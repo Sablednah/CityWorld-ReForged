@@ -77,6 +77,18 @@ Coupling inventory (from the 1.14 source):
       `CityWorldChunkGenerator` driving `PlatMap` via `fillFromNoise`; `buildSurface`,
       `getBaseHeight`/`getBaseColumn`; custom `BiomeSource`. Register the dimension (datapack JSON)
       and world preset. **Gate: teleport into `cityworld:city` and see terrain.**
+    - [x] **Infrastructure spike PROVEN.** `CityWorldChunkGenerator` (codec-registered under
+          `cityworld:city` via `DeferredRegister` on `Registries.CHUNK_GENERATOR`) implements the
+          full 11-method `ChunkGenerator` contract and writes a placeholder bedrock/stone/grass
+          profile through the real `InitialBlocks`→`Material` seam. Datapacks: `dimension/city.json`,
+          `worldgen/world_preset/city.json`, and a `#minecraft:normal` world-preset tag (dropdown).
+          A headless `runServer` (level-type `cityworld:city`) confirmed the overworld generator is
+          ours and blocks are exactly the placeholder profile (stone at y=0 where vanilla is
+          deepslate) — no exceptions. Verified via a temporary `ServerStartedEvent` diagnostic
+          (since removed). **This validates the whole Phase 1 seam plugs into modern worldgen.**
+    - [ ] Replace the placeholder fill with the real terrain brain (needs P2 + `ShapeProvider`/
+          `PlatMap`/contexts ported); add the `/cityworld` teleport into the `cityworld:city`
+          dimension.
 - [ ] **P4 — Height modernization.** `ShapeProvider` Y math for `-64..319`; deepslate strata;
       sea/tree/snow bands; `OreProvider` deepslate variants; `SurfaceProvider`; modern carvers.
 - [ ] **P5 — Decoration (old `BlockPopulator`).** Loot chests, spawners, furnished `Rooms`,

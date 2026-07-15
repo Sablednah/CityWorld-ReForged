@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 
+import me.daddychurchill.CityWorld.worldgen.CityWorldRegistries;
+
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -31,9 +33,11 @@ public class CityWorldMod {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public CityWorldMod(IEventBus modEventBus, ModContainer modContainer) {
-        // Phase 0 scaffold: nothing registered yet. Upcoming phases will register, on the mod
-        // event bus, the custom ChunkGenerator type, BiomeSource, dimension, and world preset.
-        LOGGER.info("CityWorld {} initialising (NeoForge port — scaffold)",
+        // Register the custom ChunkGenerator codec (cityworld:city). The dimension and world
+        // preset that reference it live in src/main/resources/data/cityworld/...
+        CityWorldRegistries.register(modEventBus);
+
+        LOGGER.info("CityWorld {} initialising (NeoForge port)",
                 modContainer.getModInfo().getVersion());
     }
 }
