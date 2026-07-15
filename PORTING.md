@@ -58,13 +58,18 @@ Coupling inventory (from the 1.14 source):
           orientation helpers `withFacing`/`withFaces`/`asSlab`/`asDoorHalf` + id resolver +
           representative constant set). Strategy: `Material` is a value-vocabulary (never
           switched-on across the source), so it becomes interned wrappers, not an enum.
-    - [ ] Port `Support/Odds` (has Bukkit imports: Material/BlockFace/TreeSpecies/Vector — reroute
-          to the shims, drop TreeSpecies/Vector).
-    - [ ] Reimplement `AbstractBlocks` (mechanical type swaps; keep the `final` convenience methods),
-          `InitialBlocks` (on `ChunkAccess`), then `SupportBlocks`/`RealBlocks`/`WorldBlocks`
-          (world-reading/decoration — needed by P5) and `CornerBlocks`.
+    - [x] Port `Support/Odds` (Material/BlockFace → shims; Vector → `Vec3`; TreeSpecies →
+          `compat/WoodSpecies`).
+    - [x] **Generation-side seam** compiling: `AbstractBlocks` (768 lines, surgically transformed —
+          all `final` convenience methods intact), `InitialBlocks` (on `ChunkAccess`/`ProtoChunk`,
+          world-coord mapping + heightmap-auto-update), `Factories/MaterialFactory`, and a minimal
+          `CityWorldGenerator` skeleton exposing only what the block layer needs (grows in P3).
+    - [ ] **Decoration-side seam** (reads the live world — needed by P5, not by the P3 terrain gate):
+          `SupportBlocks` (971 lines), `RealBlocks`, `RelativeBlocks`, `WorldBlocks`, `CornerBlocks`
+          (1222 lines). These bind to `WorldGenLevel`/`LevelAccessor` rather than `ChunkAccess`.
     - [ ] Mass import rewrite across ported files: `org.bukkit.Material` →
-          `me.daddychurchill.CityWorld.compat.Material`, `org.bukkit.block.BlockFace` → `compat.BlockFace`.
+          `me.daddychurchill.CityWorld.compat.Material`, `org.bukkit.block.BlockFace` → `compat.BlockFace`
+          (done per-file as each is ported).
 - [ ] **P2 — Material mapping.** `Material` name → `BlockState` behind `MaterialProvider`; most
       1.14 names map 1:1 to `minecraft:<name>`; special-case removed/renamed blocks and state
       variants. Unblocks compilation of the Material-using files.
