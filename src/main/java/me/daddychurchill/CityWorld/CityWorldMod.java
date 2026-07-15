@@ -1,0 +1,39 @@
+package me.daddychurchill.CityWorld;
+
+import org.slf4j.Logger;
+
+import com.mojang.logging.LogUtils;
+
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+
+/**
+ * CityWorld — main mod entrypoint (common: loaded on both client and dedicated server).
+ *
+ * <p>A modern NeoForge rewrite of the classic CityWorld Bukkit plugin, which procedurally
+ * generates endless cities, roads, buildings, mines, sewers, farms and nature. The generation
+ * "brain" (PlatMap / PlatLot / Context / providers) is being ported largely intact; the Bukkit
+ * block-writing layer ({@code AbstractBlocks} and friends) is being reimplemented against modern
+ * {@code ChunkAccess}/{@code BlockState}, and the whole thing is wrapped in a codec-registered
+ * custom {@code ChunkGenerator} exposed as both a dimension and a world preset.
+ *
+ * <p>See {@code PORTING.md} in the reference (Bukkit) repo for the phased plan. This is Phase 0:
+ * an empty, buildable NeoForge scaffold.
+ */
+@Mod(CityWorldMod.MODID)
+public class CityWorldMod {
+
+    /** The mod id — must match {@code mod_id} in gradle.properties and the modId in neoforge.mods.toml. */
+    public static final String MODID = "cityworld";
+
+    /** Shared logger. */
+    public static final Logger LOGGER = LogUtils.getLogger();
+
+    public CityWorldMod(IEventBus modEventBus, ModContainer modContainer) {
+        // Phase 0 scaffold: nothing registered yet. Upcoming phases will register, on the mod
+        // event bus, the custom ChunkGenerator type, BiomeSource, dimension, and world preset.
+        LOGGER.info("CityWorld {} initialising (NeoForge port — scaffold)",
+                modContainer.getModInfo().getVersion());
+    }
+}

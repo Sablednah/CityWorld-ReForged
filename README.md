@@ -1,10 +1,35 @@
-*CityWorld...*
+# CityWorld (NeoForge)
 
-The great outdoors is all good and fine but sometimes you just want to go to town. Not any town will do, how about one that goes on forever or multiple ones separated by the largest mountains possible in Minecraft. But what is under those mountains? There is an entire world to explore, have fun!
+A modern **NeoForge** rewrite of the classic [CityWorld](https://www.spigotmc.org/resources/cityworld.2250/)
+Bukkit plugin — it procedurally generates endless cities, roads, buildings, mines, sewers, farms
+and nature.
 
+| | |
+|---|---|
+| **Minecraft** | 1.21.11 |
+| **Loader** | NeoForge 21.11.42 |
+| **Java** | 21 |
+| **Status** | 🚧 Early port — Phase 0 (scaffold) |
 
-*Open Source Sponsors...*
+> This is a work-in-progress port. The generation logic is being ported from the original Bukkit
+> plugin (kept as the reference implementation in the sibling `CityWorld-ReForged` repo). See
+> that repo's `PORTING.md` for the phased plan and progress.
 
-YourKit is kindly supporting open source projects with its full-featured Java Profiler.
-YourKit, LLC is the creator of innovative and intelligent tools for profiling Java and .NET applications. Take a look at YourKit's leading software products:
-<a href="http://www.yourkit.com/java/profiler/index.jsp">YourKit Java Profiler</a> and <a href="http://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>.
+## Delivery
+
+CityWorld will be reachable two ways (both on one shared chunk generator):
+
+- a custom **dimension** (`cityworld:city`), entered/left with `/cityworld`; and
+- a **world preset** ("world type") for whole-world city generation at creation.
+
+## Building from source
+
+Requires a JDK 21.
+
+```bash
+./gradlew build
+# output: build/libs/cityworld-<version>.jar
+```
+
+Standard [NeoForge ModDevGradle](https://github.com/neoforged/ModDevGradle) setup. Use
+`./gradlew runClient` or `./gradlew runServer` for a dev instance.
