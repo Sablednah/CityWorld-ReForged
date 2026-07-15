@@ -140,3 +140,13 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
 - No system Java; build with `JAVA_HOME=../MobHealth-Forge/tools/jdk21` (also copied to
   `./tools/jdk21`, git-ignored). `./gradlew compileJava` is the fast inner loop while porting.
 - Decompiled MC/NeoForge sources (for checking signatures) extract from the neoform jar above.
+
+## Future ideas (parking lot)
+
+- **Harvest vanilla structure placement points as city anchors.** Right now the generator
+  *suppresses* all vanilla structure sets (villages, mineshafts, trial chambers, …) so CityWorld
+  owns the chunk. Distant-future idea: instead of only discarding them, read where vanilla *would*
+  have placed structures and use those points as anchors to seed CityWorld content — e.g. drop a
+  landmark building, a plaza, an underground vault, or a themed district at a would-be village /
+  trial-chamber location. The placement machinery already computes good spots; we'd be repurposing
+  them as hints rather than throwing them away.

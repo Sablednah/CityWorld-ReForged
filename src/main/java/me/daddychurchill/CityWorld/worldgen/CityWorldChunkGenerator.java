@@ -2,6 +2,7 @@ package me.daddychurchill.CityWorld.worldgen;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -11,19 +12,24 @@ import me.daddychurchill.CityWorld.Support.InitialBlocks;
 import me.daddychurchill.CityWorld.compat.Material;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.blending.Blender;
+import net.minecraft.world.level.levelgen.structure.StructureSet;
 
 /**
  * The CityWorld {@link ChunkGenerator}.
@@ -78,6 +84,27 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     @Override
     public void applyCarvers(WorldGenRegion region, long seed, RandomState randomState,
             BiomeManager biomeManager, StructureManager structureManager, ChunkAccess chunk) {
+        // No vanilla carvers (caves/ravines) — CityWorld carves its own mines/sewers.
+    }
+
+    /**
+     * Suppress vanilla structures (villages, mineshafts, trial chambers, strongholds, …) by giving
+     * the structure state an empty set — CityWorld generates its own structures.
+     *
+     * <p>Future idea (see PORTING.md "Future ideas"): rather than discard these, harvest the points
+     * where vanilla <em>would</em> have placed structures and reuse them as city anchors.
+     */
+    @Override
+    public ChunkGeneratorStructureState createState(HolderLookup<StructureSet> lookup,
+            RandomState randomState, long seed) {
+        return ChunkGeneratorStructureState.createForFlat(
+                randomState, seed, this.biomeSource, Stream.<Holder<StructureSet>>empty());
+    }
+
+    /** Suppress vanilla biome decoration (trees, flowers, ores, lakes) — CityWorld places its own. */
+    @Override
+    public void applyBiomeDecoration(WorldGenLevel level, ChunkAccess chunk,
+            StructureManager structureManager) {
     }
 
     @Override
