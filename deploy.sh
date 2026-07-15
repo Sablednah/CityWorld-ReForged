@@ -11,9 +11,9 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 export JAVA_HOME="$ROOT/tools/jdk21"
 export PATH="$JAVA_HOME/bin:$PATH"
 
-# Target NeoForge instance. Create a NeoForge 1.21.11 instance named "CityWorld - Forge"
-# in CurseForge, or point CITYWORLD_INSTANCE at any instance folder.
-INSTANCE="${CITYWORLD_INSTANCE:-/mnt/c/Users/darre/curseforge/minecraft/Instances/CityWorld - Forge}"
+# Target NeoForge instance (a NeoForge 1.21.11 CurseForge instance).
+# Override with CITYWORLD_INSTANCE=/path/to/instance ./deploy.sh
+INSTANCE="${CITYWORLD_INSTANCE:-/mnt/c/Users/darre/curseforge/minecraft/Instances/CityWork-ReForged}"
 MODS="$INSTANCE/mods"
 
 echo ">> Building CityWorld..."
@@ -21,7 +21,7 @@ echo ">> Building CityWorld..."
 
 if [ ! -d "$MODS" ]; then
     echo "!! Instance mods folder not found: $MODS" >&2
-    echo "!! Create a NeoForge 1.21.11 instance (default name 'CityWorld - Forge')," >&2
+    echo "!! Create a NeoForge 1.21.11 instance (default name 'CityWork-ReForged')," >&2
     echo "!! or run: CITYWORLD_INSTANCE=\"/path/to/instance\" ./deploy.sh" >&2
     exit 1
 fi
