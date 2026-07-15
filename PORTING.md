@@ -53,6 +53,18 @@ Coupling inventory (from the 1.14 source):
 - [ ] **P1 — Block seam.** Reimplement `AbstractBlocks`/`InitialBlocks`/`RealBlocks`/`SupportBlocks`
       on `ChunkAccess`/`BlockState`; `BlockFace` → `Direction`; oriented placement (stairs, doors,
       facing, waterlogging).
+    - [x] Compat foundation compiling: `compat/BlockFace` (enum mirroring Bukkit values +
+          `toDirection`/`getOppositeFace`) and `compat/Material` (interned `BlockState` wrapper +
+          orientation helpers `withFacing`/`withFaces`/`asSlab`/`asDoorHalf` + id resolver +
+          representative constant set). Strategy: `Material` is a value-vocabulary (never
+          switched-on across the source), so it becomes interned wrappers, not an enum.
+    - [ ] Port `Support/Odds` (has Bukkit imports: Material/BlockFace/TreeSpecies/Vector — reroute
+          to the shims, drop TreeSpecies/Vector).
+    - [ ] Reimplement `AbstractBlocks` (mechanical type swaps; keep the `final` convenience methods),
+          `InitialBlocks` (on `ChunkAccess`), then `SupportBlocks`/`RealBlocks`/`WorldBlocks`
+          (world-reading/decoration — needed by P5) and `CornerBlocks`.
+    - [ ] Mass import rewrite across ported files: `org.bukkit.Material` →
+          `me.daddychurchill.CityWorld.compat.Material`, `org.bukkit.block.BlockFace` → `compat.BlockFace`.
 - [ ] **P2 — Material mapping.** `Material` name → `BlockState` behind `MaterialProvider`; most
       1.14 names map 1:1 to `minecraft:<name>`; special-case removed/renamed blocks and state
       variants. Unblocks compilation of the Material-using files.
@@ -85,3 +97,29 @@ cities yet). Cities/decoration/loot layer on after.
 2. **Neighbor access** during decoration for connected roads/parks.
 3. **Performance** — the original disabled several styles for perf even on Bukkit.
 4. **Per-world config** doesn't match NeoForge's per-instance config model.
+
+## 1.21.11 API notes (verified against the decompiled NeoForge sources)
+
+These bit us / would bite anyone porting; confirmed by grepping the neoform sources jar
+(`~/.gradle/caches/neoformruntime/.../sourcesAndCompiledWithNeoForge_*.jar`):
+
+- **`ResourceLocation` is renamed `net.minecraft.resources.Identifier`** in 1.21.11. Factories:
+  `Identifier.withDefaultNamespace(path)`, `Identifier.fromNamespaceAndPath(ns, path)`,
+  `Identifier.parse(str)`.
+- **`ChunkAccess.setBlockState(BlockPos, BlockState, int flags)`** — the third arg is an
+  `@Block.UpdateFlags int`, **not** the old `boolean isMoving`. A 2-arg convenience
+  `setBlockState(pos, state)` defaults to flags `3`. `ProtoChunk` updates heightmaps automatically.
+- **Registry lookups**: `BuiltInRegistries.BLOCK.getValue(Identifier)` returns a `@Nullable Block`;
+  `.get(Identifier)` returns `Optional<Holder.Reference<Block>>`; `.getKey(block)` returns the
+  `Identifier`.
+- **State properties** live in `net.minecraft.world.level.block.state.properties.BlockStateProperties`:
+  `FACING`/`HORIZONTAL_FACING` (`Direction`), `AXIS` (`Direction.Axis`), `SLAB_TYPE` (`SlabType`),
+  `HALF` (`Half`), `DOUBLE_BLOCK_HALF` (`DoubleBlockHalf`), `WATERLOGGED`, and boolean connection
+  faces `NORTH/EAST/SOUTH/WEST/UP/DOWN`. Apply with `state.setValue(prop, val)` /
+  guard with `state.hasProperty(prop)`.
+
+## Build notes
+
+- No system Java; build with `JAVA_HOME=../MobHealth-Forge/tools/jdk21` (also copied to
+  `./tools/jdk21`, git-ignored). `./gradlew compileJava` is the fast inner loop while porting.
+- Decompiled MC/NeoForge sources (for checking signatures) extract from the neoform jar above.
