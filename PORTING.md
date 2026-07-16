@@ -60,7 +60,7 @@ backed by a **shim layer** for the remaining Bukkit surface. Not incremental fea
 | `Material` | 150 | ✅ done (`compat/Material`, all 557 constants) |
 | `block.BlockFace` | 82 | ✅ done (`compat/BlockFace`) |
 | `ChunkGenerator.BiomeGrid` + `block.Biome` | 56 | **Design needed** — CityWorld writes biomes per column; modern gen assigns via `BiomeSource`. Architectural change. |
-| `util.noise.*` (`NoiseGenerator`, `SimplexNoiseGenerator`, `SimplexOctaveGenerator`) | 25 | **Terrain fidelity risk** — CityWorld's terrain shape *is* Bukkit's noise impl. Either vendor those classes (see licence note) or accept different terrain using vanilla noise. |
+| `util.noise.*` (`NoiseGenerator`, `SimplexNoiseGenerator`, `SimplexOctaveGenerator`) | 25 | **Vendor Bukkit's noise classes** — cleared now that we're GPL-3 (see licence section). Preserves CityWorld's exact terrain shape. |
 | `block.data.*` (`Bisected.Half`, `Slab.Type`, `Stairs`, `Rail.Shape`, `Bed`, `Door`, `Leaves`, `Snow`, `Chest`, …) | ~45 | Small shims → `BlockState` properties (the `Material` helpers already cover facing/slab/half). |
 | `World`, `Chunk`, `Location`, `Bukkit`, `Environment` | ~30 | Decoration-side → `WorldGenLevel`/`ServerLevel`. |
 | `entity.*` (`EntityType`, `Entity`, `Player`, `Item`) | ~15 | → modern `EntityType` (P5). |
@@ -152,17 +152,23 @@ Coupling inventory (from the 1.14 source):
 **Critical path to first playable slice:** P0 → P1 → P2 → P3 (terrain in `cityworld:city`, no
 cities yet). Cities/decoration/loot layer on after.
 
-## Open question: licence ⚠
+## Licence: GPL-3 (settled)
 
-`gradle.properties` currently declares `mod_license=MIT`. **That was assumed, not verified** — it
-was copied from the MobHealth port's template. The upstream CityWorld tree has **no `LICENSE` file
-and no `<licenses>` block in `pom.xml`**, so the original terms are unstated. This needs a decision
-from the project owner before any release, and it interacts with a porting choice:
+Upstream CityWorld is **GPL-3** (confirmed by the project owner; the upstream tree carries no
+`LICENSE` file and no `<licenses>` in `pom.xml`, which is why this was ambiguous at first). This
+port is a **derivative work**, so it **must remain GPL-3** — GPL-3 → MIT is not permitted
+(compatibility runs the other way only: MIT code may be absorbed into a GPL-3 work).
 
-- Vendoring Bukkit's `SimplexNoiseGenerator`/`SimplexOctaveGenerator` would preserve CityWorld's
-  exact terrain shape, but that code is **Bukkit's (GPL-family)** — copying it has licence
-  implications for the mod.
-- Using vanilla/own noise avoids that, but produces **different terrain** from the original.
+An earlier `mod_license=MIT` was an unverified assumption copied from the MobHealth template; it has
+been corrected to `GPL-3.0-only`, and a verbatim GPL-3 `LICENSE` now lives at the repo root.
+
+**Consequence — the noise question resolves the good way:** since we are GPL-3 and Bukkit's API is
+GPL-3, we **may vendor** Bukkit's `SimplexNoiseGenerator`/`SimplexOctaveGenerator` (with notices and
+attribution intact) and so **preserve CityWorld's exact terrain shape**, rather than approximating
+it with vanilla noise and getting different terrain.
+
+Known wrinkle (not blocking, owner's call): GPL + linking against proprietary Minecraft is a
+long-standing grey area in the modding ecosystem; many GPL mods ship regardless.
 
 ## Top risks
 
