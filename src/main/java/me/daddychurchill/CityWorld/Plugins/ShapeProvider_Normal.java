@@ -5,8 +5,14 @@ import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
+import me.daddychurchill.CityWorld.Context.ConstructionContext;
 import me.daddychurchill.CityWorld.Context.DataContext;
+import me.daddychurchill.CityWorld.Context.HighriseContext;
+import me.daddychurchill.CityWorld.Context.LowriseContext;
+import me.daddychurchill.CityWorld.Context.MidriseContext;
 import me.daddychurchill.CityWorld.Context.NatureContext;
+import me.daddychurchill.CityWorld.Context.NeighborhoodContext;
+import me.daddychurchill.CityWorld.Context.ParkContext;
 import me.daddychurchill.CityWorld.Context.RoadContext;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle;
@@ -23,6 +29,24 @@ import me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator;
 public class ShapeProvider_Normal extends ShapeProvider {
 
 	private static final Logger LOGGER = LogUtils.getLogger();
+
+	DataContext parkContext;
+	DataContext highriseContext;
+	DataContext constructionContext;
+	DataContext midriseContext;
+	DataContext lowriseContext;
+	DataContext neighborhoodContext;
+
+	/**
+	 * Declared but never allocated: their lot families are unported, and the settings that guard
+	 * their arms of {@link #getContext(PlatMap)} are off, so the ladder never reaches them. They
+	 * stay here rather than being deleted so restoring each is a one-line change in
+	 * {@link #allocateContexts} plus flipping its setting back on.
+	 */
+	DataContext municipalContext;
+	DataContext industrialContext;
+	DataContext farmContext;
+	DataContext outlandContext;
 
 	private final SimplexOctaveGenerator landShape1;
 	private final SimplexOctaveGenerator landShape2;
@@ -73,6 +97,8 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	private final static double mineScale = 1.0 / 4.0;
 	public final static double mineScaleY = mineScale;
 
+	private final static double oddsOfCentralPark = Odds.oddsUnlikely;
+
 	public ShapeProvider_Normal(CityWorldGenerator generator, Odds odds) {
 		super(generator, odds);
 		long seed = generator.getWorldSeed();
@@ -119,10 +145,17 @@ public class ShapeProvider_Normal extends ShapeProvider {
 			natureContext = new NatureContext(generator);
 			roadContext = new RoadContext(generator);
 
-			// Upstream also allocates the ten urban contexts here (park, highrise, construction,
-			// midrise, municipal, industrial, lowrise, neighborhood, farm, outland) — the city
-			// planning half of the brain. They arrive in wave 2 with the lots they build; see
-			// getContext(PlatMap) below and PORTING.md.
+			parkContext = new ParkContext(generator);
+			highriseContext = new HighriseContext(generator);
+			constructionContext = new ConstructionContext(generator);
+			midriseContext = new MidriseContext(generator);
+			lowriseContext = new LowriseContext(generator);
+			neighborhoodContext = new NeighborhoodContext(generator);
+
+			// Upstream also allocates municipalContext, industrialContext, farmContext and
+			// outlandContext here. Each needs a lot family that is not ported yet (government and
+			// museum buildings; factories and warehouses; barns and farms; the rural/nature
+			// set-pieces). See getContext(PlatMap) for how the ladder copes without them.
 
 			contextInitialized = true;
 		}
@@ -140,34 +173,51 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	}
 
 	/**
-	 * Picks the context for a platmap from how natural it still is.
+	 * Picks the context for a platmap from how natural it still is — the ladder that decides
+	 * whether a patch of world becomes downtown, suburb, farm or wilderness. The thresholds are the
+	 * knobs that give a world its character, and are upstream's, unchanged.
 	 *
-	 * <p><b>Wave 1 stub — this is the city-planning ladder, and it is deferred, not lost.</b>
-	 * Upstream grades {@code platmap.getNaturePercent()} into ten urban contexts, and the exact
-	 * thresholds are the knobs that decide a world's character, so they are recorded here verbatim
-	 * to be restored with the contexts in wave 2:
-	 *
-	 * <pre>
-	 *   0.00        -> park (odds of a central park) else highrise
-	 *   &lt; 0.05      -> highrise
-	 *   &lt; 0.10      -> construction
-	 *   &lt; 0.15      -> municipal      (if includeMunicipalities)
-	 *   &lt; 0.25      -> midrise
-	 *   &lt; 0.30      -> industrial     (if includeIndustrialSectors)
-	 *   &lt; 0.40      -> lowrise
-	 *   &lt; 0.55      -> neighborhood
-	 *   &lt; 0.70      -> farm           (if includeFarms)
-	 *   &lt; 0.75      -> outland
-	 *   otherwise   -> nature (keep what we have)
-	 * </pre>
-	 *
-	 * Returning nature until then is what upstream itself does for a fully-natural platmap, which
-	 * is every platmap in wave 1 — so the terrain path runs unchanged and worlds simply have no
-	 * cities in them yet.
+	 * <p><b>Four arms are not reachable yet</b>, each because its lot family is unported. Three of
+	 * them (municipal, industrial, farm) upstream already guards with a setting, so switching that
+	 * setting off makes the arm fall through to the next band exactly as a player disabling the
+	 * feature would — no special-casing needed. See {@code CityWorldSettings}. The fourth, outland,
+	 * has no such guard, so it falls through to nature here; that is a deliberate deviation and is
+	 * marked below.
 	 */
 	@Override
 	public DataContext getContext(PlatMap platmap) {
-		return natureContext;
+
+		// how natural is this platmap?
+		double nature = platmap.getNaturePercent();
+		if (nature == 0.0) {
+			if (platmap.getOddsGenerator().playOdds(oddsOfCentralPark))
+				return parkContext;
+			else
+				return highriseContext;
+		} else if (nature < 0.05) // 5
+			return highriseContext;
+		else if (nature < 0.10) // 5
+			return constructionContext;
+		else if (nature < 0.15 && platmap.generator.getSettings().includeMunicipalities) // 5
+			return municipalContext;
+		else if (nature < 0.25) // 10
+			return midriseContext;
+		else if (nature < 0.30 && platmap.generator.getSettings().includeIndustrialSectors) // 5
+			return industrialContext;
+		else if (nature < 0.40) // 10
+			return lowriseContext;
+		else if (nature < 0.55) // 15
+			return neighborhoodContext;
+		else if (nature < 0.70 && platmap.generator.getSettings().includeFarms) // 10
+			return farmContext;
+
+			// Upstream: `else if (nature < 0.75) return outlandContext;` — the outland lots
+			// (campgrounds, gravel works, wood works, mine entrances) are not ported, and unlike the
+			// arms above there is no setting to switch it off, so this band falls to nature for now.
+
+			// otherwise just keep what we have
+		else
+			return natureContext;
 	}
 
 	@Override

@@ -18,9 +18,19 @@ public class CityWorldSettings {
     // Defaults carried over verbatim from the upstream field initializers.
     public boolean includeRoads = true;
     public boolean includeBuildings = true;
-    public boolean includeFarms = true;
-    public boolean includeMunicipalities = true;
-    public boolean includeIndustrialSectors = true;
+    /**
+     * These three are upstream-default-on, and forced off here because their lot families are not
+     * ported: farms want {@code BarnLot}/{@code FarmLot}/{@code WaterTowerLot}, municipalities want
+     * the government and museum buildings, industrial sectors want factories and warehouses.
+     *
+     * <p>Using the settings for this is deliberate rather than a hack: upstream already guards each
+     * of these arms of {@code ShapeProvider_Normal.getContext} with its setting, so switching them
+     * off makes those bands fall through to the next exactly as they would for a player who turned
+     * the feature off — no special-casing in the ladder. Flip each back on with its lots.
+     */
+    public boolean includeFarms = false;
+    public boolean includeMunicipalities = false;
+    public boolean includeIndustrialSectors = false;
     public boolean includeCaves = true;
     public boolean includeLavaFields = true;
     public boolean includeSeas = true;
@@ -42,15 +52,19 @@ public class CityWorldSettings {
     public double oddsOfTreasureInSewers = Odds.oddsLikely;
     public boolean includeNamedRoads = true;
     public boolean includeDecayedRoads = false;
+    public boolean includeDecayedBuildings = false;
+    public boolean includeBuildingInteriors = true;
+    public boolean includeHouses = true;
+    public boolean includeBasements = true;
+    public boolean includeCisterns = true;
+    public boolean treasuresInBuildings = true;
+    public double oddsOfTreasureInBuildings = Odds.oddsLikely;
 
     /** How rural a world skews; folded into {@code PlatMap.getNaturePercent}. */
     public double ruralnessLevel = 0.0;
 
-    /**
-     * Roundabouts need {@code RoundaboutCenterLot} (or a P6 schematic), neither of which is ported.
-     * Forced off until then — upstream defaults this on, so restore it with wave 2b.
-     */
-    public boolean includeRoundabouts = false;
+    /** Back on at upstream's default now that {@code RoundaboutCenterLot} is ported (wave 2b). */
+    public boolean includeRoundabouts = true;
 
     /**
      * Whether a chunk is inside the configured city radius.
@@ -65,6 +79,11 @@ public class CityWorldSettings {
 
     /** As {@link #inCityRange}, for the road network's own radius. Gated off upstream by default. */
     public boolean inRoadRange(int chunkX, int chunkZ) {
+        return true;
+    }
+
+    /** As {@link #inCityRange}, for the constructs (quarries, gravel pits). Gated off by default. */
+    public boolean inConstructRange(int chunkX, int chunkZ) {
         return true;
     }
 }

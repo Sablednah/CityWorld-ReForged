@@ -1,6 +1,7 @@
 package me.daddychurchill.CityWorld.Context;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
+import me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily;
 import me.daddychurchill.CityWorld.Plats.NatureLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Support.Odds;
@@ -106,6 +107,40 @@ public abstract class DataContext {
 	public abstract void populateMap(CityWorldGenerator generator, PlatMap platmap);
 
 	public abstract void validateMap(CityWorldGenerator generator, PlatMap platmap);
+
+	/**
+	 * Lets the user's own schematics claim lots before the generator fills the rest with its own
+	 * buildings — which is why {@code UrbanContext.populateMap} calls it first.
+	 *
+	 * <p>No-op until P6 ports {@code Clipboard}/{@code PasteProvider}; with no schematics loaded,
+	 * upstream's version does nothing either.
+	 */
+	void populateSchematics(CityWorldGenerator generator, PlatMap platmap) {
+	}
+
+	// --- schematic family ----------------------------------------------------------------------
+	// What kind of place this context builds. Each context declares its own in its constructor, and
+	// P6 uses it to pick which of the player's schematics may land here. Tracked now so those
+	// declarations survive; nothing reads it until then.
+
+	private static final int schematicMax = 4;
+	private SchematicFamily schematicFamily = SchematicFamily.NATURE;
+	private int schematicMaxX = schematicMax;
+	private int schematicMaxZ = schematicMax;
+
+	protected void setSchematicFamily(SchematicFamily family) {
+		setSchematicFamily(family, schematicMax);
+	}
+
+	void setSchematicFamily(SchematicFamily family, int maxWidth) {
+		schematicFamily = family;
+		schematicMaxX = maxWidth;
+		schematicMaxZ = maxWidth;
+	}
+
+	public SchematicFamily getSchematicFamily() {
+		return schematicFamily;
+	}
 
 	public PlatLot createNaturalLot(CityWorldGenerator generator, PlatMap platmap, int x, int z) {
 		return new NatureLot(platmap, platmap.originX + x, platmap.originZ + z);

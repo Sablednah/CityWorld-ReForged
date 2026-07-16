@@ -2,11 +2,14 @@
 
 ## ▶ Resume here (next task)
 
-**Terrain and roads both generate.** `ShapeProvider_Normal` shapes the world in `fillFromNoise`; the
-city planner (`PlatMap`/`PlatLot`/contexts) is ported and real; `RoadLot` draws paved roads with
-sidewalks, retaining walls and sewers. All verified against blocks read out of a generated world.
+**CityWorld generates cities.** Terrain, roads, buildings with furnished interiors, parks and
+roundabouts all come out of a real world — verified by reading the blocks back, deterministically,
+with no exceptions.
 
-**Next: buildings** — the `UrbanContext` family. See "Wave 2b" below.
+**What's left is breadth, not depth**: the remaining lot families (farms, industry, municipal,
+outland, the nature set-pieces), the decoration providers that dress what's built (P5), schematics
+(P6), config (P7), and the other nine world styles (P8). The architecture is all proven. See
+"Remaining families" below.
 
 ### ⚠ The single most important thing to know: CityWorld builds in the DECORATION pass
 
@@ -31,24 +34,36 @@ also what suppresses vanilla's own decoration. **Neighbour access is the live co
 #2): a `WorldGenRegion` only permits writes near the chunk being decorated, which is why
 `RealBlocks` refusing to look past its chunk edge matters more now than it did under Bukkit.
 
-### Wave 2b: buildings
+### Remaining families
 
-| to port | notes |
-|---|---|
-| `Context/UrbanContext` (167) | **deleted from the tree for now** — `RoadContext` temporarily extends `CivilizedContext` instead, purely to avoid dragging the building families in. Restore it as the real parent. |
-| `Plats/Urban/*` — `OfficeBuildingLot` (120), `StoreBuildingLot` (83), `LibraryBuildingLot` (80), `EmptyBuildingLot` (41), `UnfinishedBuildingLot` (277), `ParkLot` (698) | what `UrbanContext.populateMap` places |
-| `Plats/BuildingLot` (1220), `FinishedBuildingLot` (2348) | the machinery underneath them |
-| `ShapeProvider_Normal.getContext(PlatMap)` | still returns `natureContext`; the ten-way nature-percent ladder is recorded verbatim in its javadoc and wants restoring once the contexts exist |
-| `Rooms/*` (~60 files) | furnishes building interiors — P5-ish, after the shells |
+The context ladder in `ShapeProvider_Normal.getContext(PlatMap)` is restored and real. Four of its
+arms are unreachable, each waiting only on its lot family:
 
-Also outstanding from wave 2, smaller:
-- **Roundabouts** are forced off (`CityWorldSettings.includeRoundabouts = false`) because they need
-  `RoundaboutCenterLot` (356) or a P6 schematic. Upstream defaults them on.
+| arm | needs | how it's held back |
+|---|---|---|
+| municipal | `GovernmentBuildingLot` (379), `GovernmentMonumentLot` (194), `MuseumBuildingLot` (124) | `includeMunicipalities = false` |
+| industrial | `FactoryBuildingLot` (703), `WarehouseBuildingLot` (99), `StorageLot` (121) | `includeIndustrialSectors = false` |
+| farm | `FarmLot` (691), `BarnLot` (384), `WaterTowerLot` (56) | `includeFarms = false` |
+| outland | `CampgroundLot`, `GravelworksLot`, `WoodworksLot`, `MineEntranceLot`, … | **no setting guards this one** — its band falls through to nature, marked in `getContext` |
+
+**Using the settings for the first three is deliberate, not a hack.** Upstream already guards those
+arms with exactly those flags, so switching them off makes the band fall through to the next one
+precisely as it would for a player who disabled the feature. Restoring each is: port its lots,
+allocate its context in `allocateContexts`, flip the flag. The context fields are already declared.
+
+Also still outstanding:
 - **`NatureContext.populateMap` is simplified** — upstream surveys each chunk's `HeightInfo` and
   seeds set-pieces by terrain type (bunkers, radio towers, oil platforms, flying saucers, hot air
   balloons, mine entrances). `BunkerLot` alone is 1037 lines. Its survey code is the only consumer
-  of `HeightInfo`'s `HeightState`.
-- **`PlatMap.placeSpecificClip`** (schematic placement) is dropped — P6.
+  of `HeightInfo`'s `HeightState` classification.
+- **The decoration providers are stubs** — `CoverProvider` (903, ground cover + trees),
+  `TreeProvider` (631), `SurfaceProvider`, `SpawnProvider` (333, needs Bukkit→modern `EntityType`),
+  `ThingProvider` (492), `OdonymProvider` (78, street names), `StructureOnGroundProvider` (1158,
+  water towers/sheds), `StructureInAirProvider` (207, balloons). All of it is P5. Their *vocabulary*
+  is ported where callers name it (e.g. `CoverProvider.CoverageType`), so a park lays out correctly
+  and is simply unplanted.
+- **Loot** — chests are placed but empty (`LootProvider.loadProvider` returns a do-nothing). P5.
+- **`PlatMap.placeSpecificClip`** and the schematic-backed roundabout centre — P6.
 
 ### ✔ Closed: the "sea level might be 64" scare was a stale comment (2026-07)
 

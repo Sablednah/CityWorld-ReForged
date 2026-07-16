@@ -22,6 +22,8 @@ public class SpawnProvider extends Provider {
     public final AbstractEntityList itemsEntities_Sewers = new AbstractEntityList();
     public final AbstractEntityList itemsEntities_Mine = new AbstractEntityList();
     public final AbstractEntityList itemsEntities_Bunker = new AbstractEntityList();
+    public final AbstractEntityList itemsEntities_LavaPit = new AbstractEntityList();
+    public final AbstractEntityList itemsEntities_WaterPit = new AbstractEntityList();
 
     public SpawnProvider(CityWorldGenerator generator) {
     }
@@ -31,8 +33,17 @@ public class SpawnProvider extends Provider {
             boolean doSpawner, AbstractEntityList entities) {
     }
 
+    /** P5: place a spawner for one of {@code entities}. */
+    public void setSpawner(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
+            AbstractEntityList entities) {
+    }
+
     /** P5. */
     public void spawnBeings(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z) {
+    }
+
+    /** P5: one being, rather than a group. */
+    public void spawnBeing(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z) {
     }
 
     /** P5. */

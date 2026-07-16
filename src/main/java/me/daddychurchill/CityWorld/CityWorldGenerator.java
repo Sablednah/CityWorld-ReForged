@@ -11,8 +11,11 @@ import me.daddychurchill.CityWorld.Plugins.LootProvider;
 import me.daddychurchill.CityWorld.Plugins.MaterialProvider;
 import me.daddychurchill.CityWorld.Plugins.OdonymProvider;
 import me.daddychurchill.CityWorld.Plugins.OreProvider;
+import me.daddychurchill.CityWorld.Plugins.RoomProvider;
 import me.daddychurchill.CityWorld.Plugins.ShapeProvider;
 import me.daddychurchill.CityWorld.Plugins.SpawnProvider;
+import me.daddychurchill.CityWorld.Plugins.StructureInAirProvider;
+import me.daddychurchill.CityWorld.Plugins.StructureOnGroundProvider;
 import me.daddychurchill.CityWorld.Plugins.SurfaceProvider;
 import me.daddychurchill.CityWorld.Plugins.ThingProvider;
 import me.daddychurchill.CityWorld.Support.Odds;
@@ -99,6 +102,9 @@ public class CityWorldGenerator {
     public ThingProvider thingProvider;
     public CoverProvider coverProvider;
     public LootProvider lootProvider;
+    public RoomProvider roomProvider;
+    public StructureInAirProvider structureInAirProvider;
+    public StructureOnGroundProvider structureOnGroundProvider;
 
     private final CityWorldSettings settings;
 
@@ -157,6 +163,8 @@ public class CityWorldGenerator {
         thingProvider = ThingProvider.loadProvider(this);
         coverProvider = CoverProvider.loadProvider(this, new Odds(getRelatedSeed()));
         lootProvider = LootProvider.loadProvider(this);
+        structureInAirProvider = StructureInAirProvider.loadProvider(this);
+        structureOnGroundProvider = StructureOnGroundProvider.loadProvider(this);
 
         // Fixed per world, so every road shares one identity. Derived straight from the seed rather
         // than from a running RNG — see getConnectionKey.
@@ -300,6 +308,13 @@ public class CityWorldGenerator {
      * yet (P5). Only the destroyed-city styles call it.
      */
     public void destroyWithin(int x1, int x2, int y1, int y2, int z1, int z2) {
+    }
+
+    /**
+     * Blows a rough sphere out of the world — how the unfinished/decayed styles chew holes in
+     * things. Stubbed alongside {@link #destroyWithin}; both belong to the decoration pass (P5).
+     */
+    public void destroyArea(int x, int y, int z, int radius) {
     }
 
     /**

@@ -185,6 +185,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
@@ -300,6 +301,18 @@ public final class Material {
      */
     public boolean isOccluding() {
         return defaultState != null && defaultState.canOcclude();
+    }
+
+    /**
+     * Bukkit's {@code Material.hasGravity()} — whether this block falls if unsupported (sand,
+     * gravel, anvils, concrete powder). The building code asks before using something as an outset
+     * or ceiling, since a floating slab of sand would just drop.
+     *
+     * <p>Bukkit answered from a flag on the material; vanilla expresses it as a block class, so this
+     * asks whether the block is a {@link FallingBlock}. Item-only materials never have gravity.
+     */
+    public boolean hasGravity() {
+        return block instanceof FallingBlock;
     }
 
     // ---- Orientation derivation (mirrors the old InitialBlocks BlockData logic) --------------
