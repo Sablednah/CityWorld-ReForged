@@ -12,29 +12,62 @@ PlatLot ↔ Context ↔ Plugins ↔ Rooms ↔ Clipboard`), so the plan of record
 transform in waves plus shims**, the way `AbstractBlocks`/`CornerBlocks` were done — not
 file-by-file.
 
-Where to start:
+### Recon already done (2026-07 — measured, don't re-derive)
 
-1. **Read the two open design questions first**, both of which `ShapeProvider` walks straight into:
-   - **Biomes** (`ChunkGenerator.BiomeGrid` + `block.Biome`, ~56 uses) — CityWorld writes biomes per
-     column; modern gen assigns them via a `BiomeSource`. Architectural, still undecided.
-   - **Noise** (`util.noise.*`, ~25 uses) — decided: **vendor** Bukkit's `SimplexNoiseGenerator`/
-     `SimplexOctaveGenerator` (GPL-3 lets us; see the licence section) to keep CityWorld's exact
-     terrain shape. `NoiseGenerator.floor` is just `Mth.floor`.
-2. **Grow the stubs as you go**: `CityWorldGenerator` is still a skeleton (it has `height`,
-   `streetLevel`, `reportFormatted`, `clearAtmosphere`, `findAtmosphereMaterialAt`). The real
-   `streetLevel` comes from `shapeProvider.getStreetLevel()` (= `seaLevel + 1`). `DataContext` is a
-   stub with only `torchMat` + `FloorHeight`; `LootProvider`/`Provider` are signature-only.
-3. **Everything the block layer needs is ready** — don't rebuild it. `SupportBlocks` owns the
-   `BlockData → BlockState` translation (`with`, `withDirection`, `withHalf`, `withRailShape`,
-   `withScaledLevel`, `stateOf`); `compat/Material` has `withFacing`/`withFaces`/`asSlab`/
-   `asDoorHalf`/`hasFaces`/`isOccluding`. No `block.data.*` shims are needed — they all map onto
-   vanilla property enums.
-4. Then P3 can replace the placeholder fill in `CityWorldChunkGenerator` with the real brain.
+**Only two files are needed for the P3 gate, not the whole family.** `ShapeProvider` has 10
+variants totalling 2,376 lines, but the gate ("teleport in and see terrain") only needs **NORMAL**:
 
-**Verify behaviour, don't just compile.** Both waves of this seam were proven with a temporary
+| | |
+|---|---|
+| `Plugins/ShapeProvider` (abstract base) | 366 lines |
+| `Plugins/ShapeProvider_Normal` | 477 lines |
+| the other 8 variants (`_Astral` 558, `_Floating` 262, `_SnowDunes` 265, `_SandDunes` 173, `_Flooded` 119, `_Maze` 86, `_Metro` 51, `_Nature` 19) | ~1,533 lines — **defer**; `loadProvider` switches on `worldStyle`, so stub the arms |
+
+So the first wave is **~843 lines**, not 2,376.
+
+**`ShapeProvider`'s direct unported dependencies** (from its own imports):
+
+| | |
+|---|---|
+| `Support/PlatMap` | 548 — the 10×10 chunk grid, seed-deterministic |
+| `Plats/PlatLot` | 612 — one chunk's "what goes here" |
+| `Context/DataContext` | 165 — **currently a stub** (`torchMat` + `FloorHeight` only) |
+| `Context/RoadContext` | 70 |
+| `Support/AbstractCachedYs` | 88 — plus `TraditionalCachedYs` (11) |
+| already done | `Material`, `InitialBlocks`, `RealBlocks`, `Odds`, `CityWorldGenerator` (skeleton) |
+
+**Biomes: deferrable, despite being listed as "design needed".** The 56 in the coupling table is a
+*use* count and reads scarier than it is — it lands in only **12 files**, concentrated in the
+`ShapeProvider_*` variants (`_Normal` 13, `_Astral` 6), `PlatLot` (6) and `SpawnProvider` (5). On the
+abstract base the entire surface is **two signatures**: `generateChunk(..., BiomeGrid biomes,
+AbstractCachedYs blockYs)` and `remapBiome(generator, PlatLot lot, Biome biome)`. So put a thin
+`compat/Biome` + `BiomeGrid` shim behind those two, port the brain, and hook a real `BiomeSource` at
+P3/P4 when there is terrain to look at. The architectural question (CityWorld writes biomes per
+column; modern gen assigns them via a `BiomeSource`) is still real — it just isn't a gate.
+
+**Noise is already decided**: vendor Bukkit's `SimplexNoiseGenerator`/`SimplexOctaveGenerator`
+(GPL-3 permits it — see the licence section) to keep CityWorld's exact terrain shape.
+`NoiseGenerator.floor` is just `Mth.floor`; no vendoring needed for that one.
+
+### Then
+
+1. **Grow the stubs as you go.** `CityWorldGenerator` is a skeleton (`height`, `streetLevel`,
+   `reportFormatted`, `clearAtmosphere`, `findAtmosphereMaterialAt`); the real `streetLevel` comes
+   from `shapeProvider.getStreetLevel()` (`= seaLevel + 1`). `DataContext` is a stub;
+   `LootProvider`/`Provider` are signature-only. **Watch the threading rule**: the original hung
+   per-world state off the generator (`generator.getWorld()`); a modern `ChunkGenerator` is shared
+   and immutable, so that state gets passed in instead — that is exactly why `RealBlocks` now takes
+   a `LevelAccessor` + `ChunkPos`. Same trap will recur across the brain (top risk #1).
+2. **Don't rebuild the block layer.** `SupportBlocks` owns the `BlockData → BlockState` translation
+   (`with`, `withDirection`, `withHalf`, `withRailShape`, `withScaledLevel`, `stateOf`);
+   `compat/Material` has `withFacing`/`withFaces`/`asSlab`/`asDoorHalf`/`hasFaces`/`isOccluding`.
+   No `block.data.*` shims are needed — they all map onto vanilla property enums.
+3. Then P3 replaces the placeholder fill in `CityWorldChunkGenerator` with the real brain.
+
+**Verify behaviour, don't just compile.** Both waves of the seam were proven with a temporary
 subclass + a `ServerStartedEvent` listener that places blocks and logs the resulting `BlockState`s
 (Gradle can't pipe stdin to the server console). That caught two real bugs and a coordinate check
-that compiling could never have. Delete the probe before committing.
+that compiling never could. Delete the probe before committing.
 
 ---
 
@@ -97,7 +130,7 @@ backed by a **shim layer** for the remaining Bukkit surface. Not incremental fea
 |---|---:|---|
 | `Material` | 150 | ✅ done (`compat/Material`, all 557 constants) |
 | `block.BlockFace` | 82 | ✅ done (`compat/BlockFace`) |
-| `ChunkGenerator.BiomeGrid` + `block.Biome` | 56 | **Design needed** — CityWorld writes biomes per column; modern gen assigns via `BiomeSource`. Architectural change. |
+| `ChunkGenerator.BiomeGrid` + `block.Biome` | 56 uses, but only **12 files** | **Deferrable, not a blocker** (re-measured 2026-07). CityWorld writes biomes per column; modern gen assigns via `BiomeSource` — still a real architectural change, but it is concentrated in the `ShapeProvider_*` variants, `PlatLot` and `SpawnProvider`, and the abstract `ShapeProvider` exposes just **2 signatures** (`generateChunk(…, BiomeGrid, …)`, `remapBiome(…)`). Shim those two, port the brain, hook a real `BiomeSource` at P3/P4. |
 | `util.noise.*` (`NoiseGenerator`, `SimplexNoiseGenerator`, `SimplexOctaveGenerator`) | 25 | **Vendor Bukkit's noise classes** — cleared now that we're GPL-3 (see licence section). Preserves CityWorld's exact terrain shape. |
 | `block.data.*` (`Bisected.Half`, `Slab.Type`, `Stairs`, `Rail.Shape`, `Bed`, `Door`, `Leaves`, `Snow`, `Chest`, …) | ~45 | ✅ done — **no shims needed**: each maps onto a vanilla property enum (`Half`, `SlabType`, `StairsShape`, `RailShape`, `BedPart`, `DoorHingeSide`, `ChestType`, …), and the `instanceof` chains became `hasProperty` guards in `SupportBlocks`. |
 | `World`, `Chunk`, `Location`, `Bukkit`, `Environment` | ~30 | Decoration-side → `WorldGenLevel`/`ServerLevel`. |
@@ -139,9 +172,9 @@ Coupling inventory (from the 1.14 source):
           all `final` convenience methods intact), `InitialBlocks` (on `ChunkAccess`/`ProtoChunk`,
           world-coord mapping + heightmap-auto-update), `Factories/MaterialFactory`, and a minimal
           `CityWorldGenerator` skeleton exposing only what the block layer needs (grows in P3).
-    - [ ] **Decoration-side seam** — **hard prerequisite for `ShapeProvider`** (its signatures take
-          `RealBlocks`), not a P5 concern as first assumed. Binds to `LevelAccessor` (live world)
-          rather than `ChunkAccess`.
+    - [x] **Decoration-side seam — done.** Was a **hard prerequisite for `ShapeProvider`** (its
+          signatures take `RealBlocks`), not a P5 concern as first assumed. Binds to `LevelAccessor`
+          (live world) rather than `ChunkAccess`.
         - [x] `compat/Block` — shim for Bukkit's live positioned block reference, pairing a
               `LevelAccessor` + `BlockPos`. This is the single primitive the whole decoration layer
               rests on (`SupportBlocks.getActualBlock(x,y,z)` is its *only* abstract method).
