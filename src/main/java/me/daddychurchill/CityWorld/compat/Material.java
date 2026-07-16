@@ -118,6 +118,15 @@ public final class Material {
         return block != null ? other.block == block : other.item == item;
     }
 
+    /**
+     * Bukkit's {@code Material.isOccluding()} — whether this is a full, opaque cube. The generator
+     * uses it to decide what may be stacked on (see {@code SupportBlocks.isNonstackableBlock}).
+     * Item-only materials are not occluding.
+     */
+    public boolean isOccluding() {
+        return defaultState != null && defaultState.canOcclude();
+    }
+
     // ---- Orientation derivation (mirrors the old InitialBlocks BlockData logic) --------------
 
     /**
@@ -137,7 +146,7 @@ public final class Material {
                 && state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
             return state.setValue(BlockStateProperties.HORIZONTAL_FACING, dir);
         }
-        Property<Boolean> faceProp = booleanFaceProperty(facing);
+        Property<Boolean> faceProp = faceProperty(facing);
         if (faceProp != null && state.hasProperty(faceProp)) {
             return state.setValue(faceProp, true);
         }
@@ -147,19 +156,43 @@ public final class Material {
         return state;
     }
 
-    /** Set several connection faces true (fences, walls, panes, glass). */
+    /** Set several connection faces true (fences, panes, glass, bars, vines). */
     public BlockState withFaces(BlockFace... faces) {
         BlockState state = defaultState;
         if (state == null) {
             return null;
         }
         for (BlockFace face : faces) {
-            Property<Boolean> faceProp = booleanFaceProperty(face);
+            Property<Boolean> faceProp = faceProperty(face);
             if (faceProp != null && state.hasProperty(faceProp)) {
                 state = state.setValue(faceProp, true);
             }
         }
         return state;
+    }
+
+    /**
+     * Whether this block connects face-by-face — Bukkit's {@code MultipleFacing}. The old code
+     * tests this to choose between per-face and bulk placement (see {@code SupportBlocks.setWalls}).
+     *
+     * <p><b>Walls are deliberately excluded.</b> In 1.14 walls were {@code MultipleFacing} like
+     * fences, but the 1.16 flattening moved them to a {@code WallSide} (none/low/tall) enum per
+     * side, so they no longer carry the boolean face properties this reports on. They therefore
+     * take the bulk-placement branch. Revisit when decoration lands (Phase 5) if wall connections
+     * come out wrong.
+     */
+    public boolean hasFaces() {
+        if (defaultState == null) {
+            return false;
+        }
+        for (BlockFace face : new BlockFace[] { BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST,
+                BlockFace.UP, BlockFace.DOWN }) {
+            Property<Boolean> faceProp = faceProperty(face);
+            if (faceProp != null && defaultState.hasProperty(faceProp)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** The block as a slab of the given type (top / bottom / double), if it is a slab. */
@@ -196,7 +229,8 @@ public final class Material {
         return state;
     }
 
-    private static Property<Boolean> booleanFaceProperty(BlockFace face) {
+    /** The boolean connection property for one face, or {@code null} for a face that has none. */
+    public static Property<Boolean> faceProperty(BlockFace face) {
         switch (face) {
             case NORTH: return BlockStateProperties.NORTH;
             case EAST:  return BlockStateProperties.EAST;

@@ -2,35 +2,30 @@
 
 ## ▶ Resume here (next task)
 
-**Port `Support/SupportBlocks` (971 lines)** — the decoration-side block seam. It is a **hard
-prerequisite for `ShapeProvider`** (whose signatures take `RealBlocks`), so it blocks the whole
-generation brain.
+**Port the four `SupportBlocks` subclasses**: `RealBlocks` (41), `RelativeBlocks` (34),
+`WorldBlocks` (202), `CornerBlocks` (1222). `SupportBlocks` itself is **done and runtime-verified**
+(see below), so this is the last thing between us and `ShapeProvider` — whose signatures take
+`RealBlocks`, which is what gates the whole generation brain.
 
-Everything it needs is already designed and compiling:
+What you need to know:
 
-1. **`compat/Block` is done** — `SupportBlocks`' *only* abstract method is
-   `getActualBlock(int x, int y, int z)`, and `compat/Block` (a `LevelAccessor` + `BlockPos` pair)
-   is what it should now return. The rest of the class is built on that one primitive.
-2. **Add a `LevelAccessor` field to `SupportBlocks`.** Careful: `RelativeBlocks`/`WorldBlocks` call
-   `world.getBlockAt(...)` — the Bukkit `world` field that was deliberately **dropped from
-   `AbstractBlocks`**. The level reference belongs on `SupportBlocks`, not `AbstractBlocks`.
-3. **Mechanical swaps** (as with `AbstractBlocks` — script it, then fix residuals):
-   `org.bukkit.Material` → `compat.Material`, `block.BlockFace` → `compat.BlockFace`,
-   `block.Block` → `compat.Block`, `Slab.Type` → `SlabType`, `Bisected.Half` → `Half`.
-4. **Real work**: the `BlockData` manipulation (bed / door / stairs / rail / snow / leaves / chest)
-   becomes `BlockState` property sets — same pattern as the existing helpers in `compat/Material`
-   (`withFacing`/`withFaces`/`asSlab`/`asDoorHalf`). Bukkit `BlockData` ≡ modern `BlockState`.
-5. **Stub these thin cycle edges** (verified small, don't port them yet):
-   - `Context/DataContext` — 1 signature only (`drawCrane`)
-   - `Plugins/LootProvider` + `LootProvider.LootLocation` — 3 signatures (chest filling; real loot is P5)
-   - `generator.reportFormatted` — add to the `CityWorldGenerator` skeleton
-   - `NoiseGenerator.floor(...)` → vanilla `Mth.floor(...)` (no vendoring needed for this one)
-6. Then: `RealBlocks` (41), `RelativeBlocks` (34), `WorldBlocks` (202), `CornerBlocks` (1222).
+1. **Each subclass exists to define one method**: `getActualBlock(int x, int y, int z)`, mapping its
+   own coordinate space onto a real position. Everything else is inherited. They also owe
+   `isSurroundedByEmpty` and `isByWater`.
+2. **The `LevelAccessor` lives on `SupportBlocks`** (field `world`, set via the constructor) — not on
+   `AbstractBlocks`, which stays world-free for the generation side. `RelativeBlocks`/`WorldBlocks`
+   called `world.getBlockAt(...)`; that becomes `new Block(world, x, y, z)`.
+3. **Don't hand-roll property sets** — `SupportBlocks` already has the whole
+   `BlockData → BlockState` translation (`with`, `withDirection`, `withHalf`, `withRailShape`,
+   `withScaledLevel`, `stateOf`), and `compat/Material` has `withFacing`/`withFaces`/`asSlab`/
+   `asDoorHalf`/`hasFaces`. Reuse them.
+4. Still to write when something needs them: `Sign` is handled (see `setSignText`), `Location` is
+   done; no `block.data.*` shims are needed any more — they all became vanilla property enums.
 
-Small shims still to write: `block.data.*` (`Bed`/`Part`, `Door`/`Hinge`, `Stairs.Shape`,
-`Rail.Shape`, `Snow`, `Leaves`, `Chest`), `Sign`, `Location`.
-
-Verify with `./gradlew compileJava`. Then commit on `neoforge-port`.
+Verify with `./gradlew compileJava`, then commit on `neoforge-port`. Once a concrete subclass
+exists, prefer proving behaviour the way `SupportBlocks` was proven: a temporary `SupportBlocks`
+subclass + a `ServerStartedEvent` listener that places blocks and logs the resulting `BlockState`s.
+It caught two real bugs that compiling could never have.
 
 ---
 
@@ -95,12 +90,12 @@ backed by a **shim layer** for the remaining Bukkit surface. Not incremental fea
 | `block.BlockFace` | 82 | ✅ done (`compat/BlockFace`) |
 | `ChunkGenerator.BiomeGrid` + `block.Biome` | 56 | **Design needed** — CityWorld writes biomes per column; modern gen assigns via `BiomeSource`. Architectural change. |
 | `util.noise.*` (`NoiseGenerator`, `SimplexNoiseGenerator`, `SimplexOctaveGenerator`) | 25 | **Vendor Bukkit's noise classes** — cleared now that we're GPL-3 (see licence section). Preserves CityWorld's exact terrain shape. |
-| `block.data.*` (`Bisected.Half`, `Slab.Type`, `Stairs`, `Rail.Shape`, `Bed`, `Door`, `Leaves`, `Snow`, `Chest`, …) | ~45 | Small shims → `BlockState` properties (the `Material` helpers already cover facing/slab/half). |
+| `block.data.*` (`Bisected.Half`, `Slab.Type`, `Stairs`, `Rail.Shape`, `Bed`, `Door`, `Leaves`, `Snow`, `Chest`, …) | ~45 | ✅ done — **no shims needed**: each maps onto a vanilla property enum (`Half`, `SlabType`, `StairsShape`, `RailShape`, `BedPart`, `DoorHingeSide`, `ChestType`, …), and the `instanceof` chains became `hasProperty` guards in `SupportBlocks`. |
 | `World`, `Chunk`, `Location`, `Bukkit`, `Environment` | ~30 | Decoration-side → `WorldGenLevel`/`ServerLevel`. |
 | `entity.*` (`EntityType`, `Entity`, `Player`, `Item`) | ~15 | → modern `EntityType` (P5). |
 | `configuration.*` | ~10 | → `ModConfigSpec` (P7). |
 | `command.*`, `plugin.*`, `event.*` | ~15 | → Brigadier / drop plugin lifecycle (P7). |
-| misc (`DyeColor`, `Axis`, `NamespacedKey`, `TreeType`, `ItemStack`, `Inventory`, `Sign`, `CreatureSpawner`, `MushroomBlockTexture`) | ~12 | Small shims, as encountered. |
+| misc (`DyeColor`, `Axis`, `NamespacedKey`, `TreeType`, `ItemStack`, `Inventory`, `Sign`, `CreatureSpawner`, `MushroomBlockTexture`) | ~12 | Small shims, as encountered. `DyeColor` and `Axis` need none (vanilla has both); `Sign` and `Location` are done. |
 
 ## The key seam (why it's tractable)
 
@@ -140,16 +135,35 @@ Coupling inventory (from the 1.14 source):
               rests on (`SupportBlocks.getActualBlock(x,y,z)` is its *only* abstract method).
               Key mappings: Bukkit `BlockData` ≡ modern `BlockState`; "apply physics" ≡ update
               flags (`UPDATE_ALL` vs `UPDATE_CLIENTS`).
-        - [ ] `SupportBlocks` (971) — mostly type swaps, but the `BlockData` manipulation
-              (bed/door/stairs/rail/snow/leaves/chest) becomes `BlockState` property sets, as in the
-              `Material` helpers. Needs a `LevelAccessor` field (note `RelativeBlocks` used the old
-              Bukkit `world` field, which was dropped from `AbstractBlocks`).
+        - [x] **`SupportBlocks` (971) — done, and verified in a live world.** All 77 original
+              methods ported. The Bukkit `instanceof` chains (`Directional`, `Bisected`, `Levelled`,
+              `Ageable`, `Snow`, `Rail`, `Chest`, …) became `hasProperty` guards — that is what those
+              interfaces were really testing — via one helper, `with(state, property, value)`, which
+              leaves the state alone when the property is absent, exactly as the old `instanceof`
+              fell through. The read-modify-write idiom (`setType` → `getBlockData` → mutate →
+              `setBlockData`) collapsed into deriving the state first and writing **once**.
+              Notes worth keeping:
+            - `withScaledLevel` looks its property up **by name** (`age`/`level`/`layers`), because
+              there is no single `AGE` property to reference — vanilla declares `AGE_1 … AGE_25`, and
+              `LEVEL` alongside `LEVEL_CAULDRON`, each with its own range.
+            - Signs: a block entity reached through a `WorldGenRegion` over a `ProtoChunk` **has no
+              level**, and `SignBlockEntity.updateText` → `markUpdated` dereferences it. `setSignText`
+              hands it one first; without that, placing a sign during generation NPEs.
+            - `setCauldron` no longer fills the cauldron — the 1.13 flattening split levelled
+              `CAULDRON` into `cauldron` + `water_cauldron`, and only the latter has a level. Left
+              for P5, when the callers land.
+            - Upstream's `setDoorBlock`/`setBedBlock` took a `doPhysics` flag **they never read**
+              (both ended `setBlockData(data, getDoPhysics(x, z))`), so the `true` at those call
+              sites never did anything. Parameter dropped; behaviour unchanged.
+            - `Material.hasFaces()` (Bukkit's `MultipleFacing`) **excludes walls**: 1.16 moved them
+              off boolean faces onto a `WallSide` enum, so they take the bulk-placement branch of
+              `setWalls`/`fillBlocks`. Revisit at P5 if wall connections look wrong.
+        - [x] Supporting work that fell out of it: `compat/Location`; `Material.isOccluding()`
+              (→ `BlockState.canOcclude()`), `Material.hasFaces()`; ported `Support/Colors` (491,
+              a pure leaf — vanilla has its own `DyeColor`, so it was a two-import swap); stubbed
+              `Context/DataContext` (`torchMat`), `Plugins/LootProvider`/`LootLocation` + `Provider`;
+              added `CityWorldGenerator.reportFormatted`. `NoiseGenerator.floor` → `Mth.floor`.
         - [ ] `RealBlocks` (41), `RelativeBlocks` (34), `WorldBlocks` (202), `CornerBlocks` (1222).
-        - [ ] Small shims still needed: `block.data.*` types (`Bed`/`Part`, `Door`/`Hinge`,
-              `Stairs.Shape`, `Rail.Shape`, `Snow`, `Leaves`, `Chest`), `Sign`, `Location`.
-        - [ ] Thin cycle edges to stub (verified small): `DataContext` (1 method signature —
-              `drawCrane`), `LootProvider`/`LootLocation` (3 signatures), `generator.reportFormatted`.
-              `NoiseGenerator.floor` → vanilla `Mth.floor` (no vendoring needed for that one).
     - [ ] Mass import rewrite across ported files: `org.bukkit.Material` →
           `me.daddychurchill.CityWorld.compat.Material`, `org.bukkit.block.BlockFace` → `compat.BlockFace`
           (done per-file as each is ported).
@@ -238,6 +252,20 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
 - **`ChunkAccess.setBlockState(BlockPos, BlockState, int flags)`** — the third arg is an
   `@Block.UpdateFlags int`, **not** the old `boolean isMoving`. A 2-arg convenience
   `setBlockState(pos, state)` defaults to flags `3`. `ProtoChunk` updates heightmaps automatically.
+- **Bukkit's "apply physics = false" is `UPDATE_SKIP_ALL_SIDEEFFECTS | UPDATE_CLIENTS`, not
+  `UPDATE_CLIENTS`.** This bit us and was only caught by placing blocks in a live world. Writing
+  with `UPDATE_CLIENTS` alone still lets the block run `onPlace` — so a powered rail re-reads the
+  redstone around it and **un-powers itself**, and a plant checks what it is standing on and
+  **deletes itself** — quietly corrupting whatever the generator placed. `LevelChunk.setBlockState`
+  gates the side effects on flags: `onPlace` unless `UPDATE_SKIP_ON_PLACE` (512), container drops
+  unless `UPDATE_SKIP_BLOCK_ENTITY_SIDEEFFECTS` (256). `UPDATE_SKIP_ALL_SIDEEFFECTS` (816) is
+  vanilla's name for the whole inert combination. Fixed in `compat/Block`.
+- **`ResourceKey.location()` is now `identifier()`** — same rename family as `ResourceLocation` →
+  `Identifier`. So a dimension's path is `level.dimension().identifier().getPath()`.
+- **`SignBlockEntity`**: text goes in via `updateText(UnaryOperator<SignText>, true /* front */)`,
+  and `SignText.setMessage(i, Component)` returns a **new** `SignText`. It notifies its level on
+  change, and a block entity built on demand through a `WorldGenRegion`/`ProtoChunk` has none — see
+  the `SupportBlocks` note above.
 - **Registry lookups**: `BuiltInRegistries.BLOCK.getValue(Identifier)` returns a `@Nullable Block`;
   `.get(Identifier)` returns `Optional<Holder.Reference<Block>>`; `.getKey(block)` returns the
   `Identifier`.

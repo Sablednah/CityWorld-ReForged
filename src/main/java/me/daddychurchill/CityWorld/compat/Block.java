@@ -29,8 +29,19 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public final class Block {
 
-    /** Write the block and tell clients, but don't trigger neighbour physics (generator default). */
-    private static final int NO_PHYSICS = net.minecraft.world.level.block.Block.UPDATE_CLIENTS;
+    /**
+     * Write the block exactly as told and tell clients, with no reactions at all (generator
+     * default) — the port of Bukkit's {@code applyPhysics = false}.
+     *
+     * <p>{@code UPDATE_CLIENTS} alone is <em>not</em> enough, and quietly corrupts what the
+     * generator places: it still lets the block run {@code onPlace}, so a powered rail re-reads the
+     * redstone around it and un-powers itself, and a plant checks what it is standing on and
+     * deletes itself. {@code UPDATE_SKIP_ALL_SIDEEFFECTS} is vanilla's name for the combination
+     * that suppresses all of it — skip {@code onPlace}, skip shape updates, suppress drops, and
+     * skip block-entity removal side effects (so overwriting a chest doesn't spew its contents).
+     */
+    private static final int NO_PHYSICS = net.minecraft.world.level.block.Block.UPDATE_SKIP_ALL_SIDEEFFECTS
+            | net.minecraft.world.level.block.Block.UPDATE_CLIENTS;
     /** Write the block and let neighbours react. */
     private static final int WITH_PHYSICS = net.minecraft.world.level.block.Block.UPDATE_ALL;
 
