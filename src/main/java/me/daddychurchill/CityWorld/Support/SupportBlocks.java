@@ -830,7 +830,11 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		sign.updateText(text -> {
 			SignText result = text;
 			for (int i = 0; i < lines.length && i < SignText.LINES; i++)
-				result = result.setMessage(i, Component.literal(lines[i]));
+				// A null line means a blank one. Bukkit's setLine tolerated null; modern
+				// Component.literal(null) throws, and it throws inside chunk generation, which fails
+				// the whole chunk. Callers legitimately leave gaps — OdonymProvider's fossil names
+				// fill only line 1 of a String[4] and leave the rest null.
+				result = result.setMessage(i, Component.literal(lines[i] == null ? "" : lines[i]));
 			return result;
 		}, true);
 	}
