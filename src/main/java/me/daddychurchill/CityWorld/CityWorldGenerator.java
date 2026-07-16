@@ -1,12 +1,22 @@
 package me.daddychurchill.CityWorld;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 
+import me.daddychurchill.CityWorld.Plugins.CoverProvider;
+import me.daddychurchill.CityWorld.Plugins.LootProvider;
+import me.daddychurchill.CityWorld.Plugins.MaterialProvider;
+import me.daddychurchill.CityWorld.Plugins.OdonymProvider;
 import me.daddychurchill.CityWorld.Plugins.OreProvider;
 import me.daddychurchill.CityWorld.Plugins.ShapeProvider;
+import me.daddychurchill.CityWorld.Plugins.SpawnProvider;
+import me.daddychurchill.CityWorld.Plugins.SurfaceProvider;
+import me.daddychurchill.CityWorld.Plugins.ThingProvider;
 import me.daddychurchill.CityWorld.Support.Odds;
+import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.compat.Material;
 
 /**
@@ -82,8 +92,20 @@ public class CityWorldGenerator {
 
     public ShapeProvider shapeProvider;
     public OreProvider oreProvider;
+    public MaterialProvider materialProvider;
+    public SurfaceProvider surfaceProvider;
+    public OdonymProvider odonymProvider;
+    public SpawnProvider spawnProvider;
+    public ThingProvider thingProvider;
+    public CoverProvider coverProvider;
+    public LootProvider lootProvider;
 
     private final CityWorldSettings settings;
+
+    /** Shared identity for every paved road, so they all count as connected to each other. */
+    public long connectedKeyForPavedRoads;
+    /** As above, for parks. */
+    public long connectedKeyForParks;
 
     // --- the vertical datums, all derived from the ShapeProvider --------------------------------
 
@@ -128,6 +150,18 @@ public class CityWorldGenerator {
         // providers read the world facts above, and the datums below read the providers.
         shapeProvider = ShapeProvider.loadProvider(this, new Odds(getRelatedSeed()));
         oreProvider = OreProvider.loadProvider(this);
+        materialProvider = new MaterialProvider(this);
+        surfaceProvider = SurfaceProvider.loadProvider(this);
+        odonymProvider = OdonymProvider.loadProvider(this, new Odds(getRelatedSeed()));
+        spawnProvider = new SpawnProvider(this);
+        thingProvider = ThingProvider.loadProvider(this);
+        coverProvider = CoverProvider.loadProvider(this, new Odds(getRelatedSeed()));
+        lootProvider = LootProvider.loadProvider(this);
+
+        // Fixed per world, so every road shares one identity. Derived straight from the seed rather
+        // than from a running RNG — see getConnectionKey.
+        connectedKeyForPavedRoads = new Odds(worldSeed + 101).getRandomLong();
+        connectedKeyForParks = new Odds(worldSeed + 102).getRandomLong();
 
         // get ranges and contexts
         height = shapeProvider.getWorldHeight();
@@ -191,6 +225,83 @@ public class CityWorldGenerator {
         return shapeProvider.findAtmosphereMaterialAt(this, blockY);
     }
 
+    /** The terrain height at a position, without generating anything there. */
+    public int getFarBlockY(int blockX, int blockZ) {
+        return shapeProvider.findBlockY(this, blockX, blockZ);
+    }
+
+    // --- the platmap collection ----------------------------------------------------------------
+
+    /**
+     * The city plans, one per {@link PlatMap#Width}² block of chunks, built on demand.
+     *
+     * <p><b>Concurrent by necessity.</b> Upstream used a {@code Hashtable} with a get-then-put,
+     * which is not atomic — two threads that miss together both build a PlatMap and one silently
+     * wins. Bukkit generated chunks on one thread so it never happened; the modern pipeline does
+     * not, so this is a {@code ConcurrentHashMap} and {@link #getPlatMap} uses
+     * {@code computeIfAbsent}, which builds exactly once per key however many threads ask at once.
+     */
+    private final ConcurrentHashMap<Long, PlatMap> platmaps = new ConcurrentHashMap<>();
+
+    public PlatMap getPlatMap(int chunkX, int chunkZ) {
+
+        // find the origin for the plat
+        int platX = calcOrigin(chunkX);
+        int platZ = calcOrigin(chunkZ);
+
+        // calculate the plat's key
+        Long platkey = ((long) platX * (long) Integer.MAX_VALUE + (long) platZ);
+
+        // Build-once, however many threads race here. Note this runs PlatMap's constructor —
+        // i.e. the whole city plan for that block — inside the map's per-bin lock, which is what
+        // makes "exactly once" true. Everything it calls must therefore avoid touching the platmap
+        // collection again, or it would deadlock; nothing does, because planning only ever reads
+        // the shape provider.
+        return platmaps.computeIfAbsent(platkey, key -> new PlatMap(this, shapeProvider, platX, platZ));
+    }
+
+    // Supporting code used by getPlatMap
+    private int calcOrigin(int i) {
+        if (i >= 0) {
+            return i / PlatMap.Width * PlatMap.Width;
+        } else {
+            return -((Math.abs(i + 1) / PlatMap.Width * PlatMap.Width) + PlatMap.Width);
+        }
+    }
+
+    /** How many platmaps have been planned — diagnostics only. */
+    public int getPlatMapCount() {
+        return platmaps.size();
+    }
+
+    /**
+     * A fresh identity for a lot, used to decide which lots are connected to which.
+     *
+     * <p><b>Deliberately not upstream's implementation, and it has to be.</b> Upstream drew this
+     * from one shared, mutable RNG ({@code connectionKeyGen.getRandomLong()}), so the value a lot
+     * received depended on how many lots had been created before it. Under Bukkit's single-threaded
+     * generation that was reproducible; under the modern pipeline platmaps are planned concurrently
+     * and in arbitrary order, so the same seed would produce a different world every run — and the
+     * RNG itself would be raced.
+     *
+     * <p>Only <em>equality</em> of these keys is ever tested ({@code ConnectedLot.isConnected}), so
+     * deriving them from the lot's position preserves the meaning exactly — every lot still starts
+     * with its own distinct key, and {@code makeConnected} still propagates a neighbour's — while
+     * making it order-independent and reproducible.
+     */
+    public long getConnectionKey(int chunkX, int chunkZ) {
+        return new Odds(worldSeed + ((long) chunkX << 32 ^ chunkZ)).getRandomLong();
+    }
+
+    /**
+     * Clears a region — used when a lot decides to demolish what is under it.
+     *
+     * <p>Stubbed: it belongs to the decoration pass, which runs on a live level and is not driven
+     * yet (P5). Only the destroyed-city styles call it.
+     */
+    public void destroyWithin(int x1, int x2, int y1, int y2, int z1, int z2) {
+    }
+
     /**
      * Diagnostic logging, used throughout the generator (mostly from commented-out tracing that the
      * port preserves). The original routed this through the Bukkit plugin's logger; here it goes to
@@ -198,6 +309,10 @@ public class CityWorldGenerator {
      */
     public void reportFormatted(String format, Object... objects) {
         LOGGER.debug(String.format(format, objects));
+    }
+
+    public void reportMessage(String message) {
+        LOGGER.debug(message);
     }
 
     /**

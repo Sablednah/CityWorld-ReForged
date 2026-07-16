@@ -1,49 +1,117 @@
 package me.daddychurchill.CityWorld.Context;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
+import me.daddychurchill.CityWorld.Plats.NatureLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
+import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.compat.Material;
 
 /**
- * Stub of the original {@code DataContext} (165 lines) — a context decides which lots populate a
- * {@code PlatMap}, i.e. whether a patch of world becomes downtown, suburb, farm or wilderness.
+ * A context decides which lots populate a {@link PlatMap} — i.e. whether a patch of world becomes
+ * downtown, suburb, farm or wilderness. The odds below are the knobs that give each kind of district
+ * its character.
  *
- * <p><b>Wave 1 placeholder.</b> {@code DataContext} is one node of the generator's mutually
- * recursive brain ({@code ShapeProvider ↔ PlatMap ↔ PlatLot ↔ Context ↔ Plugins}), so porting it
- * for real pulls in essentially the whole tree — the ~20 concrete contexts each reach for their own
- * families of lots. Only the members the block seam and the {@code ShapeProvider} touch are here.
- *
- * <p>The real class (lot odds, floor-height maths, schematic families, light materials chosen from
- * the world settings) arrives with the contexts in wave 2, at which point this file is replaced
- * wholesale rather than extended.
+ * <p>Ported for real in wave 2, with one half deferred: the <b>schematic</b> methods
+ * ({@code getSingleSchematic}, {@code populateSchematics}, {@code setSchematicFamily}) need
+ * {@code Clipboard}/{@code PasteProvider}, which are P6. The schematic family a context declares is
+ * still tracked so the P6 work has somewhere to land.
  */
 public abstract class DataContext {
 
-    /** Blocks per building floor. A real constant, not a stub — carried over verbatim. */
-    public static final int FloorHeight = 4;
+	// While these are initialized here, the real defaults live in CivilizedContext
+	// and UncivilizedContext
 
-    /**
-     * The torch material for this context. The original picks between {@code TORCH} and
-     * {@code REDSTONE_TORCH} based on the per-world {@code includeWorkingLights} setting; settings
-     * are P7, so the stub takes the working-lights branch.
-     */
-    public final Material torchMat = Material.TORCH;
+	protected double oddsOfIsolatedLots = Odds.oddsNeverGoingToHappen;
+	protected double oddsOfIsolatedConstructs = Odds.oddsNeverGoingToHappen;
+	protected double oddsOfParks = Odds.oddsNeverGoingToHappen; // parks show up 1/n of the time
 
-    /** Fills a platmap with the lots this context calls for. Wave 2. */
-    public abstract void populateMap(CityWorldGenerator generator, PlatMap platmap);
+	public double oddsOfIdenticalBuildingHeights = Odds.oddsNeverGoingToHappen; // similar height 1/n of the time
+	public double oddsOfSimilarBuildingHeights = Odds.oddsNeverGoingToHappen; // identical height 1/n of the time
+	public final double oddsOfRoundedBuilding = Odds.oddsEnormouslyLikely;// Odds.oddsLikely; // how naturally rounded are
+	// buildings that can be rounded
+	public double oddsOfSimilarBuildingRounding = Odds.oddsNeverGoingToHappen; // like rounding 1/n of the time
+	public double oddsOfStairWallMaterialIsWallMaterial = Odds.oddsNeverGoingToHappen; // stair walls are the same as
+	// walls 1/n of the time
+	public int rangeOfWallInset = 2; // 1 or 2 in... but not zero
+	public final double oddsOfForcedNarrowInteriorMode = Odds.oddsLikely;
+	public final double oddsOfDifferentInteriorModes = Odds.oddsUnlikely;
 
-    /** Second pass over a populated platmap, fixing up lots that don't agree with their neighbours. Wave 2. */
-    public abstract void validateMap(CityWorldGenerator generator, PlatMap platmap);
+	public double oddsOfOnlyUnfinishedBasements = Odds.oddsNeverGoingToHappen; // unfinished buildings only have
+	// basements 1/n of the time
+	public double oddsOfCranes = Odds.oddsVeryLikely; // plop a crane on top of the last horizontal girder 1/n of the
+	// time
 
-    /**
-     * Makes the "nothing here but nature" lot for a chunk.
-     *
-     * <p>Upstream this picks among the nature lots (mountains, gravel, bunkers, oil platforms, …);
-     * the wave-1 stub returns the plain base {@code PlatLot}, which is the natural, unplanned chunk
-     * the terrain path is built around.
-     */
-    public PlatLot createNaturalLot(CityWorldGenerator generator, PlatMap platmap, int x, int z) {
-        return new PlatLot(generator, platmap.originX + x, platmap.originZ + z);
-    }
+	public double oddsOfBuildingWallInset = Odds.oddsNeverGoingToHappen; // building walls inset as they go up 1/n of
+	// the time
+	public double oddsOfSimilarInsetBuildings = Odds.oddsNeverGoingToHappen; // the east/west inset is used for
+	// north/south inset 1/n of the time
+	public double oddsOfFlatWalledBuildings = Odds.oddsNeverGoingToHappen; // the ceilings are inset like the walls 1/n
+	// of the time
+
+	// TODO oddsOfMissingRoad is current not used... I need to fix this
+	// public double oddsOfMissingRoad = oddsNeverGoingToHappen; // roads are
+	// missing 1/n of the time
+	public double oddsOfRoundAbouts = Odds.oddsNeverGoingToHappen; // roundabouts are created 1/n of the time
+
+	public double oddsOfArt = Odds.oddsNeverGoingToHappen; // art is missing 1/n of the time
+	public double oddsOfNaturalArt = Odds.oddsNeverGoingToHappen; // sometimes nature is art 1/n of the time
+
+	public final Material lightMat;
+	public final Material torchMat;
+
+	public static final int FloorHeight = 4;
+	private static final int FudgeFloorsBelow = 2;
+	private static final int FudgeFloorsAbove = 0;// 3;
+	private static final int absoluteMinimumFloorsAbove = 5; // shortest tallest building
+	private static final int absoluteAbsoluteMaximumFloorsBelow = 3; // that is as many basements as I personally can
+	// tolerate
+	private static final int absoluteAbsoluteMaximumFloorsAbove = 20; // that is tall enough folks
+	public final int buildingMaximumY;
+	public int maximumFloorsAbove = 2;
+	public int maximumFloorsBelow = 2;
+	private final int absoluteMaximumFloorsBelow;
+	protected final int absoluteMaximumFloorsAbove;
+
+	protected double oddsOfUnfinishedBuildings = Odds.oddsNeverGoingToHappen;
+
+	protected DataContext(CityWorldGenerator generator) {
+
+		// lights?
+		if (generator.getSettings().includeWorkingLights) {
+			lightMat = Material.GLOWSTONE;
+			torchMat = Material.TORCH;
+		} else {
+			lightMat = Material.REDSTONE_LAMP;
+			torchMat = Material.REDSTONE_TORCH;
+		}
+
+		// where is the ground
+		// NOTE: generator.height is the *terrain* ceiling (256), not the world's (319) — see
+		// CityWorldGenerator.worldMinY. So buildings still cap where they did in 1.14; letting them
+		// use the extra headroom is a deliberate P4 follow-up, not an oversight.
+		buildingMaximumY = Math.min(192 + FudgeFloorsAbove * FloorHeight, generator.height);
+		absoluteMaximumFloorsBelow = Math.max(
+				Math.min(generator.streetLevel / FloorHeight - FudgeFloorsBelow, absoluteAbsoluteMaximumFloorsBelow),
+				0);
+		absoluteMaximumFloorsAbove = Math
+				.max(Math.min((buildingMaximumY - generator.streetLevel) / FloorHeight - FudgeFloorsAbove,
+						absoluteAbsoluteMaximumFloorsAbove), absoluteMinimumFloorsAbove);
+
+		// calculate the extremes for this plat
+		maximumFloorsAbove = Math.min(maximumFloorsAbove, absoluteMaximumFloorsAbove);
+		maximumFloorsBelow = Math.min(maximumFloorsBelow, absoluteMaximumFloorsBelow);
+	}
+
+	public abstract void populateMap(CityWorldGenerator generator, PlatMap platmap);
+
+	public abstract void validateMap(CityWorldGenerator generator, PlatMap platmap);
+
+	public PlatLot createNaturalLot(CityWorldGenerator generator, PlatMap platmap, int x, int z) {
+		return new NatureLot(platmap, platmap.originX + x, platmap.originZ + z);
+	}
+
+	public Material getMapRepresentation() {
+		return Material.AIR;
+	}
 }

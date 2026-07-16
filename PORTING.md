@@ -2,30 +2,53 @@
 
 ## ▶ Resume here (next task)
 
-**The P3 gate is met: CityWorld terrain generates in a real world.** `ShapeProvider_Normal` drives
-`CityWorldChunkGenerator.fillFromNoise`, the height modernization (P4's Y math) is done, and it is
-all verified against blocks read back out of a generated world — mountains, seas, beaches, caves,
-lava fields, and a vanilla-style deepslate underground from -64.
+**Terrain and roads both generate.** `ShapeProvider_Normal` shapes the world in `fillFromNoise`; the
+city planner (`PlatMap`/`PlatLot`/contexts) is ported and real; `RoadLot` draws paved roads with
+sidewalks, retaining walls and sewers. All verified against blocks read out of a generated world.
 
-**What's missing is the cities.** Every chunk comes out a natural lot, because the city-planning half
-of the brain (`PlatMap`, `PlatLot`, the contexts) is still stubbed. **That is wave 2, and it is the
-next task** — see "Wave 2" below.
+**Next: buildings** — the `UrbanContext` family. See "Wave 2b" below.
 
-### Wave 2: the city planning half
+### ⚠ The single most important thing to know: CityWorld builds in the DECORATION pass
 
-The terrain half is done and wired. What's missing is everything that decides a chunk is a *road* or
-a *building* rather than wilderness — currently stubbed at the cycle's thin edges:
+Not in the chunk generator. Upstream's `ChunkGenerator.generateChunkData` only ever shaped *terrain*;
+a separate `BlockPopulator` drew the cities afterwards. `RoadLot.generateActualChunk` is **literally
+empty**, commented "moved to other chunk generator" — all 1,600-odd lines of road live in
+`generateActualBlocks`, which needs a **live level** rather than a raw chunk.
 
-| stub | what the real one does |
+This was discovered the hard way: the planner reported 1,142 road lots while the world showed zero
+road blocks. Planning and drawing are different passes.
+
+So the two passes map onto modern worldgen as:
+
+| upstream | port | writes to |
+|---|---|---|
+| `generateChunkData` → `platmap.generateChunk` | `CityWorldChunkGenerator.fillFromNoise` | `InitialBlocks` (raw `ChunkAccess`) — terrain only |
+| `BlockPopulator` → `platmap.generateBlocks` | `CityWorldChunkGenerator.applyBiomeDecoration` | `RealBlocks` (live `WorldGenLevel`) — **the whole city** |
+
+`applyBiomeDecoration` is the modern `BlockPopulator`: it runs at the decoration stage and hands over
+a `WorldGenLevel`, which is exactly what `RealBlocks` was built to take. Not calling `super` there is
+also what suppresses vanilla's own decoration. **Neighbour access is the live constraint** (top risk
+#2): a `WorldGenRegion` only permits writes near the chunk being decorated, which is why
+`RealBlocks` refusing to look past its chunk edge matters more now than it did under Bukkit.
+
+### Wave 2b: buildings
+
+| to port | notes |
 |---|---|
-| `Support/PlatMap` (548) | the Width×Width lot grid; `populateRoads`/`validateRoads` |
-| `Plats/PlatLot` (612) + its subclasses (`RoadLot` 1677, `BuildingLot` 1220, `FinishedBuildingLot` 2348, …) | one chunk's "what goes here" |
-| `Context/DataContext` (165) + ~20 concrete contexts | which lots populate a platmap |
-| `ShapeProvider_Normal.getContext(PlatMap)` | the ten-way nature-percent ladder (thresholds recorded verbatim in its javadoc) |
-| `CityWorldSettings` (961) | only the shaper's flags exist, at upstream defaults |
+| `Context/UrbanContext` (167) | **deleted from the tree for now** — `RoadContext` temporarily extends `CivilizedContext` instead, purely to avoid dragging the building families in. Restore it as the real parent. |
+| `Plats/Urban/*` — `OfficeBuildingLot` (120), `StoreBuildingLot` (83), `LibraryBuildingLot` (80), `EmptyBuildingLot` (41), `UnfinishedBuildingLot` (277), `ParkLot` (698) | what `UrbanContext.populateMap` places |
+| `Plats/BuildingLot` (1220), `FinishedBuildingLot` (2348) | the machinery underneath them |
+| `ShapeProvider_Normal.getContext(PlatMap)` | still returns `natureContext`; the ten-way nature-percent ladder is recorded verbatim in its javadoc and wants restoring once the contexts exist |
+| `Rooms/*` (~60 files) | furnishes building interiors — P5-ish, after the shells |
 
-The natural first cut is `PlatMap` + `PlatLot` + `NatureContext` for real, since `getContext` already
-returns nature — that gets lots being *placed* without needing the urban families yet.
+Also outstanding from wave 2, smaller:
+- **Roundabouts** are forced off (`CityWorldSettings.includeRoundabouts = false`) because they need
+  `RoundaboutCenterLot` (356) or a P6 schematic. Upstream defaults them on.
+- **`NatureContext.populateMap` is simplified** — upstream surveys each chunk's `HeightInfo` and
+  seeds set-pieces by terrain type (bunkers, radio towers, oil platforms, flying saucers, hot air
+  balloons, mine entrances). `BunkerLot` alone is 1037 lines. Its survey code is the only consumer
+  of `HeightInfo`'s `HeightState`.
+- **`PlatMap.placeSpecificClip`** (schematic placement) is dropped — P6.
 
 ### ✔ Closed: the "sea level might be 64" scare was a stale comment (2026-07)
 
@@ -407,8 +430,25 @@ long-standing grey area in the modding ecosystem; many GPL mods ship regardless.
 ## Top risks
 
 1. **Threading/determinism** in the multithreaded chunk pipeline (mutable caches → concurrent or
-   per-chunk-recomputed). Biggest one.
-2. **Neighbor access** during decoration for connected roads/parks.
+   per-chunk-recomputed). Biggest one. **Hit in full at wave 2 (2026-07) and dealt with** — two
+   separate bugs, both invisible to the compiler:
+    - `getPlatMap` cached in a `Hashtable` with a **non-atomic get-then-put**, so concurrent chunks
+      would each build their own PlatMap for the same origin. Now a `ConcurrentHashMap` with
+      `computeIfAbsent`, which builds exactly once per key however many threads ask.
+    - Far worse: `ConnectedLot` drew its identity from `connectionKeyGen.getRandomLong()` — **one
+      shared, mutable RNG**, so a lot's key depended on how many lots had been built before it.
+      Single-threaded Bukkit made that reproducible; concurrent, arbitrarily-ordered planning would
+      have made **the same seed produce a different world every run**, and raced the RNG besides.
+      Now derived from the lot's position (`CityWorldGenerator.getConnectionKey(chunkX, chunkZ)`) —
+      only key *equality* is ever tested, so the meaning is identical and it is order-independent.
+      Verified: same seed + fresh generator ⇒ identical plan across a 25-platmap sample.
+
+   The pattern to watch for in the rest of the port: **anything whose value depends on call order**.
+   `CityWorldGenerator.getRelatedSeed()` is the remaining one — it advances a counter per call, so
+   the provider stack must keep being built in upstream's order, on one thread.
+2. **Neighbor access** during decoration for connected roads/parks. **Now live** — the city is drawn
+   in `applyBiomeDecoration` against a `WorldGenRegion`, which restricts how far a write may reach.
+   `RealBlocks` refusing to cross its chunk edge is what keeps this legal.
 3. **Performance** — the original disabled several styles for perf even on Bukkit.
 4. **Per-world config** doesn't match NeoForge's per-instance config model.
 

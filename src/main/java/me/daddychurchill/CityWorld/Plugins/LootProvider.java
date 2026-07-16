@@ -29,4 +29,22 @@ public abstract class LootProvider extends Provider {
             LootLocation chestLocation, Block block);
 
     public abstract void saveLoots();
+
+    /**
+     * Upstream picks between a PhatLoots integration, its own loot tables, and vanilla ones. Until
+     * P5 there is only the do-nothing implementation, so chests are placed but left empty.
+     */
+    public static LootProvider loadProvider(CityWorldGenerator generator) {
+        return new LootProvider() {
+
+            @Override
+            public void setLoot(CityWorldGenerator generator, Odds odds, String worldPrefix,
+                    LootLocation chestLocation, Block block) {
+            }
+
+            @Override
+            public void saveLoots() {
+            }
+        };
+    }
 }

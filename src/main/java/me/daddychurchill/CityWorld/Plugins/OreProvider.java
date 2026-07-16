@@ -1,6 +1,10 @@
 package me.daddychurchill.CityWorld.Plugins;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
+import me.daddychurchill.CityWorld.Plats.PlatLot;
+import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
+import me.daddychurchill.CityWorld.Support.Odds;
+import me.daddychurchill.CityWorld.Support.SupportBlocks;
 import me.daddychurchill.CityWorld.compat.Biome;
 import me.daddychurchill.CityWorld.compat.Material;
 import me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator;
@@ -134,5 +138,15 @@ public class OreProvider extends Provider {
      */
     public Biome remapBiome(Biome biome) {
         return biome;
+    }
+
+    /**
+     * Scatters ore veins and fluid pockets through a chunk's strata.
+     *
+     * <p>P5, with the rest of the ore-placement half — it runs in the decoration pass, which is not
+     * driven yet, and wants the deepslate ore variants that only exist from 1.17 on.
+     */
+    public void sprinkleOres(CityWorldGenerator generator, PlatLot lot, SupportBlocks chunk,
+            AbstractCachedYs blockYs, Odds odds) {
     }
 }

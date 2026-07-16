@@ -9,9 +9,10 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
-import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Plugins.OreProvider;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
+import me.daddychurchill.CityWorld.Support.PlatMap;
+import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.compat.BiomeGrid;
 import me.daddychurchill.CityWorld.compat.Material;
 
@@ -19,6 +20,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.server.level.WorldGenRegion;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.StructureManager;
@@ -154,14 +156,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         int chunkX = chunk.getPos().x;
         int chunkZ = chunk.getPos().z;
 
-        // One chunk's worth of "what goes here". Building it precalculates the column heights this
-        // chunk is shaped against. Wave 1 always yields a natural (unplanned) lot — the city
-        // planning that would make it a road or a building is wave 2.
-        PlatLot lot = new PlatLot(context, chunkX, chunkZ);
         InitialBlocks blocks = new InitialBlocks(context, chunk, chunkX, chunkZ);
 
-        context.shapeProvider.preGenerateChunk(context, lot, blocks, IGNORE_BIOMES, lot.blockYs);
-        context.shapeProvider.postGenerateChunk(context, lot, blocks, lot.blockYs);
+        // Fetch (or plan) the city block this chunk belongs to, then let it drive. The platmap
+        // routes to whichever lot owns this chunk, and the lot calls the shape provider itself —
+        // so terrain and city come from one path rather than two.
+        PlatMap platmap = context.getPlatMap(chunkX, chunkZ);
+        platmap.generateChunk(blocks, IGNORE_BIOMES);
 
         return CompletableFuture.completedFuture(chunk);
     }
@@ -196,10 +197,35 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 randomState, seed, this.biomeSource, Stream.<Holder<StructureSet>>empty());
     }
 
-    /** Suppress vanilla biome decoration (trees, flowers, ores, lakes) — CityWorld places its own. */
+    /**
+     * Draws the city.
+     *
+     * <p>This is the decoration pass, and it is where CityWorld actually builds — not
+     * {@link #fillFromNoise}. The split is upstream's own: its {@code ChunkGenerator} only ever
+     * shaped terrain, and a separate {@code BlockPopulator} laid down the roads, buildings, sewers
+     * and bridges afterwards. {@code RoadLot.generateActualChunk} is literally empty, with the
+     * comment "moved to other chunk generator"; all 1,600-odd lines of road live in
+     * {@code generateActualBlocks}, which needs a <em>live</em> level rather than a raw chunk.
+     * {@code applyBiomeDecoration} is the modern equivalent: it runs at the decoration stage and
+     * hands us a {@link WorldGenLevel}, which is exactly what {@link RealBlocks} was built to take.
+     *
+     * <p>Vanilla's own biome decoration (trees, flowers, ores, lakes) is suppressed by not calling
+     * {@code super} — CityWorld places its own.
+     *
+     * <p>Neighbour access is the constraint to respect here (PORTING.md, top risk #2): a
+     * {@code WorldGenRegion} only permits writes within a small radius of the chunk being decorated.
+     * {@code RealBlocks} already refuses to look past its own chunk edge, which is what makes this
+     * legal — and is why the {@code RealBlocks}/{@code RelativeBlocks} split matters more now than
+     * it did under Bukkit.
+     */
     @Override
     public void applyBiomeDecoration(WorldGenLevel level, ChunkAccess chunk,
             StructureManager structureManager) {
+        CityWorldGenerator context = context(level);
+        ChunkPos pos = chunk.getPos();
+
+        PlatMap platmap = context.getPlatMap(pos.x, pos.z);
+        platmap.generateBlocks(new RealBlocks(context, level, pos));
     }
 
     @Override

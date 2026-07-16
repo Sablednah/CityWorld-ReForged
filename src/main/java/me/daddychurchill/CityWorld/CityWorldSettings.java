@@ -1,5 +1,7 @@
 package me.daddychurchill.CityWorld;
 
+import me.daddychurchill.CityWorld.Support.Odds;
+
 /**
  * Stub of the original {@code CityWorldSettings} (961 lines).
  *
@@ -24,7 +26,31 @@ public class CityWorldSettings {
     public boolean includeSeas = true;
     public boolean includeMountains = true;
     public boolean includeAbovegroundFluids = true;
+    public boolean includeUndergroundFluids = true;
     public boolean includeDecayedNature = false;
+    public boolean includeMines = true;
+    public boolean includeBones = true;
+    public boolean includeOres = true;
+    public boolean includeWorkingLights = true;
+    public boolean treasuresInMines = true;
+    public boolean spawnersInMines = true;
+    public double oddsOfTreasureInMines = Odds.oddsLikely;
+    public double oddsOfAlcoveInMines = Odds.oddsLikely;
+    public boolean includeSewers = true;
+    public boolean treasuresInSewers = true;
+    public boolean spawnersInSewers = true;
+    public double oddsOfTreasureInSewers = Odds.oddsLikely;
+    public boolean includeNamedRoads = true;
+    public boolean includeDecayedRoads = false;
+
+    /** How rural a world skews; folded into {@code PlatMap.getNaturePercent}. */
+    public double ruralnessLevel = 0.0;
+
+    /**
+     * Roundabouts need {@code RoundaboutCenterLot} (or a P6 schematic), neither of which is ported.
+     * Forced off until then — upstream defaults this on, so restore it with wave 2b.
+     */
+    public boolean includeRoundabouts = false;
 
     /**
      * Whether a chunk is inside the configured city radius.
@@ -34,6 +60,11 @@ public class CityWorldSettings {
      * (centre point, {@code buildOutsideRadius}) lands with the rest of the settings at P7.
      */
     public boolean inCityRange(int chunkX, int chunkZ) {
+        return true;
+    }
+
+    /** As {@link #inCityRange}, for the road network's own radius. Gated off upstream by default. */
+    public boolean inRoadRange(int chunkX, int chunkZ) {
         return true;
     }
 }
