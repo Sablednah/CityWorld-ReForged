@@ -27,24 +27,40 @@ a *building* rather than wilderness — currently stubbed at the cycle's thin ed
 The natural first cut is `PlatMap` + `PlatLot` + `NatureContext` for real, since `getContext` already
 returns nature — that gets lots being *placed* without needing the urban families yet.
 
-### ⚠ Open question: is upstream's sea level 63 or 64? (found 2026-07, unresolved)
+### ✔ Closed: the "sea level might be 64" scare was a stale comment (2026-07)
 
-We pass **63**. Upstream's own commented-out reference line in `initializeWorldInfo` reads:
+An earlier pass flagged that upstream's commented-out reference line in `initializeWorldInfo` —
 
 > `seabed = 35 deepsea = 50 sea = 64 sidewalk = 65 tree = 110 evergreen = 156 snow = 202 top = 249`
 
-Recomputing that line both ways: `seabed = 35` and `top = 249` come out right **either way** (the
-`landRange` formula absorbs the difference), but `sea`/`sidewalk`/`tree`/`evergreen`/`snow` only
-reproduce **exactly** at `seaLevel = 64` — at 63 the port gives `63/64/109/155/201`, uniformly one
-low. (`deepsea` matches neither, so that line is at least partly stale.) Bukkit's `World.getSeaLevel()`
-javadoc is no help — it claims "often half of getMaxHeight()", i.e. 128, which is plainly not what
-the comment shows. CityWorld predates 1.14 by years, so the comment may record an older Bukkit where
-sea level was 64.
+— only reproduces at `seaLevel = 64`, while we pass 63, and worried this undercut terrain parity.
+**It doesn't. That comment cannot be evidence about 1.14, because it references `sidewalkLevel`,
+which is not a field on `CityWorldGenerator` and has not been one for years** — in the 1.14 source
+it is a *local* in `PlatLot.getSidewalkLevel()` (`streetLevel + 1` inside a city). The commented line
+would not even compile against the code it sits in. It is a fossil from an older CityWorld with
+different formulas, which is also why its `deepsea = 50` matches no version of the maths. Two of its
+numbers agreeing with a `seaLevel = 64` reading is a property of that dead version, not of 1.14.
 
-**Why it matters:** the whole point of vendoring Bukkit's noise was to reproduce upstream's terrain
-*exactly*; a one-block datum shift quietly undercuts that. **Why it isn't urgent:** it shifts every
-level uniformly by one, and P4 re-does this Y mapping anyway. Settle it against a real 1.14
-CraftBukkit `getSeaLevel()` before declaring terrain parity at P8.
+**So 63 is right**, and it is what both 1.14 Bukkit and modern Minecraft use. The lesson is narrower
+and worth keeping: *don't infer behaviour from upstream's commented-out code* — check whether it
+still type-checks against the tree it lives in first. Terrain parity was independently confirmed by
+eye anyway (above).
+
+### Sea level: what the number means to vanilla vs to CityWorld
+
+Related, and a real difference that has to be translated rather than "fixed":
+
+- **CityWorld** fills water *through* its sea level, inclusive (`for (y = subsurfaceY + 1; y <= coverY; y++)`,
+  `coverY = seaLevel`). With `seaLevel = 63` the topmost water block is **63** and the surface plane
+  is **64.0**. Its beaches sit flush with that waterline (sand at 63, dry) — which is exactly what
+  makes them read as beaches, so this is intentional and must not be "corrected".
+- **Vanilla** means the opposite by the same word: `Aquifer.FluidStatus.at(y)` gives fluid only where
+  `y < fluidLevel`, so sea level is *the first Y that is not water* — the top water block is
+  `seaLevel - 1`.
+
+The two conventions differ by one, so `CityWorldChunkGenerator.getSeaLevel()` returns
+`UPSTREAM_SEA_LEVEL + 1` (64). Reporting 63 told vanilla our oceans were a block deeper than they
+are. Found by standing on a beach and reading F3: player at Y=64, water at 63.
 
 ### Verified by reading blocks back out of a generated world (2026-07)
 

@@ -211,9 +211,22 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         return 384;
     }
 
+    /**
+     * The first Y that is <em>not</em> water — which is what vanilla means by "sea level"
+     * ({@code Aquifer.FluidStatus.at} gives fluid only where {@code y < fluidLevel}).
+     *
+     * <p><b>That is one above {@link #UPSTREAM_SEA_LEVEL}, and deliberately so.</b> CityWorld fills
+     * water <em>through</em> its sea level inclusive ({@code for (y = subsurfaceY + 1; y <= coverY; y++)}
+     * with {@code coverY = seaLevel}), so with a sea level of 63 the topmost water block is at 63 and
+     * the surface plane is 64.0 — a block higher than vanilla would put it for the same number. Its
+     * beaches sit flush with that waterline (sand at 63, dry), which is what makes them read as
+     * beaches. So the terrain is right and it is upstream's; it is only the number reported to
+     * vanilla that has to be translated, or vanilla thinks our oceans are a block deeper than they
+     * are.
+     */
     @Override
     public int getSeaLevel() {
-        return UPSTREAM_SEA_LEVEL;
+        return UPSTREAM_SEA_LEVEL + 1;
     }
 
     @Override
