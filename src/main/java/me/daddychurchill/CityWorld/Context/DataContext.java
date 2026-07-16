@@ -17,6 +17,9 @@ import me.daddychurchill.CityWorld.compat.Material;
  */
 public abstract class DataContext {
 
+    /** Blocks per building floor. A real constant, not a stub — carried over verbatim. */
+    public static final int FloorHeight = 4;
+
     /**
      * The torch material for this context. The original picks between {@code TORCH} and
      * {@code REDSTONE_TORCH} based on the per-world {@code includeWorkingLights} setting; settings

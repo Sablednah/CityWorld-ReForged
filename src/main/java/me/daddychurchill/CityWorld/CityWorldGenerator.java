@@ -29,6 +29,15 @@ public class CityWorldGenerator {
     public int height = 384;
 
     /**
+     * Y of the streets — the datum the whole city is laid out around (buildings measure their
+     * floors above and basements below it). The real value comes from
+     * {@code shapeProvider.getStreetLevel()} once the ShapeProvider is ported, which computes it as
+     * {@code seaLevel + 1}; with Bukkit's sea level of 63 that is the 64 stubbed here. Phase 4
+     * revisits it along with the rest of the Y math for -64..319.
+     */
+    public int streetLevel = 64;
+
+    /**
      * Whether the "atmosphere" (sky column) should be actively cleared/filled during generation.
      * Stubbed {@code false} for Phase 1 (only the alien/void styles set this); the real value comes
      * from the ShapeProvider once ported.

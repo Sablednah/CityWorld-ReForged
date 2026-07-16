@@ -2,30 +2,39 @@
 
 ## ▶ Resume here (next task)
 
-**Port the four `SupportBlocks` subclasses**: `RealBlocks` (41), `RelativeBlocks` (34),
-`WorldBlocks` (202), `CornerBlocks` (1222). `SupportBlocks` itself is **done and runtime-verified**
-(see below), so this is the last thing between us and `ShapeProvider` — whose signatures take
-`RealBlocks`, which is what gates the whole generation brain.
+**The block seam (P1) is done and runtime-verified — start the brain: `Plugins/ShapeProvider`.**
+Its signatures take `RealBlocks`, which is why the seam had to come first; that dependency is now
+satisfied. Nothing is left blocking it.
 
-What you need to know:
+Expect this to be the hard part, and **not** an incremental one — see "There is no terrain-only
+slice" below. `ShapeProvider` sits in the mutually recursive cycle (`ShapeProvider ↔ PlatMap ↔
+PlatLot ↔ Context ↔ Plugins ↔ Rooms ↔ Clipboard`), so the plan of record is a scripted **mass
+transform in waves plus shims**, the way `AbstractBlocks`/`CornerBlocks` were done — not
+file-by-file.
 
-1. **Each subclass exists to define one method**: `getActualBlock(int x, int y, int z)`, mapping its
-   own coordinate space onto a real position. Everything else is inherited. They also owe
-   `isSurroundedByEmpty` and `isByWater`.
-2. **The `LevelAccessor` lives on `SupportBlocks`** (field `world`, set via the constructor) — not on
-   `AbstractBlocks`, which stays world-free for the generation side. `RelativeBlocks`/`WorldBlocks`
-   called `world.getBlockAt(...)`; that becomes `new Block(world, x, y, z)`.
-3. **Don't hand-roll property sets** — `SupportBlocks` already has the whole
+Where to start:
+
+1. **Read the two open design questions first**, both of which `ShapeProvider` walks straight into:
+   - **Biomes** (`ChunkGenerator.BiomeGrid` + `block.Biome`, ~56 uses) — CityWorld writes biomes per
+     column; modern gen assigns them via a `BiomeSource`. Architectural, still undecided.
+   - **Noise** (`util.noise.*`, ~25 uses) — decided: **vendor** Bukkit's `SimplexNoiseGenerator`/
+     `SimplexOctaveGenerator` (GPL-3 lets us; see the licence section) to keep CityWorld's exact
+     terrain shape. `NoiseGenerator.floor` is just `Mth.floor`.
+2. **Grow the stubs as you go**: `CityWorldGenerator` is still a skeleton (it has `height`,
+   `streetLevel`, `reportFormatted`, `clearAtmosphere`, `findAtmosphereMaterialAt`). The real
+   `streetLevel` comes from `shapeProvider.getStreetLevel()` (= `seaLevel + 1`). `DataContext` is a
+   stub with only `torchMat` + `FloorHeight`; `LootProvider`/`Provider` are signature-only.
+3. **Everything the block layer needs is ready** — don't rebuild it. `SupportBlocks` owns the
    `BlockData → BlockState` translation (`with`, `withDirection`, `withHalf`, `withRailShape`,
-   `withScaledLevel`, `stateOf`), and `compat/Material` has `withFacing`/`withFaces`/`asSlab`/
-   `asDoorHalf`/`hasFaces`. Reuse them.
-4. Still to write when something needs them: `Sign` is handled (see `setSignText`), `Location` is
-   done; no `block.data.*` shims are needed any more — they all became vanilla property enums.
+   `withScaledLevel`, `stateOf`); `compat/Material` has `withFacing`/`withFaces`/`asSlab`/
+   `asDoorHalf`/`hasFaces`/`isOccluding`. No `block.data.*` shims are needed — they all map onto
+   vanilla property enums.
+4. Then P3 can replace the placeholder fill in `CityWorldChunkGenerator` with the real brain.
 
-Verify with `./gradlew compileJava`, then commit on `neoforge-port`. Once a concrete subclass
-exists, prefer proving behaviour the way `SupportBlocks` was proven: a temporary `SupportBlocks`
-subclass + a `ServerStartedEvent` listener that places blocks and logs the resulting `BlockState`s.
-It caught two real bugs that compiling could never have.
+**Verify behaviour, don't just compile.** Both waves of this seam were proven with a temporary
+subclass + a `ServerStartedEvent` listener that places blocks and logs the resulting `BlockState`s
+(Gradle can't pipe stdin to the server console). That caught two real bugs and a coordinate check
+that compiling could never have. Delete the probe before committing.
 
 ---
 
@@ -113,9 +122,12 @@ Coupling inventory (from the 1.14 source):
 
 - [x] **P0 — Scaffold.** ModDevGradle project at repo root, `@Mod` entrypoint (`CityWorldMod`),
       builds empty (`cityworld-<version>.jar`), `runClient`/`runServer` available. **Done.**
-- [ ] **P1 — Block seam.** Reimplement `AbstractBlocks`/`InitialBlocks`/`RealBlocks`/`SupportBlocks`
-      on `ChunkAccess`/`BlockState`; `BlockFace` → `Direction`; oriented placement (stairs, doors,
-      facing, waterlogging).
+- [x] **P1 — Block seam. Done** (bar the mass import rewrite, which happens per-file as the brain is
+      ported). `AbstractBlocks`/`InitialBlocks` (generation side, on `ChunkAccess`) and
+      `SupportBlocks`/`RealBlocks`/`RelativeBlocks`/`WorldBlocks` (decoration side, on
+      `LevelAccessor`) all reimplemented on `BlockState`; `BlockFace` → `Direction`; oriented
+      placement (stairs, doors, facing, waterlogging) verified in a live world. **This unblocks
+      `ShapeProvider`, and with it the whole generation brain.**
     - [x] Compat foundation compiling: `compat/BlockFace` (enum mirroring Bukkit values +
           `toDirection`/`getOppositeFace`) and `compat/Material` (interned `BlockState` wrapper +
           orientation helpers `withFacing`/`withFaces`/`asSlab`/`asDoorHalf` + id resolver +
@@ -163,7 +175,22 @@ Coupling inventory (from the 1.14 source):
               a pure leaf — vanilla has its own `DyeColor`, so it was a two-import swap); stubbed
               `Context/DataContext` (`torchMat`), `Plugins/LootProvider`/`LootLocation` + `Provider`;
               added `CityWorldGenerator.reportFormatted`. `NoiseGenerator.floor` → `Mth.floor`.
-        - [ ] `RealBlocks` (41), `RelativeBlocks` (34), `WorldBlocks` (202), `CornerBlocks` (1222).
+        - [x] **`RealBlocks` (41), `RelativeBlocks` (34), `WorldBlocks` (202) — done.** Each exists
+              to define `getActualBlock`; all three verified in a live world (origin arithmetic incl.
+              negative chunk coords, edge-crossing, writes landing at the right position).
+              The original took `world` from `generator.getWorld()`; the port passes a
+              `LevelAccessor` in at construction instead, because a modern `ChunkGenerator` is shared
+              and immutable and cannot hold a per-world reference (top risk #1). So `RealBlocks` now
+              takes `(generator, LevelAccessor, ChunkPos)` in place of a Bukkit `Chunk`, and
+              `WorldBlocks` takes the level too; `RelativeBlocks` borrows both origin and level from
+              the section it is relative to, so its signature is unchanged.
+              The `RealBlocks`/`RelativeBlocks` split matters more now than it did under Bukkit:
+              `RealBlocks` refuses to look past the chunk edge (returns false), `RelativeBlocks`
+              crosses freely — and the modern pipeline restricts neighbour access during generation.
+        - [x] **`CornerBlocks` (1222) — done**, two import swaps. Worth correcting the record: it is
+              **not** a `SupportBlocks` subclass, it is a standalone corner-style table that takes an
+              `AbstractBlocks` as a parameter and only calls `setBlock`/`setBlocks`/`setDoor` on it.
+              A pure leaf.
     - [ ] Mass import rewrite across ported files: `org.bukkit.Material` →
           `me.daddychurchill.CityWorld.compat.Material`, `org.bukkit.block.BlockFace` → `compat.BlockFace`
           (done per-file as each is ported).
