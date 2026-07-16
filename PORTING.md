@@ -411,6 +411,14 @@ port is a **derivative work**, so it **must remain GPL-3** — GPL-3 → MIT is 
 An earlier `mod_license=MIT` was an unverified assumption copied from the MobHealth template; it has
 been corrected to `GPL-3.0-only`, and a verbatim GPL-3 `LICENSE` now lives at the repo root.
 
+**The original author knows about this port and has approved it** (2026-07). GPL-3 already permitted
+the fork, so his blessing was not required — it was asked for anyway, which seems the right way to
+treat someone whose project this was. Worth recording because it is otherwise undocumented, and
+because it means open questions about upstream's *intent* — as opposed to its behaviour, which the
+code answers — now have somewhere to go. (Fittingly, his own plea is still in the tree: the log line
+in `ShapeProvider_Normal.getContext(int, int)` asking whoever sees it to email him. It is preserved
+verbatim.)
+
 **Consequence — the noise question resolves the good way:** since we are GPL-3 and Bukkit's API is
 GPL-3, we **may vendor** Bukkit's `SimplexNoiseGenerator`/`SimplexOctaveGenerator` (with notices and
 attribution intact) and so **preserve CityWorld's exact terrain shape**, rather than approximating
