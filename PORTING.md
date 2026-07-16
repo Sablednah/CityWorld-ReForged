@@ -98,9 +98,24 @@ Coupling inventory (from the 1.14 source):
           all `final` convenience methods intact), `InitialBlocks` (on `ChunkAccess`/`ProtoChunk`,
           world-coord mapping + heightmap-auto-update), `Factories/MaterialFactory`, and a minimal
           `CityWorldGenerator` skeleton exposing only what the block layer needs (grows in P3).
-    - [ ] **Decoration-side seam** (reads the live world — needed by P5, not by the P3 terrain gate):
-          `SupportBlocks` (971 lines), `RealBlocks`, `RelativeBlocks`, `WorldBlocks`, `CornerBlocks`
-          (1222 lines). These bind to `WorldGenLevel`/`LevelAccessor` rather than `ChunkAccess`.
+    - [ ] **Decoration-side seam** — **hard prerequisite for `ShapeProvider`** (its signatures take
+          `RealBlocks`), not a P5 concern as first assumed. Binds to `LevelAccessor` (live world)
+          rather than `ChunkAccess`.
+        - [x] `compat/Block` — shim for Bukkit's live positioned block reference, pairing a
+              `LevelAccessor` + `BlockPos`. This is the single primitive the whole decoration layer
+              rests on (`SupportBlocks.getActualBlock(x,y,z)` is its *only* abstract method).
+              Key mappings: Bukkit `BlockData` ≡ modern `BlockState`; "apply physics" ≡ update
+              flags (`UPDATE_ALL` vs `UPDATE_CLIENTS`).
+        - [ ] `SupportBlocks` (971) — mostly type swaps, but the `BlockData` manipulation
+              (bed/door/stairs/rail/snow/leaves/chest) becomes `BlockState` property sets, as in the
+              `Material` helpers. Needs a `LevelAccessor` field (note `RelativeBlocks` used the old
+              Bukkit `world` field, which was dropped from `AbstractBlocks`).
+        - [ ] `RealBlocks` (41), `RelativeBlocks` (34), `WorldBlocks` (202), `CornerBlocks` (1222).
+        - [ ] Small shims still needed: `block.data.*` types (`Bed`/`Part`, `Door`/`Hinge`,
+              `Stairs.Shape`, `Rail.Shape`, `Snow`, `Leaves`, `Chest`), `Sign`, `Location`.
+        - [ ] Thin cycle edges to stub (verified small): `DataContext` (1 method signature —
+              `drawCrane`), `LootProvider`/`LootLocation` (3 signatures), `generator.reportFormatted`.
+              `NoiseGenerator.floor` → vanilla `Mth.floor` (no vendoring needed for that one).
     - [ ] Mass import rewrite across ported files: `org.bukkit.Material` →
           `me.daddychurchill.CityWorld.compat.Material`, `org.bukkit.block.BlockFace` → `compat.BlockFace`
           (done per-file as each is ported).
