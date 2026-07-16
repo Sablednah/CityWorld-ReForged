@@ -1,5 +1,6 @@
 package me.daddychurchill.CityWorld;
 
+import me.daddychurchill.CityWorld.Plugins.TreeProvider;
 import me.daddychurchill.CityWorld.Support.Odds;
 
 /**
@@ -55,6 +56,12 @@ public class CityWorldSettings {
     public boolean includeDecayedBuildings = false;
     public boolean includeBuildingInteriors = true;
     public boolean includeHouses = true;
+
+    /** Which family of trees a world grows. Only NORMAL is ported; SPOOKY/CRYSTAL are P8 styles. */
+    public TreeProvider.TreeStyle treeStyle = TreeProvider.TreeStyle.NORMAL;
+    public double spawnTrees = Odds.oddsLikely;
+    /** Set by the alien/nether styles; makes ground cover sparser. */
+    public boolean darkEnvironment = false;
     public boolean includeBasements = true;
     public boolean includeCisterns = true;
     public boolean treasuresInBuildings = true;

@@ -3,31 +3,96 @@ package me.daddychurchill.CityWorld.Plugins;
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
+import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.SupportBlocks;
 
-/**
- * Stub of the original {@code SurfaceProvider} (106 lines + 7 variants) — grass, snow, flowers and
- * trees on top of the shaped terrain.
- *
- * <p><b>Wave 2a placeholder.</b> This runs in the <em>decoration</em> pass ({@code generateBlocks},
- * on a live {@code LevelAccessor}), which the port does not drive yet — only the terrain pass
- * ({@code generateChunk}) is wired. So it would be dead code today. It lands with P5 alongside
- * {@code TreeProvider} (631) and {@code CoverProvider} (903), which are what it actually delegates
- * to.
- */
-public class SurfaceProvider extends Provider {
+public abstract class SurfaceProvider extends Provider {
 
-    public static SurfaceProvider loadProvider(CityWorldGenerator generator) {
-        return new SurfaceProvider();
-    }
+	SurfaceProvider(Odds odds) {
+		super();
+		this.odds = odds;
+	}
 
-    /** No-op until the decoration pass is wired (P5). Whole-chunk variant. */
-    public void generateSurface(CityWorldGenerator generator, PlatLot lot, SupportBlocks chunk,
-            AbstractCachedYs blockYs, int addTo, boolean includeTrees) {
-    }
+	final static double treeOdds = Odds.oddsVeryUnlikely;
+	final static double treeTallOdds = Odds.oddsLikely;
+	final static double treeAltOdds = Odds.oddsLikely;
+	final static double treeAltTallOdds = Odds.oddsVeryUnlikely;
+	final static double foliageOdds = Odds.oddsSomewhatLikely;
+	final static double cactusOdds = Odds.oddsUnlikely;
+	final static double reedOdds = Odds.oddsPrettyUnlikely;
+	protected final static double flowerRedOdds = Odds.oddsVeryUnlikely;
+	protected final static double flowerYellowOdds = Odds.oddsExtremelyUnlikely;
+	final static double flowerFernOdds = Odds.oddsSomewhatLikely;
 
-    /** No-op until the decoration pass is wired (P5). Single-column variant. */
-    public void generateSurface(CityWorldGenerator generator, PlatLot lot, SupportBlocks chunk, int x, int y, int z,
-            boolean includeTrees) {
-    }
+	final static double vagrantOdds = Odds.oddsTremendouslyUnlikely;
+
+	final Odds odds;
+
+	protected abstract void generateSurfacePoint(CityWorldGenerator generator, PlatLot lot, SupportBlocks chunk,
+			CoverProvider foliage, int x, double perciseY, int z, boolean includeTrees);
+
+	public void generateSurface(CityWorldGenerator generator, PlatLot lot, SupportBlocks chunk,
+			AbstractCachedYs blockYs, boolean includeTrees) {
+		generateSurface(generator, lot, chunk, blockYs, 0, includeTrees);
+	}
+
+	boolean inTreeRange(int x, int z) {
+		return x > 2 && x < 15 && z > 2 && z < 15;// && x % 2 == 0 && z % 2 != 0;
+	}
+
+	boolean inBigTreeRange(int x, int z) {
+		return x > 4 && x < 11 && z > 4 && z < 11 && x % 2 == 0 && z % 2 != 0;
+	}
+
+	public void generateSurface(CityWorldGenerator generator, PlatLot lot, SupportBlocks chunk, int x, int y, int z,
+			boolean includeTrees) {
+		CoverProvider foliage = generator.coverProvider;
+
+		generateSurfacePoint(generator, lot, chunk, foliage, x, y, z, includeTrees);
+	}
+
+	public void generateSurface(CityWorldGenerator generator, PlatLot lot, SupportBlocks chunk,
+			AbstractCachedYs blockYs, int addTo, boolean includeTrees) {
+		CoverProvider foliage = generator.coverProvider;
+
+		for (int x = 0; x < chunk.width; x++) {
+			for (int z = 0; z < chunk.width; z++) {
+				int topY = lot.getTopY(generator, blockYs, x, z);
+				double y = blockYs.getPerciseY(x, z) + addTo;
+				if (topY <= y) {
+					generateSurfacePoint(generator, lot, chunk, foliage, x, y, z, includeTrees);
+				}
+			}
+		}
+	}
+
+	// Based on work contributed by drew-bahrue
+	// (https://github.com/echurchill/CityWorld/pull/2)
+	public static SurfaceProvider loadProvider(CityWorldGenerator generator, Odds odds) {
+
+		SurfaceProvider provider = null;
+
+		switch (generator.worldStyle) {
+
+		// As with ShapeProvider.loadProvider: the style-specific variants (_Floating, _Flooded,
+		// _SandDunes, _SnowDunes, _Astral, _Maze) land with their world styles at P8. Until then
+		// every style surfaces as NORMAL rather than failing.
+		case FLOATING:
+		case FLOODED:
+		case SANDDUNES:
+		case SNOWDUNES:
+		case ASTRAL:
+		case MAZE:
+		case NATURE:
+		case METRO:
+		case SPARSE:
+		case DESTROYED:
+		case NORMAL:
+			provider = new SurfaceProvider_Normal(odds);
+			break;
+		}
+
+		return provider;
+	}
+
 }

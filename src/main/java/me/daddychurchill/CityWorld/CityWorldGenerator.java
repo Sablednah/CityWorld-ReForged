@@ -18,6 +18,7 @@ import me.daddychurchill.CityWorld.Plugins.StructureInAirProvider;
 import me.daddychurchill.CityWorld.Plugins.StructureOnGroundProvider;
 import me.daddychurchill.CityWorld.Plugins.SurfaceProvider;
 import me.daddychurchill.CityWorld.Plugins.ThingProvider;
+import me.daddychurchill.CityWorld.Plugins.TreeProvider;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.compat.Material;
@@ -105,6 +106,7 @@ public class CityWorldGenerator {
     public RoomProvider roomProvider;
     public StructureInAirProvider structureInAirProvider;
     public StructureOnGroundProvider structureOnGroundProvider;
+    public TreeProvider treeProvider;
 
     private final CityWorldSettings settings;
 
@@ -157,7 +159,8 @@ public class CityWorldGenerator {
         shapeProvider = ShapeProvider.loadProvider(this, new Odds(getRelatedSeed()));
         oreProvider = OreProvider.loadProvider(this);
         materialProvider = new MaterialProvider(this);
-        surfaceProvider = SurfaceProvider.loadProvider(this);
+        treeProvider = TreeProvider.loadProvider(this, new Odds(getRelatedSeed()));
+        surfaceProvider = SurfaceProvider.loadProvider(this, new Odds(getRelatedSeed()));
         odonymProvider = OdonymProvider.loadProvider(this, new Odds(getRelatedSeed()));
         spawnProvider = new SpawnProvider(this);
         thingProvider = ThingProvider.loadProvider(this);

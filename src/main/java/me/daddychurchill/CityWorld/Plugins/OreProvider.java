@@ -140,6 +140,17 @@ public class OreProvider extends Provider {
         return biome;
     }
 
+    public void dropSnow(CityWorldGenerator generator, SupportBlocks chunk, int x, int y, int z) {
+        dropSnow(generator, chunk, x, y, z, 0);
+    }
+
+    /** Lays a snow layer on whatever it lands on. Ported verbatim — it is plain block work. */
+    public void dropSnow(CityWorldGenerator generator, SupportBlocks chunk, int x, int y, int z, double level) {
+        y = chunk.findLastEmptyBelow(x, y + 1, z, y - 6);
+        if (!chunk.isOfTypes(x, y - 1, z, Material.AIR, Material.SNOW))
+            chunk.setBlock(x, y, z, Material.SNOW, level);
+    }
+
     /**
      * Scatters ore veins and fluid pockets through a chunk's strata.
      *
