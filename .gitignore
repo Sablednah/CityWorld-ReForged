@@ -46,3 +46,6 @@ run/
 **/src/generated/**/.cache/
 repo/
 !**/src/**/repo/
+
+### Built jars stashed for manual testing (not source)
+/builds/
