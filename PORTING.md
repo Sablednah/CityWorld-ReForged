@@ -69,6 +69,20 @@ what exposed it: 625 chunks, `NATURE=0`.
 Worth generalising: **stubs are behaviour, not absence.** Before stubbing something out, check what
 the callers *read back* from having called it — here, `naturalPlats`, three lines away.
 
+### ⚠ Lesson: probe the whole world before shipping, not one feature at a time
+
+A null sign line crashed **chunk generation** — `Component.literal(null)` throws where Bukkit's
+`setLine` blanked the line, and `OdonymProvider`'s fossil names fill only line 1 of a `String[4]`.
+The chunk failed outright, leaving holes wherever a museum tried to label a fossil.
+
+It was latent in the block seam from the start and only became reachable when `MuseumBuildingLot` —
+the only fossil sign in the game — landed. **Every probe in that session targeted one feature at a
+time, and none of them placed a museum.** It was caught by one last end-to-end pass over the exact
+jar about to be handed over, and that is the only reason it didn't ship.
+
+So: a per-feature probe proves a feature. It does not prove a world. Do a whole-world pass over the
+artefact you are actually shipping — the interesting bugs live where two features meet.
+
 ### Remaining families
 
 The context ladder in `ShapeProvider_Normal.getContext(PlatMap)` is real and eight of its ten arms
