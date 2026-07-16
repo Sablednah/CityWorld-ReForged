@@ -96,7 +96,20 @@ public abstract class ShapeProvider extends Provider {
 		}
 	}
 
-	boolean contextInitialized = false;
+	/**
+	 * Guards the one-time context allocation.
+	 *
+	 * <p>Volatile, and {@code allocateContexts} is synchronized, because {@code populateLots} runs
+	 * inside the platmap cache's {@code computeIfAbsent} — and different platmaps hash to different
+	 * bins, so they plan on several threads at once. Unsynchronized, a thread could see this flag
+	 * set before seeing the context fields it guards, and read a null context.
+	 *
+	 * <p>It cannot simply be allocated eagerly with the rest of the provider stack: the contexts'
+	 * constructors read {@code generator.height} and {@code generator.streetLevel}, which are derived
+	 * from this provider and so do not exist until after it is built. That is why upstream defers it
+	 * to first use, and why the deferral has to be made thread-safe rather than removed.
+	 */
+	volatile boolean contextInitialized = false;
 	DataContext natureContext;
 	RoadContext roadContext;
 

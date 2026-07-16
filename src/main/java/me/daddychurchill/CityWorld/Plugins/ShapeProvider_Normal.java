@@ -139,8 +139,9 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		// nothing to do in this one
 	}
 
+	/** Synchronized: several threads plan platmaps at once — see {@code contextInitialized}. */
 	@Override
-	protected void allocateContexts(CityWorldGenerator generator) {
+	protected synchronized void allocateContexts(CityWorldGenerator generator) {
 		if (!contextInitialized) {
 			natureContext = new NatureContext(generator);
 			roadContext = new RoadContext(generator);

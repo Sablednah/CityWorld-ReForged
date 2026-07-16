@@ -34,6 +34,32 @@ also what suppresses vanilla's own decoration. **Neighbour access is the live co
 #2): a `WorldGenRegion` only permits writes near the chunk being decorated, which is why
 `RealBlocks` refusing to look past its chunk edge matters more now than it did under Bukkit.
 
+### ⚠ Lesson: a "simplified" stub silently rewired the whole world
+
+`NatureContext.populateMap` was stubbed to a no-op in wave 2 on the reasoning that its job was to
+place nature *set-pieces*, which aren't ported. That reasoning missed its real job, and the result
+shipped: **it surveys every chunk and hands the unbuildable ones to nature before anything else is
+planned.** Without it,
+
+- nothing is ever marked natural, so `PlatMap.getNaturePercent()` reads **0.00 for every platmap**
+  and `getContext`'s ladder grades the entire world as downtown highrise — the other nine bands
+  become unreachable (a `HouseLot` could not exist);
+- mountains and seas are never excluded, so buildings get planned on them and flatten them;
+- the only lots left natural are roads that `validateRoads` reclaims — each one a 16×16 column of
+  untouched terrain standing in a flattened downtown. That is what "mountains mid-city" and "random
+  columns of stone" actually were.
+
+**How it was found:** not by a probe — by the owner playing it. And the first two diagnoses were
+wrong. A data race in `allocateContexts` (real, latent, since fixed) looked like an excellent
+suspect, and a probe built to reproduce it *appeared* to, until the probe turned out to be varying
+the seed per attempt. Rebuilt to hold the seed fixed and compare concurrent planning against a
+sequential reference, it reported **0 differences over 6 runs** — clearing the race and forcing the
+search back to the actual cause. Correlating each lot's planned style against real terrain heights is
+what exposed it: 625 chunks, `NATURE=0`.
+
+Worth generalising: **stubs are behaviour, not absence.** Before stubbing something out, check what
+the callers *read back* from having called it — here, `naturalPlats`, three lines away.
+
 ### Remaining families
 
 The context ladder in `ShapeProvider_Normal.getContext(PlatMap)` is restored and real. Four of its
@@ -52,10 +78,11 @@ precisely as it would for a player who disabled the feature. Restoring each is: 
 allocate its context in `allocateContexts`, flip the flag. The context fields are already declared.
 
 Also still outstanding:
-- **`NatureContext.populateMap` is simplified** — upstream surveys each chunk's `HeightInfo` and
-  seeds set-pieces by terrain type (bunkers, radio towers, oil platforms, flying saucers, hot air
-  balloons, mine entrances). `BunkerLot` alone is 1037 lines. Its survey code is the only consumer
-  of `HeightInfo`'s `HeightState` classification.
+- **`NatureContext.populateMap` still lacks its set-pieces** — upstream seeds bunkers, radio towers,
+  oil platforms, flying saucers, hot air balloons and mine entrances by terrain type, and tracks the
+  platmap's highest and lowest spots to place two "special" lots. `BunkerLot` alone is 1037 lines.
+  Its `HeightState` switch is the only consumer of `HeightInfo`'s classification. **The survey
+  itself is ported and is not optional** — see the warning below.
 - **The decoration providers are stubs** — `CoverProvider` (903, ground cover + trees),
   `TreeProvider` (631), `SurfaceProvider`, `SpawnProvider` (333, needs Bukkit→modern `EntityType`),
   `ThingProvider` (492), `OdonymProvider` (78, street names), `StructureOnGroundProvider` (1158,

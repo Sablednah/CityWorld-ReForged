@@ -39,13 +39,16 @@ import net.minecraft.world.level.levelgen.structure.StructureSet;
 /**
  * The CityWorld {@link ChunkGenerator} — the adapter between modern worldgen and the ported brain.
  *
- * <p>{@link #fillFromNoise} drives the real {@code ShapeProvider}, so terrain here is CityWorld's
- * own shape, written through the ported {@link InitialBlocks} seam. What is <em>not</em> here yet is
- * the city planning: every chunk comes out a natural lot, because {@code PlatMap}/{@code PlatLot}
- * and the contexts are still stubbed (wave 2). So a world generates mountains, seas, beaches, caves
- * and lava fields — but no roads or buildings.
+ * <p><b>The work happens in two passes, and which one does what is the thing to know here:</b>
+ * <ul>
+ *   <li>{@link #fillFromNoise} shapes <em>terrain</em> through the ported {@link InitialBlocks} seam
+ *       (raw {@code ChunkAccess}).
+ *   <li>{@link #applyBiomeDecoration} builds the <em>city</em> through {@link RealBlocks} (a live
+ *       {@code WorldGenLevel}). That split is upstream's own: its chunk generator only ever made
+ *       terrain and a {@code BlockPopulator} drew the city afterwards.
+ * </ul>
  *
- * <p>Two seams worth knowing about:
+ * <p>Two other seams worth knowing about:
  * <ul>
  *   <li><b>Vertical layout</b> — terrain scales against a 256 ceiling (upstream's shape) inside a
  *       {@code -64..319} world; see {@link #TERRAIN_CEILING} and {@code CityWorldGenerator.worldMinY}.
