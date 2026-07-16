@@ -34,6 +34,40 @@ modern Minecraft. Modern worldgen is a **codec-registered `ChunkGenerator`** run
 multithreaded** pipeline with **restricted neighbor access**, using `BlockState` (not Bukkit
 `Material`) and a `-64..319` world.
 
+## ⚠ There is no "terrain-only" slice (measured, 2026-07)
+
+The original plan assumed we could port the terrain shaper first and add cities later. **We can't.**
+Following *only* explicit imports, the transitive closure is **identical (316 files / ~39,780 lines)**
+from every one of these seeds:
+
+- `Plugins/ShapeProvider_Normal` (the terrain shaper)
+- `Plugins/ShapeProvider` (the abstract base)
+- `Support/PlatMap`
+
+The brain is one mutually-recursive cycle — `ShapeProvider ↔ PlatMap ↔ PlatLot ↔ Context ↔ Plugins
+↔ Rooms ↔ Clipboard` — so touching any of it pulls in essentially the whole codebase. `ShapeProvider`
+also references `RealBlocks` in its method signatures, so the **decoration-side block seam is a hard
+prerequisite**, not a P5 concern.
+
+**Revised strategy:** port the brain as a scripted **mass transform in waves** (as was done for
+`AbstractBlocks`: rewrite imports/types mechanically, then fix residuals against the compiler),
+backed by a **shim layer** for the remaining Bukkit surface. Not incremental feature-by-feature.
+
+### Remaining Bukkit coupling (whole tree, by import count)
+
+| Surface | Uses | Plan |
+|---|---:|---|
+| `Material` | 150 | ✅ done (`compat/Material`, all 557 constants) |
+| `block.BlockFace` | 82 | ✅ done (`compat/BlockFace`) |
+| `ChunkGenerator.BiomeGrid` + `block.Biome` | 56 | **Design needed** — CityWorld writes biomes per column; modern gen assigns via `BiomeSource`. Architectural change. |
+| `util.noise.*` (`NoiseGenerator`, `SimplexNoiseGenerator`, `SimplexOctaveGenerator`) | 25 | **Terrain fidelity risk** — CityWorld's terrain shape *is* Bukkit's noise impl. Either vendor those classes (see licence note) or accept different terrain using vanilla noise. |
+| `block.data.*` (`Bisected.Half`, `Slab.Type`, `Stairs`, `Rail.Shape`, `Bed`, `Door`, `Leaves`, `Snow`, `Chest`, …) | ~45 | Small shims → `BlockState` properties (the `Material` helpers already cover facing/slab/half). |
+| `World`, `Chunk`, `Location`, `Bukkit`, `Environment` | ~30 | Decoration-side → `WorldGenLevel`/`ServerLevel`. |
+| `entity.*` (`EntityType`, `Entity`, `Player`, `Item`) | ~15 | → modern `EntityType` (P5). |
+| `configuration.*` | ~10 | → `ModConfigSpec` (P7). |
+| `command.*`, `plugin.*`, `event.*` | ~15 | → Brigadier / drop plugin lifecycle (P7). |
+| misc (`DyeColor`, `Axis`, `NamespacedKey`, `TreeType`, `ItemStack`, `Inventory`, `Sign`, `CreatureSpawner`, `MushroomBlockTexture`) | ~12 | Small shims, as encountered. |
+
 ## The key seam (why it's tractable)
 
 The original author already funneled all block writing through one family:
@@ -117,6 +151,18 @@ Coupling inventory (from the 1.14 source):
 
 **Critical path to first playable slice:** P0 → P1 → P2 → P3 (terrain in `cityworld:city`, no
 cities yet). Cities/decoration/loot layer on after.
+
+## Open question: licence ⚠
+
+`gradle.properties` currently declares `mod_license=MIT`. **That was assumed, not verified** — it
+was copied from the MobHealth port's template. The upstream CityWorld tree has **no `LICENSE` file
+and no `<licenses>` block in `pom.xml`**, so the original terms are unstated. This needs a decision
+from the project owner before any release, and it interacts with a porting choice:
+
+- Vendoring Bukkit's `SimplexNoiseGenerator`/`SimplexOctaveGenerator` would preserve CityWorld's
+  exact terrain shape, but that code is **Bukkit's (GPL-family)** — copying it has licence
+  implications for the mod.
+- Using vanilla/own noise avoids that, but produces **different terrain** from the original.
 
 ## Top risks
 
