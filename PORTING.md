@@ -1,5 +1,39 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Resume here (next task)
+
+**Port `Support/SupportBlocks` (971 lines)** — the decoration-side block seam. It is a **hard
+prerequisite for `ShapeProvider`** (whose signatures take `RealBlocks`), so it blocks the whole
+generation brain.
+
+Everything it needs is already designed and compiling:
+
+1. **`compat/Block` is done** — `SupportBlocks`' *only* abstract method is
+   `getActualBlock(int x, int y, int z)`, and `compat/Block` (a `LevelAccessor` + `BlockPos` pair)
+   is what it should now return. The rest of the class is built on that one primitive.
+2. **Add a `LevelAccessor` field to `SupportBlocks`.** Careful: `RelativeBlocks`/`WorldBlocks` call
+   `world.getBlockAt(...)` — the Bukkit `world` field that was deliberately **dropped from
+   `AbstractBlocks`**. The level reference belongs on `SupportBlocks`, not `AbstractBlocks`.
+3. **Mechanical swaps** (as with `AbstractBlocks` — script it, then fix residuals):
+   `org.bukkit.Material` → `compat.Material`, `block.BlockFace` → `compat.BlockFace`,
+   `block.Block` → `compat.Block`, `Slab.Type` → `SlabType`, `Bisected.Half` → `Half`.
+4. **Real work**: the `BlockData` manipulation (bed / door / stairs / rail / snow / leaves / chest)
+   becomes `BlockState` property sets — same pattern as the existing helpers in `compat/Material`
+   (`withFacing`/`withFaces`/`asSlab`/`asDoorHalf`). Bukkit `BlockData` ≡ modern `BlockState`.
+5. **Stub these thin cycle edges** (verified small, don't port them yet):
+   - `Context/DataContext` — 1 signature only (`drawCrane`)
+   - `Plugins/LootProvider` + `LootProvider.LootLocation` — 3 signatures (chest filling; real loot is P5)
+   - `generator.reportFormatted` — add to the `CityWorldGenerator` skeleton
+   - `NoiseGenerator.floor(...)` → vanilla `Mth.floor(...)` (no vendoring needed for this one)
+6. Then: `RealBlocks` (41), `RelativeBlocks` (34), `WorldBlocks` (202), `CornerBlocks` (1222).
+
+Small shims still to write: `block.data.*` (`Bed`/`Part`, `Door`/`Hinge`, `Stairs.Shape`,
+`Rail.Shape`, `Snow`, `Leaves`, `Chest`), `Sign`, `Location`.
+
+Verify with `./gradlew compileJava`. Then commit on `neoforge-port`.
+
+---
+
 Living checklist for porting CityWorld from a Spigot 1.14 plugin to a modern **NeoForge** mod.
 
 This repo is a fork of the original CityWorld; the NeoForge port is being built **in place at the

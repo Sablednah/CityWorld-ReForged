@@ -4,14 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-This repo is a fork of **CityWorld**, originally a Bukkit/Spigot 1.14 plugin that procedurally
-generates worlds full of cities, roads, buildings, mines, sewers, farms and nature. It is being
-**ported to a modern NeoForge mod**. The port is built in place at the repo root; the original
-Bukkit project has been removed from the working tree but remains the reference implementation in
-git history and on the upstream fork.
+A fork of **CityWorld** — originally a Bukkit/Spigot 1.14 plugin that procedurally generates worlds
+full of cities, roads, buildings, mines, sewers, farms and nature — being **ported to a modern
+NeoForge mod**. The port is built in place at the repo root; the original Bukkit project was removed
+from the working tree and lives on in git history as the reference implementation.
 
-**Read `PORTING.md` first** — it is the living plan (phases, decisions, coupling inventory, risks)
-and the source of truth for what's done and what's next.
+**Read `PORTING.md` first.** It is the living plan and the source of truth for decisions, progress,
+verified API notes, and what to do next. Start at its "Resume here" section.
 
 | | |
 |---|---|
@@ -19,63 +18,106 @@ and the source of truth for what's done and what's next.
 | Loader | NeoForge 21.11.42 |
 | Java | 21 |
 | Build | Gradle + ModDevGradle (`net.neoforged.moddev`) |
+| Licence | **GPL-3.0-only** (see below — non-negotiable) |
+| Branch | work happens on `neoforge-port` |
+
+## Licence — important
+
+Upstream CityWorld is **GPL-3**, so this port is a derivative work and **must stay GPL-3**.
+GPL-3 → MIT is not permitted. Don't "helpfully" relabel it. (An early `mod_license=MIT` was an
+unverified assumption and has been corrected.)
+
+A useful consequence: because we're GPL-3 and Bukkit's API is GPL-3, we **may vendor** Bukkit's
+`SimplexNoiseGenerator`/`SimplexOctaveGenerator` (with attribution) to preserve CityWorld's exact
+terrain shape. See `PORTING.md`.
 
 ## Build & run
 
-Requires a JDK 21. There is no system Java on this machine; a bundled JDK21 lives at
-`../MobHealth-Forge/tools/jdk21` — export it as `JAVA_HOME` for Gradle:
+Requires a JDK 21. There is **no system Java**; a JDK lives at `./tools/jdk21` (git-ignored):
 
 ```bash
-export JAVA_HOME=/mnt/d/Repos/sable/MobHealth-Forge/tools/jdk21
+export JAVA_HOME="$PWD/tools/jdk21"
 export PATH="$JAVA_HOME/bin:$PATH"
 
-./gradlew build        # -> build/libs/cityworld-<version>.jar
-./gradlew runClient    # dev client
-./gradlew runServer    # dev dedicated server
-./gradlew runData      # data generators -> src/generated/resources
+./gradlew compileJava   # fast inner loop while porting
+./gradlew build         # -> build/libs/cityworld-<version>.jar
+./gradlew runServer     # dev dedicated server
+./gradlew runClient     # dev client (needs a display)
 ```
 
-- All versions/metadata live in `gradle.properties` and are expanded into
+- `./deploy.sh` builds and copies the jar into the CurseForge test instance
+  (`CityWork-ReForged`); it sets `JAVA_HOME` itself.
+- The dev server's `run/server.properties` is already set to `level-type=cityworld\:city`, so
+  `runServer` generates using our generator. **Delete `run/world` to force regeneration.**
+- Gradle can't forward piped stdin to the server console — to verify in-world behaviour, register a
+  temporary `ServerStartedEvent` listener that logs what you need, rather than piping commands.
+- Versions/metadata live in `gradle.properties` and expand into
   `src/main/templates/META-INF/neoforge.mods.toml` at build time — **edit the template and
   gradle.properties, never a generated `mods.toml`**.
-- Mod id is `cityworld`; the `@Mod` entrypoint is
-  `me.daddychurchill.CityWorld.CityWorldMod`.
+- Mod id `cityworld`; `@Mod` entrypoint `me.daddychurchill.CityWorld.CityWorldMod`.
+
+## Reading the original Bukkit source
+
+It is **not in the working tree**. Two ways in:
+
+```bash
+# One file, from the last pre-port commit (stable sha; 9827bcf removed the tree):
+git show 251078e:src/me/daddychurchill/CityWorld/Support/AbstractBlocks.java
+
+# Or restore the whole reference tree (self-bootstrapping; finds the commit itself):
+python3 scripts/gen_material.py     # -> /tmp/cityworld-portgen/bukkit-ref/src/...
+```
+
+That script also extracts decompiled Minecraft sources to `/tmp/cityworld-portgen/mcsrc/`. Grep them
+to **verify API signatures instead of guessing** — 1.21.11 renamed and reshaped things (see the
+"1.21.11 API notes" in `PORTING.md`; e.g. `ResourceLocation` is now `Identifier`).
 
 ## Conventions specific to this port
 
 - **Package tree is preserved**: ported code keeps the original `me.daddychurchill.CityWorld.*`
-  packages (minimizes churn across ~300 files, keeps attribution). Note the Gradle group id is
-  lowercase `me.daddychurchill.cityworld` — that's fine, it need not match the package.
-- **Reading the reference source**: the Bukkit original is not in the working tree. Retrieve any
-  file from history, e.g. `git show HEAD~1:src/me/daddychurchill/CityWorld/Support/AbstractBlocks.java`.
-- Keep loader-agnostic generation logic free of NeoForge/Minecraft-specific glue where practical
-  (the MobHealth port follows the same `core` vs. loader-glue split — see `../MobHealth-Forge`).
+  packages (minimizes churn across ~300 files, keeps attribution). The Gradle group id is lowercase
+  `me.daddychurchill.cityworld` — that's fine, it needn't match.
+- **Port by mechanical transform, not retyping.** Large files (e.g. the 768-line `AbstractBlocks`)
+  were ported by scripting the import/type swaps and then fixing residuals against the compiler.
+  Preserve the original logic and comments; keep diffs reviewable.
+- **`compat/` holds the Bukkit shims** — the trick that makes this tractable:
+  - `Material` — interned wrapper over `Block`/`BlockState` **and** `Item`. Its constant block is
+    **generated by `scripts/gen_material.py` — do not hand-edit**; change the generator and re-run.
+  - `BlockFace` → vanilla `Direction`; `WoodSpecies` → Bukkit `TreeSpecies`.
+  - `Block` → Bukkit's live positioned block (`LevelAccessor` + `BlockPos`).
+  - Mappings worth remembering: Bukkit `BlockData` ≡ modern `BlockState`; Bukkit "apply physics" ≡
+    vanilla update flags (`UPDATE_ALL` vs `UPDATE_CLIENTS`).
 
-## Architecture being ported (the generation "brain")
+## Architecture being ported
 
-The original isolates almost all Bukkit block coupling behind one seam, which is what makes the
-port tractable. Key structures (ported largely intact):
+The original funnels nearly all Bukkit block coupling through one seam, which is what makes this
+possible:
 
-- **`AbstractBlocks` → `InitialBlocks`/`RealBlocks`/`SupportBlocks`** — the block-writing layer.
-  Reimplementing this family against modern `ChunkAccess`/`BlockState` (Phase 1) isolates the
-  ~300 algorithm files from the Bukkit block API. This is the linchpin.
+- **`AbstractBlocks`** → **`InitialBlocks`** (generation side, on `ChunkAccess`) — **done**.
+- **`SupportBlocks`** → `RealBlocks`/`RelativeBlocks`/`WorldBlocks`/`CornerBlocks` (decoration side,
+  on `LevelAccessor`) — **in progress**. Rests on one abstract method, `getActualBlock(x,y,z)`.
 - **`PlatMap`** — a 10×10 grid of chunks; the unit of city planning. Seed-deterministic (important
   for the multithreaded modern chunk pipeline).
 - **`PlatLot`** subclasses (`RoadLot`, `BuildingLot`, `ConnectedLot`, `NatureLot`, …) — one chunk's
-  worth of "what goes here" and how to generate it.
+  worth of "what goes here".
 - **`Context/`** (`DataContext` subclasses) — decide which lots populate a PlatMap.
-- **Provider pattern** (`Plugins/`) — pluggable strategies (`ShapeProvider`, `CoverProvider`,
-  `OreProvider`, `TreeProvider`, `LootProvider`, `MaterialProvider`, `PasteProvider`, …), selected
-  per world style/environment.
-- **`Support/Odds`** — the deterministic RNG wrapper; prefer it over raw randomness.
+- **Provider pattern** (`Plugins/`) — `ShapeProvider`, `CoverProvider`, `OreProvider`, `TreeProvider`,
+  `LootProvider`, `MaterialProvider`, `PasteProvider`, … selected per world style/environment.
+- **`Support/Odds`** — deterministic RNG wrapper; prefer it over raw randomness.
 
-In modern Minecraft this all gets wrapped in a codec-registered custom `ChunkGenerator`, exposed
-as both a custom dimension (`cityworld:city`) and a world preset. The old Bukkit two-phase model
-(`generateChunkData` + `BlockPopulator`) maps onto the staged chunk pipeline; see `PORTING.md`
-Phases 3 and 5 for how, and for the neighbor-access and threading caveats.
+**⚠ The brain is one mutually-recursive cycle** (`ShapeProvider ↔ PlatMap ↔ PlatLot ↔ Context ↔
+Plugins ↔ Rooms ↔ Clipboard`) — measured: every seed yields the same 316-file / ~40k-line closure.
+**There is no "terrain-only" slice.** Port it as a mass transform in waves plus shims. The cycle's
+edges are often thin (single method signatures), so they can be stubbed to break it.
+
+Modern worldgen wraps this in a codec-registered `ChunkGenerator` (`worldgen/CityWorldChunkGenerator`,
+registered `cityworld:city`), exposed as both a dimension and a world preset. It currently generates
+**placeholder flat terrain** — the pipeline is proven end-to-end; the brain isn't wired in yet. It
+also suppresses vanilla structures/decoration/carvers so CityWorld owns the chunk.
 
 ## Reference port
 
 `../MobHealth-Forge` is a completed NeoForge port of another Bukkit plugin by the same author. Its
 Gradle setup, `mods.toml` template, config (`ModConfigSpec`), Brigadier commands, and permission
-handling are the patterns this project copies.
+handling are the patterns this project copies. (It's a simple event-driven mod, so it has no
+worldgen or registration examples.)
