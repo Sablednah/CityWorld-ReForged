@@ -6,10 +6,12 @@ import com.mojang.logging.LogUtils;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Context.ConstructionContext;
+import me.daddychurchill.CityWorld.Context.FarmContext;
 import me.daddychurchill.CityWorld.Context.DataContext;
 import me.daddychurchill.CityWorld.Context.HighriseContext;
 import me.daddychurchill.CityWorld.Context.LowriseContext;
 import me.daddychurchill.CityWorld.Context.MidriseContext;
+import me.daddychurchill.CityWorld.Context.MunicipalContext;
 import me.daddychurchill.CityWorld.Context.NatureContext;
 import me.daddychurchill.CityWorld.Context.NeighborhoodContext;
 import me.daddychurchill.CityWorld.Context.ParkContext;
@@ -37,15 +39,14 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	DataContext lowriseContext;
 	DataContext neighborhoodContext;
 
+	DataContext municipalContext;
+	DataContext farmContext;
+
 	/**
 	 * Declared but never allocated: their lot families are unported, and the settings that guard
-	 * their arms of {@link #getContext(PlatMap)} are off, so the ladder never reaches them. They
-	 * stay here rather than being deleted so restoring each is a one-line change in
-	 * {@link #allocateContexts} plus flipping its setting back on.
+	 * their arms of {@link #getContext(PlatMap)} are off, so the ladder never reaches them.
 	 */
-	DataContext municipalContext;
 	DataContext industrialContext;
-	DataContext farmContext;
 	DataContext outlandContext;
 
 	private final SimplexOctaveGenerator landShape1;
@@ -152,11 +153,12 @@ public class ShapeProvider_Normal extends ShapeProvider {
 			midriseContext = new MidriseContext(generator);
 			lowriseContext = new LowriseContext(generator);
 			neighborhoodContext = new NeighborhoodContext(generator);
+			municipalContext = new MunicipalContext(generator);
+			farmContext = new FarmContext(generator);
 
-			// Upstream also allocates municipalContext, industrialContext, farmContext and
-			// outlandContext here. Each needs a lot family that is not ported yet (government and
-			// museum buildings; factories and warehouses; barns and farms; the rural/nature
-			// set-pieces). See getContext(PlatMap) for how the ladder copes without them.
+			// Upstream also allocates industrialContext and outlandContext here. Each still needs a
+			// lot family that is not ported (factories and warehouses; the rural/nature set-pieces).
+			// See getContext(PlatMap) for how the ladder copes without them.
 
 			contextInitialized = true;
 		}

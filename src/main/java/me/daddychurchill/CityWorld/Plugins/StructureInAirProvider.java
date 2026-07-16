@@ -25,6 +25,11 @@ public class StructureInAirProvider extends Provider {
             int attachY, int attachZ, Odds odds) {
     }
 
+    /** P5: a hot air balloon sitting on the ground, as a farm's landed one. */
+    public void generateHotairBalloon(CityWorldGenerator generator, SupportBlocks chunk, DataContext context,
+            int bottomY, Odds odds) {
+    }
+
     /** P5: moors a larger balloon, centred on the roof. */
     public void generateBigBalloon(CityWorldGenerator generator, SupportBlocks chunk, DataContext context, int attachY,
             Odds odds) {

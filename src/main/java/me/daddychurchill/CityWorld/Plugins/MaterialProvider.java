@@ -91,6 +91,26 @@ public class MaterialProvider {
             Material.IRON_ORE, Material.GOLD_ORE, Material.LAPIS_ORE, Material.REDSTONE_ORE, Material.DIAMOND_ORE,
             Material.EMERALD_ORE);
 
+    // --- municipal -----------------------------------------------------------------------------
+    // Government buildings share one pale, civic palette across walls/foundations/ceilings.
+
+    private final static String tagSelectMaterial_GovernmentWalls = "Materials_For_GovernmentWalls";
+    public final MaterialList itemsSelectMaterial_GovernmentWalls = createList(tagSelectMaterial_GovernmentWalls,
+            Material.WHITE_TERRACOTTA, Material.LIGHT_GRAY_TERRACOTTA, Material.QUARTZ_BLOCK, Material.QUARTZ_PILLAR,
+            Material.CHISELED_QUARTZ_BLOCK, Material.END_STONE, Material.END_STONE_BRICKS, Material.WHITE_WOOL);
+
+    private final static String tagSelectMaterial_GovernmentFoundations = "Materials_For_GovernmentFoundations";
+    public final MaterialList itemsSelectMaterial_GovernmentFoundations = createList(
+            tagSelectMaterial_GovernmentFoundations,
+            Material.WHITE_TERRACOTTA, Material.LIGHT_GRAY_TERRACOTTA, Material.QUARTZ_BLOCK, Material.QUARTZ_PILLAR,
+            Material.CHISELED_QUARTZ_BLOCK, Material.END_STONE, Material.END_STONE_BRICKS, Material.WHITE_WOOL);
+
+    private final static String tagSelectMaterial_GovernmentCeilings = "Materials_For_GovernmentCeilings";
+    public final MaterialList itemsSelectMaterial_GovernmentCeilings = createList(
+            tagSelectMaterial_GovernmentCeilings,
+            Material.WHITE_TERRACOTTA, Material.LIGHT_GRAY_TERRACOTTA, Material.QUARTZ_BLOCK, Material.QUARTZ_PILLAR,
+            Material.CHISELED_QUARTZ_BLOCK, Material.END_STONE, Material.END_STONE_BRICKS, Material.WHITE_WOOL);
+
     public MaterialProvider(CityWorldGenerator generator) {
     }
 

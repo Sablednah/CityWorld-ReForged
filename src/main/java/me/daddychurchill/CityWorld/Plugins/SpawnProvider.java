@@ -3,6 +3,7 @@ package me.daddychurchill.CityWorld.Plugins;
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.SupportBlocks;
+import me.daddychurchill.CityWorld.compat.EntityType;
 
 /**
  * Stub of the original {@code SpawnProvider} (333 lines) — the mobs and spawners CityWorld seeds
@@ -44,6 +45,15 @@ public class SpawnProvider extends Provider {
 
     /** P5: one being, rather than a group. */
     public void spawnBeing(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z) {
+    }
+
+    /** P5: farm animals, of whatever the world fancies. */
+    public void spawnAnimals(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z) {
+    }
+
+    /** P5: farm animals of a named kind — a barn asks for horses or donkeys. */
+    public void spawnAnimals(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
+            EntityType animal) {
     }
 
     /** P5. */

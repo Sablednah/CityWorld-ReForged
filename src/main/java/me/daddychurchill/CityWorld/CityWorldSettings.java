@@ -19,18 +19,19 @@ public class CityWorldSettings {
     // Defaults carried over verbatim from the upstream field initializers.
     public boolean includeRoads = true;
     public boolean includeBuildings = true;
+    public boolean includeFarms = true;
+    public boolean includeMunicipalities = true;
+
     /**
-     * These three are upstream-default-on, and forced off here because their lot families are not
-     * ported: farms want {@code BarnLot}/{@code FarmLot}/{@code WaterTowerLot}, municipalities want
-     * the government and museum buildings, industrial sectors want factories and warehouses.
+     * Upstream-default-on, forced off here because its lot family is not ported: industrial sectors
+     * want {@code FactoryBuildingLot}/{@code WarehouseBuildingLot}/{@code StorageLot} (and
+     * {@code BunkerLot} underneath them).
      *
-     * <p>Using the settings for this is deliberate rather than a hack: upstream already guards each
-     * of these arms of {@code ShapeProvider_Normal.getContext} with its setting, so switching them
-     * off makes those bands fall through to the next exactly as they would for a player who turned
-     * the feature off — no special-casing in the ladder. Flip each back on with its lots.
+     * <p>Using the setting for this is deliberate rather than a hack: upstream already guards that
+     * arm of {@code ShapeProvider_Normal.getContext} with this flag, so switching it off makes the
+     * band fall through to the next exactly as it would for a player who turned the feature off —
+     * no special-casing in the ladder. Flip it back on with its lots.
      */
-    public boolean includeFarms = false;
-    public boolean includeMunicipalities = false;
     public boolean includeIndustrialSectors = false;
     public boolean includeCaves = true;
     public boolean includeLavaFields = true;
@@ -56,6 +57,8 @@ public class CityWorldSettings {
     public boolean includeDecayedBuildings = false;
     public boolean includeBuildingInteriors = true;
     public boolean includeHouses = true;
+    /** Balloons and blimps over the fields. The lots that carry them are P5/P8. */
+    public boolean includeAirborneStructures = true;
 
     /** Which family of trees a world grows. Only NORMAL is ported; SPOOKY/CRYSTAL are P8 styles. */
     public TreeProvider.TreeStyle treeStyle = TreeProvider.TreeStyle.NORMAL;

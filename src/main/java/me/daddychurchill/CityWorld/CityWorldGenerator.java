@@ -19,8 +19,10 @@ import me.daddychurchill.CityWorld.Plugins.StructureOnGroundProvider;
 import me.daddychurchill.CityWorld.Plugins.SurfaceProvider;
 import me.daddychurchill.CityWorld.Plugins.ThingProvider;
 import me.daddychurchill.CityWorld.Plugins.TreeProvider;
+import me.daddychurchill.CityWorld.Support.AbstractBlocks;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
+import me.daddychurchill.CityWorld.compat.Environment;
 import me.daddychurchill.CityWorld.compat.Material;
 
 /**
@@ -75,6 +77,13 @@ public class CityWorldGenerator {
     private final int worldSeaLevel;
 
     public final WorldStyle worldStyle;
+
+    /**
+     * Always {@code NORMAL}: the port registers one overworld dimension. Kept because ported code
+     * legitimately branches on it (a farm grows netherwart instead of wheat in the Nether). See
+     * {@code compat/Environment}.
+     */
+    public final Environment worldEnvironment = Environment.NORMAL;
 
     /**
      * The world's real block bounds — {@code -64} and {@code 319} for a modern overworld.
@@ -327,6 +336,18 @@ public class CityWorldGenerator {
      */
     public void reportFormatted(String format, Object... objects) {
         LOGGER.debug(String.format(format, objects));
+    }
+
+    /**
+     * Announces a landmark's location. Upstream broadcast these to the server when
+     * {@code broadcastSpecialPlaces} was set; that setting is P7, so for now it just logs.
+     */
+    public void reportLocation(String title, AbstractBlocks chunk) {
+        reportLocation(title, chunk.getOriginX(), chunk.getOriginZ());
+    }
+
+    public void reportLocation(String title, int originX, int originZ) {
+        LOGGER.debug("{} placed near {}, {}", title, originX, originZ);
     }
 
     public void reportMessage(String message) {
