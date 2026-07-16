@@ -2,72 +2,101 @@
 
 ## ▶ Resume here (next task)
 
-**The block seam (P1) is done and runtime-verified — start the brain: `Plugins/ShapeProvider`.**
-Its signatures take `RealBlocks`, which is why the seam had to come first; that dependency is now
-satisfied. Nothing is left blocking it.
+**Wave 1 of the brain is done and runtime-verified: `ShapeProvider` + `ShapeProvider_Normal` are
+ported and produce real, deterministic CityWorld terrain heights.** The next task is to **wire that
+terrain into `CityWorldChunkGenerator.fillFromNoise`**, replacing the placeholder flat fill — that
+is the remaining half of the P3 gate ("teleport in and see terrain").
 
-Expect this to be the hard part, and **not** an incremental one — see "There is no terrain-only
-slice" below. `ShapeProvider` sits in the mutually recursive cycle (`ShapeProvider ↔ PlatMap ↔
-PlatLot ↔ Context ↔ Plugins ↔ Rooms ↔ Clipboard`), so the plan of record is a scripted **mass
-transform in waves plus shims**, the way `AbstractBlocks`/`CornerBlocks` were done — not
-file-by-file.
+### Wiring it in — what's already true, and the one decision to make first
 
-### Recon already done (2026-07 — measured, don't re-derive)
+The call shape is short, because the pieces exist:
 
-**Only two files are needed for the P3 gate, not the whole family.** `ShapeProvider` has 10
-variants totalling 2,376 lines, but the gate ("teleport in and see terrain") only needs **NORMAL**:
+```java
+CityWorldGenerator context = context();                 // already there, lazy + thread-safe
+PlatLot lot = new PlatLot(context, chunkX, chunkZ);      // precalcs its own cached Ys
+InitialBlocks blocks = new InitialBlocks(context, chunk, chunkX, chunkZ);
+context.shapeProvider.preGenerateChunk(context, lot, blocks, biomes, lot.blockYs);
+context.shapeProvider.postGenerateChunk(context, lot, blocks, lot.blockYs);
+```
 
-| | |
+Two things to settle before writing it:
+
+1. **The Y offset — decide this first, it's the whole shape of P4.** The ported shaper thinks in
+   upstream's `0..255` world (`ShapeProvider.bottomOfWorld = 0`, and `CityWorldChunkGenerator`
+   currently feeds it `UPSTREAM_MAX_HEIGHT = 256` / `UPSTREAM_SEA_LEVEL = 63` deliberately, to
+   reproduce upstream's terrain exactly). Wired naively into a `-64..319` world, terrain lands at
+   `y = 0..253` with a void gap below it. Either accept that as a visible-but-wrong-looking gate and
+   fix it at P4, or do the height modernization first. Not a bug — a sequencing choice.
+2. **`BiomeGrid`** needs an implementation to receive the per-column biomes (a no-op one is enough
+   to see terrain; see `compat/BiomeGrid` for why the real answer is a `BiomeSource`).
+
+### ⚠ Open question: is upstream's sea level 63 or 64? (found 2026-07, unresolved)
+
+We pass **63**. Upstream's own commented-out reference line in `initializeWorldInfo` reads:
+
+> `seabed = 35 deepsea = 50 sea = 64 sidewalk = 65 tree = 110 evergreen = 156 snow = 202 top = 249`
+
+Recomputing that line both ways: `seabed = 35` and `top = 249` come out right **either way** (the
+`landRange` formula absorbs the difference), but `sea`/`sidewalk`/`tree`/`evergreen`/`snow` only
+reproduce **exactly** at `seaLevel = 64` — at 63 the port gives `63/64/109/155/201`, uniformly one
+low. (`deepsea` matches neither, so that line is at least partly stale.) Bukkit's `World.getSeaLevel()`
+javadoc is no help — it claims "often half of getMaxHeight()", i.e. 128, which is plainly not what
+the comment shows. CityWorld predates 1.14 by years, so the comment may record an older Bukkit where
+sea level was 64.
+
+**Why it matters:** the whole point of vendoring Bukkit's noise was to reproduce upstream's terrain
+*exactly*; a one-block datum shift quietly undercuts that. **Why it isn't urgent:** it shifts every
+level uniformly by one, and P4 re-does this Y mapping anyway. Settle it against a real 1.14
+CraftBukkit `getSeaLevel()` before declaring terrain parity at P8.
+
+### What wave 1 actually built (verified in a live world, 2026-07)
+
+A `ServerStartedEvent` probe (since deleted) drove the ported provider directly. Results, seed 12345,
+`256`/`63`:
+
+- **The datums derive correctly**: `height=256 seaLevel=63 streetLevel=64 landRange=186 seaRange=28`,
+  `deepsea=54 tree=109 evergreen=155 snow=201`. `streetLevel = seaLevel + 1` as predicted.
+- **Terrain varies and stays in range**: over a 2000×2000 sample, `minY=47 maxY=218` (bounds are
+  `3..253`).
+- **Deterministic** — required, since the modern pipeline generates chunks on many threads: repeated
+  calls agree, and a *fresh generator on the same seed* agrees. A different seed moves **1222 of
+  1521** sampled columns, so the seed really is plumbed through (the rest are flat areas clamped to
+  sea/street level).
+- **The cached-Ys path agrees with the provider** column-for-column, and `TraditionalCachedYs`
+  classifies chunk (0,0) as `BUILDING` (it is flat at exactly `streetLevel`).
+- **Caves carve**: `notACave` is false for ~4.6% of sampled blocks — so the strata loop's cave branch
+  is live, not a no-op.
+
+**Still unexercised**: `preGenerateChunk` → `generateStratas` → `chunk.setBlock`, i.e. the path that
+actually *writes* terrain. It needs a real `ChunkAccess`, so it gets proven by the wiring above —
+that is the first thing to check once fillFromNoise drives it.
+
+### How wave 1 was cut (so wave 2 can be cut the same way)
+
+The measured closure from `ShapeProvider` is **250 files / ~29k lines** — the earlier "~843 lines"
+estimate counted only `ShapeProvider` + `_Normal` themselves and missed that their dependencies pull
+the whole cycle (it also missed `AbstractYs`, `Point`, and the ~20 contexts). **There is no
+terrain-only slice**; what makes it tractable is that the cycle's edges are thin, so wave 1 ported
+the terrain spine for real and stubbed the city-planning side:
+
+| ported for real | stubbed (wave 2) |
 |---|---|
-| `Plugins/ShapeProvider` (abstract base) | 366 lines |
-| `Plugins/ShapeProvider_Normal` | 477 lines |
-| the other 8 variants (`_Astral` 558, `_Floating` 262, `_SnowDunes` 265, `_SandDunes` 173, `_Flooded` 119, `_Maze` 86, `_Metro` 51, `_Nature` 19) | ~1,533 lines — **defer**; `loadProvider` switches on `worldStyle`, so stub the arms |
+| `compat/noise/*` (5 classes, vendored verbatim) | `Plats/PlatLot` — only `style`/`blockYs`/`isValidStrataY`/`getChunkBiome`/`generate*` |
+| `Plugins/ShapeProvider` + `_Normal` (terrain maths, strata, caves/mines noise) | `Support/PlatMap` — no lot grid |
+| `Support/AbstractYs`, `AbstractCachedYs`, `TraditionalCachedYs`, `Point` | `Context/DataContext`, `NatureContext`, `RoadContext` |
+| `CityWorldGenerator` (now the real per-world context) | `CityWorldSettings` — only the flags the shaper branches on, at upstream defaults |
+| `OreProvider`'s strata palette | `OreProvider`'s ore *placement*; the other 8 `ShapeProvider` variants |
 
-So the first wave is **~843 lines**, not 2,376.
+Two deferrals worth knowing about, both documented at their sites:
+- **`ShapeProvider_Normal.getContext(PlatMap)`** — the ten-way nature-percent ladder that decides
+  whether a platmap becomes downtown or farmland. Thresholds are recorded verbatim in its javadoc;
+  it returns `natureContext` until the contexts land. This is *why* wave-1 worlds have terrain but
+  no cities.
+- **`loadProvider`** — all 10 style arms currently construct `_Normal` rather than failing.
 
-**`ShapeProvider`'s direct unported dependencies** (from its own imports):
-
-| | |
-|---|---|
-| `Support/PlatMap` | 548 — the 10×10 chunk grid, seed-deterministic |
-| `Plats/PlatLot` | 612 — one chunk's "what goes here" |
-| `Context/DataContext` | 165 — **currently a stub** (`torchMat` + `FloorHeight` only) |
-| `Context/RoadContext` | 70 |
-| `Support/AbstractCachedYs` | 88 — plus `TraditionalCachedYs` (11) |
-| already done | `Material`, `InitialBlocks`, `RealBlocks`, `Odds`, `CityWorldGenerator` (skeleton) |
-
-**Biomes: deferrable, despite being listed as "design needed".** The 56 in the coupling table is a
-*use* count and reads scarier than it is — it lands in only **12 files**, concentrated in the
-`ShapeProvider_*` variants (`_Normal` 13, `_Astral` 6), `PlatLot` (6) and `SpawnProvider` (5). On the
-abstract base the entire surface is **two signatures**: `generateChunk(..., BiomeGrid biomes,
-AbstractCachedYs blockYs)` and `remapBiome(generator, PlatLot lot, Biome biome)`. So put a thin
-`compat/Biome` + `BiomeGrid` shim behind those two, port the brain, and hook a real `BiomeSource` at
-P3/P4 when there is terrain to look at. The architectural question (CityWorld writes biomes per
-column; modern gen assigns them via a `BiomeSource`) is still real — it just isn't a gate.
-
-**Noise is already decided**: vendor Bukkit's `SimplexNoiseGenerator`/`SimplexOctaveGenerator`
-(GPL-3 permits it — see the licence section) to keep CityWorld's exact terrain shape.
-`NoiseGenerator.floor` is just `Mth.floor`; no vendoring needed for that one.
-
-### Then
-
-1. **Grow the stubs as you go.** `CityWorldGenerator` is a skeleton (`height`, `streetLevel`,
-   `reportFormatted`, `clearAtmosphere`, `findAtmosphereMaterialAt`); the real `streetLevel` comes
-   from `shapeProvider.getStreetLevel()` (`= seaLevel + 1`). `DataContext` is a stub;
-   `LootProvider`/`Provider` are signature-only. **Watch the threading rule**: the original hung
-   per-world state off the generator (`generator.getWorld()`); a modern `ChunkGenerator` is shared
-   and immutable, so that state gets passed in instead — that is exactly why `RealBlocks` now takes
-   a `LevelAccessor` + `ChunkPos`. Same trap will recur across the brain (top risk #1).
-2. **Don't rebuild the block layer.** `SupportBlocks` owns the `BlockData → BlockState` translation
-   (`with`, `withDirection`, `withHalf`, `withRailShape`, `withScaledLevel`, `stateOf`);
-   `compat/Material` has `withFacing`/`withFaces`/`asSlab`/`asDoorHalf`/`hasFaces`/`isOccluding`.
-   No `block.data.*` shims are needed — they all map onto vanilla property enums.
-3. Then P3 replaces the placeholder fill in `CityWorldChunkGenerator` with the real brain.
-
-**Verify behaviour, don't just compile.** Both waves of the seam were proven with a temporary
-subclass + a `ServerStartedEvent` listener that places blocks and logs the resulting `BlockState`s
-(Gradle can't pipe stdin to the server console). That caught two real bugs and a coordinate check
-that compiling never could. Delete the probe before committing.
+**Verify behaviour, don't just compile.** Every wave so far was proven with a temporary
+`ServerStartedEvent` probe (Gradle can't pipe stdin to the server console). It has caught real bugs
+the compiler couldn't. Delete the probe before committing.
 
 ---
 
@@ -130,8 +159,8 @@ backed by a **shim layer** for the remaining Bukkit surface. Not incremental fea
 |---|---:|---|
 | `Material` | 150 | ✅ done (`compat/Material`, all 557 constants) |
 | `block.BlockFace` | 82 | ✅ done (`compat/BlockFace`) |
-| `ChunkGenerator.BiomeGrid` + `block.Biome` | 56 uses, but only **12 files** | **Deferrable, not a blocker** (re-measured 2026-07). CityWorld writes biomes per column; modern gen assigns via `BiomeSource` — still a real architectural change, but it is concentrated in the `ShapeProvider_*` variants, `PlatLot` and `SpawnProvider`, and the abstract `ShapeProvider` exposes just **2 signatures** (`generateChunk(…, BiomeGrid, …)`, `remapBiome(…)`). Shim those two, port the brain, hook a real `BiomeSource` at P3/P4. |
-| `util.noise.*` (`NoiseGenerator`, `SimplexNoiseGenerator`, `SimplexOctaveGenerator`) | 25 | **Vendor Bukkit's noise classes** — cleared now that we're GPL-3 (see licence section). Preserves CityWorld's exact terrain shape. |
+| `ChunkGenerator.BiomeGrid` + `block.Biome` | 56 uses, but only **12 files** | ✅ **shimmed** (`compat/Biome`, `compat/BiomeGrid`). The whole tree names only **12 biome constants**, and `BiomeGrid`'s entire used surface is `setBiome(x, z, biome)`. **4 of the 12 no longer exist** — the 1.18 rework deleted every `*_HILLS` variant plus `SNOWY_MOUNTAINS` — so they remap to the nearest survivor (`BIRCH_FOREST`, `TAIGA`, `DESERT`, `SNOWY_SLOPES`); costs colour/mob flavour, not terrain. The real change (CityWorld pushes biomes per column, modern gen pulls via `BiomeSource`) is still outstanding at P3/P4. |
+| `util.noise.*` (`NoiseGenerator`, `SimplexNoiseGenerator`, `SimplexOctaveGenerator`) | 25 | ✅ **done** — vendored verbatim into `compat/noise` (GPL-3 permits it; see licence section), preserving CityWorld's exact terrain shape. 5 classes: the 3 above plus `PerlinNoiseGenerator` and `OctaveGenerator` (their base classes). Only change: the `org.bukkit.World` convenience ctors are dropped. `NoiseGenerator.floor` is just `Mth.floor`, but it comes along with the vendored base anyway. |
 | `block.data.*` (`Bisected.Half`, `Slab.Type`, `Stairs`, `Rail.Shape`, `Bed`, `Door`, `Leaves`, `Snow`, `Chest`, …) | ~45 | ✅ done — **no shims needed**: each maps onto a vanilla property enum (`Half`, `SlabType`, `StairsShape`, `RailShape`, `BedPart`, `DoorHingeSide`, `ChestType`, …), and the `instanceof` chains became `hasProperty` guards in `SupportBlocks`. |
 | `World`, `Chunk`, `Location`, `Bukkit`, `Environment` | ~30 | Decoration-side → `WorldGenLevel`/`ServerLevel`. |
 | `entity.*` (`EntityType`, `Entity`, `Player`, `Item`) | ~15 | → modern `EntityType` (P5). |
@@ -241,6 +270,14 @@ Coupling inventory (from the 1.14 source):
     - The constant block is **generated — do not hand-edit**; change the generator and re-run.
     - Note: modern blocks the 1.14 vocabulary never knew (deepslate, tuff, deepslate ores) are
       deliberately absent; P4 adds them as it needs them (or use `Material.of("deepslate")`).
+- [x] **P1.5 — The brain, wave 1: the terrain spine. Done, runtime-verified.**
+      `Plugins/ShapeProvider` + `ShapeProvider_Normal` ported and producing real, deterministic
+      CityWorld heights; Bukkit's noise stack vendored verbatim into `compat/noise`; `compat/Biome`
+      + `BiomeGrid` shimmed; the `Ys` family (`AbstractYs`, `AbstractCachedYs`,
+      `TraditionalCachedYs`, `Point`) ported; `CityWorldGenerator` grown from a skeleton into the
+      real per-world context. The city-planning side (`PlatMap`, `PlatLot`, the contexts) is stubbed
+      at thin edges — see "How wave 1 was cut" above. **Terrain heights are real; nothing writes
+      them into a chunk yet.**
 - [ ] **P3 — Custom `ChunkGenerator` + registration (vertical slice).** Codec-registered
       `CityWorldChunkGenerator` driving `PlatMap` via `fillFromNoise`; `buildSurface`,
       `getBaseHeight`/`getBaseColumn`; custom `BiomeSource`. Register the dimension (datapack JSON)
@@ -254,9 +291,12 @@ Coupling inventory (from the 1.14 source):
           ours and blocks are exactly the placeholder profile (stone at y=0 where vanilla is
           deepslate) — no exceptions. Verified via a temporary `ServerStartedEvent` diagnostic
           (since removed). **This validates the whole Phase 1 seam plugs into modern worldgen.**
-    - [ ] Replace the placeholder fill with the real terrain brain (needs P2 + `ShapeProvider`/
-          `PlatMap`/contexts ported); add the `/cityworld` teleport into the `cityworld:city`
-          dimension.
+    - [ ] **Replace the placeholder fill with the real terrain shaper — this is the next task; see
+          "Resume here".** No longer blocked: P2 and wave 1 (`ShapeProvider_Normal`, and enough of
+          `PlatLot`/`PlatMap`) are done, and `CityWorldChunkGenerator` already builds the per-world
+          context lazily and thread-safely. Needs a `BiomeGrid` implementation and a decision on the
+          Y offset. Contexts/cities are *not* needed for the terrain gate — they are wave 2.
+    - [ ] Add the `/cityworld` teleport into the `cityworld:city` dimension.
 - [ ] **P4 — Height modernization.** `ShapeProvider` Y math for `-64..319`; deepslate strata;
       sea/tree/snow bands; `OreProvider` deepslate variants; `SurfaceProvider`; modern carvers.
 - [ ] **P5 — Decoration (old `BlockPopulator`).** Loot chests, spawners, furnished `Rooms`,
@@ -289,6 +329,14 @@ been corrected to `GPL-3.0-only`, and a verbatim GPL-3 `LICENSE` now lives at th
 GPL-3, we **may vendor** Bukkit's `SimplexNoiseGenerator`/`SimplexOctaveGenerator` (with notices and
 attribution intact) and so **preserve CityWorld's exact terrain shape**, rather than approximating
 it with vanilla noise and getting different terrain.
+
+**Done** (2026-07): the five classes now live in `me.daddychurchill.CityWorld.compat.noise`
+(`NoiseGenerator`, `PerlinNoiseGenerator`, `SimplexNoiseGenerator`, `OctaveGenerator`,
+`SimplexOctaveGenerator`), each carrying an attribution header naming Bukkit as the source, the
+GPL-3 basis for vendoring, and the only change made (dropping the `org.bukkit.World` ctors). Bukkit
+ships no per-file licence headers — its licence is repo-level — which is precisely why the header we
+add matters. Upstream Bukkit in turn derived them from Stefan Gustavson's public-domain simplex
+paper; that credit is preserved too.
 
 Known wrinkle (not blocking, owner's call): GPL + linking against proprietary Minecraft is a
 long-standing grey area in the modding ecosystem; many GPL mods ship regardless.

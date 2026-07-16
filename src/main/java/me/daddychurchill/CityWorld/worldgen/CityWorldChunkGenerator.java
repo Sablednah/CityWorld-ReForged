@@ -51,8 +51,62 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     // Placeholder vertical profile (Phase 4 replaces this with the ShapeProvider's real levels).
     private static final int SURFACE_Y = 63;
 
+    /**
+     * The world facts the per-world context needs, at their 1.14 values so the ported
+     * {@code ShapeProvider} reproduces upstream's terrain exactly. P4 modernizes this to
+     * {@code -64..319} (PORTING.md, "World layout: modernize now").
+     */
+    private static final int UPSTREAM_MAX_HEIGHT = 256;
+    private static final int UPSTREAM_SEA_LEVEL = 63;
+
+    /**
+     * The per-world context, built once and lazily.
+     *
+     * <p>This generator instance is shared across the chunk pipeline's worker threads, so the
+     * context has to be published safely — hence the volatile + double-checked locking rather than
+     * a plain field. It cannot simply be built in the constructor because the codec does not carry
+     * the world seed; {@link #createState} is the only place vanilla hands it to us.
+     */
+    private volatile CityWorldGenerator context;
+
+    /** Captured in {@link #createState}; see {@link #context}. */
+    private volatile long levelSeed;
+
+    /**
+     * Whether {@link #createState} has handed us the seed yet.
+     *
+     * <p>Tracked separately rather than sniffing for {@code levelSeed == 0} — zero is a perfectly
+     * legal world seed.
+     */
+    private volatile boolean levelSeedKnown;
+
     public CityWorldChunkGenerator(BiomeSource biomeSource) {
         super(biomeSource);
+    }
+
+    /** The per-world context, created on first use. */
+    private CityWorldGenerator context() {
+        CityWorldGenerator local = context;
+        if (local == null) {
+            synchronized (this) {
+                local = context;
+                if (local == null) {
+                    // In practice the level's structure state is built before any chunk generates,
+                    // so the seed is always known by now. Fail loudly rather than trust it: the
+                    // context is cached forever, so seeding it wrong would silently give this world
+                    // the wrong terrain for its entire life — with no symptom to trace back.
+                    if (!levelSeedKnown)
+                        throw new IllegalStateException(
+                                "CityWorld: chunk generation began before createState() supplied the world seed, "
+                                        + "so the per-world context cannot be seeded. Terrain would be wrong for "
+                                        + "this world. Find another way to obtain the seed.");
+                    local = new CityWorldGenerator(levelSeed, UPSTREAM_MAX_HEIGHT, UPSTREAM_SEA_LEVEL,
+                            CityWorldGenerator.WorldStyle.NORMAL);
+                    context = local;
+                }
+            }
+        }
+        return local;
     }
 
     @Override
@@ -63,8 +117,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     @Override
     public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState,
             StructureManager structureManager, ChunkAccess chunk) {
-        // Minimal per-world context for the block layer (grows into the real generator in later phases).
-        CityWorldGenerator context = new CityWorldGenerator();
+        CityWorldGenerator context = context();
         int minY = chunk.getMinY();
 
         InitialBlocks blocks = new InitialBlocks(context, chunk, chunk.getPos().x, chunk.getPos().z);
@@ -97,6 +150,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     @Override
     public ChunkGeneratorStructureState createState(HolderLookup<StructureSet> lookup,
             RandomState randomState, long seed) {
+        // Doubles as the one place vanilla tells a ChunkGenerator its world seed — see context().
+        this.levelSeed = seed;
+        this.levelSeedKnown = true;
         return ChunkGeneratorStructureState.createForFlat(
                 randomState, seed, this.biomeSource, Stream.<Holder<StructureSet>>empty());
     }
