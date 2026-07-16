@@ -149,6 +149,12 @@ That is the payoff of vendoring Bukkit's noise rather than approximating it with
 evidence no probe can produce. It does **not** settle the sea-level question below: a uniform
 one-block shift is invisible to the eye.
 
+**Confirmed again once the cities landed** (after the `NatureContext` fix): "bridges, tunnels,
+mountains, buildings, roundabouts — it all feels right, like old CityWorld". Worth noting what that
+covers that nothing here tested: **bridges and tunnels**. Several hundred lines of `RoadLot` — the
+polarity search in `PlatMap.isBridgeTowards` that decides a crossing is worth building, then the
+bridge caps, railings and tunnel linings — and no probe ever looked for them. They work.
+
 **A bug this caught:** `getBaseHeight` first returned the *terrain* height, which disagreed with the
 world on **63 of 289** columns — every sea column, because `WORLD_SURFACE` counts water as the
 surface while `OCEAN_FLOOR` doesn't. Vanilla uses it to place spawn, so it would have dropped players
