@@ -1,0 +1,406 @@
+#!/usr/bin/env python3
+"""
+Phase 2 codegen: generate me.daddychurchill.CityWorld.compat.Material.
+
+Partitions every `Material.X` constant referenced by the original Bukkit source into:
+  - block constants   -> of(Blocks.X)      (name exists as a modern Blocks field)
+  - legacy/renamed    -> of(Blocks.<new>)  (hand-mapped table below)
+  - item-only         -> ofItem(Items.X)   (name exists as a modern Items field only)
+
+Run:  python3 gen_material.py
+"""
+import glob
+import pathlib
+import re
+import subprocess
+import sys
+import tempfile
+import zipfile
+
+# Repo root (this script lives in <repo>/scripts/).
+REPO = pathlib.Path(__file__).resolve().parent.parent
+# Bootstrap cache lives outside the repo so it is never committed.
+SCRATCH = pathlib.Path(tempfile.gettempdir()) / "cityworld-portgen"
+REF = SCRATCH / "bukkit-ref/src"
+MCSRC = SCRATCH / "mcsrc"
+OUT = REPO / "src/main/java/me/daddychurchill/CityWorld/compat/Material.java"
+
+# A file that only ever existed in the Bukkit tree — used to locate the pre-port commit.
+SENTINEL = "src/me/daddychurchill/CityWorld/Support/AbstractBlocks.java"
+MC_FILES = ["net/minecraft/world/level/block/Blocks.java", "net/minecraft/world/item/Items.java"]
+
+
+def git(*args):
+    return subprocess.run(["git", "-C", str(REPO), *args],
+                          capture_output=True, text=True, check=True).stdout.strip()
+
+
+def ensure_bukkit_ref():
+    """Restore the original Bukkit source from git history (it's not in the working tree)."""
+    if REF.is_dir():
+        return
+    # The commit that DELETED the Bukkit tree; its parent still has it.
+    deleted_in = git("log", "--diff-filter=D", "--format=%H", "-1", "--", SENTINEL)
+    if not deleted_in:
+        sys.exit(f"Could not find the commit that removed {SENTINEL}")
+    ref = f"{deleted_in}~1"
+    REF.parent.mkdir(parents=True, exist_ok=True)
+    print(f"bootstrapping Bukkit reference tree from {ref[:12]}")
+    archive = subprocess.run(["git", "-C", str(REPO), "archive", ref, "src"],
+                             capture_output=True, check=True).stdout
+    tar = SCRATCH / "_ref.tar"
+    tar.write_bytes(archive)
+    subprocess.run(["tar", "-xf", str(tar), "-C", str(REF.parent)], check=True)
+    tar.unlink()
+
+
+def ensure_mc_sources():
+    """Extract the decompiled Blocks/Items sources from the NeoForm cache."""
+    if all((MCSRC / f).exists() for f in MC_FILES):
+        return
+    jars = glob.glob(str(pathlib.Path.home() /
+                         ".gradle/caches/neoformruntime/intermediate_results/"
+                         "sourcesAndCompiledWithNeoForge_*_output.jar"))
+    if not jars:
+        sys.exit("NeoForm sources jar not found — run ./gradlew build first.")
+    MCSRC.mkdir(parents=True, exist_ok=True)
+    print(f"bootstrapping MC sources from {pathlib.Path(jars[0]).name}")
+    with zipfile.ZipFile(jars[0]) as z:
+        for f in MC_FILES:
+            z.extract(f, MCSRC)
+
+# 1.14 Bukkit name -> modern Blocks field. Names that no longer exist in either registry.
+# (Most of these survive only in commented-out code; mapped anyway so they can't bite later.)
+LEGACY = {
+    "BED_BLOCK":          ("WHITE_BED",         "generic bed -> a concrete colour"),
+    "CARPET":             ("WHITE_CARPET",      "generic carpet -> a concrete colour"),
+    "DOUBLE_STEP":        ("SMOOTH_STONE",      "legacy double stone slab -> the full block"),
+    "ENCHANTMENT_TABLE":  ("ENCHANTING_TABLE",  "renamed"),
+    "ENDER_PORTAL_FRAME": ("END_PORTAL_FRAME",  "renamed"),
+    "GRASS":              ("SHORT_GRASS",       "1.14 GRASS was the plant; renamed in 1.20.3"),
+    "GRASS_PATH":         ("DIRT_PATH",         "renamed"),
+    "IRON_DOOR_BLOCK":    ("IRON_DOOR",         "legacy block name"),
+    "LONG_GRASS":         ("TALL_GRASS",        "legacy tall-grass name"),
+    "QUARTZ_ORE":         ("NETHER_QUARTZ_ORE", "renamed"),
+    "SIGN":               ("OAK_SIGN",          "generic sign -> oak"),
+    "TRAP_DOOR":          ("OAK_TRAPDOOR",      "legacy generic trapdoor -> oak"),
+    "WOOD_DOOR":          ("OAK_DOOR",          "legacy generic wooden door -> oak"),
+    "WOOD_STEP":          ("OAK_SLAB",          "legacy generic wooden slab -> oak"),
+}
+
+
+def referenced_names():
+    out = subprocess.run(
+        ["grep", "-rhoE", r"Material\.[A-Z][A-Z_0-9]*", str(REF)],
+        capture_output=True, text=True, check=True).stdout
+    return sorted({line.split(".", 1)[1] for line in out.splitlines() if line.strip()})
+
+
+def fields(java_file, decl):
+    text = (MCSRC / java_file).read_text()
+    return set(re.findall(r"public static final %s ([A-Z][A-Z_0-9]*)" % decl, text))
+
+
+def main():
+    ensure_bukkit_ref()
+    ensure_mc_sources()
+
+    names = referenced_names()
+    blocks = fields("net/minecraft/world/level/block/Blocks.java", "Block")
+    items = fields("net/minecraft/world/item/Items.java", "Item")
+
+    block_names, item_names, legacy_names, unknown = [], [], [], []
+    for n in names:
+        if n in LEGACY:
+            legacy_names.append(n)
+        elif n in blocks:
+            block_names.append(n)
+        elif n in items:
+            item_names.append(n)
+        else:
+            unknown.append(n)
+
+    # Fail loudly rather than silently emitting something that won't compile.
+    if unknown:
+        sys.exit("Unmapped names (add to LEGACY): %s" % ", ".join(unknown))
+    bad = [f"{k}->{v[0]}" for k, v in LEGACY.items() if v[0] not in blocks]
+    if bad:
+        sys.exit("LEGACY targets missing from Blocks: %s" % ", ".join(bad))
+
+    lines = []
+    lines.append("    // ---- Blocks (%d) — 1.14 names that map 1:1 onto a modern block --------------"
+                 % len(block_names))
+    for n in block_names:
+        lines.append(f"    public static final Material {n} = of(Blocks.{n});")
+    lines.append("")
+    lines.append("    // ---- Legacy / renamed (%d) — 1.14 names with no modern equivalent ----------"
+                 % len(legacy_names))
+    for n in legacy_names:
+        target, why = LEGACY[n]
+        lines.append(f"    public static final Material {n} = of(Blocks.{target}); // {why}")
+    lines.append("")
+    lines.append("    // ---- Items (%d) — Bukkit's Material spanned blocks AND items; these are ----"
+                 % len(item_names))
+    lines.append("    // ---- item-only (loot/chest contents). They carry no block state. -----------")
+    for n in item_names:
+        lines.append(f"    public static final Material {n} = ofItem(Items.{n});")
+
+    constants = "\n".join(lines)
+    OUT.write_text(TEMPLATE.replace("//__CONSTANTS__", constants))
+
+    print(f"blocks={len(block_names)} legacy={len(legacy_names)} items={len(item_names)} "
+          f"total={len(block_names)+len(legacy_names)+len(item_names)} (referenced={len(names)})")
+    print(f"wrote {OUT}")
+
+
+TEMPLATE = '''package me.daddychurchill.CityWorld.compat;
+
+import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
+
+import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.block.state.properties.Half;
+import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.block.state.properties.SlabType;
+
+/**
+ * Port shim for {@code org.bukkit.Material}.
+ *
+ * <p><b>Generated — do not hand-edit the constant block.</b> It is produced by
+ * {@code gen_material.py} from the constants the original Bukkit source actually references,
+ * cross-checked against the modern {@link Blocks}/{@link Items} fields.
+ *
+ * <p>The original generator passes Bukkit {@code Material} constants around as a vocabulary
+ * (never switched-on anywhere in the source), so this replaces that vocabulary with interned
+ * wrappers over vanilla types; ported call sites keep their {@code Material.STONE} shape and only
+ * change an import.
+ *
+ * <p>Like Bukkit's enum, a {@code Material} may denote a <em>block</em> or an <em>item</em>:
+ * block-backed materials expose a {@link BlockState}; item-only ones (loot/chest contents) do not
+ * and return {@code null} from the state accessors — see {@link #isBlock()}.
+ *
+ * <p>Because Bukkit encoded orientation in separate {@code BlockFace}/slab/half arguments applied
+ * at placement rather than baked into the constant, a material holds a block's <em>default
+ * state</em> and derives oriented states via {@link #withFacing}, {@link #withFaces},
+ * {@link #asSlab} and {@link #asDoorHalf}.
+ *
+ * <p>Instances are interned, so {@code ==}/{@link #equals} compare block (or item) identity,
+ * ignoring state — matching how the old code compared {@code Material}s.
+ */
+public final class Material {
+
+    private static final ConcurrentHashMap<Block, Material> BLOCK_INTERN = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Item, Material> ITEM_INTERN = new ConcurrentHashMap<>();
+
+    private final Block block;
+    private final BlockState defaultState;
+    private final Item item;
+
+    private Material(Block block) {
+        this.block = block;
+        this.defaultState = block.defaultBlockState();
+        this.item = block.asItem();
+    }
+
+    private Material(Item item) {
+        this.block = null;
+        this.defaultState = null;
+        this.item = item;
+    }
+
+    /** Interned wrapper for a vanilla block. */
+    public static Material of(Block block) {
+        return BLOCK_INTERN.computeIfAbsent(block, Material::new);
+    }
+
+    /** Interned wrapper for an item-only material (no block form). */
+    public static Material ofItem(Item item) {
+        return ITEM_INTERN.computeIfAbsent(item, Material::new);
+    }
+
+    /**
+     * Resolve a block by (namespaced or bare) id, e.g. {@code "stone"} or {@code "minecraft:stone"}.
+     * Falls back to {@link #AIR} if unknown. Requires the block registry to be loaded (true during
+     * world generation); prefer the typed constants for anything referenced at class-load time.
+     */
+    public static Material of(String id) {
+        Identifier key = id.indexOf(':') >= 0 ? Identifier.parse(id) : Identifier.withDefaultNamespace(id);
+        Block resolved = BuiltInRegistries.BLOCK.getValue(key);
+        return of(resolved == null ? Blocks.AIR : resolved);
+    }
+
+    /** Whether this material has a block form (false for item-only materials). */
+    public boolean isBlock() {
+        return block != null;
+    }
+
+    /** The vanilla block, or {@code null} for item-only materials. */
+    public Block getBlock() {
+        return block;
+    }
+
+    /** The block's default {@link BlockState}, or {@code null} for item-only materials. */
+    public BlockState getBlockState() {
+        return defaultState;
+    }
+
+    /** The item form (a block's own item for block-backed materials). */
+    public Item getItem() {
+        return item;
+    }
+
+    /** Approximates Bukkit {@code Material.name()} — the registry path, upper-cased. */
+    public String name() {
+        Identifier key = block != null
+                ? BuiltInRegistries.BLOCK.getKey(block)
+                : BuiltInRegistries.ITEM.getKey(item);
+        return key.getPath().toUpperCase(Locale.ROOT);
+    }
+
+    public boolean is(Material other) {
+        if (other == null) {
+            return false;
+        }
+        return block != null ? other.block == block : other.item == item;
+    }
+
+    // ---- Orientation derivation (mirrors the old InitialBlocks BlockData logic) --------------
+
+    /**
+     * Apply a single facing, matching the old {@code Directional / MultipleFacing / Orientable}
+     * fallback chain: a facing property if present, else a single connection face, else an axis.
+     */
+    public BlockState withFacing(BlockFace facing) {
+        BlockState state = defaultState;
+        if (state == null) {
+            return null;
+        }
+        Direction dir = facing.toDirection();
+        if (dir != null && state.hasProperty(BlockStateProperties.FACING)) {
+            return state.setValue(BlockStateProperties.FACING, dir);
+        }
+        if (dir != null && dir.getAxis().isHorizontal()
+                && state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+            return state.setValue(BlockStateProperties.HORIZONTAL_FACING, dir);
+        }
+        Property<Boolean> faceProp = booleanFaceProperty(facing);
+        if (faceProp != null && state.hasProperty(faceProp)) {
+            return state.setValue(faceProp, true);
+        }
+        if (state.hasProperty(BlockStateProperties.AXIS)) {
+            return state.setValue(BlockStateProperties.AXIS, axisFor(facing));
+        }
+        return state;
+    }
+
+    /** Set several connection faces true (fences, walls, panes, glass). */
+    public BlockState withFaces(BlockFace... faces) {
+        BlockState state = defaultState;
+        if (state == null) {
+            return null;
+        }
+        for (BlockFace face : faces) {
+            Property<Boolean> faceProp = booleanFaceProperty(face);
+            if (faceProp != null && state.hasProperty(faceProp)) {
+                state = state.setValue(faceProp, true);
+            }
+        }
+        return state;
+    }
+
+    /** The block as a slab of the given type (top / bottom / double), if it is a slab. */
+    public BlockState asSlab(SlabType type) {
+        BlockState state = defaultState;
+        if (state == null) {
+            return null;
+        }
+        return state.hasProperty(BlockStateProperties.SLAB_TYPE)
+                ? state.setValue(BlockStateProperties.SLAB_TYPE, type)
+                : state;
+    }
+
+    /**
+     * One half of a two-tall block (door), facing the given direction. Handles both the modern
+     * {@code DOUBLE_BLOCK_HALF} (doors) and the {@code HALF} (stairs/trapdoors) properties.
+     */
+    public BlockState asDoorHalf(boolean top, BlockFace facing) {
+        BlockState state = defaultState;
+        if (state == null) {
+            return null;
+        }
+        Direction dir = facing.toDirection();
+        if (dir != null && dir.getAxis().isHorizontal()
+                && state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+            state = state.setValue(BlockStateProperties.HORIZONTAL_FACING, dir);
+        }
+        if (state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)) {
+            state = state.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF,
+                    top ? DoubleBlockHalf.UPPER : DoubleBlockHalf.LOWER);
+        } else if (state.hasProperty(BlockStateProperties.HALF)) {
+            state = state.setValue(BlockStateProperties.HALF, top ? Half.TOP : Half.BOTTOM);
+        }
+        return state;
+    }
+
+    private static Property<Boolean> booleanFaceProperty(BlockFace face) {
+        switch (face) {
+            case NORTH: return BlockStateProperties.NORTH;
+            case EAST:  return BlockStateProperties.EAST;
+            case SOUTH: return BlockStateProperties.SOUTH;
+            case WEST:  return BlockStateProperties.WEST;
+            case UP:    return BlockStateProperties.UP;
+            case DOWN:  return BlockStateProperties.DOWN;
+            default:    return null;
+        }
+    }
+
+    private static Direction.Axis axisFor(BlockFace facing) {
+        switch (facing) {
+            case NORTH:
+            case SOUTH:
+                return Direction.Axis.Z;
+            case EAST:
+            case WEST:
+                return Direction.Axis.X;
+            default:
+                return Direction.Axis.Y;
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Material)) {
+            return false;
+        }
+        Material other = (Material) o;
+        return block != null ? other.block == block : other.item == item;
+    }
+
+    @Override
+    public int hashCode() {
+        return block != null ? block.hashCode() : item.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Material(" + name() + ")";
+    }
+
+//__CONSTANTS__
+}
+'''
+
+if __name__ == "__main__":
+    main()
