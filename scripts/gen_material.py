@@ -88,6 +88,13 @@ LEGACY = {
     "WOOD_STEP":          ("OAK_SLAB",          "legacy generic wooden slab -> oak"),
 }
 
+# Modern blocks the 1.14 vocabulary never had, so they appear nowhere in the Bukkit source and
+# referenced_names() cannot find them — but the port needs them anyway. Added here rather than by
+# hand-editing Material.java (which is generated). Each must exist as a modern Blocks field.
+EXTRAS = {
+    "DEEPSLATE": "P4: the deep stratum below y=0; 1.14's world bottomed out at stone",
+}
+
 
 def referenced_names():
     out = subprocess.run(
@@ -126,6 +133,14 @@ def main():
     bad = [f"{k}->{v[0]}" for k, v in LEGACY.items() if v[0] not in blocks]
     if bad:
         sys.exit("LEGACY targets missing from Blocks: %s" % ", ".join(bad))
+    missing_extras = [n for n in EXTRAS if n not in blocks]
+    if missing_extras:
+        sys.exit("EXTRAS missing from Blocks: %s" % ", ".join(missing_extras))
+    # An EXTRA that the Bukkit source turns out to reference is just a normal block constant, and
+    # emitting both would not compile.
+    dupe_extras = [n for n in EXTRAS if n in block_names]
+    if dupe_extras:
+        sys.exit("EXTRAS already emitted as block constants (drop them): %s" % ", ".join(dupe_extras))
 
     lines = []
     lines.append("    // ---- Blocks (%d) — 1.14 names that map 1:1 onto a modern block --------------"
@@ -138,6 +153,11 @@ def main():
     for n in legacy_names:
         target, why = LEGACY[n]
         lines.append(f"    public static final Material {n} = of(Blocks.{target}); // {why}")
+    lines.append("")
+    lines.append("    // ---- Modern extras (%d) — blocks the 1.14 vocabulary never had -------------"
+                 % len(EXTRAS))
+    for n in sorted(EXTRAS):
+        lines.append(f"    public static final Material {n} = of(Blocks.{n}); // {EXTRAS[n]}")
     lines.append("")
     lines.append("    // ---- Items (%d) — Bukkit's Material spanned blocks AND items; these are ----"
                  % len(item_names))
@@ -273,6 +293,15 @@ public final class Material {
         return block != null ? other.block == block : other.item == item;
     }
 
+    /**
+     * Bukkit's {@code Material.isOccluding()} — whether this is a full, opaque cube. The generator
+     * uses it to decide what may be stacked on (see {@code SupportBlocks.isNonstackableBlock}).
+     * Item-only materials are not occluding.
+     */
+    public boolean isOccluding() {
+        return defaultState != null && defaultState.canOcclude();
+    }
+
     // ---- Orientation derivation (mirrors the old InitialBlocks BlockData logic) --------------
 
     /**
@@ -292,7 +321,7 @@ public final class Material {
                 && state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
             return state.setValue(BlockStateProperties.HORIZONTAL_FACING, dir);
         }
-        Property<Boolean> faceProp = booleanFaceProperty(facing);
+        Property<Boolean> faceProp = faceProperty(facing);
         if (faceProp != null && state.hasProperty(faceProp)) {
             return state.setValue(faceProp, true);
         }
@@ -302,19 +331,43 @@ public final class Material {
         return state;
     }
 
-    /** Set several connection faces true (fences, walls, panes, glass). */
+    /** Set several connection faces true (fences, panes, glass, bars, vines). */
     public BlockState withFaces(BlockFace... faces) {
         BlockState state = defaultState;
         if (state == null) {
             return null;
         }
         for (BlockFace face : faces) {
-            Property<Boolean> faceProp = booleanFaceProperty(face);
+            Property<Boolean> faceProp = faceProperty(face);
             if (faceProp != null && state.hasProperty(faceProp)) {
                 state = state.setValue(faceProp, true);
             }
         }
         return state;
+    }
+
+    /**
+     * Whether this block connects face-by-face — Bukkit's {@code MultipleFacing}. The old code
+     * tests this to choose between per-face and bulk placement (see {@code SupportBlocks.setWalls}).
+     *
+     * <p><b>Walls are deliberately excluded.</b> In 1.14 walls were {@code MultipleFacing} like
+     * fences, but the 1.16 flattening moved them to a {@code WallSide} (none/low/tall) enum per
+     * side, so they no longer carry the boolean face properties this reports on. They therefore
+     * take the bulk-placement branch. Revisit when decoration lands (Phase 5) if wall connections
+     * come out wrong.
+     */
+    public boolean hasFaces() {
+        if (defaultState == null) {
+            return false;
+        }
+        for (BlockFace face : new BlockFace[] { BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST,
+                BlockFace.UP, BlockFace.DOWN }) {
+            Property<Boolean> faceProp = faceProperty(face);
+            if (faceProp != null && defaultState.hasProperty(faceProp)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** The block as a slab of the given type (top / bottom / double), if it is a slab. */
@@ -351,7 +404,8 @@ public final class Material {
         return state;
     }
 
-    private static Property<Boolean> booleanFaceProperty(BlockFace face) {
+    /** The boolean connection property for one face, or {@code null} for a face that has none. */
+    public static Property<Boolean> faceProperty(BlockFace face) {
         switch (face) {
             case NORTH: return BlockStateProperties.NORTH;
             case EAST:  return BlockStateProperties.EAST;

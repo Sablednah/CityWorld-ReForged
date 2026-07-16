@@ -722,6 +722,9 @@ public final class Material {
     public static final Material WOOD_DOOR = of(Blocks.OAK_DOOR); // legacy generic wooden door -> oak
     public static final Material WOOD_STEP = of(Blocks.OAK_SLAB); // legacy generic wooden slab -> oak
 
+    // ---- Modern extras (1) — blocks the 1.14 vocabulary never had -------------
+    public static final Material DEEPSLATE = of(Blocks.DEEPSLATE); // P4: the deep stratum below y=0; 1.14's world bottomed out at stone
+
     // ---- Items (116) — Bukkit's Material spanned blocks AND items; these are ----
     // ---- item-only (loot/chest contents). They carry no block state. -----------
     public static final Material ACACIA_BOAT = ofItem(Items.ACACIA_BOAT);
