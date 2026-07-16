@@ -62,6 +62,12 @@ A `ServerStartedEvent` probe (since deleted) generated a real world and read it 
 - **`getBaseHeight` agrees with generated terrain on 288/289.** The one outlier is a surface cave,
   which `getBaseColumn` deliberately does not model.
 
+**And confirmed by eye**: the project owner played a generated world and recognised it — "mountains,
+flat areas with beaches and lots of caves — looks just like the old CityWorld terrain I remember".
+That is the payoff of vendoring Bukkit's noise rather than approximating it with vanilla's, and it is
+evidence no probe can produce. It does **not** settle the sea-level question below: a uniform
+one-block shift is invisible to the eye.
+
 **A bug this caught:** `getBaseHeight` first returned the *terrain* height, which disagreed with the
 world on **63 of 289** columns — every sea column, because `WORLD_SURFACE` counts water as the
 surface while `OCEAN_FLOOR` doesn't. Vanilla uses it to place spawn, so it would have dropped players
