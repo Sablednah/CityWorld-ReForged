@@ -2,33 +2,30 @@
 
 ## ▶ Resume here (next task)
 
-**Wave 1 of the brain is done and runtime-verified: `ShapeProvider` + `ShapeProvider_Normal` are
-ported and produce real, deterministic CityWorld terrain heights.** The next task is to **wire that
-terrain into `CityWorldChunkGenerator.fillFromNoise`**, replacing the placeholder flat fill — that
-is the remaining half of the P3 gate ("teleport in and see terrain").
+**The P3 gate is met: CityWorld terrain generates in a real world.** `ShapeProvider_Normal` drives
+`CityWorldChunkGenerator.fillFromNoise`, the height modernization (P4's Y math) is done, and it is
+all verified against blocks read back out of a generated world — mountains, seas, beaches, caves,
+lava fields, and a vanilla-style deepslate underground from -64.
 
-### Wiring it in — what's already true, and the one decision to make first
+**What's missing is the cities.** Every chunk comes out a natural lot, because the city-planning half
+of the brain (`PlatMap`, `PlatLot`, the contexts) is still stubbed. **That is wave 2, and it is the
+next task** — see "Wave 2" below.
 
-The call shape is short, because the pieces exist:
+### Wave 2: the city planning half
 
-```java
-CityWorldGenerator context = context();                 // already there, lazy + thread-safe
-PlatLot lot = new PlatLot(context, chunkX, chunkZ);      // precalcs its own cached Ys
-InitialBlocks blocks = new InitialBlocks(context, chunk, chunkX, chunkZ);
-context.shapeProvider.preGenerateChunk(context, lot, blocks, biomes, lot.blockYs);
-context.shapeProvider.postGenerateChunk(context, lot, blocks, lot.blockYs);
-```
+The terrain half is done and wired. What's missing is everything that decides a chunk is a *road* or
+a *building* rather than wilderness — currently stubbed at the cycle's thin edges:
 
-Two things to settle before writing it:
+| stub | what the real one does |
+|---|---|
+| `Support/PlatMap` (548) | the Width×Width lot grid; `populateRoads`/`validateRoads` |
+| `Plats/PlatLot` (612) + its subclasses (`RoadLot` 1677, `BuildingLot` 1220, `FinishedBuildingLot` 2348, …) | one chunk's "what goes here" |
+| `Context/DataContext` (165) + ~20 concrete contexts | which lots populate a platmap |
+| `ShapeProvider_Normal.getContext(PlatMap)` | the ten-way nature-percent ladder (thresholds recorded verbatim in its javadoc) |
+| `CityWorldSettings` (961) | only the shaper's flags exist, at upstream defaults |
 
-1. **The Y offset — decide this first, it's the whole shape of P4.** The ported shaper thinks in
-   upstream's `0..255` world (`ShapeProvider.bottomOfWorld = 0`, and `CityWorldChunkGenerator`
-   currently feeds it `UPSTREAM_MAX_HEIGHT = 256` / `UPSTREAM_SEA_LEVEL = 63` deliberately, to
-   reproduce upstream's terrain exactly). Wired naively into a `-64..319` world, terrain lands at
-   `y = 0..253` with a void gap below it. Either accept that as a visible-but-wrong-looking gate and
-   fix it at P4, or do the height modernization first. Not a bug — a sequencing choice.
-2. **`BiomeGrid`** needs an implementation to receive the per-column biomes (a no-op one is enough
-   to see terrain; see `compat/BiomeGrid` for why the real answer is a `BiomeSource`).
+The natural first cut is `PlatMap` + `PlatLot` + `NatureContext` for real, since `getContext` already
+returns nature — that gets lots being *placed* without needing the urban families yet.
 
 ### ⚠ Open question: is upstream's sea level 63 or 64? (found 2026-07, unresolved)
 
@@ -49,10 +46,30 @@ sea level was 64.
 level uniformly by one, and P4 re-does this Y mapping anyway. Settle it against a real 1.14
 CraftBukkit `getSeaLevel()` before declaring terrain parity at P8.
 
-### What wave 1 actually built (verified in a live world, 2026-07)
+### Verified by reading blocks back out of a generated world (2026-07)
 
-A `ServerStartedEvent` probe (since deleted) drove the ported provider directly. Results, seed 12345,
-`256`/`63`:
+A `ServerStartedEvent` probe (since deleted) generated a real world and read it back:
+
+- **Layout**: `minY=-64 maxY=319`, generator is ours. Bedrock at **-64**, and y=0 is *stone, not
+  bedrock* — i.e. the old 1.14 floor is gone.
+- **Deepslate blend**: 100% deepslate at y=-8 ramping smoothly to 100% stone at y=0, mixed on all 7
+  rows between. Ragged like vanilla, not a flat seam.
+- **Real terrain**: surface varies **64..211** across a ±512 grid; sample columns show continuous
+  strata from bedrock through deepslate to stone to a grass surface at y=129/65/123, with scattered
+  air pockets that are caves (5–29 per column, no long runs — so no void gaps).
+- **Seas and beaches run**: ~52 of 289 sampled columns are water-topped, and 8 are sand — so the
+  sea/beach/fluid branches of `preGenerateChunk` genuinely execute, not just the mountain branch.
+- **`getBaseHeight` agrees with generated terrain on 288/289.** The one outlier is a surface cave,
+  which `getBaseColumn` deliberately does not model.
+
+**A bug this caught:** `getBaseHeight` first returned the *terrain* height, which disagreed with the
+world on **63 of 289** columns — every sea column, because `WORLD_SURFACE` counts water as the
+surface while `OCEAN_FLOOR` doesn't. Vanilla uses it to place spawn, so it would have dropped players
+under the sea. Both it and `getBaseColumn` now model the fluid fill, and `getBaseHeight` is derived
+*from* `getBaseColumn` via the heightmap's own predicate, exactly as vanilla does, so the two cannot
+drift apart again.
+
+### And earlier, driving the provider directly (seed 12345, `256`/`63`)
 
 - **The datums derive correctly**: `height=256 seaLevel=63 streetLevel=64 landRange=186 seaRange=28`,
   `deepsea=54 tree=109 evergreen=155 snow=201`. `streetLevel = seaLevel + 1` as predicted.
@@ -67,9 +84,8 @@ A `ServerStartedEvent` probe (since deleted) drove the ported provider directly.
 - **Caves carve**: `notACave` is false for ~4.6% of sampled blocks — so the strata loop's cave branch
   is live, not a no-op.
 
-**Still unexercised**: `preGenerateChunk` → `generateStratas` → `chunk.setBlock`, i.e. the path that
-actually *writes* terrain. It needs a real `ChunkAccess`, so it gets proven by the wiring above —
-that is the first thing to check once fillFromNoise drives it.
+(The write path — `preGenerateChunk` → `generateStratas` → `chunk.setBlock` — was unexercised at that
+point; wiring `fillFromNoise` is what proved it, above.)
 
 ### How wave 1 was cut (so wave 2 can be cut the same way)
 
@@ -122,7 +138,14 @@ Phases 5–6.
 - **Delivery: both** a custom **dimension** (`cityworld:city`, entered via `/cityworld`) *and* a
   **world preset** (whole-world generation at creation). Both sit on one shared `ChunkGenerator`.
 - **World layout: modernize now** — full `-64..319` height, deepslate strata, modern cave carvers
-  (not a 1:1 copy of the 1.14 `0..255` layout).
+  (not a 1:1 copy of the 1.14 `0..255` layout). **Settled 2026-07 — "extend down, keep the shape":**
+  the world runs `-64..319`, but **terrain still scales against a 256 ceiling**. These are two
+  different numbers, and upstream conflated them in `world.getMaxHeight()`. `landRange` (which sets
+  mountain amplitude) is derived from that ceiling, so feeding the shaper 384 would not make the
+  world taller — it would make *mountains* half again as tall (peaks ~345, clipping the 319 ceiling)
+  and discard the shape the noise vendoring exists to preserve. So modernization goes **downward**:
+  64 blocks of new underground, deepslate below y=0, sky/building headroom to 319. Sea level is 63
+  in both 1.14 and modern Minecraft, so the surface band already lines up.
 - **Package tree preserved**: keep `me.daddychurchill.CityWorld.*` across all ported files to
   minimize churn and keep attribution. Gradle `mod_group_id = me.daddychurchill.cityworld`.
 
@@ -297,8 +320,26 @@ Coupling inventory (from the 1.14 source):
           context lazily and thread-safely. Needs a `BiomeGrid` implementation and a decision on the
           Y offset. Contexts/cities are *not* needed for the terrain gate — they are wave 2.
     - [ ] Add the `/cityworld` teleport into the `cityworld:city` dimension.
-- [ ] **P4 — Height modernization.** `ShapeProvider` Y math for `-64..319`; deepslate strata;
-      sea/tree/snow bands; `OreProvider` deepslate variants; `SurfaceProvider`; modern carvers.
+- [ ] **P4 — Height modernization.** Mostly done (2026-07); see "extend down, keep the shape" above.
+    - [x] **`ShapeProvider` Y math for `-64..319`.** The key insight is that upstream's single
+          `height` meant two things — the world's ceiling *and* the ceiling terrain scales against —
+          and they now differ. `CityWorldGenerator` splits them: `getTerrainCeiling()` (256, feeds
+          `landRange`) vs `worldMinY`/`worldMaxY` (-64/319, the real bounds).
+          `ShapeProvider.bottomOfWorld` was a hardcoded `0` and now reads `generator.worldMinY`, so
+          the strata reach the real floor instead of opening onto a void.
+    - [x] **Deepslate strata.** `OreProvider.stratumMaterialAt` blends stone→deepslate across
+          `y = 0..-8` like vanilla, ragged rather than a flat seam, off seed-derived noise (so it
+          stays deterministic under the multithreaded pipeline). It only substitutes for *this*
+          provider's stone, so the Nether/End/Astral strata are untouched when those land.
+    - [x] **Y constants that were secretly floor-relative.** `OreProvider.lavaFieldLevel` was an
+          absolute `12` that only meant "12 above bedrock" because bedrock was at 0; at -64 it would
+          have flooded 76 blocks. Now `lavaFieldDepth` + `worldMinY`. `AbstractBlocks.insideY`/
+          `clampY` were `0..height` and would have rejected/mis-clamped the new underground — fixed
+          preventively (nothing calls them until wave 2's lots do).
+    - [ ] `OreProvider` deepslate **ore** variants (`deepslate_coal_ore`, …) — needed once ores are
+          actually placed (P5). Add them via `EXTRAS` in `gen_material.py`, as `DEEPSLATE` was.
+    - [ ] `SurfaceProvider`; modern carvers; revisit `DataContext.buildingMaximumY` (still capped at
+          the 256 terrain ceiling, though the world now allows 319).
 - [ ] **P5 — Decoration (old `BlockPopulator`).** Loot chests, spawners, furnished `Rooms`,
       neighbor-aware roads/parks → feature placement / post-gen, respecting neighbor limits (the
       seed-deterministic `PlatMap` makes per-chunk regeneration viable). Migrate datapack loot

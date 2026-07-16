@@ -57,10 +57,26 @@ public class CityWorldGenerator {
     // --- what the original read off the Bukkit World -------------------------------------------
 
     private final long worldSeed;
-    private final int worldMaxHeight;
+    private final int terrainCeiling;
     private final int worldSeaLevel;
 
     public final WorldStyle worldStyle;
+
+    /**
+     * The world's real block bounds — {@code -64} and {@code 319} for a modern overworld.
+     *
+     * <p><b>These are deliberately not the same as {@link #height}.</b> In 1.14 the world was
+     * {@code 0..255} and one number meant both "how tall the world is" and "how tall terrain
+     * scales"; upstream conflated them in {@code world.getMaxHeight()}. At P4 they separate:
+     * terrain still scales against a 256 ceiling (so its shape stays exactly upstream's — the whole
+     * point of vendoring Bukkit's noise), while the world itself runs {@code -64..319}. The extra
+     * room is not stretched terrain: below is 64 blocks of new underground, above is sky/building
+     * headroom.
+     */
+    public final int worldMinY;
+
+    /** Inclusive — {@code 319} for a modern overworld. See {@link #worldMinY}. */
+    public final int worldMaxY;
 
     // --- the provider stack -------------------------------------------------------------------
 
@@ -90,16 +106,22 @@ public class CityWorldGenerator {
      *
      * @param worldSeed      the world seed — every provider derives its noise from this, so it is
      *                       what makes generation reproducible
-     * @param worldMaxHeight what Bukkit's {@code World.getMaxHeight()} used to answer; supply it
-     *                       from the level's {@code LevelHeightAccessor} at P3
+     * @param terrainCeiling what Bukkit's {@code World.getMaxHeight()} used to answer, and what
+     *                       terrain still scales against; pass {@code 256} for upstream's shape.
+     *                       <em>Not</em> the world's ceiling — see {@link #worldMinY}
      * @param worldSeaLevel  what Bukkit's {@code World.getSeaLevel()} used to answer
      * @param worldStyle     which {@code ShapeProvider} variant to load
+     * @param worldMinY      the world's real floor, from the level's {@code LevelHeightAccessor}
+     * @param worldMaxY      the world's real ceiling (inclusive), likewise
      */
-    public CityWorldGenerator(long worldSeed, int worldMaxHeight, int worldSeaLevel, WorldStyle worldStyle) {
+    public CityWorldGenerator(long worldSeed, int terrainCeiling, int worldSeaLevel, WorldStyle worldStyle,
+            int worldMinY, int worldMaxY) {
         this.worldSeed = worldSeed;
-        this.worldMaxHeight = worldMaxHeight;
+        this.terrainCeiling = terrainCeiling;
         this.worldSeaLevel = worldSeaLevel;
         this.worldStyle = worldStyle;
+        this.worldMinY = worldMinY;
+        this.worldMaxY = worldMaxY;
         this.settings = new CityWorldSettings();
 
         // The original's initializeWorldInfo, minus the lazy-init dance. Order matters: the
@@ -128,9 +150,13 @@ public class CityWorldGenerator {
         return worldSeed;
     }
 
-    /** Replaces {@code getWorld().getMaxHeight()}. */
-    public int getWorldMaxHeight() {
-        return worldMaxHeight;
+    /**
+     * Replaces {@code getWorld().getMaxHeight()} <em>for terrain scaling only</em> — it feeds
+     * {@code landRange}, which sets how tall mountains get. Kept at upstream's 256 so terrain keeps
+     * its original shape; the world's actual ceiling is {@link #worldMaxY}.
+     */
+    public int getTerrainCeiling() {
+        return terrainCeiling;
     }
 
     /** Replaces {@code getWorld().getSeaLevel()}. */

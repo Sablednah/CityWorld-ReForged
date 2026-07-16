@@ -95,7 +95,12 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		// Upstream read these off the Bukkit World (world.getMaxHeight()/getSeaLevel()). A modern
 		// ChunkGenerator has no World to ask and cannot hold per-world state, so the context is
 		// handed them at construction instead — see CityWorldGenerator (PORTING.md, top risk #1).
-		height = generator.getWorldMaxHeight();
+		//
+		// `height` here is the *terrain* ceiling (256), not the world's (319): it feeds landRange
+		// below, which scales mountain amplitude, so raising it would rescale terrain away from
+		// upstream's shape rather than simply making the world taller. P4 extends the world
+		// downward instead — see CityWorldGenerator.worldMinY.
+		height = generator.getTerrainCeiling();
 		seaLevel = generator.getWorldSeaLevel();
 		landRange = height - seaLevel - fudgeVerticalScale + landFlattening;
 		seaRange = seaLevel - fudgeVerticalScale + seaFlattening;

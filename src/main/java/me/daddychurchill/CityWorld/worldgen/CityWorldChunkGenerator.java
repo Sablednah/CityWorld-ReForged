@@ -2,13 +2,17 @@ package me.daddychurchill.CityWorld.worldgen;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
+import me.daddychurchill.CityWorld.Plats.PlatLot;
+import me.daddychurchill.CityWorld.Plugins.OreProvider;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
+import me.daddychurchill.CityWorld.compat.BiomeGrid;
 import me.daddychurchill.CityWorld.compat.Material;
 
 import net.minecraft.core.BlockPos;
@@ -21,7 +25,6 @@ import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.BiomeSource;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -32,14 +35,23 @@ import net.minecraft.world.level.levelgen.blending.Blender;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
 
 /**
- * The CityWorld {@link ChunkGenerator}.
+ * The CityWorld {@link ChunkGenerator} — the adapter between modern worldgen and the ported brain.
  *
- * <p><b>Phase 3 spike.</b> This is deliberately a placeholder: it lays down a flat bedrock →
- * stone → grass profile through the real {@link InitialBlocks} seam, purely to prove the pipeline
- * end-to-end — that a codec-registered custom generator loads, is selected via a dimension / world
- * preset, and successfully writes blocks through our ported block layer. The actual CityWorld
- * terrain brain (ShapeProvider → PlatMap → contexts) is wired in during later phases; when it is,
- * {@link #fillFromNoise} will drive it instead of this flat fill.
+ * <p>{@link #fillFromNoise} drives the real {@code ShapeProvider}, so terrain here is CityWorld's
+ * own shape, written through the ported {@link InitialBlocks} seam. What is <em>not</em> here yet is
+ * the city planning: every chunk comes out a natural lot, because {@code PlatMap}/{@code PlatLot}
+ * and the contexts are still stubbed (wave 2). So a world generates mountains, seas, beaches, caves
+ * and lava fields — but no roads or buildings.
+ *
+ * <p>Two seams worth knowing about:
+ * <ul>
+ *   <li><b>Vertical layout</b> — terrain scales against a 256 ceiling (upstream's shape) inside a
+ *       {@code -64..319} world; see {@link #TERRAIN_CEILING} and {@code CityWorldGenerator.worldMinY}.
+ *   <li><b>Biomes</b> — the shaper pushes them per column, modern gen pulls them from a
+ *       {@code BiomeSource}; see {@link #IGNORE_BIOMES}.
+ * </ul>
+ *
+ * <p>It also suppresses vanilla structures, carvers and decoration, so CityWorld owns the chunk.
  */
 public class CityWorldChunkGenerator extends ChunkGenerator {
 
@@ -48,15 +60,19 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     BiomeSource.CODEC.fieldOf("biome_source").forGetter(ChunkGenerator::getBiomeSource)
             ).apply(instance, CityWorldChunkGenerator::new));
 
-    // Placeholder vertical profile (Phase 4 replaces this with the ShapeProvider's real levels).
-    private static final int SURFACE_Y = 63;
-
     /**
-     * The world facts the per-world context needs, at their 1.14 values so the ported
-     * {@code ShapeProvider} reproduces upstream's terrain exactly. P4 modernizes this to
-     * {@code -64..319} (PORTING.md, "World layout: modernize now").
+     * The ceiling terrain scales against, at its 1.14 value so the ported {@code ShapeProvider}
+     * reproduces upstream's terrain exactly.
+     *
+     * <p><b>Not the world's ceiling</b> — the world is {@code -64..319}, taken from the level below.
+     * Feeding the shaper 384 would not make the world taller, it would make *mountains* half again
+     * as tall (it scales {@code landRange}) and throw away the shape the noise vendoring exists to
+     * preserve. P4's modernization is downward: 64 blocks of new underground. See
+     * {@code CityWorldGenerator.worldMinY}.
      */
-    private static final int UPSTREAM_MAX_HEIGHT = 256;
+    private static final int TERRAIN_CEILING = 256;
+
+    /** Sea level — 63 in both 1.14 and modern Minecraft, so the surface band already lines up. */
     private static final int UPSTREAM_SEA_LEVEL = 63;
 
     /**
@@ -84,8 +100,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         super(biomeSource);
     }
 
-    /** The per-world context, created on first use. */
-    private CityWorldGenerator context() {
+    /**
+     * The per-world context, created on first use.
+     *
+     * @param level supplies the world's real vertical bounds; every caller is already generating
+     *              for a chunk, so it has one to hand
+     */
+    private CityWorldGenerator context(LevelHeightAccessor level) {
         CityWorldGenerator local = context;
         if (local == null) {
             synchronized (this) {
@@ -100,8 +121,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                 "CityWorld: chunk generation began before createState() supplied the world seed, "
                                         + "so the per-world context cannot be seeded. Terrain would be wrong for "
                                         + "this world. Find another way to obtain the seed.");
-                    local = new CityWorldGenerator(levelSeed, UPSTREAM_MAX_HEIGHT, UPSTREAM_SEA_LEVEL,
-                            CityWorldGenerator.WorldStyle.NORMAL);
+                    local = new CityWorldGenerator(levelSeed, TERRAIN_CEILING, UPSTREAM_SEA_LEVEL,
+                            CityWorldGenerator.WorldStyle.NORMAL, level.getMinY(), level.getMaxY());
                     context = local;
                 }
             }
@@ -114,16 +135,33 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         return CODEC;
     }
 
+    /**
+     * Biome sink for the shaper.
+     *
+     * <p>CityWorld pushes a biome per column while it shapes; modern worldgen pulls them from a
+     * {@code BiomeSource} instead, and the dimension currently declares a fixed one. So the columns
+     * are dropped on the floor for now — terrain is unaffected, since nothing in the shaper reads
+     * back what it wrote. Replacing this with a real {@code BiomeSource} driven by the same maths is
+     * P4 work; see {@code compat/BiomeGrid}.
+     */
+    private static final BiomeGrid IGNORE_BIOMES = (x, z, biome) -> {
+    };
+
     @Override
     public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState,
             StructureManager structureManager, ChunkAccess chunk) {
-        CityWorldGenerator context = context();
-        int minY = chunk.getMinY();
+        CityWorldGenerator context = context(chunk);
+        int chunkX = chunk.getPos().x;
+        int chunkZ = chunk.getPos().z;
 
-        InitialBlocks blocks = new InitialBlocks(context, chunk, chunk.getPos().x, chunk.getPos().z);
-        blocks.setBlocks(0, 16, minY, minY + 1, 0, 16, Material.BEDROCK);
-        blocks.setBlocks(0, 16, minY + 1, SURFACE_Y, 0, 16, Material.STONE);
-        blocks.setBlocks(0, 16, SURFACE_Y, SURFACE_Y + 1, 0, 16, Material.GRASS_BLOCK);
+        // One chunk's worth of "what goes here". Building it precalculates the column heights this
+        // chunk is shaped against. Wave 1 always yields a natural (unplanned) lot — the city
+        // planning that would make it a road or a building is wave 2.
+        PlatLot lot = new PlatLot(context, chunkX, chunkZ);
+        InitialBlocks blocks = new InitialBlocks(context, chunk, chunkX, chunkZ);
+
+        context.shapeProvider.preGenerateChunk(context, lot, blocks, IGNORE_BIOMES, lot.blockYs);
+        context.shapeProvider.postGenerateChunk(context, lot, blocks, lot.blockYs);
 
         return CompletableFuture.completedFuture(chunk);
     }
@@ -131,7 +169,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     @Override
     public void buildSurface(WorldGenRegion region, StructureManager structureManager,
             RandomState randomState, ChunkAccess chunk) {
-        // The flat fill already places the surface; nothing extra for the spike.
+        // Nothing: the shaper lays its own surface down in fillFromNoise (that is what the
+        // surfaceMaterial/subsurfaceMaterial strata are), so vanilla's surface pass has no job here.
     }
 
     @Override
@@ -174,42 +213,97 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
     @Override
     public int getSeaLevel() {
-        return SURFACE_Y;
+        return UPSTREAM_SEA_LEVEL;
     }
 
     @Override
     public int getMinY() {
+        // The signature carries no level to ask, and this is consulted before one exists. It must
+        // agree with the dimension's own min_y (minecraft:overworld => -64).
         return -64;
     }
 
+    /**
+     * The first free Y above the column — vanilla uses this to place spawn and to decide where
+     * structures sit, so it has to agree with what {@link #fillFromNoise} actually builds. A flat
+     * constant here would strand spawn in the air or inside a mountain.
+     *
+     * <p>Derived from {@link #getBaseColumn} and the heightmap's own predicate, exactly as vanilla
+     * does, so the two can never drift apart. That matters more than it looks: {@code WORLD_SURFACE}
+     * counts water as surface while {@code OCEAN_FLOOR} does not, so simply returning the terrain
+     * height answers wrong for every sea column — by up to the sea's depth, which would drop spawn
+     * under the water.
+     */
     @Override
     public int getBaseHeight(int x, int z, Heightmap.Types type, LevelHeightAccessor level,
             RandomState randomState) {
-        return SURFACE_Y + 1;
+        NoiseColumn column = getBaseColumn(x, z, level, randomState);
+        Predicate<BlockState> isOpaque = type.isOpaque();
+        for (int y = level.getMaxY(); y >= level.getMinY(); y--)
+            if (isOpaque.test(column.getBlock(y)))
+                return y + 1;
+        return level.getMinY();
     }
 
+    /**
+     * The block column at a position, without generating the chunk.
+     *
+     * <p>Reproduces the shaper's height and its broad vertical profile — bedrock, the
+     * deepslate/stone strata, the surface, and the sea fill above a submerged column — but not the
+     * detail that needs a whole chunk to compute (caves, lava fields, the exact beach/snow
+     * banding). Vanilla asks this to find somewhere solid to stand, so what has to be right is
+     * where solid ends and where water sits.
+     */
     @Override
     public NoiseColumn getBaseColumn(int x, int z, LevelHeightAccessor level, RandomState randomState) {
+        CityWorldGenerator context = context(level);
+        OreProvider ores = context.oreProvider;
+        int terrainY = context.shapeProvider.findBlockY(context, x, z);
+
+        // Mirrors preGenerateChunk: a column at or below sea level gets the fluid palette, and one
+        // below sea level is flooded to sea level when the world has aboveground fluids.
+        boolean submerged = terrainY < context.seaLevel;
+        boolean flooded = submerged && context.getSettings().includeAbovegroundFluids;
+        Material surface = (submerged || terrainY == context.seaLevel)
+                ? ores.fluidSurfaceMaterial
+                : ores.surfaceMaterial;
+
         int minY = level.getMinY();
         int height = level.getHeight();
         BlockState[] column = new BlockState[height];
         for (int i = 0; i < height; i++) {
             int y = minY + i;
-            if (y == minY) {
-                column[i] = Blocks.BEDROCK.defaultBlockState();
-            } else if (y < SURFACE_Y) {
-                column[i] = Blocks.STONE.defaultBlockState();
-            } else if (y == SURFACE_Y) {
-                column[i] = Blocks.GRASS_BLOCK.defaultBlockState();
-            } else {
-                column[i] = Blocks.AIR.defaultBlockState();
-            }
+            Material material;
+            if (y == minY)
+                material = ores.substratumMaterial;
+            else if (y < terrainY)
+                material = ores.stratumMaterialAt(ores.stratumMaterial, x, y, z);
+            else if (y == terrainY)
+                material = surface;
+            else if (flooded && y <= context.seaLevel)
+                material = ores.fluidMaterial;
+            else
+                material = Material.AIR;
+            column[i] = material.getBlockState();
         }
         return new NoiseColumn(minY, column);
     }
 
     @Override
     public void addDebugScreenInfo(List<String> info, RandomState randomState, BlockPos pos) {
-        info.add("CityWorld: placeholder flat generator (Phase 3 spike)");
+        CityWorldGenerator context = context();
+        if (context == null) {
+            info.add("CityWorld: context not built yet");
+            return;
+        }
+        info.add(String.format("CityWorld: %s, terrainY=%d, street=%d, sea=%d",
+                context.shapeProvider.getCollectionName(),
+                context.shapeProvider.findBlockY(context, pos.getX(), pos.getZ()),
+                context.streetLevel, context.seaLevel));
+    }
+
+    /** The context if it has been built, else null — for diagnostics that must not force creation. */
+    private CityWorldGenerator context() {
+        return context;
     }
 }

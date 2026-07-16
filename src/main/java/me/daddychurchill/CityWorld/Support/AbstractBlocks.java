@@ -10,7 +10,17 @@ import me.daddychurchill.CityWorld.Factories.MaterialFactory;
 public abstract class AbstractBlocks {
 
 	public final int width;
+	/**
+	 * The terrain/build ceiling the generator reasons about (256) — <em>not</em> the world's real
+	 * ceiling ({@link #maxY}, 319). Lots use it as their "top of the world" reference (e.g.
+	 * {@code chunk.height - 32} to hang a blimp), so it stays the conservative 1.14 value; raising
+	 * it would fling those over the real ceiling. See {@code CityWorldGenerator.worldMinY}.
+	 */
 	public final int height;
+	/** The world's real floor (-64) — writes below this are out of bounds. */
+	public final int minY;
+	/** The world's real ceiling (319, inclusive). */
+	public final int maxY;
 	public int sectionX;
 	public int sectionZ;
 
@@ -21,6 +31,8 @@ public abstract class AbstractBlocks {
 
 		this.width = sectionBlockWidth;
 		this.height = generator.height;
+		this.minY = generator.worldMinY;
+		this.maxY = generator.worldMaxY;
 	}
 
 	public boolean onEdgeXZ(int x, int z) {
@@ -43,16 +55,22 @@ public abstract class AbstractBlocks {
 		return value >= 0 && value < width;
 	}
 
+	/**
+	 * Upstream asked {@code value >= 0 && value < height}, because in 1.14 the world floor was 0
+	 * and the terrain ceiling was the world ceiling. Both halves of that are now false: the floor
+	 * is -64, so a 0-based check would silently reject every write into the new deepslate band.
+	 */
 	private boolean insideY(int value) {
-		return value >= 0 && value < height;
+		return value >= minY && value <= maxY;
 	}
 
 	public int clampXZ(int value) {
 		return Math.max(Math.min(value, width - 1), 0);
 	}
 
+	/** Clamps to the world's real bounds — ore veins near bedrock would otherwise clamp up to 0. */
 	public int clampY(int value) {
-		return Math.max(Math.min(value, height), 0);
+		return Math.max(Math.min(value, maxY), minY);
 	}
 
 	public static int getBlockX(int sectionX, int x) {

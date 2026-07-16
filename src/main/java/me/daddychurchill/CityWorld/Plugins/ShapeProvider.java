@@ -205,26 +205,30 @@ public abstract class ShapeProvider extends Provider {
 		return provider;
 	}
 
-	private static final int bottomOfWorld = 0;
-
 	void actualGenerateStratas(CityWorldGenerator generator, PlatLot lot, InitialBlocks chunk, int x, int z,
 			Material substratumMaterial, Material stratumMaterial, int stratumY, Material subsurfaceMaterial,
 			int subsurfaceY, Material surfaceMaterial, boolean surfaceCaves) {
 
-		// make the base
-		chunk.setBlock(x, bottomOfWorld, z, substratumMaterial);
-		chunk.setBlock(x, bottomOfWorld + 1, z, stratumMaterial);
+		// Upstream hardcoded this to 0, the 1.14 world floor. It is now the level's real floor
+		// (-64), so the strata reach all the way down and the world gains 64 blocks of underground
+		// rather than opening onto a void. P4; see CityWorldGenerator.worldMinY.
+		final int bottomOfWorld = generator.worldMinY;
 
 		// compute the world block coordinates
 		int blockX = chunk.sectionX * chunk.width + x;
 		int blockZ = chunk.sectionZ * chunk.width + z;
 
+		// make the base
+		chunk.setBlock(x, bottomOfWorld, z, substratumMaterial);
+		chunk.setBlock(x, bottomOfWorld + 1, z,
+				generator.oreProvider.stratumMaterialAt(stratumMaterial, blockX, bottomOfWorld + 1, blockZ));
+
 		// stony bits
 		for (int y = bottomOfWorld + 2; y < stratumY; y++)
 			if (lot.isValidStrataY(generator, blockX, y, blockZ)
 					&& generator.shapeProvider.notACave(generator, blockX, y, blockZ))
-				chunk.setBlock(x, y, z, stratumMaterial);
-			else if (y <= OreProvider.lavaFieldLevel && generator.getSettings().includeLavaFields)
+				chunk.setBlock(x, y, z, generator.oreProvider.stratumMaterialAt(stratumMaterial, blockX, y, blockZ));
+			else if (y <= generator.oreProvider.lavaFieldLevel && generator.getSettings().includeLavaFields)
 				chunk.setBlock(x, y, z, Material.LAVA);
 
 		// aggregate bits
