@@ -74,6 +74,53 @@ what exposed it: 625 chunks, `NATURE=0`.
 Worth generalising: **stubs are behaviour, not absence.** Before stubbing something out, check what
 the callers *read back* from having called it — here, `naturalPlats`, three lines away.
 
+### ⚠ Never let a block entity have a real level during decoration (the deadlock)
+
+**Symptom:** world creation wedged at "Preparing spawn area: 27%" forever. **Found by the owner
+playing it**, again — and the fix for it was itself the cause of the previous fix.
+
+An earlier pass found that placing a sign during generation NPE'd, because a block entity reached
+through a `WorldGenRegion` over a `ProtoChunk` **has no level** — it is built on demand by
+`newBlockEntity` and never told where it lives, and `SignBlockEntity.markUpdated` does
+`this.level.sendBlockUpdated(…)`. That pass silenced the NPE with `sign.setLevel(server.getLevel())`.
+That looked reasonable, shipped, and armed a deadlock:
+
+```
+applyBiomeDecoration                       ← on a chunk-generation worker
+ └ setSignText → updateText → markUpdated
+    └ setChanged()                          ← no longer a no-op: the BE has a level now
+       └ Level.blockEntityChanged → getChunkAt
+          └ ServerChunkCache.getChunk → CompletableFuture.join()   ← waits forever
+```
+
+A generation worker asking the chunk system for a chunk **synchronously, from inside chunk
+generation**. The future needs a worker; the worker is blocked on the future. Every worker parked at
+0% CPU, the server thread in `managedBlock`, nothing computing. `BlockEntity.setChanged()` is guarded
+by `if (this.level != null)` — *the levelless block entity was already correct*, and giving it a level
+is what broke it.
+
+**The fix: don't give it one.** No notification is wanted during worldgen — there are no clients to
+update, and the block entity is already held by the chunk (`WorldGenRegion.getBlockEntity` calls
+`setBlockEntity` on the one it builds), so it saves without being marked. But every public way into a
+sign (`updateText`/`setText` → `setFrontText`) ends at `markUpdated`, so the port writes
+`SignBlockEntity.frontText` directly via an **access transformer**
+(`src/main/resources/META-INF/accesstransformer.cfg`, wired in `build.gradle` — note adding it forces
+a one-off re-run of the NeoForm decompile, which takes minutes). Verified: 124 signs, 124 with text,
+0 blank; and the owner's exact hung seed (`-8325793622667797117`, pulled from `level.dat`) now
+generates in 2.6s.
+
+**The rules this leaves:**
+- **A block entity touched during decoration must never hold a real `Level`.** Anything that
+  notifies — `setChanged`, `sendBlockUpdated`, neighbour updates — can re-enter the chunk system from
+  a worker and deadlock. Loot and spawners are safe precisely because `setLootTable` and
+  `setEntityId` only write fields (see "Closed: mobs and loot").
+- **An NPE is a symptom, not a diagnosis.** The null level was load-bearing. Silencing a null without
+  asking *why it is null* replaced a loud crash with a silent hang — a far worse bug, and one that
+  only showed up under someone else's seed.
+- **A hang is not slowness.** `jstack` on the running process named the culprit in one shot after two
+  wrong theories. For a client: `tasklist.exe` for the `javaw` pid, then the CurseForge runtime's
+  `jstack.exe`. Workers at 0% CPU ⇒ deadlock, not work.
+
 ### ⚠ A faithful port of a physics-dependent line is still wrong: the dry sewers
 
 **Found by the owner playing it** — sewer water had gaps. Not a transcription error; `RoadLot` is

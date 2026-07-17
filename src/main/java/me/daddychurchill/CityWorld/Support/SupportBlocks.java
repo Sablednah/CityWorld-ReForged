@@ -4,7 +4,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
@@ -813,30 +812,45 @@ public abstract class SupportBlocks extends AbstractBlocks {
 	/**
 	 * Write a sign's front text, the port of Bukkit's {@code Sign} block state.
 	 *
-	 * <p>{@code SignBlockEntity} notifies its level whenever its text changes, and a block entity
-	 * reached through a {@code WorldGenRegion} over a {@code ProtoChunk} has no level yet — it is
-	 * built on demand by {@code newBlockEntity} and never told where it lives — so it is handed one
-	 * first. Without that this NPEs the moment a sign is placed during generation.
+	 * <p><b>This writes the field directly (via an access transformer) and deliberately does not go
+	 * through {@code updateText}/{@code setText}.</b> Every public way into a sign ends at
+	 * {@code markUpdated()}, which notifies the sign's level — and during decoration there is no good
+	 * answer for that level:
+	 *
+	 * <ul>
+	 * <li><b>Null NPEs.</b> A block entity reached through a {@code WorldGenRegion} over a
+	 * {@code ProtoChunk} has no level — it is built on demand by {@code newBlockEntity} and never
+	 * told where it lives — so {@code markUpdated}'s {@code level.sendBlockUpdated(…)} throws.
+	 * <li><b>The real {@code ServerLevel} deadlocks</b>, which is worse, because it looks like it
+	 * works. With a level present, {@code setChanged()} stops no-opping and runs
+	 * {@code Level.blockEntityChanged} → {@code getChunkAt} → {@code ServerChunkCache.getChunk} →
+	 * {@code CompletableFuture.join()} — a <em>synchronous chunk request from inside chunk
+	 * generation</em>, on a generation worker. The future needs a worker to complete; the worker is
+	 * blocked waiting for the future. The server wedges mid-"Preparing spawn area" with every worker
+	 * parked at 0% CPU. An earlier pass reached for {@code setLevel} to silence the NPE above and
+	 * armed this instead; it took a thread dump of a hung client to see it.
+	 * </ul>
+	 *
+	 * <p>Neither notification is wanted. There are no clients to update during worldgen, and the
+	 * block entity is already held by the chunk ({@code WorldGenRegion.getBlockEntity} calls
+	 * {@code setBlockEntity} on the one it builds), so it is saved without being marked. Setting the
+	 * text <em>is</em> the whole operation — which is why the sign needs no level at all, and is not
+	 * given one.
 	 */
 	private void setSignText(Block block, String... lines) {
 		BlockEntity entity = block.getState();
 		if (!(entity instanceof SignBlockEntity sign))
 			return;
-		if (sign.getLevel() == null) {
-			if (!(world instanceof ServerLevelAccessor server))
-				return;
-			sign.setLevel(server.getLevel());
-		}
-		sign.updateText(text -> {
-			SignText result = text;
-			for (int i = 0; i < lines.length && i < SignText.LINES; i++)
-				// A null line means a blank one. Bukkit's setLine tolerated null; modern
-				// Component.literal(null) throws, and it throws inside chunk generation, which fails
-				// the whole chunk. Callers legitimately leave gaps — OdonymProvider's fossil names
-				// fill only line 1 of a String[4] and leave the rest null.
-				result = result.setMessage(i, Component.literal(lines[i] == null ? "" : lines[i]));
-			return result;
-		}, true);
+
+		SignText result = sign.getFrontText();
+		for (int i = 0; i < lines.length && i < SignText.LINES; i++)
+			// A null line means a blank one. Bukkit's setLine tolerated null; modern
+			// Component.literal(null) throws, and it throws inside chunk generation, which fails
+			// the whole chunk. Callers legitimately leave gaps — OdonymProvider's fossil names
+			// fill only line 1 of a String[4] and leave the rest null.
+			result = result.setMessage(i, Component.literal(lines[i] == null ? "" : lines[i]));
+
+		sign.frontText = result;
 	}
 
 }

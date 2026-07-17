@@ -30,6 +30,10 @@ base {
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 neoForge {
+    // SignBlockEntity's only public way to set text insists on notifying its level, which is a
+    // deadlock during worldgen — see SupportBlocks.setSignText. We write the field instead.
+    accessTransformers.from('src/main/resources/META-INF/accesstransformer.cfg')
+
     version = project.neo_version
 
     // Parchment gives human-readable parameter names/javadocs. Optional.
