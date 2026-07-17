@@ -5,6 +5,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 
 /**
  * Port shim for {@code org.bukkit.block.Block} — a <em>live, positioned</em> block reference.
@@ -19,9 +20,11 @@ import net.minecraft.world.level.block.state.BlockState;
  * <ul>
  *   <li>Bukkit's {@code BlockData} is modern {@link BlockState} — so {@code getBlockData()} /
  *       {@code setBlockData()} here read and write block states.</li>
- *   <li>Bukkit's "apply physics" flag maps onto vanilla's update flags: physics on →
+ *   <li>Bukkit's "apply physics" flag maps onto vanilla's update flags — physics on →
  *       {@code UPDATE_ALL} (notify neighbours), physics off → {@code UPDATE_CLIENTS} (write the
- *       block, skip neighbour reactions) — which is what the generator wants while building.</li>
+ *       block, skip neighbour reactions) — <em>plus an explicit fluid tick</em>. The flag alone is
+ *       not enough during generation, because a {@code ProtoChunk} never runs {@code onPlace}; see
+ *       {@link #setBlockData(BlockState, boolean)}, which is where the sewers went dry.</li>
  * </ul>
  *
  * <p>Unlike {@link Material} these are <em>not</em> interned: each instance is a cheap, throwaway
@@ -87,8 +90,37 @@ public final class Block {
         setBlockData(state, false);
     }
 
+    /**
+     * Write a block state here, optionally letting it react — the port of Bukkit's
+     * {@code setBlockData(data, applyPhysics)}.
+     *
+     * <p><b>The update flag is not the whole translation, and believing it was cost us the sewers.</b>
+     * Decoration writes through a {@code WorldGenRegion} onto a {@code ProtoChunk}, and
+     * {@code ProtoChunk.setBlockState} <em>never calls {@code onPlace}</em> and never notifies
+     * neighbours — it writes the section, the heightmaps and the light, and stops. So
+     * {@code UPDATE_ALL} is very nearly inert here, and the one thing CityWorld actually wants
+     * physics for silently did nothing: {@code LiquidBlock.onPlace} is what schedules a fluid's
+     * first tick, and without it placed water is simply a block that sits there. Upstream never
+     * noticed because a Bukkit {@code BlockPopulator} ran on a live, ticking world, where physics
+     * fired at once and the flow was baked into the chunk.
+     *
+     * <p>So we schedule the tick ourselves, which is exactly what vanilla does when <em>it</em>
+     * places a fluid during worldgen — {@code SpringFeature} and {@code LakeFeature} both follow
+     * their {@code setBlock} with an explicit {@code scheduleTick}, for this very reason. The delay
+     * is the fluid's own, mirroring {@code onPlace} rather than inventing a number.
+     *
+     * <p>The water then flows once the chunk ticks, rather than during generation. That is the one
+     * behavioural difference from upstream that remains, and it is invisible in play: a chunk ticks
+     * when a player is near enough to be looking at it.
+     */
     public void setBlockData(BlockState state, boolean applyPhysics) {
         level.setBlock(pos, state, applyPhysics ? WITH_PHYSICS : NO_PHYSICS);
+
+        if (applyPhysics) {
+            FluidState fluid = state.getFluidState();
+            if (!fluid.isEmpty())
+                level.scheduleTick(pos, fluid.getType(), fluid.getType().getTickDelay(level));
+        }
     }
 
     /** The material at this position. */

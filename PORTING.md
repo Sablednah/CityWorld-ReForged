@@ -74,6 +74,45 @@ what exposed it: 625 chunks, `NATURE=0`.
 Worth generalising: **stubs are behaviour, not absence.** Before stubbing something out, check what
 the callers *read back* from having called it — here, `naturalPlats`, three lines away.
 
+### ⚠ A faithful port of a physics-dependent line is still wrong: the dry sewers
+
+**Found by the owner playing it** — sewer water had gaps. Not a transcription error; `RoadLot` is
+verbatim upstream. The platform moved underneath it.
+
+CityWorld fills a sewer channel in two halves: **static** water stubs at the four chunk edges
+(physics off, commented *"prevent cross-chunk domino effect"*), and four **single source blocks**
+inland placed with `setDoPhysics(true)`, expecting the water to *flow* and fill the ~12 blocks
+between. Under Bukkit that worked, because a `BlockPopulator` ran on a live, ticking world: physics
+fired immediately and the flow was baked into the chunk.
+
+Decoration writes through a `WorldGenRegion` onto a `ProtoChunk`, and **`ProtoChunk.setBlockState`
+never calls `onPlace` and never notifies neighbours** — it writes the section, heightmaps and light,
+and stops. `WorldGenRegion.setBlock` only consults the update flags for one post-processing check.
+So `UPDATE_ALL` is very nearly inert during generation, and `LiquidBlock.onPlace` — *the thing that
+schedules a fluid's first tick* — never runs. Placed water is just a block that sits there.
+
+Measured before the fix: **0 pending fluid ticks**, every water block a source, **zero** flowing, and
+the channel between the stubs open air. That is exactly what "gaps" looked like.
+
+**Vanilla hits the same wall and works around it explicitly**: `SpringFeature` and `LakeFeature`
+follow their `setBlock` with a hand-written `scheduleTick(pos, fluid, …)` *for this very reason*.
+So does `compat/Block.setBlockData` now — one seam, so any future fluid works too, and `RoadLot` is
+untouched. After: **0 → 292** pending ticks (4 per sewer chunk = the four `setDoPhysics(true)`
+calls), and they fire once chunks tick.
+
+The one remaining difference from upstream: water flows **when the chunk ticks**, not during
+generation. Invisible in play (a chunk ticks when a player is near enough to look at it), and the
+scheduled tick survives in the chunk's tick container until then. If it ever proves not enough, the
+fallback is to fill the channel statically in `RoadLot` and stop depending on flow at all.
+
+**Two generalisations worth more than the bug:**
+- **`setDoPhysics(true)` had exactly one caller in the whole tree** — this water. A seam with one
+  user, silently doing nothing. Grep for lone callers of a compat flag; they are where the
+  assumptions hide.
+- **The dangerous ports are the faithful ones.** A line that reads identically to upstream and
+  compiles clean can still be wrong, because upstream's line depended on *when* and *where* it ran.
+  Anything relying on ticks, physics, neighbours or a live world is suspect at decoration time.
+
 ### ⚠ Lesson: probe the whole world before shipping, not one feature at a time
 
 A null sign line crashed **chunk generation** — `Component.literal(null)` throws where Bukkit's
