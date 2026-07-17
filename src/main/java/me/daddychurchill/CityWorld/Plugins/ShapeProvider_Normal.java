@@ -9,6 +9,7 @@ import me.daddychurchill.CityWorld.Context.ConstructionContext;
 import me.daddychurchill.CityWorld.Context.FarmContext;
 import me.daddychurchill.CityWorld.Context.DataContext;
 import me.daddychurchill.CityWorld.Context.HighriseContext;
+import me.daddychurchill.CityWorld.Context.IndustrialContext;
 import me.daddychurchill.CityWorld.Context.LowriseContext;
 import me.daddychurchill.CityWorld.Context.MidriseContext;
 import me.daddychurchill.CityWorld.Context.MunicipalContext;
@@ -155,10 +156,11 @@ public class ShapeProvider_Normal extends ShapeProvider {
 			neighborhoodContext = new NeighborhoodContext(generator);
 			municipalContext = new MunicipalContext(generator);
 			farmContext = new FarmContext(generator);
+			industrialContext = new IndustrialContext(generator);
 
-			// Upstream also allocates industrialContext and outlandContext here. Each still needs a
-			// lot family that is not ported (factories and warehouses; the rural/nature set-pieces).
-			// See getContext(PlatMap) for how the ladder copes without them.
+			// Upstream also allocates outlandContext here. It still needs a lot family that is not
+			// ported (the rural/nature set-pieces). See getContext(PlatMap) for how the ladder copes
+			// without it.
 
 			contextInitialized = true;
 		}

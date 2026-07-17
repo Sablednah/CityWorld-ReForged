@@ -2,6 +2,7 @@ package me.daddychurchill.CityWorld.Plugins;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Context.DataContext;
+import me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 
@@ -33,5 +34,24 @@ public class StructureOnGroundProvider extends Provider {
     public int generateHouse(CityWorldGenerator generator, RealBlocks chunk, DataContext context, Odds odds, int baseY,
             int maxFloors) {
         return 0;
+    }
+
+    /**
+     * P5: a small shed with a chest in it, the {@code SHED} content of a {@code StorageLot}.
+     *
+     * <p>Safe to leave empty — both call sites are {@code void} and read nothing back, unlike
+     * {@link #generateHouse} above, whose return value the callers key off. The visible cost is that
+     * a storage lot which rolled {@code SHED} is simply an empty yard, and that
+     * {@code LootLocation.STORAGE_SHED} stays unreached even though its loot table ships and rolls
+     * (see "Closed: mobs and loot" in PORTING.md).
+     */
+    public void generateShed(CityWorldGenerator generator, RealBlocks chunk, DataContext context, Odds odds, int x,
+            int y, int z, int radius, LootLocation location) {
+        generateShed(generator, chunk, context, odds, x, y, z, radius, location, location);
+    }
+
+    /** P5. */
+    public void generateShed(CityWorldGenerator generator, RealBlocks chunk, DataContext context, Odds odds, int x,
+            int y, int z, int radius, LootLocation location, LootLocation other) {
     }
 }

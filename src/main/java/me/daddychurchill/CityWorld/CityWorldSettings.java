@@ -22,17 +22,8 @@ public class CityWorldSettings {
     public boolean includeFarms = true;
     public boolean includeMunicipalities = true;
 
-    /**
-     * Upstream-default-on, forced off here because its lot family is not ported: industrial sectors
-     * want {@code FactoryBuildingLot}/{@code WarehouseBuildingLot}/{@code StorageLot} (and
-     * {@code BunkerLot} underneath them).
-     *
-     * <p>Using the setting for this is deliberate rather than a hack: upstream already guards that
-     * arm of {@code ShapeProvider_Normal.getContext} with this flag, so switching it off makes the
-     * band fall through to the next exactly as it would for a player who turned the feature off —
-     * no special-casing in the ladder. Flip it back on with its lots.
-     */
-    public boolean includeIndustrialSectors = false;
+    /** Back on at upstream's default now that the factory/warehouse/storage family is ported. */
+    public boolean includeIndustrialSectors = true;
     public boolean includeCaves = true;
     public boolean includeLavaFields = true;
     public boolean includeSeas = true;
@@ -47,6 +38,9 @@ public class CityWorldSettings {
     public boolean treasuresInMines = true;
     public boolean spawnersInMines = true;
     public double oddsOfTreasureInMines = Odds.oddsLikely;
+    public boolean treasuresInBunkers = true;
+    public boolean spawnersInBunkers = true;
+    public double oddsOfTreasureInBunkers = Odds.oddsLikely;
     public double oddsOfAlcoveInMines = Odds.oddsLikely;
     public boolean includeSewers = true;
     public boolean treasuresInSewers = true;

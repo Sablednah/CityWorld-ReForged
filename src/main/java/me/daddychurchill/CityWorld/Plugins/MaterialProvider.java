@@ -114,6 +114,85 @@ public class MaterialProvider {
     public MaterialProvider(CityWorldGenerator generator) {
     }
 
+    private final static String tagSelectMaterial_FactoryInsides = "Materials_For_FactoryInsides";
+    public final MaterialList itemsSelectMaterial_FactoryInsides = createList(tagSelectMaterial_FactoryInsides,
+            Material.STONE, Material.SMOOTH_STONE, Material.QUARTZ_BLOCK, Material.CLAY, Material.WHITE_CONCRETE,
+            Material.ORANGE_CONCRETE, Material.MAGENTA_CONCRETE, Material.LIGHT_BLUE_CONCRETE, Material.YELLOW_CONCRETE,
+            Material.LIME_CONCRETE, Material.PINK_CONCRETE, Material.GRAY_CONCRETE, Material.LIGHT_GRAY_CONCRETE,
+            Material.CYAN_CONCRETE, Material.PURPLE_CONCRETE, Material.BLUE_CONCRETE, Material.BROWN_CONCRETE,
+            Material.GREEN_CONCRETE, Material.RED_CONCRETE, Material.BLACK_CONCRETE);
+
+    private final static String tagSelectMaterial_FactoryTanks = "Materials_For_FactoryTanks";
+    public final MaterialList itemsSelectMaterial_FactoryTanks = createList(tagSelectMaterial_FactoryTanks, Material.LAVA,
+            Material.ICE, Material.PACKED_ICE, Material.SNOW_BLOCK, Material.SLIME_BLOCK, Material.COAL_BLOCK,
+            Material.SAND, Material.WATER, Material.GLASS, Material.WHITE_STAINED_GLASS, Material.ORANGE_STAINED_GLASS,
+            Material.MAGENTA_STAINED_GLASS, Material.LIGHT_BLUE_STAINED_GLASS, Material.YELLOW_STAINED_GLASS,
+            Material.LIME_STAINED_GLASS, Material.PINK_STAINED_GLASS, Material.GRAY_STAINED_GLASS,
+            Material.LIGHT_GRAY_STAINED_GLASS, Material.CYAN_STAINED_GLASS, Material.PURPLE_STAINED_GLASS,
+            Material.BLUE_STAINED_GLASS, Material.BROWN_STAINED_GLASS, Material.GREEN_STAINED_GLASS,
+            Material.RED_STAINED_GLASS, Material.BLACK_STAINED_GLASS, Material.TERRACOTTA, Material.WHITE_TERRACOTTA,
+            Material.ORANGE_TERRACOTTA, Material.MAGENTA_TERRACOTTA, Material.LIGHT_BLUE_TERRACOTTA,
+            Material.YELLOW_TERRACOTTA, Material.LIME_TERRACOTTA, Material.PINK_TERRACOTTA, Material.GRAY_TERRACOTTA,
+            Material.LIGHT_GRAY_TERRACOTTA, Material.CYAN_TERRACOTTA, Material.PURPLE_TERRACOTTA,
+            Material.BLUE_TERRACOTTA, Material.BROWN_TERRACOTTA, Material.GREEN_TERRACOTTA, Material.RED_TERRACOTTA,
+            Material.BLACK_TERRACOTTA, Material.WHITE_CONCRETE_POWDER, Material.ORANGE_CONCRETE_POWDER,
+            Material.MAGENTA_CONCRETE_POWDER, Material.LIGHT_BLUE_CONCRETE_POWDER, Material.YELLOW_CONCRETE_POWDER,
+            Material.LIME_CONCRETE_POWDER, Material.PINK_CONCRETE_POWDER, Material.GRAY_CONCRETE_POWDER,
+            Material.LIGHT_GRAY_CONCRETE_POWDER, Material.CYAN_CONCRETE_POWDER, Material.PURPLE_CONCRETE_POWDER,
+            Material.BLUE_CONCRETE_POWDER, Material.BROWN_CONCRETE_POWDER, Material.GREEN_CONCRETE_POWDER,
+            Material.RED_CONCRETE_POWDER, Material.BLACK_CONCRETE_POWDER);
+
+    private final static String tagSelectMaterial_BunkerBuildings = "Materials_For_BunkerBuildings";
+    public final MaterialList itemsSelectMaterial_BunkerBuildings = createList(tagSelectMaterial_BunkerBuildings,
+            Material.CLAY, Material.QUARTZ_BLOCK, Material.TERRACOTTA, Material.WHITE_TERRACOTTA,
+            Material.ORANGE_TERRACOTTA, Material.MAGENTA_TERRACOTTA, Material.LIGHT_BLUE_TERRACOTTA,
+            Material.YELLOW_TERRACOTTA, Material.LIME_TERRACOTTA, Material.PINK_TERRACOTTA, Material.GRAY_TERRACOTTA,
+            Material.LIGHT_GRAY_TERRACOTTA, Material.CYAN_TERRACOTTA, Material.PURPLE_TERRACOTTA,
+            Material.BLUE_TERRACOTTA, Material.BROWN_TERRACOTTA, Material.GREEN_TERRACOTTA, Material.RED_TERRACOTTA,
+            Material.BLACK_TERRACOTTA, Material.WHITE_TERRACOTTA, Material.WHITE_CONCRETE, Material.ORANGE_CONCRETE,
+            Material.MAGENTA_CONCRETE, Material.LIGHT_BLUE_CONCRETE, Material.YELLOW_CONCRETE, Material.LIME_CONCRETE,
+            Material.PINK_CONCRETE, Material.GRAY_CONCRETE, Material.LIGHT_GRAY_CONCRETE, Material.CYAN_CONCRETE,
+            Material.PURPLE_CONCRETE, Material.BLUE_CONCRETE, Material.BROWN_CONCRETE, Material.GREEN_CONCRETE,
+            Material.RED_CONCRETE, Material.BLACK_CONCRETE);
+
+    private final static String tagSelectMaterial_BunkerPlatforms = "Materials_For_BunkerPlatforms";
+    public final MaterialList itemsSelectMaterial_BunkerPlatforms = createList(tagSelectMaterial_BunkerPlatforms,
+            Material.CLAY, Material.QUARTZ_BLOCK, Material.QUARTZ_PILLAR, Material.CHISELED_QUARTZ_BLOCK,
+            Material.TERRACOTTA, Material.WHITE_TERRACOTTA, Material.ORANGE_TERRACOTTA, Material.MAGENTA_TERRACOTTA,
+            Material.LIGHT_BLUE_TERRACOTTA, Material.YELLOW_TERRACOTTA, Material.LIME_TERRACOTTA,
+            Material.PINK_TERRACOTTA, Material.GRAY_TERRACOTTA, Material.LIGHT_GRAY_TERRACOTTA,
+            Material.CYAN_TERRACOTTA, Material.PURPLE_TERRACOTTA, Material.BLUE_TERRACOTTA, Material.BROWN_TERRACOTTA,
+            Material.GREEN_TERRACOTTA, Material.RED_TERRACOTTA, Material.BLACK_TERRACOTTA, Material.WHITE_TERRACOTTA,
+            Material.WHITE_CONCRETE, Material.ORANGE_CONCRETE, Material.MAGENTA_CONCRETE, Material.LIGHT_BLUE_CONCRETE,
+            Material.YELLOW_CONCRETE, Material.LIME_CONCRETE, Material.PINK_CONCRETE, Material.GRAY_CONCRETE,
+            Material.LIGHT_GRAY_CONCRETE, Material.CYAN_CONCRETE, Material.PURPLE_CONCRETE, Material.BLUE_CONCRETE,
+            Material.BROWN_CONCRETE, Material.GREEN_CONCRETE, Material.RED_CONCRETE, Material.BLACK_CONCRETE);
+
+    private final static String tagSelectMaterial_BunkerBilge = "Materials_For_BunkerBilge";
+    public final MaterialList itemsSelectMaterial_BunkerBilge = createList(tagSelectMaterial_BunkerBilge, Material.AIR,
+            Material.LAVA, Material.WATER, Material.ICE, Material.PACKED_ICE);
+
+    private final static String tagSelectMaterial_BunkerTanks = "Materials_For_BunkerTanks";
+    public final MaterialList itemsSelectMaterial_BunkerTanks = createList(tagSelectMaterial_BunkerTanks, Material.SPONGE,
+            Material.REDSTONE_BLOCK, Material.END_STONE, Material.EMERALD_BLOCK, Material.LAVA, Material.ICE,
+            Material.PACKED_ICE, Material.SNOW_BLOCK, Material.SLIME_BLOCK, Material.COAL_BLOCK, Material.SAND,
+            Material.WATER, Material.GLASS, Material.WHITE_STAINED_GLASS, Material.ORANGE_STAINED_GLASS,
+            Material.MAGENTA_STAINED_GLASS, Material.LIGHT_BLUE_STAINED_GLASS, Material.YELLOW_STAINED_GLASS,
+            Material.LIME_STAINED_GLASS, Material.PINK_STAINED_GLASS, Material.GRAY_STAINED_GLASS,
+            Material.LIGHT_GRAY_STAINED_GLASS, Material.CYAN_STAINED_GLASS, Material.PURPLE_STAINED_GLASS,
+            Material.BLUE_STAINED_GLASS, Material.BROWN_STAINED_GLASS, Material.GREEN_STAINED_GLASS,
+            Material.RED_STAINED_GLASS, Material.BLACK_STAINED_GLASS, Material.TERRACOTTA, Material.WHITE_TERRACOTTA,
+            Material.ORANGE_TERRACOTTA, Material.MAGENTA_TERRACOTTA, Material.LIGHT_BLUE_TERRACOTTA,
+            Material.YELLOW_TERRACOTTA, Material.LIME_TERRACOTTA, Material.PINK_TERRACOTTA, Material.GRAY_TERRACOTTA,
+            Material.LIGHT_GRAY_TERRACOTTA, Material.CYAN_TERRACOTTA, Material.PURPLE_TERRACOTTA,
+            Material.BLUE_TERRACOTTA, Material.BROWN_TERRACOTTA, Material.GREEN_TERRACOTTA, Material.RED_TERRACOTTA,
+            Material.BLACK_TERRACOTTA, Material.WHITE_CONCRETE_POWDER, Material.ORANGE_CONCRETE_POWDER,
+            Material.MAGENTA_CONCRETE_POWDER, Material.LIGHT_BLUE_CONCRETE_POWDER, Material.YELLOW_CONCRETE_POWDER,
+            Material.LIME_CONCRETE_POWDER, Material.PINK_CONCRETE_POWDER, Material.GRAY_CONCRETE_POWDER,
+            Material.LIGHT_GRAY_CONCRETE_POWDER, Material.CYAN_CONCRETE_POWDER, Material.PURPLE_CONCRETE_POWDER,
+            Material.BLUE_CONCRETE_POWDER, Material.BROWN_CONCRETE_POWDER, Material.GREEN_CONCRETE_POWDER,
+            Material.RED_CONCRETE_POWDER, Material.BLACK_CONCRETE_POWDER);
+
     private MaterialList createList(String name, Material... materials) {
 
         // create the list and add all of the goodies

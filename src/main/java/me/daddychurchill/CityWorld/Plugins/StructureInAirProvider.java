@@ -34,4 +34,19 @@ public class StructureInAirProvider extends Provider {
     public void generateBigBalloon(CityWorldGenerator generator, SupportBlocks chunk, DataContext context, int attachY,
             Odds odds) {
     }
+
+    /**
+     * P5: a flying saucer, which a bunker occasionally keeps one of.
+     *
+     * <p>Safe to leave empty — the call site ({@code BunkerLot}) is {@code void} and reads nothing
+     * back. The bunker builds; there is just nothing parked in it.
+     */
+    public void generateSaucer(CityWorldGenerator generator, SupportBlocks chunk, int y, boolean drawLegs) {
+        generateSaucer(generator, chunk, 7, y, 7, drawLegs);
+    }
+
+    /** P5. */
+    public void generateSaucer(CityWorldGenerator generator, SupportBlocks chunk, int x, int y, int z,
+            boolean drawLegs) {
+    }
 }

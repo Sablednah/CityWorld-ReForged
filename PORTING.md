@@ -23,14 +23,20 @@ playing rather than by any probe, and both written up above: the **dry sewers** 
 line whose meaning depended on running in a live world) and the **worldgen deadlock** (a previous
 fix's `setLevel` turning a load-bearing null into a hang). Read those two before the next wave.
 
-**What's left is breadth, not architecture.** The two most valuable next steps, in order:
+**Industrial landed too** (2026-07) — factories, warehouses and storage yards, with bunkers under the
+factories. Nine of the ladder's ten arms are now live. See "Closed: industrial" below; it was **less
+than half** the predicted work, because this document's own estimate had gone stale.
 
-1. **The industrial family** — the last ladder arm that has a lot family waiting
-   (`FactoryBuildingLot` 703 + `BunkerLot` 1037). Measured: ~90 compiler fixes, vs ~4 for farm.
-   Its `itemsEntities_Bunker` list and `BUNKER`/`STORAGE_SHED`/`WOODWORKS`/`STONEWORKS` loot tables
-   are already ported and waiting — they light up for free when the lots land.
-2. **Outland + the nature set-pieces** — bunkers, radio towers, oil platforms, flying saucers.
-   The last ladder arm, and the only one with no setting to hide behind.
+**What's left is breadth, not architecture.** The most valuable next steps, in order:
+
+1. **Outland + the nature set-pieces** — campgrounds, radio towers, oil platforms, flying saucers,
+   mine entrances, and `BunkerLot` *as a lot* (its statics are already in use by factories). The last
+   ladder arm, and the only one with no setting to hide behind. `NatureContext.populateMap` still
+   lacks its set-piece survey (see below) — that is the same job.
+2. **`StructureOnGroundProvider` (1158) and `StructureInAirProvider` (207)** — the last two stubs of
+   consequence. Between them they cost: parks with no water tower, storage lots that roll `SHED` and
+   build nothing (leaving `LootLocation.STORAGE_SHED` unreached), bunkers with no saucer, and no
+   balloons. Self-contained and highly visible for the money.
 
 ### ⚠ The single most important thing to know: CityWorld builds in the DECORATION pass
 
@@ -184,24 +190,53 @@ artefact you are actually shipping — the interesting bugs live where two featu
 
 ### Remaining families
 
-The context ladder in `ShapeProvider_Normal.getContext(PlatMap)` is real and eight of its ten arms
-are live (park, highrise, construction, midrise, lowrise, neighborhood, municipal, farm). Two remain:
+The context ladder in `ShapeProvider_Normal.getContext(PlatMap)` is real and **nine of its ten arms
+are live** (park, highrise, construction, midrise, lowrise, neighborhood, municipal, farm,
+industrial). One remains:
 
 | arm | needs | how it's held back |
 |---|---|---|
-| industrial | `FactoryBuildingLot` (703), `WarehouseBuildingLot` (99), `StorageLot` (121), and `BunkerLot` (1037) under them | `includeIndustrialSectors = false` |
 | outland | `CampgroundLot`, `GravelworksLot`, `WoodworksLot`, `MineEntranceLot`, … | **no setting guards this one** — its band falls through to nature, marked in `getContext` |
 
-**Using the setting for industrial is deliberate, not a hack.** Upstream already guards that arm
-with exactly that flag, so switching it off makes the band fall through to the next precisely as it
-would for a player who disabled the feature. Restoring it is: port its lots, allocate its context in
-`allocateContexts`, flip the flag. The context field is already declared.
+### ✔ Closed: industrial (2026-07)
 
-**Why industrial and not the others** (measured, don't re-derive): transformed together, the three
-families needed wildly different amounts of fixing against the compiler — municipal **~0**, farm
-**4**, industrial **90** (`FactoryBuildingLot` 69, `BunkerLot` 21). Factory reaches for
-`InteriorStyle`, `insetWallNS/WE`, `firstFloorHeight` and `itemsSelectMaterial_FactoryInsides`;
-Bunker wants `RoadThroughBunkerLot` and `itemsSelectMaterial_BunkerPlatforms`.
+`IndustrialContext` (55), `IndustrialBuildingLot` (38), `FactoryBuildingLot` (703),
+`WarehouseBuildingLot` (99), `StorageLot` (121), `BunkerLot` (1037) and `RoadThroughBunkerLot` (73) —
+**2,126 lines, copied verbatim**, `includeIndustrialSectors` back on at upstream's default.
+
+**The "90 compiler fixes" estimate was stale and this section told you not to re-derive it — derive it
+anyway.** The real number was 200 before the import transform and **40 after**, and they collapsed
+into three small buckets, because the things Factory was said to be blocked on had all quietly
+arrived with later waves: `InteriorStyle`, `insetWallNS/WE`, `firstFloorHeight`, `RoofStyle`,
+`RoofFeature`, `InsetStyle` were *already there*. What was actually missing:
+
+- **Six `MaterialProvider` lists**, not the two named here: `itemsSelectMaterial_FactoryInsides`,
+  `_FactoryTanks`, `_BunkerBuildings`, `_BunkerPlatforms`, `_BunkerBilge`, `_BunkerTanks`.
+- **Three settings**: `treasuresInBunkers`, `spawnersInBunkers`, `oddsOfTreasureInBunkers`.
+- **Two stub methods**: `StructureOnGroundProvider.generateShed` and
+  `StructureInAirProvider.generateSaucer`. Both call sites are `void` and read nothing back — checked,
+  because of the `NatureContext.populateMap` lesson — so no-op stubs are safe. The cost is that a
+  `StorageLot` which rolls `SHED` is an empty yard, and `LootLocation.STORAGE_SHED` stays unreached.
+
+**`IndustrialBuildingLot` was missing from the list above** — the abstract parent of Factory and
+Warehouse. `BunkerLot`'s role was also mis-stated: Factory needs only its **static** generators
+(`generateRecallBunker`, `generateTankBunker`, `generateBallsyBunker`, `generateQuadBunker`,
+`generateGrowingBunker`), not `BunkerLot` as a lot. `BunkerLot` as a *lot* is still unplanned —
+that's `NatureContext`'s set-pieces, still outstanding.
+
+**The transform is mechanical and worth reusing** (measured on already-ported lots, which differ from
+upstream by 0–22 lines): `org.bukkit.Material` → `compat.Material`, `org.bukkit.block.BlockFace` →
+`compat.BlockFace`, `org.bukkit.TreeSpecies` → `compat.WoodSpecies` (+ the type refs),
+`ChunkGenerator.BiomeGrid` → `compat.BiomeGrid`, `Bisected.Half` →
+`properties.Half`, `Stairs.Shape.X` → `StairsShape.X`. That is the whole port for a lot file.
+
+**Verified by probing planning *and* drawing** (they are different passes — that is the 1,142-road-lots
+lesson): 2 of 25 platmaps chose `IndustrialContext`; 77 `FactoryBuildingLot`, 26
+`WarehouseBuildingLot`, 6 `StorageLot` planned; and in the world, **41 `chests/warehouse` and 13
+`chests/bunker`** — both previously unreachable — plus a **blaze spawner**, i.e.
+`itemsEntities_Bunker` reached for the first time. 625 chunks, 8s, no exceptions. Those bunker chests
+and spawners are factories building bunkers beneath themselves via `generateTreat`/`generateTrick`,
+which is exactly what the three new settings gate.
 
 ### P5: what's deliberately not done
 
@@ -282,8 +317,10 @@ proves the table was attached but says nothing about the save/load round trip a 
 meets. Barn chests are the nicer confirmation — `FARMWORKS` is a coin-flip inside a coin-flip
 (`BarnLot.placeChest`) and never once turned up in a probe sample.
 
-Still unreached, because their lots aren't ported: `BUNKER`, `STORAGE_SHED`, `WOODWORKS(_OUTPUT)`,
-`STONEWORKS(_OUTPUT)` chests, and the `itemsEntities_Bunker` list.
+`BUNKER`, `WAREHOUSE` and `itemsEntities_Bunker` came alive with the industrial family — measured in
+a world: 13 bunker chests, 41 warehouse chests, and a blaze spawner. Still unreached: `STORAGE_SHED`
+(its lot rolls, but `generateShed` is a stub), and `WOODWORKS(_OUTPUT)` / `STONEWORKS(_OUTPUT)`,
+whose outland lots aren't ported. `RANDOM` has no caller outside the Astral styles.
 
 Also still outstanding:
 - **`NatureContext.populateMap` still lacks its set-pieces** — upstream seeds bunkers, radio towers,
