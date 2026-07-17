@@ -5,46 +5,50 @@ import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.compat.Block;
 
 /**
- * Stub of the original {@code LootProvider}.
+ * What goes in the chests.
  *
- * <p><b>Phase 1 placeholder.</b> {@code SupportBlocks} needs this type only to name it in the
- * {@code setChest}/{@code setDoubleChest} signatures — it calls {@link #setLoot} and nothing else.
- * Keeping the shape and dropping the body is what lets the block seam compile ahead of the loot
- * layer.
+ * <p>Upstream offered three implementations — a PhatLoots integration (already commented out by
+ * 1.14), {@code LootProvider_Normal}, which filled inventories imperatively with random picks from
+ * {@code MaterialProvider}'s per-location lists, and {@code LootProvider_LootTable}, which handed the
+ * job to Minecraft's own loot tables. The last was upstream's default
+ * ({@code useMinecraftLootTables = true}) and is the only one ported: it is the one that already
+ * behaves like modern Minecraft, and the imperative path would need a dozen
+ * {@code itemsRandomMaterials_*Chests} lists rebuilt to say something vanilla now says better.
  *
- * <p>Real loot is Phase 5, and it will not look like this: the original filled chest inventories
- * imperatively with Bukkit {@code ItemStack}s (and could hand off to Minecraft loot tables when
- * {@code useMinecraftLootTables} was set), whereas the port will migrate the bundled loot tables to
- * the 1.21 format and let vanilla populate the container. The {@code worldPrefix} argument exists
- * because the original scoped its loot tables per world name.
+ * <p><b>The tables ship with the mod.</b> Upstream extracted its bundled datapack into
+ * {@code <world>/datapacks/cityworld/} at world-load and called {@code Bukkit.reloadData()}; a
+ * NeoForge mod jar <em>is</em> a datapack, so the 13 tables simply sit in
+ * {@code data/cityworld/loot_table/chests/} and are found. That retires two pieces of upstream's
+ * signature:
+ *
+ * <ul>
+ * <li>{@code saveLoots()} — a vestige of the PhatLoots API that both upstream implementations
+ * already left empty.
+ * <li>{@code worldPrefix} — passed at every call site and read by neither implementation. Its intent
+ * was per-world loot customisation, keying each table {@code <worldname>_<location>}, which is what
+ * the extraction step was really for. The port has no per-world anything (the dimension is always
+ * {@code city}), so the prefix could only ever spell one name. It returns with the settings layer at
+ * P7, if it returns at all.
+ * </ul>
  */
 public abstract class LootProvider extends Provider {
 
+    /**
+     * Where a chest is, which is to say what should be in it.
+     *
+     * <p>The order is load-bearing: {@link LootLocation#EMPTY} and {@link LootLocation#RANDOM} are
+     * the two non-places, and everything from index 2 on is a real one whose name matches a table in
+     * {@code data/cityworld/loot_table/chests/}. Upstream leant on the same split with
+     * {@code Arrays.copyOfRange(values(), 2, …)}.
+     */
     public enum LootLocation {
         EMPTY, RANDOM, SEWER, MINE, BUNKER, BUILDING, WAREHOUSE, FOOD, STORAGE_SHED, FARMWORKS, FARMWORKS_OUTPUT,
         WOODWORKS, WOODWORKS_OUTPUT, STONEWORKS, STONEWORKS_OUTPUT
     }
 
-    public abstract void setLoot(CityWorldGenerator generator, Odds odds, String worldPrefix,
-            LootLocation chestLocation, Block block);
+    public abstract void setLoot(CityWorldGenerator generator, Odds odds, LootLocation lootLocation, Block block);
 
-    public abstract void saveLoots();
-
-    /**
-     * Upstream picks between a PhatLoots integration, its own loot tables, and vanilla ones. Until
-     * P5 there is only the do-nothing implementation, so chests are placed but left empty.
-     */
     public static LootProvider loadProvider(CityWorldGenerator generator) {
-        return new LootProvider() {
-
-            @Override
-            public void setLoot(CityWorldGenerator generator, Odds odds, String worldPrefix,
-                    LootLocation chestLocation, Block block) {
-            }
-
-            @Override
-            public void saveLoots() {
-            }
-        };
+        return new LootProvider_LootTable();
     }
 }

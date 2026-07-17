@@ -548,7 +548,7 @@ public abstract class SupportBlocks extends AbstractBlocks {
 			Block block = getActualBlock(x, y, z);
 			connectDoubleChest(x, y, z, facing);
 			if (isType(block, Material.CHEST))
-				lootProvider.setLoot(generator, odds, getWorldName(), lootLocation, block);
+				lootProvider.setLoot(generator, odds, lootLocation, block);
 		}
 //		else
 //			generator.reportFormatted("SKIPPED CHEST AT %d, %d, %d", x, y, z);
@@ -839,13 +839,4 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		}, true);
 	}
 
-	/**
-	 * The old Bukkit {@code World.getName()}, which the loot layer uses to scope its tables per
-	 * world. The dimension path ("city") is the closest modern equivalent.
-	 */
-	private String getWorldName() {
-		if (world instanceof ServerLevelAccessor server)
-			return server.getLevel().dimension().identifier().getPath();
-		return "world";
-	}
 }

@@ -6,18 +6,23 @@
 buildings with furnished interiors, parks, roundabouts, farms, civic districts, trees and ground
 cover — all verified by reading blocks back out of a real world, deterministically, no exceptions.
 
-**Two jars are stashed in `builds/`** (git-ignored) for comparing progress by hand:
-`cityworld-p5-trees-and-streets.jar`, then `cityworld-p5-plus-farms-and-civic.jar`. The latter is
-also deployed to the CurseForge instance. Remember: **new world each time** — existing chunks never
+**Three jars are stashed in `builds/`** (git-ignored) for comparing progress by hand:
+`cityworld-p5-trees-and-streets.jar`, `cityworld-p5-plus-farms-and-civic.jar`, then
+`cityworld-p5-mobs-and-loot.jar`. Remember: **new world each time** — existing chunks never
 regenerate.
 
-**What's left is breadth, not architecture.** The three most valuable next steps, in order:
+**The cities are inhabited and the chests have things in them** (2026-07). Villagers with names,
+animals in the fields, fish in the sea, spawners in the mines and sewers, and 13 loot tables that
+vanilla rolls on first open. See "Closed: mobs and loot" below — both were *smaller* than this
+document predicted, because two of the risks recorded here rested on unchecked assumptions.
 
-1. **Mobs and loot** — the two most conspicuous absences. A city with nobody in it and empty chests.
-   Both are real work, not stubs-to-fill: see "P5: what's deliberately not done" below.
-2. **The industrial family** — the last ladder arm that has a lot family waiting
+**What's left is breadth, not architecture.** The two most valuable next steps, in order:
+
+1. **The industrial family** — the last ladder arm that has a lot family waiting
    (`FactoryBuildingLot` 703 + `BunkerLot` 1037). Measured: ~90 compiler fixes, vs ~4 for farm.
-3. **Outland + the nature set-pieces** — bunkers, radio towers, oil platforms, flying saucers.
+   Its `itemsEntities_Bunker` list and `BUNKER`/`STORAGE_SHED`/`WOODWORKS`/`STONEWORKS` loot tables
+   are already ported and waiting — they light up for free when the lots land.
+2. **Outland + the nature set-pieces** — bunkers, radio towers, oil platforms, flying saucers.
    The last ladder arm, and the only one with no setting to hide behind.
 
 ### ⚠ The single most important thing to know: CityWorld builds in the DECORATION pass
@@ -106,22 +111,79 @@ Bunker wants `RoadThroughBunkerLot` and `itemsSelectMaterial_BunkerPlatforms`.
 
 ### P5: what's deliberately not done
 
-Trees, ground cover, street names, statues and fossils are ported. Two conspicuous absences remain,
-and both are real work rather than stubs waiting to be filled in:
-
-- **Mobs** (`SpawnProvider`, 333 + four entity-list classes). It wants three things the port has
-  deliberately made hard: `generator.getWorld()` (which does not exist — that is top risk #1),
-  entity spawning during worldgen against a restricted `WorldGenRegion`, and per-column
-  `world.setBiome` (the `BiomeGrid` problem). Plus Bukkit→modern `EntityType` for 46 entities, of
-  which `PIG_ZOMBIE`→`ZOMBIFIED_PIGLIN`, `SNOWMAN`→`SNOW_GOLEM` and `UNKNOWN` need judgement rather
-  than a rename. `compat/EntityType` exists and holds the two a lot already names.
-- **Loot** (`LootProvider`). Chests are placed but empty. PORTING.md's P5 plan is to migrate the
-  bundled datapack loot tables to the 1.21 format and let vanilla populate the containers, dropping
-  upstream's runtime extraction — i.e. a different design, not a transcription.
+Trees, ground cover, street names, statues, fossils, **mobs and loot** are ported.
 
 Also stubbed, each documented at its site: `StructureOnGroundProvider` (1158 — water towers, sheds,
 campgrounds; a park lays out correctly but has no water tower in it), `StructureInAirProvider` (207
 — balloons and blimps).
+
+### ✔ Closed: mobs and loot (2026-07)
+
+Both landed, and both were **smaller than this document estimated** — in each case because a risk
+recorded here turned out to rest on an assumption nobody had checked. Worth reading before trusting
+the other estimates.
+
+- **Top risk #1 (`generator.getWorld()` does not exist) was never a real problem.** `SpawnProvider`
+  was the one caller that supposedly needed a whole `World`, and it doesn't: Bukkit's `Location`
+  carried its world, and so does `compat/Location`. Upstream had the level in its hand — `at` — at
+  the moment it called `getWorld()`. The port reads `blocks.getBlockLocation(…).getLevel()` and the
+  risk evaporates. It is struck from the list below.
+- **The `BiomeGrid` problem is real, unfixable here, and doesn't matter.** There is no `setBiome` on
+  `LevelAccessor`, `ChunkAccess` or `LevelChunk`; section biome containers are `PalettedContainerRO`
+  (read-only) and `BIOMES` settles five chunk-statuses before `FEATURES`. Upstream used it for
+  exactly two entries — wolf→`FOREST`, ocelot→`JUNGLE` — as cosmetic tidying before a spawn. Dropped
+  and documented in `SpawnProvider`. Directly-placed mobs ignore natural spawn rules, so nothing
+  depends on it. If it is ever wanted, it belongs to the `BiomeSource`.
+- **The loot tables needed almost no migration.** The estimate here was "number-provider objects,
+  `enchant_randomly` options, `pack_format` bump". Checked against the codecs instead of assumed:
+  `NumberProviders.CODEC` is `Codec.withAlternative(TYPED_CODEC, UniformGenerator.CODEC)`, so bare
+  `{"min":…,"max":…}` still reads as uniform; `enchant_randomly`'s `options` is an
+  `optionalFieldOf`; and the top-level `type` is a `lenientOptionalFieldOf`. The 13 files needed
+  **no content edits at all** — only the `loot_tables` → `loot_table` directory rename (the
+  registry key is `loot_table`), and a `"type": "minecraft:chest"` added for explicitness. All 205
+  item ids they name still exist in 1.21.11.
+- **A mod jar is a datapack**, so upstream's extract-into-`<world>/datapacks/`-then-`reloadData()`
+  machinery is gone; the tables just sit in `data/cityworld/loot_table/chests/`. That retired
+  `saveLoots()` (already empty in both upstream implementations) and the `worldPrefix` argument
+  (passed everywhere, read by neither — it keyed per-world tables, and the port has no per-world
+  anything).
+- **Only the loot-table implementation is ported**, not `LootProvider_Normal`. It was upstream's
+  default (`useMinecraftLootTables = true`) and the imperative path would need a dozen
+  `itemsRandomMaterials_*Chests` lists rebuilt to say what vanilla says better.
+
+Two modern gotchas the code comments carry, worth knowing before touching this again:
+
+- **`EntityType.spawn(...)` is unusable at decoration** — every overload demands a concrete
+  `ServerLevel` and would add the mob to the live level, bypassing the region. Vanilla's own worldgen
+  never calls it. The idiom (`OceanMonumentPieces`, `SwampHutPiece`, `MineshaftPieces`) is
+  `create(level.getLevel(), reason)` → `snapTo` → `finalizeSpawn(region, …)` →
+  `region.addFreshEntityWithPassengers(…)`: `getLevel()` only to *construct*, the accessor to place.
+- **`WorldGenRegion.addFreshEntity` does not bounds-check like `setBlock` does.** It never consults
+  `ensureCanWrite`; it resolves the chunk directly, and one outside the region's cache throws
+  `ReportedException` — a server crash, not a declined write. Upstream's `insideXYZ`/`clampXZ` guards
+  are load-bearing now, not politeness.
+- **Use `EventHooks.finalizeMobSpawn`, not `Mob.finalizeSpawn`** — NeoForge marks the latter
+  `@ApiStatus.OverrideOnly`. The hook fires `FinalizeSpawnEvent` so other mods get a say; a cancelled
+  spawn needs no handling on our side, as `WorldGenRegion.addFreshEntity` drops marked mobs.
+- **Chests need no `setLevel` guard**, unlike signs: `setLootTable` is a plain field write that never
+  notifies its level. Spawners likewise — `SpawnerBlockEntity.setEntityId` passes its `@Nullable`
+  level straight through and the trailing `setChanged()` guards on it.
+
+**Verified by generating 625 chunks and reading them back** (`PopulationProbe`, since deleted), over
+three seeds: 60–88 mobs across 15–20 kinds, 27–42 spawners across 7–8 kinds, 443–485 chests of which
+**every single one carried a loot table**, villagers with names ("Hazel Simmons", "Christine
+Johnson", "Curtis Nichols"), zero exceptions.
+
+**And separately: all 13 tables resolved and rolled 20× each, every one yielding items** — including
+the seven whose lots aren't ported, so they're known-good ahead of time. This was worth doing on its
+own: a chest tagged with a table that doesn't parse is exactly as empty as one with no table at all,
+and `setLootTable` only stores a key, so counting tagged chests proves nothing about the data. The
+first attempt at this probe *itself* crashed on `Missing registry: minecraft:loot_table` — loot
+tables are **not** in `level.registryAccess()`, they are a reloadable datapack registry reached via
+`server.reloadableRegistries().getLootTable(key)`.
+
+Still unreached, because their lots aren't ported: `BUNKER`, `STORAGE_SHED`, `WOODWORKS(_OUTPUT)`,
+`STONEWORKS(_OUTPUT)` chests, and the `itemsEntities_Bunker` list.
 
 Also still outstanding:
 - **`NatureContext.populateMap` still lacks its set-pieces** — upstream seeds bunkers, radio towers,
@@ -544,9 +606,17 @@ long-standing grey area in the modding ecosystem; many GPL mods ship regardless.
    the provider stack must keep being built in upstream's order, on one thread.
 2. **Neighbor access** during decoration for connected roads/parks. **Now live** — the city is drawn
    in `applyBiomeDecoration` against a `WorldGenRegion`, which restricts how far a write may reach.
-   `RealBlocks` refusing to cross its chunk edge is what keeps this legal.
+   `RealBlocks` refusing to cross its chunk edge is what keeps this legal. **Sharper than it looks
+   for entities**: `WorldGenRegion.addFreshEntity` skips the `ensureCanWrite` check that `setBlock`
+   gets, and resolving a chunk outside the region's cache *throws* rather than declining — so an
+   out-of-chunk spawn crashes the server instead of being quietly dropped. See `SpawnProvider`.
 3. **Performance** — the original disabled several styles for perf even on Bukkit.
 4. **Per-world config** doesn't match NeoForge's per-instance config model.
+
+**Struck: the old risk #1, "`generator.getWorld()` does not exist".** It was only ever needed by
+`SpawnProvider`, which doesn't need it either — `compat/Location` carries its level exactly as
+Bukkit's `Location` carried its world. See "Closed: mobs and loot". The numbering above is kept as-is
+so older notes referring to "top risk #2" still point at neighbour access.
 
 ## 1.21.11 API notes (verified against the decompiled NeoForge sources)
 

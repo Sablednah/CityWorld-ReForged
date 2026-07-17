@@ -55,6 +55,14 @@ public class CityWorldSettings {
     public boolean includeNamedRoads = true;
     public boolean includeDecayedRoads = false;
     public boolean includeDecayedBuildings = false;
+
+    /** Who turns up, and how often. {@code SpawnProvider} branches on all of these. */
+    public double spawnBeings = Odds.oddsLikely;
+    public double spawnBaddies = Odds.oddsPrettyUnlikely;
+    public double spawnAnimals = Odds.oddsVeryLikely;
+    public double spawnVagrants = Odds.oddsSomewhatUnlikely;
+    public boolean nameVillagers = true;
+    public boolean showVillagersNames = true;
     public boolean includeBuildingInteriors = true;
     public boolean includeHouses = true;
     /** Balloons and blimps over the fields. The lots that carry them are P5/P8. */

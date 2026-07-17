@@ -51,6 +51,10 @@ export PATH="$JAVA_HOME/bin:$PATH"
   `runServer` generates using our generator. **Delete `run/world` to force regeneration.**
 - Gradle can't forward piped stdin to the server console — to verify in-world behaviour, register a
   temporary `ServerStartedEvent` listener that logs what you need, rather than piping commands.
+- **Kill the previous `runServer` before starting another.** A backgrounded one keeps port 25565, and
+  the second run fails with `bind(..) failed: Address already in use` → `Failed to initialize server`
+  → a crash report and an NPE in `overworld()` on shutdown. That reads like a code fault and isn't
+  one. `pkill -f "gradlew runServer"`, then check the port is actually free before rerunning.
 - Versions/metadata live in `gradle.properties` and expand into
   `src/main/templates/META-INF/neoforge.mods.toml` at build time — **edit the template and
   gradle.properties, never a generated `mods.toml`**.
