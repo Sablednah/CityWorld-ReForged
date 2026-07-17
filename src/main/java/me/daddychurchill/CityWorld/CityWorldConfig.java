@@ -39,7 +39,11 @@ public final class CityWorldConfig {
                 .comment("Break up roads and sidewalks with rubble.")
                 .define("includeDecayedRoads", false);
         INCLUDE_DECAYED_NATURE = BUILDER
-                .comment("Let the wild set-pieces (radio towers, castles, ...) decay further.")
+                .comment("Dry the whole world out — the full post-apocalyptic look.",
+                        "Drains the seas (only the deepest water, below deep-sea level, remains),",
+                        "forces every biome to desert, and withers crops and ground cover.",
+                        "This is what empties the ocean; leave it false for ruined buildings on a",
+                        "normal, wet, green world.")
                 .define("includeDecayedNature", false);
         INCLUDE_FIRES = BUILDER
                 .comment("Whether demolition debris can be left burning (netherrack + fire),",
