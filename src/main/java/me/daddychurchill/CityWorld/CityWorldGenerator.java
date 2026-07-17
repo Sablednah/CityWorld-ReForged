@@ -22,8 +22,12 @@ import me.daddychurchill.CityWorld.Plugins.TreeProvider;
 import me.daddychurchill.CityWorld.Support.AbstractBlocks;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
+import me.daddychurchill.CityWorld.Support.WorldBlocks;
 import me.daddychurchill.CityWorld.compat.Environment;
 import me.daddychurchill.CityWorld.compat.Material;
+
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.LevelAccessor;
 
 /**
  * Per-world context for the generator: the seed, the world's vertical layout, the settings, and the
@@ -314,23 +318,57 @@ public class CityWorldGenerator {
     }
 
     /**
-     * Clears a region — used when a lot decides to demolish what is under it.
+     * The demolition tool bound to the chunk currently being decorated.
      *
-     * <p>Stubbed: it belongs to the decoration pass, which runs on a live level and is not driven
-     * yet (P5). Only the destroyed-city styles call it.
+     * <p><b>Thread-local, and it has to be.</b> This generator is one shared per-world context, but
+     * decoration runs concurrently on chunk-generation workers, each with its own live
+     * {@code WorldGenLevel} and each in the middle of one chunk. Upstream kept a single shared
+     * {@code decayBlocks} with a single mutable {@code Odds} — reproducible only because Bukkit
+     * generated one chunk at a time. Under the modern pipeline that field would be raced and its RNG
+     * order non-deterministic. A thread-local, re-seeded per chunk from the chunk position (the same
+     * order-independent trick {@link #getConnectionKey} uses), keeps every worker's demolition on its
+     * own level and reproducible regardless of scheduling.
      */
-    public void destroyWithin(int x1, int x2, int y1, int y2, int z1, int z2) {
+    private final ThreadLocal<WorldBlocks> decayBlocks = new ThreadLocal<>();
+
+    /**
+     * Binds {@link #decayBlocks} to the chunk about to be decorated. Call from the decoration pass
+     * before running the lots, and pair with {@link #endDecoration()} in a {@code finally}.
+     */
+    public void beginDecoration(LevelAccessor level, ChunkPos pos) {
+        Odds odds = new Odds(worldSeed + ((long) pos.x << 32 ^ pos.z));
+        decayBlocks.set(new WorldBlocks(this, level, odds));
     }
 
-    /** Overload that would leave fire behind; stubbed with the rest of the demolition pass (P5). */
+    /** Releases this thread's demolition tool once the chunk's decoration is done. */
+    public void endDecoration() {
+        decayBlocks.remove();
+    }
+
+    /**
+     * Clears a region — used when a lot decides to demolish what is under it. Delegates to the
+     * thread-local {@link WorldBlocks} bound by {@link #beginDecoration}; a no-op if called outside
+     * the decoration pass (e.g. a plan-only sweep with no live level).
+     */
+    public void destroyWithin(int x1, int x2, int y1, int y2, int z1, int z2) {
+        destroyWithin(x1, x2, y1, y2, z1, z2, getSettings().includeFires);
+    }
+
+    /** Overload that can leave fire in the debris, gated on {@code includeFires}. */
     public void destroyWithin(int x1, int x2, int y1, int y2, int z1, int z2, boolean withFire) {
+        WorldBlocks blocks = decayBlocks.get();
+        if (blocks != null)
+            blocks.destroyWithin(x1, x2, y1, y2, z1, z2, withFire && getSettings().includeFires);
     }
 
     /**
      * Blows a rough sphere out of the world — how the unfinished/decayed styles chew holes in
-     * things. Stubbed alongside {@link #destroyWithin}; both belong to the decoration pass (P5).
+     * things. Delegates like {@link #destroyWithin}; a no-op outside the decoration pass.
      */
     public void destroyArea(int x, int y, int z, int radius) {
+        WorldBlocks blocks = decayBlocks.get();
+        if (blocks != null)
+            blocks.destroyArea(x, y, z, radius, getSettings().includeFires);
     }
 
     /**

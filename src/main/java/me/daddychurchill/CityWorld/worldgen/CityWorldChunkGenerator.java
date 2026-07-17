@@ -228,7 +228,17 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         ChunkPos pos = chunk.getPos();
 
         PlatMap platmap = context.getPlatMap(pos.x, pos.z);
-        platmap.generateBlocks(new RealBlocks(context, level, pos));
+
+        // Bind the thread-local demolition tool to this chunk's live level for the duration of the
+        // pass, so lots that call generator.destroyWithin/destroyArea (castles, radio towers, oil
+        // platforms, unfinished/decayed styles) actually chew holes. Released in finally so a worker
+        // never carries a stale level into the next chunk.
+        context.beginDecoration(level, pos);
+        try {
+            platmap.generateBlocks(new RealBlocks(context, level, pos));
+        } finally {
+            context.endDecoration();
+        }
     }
 
     @Override

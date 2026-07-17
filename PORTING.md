@@ -46,15 +46,32 @@ buried under midlands/highlands, and one "special" lot at the platmap's highest 
 points chosen by terrain — oil platforms in deep sea, saucers/balloons overhead, mine entrances in
 midlands, radio towers on highlands, a castle on a peak. Added `includeBunkers` to settings, three
 `materialProvider` selectors (oil-platform floor/column, castles), and a stubbed 7-arg `destroyWithin`
-(demolition is still P5, so castles/decayed radio towers stand intact for now). A 25,921-platmap
+(since wired — see "Demolition landed" below; castles/decayed radio towers now spawn as ruins). A 25,921-platmap
 plan-sweep confirmed all nine set-piece types generate without throwing (rarest: `OldCastleLot`=112,
 `FlyingSaucerLot`=134).
 
+**Demolition landed** (2026-07) — `destroyWithin`/`destroyArea` are no longer stubs. The full
+`WorldBlocks` demolition machinery (sphere dispersal, debris sprinkle, fire) was already ported;
+the gap was purely wiring the generator's three entry points to a `WorldBlocks` bound to the live
+decoration level. Done with a **thread-local** `WorldBlocks` on the per-world generator, re-seeded
+per chunk from the chunk position — *not* upstream's single shared `decayBlocks`/`Odds`, which would
+race and go non-deterministic under the concurrent decoration workers (the same trap `RealBlocks` and
+`getConnectionKey` already dodge). `CityWorldChunkGenerator.applyBiomeDecoration` binds it via
+`beginDecoration`/`endDecoration` (in a `finally`, so a worker never carries a stale level forward).
+Now the ruined styles actually chew holes: castles/radio towers/oil platforms/unfinished buildings
+crumble even at default settings (they demolish unconditionally), and `includeDecayedBuildings`/
+`includeDecayedRoads` finally bite. **Verified end-to-end**: with `includeDecayedBuildings` forced on,
+a 41×41 (1,681-chunk) force-load generated with **0 chunk failures, 90 demolitions on live levels,
+zero far-chunk write warnings, zero stacktraces, zero watchdog trips** — the debris radius (≤~10
+blocks) stays inside the decorating chunk's writable region, so PORTING.md's top-risk #2 (neighbour
+access) doesn't bite here. `includeDecayedBuildings=true` is the owner's "apocalypse server" preset,
+so this path matters in play, not just in theory.
+
 **What's left is breadth, not architecture.** The most valuable next steps:
 
-1. **P5 demolition** — `destroyWithin`/`destroyArea` are still no-op stubs, so the decayed styles
-   (`includeDecayedBuildings`) don't actually chew holes yet. Castles are meant to spawn as ruins;
-   right now they stand whole. Wiring these needs the live-level decoration pass.
+1. **P6 schematics** or **P7 config/commands** — see the phase list below. Demolition (the last
+   flagged P5 gap) is done; what remains is the schematic paste pipeline and wiring settings/commands
+   through to NeoForge config, neither of which is architectural.
 
 ### ⚠ The single most important thing to know: CityWorld builds in the DECORATION pass
 
