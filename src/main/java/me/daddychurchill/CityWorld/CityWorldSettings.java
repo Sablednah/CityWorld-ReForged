@@ -10,9 +10,11 @@ import me.daddychurchill.CityWorld.Support.Odds;
  * the flags the {@code ShapeProvider} family actually branches on are here, each at its upstream
  * default, so terrain generates exactly as an unconfigured CityWorld world would.
  *
- * <p>The real one arrives at P7, and it is not a straight port: CityWorld's settings are
- * <em>per-world</em>, while NeoForge's {@code ModConfigSpec} is per-instance, so this needs a
- * datapack or world-saved-data approach rather than a config file (PORTING.md, top risk #4).
+ * <p>The full port arrives at P7, and it is not straight: CityWorld's settings are
+ * <em>per-world</em>, while NeoForge's {@code ModConfigSpec} is per-instance, so it needs a
+ * datapack or world-saved-data approach rather than a config file (PORTING.md, top risk #4). A first
+ * slice is wired ahead of that, though — {@link CityWorldConfig} exposes the decay/apocalypse
+ * toggles as a per-instance config, overlaid onto the defaults in the constructor below.
  */
 public class CityWorldSettings {
 
@@ -81,6 +83,19 @@ public class CityWorldSettings {
 
     /** Back on at upstream's default now that {@code RoundaboutCenterLot} is ported (wave 2b). */
     public boolean includeRoundabouts = true;
+
+    public CityWorldSettings() {
+        // Overlay the runtime config's decay slice onto the compiled defaults. Guarded on isLoaded()
+        // so plan-only paths (probes, tests) that build settings before config load keep the
+        // defaults instead of throwing. The rest of the ~100 knobs still come from the field
+        // initializers above until the full per-world settings port (P7).
+        if (CityWorldConfig.SPEC.isLoaded()) {
+            includeDecayedBuildings = CityWorldConfig.INCLUDE_DECAYED_BUILDINGS.get();
+            includeDecayedRoads = CityWorldConfig.INCLUDE_DECAYED_ROADS.get();
+            includeDecayedNature = CityWorldConfig.INCLUDE_DECAYED_NATURE.get();
+            includeFires = CityWorldConfig.INCLUDE_FIRES.get();
+        }
+    }
 
     /**
      * Whether a chunk is inside the configured city radius.

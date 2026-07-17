@@ -9,6 +9,7 @@ import me.daddychurchill.CityWorld.worldgen.CityWorldRegistries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
 
 /**
  * CityWorld — main mod entrypoint (common: loaded on both client and dedicated server).
@@ -36,6 +37,10 @@ public class CityWorldMod {
         // Register the custom ChunkGenerator codec (cityworld:city). The dimension and world
         // preset that reference it live in src/main/resources/data/cityworld/...
         CityWorldRegistries.register(modEventBus);
+
+        // A first slice of runtime config (per-instance): the decay/apocalypse toggles. The full
+        // per-world settings port is P7; see CityWorldConfig.
+        modContainer.registerConfig(ModConfig.Type.COMMON, CityWorldConfig.SPEC);
 
         LOGGER.info("CityWorld {} initialising (NeoForge port)",
                 modContainer.getModInfo().getVersion());
