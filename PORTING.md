@@ -65,7 +65,9 @@ a 41×41 (1,681-chunk) force-load generated with **0 chunk failures, 90 demoliti
 zero far-chunk write warnings, zero stacktraces, zero watchdog trips** — the debris radius (≤~10
 blocks) stays inside the decorating chunk's writable region, so PORTING.md's top-risk #2 (neighbour
 access) doesn't bite here. `includeDecayedBuildings=true` is the owner's "apocalypse server" preset,
-so this path matters in play, not just in theory.
+so this path matters in play, not just in theory. **Confirmed in play** (2026-07): with the decay
+config on (buildings + roads + nature, fires off) the owner walked a fresh world — ruined buildings,
+rubbled roads, remote structures and oil rigs all reading right. City 17.
 
 **What's left is breadth, not architecture.** The most valuable next steps:
 
@@ -713,7 +715,7 @@ Coupling inventory (from the 1.14 source):
           `PlatLot`/`PlatMap`) are done, and `CityWorldChunkGenerator` already builds the per-world
           context lazily and thread-safely. Needs a `BiomeGrid` implementation and a decision on the
           Y offset. Contexts/cities are *not* needed for the terrain gate — they are wave 2.
-    - [ ] Add the `/cityworld` teleport into the `cityworld:city` dimension.
+    - [x] Add the `/cityworld` teleport into the `cityworld:city` dimension. (Done — see P7 below.)
 - [ ] **P4 — Height modernization.** Mostly done (2026-07); see "extend down, keep the shape" above.
     - [x] **`ShapeProvider` Y math for `-64..319`.** The key insight is that upstream's single
           `height` meant two things — the world's ceiling *and* the ceiling terrain scales against —
@@ -747,9 +749,18 @@ Coupling inventory (from the 1.14 source):
       Format is the **old flat-array MCEdit `.schematic`** (2013, MC ~1.5): numeric block IDs in
       `Blocks`/`Data` byte arrays — not WorldEdit `.schem`, not vanilla `.nbt`. Conversion needs a
       numeric-ID → modern `BlockState` mapping pass on top of the NBT reshaping.
-- [ ] **P7 — Config + commands.** `CityWorldSettings` YAML → `ModConfigSpec` TOML (per-world
-      settings need a datapack/world-saved-data approach — NeoForge config is per-instance).
-      `/cityworld`, `/citychunk`, `/cityinfo` → Brigadier; NeoForge permissions.
+- [~] **P7 — Config + commands.** *Partly done.* Config: a first per-instance slice is wired —
+      `CityWorldConfig` exposes the `[decay]` family (see "Demolition landed"); the full per-world
+      settings (YAML → datapack/world-saved-data, since NeoForge config is per-instance) is still
+      open. Commands: `/cityinfo` (anyone; reports context/lot/nature under the player — the modern
+      Brigadier port of Sablednah's upstream PR #4) and `/cityworld` + `/cityworld leave` (op;
+      teleport into/out of the `cityworld:city` dimension, landing on the surface at the player's
+      X/Z) are **done** — `CityWorldCommands`, registered via `CityWorldServerEvents` on
+      `RegisterCommandsEvent`. Command gating uses Brigadier permission levels (op for teleport),
+      matching the reference port's command pattern. `/citychunk` deliberately **not** ported: its
+      `regen` relied on Bukkit's `World.regenerateChunk`, which modern MC has no safe runtime
+      equivalent for. Still to do: the full settings port; a proper `NeoForge` permission-node layer
+      if per-node control is wanted beyond op levels.
 - [ ] **P8 — Parity & polish.** Re-enable world styles (`validateStyle` currently forces `NORMAL`);
       GameTest coverage; README/docs.
 

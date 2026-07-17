@@ -135,6 +135,15 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         return local;
     }
 
+    /**
+     * The per-world CityWorld context, for read-only callers outside generation — the
+     * {@code /cityinfo} and {@code /cityworld} commands. Same lazily-built, seed-checked context the
+     * generation path uses, so it plans identically.
+     */
+    public CityWorldGenerator getContext(LevelHeightAccessor level) {
+        return context(level);
+    }
+
     @Override
     protected MapCodec<? extends ChunkGenerator> codec() {
         return CODEC;

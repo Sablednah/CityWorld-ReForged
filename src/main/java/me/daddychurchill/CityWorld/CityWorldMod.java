@@ -42,6 +42,9 @@ public class CityWorldMod {
         // per-world settings port is P7; see CityWorldConfig.
         modContainer.registerConfig(ModConfig.Type.COMMON, CityWorldConfig.SPEC);
 
+        // Server-side registrations on the game event bus (commands: /cityinfo, /cityworld).
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(CityWorldServerEvents.class);
+
         LOGGER.info("CityWorld {} initialising (NeoForge port)",
                 modContainer.getModInfo().getVersion());
     }
