@@ -1,11 +1,14 @@
 package me.daddychurchill.CityWorld;
 
+import java.io.InputStream;
 import java.util.Set;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
+import me.daddychurchill.CityWorld.Clipboard.LegacySchematic;
 import me.daddychurchill.CityWorld.Context.DataContext;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Support.PlatMap;
@@ -13,6 +16,7 @@ import me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -23,8 +27,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Relative;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
 /**
  * The CityWorld command tree — the modern Brigadier port of upstream's {@code CommandCityWorld} /
@@ -59,6 +66,11 @@ public final class CityWorldCommands {
                 .executes(ctx -> teleport(ctx, CITY, "Entering the city..."))
                 .then(Commands.literal("leave")
                         .executes(ctx -> teleport(ctx, Level.OVERWORLD, "Leaving CityWorld... come back soon!"))));
+
+        dispatcher.register(Commands.literal("cityschem")
+                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .then(Commands.argument("name", StringArgumentType.word())
+                        .executes(CityWorldCommands::pasteSchematic)));
     }
 
     // ------------------------------------------------------------------ /cityinfo
@@ -89,6 +101,44 @@ public final class CityWorldCommands {
 
     private static void line(CommandContext<CommandSourceStack> ctx, String key, String value) {
         ctx.getSource().sendSuccess(() -> Component.literal(key + ": " + value), false);
+    }
+
+    // ------------------------------------------------------------------ /cityschem <name>
+
+    private static int pasteSchematic(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        ServerLevel level = player.level();
+        String name = StringArgumentType.getString(ctx, "name");
+
+        // Spike: read the bundled classic assets. The full asset index / category resolution comes
+        // with the PasteProvider wiring.
+        String path = "/cityworld/schematics/Lowrise/" + name + ".schematic";
+        StructureTemplate template;
+        try (InputStream in = CityWorldCommands.class.getResourceAsStream(path)) {
+            if (in == null) {
+                ctx.getSource().sendFailure(Component.literal("No bundled schematic named '" + name + "'."));
+                return 0;
+            }
+            LegacySchematic schematic = LegacySchematic.read(in);
+            template = schematic.toTemplate(level.registryAccess().lookupOrThrow(Registries.BLOCK));
+        } catch (Exception ex) {
+            ctx.getSource().sendFailure(Component.literal("Failed to load '" + name + "': " + ex.getMessage()));
+            return 0;
+        }
+
+        BlockPos origin = player.blockPosition();
+        boolean placed = template.placeInWorld(level, origin, origin, new StructurePlaceSettings(),
+                level.getRandom(), Block.UPDATE_CLIENTS);
+        if (!placed) {
+            ctx.getSource().sendFailure(Component.literal("Nothing to place (empty template)."));
+            return 0;
+        }
+
+        var size = template.getSize();
+        ctx.getSource().sendSuccess(() -> Component.literal(
+                "Pasted '" + name + "' (" + size.getX() + "x" + size.getY() + "x" + size.getZ() + ") at "
+                        + origin.getX() + ", " + origin.getY() + ", " + origin.getZ()), true);
+        return 1;
     }
 
     // ------------------------------------------------------------------ /cityworld [leave]

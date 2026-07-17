@@ -741,8 +741,20 @@ Coupling inventory (from the 1.14 source):
       seed-deterministic `PlatMap` makes per-chunk regeneration viable). Migrate datapack loot
       tables to 1.21 format and bundle them in mod resources (drop the runtime extraction).
       `SpawnProvider` → modern `EntityType`.
-- [ ] **P6 — Schematics.** Reimplement `PasteProvider`/`Clipboard` via `StructureTemplate`; convert
-      `schematics/` assets to `.nbt` (or read the existing format).
+- [~] **P6 — Schematics.** *Spike done.* The conversion seam is built and proven: `LegacySchematic`
+      reads a legacy MCEdit `.schematic` (numeric ids + `Data`, `Width/Height/Length`) and converts it
+      to a native `StructureTemplate` — the vanilla `.nbt` representation — via `LegacyBlocks` (legacy
+      id+data → modern `BlockState`, growing from what assets use, unknown ids logged and fall back to
+      stone). Verified on `gas_stop`: 2,567/2,645 non-air blocks placed with every structural block
+      count matching the schematic exactly; the ~78 missing are attachment blocks (signs/levers/doors)
+      that can't survive a *mid-air* test and attach fine on a grounded build. A kept `/cityschem
+      <name>` command (op) pastes a bundled classic at the player. **Decisions:** modern target =
+      vanilla `.nbt` (native, no deps); WorldEdit `.schem` deferred; legacy→`.nbt` is one reusable
+      conversion so both formats share the load/place path. Still to do: bundle the full zarp set +
+      build-time (or cached-on-disk) `.schematic`→`.nbt` conversion so the legacy parser isn't a
+      runtime cost; the `.yml` placement metadata (`GroundLevelY`, `Flipable`, `OddsOfAppearance`,
+      `Decayable`); port `PasteProvider`/`ClipboardLot`/`ClipboardList` to select and place clips in
+      worldgen; refine orientation (doors/signs/stairs facing from data bits) and tile entities.
       Assets recovered: `../Schematics for zarp.zip` (Era-3 backup, ~297 KB, 186 files) holds the
       building schematics grouped by style (`Lowrise/`, `Industrial/`, `Municipal/`, …). Each
       `.schematic` has a `.schematic.yml` sidecar with CityWorld placement metadata — port both.
