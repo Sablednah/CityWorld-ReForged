@@ -15,6 +15,7 @@ import me.daddychurchill.CityWorld.Context.MidriseContext;
 import me.daddychurchill.CityWorld.Context.MunicipalContext;
 import me.daddychurchill.CityWorld.Context.NatureContext;
 import me.daddychurchill.CityWorld.Context.NeighborhoodContext;
+import me.daddychurchill.CityWorld.Context.OutlandContext;
 import me.daddychurchill.CityWorld.Context.ParkContext;
 import me.daddychurchill.CityWorld.Context.RoadContext;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
@@ -43,10 +44,6 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	DataContext municipalContext;
 	DataContext farmContext;
 
-	/**
-	 * Declared but never allocated: their lot families are unported, and the settings that guard
-	 * their arms of {@link #getContext(PlatMap)} are off, so the ladder never reaches them.
-	 */
 	DataContext industrialContext;
 	DataContext outlandContext;
 
@@ -157,10 +154,7 @@ public class ShapeProvider_Normal extends ShapeProvider {
 			municipalContext = new MunicipalContext(generator);
 			farmContext = new FarmContext(generator);
 			industrialContext = new IndustrialContext(generator);
-
-			// Upstream also allocates outlandContext here. It still needs a lot family that is not
-			// ported (the rural/nature set-pieces). See getContext(PlatMap) for how the ladder copes
-			// without it.
+			outlandContext = new OutlandContext(generator);
 
 			contextInitialized = true;
 		}
@@ -182,12 +176,10 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	 * whether a patch of world becomes downtown, suburb, farm or wilderness. The thresholds are the
 	 * knobs that give a world its character, and are upstream's, unchanged.
 	 *
-	 * <p><b>Four arms are not reachable yet</b>, each because its lot family is unported. Three of
-	 * them (municipal, industrial, farm) upstream already guards with a setting, so switching that
-	 * setting off makes the arm fall through to the next band exactly as a player disabling the
-	 * feature would — no special-casing needed. See {@code CityWorldSettings}. The fourth, outland,
-	 * has no such guard, so it falls through to nature here; that is a deliberate deviation and is
-	 * marked below.
+	 * <p>The municipal, industrial and farm arms are each guarded by a setting, so switching one off
+	 * makes that arm fall through to the next band exactly as a player disabling the feature would —
+	 * no special-casing needed. See {@code CityWorldSettings}. Outland has no such guard and is always
+	 * reachable.
 	 */
 	@Override
 	public DataContext getContext(PlatMap platmap) {
@@ -215,10 +207,8 @@ public class ShapeProvider_Normal extends ShapeProvider {
 			return neighborhoodContext;
 		else if (nature < 0.70 && platmap.generator.getSettings().includeFarms) // 10
 			return farmContext;
-
-			// Upstream: `else if (nature < 0.75) return outlandContext;` — the outland lots
-			// (campgrounds, gravel works, wood works, mine entrances) are not ported, and unlike the
-			// arms above there is no setting to switch it off, so this band falls to nature for now.
+		else if (nature < 0.75) // 5
+			return outlandContext;
 
 			// otherwise just keep what we have
 		else
