@@ -11,10 +11,17 @@ cover — all verified by reading blocks back out of a real world, deterministic
 `cityworld-p5-mobs-and-loot.jar`. Remember: **new world each time** — existing chunks never
 regenerate.
 
-**The cities are inhabited and the chests have things in them** (2026-07). Villagers with names,
-animals in the fields, fish in the sea, spawners in the mines and sewers, and 13 loot tables that
-vanilla rolls on first open. See "Closed: mobs and loot" below — both were *smaller* than this
-document predicted, because two of the risks recorded here rested on unchecked assumptions.
+**The cities are inhabited, the chests have things in them, and the sewers run wet** (2026-07).
+Villagers with names, animals in the fields, fish in the sea, spawners in the mines and sewers, and
+13 loot tables that vanilla rolls on first open. **All confirmed in play, not just by probe** — named
+villagers, sewer and barn chests with contents, flowing sewer water. See "Closed: mobs and loot"
+below: both were *smaller* than this document predicted, because two of the risks recorded here
+rested on unchecked assumptions.
+
+**Two bugs that shipped in the same session are the more valuable record**, both found by the owner
+playing rather than by any probe, and both written up above: the **dry sewers** (a verbatim port of a
+line whose meaning depended on running in a live world) and the **worldgen deadlock** (a previous
+fix's `setLevel` turning a load-bearing null into a hang). Read those two before the next wave.
 
 **What's left is breadth, not architecture.** The two most valuable next steps, in order:
 
@@ -148,9 +155,10 @@ untouched. After: **0 → 292** pending ticks (4 per sewer chunk = the four `set
 calls), and they fire once chunks tick.
 
 The one remaining difference from upstream: water flows **when the chunk ticks**, not during
-generation. Invisible in play (a chunk ticks when a player is near enough to look at it), and the
-scheduled tick survives in the chunk's tick container until then. If it ever proves not enough, the
-fallback is to fill the channel statically in `RoadLot` and stop depending on flow at all.
+generation. **Confirmed in play by the owner — the sewers have flowing water**, so the deferral is
+invisible as predicted, and the fallback (fill the channel statically in `RoadLot` and stop depending
+on flow) is *not* needed. Worth noting the probe could only ever prove the ticks were scheduled
+(0 → 292); that flow actually fills the channel was settled by walking into one.
 
 **Two generalisations worth more than the bug:**
 - **`setDoPhysics(true)` had exactly one caller in the whole tree** — this water. A seam with one
@@ -267,6 +275,12 @@ and `setLootTable` only stores a key, so counting tagged chests proves nothing a
 first attempt at this probe *itself* crashed on `Missing registry: minecraft:loot_table` — loot
 tables are **not** in `level.registryAccess()`, they are a reloadable datapack registry reached via
 `server.reloadableRegistries().getLootTable(key)`.
+
+**Confirmed in play by the owner (2026-07): sewer and barn chests have contents, and villagers have
+names.** That closes the gap the probe could not: it read chests *in memory during generation*, which
+proves the table was attached but says nothing about the save/load round trip a player actually
+meets. Barn chests are the nicer confirmation — `FARMWORKS` is a coin-flip inside a coin-flip
+(`BarnLot.placeChest`) and never once turned up in a probe sample.
 
 Still unreached, because their lots aren't ported: `BUNKER`, `STORAGE_SHED`, `WOODWORKS(_OUTPUT)`,
 `STONEWORKS(_OUTPUT)` chests, and the `itemsEntities_Bunker` list.
