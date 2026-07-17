@@ -27,19 +27,34 @@ fix's `setLevel` turning a load-bearing null into a hang). Read those two before
 factories. Nine of the ladder's ten arms are now live. See "Closed: industrial" below; it was **less
 than half** the predicted work, because this document's own estimate had gone stale.
 
-**What's left is breadth, not architecture.** The most valuable next steps, in order:
+**Outland landed** (2026-07) — `OutlandContext` and its six lots (`GravelMineLot`, `CampgroundLot`,
+`WoodframeLot`, `MineEntranceLot`, `GravelworksLot`, `WoodworksLot`) ported and wired into the
+ladder's tenth and last arm. A deterministic plan-sweep of 6,561 platmaps confirmed it: the outland
+band selects `OutlandContext` (212 platmaps) and all six lot types generate without throwing —
+`GravelworksLot` and `WoodworksLot` in bulk, the four singletons (`Campground`, `GravelMine`,
+`MineEntrance`, `Woodframe`) at their intended rarity. **Every ladder arm is now live.** It was a
+straight mechanical port: all its support (`StructureOnGroundProvider`, `GravelLot`'s hole/pile/
+tailings helpers, the `WOODWORKS`/`STONEWORKS` loot) was already in place from earlier waves.
 
-1. **Outland** — `OutlandContext` (132) plus six small lots: `GravelMineLot` (31), `CampgroundLot`
-   (45), `WoodframeLot` (76), `MineEntranceLot` (79), `GravelworksLot` (87), `WoodworksLot` (149).
-   **~470 lines — far smaller than industrial**, and now unblocked: `StructureOnGroundProvider` is
-   ported, so `generateCampground`/`generateShed`/`generateFirePit` are real. It is the last ladder
-   arm and the only one with no setting to hide behind. Will light up `WOODWORKS(_OUTPUT)` and
-   `STONEWORKS(_OUTPUT)` loot, which already ships and rolls.
-2. **`NatureContext.populateMap`'s set-pieces** — bunkers, radio towers, oil platforms, flying
-   saucers, hot air balloons, mine entrances, and the platmap's two "special" lots. This is where
-   `BunkerLot` finally gets planned *as a lot* (its statics are already in use by factories) and
-   where `HeightInfo`'s classification finally has a consumer.
-3. **`StructureInAirProvider` (207)** — balloons, blimps, saucers. Small, self-contained, visible.
+**Nature set-pieces landed** (2026-07) — `NatureContext.populateMap`'s full survey is restored, so
+the wild parts of the world now get their landmarks. Eight lot families ported to feed it:
+`MountainFlatLot` (parent) with `MountainShackLot`/`MountainTentLot`, the airborne `FlyingSaucerLot`/
+`HotairBalloonLot` (over `StructureInAirProvider`, which was already ported), and the three medium
+builds `OilPlatformLot`/`OldCastleLot`/`RadioTowerLot`. `BunkerLot` is now planned **as a lot** (not
+just via its statics), and `HeightInfo`'s `HeightState` classification finally has consumers: bunkers
+buried under midlands/highlands, and one "special" lot at the platmap's highest and lowest inner
+points chosen by terrain — oil platforms in deep sea, saucers/balloons overhead, mine entrances in
+midlands, radio towers on highlands, a castle on a peak. Added `includeBunkers` to settings, three
+`materialProvider` selectors (oil-platform floor/column, castles), and a stubbed 7-arg `destroyWithin`
+(demolition is still P5, so castles/decayed radio towers stand intact for now). A 25,921-platmap
+plan-sweep confirmed all nine set-piece types generate without throwing (rarest: `OldCastleLot`=112,
+`FlyingSaucerLot`=134).
+
+**What's left is breadth, not architecture.** The most valuable next steps:
+
+1. **P5 demolition** — `destroyWithin`/`destroyArea` are still no-op stubs, so the decayed styles
+   (`includeDecayedBuildings`) don't actually chew holes yet. Castles are meant to spawn as ruins;
+   right now they stand whole. Wiring these needs the live-level decoration pass.
 
 ### ⚠ The single most important thing to know: CityWorld builds in the DECORATION pass
 
@@ -709,6 +724,12 @@ Coupling inventory (from the 1.14 source):
       `SpawnProvider` → modern `EntityType`.
 - [ ] **P6 — Schematics.** Reimplement `PasteProvider`/`Clipboard` via `StructureTemplate`; convert
       `schematics/` assets to `.nbt` (or read the existing format).
+      Assets recovered: `../Schematics for zarp.zip` (Era-3 backup, ~297 KB, 186 files) holds the
+      building schematics grouped by style (`Lowrise/`, `Industrial/`, `Municipal/`, …). Each
+      `.schematic` has a `.schematic.yml` sidecar with CityWorld placement metadata — port both.
+      Format is the **old flat-array MCEdit `.schematic`** (2013, MC ~1.5): numeric block IDs in
+      `Blocks`/`Data` byte arrays — not WorldEdit `.schem`, not vanilla `.nbt`. Conversion needs a
+      numeric-ID → modern `BlockState` mapping pass on top of the NBT reshaping.
 - [ ] **P7 — Config + commands.** `CityWorldSettings` YAML → `ModConfigSpec` TOML (per-world
       settings need a datapack/world-saved-data approach — NeoForge config is per-instance).
       `/cityworld`, `/citychunk`, `/cityinfo` → Brigadier; NeoForge permissions.

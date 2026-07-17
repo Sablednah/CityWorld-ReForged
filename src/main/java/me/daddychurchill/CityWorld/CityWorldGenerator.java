@@ -322,6 +322,10 @@ public class CityWorldGenerator {
     public void destroyWithin(int x1, int x2, int y1, int y2, int z1, int z2) {
     }
 
+    /** Overload that would leave fire behind; stubbed with the rest of the demolition pass (P5). */
+    public void destroyWithin(int x1, int x2, int y1, int y2, int z1, int z2, boolean withFire) {
+    }
+
     /**
      * Blows a rough sphere out of the world — how the unfinished/decayed styles chew holes in
      * things. Stubbed alongside {@link #destroyWithin}; both belong to the decoration pass (P5).

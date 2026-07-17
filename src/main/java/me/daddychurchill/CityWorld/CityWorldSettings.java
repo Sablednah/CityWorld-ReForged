@@ -61,6 +61,8 @@ public class CityWorldSettings {
     public boolean showVillagersNames = true;
     public boolean includeBuildingInteriors = true;
     public boolean includeHouses = true;
+    /** Buried bunkers under the midlands and highlands, planned by NatureContext. */
+    public boolean includeBunkers = true;
     /** Balloons and blimps over the fields. The lots that carry them are P5/P8. */
     public boolean includeAirborneStructures = true;
 

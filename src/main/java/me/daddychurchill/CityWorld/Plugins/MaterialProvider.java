@@ -91,6 +91,30 @@ public class MaterialProvider {
             Material.IRON_ORE, Material.GOLD_ORE, Material.LAPIS_ORE, Material.REDSTONE_ORE, Material.DIAMOND_ORE,
             Material.EMERALD_ORE);
 
+    // --- nature set-pieces ---------------------------------------------------------------------
+    // Oil platforms get a random splash of coloured concrete; castles a weathered stone palette.
+
+    private final static String tagSelectMaterial_OilPlatformFloor = "Materials_For_OilPlatformFloor";
+    public final MaterialList itemsSelectMaterial_OilPlatformFloor = createList(tagSelectMaterial_OilPlatformFloor,
+            Material.WHITE_CONCRETE, Material.ORANGE_CONCRETE, Material.MAGENTA_CONCRETE, Material.LIGHT_BLUE_CONCRETE,
+            Material.YELLOW_CONCRETE, Material.LIME_CONCRETE, Material.PINK_CONCRETE, Material.GRAY_CONCRETE,
+            Material.LIGHT_GRAY_CONCRETE, Material.CYAN_CONCRETE, Material.PURPLE_CONCRETE, Material.BLUE_CONCRETE,
+            Material.BROWN_CONCRETE, Material.GREEN_CONCRETE, Material.RED_CONCRETE, Material.BLACK_CONCRETE,
+            Material.STONE);
+
+    private final static String tagSelectMaterial_OilPlatformColumn = "Materials_For_OilPlatformColumn";
+    public final MaterialList itemsSelectMaterial_OilPlatformColumn = createList(tagSelectMaterial_OilPlatformColumn,
+            Material.WHITE_CONCRETE, Material.ORANGE_CONCRETE, Material.MAGENTA_CONCRETE, Material.LIGHT_BLUE_CONCRETE,
+            Material.YELLOW_CONCRETE, Material.LIME_CONCRETE, Material.PINK_CONCRETE, Material.GRAY_CONCRETE,
+            Material.LIGHT_GRAY_CONCRETE, Material.CYAN_CONCRETE, Material.PURPLE_CONCRETE, Material.BLUE_CONCRETE,
+            Material.BROWN_CONCRETE, Material.GREEN_CONCRETE, Material.RED_CONCRETE, Material.BLACK_CONCRETE,
+            Material.STONE);
+
+    private final static String tagSelectMaterial_Castles = "Materials_For_Castles";
+    public final MaterialList itemsSelectMaterial_Castles = createList(tagSelectMaterial_Castles, Material.COBBLESTONE,
+            Material.MOSSY_COBBLESTONE, Material.CRACKED_STONE_BRICKS, Material.CHISELED_STONE_BRICKS,
+            Material.QUARTZ_PILLAR, Material.CHISELED_QUARTZ_BLOCK);
+
     // --- municipal -----------------------------------------------------------------------------
     // Government buildings share one pale, civic palette across walls/foundations/ceilings.
 
