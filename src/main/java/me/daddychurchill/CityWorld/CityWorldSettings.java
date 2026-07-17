@@ -35,6 +35,8 @@ public class CityWorldSettings {
     public boolean includeBones = true;
     public boolean includeOres = true;
     public boolean includeWorkingLights = true;
+    /** Lit campfires and fire pits. */
+    public boolean includeFires = true;
     public boolean treasuresInMines = true;
     public boolean spawnersInMines = true;
     public double oddsOfTreasureInMines = Odds.oddsLikely;

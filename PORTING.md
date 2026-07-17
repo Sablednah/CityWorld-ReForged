@@ -29,14 +29,17 @@ than half** the predicted work, because this document's own estimate had gone st
 
 **What's left is breadth, not architecture.** The most valuable next steps, in order:
 
-1. **Outland + the nature set-pieces** — campgrounds, radio towers, oil platforms, flying saucers,
-   mine entrances, and `BunkerLot` *as a lot* (its statics are already in use by factories). The last
-   ladder arm, and the only one with no setting to hide behind. `NatureContext.populateMap` still
-   lacks its set-piece survey (see below) — that is the same job.
-2. **`StructureOnGroundProvider` (1158) and `StructureInAirProvider` (207)** — the last two stubs of
-   consequence. Between them they cost: parks with no water tower, storage lots that roll `SHED` and
-   build nothing (leaving `LootLocation.STORAGE_SHED` unreached), bunkers with no saucer, and no
-   balloons. Self-contained and highly visible for the money.
+1. **Outland** — `OutlandContext` (132) plus six small lots: `GravelMineLot` (31), `CampgroundLot`
+   (45), `WoodframeLot` (76), `MineEntranceLot` (79), `GravelworksLot` (87), `WoodworksLot` (149).
+   **~470 lines — far smaller than industrial**, and now unblocked: `StructureOnGroundProvider` is
+   ported, so `generateCampground`/`generateShed`/`generateFirePit` are real. It is the last ladder
+   arm and the only one with no setting to hide behind. Will light up `WOODWORKS(_OUTPUT)` and
+   `STONEWORKS(_OUTPUT)` loot, which already ships and rolls.
+2. **`NatureContext.populateMap`'s set-pieces** — bunkers, radio towers, oil platforms, flying
+   saucers, hot air balloons, mine entrances, and the platmap's two "special" lots. This is where
+   `BunkerLot` finally gets planned *as a lot* (its statics are already in use by factories) and
+   where `HeightInfo`'s classification finally has a consumer.
+3. **`StructureInAirProvider` (207)** — balloons, blimps, saucers. Small, self-contained, visible.
 
 ### ⚠ The single most important thing to know: CityWorld builds in the DECORATION pass
 
@@ -215,8 +218,8 @@ arrived with later waves: `InteriorStyle`, `insetWallNS/WE`, `firstFloorHeight`,
 - **Three settings**: `treasuresInBunkers`, `spawnersInBunkers`, `oddsOfTreasureInBunkers`.
 - **Two stub methods**: `StructureOnGroundProvider.generateShed` and
   `StructureInAirProvider.generateSaucer`. Both call sites are `void` and read nothing back — checked,
-  because of the `NatureContext.populateMap` lesson — so no-op stubs are safe. The cost is that a
-  `StorageLot` which rolls `SHED` is an empty yard, and `LootLocation.STORAGE_SHED` stays unreached.
+  because of the `NatureContext.populateMap` lesson — so no-op stubs were safe. (`generateShed` has
+  since been ported for real; see "Closed: StructureOnGroundProvider".)
 
 **`IndustrialBuildingLot` was missing from the list above** — the abstract parent of Factory and
 Warehouse. `BunkerLot`'s role was also mis-stated: Factory needs only its **static** generators
@@ -242,9 +245,36 @@ which is exactly what the three new settings gate.
 
 Trees, ground cover, street names, statues, fossils, **mobs and loot** are ported.
 
-Also stubbed, each documented at its site: `StructureOnGroundProvider` (1158 — water towers, sheds,
-campgrounds; a park lays out correctly but has no water tower in it), `StructureInAirProvider` (207
-— balloons and blimps).
+Also stubbed, documented at its site: `StructureInAirProvider` (207 — balloons, blimps, saucers).
+
+### ✔ Closed: StructureOnGroundProvider (2026-07) — and the houses were empty
+
+Ported whole (1158 lines, copied verbatim), plus **nine** `MaterialProvider` lists
+(`_HouseWalls/_HouseFloors/_HouseCeilings/_HouseRoofs`, `_ShackWalls/_ShackRoofs`,
+`_ShedWalls/_ShedRoofs`, `_WaterTowers`) and one setting (`includeFires`). 26 compiler errors, all of
+them those ten symbols. `org.bukkit.DyeColor` → `net.minecraft.world.item.DyeColor` joins the import
+transform; no shim was needed because `Support/Colors` already used the vanilla enum.
+
+**This was reordered ahead of outland, and the reason matters more than the port.** The plan had
+outland next. Surveying it first showed two things that changed the order:
+
+- **`HouseLot:56` keyed off `generateHouse`, which the stub returned `0` from** — so *every*
+  `HouseLot` was a vacant plot. `NeighborhoodContext` is the most common civilized context (7 of 25
+  platmaps in a sample) and the planner made 146 `HouseLot`s per 2,500. A large, populated-looking
+  fraction of the world was bare ground, and the stub's own doc-comment described this as correct
+  behaviour ("lays out its plots and leaves them vacant") rather than as a hole.
+- **`CampgroundLot`'s entire body is `generateCampground(…)`**. Porting outland first would have
+  shipped campgrounds that compile, plan, draw — and are bare terrain.
+
+**Verified by asking the planner which chunks it made houses on, then measuring those exact chunks**:
+27 of 27 sampled `HouseLot`s now carry ~552 blocks above street level; **0 vacant**. The first attempt
+at this probe was worthless and worth recording as a method note — it counted "house tells" (doors,
+stairs, bookshelves, glass panes) across the whole world, which offices and libraries also place, and
+it flagged the *absence* of beds as suspicious when `generateHouse` carries upstream's own
+`// TODO add bed`. **A probe that cannot distinguish the feature from its neighbours proves nothing.**
+
+Still stubbed here on purpose, both `void` with nothing read back:
+`StructureInAirProvider.generateSaucer` (bunkers have no saucer parked in them).
 
 ### ✔ Closed: mobs and loot (2026-07)
 
@@ -318,9 +348,9 @@ meets. Barn chests are the nicer confirmation — `FARMWORKS` is a coin-flip ins
 (`BarnLot.placeChest`) and never once turned up in a probe sample.
 
 `BUNKER`, `WAREHOUSE` and `itemsEntities_Bunker` came alive with the industrial family — measured in
-a world: 13 bunker chests, 41 warehouse chests, and a blaze spawner. Still unreached: `STORAGE_SHED`
-(its lot rolls, but `generateShed` is a stub), and `WOODWORKS(_OUTPUT)` / `STONEWORKS(_OUTPUT)`,
-whose outland lots aren't ported. `RANDOM` has no caller outside the Astral styles.
+a world: 13 bunker chests, 41 warehouse chests, and a blaze spawner. `STORAGE_SHED` became reachable
+with `StructureOnGroundProvider`. Still unreached: `WOODWORKS(_OUTPUT)` / `STONEWORKS(_OUTPUT)`, whose
+outland lots aren't ported. `RANDOM` has no caller outside the Astral styles.
 
 Also still outstanding:
 - **`NatureContext.populateMap` still lacks its set-pieces** — upstream seeds bunkers, radio towers,

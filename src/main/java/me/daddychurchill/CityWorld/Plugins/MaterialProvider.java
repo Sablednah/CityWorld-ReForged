@@ -193,6 +193,88 @@ public class MaterialProvider {
             Material.BLUE_CONCRETE_POWDER, Material.BROWN_CONCRETE_POWDER, Material.GREEN_CONCRETE_POWDER,
             Material.RED_CONCRETE_POWDER, Material.BLACK_CONCRETE_POWDER);
 
+    private final static String tagSelectMaterial_HouseWalls = "Materials_For_HouseWalls";
+    public final MaterialList itemsSelectMaterial_HouseWalls = createList(tagSelectMaterial_HouseWalls, Material.COBBLESTONE,
+            Material.MOSSY_COBBLESTONE, Material.STONE, Material.SMOOTH_STONE, Material.SANDSTONE,
+            Material.RED_SANDSTONE, Material.STONE_BRICKS, Material.NETHER_BRICKS, Material.BRICKS, Material.CLAY,
+            Material.TERRACOTTA, Material.WHITE_TERRACOTTA, Material.ORANGE_TERRACOTTA, Material.MAGENTA_TERRACOTTA,
+            Material.LIGHT_BLUE_TERRACOTTA, Material.YELLOW_TERRACOTTA, Material.LIME_TERRACOTTA,
+            Material.PINK_TERRACOTTA, Material.GRAY_TERRACOTTA, Material.LIGHT_GRAY_TERRACOTTA,
+            Material.CYAN_TERRACOTTA, Material.PURPLE_TERRACOTTA, Material.BLUE_TERRACOTTA, Material.BROWN_TERRACOTTA,
+            Material.GREEN_TERRACOTTA, Material.RED_TERRACOTTA, Material.BLACK_TERRACOTTA, Material.PRISMARINE,
+            Material.PURPUR_BLOCK, Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS,
+            Material.JUNGLE_PLANKS, Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.WHITE_CONCRETE,
+            Material.ORANGE_CONCRETE, Material.MAGENTA_CONCRETE, Material.LIGHT_BLUE_CONCRETE, Material.YELLOW_CONCRETE,
+            Material.LIME_CONCRETE, Material.PINK_CONCRETE, Material.GRAY_CONCRETE, Material.LIGHT_GRAY_CONCRETE,
+            Material.CYAN_CONCRETE, Material.PURPLE_CONCRETE, Material.BLUE_CONCRETE, Material.BROWN_CONCRETE,
+            Material.GREEN_CONCRETE, Material.RED_CONCRETE, Material.BLACK_CONCRETE, Material.END_STONE,
+            Material.END_STONE_BRICKS);
+
+    private final static String tagSelectMaterial_HouseFloors = "Materials_For_HouseFloors";
+    public final MaterialList itemsSelectMaterial_HouseFloors = createList(tagSelectMaterial_HouseFloors,
+            Material.COBBLESTONE, Material.COBBLESTONE, Material.COBBLESTONE, Material.STONE, Material.STONE,
+            Material.STONE, Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS,
+            Material.JUNGLE_PLANKS, Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.WHITE_WOOL,
+            Material.ORANGE_WOOL, Material.MAGENTA_WOOL, Material.LIGHT_BLUE_WOOL, Material.YELLOW_WOOL,
+            Material.LIME_WOOL, Material.PINK_WOOL, Material.GRAY_WOOL, Material.LIGHT_GRAY_WOOL, Material.CYAN_WOOL,
+            Material.PURPLE_WOOL, Material.BLUE_WOOL, Material.BROWN_WOOL, Material.GREEN_WOOL, Material.RED_WOOL,
+            Material.BLACK_WOOL, Material.TERRACOTTA, Material.WHITE_TERRACOTTA, Material.ORANGE_TERRACOTTA,
+            Material.MAGENTA_TERRACOTTA, Material.LIGHT_BLUE_TERRACOTTA, Material.YELLOW_TERRACOTTA,
+            Material.LIME_TERRACOTTA, Material.PINK_TERRACOTTA, Material.GRAY_TERRACOTTA,
+            Material.LIGHT_GRAY_TERRACOTTA, Material.CYAN_TERRACOTTA, Material.PURPLE_TERRACOTTA,
+            Material.BLUE_TERRACOTTA, Material.BROWN_TERRACOTTA, Material.GREEN_TERRACOTTA, Material.RED_TERRACOTTA,
+            Material.BLACK_TERRACOTTA, Material.BLACK_GLAZED_TERRACOTTA, Material.BLUE_GLAZED_TERRACOTTA,
+            Material.BROWN_GLAZED_TERRACOTTA, Material.CYAN_GLAZED_TERRACOTTA, Material.GRAY_GLAZED_TERRACOTTA,
+            Material.GREEN_GLAZED_TERRACOTTA, Material.LIGHT_BLUE_GLAZED_TERRACOTTA, Material.LIME_GLAZED_TERRACOTTA,
+            Material.MAGENTA_GLAZED_TERRACOTTA, Material.ORANGE_GLAZED_TERRACOTTA, Material.PINK_GLAZED_TERRACOTTA,
+            Material.PURPLE_GLAZED_TERRACOTTA, Material.RED_GLAZED_TERRACOTTA, Material.LIGHT_GRAY_GLAZED_TERRACOTTA,
+            Material.WHITE_GLAZED_TERRACOTTA, Material.YELLOW_GLAZED_TERRACOTTA);
+
+    private final static String tagSelectMaterial_HouseCeilings = "Materials_For_HouseCeilings";
+    public final MaterialList itemsSelectMaterial_HouseCeilings = createList(tagSelectMaterial_HouseCeilings,
+            Material.COBBLESTONE, Material.SMOOTH_STONE, Material.SANDSTONE, Material.RED_SANDSTONE,
+            Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS, Material.JUNGLE_PLANKS,
+            Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.STONE);
+
+    private final static String tagSelectMaterial_HouseRoofs = "Materials_For_HouseRoofs";
+    public final MaterialList itemsSelectMaterial_HouseRoofs = createList(tagSelectMaterial_HouseRoofs, Material.COBBLESTONE,
+            Material.MOSSY_COBBLESTONE, Material.SMOOTH_STONE, Material.SANDSTONE, Material.RED_SANDSTONE,
+            Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS, Material.JUNGLE_PLANKS,
+            Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.STONE);
+
+    private final static String tagSelectMaterial_ShackWalls = "Materials_For_ShackWalls";
+    public final MaterialList itemsSelectMaterial_ShackWalls = createList(tagSelectMaterial_ShackWalls,
+            Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS, Material.JUNGLE_PLANKS,
+            Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.MOSSY_COBBLESTONE, Material.RED_SANDSTONE,
+            Material.STONE_BRICKS, Material.NETHER_BRICKS, Material.BRICKS, Material.STONE);
+
+    private final static String tagSelectMaterial_ShackRoofs = "Materials_For_ShackRoofs";
+    public final MaterialList itemsSelectMaterial_ShackRoofs = createList(tagSelectMaterial_ShackRoofs,
+            Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS, Material.JUNGLE_PLANKS,
+            Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.STONE);
+
+    private final static String tagSelectMaterial_ShedWalls = "Materials_For_ShedWalls";
+    public final MaterialList itemsSelectMaterial_ShedWalls = createList(tagSelectMaterial_ShedWalls, Material.SANDSTONE,
+            Material.RED_SANDSTONE, Material.SPRUCE_PLANKS, Material.COBBLESTONE, Material.BRICKS,
+            Material.SMOOTH_STONE, Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS,
+            Material.JUNGLE_PLANKS, Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.STONE);
+
+    private final static String tagSelectMaterial_ShedRoofs = "Materials_For_ShedRoofs";
+    public final MaterialList itemsSelectMaterial_ShedRoofs = createList(tagSelectMaterial_ShedRoofs, Material.STONE_SLAB,
+            Material.BIRCH_SLAB);
+
+    private final static String tagSelectMaterial_WaterTowers = "Materials_For_WaterTowers";
+    public final MaterialList itemsSelectMaterial_WaterTowers = createList(tagSelectMaterial_WaterTowers, Material.CLAY,
+            Material.WHITE_TERRACOTTA, Material.ORANGE_TERRACOTTA, Material.MAGENTA_TERRACOTTA,
+            Material.LIGHT_BLUE_TERRACOTTA, Material.YELLOW_TERRACOTTA, Material.LIME_TERRACOTTA,
+            Material.PINK_TERRACOTTA, Material.GRAY_TERRACOTTA, Material.LIGHT_GRAY_TERRACOTTA,
+            Material.CYAN_TERRACOTTA, Material.PURPLE_TERRACOTTA, Material.BLUE_TERRACOTTA, Material.BROWN_TERRACOTTA,
+            Material.GREEN_TERRACOTTA, Material.RED_TERRACOTTA, Material.BLACK_TERRACOTTA, Material.WHITE_CONCRETE,
+            Material.ORANGE_CONCRETE, Material.MAGENTA_CONCRETE, Material.LIGHT_BLUE_CONCRETE, Material.YELLOW_CONCRETE,
+            Material.LIME_CONCRETE, Material.PINK_CONCRETE, Material.GRAY_CONCRETE, Material.LIGHT_GRAY_CONCRETE,
+            Material.CYAN_CONCRETE, Material.PURPLE_CONCRETE, Material.BLUE_CONCRETE, Material.BROWN_CONCRETE,
+            Material.GREEN_CONCRETE, Material.RED_CONCRETE, Material.BLACK_CONCRETE);
+
     private MaterialList createList(String name, Material... materials) {
 
         // create the list and add all of the goodies
