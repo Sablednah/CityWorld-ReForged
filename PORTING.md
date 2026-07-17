@@ -611,7 +611,9 @@ long-standing grey area in the modding ecosystem; many GPL mods ship regardless.
    gets, and resolving a chunk outside the region's cache *throws* rather than declining — so an
    out-of-chunk spawn crashes the server instead of being quietly dropped. See `SpawnProvider`.
 3. **Performance** — the original disabled several styles for perf even on Bukkit.
-4. **Per-world config** doesn't match NeoForge's per-instance config model.
+4. **Per-world config** doesn't match NeoForge's per-instance config model. Note the *name and mob
+   lists* are a separable slice of this and need not wait for it — see "Let players write their own
+   villager names…" in the parking lot.
 
 **Struck: the old risk #1, "`generator.getWorld()` does not exist".** It was only ever needed by
 `SpawnProvider`, which doesn't need it either — `compat/Location` carries its level exactly as
@@ -659,6 +661,32 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
 - Decompiled MC/NeoForge sources (for checking signatures) extract from the neoform jar above.
 
 ## Future ideas (parking lot)
+
+- **Let players write their own villager names, street names and mob lists** (asked for by the owner,
+  2026-07). Personalising your own city is the point — "Christine Johnson on Elm Street" should be
+  able to be *your* names.
+
+  **This is re-attaching a reader, not new design.** Upstream already had it, and the port kept the
+  seams and dropped only the plumbing, because the plumbing was Bukkit YAML:
+    - `OdonymProvider_Normal` holds **nine** lists, each already paired with its config tag —
+      `VillagerGivenNames`, `VillagerSurnames`, `StreetTerms`, `StreetPrefixes`, `StreetStarts`,
+      `StreetEnds`, `StreetSuffixes`, `FossilPrefixes`, `FossilSuffixes`. The `tag*` fields are
+      **still in the port and currently unused**; upstream's `read` did
+      `getNames(section, tag, defaults)` — take the list if configured, else keep the hardcoded one.
+      That fallback shape is exactly right and should survive.
+    - `AbstractEntityList` had the same arrangement for the mob lists (`Entities_For_Goodies`,
+      `_Baddies`, `_Animals`, `_SeaAnimals`, `_Vagrants`, `_Sewers`, `_Mine`, `_Bunker`,
+      `_WaterPit`, `_LavaPit`). Its `read`/`write` were dropped in the mobs port for want of a
+      reader; the `listName` is still carried and `getListName()` is there for whoever adds one.
+      Note upstream's reader also validated names and reported unknown/nonliving ones — worth
+      keeping, since a typo'd entity name is the obvious failure mode.
+
+  **The open question is the mechanism, and it is the same one as top risk #4**: CityWorld's settings
+  are per-world, NeoForge's `ModConfigSpec` is per-instance. A datapack fits these particular lists
+  unusually well — they are pure data, they want to differ per world, and players already know how to
+  edit one; loot tables landed exactly this way in P5 and cost nothing. A custom registry or plain
+  JSON under `data/cityworld/` would both work. Whatever P7 picks for settings generally, **these
+  lists probably shouldn't wait for it** — they have no dependency on the rest of the settings layer.
 
 - **Harvest vanilla structure placement points as city anchors.** Right now the generator
   *suppresses* all vanilla structure sets (villages, mineshafts, trial chambers, …) so CityWorld
