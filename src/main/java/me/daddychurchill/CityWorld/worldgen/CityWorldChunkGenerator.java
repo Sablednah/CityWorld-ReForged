@@ -1,10 +1,12 @@
 package me.daddychurchill.CityWorld.worldgen;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -62,7 +64,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
     public static final MapCodec<CityWorldChunkGenerator> CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
-                    BiomeSource.CODEC.fieldOf("biome_source").forGetter(ChunkGenerator::getBiomeSource)
+                    BiomeSource.CODEC.fieldOf("biome_source").forGetter(ChunkGenerator::getBiomeSource),
+                    Codec.BOOL.optionalFieldOf("decayed").forGetter(g -> g.decayed)
             ).apply(instance, CityWorldChunkGenerator::new));
 
     /**
@@ -101,8 +104,27 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private volatile boolean levelSeedKnown;
 
+    /**
+     * A per-dimension decay override, straight from the generator's JSON ({@code "decayed": true}).
+     *
+     * <p>Present {@code true}/{@code false} forces the ruined/pristine styles on for <em>this</em>
+     * dimension regardless of the global {@link CityWorldConfig}; absent means "follow the config".
+     * It's what lets two same-seed dimensions be the same city intact and in ruins — the overworld
+     * follows the config, and the {@code cityworld:city} dimension ships with {@code decayed: true}.
+     *
+     * <p>Deliberately scoped to buildings and roads, not {@code includeDecayedNature}: nature-decay
+     * drains the seas and deserts the world, which is a whole-world mood, not "this city is ruined".
+     * The twin should read as the same wet, green place with its buildings wrecked.
+     */
+    private final Optional<Boolean> decayed;
+
     public CityWorldChunkGenerator(BiomeSource biomeSource) {
+        this(biomeSource, Optional.empty());
+    }
+
+    public CityWorldChunkGenerator(BiomeSource biomeSource, Optional<Boolean> decayed) {
         super(biomeSource);
+        this.decayed = decayed;
     }
 
     /**
@@ -127,7 +149,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                         + "so the per-world context cannot be seeded. Terrain would be wrong for "
                                         + "this world. Find another way to obtain the seed.");
                     local = new CityWorldGenerator(levelSeed, TERRAIN_CEILING, UPSTREAM_SEA_LEVEL,
-                            CityWorldGenerator.WorldStyle.NORMAL, level.getMinY(), level.getMaxY());
+                            CityWorldGenerator.WorldStyle.NORMAL, level.getMinY(), level.getMaxY(), decayed);
                     context = local;
                 }
             }

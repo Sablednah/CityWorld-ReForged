@@ -85,6 +85,19 @@ public class CityWorldSettings {
     public boolean includeRoundabouts = true;
 
     public CityWorldSettings() {
+        this(java.util.Optional.empty());
+    }
+
+    /**
+     * @param decayOverride a per-dimension decay override (from the generator's {@code "decayed"}
+     *                      JSON field). When present it forces {@link #includeDecayedBuildings} and
+     *                      {@link #includeDecayedRoads} on or off for this dimension, winning over
+     *                      the config — so two same-seed dimensions can be the same city intact and
+     *                      in ruins. Empty means "follow the config". Deliberately does <em>not</em>
+     *                      touch {@link #includeDecayedNature} (that drains the seas and deserts the
+     *                      world — a whole-world mood, kept purely config-controlled).
+     */
+    public CityWorldSettings(java.util.Optional<Boolean> decayOverride) {
         // Overlay the runtime config's decay slice onto the compiled defaults. Guarded on isLoaded()
         // so plan-only paths (probes, tests) that build settings before config load keep the
         // defaults instead of throwing. The rest of the ~100 knobs still come from the field
@@ -95,6 +108,12 @@ public class CityWorldSettings {
             includeDecayedNature = CityWorldConfig.INCLUDE_DECAYED_NATURE.get();
             includeFires = CityWorldConfig.INCLUDE_FIRES.get();
         }
+
+        // A per-dimension override wins over the config for the building/road ruin.
+        decayOverride.ifPresent(decayed -> {
+            includeDecayedBuildings = decayed;
+            includeDecayedRoads = decayed;
+        });
     }
 
     /**

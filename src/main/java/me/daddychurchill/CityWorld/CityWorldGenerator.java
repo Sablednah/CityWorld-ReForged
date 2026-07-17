@@ -159,13 +159,24 @@ public class CityWorldGenerator {
      */
     public CityWorldGenerator(long worldSeed, int terrainCeiling, int worldSeaLevel, WorldStyle worldStyle,
             int worldMinY, int worldMaxY) {
+        this(worldSeed, terrainCeiling, worldSeaLevel, worldStyle, worldMinY, worldMaxY,
+                java.util.Optional.empty());
+    }
+
+    /**
+     * @param decayOverride a per-dimension decay override (from the generator's {@code "decayed"}
+     *                      JSON field), or empty to follow {@link CityWorldConfig}. See
+     *                      {@link CityWorldSettings#CityWorldSettings(java.util.Optional)}.
+     */
+    public CityWorldGenerator(long worldSeed, int terrainCeiling, int worldSeaLevel, WorldStyle worldStyle,
+            int worldMinY, int worldMaxY, java.util.Optional<Boolean> decayOverride) {
         this.worldSeed = worldSeed;
         this.terrainCeiling = terrainCeiling;
         this.worldSeaLevel = worldSeaLevel;
         this.worldStyle = worldStyle;
         this.worldMinY = worldMinY;
         this.worldMaxY = worldMaxY;
-        this.settings = new CityWorldSettings();
+        this.settings = new CityWorldSettings(decayOverride);
 
         // The original's initializeWorldInfo, minus the lazy-init dance. Order matters: the
         // providers read the world facts above, and the datums below read the providers.

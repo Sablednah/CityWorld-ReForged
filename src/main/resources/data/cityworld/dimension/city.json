@@ -2,6 +2,7 @@
   "type": "minecraft:overworld",
   "generator": {
     "type": "cityworld:city",
+    "decayed": true,
     "biome_source": {
       "type": "minecraft:fixed",
       "biome": "minecraft:plains"

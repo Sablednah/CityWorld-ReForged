@@ -761,6 +761,14 @@ Coupling inventory (from the 1.14 source):
       `regen` relied on Bukkit's `World.regenerateChunk`, which modern MC has no safe runtime
       equivalent for. Still to do: the full settings port; a proper `NeoForge` permission-node layer
       if per-node control is wanted beyond op levels.
+  - **Per-dimension decay override** (the "ruined twin"). The generator codec now carries an optional
+    `decayed` boolean; when present it forces `includeDecayedBuildings`/`includeDecayedRoads` on/off
+    for that dimension, winning over the global config (absent = follow config). The `cityworld:city`
+    dimension ships with `decayed: true`, so — because both dimensions seed off the same world seed —
+    `/cityworld` visits the *same city in ruins* while the overworld follows the config. Scoped to
+    buildings/roads, not `includeDecayedNature` (that drains the seas / deserts the world — a
+    whole-world mood, not "this city is wrecked"), so the twin stays wet and green. Backward
+    compatible: existing worlds lack the field → `Optional.empty()` → config.
 - [ ] **P8 — Parity & polish.** Re-enable world styles (`validateStyle` currently forces `NORMAL`);
       GameTest coverage; README/docs.
 
