@@ -741,20 +741,39 @@ Coupling inventory (from the 1.14 source):
       seed-deterministic `PlatMap` makes per-chunk regeneration viable). Migrate datapack loot
       tables to 1.21 format and bundle them in mod resources (drop the runtime extraction).
       `SpawnProvider` → modern `EntityType`.
-- [~] **P6 — Schematics.** *Spike done.* The conversion seam is built and proven: `LegacySchematic`
-      reads a legacy MCEdit `.schematic` (numeric ids + `Data`, `Width/Height/Length`) and converts it
-      to a native `StructureTemplate` — the vanilla `.nbt` representation — via `LegacyBlocks` (legacy
-      id+data → modern `BlockState`, growing from what assets use, unknown ids logged and fall back to
-      stone). Verified on `gas_stop`: 2,567/2,645 non-air blocks placed with every structural block
-      count matching the schematic exactly; the ~78 missing are attachment blocks (signs/levers/doors)
-      that can't survive a *mid-air* test and attach fine on a grounded build. A kept `/cityschem
-      <name>` command (op) pastes a bundled classic at the player. **Decisions:** modern target =
-      vanilla `.nbt` (native, no deps); WorldEdit `.schem` deferred; legacy→`.nbt` is one reusable
-      conversion so both formats share the load/place path. Still to do: bundle the full zarp set +
-      build-time (or cached-on-disk) `.schematic`→`.nbt` conversion so the legacy parser isn't a
-      runtime cost; the `.yml` placement metadata (`GroundLevelY`, `Flipable`, `OddsOfAppearance`,
-      `Decayable`); port `PasteProvider`/`ClipboardLot`/`ClipboardList` to select and place clips in
-      worldgen; refine orientation (doors/signs/stairs facing from data bits) and tile entities.
+- [~] **P6 — Schematics.** *Conversion + library + paste command done; worldgen placement is the
+      remaining piece.* The seam: `LegacySchematic` reads a legacy MCEdit `.schematic` (numeric ids +
+      `Data`, `Width/Height/Length`) and converts it to a native `StructureTemplate` (the vanilla
+      `.nbt` representation) via `LegacyBlocks` (legacy id+data → modern `BlockState`). `LegacyBlocks`
+      now covers **every one of the 91 legacy ids** the classic catalog uses — verified: **all 86
+      bundled schematics convert with zero unmapped ids and zero failures** (5.69M blocks). `Clipboard`
+      wraps the template + parsed `.yml` metadata and pastes in one native call; `SchematicLibrary`
+      indexes/loads/caches all 86 across 11 families (via a shipped `index.txt`, since jars can't list
+      resource dirs). `/cityschem <name>` (op) pastes any classic at the player; `/cityschem list`
+      enumerates them. **Decisions:** modern target = vanilla `.nbt` (native, no deps); WorldEdit
+      `.schem` deferred; legacy→`.nbt` is one reusable conversion.
+
+      **Next — worldgen auto-placement (needs visual verification, so left for a supervised session).**
+      Upstream path is `DataContext.populateSchematics` → `pasteProvider.getFamilyClips(family)` →
+      `ClipboardList.populate` → `PlatMap.placeSpecificClip` (finds a run of empty `platLots` big
+      enough, fills them with `ClipboardLot`s) → each `ClipboardLot.generateActualBlocks` places its
+      chunk's slice. Contexts already call `populateSchematics` (a no-op stub now); `SchematicFamily`
+      is already tracked per context. **Modern simplification:** instead of upstream's manual per-block
+      sub-region math, place with `StructureTemplate.placeInWorld(...)` and
+      `StructurePlaceSettings.setBoundingBox(currentChunkBounds)` — that clips the write to the chunk
+      being decorated, so a multi-chunk building is placed correctly and legally (respects the
+      `WorldGenRegion` writable radius) as each overlapping chunk decorates its own slice. Height comes
+      from upstream's `depth = streetLevel − groundLevelY` (+ `edgeRise`); `ClipboardLot` extends
+      `IsolatedLot` and also levels the terrain under the footprint in `generateActualChunk`. **Why not
+      done tonight:** correctness here is *visual* (buildings flush with streets, not floating/buried,
+      not clobbering roads) and can't be confirmed by a headless probe — a probe only shows blocks were
+      written without crashing, not that the result looks right. Wiring it unverified risks
+      destabilizing city generation. Do it behind an `includeSchematics` setting (default off) so it
+      can't regress normal gen, then verify in-world.
+
+      Also still to do: build-time (or cached-on-disk) `.schematic`→`.nbt` so the legacy parser isn't a
+      runtime cost; tile-entity contents (chests/signs — the block states place, contents don't yet);
+      refine orientation (doors/signs/stairs facing from data bits).
       Assets recovered: `../Schematics for zarp.zip` (Era-3 backup, ~297 KB, 186 files) holds the
       building schematics grouped by style (`Lowrise/`, `Industrial/`, `Municipal/`, …). Each
       `.schematic` has a `.schematic.yml` sidecar with CityWorld placement metadata — port both.
