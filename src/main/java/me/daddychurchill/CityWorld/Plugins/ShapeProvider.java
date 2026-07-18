@@ -196,18 +196,23 @@ public abstract class ShapeProvider extends Provider {
 
 		switch (generator.worldStyle) {
 
-		// The other 8 variants (_Floating, _Flooded, _SandDunes, _SnowDunes, _Astral, _Maze,
-		// _Nature, _Metro — ~1,533 lines) are deferred: the P3 gate only needs NORMAL, and this
-		// switch is exactly the seam that lets them land one at a time. PORTING.md P8 re-enables
-		// them; until then every style shapes as NORMAL rather than failing.
+		// NATURE and METRO reshape Normal without dragging in a style-specific Context/Lot tree, so
+		// they land here directly. The other six terrain styles (_Floating, _Flooded, _SandDunes,
+		// _SnowDunes, _Astral, _Maze) each pull in a whole Context/<style> package and matching lots
+		// (measured ~660–3,270 lines apiece); they land one complete style at a time behind this
+		// same seam. Until each does, its case falls through to NORMAL rather than failing.
+		case NATURE:
+			provider = new ShapeProvider_Nature(generator, odds);
+			break;
+		case METRO:
+			provider = new ShapeProvider_Metro(generator, odds);
+			break;
 		case FLOATING:
 		case FLOODED:
 		case SANDDUNES:
 		case SNOWDUNES:
 		case ASTRAL:
 		case MAZE:
-		case NATURE:
-		case METRO:
 		case DESTROYED:
 		case SPARSE:
 		case NORMAL:
