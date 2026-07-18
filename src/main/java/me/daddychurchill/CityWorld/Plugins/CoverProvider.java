@@ -771,10 +771,17 @@ public abstract class CoverProvider extends Provider {
 
 			// Upstream picks a variant from the world style (_Flooded, _SandDunes, _SnowDunes), then
 			// from the world's Bukkit Environment (_Nether, _TheEnd), then from includeDecayedNature
-			// (_Decayed). None of those apply yet: the styles are P8, and the port has no
-			// `worldEnvironment` because it only registers an overworld dimension — a Nether/End
-			// CityWorld would be a second dimension, which is its own piece of work.
-			provider = new CoverProvider_Normal(odds);
+			// (_Decayed). The style variants land at P8, one style at a time; the port has no
+			// `worldEnvironment` (overworld only), so the Nether/End branches are unreachable, and
+			// the _Decayed branch falls through to Normal until CoverProvider_Decayed is ported.
+			switch (generator.worldStyle) {
+			case FLOODED:
+				provider = new CoverProvider_Flooded(odds);
+				break;
+			default:
+				provider = new CoverProvider_Normal(odds);
+				break;
+			}
 		}
 
 		return provider;
