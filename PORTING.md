@@ -741,8 +741,16 @@ Coupling inventory (from the 1.14 source):
       seed-deterministic `PlatMap` makes per-chunk regeneration viable). Migrate datapack loot
       tables to 1.21 format and bundle them in mod resources (drop the runtime extraction).
       `SpawnProvider` → modern `EntityType`.
-- [~] **P6 — Schematics.** *Conversion + library + paste command done; worldgen auto-placement wired
-      (behind `includeSchematics`, default off) and plan-verified — awaiting the owner's in-world look.*
+- [~] **P6 — Schematics.** *Largely done: conversion, library, paste command, worldgen placement,
+      multi-format loading, drop-in folder, data-fixing and block entities all landed and verified.
+      Remaining: schematic rotation/mirroring (FlipableX/Z parsed but not applied).* Formats read:
+      legacy `.schematic`, WorldEdit `.schem` (Sponge v2/v3), Litematica `.litematic`, and vanilla
+      `.nbt` — each converted to a `StructureTemplate` and run through the vanilla structure data-fixer
+      (`Templates.build`) so older files are upgraded rather than losing renamed blocks to air (a 2017
+      DataVersion-1343 `.nbt` recovered 585→1273 non-air). Block entities (chests/signs/pots) are
+      carried for every format. Players drop their own into `config/cityworld/schematics/<Family>/`
+      (external scan alongside the bundled set; created with a README on first run). `/cityfind <name>`
+      locates the nearest; `/cityinfo` names the one underfoot.
       The seam: `LegacySchematic` reads a legacy MCEdit `.schematic` (numeric ids +
       `Data`, `Width/Height/Length`) and converts it to a native `StructureTemplate` (the vanilla
       `.nbt` representation) via `LegacyBlocks` (legacy id+data → modern `BlockState`). `LegacyBlocks`
