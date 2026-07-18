@@ -9,6 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoorHingeSide;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
@@ -100,7 +101,7 @@ public final class LegacyBlocks {
                           default -> Blocks.SANDSTONE.defaultBlockState();
                       };
             case 25:  return Blocks.NOTE_BLOCK.defaultBlockState();
-            case 26:  return Blocks.RED_BED.defaultBlockState();
+            case 26:  return bed(data);
             case 29:  return Blocks.STICKY_PISTON.defaultBlockState();
             case 30:  return Blocks.COBWEB.defaultBlockState();
             case 31:  return data == 2 ? Blocks.FERN.defaultBlockState() : Blocks.SHORT_GRASS.defaultBlockState();
@@ -156,7 +157,8 @@ public final class LegacyBlocks {
             case 101: return Blocks.IRON_BARS.defaultBlockState();
             case 102: return Blocks.GLASS_PANE.defaultBlockState();
             case 106: return Blocks.VINE.defaultBlockState();
-            case 107: return Blocks.OAK_FENCE_GATE.defaultBlockState();
+            case 107: return Blocks.OAK_FENCE_GATE.defaultBlockState()
+                          .setValue(BlockStateProperties.HORIZONTAL_FACING, rot4Facing(data));
             case 109: return stairs(Blocks.STONE_BRICK_STAIRS, data);
             case 112: return Blocks.NETHER_BRICKS.defaultBlockState();
             case 113: return Blocks.NETHER_BRICK_FENCE.defaultBlockState();
@@ -326,5 +328,32 @@ public final class LegacyBlocks {
             case 2 -> Direction.WEST;
             default -> Direction.NORTH;
         };
+    }
+
+    /**
+     * The 4-way rotation legacy blocks with two facing bits use (beds, fence gates, ...). Each block
+     * carries its own facing, so — unlike doors — no neighbour is needed. Beds store the same bits in
+     * both halves and set {@code FACING} foot→head, so head and foot stay consistent and the bed is a
+     * valid pair rather than two loose ends that pop off on placement.
+     */
+    private static Direction rot4Facing(int data) {
+        return switch (data & 3) {
+            case 0 -> Direction.SOUTH;
+            case 1 -> Direction.WEST;
+            case 2 -> Direction.NORTH;
+            default -> Direction.EAST;
+        };
+    }
+
+    private static BlockState bed(int data) {
+        return Blocks.RED_BED.defaultBlockState()
+                .setValue(BlockStateProperties.HORIZONTAL_FACING, rot4Facing(data))
+                .setValue(BlockStateProperties.BED_PART, (data & 8) != 0 ? BedPart.HEAD : BedPart.FOOT)
+                .setValue(BlockStateProperties.OCCUPIED, false);
+    }
+
+    /** The facing a legacy chest (id 54) decodes to — used to pair adjacent chests into doubles. */
+    static Direction chestFacing(int data) {
+        return of(54, data).getValue(BlockStateProperties.HORIZONTAL_FACING);
     }
 }

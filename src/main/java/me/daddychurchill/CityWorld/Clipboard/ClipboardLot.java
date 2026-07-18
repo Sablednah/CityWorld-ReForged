@@ -85,23 +85,45 @@ public class ClipboardLot extends IsolatedLot {
 		int nwX = chunk.getOriginX() - lotX * chunk.width;
 		int nwZ = chunk.getOriginZ() - lotZ * chunk.width;
 
-		clip.pasteChunk(level, nwX, generator.streetLevel, nwZ,
+		clip.pasteChunk(level, nwX, surfaceLevel(generator), nwZ,
 				chunk.getOriginX(), chunk.getOriginZ(), level.getRandom());
 
 		if (clip.decayable && generator.getSettings().includeDecayedBuildings) {
-			int depth = generator.streetLevel - clip.groundLevelY;
+			int depth = surfaceLevel(generator) - clip.groundLevelY;
 			destroyLot(generator, depth, depth + clip.sizeY);
 		}
 	}
 
+	/**
+	 * The world Y the building's ground layer should sit at. In a city the roads raise the sidewalk to
+	 * {@code streetLevel + 1} (see {@code RoadLot.topOfRoad}), so a building whose floor sits at
+	 * {@code streetLevel} reads as one block low next to the kerb — which is exactly the "1 too low"
+	 * seen for urban schematics (and not for rural ones, where there is no raised sidewalk). So urban
+	 * families sit a block higher; rural families stay on the natural surface.
+	 *
+	 * <p>Keyed off the family rather than {@code inACity} because that setting is still a stub that
+	 * answers true everywhere until the P7 city-radius work lands.
+	 */
+	private int surfaceLevel(CityWorldGenerator generator) {
+		return generator.streetLevel + (isUrban(clip.family) ? 1 : 0);
+	}
+
+	private static boolean isUrban(PasteProvider.SchematicFamily family) {
+		return switch (family) {
+			case FARM, NATURE, OUTLAND, ASTRAL -> false;
+			default -> true; // roundabout, highrise, midrise, lowrise, municipal, industrial,
+							  // construction, neighborhood, park — all built on raised city sidewalks
+		};
+	}
+
 	@Override
 	public int getBottomY(CityWorldGenerator generator) {
-		return generator.streetLevel - clip.groundLevelY;
+		return surfaceLevel(generator) - clip.groundLevelY;
 	}
 
 	@Override
 	public int getTopY(CityWorldGenerator generator, AbstractCachedYs blockYs, int x, int z) {
-		return generator.streetLevel - clip.groundLevelY + clip.sizeY;
+		return surfaceLevel(generator) - clip.groundLevelY + clip.sizeY;
 	}
 
 	/** The building this lot is a chunk of. (Upstream exposed this too — Sablednah, PR #4.) */

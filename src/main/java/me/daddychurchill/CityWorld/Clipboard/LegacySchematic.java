@@ -17,8 +17,11 @@ import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
 /**
@@ -201,7 +204,33 @@ public final class LegacySchematic {
             }
             return LegacyBlocks.doorState(id, lowerData, upperData, upper);
         }
+        if (id == 54) // chest — pair adjacent same-facing chests into a double
+            return chestState(x, y, z, dataAt(x, y, z));
         return LegacyBlocks.of(id, dataAt(x, y, z));
+    }
+
+    /**
+     * A chest, with {@code CHEST_TYPE} set so an adjacent same-facing chest becomes a double (raw
+     * {@code setBlock} placement doesn't auto-merge chests the way interactive placement does). Vanilla
+     * rule: a LEFT chest's partner sits at {@code facing.getClockWise()}, a RIGHT chest's at
+     * {@code getCounterClockWise()} — so a matching neighbour on the clockwise side makes this the left.
+     */
+    private BlockState chestState(int x, int y, int z, int data) {
+        BlockState base = LegacyBlocks.of(54, data);
+        Direction facing = LegacyBlocks.chestFacing(data);
+        if (matchingChest(x, y, z, facing, facing.getClockWise()))
+            return base.setValue(BlockStateProperties.CHEST_TYPE, ChestType.LEFT);
+        if (matchingChest(x, y, z, facing, facing.getCounterClockWise()))
+            return base.setValue(BlockStateProperties.CHEST_TYPE, ChestType.RIGHT);
+        return base;
+    }
+
+    private boolean matchingChest(int x, int y, int z, Direction facing, Direction toward) {
+        int nx = x + toward.getStepX();
+        int nz = z + toward.getStepZ();
+        if (nx < 0 || nx >= width || nz < 0 || nz >= length)
+            return false;
+        return idAt(nx, y, nz) == 54 && LegacyBlocks.chestFacing(dataAt(nx, y, nz)) == facing;
     }
 
     /**
