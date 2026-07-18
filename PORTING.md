@@ -798,10 +798,17 @@ Coupling inventory (from the 1.14 source):
       commands: `/cityfind <name>` (async nearest-match search) and `/cityinfo` now names the schematic
       you're standing on.
 
+      *Container contents now carried too* (2026-07): legacy `Chest`/`Furnace`/`Trap`(=old dispenser)
+      tile-entity `Items` → a modern `Items` list via a tiny legacy item-id map (only six ids appear in
+      the catalog: gold ingot/nugget, emerald, potion, golden helmet, slimeball). Only three buildings
+      ship stock — **chayats-bank** (a vault, 108 gold stacks), **IMCHospital**, **winchester** (one
+      emerald) — verified by place-and-read-back. Unknown item ids are logged once and skipped, never
+      guessed. Decay currently leaves a stocked vault intact except where `destroyLot` happens to blow
+      through it; thinning contents under `includeDecayedBuildings` is a possible later refinement.
+
       Also still to do: build-time (or cached-on-disk) `.schematic`→`.nbt` so the legacy parser isn't a
-      runtime cost; **container contents** (chests/furnaces still place empty — needs a legacy item-id
-      map); refine orientation (door facing mapping and stairs facing may need a rotation tweak once
-      eyeballed); building rotation and the foundation dig above.
+      runtime cost; refine orientation (door facing mapping and stairs facing may need a rotation tweak
+      once eyeballed); building rotation and the foundation dig above.
       Assets recovered: `../Schematics for zarp.zip` (Era-3 backup, ~297 KB, 186 files) holds the
       building schematics grouped by style (`Lowrise/`, `Industrial/`, `Municipal/`, …). Each
       `.schematic` has a `.schematic.yml` sidecar with CityWorld placement metadata — port both.

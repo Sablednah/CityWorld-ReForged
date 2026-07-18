@@ -27,8 +27,8 @@ import net.minecraft.world.level.block.state.properties.SlabType;
  * orientation, flower kind) are decoded; fiddly runtime state (redstone power, crop age, piston
  * extension) is left at the block's default. Doors are the exception that needs both halves at once
  * (hinge lives on the upper block) — see {@link #doorState}, driven from {@code LegacySchematic}.
- * Tile-entity contents are handled in a separate pass in {@code LegacySchematic}: sign text is
- * carried, container inventories (chests/furnaces) are not yet, so those place empty.
+ * Tile-entity contents are handled in a separate pass in {@code LegacySchematic}: sign text and
+ * container inventories (chests/furnaces/dispensers) are both carried now.
  */
 public final class LegacyBlocks {
 

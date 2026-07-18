@@ -4,6 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import me.daddychurchill.CityWorld.CityWorldMod;
 
 import net.minecraft.core.HolderGetter;
 import net.minecraft.nbt.CompoundTag;
@@ -62,9 +66,10 @@ public final class LegacySchematic {
     }
 
     /**
-     * Pull the legacy {@code TileEntities} we can carry into a {@link StructureTemplate}. Only signs
-     * for now — the plain {@code Text1..Text4} lines become a modern sign's {@code front_text}.
-     * Container contents (chests/furnaces) need a separate item-id mapping and are still left empty.
+     * Pull the legacy {@code TileEntities} we can carry into a {@link StructureTemplate}: sign text
+     * (plain {@code Text1..Text4} → a modern sign's {@code front_text}) and container inventories
+     * (chests/furnaces/... → a modern {@code Items} list). Item-only tile entities we can't map yet
+     * (e.g. jukebox records) are skipped.
      */
     private void readBlockEntities(CompoundTag root) {
         ListTag list = root.getList("TileEntities").orElse(null);
@@ -72,19 +77,71 @@ public final class LegacySchematic {
             return;
         for (int i = 0; i < list.size(); i++) {
             CompoundTag te = list.getCompoundOrEmpty(i);
-            if (!"Sign".equals(te.getStringOr("id", "")))
-                continue;
             int x = te.getIntOr("x", 0);
             int y = te.getIntOr("y", 0);
             int z = te.getIntOr("z", 0);
             if (x < 0 || x >= width || y < 0 || y >= height || z < 0 || z >= length)
                 continue;
-            String[] lines = {
-                te.getStringOr("Text1", ""), te.getStringOr("Text2", ""),
-                te.getStringOr("Text3", ""), te.getStringOr("Text4", "")
+            CompoundTag nbt = switch (te.getStringOr("id", "")) {
+                case "Sign" -> signNbt(new String[] {
+                        te.getStringOr("Text1", ""), te.getStringOr("Text2", ""),
+                        te.getStringOr("Text3", ""), te.getStringOr("Text4", "") });
+                case "Chest", "Trap", "Furnace", "Dispenser", "Dropper", "Hopper", "Brewingstand" ->
+                        containerNbt(te);
+                default -> null;
             };
-            blockEntities.put(index(x, y, z), signNbt(lines));
+            if (nbt != null)
+                blockEntities.put(index(x, y, z), nbt);
         }
+    }
+
+    /** Modern container block-entity nbt: {@code Items} rebuilt from the legacy stacks we can map. */
+    private static CompoundTag containerNbt(CompoundTag te) {
+        ListTag legacy = te.getList("Items").orElse(null);
+        if (legacy == null || legacy.isEmpty())
+            return null;
+        ListTag items = new ListTag();
+        for (int i = 0; i < legacy.size(); i++) {
+            CompoundTag it = legacy.getCompoundOrEmpty(i);
+            int legacyId = it.getIntOr("id", -1);
+            int count = it.getIntOr("Count", 0);
+            int slot = it.getIntOr("Slot", 0);
+            if (legacyId < 0 || count < 1)
+                continue;
+            String modern = modernItemId(legacyId);
+            if (modern == null) {
+                if (unknownItems.add(legacyId))
+                    CityWorldMod.LOGGER.info("LegacySchematic: no item mapping for legacy id {} (stack skipped)",
+                            legacyId);
+                continue;
+            }
+            CompoundTag entry = new CompoundTag();
+            entry.putByte("Slot", (byte) slot);
+            entry.putString("id", modern);
+            entry.putInt("count", Math.min(count, 99));
+            items.add(entry);
+        }
+        if (items.isEmpty())
+            return null;
+        CompoundTag be = new CompoundTag();
+        be.put("Items", items);
+        return be;
+    }
+
+    // Legacy numeric item ids used by the bundled catalog's stocked containers. Small on purpose —
+    // only these six actually appear; anything else is logged and skipped rather than guessed.
+    private static final Set<Integer> unknownItems = ConcurrentHashMap.newKeySet();
+
+    private static String modernItemId(int legacyId) {
+        return switch (legacyId) {
+            case 266 -> "minecraft:gold_ingot";
+            case 314 -> "minecraft:golden_helmet";
+            case 341 -> "minecraft:slime_ball";
+            case 371 -> "minecraft:gold_nugget";
+            case 373 -> "minecraft:potion";
+            case 388 -> "minecraft:emerald";
+            default -> null;
+        };
     }
 
     /** Modern sign block-entity nbt: {@code front_text.messages} from the four legacy lines. */
@@ -173,7 +230,7 @@ public final class LegacySchematic {
                     block.put("pos", intList(x, y, z));
                     block.putInt("state", idx);
                     CompoundTag nbt = blockEntities.get(index(x, y, z));
-                    if (nbt != null && (id == 63 || id == 68)) // only attach sign nbt to sign blocks
+                    if (nbt != null && state.hasBlockEntity()) // only attach to a block that hosts one
                         block.put("nbt", nbt);
                     blockList.add(block);
                 }
