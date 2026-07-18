@@ -45,6 +45,10 @@ public class CityWorldMod {
         // Server-side registrations on the game event bus (commands: /cityinfo, /cityworld).
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(CityWorldServerEvents.class);
 
+        // Create the drop-in folder (config/cityworld/schematics/) so players can add their own
+        // schematics without a rebuild; the library scans it alongside the bundled set.
+        me.daddychurchill.CityWorld.Clipboard.SchematicLibrary.ensureExternalFolder();
+
         LOGGER.info("CityWorld {} initialising (NeoForge port)",
                 modContainer.getModInfo().getVersion());
     }
