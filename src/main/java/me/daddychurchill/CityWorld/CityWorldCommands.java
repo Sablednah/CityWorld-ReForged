@@ -1,6 +1,5 @@
 package me.daddychurchill.CityWorld;
 
-import java.io.InputStream;
 import java.util.Set;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -8,7 +7,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
-import me.daddychurchill.CityWorld.Clipboard.LegacySchematic;
+import me.daddychurchill.CityWorld.Clipboard.Clipboard;
+import me.daddychurchill.CityWorld.Clipboard.SchematicLibrary;
 import me.daddychurchill.CityWorld.Context.DataContext;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Support.PlatMap;
@@ -27,11 +27,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Relative;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
 /**
  * The CityWorld command tree — the modern Brigadier port of upstream's {@code CommandCityWorld} /
@@ -69,7 +66,9 @@ public final class CityWorldCommands {
 
         dispatcher.register(Commands.literal("cityschem")
                 .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
-                .then(Commands.argument("name", StringArgumentType.word())
+                .then(Commands.literal("list")
+                        .executes(CityWorldCommands::listSchematics))
+                .then(Commands.argument("name", StringArgumentType.greedyString())
                         .executes(CityWorldCommands::pasteSchematic)));
     }
 
@@ -110,34 +109,25 @@ public final class CityWorldCommands {
         ServerLevel level = player.level();
         String name = StringArgumentType.getString(ctx, "name");
 
-        // Spike: read the bundled classic assets. The full asset index / category resolution comes
-        // with the PasteProvider wiring.
-        String path = "/cityworld/schematics/Lowrise/" + name + ".schematic";
-        StructureTemplate template;
-        try (InputStream in = CityWorldCommands.class.getResourceAsStream(path)) {
-            if (in == null) {
-                ctx.getSource().sendFailure(Component.literal("No bundled schematic named '" + name + "'."));
-                return 0;
-            }
-            LegacySchematic schematic = LegacySchematic.read(in);
-            template = schematic.toTemplate(level.registryAccess().lookupOrThrow(Registries.BLOCK));
-        } catch (Exception ex) {
-            ctx.getSource().sendFailure(Component.literal("Failed to load '" + name + "': " + ex.getMessage()));
+        Clipboard clip = SchematicLibrary.get(name);
+        if (clip == null) {
+            ctx.getSource().sendFailure(Component.literal(
+                    "No classic schematic named '" + name + "'. Try /cityschem list."));
             return 0;
         }
 
-        BlockPos origin = player.blockPosition();
-        boolean placed = template.placeInWorld(level, origin, origin, new StructurePlaceSettings(),
-                level.getRandom(), Block.UPDATE_CLIENTS);
-        if (!placed) {
-            ctx.getSource().sendFailure(Component.literal("Nothing to place (empty template)."));
-            return 0;
-        }
-
-        var size = template.getSize();
+        BlockPos at = player.blockPosition();
+        clip.paste(level, at.getX(), at.getY(), at.getZ(), level.getRandom());
         ctx.getSource().sendSuccess(() -> Component.literal(
-                "Pasted '" + name + "' (" + size.getX() + "x" + size.getY() + "x" + size.getZ() + ") at "
-                        + origin.getX() + ", " + origin.getY() + ", " + origin.getZ()), true);
+                "Pasted '" + clip.name + "' [" + clip.family + "] (" + clip.sizeX + "x" + clip.sizeY + "x"
+                        + clip.sizeZ + ") at " + at.getX() + ", " + at.getY() + ", " + at.getZ()), true);
+        return 1;
+    }
+
+    private static int listSchematics(CommandContext<CommandSourceStack> ctx) {
+        java.util.List<String> names = SchematicLibrary.names();
+        ctx.getSource().sendSuccess(() -> Component.literal(
+                names.size() + " classic schematics: " + String.join(", ", names)), false);
         return 1;
     }
 
