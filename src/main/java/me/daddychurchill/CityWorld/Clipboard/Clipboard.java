@@ -93,11 +93,9 @@ public final class Clipboard {
             throws IOException {
         String lower = fileName.toLowerCase(Locale.ROOT);
         if (lower.endsWith(".nbt")) {
-            // A .nbt file already IS a StructureTemplate — no conversion needed.
+            // A .nbt file already IS a structure tag; data-fix it (old files) then load.
             CompoundTag tag = NbtIo.readCompressed(data, NbtAccounter.unlimitedHeap());
-            StructureTemplate template = new StructureTemplate();
-            template.load(blocks, tag);
-            return template;
+            return Templates.build(tag, tag.getInt("DataVersion").orElse(0), blocks);
         }
         if (lower.endsWith(".schem"))
             return SpongeSchematic.read(data).toTemplate(blocks);
