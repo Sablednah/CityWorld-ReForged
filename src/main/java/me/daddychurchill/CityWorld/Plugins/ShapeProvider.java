@@ -216,9 +216,11 @@ public abstract class ShapeProvider extends Provider {
 		case SNOWDUNES:
 			provider = new ShapeProvider_SnowDunes(generator, odds);
 			break;
+		case MAZE:
+			provider = new ShapeProvider_Maze(generator, odds);
+			break;
 		case FLOATING:
 		case ASTRAL:
-		case MAZE:
 		case DESTROYED:
 		case SPARSE:
 		case NORMAL:

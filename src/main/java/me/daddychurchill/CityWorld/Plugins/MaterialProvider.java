@@ -25,6 +25,15 @@ public class MaterialProvider {
 
     private List<MaterialList> listOfLists;
 
+    // --- maze walls (MAZE style) ---------------------------------------------------------------
+
+    private final static String tagMaterialListFor_MazeWalls = "Materials_List_For_MazeWalls";
+    public final MaterialList itemsMaterialListFor_MazeWalls = createList(tagMaterialListFor_MazeWalls,
+
+            // ORDER MATTERS IN THIS CASE
+            Material.OBSIDIAN, // Walls
+            Material.OBSIDIAN); // Underlayment
+
     // --- roads ---------------------------------------------------------------------------------
 
     private final static String tagMaterialListFor_Roads = "Materials_List_For_Roads";

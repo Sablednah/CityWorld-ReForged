@@ -86,9 +86,11 @@ public abstract class SurfaceProvider extends Provider {
 		case SNOWDUNES:
 			provider = new SurfaceProvider_SnowDunes(odds);
 			break;
+		case MAZE:
+			provider = new SurfaceProvider_Maze(odds);
+			break;
 		case FLOATING:
 		case ASTRAL:
-		case MAZE:
 		case NATURE:
 		case METRO:
 		case SPARSE:
