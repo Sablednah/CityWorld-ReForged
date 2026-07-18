@@ -65,7 +65,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     public static final MapCodec<CityWorldChunkGenerator> CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
                     BiomeSource.CODEC.fieldOf("biome_source").forGetter(ChunkGenerator::getBiomeSource),
-                    Codec.BOOL.optionalFieldOf("decayed").forGetter(g -> g.decayed)
+                    Codec.BOOL.optionalFieldOf("decayed").forGetter(g -> g.decayed),
+                    Codec.STRING.optionalFieldOf("style").forGetter(g -> g.style)
             ).apply(instance, CityWorldChunkGenerator::new));
 
     /**
@@ -118,13 +119,25 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private final Optional<Boolean> decayed;
 
+    /**
+     * The world style, straight from the generator's JSON ({@code "style": "flooded"}).
+     *
+     * <p>Absent means {@link CityWorldGenerator.WorldStyle#NORMAL}. Kept as the raw string (not a
+     * parsed {@code WorldStyle}) purely so the codec round-trips exactly what was written; it is
+     * resolved to an enum in {@link #context}. This is what a per-style world preset sets, what the
+     * single-player Customize screen writes, and — eventually — what a per-world server config will
+     * carry. See {@code CityWorldGenerator.parseStyle}.
+     */
+    private final Optional<String> style;
+
     public CityWorldChunkGenerator(BiomeSource biomeSource) {
-        this(biomeSource, Optional.empty());
+        this(biomeSource, Optional.empty(), Optional.empty());
     }
 
-    public CityWorldChunkGenerator(BiomeSource biomeSource, Optional<Boolean> decayed) {
+    public CityWorldChunkGenerator(BiomeSource biomeSource, Optional<Boolean> decayed, Optional<String> style) {
         super(biomeSource);
         this.decayed = decayed;
+        this.style = style;
     }
 
     /**
@@ -149,7 +162,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                         + "so the per-world context cannot be seeded. Terrain would be wrong for "
                                         + "this world. Find another way to obtain the seed.");
                     local = new CityWorldGenerator(levelSeed, TERRAIN_CEILING, UPSTREAM_SEA_LEVEL,
-                            CityWorldGenerator.WorldStyle.NORMAL, level.getMinY(), level.getMaxY(), decayed);
+                            CityWorldGenerator.parseStyle(style), level.getMinY(), level.getMaxY(), decayed);
                     context = local;
                 }
             }

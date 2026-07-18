@@ -74,6 +74,23 @@ public class CityWorldGenerator {
         NORMAL
     }
 
+    /**
+     * Resolves the generator's {@code "style"} JSON field (a case-insensitive style name, or empty)
+     * to a {@link WorldStyle}. Absent or unrecognised falls back to {@link WorldStyle#NORMAL} —
+     * upstream's {@code validateStyle} did the same, so a typo yields a plain world rather than a
+     * crash. This is the one place the raw string becomes an enum.
+     */
+    public static WorldStyle parseStyle(java.util.Optional<String> name) {
+        if (name.isEmpty())
+            return WorldStyle.NORMAL;
+        try {
+            return WorldStyle.valueOf(name.get().trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            LOGGER.warn("CityWorld: unknown world style \"{}\" — falling back to NORMAL", name.get());
+            return WorldStyle.NORMAL;
+        }
+    }
+
     // --- what the original read off the Bukkit World -------------------------------------------
 
     private final long worldSeed;
@@ -176,7 +193,7 @@ public class CityWorldGenerator {
         this.worldStyle = worldStyle;
         this.worldMinY = worldMinY;
         this.worldMaxY = worldMaxY;
-        this.settings = new CityWorldSettings(decayOverride);
+        this.settings = new CityWorldSettings(worldStyle, decayOverride);
 
         // The original's initializeWorldInfo, minus the lazy-init dance. Order matters: the
         // providers read the world facts above, and the datums below read the providers.

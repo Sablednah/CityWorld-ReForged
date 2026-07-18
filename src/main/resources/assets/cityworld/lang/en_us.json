@@ -1,0 +1,13 @@
+{
+  "generator.cityworld.city": "CityWorld",
+  "generator.cityworld.floating": "CityWorld: Floating",
+  "generator.cityworld.flooded": "CityWorld: Flooded",
+  "generator.cityworld.snowdunes": "CityWorld: Snow Dunes",
+  "generator.cityworld.sanddunes": "CityWorld: Sand Dunes",
+  "generator.cityworld.astral": "CityWorld: Astral",
+  "generator.cityworld.maze": "CityWorld: Maze",
+  "generator.cityworld.nature": "CityWorld: Nature",
+  "generator.cityworld.metro": "CityWorld: Metro",
+  "generator.cityworld.sparse": "CityWorld: Sparse",
+  "generator.cityworld.destroyed": "CityWorld: Destroyed"
+}
