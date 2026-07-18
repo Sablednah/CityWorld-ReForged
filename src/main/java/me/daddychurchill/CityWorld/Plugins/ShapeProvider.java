@@ -220,6 +220,8 @@ public abstract class ShapeProvider extends Provider {
 			provider = new ShapeProvider_Maze(generator, odds);
 			break;
 		case FLOATING:
+			provider = new ShapeProvider_Floating(generator, odds);
+			break;
 		case ASTRAL:
 		case DESTROYED:
 		case SPARSE:
