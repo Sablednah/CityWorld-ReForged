@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 import me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily;
 import me.daddychurchill.CityWorld.Support.SupportBlocks;
@@ -12,6 +13,9 @@ import me.daddychurchill.CityWorld.Support.SupportBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -76,12 +80,30 @@ public final class Clipboard {
      * metadata stream. The block registry is the static {@link BuiltInRegistries#BLOCK} so this needs
      * no live level (a {@code StructureTemplate} is level-independent until placed).
      */
-    public static Clipboard load(String name, SchematicFamily family, InputStream schematic, InputStream yml)
-            throws IOException {
+    public static Clipboard load(String name, SchematicFamily family, String fileName, InputStream data,
+            InputStream yml) throws IOException {
         HolderGetter<Block> blocks = BuiltInRegistries.BLOCK;
-        StructureTemplate template = LegacySchematic.read(schematic).toTemplate(blocks);
+        StructureTemplate template = readTemplate(fileName, data, blocks);
         Meta meta = yml != null ? Meta.parse(yml) : new Meta();
         return new Clipboard(name, family, template, meta);
+    }
+
+    /** Pick a reader by file extension: native {@code .nbt}, WorldEdit {@code .schem}, or legacy. */
+    private static StructureTemplate readTemplate(String fileName, InputStream data, HolderGetter<Block> blocks)
+            throws IOException {
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        if (lower.endsWith(".nbt")) {
+            // A .nbt file already IS a StructureTemplate — no conversion needed.
+            CompoundTag tag = NbtIo.readCompressed(data, NbtAccounter.unlimitedHeap());
+            StructureTemplate template = new StructureTemplate();
+            template.load(blocks, tag);
+            return template;
+        }
+        if (lower.endsWith(".schem"))
+            return SpongeSchematic.read(data).toTemplate(blocks);
+        if (lower.endsWith(".litematic"))
+            return LitematicSchematic.read(data).toTemplate(blocks);
+        return LegacySchematic.read(data).toTemplate(blocks); // legacy .schematic
     }
 
     /**

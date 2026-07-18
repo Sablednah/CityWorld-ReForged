@@ -49,3 +49,6 @@ repo/
 
 ### Built jars stashed for manual testing (not source)
 /builds/
+
+# Personal staging area for schematics to test (third-party downloads, not for commit)
+/Schematics/

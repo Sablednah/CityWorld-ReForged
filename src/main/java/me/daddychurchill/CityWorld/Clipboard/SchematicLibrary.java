@@ -44,6 +44,9 @@ public final class SchematicLibrary {
     private static final String INDEX = ROOT + "index.txt";
     private static final String SCHEMATIC = ".schematic";
 
+    /** Extensions the loader understands, longest/most-specific first (so {@code .schematic} wins). */
+    private static final String[] EXTS = { ".schematic", ".litematic", ".schem", ".nbt" };
+
     /** For a bundled entry {@code path} is a classpath resource; for an external one, a filesystem path. */
     private record Entry(String name, SchematicFamily family, String path, boolean external) {}
 
@@ -115,10 +118,15 @@ public final class SchematicLibrary {
                 SchematicFamily family = familyOf(famDir.getFileName().toString());
                 if (family == null)
                     continue;
-                try (DirectoryStream<Path> files = Files.newDirectoryStream(famDir, "*" + SCHEMATIC)) {
+                try (DirectoryStream<Path> files = Files.newDirectoryStream(famDir)) {
                     for (Path f : files) {
+                        if (!Files.isRegularFile(f))
+                            continue;
                         String file = f.getFileName().toString();
-                        String name = file.substring(0, file.length() - SCHEMATIC.length());
+                        String ext = supportedExt(file);
+                        if (ext == null)
+                            continue;
+                        String name = file.substring(0, file.length() - ext.length());
                         list.add(new Entry(name, family, f.toAbsolutePath().toString(), true));
                         found++;
                     }
@@ -167,10 +175,20 @@ public final class SchematicLibrary {
             + "  Highrise, Midrise, Lowrise, Municipal, Industrial, Construction,\n"
             + "  Park, Neighborhood, Farm, Roundabout, Nature, Outland\n"
             + "  (Outland = wilderness; Roundabout = a statue at a roundabout centre.)\n\n"
-            + "Format: the old flat-array MCEdit .schematic (numeric block ids), same as the\n"
-            + "bundled set. Modern WorldEdit .schem is not supported yet.\n\n"
+            + "Formats: .schematic (legacy MCEdit), .schem (WorldEdit), .litematic (Litematica),\n"
+            + "and .nbt (vanilla structure). Very old files may lose blocks that were renamed in\n"
+            + "later versions (they place as air); modern exports come through cleanly.\n\n"
             + "Turn placement on with the [schematics] includeSchematics config option, then\n"
             + "generate fresh chunks. Files here are loaded at startup - relaunch after adding.\n";
+
+    /** The supported extension a file ends with (e.g. {@code .schem}), or null if unrecognised. */
+    private static String supportedExt(String file) {
+        String lower = file.toLowerCase(Locale.ROOT);
+        for (String e : EXTS)
+            if (lower.endsWith(e))
+                return e;
+        return null;
+    }
 
     private static SchematicFamily familyOf(String folder) {
         try {
@@ -225,11 +243,10 @@ public final class SchematicLibrary {
     private static Clipboard load(Entry entry) {
         try {
             if (entry.external) {
-                Path schematic = Path.of(entry.path);
-                Path yml = Path.of(entry.path + ".yml");
-                try (InputStream s = Files.newInputStream(schematic);
-                     InputStream y = Files.exists(yml) ? Files.newInputStream(yml) : null) {
-                    return Clipboard.load(entry.name, entry.family, s, y);
+                Path yml = externalYml(entry.path);
+                try (InputStream s = Files.newInputStream(Path.of(entry.path));
+                     InputStream y = yml != null ? Files.newInputStream(yml) : null) {
+                    return Clipboard.load(entry.name, entry.family, entry.path, s, y);
                 }
             }
             try (InputStream s = SchematicLibrary.class.getResourceAsStream(entry.path);
@@ -238,11 +255,28 @@ public final class SchematicLibrary {
                     CityWorldMod.LOGGER.warn("SchematicLibrary: missing resource {}", entry.path);
                     return null;
                 }
-                return Clipboard.load(entry.name, entry.family, s, y);
+                return Clipboard.load(entry.name, entry.family, entry.path, s, y);
             }
         } catch (Exception e) {
             CityWorldMod.LOGGER.warn("SchematicLibrary: failed to load {} ({})", entry.name, entry.path, e);
             return null;
         }
+    }
+
+    /**
+     * Find a schematic's {@code .yml} sidecar. Two conventions are in the wild: {@code name.schematic.yml}
+     * (append) and {@code name.yml} (replace the extension) — try both.
+     */
+    private static Path externalYml(String path) {
+        Path appended = Path.of(path + ".yml");
+        if (Files.exists(appended))
+            return appended;
+        int dot = path.lastIndexOf('.');
+        if (dot > 0) {
+            Path replaced = Path.of(path.substring(0, dot) + ".yml");
+            if (Files.exists(replaced))
+                return replaced;
+        }
+        return null;
     }
 }
