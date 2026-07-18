@@ -1,0 +1,107 @@
+package me.daddychurchill.CityWorld.Clipboard;
+
+import me.daddychurchill.CityWorld.compat.BiomeGrid;
+
+import me.daddychurchill.CityWorld.CityWorldGenerator;
+import me.daddychurchill.CityWorld.Context.DataContext;
+import me.daddychurchill.CityWorld.Plats.IsolatedLot;
+import me.daddychurchill.CityWorld.Plats.PlatLot;
+import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
+import me.daddychurchill.CityWorld.Support.InitialBlocks;
+import me.daddychurchill.CityWorld.Support.PlatMap;
+import me.daddychurchill.CityWorld.Support.RealBlocks;
+
+import net.minecraft.world.level.ServerLevelAccessor;
+
+/**
+ * One chunk of a placed classic schematic. A building whose footprint spans several chunks becomes
+ * several of these — one per chunk of the {@link PlatMap} grid it covers, each carrying the same
+ * {@link Clipboard} plus its own {@code (lotX, lotZ)} offset into that footprint.
+ *
+ * <p>This is the modern counterpart of upstream's {@code ClipboardLot}, but the block-copying is
+ * different by design. Upstream sliced the clip by hand — computing per-chunk sub-rectangles and
+ * copying block by block through {@code RealBlocks}. Here the block data lives in a native
+ * {@link net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate}, so each
+ * chunk simply asks {@link Clipboard#pasteChunk} to place the whole building with a placement
+ * bounding box clipped to this chunk. The template does the slicing; every chunk computes the same
+ * whole-building origin, so the pieces line up.
+ *
+ * <p><b>First-cut scope</b> (parity-oriented, to be refined once verified in-world):
+ * <ul>
+ *   <li>No rotation yet — every building faces the same way ({@code Rotation.NONE}). Random facing
+ *       is easy to add but changes the footprint for 90/270°, which complicates the origin maths;
+ *       deferred until basic placement is confirmed.</li>
+ *   <li>No foundation dig / air-carve. The converted template omits air, so a building sits on the
+ *       street surface cleanly on flat city ground (where cities generate) but does not hollow out a
+ *       hillside or a basement pocket. Basement-bearing schematics ({@code groundLevelY > 0}) will
+ *       want the upstream backfill later.</li>
+ * </ul>
+ */
+public class ClipboardLot extends IsolatedLot {
+
+	private final Clipboard clip;
+	private final int lotX;
+	private final int lotZ;
+
+	public ClipboardLot(PlatMap platmap, int chunkX, int chunkZ, Clipboard clip, int lotX, int lotZ) {
+		super(platmap, chunkX, chunkZ);
+		this.style = LotStyle.STRUCTURE;
+		this.clip = clip;
+		this.lotX = lotX;
+		this.lotZ = lotZ;
+	}
+
+	@Override
+	public PlatLot newLike(PlatMap platmap, int chunkX, int chunkZ) {
+		return new ClipboardLot(platmap, chunkX, chunkZ, clip, lotX, lotZ);
+	}
+
+	@Override
+	public boolean isPlaceableAt(CityWorldGenerator generator, int chunkX, int chunkZ) {
+		return generator.getSettings().inCityRange(chunkX, chunkZ);
+	}
+
+	@Override
+	protected void generateActualChunk(CityWorldGenerator generator, PlatMap platmap, InitialBlocks chunk,
+			BiomeGrid biomes, DataContext context, int platX, int platZ) {
+		// No terrain shaping in the first cut; the building is placed whole during decoration.
+	}
+
+	@Override
+	protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
+			DataContext context, int platX, int platZ) {
+
+		ServerLevelAccessor level = chunk.getServerLevel();
+		if (level == null)
+			return; // not a live worldgen level — nothing safe to place onto
+
+		// The whole building's NW corner, in world blocks: this chunk's origin, stepped back by our
+		// offset into the footprint. Every chunk of the building computes the same value, so the
+		// clipped slices tile together seamlessly.
+		int nwX = chunk.getOriginX() - lotX * chunk.width;
+		int nwZ = chunk.getOriginZ() - lotZ * chunk.width;
+
+		clip.pasteChunk(level, nwX, generator.streetLevel, nwZ,
+				chunk.getOriginX(), chunk.getOriginZ(), level.getRandom());
+
+		if (clip.decayable && generator.getSettings().includeDecayedBuildings) {
+			int depth = generator.streetLevel - clip.groundLevelY;
+			destroyLot(generator, depth, depth + clip.sizeY);
+		}
+	}
+
+	@Override
+	public int getBottomY(CityWorldGenerator generator) {
+		return generator.streetLevel - clip.groundLevelY;
+	}
+
+	@Override
+	public int getTopY(CityWorldGenerator generator, AbstractCachedYs blockYs, int x, int z) {
+		return generator.streetLevel - clip.groundLevelY + clip.sizeY;
+	}
+
+	/** The building this lot is a chunk of. (Upstream exposed this too — Sablednah, PR #4.) */
+	public Clipboard getClip() {
+		return clip;
+	}
+}

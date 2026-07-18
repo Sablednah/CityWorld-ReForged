@@ -741,8 +741,9 @@ Coupling inventory (from the 1.14 source):
       seed-deterministic `PlatMap` makes per-chunk regeneration viable). Migrate datapack loot
       tables to 1.21 format and bundle them in mod resources (drop the runtime extraction).
       `SpawnProvider` → modern `EntityType`.
-- [~] **P6 — Schematics.** *Conversion + library + paste command done; worldgen placement is the
-      remaining piece.* The seam: `LegacySchematic` reads a legacy MCEdit `.schematic` (numeric ids +
+- [~] **P6 — Schematics.** *Conversion + library + paste command done; worldgen auto-placement wired
+      (behind `includeSchematics`, default off) and plan-verified — awaiting the owner's in-world look.*
+      The seam: `LegacySchematic` reads a legacy MCEdit `.schematic` (numeric ids +
       `Data`, `Width/Height/Length`) and converts it to a native `StructureTemplate` (the vanilla
       `.nbt` representation) via `LegacyBlocks` (legacy id+data → modern `BlockState`). `LegacyBlocks`
       now covers **every one of the 91 legacy ids** the classic catalog uses — verified: **all 86
@@ -753,23 +754,39 @@ Coupling inventory (from the 1.14 source):
       enumerates them. **Decisions:** modern target = vanilla `.nbt` (native, no deps); WorldEdit
       `.schem` deferred; legacy→`.nbt` is one reusable conversion.
 
-      **Next — worldgen auto-placement (needs visual verification, so left for a supervised session).**
-      Upstream path is `DataContext.populateSchematics` → `pasteProvider.getFamilyClips(family)` →
-      `ClipboardList.populate` → `PlatMap.placeSpecificClip` (finds a run of empty `platLots` big
-      enough, fills them with `ClipboardLot`s) → each `ClipboardLot.generateActualBlocks` places its
-      chunk's slice. Contexts already call `populateSchematics` (a no-op stub now); `SchematicFamily`
-      is already tracked per context. **Modern simplification:** instead of upstream's manual per-block
-      sub-region math, place with `StructureTemplate.placeInWorld(...)` and
-      `StructurePlaceSettings.setBoundingBox(currentChunkBounds)` — that clips the write to the chunk
-      being decorated, so a multi-chunk building is placed correctly and legally (respects the
-      `WorldGenRegion` writable radius) as each overlapping chunk decorates its own slice. Height comes
-      from upstream's `depth = streetLevel − groundLevelY` (+ `edgeRise`); `ClipboardLot` extends
-      `IsolatedLot` and also levels the terrain under the footprint in `generateActualChunk`. **Why not
-      done tonight:** correctness here is *visual* (buildings flush with streets, not floating/buried,
-      not clobbering roads) and can't be confirmed by a headless probe — a probe only shows blocks were
-      written without crashing, not that the result looks right. Wiring it unverified risks
-      destabilizing city generation. Do it behind an `includeSchematics` setting (default off) so it
-      can't regress normal gen, then verify in-world.
+      **Worldgen auto-placement — WIRED (behind `includeSchematics`, default off; awaiting in-world
+      visual check).** The full path is live: `DataContext.populateSchematics` (gated on the setting)
+      → `getSchematics` builds a `ClipboardList` from `SchematicLibrary.family(...)`, footprint-filtered
+      to the context's `schematicMax` → `ClipboardList.populate` rolls each clip's `oddsOfAppearance`
+      on the platmap's own `Odds` → `PlatMap.placeSpecificClip` finds a run of empty `platLots` big
+      enough (`isEmptyLots`, ≤16 tries) and fills it with one `ClipboardLot` per footprint chunk, each
+      carrying its `(lotX, lotZ)` offset. `ClipboardLot.generateActualBlocks` reconstructs the whole
+      building's NW origin (`chunk.getOriginX() − lotX*16`) and calls `Clipboard.pasteChunk`, which is
+      `StructureTemplate.placeInWorld` with `StructurePlaceSettings.setBoundingBox(thisChunk)` — the box
+      clips the write to the chunk being decorated (verified in the 1.21.11 source: `placeInWorld` skips
+      any block whose pos is outside the box), so a multi-chunk building is placed legally within the
+      `WorldGenRegion` radius as each overlapping chunk decorates its own slice. The seams line up
+      because every chunk computes the same origin. Height = `streetLevel − groundLevelY`; decay reuses
+      `destroyLot` when `includeDecayedBuildings`. `RealBlocks.getServerLevel()` hands `placeInWorld` the
+      live `ServerLevelAccessor`.
+
+      *Verified headlessly (plan-sweep probe, 1089 platmaps):* the gate works (0 `ClipboardLot`s with
+      the setting off), and with it on **2,035 building cells** were planned across every urban/farm
+      family (Highrise/Midrise/Lowrise/Industrial/Municipal/Neighborhood/Construction/Park/Farm) with
+      no exceptions — the whole planning path is sound and deterministic. Block-writing itself
+      (`placeInWorld`) was already proven by `/cityschem` (gas_stop matched block counts exactly), and
+      `pasteChunk` only adds the source-verified bounding-box clip.
+
+      **What still needs the owner's eyes in-world** (turn on `[schematics] includeSchematics` in the
+      config, fresh world): buildings flush with streets (not floating/buried/half-clobbering roads),
+      and the deliberate first-cut simplifications below.
+
+      *First-cut simplifications (parity-first; refine after the visual check):*
+      • No rotation yet — all buildings face the same way (`Rotation.NONE`); random facing swaps the
+        footprint for 90/270° and complicates the origin maths, so deferred.
+      • No foundation dig / air-carve — the converted template omits air, so a building sits cleanly on
+        flat city ground but won't hollow a hillside or basement pocket (`groundLevelY > 0` schematics
+        will want the upstream backfill in `generateActualChunk`, currently a no-op).
 
       Also still to do: build-time (or cached-on-disk) `.schematic`→`.nbt` so the legacy parser isn't a
       runtime cost; tile-entity contents (chests/signs — the block states place, contents don't yet);

@@ -2,6 +2,7 @@ package me.daddychurchill.CityWorld.Support;
 
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.compat.Block;
@@ -35,6 +36,17 @@ public final class RealBlocks extends SupportBlocks {
 	@Override
 	public Block getActualBlock(int x, int y, int z) {
 		return new Block(world, getOriginX() + x, y, getOriginZ() + z);
+	}
+
+	/**
+	 * The live level as a {@link ServerLevelAccessor}, for the few places that need a native vanilla
+	 * API rather than a chunk-relative {@link Block} — notably {@code StructureTemplate.placeInWorld}
+	 * when a {@code ClipboardLot} drops a classic schematic. During decoration {@code world} is a
+	 * {@code WorldGenLevel} (a {@code ServerLevelAccessor}); returns {@code null} in the rare case it
+	 * is not, so callers stay chunk-safe.
+	 */
+	public ServerLevelAccessor getServerLevel() {
+		return world instanceof ServerLevelAccessor sla ? sla : null;
 	}
 
 	@Override

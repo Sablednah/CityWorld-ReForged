@@ -16,6 +16,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
@@ -92,6 +93,30 @@ public final class Clipboard {
         StructurePlaceSettings settings = new StructurePlaceSettings()
                 .setRotation(Rotation.NONE)
                 .setIgnoreEntities(true);
+        template.placeInWorld(level, origin, origin, settings, random, Block.UPDATE_CLIENTS);
+    }
+
+    /**
+     * Paste only the part of this building that falls inside one chunk. Same origin arithmetic as
+     * {@link #paste} — the whole building's NW corner is {@code (nwX, nwZ)} and its {@code groundLevelY}
+     * layer sits at {@code groundY} — but a placement bounding box clipped to the chunk means the call
+     * writes nothing outside it. That is what lets a multi-chunk building be placed one chunk at a time
+     * during worldgen decoration, where the region only permits writes to the chunk being decorated
+     * (a whole-footprint {@link #paste} would try to write neighbours and be rejected/dropped).
+     *
+     * <p>Blocks are the same regardless of which chunk triggers a given world position, so the seams
+     * line up across chunk boundaries.
+     */
+    public void pasteChunk(ServerLevelAccessor level, int nwX, int groundY, int nwZ,
+            int chunkMinX, int chunkMinZ, RandomSource random) {
+        int bottom = groundY - groundLevelY;
+        BlockPos origin = new BlockPos(nwX, bottom, nwZ);
+        BoundingBox chunkBox = new BoundingBox(chunkMinX, bottom, chunkMinZ,
+                chunkMinX + 15, bottom + sizeY, chunkMinZ + 15);
+        StructurePlaceSettings settings = new StructurePlaceSettings()
+                .setRotation(Rotation.NONE)
+                .setIgnoreEntities(true)
+                .setBoundingBox(chunkBox);
         template.placeInWorld(level, origin, origin, settings, random, Block.UPDATE_CLIENTS);
     }
 

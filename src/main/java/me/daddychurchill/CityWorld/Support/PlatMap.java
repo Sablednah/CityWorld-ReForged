@@ -3,6 +3,8 @@ package me.daddychurchill.CityWorld.Support;
 import me.daddychurchill.CityWorld.compat.BiomeGrid;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
+import me.daddychurchill.CityWorld.Clipboard.Clipboard;
+import me.daddychurchill.CityWorld.Clipboard.ClipboardLot;
 import me.daddychurchill.CityWorld.Context.DataContext;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle;
@@ -503,7 +505,39 @@ public class PlatMap {
 		return false;
 	}
 
-	// Upstream's placeSpecificClip(...) pair lives here: it finds a run of empty lots big enough for
-	// a schematic and fills them with ClipboardLots. Both need Clipboard/PasteProvider, which are
-	// P6 (StructureTemplate + converting the schematics/ assets), so they land with that work.
+	private final static int maxPlaceTries = 16;
+
+	/**
+	 * Try to drop a schematic somewhere in this platmap: pick random spots until one is a run of
+	 * empty lots big enough for the clip's footprint, then fill that run with {@link ClipboardLot}s.
+	 * Gives up quietly after {@link #maxPlaceTries} misses — a full platmap simply gets no building.
+	 */
+	public void placeSpecificClip(CityWorldGenerator generator, Odds odds, Clipboard clip) {
+		int chunksX = clip.chunkX;
+		int chunksZ = clip.chunkZ;
+
+		for (int attempt = 0; attempt < maxPlaceTries; attempt++) {
+			int placeX = odds.getRandomInt(PlatMap.Width - chunksX + 1);
+			int placeZ = odds.getRandomInt(PlatMap.Width - chunksZ + 1);
+
+			if (isEmptyLots(placeX, placeZ, chunksX, chunksZ)) {
+				placeSpecificClip(generator, odds, clip, placeX, placeZ);
+				return;
+			}
+		}
+	}
+
+	private void placeSpecificClip(CityWorldGenerator generator, Odds odds, Clipboard clip, int placeX, int placeZ) {
+		int chunksX = clip.chunkX;
+		int chunksZ = clip.chunkZ;
+
+		// One ClipboardLot per chunk of the footprint; each carries its (x, z) offset so it knows
+		// which slice of the building to paste during decoration.
+		for (int x = 0; x < chunksX; x++) {
+			for (int z = 0; z < chunksZ; z++) {
+				setLot(placeX + x, placeZ + z,
+						new ClipboardLot(this, originX + placeX + x, originZ + placeZ + z, clip, x, z));
+			}
+		}
+	}
 }

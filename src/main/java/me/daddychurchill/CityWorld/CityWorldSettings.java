@@ -54,6 +54,14 @@ public class CityWorldSettings {
     public boolean includeDecayedRoads = false;
     public boolean includeDecayedBuildings = false;
 
+    /**
+     * Whether the bundled classic schematics (the old zarp catalog) may be dropped into generated
+     * cities. Upstream only placed schematics when a WorldEdit-loaded folder existed, so it was
+     * effectively off for most players; here the catalog always ships, so this defaults off and is
+     * an opt-in. Independent of {@code /cityschem}, which pastes on demand regardless.
+     */
+    public boolean includeSchematics = false;
+
     /** Who turns up, and how often. {@code SpawnProvider} branches on all of these. */
     public double spawnBeings = Odds.oddsLikely;
     public double spawnBaddies = Odds.oddsPrettyUnlikely;
@@ -107,6 +115,7 @@ public class CityWorldSettings {
             includeDecayedRoads = CityWorldConfig.INCLUDE_DECAYED_ROADS.get();
             includeDecayedNature = CityWorldConfig.INCLUDE_DECAYED_NATURE.get();
             includeFires = CityWorldConfig.INCLUDE_FIRES.get();
+            includeSchematics = CityWorldConfig.INCLUDE_SCHEMATICS.get();
         }
 
         // A per-dimension override wins over the config for the building/road ruin.

@@ -24,6 +24,7 @@ public final class CityWorldConfig {
     public static final ModConfigSpec.BooleanValue INCLUDE_DECAYED_ROADS;
     public static final ModConfigSpec.BooleanValue INCLUDE_DECAYED_NATURE;
     public static final ModConfigSpec.BooleanValue INCLUDE_FIRES;
+    public static final ModConfigSpec.BooleanValue INCLUDE_SCHEMATICS;
 
     static {
         BUILDER.comment("Decay / apocalypse options.",
@@ -49,6 +50,19 @@ public final class CityWorldConfig {
                 .comment("Whether demolition debris can be left burning (netherrack + fire),",
                         "and whether lit campfires/fire pits appear. On by default.")
                 .define("includeFires", true);
+
+        BUILDER.pop();
+
+        BUILDER.comment("Classic schematics — the bundled zarp building catalog.",
+                "These are always available on demand via /cityschem; this only controls whether",
+                "the generator itself drops them into cities as it builds. Applies to newly",
+                "generated chunks only.").push("schematics");
+
+        INCLUDE_SCHEMATICS = BUILDER
+                .comment("Let the generator place classic schematics into cities as they generate.",
+                        "Off by default — upstream only did this with a WorldEdit-loaded folder, so",
+                        "most worlds never saw them. Turn on to salt cities with the old catalog.")
+                .define("includeSchematics", false);
 
         BUILDER.pop();
     }

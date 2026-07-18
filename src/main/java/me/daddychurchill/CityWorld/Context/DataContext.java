@@ -1,6 +1,12 @@
 package me.daddychurchill.CityWorld.Context;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import me.daddychurchill.CityWorld.CityWorldGenerator;
+import me.daddychurchill.CityWorld.Clipboard.Clipboard;
+import me.daddychurchill.CityWorld.Clipboard.ClipboardList;
+import me.daddychurchill.CityWorld.Clipboard.SchematicLibrary;
 import me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily;
 import me.daddychurchill.CityWorld.Plats.NatureLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
@@ -109,13 +115,39 @@ public abstract class DataContext {
 	public abstract void validateMap(CityWorldGenerator generator, PlatMap platmap);
 
 	/**
-	 * Lets the user's own schematics claim lots before the generator fills the rest with its own
+	 * Lets the bundled classic schematics claim lots before the generator fills the rest with its own
 	 * buildings — which is why {@code UrbanContext.populateMap} calls it first.
 	 *
-	 * <p>No-op until P6 ports {@code Clipboard}/{@code PasteProvider}; with no schematics loaded,
-	 * upstream's version does nothing either.
+	 * <p>Off unless {@code includeSchematics} is set (see {@link me.daddychurchill.CityWorld.CityWorldSettings});
+	 * upstream only placed schematics when a WorldEdit folder was loaded, so most worlds saw none.
 	 */
 	void populateSchematics(CityWorldGenerator generator, PlatMap platmap) {
+		if (!generator.getSettings().includeSchematics)
+			return;
+		ClipboardList clips = getSchematics(generator);
+		if (clips != null && !clips.isEmpty())
+			clips.populate(generator, platmap);
+	}
+
+	Clipboard getSingleSchematic(CityWorldGenerator generator, PlatMap platmap, Odds odds, int x, int z) {
+		if (!generator.getSettings().includeSchematics)
+			return null;
+		ClipboardList clips = getSchematics(generator);
+		return clips != null ? clips.getSingleLot(generator, platmap, odds, x, z) : null;
+	}
+
+	/** The family's clips, resolved once (footprint-filtered to this context's max) and cached. */
+	private ClipboardList mapsSchematics;
+
+	private ClipboardList getSchematics(CityWorldGenerator generator) {
+		if (mapsSchematics == null) {
+			List<Clipboard> fits = new ArrayList<>();
+			for (Clipboard clip : SchematicLibrary.family(schematicFamily))
+				if (clip.chunkX <= schematicMaxX && clip.chunkZ <= schematicMaxZ)
+					fits.add(clip);
+			mapsSchematics = new ClipboardList(fits);
+		}
+		return mapsSchematics;
 	}
 
 	// --- schematic family ----------------------------------------------------------------------
