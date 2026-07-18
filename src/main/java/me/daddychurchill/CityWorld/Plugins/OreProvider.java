@@ -126,10 +126,19 @@ public class OreProvider extends Provider {
     // (https://github.com/echurchill/CityWorld/pull/2)
     public static OreProvider loadProvider(CityWorldGenerator generator) {
 
-        // The original switches on worldStyle over 8 variants (_Astral, _Nether, _TheEnd,
-        // _SandDunes, _SnowDunes, _Decayed, _Normal). Only the stock palette is wired up for
-        // wave 1; the variants land with their matching ShapeProviders. See PORTING.md.
-        return new OreProvider(generator);
+        // The original switches on worldStyle over several variants (_Astral, _Nether, _TheEnd,
+        // _SandDunes, _SnowDunes, _Decayed, _Normal). The style variants land with their matching
+        // ShapeProviders at P8; the Nether/End branches are unreachable (overworld only), and the
+        // _Decayed branch stays on the stock palette until OreProvider_Decayed is ported. The base
+        // OreProvider is the port's Normal palette.
+        switch (generator.worldStyle) {
+        case SANDDUNES:
+            return new OreProvider_SandDunes(generator);
+        case SNOWDUNES:
+            return new OreProvider_SnowDunes(generator);
+        default:
+            return new OreProvider(generator);
+        }
     }
 
     /**

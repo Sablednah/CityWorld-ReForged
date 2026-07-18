@@ -80,9 +80,13 @@ public abstract class SurfaceProvider extends Provider {
 		case FLOODED:
 			provider = new SurfaceProvider_Flooded(odds);
 			break;
-		case FLOATING:
 		case SANDDUNES:
+			provider = new SurfaceProvider_SandDunes(odds);
+			break;
 		case SNOWDUNES:
+			provider = new SurfaceProvider_SnowDunes(odds);
+			break;
+		case FLOATING:
 		case ASTRAL:
 		case MAZE:
 		case NATURE:

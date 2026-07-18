@@ -778,8 +778,19 @@ public abstract class CoverProvider extends Provider {
 			case FLOODED:
 				provider = new CoverProvider_Flooded(odds);
 				break;
+			case SANDDUNES:
+				provider = new CoverProvider_SandDunes(odds);
+				break;
+			case SNOWDUNES:
+				provider = new CoverProvider_SnowDunes(odds);
+				break;
 			default:
-				provider = new CoverProvider_Normal(odds);
+				// Nether/End are unreachable (overworld only); the remaining choice is decayed vs.
+				// stock foliage, exactly as upstream.
+				if (generator.getSettings().includeDecayedNature)
+					provider = new CoverProvider_Decayed(odds);
+				else
+					provider = new CoverProvider_Normal(odds);
 				break;
 			}
 		}
