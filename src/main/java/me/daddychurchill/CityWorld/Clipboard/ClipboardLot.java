@@ -126,6 +126,32 @@ public class ClipboardLot extends IsolatedLot {
 		return surfaceLevel(generator) - clip.groundLevelY + clip.sizeY;
 	}
 
+	/**
+	 * Keep the mine network out of the building's vertical span. Mines run under every lot
+	 * ({@code ShapeProvider_Normal} calls {@code generateMines} for all of them), and their oak-fence
+	 * supports and plank walkways were cutting straight up through placed schematics — the "wooden
+	 * platforms in the winchester". Upstream's {@code ClipboardLot} guarded this the same way; the
+	 * port had dropped it. Only allow a mine well below the foundation or well above the roof.
+	 */
+	@Override
+	protected boolean isShaftableLevel(CityWorldGenerator generator, int y) {
+		int bottom = surfaceLevel(generator) - clip.groundLevelY;
+		int top = bottom + clip.sizeY;
+		return (y < bottom - 32 || y > top + 16) && super.isShaftableLevel(generator, y);
+	}
+
+	/**
+	 * Keep the terrain strata out of the building's span too, so the schematic's interior air isn't
+	 * pre-filled with stone before it is pasted (strata runs in the terrain phase, the paste in
+	 * decoration). Valid only below the foundation or above the roof.
+	 */
+	@Override
+	public boolean isValidStrataY(CityWorldGenerator generator, int blockX, int blockY, int blockZ) {
+		int bottom = surfaceLevel(generator) - clip.groundLevelY;
+		int top = bottom + clip.sizeY;
+		return blockY <= bottom || blockY > top;
+	}
+
 	/** The building this lot is a chunk of. (Upstream exposed this too — Sablednah, PR #4.) */
 	public Clipboard getClip() {
 		return clip;
