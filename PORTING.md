@@ -788,9 +788,20 @@ Coupling inventory (from the 1.14 source):
         flat city ground but won't hollow a hillside or basement pocket (`groundLevelY > 0` schematics
         will want the upstream backfill in `generateActualChunk`, currently a no-op).
 
+      *Confirmed in play (2026-07, owner):* schematics drop in, frequency reads right. Fixes that
+      followed the feedback (verified via a live place-and-read-back probe on the Winchester pub):
+      **sign text now carried** (legacy `Sign` `Text1..4` → modern `front_text.messages`; "The /
+      Winchester / Tavern" reads back exactly), **double doors fixed** (both halves decoded together so
+      the hinge — which lives on the upper block — is set; place-back shows both LEFT and RIGHT hinges),
+      and **roundabout player-statues wired** (the `ROUNDABOUT` family — `sablednah`, `richard`, … — via
+      `RoadContext.createRoundaboutStatueLot` → `getSingleSchematic`; sweep found 118 placed). New op
+      commands: `/cityfind <name>` (async nearest-match search) and `/cityinfo` now names the schematic
+      you're standing on.
+
       Also still to do: build-time (or cached-on-disk) `.schematic`→`.nbt` so the legacy parser isn't a
-      runtime cost; tile-entity contents (chests/signs — the block states place, contents don't yet);
-      refine orientation (doors/signs/stairs facing from data bits).
+      runtime cost; **container contents** (chests/furnaces still place empty — needs a legacy item-id
+      map); refine orientation (door facing mapping and stairs facing may need a rotation tweak once
+      eyeballed); building rotation and the foundation dig above.
       Assets recovered: `../Schematics for zarp.zip` (Era-3 backup, ~297 KB, 186 files) holds the
       building schematics grouped by style (`Lowrise/`, `Industrial/`, `Municipal/`, …). Each
       `.schematic` has a `.schematic.yml` sidecar with CityWorld placement metadata — port both.

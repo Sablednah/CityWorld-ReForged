@@ -44,8 +44,12 @@ public class ClipboardLot extends IsolatedLot {
 	private final int lotZ;
 
 	public ClipboardLot(PlatMap platmap, int chunkX, int chunkZ, Clipboard clip, int lotX, int lotZ) {
+		this(platmap, chunkX, chunkZ, clip, lotX, lotZ, LotStyle.STRUCTURE);
+	}
+
+	public ClipboardLot(PlatMap platmap, int chunkX, int chunkZ, Clipboard clip, int lotX, int lotZ, LotStyle style) {
 		super(platmap, chunkX, chunkZ);
-		this.style = LotStyle.STRUCTURE;
+		this.style = style;
 		this.clip = clip;
 		this.lotX = lotX;
 		this.lotZ = lotZ;
@@ -53,7 +57,7 @@ public class ClipboardLot extends IsolatedLot {
 
 	@Override
 	public PlatLot newLike(PlatMap platmap, int chunkX, int chunkZ) {
-		return new ClipboardLot(platmap, chunkX, chunkZ, clip, lotX, lotZ);
+		return new ClipboardLot(platmap, chunkX, chunkZ, clip, lotX, lotZ, style);
 	}
 
 	@Override

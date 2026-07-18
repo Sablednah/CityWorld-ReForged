@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DoorHingeSide;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.level.block.state.properties.SlabType;
@@ -24,8 +25,10 @@ import net.minecraft.world.level.block.state.properties.SlabType;
  *
  * <p>Block <em>types</em> and the visible data (wood/stone species, wool colour, slab/stair
  * orientation, flower kind) are decoded; fiddly runtime state (redstone power, crop age, piston
- * extension) is left at the block's default. Tile-entity contents (chest inventories, sign text) are
- * <em>not</em> carried here — that is a separate pass — so containers place empty and signs blank.
+ * extension) is left at the block's default. Doors are the exception that needs both halves at once
+ * (hinge lives on the upper block) — see {@link #doorState}, driven from {@code LegacySchematic}.
+ * Tile-entity contents are handled in a separate pass in {@code LegacySchematic}: sign text is
+ * carried, container inventories (chests/furnaces) are not yet, so those place empty.
  */
 public final class LegacyBlocks {
 
@@ -277,5 +280,51 @@ public final class LegacyBlocks {
         DoubleBlockHalf half = (data & 8) != 0 ? DoubleBlockHalf.UPPER : DoubleBlockHalf.LOWER;
         return base.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)
                 ? base.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, half) : base;
+    }
+
+    /** True for a legacy door id (its two halves must be decoded together — see {@link #doorState}). */
+    static boolean isDoor(int id) {
+        return switch (id) {
+            case 64, 71, 193, 194, 195, 196, 197 -> true;
+            default -> false;
+        };
+    }
+
+    private static Block doorBlock(int id) {
+        return switch (id) {
+            case 71 -> Blocks.IRON_DOOR;
+            case 193 -> Blocks.SPRUCE_DOOR;
+            case 194 -> Blocks.BIRCH_DOOR;
+            case 195 -> Blocks.JUNGLE_DOOR;
+            case 196 -> Blocks.ACACIA_DOOR;
+            case 197 -> Blocks.DARK_OAK_DOOR;
+            default -> Blocks.OAK_DOOR; // 64
+        };
+    }
+
+    /**
+     * Build a full modern door state from <em>both</em> legacy halves. Legacy doors split their state
+     * across the two blocks — the lower half holds facing (bits 0–1) and open (bit 2); the upper half
+     * holds the hinge side (bit 0) and powered (bit 1). Decoding a half in isolation is why double
+     * doors came out as two identical singles: the hinge lives on the upper block, so it was never
+     * read. This combines them, so a mirrored pair reads as a proper double door.
+     */
+    static BlockState doorState(int id, int lowerData, int upperData, boolean upper) {
+        return doorBlock(id).defaultBlockState()
+                .setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, upper ? DoubleBlockHalf.UPPER : DoubleBlockHalf.LOWER)
+                .setValue(BlockStateProperties.HORIZONTAL_FACING, doorFacing(lowerData))
+                .setValue(BlockStateProperties.DOOR_HINGE, (upperData & 1) != 0 ? DoorHingeSide.RIGHT : DoorHingeSide.LEFT)
+                .setValue(BlockStateProperties.OPEN, (lowerData & 4) != 0)
+                .setValue(BlockStateProperties.POWERED, (upperData & 2) != 0);
+    }
+
+    // Legacy lower-half facing (bits 0–1) → modern FACING, the WorldEdit legacy mapping.
+    private static Direction doorFacing(int lowerData) {
+        return switch (lowerData & 3) {
+            case 0 -> Direction.EAST;
+            case 1 -> Direction.SOUTH;
+            case 2 -> Direction.WEST;
+            default -> Direction.NORTH;
+        };
     }
 }

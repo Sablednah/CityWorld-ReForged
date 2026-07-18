@@ -12,6 +12,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
@@ -33,13 +34,17 @@ public final class LegacySchematic {
     public final int length;
     private final byte[] blocks;
     private final byte[] data;
+    /** Block-entity nbt to attach, keyed by {@link #index}. Currently just sign text. */
+    private final Map<Integer, CompoundTag> blockEntities;
 
-    private LegacySchematic(int width, int height, int length, byte[] blocks, byte[] data) {
+    private LegacySchematic(int width, int height, int length, byte[] blocks, byte[] data,
+            Map<Integer, CompoundTag> blockEntities) {
         this.width = width;
         this.height = height;
         this.length = length;
         this.blocks = blocks;
         this.data = data;
+        this.blockEntities = blockEntities;
     }
 
     public static LegacySchematic read(InputStream in) throws IOException {
@@ -51,7 +56,55 @@ public final class LegacySchematic {
         byte[] d = tag.getByteArray("Data").orElse(new byte[0]);
         if (b.length != w * h * l)
             throw new IOException("Schematic Blocks length " + b.length + " != " + w + "x" + h + "x" + l);
-        return new LegacySchematic(w, h, l, b, d);
+        LegacySchematic schem = new LegacySchematic(w, h, l, b, d, new HashMap<>());
+        schem.readBlockEntities(tag);
+        return schem;
+    }
+
+    /**
+     * Pull the legacy {@code TileEntities} we can carry into a {@link StructureTemplate}. Only signs
+     * for now — the plain {@code Text1..Text4} lines become a modern sign's {@code front_text}.
+     * Container contents (chests/furnaces) need a separate item-id mapping and are still left empty.
+     */
+    private void readBlockEntities(CompoundTag root) {
+        ListTag list = root.getList("TileEntities").orElse(null);
+        if (list == null)
+            return;
+        for (int i = 0; i < list.size(); i++) {
+            CompoundTag te = list.getCompoundOrEmpty(i);
+            if (!"Sign".equals(te.getStringOr("id", "")))
+                continue;
+            int x = te.getIntOr("x", 0);
+            int y = te.getIntOr("y", 0);
+            int z = te.getIntOr("z", 0);
+            if (x < 0 || x >= width || y < 0 || y >= height || z < 0 || z >= length)
+                continue;
+            String[] lines = {
+                te.getStringOr("Text1", ""), te.getStringOr("Text2", ""),
+                te.getStringOr("Text3", ""), te.getStringOr("Text4", "")
+            };
+            blockEntities.put(index(x, y, z), signNbt(lines));
+        }
+    }
+
+    /** Modern sign block-entity nbt: {@code front_text.messages} from the four legacy lines. */
+    private static CompoundTag signNbt(String[] lines) {
+        CompoundTag be = new CompoundTag();
+        be.put("front_text", signText(lines));
+        be.put("back_text", signText(new String[] { "", "", "", "" }));
+        be.putBoolean("is_waxed", false);
+        return be;
+    }
+
+    private static CompoundTag signText(String[] lines) {
+        ListTag messages = new ListTag();
+        // Each message is a text component; a bare string decodes as a literal, which is exactly what
+        // the plain legacy lines are (pre-1.8 signs stored raw text, not JSON).
+        for (int i = 0; i < 4; i++)
+            messages.add(StringTag.valueOf(i < lines.length ? lines[i] : ""));
+        CompoundTag text = new CompoundTag();
+        text.put("messages", messages);
+        return text;
     }
 
     /** MCEdit block ordering: index = (y * length + z) * width + x. */
@@ -70,7 +123,28 @@ public final class LegacySchematic {
 
     /** The mapped modern block at a local coordinate (air where the legacy id is 0). */
     public BlockState stateAt(int x, int y, int z) {
-        return LegacyBlocks.of(idAt(x, y, z), dataAt(x, y, z));
+        return stateFor(x, y, z, idAt(x, y, z));
+    }
+
+    /**
+     * Map one block, decoding a door from both of its halves (the hinge lives on the upper block, so
+     * a per-block decode can't produce a correct double door). Everything else is a plain id+data map.
+     */
+    private BlockState stateFor(int x, int y, int z, int id) {
+        if (LegacyBlocks.isDoor(id)) {
+            int d = dataAt(x, y, z);
+            boolean upper = (d & 8) != 0;
+            int lowerData, upperData;
+            if (upper) {
+                upperData = d;
+                lowerData = (y > 0 && idAt(x, y - 1, z) == id) ? dataAt(x, y - 1, z) : 0;
+            } else {
+                lowerData = d;
+                upperData = (y + 1 < height && idAt(x, y + 1, z) == id) ? dataAt(x, y + 1, z) : 0;
+            }
+            return LegacyBlocks.doorState(id, lowerData, upperData, upper);
+        }
+        return LegacyBlocks.of(id, dataAt(x, y, z));
     }
 
     /**
@@ -88,7 +162,7 @@ public final class LegacySchematic {
                     int id = idAt(x, y, z);
                     if (LegacyBlocks.isAir(id))
                         continue;
-                    BlockState state = LegacyBlocks.of(id, dataAt(x, y, z));
+                    BlockState state = stateFor(x, y, z, id);
                     Integer idx = paletteIndex.get(state);
                     if (idx == null) {
                         idx = palette.size();
@@ -98,6 +172,9 @@ public final class LegacySchematic {
                     CompoundTag block = new CompoundTag();
                     block.put("pos", intList(x, y, z));
                     block.putInt("state", idx);
+                    CompoundTag nbt = blockEntities.get(index(x, y, z));
+                    if (nbt != null && (id == 63 || id == 68)) // only attach sign nbt to sign blocks
+                        block.put("nbt", nbt);
                     blockList.add(block);
                 }
             }
