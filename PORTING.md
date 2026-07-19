@@ -91,6 +91,40 @@ an "it stays in-chunk" assumption is only as good as the widest thing that can b
    done** (2026-07): per-world settings now come from a datapack registry (`cityworld:world_settings`),
    naming/mob lists included, verified end-to-end — see "P7 — Config + commands" below and top risk #4.
 
+### ▶▶ Next up (planned 2026-07, after the P7 session) — read this first
+
+A triage of "what's left" found that **most of it is design-gated on one big decision**, plus one
+real gap. In priority order:
+
+1. **⭐ The Modern vs Classic world-style split (owner's call, needs a greenlight).** This is the
+   organizing decision. Today's `NORMAL` becomes `CLASSIC` (faithful 1.8 look); a new `MODERN` style
+   (full modern MC — tall builds, modern blocks/ores/mobs/trees/ice, some vanilla structures) becomes
+   the default. **Most of the loose polish below is really a facet of Modern**, so decide this first.
+   Full write-up + the open sub-decisions in "Future ideas → Modern vs Classic". Suggested execution
+   order once greenlit: (a) rename `NORMAL`→`CLASSIC` (+ its preset/lang), keeping behaviour identical;
+   (b) add a `MODERN` `WorldStyle` cloning Classic, wire the `loadProvider` switches + a `world_preset`;
+   (c) move per-style knobs onto it — building height (raise the `buildingMaximumY` cap for Modern
+   only), tree style, cover/ice, ore distribution; (d) flip the codec default to Modern (or just make
+   it the top preset — that's a sub-decision).
+
+2. **⚠ Ores are not placed (real gap, not polish).** `OreProvider.sprinkleOres` is an empty stub, so
+   worlds have no ores to mine. Porting it is ~80 lines, **but the ore depths are 1.14-calibrated and
+   the distribution is itself a Modern/Classic choice**, so it folds into (1) rather than being done
+   blind. Details at the P4 ore checklist item. If you want ores *before* the Modern/Classic work,
+   the safe interim is the literal 1.14 tables re-based to the `-64..319` floor (Classic behaviour).
+
+3. **Schematic rotation/mirroring** (P6) — orthogonal to styles, player-visible, but deferred as
+   genuinely fiddly (rotated footprints complicate the multi-chunk origin maths). Do it with a
+   place-and-read-back probe, not blind.
+
+4. **Smaller, orthogonal, lower-value:** loot tables → native 1.21 datapack format (they already work);
+   GameTest/unit coverage (the `gameTestServer` run is already wired in `build.gradle`); furnished-Rooms
+   polish; the huge-mushroom all-cap cosmetic gap.
+
+Done in the P7 session and safe to build on: the datapack settings + Customize + export + example,
+the two playtest bugfixes (schematic-decay crash, schematic filename spaces), command tab-complete,
+and a rewritten README.
+
 ### ⚠ The single most important thing to know: CityWorld builds in the DECORATION pass
 
 Not in the chunk generator. Upstream's `ChunkGenerator.generateChunkData` only ever shaped *terrain*;
@@ -748,8 +782,20 @@ Coupling inventory (from the 1.14 source):
           have flooded 76 blocks. Now `lavaFieldDepth` + `worldMinY`. `AbstractBlocks.insideY`/
           `clampY` were `0..height` and would have rejected/mis-clamped the new underground — fixed
           preventively (nothing calls them until wave 2's lots do).
-    - [ ] `OreProvider` deepslate **ore** variants (`deepslate_coal_ore`, …) — needed once ores are
-          actually placed (P5). Add them via `EXTRAS` in `gen_material.py`, as `DEEPSLATE` was.
+    - [ ] **⚠ Ore veins are not placed at all yet — `OreProvider.sprinkleOres` is an empty stub**
+          (found 2026-07). So generated worlds have the stone/deepslate strata but **no coal/iron/gold/
+          diamond/… to mine** (vanilla ore features are suppressed, and CityWorld's own placement is a
+          no-op). This is a real playability gap, not just polish. The port: upstream's `sprinkleOre`
+          vein algorithm + the `ore_types`/`ore_minY`/`ore_maxY`/`ore_iterations`/… tables (~80 lines).
+          **The catch is a parity decision, so surface it before doing it:** upstream's ore depths are
+          **1.14-calibrated** (`minY`/`maxY` like 2/16/128 against a 0..255 world with bedrock at 0).
+          In the modern `-64..319` world those must be re-based (the same floor-relative trap
+          `lavaFieldLevel` hit in P4). And *what* distribution to use is itself a **Modern/Classic**
+          choice — Classic wants the literal 1.14 depths/rarities, Modern wants the modern spread
+          (diamonds deep in deepslate, etc.). So do this as a per-style facet, and add the deepslate
+          **ore** variants (`deepslate_coal_ore`, … via `EXTRAS` in `gen_material.py`) as part of it,
+          picking the variant by Y in `sprinkleOre`. Verify with a block-read probe (count veins by
+          type and Y-band). See the Modern/Classic parking-lot entry.
     - [ ] `SurfaceProvider`; modern carvers; revisit `DataContext.buildingMaximumY` (still capped at
           the 256 terrain ceiling, though the world now allows 319).
 - [ ] **P5 — Decoration (old `BlockPopulator`).** Loot chests, spawners, furnished `Rooms`,
