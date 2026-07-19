@@ -9,5 +9,20 @@
   "generator.cityworld.nature": "CityWorld: Nature",
   "generator.cityworld.metro": "CityWorld: Metro",
   "generator.cityworld.sparse": "CityWorld: Sparse",
-  "generator.cityworld.destroyed": "CityWorld: Destroyed"
+  "generator.cityworld.destroyed": "CityWorld: Destroyed",
+
+  "cityworld.customize.title": "CityWorld Settings",
+  "cityworld.customize.style": "World Style",
+
+  "cityworld.style.normal": "Normal",
+  "cityworld.style.floating": "Floating",
+  "cityworld.style.flooded": "Flooded",
+  "cityworld.style.snowdunes": "Snow Dunes",
+  "cityworld.style.sanddunes": "Sand Dunes",
+  "cityworld.style.astral": "Astral",
+  "cityworld.style.maze": "Maze",
+  "cityworld.style.nature": "Nature",
+  "cityworld.style.metro": "Metro",
+  "cityworld.style.sparse": "Sparse",
+  "cityworld.style.destroyed": "Destroyed"
 }

@@ -45,6 +45,11 @@ public class CityWorldMod {
         // Server-side registrations on the game event bus (commands: /cityinfo, /cityworld).
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(CityWorldServerEvents.class);
 
+        // Client-only: the create-world "Customize" button for the CityWorld world type. Guarded so
+        // the dedicated server never loads the @OnlyIn(CLIENT) preset-editor classes.
+        if (net.neoforged.fml.loading.FMLEnvironment.getDist() == net.neoforged.api.distmarker.Dist.CLIENT)
+            me.daddychurchill.CityWorld.client.CityWorldClient.init(modEventBus);
+
         // Create the drop-in folder (config/cityworld/schematics/) so players can add their own
         // schematics without a rebuild; the library scans it alongside the bundled set.
         me.daddychurchill.CityWorld.Clipboard.SchematicLibrary.ensureExternalFolder();

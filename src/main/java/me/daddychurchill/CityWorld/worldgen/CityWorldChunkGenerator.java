@@ -134,6 +134,14 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         this(biomeSource, Optional.empty(), Optional.empty());
     }
 
+    /**
+     * The world style this generator carries, resolved to the enum — for the single-player Customize
+     * screen, which reads it off the currently-selected generator to seed its picker.
+     */
+    public CityWorldGenerator.WorldStyle resolvedStyle() {
+        return CityWorldGenerator.parseStyle(style);
+    }
+
     public CityWorldChunkGenerator(BiomeSource biomeSource, Optional<Boolean> decayed, Optional<String> style) {
         super(biomeSource);
         this.decayed = decayed;
