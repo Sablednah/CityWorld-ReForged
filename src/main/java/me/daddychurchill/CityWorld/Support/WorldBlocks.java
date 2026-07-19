@@ -36,6 +36,21 @@ public final class WorldBlocks extends SupportBlocks {
 		return new Block(world, x, y, z);
 	}
 
+	/**
+	 * Whether the chunk containing world-absolute {@code (x, z)} is reachable through the current
+	 * level. During worldgen decoration {@code world} is a {@code WorldGenRegion}, which only permits
+	 * access to a bounded ring of chunks around the one being decorated — reading or writing outside it
+	 * throws {@code "Requested chunk unavailable during world generation"} (top risk #2). Demolition
+	 * writes at absolute coords and its debris sphere/sprinkle reaches ~10 blocks out, so a blast near a
+	 * chunk edge (a placed schematic building being decayed is the case that first bit) can cross into
+	 * an unavailable neighbour. Everything demolition-side guards on this and simply skips what it can't
+	 * reach — the neighbour decays its own slice when its turn comes, exactly as {@code RealBlocks}
+	 * refusing to cross its edge already relies on.
+	 */
+	private boolean canReach(int x, int z) {
+		return world.hasChunk(x >> 4, z >> 4);
+	}
+
 	@Override
 	public boolean isSurroundedByEmpty(int x, int y, int z) {
 		return isEmpty(x - 1, y, z) && isEmpty(x + 1, y, z) && isEmpty(x, y, z - 1) && isEmpty(x, y, z + 1);
@@ -89,6 +104,8 @@ public final class WorldBlocks extends SupportBlocks {
 	private void disperseLine(int x1, int x2, int y, int z1, int z2, Stack<debrisItem> debris) {
 		for (int x = x1; x < x2; x++) {
 			for (int z = z1; z < z2; z++) {
+				if (!canReach(x, z))
+					continue; // outside the writable region — leave it to the chunk that owns it
 				Block block = getActualBlock(x, y, z);
 				if (!block.isEmpty()) {
 					if (!isNonstackableBlock(block))
@@ -156,6 +173,8 @@ public final class WorldBlocks extends SupportBlocks {
 				// where do we drop it?
 				int x = x1 + odds.getRandomInt(r4);
 				int z = z1 + odds.getRandomInt(r4);
+				if (!canReach(x, z))
+					continue; // debris that would land outside the writable region is dropped
 				int y = findLastEmptyBelow(x, cy, z, farthestFall);
 
 				// not too far?
