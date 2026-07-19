@@ -34,6 +34,38 @@ public class MaterialProvider {
             Material.OBSIDIAN, // Walls
             Material.OBSIDIAN); // Underlayment
 
+    // --- astral (ASTRAL style) -----------------------------------------------------------------
+
+    private final static String tagSelectMaterial_AstralTowerLight = "Materials_For_AstralTowerLight";
+    public final MaterialList itemsSelectMaterial_AstralTowerLight = createList(tagSelectMaterial_AstralTowerLight,
+            Material.END_STONE, Material.END_STONE_BRICKS);
+
+    private final static String tagSelectMaterial_AstralTowerDark = "Materials_For_AstralTowerDark";
+    public final MaterialList itemsSelectMaterial_AstralTowerDark = createList(tagSelectMaterial_AstralTowerDark,
+            Material.OBSIDIAN, Material.BLACK_CONCRETE);
+
+    private final static String tagSelectMaterial_AstralTowerOres = "Materials_For_AstralTowerOres";
+    public final MaterialList itemsSelectMaterial_AstralTowerOres = createList(tagSelectMaterial_AstralTowerOres,
+            Material.LAVA, Material.WATER, Material.STONE, Material.INFESTED_STONE, Material.COAL_ORE,
+            Material.DIAMOND_ORE, Material.EMERALD_ORE, Material.GOLD_ORE, Material.IRON_ORE, Material.LAPIS_ORE,
+            Material.NETHER_QUARTZ_ORE, Material.REDSTONE_ORE);
+
+    private final static String tagSelectMaterial_AstralTowerHalls = "Materials_For_AstralTowerHalls";
+    public final MaterialList itemsSelectMaterial_AstralTowerHalls = createList(tagSelectMaterial_AstralTowerHalls,
+            Material.OBSIDIAN, Material.STONE, Material.BRICKS, Material.COBBLESTONE, Material.SMOOTH_STONE,
+            Material.MOSSY_COBBLESTONE);
+
+    private final static String tagSelectMaterial_AstralTowerTrim = "Materials_For_AstralTowerTrim";
+    public final MaterialList itemsSelectMaterial_AstralTowerTrim = createList(tagSelectMaterial_AstralTowerTrim,
+            Material.AIR, Material.GLOWSTONE);
+
+    private final static String tagSelectMaterial_AstralCubeOres = "Materials_For_AstralCubeOres";
+    public final MaterialList itemsSelectMaterial_AstralCubeOres = createList(tagSelectMaterial_AstralCubeOres,
+            Material.DIRT, Material.STONE, Material.INFESTED_STONE, Material.INFESTED_CHISELED_STONE_BRICKS,
+            Material.INFESTED_COBBLESTONE, Material.INFESTED_CRACKED_STONE_BRICKS, Material.INFESTED_STONE_BRICKS,
+            Material.COBBLESTONE, Material.SPRUCE_PLANKS, Material.IRON_BLOCK, Material.COAL_BLOCK,
+            Material.DIAMOND_BLOCK, Material.REDSTONE_BLOCK, Material.QUARTZ_BLOCK);
+
     // --- roads ---------------------------------------------------------------------------------
 
     private final static String tagMaterialListFor_Roads = "Materials_List_For_Roads";

@@ -70,6 +70,9 @@ public abstract class SupportBlocks extends AbstractBlocks {
 
 	protected final LevelAccessor world;
 
+	/** The live level this decorates — needed by lots that spin up their own {@link WorldBlocks}. */
+	public final LevelAccessor getWorld() { return world; }
+
 	private boolean doPhysics;
 	private boolean doClearData;
 

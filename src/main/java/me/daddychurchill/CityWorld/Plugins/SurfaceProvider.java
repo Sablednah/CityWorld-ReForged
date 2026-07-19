@@ -93,6 +93,8 @@ public abstract class SurfaceProvider extends Provider {
 			provider = new SurfaceProvider_Floating(odds);
 			break;
 		case ASTRAL:
+			provider = new SurfaceProvider_Astral(odds);
+			break;
 		case NATURE:
 		case METRO:
 		case SPARSE:

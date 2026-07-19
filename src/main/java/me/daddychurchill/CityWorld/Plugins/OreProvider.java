@@ -136,6 +136,8 @@ public class OreProvider extends Provider {
             return new OreProvider_SandDunes(generator);
         case SNOWDUNES:
             return new OreProvider_SnowDunes(generator);
+        case ASTRAL:
+            return new OreProvider_Astral(generator);
         default:
             return new OreProvider(generator);
         }
@@ -168,5 +170,14 @@ public class OreProvider extends Provider {
      */
     public void sprinkleOres(CityWorldGenerator generator, PlatLot lot, SupportBlocks chunk,
             AbstractCachedYs blockYs, Odds odds) {
+    }
+
+    /**
+     * Lays a patch of snow over a region. The stock palette does nothing here (snow is placed via the
+     * surface pass); the snow/astral styles override it. Kept as the seam upstream declared so those
+     * overrides bind.
+     */
+    public void sprinkleSnow(CityWorldGenerator generator, SupportBlocks chunk, Odds odds, int x1, int x2, int y,
+            int z1, int z2) {
     }
 }
