@@ -6,6 +6,8 @@ import java.util.Optional;
 import me.daddychurchill.CityWorld.CityWorldGenerator.WorldStyle;
 import me.daddychurchill.CityWorld.CityWorldMod;
 import me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator;
+import me.daddychurchill.CityWorld.worldgen.CityWorldRegistries;
+import me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData;
 
 import net.minecraft.client.gui.screens.worldselection.WorldCreationContext;
 import net.minecraft.core.Holder;
@@ -46,7 +48,8 @@ public final class CityWorldClient {
         event.register(CITY, (parent, context) -> new CityWorldCustomizeScreen(
                 parent,
                 currentStyle(context),
-                chosen -> parent.getUiState().updateDimensions(configurator(chosen))));
+                currentSettings(context),
+                result -> parent.getUiState().updateDimensions(configurator(result))));
     }
 
     /** Reads the style off whatever generator is currently selected, so the picker opens on it. */
@@ -56,18 +59,31 @@ public final class CityWorldClient {
         return WorldStyle.NORMAL;
     }
 
-    /** Rewrites the overworld to a CityWorld generator carrying the chosen style. */
-    private static WorldCreationContext.DimensionsUpdater configurator(WorldStyle style) {
-        return (registries, dimensions) ->
-                dimensions.replaceOverworldGenerator(registries, buildGenerator(registries, style));
+    /** Reads the settings off the selected generator so the screen opens on the current values. */
+    private static CityWorldSettingsData currentSettings(WorldCreationContext context) {
+        if (context.selectedDimensions().overworld() instanceof CityWorldChunkGenerator cw)
+            return cw.resolvedSettings();
+        return CityWorldSettingsData.DEFAULT;
     }
 
-    private static ChunkGenerator buildGenerator(RegistryAccess.Frozen registries, WorldStyle style) {
+    /** Rewrites the overworld to a CityWorld generator carrying the chosen style + edited settings. */
+    private static WorldCreationContext.DimensionsUpdater configurator(CityWorldCustomizeScreen.Result result) {
+        return (registries, dimensions) ->
+                dimensions.replaceOverworldGenerator(registries, buildGenerator(registries, result));
+    }
+
+    private static ChunkGenerator buildGenerator(RegistryAccess.Frozen registries,
+            CityWorldCustomizeScreen.Result result) {
         Holder<Biome> plains = registries.lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.PLAINS);
         // NORMAL is the codec's default, so leave "style" absent for it and set it otherwise.
-        Optional<String> styleField = style == WorldStyle.NORMAL
+        Optional<String> styleField = result.style() == WorldStyle.NORMAL
                 ? Optional.empty()
-                : Optional.of(style.name().toLowerCase(Locale.ROOT));
-        return new CityWorldChunkGenerator(new FixedBiomeSource(plains), Optional.empty(), styleField);
+                : Optional.of(result.style().name().toLowerCase(Locale.ROOT));
+        // Bake the edited settings in as an INLINE (direct) holder — the world carries its own tuned
+        // settings, needing no datapack. RegistryFileCodec encodes a direct holder inline into level.dat.
+        Optional<Holder<CityWorldSettingsData>> settingsField =
+                Optional.of(Holder.direct(result.settings()));
+        return new CityWorldChunkGenerator(new FixedBiomeSource(plains), Optional.empty(), styleField,
+                settingsField);
     }
 }

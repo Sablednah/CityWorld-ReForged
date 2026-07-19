@@ -50,6 +50,24 @@ public final class EntityType {
         return interned.computeIfAbsent(type, EntityType::new);
     }
 
+    /**
+     * Resolves an entity id (e.g. {@code "minecraft:zombie"}, or a bare {@code "zombie"} defaulting to
+     * the {@code minecraft} namespace) against the entity registry. Returns {@code null} for an
+     * unknown or malformed id — the caller logs and skips it, which is how per-world mob-list
+     * overrides handle a typo without guessing (see {@code CityWorldSettings}).
+     */
+    public static EntityType of(String id) {
+        net.minecraft.resources.Identifier key = net.minecraft.resources.Identifier.tryParse(id);
+        if (key == null)
+            return null;
+        net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(key);
+        // getValue falls back to the default entry (pig) for a missing key, so confirm the id maps
+        // to a registered entry rather than trusting a non-null return.
+        if (type == null || !BuiltInRegistries.ENTITY_TYPE.containsKey(key))
+            return null;
+        return of(type);
+    }
+
     /** The vanilla type this stands for — what {@code SpawnProvider} spawns from. */
     public net.minecraft.world.entity.EntityType<?> getType() {
         return type;

@@ -120,6 +120,19 @@ public class SpawnProvider extends Provider {
             EntityType.WITHER, EntityType.MAGMA_CUBE, EntityType.SHULKER);
 
     public SpawnProvider(CityWorldGenerator generator) {
+        // Apply any per-world mob-bag overrides from the datapack settings (P7). Each is a no-op when
+        // its list is empty, so an unconfigured world keeps every compiled bag above.
+        me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
+        itemsEntities_Goodies.applyOverride(settings.mobGoodies);
+        itemsEntities_Baddies.applyOverride(settings.mobBaddies);
+        itemsEntities_Animals.applyOverride(settings.mobAnimals);
+        itemsEntities_SeaAnimals.applyOverride(settings.mobSeaAnimals);
+        itemsEntities_Vagrants.applyOverride(settings.mobVagrants);
+        itemsEntities_Sewers.applyOverride(settings.mobSewers);
+        itemsEntities_Mine.applyOverride(settings.mobMine);
+        itemsEntities_Bunker.applyOverride(settings.mobBunker);
+        itemsEntities_WaterPit.applyOverride(settings.mobWaterPit);
+        itemsEntities_LavaPit.applyOverride(settings.mobLavaPit);
     }
 
     // https://en.wikipedia.org/wiki/List_of_English_terms_of_venery,_by_animal

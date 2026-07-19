@@ -9,7 +9,6 @@ import me.daddychurchill.CityWorld.worldgen.CityWorldRegistries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.config.ModConfig;
 
 /**
  * CityWorld — main mod entrypoint (common: loaded on both client and dedicated server).
@@ -38,9 +37,8 @@ public class CityWorldMod {
         // preset that reference it live in src/main/resources/data/cityworld/...
         CityWorldRegistries.register(modEventBus);
 
-        // A first slice of runtime config (per-instance): the decay/apocalypse toggles. The full
-        // per-world settings port is P7; see CityWorldConfig.
-        modContainer.registerConfig(ModConfig.Type.COMMON, CityWorldConfig.SPEC);
+        // Per-world settings are datapack-driven (the cityworld:world_settings registry, registered
+        // above), not a per-instance config — see CityWorldSettingsData / PORTING.md top risk #4.
 
         // Server-side registrations on the game event bus (commands: /cityinfo, /cityworld).
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(CityWorldServerEvents.class);
@@ -53,6 +51,10 @@ public class CityWorldMod {
         // Create the drop-in folder (config/cityworld/schematics/) so players can add their own
         // schematics without a rebuild; the library scans it alongside the bundled set.
         me.daddychurchill.CityWorld.Clipboard.SchematicLibrary.ensureExternalFolder();
+
+        // Drop a copy-and-edit settings example (config/cityworld/settings-example/) on first run:
+        // a full default datapack + a plain-text reference explaining every knob (P7).
+        me.daddychurchill.CityWorld.worldgen.SettingsExample.ensureExampleFolder();
 
         LOGGER.info("CityWorld {} initialising (NeoForge port)",
                 modContainer.getModInfo().getVersion());

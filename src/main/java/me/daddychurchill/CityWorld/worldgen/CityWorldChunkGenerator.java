@@ -21,6 +21,7 @@ import me.daddychurchill.CityWorld.compat.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.resources.RegistryFileCodec;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
@@ -66,7 +67,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             instance -> instance.group(
                     BiomeSource.CODEC.fieldOf("biome_source").forGetter(ChunkGenerator::getBiomeSource),
                     Codec.BOOL.optionalFieldOf("decayed").forGetter(g -> g.decayed),
-                    Codec.STRING.optionalFieldOf("style").forGetter(g -> g.style)
+                    Codec.STRING.optionalFieldOf("style").forGetter(g -> g.style),
+                    RegistryFileCodec.create(CityWorldRegistries.WORLD_SETTINGS, CityWorldSettingsData.CODEC)
+                            .optionalFieldOf("settings").forGetter(g -> g.settings)
             ).apply(instance, CityWorldChunkGenerator::new));
 
     /**
@@ -109,9 +112,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * A per-dimension decay override, straight from the generator's JSON ({@code "decayed": true}).
      *
      * <p>Present {@code true}/{@code false} forces the ruined/pristine styles on for <em>this</em>
-     * dimension regardless of the global {@link CityWorldConfig}; absent means "follow the config".
-     * It's what lets two same-seed dimensions be the same city intact and in ruins — the overworld
-     * follows the config, and the {@code cityworld:city} dimension ships with {@code decayed: true}.
+     * dimension regardless of the datapack {@link CityWorldSettingsData}; absent means "follow the
+     * settings". It's what lets two same-seed dimensions be the same city intact and in ruins — the
+     * overworld follows the settings, and the {@code cityworld:city} dimension ships {@code decayed: true}.
      *
      * <p>Deliberately scoped to buildings and roads, not {@code includeDecayedNature}: nature-decay
      * drains the seas and deserts the world, which is a whole-world mood, not "this city is ruined".
@@ -130,8 +133,25 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private final Optional<String> style;
 
+    /**
+     * The per-world settings. Via {@link RegistryFileCodec} the JSON is <em>either</em> a reference
+     * to a {@code cityworld:world_settings} registry entry ({@code "settings": "cityworld:default"})
+     * <em>or</em> an inline object ({@code "settings": { "features": {...}, ... }}) — resolved at
+     * codec-decode time, the one place registry access is clean ({@link #fillFromNoise} never gets a
+     * {@code registryAccess()}). The reference form is what the bundled dimension/presets use and what
+     * a server op overrides per save; the inline form is what the single-player Customize screen bakes
+     * in, so a hand-tuned world carries its own settings without needing a datapack. Absent means the
+     * compiled {@link CityWorldSettingsData#DEFAULT} — existing worlds (predating this field) and
+     * plan-only probes.
+     *
+     * <p>This is the P7 per-world config seam (PORTING.md top risk #4). World-style validation and the
+     * {@link #decayed} override still run last in {@code CityWorldSettings}, so their invariants win
+     * over whatever the settings asked for.
+     */
+    private final Optional<Holder<CityWorldSettingsData>> settings;
+
     public CityWorldChunkGenerator(BiomeSource biomeSource) {
-        this(biomeSource, Optional.empty(), Optional.empty());
+        this(biomeSource, Optional.empty(), Optional.empty(), Optional.empty());
     }
 
     /**
@@ -142,10 +162,21 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         return CityWorldGenerator.parseStyle(style);
     }
 
-    public CityWorldChunkGenerator(BiomeSource biomeSource, Optional<Boolean> decayed, Optional<String> style) {
+    /**
+     * The settings this generator carries, resolved to a value — for the single-player Customize
+     * screen, which reads them off the currently-selected generator to seed its controls. Absent
+     * holder → {@link CityWorldSettingsData#DEFAULT}.
+     */
+    public CityWorldSettingsData resolvedSettings() {
+        return settings.map(Holder::value).orElse(CityWorldSettingsData.DEFAULT);
+    }
+
+    public CityWorldChunkGenerator(BiomeSource biomeSource, Optional<Boolean> decayed, Optional<String> style,
+            Optional<Holder<CityWorldSettingsData>> settings) {
         super(biomeSource);
         this.decayed = decayed;
         this.style = style;
+        this.settings = settings;
     }
 
     /**
@@ -169,8 +200,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                 "CityWorld: chunk generation began before createState() supplied the world seed, "
                                         + "so the per-world context cannot be seeded. Terrain would be wrong for "
                                         + "this world. Find another way to obtain the seed.");
+                    CityWorldSettingsData settingsData =
+                            settings.map(Holder::value).orElse(CityWorldSettingsData.DEFAULT);
                     local = new CityWorldGenerator(levelSeed, TERRAIN_CEILING, UPSTREAM_SEA_LEVEL,
-                            CityWorldGenerator.parseStyle(style), level.getMinY(), level.getMaxY(), decayed);
+                            CityWorldGenerator.parseStyle(style), level.getMinY(), level.getMaxY(), decayed,
+                            settingsData);
                     context = local;
                 }
             }

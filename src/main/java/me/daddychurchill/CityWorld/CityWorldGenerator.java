@@ -182,18 +182,32 @@ public class CityWorldGenerator {
 
     /**
      * @param decayOverride a per-dimension decay override (from the generator's {@code "decayed"}
-     *                      JSON field), or empty to follow {@link CityWorldConfig}. See
-     *                      {@link CityWorldSettings#CityWorldSettings(java.util.Optional)}.
+     *                      JSON field), or empty. See
+     *                      {@link CityWorldSettings#CityWorldSettings(WorldStyle, java.util.Optional, me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData)}.
      */
     public CityWorldGenerator(long worldSeed, int terrainCeiling, int worldSeaLevel, WorldStyle worldStyle,
             int worldMinY, int worldMaxY, java.util.Optional<Boolean> decayOverride) {
+        this(worldSeed, terrainCeiling, worldSeaLevel, worldStyle, worldMinY, worldMaxY, decayOverride,
+                me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.DEFAULT);
+    }
+
+    /**
+     * @param settingsData the per-world settings resolved from the {@code cityworld:world_settings}
+     *                     datapack registry (or {@link me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData#DEFAULT}
+     *                     when the generator carries no settings holder). Overlaid onto the runtime
+     *                     {@link CityWorldSettings} <em>before</em> the world-style and decay
+     *                     overrides, so those still win.
+     */
+    public CityWorldGenerator(long worldSeed, int terrainCeiling, int worldSeaLevel, WorldStyle worldStyle,
+            int worldMinY, int worldMaxY, java.util.Optional<Boolean> decayOverride,
+            me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData settingsData) {
         this.worldSeed = worldSeed;
         this.terrainCeiling = terrainCeiling;
         this.worldSeaLevel = worldSeaLevel;
         this.worldStyle = worldStyle;
         this.worldMinY = worldMinY;
         this.worldMaxY = worldMaxY;
-        this.settings = new CityWorldSettings(worldStyle, decayOverride);
+        this.settings = new CityWorldSettings(worldStyle, decayOverride, settingsData);
 
         // The original's initializeWorldInfo, minus the lazy-init dance. Order matters: the
         // providers read the world facts above, and the datums below read the providers.

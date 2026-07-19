@@ -7,12 +7,35 @@ import java.util.Random;
 
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
+import me.daddychurchill.CityWorld.CityWorldSettings;
 import me.daddychurchill.CityWorld.Support.Odds;
 
 public class OdonymProvider_Normal extends OdonymProvider {
 
 	public OdonymProvider_Normal(int seed) {
 		super(seed);
+	}
+
+	/**
+	 * Applies a world's per-datapack name overrides (P7). Each of the nine lists is replaced only if
+	 * the settings carry a non-empty one for it; otherwise the hundreds of compiled defaults below
+	 * stand — upstream's "take the configured list, else keep the hardcoded one" fallback.
+	 */
+	public OdonymProvider_Normal(int seed, CityWorldSettings settings) {
+		super(seed);
+		villagerPrefixes = override(settings.villagerGivenNames, villagerPrefixes);
+		villagerSuffixes = override(settings.villagerSurnames, villagerSuffixes);
+		streetTerms = override(settings.streetTerms, streetTerms);
+		streetPrefixes = override(settings.streetPrefixes, streetPrefixes);
+		streetStarts = override(settings.streetStarts, streetStarts);
+		streetEnds = override(settings.streetEnds, streetEnds);
+		streetSuffixes = override(settings.streetSuffixes, streetSuffixes);
+		fossilPrefixes = override(settings.fossilPrefixes, fossilPrefixes);
+		fossilSuffixes = override(settings.fossilSuffixes, fossilSuffixes);
+	}
+
+	private static List<String> override(List<String> configured, List<String> hardcoded) {
+		return configured.isEmpty() ? hardcoded : new ArrayList<>(configured);
 	}
 
 	@Override

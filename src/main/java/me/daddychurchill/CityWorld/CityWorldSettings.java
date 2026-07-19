@@ -1,26 +1,35 @@
 package me.daddychurchill.CityWorld;
 
+import java.util.List;
+
 import me.daddychurchill.CityWorld.CityWorldGenerator.WorldStyle;
 import me.daddychurchill.CityWorld.Plugins.TreeProvider;
 import me.daddychurchill.CityWorld.Support.AbstractBlocks;
 import me.daddychurchill.CityWorld.Support.Odds;
+import me.daddychurchill.CityWorld.compat.EntityType;
+import me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData;
 
 /**
- * Stub of the original {@code CityWorldSettings} (961 lines).
+ * The runtime world settings — upstream's {@code CityWorldSettings}, the ~100 knobs the generation
+ * brain branches on (which structures, which terrain, spawn odds, treasure odds, city radii).
  *
- * <p><b>Wave 1 placeholder.</b> The real class parses per-world YAML and carries ~100 knobs. Only
- * the flags the {@code ShapeProvider} family actually branches on are here, each at its upstream
- * default, so terrain generates exactly as an unconfigured CityWorld world would.
+ * <p><b>P7: these now come from a datapack.</b> CityWorld's settings were <em>per-world</em>, while
+ * a NeoForge {@code ModConfigSpec} is per-instance (PORTING.md top risk #4). The port resolves the
+ * tension with a datapack registry: {@link CityWorldSettingsData} entries live under
+ * {@code data/<ns>/cityworld/world_settings/}, the generator references one by holder, and
+ * {@link #applyData} copies it onto the fields below. A server op can therefore make each world
+ * different. The field initializers here remain as the compiled fallback that
+ * {@link CityWorldSettingsData#DEFAULT} mirrors, and cover the few runtime-only fields no datapack
+ * entry carries (e.g. {@link #darkEnvironment}, set by the alien/nether styles).
  *
- * <p>The full port arrives at P7, and it is not straight: CityWorld's settings are
- * <em>per-world</em>, while NeoForge's {@code ModConfigSpec} is per-instance, so it needs a
- * datapack or world-saved-data approach rather than a config file (PORTING.md, top risk #4). A first
- * slice is wired ahead of that, though — {@link CityWorldConfig} exposes the decay/apocalypse
- * toggles as a per-instance config, overlaid onto the defaults in the constructor below.
+ * <p>Still to fold in: the villager-name / street-name / mob lists (upstream's
+ * {@code VillagerGivenNames}, {@code Entities_For_*}, …) — a separate follow-up, since they need
+ * reader plumbing back into {@code OdonymProvider} and the {@code AbstractEntityList} family.
  */
 public class CityWorldSettings {
 
-    // Defaults carried over verbatim from the upstream field initializers.
+    // Compiled defaults — the fallback CityWorldSettingsData.DEFAULT mirrors; applyData overwrites
+    // every field a datapack entry carries.
     public boolean includeRoads = true;
     public boolean includeBuildings = true;
     public boolean includeFarms = true;
@@ -106,10 +115,35 @@ public class CityWorldSettings {
 
     public SubSurfaceStyle subSurfaceStyle = SubSurfaceStyle.LAND;
 
+    // --- per-world word lists and mob bags (empty = keep the provider's compiled defaults) -------
+    // Populated by applyData from the datapack's [naming]/[mobs] groups. OdonymProvider_Normal reads
+    // the nine name lists; SpawnProvider reads the ten mob bags. Empty means "not overridden", which
+    // every reader treats as "use the hardcoded list" — upstream's getNames(...) fallback.
+
+    public java.util.List<String> villagerGivenNames = java.util.List.of();
+    public java.util.List<String> villagerSurnames = java.util.List.of();
+    public java.util.List<String> streetTerms = java.util.List.of();
+    public java.util.List<String> streetPrefixes = java.util.List.of();
+    public java.util.List<String> streetStarts = java.util.List.of();
+    public java.util.List<String> streetEnds = java.util.List.of();
+    public java.util.List<String> streetSuffixes = java.util.List.of();
+    public java.util.List<String> fossilPrefixes = java.util.List.of();
+    public java.util.List<String> fossilSuffixes = java.util.List.of();
+
+    public java.util.List<me.daddychurchill.CityWorld.compat.EntityType> mobGoodies = java.util.List.of();
+    public java.util.List<me.daddychurchill.CityWorld.compat.EntityType> mobBaddies = java.util.List.of();
+    public java.util.List<me.daddychurchill.CityWorld.compat.EntityType> mobAnimals = java.util.List.of();
+    public java.util.List<me.daddychurchill.CityWorld.compat.EntityType> mobSeaAnimals = java.util.List.of();
+    public java.util.List<me.daddychurchill.CityWorld.compat.EntityType> mobVagrants = java.util.List.of();
+    public java.util.List<me.daddychurchill.CityWorld.compat.EntityType> mobSewers = java.util.List.of();
+    public java.util.List<me.daddychurchill.CityWorld.compat.EntityType> mobMine = java.util.List.of();
+    public java.util.List<me.daddychurchill.CityWorld.compat.EntityType> mobBunker = java.util.List.of();
+    public java.util.List<me.daddychurchill.CityWorld.compat.EntityType> mobWaterPit = java.util.List.of();
+    public java.util.List<me.daddychurchill.CityWorld.compat.EntityType> mobLavaPit = java.util.List.of();
+
     // --- city-placement radii (upstream's [radius] settings) -----------------------------------
-    // The SPARSE style is the only thing that moves these off their "everywhere" defaults so far;
-    // per-world YAML control over them is P7. inCityRange/inRoadRange/inConstructRange below gate
-    // where cities, roads and constructs may appear.
+    // The SPARSE style and the datapack [radius] group move these off their "everywhere" defaults.
+    // inCityRange/inRoadRange/inConstructRange below gate where cities, roads and constructs appear.
 
     /** 1875000 — the chunk-radius ceiling for the modern world format (30,000,000 blocks / 16). */
     private static final int maxRadius = 30000000 / AbstractBlocks.sectionBlockWidth;
@@ -127,35 +161,33 @@ public class CityWorldSettings {
     private boolean checkMinInbetweenChunkDistanceOfCities = false;
 
     public CityWorldSettings() {
-        this(WorldStyle.NORMAL, java.util.Optional.empty());
+        this(WorldStyle.NORMAL, java.util.Optional.empty(), CityWorldSettingsData.DEFAULT);
     }
 
     /**
-     * @param worldStyle    the world style, which overrides a slice of the defaults below via
+     * @param worldStyle    the world style, which overrides a slice of the settings via
      *                      {@link #validateSettingsAgainstWorldStyle} (roads/mines/decay toggles and,
      *                      for {@code SPARSE}, the city-placement radii).
      * @param decayOverride a per-dimension decay override (from the generator's {@code "decayed"}
      *                      JSON field). When present it forces {@link #includeDecayedBuildings} and
      *                      {@link #includeDecayedRoads} on or off for this dimension, winning over
-     *                      the config — so two same-seed dimensions can be the same city intact and
-     *                      in ruins. Empty means "follow the config". Deliberately does <em>not</em>
-     *                      touch {@link #includeDecayedNature} (that drains the seas and deserts the
-     *                      world — a whole-world mood, kept purely config-controlled).
+     *                      the datapack settings — so two same-seed dimensions can be the same city
+     *                      intact and in ruins. Empty means "follow the settings". Deliberately does
+     *                      <em>not</em> touch {@link #includeDecayedNature} (that drains the seas and
+     *                      deserts the world — a whole-world mood, kept purely settings-controlled).
+     * @param data          the per-world settings, resolved from the {@code cityworld:world_settings}
+     *                      datapack registry (or {@link CityWorldSettingsData#DEFAULT}). Copied onto
+     *                      the fields first, so the style and decay overrides below still win.
      */
-    public CityWorldSettings(WorldStyle worldStyle, java.util.Optional<Boolean> decayOverride) {
-        // Overlay the runtime config's decay slice onto the compiled defaults. Guarded on isLoaded()
-        // so plan-only paths (probes, tests) that build settings before config load keep the
-        // defaults instead of throwing. The rest of the ~100 knobs still come from the field
-        // initializers above until the full per-world settings port (P7).
-        if (CityWorldConfig.SPEC.isLoaded()) {
-            includeDecayedBuildings = CityWorldConfig.INCLUDE_DECAYED_BUILDINGS.get();
-            includeDecayedRoads = CityWorldConfig.INCLUDE_DECAYED_ROADS.get();
-            includeDecayedNature = CityWorldConfig.INCLUDE_DECAYED_NATURE.get();
-            includeFires = CityWorldConfig.INCLUDE_FIRES.get();
-            includeSchematics = CityWorldConfig.INCLUDE_SCHEMATICS.get();
-        }
+    public CityWorldSettings(WorldStyle worldStyle, java.util.Optional<Boolean> decayOverride,
+            CityWorldSettingsData data) {
+        // The datapack settings are the source of truth (P7): copy them onto the fields, replacing
+        // the compiled defaults above. The field initializers remain as the compiled fallback that
+        // CityWorldSettingsData.DEFAULT mirrors, and cover the handful of runtime-only fields (e.g.
+        // darkEnvironment) that no datapack entry carries.
+        applyData(data);
 
-        // A per-dimension override wins over the config for the building/road ruin.
+        // A per-dimension override wins over the datapack for the building/road ruin.
         decayOverride.ifPresent(decayed -> {
             includeDecayedBuildings = decayed;
             includeDecayedRoads = decayed;
@@ -167,6 +199,171 @@ public class CityWorldSettings {
         // flags below are set — the flags must be computed *after* the style, not before.
         validateSettingsAgainstWorldStyle(worldStyle);
         deriveRangeFlags();
+    }
+
+    /**
+     * Copies a {@link CityWorldSettingsData} (the datapack registry element) onto the runtime fields.
+     * Grouped exactly as the record is — features, terrain, spawns, treasures, world, radius — so the
+     * two stay easy to diff. Runs before the style/decay overrides in the constructor, so those win.
+     */
+    private void applyData(CityWorldSettingsData data) {
+        CityWorldSettingsData.Features f = data.features();
+        includeRoads = f.includeRoads();
+        includeRoundabouts = f.includeRoundabouts();
+        includeSewers = f.includeSewers();
+        includeCisterns = f.includeCisterns();
+        includeBasements = f.includeBasements();
+        includeMines = f.includeMines();
+        includeBunkers = f.includeBunkers();
+        includeBuildings = f.includeBuildings();
+        includeHouses = f.includeHouses();
+        includeFarms = f.includeFarms();
+        includeMunicipalities = f.includeMunicipalities();
+        includeIndustrialSectors = f.includeIndustrialSectors();
+        includeAirborneStructures = f.includeAirborneStructures();
+        includeBuildingInteriors = f.includeBuildingInteriors();
+        includeSchematics = f.includeSchematics();
+        includeNamedRoads = f.includeNamedRoads();
+
+        CityWorldSettingsData.Terrain t = data.terrain();
+        includeCaves = t.includeCaves();
+        includeLavaFields = t.includeLavaFields();
+        includeSeas = t.includeSeas();
+        includeMountains = t.includeMountains();
+        includeOres = t.includeOres();
+        includeBones = t.includeBones();
+        includeFires = t.includeFires();
+        includeAbovegroundFluids = t.includeAbovegroundFluids();
+        includeUndergroundFluids = t.includeUndergroundFluids();
+        includeWorkingLights = t.includeWorkingLights();
+        includeDecayedRoads = t.includeDecayedRoads();
+        includeDecayedBuildings = t.includeDecayedBuildings();
+        includeDecayedNature = t.includeDecayedNature();
+
+        CityWorldSettingsData.Spawns s = data.spawns();
+        spawnBeings = s.spawnBeings();
+        spawnBaddies = s.spawnBaddies();
+        spawnAnimals = s.spawnAnimals();
+        spawnVagrants = s.spawnVagrants();
+        nameVillagers = s.nameVillagers();
+        showVillagersNames = s.showVillagersNames();
+
+        CityWorldSettingsData.Treasures r = data.treasures();
+        treasuresInMines = r.treasuresInMines();
+        spawnersInMines = r.spawnersInMines();
+        treasuresInBunkers = r.treasuresInBunkers();
+        spawnersInBunkers = r.spawnersInBunkers();
+        treasuresInSewers = r.treasuresInSewers();
+        spawnersInSewers = r.spawnersInSewers();
+        treasuresInBuildings = r.treasuresInBuildings();
+        oddsOfTreasureInMines = r.oddsOfTreasureInMines();
+        oddsOfTreasureInBunkers = r.oddsOfTreasureInBunkers();
+        oddsOfTreasureInSewers = r.oddsOfTreasureInSewers();
+        oddsOfTreasureInBuildings = r.oddsOfTreasureInBuildings();
+        oddsOfAlcoveInMines = r.oddsOfAlcoveInMines();
+
+        CityWorldSettingsData.World w = data.world();
+        treeStyle = w.treeStyle();
+        spawnTrees = w.spawnTrees();
+        subSurfaceStyle = w.subSurfaceStyle();
+        ruralnessLevel = w.ruralnessLevel();
+
+        CityWorldSettingsData.Radius d = data.radius();
+        centerPointOfChunkRadiusX = d.centerPointOfChunkRadiusX();
+        centerPointOfChunkRadiusZ = d.centerPointOfChunkRadiusZ();
+        constructChunkRadius = d.constructChunkRadius();
+        roadChunkRadius = d.roadChunkRadius();
+        cityChunkRadius = d.cityChunkRadius();
+        buildOutsideRadius = d.buildOutsideRadius();
+        minInbetweenChunkDistanceOfCities = d.minInbetweenChunkDistanceOfCities();
+
+        CityWorldSettingsData.Naming n = data.naming();
+        villagerGivenNames = n.villagerGivenNames();
+        villagerSurnames = n.villagerSurnames();
+        streetTerms = n.streetTerms();
+        streetPrefixes = n.streetPrefixes();
+        streetStarts = n.streetStarts();
+        streetEnds = n.streetEnds();
+        streetSuffixes = n.streetSuffixes();
+        fossilPrefixes = n.fossilPrefixes();
+        fossilSuffixes = n.fossilSuffixes();
+
+        CityWorldSettingsData.Mobs m = data.mobs();
+        mobGoodies = resolveEntities(m.goodies(), "goodies");
+        mobBaddies = resolveEntities(m.baddies(), "baddies");
+        mobAnimals = resolveEntities(m.animals(), "animals");
+        mobSeaAnimals = resolveEntities(m.seaAnimals(), "seaAnimals");
+        mobVagrants = resolveEntities(m.vagrants(), "vagrants");
+        mobSewers = resolveEntities(m.sewers(), "sewers");
+        mobMine = resolveEntities(m.mine(), "mine");
+        mobBunker = resolveEntities(m.bunker(), "bunker");
+        mobWaterPit = resolveEntities(m.waterPit(), "waterPit");
+        mobLavaPit = resolveEntities(m.lavaPit(), "lavaPit");
+    }
+
+    /**
+     * Snapshots the <em>effective</em> settings back into a {@link CityWorldSettingsData} — the values
+     * as they generate, i.e. after {@code applyData}, the {@code decayed} override and the world-style
+     * validation have all run. This is what {@code /cityexport} bottles into a datapack, so a world
+     * hand-tuned in the single-player Customize screen (or by a chosen style) can be shipped to a
+     * server verbatim. The name/mob lists round-trip as whatever the source carried: empty when the
+     * world kept the compiled defaults (so an export stays compact), the overriding list otherwise.
+     */
+    public CityWorldSettingsData toData() {
+        CityWorldSettingsData.Features features = new CityWorldSettingsData.Features(
+                includeRoads, includeRoundabouts, includeSewers, includeCisterns, includeBasements, includeMines,
+                includeBunkers, includeBuildings, includeHouses, includeFarms, includeMunicipalities,
+                includeIndustrialSectors, includeAirborneStructures, includeBuildingInteriors, includeSchematics,
+                includeNamedRoads);
+        CityWorldSettingsData.Terrain terrain = new CityWorldSettingsData.Terrain(
+                includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
+                includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
+                includeDecayedRoads, includeDecayedBuildings, includeDecayedNature);
+        CityWorldSettingsData.Spawns spawns = new CityWorldSettingsData.Spawns(
+                spawnBeings, spawnBaddies, spawnAnimals, spawnVagrants, nameVillagers, showVillagersNames);
+        CityWorldSettingsData.Treasures treasures = new CityWorldSettingsData.Treasures(
+                treasuresInMines, spawnersInMines, treasuresInBunkers, spawnersInBunkers, treasuresInSewers,
+                spawnersInSewers, treasuresInBuildings, oddsOfTreasureInMines, oddsOfTreasureInBunkers,
+                oddsOfTreasureInSewers, oddsOfTreasureInBuildings, oddsOfAlcoveInMines);
+        CityWorldSettingsData.World world = new CityWorldSettingsData.World(
+                treeStyle, spawnTrees, subSurfaceStyle, ruralnessLevel);
+        CityWorldSettingsData.Radius radius = new CityWorldSettingsData.Radius(
+                centerPointOfChunkRadiusX, centerPointOfChunkRadiusZ, constructChunkRadius, roadChunkRadius,
+                cityChunkRadius, buildOutsideRadius, minInbetweenChunkDistanceOfCities);
+        CityWorldSettingsData.Naming naming = new CityWorldSettingsData.Naming(
+                villagerGivenNames, villagerSurnames, streetTerms, streetPrefixes, streetStarts, streetEnds,
+                streetSuffixes, fossilPrefixes, fossilSuffixes);
+        CityWorldSettingsData.Mobs mobs = new CityWorldSettingsData.Mobs(
+                ids(mobGoodies), ids(mobBaddies), ids(mobAnimals), ids(mobSeaAnimals), ids(mobVagrants),
+                ids(mobSewers), ids(mobMine), ids(mobBunker), ids(mobWaterPit), ids(mobLavaPit));
+        return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs);
+    }
+
+    private static List<String> ids(List<EntityType> types) {
+        return types.stream().map(EntityType::toString).toList();
+    }
+
+    /**
+     * Resolves a datapack mob-bag (entity ids) to {@code EntityType}s, dropping and logging any the
+     * registry doesn't know — a typo skips one entity rather than crashing the world, matching
+     * upstream's reader which validated names and reported the unknowns. An empty input stays empty,
+     * which the {@code SpawnProvider} reader reads as "keep the compiled bag".
+     */
+    private static java.util.List<me.daddychurchill.CityWorld.compat.EntityType> resolveEntities(
+            java.util.List<String> ids, String listName) {
+        if (ids.isEmpty())
+            return java.util.List.of();
+        java.util.List<me.daddychurchill.CityWorld.compat.EntityType> out = new java.util.ArrayList<>(ids.size());
+        for (String id : ids) {
+            me.daddychurchill.CityWorld.compat.EntityType type =
+                    me.daddychurchill.CityWorld.compat.EntityType.of(id);
+            if (type == null)
+                CityWorldMod.LOGGER.warn("CityWorld: mob list \"{}\" names unknown entity \"{}\" — skipping it",
+                        listName, id);
+            else
+                out.add(type);
+        }
+        return out;
     }
 
     /**

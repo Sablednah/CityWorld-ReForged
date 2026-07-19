@@ -1,0 +1,72 @@
+{
+  "features": {
+    "includeRoads": true,
+    "includeRoundabouts": true,
+    "includeSewers": true,
+    "includeCisterns": true,
+    "includeBasements": true,
+    "includeMines": true,
+    "includeBunkers": true,
+    "includeBuildings": true,
+    "includeHouses": true,
+    "includeFarms": true,
+    "includeMunicipalities": true,
+    "includeIndustrialSectors": true,
+    "includeAirborneStructures": true,
+    "includeBuildingInteriors": true,
+    "includeSchematics": false,
+    "includeNamedRoads": true
+  },
+  "terrain": {
+    "includeCaves": true,
+    "includeLavaFields": true,
+    "includeSeas": true,
+    "includeMountains": true,
+    "includeOres": true,
+    "includeBones": true,
+    "includeFires": true,
+    "includeAbovegroundFluids": true,
+    "includeUndergroundFluids": true,
+    "includeWorkingLights": true,
+    "includeDecayedRoads": false,
+    "includeDecayedBuildings": false,
+    "includeDecayedNature": false
+  },
+  "spawns": {
+    "spawnBeings": 0.5,
+    "spawnBaddies": 0.047619047619047616,
+    "spawnAnimals": 0.6666666666666666,
+    "spawnVagrants": 0.2,
+    "nameVillagers": true,
+    "showVillagersNames": true
+  },
+  "treasures": {
+    "treasuresInMines": true,
+    "spawnersInMines": true,
+    "treasuresInBunkers": true,
+    "spawnersInBunkers": true,
+    "treasuresInSewers": true,
+    "spawnersInSewers": true,
+    "treasuresInBuildings": true,
+    "oddsOfTreasureInMines": 0.5,
+    "oddsOfTreasureInBunkers": 0.5,
+    "oddsOfTreasureInSewers": 0.5,
+    "oddsOfTreasureInBuildings": 0.5,
+    "oddsOfAlcoveInMines": 0.5
+  },
+  "world": {
+    "treeStyle": "NORMAL",
+    "spawnTrees": 0.5,
+    "subSurfaceStyle": "LAND",
+    "ruralnessLevel": 0.0
+  },
+  "radius": {
+    "centerPointOfChunkRadiusX": 0,
+    "centerPointOfChunkRadiusZ": 0,
+    "constructChunkRadius": 1875000,
+    "roadChunkRadius": 1875000,
+    "cityChunkRadius": 1875000,
+    "buildOutsideRadius": false,
+    "minInbetweenChunkDistanceOfCities": 0
+  }
+}

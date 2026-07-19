@@ -4,6 +4,7 @@
       "type": "minecraft:overworld",
       "generator": {
         "type": "cityworld:city",
+        "settings": "cityworld:default",
         "style": "astral",
         "biome_source": {
           "type": "minecraft:fixed",
