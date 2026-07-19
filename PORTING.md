@@ -69,11 +69,27 @@ so this path matters in play, not just in theory. **Confirmed in play** (2026-07
 config on (buildings + roads + nature, fires off) the owner walked a fresh world — ruined buildings,
 rubbled roads, remote structures and oil rigs all reading right. City 17.
 
+**⚠ Correction (2026-07): top-risk #2 DID bite once schematics decay too, and "≤~10 blocks stays
+in-chunk" was the load-bearing assumption that failed.** With `includeSchematics` *and*
+`includeDecayedBuildings` both on (a combo the new Customize screen makes one click away), a placed
+schematic building being demolished — `ClipboardLot.generateActualBlocks` → `PlatLot.destroyLot` →
+`WorldBlocks.destroyWithin` — threw `IllegalStateException: Requested chunk unavailable during world
+generation` from `WorldBlocks.disperseLine` → `Block.isEmpty` → `level.getBlockState`, crashing chunk
+generation (and then the world's teardown deadlocked, which is what "stuck on Saving world" was).
+Schematic footprints are larger and can sit at a chunk edge, so the blast's *read* reached a chunk
+outside the `WorldGenRegion`. Fix: `WorldBlocks` now guards every demolition read/drop with
+`world.hasChunk(x>>4, z>>4)` and skips what it can't reach — the neighbour decays its own slice, the
+same "don't cross the edge" rule `RealBlocks` already relies on. Verified: a 961-chunk force-load with
+schematics + decayed buildings + decayed roads all on → **0 failures, 0 unavailable-chunk throws, 0
+far-chunk write warnings**. **Found by the owner playing it, not a probe** — the earlier 1,681-chunk
+decay test had no schematics on, so it never demolished a `ClipboardLot`. The generalisation holds:
+an "it stays in-chunk" assumption is only as good as the widest thing that can be demolished.
+
 **What's left is breadth, not architecture.** The most valuable next steps:
 
-1. **P6 schematics** or **P7 config/commands** — see the phase list below. Demolition (the last
-   flagged P5 gap) is done; what remains is the schematic paste pipeline and wiring settings/commands
-   through to NeoForge config, neither of which is architectural.
+1. **P6 schematics polish** (rotation/mirroring, foundation dig) — see the phase list. **P7 config is
+   done** (2026-07): per-world settings now come from a datapack registry (`cityworld:world_settings`),
+   naming/mob lists included, verified end-to-end — see "P7 — Config + commands" below and top risk #4.
 
 ### ⚠ The single most important thing to know: CityWorld builds in the DECORATION pass
 
@@ -761,6 +777,13 @@ Coupling inventory (from the 1.14 source):
       resource dirs). `/cityschem <name>` (op) pastes any classic at the player; `/cityschem list`
       enumerates them. **Decisions:** modern target = vanilla `.nbt` (native, no deps); WorldEdit
       `.schem` deferred; legacy→`.nbt` is one reusable conversion.
+      **Bugfix (2026-07): bundled schematics with a space in the filename never loaded from the jar.**
+      `Class.getResourceAsStream` builds an internal `jar:` URI, and a space is an illegal URI char
+      (`URISyntaxException`), so the 3 copies of `IMC eaglman13 home entry.schematic` failed (caught →
+      WARN → skipped). Only *bundled* resources hit it — external drop-ins load via a filesystem `Path`
+      and were always fine. Fixed by renaming the 6 offending bundled files to underscores and updating
+      `index.txt`; the surviving-with-spaces catalog is otherwise unaffected. Surfaced once
+      `includeSchematics` became a one-click Customize toggle.
 
       **Worldgen auto-placement — WIRED (behind `includeSchematics`, default off; awaiting in-world
       visual check).** The full path is live: `DataContext.populateSchematics` (gated on the setting)
@@ -823,26 +846,102 @@ Coupling inventory (from the 1.14 source):
       Format is the **old flat-array MCEdit `.schematic`** (2013, MC ~1.5): numeric block IDs in
       `Blocks`/`Data` byte arrays — not WorldEdit `.schem`, not vanilla `.nbt`. Conversion needs a
       numeric-ID → modern `BlockState` mapping pass on top of the NBT reshaping.
-- [~] **P7 — Config + commands.** *Partly done.* Config: a first per-instance slice is wired —
-      `CityWorldConfig` exposes the `[decay]` family (see "Demolition landed"); the full per-world
-      settings (YAML → datapack/world-saved-data, since NeoForge config is per-instance) is still
-      open. Commands: `/cityinfo` (anyone; reports context/lot/nature under the player — the modern
+- [x] **P7 — Config + commands. Config done (2026-07): per-world settings via a datapack registry.**
+      Commands: `/cityinfo` (anyone; reports context/lot/nature under the player — the modern
       Brigadier port of Sablednah's upstream PR #4) and `/cityworld` + `/cityworld leave` (op;
       teleport into/out of the `cityworld:city` dimension, landing on the surface at the player's
       X/Z) are **done** — `CityWorldCommands`, registered via `CityWorldServerEvents` on
       `RegisterCommandsEvent`. Command gating uses Brigadier permission levels (op for teleport),
-      matching the reference port's command pattern. `/citychunk` deliberately **not** ported: its
-      `regen` relied on Bukkit's `World.regenerateChunk`, which modern MC has no safe runtime
-      equivalent for. Still to do: the full settings port; a proper `NeoForge` permission-node layer
-      if per-node control is wanted beyond op levels.
-  - **Per-dimension decay override** (the "ruined twin"). The generator codec now carries an optional
+      matching the reference port's command pattern. `/cityexport [name]` (op) bottles a world's
+      effective settings into a ready datapack (see "Trial → export → ship" below). `/citychunk`
+      deliberately **not** ported: its `regen` relied on Bukkit's `World.regenerateChunk`, which
+      modern MC has no safe runtime equivalent for. Still open: a proper `NeoForge` permission-node
+      layer if per-node control is wanted beyond op levels.
+
+  - **The config problem and how it was solved.** CityWorld's ~100 settings were *per-world* (parsed
+    from each world's YAML); a NeoForge `ModConfigSpec` is *per-instance* (top risk #4), so it cannot
+    say "this world crazy, that world plain". **A datapack registry can, and that's what the port now
+    uses.** `CityWorldSettingsData` (a codec'd record, `worldgen/`) is registered as the datapack
+    registry `cityworld:world_settings` (via `DataPackRegistryEvent.NewRegistry`), so entries live at
+    `data/<ns>/cityworld/world_settings/<name>.json`. The generator codec carries an optional
+    `RegistryFixedCodec` holder field `settings` — **resolved at codec-decode time, which is the one
+    place registry access is clean** (`fillFromNoise` never gets a `registryAccess()`). The bundled
+    `cityworld:default` (spelled-out defaults, a copy-and-edit template) is referenced by
+    `cityworld:city` and every world preset; a server op ships a datapack overriding `default.json`
+    per save, or points a dimension at its own profile. `CityWorldSettings.applyData` copies the
+    resolved data onto its fields *before* the world-style validation and the `decayed` override, so
+    those still win (a style's "THIS MUST BE SET" invariants and the ruined-twin are unchanged).
+    **This retired `CityWorldConfig` (the old per-instance `[decay]`/`[schematics]` `ModConfigSpec`) —
+    the datapack is now the single source of truth.** Every field is `optionalFieldOf(default)`, so a
+    JSON lists only what it overrides and a bare `{}` is a full-default world; the knobs are grouped
+    (features / terrain / spawns / treasures / world / radius) to stay under RecordCodecBuilder's
+    16-field ceiling.
+
+  - **Villager / street names and mob lists fold in here too** (the parking-lot "let players write
+    their own names" item). `CityWorldSettingsData` carries a `naming` group (nine word lists) and a
+    `mobs` group (ten weighted entity-id bags). **Each list defaults to empty, meaning "keep the
+    compiled hundreds"** — exactly upstream's "take the configured list, else the hardcoded one"
+    fallback, so they stay out of `default.json` to keep it readable. `OdonymProvider_Normal` reads
+    the nine (via its `CityWorldSettings`); `SpawnProvider` reads the ten through a new
+    `AbstractEntityList.applyOverride` (the override list *is* the weighted bag — repetition is
+    weight). Mob ids resolve via a new `EntityType.of(String)`; an unknown id is **logged once and
+    skipped, never guessed** — the `tag*`/`getListName` seams the earlier waves kept are what made
+    this a plug-in, not a redesign.
+
+  - **Verified end-to-end** (temporary `ServerStartedEvent` probes, since deleted — the usual method;
+    Gradle can't pipe stdin). Two runs: default, then the same world with a world datapack overriding
+    `cityworld:default`. The value knobs flipped as written (`includeRoundabouts` true→false,
+    `includeDecayedBuildings` false→true, `spawnBaddies` 0.0476→0.99, `oddsOfTreasureInMines`
+    0.5→0.123) while *unspecified* fields kept their defaults — field- and group-level merge both
+    work. Names came back `"Zorp Xyzzy"` / `"East New Quuxglorp Boulevard"` (a `streetPrefixes: []`
+    correctly fell through to the compiled default), the sewer bag became `minecraft:allay` only
+    (which isn't one of the 48 hardcoded constants — so `EntityType.of(String)` reaches the whole
+    registry), and a bogus `minecraft:not_a_real_mob` was logged-and-skipped. Zero exceptions; the
+    override is picked up on world *load* (the holder re-resolves each load), so no regen is needed to
+    retune spawn odds / names / decay — only terrain-shaping knobs want a fresh world.
+
+  - **Per-dimension decay override** (the "ruined twin"). The generator codec also carries an optional
     `decayed` boolean; when present it forces `includeDecayedBuildings`/`includeDecayedRoads` on/off
-    for that dimension, winning over the global config (absent = follow config). The `cityworld:city`
-    dimension ships with `decayed: true`, so — because both dimensions seed off the same world seed —
-    `/cityworld` visits the *same city in ruins* while the overworld follows the config. Scoped to
-    buildings/roads, not `includeDecayedNature` (that drains the seas / deserts the world — a
-    whole-world mood, not "this city is wrecked"), so the twin stays wet and green. Backward
-    compatible: existing worlds lack the field → `Optional.empty()` → config.
+    for that dimension, winning over the datapack settings (absent = follow settings). The
+    `cityworld:city` dimension ships with `decayed: true`, so — because both dimensions seed off the
+    same world seed — `/cityworld` visits the *same city in ruins* while the overworld follows the
+    settings. Scoped to buildings/roads, not `includeDecayedNature` (that drains the seas / deserts
+    the world — a whole-world mood, not "this city is wrecked"), so the twin stays wet and green.
+    Backward compatible: existing worlds lack the field → `Optional.empty()` → settings.
+
+  - **Trial → export → ship, and a documented example** (2026-07, follow-up). Three additions turn the
+    datapack layer into a usable workflow for server ops ("trial in single-player, then set the
+    worlds"):
+    - **The single-player Customize screen now edits every value knob**, not just the style —
+      `CityWorldCustomizeScreen` became an `OptionsSubScreen` with scrollable, headed sections
+      (Features / Terrain / Spawns / Treasures / World), booleans as on/off cycles, odds as a named
+      `Chance` ladder, enums as cycles. On Done it bakes the edited settings **inline** into the
+      generator. That needed the codec to move from `RegistryFixedCodec` (reference-only) to
+      `RegistryFileCodec` (reference *or* inline) — so `"settings"` in a dimension JSON is now either
+      `"cityworld:default"` or a full `{…}` object; both verified to decode, existing reference worlds
+      unaffected. The screen carries the radius/naming/mob groups through untouched (those stay
+      datapack-only — impractical as GUI widgets). **Compiled and wired, but not visually verified —
+      no display in the port harness; it wants an in-world look on the owner's client** (like the
+      schematics visual check).
+    - **`/cityexport [name]`** snapshots the current world's *effective* settings
+      (`CityWorldSettings.toData()` — post style-validation and decay override) into a ready datapack at
+      `config/cityworld/exports/<name>/`. Drop it into another world's `datapacks/` and it applies.
+    - **A first-run example** at `config/cityworld/settings-example/` (next to the schematics drop-in):
+      a full datapack whose `default.json` spells out *every* knob at its default, plus
+      `settings-reference.txt` documenting each setting, its type and sensible range — the "download
+      the defaults and see everything that can change, with commentary" ask.
+    - **One codec gotcha worth keeping:** `optionalFieldOf(name, default)` **omits** any field equal to
+      its default on *encode* (a default world round-trips to `{}`). Correct for reading, useless as a
+      human template — so the written datapacks use a hand-rolled full serializer (`SettingsDatapack.
+      toFullJson`), not the codec. Also: 1.21.9+ changed `pack.mcmeta` to require `min_format`/
+      `max_format` (each `[major, minor]`); the writer emits them from the running version, verified to
+      load with no "incompatible" warning.
+    - Verified headlessly: an edited *full* export pack dropped into a world loaded clean (no format
+      warning), decoded every field, and applied (`includeRoundabouts`/`spawnBaddies` flipped).
+
+  - **Still open on the settings layer** (small): the `darkEnvironment` flag is runtime-only (set by
+    the alien/nether styles), deliberately not a datapack knob; the Customize screen omits the
+    radius/naming/mob groups by design (datapack-authored). Nothing blocking.
 - [x] **P8 — World styles (done 2026-07).** All 10 styles are live behind an optional `style` field
       on the generator codec (mirrors `decayed`): NORMAL, NATURE, METRO, SPARSE, DESTROYED (terrain =
       Normal, differ via `validateSettingsAgainstWorldStyle` — ported, with the city-radius maths and
@@ -920,9 +1019,13 @@ long-standing grey area in the modding ecosystem; many GPL mods ship regardless.
    gets, and resolving a chunk outside the region's cache *throws* rather than declining — so an
    out-of-chunk spawn crashes the server instead of being quietly dropped. See `SpawnProvider`.
 3. **Performance** — the original disabled several styles for perf even on Bukkit.
-4. **Per-world config** doesn't match NeoForge's per-instance config model. Note the *name and mob
-   lists* are a separable slice of this and need not wait for it — see "Let players write their own
-   villager names…" in the parking lot.
+4. ~~**Per-world config** doesn't match NeoForge's per-instance config model.~~ **Resolved (2026-07,
+   P7):** settings are a *datapack registry* (`cityworld:world_settings`), not a `ModConfigSpec`, so
+   they are genuinely per-world/per-dimension — a server op ships a pack per save. The generator
+   references a settings holder resolved at codec-decode. The name and mob lists landed in the same
+   pass. See "P7 — Config + commands". `ModConfigSpec` was retired. What a datapack registry does
+   *not* give is per-node runtime editing — settings are authored, frozen at world load; that suits
+   the use case (retuning wants a datapack edit + reload/restart, not a live command).
 
 **Struck: the old risk #1, "`generator.getWorld()` does not exist".** It was only ever needed by
 `SpawnProvider`, which doesn't need it either — `compat/Location` carries its level exactly as
@@ -971,31 +1074,42 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
 
 ## Future ideas (parking lot)
 
-- **Let players write their own villager names, street names and mob lists** (asked for by the owner,
-  2026-07). Personalising your own city is the point — "Christine Johnson on Elm Street" should be
-  able to be *your* names.
+- **⭐ "Modern" vs "Classic" — a modernization world style, made default (owner's idea, 2026-07).**
+  The big one. Rename today's `NORMAL` style to **`CLASSIC`** (it faithfully reproduces the 1.8-era
+  look — old blocks, old height feel, no vanilla structures) and add a new **`MODERN`** style that
+  becomes the *default*, using everything current Minecraft offers:
+    - **Taller builds** — actually use the -64..319 headroom. This subsumes the existing
+      `DataContext.buildingMaximumY` cap (still pinned at the 256 terrain ceiling) — but it should be
+      **per-style**, not a blanket raise: Classic stays short, Modern goes tall. So the height cap
+      wants to move onto the settings/style, not be globally bumped.
+    - **Modern blocks** — deepslate + its ore variants (already half-wired, see P4), tuff, calcite,
+      copper/oxidation, modern wood sets, glazed terracotta, etc. in the material providers.
+    - **Modern mobs** — the newer entities in the spawn bags (allays, foxes/goats where apt, wardens
+      only where deliberate). The mob lists are already datapack-overridable (P7), so Modern can ship a
+      richer default `mobs` group while Classic keeps the 1.8 roster.
+    - **Modern ice/snow** — packed ice / blue ice / powder snow to *ice the mountaintops* properly
+      (the cover/surface providers currently use plain snow); Snowdunes-style worlds especially.
+    - **New tree types** — cherry, mangrove, azalea, spruce/large variants via the tree provider
+      (`TreeStyle` already exists but only `NORMAL` is wired; this is where `SPOOKY`/`CRYSTAL` and new
+      ones land per style).
+    - **Allow *some* vanilla structures** — instead of suppressing every structure set (see the
+      "harvest vanilla structure points" idea below), let Modern permit a curated few (ancient cities
+      deep down, trial chambers, the odd shipwreck/ruined portal) to blend with CityWorld's own.
+  **Why this shape:** most of the piecemeal "what's left" polish (building-height cap, deepslate ores,
+  new trees, modern cover) is really *facets of the Modern style*, so doing them under one style banner
+  is cleaner than one-off global changes — and it keeps a pixel-faithful `CLASSIC` for people who want
+  the original. Mechanically it rides the P8 style machinery already in place (a `WorldStyle` value +
+  `validateSettingsAgainstWorldStyle` + provider `loadProvider` switches + a `world_preset`), plus the
+  P7 datapack settings for the knobs. **Decisions to make with the owner:** does `MODERN` become the
+  literal codec default (changes new-world behaviour) or just the top preset; how far to push vanilla
+  structures; and whether "Modern" is one style or a family (Modern + Modern-Sparse, …).
 
-  **This is re-attaching a reader, not new design.** Upstream already had it, and the port kept the
-  seams and dropped only the plumbing, because the plumbing was Bukkit YAML:
-    - `OdonymProvider_Normal` holds **nine** lists, each already paired with its config tag —
-      `VillagerGivenNames`, `VillagerSurnames`, `StreetTerms`, `StreetPrefixes`, `StreetStarts`,
-      `StreetEnds`, `StreetSuffixes`, `FossilPrefixes`, `FossilSuffixes`. The `tag*` fields are
-      **still in the port and currently unused**; upstream's `read` did
-      `getNames(section, tag, defaults)` — take the list if configured, else keep the hardcoded one.
-      That fallback shape is exactly right and should survive.
-    - `AbstractEntityList` had the same arrangement for the mob lists (`Entities_For_Goodies`,
-      `_Baddies`, `_Animals`, `_SeaAnimals`, `_Vagrants`, `_Sewers`, `_Mine`, `_Bunker`,
-      `_WaterPit`, `_LavaPit`). Its `read`/`write` were dropped in the mobs port for want of a
-      reader; the `listName` is still carried and `getListName()` is there for whoever adds one.
-      Note upstream's reader also validated names and reported unknown/nonliving ones — worth
-      keeping, since a typo'd entity name is the obvious failure mode.
-
-  **The open question is the mechanism, and it is the same one as top risk #4**: CityWorld's settings
-  are per-world, NeoForge's `ModConfigSpec` is per-instance. A datapack fits these particular lists
-  unusually well — they are pure data, they want to differ per world, and players already know how to
-  edit one; loot tables landed exactly this way in P5 and cost nothing. A custom registry or plain
-  JSON under `data/cityworld/` would both work. Whatever P7 picks for settings generally, **these
-  lists probably shouldn't wait for it** — they have no dependency on the rest of the settings layer.
+- ~~**Let players write their own villager names, street names and mob lists.**~~ **Done (2026-07,
+  P7).** It was re-attaching a reader, not new design — exactly as predicted: the nine `OdonymProvider`
+  name lists and the ten `AbstractEntityList` mob bags now come from the `naming`/`mobs` groups of the
+  `cityworld:world_settings` datapack, each defaulting to empty = "keep the compiled list" (upstream's
+  `getNames` fallback). Mob-name validation (unknown → log-and-skip) came along via
+  `EntityType.of(String)`. The datapack mechanism the note guessed at is exactly what shipped.
 
 - **Harvest vanilla structure placement points as city anchors.** Right now the generator
   *suppresses* all vanilla structure sets (villages, mineshafts, trial chambers, …) so CityWorld
