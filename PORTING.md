@@ -843,8 +843,19 @@ Coupling inventory (from the 1.14 source):
     buildings/roads, not `includeDecayedNature` (that drains the seas / deserts the world — a
     whole-world mood, not "this city is wrecked"), so the twin stays wet and green. Backward
     compatible: existing worlds lack the field → `Optional.empty()` → config.
-- [ ] **P8 — Parity & polish.** Re-enable world styles (`validateStyle` currently forces `NORMAL`);
-      GameTest coverage; README/docs.
+- [x] **P8 — World styles (done 2026-07).** All 10 styles are live behind an optional `style` field
+      on the generator codec (mirrors `decayed`): NORMAL, NATURE, METRO, SPARSE, DESTROYED (terrain =
+      Normal, differ via `validateSettingsAgainstWorldStyle` — ported, with the city-radius maths and
+      `SubSurfaceStyle`), plus the six that needed their own terrain closures — FLOODED, SANDDUNES,
+      SNOWDUNES, MAZE, FLOATING, ASTRAL — each a full `ShapeProvider`/`SurfaceProvider`(/Ore/Cover)
+      + `Context/<style>/*` + `Plats/<style>/*` port wired into the provider `loadProvider` switches.
+      Exposure: a `world_preset/<style>.json` per style (`level-type=cityworld:<style>` on servers) +
+      a single-player **Customize button** (`RegisterPresetEditorsEvent` → `CityWorldCustomizeScreen`
+      style picker), and prettified `generator.cityworld.*` lang. Each style headless-verified (spawn
+      100%, 0 exceptions). One known cosmetic gap: huge mushrooms render all-cap (the 1.12
+      `MushroomBlockTexture` model is gone). See the `cityworld-next-p8-world-styles` memory.
+- [ ] **P8 remainder — Parity & polish.** GameTest coverage; README/docs; furnished-Rooms polish;
+      loot tables to native 1.21 datapack.
 
 **Critical path to first playable slice:** P0 → P1 → P2 → P3 (terrain in `cityworld:city`, no
 cities yet). Cities/decoration/loot layer on after.
