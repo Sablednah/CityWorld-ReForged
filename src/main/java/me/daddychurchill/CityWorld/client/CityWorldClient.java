@@ -42,6 +42,16 @@ public final class CityWorldClient {
 
     public static void init(IEventBus modEventBus) {
         modEventBus.addListener(CityWorldClient::onRegisterPresetEditors);
+        modEventBus.addListener(CityWorldClient::onRegisterDebugEntries);
+    }
+
+    /** Adds CityWorld's plan/technical readout to the F3 debug screen (see {@link CityWorldDebugEntry}). */
+    private static void onRegisterDebugEntries(net.neoforged.neoforge.client.event.RegisterDebugEntriesEvent event) {
+        Identifier id = Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "cityinfo");
+        event.register(id, new CityWorldDebugEntry());
+        // IN_OVERLAY = shown while the F3 overlay is up (how PLAYER_POSITION and friends are set).
+        event.includeInProfile(id, net.minecraft.client.gui.components.debug.DebugScreenProfile.DEFAULT,
+                net.minecraft.client.gui.components.debug.DebugScreenEntryStatus.IN_OVERLAY);
     }
 
     private static void onRegisterPresetEditors(RegisterPresetEditorsEvent event) {
