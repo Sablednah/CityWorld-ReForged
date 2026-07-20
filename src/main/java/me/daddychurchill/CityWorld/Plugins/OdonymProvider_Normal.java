@@ -23,19 +23,30 @@ public class OdonymProvider_Normal extends OdonymProvider {
 	 */
 	public OdonymProvider_Normal(int seed, CityWorldSettings settings) {
 		super(seed);
-		villagerPrefixes = override(settings.villagerGivenNames, villagerPrefixes);
-		villagerSuffixes = override(settings.villagerSurnames, villagerSuffixes);
-		streetTerms = override(settings.streetTerms, streetTerms);
-		streetPrefixes = override(settings.streetPrefixes, streetPrefixes);
-		streetStarts = override(settings.streetStarts, streetStarts);
-		streetEnds = override(settings.streetEnds, streetEnds);
-		streetSuffixes = override(settings.streetSuffixes, streetSuffixes);
-		fossilPrefixes = override(settings.fossilPrefixes, fossilPrefixes);
-		fossilSuffixes = override(settings.fossilSuffixes, fossilSuffixes);
+		boolean append = settings.namesAppend;
+		villagerPrefixes = override(append, settings.villagerGivenNames, villagerPrefixes);
+		villagerSuffixes = override(append, settings.villagerSurnames, villagerSuffixes);
+		streetTerms = override(append, settings.streetTerms, streetTerms);
+		streetPrefixes = override(append, settings.streetPrefixes, streetPrefixes);
+		streetStarts = override(append, settings.streetStarts, streetStarts);
+		streetEnds = override(append, settings.streetEnds, streetEnds);
+		streetSuffixes = override(append, settings.streetSuffixes, streetSuffixes);
+		fossilPrefixes = override(append, settings.fossilPrefixes, fossilPrefixes);
+		fossilSuffixes = override(append, settings.fossilSuffixes, fossilSuffixes);
 	}
 
-	private static List<String> override(List<String> configured, List<String> hardcoded) {
-		return configured.isEmpty() ? hardcoded : new ArrayList<>(configured);
+	/**
+	 * Resolves one configured list against its hardcoded default: empty keeps the default; otherwise
+	 * the configured list replaces it, or — when {@code append} — is added onto the default.
+	 */
+	private static List<String> override(boolean append, List<String> configured, List<String> hardcoded) {
+		if (configured.isEmpty())
+			return hardcoded;
+		if (!append)
+			return new ArrayList<>(configured);
+		List<String> combined = new ArrayList<>(hardcoded);
+		combined.addAll(configured);
+		return combined;
 	}
 
 	@Override

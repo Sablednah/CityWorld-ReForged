@@ -189,6 +189,14 @@ public final class SettingsExample {
                 "villagerSurnames":   ["Vance", "Okafor"]
               }
 
+            Set "append": true to ADD your names to the built-in lists instead of replacing them —
+            handy for sprinkling a few friends' names in among the stock ones:
+
+              "naming": {
+                "append": true,
+                "villagerGivenNames": ["Sablednah", "Darren"]
+              }
+
             villagerGivenNames   Given names for villagers.
             villagerSurnames     Surnames for villagers.
             streetTerms          Cardinal/central words: [declaration, N, Main, S, W, Central, E].
@@ -208,6 +216,13 @@ public final class SettingsExample {
 
               "mobs": {
                 "sewers": ["minecraft:zombie", "minecraft:zombie", "minecraft:cave_spider"]
+              }
+
+            Set "append": true to ADD your entries to the built-in bags instead of replacing them:
+
+              "mobs": {
+                "append": true,
+                "sewers": ["minecraft:cave_spider", "minecraft:cave_spider"]
               }
 
             goodies      Friendly beings in populated spots (villagers, ...).

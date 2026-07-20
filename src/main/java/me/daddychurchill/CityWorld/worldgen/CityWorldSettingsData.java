@@ -259,9 +259,10 @@ public record CityWorldSettingsData(
 
     /**
      * The nine word lists {@code OdonymProvider_Normal} draws street and villager names from. An
-     * empty list (the default) means "keep the compiled hundreds"; a non-empty one replaces it. Names
-     * are joined by the same generator logic either way, so a short custom list still produces varied
-     * street names.
+     * empty list (the default) means "keep the compiled hundreds". A non-empty one <em>replaces</em>
+     * that list — unless {@link #append} is set, in which case it is <em>added</em> to the compiled
+     * defaults instead. Names are joined by the same generator logic either way, so a short custom
+     * list still produces varied street names.
      */
     public record Naming(
             List<String> villagerGivenNames,
@@ -272,10 +273,11 @@ public record CityWorldSettingsData(
             List<String> streetEnds,
             List<String> streetSuffixes,
             List<String> fossilPrefixes,
-            List<String> fossilSuffixes) {
+            List<String> fossilSuffixes,
+            boolean append) {
 
         public static final Naming DEFAULT = new Naming(List.of(), List.of(), List.of(), List.of(), List.of(),
-                List.of(), List.of(), List.of(), List.of());
+                List.of(), List.of(), List.of(), List.of(), false);
 
         private static final Codec<List<String>> LIST = Codec.STRING.listOf();
 
@@ -288,7 +290,8 @@ public record CityWorldSettingsData(
                 LIST.optionalFieldOf("streetEnds", List.of()).forGetter(Naming::streetEnds),
                 LIST.optionalFieldOf("streetSuffixes", List.of()).forGetter(Naming::streetSuffixes),
                 LIST.optionalFieldOf("fossilPrefixes", List.of()).forGetter(Naming::fossilPrefixes),
-                LIST.optionalFieldOf("fossilSuffixes", List.of()).forGetter(Naming::fossilSuffixes)
+                LIST.optionalFieldOf("fossilSuffixes", List.of()).forGetter(Naming::fossilSuffixes),
+                Codec.BOOL.optionalFieldOf("append", false).forGetter(Naming::append)
         ).apply(i, Naming::new));
     }
 
@@ -298,8 +301,9 @@ public record CityWorldSettingsData(
      * The ten weighted entity bags {@code SpawnProvider} draws from — each a list of entity ids
      * (e.g. {@code "minecraft:zombie"}), <b>weighted by repetition</b> exactly as upstream's lists
      * are (list {@code CHICKEN} six times for "mostly chickens"). Empty (the default) keeps the
-     * compiled bag; unknown ids are logged once and skipped when {@code CityWorldSettings} resolves
-     * them, never guessed.
+     * compiled bag; a non-empty list <em>replaces</em> it, unless {@link #append} is set, in which
+     * case it is <em>added</em> to the compiled bag (repetition still counts as weight). Unknown ids
+     * are logged once and skipped when {@code CityWorldSettings} resolves them, never guessed.
      */
     public record Mobs(
             List<String> goodies,
@@ -311,10 +315,11 @@ public record CityWorldSettingsData(
             List<String> mine,
             List<String> bunker,
             List<String> waterPit,
-            List<String> lavaPit) {
+            List<String> lavaPit,
+            boolean append) {
 
         public static final Mobs DEFAULT = new Mobs(List.of(), List.of(), List.of(), List.of(), List.of(),
-                List.of(), List.of(), List.of(), List.of(), List.of());
+                List.of(), List.of(), List.of(), List.of(), List.of(), false);
 
         private static final Codec<List<String>> LIST = Codec.STRING.listOf();
 
@@ -328,7 +333,8 @@ public record CityWorldSettingsData(
                 LIST.optionalFieldOf("mine", List.of()).forGetter(Mobs::mine),
                 LIST.optionalFieldOf("bunker", List.of()).forGetter(Mobs::bunker),
                 LIST.optionalFieldOf("waterPit", List.of()).forGetter(Mobs::waterPit),
-                LIST.optionalFieldOf("lavaPit", List.of()).forGetter(Mobs::lavaPit)
+                LIST.optionalFieldOf("lavaPit", List.of()).forGetter(Mobs::lavaPit),
+                Codec.BOOL.optionalFieldOf("append", false).forGetter(Mobs::append)
         ).apply(i, Mobs::new));
     }
 

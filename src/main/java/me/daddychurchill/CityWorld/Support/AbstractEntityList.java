@@ -48,16 +48,18 @@ public abstract class AbstractEntityList {
     }
 
     /**
-     * Replaces this bag with a world's per-datapack override (P7), when it carries one. An empty list
-     * means "not overridden" and leaves the compiled default in place — upstream's fallback. The
-     * override list <em>is</em> the weighted bag: repetition is weight, exactly as the hardcoded lists
-     * use it, so a caller lists {@code minecraft:chicken} six times for "mostly chickens".
+     * Applies a world's per-datapack override (P7), when it carries one. An empty list means "not
+     * overridden" and leaves the compiled default in place — upstream's fallback. Otherwise the list
+     * <em>replaces</em> the bag, or — when {@code append} — is <em>added</em> to it. The override list
+     * <em>is</em> the weighted bag: repetition is weight, exactly as the hardcoded lists use it, so a
+     * caller lists {@code minecraft:chicken} six times for "mostly chickens".
      */
-    public void applyOverride(List<EntityType> replacements) {
-        if (!replacements.isEmpty()) {
+    public void applyOverride(List<EntityType> replacements, boolean append) {
+        if (replacements.isEmpty())
+            return;
+        if (!append)
             items.clear();
-            items.addAll(replacements);
-        }
+        items.addAll(replacements);
     }
 
     public void remove(EntityType entity) {

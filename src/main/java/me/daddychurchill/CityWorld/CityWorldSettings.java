@@ -129,6 +129,8 @@ public class CityWorldSettings {
     public java.util.List<String> streetSuffixes = java.util.List.of();
     public java.util.List<String> fossilPrefixes = java.util.List.of();
     public java.util.List<String> fossilSuffixes = java.util.List.of();
+    /** When true, the name lists above are appended to the compiled defaults instead of replacing them. */
+    public boolean namesAppend = false;
 
     public java.util.List<me.daddychurchill.CityWorld.compat.EntityType> mobGoodies = java.util.List.of();
     public java.util.List<me.daddychurchill.CityWorld.compat.EntityType> mobBaddies = java.util.List.of();
@@ -140,6 +142,8 @@ public class CityWorldSettings {
     public java.util.List<me.daddychurchill.CityWorld.compat.EntityType> mobBunker = java.util.List.of();
     public java.util.List<me.daddychurchill.CityWorld.compat.EntityType> mobWaterPit = java.util.List.of();
     public java.util.List<me.daddychurchill.CityWorld.compat.EntityType> mobLavaPit = java.util.List.of();
+    /** When true, the mob bags above are appended to the compiled bags instead of replacing them. */
+    public boolean mobsAppend = false;
 
     // --- city-placement radii (upstream's [radius] settings) -----------------------------------
     // The SPARSE style and the datapack [radius] group move these off their "everywhere" defaults.
@@ -287,8 +291,10 @@ public class CityWorldSettings {
         streetSuffixes = n.streetSuffixes();
         fossilPrefixes = n.fossilPrefixes();
         fossilSuffixes = n.fossilSuffixes();
+        namesAppend = n.append();
 
         CityWorldSettingsData.Mobs m = data.mobs();
+        mobsAppend = m.append();
         mobGoodies = resolveEntities(m.goodies(), "goodies");
         mobBaddies = resolveEntities(m.baddies(), "baddies");
         mobAnimals = resolveEntities(m.animals(), "animals");
@@ -332,10 +338,10 @@ public class CityWorldSettings {
                 cityChunkRadius, buildOutsideRadius, minInbetweenChunkDistanceOfCities);
         CityWorldSettingsData.Naming naming = new CityWorldSettingsData.Naming(
                 villagerGivenNames, villagerSurnames, streetTerms, streetPrefixes, streetStarts, streetEnds,
-                streetSuffixes, fossilPrefixes, fossilSuffixes);
+                streetSuffixes, fossilPrefixes, fossilSuffixes, namesAppend);
         CityWorldSettingsData.Mobs mobs = new CityWorldSettingsData.Mobs(
                 ids(mobGoodies), ids(mobBaddies), ids(mobAnimals), ids(mobSeaAnimals), ids(mobVagrants),
-                ids(mobSewers), ids(mobMine), ids(mobBunker), ids(mobWaterPit), ids(mobLavaPit));
+                ids(mobSewers), ids(mobMine), ids(mobBunker), ids(mobWaterPit), ids(mobLavaPit), mobsAppend);
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs);
     }
 

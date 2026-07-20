@@ -151,6 +151,7 @@ public final class SettingsDatapack {
         naming.add("streetSuffixes", arr(n.streetSuffixes()));
         naming.add("fossilPrefixes", arr(n.fossilPrefixes()));
         naming.add("fossilSuffixes", arr(n.fossilSuffixes()));
+        naming.addProperty("append", n.append());
         root.add("naming", naming);
 
         CityWorldSettingsData.Mobs m = d.mobs();
@@ -165,6 +166,7 @@ public final class SettingsDatapack {
         mobs.add("bunker", arr(m.bunker()));
         mobs.add("waterPit", arr(m.waterPit()));
         mobs.add("lavaPit", arr(m.lavaPit()));
+        mobs.addProperty("append", m.append());
         root.add("mobs", mobs);
 
         return GSON.toJson(root);

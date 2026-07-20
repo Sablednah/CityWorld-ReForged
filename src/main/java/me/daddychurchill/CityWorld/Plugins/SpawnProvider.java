@@ -123,16 +123,17 @@ public class SpawnProvider extends Provider {
         // Apply any per-world mob-bag overrides from the datapack settings (P7). Each is a no-op when
         // its list is empty, so an unconfigured world keeps every compiled bag above.
         me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
-        itemsEntities_Goodies.applyOverride(settings.mobGoodies);
-        itemsEntities_Baddies.applyOverride(settings.mobBaddies);
-        itemsEntities_Animals.applyOverride(settings.mobAnimals);
-        itemsEntities_SeaAnimals.applyOverride(settings.mobSeaAnimals);
-        itemsEntities_Vagrants.applyOverride(settings.mobVagrants);
-        itemsEntities_Sewers.applyOverride(settings.mobSewers);
-        itemsEntities_Mine.applyOverride(settings.mobMine);
-        itemsEntities_Bunker.applyOverride(settings.mobBunker);
-        itemsEntities_WaterPit.applyOverride(settings.mobWaterPit);
-        itemsEntities_LavaPit.applyOverride(settings.mobLavaPit);
+        boolean append = settings.mobsAppend;
+        itemsEntities_Goodies.applyOverride(settings.mobGoodies, append);
+        itemsEntities_Baddies.applyOverride(settings.mobBaddies, append);
+        itemsEntities_Animals.applyOverride(settings.mobAnimals, append);
+        itemsEntities_SeaAnimals.applyOverride(settings.mobSeaAnimals, append);
+        itemsEntities_Vagrants.applyOverride(settings.mobVagrants, append);
+        itemsEntities_Sewers.applyOverride(settings.mobSewers, append);
+        itemsEntities_Mine.applyOverride(settings.mobMine, append);
+        itemsEntities_Bunker.applyOverride(settings.mobBunker, append);
+        itemsEntities_WaterPit.applyOverride(settings.mobWaterPit, append);
+        itemsEntities_LavaPit.applyOverride(settings.mobLavaPit, append);
     }
 
     // https://en.wikipedia.org/wiki/List_of_English_terms_of_venery,_by_animal
