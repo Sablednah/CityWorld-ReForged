@@ -1120,6 +1120,31 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
 
 ## Future ideas (parking lot)
 
+- **Vary grass / soil / foliage / trees by BIOME (owner, 2026-07).** Right now the dimension uses a
+  `minecraft:fixed` biome (plains) and CityWorld's per-column biome pushes are discarded
+  (`IGNORE_BIOMES` in `CityWorldChunkGenerator`), so the whole world is one biome — uniform grass and
+  water colour, one tree/cover palette. The win: a **custom `BiomeSource`** driven by CityWorld's own
+  terrain maths (height / temperature / moisture, which the shaper already computes), so grass, water
+  and foliage colour vary and cover/trees can be chosen per biome. This is the deferred P3/P4
+  "custom BiomeSource" item; it's the foundation that makes MODERN look varied and lets the
+  cover/tree facets pick biome-appropriate blocks. Meaty but high-visual-payoff.
+
+- **MODERN "overgrown" look + full 1.21 palette (owner, 2026-07).** Use the whole modern block range in
+  MODERN's providers — and for a decayed/overgrown MODERN, drape **moss carpet, vines, leaf litter,
+  azalea, glow lichen** over ruins and nature (the CoverProvider + the decay path). Rides the
+  per-style settings-profile pattern (`cityworld:modern`) and, ideally, the biome work above.
+
+- **Decay as a probability, not on/off — rare pristine buildings/schematics (owner, 2026-07).**
+  *Partly done (see below).* Instead of a building/schematic being simply decayable or not when decay
+  is on, give a small **global pristine chance** (a building survives intact even in an apocalypse
+  world), overridable per-schematic in its `.yml`. So there's a rare thrill of finding an untouched
+  building. Shipped for schematics: `[terrain] oddsOfPristineBuilding` (default tiny) + a schematic
+  `PristineChance:` yml override, rolled per-building so a multi-chunk schematic agrees with itself.
+  **Still to do: the same pristine roll for regular (non-schematic) buildings** — decay there is woven
+  through ~25 scattered `includeDecayedBuildings` checks in the building lots, so it wants a per-lot
+  `buildingsDecay()` helper (roll pristine once per lot from its position) rather than a blind
+  find-replace.
+
 - **⭐ "Modern" vs "Classic" — a modernization world style, made default (owner's idea, 2026-07).**
   The big one. Rename today's `NORMAL` style to **`CLASSIC`** (it faithfully reproduces the 1.8-era
   look — old blocks, old height feel, no vanilla structures) and add a new **`MODERN`** style that

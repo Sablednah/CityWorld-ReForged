@@ -66,6 +66,14 @@ public class CityWorldSettings {
     public boolean includeDecayedBuildings = false;
 
     /**
+     * When decay is on, the chance a given building/schematic is spared and stays pristine — so a
+     * ruined world still hides the odd intact find. Tiny by default; a schematic's {@code .yml} can
+     * override it per-building via {@code PristineChance}. Rolled once per building (from its origin),
+     * so a multi-chunk building agrees with itself.
+     */
+    public double oddsOfPristineBuilding = CityWorldSettingsData.Terrain.DEFAULT_ODDS_OF_PRISTINE;
+
+    /**
      * Whether the bundled classic schematics (the old zarp catalog) may be dropped into generated
      * cities. Upstream only placed schematics when a WorldEdit-loaded folder existed, so it was
      * effectively off for most players; here the catalog always ships, so this defaults off and is
@@ -250,6 +258,7 @@ public class CityWorldSettings {
         includeDecayedRoads = t.includeDecayedRoads();
         includeDecayedBuildings = t.includeDecayedBuildings();
         includeDecayedNature = t.includeDecayedNature();
+        oddsOfPristineBuilding = t.oddsOfPristineBuilding();
 
         CityWorldSettingsData.Spawns s = data.spawns();
         spawnBeings = s.spawnBeings();
@@ -332,7 +341,7 @@ public class CityWorldSettings {
         CityWorldSettingsData.Terrain terrain = new CityWorldSettingsData.Terrain(
                 includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
                 includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
-                includeDecayedRoads, includeDecayedBuildings, includeDecayedNature);
+                includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, oddsOfPristineBuilding);
         CityWorldSettingsData.Spawns spawns = new CityWorldSettingsData.Spawns(
                 spawnBeings, spawnBaddies, spawnAnimals, spawnVagrants, nameVillagers, showVillagersNames);
         CityWorldSettingsData.Treasures treasures = new CityWorldSettingsData.Treasures(

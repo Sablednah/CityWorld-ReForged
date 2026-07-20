@@ -93,6 +93,7 @@ public final class SettingsDatapack {
         terrain.addProperty("includeDecayedRoads", t.includeDecayedRoads());
         terrain.addProperty("includeDecayedBuildings", t.includeDecayedBuildings());
         terrain.addProperty("includeDecayedNature", t.includeDecayedNature());
+        terrain.addProperty("oddsOfPristineBuilding", t.oddsOfPristineBuilding());
         root.add("terrain", terrain);
 
         CityWorldSettingsData.Spawns s = d.spawns();

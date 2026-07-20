@@ -8,6 +8,7 @@ import me.daddychurchill.CityWorld.Plats.IsolatedLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
+import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 
@@ -88,10 +89,26 @@ public class ClipboardLot extends IsolatedLot {
 		clip.pasteChunk(level, nwX, surfaceLevel(generator), nwZ,
 				chunk.getOriginX(), chunk.getOriginZ(), level.getRandom());
 
-		if (clip.decayable && generator.getSettings().includeDecayedBuildings) {
+		if (clip.decayable && generator.getSettings().includeDecayedBuildings && !isPristine(generator, nwX, nwZ)) {
 			int depth = surfaceLevel(generator) - clip.groundLevelY;
 			destroyLot(generator, depth, depth + clip.sizeY);
 		}
+	}
+
+	/**
+	 * Whether this building is spared from decay and left intact — a rare find in a ruined world. The
+	 * chance is the schematic's own {@code PristineChance} if it set one, else the world's
+	 * {@code oddsOfPristineBuilding}. Rolled once from the building's NW origin (the same value every
+	 * footprint chunk computes), so a multi-chunk building is wholly pristine or wholly decayed, never
+	 * half-and-half.
+	 */
+	private boolean isPristine(CityWorldGenerator generator, int nwX, int nwZ) {
+		double chance = clip.pristineChance >= 0.0 ? clip.pristineChance
+				: generator.getSettings().oddsOfPristineBuilding;
+		if (chance <= 0.0)
+			return false;
+		Odds odds = new Odds(generator.getWorldSeed() + nwX * 341873128712L + nwZ * 132897987541L);
+		return odds.playOdds(chance);
 	}
 
 	/**

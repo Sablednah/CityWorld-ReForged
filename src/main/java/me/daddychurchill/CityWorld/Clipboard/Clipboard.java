@@ -52,6 +52,8 @@ public final class Clipboard {
     public final boolean flipableZ;
     public final double oddsOfAppearance;
     public final boolean decayable;
+    /** Per-schematic override for the world's {@code oddsOfPristineBuilding}; {@code < 0} = use the world's. */
+    public final double pristineChance;
     public final boolean broadcastLocation;
 
     private Clipboard(String name, SchematicFamily family, StructureTemplate template, Meta meta) {
@@ -68,6 +70,7 @@ public final class Clipboard {
         this.flipableZ = meta.flipableZ;
         this.oddsOfAppearance = meta.oddsOfAppearance;
         this.decayable = meta.decayable;
+        this.pristineChance = meta.pristineChance;
         this.broadcastLocation = meta.broadcastLocation;
     }
 
@@ -147,6 +150,7 @@ public final class Clipboard {
         boolean flipableZ = false;
         double oddsOfAppearance = 0.1;
         boolean decayable = true;
+        double pristineChance = -1.0; // < 0 = use the world's oddsOfPristineBuilding
         boolean broadcastLocation = false;
 
         static Meta parse(InputStream in) throws IOException {
@@ -169,6 +173,7 @@ public final class Clipboard {
                             case "FlipableZ" -> m.flipableZ = Boolean.parseBoolean(val);
                             case "OddsOfAppearance" -> m.oddsOfAppearance = clamp01(Double.parseDouble(val));
                             case "Decayable" -> m.decayable = Boolean.parseBoolean(val);
+                            case "PristineChance" -> m.pristineChance = clamp01(Double.parseDouble(val));
                             case "BroadcastLocation" -> m.broadcastLocation = Boolean.parseBoolean(val);
                             default -> { /* ignore unknown keys */ }
                         }

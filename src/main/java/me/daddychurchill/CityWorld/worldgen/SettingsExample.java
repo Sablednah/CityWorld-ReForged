@@ -124,6 +124,11 @@ public final class SettingsExample {
             includeDecayedBuildings   false  Chew ruin-holes into buildings — the "apocalypse" switch.
             includeDecayedNature      false  Drain the seas + desert the world (whole-world ruin mood).
                                              Leave false for ruins on a normal wet, green world.
+            oddsOfPristineBuilding    0.0001 When decay is on, the chance a building/schematic is spared
+                                             and stays intact (a rare find in a ruined world). 0.0001 =
+                                             0.01%. A schematic's .yml can override this per-building
+                                             with  PristineChance: <0..1>  (and Decayable: false means
+                                             never decays). Range 0.0 .. 1.0.
 
             ============================================================================
             spawns  — who turns up, and how often   (odds 0.0 .. 1.0)
