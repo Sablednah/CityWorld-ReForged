@@ -208,15 +208,26 @@ public record CityWorldSettingsData(
         ).apply(i, Treasures::new));
     }
 
-    // --- trees, ground cover, floating subsurface, ruralness -----------------------------------
+    // --- trees, ground cover, floating subsurface, ruralness, building height -------------------
 
+    /**
+     * @param maxBuildingFloors the tallest a building may rise, in floors above street level (4
+     *        blocks each). 20 is CLASSIC's 1.14 default (~Y144); MODERN ships a taller default so
+     *        highrises use the -64..319 headroom. The generator raises the building Y ceiling to fit
+     *        this, clamped to the world's actual ceiling.
+     */
     public record World(
             TreeStyle treeStyle,
             double spawnTrees,
             SubSurfaceStyle subSurfaceStyle,
-            double ruralnessLevel) {
+            double ruralnessLevel,
+            int maxBuildingFloors) {
 
-        public static final World DEFAULT = new World(TreeStyle.NORMAL, Odds.oddsLikely, SubSurfaceStyle.LAND, 0.0);
+        /** CLASSIC's default building-floor cap — the old hardcoded {@code absoluteAbsoluteMaximumFloorsAbove}. */
+        public static final int DEFAULT_MAX_BUILDING_FLOORS = 20;
+
+        public static final World DEFAULT = new World(TreeStyle.NORMAL, Odds.oddsLikely, SubSurfaceStyle.LAND, 0.0,
+                DEFAULT_MAX_BUILDING_FLOORS);
 
         private static final Codec<TreeStyle> TREE_STYLE_CODEC = Codec.STRING.xmap(
                 s -> parseEnum(TreeStyle.class, s, TreeStyle.NORMAL), TreeStyle::name);
@@ -227,7 +238,8 @@ public record CityWorldSettingsData(
                 TREE_STYLE_CODEC.optionalFieldOf("treeStyle", TreeStyle.NORMAL).forGetter(World::treeStyle),
                 Codec.DOUBLE.optionalFieldOf("spawnTrees", Odds.oddsLikely).forGetter(World::spawnTrees),
                 SUBSURFACE_CODEC.optionalFieldOf("subSurfaceStyle", SubSurfaceStyle.LAND).forGetter(World::subSurfaceStyle),
-                Codec.DOUBLE.optionalFieldOf("ruralnessLevel", 0.0).forGetter(World::ruralnessLevel)
+                Codec.DOUBLE.optionalFieldOf("ruralnessLevel", 0.0).forGetter(World::ruralnessLevel),
+                Codec.INT.optionalFieldOf("maxBuildingFloors", DEFAULT_MAX_BUILDING_FLOORS).forGetter(World::maxBuildingFloors)
         ).apply(i, World::new));
     }
 

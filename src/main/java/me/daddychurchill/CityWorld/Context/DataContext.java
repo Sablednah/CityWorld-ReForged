@@ -73,7 +73,8 @@ public abstract class DataContext {
 	private static final int absoluteMinimumFloorsAbove = 5; // shortest tallest building
 	private static final int absoluteAbsoluteMaximumFloorsBelow = 3; // that is as many basements as I personally can
 	// tolerate
-	private static final int absoluteAbsoluteMaximumFloorsAbove = 20; // that is tall enough folks
+	// The tallest-building cap used to be a hardcoded 20 ("tall enough folks"); it is now the
+	// per-world maxBuildingFloors setting (20 for CLASSIC, taller for MODERN). See DataContext ctor.
 	public final int buildingMaximumY;
 	public int maximumFloorsAbove = 2;
 	public int maximumFloorsBelow = 2;
@@ -93,17 +94,21 @@ public abstract class DataContext {
 			torchMat = Material.REDSTONE_TORCH;
 		}
 
-		// where is the ground
-		// NOTE: generator.height is the *terrain* ceiling (256), not the world's (319) — see
-		// CityWorldGenerator.worldMinY. So buildings still cap where they did in 1.14; letting them
-		// use the extra headroom is a deliberate P4 follow-up, not an oversight.
-		buildingMaximumY = Math.min(192 + FudgeFloorsAbove * FloorHeight, generator.height);
+		// How tall may a building get? The floor cap is the per-world maxBuildingFloors setting (20 for
+		// CLASSIC's 1.14 look, taller for MODERN). Raise the building Y ceiling to fit that many floors
+		// plus a little roof headroom, clamped to the world's *real* ceiling (319, not the 256 terrain
+		// ceiling) — so MODERN highrises use the modern headroom while CLASSIC lands exactly where it did.
+		int maxFloors = generator.getSettings().maxBuildingFloors;
+		int roofHeadroom = 2 * FloorHeight;
+		buildingMaximumY = Math.min(
+				generator.streetLevel + (maxFloors + FudgeFloorsAbove) * FloorHeight + roofHeadroom,
+				generator.worldMaxY - 8);
 		absoluteMaximumFloorsBelow = Math.max(
 				Math.min(generator.streetLevel / FloorHeight - FudgeFloorsBelow, absoluteAbsoluteMaximumFloorsBelow),
 				0);
 		absoluteMaximumFloorsAbove = Math
 				.max(Math.min((buildingMaximumY - generator.streetLevel) / FloorHeight - FudgeFloorsAbove,
-						absoluteAbsoluteMaximumFloorsAbove), absoluteMinimumFloorsAbove);
+						maxFloors), absoluteMinimumFloorsAbove);
 
 		// calculate the extremes for this plat
 		maximumFloorsAbove = Math.min(maximumFloorsAbove, absoluteMaximumFloorsAbove);

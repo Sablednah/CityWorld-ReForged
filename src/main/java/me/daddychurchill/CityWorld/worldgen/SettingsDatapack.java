@@ -127,6 +127,7 @@ public final class SettingsDatapack {
         world.addProperty("spawnTrees", w.spawnTrees());
         world.addProperty("subSurfaceStyle", w.subSurfaceStyle().name());
         world.addProperty("ruralnessLevel", w.ruralnessLevel());
+        world.addProperty("maxBuildingFloors", w.maxBuildingFloors());
         root.add("world", world);
 
         CityWorldSettingsData.Radius rad = d.radius();

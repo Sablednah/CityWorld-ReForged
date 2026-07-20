@@ -78,6 +78,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private Chance spawnTrees;
     private SubSurfaceStyle subSurfaceStyle;
     private Chance ruralnessLevel;
+    private int maxBuildingFloors; // carried through untouched for now (no picker yet)
 
     public CityWorldCustomizeScreen(Screen parent, WorldStyle initialStyle, CityWorldSettingsData initial,
             Consumer<Result> onDone) {
@@ -149,6 +150,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         spawnTrees = Chance.nearest(w.spawnTrees());
         subSurfaceStyle = w.subSurfaceStyle();
         ruralnessLevel = Chance.nearest(w.ruralnessLevel());
+        maxBuildingFloors = w.maxBuildingFloors();
     }
 
     @Override
@@ -255,7 +257,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 spawnersInSewers, treasuresInBuildings, oddsOfTreasureInMines.value, oddsOfTreasureInBunkers.value,
                 oddsOfTreasureInSewers.value, oddsOfTreasureInBuildings.value, oddsOfAlcoveInMines.value);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
-                treeStyle, spawnTrees.value, subSurfaceStyle, ruralnessLevel.value);
+                treeStyle, spawnTrees.value, subSurfaceStyle, ruralnessLevel.value, maxBuildingFloors);
         CityWorldSettingsData data = new CityWorldSettingsData(
                 features, terrain, spawns, treasures, world, radius, naming, mobs);
         return new Result(style, data);

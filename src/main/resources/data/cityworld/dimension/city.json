@@ -2,7 +2,7 @@
   "type": "minecraft:overworld",
   "generator": {
     "type": "cityworld:city",
-    "settings": "cityworld:default",
+    "settings": "cityworld:modern",
     "style": "modern",
     "decayed": true,
     "biome_source": {

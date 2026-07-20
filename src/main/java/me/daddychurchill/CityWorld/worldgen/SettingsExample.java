@@ -160,6 +160,12 @@ public final class SettingsExample {
                                         NONE, LAND, CLOUD, LAVA. Only the FLOATING style reads this.
             ruralnessLevel   0.0        Skews the world more rural (more nature, fewer cities).
                                         0.0 = normal; up toward 1.0 = increasingly rural.
+            maxBuildingFloors 20        Tallest a building may rise, in floors (4 blocks each) above
+                                        street level. 20 = the classic 1.8 look (~24 blocks over a
+                                        3-storey base); the MODERN style ships taller. The build Y
+                                        ceiling follows this, clamped to the world's ceiling (319), so
+                                        very high values give skyscrapers that use the full headroom.
+                                        Sensible range 8..60.
 
             ============================================================================
             radius  — where cities may appear   (distances in CHUNKS; 16 blocks each)

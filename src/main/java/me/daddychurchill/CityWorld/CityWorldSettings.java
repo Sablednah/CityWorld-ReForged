@@ -100,6 +100,13 @@ public class CityWorldSettings {
     /** How rural a world skews; folded into {@code PlatMap.getNaturePercent}. */
     public double ruralnessLevel = 0.0;
 
+    /**
+     * Tallest a building may rise, in floors above street level (was the hardcoded
+     * {@code absoluteAbsoluteMaximumFloorsAbove}). 20 is CLASSIC's 1.14 look; MODERN ships taller.
+     * {@code DataContext} raises the building Y ceiling to fit this, clamped to the world ceiling.
+     */
+    public int maxBuildingFloors = CityWorldSettingsData.World.DEFAULT_MAX_BUILDING_FLOORS;
+
     /** Back on at upstream's default now that {@code RoundaboutCenterLot} is ported (wave 2b). */
     public boolean includeRoundabouts = true;
 
@@ -271,6 +278,7 @@ public class CityWorldSettings {
         spawnTrees = w.spawnTrees();
         subSurfaceStyle = w.subSurfaceStyle();
         ruralnessLevel = w.ruralnessLevel();
+        maxBuildingFloors = w.maxBuildingFloors();
 
         CityWorldSettingsData.Radius d = data.radius();
         centerPointOfChunkRadiusX = d.centerPointOfChunkRadiusX();
@@ -332,7 +340,7 @@ public class CityWorldSettings {
                 spawnersInSewers, treasuresInBuildings, oddsOfTreasureInMines, oddsOfTreasureInBunkers,
                 oddsOfTreasureInSewers, oddsOfTreasureInBuildings, oddsOfAlcoveInMines);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
-                treeStyle, spawnTrees, subSurfaceStyle, ruralnessLevel);
+                treeStyle, spawnTrees, subSurfaceStyle, ruralnessLevel, maxBuildingFloors);
         CityWorldSettingsData.Radius radius = new CityWorldSettingsData.Radius(
                 centerPointOfChunkRadiusX, centerPointOfChunkRadiusZ, constructChunkRadius, roadChunkRadius,
                 cityChunkRadius, buildOutsideRadius, minInbetweenChunkDistanceOfCities);
