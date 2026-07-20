@@ -10,11 +10,13 @@
   "generator.cityworld.metro": "CityWorld: Metro",
   "generator.cityworld.sparse": "CityWorld: Sparse",
   "generator.cityworld.destroyed": "CityWorld: Destroyed",
+  "generator.cityworld.classic": "CityWorld: Classic",
 
   "cityworld.customize.title": "CityWorld Settings",
   "cityworld.customize.style": "World Style",
 
   "cityworld.style.classic": "Classic",
+  "cityworld.style.modern": "Modern",
   "cityworld.style.floating": "Floating",
   "cityworld.style.flooded": "Flooded",
   "cityworld.style.snowdunes": "Snow Dunes",

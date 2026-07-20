@@ -71,7 +71,8 @@ public class CityWorldGenerator {
         METRO, // just buildings, no nature
         SPARSE, // a world of cities but away from each other
         DESTROYED, // normal landscape with destroyed cities
-        CLASSIC // the faithful 1.8-era look — was NORMAL; the fieldless/legacy default
+        CLASSIC, // the faithful 1.8-era look — was NORMAL; the fieldless/legacy default
+        MODERN // uses modern MC — tall builds, modern blocks/ores/trees/ice; the default for new worlds
     }
 
     /**

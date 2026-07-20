@@ -437,6 +437,7 @@ public class CityWorldSettings {
         // anything commented out is up for user modification
         switch (style) {
         case CLASSIC:
+        case MODERN: // skeleton: same as CLASSIC for now; its modern facets land as later steps
         case METRO:
             subSurfaceStyle = SubSurfaceStyle.NONE; // DIFFERENT
             break;

@@ -5,7 +5,7 @@
       "generator": {
         "type": "cityworld:city",
         "settings": "cityworld:default",
-        "style": "modern",
+        "style": "classic",
         "biome_source": {
           "type": "minecraft:fixed",
           "biome": "minecraft:plains"
