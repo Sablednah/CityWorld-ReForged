@@ -61,6 +61,10 @@ public class CityWorldGenerator {
      * {@code ShapeProvider} variants (PORTING.md P8 re-enables them).
      */
     public enum WorldStyle {
+        // Order matters: the single-player Customize style picker cycles in declaration order, and the
+        // two headline styles lead. MODERN is the default for new worlds; CLASSIC is the 1.8-era look.
+        MODERN, // uses modern MC — tall builds, modern blocks/ores/trees/ice; the default for new worlds
+        CLASSIC, // the faithful 1.8-era look — was NORMAL; the fieldless/legacy default
         FLOATING, // very low terrain with floating houses and cities
         FLOODED, // traditional terrain and cities but with raised sea level
         SNOWDUNES, // traditional terrain and cities but covered with snow dunes
@@ -70,9 +74,7 @@ public class CityWorldGenerator {
         NATURE, // just nature, no constructs anywhere
         METRO, // just buildings, no nature
         SPARSE, // a world of cities but away from each other
-        DESTROYED, // normal landscape with destroyed cities
-        CLASSIC, // the faithful 1.8-era look — was NORMAL; the fieldless/legacy default
-        MODERN // uses modern MC — tall builds, modern blocks/ores/trees/ice; the default for new worlds
+        DESTROYED // normal landscape with destroyed cities
     }
 
     /**
