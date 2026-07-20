@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator.WorldStyle;
 import me.daddychurchill.CityWorld.CityWorldMod;
+import me.daddychurchill.CityWorld.worldgen.CityWorldBiomeSource;
 import me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator;
 import me.daddychurchill.CityWorld.worldgen.CityWorldRegistries;
 import me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData;
@@ -15,9 +16,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
-import net.minecraft.world.level.biome.FixedBiomeSource;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.presets.WorldPreset;
 import net.neoforged.bus.api.IEventBus;
@@ -84,8 +83,21 @@ public final class CityWorldClient {
 
     private static ChunkGenerator buildGenerator(RegistryAccess.Frozen registries,
             CityWorldCustomizeScreen.Result result) {
-        Holder<Biome> plains = registries.lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.PLAINS);
-        // NORMAL is the codec's default, so leave "style" absent for it and set it otherwise.
+        // A Customize-created world must get the SAME terrain-driven biomes the presets ship, not a
+        // flat plains — otherwise opening Customize would silently strip the varied biomes. Build the
+        // CityWorldBiomeSource here with the standard palette (mirrors the biome_source in the preset
+        // JSON); a MODERN-specific palette can come later.
+        var biomeReg = registries.lookupOrThrow(Registries.BIOME);
+        CityWorldBiomeSource biomeSource = new CityWorldBiomeSource(
+                biomeReg.getOrThrow(Biomes.DEEP_OCEAN),
+                biomeReg.getOrThrow(Biomes.OCEAN),
+                biomeReg.getOrThrow(Biomes.BEACH),
+                biomeReg.getOrThrow(Biomes.PLAINS),
+                biomeReg.getOrThrow(Biomes.FOREST),
+                biomeReg.getOrThrow(Biomes.TAIGA),
+                biomeReg.getOrThrow(Biomes.SNOWY_SLOPES),
+                biomeReg.getOrThrow(Biomes.DESERT));
+        // CLASSIC is the codec's default, so leave "style" absent for it and set it otherwise.
         Optional<String> styleField = result.style() == WorldStyle.CLASSIC
                 ? Optional.empty()
                 : Optional.of(result.style().name().toLowerCase(Locale.ROOT));
@@ -93,7 +105,6 @@ public final class CityWorldClient {
         // settings, needing no datapack. RegistryFileCodec encodes a direct holder inline into level.dat.
         Optional<Holder<CityWorldSettingsData>> settingsField =
                 Optional.of(Holder.direct(result.settings()));
-        return new CityWorldChunkGenerator(new FixedBiomeSource(plains), Optional.empty(), styleField,
-                settingsField);
+        return new CityWorldChunkGenerator(biomeSource, Optional.empty(), styleField, settingsField);
     }
 }
