@@ -227,7 +227,7 @@ public abstract class ShapeProvider extends Provider {
 			break;
 		case DESTROYED:
 		case SPARSE:
-		case NORMAL:
+		case CLASSIC:
 			provider = new ShapeProvider_Normal(generator, odds);
 			break;
 		}

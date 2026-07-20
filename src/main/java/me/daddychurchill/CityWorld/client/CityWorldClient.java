@@ -56,7 +56,7 @@ public final class CityWorldClient {
     private static WorldStyle currentStyle(WorldCreationContext context) {
         if (context.selectedDimensions().overworld() instanceof CityWorldChunkGenerator cw)
             return cw.resolvedStyle();
-        return WorldStyle.NORMAL;
+        return WorldStyle.CLASSIC;
     }
 
     /** Reads the settings off the selected generator so the screen opens on the current values. */
@@ -76,7 +76,7 @@ public final class CityWorldClient {
             CityWorldCustomizeScreen.Result result) {
         Holder<Biome> plains = registries.lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.PLAINS);
         // NORMAL is the codec's default, so leave "style" absent for it and set it otherwise.
-        Optional<String> styleField = result.style() == WorldStyle.NORMAL
+        Optional<String> styleField = result.style() == WorldStyle.CLASSIC
                 ? Optional.empty()
                 : Optional.of(result.style().name().toLowerCase(Locale.ROOT));
         // Bake the edited settings in as an INLINE (direct) holder — the world carries its own tuned

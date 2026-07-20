@@ -165,7 +165,7 @@ public class CityWorldSettings {
     private boolean checkMinInbetweenChunkDistanceOfCities = false;
 
     public CityWorldSettings() {
-        this(WorldStyle.NORMAL, java.util.Optional.empty(), CityWorldSettingsData.DEFAULT);
+        this(WorldStyle.CLASSIC, java.util.Optional.empty(), CityWorldSettingsData.DEFAULT);
     }
 
     /**
@@ -430,13 +430,13 @@ public class CityWorldSettings {
     /**
      * Applies a world style's fixed overrides on top of the loaded defaults. A verbatim port of
      * upstream's method: each style forces a handful of toggles (and {@code SPARSE} the placement
-     * radii). {@code NORMAL} only pins the subsurface style. Comments preserved.
+     * radii). {@code CLASSIC} only pins the subsurface style. Comments preserved.
      */
     private void validateSettingsAgainstWorldStyle(WorldStyle style) {
         // now get the right defaults for the world style
         // anything commented out is up for user modification
         switch (style) {
-        case NORMAL:
+        case CLASSIC:
         case METRO:
             subSurfaceStyle = SubSurfaceStyle.NONE; // DIFFERENT
             break;

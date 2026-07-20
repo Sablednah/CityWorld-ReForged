@@ -125,7 +125,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     /**
      * The world style, straight from the generator's JSON ({@code "style": "flooded"}).
      *
-     * <p>Absent means {@link CityWorldGenerator.WorldStyle#NORMAL}. Kept as the raw string (not a
+     * <p>Absent means {@link CityWorldGenerator.WorldStyle#CLASSIC}. Kept as the raw string (not a
      * parsed {@code WorldStyle}) purely so the codec round-trips exactly what was written; it is
      * resolved to an enum in {@link #context}. This is what a per-style world preset sets, what the
      * single-player Customize screen writes, and — eventually — what a per-world server config will

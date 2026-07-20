@@ -71,23 +71,29 @@ public class CityWorldGenerator {
         METRO, // just buildings, no nature
         SPARSE, // a world of cities but away from each other
         DESTROYED, // normal landscape with destroyed cities
-        NORMAL
+        CLASSIC // the faithful 1.8-era look — was NORMAL; the fieldless/legacy default
     }
 
     /**
      * Resolves the generator's {@code "style"} JSON field (a case-insensitive style name, or empty)
-     * to a {@link WorldStyle}. Absent or unrecognised falls back to {@link WorldStyle#NORMAL} —
+     * to a {@link WorldStyle}. Absent or unrecognised falls back to {@link WorldStyle#CLASSIC} —
      * upstream's {@code validateStyle} did the same, so a typo yields a plain world rather than a
      * crash. This is the one place the raw string becomes an enum.
+     *
+     * <p>{@code "normal"} is accepted as a legacy alias for {@code CLASSIC} (the style was renamed when
+     * the MODERN style landed), so worlds and presets written before the rename still resolve cleanly.
      */
     public static WorldStyle parseStyle(java.util.Optional<String> name) {
         if (name.isEmpty())
-            return WorldStyle.NORMAL;
+            return WorldStyle.CLASSIC;
+        String raw = name.get().trim().toUpperCase(java.util.Locale.ROOT);
+        if (raw.equals("NORMAL"))
+            return WorldStyle.CLASSIC; // legacy alias
         try {
-            return WorldStyle.valueOf(name.get().trim().toUpperCase(java.util.Locale.ROOT));
+            return WorldStyle.valueOf(raw);
         } catch (IllegalArgumentException e) {
-            LOGGER.warn("CityWorld: unknown world style \"{}\" — falling back to NORMAL", name.get());
-            return WorldStyle.NORMAL;
+            LOGGER.warn("CityWorld: unknown world style \"{}\" — falling back to CLASSIC", name.get());
+            return WorldStyle.CLASSIC;
         }
     }
 
