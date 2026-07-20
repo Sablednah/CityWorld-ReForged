@@ -28,7 +28,7 @@ import net.minecraft.world.level.biome.Climate;
  * generator holds the context) and only reaches back here for {@link #classify} and the palette. This
  * source's own {@link #getNoiseBiome} is a plains fallback for the rare off-chunk query.
  */
-public class CityWorldBiomeSource extends BiomeSource {
+public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes {
 
     public static final MapCodec<CityWorldBiomeSource> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             Biome.CODEC.fieldOf("deep_ocean").forGetter(s -> s.deepOcean),
@@ -92,7 +92,9 @@ public class CityWorldBiomeSource extends BiomeSource {
      * band and forest / taiga / snowy peaks up the slopes. A nature-decayed world is dry (desert)
      * throughout, exactly as the shaper forced.
      */
-    public Holder<Biome> classify(CityWorldGenerator g, int terrainY, boolean decayedNature) {
+    @Override
+    public Holder<Biome> classify(CityWorldGenerator g, int terrainY, double temperature, double humidity,
+            boolean decayedNature) {
         if (decayedNature)
             return dry;
         if (terrainY < g.deepseaLevel)

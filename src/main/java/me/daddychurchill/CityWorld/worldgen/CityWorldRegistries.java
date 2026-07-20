@@ -48,7 +48,8 @@ public final class CityWorldRegistries {
 
     static {
         CHUNK_GENERATORS.register("city", () -> CityWorldChunkGenerator.CODEC);
-        BIOME_SOURCES.register("terrain", () -> CityWorldBiomeSource.CODEC);
+        BIOME_SOURCES.register("terrain", () -> CityWorldBiomeSource.CODEC);   // CLASSIC — elevation only
+        BIOME_SOURCES.register("climate", () -> CityWorldClimateBiomeSource.CODEC); // MODERN — elevation × climate
     }
 
     /** Wire the deferred registers and datapack-registry listener onto the mod event bus. */

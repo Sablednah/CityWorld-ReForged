@@ -288,19 +288,23 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     @Override
     public CompletableFuture<ChunkAccess> createBiomes(RandomState randomState, Blender blender,
             StructureManager structureManager, ChunkAccess chunk) {
-        if (!(this.getBiomeSource() instanceof CityWorldBiomeSource source))
+        if (!(this.getBiomeSource() instanceof CityWorldBiomes source))
             return super.createBiomes(randomState, blender, structureManager, chunk);
 
         return CompletableFuture.supplyAsync(() -> {
             CityWorldGenerator context = context(chunk);
             boolean decayedNature = context.getSettings().includeDecayedNature;
             // Biome is per column (2D), so classify once per (quartX, quartZ) and reuse down the column.
+            // CLASSIC's source ignores the climate; MODERN's crosses it with elevation.
             java.util.Map<Long, Holder<Biome>> perColumn = new java.util.HashMap<>();
             BiomeResolver resolver = (qx, qy, qz, sampler) -> perColumn.computeIfAbsent(
                     ((long) qx << 32) | (qz & 0xFFFFFFFFL),
-                    key -> source.classify(context,
-                            context.shapeProvider.findBlockY(context, QuartPos.toBlock(qx), QuartPos.toBlock(qz)),
-                            decayedNature));
+                    key -> {
+                        int bx = QuartPos.toBlock(qx), bz = QuartPos.toBlock(qz);
+                        int h = context.shapeProvider.findBlockY(context, bx, bz);
+                        return source.classify(context, h, context.getTemperature(bx, bz),
+                                context.getHumidity(bx, bz), decayedNature);
+                    });
             chunk.fillBiomesFromNoise(resolver, randomState.sampler());
             return chunk;
         }, Util.backgroundExecutor().forName("cityworld_biomes"));

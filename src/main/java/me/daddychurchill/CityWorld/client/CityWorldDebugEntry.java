@@ -17,8 +17,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -31,7 +29,6 @@ import org.jspecify.annotations.Nullable;
  * down — and reads only thread-safe, already-planned state (the platmap the player stands in is
  * planned by the time its chunk exists).
  */
-@OnlyIn(Dist.CLIENT)
 public class CityWorldDebugEntry implements DebugScreenEntry {
 
     @Override

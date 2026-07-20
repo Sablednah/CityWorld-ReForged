@@ -6,6 +6,7 @@ import java.util.Optional;
 import me.daddychurchill.CityWorld.CityWorldGenerator.WorldStyle;
 import me.daddychurchill.CityWorld.CityWorldMod;
 import me.daddychurchill.CityWorld.worldgen.CityWorldBiomeSource;
+import me.daddychurchill.CityWorld.worldgen.CityWorldClimateBiomeSource;
 import me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator;
 import me.daddychurchill.CityWorld.worldgen.CityWorldRegistries;
 import me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData;
@@ -84,19 +85,20 @@ public final class CityWorldClient {
     private static ChunkGenerator buildGenerator(RegistryAccess.Frozen registries,
             CityWorldCustomizeScreen.Result result) {
         // A Customize-created world must get the SAME terrain-driven biomes the presets ship, not a
-        // flat plains — otherwise opening Customize would silently strip the varied biomes. Build the
-        // CityWorldBiomeSource here with the standard palette (mirrors the biome_source in the preset
-        // JSON); a MODERN-specific palette can come later.
+        // flat plains. MODERN uses the full climate source (matches the city preset); the others use
+        // the elevation-only source with the standard palette (matches the classic preset).
         var biomeReg = registries.lookupOrThrow(Registries.BIOME);
-        CityWorldBiomeSource biomeSource = new CityWorldBiomeSource(
-                biomeReg.getOrThrow(Biomes.DEEP_OCEAN),
-                biomeReg.getOrThrow(Biomes.OCEAN),
-                biomeReg.getOrThrow(Biomes.BEACH),
-                biomeReg.getOrThrow(Biomes.PLAINS),
-                biomeReg.getOrThrow(Biomes.FOREST),
-                biomeReg.getOrThrow(Biomes.TAIGA),
-                biomeReg.getOrThrow(Biomes.SNOWY_SLOPES),
-                biomeReg.getOrThrow(Biomes.DESERT));
+        net.minecraft.world.level.biome.BiomeSource biomeSource = result.style() == WorldStyle.MODERN
+                ? new CityWorldClimateBiomeSource(biomeReg)
+                : new CityWorldBiomeSource(
+                        biomeReg.getOrThrow(Biomes.DEEP_OCEAN),
+                        biomeReg.getOrThrow(Biomes.OCEAN),
+                        biomeReg.getOrThrow(Biomes.BEACH),
+                        biomeReg.getOrThrow(Biomes.PLAINS),
+                        biomeReg.getOrThrow(Biomes.FOREST),
+                        biomeReg.getOrThrow(Biomes.TAIGA),
+                        biomeReg.getOrThrow(Biomes.SNOWY_SLOPES),
+                        biomeReg.getOrThrow(Biomes.DESERT));
         // CLASSIC is the codec's default, so leave "style" absent for it and set it otherwise.
         Optional<String> styleField = result.style() == WorldStyle.CLASSIC
                 ? Optional.empty()

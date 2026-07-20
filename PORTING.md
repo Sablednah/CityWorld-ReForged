@@ -1128,10 +1128,25 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
   grass, water and foliage colour and biome mobs now follow the land (verified: ocean below sea, beach
   at the waterline, plains→forest→taiga→snowy up the height bands). The palette lives in the
   biome-source JSON, so CLASSIC and MODERN (and each style) can use different biomes for the same band.
-  Wired into the city/classic presets + the `cityworld:city` dimension so far; the other style presets
-  still use a fixed biome (their terrain is unusual — do them per-style as needed). **Still to build
-  on this:** picking *trees and ground cover per biome* (the tree/cover facets), and giving MODERN a
-  distinctly modern palette (cherry grove, groves, jagged peaks).
+  Wired into the classic preset; the other style presets still use a fixed biome (their terrain is
+  unusual — do them per-style as needed).
+
+  **MODERN climate biomes done (2026-07):** `CityWorldClimateBiomeSource` (`cityworld:climate`) crosses
+  CityWorld's elevation with a slow temperature+humidity field (`CityWorldGenerator.getTemperature/
+  getHumidity`, seeded off the world) and a matrix maps the pair to the **full overworld biome spread**
+  — deserts/savannas warm-dry, jungle/swamp/mangrove warm-wet, snowy/ice-spikes cold, cherry-grove/
+  dark-forest temperate hills, badlands/windswept/old-growth up high, warm→frozen oceans by latitude.
+  Both sources share the elevation bands via the `CityWorldBiomes` interface, driven uniformly by
+  `createBiomes` (CLASSIC ignores the climate). The `cityworld:city` preset + dimension + the Customize
+  MODERN path use it; verified: **36 distinct biomes** in one 65×65 area, temp/humid span 0..1.
+  **Still to build on this:** per-biome *trees and ground cover* (the tree/cover facets) — right now the
+  biomes are correct (colour/mobs) but CityWorld's own trees/cover don't vary by biome yet. Gaps the
+  matrix can't place from terrain (mushroom fields, cave biomes, deep dark) → the "bio-dome" set-piece.
+
+- **"Zoo" / "Bio Dome" lot to cover biome-block gaps (owner, 2026-07).** If MODERN can't get *every*
+  naturally-spawning vanilla block to appear in the wild, add a cheeky special lot — a zoo or botanical
+  bio-dome — that showcases the stragglers (rare biome blocks, plants, spawn eggs' mobs) in one build.
+  A fun catch-all and a landmark. Rides the NatureContext set-piece machinery.
 
 - **MODERN "overgrown" look + full 1.21 palette (owner, 2026-07).** Use the whole modern block range in
   MODERN's providers — and for a decayed/overgrown MODERN, drape **moss carpet, vines, leaf litter,

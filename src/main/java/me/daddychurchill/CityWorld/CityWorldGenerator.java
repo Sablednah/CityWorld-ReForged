@@ -147,6 +147,10 @@ public class CityWorldGenerator {
     public StructureOnGroundProvider structureOnGroundProvider;
     public TreeProvider treeProvider;
 
+    /** The MODERN biome source's horizontal climate axes; see the ctor and {@link #getTemperature}. */
+    private final me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator temperatureShape;
+    private final me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator humidityShape;
+
     private final CityWorldSettings settings;
 
     /** Shared identity for every paved road, so they all count as connected to each other. */
@@ -233,6 +237,15 @@ public class CityWorldGenerator {
         structureInAirProvider = StructureInAirProvider.loadProvider(this);
         structureOnGroundProvider = StructureOnGroundProvider.loadProvider(this);
 
+        // Slow, large-region temperature/humidity fields — the horizontal climate axis the MODERN
+        // biome source lays across CityWorld's elevation, so warm/dry vs cool/wet regions pick
+        // different biomes. Seeded off the world (independent of terrain) so climate and terrain don't
+        // correlate; scale set for biome-sized (~hundreds of blocks) patches.
+        temperatureShape = new me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator(worldSeed + 71, 2);
+        temperatureShape.setScale(0.0035);
+        humidityShape = new me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator(worldSeed + 137, 2);
+        humidityShape.setScale(0.0040);
+
         // Fixed per world, so every road shares one identity. Derived straight from the seed rather
         // than from a running RNG — see getConnectionKey.
         connectedKeyForPavedRoads = new Odds(worldSeed + 101).getRandomLong();
@@ -257,6 +270,24 @@ public class CityWorldGenerator {
 
     public long getWorldSeed() {
         return worldSeed;
+    }
+
+    /**
+     * The MODERN biome climate at a column: temperature (and {@link #getHumidity humidity}) as
+     * {@code 0.0} (cold / dry) .. {@code 1.0} (hot / wet). A slow, large-region field seeded off the
+     * world and independent of terrain, so the biome source can lay warm/cool and wet/dry regions
+     * across the elevation bands.
+     */
+    public double getTemperature(int x, int z) {
+        return climate01(temperatureShape.noise(x, z, 0.5, 0.8));
+    }
+
+    public double getHumidity(int x, int z) {
+        return climate01(humidityShape.noise(x, z, 0.5, 0.8));
+    }
+
+    private static double climate01(double noise) {
+        return Math.max(0.0, Math.min(1.0, (noise + 1.0) / 2.0));
     }
 
     /**
