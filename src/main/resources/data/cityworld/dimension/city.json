@@ -6,8 +6,15 @@
     "style": "modern",
     "decayed": true,
     "biome_source": {
-      "type": "minecraft:fixed",
-      "biome": "minecraft:plains"
+      "type": "cityworld:terrain",
+      "deep_ocean": "minecraft:deep_ocean",
+      "ocean": "minecraft:ocean",
+      "beach": "minecraft:beach",
+      "low": "minecraft:plains",
+      "mid": "minecraft:forest",
+      "high": "minecraft:taiga",
+      "peak": "minecraft:snowy_slopes",
+      "dry": "minecraft:desert"
     }
   }
 }

@@ -8,6 +8,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DataPackRegistryEvent;
@@ -33,6 +34,10 @@ public final class CityWorldRegistries {
     public static final DeferredRegister<MapCodec<? extends ChunkGenerator>> CHUNK_GENERATORS =
             DeferredRegister.create(Registries.CHUNK_GENERATOR, CityWorldMod.MODID);
 
+    /** The terrain-driven biome source ({@code cityworld:terrain}) referenced by the dimension/preset JSON. */
+    public static final DeferredRegister<MapCodec<? extends BiomeSource>> BIOME_SOURCES =
+            DeferredRegister.create(Registries.BIOME_SOURCE, CityWorldMod.MODID);
+
     /** Root key of the per-world settings datapack registry. */
     public static final ResourceKey<Registry<CityWorldSettingsData>> WORLD_SETTINGS =
             ResourceKey.createRegistryKey(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "world_settings"));
@@ -43,11 +48,13 @@ public final class CityWorldRegistries {
 
     static {
         CHUNK_GENERATORS.register("city", () -> CityWorldChunkGenerator.CODEC);
+        BIOME_SOURCES.register("terrain", () -> CityWorldBiomeSource.CODEC);
     }
 
     /** Wire the deferred registers and datapack-registry listener onto the mod event bus. */
     public static void register(IEventBus modEventBus) {
         CHUNK_GENERATORS.register(modEventBus);
+        BIOME_SOURCES.register(modEventBus);
         modEventBus.addListener(CityWorldRegistries::onNewDataPackRegistry);
     }
 

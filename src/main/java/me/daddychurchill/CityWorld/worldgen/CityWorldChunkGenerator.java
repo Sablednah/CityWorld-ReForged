@@ -18,9 +18,11 @@ import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.compat.BiomeGrid;
 import me.daddychurchill.CityWorld.compat.Material;
 
+import net.minecraft.util.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.QuartPos;
 import net.minecraft.resources.RegistryFileCodec;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.ChunkPos;
@@ -28,7 +30,9 @@ import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
+import net.minecraft.world.level.biome.BiomeResolver;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -229,11 +233,12 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     /**
      * Biome sink for the shaper.
      *
-     * <p>CityWorld pushes a biome per column while it shapes; modern worldgen pulls them from a
-     * {@code BiomeSource} instead, and the dimension currently declares a fixed one. So the columns
-     * are dropped on the floor for now — terrain is unaffected, since nothing in the shaper reads
-     * back what it wrote. Replacing this with a real {@code BiomeSource} driven by the same maths is
-     * P4 work; see {@code compat/BiomeGrid}.
+     * <p>CityWorld pushes a biome per column while it shapes, but modern worldgen fills biomes in a
+     * <em>separate</em> pass ({@link #createBiomes}) that runs before terrain, so this sink drops the
+     * shaper's columns. That is no longer a loss: {@link #createBiomes} now reproduces the same
+     * height-band classification against a {@link CityWorldBiomeSource}, so grass/water/foliage
+     * colour and biome mobs vary with the land. The shaper's own biome push is kept only because
+     * removing it would touch every {@code ShapeProvider}.
      */
     private static final BiomeGrid IGNORE_BIOMES = (x, z, biome) -> {
     };
@@ -267,6 +272,38 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     public void applyCarvers(WorldGenRegion region, long seed, RandomState randomState,
             BiomeManager biomeManager, StructureManager structureManager, ChunkAccess chunk) {
         // No vanilla carvers (caves/ravines) — CityWorld carves its own mines/sewers.
+    }
+
+    /**
+     * Fills the chunk's biomes from CityWorld's own terrain instead of the flat plains a fixed source
+     * would give — ocean in the deeps, beaches at the waterline, forest/hills/snowy peaks up the
+     * mountains — so grass, water and foliage colour follow the land. The classification lives in
+     * {@link CityWorldBiomeSource#classify} (and its configurable palette); the seeded terrain height
+     * only the generator has, so it drives it here. Runs before {@link #fillFromNoise}, but the shaper
+     * is deterministic, so {@code findBlockY} agrees with what the terrain pass will build.
+     *
+     * <p>If the dimension isn't using a {@link CityWorldBiomeSource} (e.g. a plain fixed source), this
+     * falls back to vanilla's behaviour.
+     */
+    @Override
+    public CompletableFuture<ChunkAccess> createBiomes(RandomState randomState, Blender blender,
+            StructureManager structureManager, ChunkAccess chunk) {
+        if (!(this.getBiomeSource() instanceof CityWorldBiomeSource source))
+            return super.createBiomes(randomState, blender, structureManager, chunk);
+
+        return CompletableFuture.supplyAsync(() -> {
+            CityWorldGenerator context = context(chunk);
+            boolean decayedNature = context.getSettings().includeDecayedNature;
+            // Biome is per column (2D), so classify once per (quartX, quartZ) and reuse down the column.
+            java.util.Map<Long, Holder<Biome>> perColumn = new java.util.HashMap<>();
+            BiomeResolver resolver = (qx, qy, qz, sampler) -> perColumn.computeIfAbsent(
+                    ((long) qx << 32) | (qz & 0xFFFFFFFFL),
+                    key -> source.classify(context,
+                            context.shapeProvider.findBlockY(context, QuartPos.toBlock(qx), QuartPos.toBlock(qz)),
+                            decayedNature));
+            chunk.fillBiomesFromNoise(resolver, randomState.sampler());
+            return chunk;
+        }, Util.backgroundExecutor().forName("cityworld_biomes"));
     }
 
     /**

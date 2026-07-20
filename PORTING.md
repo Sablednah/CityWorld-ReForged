@@ -1120,14 +1120,18 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
 
 ## Future ideas (parking lot)
 
-- **Vary grass / soil / foliage / trees by BIOME (owner, 2026-07).** Right now the dimension uses a
-  `minecraft:fixed` biome (plains) and CityWorld's per-column biome pushes are discarded
-  (`IGNORE_BIOMES` in `CityWorldChunkGenerator`), so the whole world is one biome — uniform grass and
-  water colour, one tree/cover palette. The win: a **custom `BiomeSource`** driven by CityWorld's own
-  terrain maths (height / temperature / moisture, which the shaper already computes), so grass, water
-  and foliage colour vary and cover/trees can be chosen per biome. This is the deferred P3/P4
-  "custom BiomeSource" item; it's the foundation that makes MODERN look varied and lets the
-  cover/tree facets pick biome-appropriate blocks. Meaty but high-visual-payoff.
+- ~~**Vary grass / soil / foliage / trees by BIOME (owner, 2026-07).**~~ **Done (2026-07) for the
+  colour/terrain half.** `CityWorldBiomeSource` (registered `cityworld:terrain`) carries a configurable
+  8-biome palette keyed to CityWorld's height bands, and `CityWorldChunkGenerator.createBiomes` fills
+  each column by classifying its deterministic terrain height (the same bands the shaper used) — deep
+  ocean / ocean / beach / low / mid / high / peak, plus a dry biome for nature-decayed worlds. So
+  grass, water and foliage colour and biome mobs now follow the land (verified: ocean below sea, beach
+  at the waterline, plains→forest→taiga→snowy up the height bands). The palette lives in the
+  biome-source JSON, so CLASSIC and MODERN (and each style) can use different biomes for the same band.
+  Wired into the city/classic presets + the `cityworld:city` dimension so far; the other style presets
+  still use a fixed biome (their terrain is unusual — do them per-style as needed). **Still to build
+  on this:** picking *trees and ground cover per biome* (the tree/cover facets), and giving MODERN a
+  distinctly modern palette (cherry grove, groves, jagged peaks).
 
 - **MODERN "overgrown" look + full 1.21 palette (owner, 2026-07).** Use the whole modern block range in
   MODERN's providers — and for a decayed/overgrown MODERN, drape **moss carpet, vines, leaf litter,
