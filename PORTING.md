@@ -1139,9 +1139,16 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
   Both sources share the elevation bands via the `CityWorldBiomes` interface, driven uniformly by
   `createBiomes` (CLASSIC ignores the climate). The `cityworld:city` preset + dimension + the Customize
   MODERN path use it; verified: **36 distinct biomes** in one 65×65 area, temp/humid span 0..1.
-  **Still to build on this:** per-biome *trees and ground cover* (the tree/cover facets) — right now the
-  biomes are correct (colour/mobs) but CityWorld's own trees/cover don't vary by biome yet. Gaps the
-  matrix can't place from terrain (mushroom fields, cave biomes, deep dark) → the "bio-dome" set-piece.
+  **Cover — hybrid, trial (2026-07):** owner's call — CityWorld's own cover in the built areas, vanilla
+  wild decoration on the nature lots. Since each chunk is one lot, `applyBiomeDecoration` calls
+  {@code super.applyBiomeDecoration} (vanilla biome features) after CityWorld's pass, gated on
+  {@code lot.style == NATURE} and {@code MODERN}. Verified: 841 chunks force-loaded, 0 failures, and
+  the nature lots grow biome-appropriate vanilla vegetation — acacia/cherry/dark-oak/jungle/mangrove/
+  spruce/birch trees, bamboo, a full coral reef + seagrass in warm oceans, mushrooms. **Open (owner to
+  eyeball):** CityWorld's nature lots still place their own cover too, so wild forests may read *dense*
+  (CityWorld trees + vanilla trees); if so, suppress CityWorld's nature cover on MODERN nature lots so
+  vanilla is the sole wild decorator. Gaps vanilla can't place from terrain (mushroom fields, cave
+  biomes, deep dark) → the "bio-dome" set-piece. City-area cover (CityWorld's) is unchanged.
 
 - **"Zoo" / "Bio Dome" lot to cover biome-block gaps (owner, 2026-07).** If MODERN can't get *every*
   naturally-spawning vanilla block to appear in the wild, add a cheeky special lot — a zoo or botanical

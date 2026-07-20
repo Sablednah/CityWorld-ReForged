@@ -366,6 +366,18 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         } finally {
             context.endDecoration();
         }
+
+        // MODERN hybrid (trial): let vanilla decorate the WILD chunks — biome-appropriate trees,
+        // flowers, coral, sugar cane, etc. for the biome CityWorld assigned — while city/road/structure
+        // chunks stay wholly CityWorld-owned (no super). Each chunk is one lot, so a single NATURE-lot
+        // check gates it; runs after CityWorld's own pass so vanilla's features sit on the finished
+        // terrain. Vanilla's decoration respects the WorldGenRegion radius, so top risk #2 is its own
+        // problem here, not ours.
+        if (context.worldStyle == CityWorldGenerator.WorldStyle.MODERN) {
+            me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x, pos.z);
+            if (lot != null && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE)
+                super.applyBiomeDecoration(level, chunk, structureManager);
+        }
     }
 
     @Override
