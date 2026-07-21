@@ -42,13 +42,13 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
             Biomes.FROZEN_OCEAN, Biomes.COLD_OCEAN, Biomes.OCEAN, Biomes.LUKEWARM_OCEAN, Biomes.WARM_OCEAN,
             Biomes.BEACH, Biomes.SNOWY_BEACH, Biomes.STONY_SHORE, Biomes.MANGROVE_SWAMP,
             Biomes.DESERT, Biomes.SAVANNA, Biomes.PLAINS, Biomes.SUNFLOWER_PLAINS, Biomes.MEADOW, Biomes.SWAMP,
-            Biomes.JUNGLE, Biomes.FLOWER_FOREST, Biomes.SNOWY_PLAINS, Biomes.ICE_SPIKES,
+            Biomes.JUNGLE, Biomes.FLOWER_FOREST, Biomes.SNOWY_PLAINS, Biomes.ICE_SPIKES, Biomes.MUSHROOM_FIELDS,
             Biomes.FOREST, Biomes.BIRCH_FOREST, Biomes.DARK_FOREST, Biomes.CHERRY_GROVE, Biomes.TAIGA,
-            Biomes.SNOWY_TAIGA, Biomes.SAVANNA_PLATEAU, Biomes.BADLANDS, Biomes.WOODED_BADLANDS,
+            Biomes.SNOWY_TAIGA, Biomes.SAVANNA_PLATEAU, Biomes.BADLANDS, Biomes.WOODED_BADLANDS, Biomes.PALE_GARDEN,
             Biomes.SPARSE_JUNGLE, Biomes.BAMBOO_JUNGLE, Biomes.OLD_GROWTH_BIRCH_FOREST,
             Biomes.OLD_GROWTH_PINE_TAIGA, Biomes.OLD_GROWTH_SPRUCE_TAIGA, Biomes.WINDSWEPT_FOREST,
-            Biomes.WINDSWEPT_HILLS, Biomes.WINDSWEPT_SAVANNA, Biomes.ERODED_BADLANDS, Biomes.GROVE,
-            Biomes.SNOWY_SLOPES, Biomes.JAGGED_PEAKS, Biomes.FROZEN_PEAKS, Biomes.STONY_PEAKS);
+            Biomes.WINDSWEPT_HILLS, Biomes.WINDSWEPT_GRAVELLY_HILLS, Biomes.WINDSWEPT_SAVANNA, Biomes.ERODED_BADLANDS,
+            Biomes.GROVE, Biomes.SNOWY_SLOPES, Biomes.JAGGED_PEAKS, Biomes.FROZEN_PEAKS, Biomes.STONY_PEAKS);
 
     private final HolderGetter<Biome> biomes;
     private final List<Holder<Biome>> possible;
@@ -80,8 +80,10 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
 
     // --- the matrix ---------------------------------------------------------------------------
 
-    // Elevation bands: shared with CityWorldBiomeSource (thin plains, forest on the hills).
-    private static final int LOWLAND_PCT = 8;
+    // Elevation bands (% of the land range above sea). MODERN widens the lowland band from the CLASSIC
+    // source's thin 8% to 15% so the many lowland-only biomes (swamp, plains, meadow, flower forest,
+    // sunflower plains, mushroom fields, snowy plains…) get a real shot instead of a coastal sliver.
+    private static final int LOWLAND_PCT = 15;
     private static final int HILL_PCT = 45;
     private static final int HIGHLAND_PCT = 72;
 
@@ -134,7 +136,7 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
 
     private Holder<Biome> shore(double t, double h, boolean decayed) {
         if (decayed) return b(Biomes.DESERT);
-        if (t >= 0.6 && wet(h)) return b(Biomes.MANGROVE_SWAMP); // warm/hot + wet coast
+        if (t >= 0.6 && h > 0.5) return b(Biomes.MANGROVE_SWAMP); // warm/hot + damp coast (widened for presence)
         if (cold(t)) return b(Biomes.SNOWY_BEACH);
         return b(Biomes.BEACH);
     }
@@ -143,15 +145,18 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
         if (decayed) return b(Biomes.DESERT);
         if (cold(t)) return t < 0.15 && dry(h) ? b(Biomes.ICE_SPIKES)
                 : wet(h) ? b(Biomes.SNOWY_TAIGA) : b(Biomes.SNOWY_PLAINS);
-        if (temperate(t)) return dry(h) ? b(Biomes.PLAINS) : wet(h) ? b(Biomes.FLOWER_FOREST) : b(Biomes.MEADOW);
-        if (warm(t)) return dry(h) ? b(Biomes.SAVANNA) : wet(h) ? b(Biomes.SWAMP) : b(Biomes.SUNFLOWER_PLAINS);
+        if (temperate(t)) return dry(h) ? b(Biomes.PLAINS)
+                : h > 0.8 ? b(Biomes.MUSHROOM_FIELDS) : wet(h) ? b(Biomes.FLOWER_FOREST) : b(Biomes.MEADOW);
+        // swamp widened (h>0.5, not just wet>0.65) so warm humid lowlands read as swamp more often
+        if (warm(t)) return dry(h) ? b(Biomes.SAVANNA) : h > 0.5 ? b(Biomes.SWAMP) : b(Biomes.SUNFLOWER_PLAINS);
         return dry(h) ? b(Biomes.DESERT) : wet(h) ? b(Biomes.JUNGLE) : b(Biomes.SAVANNA); // hot
     }
 
     private Holder<Biome> hill(double t, double h, boolean decayed) {
         if (decayed) return b(Biomes.BADLANDS);
         if (cold(t)) return dry(h) ? b(Biomes.SNOWY_TAIGA) : b(Biomes.TAIGA);
-        if (temperate(t)) return dry(h) ? b(Biomes.FOREST) : wet(h) ? b(Biomes.DARK_FOREST) : b(Biomes.CHERRY_GROVE);
+        if (temperate(t)) return dry(h) ? b(Biomes.FOREST)
+                : h > 0.8 ? b(Biomes.PALE_GARDEN) : wet(h) ? b(Biomes.DARK_FOREST) : b(Biomes.CHERRY_GROVE);
         if (warm(t)) return dry(h) ? b(Biomes.SAVANNA_PLATEAU) : wet(h) ? b(Biomes.SPARSE_JUNGLE) : b(Biomes.BIRCH_FOREST);
         return dry(h) ? b(Biomes.BADLANDS) : wet(h) ? b(Biomes.BAMBOO_JUNGLE) : b(Biomes.WOODED_BADLANDS); // hot
     }
@@ -161,7 +166,8 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
         if (cold(t)) return wet(h) ? b(Biomes.OLD_GROWTH_SPRUCE_TAIGA) : b(Biomes.OLD_GROWTH_PINE_TAIGA);
         if (temperate(t)) return dry(h) ? b(Biomes.WINDSWEPT_FOREST) : wet(h) ? b(Biomes.OLD_GROWTH_BIRCH_FOREST)
                 : b(Biomes.GROVE);
-        if (warm(t)) return dry(h) ? b(Biomes.WINDSWEPT_HILLS) : b(Biomes.WINDSWEPT_FOREST);
+        if (warm(t)) return dry(h) ? (h < 0.2 ? b(Biomes.WINDSWEPT_GRAVELLY_HILLS) : b(Biomes.WINDSWEPT_HILLS))
+                : b(Biomes.WINDSWEPT_FOREST);
         return dry(h) ? b(Biomes.ERODED_BADLANDS) : b(Biomes.WINDSWEPT_SAVANNA); // hot
     }
 
