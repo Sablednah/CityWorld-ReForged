@@ -383,7 +383,43 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 // landed on ice. Only peak lots pay for the scan.
                 if (lot.getMaxTerrainY() > context.snowLevel)
                     stripSnowOnIce(chunk);
+            } else {
+                // City / road / structure / construct chunks skip the full wild pass (no trees, lakes or
+                // springs carving into the build). But they still want ORE underground — run just the
+                // UNDERGROUND_ORES step of the chunk's biome so vanilla ore veins fill the stone beneath
+                // the city exactly as they do in the wild.
+                placeUndergroundOres(level, chunk);
             }
+        }
+    }
+
+    /**
+     * Run only vanilla's {@code UNDERGROUND_ORES} decoration step for the chunk's biome — the ore and
+     * stone-blob placed features — so the stone under cities/roads/structures gets the same veins the
+     * wild does, without any of the surface/fluid features that would damage a build. Mirrors the
+     * seeding {@code ChunkGenerator.applyBiomeDecoration} uses so placement is deterministic. Wrapped so
+     * an ore feature can never take chunk generation down.
+     */
+    private void placeUndergroundOres(WorldGenLevel level, ChunkAccess chunk) {
+        try {
+            net.minecraft.core.SectionPos sp = net.minecraft.core.SectionPos.of(chunk.getPos(), level.getMinSectionY());
+            net.minecraft.core.BlockPos origin = sp.origin();
+            net.minecraft.world.level.biome.BiomeGenerationSettings settings = level.getBiome(origin).value()
+                    .getGenerationSettings();
+            int step = net.minecraft.world.level.levelgen.GenerationStep.Decoration.UNDERGROUND_ORES.ordinal();
+            if (step >= settings.features().size())
+                return;
+            net.minecraft.world.level.levelgen.WorldgenRandom random = new net.minecraft.world.level.levelgen.WorldgenRandom(
+                    new net.minecraft.world.level.levelgen.XoroshiroRandomSource(level.getSeed()));
+            long decoSeed = random.setDecorationSeed(level.getSeed(), origin.getX(), origin.getZ());
+            int index = 0;
+            for (net.minecraft.core.Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature> pf : settings
+                    .features().get(step)) {
+                random.setFeatureSeed(decoSeed, index++, step);
+                pf.value().placeWithBiomeCheck(level, this, random, origin);
+            }
+        } catch (Throwable t) {
+            // ore decoration must never break chunk generation
         }
     }
 
