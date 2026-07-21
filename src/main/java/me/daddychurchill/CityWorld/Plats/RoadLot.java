@@ -8,6 +8,7 @@ import me.daddychurchill.CityWorld.compat.BiomeGrid;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Context.DataContext;
+import me.daddychurchill.CityWorld.Plugins.CoverProvider.CoverageType;
 import me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation;
 import me.daddychurchill.CityWorld.Support.*;
 
@@ -1020,8 +1021,12 @@ public class RoadLot extends ConnectedLot {
 
 				// add nature on top — but in MODERN don't line the tunnel roof with CityWorld's
 				// biome-agnostic oak/birch/pine (they read as wrong-species tree lines tracing the road
-				// through jungles/savannas); leave the corridor clear for the surrounding wild to frame.
-				generateSurface(generator, chunk, generator.worldStyle != CityWorldGenerator.WorldStyle.MODERN);
+				// through jungles/savannas). Lay the grass/snow surface, then scatter a few biome-right
+				// trees so the roof blends into the surrounding mountain wild instead of a bald strip.
+				boolean modernRoof = generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN;
+				generateSurface(generator, chunk, !modernRoof);
+				if (modernRoof)
+					scatterRoofTrees(generator, chunk);
 
 				// TODO decay tunnels please!
 
@@ -1417,23 +1422,45 @@ public class RoadLot extends ConnectedLot {
 		}
 	}
 
+	// MODERN: a sparse scatter of biome-right trees across a tunnel roof (the mountain surface above the
+	// road), so it reads as part of the surrounding wild rather than a bald corridor. Nothing in a desert.
+	private void scatterRoofTrees(CityWorldGenerator generator, RealBlocks chunk) {
+		CoverageType[] trees = BiomeTrees.forZone(ClimateZone.at(generator, chunkX, chunkZ));
+		if (trees.length == 0)
+			return;
+		int count = chunkOdds.getRandomInt(1, 3); // 1-3 per chunk — sparse
+		for (int i = 0; i < count; i++) {
+			int x = chunkOdds.getRandomInt(1, 14);
+			int z = chunkOdds.getRandomInt(1, 14);
+			int surfaceY = getBlockY(x, z);
+			if (surfaceY > 0 && chunk.isEmpty(x, surfaceY + 1, z))
+				generator.coverProvider.generateRandomCoverage(generator, chunk, x, surfaceY + 1, z, trees);
+		}
+	}
+
 	private void pepperPlants(CityWorldGenerator generator, SupportBlocks chunk, int x1, int x2, int y, int z1, int z2,
 			double chances, Material manMade, boolean doingFolage, boolean doingTunnel) {
+		boolean modern = generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN;
+		// MODERN: plant sparse, biome-right roadside trees instead of CityWorld's biome-agnostic
+		// oak/birch (which lined roads with the wrong species through jungles/savannas).
+		CoverageType[] roadTrees = modern ? BiomeTrees.forZone(ClimateZone.at(generator, chunkX, chunkZ)) : null;
 		for (int x = x1; x < x2; x++) {
 			for (int z = z1; z < z2; z++) {
 				if (doingFolage & chunkOdds.playOdds(chances)) {
 					if (!chunk.isEmpty(x, y, z) & chunk.isEmpty(x, y + 1, z)) {
 						generator.coverProvider.makePlantable(generator, chunk, x, y, z);
-						// MODERN: skip CityWorld's biome-agnostic roadside trees (they line roads with the
-						// wrong species through jungles/savannas). Grass/plants still go down.
-						if (!doingTunnel)
-							generator.surfaceProvider.generateSurface(generator, this, chunk, x, y, z,
-									generator.worldStyle != CityWorldGenerator.WorldStyle.MODERN);
-//							chunk.setSlab(x, y + 1, z, Material.STONE_SLAB, true);
-//						else
-//							chunk.setBlock(x, y + 1, z, Material.PURPUR_BLOCK);
-//					} else {
-//						chunk.setBlock(x, y, z, Material.COAL_BLOCK);
+						if (!doingTunnel) {
+							if (modern) {
+								// grass/plant base, no CityWorld trees
+								generator.surfaceProvider.generateSurface(generator, this, chunk, x, y, z, false);
+								// a sparse avenue of the right species — not a wall
+								if (roadTrees.length > 0 && chunkOdds.playOdds(Odds.oddsSomewhatUnlikely))
+									generator.coverProvider.generateRandomCoverage(generator, chunk, x, y + 1, z,
+											roadTrees);
+							} else {
+								generator.surfaceProvider.generateSurface(generator, this, chunk, x, y, z, true);
+							}
+						}
 					}
 				} else {
 					chunk.setBlock(x, y, z, manMade);
