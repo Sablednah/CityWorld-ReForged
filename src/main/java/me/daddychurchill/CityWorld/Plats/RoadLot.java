@@ -1018,8 +1018,10 @@ public class RoadLot extends ConnectedLot {
 					}
 				}
 
-				// add nature on top
-				generateSurface(generator, chunk, true);
+				// add nature on top — but in MODERN don't line the tunnel roof with CityWorld's
+				// biome-agnostic oak/birch/pine (they read as wrong-species tree lines tracing the road
+				// through jungles/savannas); leave the corridor clear for the surrounding wild to frame.
+				generateSurface(generator, chunk, generator.worldStyle != CityWorldGenerator.WorldStyle.MODERN);
 
 				// TODO decay tunnels please!
 
@@ -1422,8 +1424,11 @@ public class RoadLot extends ConnectedLot {
 				if (doingFolage & chunkOdds.playOdds(chances)) {
 					if (!chunk.isEmpty(x, y, z) & chunk.isEmpty(x, y + 1, z)) {
 						generator.coverProvider.makePlantable(generator, chunk, x, y, z);
+						// MODERN: skip CityWorld's biome-agnostic roadside trees (they line roads with the
+						// wrong species through jungles/savannas). Grass/plants still go down.
 						if (!doingTunnel)
-							generator.surfaceProvider.generateSurface(generator, this, chunk, x, y, z, true);
+							generator.surfaceProvider.generateSurface(generator, this, chunk, x, y, z,
+									generator.worldStyle != CityWorldGenerator.WorldStyle.MODERN);
 //							chunk.setSlab(x, y + 1, z, Material.STONE_SLAB, true);
 //						else
 //							chunk.setBlock(x, y + 1, z, Material.PURPUR_BLOCK);
