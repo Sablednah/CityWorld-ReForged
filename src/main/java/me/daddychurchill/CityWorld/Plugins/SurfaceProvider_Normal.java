@@ -29,8 +29,14 @@ public class SurfaceProvider_Normal extends SurfaceProvider {
 
 		// top of the world?
 		if (y >= generator.snowLevel) {
-			ores.dropSnow(generator, chunk, x, y, z,
-					(byte) NoiseGenerator.floor((perciseY - Math.floor(perciseY)) * 8.0));
+			if (generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN)
+				// MODERN: ice the peaks properly with stable full blocks (snow / packed / blue ice /
+				// powder snow) instead of a loose snow layer sitting on ice — which is an illegal state
+				// that cascades away the moment anything touches it.
+				generateModernIcecap(generator, chunk, x, y, z, perciseY);
+			else
+				ores.dropSnow(generator, chunk, x, y, z,
+						(byte) NoiseGenerator.floor((perciseY - Math.floor(perciseY)) * 8.0));
 
 			// are on a plantable spot?
 		} else if (foliage.isPlantable(generator, chunk, x, y, z)) {
@@ -167,6 +173,61 @@ public class SurfaceProvider_Normal extends SurfaceProvider {
 					}
 				}
 			}
+		}
+	}
+
+	/**
+	 * MODERN mountaintop surfacing. Grades the cap by how high the peak stands above the snow line and
+	 * lays only stable, full-cube blocks so nothing breaks on contact:
+	 * <ul>
+	 *   <li>snowy slopes (low) — a solid snow-block surface topped by a legal snow layer, the odd
+	 *       powder-snow pocket;</li>
+	 *   <li>upper slopes (mid) — snow blocks veined with packed ice and powder-snow pockets;</li>
+	 *   <li>frozen peaks (high) — packed ice, glacier-blue ice at the very top, occasional snow caps.</li>
+	 * </ul>
+	 * Snow <em>layers</em> only ever go on snow blocks (never on ice), which is what fixes the
+	 * cascading-snow bug.
+	 */
+	private void generateModernIcecap(CityWorldGenerator generator, SupportBlocks chunk, int x, int y, int z,
+			double perciseY) {
+		OreProvider ores = generator.oreProvider;
+
+		// probe for the real solid top (mirrors dropSnow) — the empty cell above it is where a cap sits
+		int emptyY = chunk.findLastEmptyBelow(x, y + 1, z, y - 6);
+		int topY = emptyY - 1;
+		if (topY < generator.snowLevel)
+			return; // not actually standing above the snow line here
+
+		int peakTop = generator.seaLevel + generator.landRange;
+		double f = (double) (topY - generator.snowLevel) / Math.max(1, peakTop - generator.snowLevel);
+		if (f < 0.0)
+			f = 0.0;
+		if (f > 1.0)
+			f = 1.0;
+
+		double roll = odds.getRandomDouble();
+
+		if (f >= 0.7) {
+			// frozen peaks
+			Material cap = f >= 0.9 ? Material.BLUE_ICE : roll < 0.15 ? Material.SNOW_BLOCK : Material.PACKED_ICE;
+			chunk.setBlock(x, topY, z, cap);
+			if (roll > 0.92)
+				chunk.setBlock(x, emptyY, z, Material.POWDER_SNOW);
+		} else if (f >= 0.35) {
+			// upper slopes
+			Material cap = roll < 0.25 ? Material.PACKED_ICE : roll > 0.9 ? Material.POWDER_SNOW : Material.SNOW_BLOCK;
+			chunk.setBlock(x, topY, z, cap);
+			if (cap == Material.SNOW_BLOCK && roll > 0.5)
+				ores.dropSnow(generator, chunk, x, emptyY, z,
+						(byte) NoiseGenerator.floor((perciseY - Math.floor(perciseY)) * 8.0));
+		} else {
+			// snowy slopes
+			chunk.setBlock(x, topY, z, Material.SNOW_BLOCK);
+			if (roll > 0.94)
+				chunk.setBlock(x, emptyY, z, Material.POWDER_SNOW);
+			else
+				ores.dropSnow(generator, chunk, x, emptyY, z,
+						(byte) NoiseGenerator.floor((perciseY - Math.floor(perciseY)) * 8.0));
 		}
 	}
 }

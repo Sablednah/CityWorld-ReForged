@@ -1184,8 +1184,13 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
     - **Modern mobs** — the newer entities in the spawn bags (allays, foxes/goats where apt, wardens
       only where deliberate). The mob lists are already datapack-overridable (P7), so Modern can ship a
       richer default `mobs` group while Classic keeps the 1.8 roster.
-    - **Modern ice/snow** — packed ice / blue ice / powder snow to *ice the mountaintops* properly
-      (the cover/surface providers currently use plain snow); Snowdunes-style worlds especially.
+    - ~~**Modern ice/snow** — packed ice / blue ice / powder snow to *ice the mountaintops* properly
+      (the cover/surface providers currently use plain snow); Snowdunes-style worlds especially.~~
+      **Done (2026-07).** `SurfaceProvider_Normal.generateModernIcecap` grades MODERN peaks by height
+      above the snow line: snow blocks on the slopes, packed ice higher, glacier-blue ice at the tips,
+      powder-snow pockets throughout — all full cubes. Fixes the loose-snow-on-ice bug (a snow *layer*
+      on ice is illegal and cascades on touch); layers now only ever sit on snow blocks. Added
+      `BLUE_ICE`/`POWDER_SNOW` to the `gen_material.py` EXTRAS. Snowdunes still uses its own provider.
     - **New tree types** — cherry, mangrove, azalea, spruce/large variants via the tree provider
       (`TreeStyle` already exists but only `NORMAL` is wired; this is where `SPOOKY`/`CRYSTAL` and new
       ones land per style).

@@ -93,6 +93,8 @@ LEGACY = {
 # hand-editing Material.java (which is generated). Each must exist as a modern Blocks field.
 EXTRAS = {
     "DEEPSLATE": "P4: the deep stratum below y=0; 1.14's world bottomed out at stone",
+    "BLUE_ICE": "P8 MODERN: glacier-blue ice for the highest peaks; 1.14 had none",
+    "POWDER_SNOW": "P8 MODERN: powder-snow pockets on snowy slopes; a 1.17 block",
 }
 
 
