@@ -62,29 +62,29 @@ public abstract class ConstructLot extends IsolatedLot {
 
 		ClimateZone zone = ClimateZone.at(generator, chunkX, chunkZ);
 
+		// Scan from just above the lot's tallest terrain (covers built platforms — radio towers, oil rigs
+		// — a few blocks above the ground) down to each column's own terrain. This works at any elevation,
+		// unlike the old street-level window that missed mountain lots. Anything found well below the
+		// planned surface is a dug pit/shaft floor and is skipped (surfaceY >= ground - 3).
+		int scanTop = getMaxTerrainY() + DataContext.FloorHeight;
 		for (int x = 0; x < chunk.width; x++)
 			for (int z = 0; z < chunk.width; z++) {
-				// Anchor the scan to THIS column's terrain height, not street level — construct lots on
-				// mountains (radio towers, mountain campsites, mine entrances) sit hundreds of blocks up,
-				// so a street-level window never found their ground and left a hard snowless border. A
-				// small window around the planned surface catches ground and low piles while skipping tall
-				// structure shafts and deep pit floors (nothing solid found → left alone).
 				int ground = getBlockY(x, z);
-				int emptyY = chunk.findLastEmptyBelow(x, ground + 5, z, ground - 4);
+				int emptyY = chunk.findLastEmptyBelow(x, scanTop + 1, z, ground - 3);
 				int surfaceY = emptyY - 1;
-				if (emptyY <= ground - 4 || !chunk.isEmpty(x, emptyY, z))
-					continue;
+				if (emptyY <= ground - 3 || !chunk.isEmpty(x, emptyY, z))
+					continue; // deep pit/shaft floor, or nothing solid — leave it
 				blendCoverAt(generator, chunk, zone, x, emptyY, z, surfaceY);
 			}
 	}
 
 	private void blendCoverAt(CityWorldGenerator generator, RealBlocks chunk, ClimateZone zone, int x, int y, int z,
 			int surfaceY) {
-		// cold: snow blankets everything solid (ground, gravel piles, shed roofs) so the lot melts into
-		// the snowy surroundings. The surface pass may have planted grass/ferns here, so snow onto the
-		// first real solid block — replacing a plant rather than sitting on top of one — and never onto
-		// ice or water, where a snow layer would be illegal.
-		if (zone.cold()) {
+		// Snow where vanilla's elevation-aware climate says it's cold enough — the same rule the
+		// surrounding ground follows (snowy biomes at any height; plain cold biomes like taiga only up
+		// high). That stops the lot reading as a snowy island in a snowless taiga. Snow onto the first
+		// real solid block (replacing a plant, never on ice/water where a layer would be illegal).
+		if (chunk.coldEnoughToSnow(x, surfaceY + 1, z)) {
 			int groundY = isSnowableGround(chunk, x, surfaceY, z) ? surfaceY
 					: isSnowableGround(chunk, x, surfaceY - 1, z) ? surfaceY - 1 : Integer.MIN_VALUE;
 			if (groundY != Integer.MIN_VALUE && chunkOdds.playOdds(Odds.oddsExtremelyLikely))

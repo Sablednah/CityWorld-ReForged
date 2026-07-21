@@ -49,6 +49,25 @@ public final class RealBlocks extends SupportBlocks {
 		return world instanceof ServerLevelAccessor sla ? sla : null;
 	}
 
+	/**
+	 * Vanilla's elevation-aware snow test at a column: true where the biome assigned here is cold enough
+	 * to snow at this height — snowy biomes at any y, plain cold biomes (taiga, plains) only up high.
+	 * Lets MODERN blends drop snow only where the surrounding ground would already have it, so structures
+	 * don't read as snowy islands in a snowless taiga. Defensive: false off the server or on any hiccup.
+	 */
+	public boolean coldEnoughToSnow(int x, int y, int z) {
+		try {
+			ServerLevelAccessor sla = getServerLevel();
+			if (sla == null)
+				return false;
+			net.minecraft.server.level.ServerLevel lvl = sla.getLevel();
+			net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(getOriginX() + x, y, getOriginZ() + z);
+			return lvl.getBiome(pos).value().coldEnoughToSnow(pos, lvl.getSeaLevel());
+		} catch (Throwable t) {
+			return false;
+		}
+	}
+
 	@Override
 	public boolean isSurroundedByEmpty(int x, int y, int z) {
 		return (x > 0 && x < 15 && z > 0 && z < 15)

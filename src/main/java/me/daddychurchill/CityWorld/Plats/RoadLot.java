@@ -535,9 +535,6 @@ public class RoadLot extends ConnectedLot {
 	private void sprinkleTunnelRoofSnow(CityWorldGenerator generator, RealBlocks chunk) {
 		if (generator.worldStyle != CityWorldGenerator.WorldStyle.MODERN)
 			return;
-		ClimateZone zone = ClimateZone.at(generator, chunkX, chunkZ);
-		if (!zone.cold())
-			return;
 
 		int roofMin = generator.streetLevel + DataContext.FloorHeight * 2; // only a genuine mountain roof
 		for (int x = 0; x < chunk.width; x++)
@@ -549,8 +546,10 @@ public class RoadLot extends ConnectedLot {
 				int surfaceY = emptyY - 1;
 				if (emptyY <= ground - 4 || !chunk.isEmpty(x, emptyY, z))
 					continue;
-				// sparse dusting only — a keen eye's clue, not full cover
-				if (chunkOdds.playOdds(Odds.oddsSomewhatLikely) && !chunk.isEmpty(x, surfaceY, z)
+				// sparse dusting only — a keen eye's clue, not full cover — and only where the biome is
+				// actually cold enough to snow at this height, so warmer-elevation roofs stay bare.
+				if (chunk.coldEnoughToSnow(x, surfaceY + 1, z) && chunkOdds.playOdds(Odds.oddsSomewhatLikely)
+						&& !chunk.isEmpty(x, surfaceY, z)
 						&& !chunk.getActualBlock(x, surfaceY, z).getBlockData().canBeReplaced()
 						&& !chunk.isOfTypes(x, surfaceY, z, Material.ICE, Material.PACKED_ICE, Material.BLUE_ICE))
 					chunk.setBlock(x, emptyY, z, Material.SNOW, 1);
