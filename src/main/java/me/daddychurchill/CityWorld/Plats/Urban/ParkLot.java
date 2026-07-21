@@ -13,6 +13,7 @@ import me.daddychurchill.CityWorld.Plats.ConnectedLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Plugins.CoverProvider.CoverageType;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
+import me.daddychurchill.CityWorld.Support.ClimateZone;
 import me.daddychurchill.CityWorld.Support.HeightInfo;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
 import me.daddychurchill.CityWorld.Support.MazeArray;
@@ -47,6 +48,10 @@ public class ParkLot extends ConnectedLot {
 
 	private final CenterStyles centerStyle;
 
+	// In MODERN, the biome this park sits in decides its trees and flowers; null in CLASSIC (keep the
+	// original oak/birch look everywhere).
+	private final ClimateZone zone;
+
 	protected int waterDepth;
 
 	public ParkLot(PlatMap platmap, int chunkX, int chunkZ, long globalconnectionkey, int depth) {
@@ -59,6 +64,9 @@ public class ParkLot extends ConnectedLot {
 		// pick a style
 		centerStyle = getRandomCenterStyle();
 		waterDepth = depth;
+
+		zone = platmap.generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN
+				? ClimateZone.at(platmap.generator, chunkX, chunkZ) : null;
 	}
 
 	private CenterStyles getRandomCenterStyle() {
@@ -126,6 +134,95 @@ public class ParkLot extends ConnectedLot {
 			CoverageType.TALL_BIRCH_TREE };
 
 	private final static CoverageType[] tallTrees = { CoverageType.TALL_BIRCH_TREE, CoverageType.DARK_OAK_TREE };
+
+	// MODERN biome-fitting tree palettes — spruce where it's cold, acacia on the savanna, jungle in the
+	// warm wet, sparse acacia in the desert. Temperate keeps the classic oak/birch mix.
+	private final static CoverageType[] coldSmallTrees = { CoverageType.SHORT_PINE_TREE, CoverageType.PINE_TREE,
+			CoverageType.MINI_PINE_TREE, CoverageType.SHORT_BIRCH_TREE };
+	private final static CoverageType[] coldTallTrees = { CoverageType.PINE_TREE, CoverageType.TALL_PINE_TREE };
+	private final static CoverageType[] savannaSmallTrees = { CoverageType.MINI_ACACIA_TREE, CoverageType.ACACIA_TREE,
+			CoverageType.SHORT_OAK_TREE };
+	private final static CoverageType[] savannaTallTrees = { CoverageType.ACACIA_TREE };
+	private final static CoverageType[] jungleSmallTrees = { CoverageType.MINI_JUNGLE_TREE,
+			CoverageType.SHORT_JUNGLE_TREE, CoverageType.JUNGLE_TREE };
+	private final static CoverageType[] jungleTallTrees = { CoverageType.JUNGLE_TREE, CoverageType.TALL_JUNGLE_TREE };
+	private final static CoverageType[] desertSmallTrees = { CoverageType.MINI_ACACIA_TREE, CoverageType.ACACIA_TREE };
+	private final static CoverageType[] desertTallTrees = { CoverageType.ACACIA_TREE };
+
+	// biome flower/ground scatter dropped across MODERN parks (a light sprinkle, not a field)
+	private final static CoverageType[] coldFlowers = { CoverageType.OXEYE_DAISY, CoverageType.ALLIUM,
+			CoverageType.DANDELION };
+	private final static CoverageType[] temperateFlowers = { CoverageType.POPPY, CoverageType.DANDELION,
+			CoverageType.OXEYE_DAISY, CoverageType.RED_TULIP, CoverageType.ORANGE_TULIP, CoverageType.WHITE_TULIP,
+			CoverageType.PINK_TULIP, CoverageType.ALLIUM, CoverageType.AZURE_BLUET };
+	private final static CoverageType[] savannaFlowers = { CoverageType.DANDELION, CoverageType.TALL_GRASS,
+			CoverageType.GRASS };
+	private final static CoverageType[] jungleFlowers = { CoverageType.BLUE_ORCHID, CoverageType.FERN,
+			CoverageType.GRASS };
+	private final static CoverageType[] desertFlowers = { CoverageType.DEAD_BUSH, CoverageType.CACTUS };
+
+	private CoverageType[] getSmallTrees() {
+		if (zone == null)
+			return smallTrees;
+		switch (zone.temp) {
+		case COLD:
+			return coldSmallTrees;
+		case TEMPERATE:
+			return smallTrees;
+		case WARM:
+			return zone.wet() ? jungleSmallTrees : savannaSmallTrees;
+		case HOT:
+		default:
+			return zone.wet() ? jungleSmallTrees : desertSmallTrees;
+		}
+	}
+
+	private CoverageType[] getTallTrees() {
+		if (zone == null)
+			return tallTrees;
+		switch (zone.temp) {
+		case COLD:
+			return coldTallTrees;
+		case TEMPERATE:
+			return tallTrees;
+		case WARM:
+			return zone.wet() ? jungleTallTrees : savannaTallTrees;
+		case HOT:
+		default:
+			return zone.wet() ? jungleTallTrees : desertTallTrees;
+		}
+	}
+
+	private CoverageType[] getBiomeFlowers() {
+		if (zone == null)
+			return temperateFlowers;
+		switch (zone.temp) {
+		case COLD:
+			return coldFlowers;
+		case TEMPERATE:
+			return temperateFlowers;
+		case WARM:
+			return zone.wet() ? jungleFlowers : savannaFlowers;
+		case HOT:
+		default:
+			return zone.wet() ? jungleFlowers : desertFlowers;
+		}
+	}
+
+	// Sprinkle a few biome-appropriate flowers/plants across the open park lawn (MODERN only). Skips the
+	// central path/tree footprint so it just fills the grassy corners.
+	private void scatterBiomeFlowers(CityWorldGenerator generator, RealBlocks chunk, int surfaceY) {
+		if (zone == null)
+			return;
+		CoverageType[] flowers = getBiomeFlowers();
+		int count = chunkOdds.getRandomInt(4, 6);
+		for (int i = 0; i < count; i++) {
+			int x = chunkOdds.getRandomInt(1, 14);
+			int z = chunkOdds.getRandomInt(1, 14);
+			if (chunk.isEmpty(x, surfaceY, z))
+				generator.coverProvider.generateRandomCoverage(generator, chunk, x, surfaceY, z, flowers);
+		}
+	}
 
 	@Override
 	protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
@@ -561,8 +658,9 @@ public class ParkLot extends ConnectedLot {
 			default:
 				for (int x = 4; x < 12; x += 7)
 					for (int z = 4; z < 12; z += 7)
-						generator.coverProvider.generateRandomCoverage(generator, chunk, x, surfaceY, z, smallTrees);
+						generator.coverProvider.generateRandomCoverage(generator, chunk, x, surfaceY, z, getSmallTrees());
 				generateSurface(generator, chunk, false);
+				scatterBiomeFlowers(generator, chunk, surfaceY);
 				break;
 			}
 
@@ -634,18 +732,19 @@ public class ParkLot extends ConnectedLot {
 		}
 
 		if (singleTree) {
-			generator.coverProvider.generateRandomCoverage(generator, chunk, 7, surfaceY, 7, tallTrees);
+			generator.coverProvider.generateRandomCoverage(generator, chunk, 7, surfaceY, 7, getTallTrees());
 		} else {
 			if (!NW)
-				generator.coverProvider.generateRandomCoverage(generator, chunk, 4, surfaceY, 4, smallTrees);
+				generator.coverProvider.generateRandomCoverage(generator, chunk, 4, surfaceY, 4, getSmallTrees());
 			if (!NE)
-				generator.coverProvider.generateRandomCoverage(generator, chunk, 11, surfaceY, 4, smallTrees);
+				generator.coverProvider.generateRandomCoverage(generator, chunk, 11, surfaceY, 4, getSmallTrees());
 			if (!SW)
-				generator.coverProvider.generateRandomCoverage(generator, chunk, 4, surfaceY, 11, smallTrees);
+				generator.coverProvider.generateRandomCoverage(generator, chunk, 4, surfaceY, 11, getSmallTrees());
 			if (!SE)
-				generator.coverProvider.generateRandomCoverage(generator, chunk, 11, surfaceY, 11, smallTrees);
+				generator.coverProvider.generateRandomCoverage(generator, chunk, 11, surfaceY, 11, getSmallTrees());
 		}
 		generateSurface(generator, chunk, false);
+		scatterBiomeFlowers(generator, chunk, surfaceY);
 	}
 
 	private void pokeHoleSomewhere(RealBlocks chunk, int x1, int x2, int y, int z1, int z2) {

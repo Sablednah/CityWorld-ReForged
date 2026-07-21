@@ -12,6 +12,7 @@ import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Plugins.CoverProvider.CoverageSets;
 import me.daddychurchill.CityWorld.Plugins.CoverProvider.CoverageType;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
+import me.daddychurchill.CityWorld.Support.ClimateZone;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
@@ -58,6 +59,10 @@ public class FarmLot extends ConnectedLot {
 				cropType = setNetherCrop();
 		else if (platmap.generator.getSettings().includeDecayedNature)
 			cropType = setDecayedNormalCrop();
+		else if (platmap.generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN)
+			// MODERN: pick a crop that fits the biome climate this farm sits in — cane and cactus in the
+			// hot dry lands, spruce and beets where it's cold, jungle and melons in the warm wet, etc.
+			cropType = setModernCrop(ClimateZone.at(platmap.generator, chunkX, chunkZ));
 		else
 			cropType = setNormalCrop();
 
@@ -661,6 +666,52 @@ public class FarmLot extends ConnectedLot {
 		if (result == CropType.CACTUS) // make cactus less frequent
 			result = pickACrop(normalCrops);
 		return result;
+	}
+
+	// MODERN biome-climate crop palettes — each favours crops/plants/trees that fit the surrounding
+	// biome (see ClimateZone). Water-hungry crops still fall back to fallow if aboveground fluids are off.
+	private final static CropType[] modernColdCrops = { CropType.FALLOW, CropType.POTATO, CropType.BEETROOT,
+			CropType.WHEAT, CropType.FERN, CropType.TALL_FERN, CropType.PINE_TREE, CropType.PINE_TREE,
+			CropType.OAK_SAPLING, CropType.ALLIUM, CropType.OXEYE_DAISY, CropType.PADDOCK, CropType.PADDOCK };
+
+	private final static CropType[] modernTemperateCrops = { CropType.FALLOW, CropType.WHEAT, CropType.CARROT,
+			CropType.POTATO, CropType.BEETROOT, CropType.GRASS, CropType.TALL_GRASS, CropType.POPPY, CropType.DANDELION,
+			CropType.RED_TULIP, CropType.ORANGE_TULIP, CropType.WHITE_TULIP, CropType.PINK_TULIP, CropType.OXEYE_DAISY,
+			CropType.ALLIUM, CropType.OAK_TREE, CropType.BIRCH_TREE, CropType.OAK_SAPLING, CropType.BIRCH_SAPLING,
+			CropType.SHORT_FLOWERS, CropType.ALL_FLOWERS, CropType.PADDOCK, CropType.PADDOCK };
+
+	// warm + dry — savanna: acacia, hardy grasses, a little wheat, sunflowers
+	private final static CropType[] modernSavannaCrops = { CropType.FALLOW, CropType.WHEAT, CropType.MELON,
+			CropType.GRASS, CropType.TALL_GRASS, CropType.SUNFLOWER, CropType.DEAD_BUSH, CropType.ACACIA_TREE,
+			CropType.ACACIA_SAPLING, CropType.PADDOCK, CropType.PADDOCK };
+
+	// warm/hot + wet — swamp/jungle: melons, pumpkins, cane, jungle trees, orchids, ferns
+	private final static CropType[] modernJungleCrops = { CropType.MELON, CropType.PUMPKIN, CropType.REED,
+			CropType.JUNGLE_TREE, CropType.JUNGLE_SAPLING, CropType.SWAMP_TREE, CropType.FERN, CropType.BLUE_ORCHID,
+			CropType.EDIBLE_PLANTS, CropType.PADDOCK };
+
+	// hot + dry — desert/badlands: cactus, dead bush, cane by the water, the odd melon patch
+	private final static CropType[] modernDesertCrops = { CropType.FALLOW, CropType.CACTUS, CropType.CACTUS,
+			CropType.DEAD_BUSH, CropType.REED, CropType.MELON, CropType.PUMPKIN, CropType.ACACIA_TREE };
+
+	protected CropType setModernCrop(ClimateZone zone) {
+		CropType[] pool;
+		switch (zone.temp) {
+		case COLD:
+			pool = modernColdCrops;
+			break;
+		case TEMPERATE:
+			pool = modernTemperateCrops;
+			break;
+		case WARM:
+			pool = zone.wet() ? modernJungleCrops : modernSavannaCrops;
+			break;
+		case HOT:
+		default:
+			pool = zone.wet() ? modernJungleCrops : modernDesertCrops;
+			break;
+		}
+		return pickACrop(pool);
 	}
 
 	private final static CropType[] decayCrops = { CropType.FALLOW, CropType.TRELLIS, CropType.DEAD_BUSH,
