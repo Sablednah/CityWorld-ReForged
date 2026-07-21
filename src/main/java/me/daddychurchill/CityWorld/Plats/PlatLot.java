@@ -78,6 +78,11 @@ public abstract class PlatLot {
 	protected abstract void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
 			DataContext context, int platX, int platZ);
 
+	/** Highest terrain block in this lot (from the planned column heights) — used to spot peak lots. */
+	public int getMaxTerrainY() {
+		return blockYs.getMaxHeight();
+	}
+
 	public int getChunkX() {
 		return chunkX;
 	}

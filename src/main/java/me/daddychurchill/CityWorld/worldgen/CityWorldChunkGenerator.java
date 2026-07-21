@@ -376,9 +376,34 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         if (context.worldStyle == CityWorldGenerator.WorldStyle.MODERN) {
             me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x, pos.z);
             if (lot != null && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE
-                    && lot.allowsWildDecoration())
+                    && lot.allowsWildDecoration()) {
                 super.applyBiomeDecoration(level, chunk, structureManager);
+                // On iced peaks, vanilla's cold-biome decoration drops snow layers onto our packed/blue
+                // ice — the illegal, cascading state the MODERN icecap exists to avoid. Strip any that
+                // landed on ice. Only peak lots pay for the scan.
+                if (lot.getMaxTerrainY() > context.snowLevel)
+                    stripSnowOnIce(chunk);
+            }
         }
+    }
+
+    /** Remove snow layers that vanilla decoration left sitting directly on ice (an illegal, cascading
+     *  state). Scans the chunk's own columns only — safe within the decoration write radius. */
+    private static void stripSnowOnIce(ChunkAccess chunk) {
+        ChunkPos pos = chunk.getPos();
+        for (int x = 0; x < 16; x++)
+            for (int z = 0; z < 16; z++) {
+                int top = chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, x, z);
+                net.minecraft.core.BlockPos p = new net.minecraft.core.BlockPos(pos.getMinBlockX() + x, top,
+                        pos.getMinBlockZ() + z);
+                if (!chunk.getBlockState(p).is(net.minecraft.world.level.block.Blocks.SNOW))
+                    continue;
+                net.minecraft.world.level.block.state.BlockState below = chunk.getBlockState(p.below());
+                if (below.is(net.minecraft.world.level.block.Blocks.ICE)
+                        || below.is(net.minecraft.world.level.block.Blocks.PACKED_ICE)
+                        || below.is(net.minecraft.world.level.block.Blocks.BLUE_ICE))
+                    chunk.setBlockState(p, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+            }
     }
 
     @Override

@@ -15,6 +15,15 @@ public class SurfaceProvider_Normal extends SurfaceProvider {
 	// how far below the snow line MODERN begins icing the peaks — makes bare frozen tips less rare
 	private final static int MODERN_ICE_DROP = 5;
 
+	// share of icecap cells that become a flush powder-snow pocket (a real fall-in hazard, findable)
+	private final static double POWDER_SNOW_ODDS = 0.15;
+
+	// ice grading by blocks above the snow line (reachable heights — see generateModernIcecap):
+	// snowy slopes below UPPER, then packed-ice-veined slopes, frozen peaks, glacier-blue tips.
+	private final static int ICE_UPPER_ABOVE = 6;
+	private final static int ICE_FROZEN_ABOVE = 12;
+	private final static int ICE_BLUE_ABOVE = 18;
+
 	public SurfaceProvider_Normal(Odds odds) {
 		super(odds);
 		// TODO Auto-generated constructor stub
@@ -204,36 +213,45 @@ public class SurfaceProvider_Normal extends SurfaceProvider {
 		if (topY < generator.snowLevel)
 			return; // not actually standing above the snow line here
 
-		int peakTop = generator.seaLevel + generator.landRange;
-		double f = (double) (topY - generator.snowLevel) / Math.max(1, peakTop - generator.snowLevel);
-		if (f < 0.0)
-			f = 0.0;
-		if (f > 1.0)
-			f = 1.0;
+		// Grade by ABSOLUTE height above the snow line, not a fraction of the theoretical peak ceiling
+		// (seaLevel+landRange) — real terrain tops out well short of that, so the fraction never reached
+		// the frozen-peak/blue-ice tiers (probe: max peak only ~0.6 of the way up). These offsets are
+		// reachable, so the caps actually appear on tall peaks.
+		int above = topY - generator.snowLevel;
 
 		double roll = odds.getRandomDouble();
+		// a separate roll for powder snow so it doesn't correlate with the cap choice — placed FLUSH with
+		// the surface (a real walk-in pocket you fall into), not as a camouflaged bump on top.
+		boolean powder = odds.getRandomDouble() < POWDER_SNOW_ODDS;
 
-		if (f >= 0.7) {
-			// frozen peaks
-			Material cap = f >= 0.9 ? Material.BLUE_ICE : roll < 0.15 ? Material.SNOW_BLOCK : Material.PACKED_ICE;
-			chunk.setBlock(x, topY, z, cap);
-			if (roll > 0.92)
-				chunk.setBlock(x, emptyY, z, Material.POWDER_SNOW);
-		} else if (f >= 0.35) {
-			// upper slopes
-			Material cap = roll < 0.25 ? Material.PACKED_ICE : roll > 0.9 ? Material.POWDER_SNOW : Material.SNOW_BLOCK;
-			chunk.setBlock(x, topY, z, cap);
-			if (cap == Material.SNOW_BLOCK && roll > 0.5)
-				ores.dropSnow(generator, chunk, x, emptyY, z,
-						(byte) NoiseGenerator.floor((perciseY - Math.floor(perciseY)) * 8.0));
+		if (above >= ICE_BLUE_ABOVE) {
+			// the very tips — glacier-blue ice, powder nestled in
+			chunk.setBlock(x, topY, z, powder ? Material.POWDER_SNOW : Material.BLUE_ICE);
+		} else if (above >= ICE_FROZEN_ABOVE) {
+			// frozen peaks — packed ice with the odd snow-block patch and powder pockets
+			chunk.setBlock(x, topY, z,
+					powder ? Material.POWDER_SNOW : roll < 0.2 ? Material.SNOW_BLOCK : Material.PACKED_ICE);
+		} else if (above >= ICE_UPPER_ABOVE) {
+			// upper slopes — snow blocks veined with packed ice and powder-snow pockets
+			if (powder)
+				chunk.setBlock(x, topY, z, Material.POWDER_SNOW);
+			else {
+				Material cap = roll < 0.3 ? Material.PACKED_ICE : Material.SNOW_BLOCK;
+				chunk.setBlock(x, topY, z, cap);
+				if (cap == Material.SNOW_BLOCK && roll > 0.5)
+					ores.dropSnow(generator, chunk, x, emptyY, z,
+							(byte) NoiseGenerator.floor((perciseY - Math.floor(perciseY)) * 8.0));
+			}
 		} else {
-			// snowy slopes
-			chunk.setBlock(x, topY, z, Material.SNOW_BLOCK);
-			if (roll > 0.94)
-				chunk.setBlock(x, emptyY, z, Material.POWDER_SNOW);
-			else
-				ores.dropSnow(generator, chunk, x, emptyY, z,
-						(byte) NoiseGenerator.floor((perciseY - Math.floor(perciseY)) * 8.0));
+			// snowy slopes — mostly snow, findable powder-snow patches, the odd deeper drift
+			if (powder)
+				chunk.setBlock(x, topY, z, Material.POWDER_SNOW);
+			else {
+				chunk.setBlock(x, topY, z, Material.SNOW_BLOCK);
+				if (roll > 0.6)
+					ores.dropSnow(generator, chunk, x, emptyY, z,
+							(byte) NoiseGenerator.floor((perciseY - Math.floor(perciseY)) * 8.0));
+			}
 		}
 	}
 }
