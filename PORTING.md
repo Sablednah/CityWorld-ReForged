@@ -107,11 +107,14 @@ real gap. In priority order:
    only), tree style, cover/ice, ore distribution; (d) flip the codec default to Modern (or just make
    it the top preset — that's a sub-decision).
 
-2. **⚠ Ores are not placed (real gap, not polish).** `OreProvider.sprinkleOres` is an empty stub, so
-   worlds have no ores to mine. Porting it is ~80 lines, **but the ore depths are 1.14-calibrated and
-   the distribution is itself a Modern/Classic choice**, so it folds into (1) rather than being done
-   blind. Details at the P4 ore checklist item. If you want ores *before* the Modern/Classic work,
-   the safe interim is the literal 1.14 tables re-based to the `-64..319` floor (Classic behaviour).
+2. ~~**⚠ Ores are not placed (real gap, not polish).**~~ **MODERN done (2026-07).** Rather than port
+   `OreProvider.sprinkleOres` (still a stub — that's the CLASSIC path, TODO), MODERN reuses vanilla's
+   own ore distribution: `CityWorldChunkGenerator.placeUndergroundOres` runs just the `UNDERGROUND_ORES`
+   decoration step of each chunk's biome on the non-wild chunks (the wild chunks already get it via the
+   full `super.applyBiomeDecoration`). So the stone under cities/roads/structures mineralises with the
+   exact vanilla veins (incl. deepslate variants), no lakes/springs/trees. Verified: city chunks ~342
+   ore blocks/chunk vs nature ~336. **CLASSIC still has no ores** — port the 1.14 tables re-based to the
+   `-64..319` floor for that path.
 
 3. **Schematic rotation/mirroring** (P6) — orthogonal to styles, player-visible, but deferred as
    genuinely fiddly (rotated footprints complicate the multi-chunk origin maths). Do it with a
