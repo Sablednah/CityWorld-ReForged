@@ -61,15 +61,18 @@ public abstract class ConstructLot extends IsolatedLot {
 			return;
 
 		ClimateZone zone = ClimateZone.at(generator, chunkX, chunkZ);
-		int scanTop = generator.streetLevel + DataContext.FloorHeight * 4;
-		int scanBottom = generator.streetLevel - 2;
 
 		for (int x = 0; x < chunk.width; x++)
 			for (int z = 0; z < chunk.width; z++) {
-				int emptyY = chunk.findLastEmptyBelow(x, scanTop, z, scanBottom);
+				// Anchor the scan to THIS column's terrain height, not street level — construct lots on
+				// mountains (radio towers, mountain campsites, mine entrances) sit hundreds of blocks up,
+				// so a street-level window never found their ground and left a hard snowless border. A
+				// small window around the planned surface catches ground and low piles while skipping tall
+				// structure shafts and deep pit floors (nothing solid found → left alone).
+				int ground = getBlockY(x, z);
+				int emptyY = chunk.findLastEmptyBelow(x, ground + 5, z, ground - 4);
 				int surfaceY = emptyY - 1;
-				// no solid surface near street level here (a deep pit, or open air) — leave it be
-				if (emptyY <= scanBottom || surfaceY < generator.streetLevel - 1 || !chunk.isEmpty(x, emptyY, z))
+				if (emptyY <= ground - 4 || !chunk.isEmpty(x, emptyY, z))
 					continue;
 				blendCoverAt(generator, chunk, zone, x, emptyY, z, surfaceY);
 			}
@@ -84,7 +87,7 @@ public abstract class ConstructLot extends IsolatedLot {
 		if (zone.cold()) {
 			int groundY = isSnowableGround(chunk, x, surfaceY, z) ? surfaceY
 					: isSnowableGround(chunk, x, surfaceY - 1, z) ? surfaceY - 1 : Integer.MIN_VALUE;
-			if (groundY >= generator.streetLevel - 1 && chunkOdds.playOdds(Odds.oddsExtremelyLikely))
+			if (groundY != Integer.MIN_VALUE && chunkOdds.playOdds(Odds.oddsExtremelyLikely))
 				chunk.setBlock(x, groundY + 1, z, Material.SNOW, chunkOdds.getRandomInt(1, 2));
 			return;
 		}

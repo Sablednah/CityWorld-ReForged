@@ -521,6 +521,43 @@ public class RoadLot extends ConnectedLot {
 	}
 
 	@Override
+	public void generateBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk, DataContext context,
+			int platX, int platZ) {
+		super.generateBlocks(generator, platmap, chunk, context, platX, platZ);
+		sprinkleTunnelRoofSnow(generator, chunk);
+	}
+
+	// MODERN: where a road tunnels under a mountain, the road lot owns the chunk but never surfaces the
+	// mountain roof, so it stays bare while the snowy nature around it is white — a dead giveaway line
+	// from above. Give the roof a LIGHT, sparse snow sprinkle in the cold: thinner than the surrounding
+	// slopes so a keen eye can still trace the road (as if warmth from the tunnel below thinned it), but
+	// no longer a stark bare stripe. Only above the road, only on snowable solid ground (never ice).
+	private void sprinkleTunnelRoofSnow(CityWorldGenerator generator, RealBlocks chunk) {
+		if (generator.worldStyle != CityWorldGenerator.WorldStyle.MODERN)
+			return;
+		ClimateZone zone = ClimateZone.at(generator, chunkX, chunkZ);
+		if (!zone.cold())
+			return;
+
+		int roofMin = generator.streetLevel + DataContext.FloorHeight * 2; // only a genuine mountain roof
+		for (int x = 0; x < chunk.width; x++)
+			for (int z = 0; z < chunk.width; z++) {
+				int ground = getBlockY(x, z);
+				if (ground < roofMin)
+					continue; // no mountain over the road here (a surface road) — leave it
+				int emptyY = chunk.findLastEmptyBelow(x, ground + 5, z, ground - 4);
+				int surfaceY = emptyY - 1;
+				if (emptyY <= ground - 4 || !chunk.isEmpty(x, emptyY, z))
+					continue;
+				// sparse dusting only — a keen eye's clue, not full cover
+				if (chunkOdds.playOdds(Odds.oddsSomewhatLikely) && !chunk.isEmpty(x, surfaceY, z)
+						&& !chunk.getActualBlock(x, surfaceY, z).getBlockData().canBeReplaced()
+						&& !chunk.isOfTypes(x, surfaceY, z, Material.ICE, Material.PACKED_ICE, Material.BLUE_ICE))
+					chunk.setBlock(x, emptyY, z, Material.SNOW, 1);
+			}
+	}
+
+	@Override
 	protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
 			DataContext context, int platX, int platZ) {
 
