@@ -193,6 +193,24 @@ public class ParkLot extends ConnectedLot {
 		}
 	}
 
+	// MODERN park ground: sand over sandstone in hot-dry deserts, podzol in cold-wet taiga, else the
+	// world's usual grass/dirt. CLASSIC (zone == null) always uses the ore provider's defaults.
+	private Material parkSurfaceMaterial(CityWorldGenerator generator) {
+		if (zone != null) {
+			if (zone.hot() && zone.dry())
+				return Material.SAND;
+			if (zone.cold() && zone.wet())
+				return Material.PODZOL;
+		}
+		return generator.oreProvider.surfaceMaterial;
+	}
+
+	private Material parkSubsurfaceMaterial(CityWorldGenerator generator) {
+		if (zone != null && zone.hot() && zone.dry())
+			return Material.SANDSTONE;
+		return generator.oreProvider.subsurfaceMaterial;
+	}
+
 	private CoverageType[] getBiomeFlowers() {
 		if (zone == null)
 			return temperateFlowers;
@@ -290,8 +308,10 @@ public class ParkLot extends ConnectedLot {
 		}
 
 		// top it off
-		chunk.setLayer(highestY + 2, generator.oreProvider.subsurfaceMaterial);
-		chunk.setLayer(highestY + 3, generator.oreProvider.surfaceMaterial);
+		// in MODERN the ground follows the biome (sand in the desert, podzol in cold-wet taiga);
+		// everywhere else keeps the world's usual grass/dirt.
+		chunk.setLayer(highestY + 2, parkSubsurfaceMaterial(generator));
+		chunk.setLayer(highestY + 3, parkSurfaceMaterial(generator));
 
 		WoodSpecies species = chunkOdds.getRandomWoodSpecies();
 		Material logMaterial = Trees.getRandomWoodLog(species);
