@@ -78,11 +78,14 @@ public abstract class ConstructLot extends IsolatedLot {
 	private void blendCoverAt(CityWorldGenerator generator, RealBlocks chunk, ClimateZone zone, int x, int y, int z,
 			int surfaceY) {
 		// cold: snow blankets everything solid (ground, gravel piles, shed roofs) so the lot melts into
-		// the snowy surroundings — but never onto ice or water, where a snow layer would be illegal.
+		// the snowy surroundings. The surface pass may have planted grass/ferns here, so snow onto the
+		// first real solid block — replacing a plant rather than sitting on top of one — and never onto
+		// ice or water, where a snow layer would be illegal.
 		if (zone.cold()) {
-			if (chunkOdds.playOdds(Odds.oddsExtremelyLikely) && !chunk.isOfTypes(x, surfaceY, z, Material.ICE,
-					Material.PACKED_ICE, Material.BLUE_ICE, Material.WATER, Material.SNOW))
-				chunk.setBlock(x, y, z, Material.SNOW, chunkOdds.getRandomInt(1, 2));
+			int groundY = isSnowableGround(chunk, x, surfaceY, z) ? surfaceY
+					: isSnowableGround(chunk, x, surfaceY - 1, z) ? surfaceY - 1 : Integer.MIN_VALUE;
+			if (groundY >= generator.streetLevel - 1 && chunkOdds.playOdds(Odds.oddsExtremelyLikely))
+				chunk.setBlock(x, groundY + 1, z, Material.SNOW, chunkOdds.getRandomInt(1, 2));
 			return;
 		}
 
@@ -97,6 +100,15 @@ public abstract class ConstructLot extends IsolatedLot {
 				: blendTemperate);
 		if (chunkOdds.playOdds(Odds.oddsSomewhatLikely))
 			generator.coverProvider.generateRandomCoverage(generator, chunk, x, y, z, tufts);
+	}
+
+	// A block a snow layer can legally rest on: a solid, non-replaceable cube that isn't ice (snow on
+	// ice is the illegal, cascading state). canBeReplaced() is true for plants/water/snow, so this also
+	// keeps snow from landing on the grass and ferns the surface pass scattered.
+	private boolean isSnowableGround(RealBlocks chunk, int x, int y, int z) {
+		if (chunk.isEmpty(x, y, z) || chunk.getActualBlock(x, y, z).getBlockData().canBeReplaced())
+			return false;
+		return !chunk.isOfTypes(x, y, z, Material.ICE, Material.PACKED_ICE, Material.BLUE_ICE);
 	}
 
 	@Override
