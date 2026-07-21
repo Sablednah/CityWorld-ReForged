@@ -12,6 +12,9 @@ import me.daddychurchill.CityWorld.Support.SupportBlocks;
 
 public class SurfaceProvider_Normal extends SurfaceProvider {
 
+	// how far below the snow line MODERN begins icing the peaks — makes bare frozen tips less rare
+	private final static int MODERN_ICE_DROP = 5;
+
 	public SurfaceProvider_Normal(Odds odds) {
 		super(odds);
 		// TODO Auto-generated constructor stub
@@ -27,9 +30,12 @@ public class SurfaceProvider_Normal extends SurfaceProvider {
 		double primary = odds.getRandomDouble();
 		double secondary = odds.getRandomDouble();
 
-		// top of the world?
-		if (y >= generator.snowLevel) {
-			if (generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN)
+		// top of the world? MODERN starts the ice a touch lower than the snow line so bare peaks aren't
+		// so rare (playtest: the caps looked great but too seldom).
+		boolean modern = generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN;
+		int iceStart = modern ? generator.snowLevel - MODERN_ICE_DROP : generator.snowLevel;
+		if (y >= iceStart) {
+			if (modern)
 				// MODERN: ice the peaks properly with stable full blocks (snow / packed / blue ice /
 				// powder snow) instead of a loose snow layer sitting on ice — which is an illegal state
 				// that cascades away the moment anything touches it.
