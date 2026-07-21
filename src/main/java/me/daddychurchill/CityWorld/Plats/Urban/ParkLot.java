@@ -150,8 +150,12 @@ public class ParkLot extends ConnectedLot {
 	private final static CoverageType[] desertTallTrees = { CoverageType.ACACIA_TREE };
 
 	// biome flower/ground scatter dropped across MODERN parks (a light sprinkle, not a field)
-	private final static CoverageType[] coldFlowers = { CoverageType.OXEYE_DAISY, CoverageType.ALLIUM,
-			CoverageType.DANDELION };
+	// snowy plains: sparse hardy plants poking through the snow
+	private final static CoverageType[] snowyPlainsFlowers = { CoverageType.GRASS, CoverageType.DANDELION,
+			CoverageType.OXEYE_DAISY };
+	// taiga: ferns and mushrooms on the podzol
+	private final static CoverageType[] taigaFlowers = { CoverageType.FERN, CoverageType.TALL_FERN,
+			CoverageType.BROWN_MUSHROOM, CoverageType.RED_MUSHROOM, CoverageType.GRASS };
 	private final static CoverageType[] temperateFlowers = { CoverageType.POPPY, CoverageType.DANDELION,
 			CoverageType.OXEYE_DAISY, CoverageType.RED_TULIP, CoverageType.ORANGE_TULIP, CoverageType.WHITE_TULIP,
 			CoverageType.PINK_TULIP, CoverageType.ALLIUM, CoverageType.AZURE_BLUET };
@@ -216,7 +220,7 @@ public class ParkLot extends ConnectedLot {
 			return temperateFlowers;
 		switch (zone.temp) {
 		case COLD:
-			return coldFlowers;
+			return zone.wet() ? taigaFlowers : snowyPlainsFlowers;
 		case TEMPERATE:
 			return temperateFlowers;
 		case WARM:
@@ -232,6 +236,8 @@ public class ParkLot extends ConnectedLot {
 	private void scatterBiomeFlowers(CityWorldGenerator generator, RealBlocks chunk, int surfaceY) {
 		if (zone == null)
 			return;
+
+		// plants first so they poke up through any snow we lay next
 		CoverageType[] flowers = getBiomeFlowers();
 		int count = chunkOdds.getRandomInt(4, 6);
 		for (int i = 0; i < count; i++) {
@@ -240,6 +246,14 @@ public class ParkLot extends ConnectedLot {
 			if (chunk.isEmpty(x, surfaceY, z))
 				generator.coverProvider.generateRandomCoverage(generator, chunk, x, surfaceY, z, flowers);
 		}
+
+		// cold parks get a snow dusting over the lawn so snowy-plains and taiga parks read as wintry —
+		// the odd gap keeps it from looking like a solid slab.
+		if (zone.cold())
+			for (int x = 1; x < 15; x++)
+				for (int z = 1; z < 15; z++)
+					if (chunkOdds.playOdds(Odds.oddsExtremelyLikely))
+						generator.oreProvider.dropSnow(generator, chunk, x, surfaceY, z);
 	}
 
 	@Override
