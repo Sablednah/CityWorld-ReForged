@@ -375,7 +375,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // problem here, not ours.
         if (context.worldStyle == CityWorldGenerator.WorldStyle.MODERN) {
             me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x, pos.z);
-            if (lot != null && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE)
+            if (lot != null && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE
+                    && lot.allowsWildDecoration())
                 super.applyBiomeDecoration(level, chunk, structureManager);
         }
     }

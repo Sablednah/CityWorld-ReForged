@@ -15,6 +15,14 @@ public abstract class ConstructLot extends IsolatedLot {
 		return generator.getSettings().inConstructRange(chunkX, chunkZ);
 	}
 
+	// Construct lots (gravelworks/mines/oil platforms/campgrounds/etc.) carve or build during the
+	// decoration pass, after the vanilla heightmap is fixed — so vanilla wild cover would float over
+	// their pits and platforms. Keep MODERN's hybrid decoration off them.
+	@Override
+	public boolean allowsWildDecoration() {
+		return false;
+	}
+
 	@Override
 	public PlatLot validateLot(PlatMap platmap, int platX, int platZ) {
 		return null;

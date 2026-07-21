@@ -94,6 +94,16 @@ public abstract class PlatLot {
 		return generator.getSettings().inCityRange(chunkX, chunkZ);
 	}
 
+	/**
+	 * MODERN only: may vanilla wild decoration (biome trees/grass/flowers) run over this lot? True for
+	 * genuine wilderness (the default). Earthworks that carve or reshape the ground during the
+	 * decoration pass override this to false — the vanilla heightmap is computed before they dig, so
+	 * letting vanilla decorate leaves grass and flowers floating over pits and platforms.
+	 */
+	public boolean allowsWildDecoration() {
+		return true;
+	}
+
 	public PlatLot validateLot(PlatMap platmap, int platX, int platZ) {
 		return null; // assume that we don't do anything
 	}
