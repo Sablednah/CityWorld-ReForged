@@ -42,7 +42,11 @@ public class NatureLot extends IsolatedLot {
 	@Override
 	protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
 			DataContext context, int platX, int platZ) {
-		generateSurface(generator, chunk, true);
+		// In MODERN, vanilla decorates the wild (biome-appropriate trees/flowers), so don't also plant
+		// CityWorld's own trees here — that doubling was making forests read too dense. Other styles keep
+		// placing them. The grass/snow surface is still laid down either way (vanilla needs it to plant on).
+		boolean cityworldTrees = generator.worldStyle != CityWorldGenerator.WorldStyle.MODERN;
+		generateSurface(generator, chunk, cityworldTrees);
 		generateEntities(generator, chunk);
 	}
 

@@ -242,9 +242,9 @@ public class CityWorldGenerator {
         // different biomes. Seeded off the world (independent of terrain) so climate and terrain don't
         // correlate; scale set for biome-sized (~hundreds of blocks) patches.
         temperatureShape = new me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator(worldSeed + 71, 2);
-        temperatureShape.setScale(0.0035);
+        temperatureShape.setScale(0.0018);
         humidityShape = new me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator(worldSeed + 137, 2);
-        humidityShape.setScale(0.0040);
+        humidityShape.setScale(0.0021);
 
         // Fixed per world, so every road shares one identity. Derived straight from the seed rather
         // than from a running RNG — see getConnectionKey.
