@@ -237,23 +237,41 @@ public class ParkLot extends ConnectedLot {
 		if (zone == null)
 			return;
 
-		// plants first so they poke up through any snow we lay next
-		CoverageType[] flowers = getBiomeFlowers();
-		int count = chunkOdds.getRandomInt(4, 6);
-		for (int i = 0; i < count; i++) {
-			int x = chunkOdds.getRandomInt(1, 14);
-			int z = chunkOdds.getRandomInt(1, 14);
-			if (chunk.isEmpty(x, surfaceY, z))
-				generator.coverProvider.generateRandomCoverage(generator, chunk, x, surfaceY, z, flowers);
+		// dry/normal cold reads as open snowy plains: kept bare and white. Wet cold is taiga: keeps its
+		// plants and gets only a light dusting.
+		boolean snowyPlains = zone.cold() && !zone.wet();
+
+		// plants first so they poke up through any snow — but snowy plains stay bare
+		if (!snowyPlains) {
+			CoverageType[] flowers = getBiomeFlowers();
+			int count = chunkOdds.getRandomInt(4, 6);
+			for (int i = 0; i < count; i++) {
+				int x = chunkOdds.getRandomInt(1, 14);
+				int z = chunkOdds.getRandomInt(1, 14);
+				if (chunk.isEmpty(x, surfaceY, z))
+					generator.coverProvider.generateRandomCoverage(generator, chunk, x, surfaceY, z, flowers);
+			}
 		}
 
-		// cold parks get a snow dusting over the lawn so snowy-plains and taiga parks read as wintry —
-		// the odd gap keeps it from looking like a solid slab.
-		if (zone.cold())
+		// cold parks get real snow over their grassy/podzol ground: a thick white blanket on snowy plains
+		// (laid straight over the green tufts the surface pass planted, so it actually reads white), a
+		// lighter dusting in taiga so the mushrooms and ferns still show. Only over full-solid grass or
+		// podzol — never a path, column or ice — so a snow layer can never sit somewhere illegal and
+		// cascade.
+		if (zone.cold()) {
+			double snowOdds = snowyPlains ? Odds.oddsExceedinglyLikely : Odds.oddsVeryLikely;
 			for (int x = 1; x < 15; x++)
-				for (int z = 1; z < 15; z++)
-					if (chunkOdds.playOdds(Odds.oddsExtremelyLikely))
-						generator.oreProvider.dropSnow(generator, chunk, x, surfaceY, z);
+				for (int z = 1; z < 15; z++) {
+					if (!chunkOdds.playOdds(snowOdds))
+						continue;
+					if (!chunk.isOfTypes(x, surfaceY - 1, z, Material.GRASS_BLOCK, Material.PODZOL))
+						continue;
+					// taiga only snows the open cells (keep its plants); snowy plains blankets over tufts
+					if (!snowyPlains && !chunk.isEmpty(x, surfaceY, z))
+						continue;
+					chunk.setBlock(x, surfaceY, z, Material.SNOW, snowyPlains ? chunkOdds.getRandomInt(2, 2) : 1);
+				}
+		}
 	}
 
 	@Override
