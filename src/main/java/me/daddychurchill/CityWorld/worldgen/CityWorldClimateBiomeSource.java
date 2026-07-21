@@ -145,8 +145,11 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
         if (decayed) return b(Biomes.DESERT);
         if (cold(t)) return t < 0.15 && dry(h) ? b(Biomes.ICE_SPIKES)
                 : wet(h) ? b(Biomes.SNOWY_TAIGA) : b(Biomes.SNOWY_PLAINS);
+        // mushroom fields kept genuinely rare (vanilla's rarest biome) — only the warm, very-humid
+        // corner of temperate lowland; everything else damp stays flower forest.
         if (temperate(t)) return dry(h) ? b(Biomes.PLAINS)
-                : h > 0.8 ? b(Biomes.MUSHROOM_FIELDS) : wet(h) ? b(Biomes.FLOWER_FOREST) : b(Biomes.MEADOW);
+                : (t > 0.5 && h > 0.9) ? b(Biomes.MUSHROOM_FIELDS)
+                : wet(h) ? b(Biomes.FLOWER_FOREST) : b(Biomes.MEADOW);
         // swamp widened (h>0.5, not just wet>0.65) so warm humid lowlands read as swamp more often
         if (warm(t)) return dry(h) ? b(Biomes.SAVANNA) : h > 0.5 ? b(Biomes.SWAMP) : b(Biomes.SUNFLOWER_PLAINS);
         return dry(h) ? b(Biomes.DESERT) : wet(h) ? b(Biomes.JUNGLE) : b(Biomes.SAVANNA); // hot
