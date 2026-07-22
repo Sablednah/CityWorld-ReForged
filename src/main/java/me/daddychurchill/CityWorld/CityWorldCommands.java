@@ -100,12 +100,15 @@ public final class CityWorldCommands {
                 .then(Commands.argument("name", StringArgumentType.greedyString())
                         .executes(ctx -> exportSettings(ctx, StringArgumentType.getString(ctx, "name")))));
 
-        // /cwlocate <biome> — like vanilla /locate biome, but driven by CityWorld's own climate map
-        // (vanilla /locate is blind here: the biome source only reports a plains fallback).
+        // /cwlocate <biome> [tp] — like vanilla /locate biome, but driven by CityWorld's own climate map
+        // (vanilla /locate is blind here: the biome source only reports a plains fallback). Add "tp" to
+        // teleport to the match.
         dispatcher.register(Commands.literal("cwlocate")
                 .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
-                .then(Commands.argument("biome", StringArgumentType.greedyString())
-                        .executes(CityWorldCommands::locateBiome)));
+                .then(Commands.argument("biome", StringArgumentType.word())
+                        .executes(ctx -> locateBiome(ctx, false))
+                        .then(Commands.literal("tp")
+                                .executes(ctx -> locateBiome(ctx, true)))));
     }
 
     // ------------------------------------------------------------------ /cityinfo
@@ -273,7 +276,8 @@ public final class CityWorldCommands {
     /** Chunk rings to search out before giving up (~2560 blocks). */
     private static final int LOCATE_MAX_CHUNK_RINGS = 160;
 
-    private static int locateBiome(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+    private static int locateBiome(CommandContext<CommandSourceStack> ctx, boolean teleport)
+            throws CommandSyntaxException {
         ServerPlayer player = ctx.getSource().getPlayerOrException();
         ServerLevel level = player.level();
         MinecraftServer server = ctx.getSource().getServer();
@@ -303,12 +307,21 @@ public final class CityWorldCommands {
         Thread t = new Thread(() -> {
             Found best = searchBiome(context, classifier, query, decayed, pos.x, pos.z, playerX, playerZ);
             server.execute(() -> {
-                if (best == null)
+                if (best == null) {
                     player.sendSystemMessage(Component.literal("Found no biome matching '" + query + "' within "
                             + (LOCATE_MAX_CHUNK_RINGS * 16) + " blocks."));
-                else
-                    player.sendSystemMessage(Component.literal("Nearest '" + best.name() + "' at x=" + best.x()
-                            + " z=" + best.z() + "  (" + Math.round(best.dist()) + " blocks " + best.compass() + ")"));
+                    return;
+                }
+                player.sendSystemMessage(Component.literal("Nearest '" + best.name() + "' at x=" + best.x() + " z="
+                        + best.z() + "  (" + Math.round(best.dist()) + " blocks " + best.compass() + ")"));
+                if (teleport) {
+                    // force the target chunk to generate so the heightmap is real, then drop onto it
+                    level.getChunk(best.x() >> 4, best.z() >> 4);
+                    int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, best.x(), best.z());
+                    player.teleportTo(level, best.x() + 0.5, y, best.z() + 0.5, Set.<Relative>of(), player.getYRot(),
+                            player.getXRot(), false);
+                    player.sendSystemMessage(Component.literal("Teleported to the nearest '" + best.name() + "'."));
+                }
             });
         }, "cityworld-locate");
         t.setDaemon(true);
