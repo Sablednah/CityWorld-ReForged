@@ -54,6 +54,7 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	private final SimplexOctaveGenerator featureShape;
 	private final SimplexNoiseGenerator caveShape;
 	private final SimplexNoiseGenerator mineShape;
+	private final SimplexNoiseGenerator mineRegionShape;
 
 	final int height;
 	final int seaLevel;
@@ -115,6 +116,7 @@ public class ShapeProvider_Normal extends ShapeProvider {
 
 		caveShape = new SimplexNoiseGenerator(seed);
 		mineShape = new SimplexNoiseGenerator(seed + 1);
+		mineRegionShape = new SimplexNoiseGenerator(seed + 811);
 
 		// get ranges
 		// Upstream read these off the Bukkit World (world.getMaxHeight()/getSeaLevel()). A modern
@@ -445,19 +447,33 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		return Math.min(height - 3, Math.max(y, 3));
 	}
 
+	// Mines are now RARE but BIG and rambling. A low-frequency "mine field" noise decides where a network
+	// exists at all — few, broad regions (mineRegionThreshold; higher = rarer). Inside a field the
+	// original dense shaft noise (> 0.0) fills it with a sprawling warren; everywhere else has no mines.
+	// Stairs and rooms gate on shaft presence, so they thin coherently with the field — no orphans.
+	private final static double mineRegionScale = 1.0 / 48.0;
+	private final static double mineRegionThreshold = 0.45;
+
+	private boolean inMineField(int chunkX, int chunkZ) {
+		return mineRegionShape.noise(chunkX * mineRegionScale, chunkZ * mineRegionScale) > mineRegionThreshold;
+	}
+
 	@Override
 	public boolean isHorizontalNSShaft(int chunkX, int chunkY, int chunkZ) {
-		return mineShape.noise(chunkX * mineScale, chunkY * mineScale, chunkZ * mineScale + 0.5) > 0.0;
+		return inMineField(chunkX, chunkZ)
+				&& mineShape.noise(chunkX * mineScale, chunkY * mineScale, chunkZ * mineScale + 0.5) > 0.0;
 	}
 
 	@Override
 	public boolean isHorizontalWEShaft(int chunkX, int chunkY, int chunkZ) {
-		return mineShape.noise(chunkX * mineScale + 0.5, chunkY * mineScale, chunkZ * mineScale) > 0.0;
+		return inMineField(chunkX, chunkZ)
+				&& mineShape.noise(chunkX * mineScale + 0.5, chunkY * mineScale, chunkZ * mineScale) > 0.0;
 	}
 
 	@Override
 	public boolean isVerticalShaft(int chunkX, int chunkY, int chunkZ) {
-		return mineShape.noise(chunkX * mineScale, chunkY * mineScale + 0.5, chunkZ * mineScale) > 0.0;
+		return inMineField(chunkX, chunkZ)
+				&& mineShape.noise(chunkX * mineScale, chunkY * mineScale + 0.5, chunkZ * mineScale) > 0.0;
 	}
 
 	@Override
