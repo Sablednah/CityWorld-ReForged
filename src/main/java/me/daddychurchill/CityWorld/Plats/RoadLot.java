@@ -525,21 +525,35 @@ public class RoadLot extends ConnectedLot {
 	public void generateBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk, DataContext context,
 			int platX, int platZ) {
 		super.generateBlocks(generator, platmap, chunk, context, platX, platZ);
-		sprinkleTunnelRoofSnow(generator, chunk);
+		sprinkleTunnelRoofSnow(generator, platmap, chunk, platX, platZ);
+	}
+
+	// Roads keep their own tunnel-roof snow blend (below); skip the base biome-ground pass so its full
+	// biome snow doesn't drown the sparse traceable line.
+	@Override
+	protected boolean wantsBiomeGround() {
+		return false;
 	}
 
 	// MODERN: where a road tunnels under a mountain, the road lot owns the chunk but never surfaces the
 	// mountain roof, so it stays bare while the snowy nature around it is white — a dead giveaway line
-	// from above. Give the roof a LIGHT, sparse snow sprinkle in the cold: thinner than the surrounding
-	// slopes so a keen eye can still trace the road (as if warmth from the tunnel below thinned it), but
-	// no longer a stark bare stripe. Only above the road, only on snowable solid ground (never ice).
-	private void sprinkleTunnelRoofSnow(CityWorldGenerator generator, RealBlocks chunk) {
+	// from above. Snow the roof, but as a gradient: heavy on the outer band that faces nature (so the
+	// edge blends into the surrounding white) and sparse down the middle (so a keen eye can still trace
+	// the road, as if warmth from the tunnel below thinned it). Only on snowable solid ground (never ice)
+	// and only where the biome is actually cold enough to snow at this height.
+	private void sprinkleTunnelRoofSnow(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk, int platX,
+			int platZ) {
 		if (generator.worldStyle != CityWorldGenerator.WorldStyle.MODERN)
 			return;
 
+		// the road's run: N-S or E-W. Its nature-facing sides are the edges perpendicular to that.
+		SurroundingRoads roads = new SurroundingRoads(platmap, platX, platZ);
+		boolean ns = roads.toNorth() && roads.toSouth();
+		boolean ew = roads.toEast() && roads.toWest();
+		int band = 3, w = chunk.width;
 		int roofMin = generator.streetLevel + DataContext.FloorHeight * 2; // only a genuine mountain roof
-		for (int x = 0; x < chunk.width; x++)
-			for (int z = 0; z < chunk.width; z++) {
+		for (int x = 0; x < w; x++)
+			for (int z = 0; z < w; z++) {
 				int ground = getBlockY(x, z);
 				if (ground < roofMin)
 					continue; // no mountain over the road here (a surface road) — leave it
@@ -547,13 +561,21 @@ public class RoadLot extends ConnectedLot {
 				int surfaceY = emptyY - 1;
 				if (emptyY <= ground - 4 || !chunk.isEmpty(x, emptyY, z))
 					continue;
-				// sparse dusting only — a keen eye's clue, not full cover — and only where the biome is
-				// actually cold enough to snow at this height, so warmer-elevation roofs stay bare.
-				if (chunk.coldEnoughToSnow(x, surfaceY + 1, z) && chunkOdds.playOdds(Odds.oddsSomewhatLikely)
-						&& !chunk.isEmpty(x, surfaceY, z)
-						&& !chunk.getActualBlock(x, surfaceY, z).getBlockData().canBeReplaced()
-						&& !chunk.isOfTypes(x, surfaceY, z, Material.ICE, Material.PACKED_ICE, Material.BLUE_ICE))
-					chunk.setBlock(x, emptyY, z, Material.SNOW, 1);
+				if (!chunk.coldEnoughToSnow(x, surfaceY + 1, z) || chunk.isEmpty(x, surfaceY, z)
+						|| chunk.getActualBlock(x, surfaceY, z).getBlockData().canBeReplaced()
+						|| chunk.isOfTypes(x, surfaceY, z, Material.ICE, Material.PACKED_ICE, Material.BLUE_ICE))
+					continue;
+
+				boolean edge;
+				if (ns)
+					edge = x < band || x >= w - band; // blend the E/W sides
+				else if (ew)
+					edge = z < band || z >= w - band; // blend the N/S sides
+				else
+					edge = x < band || x >= w - band || z < band || z >= w - band; // junction: all sides
+				double odds = edge ? Odds.oddsExceedinglyLikely : Odds.oddsSomewhatLikely;
+				if (chunkOdds.playOdds(odds))
+					chunk.setBlock(x, emptyY, z, Material.SNOW, edge ? chunkOdds.getRandomInt(1, 2) : 1);
 			}
 	}
 

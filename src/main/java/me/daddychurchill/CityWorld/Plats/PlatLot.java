@@ -225,8 +225,62 @@ public abstract class PlatLot {
 		// let the specialized platlot do it's thing
 		generateActualBlocks(generator, platmap, chunk, context, platX, platZ);
 
+		// MODERN: give the exposed natural ground of every lot its biome-signature block (sand deserts,
+		// banded badlands, mycelium isles, snowy plains) — so a house yard or farm edge in a desert reads
+		// sandy instead of a green island. Guarded to grass/dirt, so it never touches builds, farmland,
+		// roads or swamp pools. Roads opt out (they keep their own snow blend).
+		if (generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN && wantsBiomeGround())
+			applyBiomeGround(generator, chunk);
+
 		// polish things off
 		generator.shapeProvider.postGenerateBlocks(generator, this, chunk, blockYs);
+	}
+
+	/** MODERN: whether the base biome-ground pass runs on this lot. True by default; roads opt out to
+	 *  keep their sparse tunnel-roof snow blend. */
+	protected boolean wantsBiomeGround() {
+		return true;
+	}
+
+	/** MODERN biome-aware ground: swap the exposed natural grass/dirt of this lot's columns to the
+	 *  assigned biome's signature block (and snow the cold ones), clearing any surface vegetation first
+	 *  so nothing floats. Only touches grass/dirt near the planned surface, below the icecap line. */
+	protected void applyBiomeGround(CityWorldGenerator generator, RealBlocks chunk) {
+		int iceLine = generator.snowLevel - 5; // the icecap pass owns columns at/above this
+		for (int x = 0; x < 16; x++)
+			for (int z = 0; z < 16; z++) {
+				int top = getBlockY(x, z);
+				if (top < generator.seaLevel || top >= iceLine)
+					continue;
+				if (!chunk.isOfTypes(x, top, z, Material.GRASS_BLOCK, Material.DIRT, Material.COARSE_DIRT,
+						Material.PODZOL))
+					continue; // only natural grassy ground — never a build, farmland, road or swamp pool
+				var biome = chunk.getBiomeKey(x, top, z);
+				if (biome == null)
+					continue;
+
+				Material surf = me.daddychurchill.CityWorld.Support.BiomeSurface.surface(biome);
+				boolean snow = me.daddychurchill.CityWorld.Support.BiomeSurface.snowy(biome);
+				if (surf == null && !snow)
+					continue;
+
+				clearVegetation(chunk, x, top + 1, z);
+				clearVegetation(chunk, x, top + 2, z);
+
+				if (surf != null) {
+					chunk.setBlock(x, top, z, surf);
+					Material sub = me.daddychurchill.CityWorld.Support.BiomeSurface.subsurface(biome);
+					if (sub != null)
+						chunk.setBlocks(x, top - 3, top, z, sub);
+				}
+				if (snow)
+					chunk.setBlock(x, top + 1, z, Material.SNOW, chunkOdds.getRandomInt(1, 2));
+			}
+	}
+
+	private void clearVegetation(RealBlocks chunk, int x, int y, int z) {
+		if (!chunk.isEmpty(x, y, z) && !chunk.getActualBlock(x, y, z).getBlockData().blocksMotion())
+			chunk.setBlock(x, y, z, Material.AIR);
 	}
 
 	protected void destroyLot(CityWorldGenerator generator, int y1, int y2) {
