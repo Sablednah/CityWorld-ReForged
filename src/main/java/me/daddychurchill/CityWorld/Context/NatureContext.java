@@ -51,7 +51,10 @@ public class NatureContext extends UncivilizedContext {
 	public NatureContext(CityWorldGenerator generator) {
 		super(generator);
 
-		oddsOfIsolatedConstructs = Odds.oddsSomewhatLikely;
+		// bumped from oddsSomewhatLikely: mine entrances are now gated on a shaft actually sitting below
+		// (mines cluster into rare fields), so more isolated-construct spots are checked to make sure a
+		// field reliably gets surface access.
+		oddsOfIsolatedConstructs = Odds.oddsLikely;
 	}
 
 	private final static double oddsOfBunkers = Odds.oddsLikely;
@@ -228,8 +231,10 @@ public class NatureContext extends UncivilizedContext {
 				}
 				break;
 			case MIDLAND:
-				// Mine entrance
-				if (generator.getSettings().includeMines)
+				// Mine entrance — only where a CityWorld mine shaft actually sits below (mines cluster into
+				// rare fields now, so an ungated entrance would open onto a dead-end hole)
+				if (generator.getSettings().includeMines && generator.shapeProvider.hasMineShaftBelow(generator,
+						platmap.originX + x, platmap.originZ + z))
 					current = new MineEntranceLot(platmap, platmap.originX + x, platmap.originZ + z);
 				break;
 			case HIGHLAND:

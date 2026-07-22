@@ -308,6 +308,22 @@ public abstract class ShapeProvider extends Provider {
 
 	public abstract boolean isVerticalShaft(int chunkX, int chunkY, int chunkZ);
 
+	/**
+	 * Is there a CityWorld mine shaft under this chunk for a mine entrance to drop into? Mirrors
+	 * {@code PlatLot.findHighestShaftableLevel} — now that mines cluster into rare fields, entrances must
+	 * only be placed where a shaft actually exists, or they'd open onto a dead-end hole.
+	 */
+	public boolean hasMineShaftBelow(CityWorldGenerator generator, int chunkX, int chunkZ) {
+		AbstractCachedYs ys = getCachedYs(generator, chunkX, chunkZ);
+		int minHeight = ys.getMinHeight();
+		if (minHeight <= generator.seaLevel)
+			return false;
+		for (int y = (minHeight / 16 - 1) * 16; y >= 16; y -= 16)
+			if (y < minHeight && isHorizontalWEShaft(chunkX, y, chunkZ))
+				return true;
+		return false;
+	}
+
 	// TODO refactor this so that it is a positive (maybe ifCave) instead of a
 	// negative
 	protected abstract boolean notACave(CityWorldGenerator generator, int blockX, int blockY, int blockZ);

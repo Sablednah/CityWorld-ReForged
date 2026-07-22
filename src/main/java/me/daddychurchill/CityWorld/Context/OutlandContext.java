@@ -97,7 +97,8 @@ public class OutlandContext extends RuralContext {
 								if (!singletonOneUsed && platmapOdds.playOdds(Odds.oddsUnlikely)) {
 									current = new GravelMineLot(platmap, chunkX, chunkZ);
 									singletonOneUsed = true;
-								} else if (!singletonTwoUsed && platmapOdds.playOdds(Odds.oddsUnlikely)) {
+								} else if (!singletonTwoUsed && platmapOdds.playOdds(Odds.oddsUnlikely)
+										&& generator.shapeProvider.hasMineShaftBelow(generator, chunkX, chunkZ)) {
 									current = new MineEntranceLot(platmap, chunkX, chunkZ);
 									singletonTwoUsed = true;
 								} else
