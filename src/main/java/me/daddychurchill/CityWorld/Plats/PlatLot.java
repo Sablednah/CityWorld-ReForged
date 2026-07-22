@@ -327,30 +327,21 @@ public abstract class PlatLot {
 	}
 
 	private final static int lowestMineSegment = 16;
-	// Upstream stacked a mine level every 16 blocks from the surface to y16 — under a mountain that's ~9
-	// stacked levels ("full of mineshafts"). Thin them: wider vertical spacing, and keep them a good bit
-	// below the surface so tall terrain doesn't fill with shafts up to the grass.
-	private final static int mineLevelSpacing = 32;
-	private final static int mineDepthBelowSurface = 20;
 
 	public void generateMines(CityWorldGenerator generator, InitialBlocks chunk) {
 
 		// get shafted! (this builds down to keep the support poles happy)
-		if (generator.getSettings().includeMines) {
-			int highest = Math.min(blockYs.getMinHeight() - mineDepthBelowSurface, generator.seaLevel + 20);
-			for (int y = (highest / 16) * 16; y >= lowestMineSegment; y -= mineLevelSpacing) {
+		if (generator.getSettings().includeMines)
+			for (int y = (blockYs.getMinHeight() / 16 - 1) * 16; y >= lowestMineSegment; y -= 16) {
 				if (isShaftableLevel(generator, y))
 					generateHorizontalMineLevel(generator, chunk, y);
 			}
-		}
 	}
 
 	protected int findHighestShaftableLevel(CityWorldGenerator generator, DataContext context, SupportBlocks chunk) {
 
-		// keep going down until we find what we are looking for — step in lockstep with generateMines so a
-		// mine entrance connects to a level that actually has a shaft
-		int highest = Math.min(blockYs.getMinHeight() - mineDepthBelowSurface, generator.seaLevel + 20);
-		for (int y = (highest / 16) * 16; y >= lowestMineSegment; y -= mineLevelSpacing) {
+		// keep going down until we find what we are looking for
+		for (int y = (blockYs.getMinHeight() / 16 - 1) * 16; y >= lowestMineSegment; y -= 16) {
 			if (isShaftableLevel(generator, y)
 					&& generator.shapeProvider.isHorizontalWEShaft(chunk.sectionX, y, chunk.sectionZ))
 				return y + 7;
