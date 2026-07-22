@@ -4,6 +4,7 @@ import me.daddychurchill.CityWorld.compat.Material;
 import me.daddychurchill.CityWorld.compat.Biome;
 import me.daddychurchill.CityWorld.compat.BlockFace;
 import net.minecraft.world.level.block.state.properties.Half;
+import net.minecraft.world.level.block.state.properties.RailShape;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import me.daddychurchill.CityWorld.compat.BiomeGrid;
 
@@ -566,6 +567,51 @@ public abstract class PlatLot {
 		// draw the center bit
 		if (pathFound)
 			generateMineCeiling(chunk, 6, 10, y1 + 3, 6, 10);
+
+		// vanilla-style dressing: minecart rails down the corridors, cobwebs and the odd torch
+		dressMineCorridors(generator, chunk, y);
+	}
+
+	// Dress the carved corridors like a vanilla mineshaft: a rail line down the centre (with occasional
+	// gaps for old broken track), cobwebs strung about, and a torch or two.
+	private void dressMineCorridors(CityWorldGenerator generator, SupportBlocks chunk, int y) {
+		int floorY = y + 6;
+		int railY = floorY + 1;
+		boolean ns = generator.shapeProvider.isHorizontalNSShaft(chunk.sectionX, y, chunk.sectionZ);
+		boolean we = generator.shapeProvider.isHorizontalWEShaft(chunk.sectionX, y, chunk.sectionZ);
+		if (!ns && !we)
+			return;
+
+		if (ns)
+			for (int z = 0; z < 16; z++)
+				layMineRail(chunk, 8, floorY, railY, z, RailShape.NORTH_SOUTH);
+		if (we)
+			for (int x = 0; x < 16; x++)
+				layMineRail(chunk, x, floorY, railY, 8, RailShape.EAST_WEST);
+
+		// cobwebs strung through the corridor volume
+		for (int i = 0; i < 6; i++) {
+			int wx = chunkOdds.getRandomInt(1, 14);
+			int wz = chunkOdds.getRandomInt(1, 14);
+			int wy = railY + chunkOdds.getRandomInt(0, 3);
+			if (chunk.isEmpty(wx, wy, wz) && chunkOdds.playOdds(Odds.oddsSomewhatLikely))
+				chunk.setBlock(wx, wy, wz, Material.COBWEB);
+		}
+
+		// a torch or two on the plank floor for a bit of light
+		for (int i = 0; i < 2; i++) {
+			int tx = chunkOdds.getRandomInt(1, 14);
+			int tz = chunkOdds.getRandomInt(1, 14);
+			if (!chunk.isEmpty(tx, floorY, tz) && chunk.isType(tx, floorY, tz, shaftBridge)
+					&& chunk.isEmpty(tx, railY, tz) && chunkOdds.playOdds(Odds.oddsVeryLikely))
+				chunk.setBlock(tx, railY, tz, Material.TORCH);
+		}
+	}
+
+	private void layMineRail(SupportBlocks chunk, int x, int floorY, int railY, int z, RailShape shape) {
+		if (!chunk.isEmpty(x, floorY, z) && chunk.isEmpty(x, railY, z)
+				&& chunkOdds.playOdds(Odds.oddsExtremelyLikely)) // occasional gaps = old broken track
+			chunk.setBlock(x, railY, z, Material.RAIL, shape, false);
 	}
 
 	private void generateMineAlcove(CityWorldGenerator generator, SupportBlocks chunk, int x, int y, int z, int prizeX,
@@ -638,6 +684,15 @@ public abstract class PlatLot {
 		// not so cool stuff?
 		generator.spawnProvider.setSpawnOrSpawner(generator, chunk, chunkOdds, x, y, z,
 				generator.getSettings().spawnersInMines, generator.spawnProvider.itemsEntities_Mine);
+
+		// cave-spider style: string the alcove up with cobwebs around the spawner
+		if (generator.getSettings().spawnersInMines)
+			for (int dx = -1; dx <= 1; dx++)
+				for (int dz = -1; dz <= 1; dz++)
+					for (int dy = 0; dy <= 1; dy++)
+						if (!(dx == 0 && dz == 0 && dy == 0) && chunk.isEmpty(x + dx, y + dy, z + dz)
+								&& chunkOdds.playOdds(Odds.oddsVeryLikely))
+							chunk.setBlock(x + dx, y + dy, z + dz, Material.COBWEB);
 	}
 
 	public boolean isValidStrataY(CityWorldGenerator generator, int blockX, int blockY, int blockZ) {
