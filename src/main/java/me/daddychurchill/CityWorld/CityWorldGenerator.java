@@ -307,7 +307,7 @@ public class CityWorldGenerator {
      * everywhere bar the wander.
      */
     public me.daddychurchill.CityWorld.compat.Material badlandsBandAt(int x, int y, int z) {
-        int offset = (int) Math.round(badlandsOffsetShape.noise(x, z, 0.5, 0.8) * 2.0); // gentle ~+/-2 wander
+        int offset = (int) Math.round(badlandsOffsetShape.noise(x, z, 0.5, 0.8) * 1.5); // very gentle wander
         return badlandsBands[Math.floorMod(y + offset, badlandsBands.length)];
     }
 
@@ -322,44 +322,35 @@ public class CityWorldGenerator {
         return badlandsBandAt(x, y, z);
     }
 
-    // Vanilla-style mesa band table: mostly plain terracotta, scattered orange/yellow/brown/red runs of
-    // varying thickness, plus a few white/light-grey layered bands. Seeded off the world for determinism.
+    // Mesa band table. Our terrain is far bumpier than a vanilla mesa, so thin bands read as colour
+    // speckle (every little step lands in a different band). Instead: bold 3-6 block bands cycling an
+    // orange-dominant palette with clear accents, so bumps within a few blocks share a colour and the
+    // surface shows coherent stripe zones. Seeded off the world for determinism.
     private static me.daddychurchill.CityWorld.compat.Material[] buildBadlandsBands(long seed) {
         java.util.Random r = new java.util.Random(seed);
+        me.daddychurchill.CityWorld.compat.Material[] palette = {
+                me.daddychurchill.CityWorld.compat.Material.TERRACOTTA,
+                me.daddychurchill.CityWorld.compat.Material.ORANGE_TERRACOTTA,
+                me.daddychurchill.CityWorld.compat.Material.TERRACOTTA,
+                me.daddychurchill.CityWorld.compat.Material.BROWN_TERRACOTTA,
+                me.daddychurchill.CityWorld.compat.Material.YELLOW_TERRACOTTA,
+                me.daddychurchill.CityWorld.compat.Material.TERRACOTTA,
+                me.daddychurchill.CityWorld.compat.Material.ORANGE_TERRACOTTA,
+                me.daddychurchill.CityWorld.compat.Material.RED_TERRACOTTA,
+                me.daddychurchill.CityWorld.compat.Material.TERRACOTTA,
+                me.daddychurchill.CityWorld.compat.Material.WHITE_TERRACOTTA,
+                me.daddychurchill.CityWorld.compat.Material.LIGHT_GRAY_TERRACOTTA };
         var bands = new me.daddychurchill.CityWorld.compat.Material[64];
-        java.util.Arrays.fill(bands, me.daddychurchill.CityWorld.compat.Material.TERRACOTTA);
-        for (int i = 0; i < bands.length; i++) {
-            i += r.nextInt(5) + 1;
-            if (i < bands.length)
-                bands[i] = me.daddychurchill.CityWorld.compat.Material.ORANGE_TERRACOTTA;
-        }
-        makeBands(r, bands, me.daddychurchill.CityWorld.compat.Material.YELLOW_TERRACOTTA, 1);
-        makeBands(r, bands, me.daddychurchill.CityWorld.compat.Material.BROWN_TERRACOTTA, 2);
-        makeBands(r, bands, me.daddychurchill.CityWorld.compat.Material.RED_TERRACOTTA, 1);
-        int groups = r.nextInt(3) + 3;
-        int pos = 0;
-        for (int g = 0; g < groups; g++) {
-            pos += r.nextInt(16) + 4;
-            if (pos >= bands.length)
-                break;
-            bands[pos] = me.daddychurchill.CityWorld.compat.Material.WHITE_TERRACOTTA;
-            if (pos > 0 && r.nextBoolean())
-                bands[pos - 1] = me.daddychurchill.CityWorld.compat.Material.LIGHT_GRAY_TERRACOTTA;
-            if (pos < bands.length - 1 && r.nextBoolean())
-                bands[pos + 1] = me.daddychurchill.CityWorld.compat.Material.LIGHT_GRAY_TERRACOTTA;
+        int idx = 0;
+        int p = r.nextInt(palette.length);
+        while (idx < bands.length) {
+            me.daddychurchill.CityWorld.compat.Material colour = palette[p % palette.length];
+            int thick = 3 + r.nextInt(4); // 3-6 blocks — bold
+            for (int j = 0; j < thick && idx < bands.length; j++)
+                bands[idx++] = colour;
+            p++;
         }
         return bands;
-    }
-
-    private static void makeBands(java.util.Random r, me.daddychurchill.CityWorld.compat.Material[] bands,
-            me.daddychurchill.CityWorld.compat.Material colour, int minThick) {
-        int count = r.nextInt(4) + 2;
-        for (int i = 0; i < count; i++) {
-            int thick = minThick + 1 + r.nextInt(3); // a touch bolder so stripes stay distinct on a slope
-            int p = r.nextInt(bands.length);
-            for (int j = 0; j < thick && p + j < bands.length; j++)
-                bands[p + j] = colour;
-        }
     }
 
     /**
