@@ -84,18 +84,32 @@ public class NatureLot extends IsolatedLot {
 					continue;
 
 				Material surf = BiomeSurface.surface(biome);
+				boolean snow = BiomeSurface.snowy(biome);
+				if (surf == null && !snow)
+					continue; // a grass biome — leave its grass and foliage alone
+
+				// The surface pass planted grass/ferns/flowers on the (grass) ground; clear all of it —
+				// including 2-tall plants and non-replaceable flowers — so nothing floats over the new
+				// sand/snow/etc. (These are wild lots: nothing but that vegetation sits above ground here.)
+				clearVegetation(chunk, x, top + 1, z);
+				clearVegetation(chunk, x, top + 2, z);
+
 				if (surf != null) {
-					// clear a grass tuft the surface pass may have dropped, then swap ground + sub-surface
-					if (chunk.getActualBlock(x, top + 1, z).getBlockData().canBeReplaced())
-						chunk.setBlock(x, top + 1, z, Material.AIR);
 					chunk.setBlock(x, top, z, surf);
 					Material sub = BiomeSurface.subsurface(biome);
 					if (sub != null)
 						chunk.setBlocks(x, top - 3, top, z, sub);
 				}
-				if (BiomeSurface.snowy(biome))
+				if (snow)
 					chunk.setBlock(x, top + 1, z, Material.SNOW, chunkOdds.getRandomInt(1, 2));
 			}
+	}
+
+	/** Clear a bit of surface vegetation (grass/ferns/flowers/tall plants) — anything non-air that
+	 *  doesn't block motion — leaving solid blocks be. */
+	private void clearVegetation(RealBlocks chunk, int x, int y, int z) {
+		if (!chunk.isEmpty(x, y, z) && !chunk.getActualBlock(x, y, z).getBlockData().blocksMotion())
+			chunk.setBlock(x, y, z, Material.AIR);
 	}
 
 	private void carveSwampPools(CityWorldGenerator generator, RealBlocks chunk) {
