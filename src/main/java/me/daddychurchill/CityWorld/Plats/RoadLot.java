@@ -525,7 +525,7 @@ public class RoadLot extends ConnectedLot {
 	public void generateBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk, DataContext context,
 			int platX, int platZ) {
 		super.generateBlocks(generator, platmap, chunk, context, platX, platZ);
-		sprinkleTunnelRoofSnow(generator, platmap, chunk, platX, platZ);
+		sprinkleRoadSnow(generator, platmap, chunk, platX, platZ);
 	}
 
 	// Roads DO want biome soil on their exposed grass (a desert tunnel roof should be sand, not a green
@@ -536,13 +536,15 @@ public class RoadLot extends ConnectedLot {
 		return false;
 	}
 
-	// MODERN: where a road tunnels under a mountain, the road lot owns the chunk but never surfaces the
-	// mountain roof, so it stays bare while the snowy nature around it is white — a dead giveaway line
-	// from above. Snow the roof, but as a gradient: heavy on the outer band that faces nature (so the
-	// edge blends into the surrounding white) and sparse down the middle (so a keen eye can still trace
-	// the road, as if warmth from the tunnel below thinned it). Only on snowable solid ground (never ice)
-	// and only where the biome is actually cold enough to snow at this height.
-	private void sprinkleTunnelRoofSnow(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk, int platX,
+	// MODERN: roads own their snow (the base biome-ground pass leaves it to them). Two cases:
+	// - Tunnel roof (a mountain sits over the road): the roof grass is bare while the snowy nature around
+	//   it is white — a giveaway line. Snow it as a gradient: heavy on the outer band that faces nature
+	//   (blends into the white) and sparse down the middle (a keen eye can still trace the road, as if
+	//   warmth from the tunnel thinned it).
+	// - Surface road: snow the grassy verges to match the snowy wild, but leave the pavement clear so the
+	//   road stays readable.
+	// Only on snowable solid ground (never ice), only where the biome is cold enough to snow at height.
+	private void sprinkleRoadSnow(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk, int platX,
 			int platZ) {
 		if (generator.worldStyle != CityWorldGenerator.WorldStyle.MODERN)
 			return;
@@ -552,12 +554,10 @@ public class RoadLot extends ConnectedLot {
 		boolean ns = roads.toNorth() && roads.toSouth();
 		boolean ew = roads.toEast() && roads.toWest();
 		int band = 3, w = chunk.width;
-		int roofMin = generator.streetLevel + DataContext.FloorHeight * 2; // only a genuine mountain roof
+		int roofMin = generator.streetLevel + DataContext.FloorHeight * 2; // a genuine mountain roof
 		for (int x = 0; x < w; x++)
 			for (int z = 0; z < w; z++) {
 				int ground = getBlockY(x, z);
-				if (ground < roofMin)
-					continue; // no mountain over the road here (a surface road) — leave it
 				int emptyY = chunk.findLastEmptyBelow(x, ground + 5, z, ground - 4);
 				int surfaceY = emptyY - 1;
 				if (emptyY <= ground - 4 || !chunk.isEmpty(x, emptyY, z))
@@ -567,16 +567,29 @@ public class RoadLot extends ConnectedLot {
 						|| chunk.isOfTypes(x, surfaceY, z, Material.ICE, Material.PACKED_ICE, Material.BLUE_ICE))
 					continue;
 
-				boolean edge;
-				if (ns)
-					edge = x < band || x >= w - band; // blend the E/W sides
-				else if (ew)
-					edge = z < band || z >= w - band; // blend the N/S sides
-				else
-					edge = x < band || x >= w - band || z < band || z >= w - band; // junction: all sides
-				double odds = edge ? Odds.oddsExceedinglyLikely : Odds.oddsSomewhatLikely;
+				double odds;
+				int level;
+				if (ground >= roofMin) {
+					// tunnel roof — graded so the road stays traceable
+					boolean edge;
+					if (ns)
+						edge = x < band || x >= w - band; // blend the E/W sides
+					else if (ew)
+						edge = z < band || z >= w - band; // blend the N/S sides
+					else
+						edge = x < band || x >= w - band || z < band || z >= w - band; // junction: all sides
+					odds = edge ? Odds.oddsExceedinglyLikely : Odds.oddsSomewhatLikely;
+					level = edge ? chunkOdds.getRandomInt(1, 2) : 1;
+				} else {
+					// surface road — snow the grassy verges to match the wild, leave the pavement clear
+					if (!chunk.isOfTypes(x, surfaceY, z, Material.GRASS_BLOCK, Material.DIRT, Material.COARSE_DIRT,
+							Material.PODZOL))
+						continue;
+					odds = Odds.oddsExceedinglyLikely;
+					level = chunkOdds.getRandomInt(1, 2);
+				}
 				if (chunkOdds.playOdds(odds))
-					chunk.setBlock(x, emptyY, z, Material.SNOW, edge ? chunkOdds.getRandomInt(1, 2) : 1);
+					chunk.setBlock(x, emptyY, z, Material.SNOW, level);
 			}
 	}
 
