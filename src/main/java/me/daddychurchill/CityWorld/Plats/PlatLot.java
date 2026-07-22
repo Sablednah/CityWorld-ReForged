@@ -278,7 +278,9 @@ public abstract class PlatLot {
 			}
 	}
 
-	private void clearVegetation(RealBlocks chunk, int x, int y, int z) {
+	/** Clear a bit of surface vegetation (grass/ferns/flowers/tall plants) — anything non-air that
+	 *  doesn't block motion — leaving solid blocks be. */
+	protected void clearVegetation(RealBlocks chunk, int x, int y, int z) {
 		if (!chunk.isEmpty(x, y, z) && !chunk.getActualBlock(x, y, z).getBlockData().blocksMotion())
 			chunk.setBlock(x, y, z, Material.AIR);
 	}
