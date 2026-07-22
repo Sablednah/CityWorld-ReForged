@@ -58,12 +58,13 @@ public class NatureLot extends IsolatedLot {
 		if (generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN)
 			applyBiomeGround(generator, chunk);
 
-		// MODERN swamps/mangroves sit on dry lowland just above the waterline, so they read swampy but
-		// have no water. Scoop a few shallow, muddy pools down to the water table so vanilla's swamp
-		// decoration (lily pads, mangrove roots) has water to work with.
+		// MODERN swamps/mangroves sat on dry lowland a block above the waterline, so they read swampy but
+		// had no water. Drop the whole swamp to sea level and rebuild it as muddy ground shot through
+		// with water pools, so it's flush with the water table — vanilla then adds lily pads, mangrove
+		// roots and blue orchids.
 		if (generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN
 				&& chunk.isSwampBiome(8, getBlockY(8, 8), 8))
-			carveSwampPools(generator, chunk);
+			generateSwampSurface(generator, chunk);
 
 		generateEntities(generator, chunk);
 	}
@@ -112,37 +113,30 @@ public class NatureLot extends IsolatedLot {
 			chunk.setBlock(x, y, z, Material.AIR);
 	}
 
-	private void carveSwampPools(CityWorldGenerator generator, RealBlocks chunk) {
+	private void generateSwampSurface(CityWorldGenerator generator, RealBlocks chunk) {
 		int sea = generator.seaLevel;
-		int pools = chunkOdds.getRandomInt(2, 3); // 2-4 small pools per swamp chunk
-		for (int i = 0; i < pools; i++) {
-			int px = chunkOdds.getRandomInt(2, 12);
-			int pz = chunkOdds.getRandomInt(2, 12);
-			int depth = chunkOdds.getRandomInt(1, 2); // 1-2 deep
-			carvePoolCell(chunk, px, pz, sea, depth);
-			// a small blob rather than a single hole
-			if (chunkOdds.flipCoin())
-				carvePoolCell(chunk, px + 1, pz, sea, depth);
-			if (chunkOdds.flipCoin())
-				carvePoolCell(chunk, px - 1, pz, sea, depth);
-			if (chunkOdds.flipCoin())
-				carvePoolCell(chunk, px, pz + 1, sea, depth);
-			if (chunkOdds.flipCoin())
-				carvePoolCell(chunk, px, pz - 1, sea, depth);
-		}
-	}
+		for (int x = 0; x < 16; x++)
+			for (int z = 0; z < 16; z++) {
+				int top = getBlockY(x, z);
+				if (top < sea)
+					continue; // already open water at the swamp's edge — leave it
 
-	private void carvePoolCell(RealBlocks chunk, int x, int z, int sea, int depth) {
-		if (x < 1 || x > 14 || z < 1 || z > 14)
-			return; // keep a block off the chunk edge so pool water can't chase an unloaded neighbour
-		int top = getBlockY(x, z);
-		int waterTop = Math.min(top, sea); // the pool surface sits at the water table
-		if (waterTop - depth < 1)
-			return;
-		if (top > waterTop)
-			chunk.setBlocks(x, waterTop + 1, top + 1, z, me.daddychurchill.CityWorld.compat.Material.AIR);
-		chunk.setBlocks(x, waterTop - depth + 1, waterTop + 1, z, me.daddychurchill.CityWorld.compat.Material.WATER);
-		chunk.setBlock(x, waterTop - depth, z, me.daddychurchill.CityWorld.compat.Material.MUD);
+				// strip the swamp down to the water table: clear the block(s) and any vegetation above sea
+				chunk.setBlocks(x, sea + 1, top + 2, z, Material.AIR);
+
+				// keep water a block off the chunk edge so a source can't chase an unloaded neighbour
+				boolean edge = x == 0 || x == 15 || z == 0 || z == 15;
+				double roll = chunkOdds.getRandomDouble();
+				if (!edge && roll < 0.45) {
+					// a water pool sitting flush with the sea, muddy bottom
+					chunk.setBlock(x, sea, z, Material.WATER);
+					chunk.setBlock(x, sea - 1, z, Material.MUD);
+				} else if (roll < 0.9) {
+					chunk.setBlock(x, sea, z, Material.MUD); // muddy swamp ground
+				} else {
+					chunk.setBlock(x, sea, z, Material.GRASS_BLOCK); // the odd grassy tussock
+				}
+			}
 	}
 
 	private final static int magicSeaSpawnY = 62;
