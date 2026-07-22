@@ -307,8 +307,19 @@ public class CityWorldGenerator {
      * everywhere bar the wander.
      */
     public me.daddychurchill.CityWorld.compat.Material badlandsBandAt(int x, int y, int z) {
-        int offset = (int) Math.round(badlandsOffsetShape.noise(x, z, 0.5, 0.8) * 4.0); // ~+/-4 block wander
+        int offset = (int) Math.round(badlandsOffsetShape.noise(x, z, 0.5, 0.8) * 2.0); // gentle ~+/-2 wander
         return badlandsBands[Math.floorMod(y + offset, badlandsBands.length)];
+    }
+
+    /**
+     * The badlands <em>surface</em> block: red sand skims the high spots of a surface noise (like the
+     * plateau tops of a vanilla mesa) while the rest shows the bare terracotta band for its elevation, so
+     * a smooth slope reads as stripes instead of a solid red-sand skin.
+     */
+    public me.daddychurchill.CityWorld.compat.Material badlandsSurfaceAt(int x, int y, int z) {
+        if (badlandsOffsetShape.noise(x + 4096, z - 4096, 0.5, 0.8) > 0.35)
+            return me.daddychurchill.CityWorld.compat.Material.RED_SAND;
+        return badlandsBandAt(x, y, z);
     }
 
     // Vanilla-style mesa band table: mostly plain terracotta, scattered orange/yellow/brown/red runs of
@@ -344,7 +355,7 @@ public class CityWorldGenerator {
             me.daddychurchill.CityWorld.compat.Material colour, int minThick) {
         int count = r.nextInt(4) + 2;
         for (int i = 0; i < count; i++) {
-            int thick = minThick + r.nextInt(3);
+            int thick = minThick + 1 + r.nextInt(3); // a touch bolder so stripes stay distinct on a slope
             int p = r.nextInt(bands.length);
             for (int j = 0; j < thick && p + j < bands.length; j++)
                 bands[p + j] = colour;

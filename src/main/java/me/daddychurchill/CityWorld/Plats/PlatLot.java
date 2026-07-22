@@ -299,8 +299,11 @@ public abstract class PlatLot {
 	private void layBadlands(CityWorldGenerator generator, RealBlocks chunk, int x, int top, int z) {
 		int wx = chunkX * SupportBlocks.sectionBlockWidth + x;
 		int wz = chunkZ * SupportBlocks.sectionBlockWidth + z;
-		chunk.setBlock(x, top, z, Material.RED_SAND);
-		int floor = top - 24; // band the top ~24 blocks (the visible cliff); stone below
+		// The surface itself carries the band colour (so a smooth slope shows its stripe as it rises,
+		// rather than a red-sand cap hiding everything). A red-sand skim only lands on the near-flat tops
+		// via a surface roll, the way vanilla mesas keep red sand up top but bare terracotta on the faces.
+		chunk.setBlock(x, top, z, generator.badlandsSurfaceAt(wx, top, wz));
+		int floor = top - 24; // band the top ~24 blocks (the visible face); stone below
 		for (int y = top - 1; y >= floor; y--)
 			chunk.setBlock(x, y, z, generator.badlandsBandAt(wx, y, wz));
 	}
