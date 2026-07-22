@@ -5,9 +5,14 @@ import me.daddychurchill.CityWorld.compat.BiomeGrid;
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Context.DataContext;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
+import me.daddychurchill.CityWorld.Support.BiomeSurface;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
+import me.daddychurchill.CityWorld.compat.Material;
+
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.biome.Biome;
 
 public class NatureLot extends IsolatedLot {
 
@@ -48,6 +53,11 @@ public class NatureLot extends IsolatedLot {
 		boolean cityworldTrees = generator.worldStyle != CityWorldGenerator.WorldStyle.MODERN;
 		generateSurface(generator, chunk, cityworldTrees);
 
+		// MODERN: give the wild its biome-signature ground (sand deserts, banded badlands, mycelial
+		// mushroom isles, snowy low plains, gravelly hills) — CityWorld lays grass everywhere otherwise.
+		if (generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN)
+			applyBiomeGround(generator, chunk);
+
 		// MODERN swamps/mangroves sit on dry lowland just above the waterline, so they read swampy but
 		// have no water. Scoop a few shallow, muddy pools down to the water table so vanilla's swamp
 		// decoration (lily pads, mangrove roots) has water to work with.
@@ -56,6 +66,36 @@ public class NatureLot extends IsolatedLot {
 			carveSwampPools(generator, chunk);
 
 		generateEntities(generator, chunk);
+	}
+
+	private void applyBiomeGround(CityWorldGenerator generator, RealBlocks chunk) {
+		int iceLine = generator.snowLevel - 5; // the icecap pass owns columns at/above this
+		for (int x = 0; x < 16; x++)
+			for (int z = 0; z < 16; z++) {
+				int top = getBlockY(x, z);
+				if (top < generator.seaLevel || top >= iceLine)
+					continue; // underwater, or up in the icecap's territory
+				// only reshape natural grassy ground — never a placed feature, water or a swamp pool
+				if (!chunk.isOfTypes(x, top, z, Material.GRASS_BLOCK, Material.DIRT, Material.COARSE_DIRT,
+						Material.PODZOL))
+					continue;
+				ResourceKey<Biome> biome = chunk.getBiomeKey(x, top, z);
+				if (biome == null)
+					continue;
+
+				Material surf = BiomeSurface.surface(biome);
+				if (surf != null) {
+					// clear a grass tuft the surface pass may have dropped, then swap ground + sub-surface
+					if (chunk.getActualBlock(x, top + 1, z).getBlockData().canBeReplaced())
+						chunk.setBlock(x, top + 1, z, Material.AIR);
+					chunk.setBlock(x, top, z, surf);
+					Material sub = BiomeSurface.subsurface(biome);
+					if (sub != null)
+						chunk.setBlocks(x, top - 3, top, z, sub);
+				}
+				if (BiomeSurface.snowy(biome))
+					chunk.setBlock(x, top + 1, z, Material.SNOW, chunkOdds.getRandomInt(1, 2));
+			}
 	}
 
 	private void carveSwampPools(CityWorldGenerator generator, RealBlocks chunk) {

@@ -68,6 +68,21 @@ public final class RealBlocks extends SupportBlocks {
 		}
 	}
 
+	/** The biome key assigned at this column, or {@code null} off the server / on any hiccup — used by
+	 *  the MODERN biome-aware surface pass to pick sand/terracotta/mycelium/etc. */
+	public net.minecraft.resources.ResourceKey<net.minecraft.world.level.biome.Biome> getBiomeKey(int x, int y,
+			int z) {
+		try {
+			ServerLevelAccessor sla = getServerLevel();
+			if (sla == null)
+				return null;
+			net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(getOriginX() + x, y, getOriginZ() + z);
+			return sla.getLevel().getBiome(pos).unwrapKey().orElse(null);
+		} catch (Throwable t) {
+			return null;
+		}
+	}
+
 	/** True if the biome assigned at this column is a swamp or mangrove swamp — used to carve the water
 	 *  pools that make MODERN swamps actually swampy. Defensive: false off the server or on any hiccup. */
 	public boolean isSwampBiome(int x, int y, int z) {

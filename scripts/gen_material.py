@@ -96,6 +96,7 @@ EXTRAS = {
     "BLUE_ICE": "P8 MODERN: glacier-blue ice for the highest peaks; 1.14 had none",
     "POWDER_SNOW": "P8 MODERN: powder-snow pockets on snowy slopes; a 1.17 block",
     "MUD": "P8 MODERN: muddy bottoms for carved swamp/mangrove pools; a 1.19 block",
+    "RED_SAND": "P8 MODERN: badlands surface; the 1.14 Bukkit source never referenced it",
 }
 
 
