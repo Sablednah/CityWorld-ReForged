@@ -151,6 +151,10 @@ public class CityWorldGenerator {
     private final me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator temperatureShape;
     private final me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator humidityShape;
 
+    /** Seeded terracotta colour table for badlands, sampled by elevation; see {@link #badlandsBandAt}. */
+    private final me.daddychurchill.CityWorld.compat.Material[] badlandsBands;
+    private final me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator badlandsOffsetShape;
+
     private final CityWorldSettings settings;
 
     /** Shared identity for every paved road, so they all count as connected to each other. */
@@ -246,6 +250,12 @@ public class CityWorldGenerator {
         humidityShape = new me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator(worldSeed + 137, 2);
         humidityShape.setScale(0.0012);
 
+        // Badlands terracotta bands: a seeded colour table sampled by elevation, with a gentle low-freq
+        // offset so the stripes undulate instead of being dead flat (mirrors vanilla's mesa surface).
+        badlandsBands = buildBadlandsBands(worldSeed);
+        badlandsOffsetShape = new me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator(worldSeed + 211, 1);
+        badlandsOffsetShape.setScale(0.012);
+
         // Fixed per world, so every road shares one identity. Derived straight from the seed rather
         // than from a running RNG — see getConnectionKey.
         connectedKeyForPavedRoads = new Odds(worldSeed + 101).getRandomLong();
@@ -288,6 +298,57 @@ public class CityWorldGenerator {
 
     private static double climate01(double noise) {
         return Math.max(0.0, Math.min(1.0, (noise + 1.0) / 2.0));
+    }
+
+    /**
+     * The badlands terracotta colour at a block — the seeded band table indexed by elevation, nudged by
+     * a gentle low-frequency offset so the stripes wander a little (as vanilla's mesas do) rather than
+     * ringing the world dead level. Continuous across columns: a given elevation is the same colour
+     * everywhere bar the wander.
+     */
+    public me.daddychurchill.CityWorld.compat.Material badlandsBandAt(int x, int y, int z) {
+        int offset = (int) Math.round(badlandsOffsetShape.noise(x, z, 0.5, 0.8) * 4.0); // ~+/-4 block wander
+        return badlandsBands[Math.floorMod(y + offset, badlandsBands.length)];
+    }
+
+    // Vanilla-style mesa band table: mostly plain terracotta, scattered orange/yellow/brown/red runs of
+    // varying thickness, plus a few white/light-grey layered bands. Seeded off the world for determinism.
+    private static me.daddychurchill.CityWorld.compat.Material[] buildBadlandsBands(long seed) {
+        java.util.Random r = new java.util.Random(seed);
+        var bands = new me.daddychurchill.CityWorld.compat.Material[64];
+        java.util.Arrays.fill(bands, me.daddychurchill.CityWorld.compat.Material.TERRACOTTA);
+        for (int i = 0; i < bands.length; i++) {
+            i += r.nextInt(5) + 1;
+            if (i < bands.length)
+                bands[i] = me.daddychurchill.CityWorld.compat.Material.ORANGE_TERRACOTTA;
+        }
+        makeBands(r, bands, me.daddychurchill.CityWorld.compat.Material.YELLOW_TERRACOTTA, 1);
+        makeBands(r, bands, me.daddychurchill.CityWorld.compat.Material.BROWN_TERRACOTTA, 2);
+        makeBands(r, bands, me.daddychurchill.CityWorld.compat.Material.RED_TERRACOTTA, 1);
+        int groups = r.nextInt(3) + 3;
+        int pos = 0;
+        for (int g = 0; g < groups; g++) {
+            pos += r.nextInt(16) + 4;
+            if (pos >= bands.length)
+                break;
+            bands[pos] = me.daddychurchill.CityWorld.compat.Material.WHITE_TERRACOTTA;
+            if (pos > 0 && r.nextBoolean())
+                bands[pos - 1] = me.daddychurchill.CityWorld.compat.Material.LIGHT_GRAY_TERRACOTTA;
+            if (pos < bands.length - 1 && r.nextBoolean())
+                bands[pos + 1] = me.daddychurchill.CityWorld.compat.Material.LIGHT_GRAY_TERRACOTTA;
+        }
+        return bands;
+    }
+
+    private static void makeBands(java.util.Random r, me.daddychurchill.CityWorld.compat.Material[] bands,
+            me.daddychurchill.CityWorld.compat.Material colour, int minThick) {
+        int count = r.nextInt(4) + 2;
+        for (int i = 0; i < count; i++) {
+            int thick = minThick + r.nextInt(3);
+            int p = r.nextInt(bands.length);
+            for (int j = 0; j < thick && p + j < bands.length; j++)
+                bands[p + j] = colour;
+        }
     }
 
     /**

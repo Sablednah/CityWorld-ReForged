@@ -265,6 +265,15 @@ public abstract class PlatLot {
 				if (biome == null)
 					continue;
 
+				// Badlands: red sand cap over striped terracotta bands (elevation-indexed, gently
+				// wandering) instead of the flat sand/terracotta a plain swap would give.
+				if (me.daddychurchill.CityWorld.Support.BiomeSurface.isBadlands(biome)) {
+					clearVegetation(chunk, x, top + 1, z);
+					clearVegetation(chunk, x, top + 2, z);
+					layBadlands(generator, chunk, x, top, z);
+					continue;
+				}
+
 				Material surf = me.daddychurchill.CityWorld.Support.BiomeSurface.surface(biome);
 				boolean doSnow = me.daddychurchill.CityWorld.Support.BiomeSurface.snowy(biome) && biomeGroundSnows();
 				if (surf == null && !doSnow)
@@ -282,6 +291,18 @@ public abstract class PlatLot {
 				if (doSnow)
 					chunk.setBlock(x, top + 1, z, Material.SNOW, chunkOdds.getRandomInt(1, 2));
 			}
+	}
+
+	/** Lay a badlands column: a red-sand cap, then striped terracotta bands down the exposed face. Colour
+	 *  comes from the generator's seeded, elevation-indexed band table so stripes line up across columns
+	 *  and cliff faces. */
+	private void layBadlands(CityWorldGenerator generator, RealBlocks chunk, int x, int top, int z) {
+		int wx = chunkX * SupportBlocks.sectionBlockWidth + x;
+		int wz = chunkZ * SupportBlocks.sectionBlockWidth + z;
+		chunk.setBlock(x, top, z, Material.RED_SAND);
+		int floor = top - 24; // band the top ~24 blocks (the visible cliff); stone below
+		for (int y = top - 1; y >= floor; y--)
+			chunk.setBlock(x, y, z, generator.badlandsBandAt(wx, y, wz));
 	}
 
 	/** Clear a bit of surface vegetation (grass/ferns/flowers/tall plants) — anything non-air that

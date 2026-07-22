@@ -58,4 +58,9 @@ public final class BiomeSurface {
 	public static boolean snowy(ResourceKey<Biome> b) {
 		return b == Biomes.SNOWY_PLAINS || b == Biomes.SNOWY_TAIGA || b == Biomes.SNOWY_BEACH;
 	}
+
+	/** Badlands family — gets red sand over striped terracotta bands rather than the flat sub-surface. */
+	public static boolean isBadlands(ResourceKey<Biome> b) {
+		return b == Biomes.BADLANDS || b == Biomes.WOODED_BADLANDS || b == Biomes.ERODED_BADLANDS;
+	}
 }
