@@ -68,6 +68,22 @@ public final class RealBlocks extends SupportBlocks {
 		}
 	}
 
+	/** True if the biome assigned at this column is a swamp or mangrove swamp — used to carve the water
+	 *  pools that make MODERN swamps actually swampy. Defensive: false off the server or on any hiccup. */
+	public boolean isSwampBiome(int x, int y, int z) {
+		try {
+			ServerLevelAccessor sla = getServerLevel();
+			if (sla == null)
+				return false;
+			net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(getOriginX() + x, y, getOriginZ() + z);
+			var key = sla.getLevel().getBiome(pos).unwrapKey().orElse(null);
+			return key == net.minecraft.world.level.biome.Biomes.SWAMP
+					|| key == net.minecraft.world.level.biome.Biomes.MANGROVE_SWAMP;
+		} catch (Throwable t) {
+			return false;
+		}
+	}
+
 	@Override
 	public boolean isSurroundedByEmpty(int x, int y, int z) {
 		return (x > 0 && x < 15 && z > 0 && z < 15)

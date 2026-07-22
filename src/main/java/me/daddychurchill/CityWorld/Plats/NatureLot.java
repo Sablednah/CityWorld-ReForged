@@ -47,7 +47,48 @@ public class NatureLot extends IsolatedLot {
 		// placing them. The grass/snow surface is still laid down either way (vanilla needs it to plant on).
 		boolean cityworldTrees = generator.worldStyle != CityWorldGenerator.WorldStyle.MODERN;
 		generateSurface(generator, chunk, cityworldTrees);
+
+		// MODERN swamps/mangroves sit on dry lowland just above the waterline, so they read swampy but
+		// have no water. Scoop a few shallow, muddy pools down to the water table so vanilla's swamp
+		// decoration (lily pads, mangrove roots) has water to work with.
+		if (generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN
+				&& chunk.isSwampBiome(8, getBlockY(8, 8), 8))
+			carveSwampPools(generator, chunk);
+
 		generateEntities(generator, chunk);
+	}
+
+	private void carveSwampPools(CityWorldGenerator generator, RealBlocks chunk) {
+		int sea = generator.seaLevel;
+		int pools = chunkOdds.getRandomInt(2, 3); // 2-4 small pools per swamp chunk
+		for (int i = 0; i < pools; i++) {
+			int px = chunkOdds.getRandomInt(2, 12);
+			int pz = chunkOdds.getRandomInt(2, 12);
+			int depth = chunkOdds.getRandomInt(1, 2); // 1-2 deep
+			carvePoolCell(chunk, px, pz, sea, depth);
+			// a small blob rather than a single hole
+			if (chunkOdds.flipCoin())
+				carvePoolCell(chunk, px + 1, pz, sea, depth);
+			if (chunkOdds.flipCoin())
+				carvePoolCell(chunk, px - 1, pz, sea, depth);
+			if (chunkOdds.flipCoin())
+				carvePoolCell(chunk, px, pz + 1, sea, depth);
+			if (chunkOdds.flipCoin())
+				carvePoolCell(chunk, px, pz - 1, sea, depth);
+		}
+	}
+
+	private void carvePoolCell(RealBlocks chunk, int x, int z, int sea, int depth) {
+		if (x < 1 || x > 14 || z < 1 || z > 14)
+			return; // keep a block off the chunk edge so pool water can't chase an unloaded neighbour
+		int top = getBlockY(x, z);
+		int waterTop = Math.min(top, sea); // the pool surface sits at the water table
+		if (waterTop - depth < 1)
+			return;
+		if (top > waterTop)
+			chunk.setBlocks(x, waterTop + 1, top + 1, z, me.daddychurchill.CityWorld.compat.Material.AIR);
+		chunk.setBlocks(x, waterTop - depth + 1, waterTop + 1, z, me.daddychurchill.CityWorld.compat.Material.WATER);
+		chunk.setBlock(x, waterTop - depth, z, me.daddychurchill.CityWorld.compat.Material.MUD);
 	}
 
 	private final static int magicSeaSpawnY = 62;

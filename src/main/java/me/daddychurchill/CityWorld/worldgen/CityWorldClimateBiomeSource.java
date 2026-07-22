@@ -87,6 +87,9 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
     private static final int HILL_PCT = 45;
     private static final int HIGHLAND_PCT = 72;
 
+    // how many blocks of shallow water below sea level read as swamp (marshy edges) at warm+wet columns
+    private static final int SWAMP_SHALLOW = 4;
+
     /**
      * The biome for a column: oceans (by temperature) below sea, a shore at the waterline, then the
      * land tiers (lowland / hills / highland / peaks) each split by temperature and humidity.
@@ -95,8 +98,13 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
     public Holder<Biome> classify(CityWorldGenerator g, int terrainY, double temp, double humid, boolean decayedNature) {
         if (terrainY < g.deepseaLevel)
             return deepOcean(temp);
-        if (terrainY < g.seaLevel)
+        if (terrainY < g.seaLevel) {
+            // warm, humid, shallow water reads as swamp rather than open ocean — gives the lowland swamp
+            // a watery edge (marsh) instead of a hard dry-land-meets-sea line.
+            if (!decayedNature && temp >= 0.6 && humid > 0.5 && terrainY >= g.seaLevel - SWAMP_SHALLOW)
+                return b(Biomes.SWAMP);
             return ocean(temp);
+        }
         if (terrainY <= g.seaLevel)
             return shore(temp, humid, decayedNature);
 
