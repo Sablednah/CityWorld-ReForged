@@ -236,9 +236,15 @@ public abstract class PlatLot {
 		generator.shapeProvider.postGenerateBlocks(generator, this, chunk, blockYs);
 	}
 
-	/** MODERN: whether the base biome-ground pass runs on this lot. True by default; roads opt out to
-	 *  keep their sparse tunnel-roof snow blend. */
+	/** MODERN: whether the base biome-ground pass runs on this lot's exposed grass. True by default. */
 	protected boolean wantsBiomeGround() {
+		return true;
+	}
+
+	/** MODERN: whether the biome-ground pass also lays snow on cold-biome grass. True by default; roads
+	 *  return false so they still get biome soil (sand/badlands/etc.) but keep their own graded
+	 *  tunnel-roof snow (the traceable line) instead of a full blanket. */
+	protected boolean biomeGroundSnows() {
 		return true;
 	}
 
@@ -260,9 +266,9 @@ public abstract class PlatLot {
 					continue;
 
 				Material surf = me.daddychurchill.CityWorld.Support.BiomeSurface.surface(biome);
-				boolean snow = me.daddychurchill.CityWorld.Support.BiomeSurface.snowy(biome);
-				if (surf == null && !snow)
-					continue;
+				boolean doSnow = me.daddychurchill.CityWorld.Support.BiomeSurface.snowy(biome) && biomeGroundSnows();
+				if (surf == null && !doSnow)
+					continue; // grass biome, or a road that owns its own snow — leave it
 
 				clearVegetation(chunk, x, top + 1, z);
 				clearVegetation(chunk, x, top + 2, z);
@@ -273,7 +279,7 @@ public abstract class PlatLot {
 					if (sub != null)
 						chunk.setBlocks(x, top - 3, top, z, sub);
 				}
-				if (snow)
+				if (doSnow)
 					chunk.setBlock(x, top + 1, z, Material.SNOW, chunkOdds.getRandomInt(1, 2));
 			}
 	}

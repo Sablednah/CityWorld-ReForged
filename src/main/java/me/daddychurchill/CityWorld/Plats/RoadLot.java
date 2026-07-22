@@ -528,10 +528,11 @@ public class RoadLot extends ConnectedLot {
 		sprinkleTunnelRoofSnow(generator, platmap, chunk, platX, platZ);
 	}
 
-	// Roads keep their own tunnel-roof snow blend (below); skip the base biome-ground pass so its full
-	// biome snow doesn't drown the sparse traceable line.
+	// Roads DO want biome soil on their exposed grass (a desert tunnel roof should be sand, not a green
+	// stripe) — the pavement is non-grass so the pass skips it. But they keep owning their snow: the
+	// graded tunnel-roof blend below, not a full biome blanket that would drown the traceable line.
 	@Override
-	protected boolean wantsBiomeGround() {
+	protected boolean biomeGroundSnows() {
 		return false;
 	}
 
