@@ -867,8 +867,9 @@ public abstract class PlatLot {
 			Material.LANTERN, Material.SOUL_LANTERN, Material.COPPER_LANTERN,
 			// camp
 			Material.CHEST, Material.DECORATED_POT, Material.CAMPFIRE, Material.SOUL_CAMPFIRE, Material.BELL,
-			// getting about
-			Material.SCAFFOLDING, Material.LADDER };
+			// getting about — weighted up (scaffolding most, ladders a little), listed several times
+			Material.SCAFFOLDING, Material.SCAFFOLDING, Material.SCAFFOLDING, Material.SCAFFOLDING,
+			Material.LADDER, Material.LADDER };
 
 	private final static double oddsOfMineProp = Odds.oddsVeryUnlikely;
 
@@ -905,7 +906,7 @@ public abstract class PlatLot {
 		}
 	}
 
-	private final static double oddsOfMineLift = Odds.oddsSomewhatLikely;
+	private final static double oddsOfMineLift = Odds.oddsLikely;
 
 	// A vertical lift shaft at a corridor crossing: four cut-copper corner posts frame a 5x5 mouth, a
 	// copper-grate winch housing caps the ceiling, and the inner 3x3 is a hollow shaft you can drop
@@ -946,14 +947,18 @@ public abstract class PlatLot {
 			for (int gz = 7; gz <= 9; gz++)
 				chunk.setBlock(gx, ceil, gz, grate);
 
-		// hollow the inner 3x3 into an open fall shaft, from this floor straight down to the level below
-		for (int level = lower + 1; level <= y1; level++)
+		// hollow the inner 3x3 into an open fall shaft, from the junction headroom straight down to the
+		// level below — clearing the floor and any rails/cobwebs the corridor pass laid across the crossing
+		for (int level = lower + 1; level <= y1 + 2; level++)
 			for (int vx = 7; vx <= 9; vx++)
 				for (int vz = 7; vz <= 9; vz++)
 					chunk.setBlock(vx, level, vz, Material.AIR);
-		// a chain cable down the centre of the shaft, and a 3x3 grate landing at the bottom
+		// a chain cable down the centre, a ladder up one corner (climb or fall, your choice), and a 3x3
+		// grate landing at the bottom
 		for (int level = lower + 1; level < ceil; level++)
 			chunk.setBlock(8, level, 8, chain);
+		for (int level = lower + 1; level <= y1; level++)
+			chunk.setBlock(7, level, 7, Material.LADDER, BlockFace.SOUTH);
 		for (int gx = 7; gx <= 9; gx++)
 			for (int gz = 7; gz <= 9; gz++)
 				chunk.setBlock(gx, lower, gz, grate);

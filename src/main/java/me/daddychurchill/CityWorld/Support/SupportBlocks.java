@@ -862,15 +862,21 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		if (!(entity instanceof SignBlockEntity sign))
 			return;
 
-		SignText result = sign.getFrontText();
-		for (int i = 0; i < lines.length && i < SignText.LINES; i++)
+		// Write the same text on both faces so hanging/free-standing signs read from either side (the
+		// back is invisible on a wall sign, so mirroring it there costs nothing).
+		SignText front = sign.getFrontText();
+		SignText back = sign.getText(false);
+		for (int i = 0; i < lines.length && i < SignText.LINES; i++) {
 			// A null line means a blank one. Bukkit's setLine tolerated null; modern
 			// Component.literal(null) throws, and it throws inside chunk generation, which fails
 			// the whole chunk. Callers legitimately leave gaps — OdonymProvider's fossil names
 			// fill only line 1 of a String[4] and leave the rest null.
-			result = result.setMessage(i, Component.literal(lines[i] == null ? "" : lines[i]));
-
-		sign.frontText = result;
+			Component line = Component.literal(lines[i] == null ? "" : lines[i]);
+			front = front.setMessage(i, line);
+			back = back.setMessage(i, line);
+		}
+		sign.frontText = front;
+		sign.setText(back, false);
 	}
 
 }
