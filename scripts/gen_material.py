@@ -138,6 +138,11 @@ EXTRAS = {
     "GRINDSTONE": "P9 mine prop: miners' camp",
     "ANVIL": "P9 mine prop: miners' camp",
     "CARTOGRAPHY_TABLE": "P9 mine prop: miners' camp (drawing up plans)",
+    "DECORATED_POT": "P9 mine prop: miners' camp clutter",
+    "SOUL_CAMPFIRE": "P9 mine prop: miners' camp fire (soul)",
+    "BELL": "P9 mine prop: miners' signal bell",
+    "SOUL_LANTERN": "P9 mine prop/light: soul lantern",
+    "OAK_HANGING_SIGN": "P9 mine entrance: the named-mine headframe sign",
 }
 
 # Copper "weathering" families are declared as `public static final WeatheringCopperBlocks NAME`
@@ -153,6 +158,10 @@ EXTRAS_EXPR = {
     "EXPOSED_COPPER_BARS":    ("Blocks.COPPER_BARS.exposed()",     "P9 copper mine: cage bars (exposed)"),
     "WEATHERED_COPPER_BARS":  ("Blocks.COPPER_BARS.weathered()",   "P9 copper mine: cage bars (weathered)"),
     "OXIDIZED_COPPER_BARS":   ("Blocks.COPPER_BARS.oxidized()",    "P9 copper mine: cage bars (oxidized, deepest)"),
+    "COPPER_LANTERN":           ("Blocks.COPPER_LANTERN.unaffected()", "P9 mine prop/light: copper lantern (fresh)"),
+    "EXPOSED_COPPER_LANTERN":   ("Blocks.COPPER_LANTERN.exposed()",    "P9 mine prop/light: copper lantern (exposed)"),
+    "WEATHERED_COPPER_LANTERN": ("Blocks.COPPER_LANTERN.weathered()",  "P9 mine prop/light: copper lantern (weathered)"),
+    "OXIDIZED_COPPER_LANTERN":  ("Blocks.COPPER_LANTERN.oxidized()",   "P9 mine prop/light: copper lantern (oxidized)"),
 }
 
 

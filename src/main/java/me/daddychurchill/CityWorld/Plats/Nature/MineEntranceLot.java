@@ -11,6 +11,8 @@ import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.Support.SupportBlocks;
+import me.daddychurchill.CityWorld.compat.BlockFace;
+import me.daddychurchill.CityWorld.compat.Material;
 
 public class MineEntranceLot extends ConstructLot {
 
@@ -52,22 +54,75 @@ public class MineEntranceLot extends ConstructLot {
 		int y = shaftY;
 		int topY = blockYs.getMaxYWithin(0, 7, 0, 7) - 2;
 
-		// spiral up
+		// spiral up, remembering where the mouth surfaced so we can sign it
+		int mouthX = 3, mouthZ = 0;
 		while (y <= topY) {
 			y = makeSpace(generator, chunk, chunkOdds, 4, y, 3);
+			mouthX = 4;
+			mouthZ = 3;
 			if (y > topY)
 				break;
 			y = makeSpace(generator, chunk, chunkOdds, 1, y, 4);
+			mouthX = 1;
+			mouthZ = 4;
 			if (y > topY)
 				break;
 			y = makeSpace(generator, chunk, chunkOdds, 0, y, 1);
+			mouthX = 0;
+			mouthZ = 1;
 			if (y > topY)
 				break;
 			y = makeSpace(generator, chunk, chunkOdds, 3, y, 0);
+			mouthX = 3;
+			mouthZ = 0;
 		}
 
 		// place snow
 		generateSurface(generator, chunk, false);
+
+		// a named headframe over the mouth — a gallows beam on two posts with the mine's name hung beneath
+		generateMineHeadframe(generator, chunk, mouthX, mouthZ);
+	}
+
+	// Old-timey mine-name parts. Combined into "<prefix> <noun>" (e.g. "Sable's Gorge", "Widow's Lode").
+	private final static String[] mineNamePrefix = { "Sable's", "Old", "Deep", "Widow's", "Miner's", "Black",
+			"Lost", "Dead Man's", "Copper", "Rusty", "Silver", "Devil's", "Hangman's", "Gould's", "Redvein",
+			"Ironjaw", "Coldwater", "Bleak", "Grim", "Gallows" };
+	private final static String[] mineNameNoun = { "Gorge", "Deep", "Shaft", "Lode", "Hollow", "Delve", "Drift",
+			"Seam", "Reach", "Pit", "Descent", "Cut", "Folly", "Adit", "Vein", "Gully", "Bore", "Prospect",
+			"Chasm", "End" };
+
+	private String[] mineName(Odds odds) {
+		String prefix = mineNamePrefix[odds.getRandomInt(mineNamePrefix.length)];
+		String noun = mineNameNoun[odds.getRandomInt(mineNameNoun.length)];
+		return new String[] { prefix, noun, "", "Est. " + (1850 + odds.getRandomInt(49)) };
+	}
+
+	// A gallows headframe: two dark-oak posts either side of the mouth, a beam across the top, and a
+	// hanging sign with the mine's name swinging beneath it.
+	private void generateMineHeadframe(CityWorldGenerator generator, SupportBlocks chunk, int mouthX, int mouthZ) {
+		int x1 = mouthX, x2 = mouthX + 3, z = mouthZ;
+		int beamY = blockYs.getMaxYWithin(mouthX, mouthX + 3, mouthZ, mouthZ + 3) + 3;
+
+		// posts, grown downward from the beam until they rest on solid ground (no floating, whatever the
+		// terrain does at the mouth)
+		raiseHeadframePost(chunk, x1, beamY, z);
+		raiseHeadframePost(chunk, x2, beamY, z);
+
+		// the beam across the top (a horizontal dark-oak log)
+		for (int xx = x1; xx <= x2; xx++)
+			chunk.setBlock(xx, beamY, z, Material.DARK_OAK_LOG, BlockFace.EAST);
+
+		// the named sign hanging beneath the beam
+		chunk.setSignPost(mouthX + 1, beamY - 1, z, Material.OAK_HANGING_SIGN, BlockFace.NORTH, mineName(chunkOdds));
+	}
+
+	private void raiseHeadframePost(SupportBlocks chunk, int x, int beamY, int z) {
+		for (int yy = beamY - 1; yy > beamY - 14; yy--) {
+			chunk.setBlock(x, yy, z, Material.DARK_OAK_LOG);
+			if (!chunk.isEmpty(x, yy - 1, z))
+				break; // resting on solid ground
+		}
 	}
 
 	private int makeSpace(CityWorldGenerator generator, SupportBlocks chunk, Odds odds, int x, int y, int z) {

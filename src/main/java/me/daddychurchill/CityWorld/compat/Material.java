@@ -735,10 +735,11 @@ public final class Material {
     public static final Material WOOD_DOOR = of(Blocks.OAK_DOOR); // legacy generic wooden door -> oak
     public static final Material WOOD_STEP = of(Blocks.OAK_SLAB); // legacy generic wooden slab -> oak
 
-    // ---- Modern extras (41) — blocks the 1.14 vocabulary never had -------------
+    // ---- Modern extras (46) — blocks the 1.14 vocabulary never had -------------
     public static final Material ANCIENT_DEBRIS = of(Blocks.ANCIENT_DEBRIS); // P9: rare prize in the deepest mines (the reason they dug so far)
     public static final Material ANVIL = of(Blocks.ANVIL); // P9 mine prop: miners' camp
     public static final Material BARREL = of(Blocks.BARREL); // P9 mine prop: miners' camp storage
+    public static final Material BELL = of(Blocks.BELL); // P9 mine prop: miners' signal bell
     public static final Material BLAST_FURNACE = of(Blocks.BLAST_FURNACE); // P9 mine prop: miners' camp
     public static final Material BLUE_ICE = of(Blocks.BLUE_ICE); // P8 MODERN: glacier-blue ice for the highest peaks; 1.14 had none
     public static final Material CARTOGRAPHY_TABLE = of(Blocks.CARTOGRAPHY_TABLE); // P9 mine prop: miners' camp (drawing up plans)
@@ -748,6 +749,7 @@ public final class Material {
     public static final Material COPPER_TORCH = of(Blocks.COPPER_TORCH); // P9 copper mine: standing copper torch (green flame)
     public static final Material COPPER_WALL_TORCH = of(Blocks.COPPER_WALL_TORCH); // P9 copper mine: wall-mounted copper torch
     public static final Material CUT_COPPER = of(Blocks.CUT_COPPER); // P9 copper mine: worked-metal support beam (fresh)
+    public static final Material DECORATED_POT = of(Blocks.DECORATED_POT); // P9 mine prop: miners' camp clutter
     public static final Material DEEPSLATE = of(Blocks.DEEPSLATE); // P4: the deep stratum below y=0; 1.14's world bottomed out at stone
     public static final Material DEEPSLATE_COAL_ORE = of(Blocks.DEEPSLATE_COAL_ORE); // P9: deepslate ore variant for deep mines
     public static final Material DEEPSLATE_COPPER_ORE = of(Blocks.DEEPSLATE_COPPER_ORE); // P9: deepslate ore variant for deep mines
@@ -765,6 +767,7 @@ public final class Material {
     public static final Material IRON_CHAIN = of(Blocks.IRON_CHAIN); // P9: chains in mine lift shafts (1.21 renamed CHAIN -> IRON_CHAIN)
     public static final Material LANTERN = of(Blocks.LANTERN); // P9: mine lighting
     public static final Material MUD = of(Blocks.MUD); // P8 MODERN: muddy bottoms for carved swamp/mangrove pools; a 1.19 block
+    public static final Material OAK_HANGING_SIGN = of(Blocks.OAK_HANGING_SIGN); // P9 mine entrance: the named-mine headframe sign
     public static final Material OXIDIZED_COPPER_CHEST = of(Blocks.OXIDIZED_COPPER_CHEST); // P9 copper mine: loot chest (oxidized, deepest)
     public static final Material OXIDIZED_COPPER_GRATE = of(Blocks.OXIDIZED_COPPER_GRATE); // P9 copper mine: cage/machinery grate (oxidized, deepest)
     public static final Material OXIDIZED_CUT_COPPER = of(Blocks.OXIDIZED_CUT_COPPER); // P9 copper mine: worked-metal support beam (oxidized, deepest)
@@ -772,21 +775,27 @@ public final class Material {
     public static final Material RED_SAND = of(Blocks.RED_SAND); // P8 MODERN: badlands surface; the 1.14 Bukkit source never referenced it
     public static final Material SMITHING_TABLE = of(Blocks.SMITHING_TABLE); // P9 mine prop: miners' camp
     public static final Material SMOKER = of(Blocks.SMOKER); // P9 mine prop: miners' camp
+    public static final Material SOUL_CAMPFIRE = of(Blocks.SOUL_CAMPFIRE); // P9 mine prop: miners' camp fire (soul)
+    public static final Material SOUL_LANTERN = of(Blocks.SOUL_LANTERN); // P9 mine prop/light: soul lantern
     public static final Material STONECUTTER = of(Blocks.STONECUTTER); // P9 mine prop: miners' camp
     public static final Material WALL_TORCH = of(Blocks.WALL_TORCH); // P9: wall-mounted torches for mine corridors; the Bukkit source only used standing TORCH
     public static final Material WEATHERED_COPPER_CHEST = of(Blocks.WEATHERED_COPPER_CHEST); // P9 copper mine: loot chest (weathered)
     public static final Material WEATHERED_COPPER_GRATE = of(Blocks.WEATHERED_COPPER_GRATE); // P9 copper mine: cage/machinery grate (weathered)
     public static final Material WEATHERED_CUT_COPPER = of(Blocks.WEATHERED_CUT_COPPER); // P9 copper mine: worked-metal support beam (weathered)
 
-    // ---- Copper weathering stages (8) — reached via WeatheringCopperBlocks accessors -
+    // ---- Copper weathering stages (12) — reached via WeatheringCopperBlocks accessors -
     public static final Material COPPER_BARS = of(Blocks.COPPER_BARS.unaffected()); // P9 copper mine: cage bars (fresh)
     public static final Material COPPER_CHAIN = of(Blocks.COPPER_CHAIN.unaffected()); // P9 copper mine: lift-shaft chain (fresh)
+    public static final Material COPPER_LANTERN = of(Blocks.COPPER_LANTERN.unaffected()); // P9 mine prop/light: copper lantern (fresh)
     public static final Material EXPOSED_COPPER_BARS = of(Blocks.COPPER_BARS.exposed()); // P9 copper mine: cage bars (exposed)
     public static final Material EXPOSED_COPPER_CHAIN = of(Blocks.COPPER_CHAIN.exposed()); // P9 copper mine: lift-shaft chain (exposed)
+    public static final Material EXPOSED_COPPER_LANTERN = of(Blocks.COPPER_LANTERN.exposed()); // P9 mine prop/light: copper lantern (exposed)
     public static final Material OXIDIZED_COPPER_BARS = of(Blocks.COPPER_BARS.oxidized()); // P9 copper mine: cage bars (oxidized, deepest)
     public static final Material OXIDIZED_COPPER_CHAIN = of(Blocks.COPPER_CHAIN.oxidized()); // P9 copper mine: lift-shaft chain (oxidized, deepest)
+    public static final Material OXIDIZED_COPPER_LANTERN = of(Blocks.COPPER_LANTERN.oxidized()); // P9 mine prop/light: copper lantern (oxidized)
     public static final Material WEATHERED_COPPER_BARS = of(Blocks.COPPER_BARS.weathered()); // P9 copper mine: cage bars (weathered)
     public static final Material WEATHERED_COPPER_CHAIN = of(Blocks.COPPER_CHAIN.weathered()); // P9 copper mine: lift-shaft chain (weathered)
+    public static final Material WEATHERED_COPPER_LANTERN = of(Blocks.COPPER_LANTERN.weathered()); // P9 mine prop/light: copper lantern (weathered)
 
     // ---- Items (116) — Bukkit's Material spanned blocks AND items; these are ----
     // ---- item-only (loot/chest contents). They carry no block state. -----------

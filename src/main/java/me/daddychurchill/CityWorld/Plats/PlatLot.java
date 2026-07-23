@@ -633,7 +633,7 @@ public abstract class PlatLot {
 		maybeCaveSpiderNest(generator, chunk, floorY, railY, ns, we);
 
 		// miners' camp clutter — furnaces, stonecutters and the like on the ledge opposite the track
-		scatterMineProps(chunk, floorY, ns, we);
+		scatterMineProps(generator, chunk, floorY, ns, we);
 
 		// ore veins exposed in the walls (depth-graded), gravel fall-in hazards, the odd cave-in rubble
 		veinAndHazard(generator, chunk, floorY, ns, we);
@@ -858,30 +858,51 @@ public abstract class PlatLot {
 	// Miners' camp clutter dropped along the corridor. A mix of workstations, as if the crew downed
 	// tools and walked off — some fitting (furnace, stonecutter, smithing table, grindstone, anvil,
 	// barrel), some just village workshop odds and ends.
-	private final static Material[] mineProps = { Material.FURNACE, Material.BLAST_FURNACE, Material.SMOKER,
-			Material.STONECUTTER, Material.SMITHING_TABLE, Material.GRINDSTONE, Material.ANVIL, Material.BARREL,
-			Material.CRAFTING_TABLE, Material.CAULDRON, Material.CARTOGRAPHY_TABLE, Material.LANTERN };
+	private final static Material[] mineProps = {
+			// workstations
+			Material.FURNACE, Material.BLAST_FURNACE, Material.SMOKER, Material.STONECUTTER, Material.SMITHING_TABLE,
+			Material.GRINDSTONE, Material.ANVIL, Material.BARREL, Material.CRAFTING_TABLE, Material.CAULDRON,
+			Material.CARTOGRAPHY_TABLE,
+			// lighting (three types)
+			Material.LANTERN, Material.SOUL_LANTERN, Material.COPPER_LANTERN,
+			// camp
+			Material.CHEST, Material.DECORATED_POT, Material.CAMPFIRE, Material.SOUL_CAMPFIRE, Material.BELL,
+			// getting about
+			Material.SCAFFOLDING, Material.LADDER };
 
 	private final static double oddsOfMineProp = Odds.oddsVeryUnlikely;
 
 	// Scatter the camp clutter along the ledge opposite the rail (x6 on a N/S run, z6 on a W/E run) so it
 	// never sits on the track, each piece facing into the corridor.
-	private void scatterMineProps(SupportBlocks chunk, int floorY, boolean ns, boolean we) {
+	private void scatterMineProps(CityWorldGenerator generator, SupportBlocks chunk, int floorY, boolean ns,
+			boolean we) {
 		int propY = floorY + 1;
 		if (ns)
 			for (int z = 2; z < 15; z++)
 				if (chunkOdds.playOdds(oddsOfMineProp))
-					placeMineProp(chunk, 6, propY, z, BlockFace.EAST);
+					placeMineProp(generator, chunk, 6, propY, z, BlockFace.EAST);
 		if (we)
 			for (int x = 2; x < 15; x++)
 				if (chunkOdds.playOdds(oddsOfMineProp))
-					placeMineProp(chunk, x, propY, 6, BlockFace.SOUTH);
+					placeMineProp(generator, chunk, x, propY, 6, BlockFace.SOUTH);
 	}
 
-	private void placeMineProp(SupportBlocks chunk, int x, int y, int z, BlockFace facing) {
+	private void placeMineProp(CityWorldGenerator generator, SupportBlocks chunk, int x, int y, int z,
+			BlockFace facing) {
 		if (!chunk.isEmpty(x, y, z) || chunk.isEmpty(x, y - 1, z))
 			return; // want an empty spot standing on a solid floor
-		chunk.setBlock(x, y, z, mineProps[chunkOdds.getRandomInt(mineProps.length)], facing);
+		Material prop = mineProps[chunkOdds.getRandomInt(mineProps.length)];
+		if (prop.is(Material.CHEST)) {
+			// a supply crate, actually worth opening
+			chunk.setChest(generator, x, y, z, facing, chunkOdds, generator.lootProvider, LootLocation.MINE);
+		} else if (prop.is(Material.LADDER) || prop.is(Material.SCAFFOLDING)) {
+			// a climb up the wall — fill the corridor headroom
+			for (int yy = y; yy <= y + 1; yy++)
+				if (chunk.isEmpty(x, yy, z))
+					chunk.setBlock(x, yy, z, prop, facing);
+		} else {
+			chunk.setBlock(x, y, z, prop, facing);
+		}
 	}
 
 	private final static double oddsOfMineLift = Odds.oddsSomewhatLikely;
