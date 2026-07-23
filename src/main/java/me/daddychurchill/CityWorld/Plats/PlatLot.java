@@ -582,12 +582,29 @@ public abstract class PlatLot {
 		if (!ns && !we)
 			return;
 
+		// rails down the centre, wall torches on the corridor walls at intervals
+		int torchY = railY + 1; // up the wall a little
 		if (ns)
-			for (int z = 0; z < 16; z++)
+			for (int z = 0; z < 16; z++) {
 				layMineRail(chunk, 8, floorY, railY, z, RailShape.NORTH_SOUTH);
+				if (z % 5 == 2) {
+					// mount on whichever side wall is solid: west (x5) facing east, else east (x10) facing west
+					if (!chunk.isEmpty(5, torchY, z) && chunk.isEmpty(6, torchY, z))
+						chunk.setBlock(6, torchY, z, Material.WALL_TORCH, BlockFace.EAST);
+					else if (!chunk.isEmpty(10, torchY, z) && chunk.isEmpty(9, torchY, z))
+						chunk.setBlock(9, torchY, z, Material.WALL_TORCH, BlockFace.WEST);
+				}
+			}
 		if (we)
-			for (int x = 0; x < 16; x++)
+			for (int x = 0; x < 16; x++) {
 				layMineRail(chunk, x, floorY, railY, 8, RailShape.EAST_WEST);
+				if (x % 5 == 2) {
+					if (!chunk.isEmpty(x, torchY, 5) && chunk.isEmpty(x, torchY, 6))
+						chunk.setBlock(x, torchY, 6, Material.WALL_TORCH, BlockFace.SOUTH);
+					else if (!chunk.isEmpty(x, torchY, 10) && chunk.isEmpty(x, torchY, 9))
+						chunk.setBlock(x, torchY, 9, Material.WALL_TORCH, BlockFace.NORTH);
+				}
+			}
 
 		// cobwebs strung through the corridor volume
 		for (int i = 0; i < 6; i++) {
@@ -596,15 +613,6 @@ public abstract class PlatLot {
 			int wy = railY + chunkOdds.getRandomInt(0, 3);
 			if (chunk.isEmpty(wx, wy, wz) && chunkOdds.playOdds(Odds.oddsSomewhatLikely))
 				chunk.setBlock(wx, wy, wz, Material.COBWEB);
-		}
-
-		// a torch or two on the plank floor for a bit of light
-		for (int i = 0; i < 2; i++) {
-			int tx = chunkOdds.getRandomInt(1, 14);
-			int tz = chunkOdds.getRandomInt(1, 14);
-			if (!chunk.isEmpty(tx, floorY, tz) && chunk.isType(tx, floorY, tz, shaftBridge)
-					&& chunk.isEmpty(tx, railY, tz) && chunkOdds.playOdds(Odds.oddsVeryLikely))
-				chunk.setBlock(tx, railY, tz, Material.TORCH);
 		}
 	}
 

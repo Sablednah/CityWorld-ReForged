@@ -97,6 +97,7 @@ EXTRAS = {
     "POWDER_SNOW": "P8 MODERN: powder-snow pockets on snowy slopes; a 1.17 block",
     "MUD": "P8 MODERN: muddy bottoms for carved swamp/mangrove pools; a 1.19 block",
     "RED_SAND": "P8 MODERN: badlands surface; the 1.14 Bukkit source never referenced it",
+    "WALL_TORCH": "P9: wall-mounted torches for mine corridors; the Bukkit source only used standing TORCH",
 }
 
 

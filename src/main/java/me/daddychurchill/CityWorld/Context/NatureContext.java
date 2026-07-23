@@ -201,8 +201,16 @@ public class NatureContext extends UncivilizedContext {
 			PlatLot current = null;
 			Odds platmapOdds = platmap.getOddsGenerator();
 
+			// A mine entrance takes priority wherever a CityWorld shaft sits below — at any land band, not
+			// just MIDLAND — so mine fields (now clustered, and common under mountains) reliably get
+			// surface access.
+			if (generator.getSettings().includeMines && generator.shapeProvider.hasMineShaftBelow(generator,
+					platmap.originX + x, platmap.originZ + z))
+				current = new MineEntranceLot(platmap, platmap.originX + x, platmap.originZ + z);
+
 			// what to make?
-			switch (state) {
+			if (current == null)
+				switch (state) {
 			case DEEPSEA:
 				// Oil rigs
 				if (generator.getSettings().includeBuildings)
@@ -231,11 +239,7 @@ public class NatureContext extends UncivilizedContext {
 				}
 				break;
 			case MIDLAND:
-				// Mine entrance — only where a CityWorld mine shaft actually sits below (mines cluster into
-				// rare fields now, so an ungated entrance would open onto a dead-end hole)
-				if (generator.getSettings().includeMines && generator.shapeProvider.hasMineShaftBelow(generator,
-						platmap.originX + x, platmap.originZ + z))
-					current = new MineEntranceLot(platmap, platmap.originX + x, platmap.originZ + z);
+				// mine entrances handled above (any band over a field); nothing else here
 				break;
 			case HIGHLAND:
 				// Radio towers

@@ -452,10 +452,15 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	// original dense shaft noise (> 0.0) fills it with a sprawling warren; everywhere else has no mines.
 	// Stairs and rooms gate on shaft presence, so they thin coherently with the field — no orphans.
 	private final static double mineRegionScale = 1.0 / 48.0;
-	private final static double mineRegionThreshold = 0.45;
+	private final static double mineRegionThreshold = 0.40; // a touch more common overall
+	private final static double mineMountainBonus = 0.40; // high ground lowers the bar this much (more mines)
 
 	private boolean inMineField(int chunkX, int chunkZ) {
-		return mineRegionShape.noise(chunkX * mineRegionScale, chunkZ * mineRegionScale) > mineRegionThreshold;
+		double region = mineRegionShape.noise(chunkX * mineRegionScale, chunkZ * mineRegionScale);
+		// mine fields are far more common under mountains: the higher the land noise here, the lower the
+		// bar. Flat ground keeps the base rarity; big peaks get warrens almost everywhere beneath.
+		double land = landShape1.noise(chunkX * 16 + 8, chunkZ * 16 + 8, landFrequency1, landAmplitude1, true);
+		return region > mineRegionThreshold - Math.max(0.0, land) * mineMountainBonus;
 	}
 
 	@Override
