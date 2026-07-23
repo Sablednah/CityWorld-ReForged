@@ -631,20 +631,20 @@ public abstract class PlatLot {
 	private void dressCopperSupports(SupportBlocks chunk, int floorY, boolean ns, boolean we) {
 		int ceilY = floorY + 4;
 		Material beam = copperCut(floorY);
-		Material grate = copperGrate(floorY);
+		Material bars = copperBars(floorY);
 		Material chain = copperChain(floorY);
 		if (ns)
 			for (int z = 2; z < 16; z += 6)
-				buildCopperFrame(chunk, floorY, ceilY, beam, grate, chain, 5, 10, z, z, true);
+				buildCopperFrame(chunk, floorY, ceilY, beam, bars, chain, 5, 10, z, z, true);
 		if (we)
 			for (int x = 2; x < 16; x += 6)
-				buildCopperFrame(chunk, floorY, ceilY, beam, grate, chain, x, x, 5, 10, false);
+				buildCopperFrame(chunk, floorY, ceilY, beam, bars, chain, x, x, 5, 10, false);
 	}
 
 	// One support frame spanning a corridor. (loX,loZ)/(hiX,hiZ) are the two side-wall columns; the
 	// lintel and hanging cable run between them. Only ever recolours blocks that are already solid so a
 	// frame at a junction/opening doesn't wall the corridor off.
-	private void buildCopperFrame(SupportBlocks chunk, int floorY, int ceilY, Material beam, Material grate,
+	private void buildCopperFrame(SupportBlocks chunk, int floorY, int ceilY, Material beam, Material bars,
 			Material chain, int loX, int hiX, int loZ, int hiZ, boolean ns) {
 		// posts up both side walls
 		for (int level = floorY; level < ceilY; level++) {
@@ -653,19 +653,18 @@ public abstract class PlatLot {
 			if (!chunk.isEmpty(hiX, level, hiZ))
 				chunk.setBlock(hiX, level, hiZ, beam);
 		}
-		// lintel across the ceiling, with a grate port at the centre and a chain hung beneath it
+		// lintel across the ceiling, with a 3-wide copper-bars grille (an old barred vent) at the centre
+		// and a chain hung beneath it
 		if (ns) {
 			for (int x = loX; x <= hiX; x++)
 				if (!chunk.isEmpty(x, ceilY, loZ))
-					chunk.setBlock(x, ceilY, loZ, beam);
-			chunk.setBlock(8, ceilY, loZ, grate);
+					chunk.setBlock(x, ceilY, loZ, x >= 7 && x <= 9 ? bars : beam);
 			if (chunk.isEmpty(8, ceilY - 1, loZ))
 				chunk.setBlock(8, ceilY - 1, loZ, chain);
 		} else {
 			for (int z = loZ; z <= hiZ; z++)
 				if (!chunk.isEmpty(loX, ceilY, z))
-					chunk.setBlock(loX, ceilY, z, beam);
-			chunk.setBlock(loX, ceilY, 8, grate);
+					chunk.setBlock(loX, ceilY, z, z >= 7 && z <= 9 ? bars : beam);
 			if (chunk.isEmpty(loX, ceilY - 1, 8))
 				chunk.setBlock(loX, ceilY - 1, 8, chain);
 		}
@@ -696,16 +695,16 @@ public abstract class PlatLot {
 		}
 	}
 
-	private Material copperGrate(int floorY) {
+	private Material copperBars(int floorY) {
 		switch (copperWeatherStage(floorY)) {
 		case 0:
-			return Material.COPPER_GRATE;
+			return Material.COPPER_BARS;
 		case 1:
-			return Material.EXPOSED_COPPER_GRATE;
+			return Material.EXPOSED_COPPER_BARS;
 		case 2:
-			return Material.WEATHERED_COPPER_GRATE;
+			return Material.WEATHERED_COPPER_BARS;
 		default:
-			return Material.OXIDIZED_COPPER_GRATE;
+			return Material.OXIDIZED_COPPER_BARS;
 		}
 	}
 
