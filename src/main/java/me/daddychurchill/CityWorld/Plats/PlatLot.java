@@ -327,7 +327,9 @@ public abstract class PlatLot {
 		destroyLot(generator, y, y + DataContext.FloorHeight * (floors + 1));
 	}
 
-	private final static int lowestMineSegment = 16;
+	// Mines now run deep — down into the deepslate — so there's room for a real depth gradient (coal/iron
+	// up top, diamond and the odd scrap of ancient debris at the bottom, the reason they dug so far).
+	private final static int lowestMineSegment = -48;
 
 	public void generateMines(CityWorldGenerator generator, InitialBlocks chunk) {
 
@@ -606,20 +608,99 @@ public abstract class PlatLot {
 				}
 			}
 
-		// cobwebs strung through the corridor volume
-		for (int i = 0; i < 6; i++) {
+		// cobwebs strung through the corridor volume — more the deeper (older/more abandoned) it is
+		int webCount = 5 + Math.max(0, (32 - floorY) / 10);
+		for (int i = 0; i < webCount; i++) {
 			int wx = chunkOdds.getRandomInt(1, 14);
 			int wz = chunkOdds.getRandomInt(1, 14);
 			int wy = railY + chunkOdds.getRandomInt(0, 3);
 			if (chunk.isEmpty(wx, wy, wz) && chunkOdds.playOdds(Odds.oddsSomewhatLikely))
 				chunk.setBlock(wx, wy, wz, Material.COBWEB);
 		}
+
+		// ore veins exposed in the walls (depth-graded), gravel fall-in hazards, the odd cave-in rubble
+		veinAndHazard(generator, chunk, floorY, ns, we);
 	}
 
 	private void layMineRail(SupportBlocks chunk, int x, int floorY, int railY, int z, RailShape shape) {
 		if (!chunk.isEmpty(x, floorY, z) && chunk.isEmpty(x, railY, z)
 				&& chunkOdds.playOdds(Odds.oddsExtremelyLikely)) // occasional gaps = old broken track
 			chunk.setBlock(x, railY, z, Material.RAIL, shape, false);
+	}
+
+	private final static double oreVeinOdds = Odds.oddsSomewhatUnlikely;
+
+	// Expose ore in the corridor walls (worth mining), sprinkle gravel in the ceiling (a fall-in hazard),
+	// and drop the odd cave-in rubble pile on the floor — all depth-graded via oreForDepth.
+	private void veinAndHazard(CityWorldGenerator generator, SupportBlocks chunk, int floorY, boolean ns, boolean we) {
+		if (ns)
+			for (int z = 0; z < 16; z++) {
+				veinWall(chunk, 5, floorY, z);
+				veinWall(chunk, 10, floorY, z);
+			}
+		if (we)
+			for (int x = 0; x < 16; x++) {
+				veinWall(chunk, x, floorY, 5);
+				veinWall(chunk, x, floorY, 10);
+			}
+
+		int ceilY = floorY + 4;
+		for (int i = 0; i < 4; i++) {
+			// suspended gravel in the ceiling — falls when disturbed
+			int gx = chunkOdds.getRandomInt(1, 14), gz = chunkOdds.getRandomInt(1, 14);
+			if (!chunk.isEmpty(gx, ceilY, gz) && chunk.isEmpty(gx, ceilY - 1, gz)
+					&& chunkOdds.playOdds(Odds.oddsSomewhatLikely))
+				chunk.setBlock(gx, ceilY, gz, Material.GRAVEL);
+			// cave-in rubble on the floor
+			int rx = chunkOdds.getRandomInt(1, 14), rz = chunkOdds.getRandomInt(1, 14);
+			if (chunk.isType(rx, floorY, rz, shaftBridge) && chunk.isEmpty(rx, floorY + 1, rz)
+					&& chunkOdds.playOdds(Odds.oddsUnlikely))
+				chunk.setBlock(rx, floorY + 1, rz, chunkOdds.flipCoin() ? Material.GRAVEL : Material.COBBLESTONE);
+		}
+	}
+
+	private void veinWall(SupportBlocks chunk, int x, int floorY, int z) {
+		for (int level = floorY; level <= floorY + 3; level++)
+			if ((chunk.isType(x, level, z, Material.STONE) || chunk.isType(x, level, z, Material.DEEPSLATE))
+					&& chunkOdds.playOdds(oreVeinOdds))
+				chunk.setBlock(x, level, z, oreForDepth(level));
+	}
+
+	// Ore by depth: coal/iron/copper up top, gold/redstone/lapis/diamond as you go deep, and a rare scrap
+	// of ancient debris right at the bottom — the reason they mined so far. Deepslate variants below y0.
+	private Material oreForDepth(int y) {
+		boolean deep = y < 0;
+		if (y < -32 && chunkOdds.playOdds(Odds.oddsExtremelyUnlikely))
+			return Material.ANCIENT_DEBRIS;
+		double r = chunkOdds.getRandomDouble();
+		if (deep) {
+			if (r < 0.06)
+				return Material.DEEPSLATE_DIAMOND_ORE;
+			if (r < 0.14)
+				return Material.DEEPSLATE_REDSTONE_ORE;
+			if (r < 0.20)
+				return Material.DEEPSLATE_LAPIS_ORE;
+			if (r < 0.27)
+				return Material.DEEPSLATE_GOLD_ORE;
+			if (r < 0.30)
+				return Material.DEEPSLATE_EMERALD_ORE;
+			if (r < 0.55)
+				return Material.DEEPSLATE_IRON_ORE;
+			if (r < 0.74)
+				return Material.DEEPSLATE_COPPER_ORE;
+			return Material.DEEPSLATE_COAL_ORE;
+		}
+		if (r < 0.03)
+			return Material.GOLD_ORE;
+		if (r < 0.07)
+			return Material.REDSTONE_ORE;
+		if (r < 0.11)
+			return Material.LAPIS_ORE;
+		if (r < 0.45)
+			return Material.IRON_ORE;
+		if (r < 0.66)
+			return Material.COPPER_ORE;
+		return Material.COAL_ORE;
 	}
 
 	private void generateMineAlcove(CityWorldGenerator generator, SupportBlocks chunk, int x, int y, int z, int prizeX,

@@ -98,6 +98,19 @@ EXTRAS = {
     "MUD": "P8 MODERN: muddy bottoms for carved swamp/mangrove pools; a 1.19 block",
     "RED_SAND": "P8 MODERN: badlands surface; the 1.14 Bukkit source never referenced it",
     "WALL_TORCH": "P9: wall-mounted torches for mine corridors; the Bukkit source only used standing TORCH",
+    # P9 mine dress-up: deepslate ore variants, copper, ancient debris, chains, lanterns
+    "DEEPSLATE_COAL_ORE": "P9: deepslate ore variant for deep mines",
+    "DEEPSLATE_IRON_ORE": "P9: deepslate ore variant for deep mines",
+    "COPPER_ORE": "P9: copper ore in mine walls",
+    "DEEPSLATE_COPPER_ORE": "P9: deepslate ore variant for deep mines",
+    "DEEPSLATE_GOLD_ORE": "P9: deepslate ore variant for deep mines",
+    "DEEPSLATE_REDSTONE_ORE": "P9: deepslate ore variant for deep mines",
+    "DEEPSLATE_LAPIS_ORE": "P9: deepslate ore variant for deep mines",
+    "DEEPSLATE_DIAMOND_ORE": "P9: deepslate ore variant for deep mines",
+    "DEEPSLATE_EMERALD_ORE": "P9: deepslate ore variant for deep mines",
+    "ANCIENT_DEBRIS": "P9: rare prize in the deepest mines (the reason they dug so far)",
+    "IRON_CHAIN": "P9: chains in mine lift shafts (1.21 renamed CHAIN -> IRON_CHAIN)",
+    "LANTERN": "P9: mine lighting",
 }
 
 

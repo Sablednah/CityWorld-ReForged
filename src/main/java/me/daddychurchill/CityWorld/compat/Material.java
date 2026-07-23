@@ -735,9 +735,21 @@ public final class Material {
     public static final Material WOOD_DOOR = of(Blocks.OAK_DOOR); // legacy generic wooden door -> oak
     public static final Material WOOD_STEP = of(Blocks.OAK_SLAB); // legacy generic wooden slab -> oak
 
-    // ---- Modern extras (6) — blocks the 1.14 vocabulary never had -------------
+    // ---- Modern extras (18) — blocks the 1.14 vocabulary never had -------------
+    public static final Material ANCIENT_DEBRIS = of(Blocks.ANCIENT_DEBRIS); // P9: rare prize in the deepest mines (the reason they dug so far)
     public static final Material BLUE_ICE = of(Blocks.BLUE_ICE); // P8 MODERN: glacier-blue ice for the highest peaks; 1.14 had none
+    public static final Material COPPER_ORE = of(Blocks.COPPER_ORE); // P9: copper ore in mine walls
     public static final Material DEEPSLATE = of(Blocks.DEEPSLATE); // P4: the deep stratum below y=0; 1.14's world bottomed out at stone
+    public static final Material DEEPSLATE_COAL_ORE = of(Blocks.DEEPSLATE_COAL_ORE); // P9: deepslate ore variant for deep mines
+    public static final Material DEEPSLATE_COPPER_ORE = of(Blocks.DEEPSLATE_COPPER_ORE); // P9: deepslate ore variant for deep mines
+    public static final Material DEEPSLATE_DIAMOND_ORE = of(Blocks.DEEPSLATE_DIAMOND_ORE); // P9: deepslate ore variant for deep mines
+    public static final Material DEEPSLATE_EMERALD_ORE = of(Blocks.DEEPSLATE_EMERALD_ORE); // P9: deepslate ore variant for deep mines
+    public static final Material DEEPSLATE_GOLD_ORE = of(Blocks.DEEPSLATE_GOLD_ORE); // P9: deepslate ore variant for deep mines
+    public static final Material DEEPSLATE_IRON_ORE = of(Blocks.DEEPSLATE_IRON_ORE); // P9: deepslate ore variant for deep mines
+    public static final Material DEEPSLATE_LAPIS_ORE = of(Blocks.DEEPSLATE_LAPIS_ORE); // P9: deepslate ore variant for deep mines
+    public static final Material DEEPSLATE_REDSTONE_ORE = of(Blocks.DEEPSLATE_REDSTONE_ORE); // P9: deepslate ore variant for deep mines
+    public static final Material IRON_CHAIN = of(Blocks.IRON_CHAIN); // P9: chains in mine lift shafts (1.21 renamed CHAIN -> IRON_CHAIN)
+    public static final Material LANTERN = of(Blocks.LANTERN); // P9: mine lighting
     public static final Material MUD = of(Blocks.MUD); // P8 MODERN: muddy bottoms for carved swamp/mangrove pools; a 1.19 block
     public static final Material POWDER_SNOW = of(Blocks.POWDER_SNOW); // P8 MODERN: powder-snow pockets on snowy slopes; a 1.17 block
     public static final Material RED_SAND = of(Blocks.RED_SAND); // P8 MODERN: badlands surface; the 1.14 Bukkit source never referenced it
