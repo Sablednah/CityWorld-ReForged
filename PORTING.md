@@ -85,6 +85,51 @@ far-chunk write warnings**. **Found by the owner playing it, not a probe** — t
 decay test had no schematics on, so it never demolished a `ClipboardLot`. The generalisation holds:
 an "it stays in-chunk" assumption is only as good as the widest thing that can be demolished.
 
+**Mines got a full MODERN pass** (2026-07) — a long cosmetic + gameplay arc on the underground, all in
+`PlatLot`'s mine methods (the `SupportBlocks`/decoration side) plus `MineEntranceLot`. Landed in order:
+
+- **Density → "rare but big + rambling"**: mine shafts cluster into rare *fields* (a low-frequency
+  `mineRegionShape` in `ShapeProvider_Normal.inMineField`, with a mountain bonus), instead of being
+  dense everywhere. Mine *entrances* gate on `hasMineShaftBelow` (so they always connect to a real
+  shaft) and appear at any land band over a field, common under mountains.
+- **Copper-age theme, weathered by depth**: corridors get copper wall torches, cut-copper support
+  frames (posts + a full-width copper-grate ceiling vent + a hung chain), and the vanilla oak-fence
+  supports recolour to copper bars so nothing wooden clashes. Everything patinas with depth — fresh
+  near the surface → exposed → weathered → oxidised in the deepest shafts (`copperWeatherStage`).
+- **Deep + worthwhile + risky + abandoned**: `lowestMineSegment` dropped to −48; depth-graded ore
+  veins in the walls (`oreForDepth`: coal/iron/copper up top → deepslate gold/redstone/lapis/diamond
+  deep → a rare scrap of **ancient debris** at the bottom); gravel fall-in + cave-in rubble that scale
+  with depth; glow lichen and mossy-cobble decay thickening downward; cobwebs scaling with depth.
+- **Cave-spider nests**: dedicated cave-spider spawners on the corridor centreline in a dense web
+  tangle, rare up top and common deep. The spawner is *forced* — `SpawnProvider.setSpawner` got a
+  `force` overload that bypasses the `spawnBaddies` roll (~0.048), which was silently skipping the
+  spawner ~95% of the time and leaving webs with nothing at their heart.
+- **Miners' camp props**: a weighted pool (furnace/blast furnace/smoker/stonecutter/smithing table/
+  grindstone/anvil/barrel/crafting table/cauldron/cartography table, three lantern types incl. the new
+  copper lantern, chest/decorated pot/campfire/soul campfire/bell, and weighted-up scaffolding +
+  ladders) scattered on the ledge *opposite the rail* so it never fouls the track.
+- **Vertical lift shafts** at 4-way crossings: a 5×5 cut-copper frame around a hollow 3×3 you can drop
+  straight down, a chain cable down the centre, a ladder up one corner, and a copper-grate landing at
+  the bottom — carved through the crossing rails so nothing floats.
+- **Named entrances**: each mine mouth gets a dark-oak gallows headframe with an `OAK_HANGING_SIGN`
+  swinging beneath, procedurally named from a 20×20 prefix/noun table ("Sable's Gorge", "Widow's Lode",
+  … "Est. 18xx"). Signs write **both faces** so they read front and back.
+
+**⚠ Two `WeatheringCopperBlocks` gotchas worth remembering.** (1) The 1.21.9 "copper age" *is* in
+1.21.11, but `COPPER_CHAIN`/`COPPER_BARS`/`COPPER_LANTERN` are declared as `WeatheringCopperBlocks`
+*records* (a 4-stage bundle), **not** `public static final Block` fields — so `gen_material.py`'s
+field-name scan can't see them and an early grep wrongly concluded they didn't exist. Reach the stages
+via accessors (`Blocks.COPPER_CHAIN.exposed()`); the generator now emits those through a new
+`EXTRAS_EXPR` table (plain copper Block fields still go in `EXTRAS`). Proof they exist: read them out
+of a save's region NBT (`palette` strings). (2) **The two-sided sign crash** — writing the *back* text
+via `SignBlockEntity.setText(text, false)` routes through `markUpdated()`, which dereferences the block
+entity's `level`; that level is **null during decoration** (the load-bearing rule this port already
+follows for `frontText`), so it NPEs and fails the chunk — and the world's teardown then hangs on
+"Saving world". Fix: an access-transformer entry widening `backText` (mirroring the existing
+`frontText` one), then a direct field write. **Same NPE-on-null-level / deadlock-on-real-level trap as
+`frontText`** — any BE mutation during decoration must be a plain field write, never a setter that
+notifies the level.
+
 **What's left is breadth, not architecture.** The most valuable next steps:
 
 1. **P6 schematics polish** (rotation/mirroring, foundation dig) — see the phase list. **P7 config is

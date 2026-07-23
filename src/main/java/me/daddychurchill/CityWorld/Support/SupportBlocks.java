@@ -876,7 +876,9 @@ public abstract class SupportBlocks extends AbstractBlocks {
 			back = back.setMessage(i, line);
 		}
 		sign.frontText = front;
-		sign.setText(back, false);
+		// Direct field write, same as frontText above — setText(back, false) routes through
+		// markUpdated(), which NPEs on the null decoration-time level (see accesstransformer.cfg).
+		sign.backText = back;
 	}
 
 }
