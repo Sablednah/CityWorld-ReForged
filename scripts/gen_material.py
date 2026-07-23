@@ -111,6 +111,35 @@ EXTRAS = {
     "ANCIENT_DEBRIS": "P9: rare prize in the deepest mines (the reason they dug so far)",
     "IRON_CHAIN": "P9: chains in mine lift shafts (1.21 renamed CHAIN -> IRON_CHAIN)",
     "LANTERN": "P9: mine lighting",
+    # P9 copper-theme mine (the 1.21.9 "copper age" set). Weathers by depth: fresh near the
+    # surface -> exposed -> weathered -> oxidized in the deepest shafts. These are plain Block
+    # fields; the chain/bars families are WeatheringCopperBlocks records and live in EXTRAS_EXPR.
+    "COPPER_TORCH": "P9 copper mine: standing copper torch (green flame)",
+    "COPPER_WALL_TORCH": "P9 copper mine: wall-mounted copper torch",
+    "CUT_COPPER": "P9 copper mine: worked-metal support beam (fresh)",
+    "EXPOSED_CUT_COPPER": "P9 copper mine: worked-metal support beam (exposed)",
+    "WEATHERED_CUT_COPPER": "P9 copper mine: worked-metal support beam (weathered)",
+    "OXIDIZED_CUT_COPPER": "P9 copper mine: worked-metal support beam (oxidized, deepest)",
+    "COPPER_GRATE": "P9 copper mine: cage/machinery grate (fresh)",
+    "EXPOSED_COPPER_GRATE": "P9 copper mine: cage/machinery grate (exposed)",
+    "WEATHERED_COPPER_GRATE": "P9 copper mine: cage/machinery grate (weathered)",
+    "OXIDIZED_COPPER_GRATE": "P9 copper mine: cage/machinery grate (oxidized, deepest)",
+    "COPPER_CHEST": "P9 copper mine: loot chest, copper-age flavour",
+}
+
+# Copper "weathering" families are declared as `public static final WeatheringCopperBlocks NAME`
+# — a record bundling the four weather stages — NOT as individual `Block` fields, so the stage
+# blocks are reached through accessors (Blocks.COPPER_CHAIN.exposed()) rather than a bare field.
+# Emit those via raw expressions instead of the of(Blocks.NAME) shortcut EXTRAS uses.
+EXTRAS_EXPR = {
+    "COPPER_CHAIN":           ("Blocks.COPPER_CHAIN.unaffected()", "P9 copper mine: lift-shaft chain (fresh)"),
+    "EXPOSED_COPPER_CHAIN":   ("Blocks.COPPER_CHAIN.exposed()",    "P9 copper mine: lift-shaft chain (exposed)"),
+    "WEATHERED_COPPER_CHAIN": ("Blocks.COPPER_CHAIN.weathered()",  "P9 copper mine: lift-shaft chain (weathered)"),
+    "OXIDIZED_COPPER_CHAIN":  ("Blocks.COPPER_CHAIN.oxidized()",   "P9 copper mine: lift-shaft chain (oxidized, deepest)"),
+    "COPPER_BARS":            ("Blocks.COPPER_BARS.unaffected()",  "P9 copper mine: cage bars (fresh)"),
+    "EXPOSED_COPPER_BARS":    ("Blocks.COPPER_BARS.exposed()",     "P9 copper mine: cage bars (exposed)"),
+    "WEATHERED_COPPER_BARS":  ("Blocks.COPPER_BARS.weathered()",   "P9 copper mine: cage bars (weathered)"),
+    "OXIDIZED_COPPER_BARS":   ("Blocks.COPPER_BARS.oxidized()",    "P9 copper mine: cage bars (oxidized, deepest)"),
 }
 
 
@@ -132,6 +161,7 @@ def main():
 
     names = referenced_names()
     blocks = fields("net/minecraft/world/level/block/Blocks.java", "Block")
+    weathering = fields("net/minecraft/world/level/block/Blocks.java", "WeatheringCopperBlocks")
     items = fields("net/minecraft/world/item/Items.java", "Item")
 
     block_names, item_names, legacy_names, unknown = [], [], [], []
@@ -159,6 +189,16 @@ def main():
     dupe_extras = [n for n in EXTRAS if n in block_names]
     if dupe_extras:
         sys.exit("EXTRAS already emitted as block constants (drop them): %s" % ", ".join(dupe_extras))
+    # EXTRAS_EXPR: validate the WeatheringCopperBlocks base field each accessor hangs off exists,
+    # and that no name collides with another emitted constant.
+    missing_expr = [n for n, (e, _) in EXTRAS_EXPR.items()
+                    if e.split("Blocks.", 1)[1].split(".", 1)[0] not in weathering]
+    if missing_expr:
+        sys.exit("EXTRAS_EXPR base not a WeatheringCopperBlocks field: %s" % ", ".join(missing_expr))
+    dupe_expr = [n for n in EXTRAS_EXPR if n in block_names or n in item_names
+                 or n in legacy_names or n in EXTRAS]
+    if dupe_expr:
+        sys.exit("EXTRAS_EXPR collides with another constant (drop them): %s" % ", ".join(dupe_expr))
 
     lines = []
     lines.append("    // ---- Blocks (%d) — 1.14 names that map 1:1 onto a modern block --------------"
@@ -176,6 +216,12 @@ def main():
                  % len(EXTRAS))
     for n in sorted(EXTRAS):
         lines.append(f"    public static final Material {n} = of(Blocks.{n}); // {EXTRAS[n]}")
+    lines.append("")
+    lines.append("    // ---- Copper weathering stages (%d) — reached via WeatheringCopperBlocks accessors -"
+                 % len(EXTRAS_EXPR))
+    for n in sorted(EXTRAS_EXPR):
+        expr, why = EXTRAS_EXPR[n]
+        lines.append(f"    public static final Material {n} = of({expr}); // {why}")
     lines.append("")
     lines.append("    // ---- Items (%d) — Bukkit's Material spanned blocks AND items; these are ----"
                  % len(item_names))

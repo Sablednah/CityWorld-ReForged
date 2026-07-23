@@ -592,9 +592,9 @@ public abstract class PlatLot {
 				if (z % 5 == 2) {
 					// mount on whichever side wall is solid: west (x5) facing east, else east (x10) facing west
 					if (!chunk.isEmpty(5, torchY, z) && chunk.isEmpty(6, torchY, z))
-						chunk.setBlock(6, torchY, z, Material.WALL_TORCH, BlockFace.EAST);
+						chunk.setBlock(6, torchY, z, Material.COPPER_WALL_TORCH, BlockFace.EAST);
 					else if (!chunk.isEmpty(10, torchY, z) && chunk.isEmpty(9, torchY, z))
-						chunk.setBlock(9, torchY, z, Material.WALL_TORCH, BlockFace.WEST);
+						chunk.setBlock(9, torchY, z, Material.COPPER_WALL_TORCH, BlockFace.WEST);
 				}
 			}
 		if (we)
@@ -602,9 +602,9 @@ public abstract class PlatLot {
 				layMineRail(chunk, x, floorY, railY, 8, RailShape.EAST_WEST);
 				if (x % 5 == 2) {
 					if (!chunk.isEmpty(x, torchY, 5) && chunk.isEmpty(x, torchY, 6))
-						chunk.setBlock(x, torchY, 6, Material.WALL_TORCH, BlockFace.SOUTH);
+						chunk.setBlock(x, torchY, 6, Material.COPPER_WALL_TORCH, BlockFace.SOUTH);
 					else if (!chunk.isEmpty(x, torchY, 10) && chunk.isEmpty(x, torchY, 9))
-						chunk.setBlock(x, torchY, 9, Material.WALL_TORCH, BlockFace.NORTH);
+						chunk.setBlock(x, torchY, 9, Material.COPPER_WALL_TORCH, BlockFace.NORTH);
 				}
 			}
 
@@ -618,8 +618,108 @@ public abstract class PlatLot {
 				chunk.setBlock(wx, wy, wz, Material.COBWEB);
 		}
 
+		// copper-age shoring: cut-copper support frames with a dangling chain cable, patinated by depth
+		dressCopperSupports(chunk, floorY, ns, we);
+
 		// ore veins exposed in the walls (depth-graded), gravel fall-in hazards, the odd cave-in rubble
 		veinAndHazard(generator, chunk, floorY, ns, we);
+	}
+
+	// Copper-age shoring: at intervals, frame the corridor with cut-copper posts embedded in the side
+	// walls, a lintel across the ceiling with a copper grate set into it (an old ventilation/hoist port),
+	// and a copper-chain cable dangling from it — the deeper the shaft, the more oxidised it all is.
+	private void dressCopperSupports(SupportBlocks chunk, int floorY, boolean ns, boolean we) {
+		int ceilY = floorY + 4;
+		Material beam = copperCut(floorY);
+		Material grate = copperGrate(floorY);
+		Material chain = copperChain(floorY);
+		if (ns)
+			for (int z = 2; z < 16; z += 6)
+				buildCopperFrame(chunk, floorY, ceilY, beam, grate, chain, 5, 10, z, z, true);
+		if (we)
+			for (int x = 2; x < 16; x += 6)
+				buildCopperFrame(chunk, floorY, ceilY, beam, grate, chain, x, x, 5, 10, false);
+	}
+
+	// One support frame spanning a corridor. (loX,loZ)/(hiX,hiZ) are the two side-wall columns; the
+	// lintel and hanging cable run between them. Only ever recolours blocks that are already solid so a
+	// frame at a junction/opening doesn't wall the corridor off.
+	private void buildCopperFrame(SupportBlocks chunk, int floorY, int ceilY, Material beam, Material grate,
+			Material chain, int loX, int hiX, int loZ, int hiZ, boolean ns) {
+		// posts up both side walls
+		for (int level = floorY; level < ceilY; level++) {
+			if (!chunk.isEmpty(loX, level, loZ))
+				chunk.setBlock(loX, level, loZ, beam);
+			if (!chunk.isEmpty(hiX, level, hiZ))
+				chunk.setBlock(hiX, level, hiZ, beam);
+		}
+		// lintel across the ceiling, with a grate port at the centre and a chain hung beneath it
+		if (ns) {
+			for (int x = loX; x <= hiX; x++)
+				if (!chunk.isEmpty(x, ceilY, loZ))
+					chunk.setBlock(x, ceilY, loZ, beam);
+			chunk.setBlock(8, ceilY, loZ, grate);
+			if (chunk.isEmpty(8, ceilY - 1, loZ))
+				chunk.setBlock(8, ceilY - 1, loZ, chain);
+		} else {
+			for (int z = loZ; z <= hiZ; z++)
+				if (!chunk.isEmpty(loX, ceilY, z))
+					chunk.setBlock(loX, ceilY, z, beam);
+			chunk.setBlock(loX, ceilY, 8, grate);
+			if (chunk.isEmpty(loX, ceilY - 1, 8))
+				chunk.setBlock(loX, ceilY - 1, 8, chain);
+		}
+	}
+
+	// Copper patinas the deeper (older) the shaft: 0 fresh near the surface .. 3 fully oxidised at the
+	// bottom. floorY runs from about +60 down to -42, so the bands are spaced across that range.
+	private int copperWeatherStage(int floorY) {
+		if (floorY >= 24)
+			return 0;
+		if (floorY >= 4)
+			return 1;
+		if (floorY >= -20)
+			return 2;
+		return 3;
+	}
+
+	private Material copperCut(int floorY) {
+		switch (copperWeatherStage(floorY)) {
+		case 0:
+			return Material.CUT_COPPER;
+		case 1:
+			return Material.EXPOSED_CUT_COPPER;
+		case 2:
+			return Material.WEATHERED_CUT_COPPER;
+		default:
+			return Material.OXIDIZED_CUT_COPPER;
+		}
+	}
+
+	private Material copperGrate(int floorY) {
+		switch (copperWeatherStage(floorY)) {
+		case 0:
+			return Material.COPPER_GRATE;
+		case 1:
+			return Material.EXPOSED_COPPER_GRATE;
+		case 2:
+			return Material.WEATHERED_COPPER_GRATE;
+		default:
+			return Material.OXIDIZED_COPPER_GRATE;
+		}
+	}
+
+	private Material copperChain(int floorY) {
+		switch (copperWeatherStage(floorY)) {
+		case 0:
+			return Material.COPPER_CHAIN;
+		case 1:
+			return Material.EXPOSED_COPPER_CHAIN;
+		case 2:
+			return Material.WEATHERED_COPPER_CHAIN;
+		default:
+			return Material.OXIDIZED_COPPER_CHAIN;
+		}
 	}
 
 	private void layMineRail(SupportBlocks chunk, int x, int floorY, int railY, int z, RailShape shape) {
