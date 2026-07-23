@@ -129,6 +129,18 @@ EXTRAS = {
     "WEATHERED_COPPER_CHEST": "P9 copper mine: loot chest (weathered)",
     "OXIDIZED_COPPER_CHEST": "P9 copper mine: loot chest (oxidized, deepest)",
     "GLOW_LICHEN": "P9 mine: glow lichen creeping the abandoned walls, thicker with depth",
+    # P9 mine props — miners' camp clutter dropped along the corridor ledge opposite the track
+    "BLAST_FURNACE": "P9 mine prop: miners' camp",
+    "SMOKER": "P9 mine prop: miners' camp",
+    "STONECUTTER": "P9 mine prop: miners' camp",
+    "SMITHING_TABLE": "P9 mine prop: miners' camp",
+    "BARREL": "P9 mine prop: miners' camp storage",
+    "GRINDSTONE": "P9 mine prop: miners' camp",
+    "ANVIL": "P9 mine prop: miners' camp",
+    "COMPOSTER": "P9 mine prop: miners' camp",
+    "CARTOGRAPHY_TABLE": "P9 mine prop: miners' camp",
+    "LOOM": "P9 mine prop: miners' camp",
+    "FLETCHING_TABLE": "P9 mine prop: miners' camp",
 }
 
 # Copper "weathering" families are declared as `public static final WeatheringCopperBlocks NAME`

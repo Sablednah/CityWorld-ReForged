@@ -356,7 +356,7 @@ public class SpawnProvider extends Provider {
      * follows guards on it. This is exactly what {@code MineshaftPieces} does to place its cave
      * spider spawners during generation.
      */
-    private void setSpawner(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
+    public void setSpawner(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
             EntityType entity) {
         if (entity == null || !odds.playOdds(generator.getSettings().spawnBaddies))
             return;

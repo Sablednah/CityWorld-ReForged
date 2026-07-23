@@ -15,6 +15,7 @@ import me.daddychurchill.CityWorld.Support.AbstractBlocks;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
 import me.daddychurchill.CityWorld.Support.Odds;
+import me.daddychurchill.CityWorld.compat.EntityType;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.Support.SupportBlocks;
@@ -572,6 +573,9 @@ public abstract class PlatLot {
 
 		// vanilla-style dressing: minecart rails down the corridors, cobwebs and the odd torch
 		dressMineCorridors(generator, chunk, y);
+
+		// the occasional copper lift shaft at a crossing (placed last so its frame wins any overlap)
+		generateMineLift(generator, chunk, y);
 	}
 
 	// Dress the carved corridors like a vanilla mineshaft: a rail line down the centre (with occasional
@@ -625,6 +629,12 @@ public abstract class PlatLot {
 		// oak-fence supports to copper so nothing wooden clashes with the copper frames
 		weatherAndLichen(chunk, floorY, ns, we);
 
+		// the odd cave-spider nest right in the corridor — more the deeper you go
+		maybeCaveSpiderNest(generator, chunk, floorY, railY, ns, we);
+
+		// miners' camp clutter — furnaces, stonecutters and the like on the ledge opposite the track
+		scatterMineProps(chunk, floorY, ns, we);
+
 		// ore veins exposed in the walls (depth-graded), gravel fall-in hazards, the odd cave-in rubble
 		veinAndHazard(generator, chunk, floorY, ns, we);
 	}
@@ -635,20 +645,20 @@ public abstract class PlatLot {
 	private void dressCopperSupports(SupportBlocks chunk, int floorY, boolean ns, boolean we) {
 		int ceilY = floorY + 3; // the carved corridor ceiling sits at floorY+3 (floorY+1/+2 are the air gap)
 		Material beam = copperCut(floorY);
-		Material bars = copperBars(floorY);
+		Material grate = copperGrate(floorY);
 		Material chain = copperChain(floorY);
 		if (ns)
 			for (int z = 2; z < 16; z += 6)
-				buildCopperFrame(chunk, floorY, ceilY, beam, bars, chain, 5, 10, z, z, true);
+				buildCopperFrame(chunk, floorY, ceilY, beam, grate, chain, 5, 10, z, z, true);
 		if (we)
 			for (int x = 2; x < 16; x += 6)
-				buildCopperFrame(chunk, floorY, ceilY, beam, bars, chain, x, x, 5, 10, false);
+				buildCopperFrame(chunk, floorY, ceilY, beam, grate, chain, x, x, 5, 10, false);
 	}
 
 	// One support frame spanning a corridor. (loX,loZ)/(hiX,hiZ) are the two side-wall columns; the
 	// lintel and hanging cable run between them. Only ever recolours blocks that are already solid so a
 	// frame at a junction/opening doesn't wall the corridor off.
-	private void buildCopperFrame(SupportBlocks chunk, int floorY, int ceilY, Material beam, Material bars,
+	private void buildCopperFrame(SupportBlocks chunk, int floorY, int ceilY, Material beam, Material grate,
 			Material chain, int loX, int hiX, int loZ, int hiZ, boolean ns) {
 		// posts up both side walls
 		for (int level = floorY; level < ceilY; level++) {
@@ -657,18 +667,18 @@ public abstract class PlatLot {
 			if (!chunk.isEmpty(hiX, level, hiZ))
 				chunk.setBlock(hiX, level, hiZ, beam);
 		}
-		// lintel across the ceiling, with a 3-wide copper-bars grille (an old barred vent) at the centre
-		// and a chain hung beneath it
+		// solid cut-copper lintel across the ceiling, with a copper-grate vent panel spanning the full
+		// corridor width (the 6..9 opening; walls at loX/hiX stay cut copper) and a chain hung beneath it
 		if (ns) {
 			for (int x = loX; x <= hiX; x++)
 				if (!chunk.isEmpty(x, ceilY, loZ))
-					chunk.setBlock(x, ceilY, loZ, x >= 7 && x <= 9 ? bars : beam);
+					chunk.setBlock(x, ceilY, loZ, x >= 6 && x <= 9 ? grate : beam);
 			if (chunk.isEmpty(8, ceilY - 1, loZ))
 				chunk.setBlock(8, ceilY - 1, loZ, chain);
 		} else {
 			for (int z = loZ; z <= hiZ; z++)
 				if (!chunk.isEmpty(loX, ceilY, z))
-					chunk.setBlock(loX, ceilY, z, z >= 7 && z <= 9 ? bars : beam);
+					chunk.setBlock(loX, ceilY, z, z >= 6 && z <= 9 ? grate : beam);
 			if (chunk.isEmpty(loX, ceilY - 1, 8))
 				chunk.setBlock(loX, ceilY - 1, 8, chain);
 		}
@@ -709,6 +719,19 @@ public abstract class PlatLot {
 			return Material.WEATHERED_COPPER_BARS;
 		default:
 			return Material.OXIDIZED_COPPER_BARS;
+		}
+	}
+
+	private Material copperGrate(int floorY) {
+		switch (copperWeatherStage(floorY)) {
+		case 0:
+			return Material.COPPER_GRATE;
+		case 1:
+			return Material.EXPOSED_COPPER_GRATE;
+		case 2:
+			return Material.WEATHERED_COPPER_GRATE;
+		default:
+			return Material.OXIDIZED_COPPER_GRATE;
 		}
 	}
 
@@ -775,6 +798,142 @@ public abstract class PlatLot {
 			return; // nothing solid to cling to
 		if (chunkOdds.playOdds(Odds.oddsLikely))
 			chunk.setBlock(x, y, z, Material.GLOW_LICHEN, new BlockFace[] { attachTo });
+	}
+
+	// A proper cave-spider nest strung right across the corridor: a cave-spider spawner on the centreline
+	// with a dense web tangle 2-3 blocks deep around it. Rare up top, common in the deep levels.
+	private void maybeCaveSpiderNest(CityWorldGenerator generator, SupportBlocks chunk, int floorY, int railY,
+			boolean ns, boolean we) {
+		if (!generator.getSettings().spawnersInMines)
+			return;
+		double nestOdds;
+		switch (copperWeatherStage(floorY)) { // 0 shallow .. 3 deepest
+		case 0:
+			nestOdds = Odds.oddsVeryUnlikely;
+			break;
+		case 1:
+			nestOdds = Odds.oddsUnlikely;
+			break;
+		case 2:
+			nestOdds = Odds.oddsSomewhatLikely;
+			break;
+		default:
+			nestOdds = Odds.oddsLikely;
+			break;
+		}
+		if (!chunkOdds.playOdds(nestOdds))
+			return;
+
+		// on the corridor centreline, back from the chunk edges
+		int sx, sy = railY, sz;
+		if (ns) {
+			sx = 8;
+			sz = chunkOdds.getRandomInt(4, 11);
+		} else {
+			sx = chunkOdds.getRandomInt(4, 11);
+			sz = 8;
+		}
+		if (!chunk.isEmpty(sx, sy, sz))
+			return;
+
+		generator.spawnProvider.setSpawner(generator, chunk, chunkOdds, sx, sy, sz, EntityType.CAVE_SPIDER);
+
+		// dense web core around the spawner, thinning to wisps 2-3 blocks out
+		for (int dx = -2; dx <= 2; dx++)
+			for (int dz = -2; dz <= 2; dz++)
+				for (int dy = -1; dy <= 2; dy++)
+					if (!(dx == 0 && dz == 0 && dy == 0)) {
+						int wx = sx + dx, wy = sy + dy, wz = sz + dz;
+						if (!chunk.isEmpty(wx, wy, wz))
+							continue;
+						int dist = Math.abs(dx) + Math.abs(dz) + Math.abs(dy);
+						double webOdds = dist <= 1 ? Odds.oddsExtremelyLikely
+								: dist <= 2 ? Odds.oddsVeryLikely
+										: dist <= 3 ? Odds.oddsSomewhatLikely : Odds.oddsUnlikely;
+						if (chunkOdds.playOdds(webOdds))
+							chunk.setBlock(wx, wy, wz, Material.COBWEB);
+					}
+	}
+
+	// Miners' camp clutter dropped along the corridor. A mix of workstations, as if the crew downed
+	// tools and walked off — some fitting (furnace, stonecutter, smithing table, grindstone, anvil,
+	// barrel), some just village workshop odds and ends.
+	private final static Material[] mineProps = { Material.FURNACE, Material.BLAST_FURNACE, Material.SMOKER,
+			Material.STONECUTTER, Material.SMITHING_TABLE, Material.GRINDSTONE, Material.ANVIL, Material.BARREL,
+			Material.CRAFTING_TABLE, Material.CAULDRON, Material.COMPOSTER, Material.CARTOGRAPHY_TABLE,
+			Material.LOOM, Material.FLETCHING_TABLE, Material.LANTERN };
+
+	private final static double oddsOfMineProp = Odds.oddsVeryUnlikely;
+
+	// Scatter the camp clutter along the ledge opposite the rail (x6 on a N/S run, z6 on a W/E run) so it
+	// never sits on the track, each piece facing into the corridor.
+	private void scatterMineProps(SupportBlocks chunk, int floorY, boolean ns, boolean we) {
+		int propY = floorY + 1;
+		if (ns)
+			for (int z = 2; z < 15; z++)
+				if (chunkOdds.playOdds(oddsOfMineProp))
+					placeMineProp(chunk, 6, propY, z, BlockFace.EAST);
+		if (we)
+			for (int x = 2; x < 15; x++)
+				if (chunkOdds.playOdds(oddsOfMineProp))
+					placeMineProp(chunk, x, propY, 6, BlockFace.SOUTH);
+	}
+
+	private void placeMineProp(SupportBlocks chunk, int x, int y, int z, BlockFace facing) {
+		if (!chunk.isEmpty(x, y, z) || chunk.isEmpty(x, y - 1, z))
+			return; // want an empty spot standing on a solid floor
+		chunk.setBlock(x, y, z, mineProps[chunkOdds.getRandomInt(mineProps.length)], facing);
+	}
+
+	private final static double oddsOfMineLift = Odds.oddsSomewhatLikely;
+
+	// A vertical lift shaft at a corridor crossing: four cut-copper corner posts frame the junction, a
+	// copper-grate winch housing caps the ceiling, and a chain cable runs from the winch down past a
+	// grate car floor and on down a bored shaft to a grate landing on the level below. Purely structural
+	// atmosphere — the stairs still do the real traversal, so this never has to be walkable. Sited only
+	// at 4-way crossings so the corner posts sit off the N/S and E/W lanes and never wall a corridor.
+	private void generateMineLift(CityWorldGenerator generator, SupportBlocks chunk, int y) {
+		if (!isShaftableLevel(generator, y - 16))
+			return; // need a level directly below to drop the cable into
+		boolean ns = generator.shapeProvider.isHorizontalNSShaft(chunk.sectionX, y, chunk.sectionZ);
+		boolean we = generator.shapeProvider.isHorizontalWEShaft(chunk.sectionX, y, chunk.sectionZ);
+		if (!(ns && we))
+			return;
+		// the level below must have a corridor at the centre too, so the shaft bottoms into open corridor
+		// rather than solid rock ((8,8) is corridor air for a shaft of either direction)
+		if (!generator.shapeProvider.isHorizontalNSShaft(chunk.sectionX, y - 16, chunk.sectionZ)
+				&& !generator.shapeProvider.isHorizontalWEShaft(chunk.sectionX, y - 16, chunk.sectionZ))
+			return;
+		if (!chunkOdds.playOdds(oddsOfMineLift))
+			return;
+
+		int y1 = y + 6; // this level's floor
+		int lower = y1 - 16; // the level below's floor
+		int ceil = y1 + 3; // this junction's ceiling
+		Material post = copperCut(y1);
+		Material chain = copperChain(y1);
+		Material grate = copperGrate(y1);
+
+		// four cut-copper corner posts, leaving the x8 (N/S) and z8 (E/W) lanes clear
+		for (int level = y1; level <= ceil; level++) {
+			chunk.setBlock(7, level, 7, post);
+			chunk.setBlock(9, level, 7, post);
+			chunk.setBlock(7, level, 9, post);
+			chunk.setBlock(9, level, 9, post);
+		}
+		// copper-grate winch housing across the junction ceiling
+		for (int gx = 7; gx <= 9; gx++)
+			for (int gz = 7; gz <= 9; gz++)
+				chunk.setBlock(gx, ceil, gz, grate);
+
+		// grate car floor (solid but see-through), the cable up to the winch, then down a bored shaft to
+		// a grate landing on the level below — you stand on the car and look down the shaft through it
+		chunk.setBlock(8, y1, 8, grate);
+		for (int level = y1 + 1; level < ceil; level++)
+			chunk.setBlock(8, level, 8, chain);
+		for (int level = lower + 1; level < y1; level++)
+			chunk.setBlock(8, level, 8, chain);
+		chunk.setBlock(8, lower, 8, grate);
 	}
 
 	private Material copperChain(int floorY) {
