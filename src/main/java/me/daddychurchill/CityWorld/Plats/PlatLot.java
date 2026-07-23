@@ -608,18 +608,22 @@ public abstract class PlatLot {
 				}
 			}
 
-		// cobwebs strung through the corridor volume — more the deeper (older/more abandoned) it is
-		int webCount = 5 + Math.max(0, (32 - floorY) / 10);
+		// cobwebs strung through the corridor volume — many more the deeper (older/more abandoned) it is
+		int webCount = 6 + Math.max(0, (24 - floorY) / 5);
 		for (int i = 0; i < webCount; i++) {
 			int wx = chunkOdds.getRandomInt(1, 14);
 			int wz = chunkOdds.getRandomInt(1, 14);
-			int wy = railY + chunkOdds.getRandomInt(0, 3);
+			int wy = railY + chunkOdds.getRandomInt(0, 2);
 			if (chunk.isEmpty(wx, wy, wz) && chunkOdds.playOdds(Odds.oddsSomewhatLikely))
 				chunk.setBlock(wx, wy, wz, Material.COBWEB);
 		}
 
 		// copper-age shoring: cut-copper support frames with a dangling chain cable, patinated by depth
 		dressCopperSupports(chunk, floorY, ns, we);
+
+		// abandoned decay + creeping glow lichen (both intensify with depth), and recolour the vanilla
+		// oak-fence supports to copper so nothing wooden clashes with the copper frames
+		weatherAndLichen(chunk, floorY, ns, we);
 
 		// ore veins exposed in the walls (depth-graded), gravel fall-in hazards, the odd cave-in rubble
 		veinAndHazard(generator, chunk, floorY, ns, we);
@@ -629,7 +633,7 @@ public abstract class PlatLot {
 	// walls, a lintel across the ceiling with a copper grate set into it (an old ventilation/hoist port),
 	// and a copper-chain cable dangling from it — the deeper the shaft, the more oxidised it all is.
 	private void dressCopperSupports(SupportBlocks chunk, int floorY, boolean ns, boolean we) {
-		int ceilY = floorY + 4;
+		int ceilY = floorY + 3; // the carved corridor ceiling sits at floorY+3 (floorY+1/+2 are the air gap)
 		Material beam = copperCut(floorY);
 		Material bars = copperBars(floorY);
 		Material chain = copperChain(floorY);
@@ -708,6 +712,71 @@ public abstract class PlatLot {
 		}
 	}
 
+	private Material copperChest(int floorY) {
+		switch (copperWeatherStage(floorY)) {
+		case 0:
+			return Material.COPPER_CHEST;
+		case 1:
+			return Material.EXPOSED_COPPER_CHEST;
+		case 2:
+			return Material.WEATHERED_COPPER_CHEST;
+		default:
+			return Material.OXIDIZED_COPPER_CHEST;
+		}
+	}
+
+	// Recolour the vanilla oak-fence supports to (weathered) copper bars so nothing wooden clashes with
+	// the copper frames, then creep glow lichen over the walls and ceiling and moss up the cobble — all
+	// heavier the deeper (older, more abandoned) the shaft.
+	private void weatherAndLichen(SupportBlocks chunk, int floorY, boolean ns, boolean we) {
+		Material bars = copperBars(floorY);
+		int stage = copperWeatherStage(floorY); // 0 shallow .. 3 deepest
+
+		// oak-fence supports -> copper bars, anywhere in this corridor slice
+		for (int x = 1; x < 15; x++)
+			for (int z = 1; z < 15; z++)
+				for (int yy = floorY; yy <= floorY + 3; yy++)
+					if (chunk.isType(x, yy, z, Material.OAK_FENCE))
+						chunk.setBlock(x, yy, z, bars);
+
+		// glow lichen creeping the corridor walls + ceiling; more patches the deeper it is
+		int patches = 4 + stage * 5;
+		for (int i = 0; i < patches; i++) {
+			int wy = floorY + 1 + chunkOdds.getRandomInt(0, 1); // the air gap
+			if (ns) {
+				int z = chunkOdds.getRandomInt(1, 14);
+				creepLichen(chunk, 6, wy, z, BlockFace.WEST); // onto the x5 wall
+				creepLichen(chunk, 9, wy, z, BlockFace.EAST); // onto the x10 wall
+			}
+			if (we) {
+				int x = chunkOdds.getRandomInt(1, 14);
+				creepLichen(chunk, x, wy, 6, BlockFace.NORTH); // onto the z5 wall
+				creepLichen(chunk, x, wy, 9, BlockFace.SOUTH); // onto the z10 wall
+			}
+			// the odd patch clinging to the ceiling
+			int cx = chunkOdds.getRandomInt(6, 9), cz = chunkOdds.getRandomInt(6, 9);
+			creepLichen(chunk, cx, floorY + 2, cz, BlockFace.UP);
+		}
+
+		// mossy decay in the cobble ceiling, spreading with depth
+		if (stage > 0)
+			for (int i = 0; i < stage * 3; i++) {
+				int mx = chunkOdds.getRandomInt(1, 14), mz = chunkOdds.getRandomInt(1, 14);
+				if (chunk.isType(mx, floorY + 3, mz, Material.COBBLESTONE))
+					chunk.setBlock(mx, floorY + 3, mz, Material.MOSSY_COBBLESTONE);
+			}
+	}
+
+	// Place a glow-lichen patch in an air cell, attached to the solid neighbour on the given face.
+	private void creepLichen(SupportBlocks chunk, int x, int y, int z, BlockFace attachTo) {
+		if (!chunk.isEmpty(x, y, z))
+			return;
+		if (chunk.isEmpty(x + attachTo.getModX(), y + attachTo.getModY(), z + attachTo.getModZ()))
+			return; // nothing solid to cling to
+		if (chunkOdds.playOdds(Odds.oddsLikely))
+			chunk.setBlock(x, y, z, Material.GLOW_LICHEN, new BlockFace[] { attachTo });
+	}
+
 	private Material copperChain(int floorY) {
 		switch (copperWeatherStage(floorY)) {
 		case 0:
@@ -743,12 +812,13 @@ public abstract class PlatLot {
 				veinWall(chunk, x, floorY, 10);
 			}
 
-		int ceilY = floorY + 4;
-		for (int i = 0; i < 4; i++) {
+		int ceilY = floorY + 3; // the carved corridor ceiling
+		int hazards = 5 + copperWeatherStage(floorY) * 4; // riskier the deeper you dig
+		for (int i = 0; i < hazards; i++) {
 			// suspended gravel in the ceiling — falls when disturbed
 			int gx = chunkOdds.getRandomInt(1, 14), gz = chunkOdds.getRandomInt(1, 14);
 			if (!chunk.isEmpty(gx, ceilY, gz) && chunk.isEmpty(gx, ceilY - 1, gz)
-					&& chunkOdds.playOdds(Odds.oddsSomewhatLikely))
+					&& chunkOdds.playOdds(Odds.oddsLikely))
 				chunk.setBlock(gx, ceilY, gz, Material.GRAVEL);
 			// cave-in rubble on the floor
 			int rx = chunkOdds.getRandomInt(1, 14), rz = chunkOdds.getRandomInt(1, 14);
@@ -864,7 +934,7 @@ public abstract class PlatLot {
 
 		// cool stuff?
 		if (generator.getSettings().treasuresInMines && chunkOdds.playOdds(generator.getSettings().oddsOfTreasureInMines)) {
-			chunk.setChest(generator, x, y, z, chunkOdds, generator.lootProvider, LootLocation.MINE);
+			chunk.setChest(generator, x, y, z, chunkOdds, generator.lootProvider, LootLocation.MINE, copperChest(y));
 		}
 	}
 
@@ -873,14 +943,18 @@ public abstract class PlatLot {
 		generator.spawnProvider.setSpawnOrSpawner(generator, chunk, chunkOdds, x, y, z,
 				generator.getSettings().spawnersInMines, generator.spawnProvider.itemsEntities_Mine);
 
-		// cave-spider style: string the alcove up with cobwebs around the spawner
+		// cave-spider style: a proper nest — a dense web core around the spawner fading to wisps ~2 out
 		if (generator.getSettings().spawnersInMines)
-			for (int dx = -1; dx <= 1; dx++)
-				for (int dz = -1; dz <= 1; dz++)
-					for (int dy = 0; dy <= 1; dy++)
-						if (!(dx == 0 && dz == 0 && dy == 0) && chunk.isEmpty(x + dx, y + dy, z + dz)
-								&& chunkOdds.playOdds(Odds.oddsVeryLikely))
-							chunk.setBlock(x + dx, y + dy, z + dz, Material.COBWEB);
+			for (int dx = -2; dx <= 2; dx++)
+				for (int dz = -2; dz <= 2; dz++)
+					for (int dy = 0; dy <= 2; dy++)
+						if (!(dx == 0 && dz == 0 && dy == 0) && chunk.isEmpty(x + dx, y + dy, z + dz)) {
+							int dist = Math.abs(dx) + Math.abs(dz) + dy;
+							double webOdds = dist <= 1 ? Odds.oddsExtremelyLikely
+									: dist <= 2 ? Odds.oddsVeryLikely : Odds.oddsSomewhatLikely;
+							if (chunkOdds.playOdds(webOdds))
+								chunk.setBlock(x + dx, y + dy, z + dz, Material.COBWEB);
+						}
 	}
 
 	public boolean isValidStrataY(CityWorldGenerator generator, int blockX, int blockY, int blockZ) {

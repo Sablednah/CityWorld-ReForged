@@ -530,6 +530,14 @@ public abstract class SupportBlocks extends AbstractBlocks {
 
 	public final void setChest(CityWorldGenerator generator, int x, int y, int z, Odds odds,
 			LootProvider lootProvider, LootLocation lootLocation) {
+		setChest(generator, x, y, z, odds, lootProvider, lootLocation, Material.CHEST);
+	}
+
+	// As above but with a caller-chosen chest block (e.g. a copper chest for the mines). Any chest-family
+	// block works: double-chest pairing keys off the CHEST_TYPE property and the loot fill off the
+	// container block entity, neither of which is specific to plain oak chests.
+	public final void setChest(CityWorldGenerator generator, int x, int y, int z, Odds odds,
+			LootProvider lootProvider, LootLocation lootLocation, Material chestMaterial) {
 		if (!onEdgeXZ(x, z)) {
 			BlockFace facing = BlockFace.NORTH;
 			if (isEmpty(x - 1, y, z))
@@ -538,18 +546,23 @@ public abstract class SupportBlocks extends AbstractBlocks {
 				facing = BlockFace.EAST;
 			else if (isEmpty(x, y, z + 1))
 				facing = BlockFace.SOUTH;
-			setChest(generator, x, y, z, facing, odds, lootProvider, lootLocation);
+			setChest(generator, x, y, z, facing, odds, lootProvider, lootLocation, chestMaterial);
 		}
 	}
 
 	public final void setChest(CityWorldGenerator generator, int x, int y, int z, BlockFace facing, Odds odds,
 			LootProvider lootProvider, LootLocation lootLocation) {
+		setChest(generator, x, y, z, facing, odds, lootProvider, lootLocation, Material.CHEST);
+	}
+
+	public final void setChest(CityWorldGenerator generator, int x, int y, int z, BlockFace facing, Odds odds,
+			LootProvider lootProvider, LootLocation lootLocation, Material chestMaterial) {
 		if (!onNearEdgeXZ(x, z)) {
 //			generator.reportFormatted("CHEST AT %d, %d, %d", x, y, z);
-			setBlock(x, y, z, Material.CHEST, facing);
+			setBlock(x, y, z, chestMaterial, facing);
 			Block block = getActualBlock(x, y, z);
-			connectDoubleChest(x, y, z, facing);
-			if (isType(block, Material.CHEST))
+			connectDoubleChest(x, y, z, facing, chestMaterial);
+			if (isType(block, chestMaterial))
 				lootProvider.setLoot(generator, odds, lootLocation, block);
 		}
 //		else
@@ -655,8 +668,12 @@ public abstract class SupportBlocks extends AbstractBlocks {
 	}
 
 	private void connectDoubleChest(int x, int y, int z, BlockFace facing) {
+		connectDoubleChest(x, y, z, facing, Material.CHEST);
+	}
+
+	private void connectDoubleChest(int x, int y, int z, BlockFace facing, Material chestMaterial) {
 		Block block = getActualBlock(x, y, z);
-		if (!isType(block, Material.CHEST)) {
+		if (!isType(block, chestMaterial)) {
 			return;
 		}
 		if (chestType(block) != ChestType.SINGLE) {
@@ -682,10 +699,10 @@ public abstract class SupportBlocks extends AbstractBlocks {
 			checkRightBlock = x < 15 ? getActualBlock(x + 1, y, z) : null;
 			break;
 		}
-		if (checkLeftBlock != null && isType(checkLeftBlock, Material.CHEST) && chestFaces(checkLeftBlock, facing)) {
+		if (checkLeftBlock != null && isType(checkLeftBlock, chestMaterial) && chestFaces(checkLeftBlock, facing)) {
 			pairChests(block, ChestType.RIGHT, checkLeftBlock, ChestType.LEFT);
 
-		} else if (checkRightBlock != null && isType(checkRightBlock, Material.CHEST)
+		} else if (checkRightBlock != null && isType(checkRightBlock, chestMaterial)
 				&& chestFaces(checkRightBlock, facing)) {
 			pairChests(block, ChestType.LEFT, checkRightBlock, ChestType.RIGHT);
 		}

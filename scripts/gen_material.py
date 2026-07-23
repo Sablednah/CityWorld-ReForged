@@ -124,7 +124,11 @@ EXTRAS = {
     "EXPOSED_COPPER_GRATE": "P9 copper mine: cage/machinery grate (exposed)",
     "WEATHERED_COPPER_GRATE": "P9 copper mine: cage/machinery grate (weathered)",
     "OXIDIZED_COPPER_GRATE": "P9 copper mine: cage/machinery grate (oxidized, deepest)",
-    "COPPER_CHEST": "P9 copper mine: loot chest, copper-age flavour",
+    "COPPER_CHEST": "P9 copper mine: loot chest, copper-age flavour (fresh)",
+    "EXPOSED_COPPER_CHEST": "P9 copper mine: loot chest (exposed)",
+    "WEATHERED_COPPER_CHEST": "P9 copper mine: loot chest (weathered)",
+    "OXIDIZED_COPPER_CHEST": "P9 copper mine: loot chest (oxidized, deepest)",
+    "GLOW_LICHEN": "P9 mine: glow lichen creeping the abandoned walls, thicker with depth",
 }
 
 # Copper "weathering" families are declared as `public static final WeatheringCopperBlocks NAME`
