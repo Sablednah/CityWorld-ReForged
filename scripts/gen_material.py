@@ -137,10 +137,7 @@ EXTRAS = {
     "BARREL": "P9 mine prop: miners' camp storage",
     "GRINDSTONE": "P9 mine prop: miners' camp",
     "ANVIL": "P9 mine prop: miners' camp",
-    "COMPOSTER": "P9 mine prop: miners' camp",
-    "CARTOGRAPHY_TABLE": "P9 mine prop: miners' camp",
-    "LOOM": "P9 mine prop: miners' camp",
-    "FLETCHING_TABLE": "P9 mine prop: miners' camp",
+    "CARTOGRAPHY_TABLE": "P9 mine prop: miners' camp (drawing up plans)",
 }
 
 # Copper "weathering" families are declared as `public static final WeatheringCopperBlocks NAME`

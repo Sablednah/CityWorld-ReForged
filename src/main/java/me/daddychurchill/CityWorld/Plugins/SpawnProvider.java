@@ -358,7 +358,17 @@ public class SpawnProvider extends Provider {
      */
     public void setSpawner(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
             EntityType entity) {
-        if (entity == null || !odds.playOdds(generator.getSettings().spawnBaddies))
+        setSpawner(generator, blocks, odds, x, y, z, entity, false);
+    }
+
+    /**
+     * As above, but {@code force} bypasses the {@code spawnBaddies} roll. Use it where a spawner is the
+     * whole point of a deliberately-placed feature (e.g. a cave-spider nest strung across a mine
+     * corridor) rather than a random baddie sprinkled through the world.
+     */
+    public void setSpawner(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
+            EntityType entity, boolean force) {
+        if (entity == null || (!force && !odds.playOdds(generator.getSettings().spawnBaddies)))
             return;
 
         Block block = blocks.getActualBlock(x, y, z);

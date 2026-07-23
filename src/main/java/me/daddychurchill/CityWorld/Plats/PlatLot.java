@@ -836,7 +836,7 @@ public abstract class PlatLot {
 		if (!chunk.isEmpty(sx, sy, sz))
 			return;
 
-		generator.spawnProvider.setSpawner(generator, chunk, chunkOdds, sx, sy, sz, EntityType.CAVE_SPIDER);
+		generator.spawnProvider.setSpawner(generator, chunk, chunkOdds, sx, sy, sz, EntityType.CAVE_SPIDER, true);
 
 		// dense web core around the spawner, thinning to wisps 2-3 blocks out
 		for (int dx = -2; dx <= 2; dx++)
@@ -860,8 +860,7 @@ public abstract class PlatLot {
 	// barrel), some just village workshop odds and ends.
 	private final static Material[] mineProps = { Material.FURNACE, Material.BLAST_FURNACE, Material.SMOKER,
 			Material.STONECUTTER, Material.SMITHING_TABLE, Material.GRINDSTONE, Material.ANVIL, Material.BARREL,
-			Material.CRAFTING_TABLE, Material.CAULDRON, Material.COMPOSTER, Material.CARTOGRAPHY_TABLE,
-			Material.LOOM, Material.FLETCHING_TABLE, Material.LANTERN };
+			Material.CRAFTING_TABLE, Material.CAULDRON, Material.CARTOGRAPHY_TABLE, Material.LANTERN };
 
 	private final static double oddsOfMineProp = Odds.oddsVeryUnlikely;
 
@@ -887,11 +886,11 @@ public abstract class PlatLot {
 
 	private final static double oddsOfMineLift = Odds.oddsSomewhatLikely;
 
-	// A vertical lift shaft at a corridor crossing: four cut-copper corner posts frame the junction, a
-	// copper-grate winch housing caps the ceiling, and a chain cable runs from the winch down past a
-	// grate car floor and on down a bored shaft to a grate landing on the level below. Purely structural
-	// atmosphere — the stairs still do the real traversal, so this never has to be walkable. Sited only
-	// at 4-way crossings so the corner posts sit off the N/S and E/W lanes and never wall a corridor.
+	// A vertical lift shaft at a corridor crossing: four cut-copper corner posts frame a 5x5 mouth, a
+	// copper-grate winch housing caps the ceiling, and the inner 3x3 is a hollow shaft you can drop
+	// straight down — a chain cable runs the centre, and a 3x3 grate landing at the bottom catches the
+	// fall onto the level below. The stairs still do the safe traversal; this is the shortcut for the
+	// brave. Sited only at 4-way crossings so the frame never walls off a corridor.
 	private void generateMineLift(CityWorldGenerator generator, SupportBlocks chunk, int y) {
 		if (!isShaftableLevel(generator, y - 16))
 			return; // need a level directly below to drop the cable into
@@ -914,26 +913,29 @@ public abstract class PlatLot {
 		Material chain = copperChain(y1);
 		Material grate = copperGrate(y1);
 
-		// four cut-copper corner posts, leaving the x8 (N/S) and z8 (E/W) lanes clear
+		// four cut-copper corner posts framing a 5x5 mouth (corners at x6/x10, z6/z10)
 		for (int level = y1; level <= ceil; level++) {
-			chunk.setBlock(7, level, 7, post);
-			chunk.setBlock(9, level, 7, post);
-			chunk.setBlock(7, level, 9, post);
-			chunk.setBlock(9, level, 9, post);
+			chunk.setBlock(6, level, 6, post);
+			chunk.setBlock(10, level, 6, post);
+			chunk.setBlock(6, level, 10, post);
+			chunk.setBlock(10, level, 10, post);
 		}
-		// copper-grate winch housing across the junction ceiling
+		// copper-grate winch housing over the shaft, at the ceiling
 		for (int gx = 7; gx <= 9; gx++)
 			for (int gz = 7; gz <= 9; gz++)
 				chunk.setBlock(gx, ceil, gz, grate);
 
-		// grate car floor (solid but see-through), the cable up to the winch, then down a bored shaft to
-		// a grate landing on the level below — you stand on the car and look down the shaft through it
-		chunk.setBlock(8, y1, 8, grate);
-		for (int level = y1 + 1; level < ceil; level++)
+		// hollow the inner 3x3 into an open fall shaft, from this floor straight down to the level below
+		for (int level = lower + 1; level <= y1; level++)
+			for (int vx = 7; vx <= 9; vx++)
+				for (int vz = 7; vz <= 9; vz++)
+					chunk.setBlock(vx, level, vz, Material.AIR);
+		// a chain cable down the centre of the shaft, and a 3x3 grate landing at the bottom
+		for (int level = lower + 1; level < ceil; level++)
 			chunk.setBlock(8, level, 8, chain);
-		for (int level = lower + 1; level < y1; level++)
-			chunk.setBlock(8, level, 8, chain);
-		chunk.setBlock(8, lower, 8, grate);
+		for (int gx = 7; gx <= 9; gx++)
+			for (int gz = 7; gz <= 9; gz++)
+				chunk.setBlock(gx, lower, gz, grate);
 	}
 
 	private Material copperChain(int floorY) {
