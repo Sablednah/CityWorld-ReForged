@@ -47,7 +47,6 @@ Municipal/taco_church.schematic
 Municipal/winchester.schematic
 Neighborhood/IMC_eaglman13_home_entry.schematic
 Neighborhood/gas_stop.schematic
-Neighborhood/midwich.schematic
 Neighborhood/polar_gas.schematic
 Neighborhood/richards_house.schematic
 Neighborhood/winchester.schematic
