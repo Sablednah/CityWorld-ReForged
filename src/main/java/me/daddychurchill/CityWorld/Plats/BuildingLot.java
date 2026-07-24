@@ -135,13 +135,12 @@ public abstract class BuildingLot extends ConnectedLot {
 		PlatLot[][] neighborChunks = getNeighborPlatLots(platmap, platX, platZ, true);
 		for (int x = 0; x < 3; x++) {
 			for (int z = 0; z < 3; z++) {
-				if (neighborChunks[x][z] == null) {
-					neighborBuildings.floors[x][z] = 0;
+				// same guard as getNeighboringBasementCounts — a key-collision can slip a non-building
+				// (e.g. RoadLot) through the connected-neighbour filter, so never cast blindly
+				if (neighborChunks[x][z] instanceof BuildingLot building) {
+					neighborBuildings.floors[x][z] = building.height;
 				} else {
-
-					// in order for this building to be connected to our building they would have to
-					// be the same type
-					neighborBuildings.floors[x][z] = ((BuildingLot) neighborChunks[x][z]).height;
+					neighborBuildings.floors[x][z] = 0;
 				}
 			}
 		}
@@ -157,13 +156,14 @@ public abstract class BuildingLot extends ConnectedLot {
 		PlatLot[][] neighborChunks = getNeighborPlatLots(platmap, platX, platZ, true);
 		for (int x = 0; x < 3; x++) {
 			for (int z = 0; z < 3; z++) {
-				if (neighborChunks[x][z] == null) {
-					neighborBuildings.floors[x][z] = 0;
+				// Only another building contributes a basement to line up with. The neighbour filter is
+				// key-based (isConnected compares connectedkey), and a road/park can collide with a
+				// building's per-chunk key (building key worldSeed+(x<<32^z) vs the roads' fixed
+				// worldSeed+101 coincide at chunk 0,101), so a RoadLot can slip through — guard the cast.
+				if (neighborChunks[x][z] instanceof BuildingLot building) {
+					neighborBuildings.floors[x][z] = building.depth;
 				} else {
-
-					// in order for this building to be connected to our building they would have to
-					// be the same type
-					neighborBuildings.floors[x][z] = ((BuildingLot) neighborChunks[x][z]).depth;
+					neighborBuildings.floors[x][z] = 0;
 				}
 			}
 		}
