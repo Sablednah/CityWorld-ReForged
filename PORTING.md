@@ -173,9 +173,21 @@ real gap. In priority order:
    probe caught nothing wrong with the maths — but a rebase like this is exactly where an off-by-64
    hides, so it was worth reading the blocks back rather than trusting the shift.
 
-3. **Schematic rotation/mirroring** (P6) — orthogonal to styles, player-visible, but deferred as
-   genuinely fiddly (rotated footprints complicate the multi-chunk origin maths). Do it with a
-   place-and-read-back probe, not blind.
+3. ~~**Schematic rotation/mirroring** (P6)~~ **DONE (2026-07).** Buildings now take a random quarter-turn
+   (and an optional mirror on axes the `.yml` marks flippable). The "fiddly multi-chunk origin maths"
+   turned out to be a solved problem in vanilla: `StructureTemplate.getZeroPositionWithTransform(target,
+   mirror, rotation)` returns the placement offset that lands the transformed structure's **minimum
+   corner** exactly on `target` (pivot left at `ZERO`) — the same pairing `FossilFeature` uses. So
+   `Clipboard.pasteChunk` takes a `Rotation`/`Mirror`, and the reservation swaps the footprint's X/Z
+   extents for the 90°/270° turns (`footprintChunkX/Z`, `swapsFootprint`) so a non-square building fits
+   its reserved grid — the piece upstream skipped (it reserved `chunkX×chunkZ` regardless and would have
+   spilled rotated non-square builds into neighbouring lots). Rotation is chosen **once** in
+   `PlatMap.placeSpecificClip` (from the platmap's deterministic `Odds`) so every footprint chunk shares
+   it; the roundabout-statue single path picks one too. **Verified with a place-and-read-back probe** (as
+   this very line advised): a 2×1-chunk building placed in all four rotations — block count identical
+   across all four (1558 — nothing clipped), block-box dims swap for 90°/270° and match for 180°, NW
+   corner exactly on target every time → PASS. Not yet done: foundation dig / air-carve for
+   basement-bearing schematics (`groundLevelY > 0`), still the one open `ClipboardLot` scope item.
 
 4. **Smaller, orthogonal, lower-value:** loot tables → native 1.21 datapack format (they already work);
    GameTest/unit coverage (the `gameTestServer` run is already wired in `build.gradle`); furnished-Rooms

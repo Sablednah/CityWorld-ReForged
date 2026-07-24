@@ -513,30 +513,43 @@ public class PlatMap {
 	 * Gives up quietly after {@link #maxPlaceTries} misses — a full platmap simply gets no building.
 	 */
 	public void placeSpecificClip(CityWorldGenerator generator, Odds odds, Clipboard clip) {
-		int chunksX = clip.chunkX;
-		int chunksZ = clip.chunkZ;
+		// Pick the building's facing once, up front, so the reserved footprint matches the turned
+		// shape (a 90/270 turn swaps its X and Z extents) and every footprint chunk shares it. Mirror
+		// only along an axis the schematic's .yml marked flippable — an asymmetric build flipped the
+		// wrong way reads backwards.
+		net.minecraft.world.level.block.Rotation rotation = Clipboard.ROTATIONS[odds.getRandomInt(4)];
+		net.minecraft.world.level.block.Mirror mirror = net.minecraft.world.level.block.Mirror.NONE;
+		if (clip.flipableZ && odds.flipCoin())
+			mirror = net.minecraft.world.level.block.Mirror.LEFT_RIGHT;
+		else if (clip.flipableX && odds.flipCoin())
+			mirror = net.minecraft.world.level.block.Mirror.FRONT_BACK;
+
+		int chunksX = clip.footprintChunkX(rotation);
+		int chunksZ = clip.footprintChunkZ(rotation);
 
 		for (int attempt = 0; attempt < maxPlaceTries; attempt++) {
 			int placeX = odds.getRandomInt(PlatMap.Width - chunksX + 1);
 			int placeZ = odds.getRandomInt(PlatMap.Width - chunksZ + 1);
 
 			if (isEmptyLots(placeX, placeZ, chunksX, chunksZ)) {
-				placeSpecificClip(generator, odds, clip, placeX, placeZ);
+				placeSpecificClip(generator, odds, clip, placeX, placeZ, rotation, mirror);
 				return;
 			}
 		}
 	}
 
-	private void placeSpecificClip(CityWorldGenerator generator, Odds odds, Clipboard clip, int placeX, int placeZ) {
-		int chunksX = clip.chunkX;
-		int chunksZ = clip.chunkZ;
+	private void placeSpecificClip(CityWorldGenerator generator, Odds odds, Clipboard clip, int placeX, int placeZ,
+			net.minecraft.world.level.block.Rotation rotation, net.minecraft.world.level.block.Mirror mirror) {
+		int chunksX = clip.footprintChunkX(rotation);
+		int chunksZ = clip.footprintChunkZ(rotation);
 
-		// One ClipboardLot per chunk of the footprint; each carries its (x, z) offset so it knows
-		// which slice of the building to paste during decoration.
+		// One ClipboardLot per chunk of the (already rotated) footprint; each carries its (x, z) offset
+		// so it knows which slice of the turned building to paste during decoration.
 		for (int x = 0; x < chunksX; x++) {
 			for (int z = 0; z < chunksZ; z++) {
 				setLot(placeX + x, placeZ + z,
-						new ClipboardLot(this, originX + placeX + x, originZ + placeZ + z, clip, x, z));
+						new ClipboardLot(this, originX + placeX + x, originZ + placeZ + z, clip, x, z,
+								PlatLot.LotStyle.STRUCTURE, rotation, mirror));
 			}
 		}
 	}

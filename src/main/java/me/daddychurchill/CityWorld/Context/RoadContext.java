@@ -61,8 +61,12 @@ public class RoadContext extends UrbanContext {
 		// odds/facing draw from the lot's own deterministic dice so the choice is seed-stable.
 		Odds odds = platmap.getChunkOddsGenerator(platmap.originX + x, platmap.originZ + z);
 		Clipboard clip = getSingleSchematic(generator, platmap, odds, x, z);
-		if (clip != null)
-			return new ClipboardLot(platmap, platmap.originX + x, platmap.originZ + z, clip, 0, 0, LotStyle.ROUNDABOUT);
+		if (clip != null) {
+			// A statue is one chunk, so any facing keeps the same footprint — just turn it for variety.
+			net.minecraft.world.level.block.Rotation rotation = Clipboard.ROTATIONS[odds.getRandomInt(4)];
+			return new ClipboardLot(platmap, platmap.originX + x, platmap.originZ + z, clip, 0, 0,
+					LotStyle.ROUNDABOUT, rotation, net.minecraft.world.level.block.Mirror.NONE);
+		}
 
 		return new RoundaboutCenterLot(platmap, platmap.originX + x, platmap.originZ + z);
 	}

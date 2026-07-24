@@ -13,6 +13,8 @@ import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
 
 /**
  * One chunk of a placed classic schematic. A building whose footprint spans several chunks becomes
@@ -27,38 +29,47 @@ import net.minecraft.world.level.ServerLevelAccessor;
  * bounding box clipped to this chunk. The template does the slicing; every chunk computes the same
  * whole-building origin, so the pieces line up.
  *
- * <p><b>First-cut scope</b> (parity-oriented, to be refined once verified in-world):
- * <ul>
- *   <li>No rotation yet — every building faces the same way ({@code Rotation.NONE}). Random facing
- *       is easy to add but changes the footprint for 90/270°, which complicates the origin maths;
- *       deferred until basic placement is confirmed.</li>
- *   <li>No foundation dig / air-carve. The converted template omits air, so a building sits on the
- *       street surface cleanly on flat city ground (where cities generate) but does not hollow out a
- *       hillside or a basement pocket. Basement-bearing schematics ({@code groundLevelY > 0}) will
- *       want the upstream backfill later.</li>
- * </ul>
+ * <p>The building is turned by {@code rotation}/{@code mirror}, chosen once at placement time (in
+ * {@code PlatMap.placeSpecificClip}) so every footprint chunk shares it. {@code (lotX, lotZ)} are the
+ * chunk offsets within the <em>placed (already rotated)</em> footprint, so the whole-building NW
+ * corner is still {@code chunkOrigin - lot*16}; {@link Clipboard#pasteChunk} maps the template onto
+ * that corner for the given rotation.
+ *
+ * <p><b>Remaining scope</b> (to refine later): no foundation dig / air-carve. The converted template
+ * omits air, so a building sits on the street surface cleanly on flat city ground (where cities
+ * generate) but does not hollow out a hillside or a basement pocket. Basement-bearing schematics
+ * ({@code groundLevelY > 0}) will want the upstream backfill later.
  */
 public class ClipboardLot extends IsolatedLot {
 
 	private final Clipboard clip;
 	private final int lotX;
 	private final int lotZ;
+	private final Rotation rotation;
+	private final Mirror mirror;
 
 	public ClipboardLot(PlatMap platmap, int chunkX, int chunkZ, Clipboard clip, int lotX, int lotZ) {
 		this(platmap, chunkX, chunkZ, clip, lotX, lotZ, LotStyle.STRUCTURE);
 	}
 
 	public ClipboardLot(PlatMap platmap, int chunkX, int chunkZ, Clipboard clip, int lotX, int lotZ, LotStyle style) {
+		this(platmap, chunkX, chunkZ, clip, lotX, lotZ, style, Rotation.NONE, Mirror.NONE);
+	}
+
+	public ClipboardLot(PlatMap platmap, int chunkX, int chunkZ, Clipboard clip, int lotX, int lotZ, LotStyle style,
+			Rotation rotation, Mirror mirror) {
 		super(platmap, chunkX, chunkZ);
 		this.style = style;
 		this.clip = clip;
 		this.lotX = lotX;
 		this.lotZ = lotZ;
+		this.rotation = rotation;
+		this.mirror = mirror;
 	}
 
 	@Override
 	public PlatLot newLike(PlatMap platmap, int chunkX, int chunkZ) {
-		return new ClipboardLot(platmap, chunkX, chunkZ, clip, lotX, lotZ, style);
+		return new ClipboardLot(platmap, chunkX, chunkZ, clip, lotX, lotZ, style, rotation, mirror);
 	}
 
 	@Override
@@ -87,7 +98,7 @@ public class ClipboardLot extends IsolatedLot {
 		int nwZ = chunk.getOriginZ() - lotZ * chunk.width;
 
 		clip.pasteChunk(level, nwX, surfaceLevel(generator), nwZ,
-				chunk.getOriginX(), chunk.getOriginZ(), level.getRandom());
+				chunk.getOriginX(), chunk.getOriginZ(), rotation, mirror, level.getRandom());
 
 		if (clip.decayable && generator.getSettings().includeDecayedBuildings && !isPristine(generator, nwX, nwZ)) {
 			int depth = surfaceLevel(generator) - clip.groundLevelY;

@@ -19,6 +19,7 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
@@ -129,18 +130,46 @@ public final class Clipboard {
      *
      * <p>Blocks are the same regardless of which chunk triggers a given world position, so the seams
      * line up across chunk boundaries.
+     *
+     * <p>{@code rotation}/{@code mirror} turn the whole building about its footprint. {@code (nwX, nwZ)}
+     * is still the NW corner the <em>rotated</em> footprint should occupy — {@link #footprintChunkX}/
+     * {@link #footprintChunkZ} give that footprint's size in chunks (swapped for 90°/270°). The origin
+     * arithmetic is vanilla's own {@code getZeroPositionWithTransform}, which returns the placement
+     * offset that lands the transformed structure's minimum corner exactly on the target (pivot stays
+     * at {@code ZERO}) — the same pairing {@code FossilFeature} uses. The clip bounding box is world
+     * space, so it needs no rotation awareness; it just restricts writes to this chunk.
      */
     public void pasteChunk(ServerLevelAccessor level, int nwX, int groundY, int nwZ,
-            int chunkMinX, int chunkMinZ, RandomSource random) {
+            int chunkMinX, int chunkMinZ, Rotation rotation, Mirror mirror, RandomSource random) {
         int bottom = groundY - groundLevelY;
-        BlockPos origin = new BlockPos(nwX, bottom, nwZ);
+        BlockPos origin = template.getZeroPositionWithTransform(new BlockPos(nwX, bottom, nwZ), mirror, rotation);
         BoundingBox chunkBox = new BoundingBox(chunkMinX, bottom, chunkMinZ,
                 chunkMinX + 15, bottom + sizeY, chunkMinZ + 15);
         StructurePlaceSettings settings = new StructurePlaceSettings()
-                .setRotation(Rotation.NONE)
+                .setRotation(rotation)
+                .setMirror(mirror)
                 .setIgnoreEntities(true)
                 .setBoundingBox(chunkBox);
         template.placeInWorld(level, origin, origin, settings, random, Block.UPDATE_CLIENTS);
+    }
+
+    /** The four quarter-turns, indexed by {@code odds.getRandomInt(4)} at placement time. */
+    public static final Rotation[] ROTATIONS = {
+            Rotation.NONE, Rotation.CLOCKWISE_90, Rotation.CLOCKWISE_180, Rotation.COUNTERCLOCKWISE_90 };
+
+    /** Footprint width in chunks after {@code rotation} — X and Z swap for the 90°/270° turns. */
+    public int footprintChunkX(Rotation rotation) {
+        return swapsFootprint(rotation) ? chunkZ : chunkX;
+    }
+
+    /** Footprint depth in chunks after {@code rotation}. See {@link #footprintChunkX}. */
+    public int footprintChunkZ(Rotation rotation) {
+        return swapsFootprint(rotation) ? chunkX : chunkZ;
+    }
+
+    /** A quarter turn (90°/270°) exchanges the X and Z extents; 0°/180° leave them be. */
+    public static boolean swapsFootprint(Rotation rotation) {
+        return rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90;
     }
 
     /** Parsed {@code .schematic.yml}; simple {@code key: value} lines, no YAML library needed. */
