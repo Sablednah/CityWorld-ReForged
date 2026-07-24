@@ -570,12 +570,16 @@ public class PlatMap {
 				int bz = (originZ + placeZ + z) * SupportBlocks.sectionBlockWidth;
 				HeightInfo h = HeightInfo.getHeightsFaster(generator, bx, bz);
 				if (h.getMaxHeight() > sea + 1)
-					return false; // sits above the waterline — that's dry inland, use the normal check
+					return false; // above the waterline — dry inland, use the normal buildable check
 				if (h.getMinHeight() < sea - 10)
 					return false; // abyssal deep ocean, not a shore
 				if (h.getMaxHeight() - h.getMinHeight() > 4)
 					return false; // too steep to seat cleanly
 			}
+		// Low, flat ground at or under the waterline. It may be a genuinely dry flat spot at exactly
+		// sea+1, but that's fine now: the build sits at seaLevel+1 (see ClipboardLot.surfaceLevel) and
+		// its water pools at sea level, so the surround reads as a shallow pool/moat rather than the bare
+		// stone pad it used to leave when the build sat a block too high for the water to reach.
 		return true;
 	}
 

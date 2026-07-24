@@ -212,6 +212,10 @@ public class ClipboardLot extends IsolatedLot {
 		// the water and the GroundLevelY layers below it are the legs/hull sitting in the sea.
 		if (clip.ocean)
 			return generator.seaLevel;
+		// A water-edge (shore) build sits at the waterline, not the raised city street — otherwise its
+		// base is above sea and the pooled water (which tops out at sea level) never reaches it.
+		if (clip.waterEdge)
+			return generator.seaLevel + 1;
 		return generator.streetLevel + (isUrban(clip.family) ? 1 : 0);
 	}
 
