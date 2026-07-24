@@ -1,6 +1,7 @@
 package me.daddychurchill.CityWorld.Context;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
+import me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily;
 import me.daddychurchill.CityWorld.Plats.Nature.BunkerLot;
 import me.daddychurchill.CityWorld.Plats.Nature.FlyingSaucerLot;
 import me.daddychurchill.CityWorld.Plats.Nature.HotairBalloonLot;
@@ -55,6 +56,10 @@ public class NatureContext extends UncivilizedContext {
 		// (mines cluster into rare fields), so more isolated-construct spots are checked to make sure a
 		// field reliably gets surface access.
 		oddsOfIsolatedConstructs = Odds.oddsLikely;
+
+		// Wild landmarks (castles, remote builds) run large and have room out here — allow up to a
+		// 9-chunk footprint, well past the 4-chunk default the dense city families keep.
+		setSchematicFamily(SchematicFamily.NATURE, 9);
 	}
 
 	private final static double oddsOfBunkers = Odds.oddsLikely;
@@ -62,10 +67,13 @@ public class NatureContext extends UncivilizedContext {
 	@Override
 	public void populateMap(CityWorldGenerator generator, PlatMap platmap) {
 
-		// TODO, Nature doesn't handle schematics quite right yet
-		// let the user add their stuff first, then plug any remaining holes with our
-		// stuff
-		// mapsSchematics.populate(generator, platmap);
+		// Let the user's own schematics claim their empty runs first; the terrain survey below only
+		// ever acts on lots that are still empty, so it plugs the remaining holes with nature (natural
+		// lots + set-pieces) around whatever the schematics took. (Caveat: placement doesn't yet check
+		// the ground is flat under a wild build — that's the terrain-blending follow-up.)
+		// Cap the wild at a couple of landmarks per platmap — with 100 empty lots here, an uncapped
+		// roll of every clip would carpet the wilderness in buildings.
+		populateSchematics(generator, platmap, 2);
 
 		// random stuff?
 		Odds platmapOdds = platmap.getOddsGenerator();

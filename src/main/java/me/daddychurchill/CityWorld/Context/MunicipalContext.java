@@ -30,7 +30,7 @@ public class MunicipalContext extends UrbanContext {
 		oddsOfBuildingWallInset = Odds.oddsAlwaysGoingToHappen;
 		rangeOfWallInset = 1;
 
-		setSchematicFamily(SchematicFamily.MUNICIPAL);
+		setSchematicFamily(SchematicFamily.MUNICIPAL, 9); // civic landmarks (cathedrals) run large
 
 		maximumFloorsAbove = 5;
 		maximumFloorsBelow = 2;

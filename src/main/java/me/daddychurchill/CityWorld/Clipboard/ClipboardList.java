@@ -44,10 +44,26 @@ public final class ClipboardList implements Iterable<Clipboard> {
 	 * the same seed lays out the same buildings.
 	 */
 	public void populate(CityWorldGenerator generator, PlatMap platmap) {
+		populate(generator, platmap, Integer.MAX_VALUE);
+	}
+
+	/**
+	 * As {@link #populate(CityWorldGenerator, PlatMap)}, but stop after {@code maxPlacements} clips have
+	 * dropped. City families place unlimited (their platmaps are mostly full of roads/buildings anyway,
+	 * so the empty-run search is the real limiter); the wild is different — a Nature platmap is 100
+	 * empty lots at populate time, so <em>every</em> clip that rolls would fit and the wild fills up.
+	 * A small cap keeps it sparse — a landmark here and there, not wall-to-wall.
+	 */
+	public void populate(CityWorldGenerator generator, PlatMap platmap, int maxPlacements) {
 		Odds odds = platmap.getOddsGenerator();
+		int placed = 0;
 		for (Clipboard clip : list) {
-			if (odds.playOdds(clip.oddsOfAppearance))
+			if (placed >= maxPlacements)
+				break;
+			if (odds.playOdds(clip.oddsOfAppearance)) {
 				platmap.placeSpecificClip(generator, odds, clip);
+				placed++;
+			}
 		}
 	}
 

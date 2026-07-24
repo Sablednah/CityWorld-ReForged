@@ -127,11 +127,16 @@ public abstract class DataContext {
 	 * upstream only placed schematics when a WorldEdit folder was loaded, so most worlds saw none.
 	 */
 	void populateSchematics(CityWorldGenerator generator, PlatMap platmap) {
+		populateSchematics(generator, platmap, Integer.MAX_VALUE);
+	}
+
+	/** As above, but cap the number of schematics dropped in this platmap (see {@link ClipboardList#populate}). */
+	void populateSchematics(CityWorldGenerator generator, PlatMap platmap, int maxPlacements) {
 		if (!generator.getSettings().includeSchematics)
 			return;
 		ClipboardList clips = getSchematics(generator);
 		if (clips != null && !clips.isEmpty())
-			clips.populate(generator, platmap);
+			clips.populate(generator, platmap, maxPlacements);
 	}
 
 	Clipboard getSingleSchematic(CityWorldGenerator generator, PlatMap platmap, Odds odds, int x, int z) {
