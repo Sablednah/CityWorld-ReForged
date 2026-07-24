@@ -532,7 +532,7 @@ public class PlatMap {
 			int placeZ = odds.getRandomInt(PlatMap.Width - chunksZ + 1);
 
 			if (isEmptyLots(placeX, placeZ, chunksX, chunksZ)
-					&& (clip.waterEdge || footprintOnLand(generator, placeX, placeZ, chunksX, chunksZ))) {
+					&& footprintBuildable(generator, placeX, placeZ, chunksX, chunksZ)) {
 				placeSpecificClip(generator, odds, clip, placeX, placeZ, rotation, mirror);
 				return;
 			}
@@ -540,17 +540,18 @@ public class PlatMap {
 	}
 
 	/**
-	 * True only when no part of the footprint dips below sea level. Ordinary buildings must land on dry
-	 * ground — without this, a wild build can drop at an ocean/lake edge and its foundation pad juts out
-	 * into the water. Water-edge builds ({@link Clipboard#waterEdge}) skip this and are allowed at the
-	 * shore on purpose.
+	 * True only when every lot of the footprint is flat, buildable ground at street level — the same
+	 * test the city uses to decide where roads and buildings can sit. Schematics place at street level,
+	 * so without this a wild build lands on a mountainside (its foundation pad carves a 40-block dirt
+	 * scar into the slope) or in an ocean. It restricts wild builds to the flat lowland patches that
+	 * dot the wilderness, which is where a lone landmark belongs anyway.
 	 */
-	private boolean footprintOnLand(CityWorldGenerator generator, int placeX, int placeZ, int chunksX, int chunksZ) {
+	private boolean footprintBuildable(CityWorldGenerator generator, int placeX, int placeZ, int chunksX, int chunksZ) {
 		for (int x = 0; x < chunksX; x++)
 			for (int z = 0; z < chunksZ; z++) {
 				int bx = (originX + placeX + x) * SupportBlocks.sectionBlockWidth;
 				int bz = (originZ + placeZ + z) * SupportBlocks.sectionBlockWidth;
-				if (HeightInfo.getHeightsFaster(generator, bx, bz).getMinHeight() < generator.seaLevel)
+				if (!HeightInfo.isBuildableAt(generator, bx, bz))
 					return false;
 			}
 		return true;
