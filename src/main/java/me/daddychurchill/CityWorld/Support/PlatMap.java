@@ -531,11 +531,29 @@ public class PlatMap {
 			int placeX = odds.getRandomInt(PlatMap.Width - chunksX + 1);
 			int placeZ = odds.getRandomInt(PlatMap.Width - chunksZ + 1);
 
-			if (isEmptyLots(placeX, placeZ, chunksX, chunksZ)) {
+			if (isEmptyLots(placeX, placeZ, chunksX, chunksZ)
+					&& (clip.waterEdge || footprintOnLand(generator, placeX, placeZ, chunksX, chunksZ))) {
 				placeSpecificClip(generator, odds, clip, placeX, placeZ, rotation, mirror);
 				return;
 			}
 		}
+	}
+
+	/**
+	 * True only when no part of the footprint dips below sea level. Ordinary buildings must land on dry
+	 * ground — without this, a wild build can drop at an ocean/lake edge and its foundation pad juts out
+	 * into the water. Water-edge builds ({@link Clipboard#waterEdge}) skip this and are allowed at the
+	 * shore on purpose.
+	 */
+	private boolean footprintOnLand(CityWorldGenerator generator, int placeX, int placeZ, int chunksX, int chunksZ) {
+		for (int x = 0; x < chunksX; x++)
+			for (int z = 0; z < chunksZ; z++) {
+				int bx = (originX + placeX + x) * SupportBlocks.sectionBlockWidth;
+				int bz = (originZ + placeZ + z) * SupportBlocks.sectionBlockWidth;
+				if (HeightInfo.getHeightsFaster(generator, bx, bz).getMinHeight() < generator.seaLevel)
+					return false;
+			}
+		return true;
 	}
 
 	private void placeSpecificClip(CityWorldGenerator generator, Odds odds, Clipboard clip, int placeX, int placeZ,

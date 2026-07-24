@@ -136,19 +136,36 @@ public class ClipboardLot extends IsolatedLot {
 		int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
 		int bx1 = Math.max(0, nwX - oX), bx2 = Math.min(chunk.width, nwX + rotSizeX - oX);
 		int bz1 = Math.max(0, nwZ - oZ), bz2 = Math.min(chunk.width, nwZ + rotSizeZ - oZ);
-		if (bx1 >= bx2 || bz1 >= bz2)
-			return; // the building doesn't actually reach into this chunk
+		boolean hasBuild = bx1 < bx2 && bz1 < bz2;
 
-		// carve the span clear in one go
-		chunk.clearBlocks(bx1, bx2, base, top, bz1, bz2);
-
-		// backfill each column's foundation down to the first solid block it finds
 		Material stratum = generator.oreProvider.stratumMaterial;
 		int floor = chunk.minY + 1; // never fill onto the bedrock course
-		for (int x = bx1; x < bx2; x++)
-			for (int z = bz1; z < bz2; z++)
-				for (int y = base - 1; y > floor && chunk.isEmpty(x, y, z); y--)
-					chunk.setBlock(x, y, z, stratum);
+
+		// the building's own columns: carve the span clear (the paste refills its blocks) and backfill a
+		// stone foundation down to the first solid block, so it never floats over a dip
+		if (hasBuild) {
+			chunk.clearBlocks(bx1, bx2, base, top, bz1, bz2);
+			for (int x = bx1; x < bx2; x++)
+				for (int z = bz1; z < bz2; z++)
+					for (int y = base - 1; y > floor && chunk.isEmpty(x, y, z); y--)
+						chunk.setBlock(x, y, z, stratum);
+		}
+
+		// a water-edge build (watertemple, a moated keep) pools the leftover footprint around it up to
+		// the water surface, so it reads as sitting in water instead of on a bare dirt pad
+		if (clip.waterEdge) {
+			int waterTop = surfaceLevel(generator); // = base + groundLevelY, i.e. the ground/water line
+			Material water = generator.oreProvider.fluidFluidMaterial;
+			for (int x = 0; x < chunk.width; x++)
+				for (int z = 0; z < chunk.width; z++) {
+					if (hasBuild && x >= bx1 && x < bx2 && z >= bz1 && z < bz2)
+						continue; // the building's own columns, handled above
+					chunk.clearBlocks(x, x + 1, base, top, z, z + 1);
+					for (int y = base - 1; y > floor && chunk.isEmpty(x, y, z); y--)
+						chunk.setBlock(x, y, z, stratum);
+					chunk.setBlocks(x, x + 1, base, waterTop + 1, z, z + 1, water);
+				}
+		}
 	}
 
 	/**
