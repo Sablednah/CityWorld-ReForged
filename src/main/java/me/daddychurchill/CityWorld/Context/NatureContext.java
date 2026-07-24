@@ -71,9 +71,13 @@ public class NatureContext extends UncivilizedContext {
 		// ever acts on lots that are still empty, so it plugs the remaining holes with nature (natural
 		// lots + set-pieces) around whatever the schematics took. (Caveat: placement doesn't yet check
 		// the ground is flat under a wild build — that's the terrain-blending follow-up.)
-		// Cap the wild at a couple of landmarks per platmap — with 100 empty lots here, an uncapped
-		// roll of every clip would carpet the wilderness in buildings.
-		populateSchematics(generator, platmap, 2);
+		// Place wild schematics, but ONLY on the real post-road pass. populateMap runs twice for a
+		// nature platmap (pre-road survey, then again as the committed context); placing in the survey
+		// drops them before roads exist, so the road grid then stamps over half of each build and the
+		// second pass drops a duplicate behind it. Gating on roadsPopulated lands them after the roads,
+		// so the empty-run search steers clear. Capped so the wild stays sparse (a couple per platmap).
+		if (platmap.roadsPopulated)
+			populateSchematics(generator, platmap, 2);
 
 		// random stuff?
 		Odds platmapOdds = platmap.getOddsGenerator();

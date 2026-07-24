@@ -36,6 +36,14 @@ public class PlatMap {
 	private final PlatLot[][] platLots;
 	private float naturalPlats;
 
+	/**
+	 * Set once {@link #populateRoads} has run. {@code NatureContext.populateMap} is called twice — once
+	 * as the pre-road survey and again as the real post-road pass — so nature schematics gate on this to
+	 * place only after roads exist; otherwise the survey drops them and the road grid then stamps over
+	 * half of each one (and they double up on the second pass).
+	 */
+	public boolean roadsPopulated = false;
+
 	public PlatMap(CityWorldGenerator generator, ShapeProvider shapeProvider, int originX, int originZ) {
 		super();
 
@@ -314,6 +322,7 @@ public class PlatMap {
 	}
 
 	public void populateRoads() {
+		roadsPopulated = true;
 
 		// place the big four
 		placeIntersection(RoadLot.PlatMapRoadInset - 1, RoadLot.PlatMapRoadInset - 1);

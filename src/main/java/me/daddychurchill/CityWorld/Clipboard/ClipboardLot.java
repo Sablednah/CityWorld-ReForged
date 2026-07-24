@@ -92,19 +92,9 @@ public class ClipboardLot extends IsolatedLot {
 		if (level == null)
 			return; // not a live worldgen level — nothing safe to place onto
 
-		// The reserved footprint's NW corner, in world blocks: this chunk's origin, stepped back by our
-		// offset into the footprint. Every chunk of the building computes the same value.
-		int footNwX = chunk.getOriginX() - lotX * chunk.width;
-		int footNwZ = chunk.getOriginZ() - lotZ * chunk.width;
-
-		// Centre the build inside its footprint. The footprint is whole chunks (ceil of the size), so a
-		// build that doesn't fill it would otherwise hug the NW corner with bare ground to the E/S; shift
-		// it by half the slack instead. Deterministic per building, so every footprint chunk agrees and
-		// the clipped slices still tile. A chunk-sized build gets a zero shift.
-		int rotSizeX = Clipboard.swapsFootprint(rotation) ? clip.sizeZ : clip.sizeX;
-		int rotSizeZ = Clipboard.swapsFootprint(rotation) ? clip.sizeX : clip.sizeZ;
-		int nwX = footNwX + (clip.footprintChunkX(rotation) * chunk.width - rotSizeX) / 2;
-		int nwZ = footNwZ + (clip.footprintChunkZ(rotation) * chunk.width - rotSizeZ) / 2;
+		// The centred build's NW corner, in world blocks — see buildNwX/Z.
+		int nwX = buildNwX();
+		int nwZ = buildNwZ();
 
 		// Level a pad first so the building neither floats over low ground nor has a hillside poking up
 		// through it — dig the terrain out of its vertical span and backfill a stone foundation down to
@@ -247,7 +237,30 @@ public class ClipboardLot extends IsolatedLot {
 	public boolean isValidStrataY(CityWorldGenerator generator, int blockX, int blockY, int blockZ) {
 		int bottom = surfaceLevel(generator) - clip.groundLevelY;
 		int top = bottom + clip.sizeY;
-		return blockY <= bottom || blockY > top;
+		if (blockY <= bottom || blockY > top)
+			return true; // outside the build's vertical span — ordinary strata
+		// Inside the span, only clear the ground UNDER the building itself. The leftover corners of a
+		// larger footprint keep their natural terrain (biome-correct grass/sand, not a bare dirt apron —
+		// the strata pass otherwise skips their surface layer here and leaves subsurface dirt showing).
+		int rotSizeX = Clipboard.swapsFootprint(rotation) ? clip.sizeZ : clip.sizeX;
+		int rotSizeZ = Clipboard.swapsFootprint(rotation) ? clip.sizeX : clip.sizeZ;
+		int nwX = buildNwX(), nwZ = buildNwZ();
+		boolean underBuild = blockX >= nwX && blockX < nwX + rotSizeX && blockZ >= nwZ && blockZ < nwZ + rotSizeZ;
+		return !underBuild;
+	}
+
+	private static final int CHUNK = 16;
+
+	/** The centred build's NW corner (world X), the same value every footprint chunk computes. */
+	private int buildNwX() {
+		int rotSizeX = Clipboard.swapsFootprint(rotation) ? clip.sizeZ : clip.sizeX;
+		return (chunkX - lotX) * CHUNK + (clip.footprintChunkX(rotation) * CHUNK - rotSizeX) / 2;
+	}
+
+	/** The centred build's NW corner (world Z). See {@link #buildNwX}. */
+	private int buildNwZ() {
+		int rotSizeZ = Clipboard.swapsFootprint(rotation) ? clip.sizeX : clip.sizeZ;
+		return (chunkZ - lotZ) * CHUNK + (clip.footprintChunkZ(rotation) * CHUNK - rotSizeZ) / 2;
 	}
 
 	/** The building this lot is a chunk of. (Upstream exposed this too — Sablednah, PR #4.) */
