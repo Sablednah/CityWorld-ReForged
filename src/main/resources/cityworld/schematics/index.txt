@@ -30,7 +30,6 @@ Midrise/pagoda_titan.schematic
 Midrise/taco_church.schematic
 Midrise/winchester.schematic
 Municipal/Hotel.schematic
-Municipal/IMC_eaglman13_home_entry.schematic
 Municipal/IMCHospital.schematic
 Municipal/chayats-bank.schematic
 Municipal/gas_stop.schematic
