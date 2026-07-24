@@ -1,6 +1,7 @@
 package me.daddychurchill.CityWorld.Clipboard;
 
 import me.daddychurchill.CityWorld.compat.BiomeGrid;
+import me.daddychurchill.CityWorld.compat.Material;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Context.DataContext;
@@ -35,10 +36,10 @@ import net.minecraft.world.level.block.Rotation;
  * corner is still {@code chunkOrigin - lot*16}; {@link Clipboard#pasteChunk} maps the template onto
  * that corner for the given rotation.
  *
- * <p><b>Remaining scope</b> (to refine later): no foundation dig / air-carve. The converted template
- * omits air, so a building sits on the street surface cleanly on flat city ground (where cities
- * generate) but does not hollow out a hillside or a basement pocket. Basement-bearing schematics
- * ({@code groundLevelY > 0}) will want the upstream backfill later.
+ * <p>{@link #shapeFoundation} levels a pad before pasting — it digs the terrain out of the building's
+ * vertical span and backfills a stone foundation down to solid ground, so a build neither floats over
+ * a dip nor gets speared by a hillside. The schematic stays the building alone; the mod supplies the
+ * ground under it. (Still to come: planting the leftover corners of a non-square footprint.)
  */
 public class ClipboardLot extends IsolatedLot {
 
@@ -97,6 +98,11 @@ public class ClipboardLot extends IsolatedLot {
 		int nwX = chunk.getOriginX() - lotX * chunk.width;
 		int nwZ = chunk.getOriginZ() - lotZ * chunk.width;
 
+		// Level a pad first so the building neither floats over low ground nor has a hillside poking up
+		// through it — dig the terrain out of its vertical span and backfill a stone foundation down to
+		// solid ground. (The schematic itself is kept to the building; the mod supplies the ground.)
+		shapeFoundation(generator, chunk, nwX, nwZ);
+
 		clip.pasteChunk(level, nwX, surfaceLevel(generator), nwZ,
 				chunk.getOriginX(), chunk.getOriginZ(), rotation, mirror, level.getRandom());
 
@@ -104,6 +110,45 @@ public class ClipboardLot extends IsolatedLot {
 			int depth = surfaceLevel(generator) - clip.groundLevelY;
 			destroyLot(generator, depth, depth + clip.sizeY);
 		}
+	}
+
+	/**
+	 * Dig a level pad for this building and backfill its foundation, clipped to the current chunk. The
+	 * schematic omits air and carries no ground of its own, so on anything but perfectly flat terrain it
+	 * would otherwise float (low ground) or be speared by a hillside (high ground). For every column of
+	 * the footprint that lies in this chunk we:
+	 * <ul>
+	 *   <li>clear the building's whole vertical span {@code [base, base+sizeY)} — removing any terrain,
+	 *       surface or hill that reaches into where the building goes; the paste then refills its own
+	 *       blocks and leaves the interior air, and</li>
+	 *   <li>fill stone from just under the base straight down until it meets solid ground, so a building
+	 *       over a dip stands on a real foundation instead of hovering.</li>
+	 * </ul>
+	 * All writes stay inside this chunk's columns, so nothing crosses the decorating region's edge.
+	 */
+	private void shapeFoundation(CityWorldGenerator generator, RealBlocks chunk, int nwX, int nwZ) {
+		int base = surfaceLevel(generator) - clip.groundLevelY;
+		int top = base + clip.sizeY;
+
+		// the footprint's block extent, rotated, then clipped to this chunk's 0..15 columns
+		int rotSizeX = Clipboard.swapsFootprint(rotation) ? clip.sizeZ : clip.sizeX;
+		int rotSizeZ = Clipboard.swapsFootprint(rotation) ? clip.sizeX : clip.sizeZ;
+		int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
+		int bx1 = Math.max(0, nwX - oX), bx2 = Math.min(chunk.width, nwX + rotSizeX - oX);
+		int bz1 = Math.max(0, nwZ - oZ), bz2 = Math.min(chunk.width, nwZ + rotSizeZ - oZ);
+		if (bx1 >= bx2 || bz1 >= bz2)
+			return; // the building doesn't actually reach into this chunk
+
+		// carve the span clear in one go
+		chunk.clearBlocks(bx1, bx2, base, top, bz1, bz2);
+
+		// backfill each column's foundation down to the first solid block it finds
+		Material stratum = generator.oreProvider.stratumMaterial;
+		int floor = chunk.minY + 1; // never fill onto the bedrock course
+		for (int x = bx1; x < bx2; x++)
+			for (int z = bz1; z < bz2; z++)
+				for (int y = base - 1; y > floor && chunk.isEmpty(x, y, z); y--)
+					chunk.setBlock(x, y, z, stratum);
 	}
 
 	/**
