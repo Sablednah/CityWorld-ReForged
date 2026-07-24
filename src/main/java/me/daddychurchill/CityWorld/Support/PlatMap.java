@@ -387,8 +387,11 @@ public class PlatMap {
 					paveLot(x - 1, z + 1, true);
 
 					paveLot(x, z - 1, true);
-					setLot(x, z, generator.shapeProvider.createRoundaboutStatueLot(generator, this, originX + x,
-							originZ + z));
+					// pass the LOT-LOCAL x,z (like createRoadLot/paveLot) — createRoundaboutStatueLot adds
+					// platmap.originX itself. Passing originX+x here double-counted the origin, so the statue
+					// ClipboardLot's chunkX was ~2x off and its build pasted ~1900 blocks away, off-chunk,
+					// clipped to nothing — the "empty roundabout" (fountains survived: they use local coords).
+					setLot(x, z, generator.shapeProvider.createRoundaboutStatueLot(generator, this, x, z));
 					paveLot(x, z + 1, true);
 
 					paveLot(x + 1, z - 1, true);
