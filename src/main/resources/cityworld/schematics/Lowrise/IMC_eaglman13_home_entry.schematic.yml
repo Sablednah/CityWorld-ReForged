@@ -1,5 +1,5 @@
 # CityWorld/WorldEdit schematic configuration
-GroundLevelY: 0
+GroundLevelY: 1
 FlipableX: false
 FlipableZ: false
 OddsOfAppearance: 0.6

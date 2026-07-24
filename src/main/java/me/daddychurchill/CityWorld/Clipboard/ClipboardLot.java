@@ -92,11 +92,19 @@ public class ClipboardLot extends IsolatedLot {
 		if (level == null)
 			return; // not a live worldgen level — nothing safe to place onto
 
-		// The whole building's NW corner, in world blocks: this chunk's origin, stepped back by our
-		// offset into the footprint. Every chunk of the building computes the same value, so the
-		// clipped slices tile together seamlessly.
-		int nwX = chunk.getOriginX() - lotX * chunk.width;
-		int nwZ = chunk.getOriginZ() - lotZ * chunk.width;
+		// The reserved footprint's NW corner, in world blocks: this chunk's origin, stepped back by our
+		// offset into the footprint. Every chunk of the building computes the same value.
+		int footNwX = chunk.getOriginX() - lotX * chunk.width;
+		int footNwZ = chunk.getOriginZ() - lotZ * chunk.width;
+
+		// Centre the build inside its footprint. The footprint is whole chunks (ceil of the size), so a
+		// build that doesn't fill it would otherwise hug the NW corner with bare ground to the E/S; shift
+		// it by half the slack instead. Deterministic per building, so every footprint chunk agrees and
+		// the clipped slices still tile. A chunk-sized build gets a zero shift.
+		int rotSizeX = Clipboard.swapsFootprint(rotation) ? clip.sizeZ : clip.sizeX;
+		int rotSizeZ = Clipboard.swapsFootprint(rotation) ? clip.sizeX : clip.sizeZ;
+		int nwX = footNwX + (clip.footprintChunkX(rotation) * chunk.width - rotSizeX) / 2;
+		int nwZ = footNwZ + (clip.footprintChunkZ(rotation) * chunk.width - rotSizeZ) / 2;
 
 		// Level a pad first so the building neither floats over low ground nor has a hillside poking up
 		// through it — dig the terrain out of its vertical span and backfill a stone foundation down to
