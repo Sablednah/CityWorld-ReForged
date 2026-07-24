@@ -1,4 +1,3 @@
-Construction/chayats-bank.schematic
 Farm/crops_carrot.schematic
 Farm/crops_glados.schematic
 Farm/graveyard_knife.schematic
