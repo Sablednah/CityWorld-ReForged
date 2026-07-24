@@ -233,6 +233,42 @@ public class RoundaboutCenterLot extends IsolatedLot {
 				chunk.pepperBlocks(4, 12, yWaterBottom, 4, 12, chunkOdds, Odds.oddsUnlikely, Material.SEA_LANTERN);
 				chunk.pepperBlocks(4, 12, yWaterBottom + 1, 4, 12, chunkOdds, Material.PRISMARINE);
 
+				// water down the four channels — seed our OWN sources, don't wait on
+				// the neighbours'. The sewer that feeds these channels caps its water at
+				// its own chunk edge (the "prevent cross-chunk domino" static stubs), and
+				// cross-chunk flow never fires during generation anyway, so the channels
+				// read dry unless this chunk wets them itself. Same static-stub + flowing
+				// source pattern as RoadLot's sewer water.
+				Material channelFluid = generator.oreProvider.fluidFluidMaterial;
+
+				// static stubs at the four channel mouths (physics off — no domino)
+				chunk.setBlocks(7, 9, yPitPipes + 1, 0, 1, channelFluid);
+				chunk.setBlocks(7, 9, yPitPipes + 1, 15, 16, channelFluid);
+				chunk.setBlocks(0, 1, yPitPipes + 1, 7, 9, channelFluid);
+				chunk.setBlocks(15, 16, yPitPipes + 1, 7, 9, channelFluid);
+
+				// flowing source a little inland — runs down the channel into the pit.
+				// Seed the FULL 2-wide channel (x7-8 / z7-8), not a single column, so
+				// the water lines up with the channel instead of half-filling by spill.
+				boolean wasChannelPhysics = chunk.setDoPhysics(true);
+				try {
+					// at the top of the 1-block mouth step (yPitPipes + 1), so it
+					// cascades down the lip — otherwise the step reads dry (the mouth
+					// stub is static and the channel source below never climbs the step)
+					chunk.setBlocks(7, 9, yPitPipes + 1, 1, 2, channelFluid);
+					chunk.setBlocks(7, 9, yPitPipes + 1, 14, 15, channelFluid);
+					chunk.setBlocks(1, 2, yPitPipes + 1, 7, 9, channelFluid);
+					chunk.setBlocks(14, 15, yPitPipes + 1, 7, 9, channelFluid);
+
+					// and along the channel floor, feeding the centre pour
+					chunk.setBlocks(7, 9, yPitPipes, 1, 2, channelFluid);
+					chunk.setBlocks(7, 9, yPitPipes, 14, 15, channelFluid);
+					chunk.setBlocks(1, 2, yPitPipes, 7, 9, channelFluid);
+					chunk.setBlocks(14, 15, yPitPipes, 7, 9, channelFluid);
+				} finally {
+					chunk.setDoPhysics(wasChannelPhysics);
+				}
+
 				// spawner?
 				if (generator.getSettings().spawnersInSewers) {
 					chunk.setBlocks(8, yWaterBottom, yWaterBottom + 4, 8, Material.PRISMARINE);

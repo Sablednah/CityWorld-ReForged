@@ -309,6 +309,38 @@ on flow) is *not* needed. Worth noting the probe could only ever prove the ticks
   compiles clean can still be wrong, because upstream's line depended on *when* and *where* it ran.
   Anything relying on ticks, physics, neighbours or a live world is suspect at decoration time.
 
+**Same bug, second site: dry roundabout channels** (2026-07). **Found by the owner playing it.** A
+roundabout's underground WATER pit has four half-pipe channels that should run water down into the
+pit. Upstream never wets them from *this* chunk — it wets only the pool and leans on the neighbouring
+sewer's flowing water spilling through the edge notches. But the neighbour caps its water at its own
+edge (the same "prevent cross-chunk domino" static stubs) and cross-chunk flow never fires during
+generation — so the channels read dry. **This is the dry-sewers bug at a different lot.** Fix
+(`RoundaboutCenterLot.generateActualBlocks`, WATER pit): the roundabout seeds its own water, exactly
+like `RoadLot` — static stubs at the four channel mouths (edge columns → physics auto-suppressed) plus
+a flowing source one block inland at (8,1)/(8,14)/(1,8)/(14,8), inside a `setDoPhysics(true)` block so
+the `compat/Block.setBlockData` seam schedules each fluid's tick. **Placement at 1/14 not 0/15 is
+load-bearing**: `SupportBlocks.getDoPhysics` suppresses physics on edge columns (`onEdgeXZ`), so a
+source at 0/15 would silently sit static — the same lone-caller trap.
+
+**Follow-up (same playtest): the mouth step, then channel width.** Took three deploys, each fixing what
+the previous one's screenshot exposed — a good example of "confirm fluids by walking them, not by
+reasoning about coordinates":
+- **Deploy 1** flowed the channels but left a 1-block dry gap at each mouth. That step down
+  (`yPitPipes+1`→`yPitPipes`) is upstream-intentional: the sewer feeds in at the higher level and the
+  channel floor is one lower. Neither source bridged the lip — the mouth stub sits at the top of the
+  step but is static (edge column), and the channel source sits at the bottom and only flows *toward
+  centre*, never climbing the step.
+- **Deploy 2** added a flowing source at the *top* of the step (`yPitPipes+1`, inland) so it cascades
+  down the lip. Fixed the gap, but seeded only a single column while the channel is **2 wide** (x7-8 /
+  z7-8), so half the width filled by spill-flow and read misaligned.
+- **Deploy 3** widened every seeded block to the full 2-wide channel with `setBlocks` (matching the
+  mouth stubs, already 2-wide). **Confirmed perfect in play.**
+
+Final shape: each WATER-pit channel seeds three tiers, all 2-wide — static mouth stub, a top-of-step
+flowing source, and a channel-floor flowing source feeding the centre pour. Generalises the first
+generalisation: **any lot that expected a fluid to arrive from a neighbour is suspect**, not just the
+one that placed it — the neighbour's water stops at the shared edge by design.
+
 ### ⚠ Lesson: probe the whole world before shipping, not one feature at a time
 
 A null sign line crashed **chunk generation** — `Component.literal(null)` throws where Bukkit's
