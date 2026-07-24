@@ -136,6 +136,19 @@ public class ClipboardLot extends IsolatedLot {
 		int bz1 = Math.max(0, nwZ - oZ), bz2 = Math.min(chunk.width, nwZ + rotSizeZ - oZ);
 		boolean hasBuild = bx1 < bx2 && bz1 < bz2;
 
+		// An ocean build sits ON open water: no foundation. Clear the build span (removing any seabed
+		// that pokes up) and make the below-waterline volume water, so the schematic's legs/hull stand
+		// in the sea and its deck rides the surface. The paste then drops the build's own blocks in.
+		if (clip.ocean) {
+			if (hasBuild) {
+				chunk.clearBlocks(bx1, bx2, base, top, bz1, bz2);
+				if (base <= generator.seaLevel)
+					chunk.setBlocks(bx1, bx2, base, generator.seaLevel + 1, bz1, bz2,
+							generator.oreProvider.fluidFluidMaterial);
+			}
+			return;
+		}
+
 		Material stratum = generator.oreProvider.stratumMaterial;
 		int floor = chunk.minY + 1; // never fill onto the bedrock course
 
@@ -195,6 +208,10 @@ public class ClipboardLot extends IsolatedLot {
 	 * answers true everywhere until the P7 city-radius work lands.
 	 */
 	private int surfaceLevel(CityWorldGenerator generator) {
+		// An ocean build's "ground layer" is its waterline — put it at the sea surface so the deck rides
+		// the water and the GroundLevelY layers below it are the legs/hull sitting in the sea.
+		if (clip.ocean)
+			return generator.seaLevel;
 		return generator.streetLevel + (isUrban(clip.family) ? 1 : 0);
 	}
 

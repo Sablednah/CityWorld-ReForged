@@ -540,9 +540,11 @@ public class PlatMap {
 			int placeX = odds.getRandomInt(PlatMap.Width - chunksX + 1);
 			int placeZ = odds.getRandomInt(PlatMap.Width - chunksZ + 1);
 
-			boolean terrainOk = clip.waterEdge
-					? footprintAtWaterline(generator, placeX, placeZ, chunksX, chunksZ)
-					: footprintBuildable(generator, placeX, placeZ, chunksX, chunksZ);
+			boolean terrainOk = clip.ocean
+					? footprintDeepWater(generator, placeX, placeZ, chunksX, chunksZ)
+					: clip.waterEdge
+							? footprintAtWaterline(generator, placeX, placeZ, chunksX, chunksZ)
+							: footprintBuildable(generator, placeX, placeZ, chunksX, chunksZ);
 			if (isEmptyLots(placeX, placeZ, chunksX, chunksZ) && terrainOk) {
 				placeSpecificClip(generator, odds, clip, placeX, placeZ, rotation, mirror);
 				return;
@@ -570,6 +572,25 @@ public class PlatMap {
 					return false; // abyssal deep ocean, not a shore
 				if (h.getMaxHeight() - h.getMinHeight() > 4)
 					return false; // too steep to seat cleanly
+			}
+		return true;
+	}
+
+	/**
+	 * For an ocean build ({@link Clipboard#ocean}): open, genuinely deep water — the whole footprint's
+	 * seabed sits well below the surface, so a rig/ship/lighthouse floats at the waterline on its own
+	 * legs with clear water beneath. No land or shallows may poke up into it.
+	 */
+	private boolean footprintDeepWater(CityWorldGenerator generator, int placeX, int placeZ, int chunksX,
+			int chunksZ) {
+		int sea = generator.seaLevel;
+		for (int x = 0; x < chunksX; x++)
+			for (int z = 0; z < chunksZ; z++) {
+				int bx = (originX + placeX + x) * SupportBlocks.sectionBlockWidth;
+				int bz = (originZ + placeZ + z) * SupportBlocks.sectionBlockWidth;
+				// the shallowest point of the seabed must still be several blocks under the surface
+				if (HeightInfo.getHeightsFaster(generator, bx, bz).getMaxHeight() > sea - 4)
+					return false;
 			}
 		return true;
 	}

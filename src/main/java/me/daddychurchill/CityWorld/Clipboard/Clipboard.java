@@ -65,6 +65,13 @@ public final class Clipboard {
      */
     public final boolean waterEdge;
 
+    /**
+     * {@code Ocean: true} in the {@code .yml} — an offshore build (rig, ship, lighthouse) that sits
+     * <em>on</em> deep open water at the surface, on its own legs/hull, with no foundation. Unlike
+     * {@link #waterEdge} (a shore build), it places only in deep water and the mod adds no ground.
+     */
+    public final boolean ocean;
+
     private Clipboard(String name, SchematicFamily family, StructureTemplate template, Meta meta) {
         this.name = name;
         this.family = family;
@@ -82,6 +89,7 @@ public final class Clipboard {
         this.pristineChance = meta.pristineChance;
         this.broadcastLocation = meta.broadcastLocation;
         this.waterEdge = detectWaterEdge(template, sizeX, sizeZ);
+        this.ocean = meta.ocean;
     }
 
     /**
@@ -208,6 +216,7 @@ public final class Clipboard {
         boolean decayable = true;
         double pristineChance = -1.0; // < 0 = use the world's oddsOfPristineBuilding
         boolean broadcastLocation = false;
+        boolean ocean = false;
 
         static Meta parse(InputStream in) throws IOException {
             Meta m = new Meta();
@@ -231,6 +240,7 @@ public final class Clipboard {
                             case "Decayable" -> m.decayable = Boolean.parseBoolean(val);
                             case "PristineChance" -> m.pristineChance = clamp01(Double.parseDouble(val));
                             case "BroadcastLocation" -> m.broadcastLocation = Boolean.parseBoolean(val);
+                            case "Ocean" -> m.ocean = Boolean.parseBoolean(val);
                             default -> { /* ignore unknown keys */ }
                         }
                     } catch (NumberFormatException ignored) {
