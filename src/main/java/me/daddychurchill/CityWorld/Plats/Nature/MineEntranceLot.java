@@ -11,6 +11,7 @@ import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.Support.SupportBlocks;
+import me.daddychurchill.CityWorld.compat.Block;
 import me.daddychurchill.CityWorld.compat.BlockFace;
 import me.daddychurchill.CityWorld.compat.Material;
 
@@ -118,11 +119,18 @@ public class MineEntranceLot extends ConstructLot {
 	}
 
 	private void raiseHeadframePost(SupportBlocks chunk, int x, int beamY, int z) {
-		for (int yy = beamY - 1; yy > beamY - 14; yy--) {
+		for (int yy = beamY - 1; yy > beamY - 15; yy--) {
 			chunk.setBlock(x, yy, z, Material.DARK_OAK_LOG);
-			if (!chunk.isEmpty(x, yy - 1, z))
-				break; // resting on solid ground
+			if (isSolidFooting(chunk, x, yy - 1, z))
+				break; // rest on real ground — drive on down through ferns, snow layers and half-slabs
 		}
+	}
+
+	// True only for a full solid cube, so a post punches past plants/snow/slabs to the first block that
+	// can actually bear it (rather than perching on a fern or half-slab).
+	private boolean isSolidFooting(SupportBlocks chunk, int x, int y, int z) {
+		Block below = chunk.getActualBlock(x, y, z);
+		return below.getBlockData().isCollisionShapeFullBlock(below.getLevel(), below.getPos());
 	}
 
 	private int makeSpace(CityWorldGenerator generator, SupportBlocks chunk, Odds odds, int x, int y, int z) {
