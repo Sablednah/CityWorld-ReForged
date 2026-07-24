@@ -1,12 +1,9 @@
-Construction/IMCHospital.schematic
 Construction/chayats-bank.schematic
-Construction/winchester.schematic
 Farm/G45station.schematic
 Farm/crops_carrot.schematic
 Farm/crops_glados.schematic
 Farm/graveyard_knife.schematic
 Farm/richards_house.schematic
-Farm/winchester.schematic
 Highrise/IMCHospital.schematic
 Highrise/liberty.schematic
 Highrise/tower.schematic
@@ -49,8 +46,6 @@ Neighborhood/IMC_eaglman13_home_entry.schematic
 Neighborhood/gas_stop.schematic
 Neighborhood/polar_gas.schematic
 Neighborhood/richards_house.schematic
-Neighborhood/winchester.schematic
-Park/IMCHospital.schematic
 Park/carasutra.schematic
 Park/dragon.schematic
 Park/graveyard_knife.schematic
@@ -66,7 +61,6 @@ Park/portals.schematic
 Park/richard.schematic
 Park/sablednah.schematic
 Park/spiritwind.schematic
-Park/winchester.schematic
 Roundabout/carasutra.schematic
 Roundabout/joster.schematic
 Roundabout/judgement.schematic
