@@ -132,9 +132,12 @@ notifies the level.
 
 **What's left is breadth, not architecture.** The most valuable next steps:
 
-1. **P6 schematics polish** (rotation/mirroring, foundation dig) — see the phase list. **P7 config is
-   done** (2026-07): per-world settings now come from a datapack registry (`cityworld:world_settings`),
-   naming/mob lists included, verified end-to-end — see "P7 — Config + commands" below and top risk #4.
+1. ~~**P6 schematics polish** (rotation/mirroring, foundation dig)~~ **DONE (2026-07)** — rotation,
+   mirroring, foundation dig/carve, centring, water-edge + ocean builds, biome surround, NATURE
+   placement, and a big bundled-family cleanup all landed in a playtest pass; see "Schematics — the big
+   playtest pass" below. **P7 config is done** (2026-07): per-world settings now come from a datapack
+   registry (`cityworld:world_settings`), naming/mob lists included, verified end-to-end — see "P7 —
+   Config + commands" below and top risk #4.
 
 ### ▶▶ Next up (planned 2026-07, after the P7 session) — read this first
 
@@ -186,8 +189,69 @@ real gap. In priority order:
    it; the roundabout-statue single path picks one too. **Verified with a place-and-read-back probe** (as
    this very line advised): a 2×1-chunk building placed in all four rotations — block count identical
    across all four (1558 — nothing clipped), block-box dims swap for 90°/270° and match for 180°, NW
-   corner exactly on target every time → PASS. Not yet done: foundation dig / air-carve for
-   basement-bearing schematics (`groundLevelY > 0`), still the one open `ClipboardLot` scope item.
+   corner exactly on target every time → PASS.
+
+### ▶▶ Schematics — the big playtest pass (2026-07), everything below landed
+
+A long owner-driven playtest loop turned the schematic system from "places, mostly" into something
+that reads right in the world. All committed + deployed; the drop-in folder `README.txt`
+(`SchematicLibrary.README`) documents every `.yml` key. In rough order:
+
+- **Foundation dig / air-carve** (`ClipboardLot.shapeFoundation`, was the last open scope item). A
+  converted template omits air and carries no ground, so on any non-flat terrain it floated or got
+  speared by a hillside. Now, in the decoration pass before the paste, it clears the build's whole
+  vertical span (kills terrain poking in) and backfills a stone foundation down to solid ground.
+  Verified: 256-chunk force-load, 0 gen failures, 0 floating columns under 28 building-chunks.
+- **Centre in footprint.** The footprint is whole chunks (ceil of the size), so a smaller build hugged
+  the NW corner. `buildNwX/buildNwZ` shift it by half the slack — deterministic, so every footprint
+  chunk agrees and the slices still tile.
+- **Placement terrain rules — three tiers** (all in `PlatMap.placeSpecificClip`, checked after
+  `isEmptyLots`): normal → `footprintBuildable` (flat, buildable, at street level — keeps builds off
+  mountains *and* water, the fix for the 40-block dirt scars and the buildings-in-the-ocean);
+  **water-edge** → `footprintAtWaterline` (flat ground at the shore/shallows); **ocean** →
+  `footprintDeepWater` (deep open sea). A 2601-platmap sweep confirmed 0 placements on non-buildable
+  ground with NATURE still at ~1595.
+- **Water-edge builds** (`Clipboard.waterEdge`, auto-detected: most of the footprint's outer ring is
+  water — catches watertemple and moated castles). They may sit at the shore and get water pooled
+  around them **at sea level** (63, a block under the land) so it reads flush with the ocean, not a
+  raised puddle.
+- **Ocean builds** (`Ocean: true` in the `.yml`) — rigs/ships/lighthouses. Place only in deep water,
+  ride the surface (`surfaceLevel = seaLevel`), and get **no foundation** — `shapeFoundation` fills the
+  below-waterline volume with water so the schematic's own legs/hull hold it up. Schematic-driven
+  `OilPlatformLot`. Put them in `Nature/`; they self-segregate from land builds by terrain.
+- **Biome-correct surround.** `isValidStrataY` was excluding the build's Y-span strata for the *whole*
+  footprint chunk, so the strata pass skipped the leftover corners' grass and left a bare dirt apron.
+  Made it footprint-aware (`buildNwX/Z`): clear strata only *under* the building, so the surround keeps
+  its natural biome surface (grass/sand).
+- **NATURE schematics enabled** (`NatureContext.populateMap` had `populateSchematics` commented out).
+  Two traps: (1) `populateMap` runs **twice** for a nature platmap (pre-road survey, then the committed
+  post-road pass) — placing in the survey let the road grid stamp over half each build and drop a
+  duplicate behind it, so it's gated on `PlatMap.roadsPopulated` to place only after roads; (2)
+  uncapped, 100 empty wild lots carpet the wilderness, so it's capped at 2 per platmap.
+- **Bundled family cleanup** (`index.txt`). One demo build, `midwich` (a school), was listed in all 8
+  families at `OddsOfAppearance: 1.0` and carpeted every platmap; several others sat in daft families.
+  Re-homed midwich/winchester(pub)/IMCHospital/G45station/chayats-bank/eaglman to sensible families and
+  odds, and deleted 17 orphan `.schematic` files left behind (present in resources but not in
+  `index.txt`, so dead weight). Resources now balance: 70 entries = 70 files = 70 ymls, all ≤ their
+  family footprint cap.
+- **⚠ A real crash surfaced here, unrelated to schematics** — see "the RoadLot/BuildingLot cast" below.
+
+The one open cosmetic follow-up: plant-decorate the (now grass) leftover corners of a non-square
+footprint. `GroundLevelY` tuning is per-build and owner-driven (sea 63 vs land 64 means water builds
+usually want their waterline layer at 63).
+
+### ⚠ A latent upstream crash: RoadLot cast to BuildingLot (the "Saving world" hang)
+
+**Found by the owner playing it** — a mid-game `ClassCastException` crashing chunk generation, which
+then wedged teardown on "Saving world". `BuildingLot.getNeighboringBasementCounts`/`...FloorCounts`
+cast every "connected" neighbour to `BuildingLot`. The connected-neighbour filter is *key*-based
+(`isConnected` compares `connectedkey`), and the port derives a building's key from `worldSeed +
+(chunkX<<32 ^ chunkZ)` while roads use a fixed `worldSeed + 101` — which **collide at chunk (0,101)**
+(and parks' `+102` at `(0,102)`). So a road next to a building there slips through the filter and the
+cast throws. Rare coordinate collision → intermittent. Upstream has the identical unchecked cast (it
+relied on the filter); the port's determinism refactor of the key is what created the specific
+collision. Fixed defensively with an `instanceof BuildingLot` guard at the cast (a non-building
+neighbour contributes 0 floors/basement) — more robust than upstream.
 
 4. **Smaller, orthogonal, lower-value:** loot tables → native 1.21 datapack format (they already work);
    GameTest/unit coverage (the `gameTestServer` run is already wired in `build.gradle`); furnished-Rooms
