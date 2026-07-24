@@ -152,7 +152,9 @@ public class ClipboardLot extends IsolatedLot {
 		// a water-edge build (watertemple, a moated keep) pools the leftover footprint around it up to
 		// the water surface, so it reads as sitting in water instead of on a bare dirt pad
 		if (clip.waterEdge) {
-			int waterTop = surfaceLevel(generator); // = base + groundLevelY, i.e. the ground/water line
+			// Pool to the world's sea level so it reads flush with the surrounding ocean/lakes (which
+			// sit a block below the land) rather than a raised puddle.
+			int waterTop = generator.seaLevel;
 			Material water = generator.oreProvider.fluidFluidMaterial;
 			for (int x = 0; x < chunk.width; x++)
 				for (int z = 0; z < chunk.width; z++) {

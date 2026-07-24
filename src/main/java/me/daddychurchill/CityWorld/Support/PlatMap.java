@@ -540,12 +540,38 @@ public class PlatMap {
 			int placeX = odds.getRandomInt(PlatMap.Width - chunksX + 1);
 			int placeZ = odds.getRandomInt(PlatMap.Width - chunksZ + 1);
 
-			if (isEmptyLots(placeX, placeZ, chunksX, chunksZ)
-					&& footprintBuildable(generator, placeX, placeZ, chunksX, chunksZ)) {
+			boolean terrainOk = clip.waterEdge
+					? footprintAtWaterline(generator, placeX, placeZ, chunksX, chunksZ)
+					: footprintBuildable(generator, placeX, placeZ, chunksX, chunksZ);
+			if (isEmptyLots(placeX, placeZ, chunksX, chunksZ) && terrainOk) {
 				placeSpecificClip(generator, odds, clip, placeX, placeZ, rotation, mirror);
 				return;
 			}
 		}
+	}
+
+	/**
+	 * For a water-edge build ({@link Clipboard#waterEdge}): flat ground at the waterline — the shallows
+	 * or a low shore. It must NOT require dry buildable land (that is what was stopping watertemple and
+	 * the moated castles from ever reaching water), but it must still stay off inland hills and out of
+	 * the deep ocean, and be flat enough to seat.
+	 */
+	private boolean footprintAtWaterline(CityWorldGenerator generator, int placeX, int placeZ, int chunksX,
+			int chunksZ) {
+		int sea = generator.seaLevel;
+		for (int x = 0; x < chunksX; x++)
+			for (int z = 0; z < chunksZ; z++) {
+				int bx = (originX + placeX + x) * SupportBlocks.sectionBlockWidth;
+				int bz = (originZ + placeZ + z) * SupportBlocks.sectionBlockWidth;
+				HeightInfo h = HeightInfo.getHeightsFaster(generator, bx, bz);
+				if (h.getMaxHeight() > sea + 1)
+					return false; // sits above the waterline — that's dry inland, use the normal check
+				if (h.getMinHeight() < sea - 10)
+					return false; // abyssal deep ocean, not a shore
+				if (h.getMaxHeight() - h.getMinHeight() > 4)
+					return false; // too steep to seat cleanly
+			}
+		return true;
 	}
 
 	/**
