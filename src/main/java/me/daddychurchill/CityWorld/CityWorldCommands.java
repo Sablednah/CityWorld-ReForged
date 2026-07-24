@@ -88,11 +88,17 @@ public final class CityWorldCommands {
                         .suggests(SUGGEST_SCHEMATICS)
                         .executes(CityWorldCommands::pasteSchematic)));
 
+        // /cityfind <name>  (report nearest) or  /cityfind tp <name>  (and teleport there). tp is a
+        // literal before the name because the name is greedy (schematic names have spaces).
         dispatcher.register(Commands.literal("cityfind")
                 .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .then(Commands.literal("tp")
+                        .then(Commands.argument("name", StringArgumentType.greedyString())
+                                .suggests(SUGGEST_SCHEMATICS)
+                                .executes(ctx -> findSchematic(ctx, true))))
                 .then(Commands.argument("name", StringArgumentType.greedyString())
                         .suggests(SUGGEST_SCHEMATICS)
-                        .executes(CityWorldCommands::findSchematic)));
+                        .executes(ctx -> findSchematic(ctx, false))));
 
         dispatcher.register(Commands.literal("cityexport")
                 .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
@@ -180,7 +186,8 @@ public final class CityWorldCommands {
     /** Rings of platmaps to search out from the player before giving up (10 chunks each). */
     private static final int FIND_MAX_RINGS = 12;
 
-    private static int findSchematic(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+    private static int findSchematic(CommandContext<CommandSourceStack> ctx, boolean teleport)
+            throws CommandSyntaxException {
         ServerPlayer player = ctx.getSource().getPlayerOrException();
         ServerLevel level = player.level();
         MinecraftServer server = ctx.getSource().getServer();
@@ -204,13 +211,22 @@ public final class CityWorldCommands {
         Thread t = new Thread(() -> {
             Found best = search(context, query, pos.x, pos.z, playerX, playerZ);
             server.execute(() -> {
-                if (best == null)
+                if (best == null) {
                     player.sendSystemMessage(Component.literal("Found no '" + query + "' within "
                             + (FIND_MAX_RINGS * PlatMap.Width * 16) + " blocks."));
-                else
-                    player.sendSystemMessage(Component.literal("Nearest '" + best.name() + "' [" + best.family()
-                            + "] at x=" + best.x() + " z=" + best.z() + "  (" + Math.round(best.dist())
-                            + " blocks " + best.compass() + ")"));
+                    return;
+                }
+                player.sendSystemMessage(Component.literal("Nearest '" + best.name() + "' [" + best.family()
+                        + "] at x=" + best.x() + " z=" + best.z() + "  (" + Math.round(best.dist())
+                        + " blocks " + best.compass() + ")"));
+                if (teleport) {
+                    // force the target chunk to generate so the heightmap is real, then drop onto it
+                    level.getChunk(best.x() >> 4, best.z() >> 4);
+                    int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, best.x(), best.z());
+                    player.teleportTo(level, best.x() + 0.5, y, best.z() + 0.5, Set.<Relative>of(), player.getYRot(),
+                            player.getXRot(), false);
+                    player.sendSystemMessage(Component.literal("Teleported to the nearest '" + best.name() + "'."));
+                }
             });
         }, "cityworld-find");
         t.setDaemon(true);
