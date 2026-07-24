@@ -152,14 +152,26 @@ real gap. In priority order:
    only), tree style, cover/ice, ore distribution; (d) flip the codec default to Modern (or just make
    it the top preset — that's a sub-decision).
 
-2. ~~**⚠ Ores are not placed (real gap, not polish).**~~ **MODERN done (2026-07).** Rather than port
-   `OreProvider.sprinkleOres` (still a stub — that's the CLASSIC path, TODO), MODERN reuses vanilla's
-   own ore distribution: `CityWorldChunkGenerator.placeUndergroundOres` runs just the `UNDERGROUND_ORES`
-   decoration step of each chunk's biome on the non-wild chunks (the wild chunks already get it via the
-   full `super.applyBiomeDecoration`). So the stone under cities/roads/structures mineralises with the
-   exact vanilla veins (incl. deepslate variants), no lakes/springs/trees. Verified: city chunks ~342
-   ore blocks/chunk vs nature ~336. **CLASSIC still has no ores** — port the 1.14 tables re-based to the
-   `-64..319` floor for that path.
+2. ~~**⚠ Ores are not placed (real gap, not polish).**~~ **MODERN done, then CLASSIC done (2026-07).**
+   MODERN reuses vanilla's own ore distribution: `CityWorldChunkGenerator.placeUndergroundOres` runs
+   just the `UNDERGROUND_ORES` decoration step of each chunk's biome on the non-wild chunks (the wild
+   chunks already get it via the full `super.applyBiomeDecoration`). So the stone under
+   cities/roads/structures mineralises with the exact vanilla veins (incl. deepslate variants), no
+   lakes/springs/trees. Verified: city chunks ~342 ore blocks/chunk vs nature ~336.
+   **CLASSIC now ported too:** `OreProvider.sprinkleOres` (+ `sprinkleOre`/`growVein`/`placeOre`/
+   `placeBlock`) is a faithful port of upstream's vein algorithm, with two port-specific changes. (a)
+   The 1.14 ore tables are Y-values in a 0-based world; the floor is now -64, so **primary placement
+   shifts down by `worldMinY`** — a 1:1 remap of the old 0..128 column onto the new -64..64 underground
+   that lands the deep ores near the new bedrock. The `mirror` (upper-terrain) half is *not* shifted:
+   mountain cores sit in surface coordinates, unchanged by the floor drop. (b) 1.14 had no deepslate,
+   so `placeBlock` now replaces **either** stone or deepslate, swapping in the ore's deepslate variant
+   (`deepVariant`) below the deepslate line — without which the shifted-down veins wouldn't place at all
+   (the stratum there isn't stone). `PlatLot.generateOres` gates MODERN off so the two paths never
+   stack. **Verified by a place-and-read-back probe** on a fresh CLASSIC world (44 spawn chunks, 0 gen
+   errors): coal ~107/chunk spanning y-7..55 in both variants, iron ~82/chunk, the deep ores all
+   deepslate variants near bedrock (diamond -62..-50, redstone avg -53, gold/lapis/emerald deep). The
+   probe caught nothing wrong with the maths — but a rebase like this is exactly where an off-by-64
+   hides, so it was worth reading the blocks back rather than trusting the shift.
 
 3. **Schematic rotation/mirroring** (P6) — orthogonal to styles, player-visible, but deferred as
    genuinely fiddly (rotated footprints complicate the multi-chunk origin maths). Do it with a

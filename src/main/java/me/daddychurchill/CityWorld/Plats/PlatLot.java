@@ -1161,6 +1161,11 @@ public abstract class PlatLot {
 
 	public void generateOres(CityWorldGenerator generator, SupportBlocks chunk) {
 
+		// MODERN gets vanilla's own ore veins (CityWorldChunkGenerator.placeUndergroundOres); CityWorld's
+		// own sprinkle pass is the CLASSIC path only, else the two would stack in the same stone.
+		if (generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN)
+			return;
+
 		// shape the world
 		if (generator.getSettings().includeOres || generator.getSettings().includeUndergroundFluids)
 			generator.oreProvider.sprinkleOres(generator, this, chunk, blockYs, chunkOdds);
