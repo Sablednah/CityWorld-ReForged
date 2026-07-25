@@ -180,6 +180,47 @@ public class PlatMap {
 		return true;
 	}
 
+	// Per-lot terrain summary (max/min surface Y, buildable?), sampled lazily and memoised so the
+	// schematic-placement footprint tests never resample the same lot. The ocean/water-edge scan tests
+	// all 100 positions and their footprints overlap heavily, so without this it re-ran
+	// HeightInfo.getHeightsFaster (5 noise samples, uncached) for the same lots over and over. Lazy
+	// per-lot (not an eager 100-lot grid) so land platmaps, which only probe a handful of random
+	// positions, never pay to sample lots they don't look at. Single-threaded per platmap (the whole
+	// plan runs in the PlatMap constructor), so no synchronisation is needed.
+	private int[][] lotMaxH, lotMinH;
+	private byte[][] lotClass; // 0 = not sampled, 1 = buildable, 2 = not buildable
+
+	private void sampleLot(CityWorldGenerator generator, int lx, int lz) {
+		if (lotClass == null) {
+			lotMaxH = new int[Width][Width];
+			lotMinH = new int[Width][Width];
+			lotClass = new byte[Width][Width];
+		}
+		if (lotClass[lx][lz] != 0)
+			return;
+		int bx = (originX + lx) * SupportBlocks.sectionBlockWidth;
+		int bz = (originZ + lz) * SupportBlocks.sectionBlockWidth;
+		HeightInfo h = HeightInfo.getHeightsFaster(generator, bx, bz);
+		lotMaxH[lx][lz] = h.getMaxHeight();
+		lotMinH[lx][lz] = h.getMinHeight();
+		lotClass[lx][lz] = (byte) (h.getState() == AbstractYs.HeightState.BUILDING ? 1 : 2);
+	}
+
+	private int lotMax(CityWorldGenerator generator, int lx, int lz) {
+		sampleLot(generator, lx, lz);
+		return lotMaxH[lx][lz];
+	}
+
+	private int lotMin(CityWorldGenerator generator, int lx, int lz) {
+		sampleLot(generator, lx, lz);
+		return lotMinH[lx][lz];
+	}
+
+	private boolean lotBuildable(CityWorldGenerator generator, int lx, int lz) {
+		sampleLot(generator, lx, lz);
+		return lotClass[lx][lz] == 1;
+	}
+
 	public boolean isInnerReallyEmptyLot(int centerX, int centerZ) {
 		if (centerX >= 1 && centerX < Width - 1 && centerZ >= 1 && centerZ < Width - 1) {
 			for (int x = centerX - 1; x < centerX + 2; x++) {
@@ -600,14 +641,13 @@ public class PlatMap {
 		int sea = generator.seaLevel;
 		for (int x = 0; x < chunksX; x++)
 			for (int z = 0; z < chunksZ; z++) {
-				int bx = (originX + placeX + x) * SupportBlocks.sectionBlockWidth;
-				int bz = (originZ + placeZ + z) * SupportBlocks.sectionBlockWidth;
-				HeightInfo h = HeightInfo.getHeightsFaster(generator, bx, bz);
-				if (h.getMaxHeight() > sea + 1)
+				int max = lotMax(generator, placeX + x, placeZ + z);
+				int min = lotMin(generator, placeX + x, placeZ + z);
+				if (max > sea + 1)
 					return false; // above the waterline — dry inland, use the normal buildable check
-				if (h.getMinHeight() < sea - 10)
+				if (min < sea - 10)
 					return false; // abyssal deep ocean, not a shore
-				if (h.getMaxHeight() - h.getMinHeight() > 4)
+				if (max - min > 4)
 					return false; // too steep to seat cleanly
 			}
 		// Low, flat ground at or under the waterline. It may be a genuinely dry flat spot at exactly
@@ -627,10 +667,10 @@ public class PlatMap {
 		int sea = generator.seaLevel;
 		for (int x = 0; x < chunksX; x++)
 			for (int z = 0; z < chunksZ; z++) {
-				int bx = (originX + placeX + x) * SupportBlocks.sectionBlockWidth;
-				int bz = (originZ + placeZ + z) * SupportBlocks.sectionBlockWidth;
-				// the shallowest point of the seabed must still be several blocks under the surface
-				if (HeightInfo.getHeightsFaster(generator, bx, bz).getMaxHeight() > sea - 4)
+				// The shallowest seabed sample must sit well under the surface — at least 6 blocks, so a
+				// hull whose keel is 3-4 blocks down still has clear water beneath and never grounds on the
+				// seabed. sea-4 let builds land in near-shore shallows and left a dirt pad around them.
+				if (lotMax(generator, placeX + x, placeZ + z) > sea - 6)
 					return false;
 			}
 		return true;
@@ -645,12 +685,9 @@ public class PlatMap {
 	 */
 	private boolean footprintBuildable(CityWorldGenerator generator, int placeX, int placeZ, int chunksX, int chunksZ) {
 		for (int x = 0; x < chunksX; x++)
-			for (int z = 0; z < chunksZ; z++) {
-				int bx = (originX + placeX + x) * SupportBlocks.sectionBlockWidth;
-				int bz = (originZ + placeZ + z) * SupportBlocks.sectionBlockWidth;
-				if (!HeightInfo.isBuildableAt(generator, bx, bz))
+			for (int z = 0; z < chunksZ; z++)
+				if (!lotBuildable(generator, placeX + x, placeZ + z))
 					return false;
-			}
 		return true;
 	}
 

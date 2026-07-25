@@ -136,16 +136,17 @@ public class ClipboardLot extends IsolatedLot {
 		int bz1 = Math.max(0, nwZ - oZ), bz2 = Math.min(chunk.width, nwZ + rotSizeZ - oZ);
 		boolean hasBuild = bx1 < bx2 && bz1 < bz2;
 
-		// An ocean build sits ON open water: no foundation. Clear the build span (removing any seabed
-		// that pokes up) and make the below-waterline volume water, so the schematic's legs/hull stand
-		// in the sea and its deck rides the surface. The paste then drops the build's own blocks in.
+		// An ocean build sits ON open, deep water: no foundation, no dirt pad. Clear the build's vertical
+		// span across the WHOLE chunk (the footprint fills it), so any seabed that pokes up around the
+		// hull is removed, and fill water from the span base up to the surface. Below the base stays
+		// natural deep sea; the paste then drops the build's own blocks in. Clearing the whole chunk
+		// (not just the build's own columns) is what stops the leftover footprint corners from showing
+		// the raised near-shore seabed as an exposed dirt platform ringing the build.
 		if (clip.ocean) {
-			if (hasBuild) {
-				chunk.clearBlocks(bx1, bx2, base, top, bz1, bz2);
-				if (base <= generator.seaLevel)
-					chunk.setBlocks(bx1, bx2, base, generator.seaLevel + 1, bz1, bz2,
-							generator.oreProvider.fluidFluidMaterial);
-			}
+			chunk.clearBlocks(0, chunk.width, base, top, 0, chunk.width);
+			if (base <= generator.seaLevel)
+				chunk.setBlocks(0, chunk.width, base, generator.seaLevel + 1, 0, chunk.width,
+						generator.oreProvider.fluidFluidMaterial);
 			return;
 		}
 
