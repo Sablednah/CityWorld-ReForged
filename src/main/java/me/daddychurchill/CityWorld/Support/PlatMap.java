@@ -214,6 +214,25 @@ public class PlatMap {
 		return lotClass[lx][lz] == 1;
 	}
 
+	/**
+	 * True when a run of lots is claimable by an oversized civic landmark: each lot is empty, nature
+	 * filler, or a road. Schematics place before the generator's own buildings but after the road grid,
+	 * and a build more than a handful of chunks wide can never find a run the road grid doesn't cross —
+	 * a 9×5 cathedral fits nowhere clear. As a last resort such a build may claim a flat spot over the
+	 * roads (they dead-end at its wall); it still may not sit on another schematic ({@code STRUCTURE}).
+	 */
+	public boolean isClaimableLots(int x, int z, int width, int length) {
+		for (int a = x; a < x + width; a++)
+			for (int b = z; b < z + length; b++) {
+				if (!inBounds(a, b))
+					return false;
+				PlatLot lot = platLots[a][b];
+				if (lot != null && lot.style != LotStyle.NATURE && lot.style != LotStyle.ROAD)
+					return false;
+			}
+		return true;
+	}
+
 	public boolean isInnerReallyEmptyLot(int centerX, int centerZ) {
 		if (centerX >= 1 && centerX < Width - 1 && centerZ >= 1 && centerZ < Width - 1) {
 			for (int x = centerX - 1; x < centerX + 2; x++) {
@@ -600,6 +619,33 @@ public class PlatMap {
 					if (footprintDeepWater(generator, px, pz, chunksX, chunksZ)
 							&& isNaturalLots(px, pz, chunksX, chunksZ))
 						valid.add(new int[] { px, pz });
+			if (valid.isEmpty())
+				return false;
+			int[] pick = valid.get(odds.getRandomInt(valid.size()));
+			placeSpecificClip(generator, odds, clip, pick[0], pick[1], rotation, mirror);
+			return true;
+		}
+
+		// A big land build (a 9x5 cathedral, a 4x4 hospital) has few candidate positions and needs a
+		// large contiguous flat-buildable run; the cheap random search almost never lands one — the
+		// cathedral placed 0 times in a 12800-block sweep. Scan every position and pick among the fits so
+		// it can appear wherever the rare open, flat spot exists. Small builds keep the cheap random dart.
+		if (chunksX * chunksZ >= 12) {
+			java.util.List<int[]> valid = new java.util.ArrayList<>();
+			for (int px = 0; px <= PlatMap.Width - chunksX; px++)
+				for (int pz = 0; pz <= PlatMap.Width - chunksZ; pz++)
+					if (isNaturalLots(px, pz, chunksX, chunksZ)
+							&& footprintBuildable(generator, px, pz, chunksX, chunksZ))
+						valid.add(new int[] { px, pz });
+			// A very large civic build (a 9×5 cathedral) never finds a clear run: the road grid crosses
+			// any span that wide, so an empty-only search comes up empty on every platmap. As a last
+			// resort let it claim a flat spot over the roads, so the landmark is at least possible.
+			if (valid.isEmpty() && (chunksX >= 6 || chunksZ >= 6))
+				for (int px = 0; px <= PlatMap.Width - chunksX; px++)
+					for (int pz = 0; pz <= PlatMap.Width - chunksZ; pz++)
+						if (isClaimableLots(px, pz, chunksX, chunksZ)
+								&& footprintBuildable(generator, px, pz, chunksX, chunksZ))
+							valid.add(new int[] { px, pz });
 			if (valid.isEmpty())
 				return false;
 			int[] pick = valid.get(odds.getRandomInt(valid.size()));
