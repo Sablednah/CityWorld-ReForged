@@ -195,9 +195,9 @@ public final class SchematicLibrary {
             + "                       open water and rides the surface on its own legs/hull -- no\n"
             + "                       foundation. Put it in Nature/. GroundLevelY here is how many\n"
             + "                       blocks of legs/hull sit below the waterline.\n\n"
-            + "Builds automatically level a foundation pad and keep off water/mountains; a build\n"
-            + "whose footprint has water around its edge is detected as a shore build and gets\n"
-            + "water pooled around it. Ocean: true is the deep-water version of that.\n\n"
+            + "Land builds automatically level a foundation pad and keep off water/mountains.\n"
+            + "Ocean: true builds are the exception -- they leave the sea floor untouched and just\n"
+            + "drop the build into deep open water.\n\n"
             + "Turn placement on by enabling schematics in the world's settings (the Customize\n"
             + "screen when creating a CityWorld world, or the world_settings datapack), then\n"
             + "generate fresh chunks. Files here are loaded at startup - relaunch after adding.\n";

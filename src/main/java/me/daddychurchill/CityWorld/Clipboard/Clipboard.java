@@ -19,7 +19,6 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -59,16 +58,9 @@ public final class Clipboard {
     public final boolean broadcastLocation;
 
     /**
-     * True when most of the footprint's outer ring is water — a build made to sit <em>in</em> water
-     * (watertemple, a moated castle). Such builds may be dropped at the shore and get water filled
-     * around them; ordinary builds must find dry land. Detected once at load from the template.
-     */
-    public final boolean waterEdge;
-
-    /**
      * {@code Ocean: true} in the {@code .yml} — an offshore build (rig, ship, lighthouse) that sits
-     * <em>on</em> deep open water at the surface, on its own legs/hull, with no foundation. Unlike
-     * {@link #waterEdge} (a shore build), it places only in deep water and the mod adds no ground.
+     * <em>on</em> deep open water at the surface, on its own legs/hull, with no foundation: it places
+     * only in genuinely deep water and the mod does nothing to the terrain, just drops the build in.
      */
     public final boolean ocean;
 
@@ -88,26 +80,7 @@ public final class Clipboard {
         this.decayable = meta.decayable;
         this.pristineChance = meta.pristineChance;
         this.broadcastLocation = meta.broadcastLocation;
-        this.waterEdge = detectWaterEdge(template, sizeX, sizeZ);
         this.ocean = meta.ocean;
-    }
-
-    /**
-     * A build "sits in water" when most of its outer footprint ring has water in it. Read the water
-     * blocks straight from the template and count how many distinct perimeter columns hold any.
-     */
-    private static boolean detectWaterEdge(StructureTemplate template, int sizeX, int sizeZ) {
-        if (sizeX < 3 || sizeZ < 3)
-            return false;
-        java.util.Set<Integer> edgeColumns = new java.util.HashSet<>();
-        for (StructureTemplate.StructureBlockInfo info : template.filterBlocks(BlockPos.ZERO,
-                new StructurePlaceSettings(), Blocks.WATER)) {
-            int x = info.pos().getX(), z = info.pos().getZ();
-            if (x == 0 || x == sizeX - 1 || z == 0 || z == sizeZ - 1)
-                edgeColumns.add(x * 100003 + z); // cheap unique key for (x,z)
-        }
-        int perimeter = 2 * sizeX + 2 * sizeZ - 4;
-        return edgeColumns.size() >= perimeter / 2;
     }
 
     private static int ceilDiv(int a, int b) {

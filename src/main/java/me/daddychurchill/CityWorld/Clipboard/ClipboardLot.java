@@ -166,24 +166,6 @@ public class ClipboardLot extends IsolatedLot {
 					for (int y = base - 1; y > floor && chunk.isEmpty(x, y, z); y--)
 						chunk.setBlock(x, y, z, stratum);
 		}
-
-		// a water-edge build (watertemple, a moated keep) pools the leftover footprint around it up to
-		// the water surface, so it reads as sitting in water instead of on a bare dirt pad
-		if (clip.waterEdge) {
-			// Pool to the world's sea level so it reads flush with the surrounding ocean/lakes (which
-			// sit a block below the land) rather than a raised puddle.
-			int waterTop = generator.seaLevel;
-			Material water = generator.oreProvider.fluidFluidMaterial;
-			for (int x = 0; x < chunk.width; x++)
-				for (int z = 0; z < chunk.width; z++) {
-					if (hasBuild && x >= bx1 && x < bx2 && z >= bz1 && z < bz2)
-						continue; // the building's own columns, handled above
-					chunk.clearBlocks(x, x + 1, base, top, z, z + 1);
-					for (int y = base - 1; y > floor && chunk.isEmpty(x, y, z); y--)
-						chunk.setBlock(x, y, z, stratum);
-					chunk.setBlocks(x, x + 1, base, waterTop + 1, z, z + 1, water);
-				}
-		}
 	}
 
 	/**
@@ -217,10 +199,6 @@ public class ClipboardLot extends IsolatedLot {
 		// the water and the GroundLevelY layers below it are the legs/hull sitting in the sea.
 		if (clip.ocean)
 			return generator.seaLevel;
-		// A water-edge (shore) build sits at the waterline, not the raised city street — otherwise its
-		// base is above sea and the pooled water (which tops out at sea level) never reaches it.
-		if (clip.waterEdge)
-			return generator.seaLevel + 1;
 		return generator.streetLevel + (isUrban(clip.family) ? 1 : 0);
 	}
 

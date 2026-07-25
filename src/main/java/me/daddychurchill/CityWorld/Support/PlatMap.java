@@ -180,20 +180,19 @@ public class PlatMap {
 		return true;
 	}
 
-	// Per-lot terrain summary (max/min surface Y, buildable?), sampled lazily and memoised so the
-	// schematic-placement footprint tests never resample the same lot. The ocean/water-edge scan tests
-	// all 100 positions and their footprints overlap heavily, so without this it re-ran
+	// Per-lot terrain summary (max surface Y, buildable?), sampled lazily and memoised so the
+	// schematic-placement footprint tests never resample the same lot. The ocean scan tests all 100
+	// positions and their footprints overlap heavily, so without this it re-ran
 	// HeightInfo.getHeightsFaster (5 noise samples, uncached) for the same lots over and over. Lazy
 	// per-lot (not an eager 100-lot grid) so land platmaps, which only probe a handful of random
 	// positions, never pay to sample lots they don't look at. Single-threaded per platmap (the whole
 	// plan runs in the PlatMap constructor), so no synchronisation is needed.
-	private int[][] lotMaxH, lotMinH;
+	private int[][] lotMaxH;
 	private byte[][] lotClass; // 0 = not sampled, 1 = buildable, 2 = not buildable
 
 	private void sampleLot(CityWorldGenerator generator, int lx, int lz) {
 		if (lotClass == null) {
 			lotMaxH = new int[Width][Width];
-			lotMinH = new int[Width][Width];
 			lotClass = new byte[Width][Width];
 		}
 		if (lotClass[lx][lz] != 0)
@@ -202,18 +201,12 @@ public class PlatMap {
 		int bz = (originZ + lz) * SupportBlocks.sectionBlockWidth;
 		HeightInfo h = HeightInfo.getHeightsFaster(generator, bx, bz);
 		lotMaxH[lx][lz] = h.getMaxHeight();
-		lotMinH[lx][lz] = h.getMinHeight();
 		lotClass[lx][lz] = (byte) (h.getState() == AbstractYs.HeightState.BUILDING ? 1 : 2);
 	}
 
 	private int lotMax(CityWorldGenerator generator, int lx, int lz) {
 		sampleLot(generator, lx, lz);
 		return lotMaxH[lx][lz];
-	}
-
-	private int lotMin(CityWorldGenerator generator, int lx, int lz) {
-		sampleLot(generator, lx, lz);
-		return lotMinH[lx][lz];
 	}
 
 	private boolean lotBuildable(CityWorldGenerator generator, int lx, int lz) {
@@ -597,20 +590,16 @@ public class PlatMap {
 		int chunksX = clip.footprintChunkX(rotation);
 		int chunksZ = clip.footprintChunkZ(rotation);
 
-		// Water and ocean builds need rare terrain (a shoreline, or a patch of deep sea), often a
-		// multi-chunk one — 16 random darts almost never hit it, which is why they never appeared. Scan
-		// EVERY position, collect the ones that fit, and pick one. Land is abundant, so ordinary builds
-		// keep the cheap random search.
-		if (clip.ocean || clip.waterEdge) {
+		// An ocean build needs a rare, often multi-chunk patch of genuinely deep sea — 16 random darts
+		// almost never hit it, which is why they never appeared. Scan EVERY position, collect the ones
+		// that fit, and pick one. Land is abundant, so ordinary builds keep the cheap random search.
+		if (clip.ocean) {
 			java.util.List<int[]> valid = new java.util.ArrayList<>();
 			for (int px = 0; px <= PlatMap.Width - chunksX; px++)
-				for (int pz = 0; pz <= PlatMap.Width - chunksZ; pz++) {
-					boolean terrainOk = clip.ocean
-							? footprintDeepWater(generator, px, pz, chunksX, chunksZ)
-							: footprintAtWaterline(generator, px, pz, chunksX, chunksZ);
-					if (terrainOk && isNaturalLots(px, pz, chunksX, chunksZ))
+				for (int pz = 0; pz <= PlatMap.Width - chunksZ; pz++)
+					if (footprintDeepWater(generator, px, pz, chunksX, chunksZ)
+							&& isNaturalLots(px, pz, chunksX, chunksZ))
 						valid.add(new int[] { px, pz });
-				}
 			if (valid.isEmpty())
 				return false;
 			int[] pick = valid.get(odds.getRandomInt(valid.size()));
@@ -628,33 +617,6 @@ public class PlatMap {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * For a water-edge build ({@link Clipboard#waterEdge}): flat ground at the waterline — the shallows
-	 * or a low shore. It must NOT require dry buildable land (that is what was stopping watertemple and
-	 * the moated castles from ever reaching water), but it must still stay off inland hills and out of
-	 * the deep ocean, and be flat enough to seat.
-	 */
-	private boolean footprintAtWaterline(CityWorldGenerator generator, int placeX, int placeZ, int chunksX,
-			int chunksZ) {
-		int sea = generator.seaLevel;
-		for (int x = 0; x < chunksX; x++)
-			for (int z = 0; z < chunksZ; z++) {
-				int max = lotMax(generator, placeX + x, placeZ + z);
-				int min = lotMin(generator, placeX + x, placeZ + z);
-				if (max > sea + 1)
-					return false; // above the waterline — dry inland, use the normal buildable check
-				if (min < sea - 10)
-					return false; // abyssal deep ocean, not a shore
-				if (max - min > 4)
-					return false; // too steep to seat cleanly
-			}
-		// Low, flat ground at or under the waterline. It may be a genuinely dry flat spot at exactly
-		// sea+1, but that's fine now: the build sits at seaLevel+1 (see ClipboardLot.surfaceLevel) and
-		// its water pools at sea level, so the surround reads as a shallow pool/moat rather than the bare
-		// stone pad it used to leave when the build sat a block too high for the water to reach.
-		return true;
 	}
 
 	/**
