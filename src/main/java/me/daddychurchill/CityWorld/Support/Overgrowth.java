@@ -72,6 +72,34 @@ public final class Overgrowth {
         // 3) roads — the occasional sapling breaking through the tarmac into a small reclaim tree.
         if (road && odds.playOdds(0.18))
             placeSmallTree(level, oX, oZ, floor, real.width, odds);
+
+        // 4) basements — dripstone reclaiming a building's cellars, the same as the mine shafts. Buildings
+        //    only (roads have no rooms below); scans the below-street air for a room ceiling/floor.
+        if (!road)
+            dripstoneUnderground(real, level, oX, oZ, generator.streetLevel, odds);
+    }
+
+    /** Sprinkle dripstone into the enclosed air rooms below street level (basements/cellars). */
+    private static void dripstoneUnderground(RealBlocks real, ServerLevelAccessor level, int oX, int oZ,
+            int street, Odds odds) {
+        int bottom = real.minY + 1;
+        for (int i = 0; i < 22; i++) {
+            int wx = oX + odds.getRandomInt(real.width), wz = oZ + odds.getRandomInt(real.width);
+            for (int y = street - 2; y > bottom + 1; y--) {
+                if (!level.getBlockState(new BlockPos(wx, y, wz)).isAir())
+                    continue;
+                boolean ceiling = !level.getBlockState(new BlockPos(wx, y + 1, wz)).isAir();
+                boolean floorBelow = !level.getBlockState(new BlockPos(wx, y - 1, wz)).isAir();
+                if (ceiling && odds.flipCoin()) {
+                    growDripstone(level, wx, y, wz, Direction.DOWN, odds);
+                    break;
+                }
+                if (floorBelow) {
+                    growDripstone(level, wx, y, wz, Direction.UP, odds);
+                    break;
+                }
+            }
+        }
     }
 
     /**
