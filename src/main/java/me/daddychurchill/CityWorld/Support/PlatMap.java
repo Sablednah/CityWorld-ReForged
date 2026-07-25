@@ -163,6 +163,23 @@ public class PlatMap {
 		return true;
 	}
 
+	/**
+	 * True when a whole run of lots is claimable by a schematic: each lot is either empty or plain
+	 * nature filler ({@link LotStyle#NATURE}). This is what {@link #placeSpecificClip} tests instead of
+	 * {@link #isEmptyLots} — on a nature/ocean platmap the pre-road survey has already planted a
+	 * {@code NatureLot} in every hole by the time the post-road schematic pass runs, so an
+	 * empty-only check finds nowhere to go and no wild/ocean build ever lands. Nature filler is just
+	 * "wild terrain here" and is safe to overwrite; roads, buildings, and other schematics (all
+	 * non-NATURE styles) are not, and stay protected.
+	 */
+	public boolean isNaturalLots(int x, int z, int width, int length) {
+		for (int a = x; a < x + width; a++)
+			for (int b = z; b < z + length; b++)
+				if (!isNaturalLot(a, b))
+					return false;
+		return true;
+	}
+
 	public boolean isInnerReallyEmptyLot(int centerX, int centerZ) {
 		if (centerX >= 1 && centerX < Width - 1 && centerZ >= 1 && centerZ < Width - 1) {
 			for (int x = centerX - 1; x < centerX + 2; x++) {
@@ -524,7 +541,7 @@ public class PlatMap {
 	 * empty lots big enough for the clip's footprint, then fill that run with {@link ClipboardLot}s.
 	 * Gives up quietly after {@link #maxPlaceTries} misses — a full platmap simply gets no building.
 	 */
-	public void placeSpecificClip(CityWorldGenerator generator, Odds odds, Clipboard clip) {
+	public boolean placeSpecificClip(CityWorldGenerator generator, Odds odds, Clipboard clip) {
 		// Pick the building's facing once, up front, so the reserved footprint matches the turned
 		// shape (a 90/270 turn swaps its X and Z extents) and every footprint chunk shares it. Mirror
 		// only along an axis the schematic's .yml marked flippable — an asymmetric build flipped the
@@ -539,20 +556,37 @@ public class PlatMap {
 		int chunksX = clip.footprintChunkX(rotation);
 		int chunksZ = clip.footprintChunkZ(rotation);
 
+		// Water and ocean builds need rare terrain (a shoreline, or a patch of deep sea), often a
+		// multi-chunk one — 16 random darts almost never hit it, which is why they never appeared. Scan
+		// EVERY position, collect the ones that fit, and pick one. Land is abundant, so ordinary builds
+		// keep the cheap random search.
+		if (clip.ocean || clip.waterEdge) {
+			java.util.List<int[]> valid = new java.util.ArrayList<>();
+			for (int px = 0; px <= PlatMap.Width - chunksX; px++)
+				for (int pz = 0; pz <= PlatMap.Width - chunksZ; pz++) {
+					boolean terrainOk = clip.ocean
+							? footprintDeepWater(generator, px, pz, chunksX, chunksZ)
+							: footprintAtWaterline(generator, px, pz, chunksX, chunksZ);
+					if (terrainOk && isNaturalLots(px, pz, chunksX, chunksZ))
+						valid.add(new int[] { px, pz });
+				}
+			if (valid.isEmpty())
+				return false;
+			int[] pick = valid.get(odds.getRandomInt(valid.size()));
+			placeSpecificClip(generator, odds, clip, pick[0], pick[1], rotation, mirror);
+			return true;
+		}
+
 		for (int attempt = 0; attempt < maxPlaceTries; attempt++) {
 			int placeX = odds.getRandomInt(PlatMap.Width - chunksX + 1);
 			int placeZ = odds.getRandomInt(PlatMap.Width - chunksZ + 1);
-
-			boolean terrainOk = clip.ocean
-					? footprintDeepWater(generator, placeX, placeZ, chunksX, chunksZ)
-					: clip.waterEdge
-							? footprintAtWaterline(generator, placeX, placeZ, chunksX, chunksZ)
-							: footprintBuildable(generator, placeX, placeZ, chunksX, chunksZ);
-			if (isEmptyLots(placeX, placeZ, chunksX, chunksZ) && terrainOk) {
+			if (isNaturalLots(placeX, placeZ, chunksX, chunksZ)
+					&& footprintBuildable(generator, placeX, placeZ, chunksX, chunksZ)) {
 				placeSpecificClip(generator, odds, clip, placeX, placeZ, rotation, mirror);
-				return;
+				return true;
 			}
 		}
+		return false;
 	}
 
 	/**

@@ -60,10 +60,12 @@ public final class ClipboardList implements Iterable<Clipboard> {
 		for (Clipboard clip : list) {
 			if (placed >= maxPlacements)
 				break;
-			if (odds.playOdds(clip.oddsOfAppearance)) {
-				platmap.placeSpecificClip(generator, odds, clip);
+			// Count only clips that ACTUALLY placed. A clip whose odds come up but finds no home (a land
+			// build in an ocean platmap, an ocean build inland) must not burn a slot -- otherwise the
+			// abundant land clips would use up the cap on water platmaps and the ocean/shore builds, whose
+			// terrain IS present there, would never get a turn.
+			if (odds.playOdds(clip.oddsOfAppearance) && platmap.placeSpecificClip(generator, odds, clip))
 				placed++;
-			}
 		}
 	}
 
