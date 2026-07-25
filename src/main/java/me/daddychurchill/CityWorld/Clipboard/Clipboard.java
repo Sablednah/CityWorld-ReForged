@@ -64,6 +64,14 @@ public final class Clipboard {
      */
     public final boolean ocean;
 
+    /**
+     * {@code KeepAir: true} in the {@code .yml} — place the schematic's air blocks instead of skipping
+     * them, so enclosed voids (a cellar, a hollow tower) stay open rather than being filled by the
+     * terrain the build overlays. Costs the overlay behaviour (the whole bounding box, air included, is
+     * stamped over the ground), so it is opt-in for builds that carry their own interior.
+     */
+    public final boolean keepAir;
+
     private Clipboard(String name, SchematicFamily family, StructureTemplate template, Meta meta) {
         this.name = name;
         this.family = family;
@@ -81,6 +89,7 @@ public final class Clipboard {
         this.pristineChance = meta.pristineChance;
         this.broadcastLocation = meta.broadcastLocation;
         this.ocean = meta.ocean;
+        this.keepAir = meta.keepAir;
     }
 
     private static int ceilDiv(int a, int b) {
@@ -95,25 +104,27 @@ public final class Clipboard {
     public static Clipboard load(String name, SchematicFamily family, String fileName, InputStream data,
             InputStream yml) throws IOException {
         HolderGetter<Block> blocks = BuiltInRegistries.BLOCK;
-        StructureTemplate template = readTemplate(fileName, data, blocks);
+        // Parse the .yml first: keepAir decides whether the reader drops the schematic's air blocks.
         Meta meta = yml != null ? Meta.parse(yml) : new Meta();
+        StructureTemplate template = readTemplate(fileName, data, blocks, meta.keepAir);
         return new Clipboard(name, family, template, meta);
     }
 
     /** Pick a reader by file extension: native {@code .nbt}, WorldEdit {@code .schem}, or legacy. */
-    private static StructureTemplate readTemplate(String fileName, InputStream data, HolderGetter<Block> blocks)
-            throws IOException {
+    private static StructureTemplate readTemplate(String fileName, InputStream data, HolderGetter<Block> blocks,
+            boolean keepAir) throws IOException {
         String lower = fileName.toLowerCase(Locale.ROOT);
         if (lower.endsWith(".nbt")) {
-            // A .nbt file already IS a structure tag; data-fix it (old files) then load.
+            // A .nbt file already IS a structure tag; data-fix it (old files) then load. It keeps
+            // whatever air the file stored, so keepAir has no extra effect here.
             CompoundTag tag = NbtIo.readCompressed(data, NbtAccounter.unlimitedHeap());
             return Templates.build(tag, tag.getInt("DataVersion").orElse(0), blocks);
         }
         if (lower.endsWith(".schem"))
-            return SpongeSchematic.read(data).toTemplate(blocks);
+            return SpongeSchematic.read(data).toTemplate(blocks, keepAir);
         if (lower.endsWith(".litematic"))
-            return LitematicSchematic.read(data).toTemplate(blocks);
-        return LegacySchematic.read(data).toTemplate(blocks); // legacy .schematic
+            return LitematicSchematic.read(data).toTemplate(blocks, keepAir);
+        return LegacySchematic.read(data).toTemplate(blocks, keepAir); // legacy .schematic
     }
 
     /**
@@ -190,6 +201,7 @@ public final class Clipboard {
         double pristineChance = -1.0; // < 0 = use the world's oddsOfPristineBuilding
         boolean broadcastLocation = false;
         boolean ocean = false;
+        boolean keepAir = false;
 
         static Meta parse(InputStream in) throws IOException {
             Meta m = new Meta();
@@ -214,6 +226,7 @@ public final class Clipboard {
                             case "PristineChance" -> m.pristineChance = clamp01(Double.parseDouble(val));
                             case "BroadcastLocation" -> m.broadcastLocation = Boolean.parseBoolean(val);
                             case "Ocean" -> m.ocean = Boolean.parseBoolean(val);
+                            case "KeepAir" -> m.keepAir = Boolean.parseBoolean(val);
                             default -> { /* ignore unknown keys */ }
                         }
                     } catch (NumberFormatException ignored) {

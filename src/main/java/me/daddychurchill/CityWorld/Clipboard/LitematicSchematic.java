@@ -60,7 +60,7 @@ public final class LitematicSchematic {
         return new LitematicSchematic(dv, regions);
     }
 
-    public StructureTemplate toTemplate(HolderGetter<Block> blockGetter) {
+    public StructureTemplate toTemplate(HolderGetter<Block> blockGetter, boolean keepAir) {
         int gMinX = Integer.MAX_VALUE, gMinY = Integer.MAX_VALUE, gMinZ = Integer.MAX_VALUE;
         int gMaxX = Integer.MIN_VALUE, gMaxY = Integer.MIN_VALUE, gMaxZ = Integer.MIN_VALUE;
         for (Region r : regions) {
@@ -100,7 +100,7 @@ public final class LitematicSchematic {
                     for (int lx = 0; lx < asx; lx++) {
                         long flat = (long) ly * asx * asz + (long) lz * asx + lx;
                         int id = bitAt(r.blockStates, flat, bits, mask);
-                        if (id < 0 || id >= n || air[id])
+                        if (id < 0 || id >= n || (air[id] && !keepAir))
                             continue;
                         CompoundTag stateTag = states[id];
                         Integer idx = paletteIndex.get(stateTag);

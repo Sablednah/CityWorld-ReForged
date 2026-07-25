@@ -5,3 +5,4 @@ FlipableZ: false
 OddsOfAppearance: 0.2
 BroadcastLocation: false
 Decayable: true
+KeepAir: true

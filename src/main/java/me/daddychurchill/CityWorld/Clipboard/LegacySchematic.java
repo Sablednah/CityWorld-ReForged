@@ -237,7 +237,7 @@ public final class LegacySchematic {
      * Build the vanilla structure NBT (the same shape {@link StructureTemplate#save} writes) and load
      * it into a fresh template — so downstream placement and re-saving are all native.
      */
-    public StructureTemplate toTemplate(HolderGetter<Block> blockGetter) {
+    public StructureTemplate toTemplate(HolderGetter<Block> blockGetter, boolean keepAir) {
         ListTag palette = new ListTag();
         Map<BlockState, Integer> paletteIndex = new HashMap<>();
         ListTag blockList = new ListTag();
@@ -246,7 +246,7 @@ public final class LegacySchematic {
             for (int z = 0; z < length; z++) {
                 for (int x = 0; x < width; x++) {
                     int id = idAt(x, y, z);
-                    if (LegacyBlocks.isAir(id))
+                    if (!keepAir && LegacyBlocks.isAir(id))
                         continue;
                     BlockState state = stateFor(x, y, z, id);
                     Integer idx = paletteIndex.get(state);

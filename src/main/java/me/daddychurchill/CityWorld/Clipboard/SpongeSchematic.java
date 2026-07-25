@@ -89,7 +89,7 @@ public final class SpongeSchematic {
         return out;
     }
 
-    public StructureTemplate toTemplate(HolderGetter<Block> blockGetter) {
+    public StructureTemplate toTemplate(HolderGetter<Block> blockGetter, boolean keepAir) {
         Map<Integer, CompoundTag> beByIndex = blockEntities(); // schematic-index -> block entity nbt
 
         ListTag paletteList = new ListTag();
@@ -101,7 +101,9 @@ public final class SpongeSchematic {
                 for (int x = 0; x < width; x++) {
                     int flat = (y * length + z) * width + x;
                     String descriptor = palette.get(indices[flat]);
-                    if (descriptor == null || Templates.isAir(Templates.nameOf(descriptor)))
+                    if (descriptor == null)
+                        continue;
+                    if (!keepAir && Templates.isAir(Templates.nameOf(descriptor)))
                         continue;
                     Integer idx = paletteIndex.get(descriptor);
                     if (idx == null) {
