@@ -18,6 +18,9 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -109,9 +112,10 @@ public final class LegacySchematic {
             int legacyId = it.getIntOr("id", -1);
             int count = it.getIntOr("Count", 0);
             int slot = it.getIntOr("Slot", 0);
+            int damage = it.getIntOr("Damage", 0);
             if (legacyId < 0 || count < 1)
                 continue;
-            String modern = modernItemId(legacyId);
+            String modern = modernItemId(legacyId, damage);
             if (modern == null) {
                 if (unknownItems.add(legacyId))
                     CityWorldMod.LOGGER.info("LegacySchematic: no item mapping for legacy id {} (stack skipped)",
@@ -131,19 +135,90 @@ public final class LegacySchematic {
         return be;
     }
 
-    // Legacy numeric item ids used by the bundled catalog's stocked containers. Small on purpose —
-    // only these six actually appear; anything else is logged and skipped rather than guessed.
+    // Legacy numeric item ids for stocked containers. Block items (< 256) reuse the block mapping; the
+    // 1.8-era item ids (256+) are tabled below. Anything still unknown is logged once and skipped.
     private static final Set<Integer> unknownItems = ConcurrentHashMap.newKeySet();
 
-    private static String modernItemId(int legacyId) {
-        return switch (legacyId) {
-            case 266 -> "minecraft:gold_ingot";
-            case 314 -> "minecraft:golden_helmet";
-            case 341 -> "minecraft:slime_ball";
-            case 371 -> "minecraft:gold_nugget";
-            case 373 -> "minecraft:potion";
-            case 388 -> "minecraft:emerald";
+    private static String modernItemId(int legacyId, int damage) {
+        // Block items (id < 256) share their id with the block; reuse the block mapping and take the
+        // placed block's item form (so a wall-torch stack still becomes a torch item, etc.). Air-only
+        // blocks (fire, water) have no item and are skipped.
+        if (legacyId > 0 && legacyId < 256) {
+            Item item = LegacyBlocks.of(legacyId, damage).getBlock().asItem();
+            return item == Items.AIR ? null : BuiltInRegistries.ITEM.getKey(item).toString();
+        }
+        String id = switch (legacyId) {
+            case 256 -> "iron_shovel";       case 257 -> "iron_pickaxe";     case 258 -> "iron_axe";
+            case 259 -> "flint_and_steel";   case 260 -> "apple";            case 261 -> "bow";
+            case 262 -> "arrow";             case 263 -> damage == 1 ? "charcoal" : "coal";
+            case 264 -> "diamond";           case 265 -> "iron_ingot";       case 266 -> "gold_ingot";
+            case 267 -> "iron_sword";        case 268 -> "wooden_sword";     case 269 -> "wooden_shovel";
+            case 270 -> "wooden_pickaxe";    case 271 -> "wooden_axe";       case 272 -> "stone_sword";
+            case 273 -> "stone_shovel";      case 274 -> "stone_pickaxe";    case 275 -> "stone_axe";
+            case 276 -> "diamond_sword";     case 277 -> "diamond_shovel";   case 278 -> "diamond_pickaxe";
+            case 279 -> "diamond_axe";       case 280 -> "stick";            case 281 -> "bowl";
+            case 282 -> "mushroom_stew";     case 283 -> "golden_sword";     case 284 -> "golden_shovel";
+            case 285 -> "golden_pickaxe";    case 286 -> "golden_axe";       case 287 -> "string";
+            case 288 -> "feather";           case 289 -> "gunpowder";        case 290 -> "wooden_hoe";
+            case 291 -> "stone_hoe";         case 292 -> "iron_hoe";         case 293 -> "diamond_hoe";
+            case 294 -> "golden_hoe";        case 295 -> "wheat_seeds";      case 296 -> "wheat";
+            case 297 -> "bread";             case 298 -> "leather_helmet";   case 299 -> "leather_chestplate";
+            case 300 -> "leather_leggings";  case 301 -> "leather_boots";    case 302 -> "chainmail_helmet";
+            case 303 -> "chainmail_chestplate"; case 304 -> "chainmail_leggings"; case 305 -> "chainmail_boots";
+            case 306 -> "iron_helmet";       case 307 -> "iron_chestplate";  case 308 -> "iron_leggings";
+            case 309 -> "iron_boots";        case 310 -> "diamond_helmet";   case 311 -> "diamond_chestplate";
+            case 312 -> "diamond_leggings";  case 313 -> "diamond_boots";    case 314 -> "golden_helmet";
+            case 315 -> "golden_chestplate"; case 316 -> "golden_leggings";  case 317 -> "golden_boots";
+            case 318 -> "flint";             case 319 -> "porkchop";         case 320 -> "cooked_porkchop";
+            case 321 -> "painting";          case 322 -> "golden_apple";     case 323 -> "oak_sign";
+            case 324 -> "oak_door";          case 325 -> "bucket";           case 326 -> "water_bucket";
+            case 327 -> "lava_bucket";       case 328 -> "minecart";         case 329 -> "saddle";
+            case 330 -> "iron_door";         case 331 -> "redstone";         case 332 -> "snowball";
+            case 333 -> "oak_boat";          case 334 -> "leather";          case 335 -> "milk_bucket";
+            case 336 -> "brick";             case 337 -> "clay_ball";        case 338 -> "sugar_cane";
+            case 339 -> "paper";             case 340 -> "book";             case 341 -> "slime_ball";
+            case 342 -> "chest_minecart";    case 343 -> "furnace_minecart"; case 344 -> "egg";
+            case 345 -> "compass";           case 346 -> "fishing_rod";      case 347 -> "clock";
+            case 348 -> "glowstone_dust";    case 349 -> fish(damage);       case 350 -> damage == 1 ? "cooked_salmon" : "cooked_cod";
+            case 351 -> dye(damage);         case 352 -> "bone";             case 353 -> "sugar";
+            case 354 -> "cake";              case 355 -> "red_bed";          case 356 -> "repeater";
+            case 357 -> "cookie";            case 358 -> "filled_map";       case 359 -> "shears";
+            case 360 -> "melon_slice";       case 361 -> "pumpkin_seeds";    case 362 -> "melon_seeds";
+            case 363 -> "beef";              case 364 -> "cooked_beef";      case 365 -> "chicken";
+            case 366 -> "cooked_chicken";    case 367 -> "rotten_flesh";     case 368 -> "ender_pearl";
+            case 369 -> "blaze_rod";         case 370 -> "ghast_tear";       case 371 -> "gold_nugget";
+            case 372 -> "nether_wart";       case 373 -> "potion";           case 375 -> "spider_eye";
+            case 376 -> "fermented_spider_eye"; case 377 -> "blaze_powder";  case 378 -> "magma_cream";
+            case 384 -> "experience_bottle"; case 385 -> "fire_charge";      case 386 -> "writable_book";
+            case 387 -> "written_book";      case 388 -> "emerald";          case 390 -> "flower_pot";
+            case 391 -> "carrot";            case 392 -> "potato";           case 393 -> "baked_potato";
+            case 394 -> "poisonous_potato";  case 395 -> "map";              case 396 -> "golden_carrot";
+            case 400 -> "pumpkin_pie";       case 403 -> "enchanted_book";   case 406 -> "quartz";
+            case 2256 -> "music_disc_13";    case 2257 -> "music_disc_cat";
             default -> null;
+        };
+        return id == null ? null : "minecraft:" + id;
+    }
+
+    /** Legacy raw fish (id 349): damage 0=cod, 1=salmon, 2=tropical fish, 3=pufferfish. */
+    private static String fish(int damage) {
+        return switch (damage) {
+            case 1 -> "salmon";
+            case 2 -> "tropical_fish";
+            case 3 -> "pufferfish";
+            default -> "cod";
+        };
+    }
+
+    /** Legacy dye (id 351): damage 0..15 in the old ink-sac-first order → the modern dye/ingredient. */
+    private static String dye(int damage) {
+        return switch (damage) {
+            case 1 -> "red_dye";     case 2 -> "green_dye";      case 3 -> "cocoa_beans";
+            case 4 -> "lapis_lazuli"; case 5 -> "purple_dye";    case 6 -> "cyan_dye";
+            case 7 -> "light_gray_dye"; case 8 -> "gray_dye";    case 9 -> "pink_dye";
+            case 10 -> "lime_dye";   case 11 -> "yellow_dye";    case 12 -> "light_blue_dye";
+            case 13 -> "magenta_dye"; case 14 -> "orange_dye";   case 15 -> "bone_meal";
+            default -> "ink_sac";
         };
     }
 
