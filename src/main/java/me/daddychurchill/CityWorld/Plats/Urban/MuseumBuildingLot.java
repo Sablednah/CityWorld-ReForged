@@ -108,7 +108,7 @@ public class MuseumBuildingLot extends FinishedBuildingLot {
 						true);
 
 				// it looked so nice for a moment... but the moment has passed
-				if (generator.getSettings().includeDecayedBuildings) {
+				if (buildingsDecay(generator)) {
 					destroyLot(generator, sidewalkLevel, sidewalkLevel + firstFloorHeight);
 
 				} else {

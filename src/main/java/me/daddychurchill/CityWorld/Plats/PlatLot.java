@@ -1170,6 +1170,33 @@ public abstract class PlatLot {
 		return true;
 	}
 
+	/** Cached per-lot pristine roll: null until first asked. */
+	private Boolean decayThisLot;
+
+	/**
+	 * Whether this building lot should wear its apocalypse decay — {@code false} when decayed buildings
+	 * are off, and also for the rare lot that rolls <em>pristine</em> and stands untouched even in a
+	 * ruined world. Building lots test this instead of {@code includeDecayedBuildings} directly, so the
+	 * decay-as-probability feature ({@code oddsOfPristineBuilding}, default tiny) applies to ordinary
+	 * buildings the way it already does to placed schematics.
+	 *
+	 * <p>Rolled once per lot and cached, seeded from the building's {@link #getConnectedKey() connection
+	 * key} (falling back to the lot position for isolated lots) so every chunk of a multi-chunk building
+	 * agrees — it is wholly pristine or wholly decayed, never half-and-half.
+	 */
+	public boolean buildingsDecay(CityWorldGenerator generator) {
+		if (!generator.getSettings().includeDecayedBuildings)
+			return false;
+		if (decayThisLot == null) {
+			double pristine = generator.getSettings().oddsOfPristineBuilding;
+			long key = getConnectedKey();
+			if (key == -1L)
+				key = chunkX * 341873128712L + chunkZ * 132897987541L;
+			decayThisLot = pristine <= 0.0 || !new Odds(generator.getWorldSeed() + key).playOdds(pristine);
+		}
+		return decayThisLot;
+	}
+
 	protected boolean isValidWithBones() {
 		return true;
 	}

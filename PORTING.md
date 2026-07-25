@@ -1328,16 +1328,19 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
   azalea, glow lichen** over ruins and nature (the CoverProvider + the decay path). Rides the
   per-style settings-profile pattern (`cityworld:modern`) and, ideally, the biome work above.
 
-- **Decay as a probability, not on/off — rare pristine buildings/schematics (owner, 2026-07).**
-  *Partly done (see below).* Instead of a building/schematic being simply decayable or not when decay
-  is on, give a small **global pristine chance** (a building survives intact even in an apocalypse
-  world), overridable per-schematic in its `.yml`. So there's a rare thrill of finding an untouched
-  building. Shipped for schematics: `[terrain] oddsOfPristineBuilding` (default tiny) + a schematic
-  `PristineChance:` yml override, rolled per-building so a multi-chunk schematic agrees with itself.
-  **Still to do: the same pristine roll for regular (non-schematic) buildings** — decay there is woven
-  through ~25 scattered `includeDecayedBuildings` checks in the building lots, so it wants a per-lot
-  `buildingsDecay()` helper (roll pristine once per lot from its position) rather than a blind
-  find-replace.
+- ~~**Decay as a probability, not on/off — rare pristine buildings/schematics (owner, 2026-07).**~~
+  **DONE (2026-07).** A building/schematic can survive intact even in an apocalypse world (a small
+  global pristine chance, `[terrain] oddsOfPristineBuilding`, default tiny 0.0001), overridable
+  per-schematic via a `PristineChance:` yml key. Schematics shipped first (rolled from the build's NW
+  origin so a multi-chunk build agrees). **Regular buildings now too:** new `PlatLot.buildingsDecay()`
+  helper — `includeDecayedBuildings && !pristine`, rolled once per lot and cached, seeded from the
+  building's `getConnectedKey()` (position fallback for isolated lots) so every chunk of a multi-chunk
+  building agrees. The scattered `includeDecayedBuildings` checks in the ordinary building lots
+  (`FinishedBuildingLot`, `HouseLot`, `BarnLot`, `FactoryBuildingLot`, `StorageLot`, `MuseumBuildingLot`,
+  `WaterTowerLot`) now test `buildingsDecay()` instead; the always-ruined nature set-pieces (castle,
+  radio tower, oil platform), floating-style lots, the unfinished-building lot, and the spawner logic
+  were left on the raw flag by design. Verified: at a 0.3 test setting, 29.6% of 29,605
+  `FinishedBuildingLot`s came back pristine — the roll fires at the configured rate.
 
 - **⭐ "Modern" vs "Classic" — a modernization world style, made default (owner's idea, 2026-07).**
   The big one. Rename today's `NORMAL` style to **`CLASSIC`** (it faithfully reproduces the 1.8-era

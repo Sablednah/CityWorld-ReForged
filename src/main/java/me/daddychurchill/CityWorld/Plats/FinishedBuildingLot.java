@@ -144,16 +144,16 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		// calculate the defaults
 		calculateOptions(context);
 
-		wallsWE = new OutsideWEWallFactory(chunkOdds, platmap.generator.getSettings().includeDecayedBuildings);
+		wallsWE = new OutsideWEWallFactory(chunkOdds, buildingsDecay(platmap.generator));
 		wallsNS = new OutsideNSWallFactory(wallsWE);
 		wallsCurved = new CurvedWallFactory(wallsWE);
 
-		wallsWEAlt = new OutsideWEWallFactory(chunkOdds, platmap.generator.getSettings().includeDecayedBuildings);
+		wallsWEAlt = new OutsideWEWallFactory(chunkOdds, buildingsDecay(platmap.generator));
 		wallsNSAlt = new OutsideNSWallFactory(wallsWEAlt);
 		wallsCurvedAlt = new CurvedWallFactory(wallsWEAlt);
 		wallStyle = pickWallStyle();
 
-		wallsInterior = new InteriorWallFactory(chunkOdds, platmap.generator.getSettings().includeDecayedBuildings);
+		wallsInterior = new InteriorWallFactory(chunkOdds, buildingsDecay(platmap.generator));
 
 		// final validation
 		validateOptions();
@@ -940,7 +940,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		}
 
 		// happy place?
-		if (!generator.getSettings().includeDecayedBuildings) {
+		if (!buildingsDecay(generator)) {
 
 			// maybe draw a navlight?
 			drawNavLight(chunk, context);
@@ -1079,7 +1079,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			Material materialGlass, StairWell stairLocation, Surroundings heights) {
 
 		DoorStyle drawExteriorDoors = floor == 0 ? DoorStyle.WOOD : DoorStyle.NONE;
-		if (drawExteriorDoors == DoorStyle.WOOD && generator.getSettings().includeDecayedBuildings)
+		if (drawExteriorDoors == DoorStyle.WOOD && buildingsDecay(generator))
 			drawExteriorDoors = chunkOdds.flipCoin() ? DoorStyle.HOLE : DoorStyle.WOOD;
 
 		if (drawExteriorDoors != DoorStyle.NONE)
