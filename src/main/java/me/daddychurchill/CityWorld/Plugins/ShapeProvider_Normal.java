@@ -239,8 +239,10 @@ public class ShapeProvider_Normal extends ShapeProvider {
 			for (int z = 0; z < chunk.width; z++) {
 				int y = blockYs.getBlockY(x, z);
 
-				// buildable?
-				if (lot.style == LotStyle.STRUCTURE || lot.style == LotStyle.ROUNDABOUT) {
+				// buildable? (but not an ocean schematic — those keep the natural sea floor under them
+				// instead of a flat foundation pad; see ClipboardLot.generatesNaturalStrata)
+				if ((lot.style == LotStyle.STRUCTURE || lot.style == LotStyle.ROUNDABOUT)
+						&& !lot.generatesNaturalStrata()) {
 					generateStratas(generator, lot, chunk, x, z, ores.substratumMaterial, ores.stratumMaterial,
 							generator.streetLevel - 2, ores.subsurfaceMaterial, generator.streetLevel,
 							ores.subsurfaceMaterial, false);

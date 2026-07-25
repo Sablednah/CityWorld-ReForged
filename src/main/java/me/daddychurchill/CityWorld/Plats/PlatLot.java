@@ -1148,6 +1148,17 @@ public abstract class PlatLot {
 		return true;
 	}
 
+	/**
+	 * Whether this lot wants the natural terrain (seabed + water, hill, whatever the noise says) under
+	 * it rather than the flat foundation pad the terrain phase lays for a {@code STRUCTURE} lot. Default
+	 * is no — a placed building normally stands on a levelled pad. An <em>ocean</em> schematic overrides
+	 * this: it floats at the waterline and must sit over the real deep seabed, or the pad raises the sea
+	 * floor to just under its hull and it reads as beached on a flat mound instead of afloat.
+	 */
+	public boolean generatesNaturalStrata() {
+		return false;
+	}
+
 	protected boolean isValidWithBones() {
 		return true;
 	}

@@ -78,6 +78,16 @@ public class ClipboardLot extends IsolatedLot {
 		return generator.getSettings().inCityRange(chunkX, chunkZ);
 	}
 
+	/**
+	 * Ocean builds keep the natural terrain (deep seabed + sea) under them instead of the flat
+	 * foundation pad the terrain phase lays for a STRUCTURE lot — that pad was raising the sea floor to
+	 * just under the hull and leaving the ship beached on a mound. Land builds still get their pad.
+	 */
+	@Override
+	public boolean generatesNaturalStrata() {
+		return clip.ocean;
+	}
+
 	@Override
 	protected void generateActualChunk(CityWorldGenerator generator, PlatMap platmap, InitialBlocks chunk,
 			BiomeGrid biomes, DataContext context, int platX, int platZ) {
@@ -136,19 +146,13 @@ public class ClipboardLot extends IsolatedLot {
 		int bz1 = Math.max(0, nwZ - oZ), bz2 = Math.min(chunk.width, nwZ + rotSizeZ - oZ);
 		boolean hasBuild = bx1 < bx2 && bz1 < bz2;
 
-		// An ocean build sits ON open, deep water: no foundation, no dirt pad. Clear the build's vertical
-		// span across the WHOLE chunk (the footprint fills it), so any seabed that pokes up around the
-		// hull is removed, and fill water from the span base up to the surface. Below the base stays
-		// natural deep sea; the paste then drops the build's own blocks in. Clearing the whole chunk
-		// (not just the build's own columns) is what stops the leftover footprint corners from showing
-		// the raised near-shore seabed as an exposed dirt platform ringing the build.
-		if (clip.ocean) {
-			chunk.clearBlocks(0, chunk.width, base, top, 0, chunk.width);
-			if (base <= generator.seaLevel)
-				chunk.setBlocks(0, chunk.width, base, generator.seaLevel + 1, 0, chunk.width,
-						generator.oreProvider.fluidFluidMaterial);
+		// An ocean build does NOTHING to the terrain: it floats on the open sea and we just drop the ship
+		// (or rig, or buoy) straight into the natural water. The terrain phase already leaves the real
+		// deep seabed and sea in place (see generatesNaturalStrata below, which keeps this lot off the
+		// flat STRUCTURE foundation pad), so there is nothing to level, clear or flood here — the paste
+		// alone puts the hull in the water with clear sea beneath and the deck at the surface.
+		if (clip.ocean)
 			return;
-		}
 
 		Material stratum = generator.oreProvider.stratumMaterial;
 		int floor = chunk.minY + 1; // never fill onto the bedrock course
@@ -259,6 +263,10 @@ public class ClipboardLot extends IsolatedLot {
 	 */
 	@Override
 	public boolean isValidStrataY(CityWorldGenerator generator, int blockX, int blockY, int blockZ) {
+		// Ocean builds touch nothing: keep every layer of natural terrain (the sea and its floor) exactly
+		// as the noise made it, and just paste the ship on top. No carving.
+		if (clip.ocean)
+			return true;
 		int bottom = surfaceLevel(generator) - clip.groundLevelY;
 		int top = bottom + clip.sizeY;
 		if (blockY <= bottom || blockY > top)
