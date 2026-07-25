@@ -234,6 +234,13 @@ public abstract class PlatLot {
 		if (generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN && wantsBiomeGround())
 			applyBiomeGround(generator, chunk);
 
+		// Overgrowth: let nature reclaim built things — moss, vines, leaf litter, small trees. Runs
+		// here, AFTER the lot's own decoration and any decay above, so the greenery isn't itself
+		// decayed. Buildings/roads/roundabouts/schematics only (nature lots grow their own cover).
+		if (generator.getSettings().includeOvergrowth
+				&& (style == LotStyle.STRUCTURE || style == LotStyle.ROAD || style == LotStyle.ROUNDABOUT))
+			me.daddychurchill.CityWorld.Support.Overgrowth.apply(generator, this, chunk, chunkOdds);
+
 		// polish things off
 		generator.shapeProvider.postGenerateBlocks(generator, this, chunk, blockYs);
 	}
@@ -621,6 +628,10 @@ public abstract class PlatLot {
 			if (chunk.isEmpty(wx, wy, wz) && chunkOdds.playOdds(Odds.oddsSomewhatLikely))
 				chunk.setBlock(wx, wy, wz, Material.COBWEB);
 		}
+
+		// overgrown worlds: dripstone reclaiming the abandoned shaft (stalactites/stalagmites/clumps)
+		if (generator.getSettings().includeOvergrowth)
+			me.daddychurchill.CityWorld.Support.Overgrowth.dripstoneMine(chunk, floorY, chunkOdds);
 
 		// copper-age shoring: cut-copper support frames with a dangling chain cable, patinated by depth
 		dressCopperSupports(chunk, floorY, ns, we);

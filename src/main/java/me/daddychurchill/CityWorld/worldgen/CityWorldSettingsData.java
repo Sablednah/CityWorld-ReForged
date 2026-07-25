@@ -128,14 +128,15 @@ public record CityWorldSettingsData(
             boolean includeDecayedRoads,
             boolean includeDecayedBuildings,
             boolean includeDecayedNature,
-            double oddsOfPristineBuilding) {
+            double oddsOfPristineBuilding,
+            boolean includeOvergrowth) {
 
         /** Default pristine chance — tiny, so a spared building is a rare find even in a ruined world. */
         public static final double DEFAULT_ODDS_OF_PRISTINE = 0.0001; // 0.01%
 
         public static final Terrain DEFAULT = new Terrain(
                 true, true, true, true, true, true, true, true, true, true, false, false, false,
-                DEFAULT_ODDS_OF_PRISTINE);
+                DEFAULT_ODDS_OF_PRISTINE, false);
 
         public static final Codec<Terrain> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("includeCaves", true).forGetter(Terrain::includeCaves),
@@ -151,7 +152,8 @@ public record CityWorldSettingsData(
                 Codec.BOOL.optionalFieldOf("includeDecayedRoads", false).forGetter(Terrain::includeDecayedRoads),
                 Codec.BOOL.optionalFieldOf("includeDecayedBuildings", false).forGetter(Terrain::includeDecayedBuildings),
                 Codec.BOOL.optionalFieldOf("includeDecayedNature", false).forGetter(Terrain::includeDecayedNature),
-                Codec.DOUBLE.optionalFieldOf("oddsOfPristineBuilding", DEFAULT_ODDS_OF_PRISTINE).forGetter(Terrain::oddsOfPristineBuilding)
+                Codec.DOUBLE.optionalFieldOf("oddsOfPristineBuilding", DEFAULT_ODDS_OF_PRISTINE).forGetter(Terrain::oddsOfPristineBuilding),
+                Codec.BOOL.optionalFieldOf("includeOvergrowth", false).forGetter(Terrain::includeOvergrowth)
         ).apply(i, Terrain::new));
     }
 

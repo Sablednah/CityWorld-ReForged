@@ -64,7 +64,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     // terrain
     private boolean includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
             includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
-            includeDecayedRoads, includeDecayedBuildings, includeDecayedNature;
+            includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, includeOvergrowth;
     private double oddsOfPristineBuilding; // carried through untouched (no picker yet)
     // spawns
     private Chance spawnBeings, spawnBaddies, spawnAnimals, spawnVagrants;
@@ -124,6 +124,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         includeDecayedBuildings = t.includeDecayedBuildings();
         includeDecayedNature = t.includeDecayedNature();
         oddsOfPristineBuilding = t.oddsOfPristineBuilding();
+        includeOvergrowth = t.includeOvergrowth();
 
         CityWorldSettingsData.Spawns s = initial.spawns();
         spawnBeings = Chance.nearest(s.spawnBeings());
@@ -195,6 +196,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, onOff("Decayed roads", includeDecayedRoads, v -> includeDecayedRoads = v));
         pair(row, onOff("Decayed buildings", includeDecayedBuildings, v -> includeDecayedBuildings = v));
         pair(row, onOff("Decayed nature", includeDecayedNature, v -> includeDecayedNature = v));
+        pair(row, onOff("Overgrowth", includeOvergrowth, v -> includeOvergrowth = v));
         flush(row);
 
         this.list.addHeader(Component.literal("Spawns"));
@@ -250,7 +252,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData.Terrain terrain = new CityWorldSettingsData.Terrain(
                 includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
                 includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
-                includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, oddsOfPristineBuilding);
+                includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, oddsOfPristineBuilding,
+                includeOvergrowth);
         CityWorldSettingsData.Spawns spawns = new CityWorldSettingsData.Spawns(
                 spawnBeings.value, spawnBaddies.value, spawnAnimals.value, spawnVagrants.value, nameVillagers,
                 showVillagersNames);

@@ -81,6 +81,13 @@ public class CityWorldSettings {
      */
     public boolean includeSchematics = false;
 
+    /**
+     * Let nature reclaim the built world: a post-decoration pass drapes buildings and roads in moss,
+     * vines, leaf litter, azalea and small reclaim trees. Runs after any decay (so the greenery isn't
+     * itself chewed up), and works with or without decay on — an "overgrown" look in its own right.
+     */
+    public boolean includeOvergrowth = false;
+
     /** Who turns up, and how often. {@code SpawnProvider} branches on all of these. */
     public double spawnBeings = Odds.oddsLikely;
     public double spawnBaddies = Odds.oddsPrettyUnlikely;
@@ -259,6 +266,7 @@ public class CityWorldSettings {
         includeDecayedBuildings = t.includeDecayedBuildings();
         includeDecayedNature = t.includeDecayedNature();
         oddsOfPristineBuilding = t.oddsOfPristineBuilding();
+        includeOvergrowth = t.includeOvergrowth();
 
         CityWorldSettingsData.Spawns s = data.spawns();
         spawnBeings = s.spawnBeings();
@@ -341,7 +349,8 @@ public class CityWorldSettings {
         CityWorldSettingsData.Terrain terrain = new CityWorldSettingsData.Terrain(
                 includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
                 includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
-                includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, oddsOfPristineBuilding);
+                includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, oddsOfPristineBuilding,
+                includeOvergrowth);
         CityWorldSettingsData.Spawns spawns = new CityWorldSettingsData.Spawns(
                 spawnBeings, spawnBaddies, spawnAnimals, spawnVagrants, nameVillagers, showVillagersNames);
         CityWorldSettingsData.Treasures treasures = new CityWorldSettingsData.Treasures(

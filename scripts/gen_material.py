@@ -143,6 +143,27 @@ EXTRAS = {
     "BELL": "P9 mine prop: miners' signal bell",
     "SOUL_LANTERN": "P9 mine prop/light: soul lantern",
     "OAK_HANGING_SIGN": "P9 mine entrance: the named-mine headframe sign",
+    # P10 overgrowth: nature reclaiming buildings/roads (a MODERN "overgrown" pass that runs AFTER
+    # decay so the plant life isn't itself decayed). Post-1.8 blocks that read as reclamation.
+    "MOSS_BLOCK": "P10 overgrowth: moss cushion on ground/floors",
+    "MOSS_CARPET": "P10 overgrowth: moss creeping across floors and roofs",
+    "PALE_MOSS_BLOCK": "P10 overgrowth: pale (grey) moss cushion",
+    "PALE_MOSS_CARPET": "P10 overgrowth: pale moss carpet",
+    "PALE_HANGING_MOSS": "P10 overgrowth: pale moss hanging from overhangs",
+    "LEAF_LITTER": "P10 overgrowth: fallen leaves littering floors (1.21.4 multiface)",
+    "MOSSY_STONE_BRICKS": "P10 overgrowth: mossy swap for stone-brick walls",
+    "AZALEA": "P10 overgrowth: azalea bush reclaiming corners",
+    "FLOWERING_AZALEA": "P10 overgrowth: flowering azalea bush",
+    "AZALEA_LEAVES": "P10 overgrowth: azalea foliage for small reclaim bushes/trees",
+    "HANGING_ROOTS": "P10 overgrowth: roots dangling from ceilings/overhangs",
+    "SPORE_BLOSSOM": "P10 overgrowth: spore blossom on ceilings",
+    "SMALL_DRIPLEAF": "P10 overgrowth: dripleaf in damp corners",
+    "BIG_DRIPLEAF": "P10 overgrowth: big dripleaf",
+    "CAVE_VINES": "P10 overgrowth: glow-berry vines hanging from ledges",
+    "PINK_PETALS": "P10 overgrowth: petals scattered on the ground",
+    "SHORT_GRASS": "P10 overgrowth: grass tufts pushing through",
+    "DRIPSTONE_BLOCK": "P10 overgrowth: dripstone clumps underground",
+    "POINTED_DRIPSTONE": "P10 overgrowth: stalactites/stalagmites in mines and caves",
 }
 
 # Copper "weathering" families are declared as `public static final WeatheringCopperBlocks NAME`

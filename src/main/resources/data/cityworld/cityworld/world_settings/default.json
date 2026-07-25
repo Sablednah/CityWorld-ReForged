@@ -30,7 +30,8 @@
     "includeWorkingLights": true,
     "includeDecayedRoads": false,
     "includeDecayedBuildings": false,
-    "includeDecayedNature": false
+    "includeDecayedNature": false,
+    "includeOvergrowth": false
   },
   "spawns": {
     "spawnBeings": 0.5,

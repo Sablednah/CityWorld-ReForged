@@ -1,0 +1,234 @@
+package me.daddychurchill.CityWorld.Support;
+
+import me.daddychurchill.CityWorld.CityWorldGenerator;
+import me.daddychurchill.CityWorld.Plats.PlatLot;
+import me.daddychurchill.CityWorld.compat.Material;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.levelgen.Heightmap;
+
+/**
+ * The MODERN "overgrown" pass — nature reclaiming the built world. Runs once per built lot (buildings,
+ * roads, roundabouts, placed schematics), on the live decoration level, <em>after</em> the lot's own
+ * decoration and any decay, so the greenery it drapes is never itself chewed up. Works with or without
+ * decay: moss and vines on a clean city read as overgrown just as well as on a ruined one.
+ *
+ * <p>All writes stay inside the decorating chunk's own columns (the same edge rule the rest of the
+ * decoration side follows). Every plant is checked with {@link BlockState#canSurvive} before it lands,
+ * so nothing pops on the next block update — a fern won't stick to a stone roof, but moss carpet will.
+ */
+public final class Overgrowth {
+
+    private Overgrowth() {}
+
+    /** Sprinkle overgrowth across one built chunk. {@code odds} is the lot's per-chunk RNG. */
+    public static void apply(CityWorldGenerator generator, PlatLot lot, SupportBlocks chunk, Odds odds) {
+        if (!(chunk instanceof RealBlocks real))
+            return;
+        ServerLevelAccessor level = real.getServerLevel();
+        if (level == null)
+            return;
+
+        boolean road = lot.style == PlatLot.LotStyle.ROAD || lot.style == PlatLot.LotStyle.ROUNDABOUT;
+        int oX = real.getOriginX(), oZ = real.getOriginZ();
+        int floor = generator.streetLevel - 6; // below this is basement/underground, left to the mines
+
+        // 1) tops — moss/leaf-litter/plants creeping over every exposed built surface (roofs, floors,
+        //    road, the ground around a build), plus the odd mossy-brick swap for age.
+        for (int x = 0; x < real.width; x++)
+            for (int z = 0; z < real.width; z++) {
+                int wx = oX + x, wz = oZ + z;
+                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, wx, wz);
+                if (surfaceY - 1 < floor)
+                    continue;
+                BlockPos topPos = new BlockPos(wx, surfaceY - 1, wz);
+                BlockState top = level.getBlockState(topPos);
+                if (top.isAir() || !top.getFluidState().isEmpty())
+                    continue;
+                if (odds.playOdds(0.12))
+                    mossySwap(level, topPos, top);
+                BlockPos onTop = new BlockPos(wx, surfaceY, wz);
+                if (level.getBlockState(onTop).isAir() && odds.playOdds(road ? 0.30 : 0.24))
+                    placeTopPlant(level, onTop, road, odds);
+            }
+
+        // 2) walls — vines creeping up the sides. Sampled (not exhaustive) to stay cheap.
+        int vineTries = road ? 4 : 28;
+        for (int i = 0; i < vineTries; i++) {
+            int x = odds.getRandomInt(real.width), z = odds.getRandomInt(real.width);
+            int wx = oX + x, wz = oZ + z;
+            int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, wx, wz);
+            for (int y = surfaceY - 1; y > floor && y > surfaceY - 20; y--)
+                if (tryVine(level, x, z, y, oX, oZ, real.width, odds))
+                    break;
+        }
+
+        // 3) roads — the occasional sapling breaking through the tarmac into a small reclaim tree.
+        if (road && odds.playOdds(0.18))
+            placeSmallTree(level, oX, oZ, floor, real.width, odds);
+    }
+
+    /**
+     * Underground reclamation for an overgrown world: dripstone taking over an abandoned mine corridor —
+     * stalactites hanging from the ceiling, stalagmites rising from the floor, the odd dripstone-block
+     * clump. Called from the mine decoration (which knows the corridor's floor), gated on the setting.
+     * The corridor is a 3-high cut: floor at {@code floorY}, air at {@code floorY+1/+2}, ceiling at
+     * {@code floorY+3}.
+     */
+    public static void dripstoneMine(SupportBlocks chunk, int floorY, Odds odds) {
+        if (!(chunk instanceof RealBlocks real))
+            return;
+        ServerLevelAccessor level = real.getServerLevel();
+        if (level == null)
+            return;
+        int oX = real.getOriginX(), oZ = real.getOriginZ(), ceilY = floorY + 3;
+        int count = 3 + odds.getRandomInt(5);
+        for (int i = 0; i < count; i++) {
+            int x = odds.getRandomInt(1, 15), z = odds.getRandomInt(1, 15);
+            if (odds.flipCoin()) {
+                if (!real.isEmpty(x, ceilY, z) && real.isEmpty(x, ceilY - 1, z))
+                    growDripstone(level, oX + x, ceilY - 1, oZ + z, Direction.DOWN, odds); // stalactite
+            } else if (!real.isEmpty(x, floorY, z) && real.isEmpty(x, floorY + 1, z))
+                growDripstone(level, oX + x, floorY + 1, oZ + z, Direction.UP, odds); // stalagmite
+        }
+        for (int i = 0; i < 2; i++) { // a couple of dripstone-block clumps in the ceiling
+            int x = odds.getRandomInt(1, 15), z = odds.getRandomInt(1, 15);
+            if (!real.isEmpty(x, ceilY, z) && odds.playOdds(0.4))
+                level.setBlock(new BlockPos(oX + x, ceilY, oZ + z), Material.DRIPSTONE_BLOCK.getBlockState(),
+                        Block.UPDATE_CLIENTS);
+        }
+    }
+
+    /** A 1-2 tall pointed-dripstone spike from an anchored cell, growing in {@code dir}. */
+    private static void growDripstone(ServerLevelAccessor level, int wx, int anchorY, int wz, Direction dir,
+            Odds odds) {
+        int step = dir == Direction.DOWN ? -1 : 1;
+        boolean tall = odds.playOdds(0.4) && level.getBlockState(new BlockPos(wx, anchorY + step, wz)).isAir();
+        if (tall) {
+            setDrip(level, wx, anchorY, wz, dir, net.minecraft.world.level.block.state.properties.DripstoneThickness.FRUSTUM);
+            setDrip(level, wx, anchorY + step, wz, dir, net.minecraft.world.level.block.state.properties.DripstoneThickness.TIP);
+        } else {
+            setDrip(level, wx, anchorY, wz, dir, net.minecraft.world.level.block.state.properties.DripstoneThickness.TIP);
+        }
+    }
+
+    private static void setDrip(ServerLevelAccessor level, int wx, int y, int wz, Direction dir,
+            net.minecraft.world.level.block.state.properties.DripstoneThickness thickness) {
+        level.setBlock(new BlockPos(wx, y, wz), Blocks.POINTED_DRIPSTONE.defaultBlockState()
+                .setValue(BlockStateProperties.VERTICAL_DIRECTION, dir)
+                .setValue(BlockStateProperties.DRIPSTONE_THICKNESS, thickness), Block.UPDATE_CLIENTS);
+    }
+
+    /** Age a stone-brick / cobble top into its mossy variant. */
+    private static void mossySwap(ServerLevelAccessor level, BlockPos pos, BlockState top) {
+        Block b = top.getBlock();
+        BlockState mossy = null;
+        if (b == Blocks.STONE_BRICKS) mossy = Material.MOSSY_STONE_BRICKS.getBlockState();
+        else if (b == Blocks.COBBLESTONE) mossy = Material.MOSSY_COBBLESTONE.getBlockState();
+        else if (b == Blocks.STONE_BRICK_STAIRS || b == Blocks.STONE_BRICK_SLAB || b == Blocks.STONE_BRICK_WALL)
+            return; // keep shaped variants; a flat swap would lose the shape
+        if (mossy != null)
+            level.setBlock(pos, mossy, Block.UPDATE_CLIENTS);
+    }
+
+    /** Drop a surface plant onto {@code pos}, preferring what can actually live on the block below it. */
+    private static void placeTopPlant(ServerLevelAccessor level, BlockPos pos, boolean road, Odds odds) {
+        // Weighted pool. Carpets/litter sit on any solid top; the leafy plants only take on soil, so
+        // canSurvive() decides — a fern rolled onto a stone roof simply falls through to moss carpet.
+        int r = odds.getRandomInt(100);
+        Material pick;
+        if (road)
+            pick = r < 45 ? Material.LEAF_LITTER : r < 70 ? Material.MOSS_CARPET
+                    : r < 82 ? Material.SHORT_GRASS : r < 90 ? Material.FERN
+                    : r < 95 ? Material.PINK_PETALS : Material.PALE_MOSS_CARPET;
+        else
+            pick = r < 32 ? Material.MOSS_CARPET : r < 55 ? Material.LEAF_LITTER
+                    : r < 66 ? Material.SHORT_GRASS : r < 74 ? Material.FERN
+                    : r < 80 ? Material.PINK_PETALS : r < 86 ? Material.AZALEA
+                    : r < 90 ? Material.FLOWERING_AZALEA : r < 94 ? Material.SMALL_DRIPLEAF
+                    : r < 97 ? Material.PALE_MOSS_CARPET
+                    : r < 99 ? Material.BROWN_MUSHROOM : Material.RED_MUSHROOM;
+
+        if (!tryPlace(level, pos, pick.getBlockState()))
+            tryPlace(level, pos, Material.MOSS_CARPET.getBlockState()); // always-safe fallback
+    }
+
+    private static boolean tryPlace(ServerLevelAccessor level, BlockPos pos, BlockState state) {
+        if (!state.canSurvive(level, pos))
+            return false;
+        level.setBlock(pos, state, Block.UPDATE_CLIENTS);
+        return true;
+    }
+
+    /** If {@code (x,z,y)} is an empty cell against an in-chunk wall, hang a vine on it. */
+    private static boolean tryVine(ServerLevelAccessor level, int x, int z, int y, int oX, int oZ, int width,
+            Odds odds) {
+        BlockPos here = new BlockPos(oX + x, y, oZ + z);
+        if (!level.getBlockState(here).isAir())
+            return false;
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            int nx = x + dir.getStepX(), nz = z + dir.getStepZ();
+            if (nx < 0 || nx >= width || nz < 0 || nz >= width)
+                continue; // wall would be outside this chunk — leave it to that chunk's own pass
+            BlockPos wall = new BlockPos(oX + nx, y, oZ + nz);
+            BlockState ws = level.getBlockState(wall);
+            if (!ws.isFaceSturdy(level, wall, dir.getOpposite()))
+                continue;
+            // occasionally glow lichen instead of vine, for a bit of light on the ruin (both are face
+            // blocks that share the same NORTH/EAST/SOUTH/WEST boolean state)
+            BlockState face = (odds.playOdds(0.15) ? Material.GLOW_LICHEN.getBlockState() : Blocks.VINE.defaultBlockState())
+                    .setValue(faceProp(dir), true);
+            level.setBlock(here, face, Block.UPDATE_CLIENTS);
+            return true;
+        }
+        return false;
+    }
+
+    private static net.minecraft.world.level.block.state.properties.BooleanProperty faceProp(Direction dir) {
+        return switch (dir) {
+            case NORTH -> BlockStateProperties.NORTH;
+            case SOUTH -> BlockStateProperties.SOUTH;
+            case WEST -> BlockStateProperties.WEST;
+            default -> BlockStateProperties.EAST;
+        };
+    }
+
+    /** A tiny reclaim tree: a short trunk pushing up through the road, capped with a small leaf ball. */
+    private static void placeSmallTree(ServerLevelAccessor level, int oX, int oZ, int floor, int width, Odds odds) {
+        int x = odds.getRandomInt(2, width - 3), z = odds.getRandomInt(2, width - 3); // keep the ball in-chunk
+        int wx = oX + x, wz = oZ + z;
+        int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, wx, wz);
+        if (surfaceY - 1 < floor)
+            return;
+        BlockState below = level.getBlockState(new BlockPos(wx, surfaceY - 1, wz));
+        if (below.isAir() || !below.getFluidState().isEmpty())
+            return;
+        int trunk = 1 + odds.getRandomInt(2); // 1..2 logs
+        for (int dy = 0; dy < trunk; dy++)
+            level.setBlock(new BlockPos(wx, surfaceY + dy, wz), Blocks.OAK_LOG.defaultBlockState(), Block.UPDATE_CLIENTS);
+        int topY = surfaceY + trunk;
+        BlockState leaf = Blocks.OAK_LEAVES.defaultBlockState().setValue(BlockStateProperties.PERSISTENT, true);
+        // a compact ball: the four sides at the top log, a cap above
+        leafAt(level, wx, topY - 1, wz, 1, 0, leaf);
+        leafAt(level, wx, topY - 1, wz, -1, 0, leaf);
+        leafAt(level, wx, topY - 1, wz, 0, 1, leaf);
+        leafAt(level, wx, topY - 1, wz, 0, -1, leaf);
+        setIfAir(level, new BlockPos(wx, topY, wz), leaf);
+        setIfAir(level, new BlockPos(wx, topY + 1, wz), leaf);
+    }
+
+    private static void leafAt(ServerLevelAccessor level, int wx, int y, int wz, int dx, int dz, BlockState leaf) {
+        setIfAir(level, new BlockPos(wx + dx, y, wz + dz), leaf);
+    }
+
+    private static void setIfAir(ServerLevelAccessor level, BlockPos pos, BlockState state) {
+        if (level.getBlockState(pos).isAir())
+            level.setBlock(pos, state, Block.UPDATE_CLIENTS);
+    }
+}

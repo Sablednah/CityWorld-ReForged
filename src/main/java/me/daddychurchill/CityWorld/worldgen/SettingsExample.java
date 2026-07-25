@@ -105,6 +105,8 @@ public final class SettingsExample {
             includeAirborneStructures true   Balloons/blimps over the fields.
             includeBuildingInteriors  true   Furnish building interiors. Off = empty shells (faster).
             includeSchematics         false  Drop the bundled classic building schematics into cities.
+            includeOvergrowth         false  Let nature reclaim buildings/roads (moss, vines, leaf litter,
+                                             azalea, small trees) + dripstone underground. After decay.
             includeNamedRoads         true   Street-name signs.
 
             ============================================================================
