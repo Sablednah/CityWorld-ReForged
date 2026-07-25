@@ -4,5 +4,8 @@
   },
   "world": {
     "maxBuildingFloors": 40
+  },
+  "terrain": {
+    "includeOvergrowth": true
   }
 }
