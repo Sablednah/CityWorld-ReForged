@@ -183,8 +183,16 @@ public final class CityWorldCommands {
     /** Where a matching building was found. */
     private record Found(String name, String family, int x, int z, double dist, String compass) {}
 
-    /** Rings of platmaps to search out from the player before giving up (10 chunks each). */
-    private static final int FIND_MAX_RINGS = 12;
+    /** Rings of platmaps to search out from the player before giving up (10 chunks = 160 blocks each).
+     *  Large, because rare wild/ocean builds (a lone lighthouse) can be thousands of blocks out; the
+     *  {@link #FIND_BUDGET_MS} wall-clock cap keeps a genuine miss from planning the whole disc. */
+    private static final int FIND_MAX_RINGS = 60; // 9600 blocks
+
+    /** Give up the (off-thread) search after this long and report how far it actually reached — each
+     *  platmap is a full deterministic plan (~tens of ms), so an unbounded miss could run for minutes.
+     *  The search runs off the server thread (the player keeps playing) and platmaps are cached across
+     *  calls, so repeated /cityfind from the same area reach steadily further out. */
+    private static final long FIND_BUDGET_MS = 120_000;
 
     private static int findSchematic(CommandContext<CommandSourceStack> ctx, boolean teleport)
             throws CommandSyntaxException {
@@ -209,11 +217,13 @@ public final class CityWorldCommands {
         // thread's tick watchdog). getPlatMap is deterministic and thread-safe, so this is safe; the
         // result is delivered back on the server thread via server.execute.
         Thread t = new Thread(() -> {
-            Found best = search(context, query, pos.x, pos.z, playerX, playerZ);
+            int[] reachedRing = { 0 };
+            Found best = search(context, query, pos.x, pos.z, playerX, playerZ, reachedRing);
             server.execute(() -> {
                 if (best == null) {
                     player.sendSystemMessage(Component.literal("Found no '" + query + "' within "
-                            + (FIND_MAX_RINGS * PlatMap.Width * 16) + " blocks."));
+                            + (reachedRing[0] * PlatMap.Width * 16) + " blocks (searched as far as it could "
+                            + "in the time budget — try again from closer, or it may be rarer/further out)."));
                     return;
                 }
                 player.sendSystemMessage(Component.literal("Nearest '" + best.name() + "' [" + best.family()
@@ -235,12 +245,13 @@ public final class CityWorldCommands {
     }
 
     private static Found search(CityWorldGenerator context, String query, int px, int pz,
-            double playerX, double playerZ) {
+            double playerX, double playerZ, int[] reachedRing) {
         String q = query.toLowerCase(Locale.ROOT);
         int pmX0 = Math.floorDiv(px, PlatMap.Width) * PlatMap.Width;
         int pmZ0 = Math.floorDiv(pz, PlatMap.Width) * PlatMap.Width;
         Found best = null;
         int foundRing = -1;
+        long deadline = System.nanoTime() + FIND_BUDGET_MS * 1_000_000L;
         for (int r = 0; r <= FIND_MAX_RINGS; r++) {
             for (int dx = -r; dx <= r; dx++) {
                 for (int dz = -r; dz <= r; dz++) {
@@ -252,10 +263,15 @@ public final class CityWorldCommands {
                         best = hit;
                 }
             }
+            reachedRing[0] = r;
             if (best != null && foundRing < 0)
                 foundRing = r;
             // once found, scan one more ring (a nearer one can sit in an adjacent platmap), then stop
             if (foundRing >= 0 && r >= foundRing + 1)
+                break;
+            // still nothing? stop once the time budget is spent — planning a whole wide disc of platmaps
+            // for a build that isn't there (or is very far) would otherwise run for minutes.
+            if (best == null && System.nanoTime() > deadline)
                 break;
         }
         return best;
