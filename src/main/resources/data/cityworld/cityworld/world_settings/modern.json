@@ -1,4 +1,7 @@
 {
+  "features": {
+    "includeSchematics": true
+  },
   "world": {
     "maxBuildingFloors": 40
   }
