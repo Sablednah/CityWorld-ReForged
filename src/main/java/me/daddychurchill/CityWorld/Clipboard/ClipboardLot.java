@@ -13,9 +13,13 @@ import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 /**
  * One chunk of a placed classic schematic. A building whose footprint spans several chunks becomes
@@ -114,6 +118,12 @@ public class ClipboardLot extends IsolatedLot {
 		clip.pasteChunk(level, nwX, surfaceLevel(generator), nwZ,
 				chunk.getOriginX(), chunk.getOriginZ(), rotation, mirror, level.getRandom());
 
+		// An ocean build sits in open water: flood its below-waterline blocks so the sea flows through
+		// (waterlog fences/stairs/slabs/… rather than leaving dry pockets), and — if it asked to be
+		// anchored — drop legs from its base to the real sea floor so it isn't perched on a rock stub.
+		if (clip.ocean)
+			finishOceanBuild(generator, chunk, level, nwX, nwZ);
+
 		if (clip.decayable && generator.getSettings().includeDecayedBuildings && !isPristine(generator, nwX, nwZ)) {
 			int depth = surfaceLevel(generator) - clip.groundLevelY;
 			destroyLot(generator, depth, depth + clip.sizeY);
@@ -166,6 +176,57 @@ public class ClipboardLot extends IsolatedLot {
 					for (int y = base - 1; y > floor && chunk.isEmpty(x, y, z); y--)
 						chunk.setBlock(x, y, z, stratum);
 		}
+	}
+
+	/**
+	 * Finish a placed ocean build (this chunk's slice of its footprint). Two passes, both on the live
+	 * level since they read and rewrite the just-pasted blocks:
+	 * <ul>
+	 *   <li><b>Waterlog</b> every below-waterline block that can hold water (fences, stairs, slabs,
+	 *       panes …) so the sea reads as flowing through the hull instead of leaving dry air pockets.</li>
+	 *   <li><b>Anchor</b> (only if the schematic set {@code Anchor: true}): extend each solid column of
+	 *       the build's bottom row straight down until it meets the sea floor, so the build stands on
+	 *       real legs to the seabed rather than perched on a floating stub of rock.</li>
+	 * </ul>
+	 * All writes stay in this chunk's own columns (down a single column), so nothing crosses the
+	 * decorating region's edge.
+	 */
+	private void finishOceanBuild(CityWorldGenerator generator, RealBlocks chunk, ServerLevelAccessor level,
+			int nwX, int nwZ) {
+		int base = surfaceLevel(generator) - clip.groundLevelY; // the build's bottom row
+		int sea = generator.seaLevel;
+		int rotSizeX = Clipboard.swapsFootprint(rotation) ? clip.sizeZ : clip.sizeX;
+		int rotSizeZ = Clipboard.swapsFootprint(rotation) ? clip.sizeX : clip.sizeZ;
+		int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
+		int bx1 = Math.max(0, nwX - oX), bx2 = Math.min(chunk.width, nwX + rotSizeX - oX);
+		int bz1 = Math.max(0, nwZ - oZ), bz2 = Math.min(chunk.width, nwZ + rotSizeZ - oZ);
+		int floor = chunk.minY + 1;
+
+		for (int x = bx1; x < bx2; x++)
+			for (int z = bz1; z < bz2; z++) {
+				int wx = oX + x, wz = oZ + z;
+
+				if (clip.anchor) {
+					BlockState bottom = level.getBlockState(new BlockPos(wx, base, wz));
+					// only anchor solid base blocks (the legs/hull), not the open-water columns
+					if (!bottom.isAir() && bottom.getFluidState().isEmpty())
+						for (int y = base - 1; y > floor; y--) {
+							BlockPos pos = new BlockPos(wx, y, wz);
+							BlockState here = level.getBlockState(pos);
+							if (!here.isAir() && here.getFluidState().isEmpty())
+								break; // reached the sea floor
+							level.setBlock(pos, bottom, Block.UPDATE_CLIENTS);
+						}
+				}
+
+				for (int y = base; y <= sea; y++) {
+					BlockPos pos = new BlockPos(wx, y, wz);
+					BlockState st = level.getBlockState(pos);
+					if (st.hasProperty(BlockStateProperties.WATERLOGGED)
+							&& !st.getValue(BlockStateProperties.WATERLOGGED))
+						level.setBlock(pos, st.setValue(BlockStateProperties.WATERLOGGED, true), Block.UPDATE_CLIENTS);
+				}
+			}
 	}
 
 	/**

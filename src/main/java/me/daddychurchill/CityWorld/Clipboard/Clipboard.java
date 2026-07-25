@@ -72,6 +72,13 @@ public final class Clipboard {
      */
     public final boolean keepAir;
 
+    /**
+     * {@code Anchor: true} in the {@code .yml}, only meaningful with {@link #ocean} — after placing,
+     * extend each solid column of the build's bottom row straight down until it meets the sea floor, so
+     * an offshore build stands on real legs to the seabed instead of floating on a stub of rock.
+     */
+    public final boolean anchor;
+
     private Clipboard(String name, SchematicFamily family, StructureTemplate template, Meta meta) {
         this.name = name;
         this.family = family;
@@ -90,6 +97,7 @@ public final class Clipboard {
         this.broadcastLocation = meta.broadcastLocation;
         this.ocean = meta.ocean;
         this.keepAir = meta.keepAir;
+        this.anchor = meta.anchor;
     }
 
     private static int ceilDiv(int a, int b) {
@@ -202,6 +210,7 @@ public final class Clipboard {
         boolean broadcastLocation = false;
         boolean ocean = false;
         boolean keepAir = false;
+        boolean anchor = false;
 
         static Meta parse(InputStream in) throws IOException {
             Meta m = new Meta();
@@ -227,6 +236,7 @@ public final class Clipboard {
                             case "BroadcastLocation" -> m.broadcastLocation = Boolean.parseBoolean(val);
                             case "Ocean" -> m.ocean = Boolean.parseBoolean(val);
                             case "KeepAir" -> m.keepAir = Boolean.parseBoolean(val);
+                            case "Anchor" -> m.anchor = Boolean.parseBoolean(val);
                             default -> { /* ignore unknown keys */ }
                         }
                     } catch (NumberFormatException ignored) {
