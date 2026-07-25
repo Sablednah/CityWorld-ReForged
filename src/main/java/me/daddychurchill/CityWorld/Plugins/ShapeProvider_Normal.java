@@ -238,11 +238,15 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		for (int x = 0; x < chunk.width; x++) {
 			for (int z = 0; z < chunk.width; z++) {
 				int y = blockYs.getBlockY(x, z);
+				int blockX = chunk.sectionX * chunk.width + x;
+				int blockZ = chunk.sectionZ * chunk.width + z;
 
-				// buildable? (but not an ocean schematic — those keep the natural sea floor under them
-				// instead of a flat foundation pad; see ClipboardLot.generatesNaturalStrata)
+				// buildable? (but not an ocean schematic — those keep the natural sea floor under them;
+				// and only the columns actually under a build get the flat pad, so a schematic smaller
+				// than its footprint leaves its leftover margin as natural biome surface, not a dirt
+				// apron — see ClipboardLot.generatesNaturalStrata / isFoundationColumnAt)
 				if ((lot.style == LotStyle.STRUCTURE || lot.style == LotStyle.ROUNDABOUT)
-						&& !lot.generatesNaturalStrata()) {
+						&& !lot.generatesNaturalStrata() && lot.isFoundationColumnAt(generator, blockX, blockZ)) {
 					generateStratas(generator, lot, chunk, x, z, ores.substratumMaterial, ores.stratumMaterial,
 							generator.streetLevel - 2, ores.subsurfaceMaterial, generator.streetLevel,
 							ores.subsurfaceMaterial, false);

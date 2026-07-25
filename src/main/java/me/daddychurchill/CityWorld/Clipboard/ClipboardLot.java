@@ -252,11 +252,25 @@ public class ClipboardLot extends IsolatedLot {
 		// Inside the span, only clear the ground UNDER the building itself. The leftover corners of a
 		// larger footprint keep their natural terrain (biome-correct grass/sand, not a bare dirt apron —
 		// the strata pass otherwise skips their surface layer here and leaves subsurface dirt showing).
+		return !isUnderBuild(blockX, blockZ);
+	}
+
+	/**
+	 * The foundation pad is only laid under the building itself; the leftover margin of a footprint the
+	 * build doesn't fill falls through to natural terrain (keeping its biome surface) rather than the
+	 * bare dirt apron the STRUCTURE strata pass would otherwise leave around the build.
+	 */
+	@Override
+	public boolean isFoundationColumnAt(CityWorldGenerator generator, int blockX, int blockZ) {
+		return isUnderBuild(blockX, blockZ);
+	}
+
+	/** Whether this world column lies under the placed (rotated, centred) building footprint. */
+	private boolean isUnderBuild(int blockX, int blockZ) {
 		int rotSizeX = Clipboard.swapsFootprint(rotation) ? clip.sizeZ : clip.sizeX;
 		int rotSizeZ = Clipboard.swapsFootprint(rotation) ? clip.sizeX : clip.sizeZ;
 		int nwX = buildNwX(), nwZ = buildNwZ();
-		boolean underBuild = blockX >= nwX && blockX < nwX + rotSizeX && blockZ >= nwZ && blockZ < nwZ + rotSizeZ;
-		return !underBuild;
+		return blockX >= nwX && blockX < nwX + rotSizeX && blockZ >= nwZ && blockZ < nwZ + rotSizeZ;
 	}
 
 	private static final int CHUNK = 16;

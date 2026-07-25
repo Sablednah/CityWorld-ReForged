@@ -1159,6 +1159,17 @@ public abstract class PlatLot {
 		return false;
 	}
 
+	/**
+	 * For a {@code STRUCTURE}/{@code ROUNDABOUT} lot, whether this particular column should get the flat
+	 * foundation pad (dirt up to street level) the terrain phase lays for buildings. Default is the
+	 * whole lot. A schematic smaller than its chunk footprint overrides this so only the columns under
+	 * the build itself get the pad; the leftover margin falls through to natural terrain and keeps its
+	 * biome-correct surface (grass/sand/…) instead of showing a bare dirt apron around the build.
+	 */
+	public boolean isFoundationColumnAt(CityWorldGenerator generator, int blockX, int blockZ) {
+		return true;
+	}
+
 	protected boolean isValidWithBones() {
 		return true;
 	}
