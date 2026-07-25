@@ -48,6 +48,32 @@ public final class LegacyBlocks {
         Blocks.BROWN_WOOL.defaultBlockState(), Blocks.GREEN_WOOL.defaultBlockState(),
         Blocks.RED_WOOL.defaultBlockState(), Blocks.BLACK_WOOL.defaultBlockState(),
     };
+    // Dye-order colour tables (white, orange, magenta, light_blue, yellow, lime, pink, gray, light_gray,
+    // cyan, purple, blue, brown, green, red, black) — the same order as legacy wool/glass/clay data.
+    private static final Block[] STAINED_GLASS = {
+        Blocks.WHITE_STAINED_GLASS, Blocks.ORANGE_STAINED_GLASS, Blocks.MAGENTA_STAINED_GLASS,
+        Blocks.LIGHT_BLUE_STAINED_GLASS, Blocks.YELLOW_STAINED_GLASS, Blocks.LIME_STAINED_GLASS,
+        Blocks.PINK_STAINED_GLASS, Blocks.GRAY_STAINED_GLASS, Blocks.LIGHT_GRAY_STAINED_GLASS,
+        Blocks.CYAN_STAINED_GLASS, Blocks.PURPLE_STAINED_GLASS, Blocks.BLUE_STAINED_GLASS,
+        Blocks.BROWN_STAINED_GLASS, Blocks.GREEN_STAINED_GLASS, Blocks.RED_STAINED_GLASS,
+        Blocks.BLACK_STAINED_GLASS,
+    };
+    private static final Block[] STAINED_GLASS_PANE = {
+        Blocks.WHITE_STAINED_GLASS_PANE, Blocks.ORANGE_STAINED_GLASS_PANE, Blocks.MAGENTA_STAINED_GLASS_PANE,
+        Blocks.LIGHT_BLUE_STAINED_GLASS_PANE, Blocks.YELLOW_STAINED_GLASS_PANE, Blocks.LIME_STAINED_GLASS_PANE,
+        Blocks.PINK_STAINED_GLASS_PANE, Blocks.GRAY_STAINED_GLASS_PANE, Blocks.LIGHT_GRAY_STAINED_GLASS_PANE,
+        Blocks.CYAN_STAINED_GLASS_PANE, Blocks.PURPLE_STAINED_GLASS_PANE, Blocks.BLUE_STAINED_GLASS_PANE,
+        Blocks.BROWN_STAINED_GLASS_PANE, Blocks.GREEN_STAINED_GLASS_PANE, Blocks.RED_STAINED_GLASS_PANE,
+        Blocks.BLACK_STAINED_GLASS_PANE,
+    };
+    private static final Block[] TERRACOTTA = {
+        Blocks.WHITE_TERRACOTTA, Blocks.ORANGE_TERRACOTTA, Blocks.MAGENTA_TERRACOTTA,
+        Blocks.LIGHT_BLUE_TERRACOTTA, Blocks.YELLOW_TERRACOTTA, Blocks.LIME_TERRACOTTA,
+        Blocks.PINK_TERRACOTTA, Blocks.GRAY_TERRACOTTA, Blocks.LIGHT_GRAY_TERRACOTTA,
+        Blocks.CYAN_TERRACOTTA, Blocks.PURPLE_TERRACOTTA, Blocks.BLUE_TERRACOTTA,
+        Blocks.BROWN_TERRACOTTA, Blocks.GREEN_TERRACOTTA, Blocks.RED_TERRACOTTA,
+        Blocks.BLACK_TERRACOTTA,
+    };
     private static final Block[] PLANKS = {
         Blocks.OAK_PLANKS, Blocks.SPRUCE_PLANKS, Blocks.BIRCH_PLANKS,
         Blocks.JUNGLE_PLANKS, Blocks.ACACIA_PLANKS, Blocks.DARK_OAK_PLANKS,
@@ -85,7 +111,10 @@ public final class LegacyBlocks {
                       };
             case 4:   return Blocks.COBBLESTONE.defaultBlockState();
             case 5:   return PLANKS[data % PLANKS.length].defaultBlockState();
+            case 8:   return Blocks.WATER.defaultBlockState(); // flowing water -> water
             case 9:   return Blocks.WATER.defaultBlockState();
+            case 10:  return Blocks.LAVA.defaultBlockState(); // flowing lava -> lava
+            case 11:  return Blocks.LAVA.defaultBlockState();
             case 12:  return data == 1 ? Blocks.RED_SAND.defaultBlockState() : Blocks.SAND.defaultBlockState();
             case 13:  return Blocks.GRAVEL.defaultBlockState();
             case 15:  return Blocks.IRON_ORE.defaultBlockState();
@@ -110,6 +139,7 @@ public final class LegacyBlocks {
             case 35:  return WOOL[data & 15];
             case 37:  return Blocks.DANDELION.defaultBlockState();
             case 38:  return redFlower(data);
+            case 41:  return Blocks.GOLD_BLOCK.defaultBlockState();
             case 42:  return Blocks.IRON_BLOCK.defaultBlockState();
             case 43:  return doubleStoneSlab(data & 7);
             case 44:  return slab(stoneSlab(data & 7), data);
@@ -125,6 +155,8 @@ public final class LegacyBlocks {
             case 58:  return Blocks.CRAFTING_TABLE.defaultBlockState();
             case 60:  return Blocks.FARMLAND.defaultBlockState();
             case 61:  return facing(Blocks.FURNACE.defaultBlockState(), data);
+            case 62:  return facing(Blocks.FURNACE.defaultBlockState()
+                          .setValue(BlockStateProperties.LIT, true), data); // lit furnace
             case 63:  return Blocks.OAK_SIGN.defaultBlockState();
             case 64:  return door(Blocks.OAK_DOOR.defaultBlockState(), data);
             case 65:  return facing(Blocks.LADDER.defaultBlockState(), data);
@@ -134,6 +166,8 @@ public final class LegacyBlocks {
             case 70:  return Blocks.STONE_PRESSURE_PLATE.defaultBlockState();
             case 71:  return door(Blocks.IRON_DOOR.defaultBlockState(), data);
             case 72:  return Blocks.OAK_PRESSURE_PLATE.defaultBlockState();
+            case 73:  return Blocks.REDSTONE_ORE.defaultBlockState();
+            case 74:  return Blocks.REDSTONE_ORE.defaultBlockState(); // lit redstone ore
             case 75:  return Blocks.REDSTONE_WALL_TORCH.defaultBlockState();
             case 76:  return Blocks.REDSTONE_WALL_TORCH.defaultBlockState();
             case 77:  return Blocks.STONE_BUTTON.defaultBlockState();
@@ -146,6 +180,8 @@ public final class LegacyBlocks {
             case 89:  return Blocks.GLOWSTONE.defaultBlockState();
             case 90:  return Blocks.NETHER_PORTAL.defaultBlockState();
             case 93:  return Blocks.REPEATER.defaultBlockState();
+            case 94:  return Blocks.REPEATER.defaultBlockState(); // powered repeater
+            case 95:  return STAINED_GLASS[data & 15].defaultBlockState();
             case 96:  return Blocks.OAK_TRAPDOOR.defaultBlockState();
             case 98:  return switch (data) {
                           case 1 -> Blocks.MOSSY_STONE_BRICKS.defaultBlockState();
@@ -159,6 +195,7 @@ public final class LegacyBlocks {
             case 106: return Blocks.VINE.defaultBlockState();
             case 107: return Blocks.OAK_FENCE_GATE.defaultBlockState()
                           .setValue(BlockStateProperties.HORIZONTAL_FACING, rot4Facing(data));
+            case 108: return stairs(Blocks.BRICK_STAIRS, data);
             case 109: return stairs(Blocks.STONE_BRICK_STAIRS, data);
             case 112: return Blocks.NETHER_BRICKS.defaultBlockState();
             case 113: return Blocks.NETHER_BRICK_FENCE.defaultBlockState();
@@ -175,12 +212,21 @@ public final class LegacyBlocks {
             case 134: return stairs(Blocks.SPRUCE_STAIRS, data);
             case 135: return stairs(Blocks.BIRCH_STAIRS, data);
             case 136: return stairs(Blocks.JUNGLE_STAIRS, data);
+            case 137: return Blocks.COMMAND_BLOCK.defaultBlockState();
             case 139: return (data & 1) == 1 ? Blocks.MOSSY_COBBLESTONE_WALL.defaultBlockState()
                                              : Blocks.COBBLESTONE_WALL.defaultBlockState();
             case 140: return Blocks.FLOWER_POT.defaultBlockState();
             case 141: return Blocks.CARROTS.defaultBlockState();
             case 142: return Blocks.POTATOES.defaultBlockState();
             case 143: return Blocks.OAK_BUTTON.defaultBlockState();
+            case 149: return Blocks.COMPARATOR.defaultBlockState(); // unpowered comparator
+            case 150: return Blocks.COMPARATOR.defaultBlockState(); // powered comparator
+            case 151: return Blocks.DAYLIGHT_DETECTOR.defaultBlockState();
+            case 154: return Blocks.HOPPER.defaultBlockState();
+            case 159: return TERRACOTTA[data & 15].defaultBlockState(); // stained hardened clay
+            case 160: return STAINED_GLASS_PANE[data & 15].defaultBlockState();
+            case 166: return Blocks.BARRIER.defaultBlockState();
+            case 175: return doublePlant(data);
             default:
                 if (unknown.add(id))
                     CityWorldMod.LOGGER.warn("LegacyBlocks: no mapping for legacy block id {} (data {}); using stone",
@@ -201,6 +247,24 @@ public final class LegacyBlocks {
             case 8 -> Blocks.OXEYE_DAISY.defaultBlockState();
             default -> Blocks.POPPY.defaultBlockState();
         };
+    }
+
+    /**
+     * Legacy double_plant (id 175): the low 3 bits are the species, bit 3 (data &amp; 8) marks the upper
+     * half. Old tools often zero the species on the top cell, so the top may fall back to the sunflower's
+     * upper half — a minor cosmetic mismatch on a two-tall plant, harmless for a decorative schematic.
+     */
+    private static BlockState doublePlant(int data) {
+        Block plant = switch (data & 7) {
+            case 1 -> Blocks.LILAC;
+            case 2 -> Blocks.TALL_GRASS;
+            case 3 -> Blocks.LARGE_FERN;
+            case 4 -> Blocks.ROSE_BUSH;
+            case 5 -> Blocks.PEONY;
+            default -> Blocks.SUNFLOWER;
+        };
+        DoubleBlockHalf half = (data & 8) != 0 ? DoubleBlockHalf.UPPER : DoubleBlockHalf.LOWER;
+        return plant.defaultBlockState().setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, half);
     }
 
     /** Legacy horizontal facing on data 2..5: 2=north, 3=south, 4=west, 5=east. */
