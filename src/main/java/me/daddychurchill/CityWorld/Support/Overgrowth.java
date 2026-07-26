@@ -51,13 +51,15 @@ public final class Overgrowth {
                 BlockState top = level.getBlockState(topPos);
                 if (top.isAir() || !top.getFluidState().isEmpty())
                     continue;
-                // Only decorate a full, flat, solid top. Moss/plants dropped onto a half-slab, fence post
-                // or stairs float a notch above the surface and read wrong — a sturdy-up-face test skips
-                // all of those and keeps overgrowth to proper block tops.
+                // Weather some stone/brick/cobble surfaces to mossy first — this DOES apply to the slab,
+                // stair and wall shapes (they keep their form), which is the point.
+                if (odds.playOdds(0.16))
+                    mossySwap(level, topPos, top);
+                // Plants, though, only sit on a full flat top. Moss/leaf-litter dropped onto a half-slab,
+                // fence post or stairs float a notch above and read wrong — a sturdy-up-face test skips
+                // all of those and keeps the loose overgrowth to proper block tops.
                 if (!top.isFaceSturdy(level, topPos, Direction.UP))
                     continue;
-                if (odds.playOdds(0.12))
-                    mossySwap(level, topPos, top);
                 BlockPos onTop = new BlockPos(wx, surfaceY, wz);
                 // roads carry only a light dusting (mostly thin leaf litter) so the streets stay readable;
                 // buildings/ground get the fuller creep.
@@ -161,16 +163,48 @@ public final class Overgrowth {
                 .setValue(BlockStateProperties.DRIPSTONE_THICKNESS, thickness), Block.UPDATE_CLIENTS);
     }
 
-    /** Age a stone-brick / cobble top into its mossy variant. */
+    /**
+     * Weather a stone-brick / cobblestone / stone surface into its mossy variant — the full block and
+     * its slab, stair and wall shapes alike (shape and orientation carried over, so a bottom slab stays a
+     * bottom slab). Plain stone has no mossy form of its own, so it (and its slab/stairs) ages toward
+     * mossy cobblestone, which reads as old weathered stone.
+     */
     private static void mossySwap(ServerLevelAccessor level, BlockPos pos, BlockState top) {
-        Block b = top.getBlock();
-        BlockState mossy = null;
-        if (b == Blocks.STONE_BRICKS) mossy = Material.MOSSY_STONE_BRICKS.getBlockState();
-        else if (b == Blocks.COBBLESTONE) mossy = Material.MOSSY_COBBLESTONE.getBlockState();
-        else if (b == Blocks.STONE_BRICK_STAIRS || b == Blocks.STONE_BRICK_SLAB || b == Blocks.STONE_BRICK_WALL)
-            return; // keep shaped variants; a flat swap would lose the shape
-        if (mossy != null)
-            level.setBlock(pos, mossy, Block.UPDATE_CLIENTS);
+        Block moss = mossyOf(top.getBlock());
+        if (moss != null)
+            level.setBlock(pos, reshape(top, moss), Block.UPDATE_CLIENTS);
+    }
+
+    private static Block mossyOf(Block b) {
+        // stone-brick family -> mossy stone brick
+        if (b == Blocks.STONE_BRICKS) return Blocks.MOSSY_STONE_BRICKS;
+        if (b == Blocks.STONE_BRICK_SLAB) return Blocks.MOSSY_STONE_BRICK_SLAB;
+        if (b == Blocks.STONE_BRICK_STAIRS) return Blocks.MOSSY_STONE_BRICK_STAIRS;
+        if (b == Blocks.STONE_BRICK_WALL) return Blocks.MOSSY_STONE_BRICK_WALL;
+        // cobblestone family -> mossy cobblestone
+        if (b == Blocks.COBBLESTONE) return Blocks.MOSSY_COBBLESTONE;
+        if (b == Blocks.COBBLESTONE_SLAB) return Blocks.MOSSY_COBBLESTONE_SLAB;
+        if (b == Blocks.COBBLESTONE_STAIRS) return Blocks.MOSSY_COBBLESTONE_STAIRS;
+        if (b == Blocks.COBBLESTONE_WALL) return Blocks.MOSSY_COBBLESTONE_WALL;
+        // plain stone has no mossy form -> age toward mossy cobble
+        if (b == Blocks.STONE) return Blocks.MOSSY_COBBLESTONE;
+        if (b == Blocks.STONE_SLAB) return Blocks.MOSSY_COBBLESTONE_SLAB;
+        if (b == Blocks.STONE_STAIRS) return Blocks.MOSSY_COBBLESTONE_STAIRS;
+        return null;
+    }
+
+    /** The target block's default state with every shared property (slab type, stair facing, …) carried
+     *  over from the source, so a swap keeps the exact shape and orientation. */
+    private static BlockState reshape(BlockState from, Block to) {
+        BlockState result = to.defaultBlockState();
+        for (net.minecraft.world.level.block.state.properties.Property<?> p : from.getProperties())
+            result = carry(from, result, p);
+        return result;
+    }
+
+    private static <T extends Comparable<T>> BlockState carry(BlockState from, BlockState to,
+            net.minecraft.world.level.block.state.properties.Property<T> p) {
+        return to.hasProperty(p) ? to.setValue(p, from.getValue(p)) : to;
     }
 
     /** Drop a surface plant onto {@code pos}, preferring what can actually live on the block below it. */
