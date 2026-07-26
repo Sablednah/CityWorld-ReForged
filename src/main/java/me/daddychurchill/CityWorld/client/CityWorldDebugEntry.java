@@ -60,6 +60,8 @@ public class CityWorldDebugEntry implements DebugScreenEntry {
                     platmap.getNaturePercent() * 100.0));
             displayer.addLine(String.format("[CityWorld] context %s (%s)",
                     data.getClass().getSimpleName(), data.getSchematicFamily()));
+            if (lot.getShopType() != null)
+                displayer.addLine("[CityWorld] shop " + lot.getShopType().describe());
             if (lot instanceof ClipboardLot clip)
                 displayer.addLine("[CityWorld] schematic " + clip.getClip().name + " [" + clip.getClip().family + "]");
             displayer.addLine(String.format("[CityWorld] street %d  sea %d  tree %d  evergreen %d  snow %d  maxFloors %d",

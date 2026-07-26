@@ -139,6 +139,8 @@ public final class CityWorldCommands {
         line(ctx, "context", dataContext.getClass().getSimpleName()
                 + " (" + dataContext.getSchematicFamily() + ")");
         line(ctx, "lot", lot.getClass().getSimpleName() + " (" + lot.style + ")");
+        if (lot.getShopType() != null)
+            line(ctx, "shop", lot.getShopType().describe());
         if (lot instanceof ClipboardLot clipLot)
             line(ctx, "schematic", clipLot.getClip().name + " [" + clipLot.getClip().family + "]");
         line(ctx, "nature", String.format("%.0f%%", platmap.getNaturePercent() * 100.0));

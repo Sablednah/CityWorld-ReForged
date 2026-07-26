@@ -184,6 +184,16 @@ public abstract class DataContext {
 		return schematicFamily;
 	}
 
+	/**
+	 * The shop {@link me.daddychurchill.CityWorld.api.ShopScale setting} this district produces — the
+	 * coarse half of the shop taxonomy, decided by the family rather than the individual lot. Commercial
+	 * cores default to {@code HIGH_STREET}; rural/residential families override to {@code CORNER_SHOP}
+	 * (see {@code RuralContext}). Only read by lots that are actually shops.
+	 */
+	public me.daddychurchill.CityWorld.api.ShopScale shopScale() {
+		return me.daddychurchill.CityWorld.api.ShopScale.HIGH_STREET;
+	}
+
 	public PlatLot createNaturalLot(CityWorldGenerator generator, PlatMap platmap, int x, int z) {
 		return new NatureLot(platmap, platmap.originX + x, platmap.originZ + z);
 	}

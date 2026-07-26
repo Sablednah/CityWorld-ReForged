@@ -16,6 +16,22 @@ The shop/job-block half is concrete; the "furniture from build guides" half want
 Placement runs through the decoration seam (`RealBlocks` / room fitting), not terrain gen. A good model
 to copy: the `Support/Overgrowth` pass added this session (post-decoration, per-lot, block-state aware).
 
+**The shop *classification layer* is now built (the foundation interiors keys off).** A store no longer
+just "is a `StoreBuildingLot`" — it carries a seed-deterministic `ShopType(ShopScale, ShopTrade)`, a
+two-axis taxonomy under family→lot: **scale** (`CORNER_SHOP` for rural/residential families vs
+`HIGH_STREET` for the commercial cores — decided by `DataContext.shopScale()`, overridden on
+`RuralContext`) × **trade** (~14 values: `CARTOGRAPHER`, `FLETCHER`, `BUILDERS_MERCHANT`, `ARMOURER`,
+`APOTHECARY`, `BUTCHER`, `NEWSAGENT`, … each carrying its vanilla profession + job-block `Identifier`).
+Set in `StoreBuildingLot`'s ctor (rolled from `chunkOdds`, shared across a connected building via
+`makeConnected`), exposed as `PlatLot.getShopType()` (null = not a shop). Because it's decided at plan
+time it's readable with no block generation: `/cityinfo` and the F3 overlay print a `shop:` line, and a
+new **public `me.daddychurchill.CityWorld.api` package** — `CityWorldShops.shopAt(level,pos)` /
+`shopsNear(...)`, query-only, no persistence — lets other mods react to shops. Verified by a plan-only
+probe: 148 high-street shops in 121×121 chunks around origin, well-spread across trades, `shopAt` in
+lockstep with the sweep. **Interiors is now: (a) wire `roomProviderForFloor` / job-block placement off
+`lot.getShopType()`, MODERN-gated; (b) add corner-shop *placement* in residential (the `CORNER_SHOP`
+scale is ready but no rural lot sets a `ShopType` yet); (c) the furniture-vocabulary design pass.**
+
 **Overgrowth landed + a big schematics/decay polish pass (2026-07, this session).** Nature now reclaims
 the built world behind the new `[overgrowth]` settings group (`enabled` / `intensity` / `capVines`; on
 + intensity 2.0 in MODERN by default). `Support.Overgrowth` runs post-decoration per built lot: moss /

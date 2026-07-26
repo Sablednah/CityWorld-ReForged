@@ -97,6 +97,15 @@ public abstract class PlatLot {
 		return Biome.PLAINS;
 	}
 
+	/**
+	 * This lot's shop classification, or {@code null} if it is not a shop. Set seed-deterministically
+	 * at plan time by shop-bearing lots (see {@code StoreBuildingLot}); read by {@code /cityinfo} and
+	 * the public {@link me.daddychurchill.CityWorld.api.CityWorldShops} lookup. Default: not a shop.
+	 */
+	public me.daddychurchill.CityWorld.api.ShopType getShopType() {
+		return null;
+	}
+
 	public boolean isPlaceableAt(CityWorldGenerator generator, int chunkX, int chunkZ) {
 		return generator.getSettings().inCityRange(chunkX, chunkZ);
 	}

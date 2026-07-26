@@ -10,6 +10,11 @@ import me.daddychurchill.CityWorld.Rooms.Populators.StoreWithRandom;
 import me.daddychurchill.CityWorld.Rooms.Populators.StoreWithRegisters;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.SupportBlocks;
+import me.daddychurchill.CityWorld.api.ShopScale;
+import me.daddychurchill.CityWorld.api.ShopTrade;
+import me.daddychurchill.CityWorld.api.ShopType;
+
+import java.util.List;
 
 public class StoreBuildingLot extends FinishedBuildingLot {
 
@@ -24,9 +29,27 @@ public class StoreBuildingLot extends FinishedBuildingLot {
 
 	private ContentStyle contentStyle;
 
+	// A store is a shop: classify it (scale from the district, trade rolled per building). Decided here
+	// at plan time so it is seed-deterministic and readable without generating blocks (see getShopType).
+	private ShopType shopType;
+
 	public StoreBuildingLot(PlatMap platmap, int chunkX, int chunkZ) {
 		super(platmap, chunkX, chunkZ);
 		contentStyle = pickContentStyle();
+		shopType = pickShopType(platmap);
+	}
+
+	private ShopType pickShopType(PlatMap platmap) {
+		ShopScale scale = platmap.context != null ? platmap.context.shopScale() : ShopScale.HIGH_STREET;
+		List<ShopTrade> trades = ShopTrade.tradesFor(scale);
+		if (trades.isEmpty())
+			return null;
+		return new ShopType(scale, trades.get(chunkOdds.getRandomInt(trades.size())));
+	}
+
+	@Override
+	public ShopType getShopType() {
+		return shopType;
 	}
 
 	private ContentStyle pickContentStyle() {
@@ -50,6 +73,8 @@ public class StoreBuildingLot extends FinishedBuildingLot {
 
 			// any other bits
 			contentStyle = relativebuilding.contentStyle;
+			// one building = one shop: share the classification across the connected footprint
+			shopType = relativebuilding.shopType;
 		}
 
 		return result;
