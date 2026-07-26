@@ -51,20 +51,28 @@ public final class Overgrowth {
                 BlockState top = level.getBlockState(topPos);
                 if (top.isAir() || !top.getFluidState().isEmpty())
                     continue;
+                // Only decorate a full, flat, solid top. Moss/plants dropped onto a half-slab, fence post
+                // or stairs float a notch above the surface and read wrong — a sturdy-up-face test skips
+                // all of those and keeps overgrowth to proper block tops.
+                if (!top.isFaceSturdy(level, topPos, Direction.UP))
+                    continue;
                 if (odds.playOdds(0.12))
                     mossySwap(level, topPos, top);
                 BlockPos onTop = new BlockPos(wx, surfaceY, wz);
-                if (level.getBlockState(onTop).isAir() && odds.playOdds(road ? 0.30 : 0.24))
+                // roads carry only a light dusting (mostly thin leaf litter) so the streets stay readable;
+                // buildings/ground get the fuller creep.
+                if (level.getBlockState(onTop).isAir() && odds.playOdds(road ? 0.12 : 0.24))
                     placeTopPlant(level, onTop, road, odds);
             }
 
-        // 2) walls — vines creeping up the sides. Sampled (not exhaustive) to stay cheap.
-        int vineTries = road ? 4 : 28;
+        // 2) walls — vines creeping up the sides. Sampled (not exhaustive) to stay cheap; dialled up on
+        //    buildings so their walls read properly reclaimed.
+        int vineTries = road ? 4 : 46;
         for (int i = 0; i < vineTries; i++) {
             int x = odds.getRandomInt(real.width), z = odds.getRandomInt(real.width);
             int wx = oX + x, wz = oZ + z;
             int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, wx, wz);
-            for (int y = surfaceY - 1; y > floor && y > surfaceY - 20; y--)
+            for (int y = surfaceY - 1; y > floor && y > surfaceY - 28; y--)
                 if (tryVine(level, x, z, y, oX, oZ, real.width, odds))
                     break;
         }
@@ -172,9 +180,9 @@ public final class Overgrowth {
         int r = odds.getRandomInt(100);
         Material pick;
         if (road)
-            pick = r < 45 ? Material.LEAF_LITTER : r < 70 ? Material.MOSS_CARPET
-                    : r < 82 ? Material.SHORT_GRASS : r < 90 ? Material.FERN
-                    : r < 95 ? Material.PINK_PETALS : Material.PALE_MOSS_CARPET;
+            // roads lean to thin, flat litter/grass rather than chunky moss carpet
+            pick = r < 62 ? Material.LEAF_LITTER : r < 74 ? Material.MOSS_CARPET
+                    : r < 88 ? Material.SHORT_GRASS : r < 96 ? Material.FERN : Material.PINK_PETALS;
         else
             pick = r < 32 ? Material.MOSS_CARPET : r < 55 ? Material.LEAF_LITTER
                     : r < 66 ? Material.SHORT_GRASS : r < 74 ? Material.FERN
