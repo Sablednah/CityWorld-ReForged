@@ -5,8 +5,9 @@
   "world": {
     "maxBuildingFloors": 40
   },
-  "terrain": {
-    "includeOvergrowth": true,
-    "overgrowthIntensity": 2.0
+  "overgrowth": {
+    "enabled": true,
+    "intensity": 2.0,
+    "capVines": false
   }
 }

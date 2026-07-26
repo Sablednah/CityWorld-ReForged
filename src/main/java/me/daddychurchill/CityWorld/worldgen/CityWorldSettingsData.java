@@ -48,14 +48,15 @@ public record CityWorldSettingsData(
         World world,
         Radius radius,
         Naming naming,
-        Mobs mobs) {
+        Mobs mobs,
+        Overgrowth overgrowth) {
 
     /** 1875000 chunks — the modern world-format radius ceiling (30,000,000 blocks / 16). */
     public static final int MAX_RADIUS = 30000000 / 16;
 
     public static final CityWorldSettingsData DEFAULT = new CityWorldSettingsData(
             Features.DEFAULT, Terrain.DEFAULT, Spawns.DEFAULT, Treasures.DEFAULT, World.DEFAULT, Radius.DEFAULT,
-            Naming.DEFAULT, Mobs.DEFAULT);
+            Naming.DEFAULT, Mobs.DEFAULT, Overgrowth.DEFAULT);
 
     public static final Codec<CityWorldSettingsData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Features.CODEC.optionalFieldOf("features", Features.DEFAULT).forGetter(CityWorldSettingsData::features),
@@ -65,7 +66,8 @@ public record CityWorldSettingsData(
             World.CODEC.optionalFieldOf("world", World.DEFAULT).forGetter(CityWorldSettingsData::world),
             Radius.CODEC.optionalFieldOf("radius", Radius.DEFAULT).forGetter(CityWorldSettingsData::radius),
             Naming.CODEC.optionalFieldOf("naming", Naming.DEFAULT).forGetter(CityWorldSettingsData::naming),
-            Mobs.CODEC.optionalFieldOf("mobs", Mobs.DEFAULT).forGetter(CityWorldSettingsData::mobs)
+            Mobs.CODEC.optionalFieldOf("mobs", Mobs.DEFAULT).forGetter(CityWorldSettingsData::mobs),
+            Overgrowth.CODEC.optionalFieldOf("overgrowth", Overgrowth.DEFAULT).forGetter(CityWorldSettingsData::overgrowth)
     ).apply(i, CityWorldSettingsData::new));
 
     // --- what gets built ----------------------------------------------------------------------
@@ -128,18 +130,14 @@ public record CityWorldSettingsData(
             boolean includeDecayedRoads,
             boolean includeDecayedBuildings,
             boolean includeDecayedNature,
-            double oddsOfPristineBuilding,
-            boolean includeOvergrowth,
-            double overgrowthIntensity) {
+            double oddsOfPristineBuilding) {
 
         /** Default pristine chance — tiny, so a spared building is a rare find even in a ruined world. */
         public static final double DEFAULT_ODDS_OF_PRISTINE = 0.0001; // 0.01%
-        /** Overgrowth density multiplier: 1.0 = the tuned default, higher = more/longer vines and plants. */
-        public static final double DEFAULT_OVERGROWTH_INTENSITY = 1.0;
 
         public static final Terrain DEFAULT = new Terrain(
                 true, true, true, true, true, true, true, true, true, true, false, false, false,
-                DEFAULT_ODDS_OF_PRISTINE, false, DEFAULT_OVERGROWTH_INTENSITY);
+                DEFAULT_ODDS_OF_PRISTINE);
 
         public static final Codec<Terrain> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("includeCaves", true).forGetter(Terrain::includeCaves),
@@ -155,10 +153,30 @@ public record CityWorldSettingsData(
                 Codec.BOOL.optionalFieldOf("includeDecayedRoads", false).forGetter(Terrain::includeDecayedRoads),
                 Codec.BOOL.optionalFieldOf("includeDecayedBuildings", false).forGetter(Terrain::includeDecayedBuildings),
                 Codec.BOOL.optionalFieldOf("includeDecayedNature", false).forGetter(Terrain::includeDecayedNature),
-                Codec.DOUBLE.optionalFieldOf("oddsOfPristineBuilding", DEFAULT_ODDS_OF_PRISTINE).forGetter(Terrain::oddsOfPristineBuilding),
-                Codec.BOOL.optionalFieldOf("includeOvergrowth", false).forGetter(Terrain::includeOvergrowth),
-                Codec.DOUBLE.optionalFieldOf("overgrowthIntensity", DEFAULT_OVERGROWTH_INTENSITY).forGetter(Terrain::overgrowthIntensity)
+                Codec.DOUBLE.optionalFieldOf("oddsOfPristineBuilding", DEFAULT_ODDS_OF_PRISTINE).forGetter(Terrain::oddsOfPristineBuilding)
         ).apply(i, Terrain::new));
+    }
+
+    // --- nature reclaiming the built world (its own group; the knobs multiplied past Terrain's codec cap) ---
+
+    /**
+     * The overgrowth pass — moss, vines, leaf litter, small trees and underground dripstone draped over
+     * buildings and roads after decay. {@code enabled} turns it on; {@code intensity} multiplies how much
+     * (1.0 = default, higher = lusher); {@code capVines} finishes each outer wall-vine string with a glow
+     * lichen so live vine growth can't lengthen it over time.
+     */
+    public record Overgrowth(boolean enabled, double intensity, boolean capVines) {
+
+        /** Density multiplier: 1.0 = the tuned default, higher = more and longer vines/plants. */
+        public static final double DEFAULT_INTENSITY = 1.0;
+
+        public static final Overgrowth DEFAULT = new Overgrowth(false, DEFAULT_INTENSITY, false);
+
+        public static final Codec<Overgrowth> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Overgrowth::enabled),
+                Codec.DOUBLE.optionalFieldOf("intensity", DEFAULT_INTENSITY).forGetter(Overgrowth::intensity),
+                Codec.BOOL.optionalFieldOf("capVines", false).forGetter(Overgrowth::capVines)
+        ).apply(i, Overgrowth::new));
     }
 
     // --- who turns up, and how often -----------------------------------------------------------

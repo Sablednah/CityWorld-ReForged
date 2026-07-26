@@ -64,7 +64,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     // terrain
     private boolean includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
             includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
-            includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, includeOvergrowth;
+            includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, includeOvergrowth, capVines;
     private double oddsOfPristineBuilding, overgrowthIntensity; // carried through untouched (no picker yet)
     // spawns
     private Chance spawnBeings, spawnBaddies, spawnAnimals, spawnVagrants;
@@ -124,8 +124,10 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         includeDecayedBuildings = t.includeDecayedBuildings();
         includeDecayedNature = t.includeDecayedNature();
         oddsOfPristineBuilding = t.oddsOfPristineBuilding();
-        includeOvergrowth = t.includeOvergrowth();
-        overgrowthIntensity = t.overgrowthIntensity();
+        CityWorldSettingsData.Overgrowth og = initial.overgrowth();
+        includeOvergrowth = og.enabled();
+        overgrowthIntensity = og.intensity();
+        capVines = og.capVines();
 
         CityWorldSettingsData.Spawns s = initial.spawns();
         spawnBeings = Chance.nearest(s.spawnBeings());
@@ -198,6 +200,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, onOff("Decayed buildings", includeDecayedBuildings, v -> includeDecayedBuildings = v));
         pair(row, onOff("Decayed nature", includeDecayedNature, v -> includeDecayedNature = v));
         pair(row, onOff("Overgrowth", includeOvergrowth, v -> includeOvergrowth = v));
+        pair(row, onOff("Cap vines", capVines, v -> capVines = v));
         flush(row);
 
         this.list.addHeader(Component.literal("Spawns"));
@@ -253,8 +256,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData.Terrain terrain = new CityWorldSettingsData.Terrain(
                 includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
                 includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
-                includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, oddsOfPristineBuilding,
-                includeOvergrowth, overgrowthIntensity);
+                includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, oddsOfPristineBuilding);
         CityWorldSettingsData.Spawns spawns = new CityWorldSettingsData.Spawns(
                 spawnBeings.value, spawnBaddies.value, spawnAnimals.value, spawnVagrants.value, nameVillagers,
                 showVillagersNames);
@@ -264,8 +266,10 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 oddsOfTreasureInSewers.value, oddsOfTreasureInBuildings.value, oddsOfAlcoveInMines.value);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
                 treeStyle, spawnTrees.value, subSurfaceStyle, ruralnessLevel.value, maxBuildingFloors);
+        CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
+                includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData data = new CityWorldSettingsData(
-                features, terrain, spawns, treasures, world, radius, naming, mobs);
+                features, terrain, spawns, treasures, world, radius, naming, mobs, overgrowth);
         return new Result(style, data);
     }
 

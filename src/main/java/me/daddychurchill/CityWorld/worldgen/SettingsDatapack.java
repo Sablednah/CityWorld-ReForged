@@ -94,9 +94,14 @@ public final class SettingsDatapack {
         terrain.addProperty("includeDecayedBuildings", t.includeDecayedBuildings());
         terrain.addProperty("includeDecayedNature", t.includeDecayedNature());
         terrain.addProperty("oddsOfPristineBuilding", t.oddsOfPristineBuilding());
-        terrain.addProperty("includeOvergrowth", t.includeOvergrowth());
-        terrain.addProperty("overgrowthIntensity", t.overgrowthIntensity());
         root.add("terrain", terrain);
+
+        CityWorldSettingsData.Overgrowth og = d.overgrowth();
+        JsonObject overgrowth = new JsonObject();
+        overgrowth.addProperty("enabled", og.enabled());
+        overgrowth.addProperty("intensity", og.intensity());
+        overgrowth.addProperty("capVines", og.capVines());
+        root.add("overgrowth", overgrowth);
 
         CityWorldSettingsData.Spawns s = d.spawns();
         JsonObject spawns = new JsonObject();

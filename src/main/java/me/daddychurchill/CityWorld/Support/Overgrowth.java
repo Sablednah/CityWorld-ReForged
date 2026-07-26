@@ -40,6 +40,9 @@ public final class Overgrowth {
         int floor = generator.streetLevel - 6; // below this is basement/underground, left to the mines
         // density multiplier — 1.0 default, cranked up by the overgrowthIntensity setting for a heavier look
         double intensity = Math.max(0.1, Math.min(6.0, generator.getSettings().overgrowthIntensity));
+        // cap the OUTER wall strings with a glow lichen at their bottom so live vine growth can't run them
+        // longer over time (and it reads as a lit tip)
+        boolean capVines = generator.getSettings().capVines;
 
         // 1) tops — moss/leaf-litter/plants creeping over every exposed built surface (roofs, floors,
         //    road, the ground around a build), plus the odd mossy-brick swap for age.
@@ -82,7 +85,7 @@ public final class Overgrowth {
                 Direction dir = wallDir(level, wx, y, wz);
                 if (dir == null)
                     continue;
-                hangVineString(level, wx, y, wz, dir, 1 + odds.getRandomInt(3), odds);
+                hangVineString(level, wx, y, wz, dir, 1 + odds.getRandomInt(3), odds, false); // nooks: no cap
                 break;
             }
         }
@@ -114,12 +117,13 @@ public final class Overgrowth {
                 }
             }
             if (topY >= 0) {
-                // Length grows with the wall's own height (taller building -> longer string) and with
-                // intensity, so tall facades don't read sparse — the string then dangles down until the
-                // wall runs out (a window/ledge stops it). Capped just past the wall so it can reach ground.
-                int wallH = Math.max(3, topY - generator.streetLevel);
-                int len = (int) Math.min(wallH + 4, (4 + odds.getRandomInt(4) + wallH * 0.6) * intensity);
-                hangVineString(level, wx, topY, wz, topDir, len, odds);
+                // Length is a random fraction of the wall's own height, anywhere from a quarter to full —
+                // so a facade reads as a varied mix of stubby and long strings, not a uniform full-height
+                // curtain. (Intensity drives how MANY strings, above, not how long each one is.) The string
+                // then dangles down until the wall runs out (a window/ledge stops it early).
+                int wallH = Math.max(4, topY - generator.streetLevel);
+                int len = wallH / 4 + odds.getRandomInt(wallH - wallH / 4 + 1);
+                hangVineString(level, wx, topY, wz, topDir, len, odds, capVines);
             }
         }
 
@@ -299,10 +303,13 @@ public final class Overgrowth {
     }
 
     /** Hang a vine string from {@code (wx,y,wz)} straight down the wall on face {@code dir}, up to
-     *  {@code len} blocks, stopping where the wall or the air runs out. The odd string is glow lichen. */
+     *  {@code len} blocks, stopping where the wall or the air runs out. The odd string is glow lichen. When
+     *  {@code cap} is set, the cell just below the string gets a glow lichen (if a wall backs it) so live
+     *  vine growth can't extend it later — a lit tip that caps the string. */
     private static void hangVineString(ServerLevelAccessor level, int wx, int y, int wz, Direction dir, int len,
-            Odds odds) {
+            Odds odds, boolean cap) {
         boolean lichen = odds.playOdds(0.12);
+        int bottom = y + 1; // one above the top; becomes the last placed row
         for (int k = 0; k < len; k++) {
             BlockPos cell = new BlockPos(wx, y - k, wz);
             if (!level.getBlockState(cell).isAir())
@@ -314,6 +321,15 @@ public final class Overgrowth {
             BlockState face = (lichen ? Material.GLOW_LICHEN.getBlockState() : Blocks.VINE.defaultBlockState())
                     .setValue(faceProp(dir), true);
             level.setBlock(cell, face, Block.UPDATE_CLIENTS);
+            bottom = y - k;
+        }
+        if (cap && bottom <= y) { // something was placed
+            BlockPos below = new BlockPos(wx, bottom - 1, wz);
+            BlockPos wall = below.relative(dir);
+            if (level.getBlockState(below).isAir() && level.hasChunk(wall.getX() >> 4, wall.getZ() >> 4)
+                    && level.getBlockState(wall).isFaceSturdy(level, wall, dir.getOpposite()))
+                level.setBlock(below, Material.GLOW_LICHEN.getBlockState().setValue(faceProp(dir), true),
+                        Block.UPDATE_CLIENTS);
         }
     }
 

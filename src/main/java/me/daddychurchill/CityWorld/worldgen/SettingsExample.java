@@ -105,10 +105,6 @@ public final class SettingsExample {
             includeAirborneStructures true   Balloons/blimps over the fields.
             includeBuildingInteriors  true   Furnish building interiors. Off = empty shells (faster).
             includeSchematics         false  Drop the bundled classic building schematics into cities.
-            includeOvergrowth         false  Let nature reclaim buildings/roads (moss, vines, leaf litter,
-                                             azalea, small trees) + dripstone underground. After decay.
-            overgrowthIntensity       1.0    Overgrowth density x-multiplier: 1.0 = default, 2-3 = heavy,
-                                             more and longer vines/plants. (in [terrain], with above.)
             includeNamedRoads         true   Street-name signs.
 
             ============================================================================
@@ -133,6 +129,17 @@ public final class SettingsExample {
                                              0.01%. A schematic's .yml can override this per-building
                                              with  PristineChance: <0..1>  (and Decayable: false means
                                              never decays). Range 0.0 .. 1.0.
+
+            ============================================================================
+            overgrowth  — nature reclaiming the built world (runs after decay)
+            ============================================================================
+            enabled     false  Drape buildings/roads in moss, vines, leaf litter, azalea and small
+                               reclaim trees, + dripstone in mines and basements. Works with or
+                               without decay.
+            intensity   1.0    Density x-multiplier: 1.0 = default, 2-3 = heavy (more/denser vines
+                               and plants). Vine-string length varies 1/4..full of each wall on its own.
+            capVines    false  Finish each outer wall-vine string with a glow lichen so live vine
+                               growth can't lengthen it over time (and it reads as a lit tip).
 
             ============================================================================
             spawns  — who turns up, and how often   (odds 0.0 .. 1.0)
