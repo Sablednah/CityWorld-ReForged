@@ -28,7 +28,18 @@ time it's readable with no block generation: `/cityinfo` and the F3 overlay prin
 new **public `me.daddychurchill.CityWorld.api` package** — `CityWorldShops.shopAt(level,pos)` /
 `shopsNear(...)`, query-only, no persistence — lets other mods react to shops. Verified by a plan-only
 probe: 148 high-street shops in 121×121 chunks around origin, well-spread across trades, `shopAt` in
-lockstep with the sweep. **Interiors is now: (a) wire `roomProviderForFloor` / job-block placement off
+lockstep with the sweep.
+
+**The old Bukkit `CityWorldAPI` is resurrected too** (Sablednah wrote the original for upstream,
+PR #4/#5). Modern `me.daddychurchill.CityWorld.api.CityWorldAPI.lotAt(level, pos) → Optional<LotInfo>`
+is the typed successor to its `getFullInfo` — a read-only snapshot of the plan for a chunk (context
+family + class, lot style + class, chunk pos, nature %, road count, schematic name, `ShopType`),
+derived from the seed-deterministic plan so it needs no generated chunk. `getFullInfo(level, pos)` keeps
+the original stringly-typed `Map<String,String>` shape (same keys) for continuity. `/cityinfo` and the
+F3 overlay now **read through this API** rather than hand-rolling `getPlatMap→getMapLot`, so command and
+API can't drift. `CityWorldShops` stays the focused shop lookup over the same plan.
+
+**Interiors is now: (a) wire `roomProviderForFloor` / job-block placement off
 `lot.getShopType()`, MODERN-gated; (b) add corner-shop *placement* in residential (the `CORNER_SHOP`
 scale is ready but no rural lot sets a `ShopType` yet); (c) the furniture-vocabulary design pass.**
 

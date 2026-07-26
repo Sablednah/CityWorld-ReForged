@@ -1,10 +1,8 @@
 package me.daddychurchill.CityWorld.client;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
-import me.daddychurchill.CityWorld.Clipboard.ClipboardLot;
-import me.daddychurchill.CityWorld.Context.DataContext;
-import me.daddychurchill.CityWorld.Plats.PlatLot;
-import me.daddychurchill.CityWorld.Support.PlatMap;
+import me.daddychurchill.CityWorld.api.CityWorldAPI;
+import me.daddychurchill.CityWorld.api.LotInfo;
 import me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator;
 
 import net.minecraft.client.Minecraft;
@@ -14,7 +12,6 @@ import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.jspecify.annotations.Nullable;
@@ -49,21 +46,21 @@ public class CityWorldDebugEntry implements DebugScreenEntry {
                 return; // not a CityWorld dimension — stay silent
 
             BlockPos pos = camera.blockPosition();
-            ChunkPos cp = new ChunkPos(pos);
             CityWorldGenerator context = cw.getContext(level);
-            PlatMap platmap = context.getPlatMap(cp.x, cp.z);
-            PlatLot lot = platmap.getMapLot(cp.x, cp.z);
-            DataContext data = platmap.context;
 
-            displayer.addLine(String.format("[CityWorld] %s  %s (%s)  nature %.0f%%",
-                    cw.resolvedStyle(), lot.getClass().getSimpleName(), lot.style,
-                    platmap.getNaturePercent() * 100.0));
-            displayer.addLine(String.format("[CityWorld] context %s (%s)",
-                    data.getClass().getSimpleName(), data.getSchematicFamily()));
-            if (lot.getShopType() != null)
-                displayer.addLine("[CityWorld] shop " + lot.getShopType().describe());
-            if (lot instanceof ClipboardLot clip)
-                displayer.addLine("[CityWorld] schematic " + clip.getClip().name + " [" + clip.getClip().family + "]");
+            // The lot/context/shop/schematic readout comes from the shared introspection API, so F3 and
+            // /cityinfo never disagree; the level datums below still come straight off the generator.
+            LotInfo info = CityWorldAPI.lotAt(level, pos).orElse(null);
+            if (info != null) {
+                displayer.addLine(String.format("[CityWorld] %s  %s (%s)  nature %.0f%%",
+                        cw.resolvedStyle(), info.lotClass(), info.lotStyle(), info.naturePercent() * 100.0));
+                displayer.addLine(String.format("[CityWorld] context %s (%s)",
+                        info.contextClass(), info.contextFamily()));
+                if (info.shop() != null)
+                    displayer.addLine("[CityWorld] shop " + info.shop().describe());
+                if (info.schematicName() != null)
+                    displayer.addLine("[CityWorld] schematic " + info.schematicName());
+            }
             displayer.addLine(String.format("[CityWorld] street %d  sea %d  tree %d  evergreen %d  snow %d  maxFloors %d",
                     context.streetLevel, context.seaLevel, context.treeLevel, context.evergreenLevel,
                     context.snowLevel, context.getSettings().maxBuildingFloors));
