@@ -88,6 +88,9 @@ public class CityWorldSettings {
      */
     public boolean includeOvergrowth = false;
 
+    /** Overgrowth density multiplier: 1.0 = tuned default, higher = more and longer vines/plants. */
+    public double overgrowthIntensity = CityWorldSettingsData.Terrain.DEFAULT_OVERGROWTH_INTENSITY;
+
     /** Who turns up, and how often. {@code SpawnProvider} branches on all of these. */
     public double spawnBeings = Odds.oddsLikely;
     public double spawnBaddies = Odds.oddsPrettyUnlikely;
@@ -267,6 +270,7 @@ public class CityWorldSettings {
         includeDecayedNature = t.includeDecayedNature();
         oddsOfPristineBuilding = t.oddsOfPristineBuilding();
         includeOvergrowth = t.includeOvergrowth();
+        overgrowthIntensity = t.overgrowthIntensity();
 
         CityWorldSettingsData.Spawns s = data.spawns();
         spawnBeings = s.spawnBeings();
@@ -350,7 +354,7 @@ public class CityWorldSettings {
                 includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
                 includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
                 includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, oddsOfPristineBuilding,
-                includeOvergrowth);
+                includeOvergrowth, overgrowthIntensity);
         CityWorldSettingsData.Spawns spawns = new CityWorldSettingsData.Spawns(
                 spawnBeings, spawnBaddies, spawnAnimals, spawnVagrants, nameVillagers, showVillagersNames);
         CityWorldSettingsData.Treasures treasures = new CityWorldSettingsData.Treasures(

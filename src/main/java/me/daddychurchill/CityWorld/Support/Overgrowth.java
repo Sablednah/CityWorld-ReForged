@@ -38,6 +38,8 @@ public final class Overgrowth {
         boolean road = lot.style == PlatLot.LotStyle.ROAD || lot.style == PlatLot.LotStyle.ROUNDABOUT;
         int oX = real.getOriginX(), oZ = real.getOriginZ();
         int floor = generator.streetLevel - 6; // below this is basement/underground, left to the mines
+        // density multiplier — 1.0 default, cranked up by the overgrowthIntensity setting for a heavier look
+        double intensity = Math.max(0.1, Math.min(6.0, generator.getSettings().overgrowthIntensity));
 
         // 1) tops — moss/leaf-litter/plants creeping over every exposed built surface (roofs, floors,
         //    road, the ground around a build), plus the odd mossy-brick swap for age.
@@ -62,14 +64,14 @@ public final class Overgrowth {
                     continue;
                 BlockPos onTop = new BlockPos(wx, surfaceY, wz);
                 // roads carry only a light dusting (mostly thin leaf litter) so the streets stay readable;
-                // buildings/ground get the fuller creep.
-                if (level.getBlockState(onTop).isAir() && odds.playOdds(road ? 0.12 : 0.24))
+                // buildings/ground get the fuller creep. Scaled by intensity (capped so it never fully tiles).
+                if (level.getBlockState(onTop).isAir() && odds.playOdds(Math.min(0.85, (road ? 0.12 : 0.24) * intensity)))
                     placeTopPlant(level, onTop, road, odds);
             }
 
         // 2a) interior nooks — the bit that already read well: from a column's top scan DOWN to the first
         //     air cell against a wall (a courtyard, a gap between rooms) and tuck a short vine there.
-        int nookTries = road ? 4 : 24;
+        int nookTries = (int) Math.ceil((road ? 4 : 24) * intensity);
         for (int i = 0; i < nookTries; i++) {
             int x = odds.getRandomInt(real.width), z = odds.getRandomInt(real.width);
             int wx = oX + x, wz = oZ + z;
@@ -91,7 +93,7 @@ public final class Overgrowth {
         //     — strings biased to the top, dangling down. The wall may be in the neighbouring chunk (an
         //     outer face sits right on the chunk seam): the vine is written in THIS chunk, only the wall is
         //     read across the boundary (guarded). Roads carry this since they flank the buildings.
-        int wallTries = road ? 40 : 30;
+        int wallTries = (int) Math.ceil((road ? 40 : 30) * intensity);
         int ceilingY = generator.streetLevel + 200; // above the tallest building; the scan breaks at a roof
         for (int i = 0; i < wallTries; i++) {
             int x = odds.getRandomInt(real.width), z = odds.getRandomInt(real.width);
@@ -111,13 +113,22 @@ public final class Overgrowth {
                     topDir = dir;
                 }
             }
-            if (topY >= 0)
-                hangVineString(level, wx, topY, wz, topDir, 2 + odds.getRandomInt(7), odds);
+            if (topY >= 0) {
+                // Length grows with the wall's own height (taller building -> longer string) and with
+                // intensity, so tall facades don't read sparse — the string then dangles down until the
+                // wall runs out (a window/ledge stops it). Capped just past the wall so it can reach ground.
+                int wallH = Math.max(3, topY - generator.streetLevel);
+                int len = (int) Math.min(wallH + 4, (4 + odds.getRandomInt(4) + wallH * 0.6) * intensity);
+                hangVineString(level, wx, topY, wz, topDir, len, odds);
+            }
         }
 
-        // 3) roads — the occasional sapling breaking through the tarmac into a small reclaim tree.
-        if (road && odds.playOdds(0.18))
-            placeSmallTree(level, oX, oZ, floor, real.width, odds);
+        // 3) roads — the occasional sapling breaking through the tarmac into a small reclaim tree (more
+        //    chances at higher intensity).
+        int treeTries = road ? (int) Math.ceil(intensity) : 0;
+        for (int i = 0; i < treeTries; i++)
+            if (odds.playOdds(0.18))
+                placeSmallTree(level, oX, oZ, floor, real.width, odds);
 
         // 4) basements — dripstone reclaiming a building's cellars, the same as the mine shafts. Buildings
         //    only (roads have no rooms below); scans the below-street air for a room ceiling/floor.

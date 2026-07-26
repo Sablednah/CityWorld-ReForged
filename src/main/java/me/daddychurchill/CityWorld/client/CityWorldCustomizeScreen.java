@@ -65,7 +65,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private boolean includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
             includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
             includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, includeOvergrowth;
-    private double oddsOfPristineBuilding; // carried through untouched (no picker yet)
+    private double oddsOfPristineBuilding, overgrowthIntensity; // carried through untouched (no picker yet)
     // spawns
     private Chance spawnBeings, spawnBaddies, spawnAnimals, spawnVagrants;
     private boolean nameVillagers, showVillagersNames;
@@ -125,6 +125,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         includeDecayedNature = t.includeDecayedNature();
         oddsOfPristineBuilding = t.oddsOfPristineBuilding();
         includeOvergrowth = t.includeOvergrowth();
+        overgrowthIntensity = t.overgrowthIntensity();
 
         CityWorldSettingsData.Spawns s = initial.spawns();
         spawnBeings = Chance.nearest(s.spawnBeings());
@@ -253,7 +254,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
                 includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
                 includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, oddsOfPristineBuilding,
-                includeOvergrowth);
+                includeOvergrowth, overgrowthIntensity);
         CityWorldSettingsData.Spawns spawns = new CityWorldSettingsData.Spawns(
                 spawnBeings.value, spawnBaddies.value, spawnAnimals.value, spawnVagrants.value, nameVillagers,
                 showVillagersNames);

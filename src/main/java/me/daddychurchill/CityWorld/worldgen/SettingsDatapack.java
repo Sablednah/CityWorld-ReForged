@@ -95,6 +95,7 @@ public final class SettingsDatapack {
         terrain.addProperty("includeDecayedNature", t.includeDecayedNature());
         terrain.addProperty("oddsOfPristineBuilding", t.oddsOfPristineBuilding());
         terrain.addProperty("includeOvergrowth", t.includeOvergrowth());
+        terrain.addProperty("overgrowthIntensity", t.overgrowthIntensity());
         root.add("terrain", terrain);
 
         CityWorldSettingsData.Spawns s = d.spawns();

@@ -31,7 +31,8 @@
     "includeDecayedRoads": false,
     "includeDecayedBuildings": false,
     "includeDecayedNature": false,
-    "includeOvergrowth": false
+    "includeOvergrowth": false,
+    "overgrowthIntensity": 1.0
   },
   "spawns": {
     "spawnBeings": 0.5,

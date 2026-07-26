@@ -6,6 +6,7 @@
     "maxBuildingFloors": 40
   },
   "terrain": {
-    "includeOvergrowth": true
+    "includeOvergrowth": true,
+    "overgrowthIntensity": 2.0
   }
 }

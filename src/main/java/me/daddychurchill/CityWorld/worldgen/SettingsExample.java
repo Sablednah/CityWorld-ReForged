@@ -107,6 +107,8 @@ public final class SettingsExample {
             includeSchematics         false  Drop the bundled classic building schematics into cities.
             includeOvergrowth         false  Let nature reclaim buildings/roads (moss, vines, leaf litter,
                                              azalea, small trees) + dripstone underground. After decay.
+            overgrowthIntensity       1.0    Overgrowth density x-multiplier: 1.0 = default, 2-3 = heavy,
+                                             more and longer vines/plants. (in [terrain], with above.)
             includeNamedRoads         true   Street-name signs.
 
             ============================================================================
