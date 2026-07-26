@@ -2,7 +2,10 @@ package me.daddychurchill.CityWorld.Plugins;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 
 
@@ -33,6 +36,58 @@ public class OdonymProvider_Normal extends OdonymProvider {
 		streetSuffixes = override(append, settings.streetSuffixes, streetSuffixes);
 		fossilPrefixes = override(append, settings.fossilPrefixes, fossilPrefixes);
 		fossilSuffixes = override(append, settings.fossilSuffixes, fossilSuffixes);
+		professionSurnames = overrideProfessions(append, settings.professionNames);
+	}
+
+	// --- role-themed worker surnames (employed villagers) --------------------------------------
+
+	/**
+	 * Occupational surnames keyed by vanilla profession id path — a fletcher becomes "… Fletcher", a
+	 * fisher "… Angler". The compiled defaults below stand unless a datapack supplies {@code
+	 * professionNames} entries (each {@code "profession:Surname"}); those <em>replace</em> the pool for
+	 * the professions they name (or, with {@code namesAppend}, add to it), exactly like the other lists.
+	 */
+	private Map<String, List<String>> professionSurnames = defaultProfessionSurnames();
+
+	private static Map<String, List<String>> defaultProfessionSurnames() {
+		Map<String, List<String>> m = new HashMap<>();
+		m.put("farmer", new ArrayList<>(Arrays.asList("Farmer", "Fields", "Plowman", "Hayward", "Barleycorn")));
+		m.put("fisherman", new ArrayList<>(Arrays.asList("Fisher", "Angler", "Netter", "Rivers", "Salmon")));
+		m.put("fletcher", new ArrayList<>(Arrays.asList("Fletcher", "Bowman", "Arrow", "Quill")));
+		m.put("cartographer", new ArrayList<>(Arrays.asList("Carter", "Mapp", "Chandler", "Compass")));
+		m.put("mason", new ArrayList<>(Arrays.asList("Mason", "Stone", "Cobb", "Slate")));
+		m.put("armorer", new ArrayList<>(Arrays.asList("Armorer", "Steele", "Plate", "Mail")));
+		m.put("weaponsmith", new ArrayList<>(Arrays.asList("Blade", "Sharpe", "Swords", "Hammer")));
+		m.put("toolsmith", new ArrayList<>(Arrays.asList("Smith", "Wright", "Cooper", "Nail")));
+		m.put("butcher", new ArrayList<>(Arrays.asList("Butcher", "Marrow", "Bonner", "Chine")));
+		m.put("leatherworker", new ArrayList<>(Arrays.asList("Tanner", "Skinner", "Hyde", "Buckle")));
+		m.put("cleric", new ArrayList<>(Arrays.asList("Cleric", "Bishop", "Priestley", "Monk")));
+		m.put("shepherd", new ArrayList<>(Arrays.asList("Shepherd", "Wooley", "Weaver", "Lamb")));
+		m.put("librarian", new ArrayList<>(Arrays.asList("Clarke", "Reader", "Booker", "Page")));
+		return m;
+	}
+
+	/** Fold the datapack's {@code "profession:Surname"} entries onto the compiled pools (replace, or add if append). */
+	private static Map<String, List<String>> overrideProfessions(boolean append, List<String> configured) {
+		Map<String, List<String>> result = defaultProfessionSurnames();
+		if (configured == null || configured.isEmpty())
+			return result;
+		Map<String, List<String>> parsed = new HashMap<>();
+		for (String entry : configured) {
+			int at = entry.indexOf(':');
+			if (at <= 0 || at >= entry.length() - 1)
+				continue; // skip malformed "profession:Surname"
+			String prof = entry.substring(0, at).trim().toLowerCase(Locale.ROOT);
+			String surname = entry.substring(at + 1).trim();
+			if (!prof.isEmpty() && !surname.isEmpty())
+				parsed.computeIfAbsent(prof, k -> new ArrayList<>()).add(surname);
+		}
+		for (Map.Entry<String, List<String>> e : parsed.entrySet())
+			if (append)
+				result.computeIfAbsent(e.getKey(), k -> new ArrayList<>()).addAll(e.getValue());
+			else
+				result.put(e.getKey(), e.getValue()); // named professions replaced; the rest keep defaults
+		return result;
 	}
 
 	/**
@@ -193,6 +248,20 @@ public class OdonymProvider_Normal extends OdonymProvider {
 	public String generateVillagerName(CityWorldGenerator generator, Odds odds) {
 		return villagerPrefixes.get(odds.getRandomInt(villagerPrefixes.size())) + " "
 				+ villagerSuffixes.get(odds.getRandomInt(villagerSuffixes.size()));
+	}
+
+	@Override
+	public String generateWorkerName(CityWorldGenerator generator, Odds odds, String professionPath) {
+		String given = villagerPrefixes.get(odds.getRandomInt(villagerPrefixes.size()));
+		List<String> pool = professionSurnames.get(professionPath.toLowerCase(Locale.ROOT));
+		String surname = (pool != null && !pool.isEmpty())
+				? pool.get(odds.getRandomInt(pool.size()))
+				: capitalize(professionPath);
+		return given + " " + surname;
+	}
+
+	private static String capitalize(String s) {
+		return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
 	}
 
 	private final String tagVillagerPrefixes = "VillagerGivenNames";

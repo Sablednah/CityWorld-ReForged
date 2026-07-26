@@ -239,6 +239,13 @@ public final class SettingsExample {
             streetSuffixes       Road types ("Street", "Avenue", "Boulevard", ...).
             fossilPrefixes       Start of museum fossil names ("Tyranno", "Dino", ...).
             fossilSuffixes       End of fossil names ("saurus", "raptor", ...).
+            professionNames      Occupational surnames for EMPLOYED villagers (shop/farm workers), as
+                                 "profession:Surname" entries — e.g. "fisherman:Angler", "fletcher:Bowman".
+                                 A worker becomes "<given name> <surname for its trade>". Professions you
+                                 don't list keep the built-in pool; with "append": true yours are added to
+                                 it. Profession ids: farmer, fisherman, fletcher, cartographer, mason,
+                                 armorer, weaponsmith, toolsmith, butcher, leatherworker, cleric, shepherd,
+                                 librarian.
 
             ============================================================================
             mobs  — your own creature lists   (lists of entity ids, WEIGHTED BY REPETITION)

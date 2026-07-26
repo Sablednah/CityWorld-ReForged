@@ -1,10 +1,16 @@
 package me.daddychurchill.CityWorld.Plugins;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
@@ -243,6 +249,20 @@ public class SpawnProvider extends Provider {
     }
 
     /**
+     * Put an <b>employed</b> villager here — a shopkeeper / farmer / fisher of the given vanilla
+     * profession, standing at the workstation just placed (see {@code ShopFitter}, {@code FarmLot},
+     * {@code FishPondLot}). It is given the profession outright and a role-themed name, so a villager
+     * doesn't have to wander in and claim the job block for the trade to read. No worker if villagers
+     * are switched off ({@code spawnBeings} is 0).
+     */
+    public final void spawnWorker(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
+            Identifier profession) {
+        if (profession == null || !odds.playOdds(generator.getSettings().spawnBeings))
+            return;
+        spawnEntity(generator, blocks, odds, x, y, z, EntityType.VILLAGER, false, true, profession);
+    }
+
+    /**
      * Put one there, if there is room and it is above the water.
      *
      * <p>The {@code insideXYZ} guard is not the politeness it was under Bukkit — it is what keeps
@@ -254,6 +274,12 @@ public class SpawnProvider extends Provider {
      */
     private void spawnEntity(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
             EntityType entity, boolean ignoreFlood, boolean ensureSpace) {
+        spawnEntity(generator, blocks, odds, x, y, z, entity, ignoreFlood, ensureSpace, null);
+    }
+
+    /** As above, but if {@code workerProfession} is set the villager is employed into that trade. */
+    private void spawnEntity(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
+            EntityType entity, boolean ignoreFlood, boolean ensureSpace, Identifier workerProfession) {
         if (!blocks.insideXYZ(x, y, z) || entity == null)
             return;
 
@@ -286,12 +312,13 @@ public class SpawnProvider extends Provider {
             if (ensureSpace)
                 blocks.clearBlocks(x, y, y + 2, z);
 
-            placeEntity(generator, odds, at, entity);
+            placeEntity(generator, odds, at, entity, workerProfession);
         }
     }
 
     /** The three-step vanilla worldgen spawn — see this class's notes. */
-    private void placeEntity(CityWorldGenerator generator, Odds odds, Location at, EntityType entity) {
+    private void placeEntity(CityWorldGenerator generator, Odds odds, Location at, EntityType entity,
+            Identifier workerProfession) {
         LevelAccessor level = at.getLevel();
         if (!(level instanceof ServerLevelAccessor server))
             return;
@@ -318,7 +345,19 @@ public class SpawnProvider extends Provider {
 
         being.setDeltaMovement(odds.getRandomVelocity());
 
-        if (generator.getSettings().nameVillagers && entity == EntityType.VILLAGER) {
+        // employ a worker villager into its trade, and give it a role-themed name
+        boolean employed = false;
+        if (workerProfession != null && being instanceof Villager villager) {
+            employed = employ(server.getLevel(), villager, workerProfession);
+            if (employed && generator.getSettings().nameVillagers) {
+                being.setCustomName(Component.literal(
+                        generator.odonymProvider.generateWorkerName(generator, odds, workerProfession.getPath())));
+                if (generator.getSettings().showVillagersNames)
+                    being.setCustomNameVisible(true);
+            }
+        }
+
+        if (!employed && generator.getSettings().nameVillagers && entity == EntityType.VILLAGER) {
             String beingName = generator.odonymProvider.generateVillagerName(generator, odds);
             being.setCustomName(Component.literal(beingName));
             if (generator.getSettings().showVillagersNames)
@@ -326,6 +365,24 @@ public class SpawnProvider extends Provider {
         }
 
         server.addFreshEntityWithPassengers(being);
+    }
+
+    /**
+     * Give a villager a profession outright (the shopkeeper's trade), keep it an adult, and rebuild its
+     * brain so the AI matches. Wrapped defensively — a villager that fails to take the job simply spawns
+     * as an ordinary resident rather than taking the chunk down. Returns whether it took.
+     */
+    private boolean employ(ServerLevel level, Villager villager, Identifier profession) {
+        try {
+            villager.setBaby(false);
+            ResourceKey<VillagerProfession> key = ResourceKey.create(Registries.VILLAGER_PROFESSION, profession);
+            villager.setVillagerData(villager.getVillagerData().withProfession(level.registryAccess(), key));
+            villager.setVillagerXp(1);
+            villager.refreshBrain(level);
+            return true;
+        } catch (RuntimeException e) {
+            return false;
+        }
     }
 
     public final void setSpawnOrSpawner(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y,

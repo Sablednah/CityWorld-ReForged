@@ -108,6 +108,10 @@ public class FishPondLot extends IsolatedLot {
         // stock the pond
         generator.spawnProvider.spawnSeaAnimals(generator, chunk, chunkOdds, 8, surfaceY, 8);
         generator.spawnProvider.spawnSeaAnimals(generator, chunk, chunkOdds, 6, surfaceY, 9);
+
+        // the angler, at the barrel
+        generator.spawnProvider.spawnWorker(generator, chunk, chunkOdds, barrelCell[0], surfaceY + 1, barrelCell[1],
+                net.minecraft.resources.Identifier.withDefaultNamespace("fisherman"));
     }
 
     /** The dominant horizontal direction from (x,z) toward the pond centre. */

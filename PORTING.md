@@ -61,9 +61,21 @@ Verified over a 341×341 plan-sweep + force-load: 165 corner shops across all fi
 with a job block; composters present across farms; 40 ponds, all water+fish, most with the barrel (a
 couple in odd wet terrain miss it — cosmetic, rare).
 
-**Interiors remainder: (c) villager professions actually claiming these job blocks (the big one — turn
-the workstations into employed residents); (d) the richer furniture-vocabulary design pass (counters,
-shelves themed per trade, hanging shop signs); optional: chase the rare barrel-less fish pond.**
+**Villagers are employed now (the big one landed).** `SpawnProvider.spawnWorker(...)` spawns a villager
+already set to the workstation's trade — cartographer at the cartography table, fisherman at the pond
+barrel, farmer at the composter, etc. — via `VillagerData.withProfession(registryAccess, key)` +
+`refreshBrain` (verified safe at worldgen). Called from `ShopFitter`, `FarmLot` and `FishPondLot` right
+where each job block is placed; rolls `spawnBeings` so keeper density tracks the world's populated-ness.
+Each employed villager gets a **role-themed name** — a given name plus an occupational surname keyed to
+the trade ("Frank Compass" cartographer, "Roberta Lamb" shepherd, "Bill Butcher"). The surname pools are
+built-in and **datapack-overridable** via a new `naming.professionNames` list (`"profession:Surname"`
+entries; replace or, with `append`, add — same as the other name lists). Verified: 21 villagers employed
+across sampled shops, all `employed=true`, names themed correctly.
+
+**Interiors remainder: (d) the richer furniture-vocabulary design pass — themed counters/shelves per
+trade, hanging shop signs, and the hay ideas (paddock bales away from fences, a haystack farm plot); plus
+optional polish: pre-populate a couple of starter trades on employed villagers, and chase the rare
+barrel-less fish pond.**
 
 **Overgrowth landed + a big schematics/decay polish pass (2026-07, this session).** Nature now reclaims
 the built world behind the new `[overgrowth]` settings group (`enabled` / `intensity` / `capVines`; on

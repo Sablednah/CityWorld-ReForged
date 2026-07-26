@@ -164,6 +164,8 @@ public class CityWorldSettings {
     public java.util.List<String> streetSuffixes = java.util.List.of();
     public java.util.List<String> fossilPrefixes = java.util.List.of();
     public java.util.List<String> fossilSuffixes = java.util.List.of();
+    /** Role-themed worker surnames as {@code "profession:Surname"} entries (e.g. {@code "fletcher:Bowman"}). */
+    public java.util.List<String> professionNames = java.util.List.of();
     /** When true, the name lists above are appended to the compiled defaults instead of replacing them. */
     public boolean namesAppend = false;
 
@@ -333,6 +335,7 @@ public class CityWorldSettings {
         streetSuffixes = n.streetSuffixes();
         fossilPrefixes = n.fossilPrefixes();
         fossilSuffixes = n.fossilSuffixes();
+        professionNames = n.professionNames();
         namesAppend = n.append();
 
         CityWorldSettingsData.Mobs m = data.mobs();
@@ -380,7 +383,7 @@ public class CityWorldSettings {
                 cityChunkRadius, buildOutsideRadius, minInbetweenChunkDistanceOfCities);
         CityWorldSettingsData.Naming naming = new CityWorldSettingsData.Naming(
                 villagerGivenNames, villagerSurnames, streetTerms, streetPrefixes, streetStarts, streetEnds,
-                streetSuffixes, fossilPrefixes, fossilSuffixes, namesAppend);
+                streetSuffixes, fossilPrefixes, fossilSuffixes, professionNames, namesAppend);
         CityWorldSettingsData.Mobs mobs = new CityWorldSettingsData.Mobs(
                 ids(mobGoodies), ids(mobBaddies), ids(mobAnimals), ids(mobSeaAnimals), ids(mobVagrants),
                 ids(mobSewers), ids(mobMine), ids(mobBunker), ids(mobWaterPit), ids(mobLavaPit), mobsAppend);

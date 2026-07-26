@@ -66,6 +66,10 @@ public final class ShopFitter {
         int fx = x + facing.getModX(), fz = z + facing.getModZ();
         if (mat != null && inChunk(fx, fz) && chunk.isEmpty(fx, y, fz) && solid(chunk, fx, y - 1, fz))
             chunk.setBlock(fx, y, fz, mat);
+
+        // and the shopkeeper — an employed villager of the trade, tending the counter
+        int wx = inChunk(fx, fz) ? fx : x, wz = inChunk(fx, fz) ? fz : z;
+        generator.spawnProvider.spawnWorker(generator, chunk, odds, wx, y, wz, shop.trade().profession());
     }
 
     /** Lowest floor of the ground storey at (x,z): open here and above, solid underfoot. -1 if none. */

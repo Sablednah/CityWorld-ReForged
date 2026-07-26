@@ -16,6 +16,13 @@ public abstract class OdonymProvider extends Provider {
 
 	public abstract String generateVillagerName(CityWorldGenerator generator, Odds odds);
 
+	/**
+	 * A role-themed name for an employed villager — a given name plus an occupational surname fitting the
+	 * trade (a fletcher becomes "Alice Fletcher", a fisher "Bob Angler"). {@code professionPath} is the
+	 * vanilla profession id path ({@code fletcher}, {@code farmer}, {@code fisherman}, …).
+	 */
+	public abstract String generateWorkerName(CityWorldGenerator generator, Odds odds, String professionPath);
+
 	// Upstream also declares read/write(ConfigurationSection) here, so a world can supply its own
 	// word lists. Config is P7; the names generated below are what an unconfigured world uses.
 

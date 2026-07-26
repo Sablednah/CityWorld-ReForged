@@ -165,6 +165,7 @@ public final class SettingsDatapack {
         naming.add("streetSuffixes", arr(n.streetSuffixes()));
         naming.add("fossilPrefixes", arr(n.fossilPrefixes()));
         naming.add("fossilSuffixes", arr(n.fossilSuffixes()));
+        naming.add("professionNames", arr(n.professionNames()));
         naming.addProperty("append", n.append());
         root.add("naming", naming);
 

@@ -493,7 +493,7 @@ public class FarmLot extends ConnectedLot {
 		// the profession. MODERN job-block dressing, gated with shops; skipped in decayed/nether farms.
 		if (generator.getSettings().includeShops && generator.worldEnvironment != Environment.NETHER
 				&& !generator.getSettings().includeDecayedNature && chunkOdds.playOdds(Odds.oddsSomewhatUnlikely))
-			placeFarmWorkstation(chunk, cropY);
+			placeFarmWorkstation(generator, chunk, cropY);
 
 		if (generator.getSettings().includeDecayedNature)
 			destroyLot(generator, cropY - 3, cropY + 3);
@@ -502,7 +502,7 @@ public class FarmLot extends ConnectedLot {
 	/** Drop a composter (and sometimes a hay bale) on a solid field corner — a little farm workstation.
 	 *  Scans a few near-corner cells for solid, dry ground: on a plowed field a fixed corner often lands
 	 *  on a water furrow, which we must not sit a composter on. */
-	private void placeFarmWorkstation(RealBlocks chunk, int cropY) {
+	private void placeFarmWorkstation(CityWorldGenerator generator, RealBlocks chunk, int cropY) {
 		int[][] candidates = { { 2, 2 }, { 13, 2 }, { 2, 13 }, { 13, 13 }, { 2, 7 }, { 13, 7 }, { 7, 2 }, { 7, 13 } };
 		int start = chunkOdds.getRandomInt(candidates.length);
 		for (int i = 0; i < candidates.length; i++) {
@@ -514,6 +514,9 @@ public class FarmLot extends ConnectedLot {
 			int hz = z < 8 ? z + 1 : z - 1;
 			if (chunkOdds.flipCoin() && !chunk.isEmpty(x, cropY - 1, hz) && !chunk.isWater(x, cropY - 1, hz))
 				chunk.setBlock(x, cropY, hz, Material.HAY_BLOCK);
+			// a farmhand to work it
+			generator.spawnProvider.spawnWorker(generator, chunk, chunkOdds, x, cropY, z,
+					net.minecraft.resources.Identifier.withDefaultNamespace("farmer"));
 			return;
 		}
 	}

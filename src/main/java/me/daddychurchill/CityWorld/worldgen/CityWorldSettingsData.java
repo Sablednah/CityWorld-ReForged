@@ -336,10 +336,11 @@ public record CityWorldSettingsData(
             List<String> streetSuffixes,
             List<String> fossilPrefixes,
             List<String> fossilSuffixes,
+            List<String> professionNames,
             boolean append) {
 
         public static final Naming DEFAULT = new Naming(List.of(), List.of(), List.of(), List.of(), List.of(),
-                List.of(), List.of(), List.of(), List.of(), false);
+                List.of(), List.of(), List.of(), List.of(), List.of(), false);
 
         private static final Codec<List<String>> LIST = Codec.STRING.listOf();
 
@@ -353,6 +354,7 @@ public record CityWorldSettingsData(
                 LIST.optionalFieldOf("streetSuffixes", List.of()).forGetter(Naming::streetSuffixes),
                 LIST.optionalFieldOf("fossilPrefixes", List.of()).forGetter(Naming::fossilPrefixes),
                 LIST.optionalFieldOf("fossilSuffixes", List.of()).forGetter(Naming::fossilSuffixes),
+                LIST.optionalFieldOf("professionNames", List.of()).forGetter(Naming::professionNames),
                 Codec.BOOL.optionalFieldOf("append", false).forGetter(Naming::append)
         ).apply(i, Naming::new));
     }
