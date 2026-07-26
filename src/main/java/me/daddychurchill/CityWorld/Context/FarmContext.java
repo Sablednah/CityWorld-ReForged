@@ -6,6 +6,7 @@ import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle;
 import me.daddychurchill.CityWorld.Plats.Rural.BarnLot;
 import me.daddychurchill.CityWorld.Plats.Rural.FarmLot;
+import me.daddychurchill.CityWorld.Plats.Rural.FishPondLot;
 import me.daddychurchill.CityWorld.Plats.Rural.HouseLot;
 import me.daddychurchill.CityWorld.Plats.Rural.WaterTowerLot;
 import me.daddychurchill.CityWorld.Plugins.ShapeProvider;
@@ -17,6 +18,8 @@ public class FarmContext extends RuralContext {
 	private final static double oddsOfFarmHouse = Odds.oddsSomewhatUnlikely;
 	private final static double oddsOfBarn = Odds.oddsSomewhatUnlikely;
 	private final static double oddsOfWaterTower = Odds.oddsSomewhatUnlikely;
+	/** A fish pond is a rare treat — at most one per farm platmap, and only where there's surface water. */
+	private final static double oddsOfFishPond = Odds.oddsVeryUnlikely;
 
 	public FarmContext(CityWorldGenerator generator) {
 		super(generator);
@@ -35,6 +38,7 @@ public class FarmContext extends RuralContext {
 		boolean housePlaced = false;
 		boolean barnPlaced = false;
 		boolean waterTowerPlaced = false;
+		boolean fishPondPlaced = false;
 		int lastX = 0, lastZ = 0;
 
 		// where do we begin?
@@ -102,6 +106,13 @@ public class FarmContext extends RuralContext {
 							&& generator.getSettings().includeBuildings) {
 						waterTowerPlaced = platmap.setLot(x, z,
 								getWaterTowerLot(generator, platmap, platmapOdds, originX + x, originZ + z));
+
+						// a rare fish pond (needs surface water and the shops/job-block dressing on)
+					} else if (!fishPondPlaced && generator.getSettings().includeShops
+							&& generator.getSettings().includeAbovegroundFluids
+							&& platmapOdds.playOdds(oddsOfFishPond)) {
+						fishPondPlaced = platmap.setLot(x, z,
+								new FishPondLot(platmap, originX + x, originZ + z));
 
 						// place the farm
 					} else {

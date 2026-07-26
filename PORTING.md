@@ -50,10 +50,20 @@ Four job blocks (fletching_table, loom, composter, lectern) were added to `gen_m
 force-load probe: **35/35 sampled shops carried the right job block, 0 misses, 0 exceptions.** The
 `Customize` screen, `SettingsExample`, `SettingsDatapack` and `/cityexport` all learned the `shops` knob.
 
-**Interiors remainder: (b) corner-shop *placement* in residential (the `CORNER_SHOP` scale is ready but
-no rural lot sets a `ShopType` yet — needs a small-shop lot in `RuralContext`); (c) villager professions
-claiming these job blocks; (d) the richer furniture-vocabulary design pass (counters, shelves themed per
-trade, hanging shop signs).**
+**Rural job-block dressing landed too (corner shops, farm composters, fish ponds).** With `shops` on:
+a residential house is occasionally a **corner shop** (`CornerShopLot extends HouseLot`, carries a
+`CORNER_SHOP` `ShopType`, so ShopFitter drops its trade's block for free — newsagent/greengrocer/
+butcher/fishmonger/apothecary; ~1 in 13 Neighborhood houses); farms get a **composter** at a field edge
+(~1 in 5 `FarmLot` chunks, the farmer's workstation, scanning for dry ground so it skips crop water
+furrows); and a rare one-off **fish pond** farm variant (`FishPondLot`, like the barn/water tower) — a
+dug water pool with lily pads, reeds, a bankside **barrel** (fisherman's workstation) and spawned fish.
+Verified over a 341×341 plan-sweep + force-load: 165 corner shops across all five corner trades, 12/12
+with a job block; composters present across farms; 40 ponds, all water+fish, most with the barrel (a
+couple in odd wet terrain miss it — cosmetic, rare).
+
+**Interiors remainder: (c) villager professions actually claiming these job blocks (the big one — turn
+the workstations into employed residents); (d) the richer furniture-vocabulary design pass (counters,
+shelves themed per trade, hanging shop signs); optional: chase the rare barrel-less fish pond.**
 
 **Overgrowth landed + a big schematics/decay polish pass (2026-07, this session).** Nature now reclaims
 the built world behind the new `[overgrowth]` settings group (`enabled` / `intensity` / `capVines`; on

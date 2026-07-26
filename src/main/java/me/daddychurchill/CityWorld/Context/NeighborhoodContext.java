@@ -3,11 +3,15 @@ package me.daddychurchill.CityWorld.Context;
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
+import me.daddychurchill.CityWorld.Plats.Rural.CornerShopLot;
 import me.daddychurchill.CityWorld.Plats.Rural.HouseLot;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 
 public class NeighborhoodContext extends RuralContext {
+
+	/** How often a residential house is instead a small corner shop — rare, so one is a local landmark. */
+	private final static double oddsOfCornerShop = Odds.oddsVeryUnlikely; // ~1 in 13 houses
 
 	public NeighborhoodContext(CityWorldGenerator generator) {
 		super(generator);
@@ -59,6 +63,10 @@ public class NeighborhoodContext extends RuralContext {
 	}
 
 	protected PlatLot getHouseLot(CityWorldGenerator generator, PlatMap platmap, Odds odds, int chunkX, int chunkZ) {
+		// occasionally a corner shop instead of a house (needs shops on — else it would look like a
+		// house with no shopfront, since ShopFitter is what marks it out)
+		if (generator.getSettings().includeShops && odds.playOdds(oddsOfCornerShop))
+			return new CornerShopLot(platmap, chunkX, chunkZ);
 		return new HouseLot(platmap, chunkX, chunkZ);
 	}
 

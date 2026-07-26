@@ -735,7 +735,7 @@ public final class Material {
     public static final Material WOOD_DOOR = of(Blocks.OAK_DOOR); // legacy generic wooden door -> oak
     public static final Material WOOD_STEP = of(Blocks.OAK_SLAB); // legacy generic wooden slab -> oak
 
-    // ---- Modern extras (69) — blocks the 1.14 vocabulary never had -------------
+    // ---- Modern extras (70) — blocks the 1.14 vocabulary never had -------------
     public static final Material ANCIENT_DEBRIS = of(Blocks.ANCIENT_DEBRIS); // P9: rare prize in the deepest mines (the reason they dug so far)
     public static final Material ANVIL = of(Blocks.ANVIL); // P9 mine prop: miners' camp
     public static final Material AZALEA = of(Blocks.AZALEA); // P10 overgrowth: azalea bush reclaiming corners
@@ -747,7 +747,7 @@ public final class Material {
     public static final Material BLUE_ICE = of(Blocks.BLUE_ICE); // P8 MODERN: glacier-blue ice for the highest peaks; 1.14 had none
     public static final Material CARTOGRAPHY_TABLE = of(Blocks.CARTOGRAPHY_TABLE); // P9 mine prop: miners' camp (drawing up plans)
     public static final Material CAVE_VINES = of(Blocks.CAVE_VINES); // P10 overgrowth: glow-berry vines hanging from ledges
-    public static final Material COMPOSTER = of(Blocks.COMPOSTER); // P11 shop: greengrocer's job block
+    public static final Material COMPOSTER = of(Blocks.COMPOSTER); // P11 shop/farm: greengrocer/farmer job block
     public static final Material COPPER_CHEST = of(Blocks.COPPER_CHEST); // P9 copper mine: loot chest, copper-age flavour (fresh)
     public static final Material COPPER_GRATE = of(Blocks.COPPER_GRATE); // P9 copper mine: cage/machinery grate (fresh)
     public static final Material COPPER_ORE = of(Blocks.COPPER_ORE); // P9: copper ore in mine walls
@@ -777,6 +777,7 @@ public final class Material {
     public static final Material LANTERN = of(Blocks.LANTERN); // P9: mine lighting
     public static final Material LEAF_LITTER = of(Blocks.LEAF_LITTER); // P10 overgrowth: fallen leaves littering floors (1.21.4 multiface)
     public static final Material LECTERN = of(Blocks.LECTERN); // P11 shop: newsagent/bookshop job block
+    public static final Material LILY_PAD = of(Blocks.LILY_PAD); // P11 farm: lily pads on the rare fish-pond farm variant
     public static final Material LOOM = of(Blocks.LOOM); // P11 shop: draper/tailor's job block
     public static final Material MOSSY_STONE_BRICKS = of(Blocks.MOSSY_STONE_BRICKS); // P10 overgrowth: mossy swap for stone-brick walls
     public static final Material MOSS_BLOCK = of(Blocks.MOSS_BLOCK); // P10 overgrowth: moss cushion on ground/floors

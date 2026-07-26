@@ -169,8 +169,9 @@ EXTRAS = {
     # cauldron, brewing_stand) already live above as mine props; these four are the stragglers.
     "FLETCHING_TABLE": "P11 shop: fletcher's job block",
     "LOOM": "P11 shop: draper/tailor's job block",
-    "COMPOSTER": "P11 shop: greengrocer's job block",
+    "COMPOSTER": "P11 shop/farm: greengrocer/farmer job block",
     "LECTERN": "P11 shop: newsagent/bookshop job block",
+    "LILY_PAD": "P11 farm: lily pads on the rare fish-pond farm variant",
 }
 
 # Copper "weathering" families are declared as `public static final WeatheringCopperBlocks NAME`

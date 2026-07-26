@@ -144,11 +144,13 @@ public final class SettingsExample {
             ============================================================================
             shops  — themed retail with villager job blocks (MODERN dressing)
             ============================================================================
-            enabled     false  Drop a villager job-site block on a classified shop's ground floor so
-                               a store reads as its trade (cartography table = map seller, fletching
-                               table = fletcher, smoker = butcher, ...) and a villager can claim the
-                               profession. The classification itself (see /cityinfo and the api
-                               package) is always computed; this only governs the block placement.
+            enabled     false  Villager job-site blocks so a store/farm reads as its trade and a
+                               villager can claim the profession: a job block on each high-street
+                               shop and rural corner shop (cartography table = map seller, fletching
+                               table = fletcher, smoker = butcher, ...), a composter at farm edges,
+                               and a rare fish-pond farm (barrel + fish). The shop classification
+                               itself (see /cityinfo and the api package) is always computed; this
+                               only governs the block placement.
 
             ============================================================================
             spawns  — who turns up, and how often   (odds 0.0 .. 1.0)
