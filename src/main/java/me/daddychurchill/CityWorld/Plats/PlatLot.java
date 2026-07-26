@@ -250,6 +250,12 @@ public abstract class PlatLot {
 				&& (style == LotStyle.STRUCTURE || style == LotStyle.ROAD || style == LotStyle.ROUNDABOUT))
 			me.daddychurchill.CityWorld.Support.Overgrowth.apply(generator, this, chunk, chunkOdds);
 
+		// Shops: a classified shop gets its trade's villager job block dropped on the ground floor, so a
+		// store reads as its trade. MODERN dressing (gated); runs after the interior is drawn so the
+		// counter lands in open floor. getShopType() is only non-null for shop lots.
+		if (generator.getSettings().includeShops && getShopType() != null)
+			me.daddychurchill.CityWorld.Support.ShopFitter.apply(generator, this, chunk, chunkOdds);
+
 		// polish things off
 		generator.shapeProvider.postGenerateBlocks(generator, this, chunk, blockYs);
 	}

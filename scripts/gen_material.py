@@ -164,6 +164,13 @@ EXTRAS = {
     "SHORT_GRASS": "P10 overgrowth: grass tufts pushing through",
     "DRIPSTONE_BLOCK": "P10 overgrowth: dripstone clumps underground",
     "POINTED_DRIPSTONE": "P10 overgrowth: stalactites/stalagmites in mines and caves",
+    # P11 shops: villager job-site blocks that mark a themed shop's trade (MODERN). Most job blocks
+    # (blast_furnace, smoker, stonecutter, cartography_table, smithing_table, barrel, grindstone,
+    # cauldron, brewing_stand) already live above as mine props; these four are the stragglers.
+    "FLETCHING_TABLE": "P11 shop: fletcher's job block",
+    "LOOM": "P11 shop: draper/tailor's job block",
+    "COMPOSTER": "P11 shop: greengrocer's job block",
+    "LECTERN": "P11 shop: newsagent/bookshop job block",
 }
 
 # Copper "weathering" families are declared as `public static final WeatheringCopperBlocks NAME`

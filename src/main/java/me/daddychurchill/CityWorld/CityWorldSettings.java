@@ -93,6 +93,14 @@ public class CityWorldSettings {
     /** Cap each outer wall-vine string with a glow lichen so live vine growth can't extend it. */
     public boolean capVines = false;
 
+    /**
+     * Theme classified shops with a villager job-site block (cartography table = map seller, fletching
+     * table = fletcher, …) dropped on the ground floor, so a store reads as its trade. MODERN dressing;
+     * off in CLASSIC. The shop <em>classification</em> (api / {@code /cityinfo}) is always computed —
+     * this only governs block placement.
+     */
+    public boolean includeShops = false;
+
     /** Who turns up, and how often. {@code SpawnProvider} branches on all of these. */
     public double spawnBeings = Odds.oddsLikely;
     public double spawnBaddies = Odds.oddsPrettyUnlikely;
@@ -275,6 +283,7 @@ public class CityWorldSettings {
         includeOvergrowth = og.enabled();
         overgrowthIntensity = og.intensity();
         capVines = og.capVines();
+        includeShops = data.shops().enabled();
 
         CityWorldSettingsData.Spawns s = data.spawns();
         spawnBeings = s.spawnBeings();
@@ -377,8 +386,9 @@ public class CityWorldSettings {
                 ids(mobSewers), ids(mobMine), ids(mobBunker), ids(mobWaterPit), ids(mobLavaPit), mobsAppend);
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
+        CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops);
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
-                overgrowth);
+                overgrowth, shops);
     }
 
     private static List<String> ids(List<EntityType> types) {

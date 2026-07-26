@@ -103,6 +103,11 @@ public final class SettingsDatapack {
         overgrowth.addProperty("capVines", og.capVines());
         root.add("overgrowth", overgrowth);
 
+        CityWorldSettingsData.Shops shops = d.shops();
+        JsonObject shopsJson = new JsonObject();
+        shopsJson.addProperty("enabled", shops.enabled());
+        root.add("shops", shopsJson);
+
         CityWorldSettingsData.Spawns s = d.spawns();
         JsonObject spawns = new JsonObject();
         spawns.addProperty("spawnBeings", s.spawnBeings());

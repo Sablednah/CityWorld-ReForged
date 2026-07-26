@@ -9,5 +9,8 @@
     "enabled": true,
     "intensity": 2.0,
     "capVines": false
+  },
+  "shops": {
+    "enabled": true
   }
 }

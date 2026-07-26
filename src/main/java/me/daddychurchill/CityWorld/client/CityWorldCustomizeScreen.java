@@ -64,7 +64,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     // terrain
     private boolean includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
             includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
-            includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, includeOvergrowth, capVines;
+            includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, includeOvergrowth, capVines,
+            includeShops;
     private double oddsOfPristineBuilding, overgrowthIntensity; // carried through untouched (no picker yet)
     // spawns
     private Chance spawnBeings, spawnBaddies, spawnAnimals, spawnVagrants;
@@ -128,6 +129,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         includeOvergrowth = og.enabled();
         overgrowthIntensity = og.intensity();
         capVines = og.capVines();
+        includeShops = initial.shops().enabled();
 
         CityWorldSettingsData.Spawns s = initial.spawns();
         spawnBeings = Chance.nearest(s.spawnBeings());
@@ -201,6 +203,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, onOff("Decayed nature", includeDecayedNature, v -> includeDecayedNature = v));
         pair(row, onOff("Overgrowth", includeOvergrowth, v -> includeOvergrowth = v));
         pair(row, onOff("Cap vines", capVines, v -> capVines = v));
+        pair(row, onOff("Shops", includeShops, v -> includeShops = v));
         flush(row);
 
         this.list.addHeader(Component.literal("Spawns"));
@@ -268,8 +271,9 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 treeStyle, spawnTrees.value, subSurfaceStyle, ruralnessLevel.value, maxBuildingFloors);
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
+        CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops);
         CityWorldSettingsData data = new CityWorldSettingsData(
-                features, terrain, spawns, treasures, world, radius, naming, mobs, overgrowth);
+                features, terrain, spawns, treasures, world, radius, naming, mobs, overgrowth, shops);
         return new Result(style, data);
     }
 

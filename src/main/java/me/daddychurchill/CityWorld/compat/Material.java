@@ -735,7 +735,7 @@ public final class Material {
     public static final Material WOOD_DOOR = of(Blocks.OAK_DOOR); // legacy generic wooden door -> oak
     public static final Material WOOD_STEP = of(Blocks.OAK_SLAB); // legacy generic wooden slab -> oak
 
-    // ---- Modern extras (65) — blocks the 1.14 vocabulary never had -------------
+    // ---- Modern extras (69) — blocks the 1.14 vocabulary never had -------------
     public static final Material ANCIENT_DEBRIS = of(Blocks.ANCIENT_DEBRIS); // P9: rare prize in the deepest mines (the reason they dug so far)
     public static final Material ANVIL = of(Blocks.ANVIL); // P9 mine prop: miners' camp
     public static final Material AZALEA = of(Blocks.AZALEA); // P10 overgrowth: azalea bush reclaiming corners
@@ -747,6 +747,7 @@ public final class Material {
     public static final Material BLUE_ICE = of(Blocks.BLUE_ICE); // P8 MODERN: glacier-blue ice for the highest peaks; 1.14 had none
     public static final Material CARTOGRAPHY_TABLE = of(Blocks.CARTOGRAPHY_TABLE); // P9 mine prop: miners' camp (drawing up plans)
     public static final Material CAVE_VINES = of(Blocks.CAVE_VINES); // P10 overgrowth: glow-berry vines hanging from ledges
+    public static final Material COMPOSTER = of(Blocks.COMPOSTER); // P11 shop: greengrocer's job block
     public static final Material COPPER_CHEST = of(Blocks.COPPER_CHEST); // P9 copper mine: loot chest, copper-age flavour (fresh)
     public static final Material COPPER_GRATE = of(Blocks.COPPER_GRATE); // P9 copper mine: cage/machinery grate (fresh)
     public static final Material COPPER_ORE = of(Blocks.COPPER_ORE); // P9: copper ore in mine walls
@@ -767,6 +768,7 @@ public final class Material {
     public static final Material EXPOSED_COPPER_CHEST = of(Blocks.EXPOSED_COPPER_CHEST); // P9 copper mine: loot chest (exposed)
     public static final Material EXPOSED_COPPER_GRATE = of(Blocks.EXPOSED_COPPER_GRATE); // P9 copper mine: cage/machinery grate (exposed)
     public static final Material EXPOSED_CUT_COPPER = of(Blocks.EXPOSED_CUT_COPPER); // P9 copper mine: worked-metal support beam (exposed)
+    public static final Material FLETCHING_TABLE = of(Blocks.FLETCHING_TABLE); // P11 shop: fletcher's job block
     public static final Material FLOWERING_AZALEA = of(Blocks.FLOWERING_AZALEA); // P10 overgrowth: flowering azalea bush
     public static final Material GLOW_LICHEN = of(Blocks.GLOW_LICHEN); // P9 mine: glow lichen creeping the abandoned walls, thicker with depth
     public static final Material GRINDSTONE = of(Blocks.GRINDSTONE); // P9 mine prop: miners' camp
@@ -774,6 +776,8 @@ public final class Material {
     public static final Material IRON_CHAIN = of(Blocks.IRON_CHAIN); // P9: chains in mine lift shafts (1.21 renamed CHAIN -> IRON_CHAIN)
     public static final Material LANTERN = of(Blocks.LANTERN); // P9: mine lighting
     public static final Material LEAF_LITTER = of(Blocks.LEAF_LITTER); // P10 overgrowth: fallen leaves littering floors (1.21.4 multiface)
+    public static final Material LECTERN = of(Blocks.LECTERN); // P11 shop: newsagent/bookshop job block
+    public static final Material LOOM = of(Blocks.LOOM); // P11 shop: draper/tailor's job block
     public static final Material MOSSY_STONE_BRICKS = of(Blocks.MOSSY_STONE_BRICKS); // P10 overgrowth: mossy swap for stone-brick walls
     public static final Material MOSS_BLOCK = of(Blocks.MOSS_BLOCK); // P10 overgrowth: moss cushion on ground/floors
     public static final Material MOSS_CARPET = of(Blocks.MOSS_CARPET); // P10 overgrowth: moss creeping across floors and roofs

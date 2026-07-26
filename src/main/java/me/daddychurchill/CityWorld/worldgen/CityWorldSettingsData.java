@@ -49,14 +49,15 @@ public record CityWorldSettingsData(
         Radius radius,
         Naming naming,
         Mobs mobs,
-        Overgrowth overgrowth) {
+        Overgrowth overgrowth,
+        Shops shops) {
 
     /** 1875000 chunks — the modern world-format radius ceiling (30,000,000 blocks / 16). */
     public static final int MAX_RADIUS = 30000000 / 16;
 
     public static final CityWorldSettingsData DEFAULT = new CityWorldSettingsData(
             Features.DEFAULT, Terrain.DEFAULT, Spawns.DEFAULT, Treasures.DEFAULT, World.DEFAULT, Radius.DEFAULT,
-            Naming.DEFAULT, Mobs.DEFAULT, Overgrowth.DEFAULT);
+            Naming.DEFAULT, Mobs.DEFAULT, Overgrowth.DEFAULT, Shops.DEFAULT);
 
     public static final Codec<CityWorldSettingsData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Features.CODEC.optionalFieldOf("features", Features.DEFAULT).forGetter(CityWorldSettingsData::features),
@@ -67,7 +68,8 @@ public record CityWorldSettingsData(
             Radius.CODEC.optionalFieldOf("radius", Radius.DEFAULT).forGetter(CityWorldSettingsData::radius),
             Naming.CODEC.optionalFieldOf("naming", Naming.DEFAULT).forGetter(CityWorldSettingsData::naming),
             Mobs.CODEC.optionalFieldOf("mobs", Mobs.DEFAULT).forGetter(CityWorldSettingsData::mobs),
-            Overgrowth.CODEC.optionalFieldOf("overgrowth", Overgrowth.DEFAULT).forGetter(CityWorldSettingsData::overgrowth)
+            Overgrowth.CODEC.optionalFieldOf("overgrowth", Overgrowth.DEFAULT).forGetter(CityWorldSettingsData::overgrowth),
+            Shops.CODEC.optionalFieldOf("shops", Shops.DEFAULT).forGetter(CityWorldSettingsData::shops)
     ).apply(i, CityWorldSettingsData::new));
 
     // --- what gets built ----------------------------------------------------------------------
@@ -177,6 +179,24 @@ public record CityWorldSettingsData(
                 Codec.DOUBLE.optionalFieldOf("intensity", DEFAULT_INTENSITY).forGetter(Overgrowth::intensity),
                 Codec.BOOL.optionalFieldOf("capVines", false).forGetter(Overgrowth::capVines)
         ).apply(i, Overgrowth::new));
+    }
+
+    // --- shops: themed retail with villager job blocks (its own group, room to grow) -----------
+
+    /**
+     * The shop-fitting pass — MODERN dressing that drops a villager job-site block (cartography table
+     * for a map seller, fletching table for a fletcher, …) on the ground floor of a classified shop, so
+     * a store reads as its trade and a villager can claim the profession. {@code enabled} turns it on.
+     * Off by default; MODERN ships it on. The classification itself (see the {@code api} package /
+     * {@code /cityinfo}) is always computed — this only governs the block placement.
+     */
+    public record Shops(boolean enabled) {
+
+        public static final Shops DEFAULT = new Shops(false);
+
+        public static final Codec<Shops> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Shops::enabled)
+        ).apply(i, Shops::new));
     }
 
     // --- who turns up, and how often -----------------------------------------------------------

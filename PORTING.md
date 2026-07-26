@@ -39,9 +39,21 @@ the original stringly-typed `Map<String,String>` shape (same keys) for continuit
 F3 overlay now **read through this API** rather than hand-rolling `getPlatMap→getMapLot`, so command and
 API can't drift. `CityWorldShops` stays the focused shop lookup over the same plan.
 
-**Interiors is now: (a) wire `roomProviderForFloor` / job-block placement off
-`lot.getShopType()`, MODERN-gated; (b) add corner-shop *placement* in residential (the `CORNER_SHOP`
-scale is ready but no rural lot sets a `ShopType` yet); (c) the furniture-vocabulary design pass.**
+**Shops now manifest in-world — job blocks landed (v1).** A new `shops` settings group (`enabled`; on
+in MODERN, off in CLASSIC) drives `Support.ShopFitter`, a post-decoration pass (modelled on Overgrowth)
+that drops the trade's villager job-site block on a classified shop's ground floor — cartography table =
+map seller, fletching table = fletcher, smoker = butcher, loom = draper, stonecutter = builder's
+merchant, lectern = bookshop, etc. It scans the ground storey for an open cell standing on solid floor,
+prefers one backing a wall/shelf, faces it inward, and lays a trade-coloured mat in front; the store's
+own registers/shelves are untouched (ShopFitter runs alongside the room populator, doesn't replace it).
+Four job blocks (fletching_table, loom, composter, lectern) were added to `gen_material.py`. Verified by
+force-load probe: **35/35 sampled shops carried the right job block, 0 misses, 0 exceptions.** The
+`Customize` screen, `SettingsExample`, `SettingsDatapack` and `/cityexport` all learned the `shops` knob.
+
+**Interiors remainder: (b) corner-shop *placement* in residential (the `CORNER_SHOP` scale is ready but
+no rural lot sets a `ShopType` yet — needs a small-shop lot in `RuralContext`); (c) villager professions
+claiming these job blocks; (d) the richer furniture-vocabulary design pass (counters, shelves themed per
+trade, hanging shop signs).**
 
 **Overgrowth landed + a big schematics/decay polish pass (2026-07, this session).** Nature now reclaims
 the built world behind the new `[overgrowth]` settings group (`enabled` / `intensity` / `capVines`; on

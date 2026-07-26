@@ -142,6 +142,15 @@ public final class SettingsExample {
                                growth can't lengthen it over time (and it reads as a lit tip).
 
             ============================================================================
+            shops  — themed retail with villager job blocks (MODERN dressing)
+            ============================================================================
+            enabled     false  Drop a villager job-site block on a classified shop's ground floor so
+                               a store reads as its trade (cartography table = map seller, fletching
+                               table = fletcher, smoker = butcher, ...) and a villager can claim the
+                               profession. The classification itself (see /cityinfo and the api
+                               package) is always computed; this only governs the block placement.
+
+            ============================================================================
             spawns  — who turns up, and how often   (odds 0.0 .. 1.0)
             ============================================================================
             spawnBeings         0.5      Villagers/witches appearing in populated spots.
