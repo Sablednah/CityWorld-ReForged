@@ -2,6 +2,40 @@
 
 ## ▶ Resume here (next task)
 
+**▶▶ NEXT: interiors + furniture + villager job blocks + shop-themed lowrise/midrise (owner, 2026-07).**
+The overgrowth arc (below) is done and shipped; the owner's queued next feature is making rooms feel
+lived-in. Three parts, in the owner's words: (1) **interiors/furniture** — research real MC
+interior-design/furniture build conventions (stairs+signs = chairs, barrel+trapdoor nightstands, item
+frames, etc.) and give the room-fitting a small furniture vocabulary; (2) **villager job blocks** so
+bundled/spawned villagers claim professions — e.g. composters on the farms, lecterns for librarians;
+(3) **theme lowrise/midrise buildings as shops** and drop the matching job block so a room reads as
+that trade — map seller = cartography table, fletcher = fletching table, cleric = brewing stand,
+armorer = blast furnace, butcher = smoker, mason = stonecutter, etc. (one theme per building/section).
+The shop/job-block half is concrete; the "furniture from build guides" half wants a design pass. See
+[[cityworld-interiors-decoration-ideas]] in memory. **MODERN-gate additions** (CLASSIC stays 1.8-era).
+Placement runs through the decoration seam (`RealBlocks` / room fitting), not terrain gen. A good model
+to copy: the `Support/Overgrowth` pass added this session (post-decoration, per-lot, block-state aware).
+
+**Overgrowth landed + a big schematics/decay polish pass (2026-07, this session).** Nature now reclaims
+the built world behind the new `[overgrowth]` settings group (`enabled` / `intensity` / `capVines`; on
++ intensity 2.0 in MODERN by default). `Support.Overgrowth` runs post-decoration per built lot: moss /
+leaf-litter / pale-moss carpets and grass/ferns/azalea/petals/dripleaf/mushrooms creep over
+sturdy-topped surfaces (canSurvive-checked, none on slabs/fences); stone-brick/cobble/stone weather to
+mossy — full blocks *and* their slab/stair/wall shapes; **vine strings hang down outer walls** (an
+up-scan finds the roofline, reads the wall across the chunk seam so seam-flush faces aren't skipped,
+length a random ¼..full of each wall, optionally capped with a glow-lichen tip); small reclaim trees
+break through roads; and **dripstone** reclaims mines *and* basements (anchored only to real
+floors/ceilings — never the cistern water — waterlogged if a tip dips in). Intensity multiplies density;
+verified 3654→8730 vines/city-platmap 1.0→3.0. Also this session: the whole **schematics playtest
+polish** — ocean builds keep the natural sea floor + `Anchor:` legs to the seabed + auto-waterlog;
+`KeepAir:` yml (winchester's cellar stays hollow) + dead-air trims; big builds full-scan and a 9×5
+cathedral may claim road lots (so it's rare-but-possible); the leftover footprint margin gets biome
+surface not a dirt apron; `LegacyBlocks`/`LegacySchematic` gained ~17 block + a full item map (the
+cathedral renders in its real materials, chests keep loot); water-edge/shallows builds pulled;
+`/cityfind` range widened. And **decay-as-probability completed**: `PlatLot.buildingsDecay()` gives
+ordinary buildings the rare-pristine roll schematics already had. All verified by read-back probes; see
+the memory notes [[cityworld-overgrowth-done]], [[cityworld-p6-schematics-done]].
+
 **CityWorld generates cities, and they're inhabited.** Terrain, roads with named street signs,
 buildings with furnished interiors, parks, roundabouts, farms, civic districts, trees and ground
 cover — all verified by reading blocks back out of a real world, deterministically, no exceptions.
