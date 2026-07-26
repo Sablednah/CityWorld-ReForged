@@ -67,16 +67,52 @@ public final class Overgrowth {
                     placeTopPlant(level, onTop, road, odds);
             }
 
-        // 2) walls — vines creeping up the sides. Sampled (not exhaustive) to stay cheap; dialled up on
-        //    buildings so their walls read properly reclaimed.
-        int vineTries = road ? 4 : 46;
-        for (int i = 0; i < vineTries; i++) {
+        // 2a) interior nooks — the bit that already read well: from a column's top scan DOWN to the first
+        //     air cell against a wall (a courtyard, a gap between rooms) and tuck a short vine there.
+        int nookTries = road ? 4 : 24;
+        for (int i = 0; i < nookTries; i++) {
             int x = odds.getRandomInt(real.width), z = odds.getRandomInt(real.width);
             int wx = oX + x, wz = oZ + z;
             int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, wx, wz);
-            for (int y = surfaceY - 1; y > floor && y > surfaceY - 28; y--)
-                if (tryVine(level, x, z, y, oX, oZ, real.width, odds))
-                    break;
+            for (int y = surfaceY - 1; y > floor && y > surfaceY - 24; y--) {
+                if (!level.getBlockState(new BlockPos(wx, y, wz)).isAir())
+                    continue;
+                Direction dir = wallDir(level, wx, y, wz);
+                if (dir == null)
+                    continue;
+                hangVineString(level, wx, y, wz, dir, 1 + odds.getRandomInt(3), odds);
+                break;
+            }
+        }
+
+        // 2b) OUTER walls — the bit that was missing. Outer building faces rise ABOVE the ground outside
+        //     the building, so scan UP from a column's exterior surface, find the highest air cell that
+        //     still has a wall beside it (up at the roofline), and hang a full vine string DOWN from there
+        //     — strings biased to the top, dangling down. The wall may be in the neighbouring chunk (an
+        //     outer face sits right on the chunk seam): the vine is written in THIS chunk, only the wall is
+        //     read across the boundary (guarded). Roads carry this since they flank the buildings.
+        int wallTries = road ? 40 : 30;
+        int ceilingY = generator.streetLevel + 200; // above the tallest building; the scan breaks at a roof
+        for (int i = 0; i < wallTries; i++) {
+            int x = odds.getRandomInt(real.width), z = odds.getRandomInt(real.width);
+            int wx = oX + x, wz = oZ + z;
+            int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, wx, wz);
+            // quick reject: no wall beside the column just above ground -> open space, don't scan the sky
+            if (wallDir(level, wx, surfaceY + 1, wz) == null && wallDir(level, wx, surfaceY + 2, wz) == null)
+                continue;
+            int topY = -1;
+            Direction topDir = null;
+            for (int y = surfaceY + 1; y <= ceilingY; y++) {
+                if (!level.getBlockState(new BlockPos(wx, y, wz)).isAir())
+                    break; // a roof/overhang closes the column above here
+                Direction dir = wallDir(level, wx, y, wz);
+                if (dir != null) {
+                    topY = y;
+                    topDir = dir;
+                }
+            }
+            if (topY >= 0)
+                hangVineString(level, wx, topY, wz, topDir, 2 + odds.getRandomInt(7), odds);
         }
 
         // 3) roads — the occasional sapling breaking through the tarmac into a small reclaim tree.
@@ -236,28 +272,38 @@ public final class Overgrowth {
         return true;
     }
 
-    /** If {@code (x,z,y)} is an empty cell against an in-chunk wall, hang a vine on it. */
-    private static boolean tryVine(ServerLevelAccessor level, int x, int z, int y, int oX, int oZ, int width,
-            Odds odds) {
-        BlockPos here = new BlockPos(oX + x, y, oZ + z);
-        if (!level.getBlockState(here).isAir())
-            return false;
+    /** The direction from the air cell {@code (wx,y,wz)} to an adjacent solid wall face, or null. Reads
+     *  the neighbour even across a chunk boundary (guarded by {@code hasChunk}), so a wall on the seam is
+     *  still found — the caller only ever WRITES the vine into the air cell itself, which is in-chunk. */
+    private static Direction wallDir(ServerLevelAccessor level, int wx, int y, int wz) {
         for (Direction dir : Direction.Plane.HORIZONTAL) {
-            int nx = x + dir.getStepX(), nz = z + dir.getStepZ();
-            if (nx < 0 || nx >= width || nz < 0 || nz >= width)
-                continue; // wall would be outside this chunk — leave it to that chunk's own pass
-            BlockPos wall = new BlockPos(oX + nx, y, oZ + nz);
-            BlockState ws = level.getBlockState(wall);
-            if (!ws.isFaceSturdy(level, wall, dir.getOpposite()))
+            int nwx = wx + dir.getStepX(), nwz = wz + dir.getStepZ();
+            if (!level.hasChunk(nwx >> 4, nwz >> 4))
                 continue;
-            // occasionally glow lichen instead of vine, for a bit of light on the ruin (both are face
-            // blocks that share the same NORTH/EAST/SOUTH/WEST boolean state)
-            BlockState face = (odds.playOdds(0.15) ? Material.GLOW_LICHEN.getBlockState() : Blocks.VINE.defaultBlockState())
-                    .setValue(faceProp(dir), true);
-            level.setBlock(here, face, Block.UPDATE_CLIENTS);
-            return true;
+            BlockPos wall = new BlockPos(nwx, y, nwz);
+            if (level.getBlockState(wall).isFaceSturdy(level, wall, dir.getOpposite()))
+                return dir;
         }
-        return false;
+        return null;
+    }
+
+    /** Hang a vine string from {@code (wx,y,wz)} straight down the wall on face {@code dir}, up to
+     *  {@code len} blocks, stopping where the wall or the air runs out. The odd string is glow lichen. */
+    private static void hangVineString(ServerLevelAccessor level, int wx, int y, int wz, Direction dir, int len,
+            Odds odds) {
+        boolean lichen = odds.playOdds(0.12);
+        for (int k = 0; k < len; k++) {
+            BlockPos cell = new BlockPos(wx, y - k, wz);
+            if (!level.getBlockState(cell).isAir())
+                break;
+            BlockPos wall = cell.relative(dir);
+            if (!level.hasChunk(wall.getX() >> 4, wall.getZ() >> 4)
+                    || !level.getBlockState(wall).isFaceSturdy(level, wall, dir.getOpposite()))
+                break; // wall ended (a window/ledge) — stop the string here
+            BlockState face = (lichen ? Material.GLOW_LICHEN.getBlockState() : Blocks.VINE.defaultBlockState())
+                    .setValue(faceProp(dir), true);
+            level.setBlock(cell, face, Block.UPDATE_CLIENTS);
+        }
     }
 
     private static net.minecraft.world.level.block.state.properties.BooleanProperty faceProp(Direction dir) {
