@@ -1742,6 +1742,11 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 
 		rooms.drawFixtures(generator, chunk, chunkOdds, floor, x, y, z, roomWidth, height, roomDepth, sideWithWall,
 				materialWall, materialGlass);
+
+		// MODERN: dress the finished room with a tasteful floor accent (plant/lamp/pot), so interiors read
+		// as lived-in rather than empty. No-op on CLASSIC and on cells the room already filled.
+		me.daddychurchill.CityWorld.Support.Furniture.accentRoom(generator, chunk, chunkOdds, x, y, z, roomWidth,
+				roomDepth);
 	}
 
 	private void drawInteriorNSWall(RealBlocks chunk, int x, int y1, int y2, int z, Material wallMaterial,

@@ -735,7 +735,8 @@ public final class Material {
     public static final Material WOOD_DOOR = of(Blocks.OAK_DOOR); // legacy generic wooden door -> oak
     public static final Material WOOD_STEP = of(Blocks.OAK_SLAB); // legacy generic wooden slab -> oak
 
-    // ---- Modern extras (70) — blocks the 1.14 vocabulary never had -------------
+    // ---- Modern extras (82) — blocks the 1.14 vocabulary never had -------------
+    public static final Material AMETHYST_CLUSTER = of(Blocks.AMETHYST_CLUSTER); // P12 interior: sparkle accent
     public static final Material ANCIENT_DEBRIS = of(Blocks.ANCIENT_DEBRIS); // P9: rare prize in the deepest mines (the reason they dug so far)
     public static final Material ANVIL = of(Blocks.ANVIL); // P9 mine prop: miners' camp
     public static final Material AZALEA = of(Blocks.AZALEA); // P10 overgrowth: azalea bush reclaiming corners
@@ -745,9 +746,14 @@ public final class Material {
     public static final Material BIG_DRIPLEAF = of(Blocks.BIG_DRIPLEAF); // P10 overgrowth: big dripleaf
     public static final Material BLAST_FURNACE = of(Blocks.BLAST_FURNACE); // P9 mine prop: miners' camp
     public static final Material BLUE_ICE = of(Blocks.BLUE_ICE); // P8 MODERN: glacier-blue ice for the highest peaks; 1.14 had none
+    public static final Material CANDLE = of(Blocks.CANDLE); // P12 interior: tabletop/shelf candle accent
     public static final Material CARTOGRAPHY_TABLE = of(Blocks.CARTOGRAPHY_TABLE); // P9 mine prop: miners' camp (drawing up plans)
     public static final Material CAVE_VINES = of(Blocks.CAVE_VINES); // P10 overgrowth: glow-berry vines hanging from ledges
+    public static final Material CHISELED_BOOKSHELF = of(Blocks.CHISELED_BOOKSHELF); // P12 interior: studies/libraries
+    public static final Material CHISELED_COPPER = of(Blocks.CHISELED_COPPER); // P12 interior: decorative modern wall/counter block
+    public static final Material CHISELED_TUFF = of(Blocks.CHISELED_TUFF); // P12 interior: decorative modern stone block
     public static final Material COMPOSTER = of(Blocks.COMPOSTER); // P11 shop/farm: greengrocer/farmer job block
+    public static final Material COPPER_BULB = of(Blocks.COPPER_BULB); // P12 interior: warm modern light source
     public static final Material COPPER_CHEST = of(Blocks.COPPER_CHEST); // P9 copper mine: loot chest, copper-age flavour (fresh)
     public static final Material COPPER_GRATE = of(Blocks.COPPER_GRATE); // P9 copper mine: cage/machinery grate (fresh)
     public static final Material COPPER_ORE = of(Blocks.COPPER_ORE); // P9: copper ore in mine walls
@@ -792,12 +798,17 @@ public final class Material {
     public static final Material PALE_MOSS_CARPET = of(Blocks.PALE_MOSS_CARPET); // P10 overgrowth: pale moss carpet
     public static final Material PINK_PETALS = of(Blocks.PINK_PETALS); // P10 overgrowth: petals scattered on the ground
     public static final Material POINTED_DRIPSTONE = of(Blocks.POINTED_DRIPSTONE); // P10 overgrowth: stalactites/stalagmites in mines and caves
+    public static final Material POTTED_AZALEA = of(Blocks.POTTED_AZALEA); // P12 interior: potted plant accent
+    public static final Material POTTED_BAMBOO = of(Blocks.POTTED_BAMBOO); // P12 interior: potted plant accent
+    public static final Material POTTED_FERN = of(Blocks.POTTED_FERN); // P12 interior: potted plant accent
     public static final Material POWDER_SNOW = of(Blocks.POWDER_SNOW); // P8 MODERN: powder-snow pockets on snowy slopes; a 1.17 block
     public static final Material RED_SAND = of(Blocks.RED_SAND); // P8 MODERN: badlands surface; the 1.14 Bukkit source never referenced it
     public static final Material SHORT_GRASS = of(Blocks.SHORT_GRASS); // P10 overgrowth: grass tufts pushing through
     public static final Material SMALL_DRIPLEAF = of(Blocks.SMALL_DRIPLEAF); // P10 overgrowth: dripleaf in damp corners
     public static final Material SMITHING_TABLE = of(Blocks.SMITHING_TABLE); // P9 mine prop: miners' camp
     public static final Material SMOKER = of(Blocks.SMOKER); // P9 mine prop: miners' camp
+    public static final Material SMOOTH_QUARTZ = of(Blocks.SMOOTH_QUARTZ); // P12 interior: clean modern counter/surface
+    public static final Material SMOOTH_QUARTZ_SLAB = of(Blocks.SMOOTH_QUARTZ_SLAB); // P12 interior: modern counter/coffee-table top
     public static final Material SOUL_CAMPFIRE = of(Blocks.SOUL_CAMPFIRE); // P9 mine prop: miners' camp fire (soul)
     public static final Material SOUL_LANTERN = of(Blocks.SOUL_LANTERN); // P9 mine prop/light: soul lantern
     public static final Material SPORE_BLOSSOM = of(Blocks.SPORE_BLOSSOM); // P10 overgrowth: spore blossom on ceilings
@@ -806,6 +817,7 @@ public final class Material {
     public static final Material WEATHERED_COPPER_CHEST = of(Blocks.WEATHERED_COPPER_CHEST); // P9 copper mine: loot chest (weathered)
     public static final Material WEATHERED_COPPER_GRATE = of(Blocks.WEATHERED_COPPER_GRATE); // P9 copper mine: cage/machinery grate (weathered)
     public static final Material WEATHERED_CUT_COPPER = of(Blocks.WEATHERED_CUT_COPPER); // P9 copper mine: worked-metal support beam (weathered)
+    public static final Material WHITE_CANDLE = of(Blocks.WHITE_CANDLE); // P12 interior: candle accent (white)
 
     // ---- Copper weathering stages (12) — reached via WeatheringCopperBlocks accessors -
     public static final Material COPPER_BARS = of(Blocks.COPPER_BARS.unaffected()); // P9 copper mine: cage bars (fresh)

@@ -72,10 +72,22 @@ built-in and **datapack-overridable** via a new `naming.professionNames` list (`
 entries; replace or, with `append`, add — same as the other name lists). Verified: 21 villagers employed
 across sampled shops, all `employed=true`, names themed correctly.
 
-**Interiors remainder: (d) the richer furniture-vocabulary design pass — themed counters/shelves per
-trade, hanging shop signs, and the hay ideas (paddock bales away from fences, a haystack farm plot); plus
-optional polish: pre-populate a couple of starter trades on employed villagers, and chase the rare
-barrel-less fish pond.**
+**Interior decoration pass — first slice landed.** New `Support.Furniture` is the MODERN furniture
+vocabulary (clever-block-trick pieces + the post-1.8 deco palette). Its centrepiece `accentRoom(...)` is
+hooked into `FinishedBuildingLot.drawInteriorRoom`, so every furnished room cell in a MODERN building has
+a chance at a tasteful floor accent — a potted plant, a fence-and-lantern floor lamp, a decorated pot, an
+amethyst sparkle — placed in a clear corner so it never blocks a walkway (CLASSIC untouched). Plus
+targeted upgrades: library rooms blend in **chiseled bookshelves**, and lounge couches get a little
+**coffee table** (slab-on-fence with a candle/plant). ~13 modern deco blocks added to `gen_material`.
+Verified: 2082 accent blocks across 50 sampled MODERN building chunks, clearFound==placed (no silent
+misses), 0 exceptions. **NOTE: worldgen entities/floor aren't final mid-construction — decoration that
+needs the finished floor belongs in a post-pass (like `ShopFitter`), not mid-room; `accentRoom` works
+because the room's own floor row is already solid when `drawInteriorRoom` runs.**
+
+**Decoration remainder (still to do): (d cont.) themed counters/shelves per shop trade, hanging shop
+signs, kitchens/bathrooms/bedrooms (houses are furnished separately from these office rooms), the hay
+ideas (paddock bales away from fences, a haystack farm plot); optional: starter trades on employed
+villagers, and the rare barrel-less fish pond.**
 
 **Overgrowth landed + a big schematics/decay polish pass (2026-07, this session).** Nature now reclaims
 the built world behind the new `[overgrowth]` settings group (`enabled` / `intensity` / `capVines`; on

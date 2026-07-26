@@ -172,6 +172,20 @@ EXTRAS = {
     "COMPOSTER": "P11 shop/farm: greengrocer/farmer job block",
     "LECTERN": "P11 shop: newsagent/bookshop job block",
     "LILY_PAD": "P11 farm: lily pads on the rare fish-pond farm variant",
+    # P12 interiors: modern furniture/decoration vocabulary (MODERN only). Clever-block-trick accents
+    # plus the post-1.8 decorative palette woven into furnished rooms.
+    "CHISELED_BOOKSHELF": "P12 interior: studies/libraries",
+    "CANDLE": "P12 interior: tabletop/shelf candle accent",
+    "WHITE_CANDLE": "P12 interior: candle accent (white)",
+    "COPPER_BULB": "P12 interior: warm modern light source",
+    "CHISELED_COPPER": "P12 interior: decorative modern wall/counter block",
+    "CHISELED_TUFF": "P12 interior: decorative modern stone block",
+    "AMETHYST_CLUSTER": "P12 interior: sparkle accent",
+    "POTTED_FERN": "P12 interior: potted plant accent",
+    "POTTED_AZALEA": "P12 interior: potted plant accent",
+    "POTTED_BAMBOO": "P12 interior: potted plant accent",
+    "SMOOTH_QUARTZ": "P12 interior: clean modern counter/surface",
+    "SMOOTH_QUARTZ_SLAB": "P12 interior: modern counter/coffee-table top",
 }
 
 # Copper "weathering" families are declared as `public static final WeatheringCopperBlocks NAME`
