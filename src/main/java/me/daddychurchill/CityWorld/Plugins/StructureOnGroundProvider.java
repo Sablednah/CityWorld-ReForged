@@ -907,12 +907,11 @@ public class StructureOnGroundProvider extends Provider {
 					doorEast = roomEast;
 				}
 
-//				chunk.setBlock((x2 - x1) / 2 + x1, y1, (z2 - z1) / 2 + z1, Material.CHEST);
+				me.daddychurchill.CityWorld.Support.Furniture.kitchen(generator, chunk, odds, x1, x2, y1, z1, z2);
 				break;
 			case DINING:
 
-//				chunk.setBlock((x2 - x1) / 2 + x1, y1, (z2 - z1) / 2 + z1, Material.SPRUCE_FENCE);
-//				chunk.setBlock((x2 - x1) / 2 + x1, y1 + 1, (z2 - z1) / 2 + z1, Material.BIRCH_PRESSURE_PLATE);
+				me.daddychurchill.CityWorld.Support.Furniture.dining(generator, chunk, odds, x1, x2, y1, z1, z2);
 				break;
 			case ENTRY:
 
@@ -1061,10 +1060,10 @@ public class StructureOnGroundProvider extends Provider {
 				break;
 			case LIVING:
 
-//				chunk.setBlock((x2 - x1) / 2 + x1, y1, (z2 - z1) / 2 + z1, Material.DIAMOND_BLOCK);
+				me.daddychurchill.CityWorld.Support.Furniture.living(generator, chunk, odds, x1, x2, y1, z1, z2);
 				break;
 			case BED:
-//				chunk.setBlock((x2 - x1) / 2 + x1, y1, (z2 - z1) / 2 + z1, Material.WHITE_WOOL);
+				me.daddychurchill.CityWorld.Support.Furniture.bedroom(generator, chunk, odds, x1, x2, y1, z1, z2);
 				break;
 			}
 

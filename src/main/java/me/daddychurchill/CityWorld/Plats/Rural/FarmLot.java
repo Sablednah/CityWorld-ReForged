@@ -36,7 +36,7 @@ public class FarmLot extends ConnectedLot {
 		ACACIA_SAPLING, DARK_OAK_SAPLING, OAK_TREE, PINE_TREE, BIRCH_TREE, JUNGLE_TREE, SWAMP_TREE, ACACIA_TREE, WHEAT,
 		CARROT, POTATO, MELON, PUMPKIN, BEETROOT, BROWN_MUSHROOM, RED_MUSHROOM, NETHERWART, SHORT_FLOWERS, TALL_FLOWERS,
 		ALL_FLOWERS, SHORT_PLANTS, TALL_PLANTS, ALL_PLANTS, PRARIE_PLANTS, EDIBLE_PLANTS, NETHER_PLANTS, DECAY_PLANTS,
-		PADDOCK, HOTAIR_BALLOON
+		PADDOCK, HOTAIR_BALLOON, HAYSTACK
 	}
 
 	private CropType cropType;
@@ -303,6 +303,19 @@ public class FarmLot extends ConnectedLot {
 			case PADDOCK:
 				generateSurface(generator, chunk, false);
 				generator.spawnProvider.spawnAnimals(generator, chunk, chunkOdds, 7, cropY, 7);
+				// a bale or two in the middle — kept well clear of the perimeter fence so the animals
+				// can't use it to hop the fence and escape
+				if (chunkOdds.playOdds(Odds.oddsLikely)) {
+					chunk.setBlock(7, cropY, 7, Material.HAY_BLOCK);
+					if (chunkOdds.flipCoin())
+						chunk.setBlock(8, cropY, 7, Material.HAY_BLOCK);
+					if (chunkOdds.flipCoin())
+						chunk.setBlock(7, cropY, 8, Material.HAY_BLOCK);
+				}
+				break;
+			case HAYSTACK:
+				haystackField(chunk, cropY);
+				generateSurface(generator, chunk, false);
 				break;
 			case VINES:
 				plantVineyard(chunk, cropY, Material.VINE);
@@ -521,6 +534,16 @@ public class FarmLot extends ConnectedLot {
 		}
 	}
 
+	/** A field of stacked hay bales in rows, with walkways between — a harvested field put up for storage. */
+	private void haystackField(SupportBlocks chunk, int cropY) {
+		for (int x = 2; x < 14; x += 2)
+			for (int z = 2; z < 14; z++)
+				if (chunkOdds.playOdds(Odds.oddsVeryLikely)) {
+					int h = 1 + (chunkOdds.playOdds(Odds.oddsUnlikely) ? 1 : 0);
+					chunk.setBlocks(x, cropY, cropY + h, z, Material.HAY_BLOCK);
+				}
+	}
+
 	private void plowField(SupportBlocks chunk, int croplevel, Material matRidge, Material matFurrow, int stepCol) {
 
 		// do the deed
@@ -687,7 +710,7 @@ public class FarmLot extends ConnectedLot {
 			CropType.BEETROOT, CropType.MELON, CropType.PUMPKIN, CropType.SHORT_FLOWERS, CropType.TALL_FLOWERS,
 			CropType.ALL_FLOWERS, CropType.SHORT_PLANTS, CropType.TALL_PLANTS, CropType.EDIBLE_PLANTS, CropType.PADDOCK,
 			CropType.PADDOCK, CropType.PADDOCK, CropType.PADDOCK, CropType.PADDOCK, CropType.PADDOCK, CropType.PADDOCK,
-			CropType.PADDOCK, CropType.HOTAIR_BALLOON };
+			CropType.PADDOCK, CropType.HAYSTACK, CropType.HAYSTACK, CropType.HOTAIR_BALLOON };
 
 	protected CropType setNormalCrop() {
 		CropType result = pickACrop(normalCrops);
@@ -700,18 +723,18 @@ public class FarmLot extends ConnectedLot {
 	// biome (see ClimateZone). Water-hungry crops still fall back to fallow if aboveground fluids are off.
 	private final static CropType[] modernColdCrops = { CropType.FALLOW, CropType.POTATO, CropType.BEETROOT,
 			CropType.WHEAT, CropType.FERN, CropType.TALL_FERN, CropType.PINE_TREE, CropType.PINE_TREE,
-			CropType.OAK_SAPLING, CropType.ALLIUM, CropType.OXEYE_DAISY, CropType.PADDOCK, CropType.PADDOCK };
+			CropType.OAK_SAPLING, CropType.ALLIUM, CropType.OXEYE_DAISY, CropType.PADDOCK, CropType.PADDOCK, CropType.HAYSTACK };
 
 	private final static CropType[] modernTemperateCrops = { CropType.FALLOW, CropType.WHEAT, CropType.CARROT,
 			CropType.POTATO, CropType.BEETROOT, CropType.GRASS, CropType.TALL_GRASS, CropType.POPPY, CropType.DANDELION,
 			CropType.RED_TULIP, CropType.ORANGE_TULIP, CropType.WHITE_TULIP, CropType.PINK_TULIP, CropType.OXEYE_DAISY,
 			CropType.ALLIUM, CropType.OAK_TREE, CropType.BIRCH_TREE, CropType.OAK_SAPLING, CropType.BIRCH_SAPLING,
-			CropType.SHORT_FLOWERS, CropType.ALL_FLOWERS, CropType.PADDOCK, CropType.PADDOCK };
+			CropType.SHORT_FLOWERS, CropType.ALL_FLOWERS, CropType.PADDOCK, CropType.PADDOCK, CropType.HAYSTACK };
 
 	// warm + dry — savanna: acacia, hardy grasses, a little wheat, sunflowers
 	private final static CropType[] modernSavannaCrops = { CropType.FALLOW, CropType.WHEAT, CropType.MELON,
 			CropType.GRASS, CropType.TALL_GRASS, CropType.SUNFLOWER, CropType.DEAD_BUSH, CropType.ACACIA_TREE,
-			CropType.ACACIA_SAPLING, CropType.PADDOCK, CropType.PADDOCK };
+			CropType.ACACIA_SAPLING, CropType.PADDOCK, CropType.PADDOCK, CropType.HAYSTACK };
 
 	// warm/hot + wet — swamp/jungle: melons, pumpkins, cane, jungle trees, orchids, ferns
 	private final static CropType[] modernJungleCrops = { CropType.MELON, CropType.PUMPKIN, CropType.REED,

@@ -84,10 +84,21 @@ misses), 0 exceptions. **NOTE: worldgen entities/floor aren't final mid-construc
 needs the finished floor belongs in a post-pass (like `ShopFitter`), not mid-room; `accentRoom` works
 because the room's own floor row is already solid when `drawInteriorRoom` runs.**
 
-**Decoration remainder (still to do): (d cont.) themed counters/shelves per shop trade, hanging shop
-signs, kitchens/bathrooms/bedrooms (houses are furnished separately from these office rooms), the hay
-ideas (paddock bales away from fences, a haystack farm plot); optional: starter trades on employed
-villagers, and the rare barrel-less fish pond.**
+**Decoration wave 2 landed — houses, shop signage, hay (2026-07).** (1) **Houses are furnished**: the
+colonial house's empty KITCHEN/DINING/LIVING/BED room styles now call `Furniture.kitchen/dining/living/
+bedroom(...)` — a cauldron-sink + stove (smoker on MODERN) + barrel counter, a table with chairs, a couch
++ coffee table, a bed + bedside barrel + lamp, all clear-floor-guarded and MODERN-accented. (2) **Shop
+signage**: `ShopFitter` hangs an `OAK_HANGING_SIGN` over the counter with a **random shop name** (new
+`OdonymProvider.generateShopName(...)` → "Gibson & Sons — Armourer", "Ye Olde Map seller", "Anderson's Map
+seller", drawn from the villager surname pool), plus a storage barrel beside the counter. No sign-NPE.
+(3) **Hay**: paddock fields get a bale or two in the *centre* (clear of the fence so animals can't hop
+out), and a new `FarmLot.CropType.HAYSTACK` renders a field of stacked bales in rows (in the normal +
+MODERN crop pools). Verified: 40 houses richly furnished, 8 shop signs with names, 123 hay blocks / 60
+farms, 0 exceptions.
+
+**Decoration remainder (still to do): themed counters/shelves per shop trade (beyond the sign+barrel),
+bathrooms, more house variety; optional: starter trades on employed villagers, the rare barrel-less fish
+pond, and richer shop-name patterns.**
 
 **Overgrowth landed + a big schematics/decay polish pass (2026-07, this session).** Nature now reclaims
 the built world behind the new `[overgrowth]` settings group (`enabled` / `intensity` / `capVines`; on

@@ -103,6 +103,68 @@ public final class Furniture {
             chunk.setBlock(x, y + 2, z, odds.flipCoin() ? Material.CANDLE : Material.POTTED_FERN);
     }
 
+    // --- house rooms (called from the colonial house's per-room styling) -----------------------
+
+    private static final Material[] BEDS = { Material.WHITE_BED, Material.RED_BED, Material.BLUE_BED };
+
+    /** A kitchen counter along the north interior wall: cabinet, sink, stove (a smoker on MODERN). */
+    public static void kitchen(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
+            int z1, int z2) {
+        int z = z1 + 1;
+        placeIfClear(chunk, x1 + 1, y, z, Material.BARREL, BlockFace.SOUTH);
+        if (clearFloor(chunk, x1 + 2, y, z))
+            chunk.setCauldron(x1 + 2, y, z, odds);
+        if (x1 + 3 <= x2 - 1)
+            placeIfClear(chunk, x1 + 3, y, z, modern(generator) ? Material.SMOKER : Material.FURNACE, BlockFace.SOUTH);
+        accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+    }
+
+    /** A dining table with a chair either side, in the middle of the room. */
+    public static void dining(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
+            int z1, int z2) {
+        int cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
+        if (clearFloor(chunk, cx, y, cz)) {
+            chunk.setBlock(cx, y, cz, Material.OAK_FENCE);
+            chunk.setBlock(cx, y + 1, cz, modern(generator) ? Material.SMOOTH_QUARTZ_SLAB : Material.WHITE_CARPET);
+        }
+        placeIfClear(chunk, cx - 1, y, cz, Material.OAK_STAIRS, BlockFace.EAST);
+        placeIfClear(chunk, cx + 1, y, cz, Material.OAK_STAIRS, BlockFace.WEST);
+        accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+    }
+
+    /** A couch against the south wall with a coffee table in front. */
+    public static void living(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
+            int z1, int z2) {
+        int z = z2 - 1;
+        for (int x = x1 + 1; x <= Math.min(x1 + 3, x2 - 1); x++)
+            placeIfClear(chunk, x, y, z, Material.SPRUCE_STAIRS, BlockFace.SOUTH);
+        sideTable(chunk, odds, x1 + 2 <= x2 - 1 ? x1 + 2 : x1 + 1, y, z - 1);
+        accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+    }
+
+    /** A bed in the corner with a bedside barrel, and (MODERN) a lamp. */
+    public static void bedroom(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
+            int z1, int z2) {
+        Material bed = BEDS[odds.getRandomInt(BEDS.length)];
+        // bed head to the north wall, foot toward room — needs two clear cells
+        if (clearFloor(chunk, x1 + 1, y, z1 + 1) && clearFloor(chunk, x1 + 1, y, z1 + 2))
+            chunk.setBed(x1 + 1, y, z1 + 1, bed, BlockFace.SOUTH);
+        placeIfClear(chunk, x1 + 2, y, z1 + 1, Material.BARREL, BlockFace.SOUTH); // nightstand
+        if (modern(generator) && x2 - 1 > x1 + 2)
+            floorLampIfClear(chunk, odds, x2 - 1, y, z2 - 1);
+        accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+    }
+
+    private static void placeIfClear(RealBlocks chunk, int x, int y, int z, Material mat, BlockFace facing) {
+        if (clearFloor(chunk, x, y, z))
+            chunk.setBlock(x, y, z, mat, facing);
+    }
+
+    private static void floorLampIfClear(RealBlocks chunk, Odds odds, int x, int y, int z) {
+        if (clearFloor(chunk, x, y, z))
+            floorLamp(chunk, odds, x, y, z);
+    }
+
     // --- checks --------------------------------------------------------------------------------
 
     /** Air at (x,y,z) and above, solid underfoot — a genuinely empty spot to stand a piece on. */

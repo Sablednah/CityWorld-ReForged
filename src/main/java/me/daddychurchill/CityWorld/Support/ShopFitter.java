@@ -70,6 +70,17 @@ public final class ShopFitter {
         // and the shopkeeper — an employed villager of the trade, tending the counter
         int wx = inChunk(fx, fz) ? fx : x, wz = inChunk(fx, fz) ? fz : z;
         generator.spawnProvider.spawnWorker(generator, chunk, odds, wx, y, wz, shop.trade().profession());
+
+        // a storage barrel beside the counter (perpendicular to the facing)
+        int sx = x - facing.getModZ(), sz = z + facing.getModX();
+        if (inChunk(sx, sz) && chunk.isEmpty(sx, y, sz) && solid(chunk, sx, y - 1, sz))
+            chunk.setBlock(sx, y, sz, Material.BARREL, facing);
+
+        // a hanging shopfront sign over the counter, with a random shop name — hung from the ceiling
+        if (chunk.isEmpty(x, y + 1, z) && chunk.isEmpty(x, y + 2, z) && solid(chunk, x, y + 3, z)) {
+            String[] name = generator.odonymProvider.generateShopName(generator, odds, shop.trade().displayName());
+            chunk.setSignPost(x, y + 2, z, Material.OAK_HANGING_SIGN, facing, name);
+        }
     }
 
     /** Lowest floor of the ground storey at (x,z): open here and above, solid underfoot. -1 if none. */

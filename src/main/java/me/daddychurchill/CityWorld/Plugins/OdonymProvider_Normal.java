@@ -264,6 +264,24 @@ public class OdonymProvider_Normal extends OdonymProvider {
 		return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
 	}
 
+	private static final String[] SHOP_ADJ = { "Golden", "Old", "Royal", "Copper", "Green", "Corner", "Grand",
+			"Market", "Silver", "Merry" };
+
+	@Override
+	public String[] generateShopName(CityWorldGenerator generator, Odds odds, String tradeLabel) {
+		String surname = villagerSuffixes.get(odds.getRandomInt(villagerSuffixes.size()));
+		switch (odds.getRandomInt(4)) {
+		case 0:
+			return new String[] { surname + " &", "Sons", tradeLabel };
+		case 1:
+			return new String[] { surname + "'s", tradeLabel };
+		case 2:
+			return new String[] { "The " + SHOP_ADJ[odds.getRandomInt(SHOP_ADJ.length)], tradeLabel };
+		default:
+			return new String[] { "Ye Olde", tradeLabel };
+		}
+	}
+
 	private final String tagVillagerPrefixes = "VillagerGivenNames";
 	private final String tagVillagerSuffixes = "VillagerSurnames";
 

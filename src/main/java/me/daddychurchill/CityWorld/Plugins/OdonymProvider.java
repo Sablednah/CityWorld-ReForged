@@ -23,6 +23,13 @@ public abstract class OdonymProvider extends Provider {
 	 */
 	public abstract String generateWorkerName(CityWorldGenerator generator, Odds odds, String professionPath);
 
+	/**
+	 * A random shop name for a hanging shopfront sign, given the trade's display label (e.g. "Fletcher",
+	 * "Map seller"). Returns the sign's lines — a shop name over the trade, drawn from the same villager
+	 * name pools as everything else ("Cooper & Sons", "The Golden Fletcher", "Vance's").
+	 */
+	public abstract String[] generateShopName(CityWorldGenerator generator, Odds odds, String tradeLabel);
+
 	// Upstream also declares read/write(ConfigurationSection) here, so a world can supply its own
 	// word lists. Config is P7; the names generated below are what an unconfigured world uses.
 
