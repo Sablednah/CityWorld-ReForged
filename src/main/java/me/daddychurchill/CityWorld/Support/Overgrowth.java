@@ -149,8 +149,11 @@ public final class Overgrowth {
             for (int y = street - 2; y > bottom + 1; y--) {
                 if (!level.getBlockState(new BlockPos(wx, y, wz)).isAir())
                     continue;
-                boolean ceiling = !level.getBlockState(new BlockPos(wx, y + 1, wz)).isAir();
-                boolean floorBelow = !level.getBlockState(new BlockPos(wx, y - 1, wz)).isAir();
+                // Anchor only to a REAL floor/ceiling — a water block (a cistern surface) is not a floor,
+                // or a stalagmite would sprout right off the water. (Dripstone that grows into water gets
+                // waterlogged in setDrip, so a stalactite dipping into the cistern still reads right.)
+                boolean ceiling = solidRoof(level, wx, y + 1, wz);
+                boolean floorBelow = solidRoof(level, wx, y - 1, wz);
                 if (ceiling && odds.flipCoin()) {
                     growDripstone(level, wx, y, wz, Direction.DOWN, odds);
                     break;
@@ -181,24 +184,31 @@ public final class Overgrowth {
         for (int i = 0; i < count; i++) {
             int x = odds.getRandomInt(1, 15), z = odds.getRandomInt(1, 15);
             if (odds.flipCoin()) {
-                if (!real.isEmpty(x, ceilY, z) && real.isEmpty(x, ceilY - 1, z))
+                if (solidRoof(level, oX + x, ceilY, oZ + z) && real.isEmpty(x, ceilY - 1, z))
                     growDripstone(level, oX + x, ceilY - 1, oZ + z, Direction.DOWN, odds); // stalactite
-            } else if (!real.isEmpty(x, floorY, z) && real.isEmpty(x, floorY + 1, z))
-                growDripstone(level, oX + x, floorY + 1, oZ + z, Direction.UP, odds); // stalagmite
+            } else if (solidRoof(level, oX + x, floorY, oZ + z) && real.isEmpty(x, floorY + 1, z))
+                growDripstone(level, oX + x, floorY + 1, oZ + z, Direction.UP, odds); // stalagmite (real floor)
         }
-        for (int i = 0; i < 2; i++) { // a couple of dripstone-block clumps in the ceiling
+        for (int i = 0; i < 2; i++) { // a couple of dripstone-block clumps in the ceiling (never in water)
             int x = odds.getRandomInt(1, 15), z = odds.getRandomInt(1, 15);
-            if (!real.isEmpty(x, ceilY, z) && odds.playOdds(0.4))
+            if (solidRoof(level, oX + x, ceilY, oZ + z) && odds.playOdds(0.4))
                 level.setBlock(new BlockPos(oX + x, ceilY, oZ + z), Material.DRIPSTONE_BLOCK.getBlockState(),
                         Block.UPDATE_CLIENTS);
         }
+    }
+
+    /** A real solid floor/ceiling block — not air and not a fluid (so a cistern's water surface is not
+     *  mistaken for a floor a stalagmite could stand on). */
+    private static boolean solidRoof(ServerLevelAccessor level, int wx, int y, int wz) {
+        BlockState s = level.getBlockState(new BlockPos(wx, y, wz));
+        return !s.isAir() && s.getFluidState().isEmpty();
     }
 
     /** A 1-2 tall pointed-dripstone spike from an anchored cell, growing in {@code dir}. */
     private static void growDripstone(ServerLevelAccessor level, int wx, int anchorY, int wz, Direction dir,
             Odds odds) {
         int step = dir == Direction.DOWN ? -1 : 1;
-        boolean tall = odds.playOdds(0.4) && level.getBlockState(new BlockPos(wx, anchorY + step, wz)).isAir();
+        boolean tall = odds.playOdds(0.4) && replaceable(level, wx, anchorY + step, wz); // air or water
         if (tall) {
             setDrip(level, wx, anchorY, wz, dir, net.minecraft.world.level.block.state.properties.DripstoneThickness.FRUSTUM);
             setDrip(level, wx, anchorY + step, wz, dir, net.minecraft.world.level.block.state.properties.DripstoneThickness.TIP);
@@ -207,11 +217,22 @@ public final class Overgrowth {
         }
     }
 
+    private static boolean replaceable(ServerLevelAccessor level, int wx, int y, int wz) {
+        BlockState s = level.getBlockState(new BlockPos(wx, y, wz));
+        return s.isAir() || s.getBlock() == Blocks.WATER;
+    }
+
     private static void setDrip(ServerLevelAccessor level, int wx, int y, int wz, Direction dir,
             net.minecraft.world.level.block.state.properties.DripstoneThickness thickness) {
-        level.setBlock(new BlockPos(wx, y, wz), Blocks.POINTED_DRIPSTONE.defaultBlockState()
+        BlockPos pos = new BlockPos(wx, y, wz);
+        // if it lands in water (a flooded cistern), waterlog it so it sits sunk instead of a dry pocket
+        boolean water = !level.getBlockState(pos).getFluidState().isEmpty();
+        BlockState drip = Blocks.POINTED_DRIPSTONE.defaultBlockState()
                 .setValue(BlockStateProperties.VERTICAL_DIRECTION, dir)
-                .setValue(BlockStateProperties.DRIPSTONE_THICKNESS, thickness), Block.UPDATE_CLIENTS);
+                .setValue(BlockStateProperties.DRIPSTONE_THICKNESS, thickness);
+        if (water)
+            drip = drip.setValue(BlockStateProperties.WATERLOGGED, true);
+        level.setBlock(pos, drip, Block.UPDATE_CLIENTS);
     }
 
     /**
