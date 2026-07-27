@@ -134,4 +134,18 @@ public final class EntityType {
     public static final EntityType TURTLE = of(net.minecraft.world.entity.EntityType.TURTLE);
     public static final EntityType GUARDIAN = of(net.minecraft.world.entity.EntityType.GUARDIAN);
     public static final EntityType ELDER_GUARDIAN = of(net.minecraft.world.entity.EntityType.ELDER_GUARDIAN);
+
+    // P13 zoo: themed-enclosure animals
+    public static final EntityType PANDA = of(net.minecraft.world.entity.EntityType.PANDA);
+    public static final EntityType CAMEL = of(net.minecraft.world.entity.EntityType.CAMEL);
+    public static final EntityType FROG = of(net.minecraft.world.entity.EntityType.FROG);
+    public static final EntityType BEE = of(net.minecraft.world.entity.EntityType.BEE);
+    public static final EntityType GOAT = of(net.minecraft.world.entity.EntityType.GOAT);
+    public static final EntityType AXOLOTL = of(net.minecraft.world.entity.EntityType.AXOLOTL);
+    public static final EntityType SNIFFER = of(net.minecraft.world.entity.EntityType.SNIFFER);
+    public static final EntityType ARMADILLO = of(net.minecraft.world.entity.EntityType.ARMADILLO);
+    public static final EntityType ALLAY = of(net.minecraft.world.entity.EntityType.ALLAY);
+    public static final EntityType GLOW_SQUID = of(net.minecraft.world.entity.EntityType.GLOW_SQUID);
+    public static final EntityType STRIDER = of(net.minecraft.world.entity.EntityType.STRIDER);
+    public static final EntityType HOGLIN = of(net.minecraft.world.entity.EntityType.HOGLIN);
 }

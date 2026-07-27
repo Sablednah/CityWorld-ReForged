@@ -735,14 +735,17 @@ public final class Material {
     public static final Material WOOD_DOOR = of(Blocks.OAK_DOOR); // legacy generic wooden door -> oak
     public static final Material WOOD_STEP = of(Blocks.OAK_SLAB); // legacy generic wooden slab -> oak
 
-    // ---- Modern extras (98) — blocks the 1.14 vocabulary never had -------------
+    // ---- Modern extras (123) — blocks the 1.14 vocabulary never had -------------
     public static final Material AMETHYST_CLUSTER = of(Blocks.AMETHYST_CLUSTER); // P12 interior: sparkle accent
     public static final Material ANCIENT_DEBRIS = of(Blocks.ANCIENT_DEBRIS); // P9: rare prize in the deepest mines (the reason they dug so far)
     public static final Material ANVIL = of(Blocks.ANVIL); // P9 mine prop: miners' camp
     public static final Material AZALEA = of(Blocks.AZALEA); // P10 overgrowth: azalea bush reclaiming corners
     public static final Material AZALEA_LEAVES = of(Blocks.AZALEA_LEAVES); // P10 overgrowth: azalea foliage for small reclaim bushes/trees
+    public static final Material BAMBOO = of(Blocks.BAMBOO); // P13 zoo: bamboo for the panda enclosure / jungle biodome
+    public static final Material BAMBOO_BLOCK = of(Blocks.BAMBOO_BLOCK); // P13 zoo: bamboo trunk
     public static final Material BARREL = of(Blocks.BARREL); // P9 mine prop: miners' camp storage
     public static final Material BASALT = of(Blocks.BASALT); // P12 MODERN build stone
+    public static final Material BEE_NEST = of(Blocks.BEE_NEST); // P13 zoo: bee enclosure / flower-forest biodome
     public static final Material BELL = of(Blocks.BELL); // P9 mine prop: miners' signal bell
     public static final Material BIG_DRIPLEAF = of(Blocks.BIG_DRIPLEAF); // P10 overgrowth: big dripleaf
     public static final Material BLACKSTONE = of(Blocks.BLACKSTONE); // P12 MODERN build stone
@@ -755,6 +758,9 @@ public final class Material {
     public static final Material CHISELED_COPPER = of(Blocks.CHISELED_COPPER); // P12 interior: decorative modern wall/counter block
     public static final Material CHISELED_POLISHED_BLACKSTONE = of(Blocks.CHISELED_POLISHED_BLACKSTONE); // P12 MODERN build stone
     public static final Material CHISELED_TUFF = of(Blocks.CHISELED_TUFF); // P12 interior: decorative modern stone block
+    public static final Material CHORUS_FLOWER = of(Blocks.CHORUS_FLOWER); // P13 biodome: end
+    public static final Material CHORUS_PLANT = of(Blocks.CHORUS_PLANT); // P13 biodome: end
+    public static final Material COCOA = of(Blocks.COCOA); // P13 biodome: jungle cocoa pods
     public static final Material COMPOSTER = of(Blocks.COMPOSTER); // P11 shop/farm: greengrocer/farmer job block
     public static final Material COPPER_BLOCK = of(Blocks.COPPER_BLOCK); // P12 MODERN build stone (weathers over time)
     public static final Material COPPER_BULB = of(Blocks.COPPER_BULB); // P12 interior: warm modern light source
@@ -764,6 +770,10 @@ public final class Material {
     public static final Material COPPER_TORCH = of(Blocks.COPPER_TORCH); // P9 copper mine: standing copper torch (green flame)
     public static final Material COPPER_WALL_TORCH = of(Blocks.COPPER_WALL_TORCH); // P9 copper mine: wall-mounted copper torch
     public static final Material CRACKED_POLISHED_BLACKSTONE_BRICKS = of(Blocks.CRACKED_POLISHED_BLACKSTONE_BRICKS); // P12 MODERN build stone
+    public static final Material CREAKING_HEART = of(Blocks.CREAKING_HEART); // P13 biodome: pale garden
+    public static final Material CRIMSON_FUNGUS = of(Blocks.CRIMSON_FUNGUS); // P13 biodome: nether
+    public static final Material CRIMSON_NYLIUM = of(Blocks.CRIMSON_NYLIUM); // P13 biodome: nether ground
+    public static final Material CRIMSON_STEM = of(Blocks.CRIMSON_STEM); // P13 biodome: nether
     public static final Material CUT_COPPER = of(Blocks.CUT_COPPER); // P12 MODERN build stone (weathers over time)
     public static final Material DECORATED_POT = of(Blocks.DECORATED_POT); // P9 mine prop: miners' camp clutter
     public static final Material DEEPSLATE = of(Blocks.DEEPSLATE); // P4: the deep stratum below y=0; 1.14's world bottomed out at stone
@@ -781,6 +791,7 @@ public final class Material {
     public static final Material EXPOSED_CUT_COPPER = of(Blocks.EXPOSED_CUT_COPPER); // P12 MODERN build stone
     public static final Material FLETCHING_TABLE = of(Blocks.FLETCHING_TABLE); // P11 shop: fletcher's job block
     public static final Material FLOWERING_AZALEA = of(Blocks.FLOWERING_AZALEA); // P10 overgrowth: flowering azalea bush
+    public static final Material FLOWERING_AZALEA_LEAVES = of(Blocks.FLOWERING_AZALEA_LEAVES); // P13 biodome: flower forest / jungle canopy
     public static final Material GILDED_BLACKSTONE = of(Blocks.GILDED_BLACKSTONE); // P12 MODERN build stone
     public static final Material GLOW_LICHEN = of(Blocks.GLOW_LICHEN); // P9 mine: glow lichen creeping the abandoned walls, thicker with depth
     public static final Material GRINDSTONE = of(Blocks.GRINDSTONE); // P9 mine prop: miners' camp
@@ -791,19 +802,28 @@ public final class Material {
     public static final Material LECTERN = of(Blocks.LECTERN); // P11 shop: newsagent/bookshop job block
     public static final Material LILY_PAD = of(Blocks.LILY_PAD); // P11 farm: lily pads on the rare fish-pond farm variant
     public static final Material LOOM = of(Blocks.LOOM); // P11 shop: draper/tailor's job block
+    public static final Material MANGROVE_LEAVES = of(Blocks.MANGROVE_LEAVES); // P13 biodome: swamp
+    public static final Material MANGROVE_LOG = of(Blocks.MANGROVE_LOG); // P13 biodome: swamp
+    public static final Material MANGROVE_ROOTS = of(Blocks.MANGROVE_ROOTS); // P13 biodome: swamp
     public static final Material MOSSY_STONE_BRICKS = of(Blocks.MOSSY_STONE_BRICKS); // P10 overgrowth: mossy swap for stone-brick walls
     public static final Material MOSS_BLOCK = of(Blocks.MOSS_BLOCK); // P10 overgrowth: moss cushion on ground/floors
     public static final Material MOSS_CARPET = of(Blocks.MOSS_CARPET); // P10 overgrowth: moss creeping across floors and roofs
     public static final Material MUD = of(Blocks.MUD); // P8 MODERN: muddy bottoms for carved swamp/mangrove pools; a 1.19 block
+    public static final Material MUDDY_MANGROVE_ROOTS = of(Blocks.MUDDY_MANGROVE_ROOTS); // P13 biodome: swamp
     public static final Material MUD_BRICKS = of(Blocks.MUD_BRICKS); // P12 MODERN build stone
+    public static final Material NETHER_WART_BLOCK = of(Blocks.NETHER_WART_BLOCK); // P13 biodome: nether
     public static final Material OAK_HANGING_SIGN = of(Blocks.OAK_HANGING_SIGN); // P9 mine entrance: the named-mine headframe sign
     public static final Material OAK_WALL_HANGING_SIGN = of(Blocks.OAK_WALL_HANGING_SIGN); // P12 shop: exterior shopfront sign above the door
+    public static final Material OPEN_EYEBLOSSOM = of(Blocks.OPEN_EYEBLOSSOM); // P13 biodome: pale garden flower
     public static final Material OXIDIZED_COPPER_CHEST = of(Blocks.OXIDIZED_COPPER_CHEST); // P9 copper mine: loot chest (oxidized, deepest)
     public static final Material OXIDIZED_COPPER_GRATE = of(Blocks.OXIDIZED_COPPER_GRATE); // P9 copper mine: cage/machinery grate (oxidized, deepest)
     public static final Material OXIDIZED_CUT_COPPER = of(Blocks.OXIDIZED_CUT_COPPER); // P12 MODERN build stone
     public static final Material PALE_HANGING_MOSS = of(Blocks.PALE_HANGING_MOSS); // P10 overgrowth: pale moss hanging from overhangs
     public static final Material PALE_MOSS_BLOCK = of(Blocks.PALE_MOSS_BLOCK); // P10 overgrowth: pale (grey) moss cushion
     public static final Material PALE_MOSS_CARPET = of(Blocks.PALE_MOSS_CARPET); // P10 overgrowth: pale moss carpet
+    public static final Material PALE_OAK_LEAVES = of(Blocks.PALE_OAK_LEAVES); // P13 biodome: pale garden
+    public static final Material PALE_OAK_LOG = of(Blocks.PALE_OAK_LOG); // P13 biodome: pale garden
+    public static final Material PALE_OAK_WOOD = of(Blocks.PALE_OAK_WOOD); // P13 biodome: pale garden
     public static final Material PINK_PETALS = of(Blocks.PINK_PETALS); // P10 overgrowth: petals scattered on the ground
     public static final Material POINTED_DRIPSTONE = of(Blocks.POINTED_DRIPSTONE); // P10 overgrowth: stalactites/stalagmites in mines and caves
     public static final Material POLISHED_ANDESITE = of(Blocks.POLISHED_ANDESITE); // P12 MODERN build stone
@@ -819,6 +839,7 @@ public final class Material {
     public static final Material RED_SAND = of(Blocks.RED_SAND); // P8 MODERN: badlands surface; the 1.14 Bukkit source never referenced it
     public static final Material RESIN_BRICKS = of(Blocks.RESIN_BRICKS); // P12 MODERN build stone
     public static final Material SHORT_GRASS = of(Blocks.SHORT_GRASS); // P10 overgrowth: grass tufts pushing through
+    public static final Material SHROOMLIGHT = of(Blocks.SHROOMLIGHT); // P13 biodome: nether light
     public static final Material SMALL_DRIPLEAF = of(Blocks.SMALL_DRIPLEAF); // P10 overgrowth: dripleaf in damp corners
     public static final Material SMITHING_TABLE = of(Blocks.SMITHING_TABLE); // P9 mine prop: miners' camp
     public static final Material SMOKER = of(Blocks.SMOKER); // P9 mine prop: miners' camp
@@ -830,6 +851,10 @@ public final class Material {
     public static final Material SPORE_BLOSSOM = of(Blocks.SPORE_BLOSSOM); // P10 overgrowth: spore blossom on ceilings
     public static final Material STONECUTTER = of(Blocks.STONECUTTER); // P9 mine prop: miners' camp
     public static final Material WALL_TORCH = of(Blocks.WALL_TORCH); // P9: wall-mounted torches for mine corridors; the Bukkit source only used standing TORCH
+    public static final Material WARPED_FUNGUS = of(Blocks.WARPED_FUNGUS); // P13 biodome: nether
+    public static final Material WARPED_NYLIUM = of(Blocks.WARPED_NYLIUM); // P13 biodome: nether ground
+    public static final Material WARPED_STEM = of(Blocks.WARPED_STEM); // P13 biodome: nether
+    public static final Material WARPED_WART_BLOCK = of(Blocks.WARPED_WART_BLOCK); // P13 biodome: nether
     public static final Material WEATHERED_COPPER_CHEST = of(Blocks.WEATHERED_COPPER_CHEST); // P9 copper mine: loot chest (weathered)
     public static final Material WEATHERED_COPPER_GRATE = of(Blocks.WEATHERED_COPPER_GRATE); // P9 copper mine: cage/machinery grate (weathered)
     public static final Material WEATHERED_CUT_COPPER = of(Blocks.WEATHERED_CUT_COPPER); // P12 MODERN build stone
