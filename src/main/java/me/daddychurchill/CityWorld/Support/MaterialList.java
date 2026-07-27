@@ -45,7 +45,7 @@ public class MaterialList {
 			items.clear();
 	}
 
-	private void add(Material... materials) {
+	public void add(Material... materials) {
 		init(false);
 		for (Material material : materials) {
 			items.add(material);

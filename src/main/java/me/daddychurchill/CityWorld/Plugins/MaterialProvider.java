@@ -181,6 +181,24 @@ public class MaterialProvider {
 
     public MaterialProvider(CityWorldGenerator generator) {
         this.modern = generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN;
+
+        // MODERN: retire plain STONE from the build pools (the ore pass peppers it) and fold the whole
+        // decorative-stone palette in with equal weight, so a MODERN city grows blackstone, mud-brick,
+        // purpur, basalt and copper buildings alongside the wood/brick/terracotta ones. CLASSIC keeps its
+        // 1.8-era palette untouched.
+        if (modern) {
+            MaterialList[] buildPools = { itemsSelectMaterial_HouseWalls, itemsSelectMaterial_HouseRoofs,
+                    itemsSelectMaterial_HouseFloors, itemsSelectMaterial_HouseCeilings,
+                    itemsSelectMaterial_BuildingWalls, itemsSelectMaterial_BuildingRoofs,
+                    itemsSelectMaterial_BuildingCeilings, itemsSelectMaterial_BuildingFoundation,
+                    itemsSelectMaterial_ShackWalls, itemsSelectMaterial_ShackRoofs,
+                    itemsSelectMaterial_ShedWalls, itemsSelectMaterial_ShedRoofs,
+                    itemsSelectMaterial_FactoryInsides };
+            for (MaterialList pool : buildPools) {
+                pool.remove(Material.STONE);
+                pool.add(MODERN_BUILD_STONES);
+            }
+        }
     }
 
     /**
@@ -191,7 +209,6 @@ public class MaterialProvider {
      * for free. (The blackstone/basalt/etc. families are all here for variety.)
      */
     private static final Material[] MODERN_BUILD_STONES = {
-            Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE,
             Material.BLACKSTONE, Material.POLISHED_BLACKSTONE, Material.POLISHED_BLACKSTONE_BRICKS,
             Material.CHISELED_POLISHED_BLACKSTONE, Material.CRACKED_POLISHED_BLACKSTONE_BRICKS, Material.GILDED_BLACKSTONE,
             Material.POLISHED_ANDESITE, Material.POLISHED_DIORITE, Material.POLISHED_GRANITE,
