@@ -519,6 +519,11 @@ public class StructureOnGroundProvider extends Provider {
 			}
 		}
 
+		// contents-aware-of-doors: furniture is placed before the doors are cut, so a piece can end up
+		// standing in a doorway. Now that every door and every furnishing is down, clear whatever blocks
+		// a door's threshold so you can always walk through.
+		clearDoorways(chunk, baseY, floors);
+
 		// figure out roofs
 		int roofBottom = baseY + floors * DataContext.FloorHeight - 1;
 		int roofHeight = DataContext.FloorHeight + 1;
@@ -703,6 +708,44 @@ public class StructureOnGroundProvider extends Provider {
 
 	private int getRoomWidth(Odds odds, int minRoomWidth, int maxRoomWidth) {
 		return odds.getRandomInt(maxRoomWidth - minRoomWidth + 1) + minRoomWidth;
+	}
+
+	private static final Material[] DOOR_MATS = { Material.BIRCH_DOOR, Material.OAK_DOOR, Material.SPRUCE_DOOR,
+			Material.DARK_OAK_DOOR, Material.JUNGLE_DOOR, Material.ACACIA_DOOR };
+	private static final BlockFace[] HORIZ = { BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST };
+
+	/**
+	 * Clear any furnishing left standing in a doorway. For every door (its lower half), the two
+	 * horizontal directions that are open above the doorframe are the through-path (interior + exterior);
+	 * the other two are the wall the door sits in. We wipe the walk cells (floor + head height) on the
+	 * open sides, so a couch or table that landed across a threshold no longer traps the room.
+	 */
+	private void clearDoorways(RealBlocks chunk, int baseY, int floors) {
+		int yTop = baseY + floors * DataContext.FloorHeight + 2;
+		for (int y = baseY; y <= yTop; y++)
+			for (int x = 0; x < chunk.width; x++)
+				for (int z = 0; z < chunk.width; z++) {
+					if (!isDoor(chunk, x, y, z) || isDoor(chunk, x, y - 1, z))
+						continue; // only act on the lower half of a door
+					for (BlockFace dir : HORIZ) {
+						int nx = x + dir.getModX(), nz = z + dir.getModZ();
+						if (nx < 0 || nx >= chunk.width || nz < 0 || nz >= chunk.width)
+							continue;
+						if (!chunk.isEmpty(nx, y + 2, nz))
+							continue; // solid above => this side is the wall, not the passage
+						if (!chunk.isEmpty(nx, y, nz))
+							chunk.setBlock(nx, y, nz, Material.AIR);
+						if (!chunk.isEmpty(nx, y + 1, nz))
+							chunk.setBlock(nx, y + 1, nz, Material.AIR);
+					}
+				}
+	}
+
+	private boolean isDoor(RealBlocks chunk, int x, int y, int z) {
+		for (Material d : DOOR_MATS)
+			if (chunk.isType(x, y, z, d))
+				return true;
+		return false;
 	}
 
 	private HouseRoofStyle pickRoofStyle(Odds odds) {
