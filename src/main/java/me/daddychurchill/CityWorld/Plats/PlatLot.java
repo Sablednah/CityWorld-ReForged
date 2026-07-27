@@ -312,7 +312,10 @@ public abstract class PlatLot {
 					if (sub != null)
 						chunk.setBlocks(x, top - 3, top, z, sub);
 				}
-				if (doSnow)
+				// Only snow onto genuinely open ground. getBlockY here is the *natural* terrain height, so
+				// on a lot that builds up from the ground (a schematic, a house on natural terrain) top+1 is
+				// the build's floor, not open air — snowing it would replace the floor. Skip if it's solid.
+				if (doSnow && chunk.isEmpty(x, top + 1, z))
 					chunk.setBlock(x, top + 1, z, Material.SNOW, chunkOdds.getRandomInt(1, 2));
 			}
 	}

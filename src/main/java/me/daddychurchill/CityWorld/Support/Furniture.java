@@ -127,8 +127,10 @@ public final class Furniture {
             chunk.setBlock(cx, y, cz, Material.OAK_FENCE);
             chunk.setBlock(cx, y + 1, cz, modern(generator) ? Material.SMOOTH_QUARTZ_SLAB : Material.WHITE_CARPET);
         }
-        placeIfClear(chunk, cx - 1, y, cz, Material.OAK_STAIRS, BlockFace.EAST);
-        placeIfClear(chunk, cx + 1, y, cz, Material.OAK_STAIRS, BlockFace.WEST);
+        // a chair's stair FACING is its backrest side, so the sitter faces the opposite way — point the
+        // backrests AWAY from the table so the diners face it
+        placeIfClear(chunk, cx - 1, y, cz, Material.OAK_STAIRS, BlockFace.WEST);
+        placeIfClear(chunk, cx + 1, y, cz, Material.OAK_STAIRS, BlockFace.EAST);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
