@@ -1057,6 +1057,11 @@ public class StructureOnGroundProvider extends Provider {
 					}
 				}
 
+				// the ground-floor entry is the room you walk into — furnish it as a living area (the
+				// couch fits around the stairwell; a single-floor foyer has the whole room)
+				if (floor == 0)
+					me.daddychurchill.CityWorld.Support.Furniture.living(generator, chunk, odds, x1, x2, y1, z1, z2);
+
 				break;
 			case LIVING:
 
