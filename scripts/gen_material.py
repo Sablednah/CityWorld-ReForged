@@ -187,6 +187,27 @@ EXTRAS = {
     "SMOOTH_QUARTZ": "P12 interior: clean modern counter/surface",
     "SMOOTH_QUARTZ_SLAB": "P12 interior: modern counter/coffee-table top",
     "OAK_WALL_HANGING_SIGN": "P12 shop: exterior shopfront sign above the door",
+    # P12 MODERN building stones — plain STONE gets peppered by vanilla's ore pass on build chunks, so
+    # MODERN builds swap it for these decorative stones (none are in the ore-replaceables tag).
+    "BLACKSTONE": "P12 MODERN build stone",
+    "POLISHED_BLACKSTONE": "P12 MODERN build stone",
+    "POLISHED_BLACKSTONE_BRICKS": "P12 MODERN build stone",
+    "CHISELED_POLISHED_BLACKSTONE": "P12 MODERN build stone",
+    "CRACKED_POLISHED_BLACKSTONE_BRICKS": "P12 MODERN build stone",
+    "GILDED_BLACKSTONE": "P12 MODERN build stone",
+    "POLISHED_ANDESITE": "P12 MODERN build stone",
+    "POLISHED_DIORITE": "P12 MODERN build stone",
+    "POLISHED_GRANITE": "P12 MODERN build stone",
+    "MUD_BRICKS": "P12 MODERN build stone",
+    "RESIN_BRICKS": "P12 MODERN build stone",
+    "BASALT": "P12 MODERN build stone",
+    "POLISHED_BASALT": "P12 MODERN build stone",
+    "SMOOTH_BASALT": "P12 MODERN build stone",
+    "COPPER_BLOCK": "P12 MODERN build stone (weathers over time)",
+    "CUT_COPPER": "P12 MODERN build stone (weathers over time)",
+    "EXPOSED_CUT_COPPER": "P12 MODERN build stone",
+    "WEATHERED_CUT_COPPER": "P12 MODERN build stone",
+    "OXIDIZED_CUT_COPPER": "P12 MODERN build stone",
 }
 
 # Copper "weathering" families are declared as `public static final WeatheringCopperBlocks NAME`

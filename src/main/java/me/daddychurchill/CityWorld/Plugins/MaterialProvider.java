@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
+import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.MaterialList;
 import me.daddychurchill.CityWorld.compat.Material;
 
@@ -176,7 +177,41 @@ public class MaterialProvider {
             Material.WHITE_TERRACOTTA, Material.LIGHT_GRAY_TERRACOTTA, Material.QUARTZ_BLOCK, Material.QUARTZ_PILLAR,
             Material.CHISELED_QUARTZ_BLOCK, Material.END_STONE, Material.END_STONE_BRICKS, Material.WHITE_WOOL);
 
+    private final boolean modern;
+
     public MaterialProvider(CityWorldGenerator generator) {
+        this.modern = generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN;
+    }
+
+    /**
+     * Decorative stones for MODERN builds — used in place of plain {@code STONE}. On MODERN, vanilla's
+     * {@code UNDERGROUND_ORES} step runs on build chunks (for ore veins in the rock below), and it also
+     * peppers any {@code minecraft:stone} — including a stone wall or roof — with diorite/andesite/dirt
+     * blobs. None of these are in the ore-replaceables tag, so they stay clean; the coppers also weather
+     * for free. (The blackstone/basalt/etc. families are all here for variety.)
+     */
+    private static final Material[] MODERN_BUILD_STONES = {
+            Material.STONE_BRICKS, Material.SMOOTH_STONE, Material.COBBLESTONE,
+            Material.BLACKSTONE, Material.POLISHED_BLACKSTONE, Material.POLISHED_BLACKSTONE_BRICKS,
+            Material.CHISELED_POLISHED_BLACKSTONE, Material.CRACKED_POLISHED_BLACKSTONE_BRICKS, Material.GILDED_BLACKSTONE,
+            Material.POLISHED_ANDESITE, Material.POLISHED_DIORITE, Material.POLISHED_GRANITE,
+            Material.MUD_BRICKS, Material.RESIN_BRICKS,
+            Material.BASALT, Material.POLISHED_BASALT, Material.SMOOTH_BASALT,
+            Material.PRISMARINE, Material.PRISMARINE_BRICKS, Material.DARK_PRISMARINE,
+            Material.PURPUR_BLOCK, Material.PURPUR_PILLAR,
+            Material.COPPER_BLOCK, Material.CUT_COPPER, Material.EXPOSED_CUT_COPPER, Material.WEATHERED_CUT_COPPER,
+            Material.OXIDIZED_CUT_COPPER };
+
+    /**
+     * MODERN only: swap plain {@code STONE} (and the raw granite/diorite/andesite/tuff the ore pass also
+     * rewrites) for a decorative stone the ore pass leaves alone, so a stone building no longer picks up
+     * dirt and diorite blobs. CLASSIC keeps its 1.8-era stone (its ore pass is CityWorld's own and never
+     * touches builds). Call it on a build material the moment it's chosen.
+     */
+    public Material deOre(Material m, Odds odds) {
+        if (modern && m == Material.STONE)
+            return MODERN_BUILD_STONES[odds.getRandomInt(MODERN_BUILD_STONES.length)];
+        return m;
     }
 
     private final static String tagSelectMaterial_FactoryInsides = "Materials_For_FactoryInsides";

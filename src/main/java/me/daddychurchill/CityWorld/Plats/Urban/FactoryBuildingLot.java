@@ -194,14 +194,14 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 			boolean skyWalks = heights.adjacentNeighbors();
 
 			Material airMat = generator.shapeProvider.findAtmosphereMaterialAt(generator, groundY);
-			Material wallMat = generator.materialProvider.itemsSelectMaterial_FactoryInsides
-					.getRandomMaterial(chunkOdds, Material.SMOOTH_STONE);
-			Material officeMat = generator.materialProvider.itemsSelectMaterial_FactoryInsides
-					.getRandomMaterial(chunkOdds, Material.SMOOTH_STONE);
-			Material supportMat = generator.materialProvider.itemsSelectMaterial_FactoryInsides
-					.getRandomMaterial(chunkOdds, Material.CLAY);
-			Material smokestackMat = generator.materialProvider.itemsSelectMaterial_FactoryInsides
-					.getRandomMaterial(chunkOdds, Material.CLAY);
+			Material wallMat = generator.materialProvider.deOre(generator.materialProvider
+					.itemsSelectMaterial_FactoryInsides.getRandomMaterial(chunkOdds, Material.SMOOTH_STONE), chunkOdds);
+			Material officeMat = generator.materialProvider.deOre(generator.materialProvider
+					.itemsSelectMaterial_FactoryInsides.getRandomMaterial(chunkOdds, Material.SMOOTH_STONE), chunkOdds);
+			Material supportMat = generator.materialProvider.deOre(generator.materialProvider
+					.itemsSelectMaterial_FactoryInsides.getRandomMaterial(chunkOdds, Material.CLAY), chunkOdds);
+			Material smokestackMat = generator.materialProvider.deOre(generator.materialProvider
+					.itemsSelectMaterial_FactoryInsides.getRandomMaterial(chunkOdds, Material.CLAY), chunkOdds);
 			Material fluidMat = generator.materialProvider.itemsSelectMaterial_FactoryTanks.getRandomMaterial(chunkOdds,
 					Material.WATER);
 

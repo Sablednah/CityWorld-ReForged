@@ -161,17 +161,20 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 
 	protected void loadMaterials(PlatMap platmap) {
 
-		// what is it made of?
-		wallMaterial = platmap.generator.materialProvider.itemsSelectMaterial_BuildingWalls.getRandomMaterial(chunkOdds,
-				Material.COBBLESTONE);
-		foundationMaterial = platmap.generator.materialProvider.itemsSelectMaterial_BuildingFoundation
-				.getRandomMaterial(chunkOdds, Material.COBBLESTONE);
-		ceilingMaterial = platmap.generator.materialProvider.itemsSelectMaterial_BuildingCeilings
-				.getRandomMaterial(chunkOdds, Material.COBBLESTONE);
-		roofMaterial = platmap.generator.materialProvider.itemsSelectMaterial_BuildingRoofs.getRandomMaterial(chunkOdds,
-				Material.COBBLESTONE);
-		columnMaterial = platmap.generator.materialProvider.itemsSelectMaterial_BuildingWalls
-				.getRandomMaterial(chunkOdds, Mapper.getColumnFor(wallMaterial));
+		// what is it made of? (deOre swaps plain stone for a decorative stone on MODERN, so vanilla's ore
+		// pass doesn't pepper a stone wall/roof with diorite/dirt blobs)
+		var mp = platmap.generator.materialProvider;
+		wallMaterial = mp.deOre(mp.itemsSelectMaterial_BuildingWalls.getRandomMaterial(chunkOdds, Material.COBBLESTONE),
+				chunkOdds);
+		foundationMaterial = mp.deOre(
+				mp.itemsSelectMaterial_BuildingFoundation.getRandomMaterial(chunkOdds, Material.COBBLESTONE), chunkOdds);
+		ceilingMaterial = mp.deOre(
+				mp.itemsSelectMaterial_BuildingCeilings.getRandomMaterial(chunkOdds, Material.COBBLESTONE), chunkOdds);
+		roofMaterial = mp.deOre(mp.itemsSelectMaterial_BuildingRoofs.getRandomMaterial(chunkOdds, Material.COBBLESTONE),
+				chunkOdds);
+		columnMaterial = mp.deOre(
+				mp.itemsSelectMaterial_BuildingWalls.getRandomMaterial(chunkOdds, Mapper.getColumnFor(wallMaterial)),
+				chunkOdds);
 	}
 
 	protected void calculateOptions(DataContext context) {

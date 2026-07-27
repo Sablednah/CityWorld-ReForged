@@ -51,10 +51,10 @@ public class StructureOnGroundProvider extends Provider {
 		int xR = x2 - x1 - 2;
 		int zR = z2 - z1 - 2;
 
-		Material wallMat = generator.materialProvider.itemsSelectMaterial_ShedWalls.getRandomMaterial(odds,
-				Material.COBBLESTONE);
-		Material roofMat = generator.materialProvider.itemsSelectMaterial_ShedRoofs.getRandomMaterial(odds,
-				Material.COBBLESTONE);
+		Material wallMat = generator.materialProvider.deOre(
+				generator.materialProvider.itemsSelectMaterial_ShedWalls.getRandomMaterial(odds, Material.COBBLESTONE), odds);
+		Material roofMat = generator.materialProvider.deOre(
+				generator.materialProvider.itemsSelectMaterial_ShedRoofs.getRandomMaterial(odds, Material.COBBLESTONE), odds);
 
 		chunk.setWalls(x1, x2, y1, y2, z1, z2, wallMat);
 		chunk.setBlocks(x1 + 1, x2 - 1, y2, z1 + 1, z2 - 1, roofMat);
@@ -291,12 +291,12 @@ public class StructureOnGroundProvider extends Provider {
 			int baseY, int roomWidth) {
 
 		// what are we made of?
-		Material matWall = generator.materialProvider.itemsSelectMaterial_ShackWalls.getRandomMaterial(odds,
-				Material.COBBLESTONE);
-		Material matFloor = generator.materialProvider.itemsSelectMaterial_ShackWalls.getRandomMaterial(odds,
-				Material.COBBLESTONE);
-		Material matRoof = generator.materialProvider.itemsSelectMaterial_ShackRoofs.getRandomMaterial(odds,
-				Material.COBBLESTONE);
+		Material matWall = generator.materialProvider.deOre(
+				generator.materialProvider.itemsSelectMaterial_ShackWalls.getRandomMaterial(odds, Material.COBBLESTONE), odds);
+		Material matFloor = generator.materialProvider.deOre(
+				generator.materialProvider.itemsSelectMaterial_ShackWalls.getRandomMaterial(odds, Material.COBBLESTONE), odds);
+		Material matRoof = generator.materialProvider.deOre(
+				generator.materialProvider.itemsSelectMaterial_ShackRoofs.getRandomMaterial(odds, Material.COBBLESTONE), odds);
 		Material matCeiling = matRoof;
 		HouseRoofStyle styleRoof = pickRoofStyle(odds);
 		int floors = 1;
@@ -311,15 +311,16 @@ public class StructureOnGroundProvider extends Provider {
 	public int generateHouse(CityWorldGenerator generator, RealBlocks chunk, DataContext context, Odds odds, int baseY,
 			int maxFloors, int maxRoomWidth) {
 
-		// what are we made of?
-		Material matWall = generator.materialProvider.itemsSelectMaterial_HouseWalls.getRandomMaterial(odds,
-				Material.COBBLESTONE);
-		Material matFloor = generator.materialProvider.itemsSelectMaterial_HouseFloors.getRandomMaterial(odds,
-				Material.COBBLESTONE);
-		Material matCeiling = generator.materialProvider.itemsSelectMaterial_HouseCeilings.getRandomMaterial(odds,
-				Material.COBBLESTONE);
-		Material matRoof = generator.materialProvider.itemsSelectMaterial_HouseRoofs.getRandomMaterial(odds,
-				Material.COBBLESTONE);
+		// what are we made of? (deOre swaps plain stone for a decorative stone on MODERN, so the ore pass
+		// doesn't pepper the build with diorite/dirt)
+		Material matWall = generator.materialProvider.deOre(
+				generator.materialProvider.itemsSelectMaterial_HouseWalls.getRandomMaterial(odds, Material.COBBLESTONE), odds);
+		Material matFloor = generator.materialProvider.deOre(
+				generator.materialProvider.itemsSelectMaterial_HouseFloors.getRandomMaterial(odds, Material.COBBLESTONE), odds);
+		Material matCeiling = generator.materialProvider.deOre(
+				generator.materialProvider.itemsSelectMaterial_HouseCeilings.getRandomMaterial(odds, Material.COBBLESTONE), odds);
+		Material matRoof = generator.materialProvider.deOre(
+				generator.materialProvider.itemsSelectMaterial_HouseRoofs.getRandomMaterial(odds, Material.COBBLESTONE), odds);
 		HouseRoofStyle styleRoof = pickRoofStyle(odds);
 		int floors = odds.getRandomInt(maxFloors) + 1;
 

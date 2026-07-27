@@ -60,8 +60,8 @@ public class StorageLot extends BuildingLot {
 		}
 
 		// top it off
-		Material floorMat = generator.materialProvider.itemsSelectMaterial_FactoryInsides.getRandomMaterial(chunkOdds,
-				Material.SMOOTH_STONE);
+		Material floorMat = generator.materialProvider.deOre(generator.materialProvider
+				.itemsSelectMaterial_FactoryInsides.getRandomMaterial(chunkOdds, Material.SMOOTH_STONE), chunkOdds);
 		chunk.setLayer(groundY, 2, floorMat);
 //		chunk.setLayer(groundY + 1, RoadLot.pavementId);
 
@@ -85,8 +85,8 @@ public class StorageLot extends BuildingLot {
 					2 + chunkOdds.getRandomInt(2), LootLocation.STORAGE_SHED);
 			break;
 		case TANK:
-			Material wallMat = generator.materialProvider.itemsSelectMaterial_FactoryInsides
-					.getRandomMaterial(chunkOdds, Material.SMOOTH_STONE);
+			Material wallMat = generator.materialProvider.deOre(generator.materialProvider
+					.itemsSelectMaterial_FactoryInsides.getRandomMaterial(chunkOdds, Material.SMOOTH_STONE), chunkOdds);
 			Material fluidMat = generator.materialProvider.itemsSelectMaterial_FactoryTanks.getRandomMaterial(chunkOdds,
 					Material.WATER);
 
