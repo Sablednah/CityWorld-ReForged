@@ -132,14 +132,38 @@ public final class Furniture {
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
-    /** A couch against the south wall with a coffee table in front. */
+    /** A couch (with a coffee table in front) against whichever interior wall has room for it. */
     public static void living(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
             int z1, int z2) {
-        int z = z2 - 1;
-        for (int x = x1 + 1; x <= Math.min(x1 + 3, x2 - 1); x++)
-            placeIfClear(chunk, x, y, z, Material.SPRUCE_STAIRS, BlockFace.SOUTH);
-        sideTable(chunk, odds, x1 + 2 <= x2 - 1 ? x1 + 2 : x1 + 1, y, z - 1);
+        int cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
+        // try the south wall (couch faces it), then east, then north, then west — first that fits wins
+        if (couchAlongX(chunk, x1, x2, y, z2 - 1, BlockFace.SOUTH))
+            sideTable(chunk, odds, cx, y, z2 - 2);
+        else if (couchAlongZ(chunk, x2 - 1, y, z1, z2, BlockFace.EAST))
+            sideTable(chunk, odds, x2 - 2, y, cz);
+        else if (couchAlongX(chunk, x1, x2, y, z1 + 1, BlockFace.NORTH))
+            sideTable(chunk, odds, cx, y, z1 + 2);
+        else if (couchAlongZ(chunk, x1 + 1, y, z1, z2, BlockFace.WEST))
+            sideTable(chunk, odds, x1 + 2, y, cz);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+    }
+
+    /** A row of couch stairs along an interior x-run at fixed z; true if at least two seats landed. */
+    private static boolean couchAlongX(RealBlocks chunk, int x1, int x2, int y, int z, BlockFace facing) {
+        int placed = 0;
+        for (int x = x1 + 1; x <= x2 - 1 && placed < 3; x++)
+            if (placeIfClear(chunk, x, y, z, Material.SPRUCE_STAIRS, facing))
+                placed++;
+        return placed >= 2;
+    }
+
+    /** A run of couch stairs along an interior z-run at fixed x; true if at least two seats landed. */
+    private static boolean couchAlongZ(RealBlocks chunk, int x, int y, int z1, int z2, BlockFace facing) {
+        int placed = 0;
+        for (int z = z1 + 1; z <= z2 - 1 && placed < 3; z++)
+            if (placeIfClear(chunk, x, y, z, Material.SPRUCE_STAIRS, facing))
+                placed++;
+        return placed >= 2;
     }
 
     /** A bed in the corner with a bedside barrel, and (MODERN) a lamp. */
@@ -155,9 +179,11 @@ public final class Furniture {
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
-    private static void placeIfClear(RealBlocks chunk, int x, int y, int z, Material mat, BlockFace facing) {
-        if (clearFloor(chunk, x, y, z))
-            chunk.setBlock(x, y, z, mat, facing);
+    private static boolean placeIfClear(RealBlocks chunk, int x, int y, int z, Material mat, BlockFace facing) {
+        if (!clearFloor(chunk, x, y, z))
+            return false;
+        chunk.setBlock(x, y, z, mat, facing);
+        return true;
     }
 
     private static void floorLampIfClear(RealBlocks chunk, Odds odds, int x, int y, int z) {

@@ -76,11 +76,53 @@ public final class ShopFitter {
         if (inChunk(sx, sz) && chunk.isEmpty(sx, y, sz) && solid(chunk, sx, y - 1, sz))
             chunk.setBlock(sx, y, sz, Material.BARREL, facing);
 
-        // a hanging shopfront sign over the counter, with a random shop name — hung from the ceiling
-        if (chunk.isEmpty(x, y + 1, z) && chunk.isEmpty(x, y + 2, z) && solid(chunk, x, y + 3, z)) {
-            String[] name = generator.odonymProvider.generateShopName(generator, odds, shop.trade().displayName());
+        // the shop's name (one name, used on both signs)
+        String[] name = generator.odonymProvider.generateShopName(generator, odds, shop.trade().displayName());
+
+        // an interior hanging sign over the counter, hung from the ceiling
+        if (chunk.isEmpty(x, y + 1, z) && chunk.isEmpty(x, y + 2, z) && solid(chunk, x, y + 3, z))
             chunk.setSignPost(x, y + 2, z, Material.OAK_HANGING_SIGN, facing, name);
-        }
+
+        // and, if the shop has a front door, a hanging shopfront sign outside above it
+        exteriorSign(chunk, y, name);
+    }
+
+    private static final Material[] DOORS = { Material.OAK_DOOR, Material.BIRCH_DOOR, Material.SPRUCE_DOOR,
+            Material.JUNGLE_DOOR, Material.ACACIA_DOOR, Material.DARK_OAK_DOOR };
+
+    /**
+     * Hang a shopfront sign on the outside wall just above a ground-floor door. The door is taken to face
+     * the street (perimeter doors point away from the building centre), and the sign attaches to the wall
+     * above it, facing out. First door that yields a clear spot wins; skips quietly if none does.
+     */
+    private static void exteriorSign(RealBlocks chunk, int y, String[] name) {
+        for (int x = 0; x < 16; x++)
+            for (int z = 0; z < 16; z++) {
+                if (!isDoor(chunk, x, y, z))
+                    continue;
+                BlockFace out = outward(x, z);
+                int ox = x + out.getModX(), oz = z + out.getModZ();
+                if (inChunk(ox, oz) && solid(chunk, x, y + 2, z)
+                        && chunk.isEmpty(ox, y + 1, oz) && chunk.isEmpty(ox, y + 2, oz)) {
+                    chunk.setWallSign(ox, y + 2, oz, Material.OAK_WALL_HANGING_SIGN, out, name);
+                    return;
+                }
+            }
+    }
+
+    private static boolean isDoor(RealBlocks chunk, int x, int y, int z) {
+        for (Material d : DOORS)
+            if (chunk.isType(x, y, z, d))
+                return true;
+        return false;
+    }
+
+    /** The dominant horizontal direction from (x,z) away from the chunk centre — a perimeter door's street side. */
+    private static BlockFace outward(int x, int z) {
+        int dx = x - 8, dz = z - 8;
+        if (Math.abs(dx) >= Math.abs(dz))
+            return dx >= 0 ? BlockFace.EAST : BlockFace.WEST;
+        return dz >= 0 ? BlockFace.SOUTH : BlockFace.NORTH;
     }
 
     /** Lowest floor of the ground storey at (x,z): open here and above, solid underfoot. -1 if none. */

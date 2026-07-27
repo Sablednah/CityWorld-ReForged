@@ -186,6 +186,7 @@ EXTRAS = {
     "POTTED_BAMBOO": "P12 interior: potted plant accent",
     "SMOOTH_QUARTZ": "P12 interior: clean modern counter/surface",
     "SMOOTH_QUARTZ_SLAB": "P12 interior: modern counter/coffee-table top",
+    "OAK_WALL_HANGING_SIGN": "P12 shop: exterior shopfront sign above the door",
 }
 
 # Copper "weathering" families are declared as `public static final WeatheringCopperBlocks NAME`
