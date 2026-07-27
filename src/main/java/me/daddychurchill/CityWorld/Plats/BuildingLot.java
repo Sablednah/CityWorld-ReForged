@@ -34,7 +34,7 @@ public abstract class BuildingLot extends ConnectedLot {
 
 	final static Material antennaBase = Material.CLAY;
 	final static Material antenna = Material.SPRUCE_FENCE;
-	final static Material conditioner = Material.STONE;
+	final static Material conditioner = Material.SMOOTH_STONE;
 	final static Material conditionerTrim = Material.STONE_PRESSURE_PLATE;
 	protected final static Material conditionerGrill = Material.RAIL;
 	final static Material duct = Material.STONE_SLAB;
@@ -674,7 +674,7 @@ public abstract class BuildingLot extends ConnectedLot {
 		// outset stuff
 		Material outsetMaterial = wallMaterial;
 		if (outsetMaterial.hasGravity())
-			outsetMaterial = Material.STONE;
+			outsetMaterial = Material.SMOOTH_STONE;
 
 		// still need to do something?
 		if (stillNeedWalls) {

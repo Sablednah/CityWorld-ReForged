@@ -27,7 +27,7 @@ public class RoundaboutCenterLot extends IsolatedLot {
 		WATER, LAVA, UNFINISHED
 	}
 
-	private final static Material curbMaterial = Material.STONE;
+	private final static Material curbMaterial = Material.SMOOTH_STONE;
 	private final static Material brickMaterial = Material.SMOOTH_STONE;
 	//	private final static Material fenceMaterial = Material.SPRUCE_FENCE;
 	private final static Material baseMaterial = Material.QUARTZ_BLOCK;

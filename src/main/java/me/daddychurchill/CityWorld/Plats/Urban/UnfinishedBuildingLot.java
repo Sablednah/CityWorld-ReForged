@@ -24,7 +24,8 @@ public class UnfinishedBuildingLot extends BuildingLot {
 	private final static Material stairMaterial = Material.BIRCH_STAIRS;
 	private final static Material stairPlatformMaterial = Material.BIRCH_PLANKS;
 	private final static Material wallMaterial = Material.SMOOTH_STONE;
-	private final static Material ceilingMaterial = Material.STONE;
+	// smooth stone, not plain STONE: MODERN's ore pass peppers minecraft:stone with diorite/dirt/ore
+	private final static Material ceilingMaterial = Material.SMOOTH_STONE;
 	private final static Material floorMaterial = ceilingMaterial;
 
 	private final static int inset = 2;

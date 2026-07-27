@@ -385,9 +385,9 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		// validate the materials
 		if (localInsetWallNS > 0 || localInsetWallWE > 0)
 			if (wallMaterial.hasGravity())
-				wallMaterial = Material.STONE;
+				wallMaterial = Material.SMOOTH_STONE;
 		if (ceilingMaterial.hasGravity())
-			ceilingMaterial = Material.STONE;
+			ceilingMaterial = Material.SMOOTH_STONE;
 
 		// starting with the bottom
 		int lowestY = getBottomY(generator);
@@ -582,7 +582,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		Material outsetMaterial = wallMaterial;
 		Material outsetBackfill = Material.AIR;
 		if (outsetMaterial.hasGravity())
-			outsetMaterial = Material.STONE;
+			outsetMaterial = Material.SMOOTH_STONE;
 
 		// still need to do something?
 		if (stillNeedWalls) {
@@ -833,9 +833,9 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		// validate the materials
 		if (localInsetWallNS > 0 || localInsetWallWE > 0)
 			if (wallMaterial.hasGravity())
-				wallMaterial = Material.STONE;
+				wallMaterial = Material.SMOOTH_STONE;
 		if (ceilingMaterial.hasGravity())
-			ceilingMaterial = Material.STONE;
+			ceilingMaterial = Material.SMOOTH_STONE;
 
 		// where are the stairs?
 		StairWell stairLocation = getStairWellLocation(allowRounded, neighborFloors);

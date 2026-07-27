@@ -36,7 +36,7 @@ public class RadioTowerLot extends ConstructLot {
 
 	private final static Material platformMaterial = Material.SMOOTH_STONE;
 	private final static Material supportMaterial = Material.COBBLESTONE;
-	private final static Material wallMaterial = Material.STONE;
+	private final static Material wallMaterial = Material.SMOOTH_STONE;
 	//	private final static Material roofMaterial = Material.STONE_SLAB;
 	private final static Material baseMaterial = Material.CLAY;
 	private final static Material antennaMaterial = Material.IRON_BARS;

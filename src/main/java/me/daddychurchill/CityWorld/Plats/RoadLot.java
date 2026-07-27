@@ -24,7 +24,7 @@ public class RoadLot extends ConnectedLot {
 	private final static int tunnelHeight = 8;
 	private final static int fenceHeight = 2;
 
-	private final static Material lightpostbaseMaterial = Material.STONE;
+	private final static Material lightpostbaseMaterial = Material.SMOOTH_STONE;
 	private final static Material lightpostMaterial = Material.SPRUCE_FENCE;
 
 	public final static Material sewerMaterial = Material.SMOOTH_STONE;
