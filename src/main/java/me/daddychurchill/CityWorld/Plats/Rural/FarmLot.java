@@ -59,7 +59,7 @@ public class FarmLot extends ConnectedLot {
 				cropType = setNetherCrop();
 		else if (platmap.generator.getSettings().includeDecayedNature)
 			cropType = setDecayedNormalCrop();
-		else if (platmap.generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN)
+		else if (platmap.generator.isModernStyle())
 			// MODERN: pick a crop that fits the biome climate this farm sits in — cane and cactus in the
 			// hot dry lands, spruce and beets where it's cold, jungle and melons in the warm wet, etc.
 			cropType = setModernCrop(ClimateZone.at(platmap.generator, chunkX, chunkZ));

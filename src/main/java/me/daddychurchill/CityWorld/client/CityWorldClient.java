@@ -88,7 +88,8 @@ public final class CityWorldClient {
         // flat plains. MODERN uses the full climate source (matches the city preset); the others use
         // the elevation-only source with the standard palette (matches the classic preset).
         var biomeReg = registries.lookupOrThrow(Registries.BIOME);
-        net.minecraft.world.level.biome.BiomeSource biomeSource = result.style() == WorldStyle.MODERN
+        boolean modernFamily = result.style() == WorldStyle.MODERN || result.style() == WorldStyle.APOCALYPSE;
+        net.minecraft.world.level.biome.BiomeSource biomeSource = modernFamily
                 ? new CityWorldClimateBiomeSource(biomeReg)
                 : new CityWorldBiomeSource(
                         biomeReg.getOrThrow(Biomes.DEEP_OCEAN),

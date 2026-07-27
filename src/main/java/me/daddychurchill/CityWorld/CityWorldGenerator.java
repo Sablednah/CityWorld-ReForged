@@ -74,7 +74,18 @@ public class CityWorldGenerator {
         NATURE, // just nature, no constructs anywhere
         METRO, // just buildings, no nature
         SPARSE, // a world of cities but away from each other
-        DESTROYED // normal landscape with destroyed cities
+        DESTROYED, // normal landscape with destroyed cities
+        APOCALYPSE // MODERN cities gone to ruin — heavy overgrowth, road/building decay, zombie-infested
+    }
+
+    /**
+     * The MODERN-family styles: the ones that render with modern MC (tall builds, the decorative block
+     * palette, modern furniture, climate biomes, vanilla wild decoration). {@code APOCALYPSE} is a
+     * MODERN world gone to ruin, so it shares the modern look — this keeps the ~dozen style checks that
+     * used to test {@code == MODERN} behaviour-preserving for MODERN while extending them to APOCALYPSE.
+     */
+    public boolean isModernStyle() {
+        return worldStyle == WorldStyle.MODERN || worldStyle == WorldStyle.APOCALYPSE;
     }
 
     /**

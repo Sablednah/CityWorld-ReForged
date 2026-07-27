@@ -41,7 +41,7 @@ public class SurfaceProvider_Normal extends SurfaceProvider {
 
 		// top of the world? MODERN starts the ice a touch lower than the snow line so bare peaks aren't
 		// so rare (playtest: the caps looked great but too seldom).
-		boolean modern = generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN;
+		boolean modern = generator.isModernStyle();
 		int iceStart = modern ? generator.snowLevel - MODERN_ICE_DROP : generator.snowLevel;
 		if (y >= iceStart) {
 			if (modern)

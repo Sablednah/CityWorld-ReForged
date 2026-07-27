@@ -26,5 +26,6 @@
   "cityworld.style.nature": "Nature",
   "cityworld.style.metro": "Metro",
   "cityworld.style.sparse": "Sparse",
-  "cityworld.style.destroyed": "Destroyed"
+  "cityworld.style.destroyed": "Destroyed",
+  "cityworld.style.apocalypse": "Apocalypse"
 }

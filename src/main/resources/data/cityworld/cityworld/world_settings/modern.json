@@ -6,7 +6,7 @@
     "maxBuildingFloors": 40
   },
   "overgrowth": {
-    "enabled": true,
+    "enabled": false,
     "intensity": 2.0,
     "capVines": false
   },

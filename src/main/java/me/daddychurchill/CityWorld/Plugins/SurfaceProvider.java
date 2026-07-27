@@ -99,6 +99,7 @@ public abstract class SurfaceProvider extends Provider {
 		case METRO:
 		case SPARSE:
 		case DESTROYED:
+		case APOCALYPSE:
 		case CLASSIC:
 		case MODERN:
 			provider = new SurfaceProvider_Normal(odds);

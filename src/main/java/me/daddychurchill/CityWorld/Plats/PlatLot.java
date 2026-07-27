@@ -240,7 +240,7 @@ public abstract class PlatLot {
 		// banded badlands, mycelium isles, snowy plains) — so a house yard or farm edge in a desert reads
 		// sandy instead of a green island. Guarded to grass/dirt, so it never touches builds, farmland,
 		// roads or swamp pools. Roads opt out (they keep their own snow blend).
-		if (generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN && wantsBiomeGround())
+		if (generator.isModernStyle() && wantsBiomeGround())
 			applyBiomeGround(generator, chunk);
 
 		// Overgrowth: let nature reclaim built things — moss, vines, leaf litter, small trees. Runs
@@ -249,6 +249,12 @@ public abstract class PlatLot {
 		if (generator.getSettings().includeOvergrowth
 				&& (style == LotStyle.STRUCTURE || style == LotStyle.ROAD || style == LotStyle.ROUNDABOUT))
 			me.daddychurchill.CityWorld.Support.Overgrowth.apply(generator, this, chunk, chunkOdds);
+
+		// Apocalypse: hide zombie spawners in the ruins' cellars — some buried in a sealed pocket UNDER
+		// the basement floor so they can't be seen. Building lots only (they have the cellars); sewers and
+		// caves get their own zombie spawners through the enabled spawner bags.
+		if (generator.worldStyle == CityWorldGenerator.WorldStyle.APOCALYPSE && style == LotStyle.STRUCTURE)
+			me.daddychurchill.CityWorld.Support.ApocalypseSpawners.apply(generator, this, chunk, chunkOdds);
 
 		// Shops: a classified shop gets its trade's villager job block dropped on the ground floor, so a
 		// store reads as its trade. MODERN dressing (gated); runs after the interior is drawn so the
@@ -1241,7 +1247,7 @@ public abstract class PlatLot {
 
 		// MODERN gets vanilla's own ore veins (CityWorldChunkGenerator.placeUndergroundOres); CityWorld's
 		// own sprinkle pass is the CLASSIC path only, else the two would stack in the same stone.
-		if (generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN)
+		if (generator.isModernStyle())
 			return;
 
 		// shape the world

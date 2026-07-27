@@ -513,6 +513,25 @@ public class CityWorldSettings {
 
             subSurfaceStyle = SubSurfaceStyle.NONE; // DIFFERENT
             break;
+        case APOCALYPSE:
+            // A MODERN world gone to ruin. Streets and buildings decay, but the land itself stays lush and
+            // wet — nature decay stays OFF (it drains the seas), then a heavy overgrowth pass reclaims the
+            // ruins and the dark places crawl with the risen dead. These are the style's invariants, applied
+            // last so they hold however the style was picked (preset or the Customize screen).
+            includeDecayedRoads = true; // DIFFERENT
+            includeDecayedBuildings = true; // DIFFERENT
+            includeDecayedNature = false; // DIFFERENT — keep the wet green world
+
+            includeOvergrowth = true; // DIFFERENT
+            overgrowthIntensity = 3.0; // DIFFERENT — fairly heavy
+
+            spawnBaddies = Odds.oddsSomewhatLikely; // DIFFERENT — up the hostiles
+            spawnersInMines = true; // DIFFERENT
+            spawnersInSewers = true; // DIFFERENT
+            spawnersInBunkers = true; // DIFFERENT
+
+            subSurfaceStyle = SubSurfaceStyle.NONE; // DIFFERENT (modern-family)
+            break;
         case MAZE:
             includeRoads = true; // This has to be true in order for things to generate correctly
             includeRoundabouts = false; // DIFFERENT

@@ -41,7 +41,7 @@ public class ParkContext extends UrbanContext {
 	@Override
 	protected PlatLot getPark(CityWorldGenerator generator, PlatMap platmap, Odds odds, int chunkX, int chunkZ,
 			int waterDepth) {
-		if (generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN) {
+		if (generator.isModernStyle()) {
 			int roll = odds.getRandomInt(6);
 			if (roll == 0)
 				return new ZooLot(platmap, chunkX, chunkZ);

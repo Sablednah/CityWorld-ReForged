@@ -1,0 +1,22 @@
+{
+  "features": {
+    "includeSchematics": true
+  },
+  "world": {
+    "maxBuildingFloors": 40
+  },
+  "overgrowth": {
+    "enabled": true,
+    "intensity": 3.0,
+    "capVines": false
+  },
+  "shops": {
+    "enabled": true
+  },
+  "mobs": {
+    "sewers": ["minecraft:zombie", "minecraft:zombie", "minecraft:zombie", "minecraft:drowned", "minecraft:husk"],
+    "mine": ["minecraft:zombie", "minecraft:zombie", "minecraft:husk", "minecraft:cave_spider"],
+    "bunker": ["minecraft:zombie", "minecraft:zombie", "minecraft:husk", "minecraft:zombie_villager"],
+    "append": false
+  }
+}

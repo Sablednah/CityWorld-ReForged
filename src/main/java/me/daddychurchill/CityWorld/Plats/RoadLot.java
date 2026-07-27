@@ -546,7 +546,7 @@ public class RoadLot extends ConnectedLot {
 	// Only on snowable solid ground (never ice), only where the biome is cold enough to snow at height.
 	private void sprinkleRoadSnow(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk, int platX,
 			int platZ) {
-		if (generator.worldStyle != CityWorldGenerator.WorldStyle.MODERN)
+		if (!generator.isModernStyle())
 			return;
 
 		// the road's run: N-S or E-W. Its nature-facing sides are the edges perpendicular to that.
@@ -1059,7 +1059,7 @@ public class RoadLot extends ConnectedLot {
 				// biome-agnostic oak/birch/pine (they read as wrong-species tree lines tracing the road
 				// through jungles/savannas). Lay the grass/snow surface, then scatter a few biome-right
 				// trees so the roof blends into the surrounding mountain wild instead of a bald strip.
-				boolean modernRoof = generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN;
+				boolean modernRoof = generator.isModernStyle();
 				generateSurface(generator, chunk, !modernRoof);
 				if (modernRoof)
 					scatterRoofTrees(generator, chunk);
@@ -1476,7 +1476,7 @@ public class RoadLot extends ConnectedLot {
 
 	private void pepperPlants(CityWorldGenerator generator, SupportBlocks chunk, int x1, int x2, int y, int z1, int z2,
 			double chances, Material manMade, boolean doingFolage, boolean doingTunnel) {
-		boolean modern = generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN;
+		boolean modern = generator.isModernStyle();
 		// MODERN: plant sparse, biome-right roadside trees instead of CityWorld's biome-agnostic
 		// oak/birch (which lined roads with the wrong species through jungles/savannas).
 		CoverageType[] roadTrees = modern ? BiomeTrees.forZone(ClimateZone.at(generator, chunkX, chunkZ)) : null;

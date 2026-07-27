@@ -373,7 +373,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // check gates it; runs after CityWorld's own pass so vanilla's features sit on the finished
         // terrain. Vanilla's decoration respects the WorldGenRegion radius, so top risk #2 is its own
         // problem here, not ours.
-        if (context.worldStyle == CityWorldGenerator.WorldStyle.MODERN) {
+        if (context.isModernStyle()) {
             me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x, pos.z);
             if (lot != null && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE
                     && lot.allowsWildDecoration()) {

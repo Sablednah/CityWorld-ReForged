@@ -57,7 +57,7 @@ public abstract class ConstructLot extends IsolatedLot {
 	 * bare sand left bare in the desert. Deep pit floors (nothing solid near street level) are skipped.
 	 */
 	protected void blendModernCover(CityWorldGenerator generator, RealBlocks chunk) {
-		if (generator.worldStyle != CityWorldGenerator.WorldStyle.MODERN)
+		if (!generator.isModernStyle())
 			return;
 
 		ClimateZone zone = ClimateZone.at(generator, chunkX, chunkZ);

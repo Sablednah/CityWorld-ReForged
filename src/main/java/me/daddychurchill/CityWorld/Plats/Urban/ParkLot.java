@@ -65,7 +65,7 @@ public class ParkLot extends ConnectedLot {
 		centerStyle = getRandomCenterStyle();
 		waterDepth = depth;
 
-		zone = platmap.generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN
+		zone = platmap.generator.isModernStyle()
 				? ClimateZone.at(platmap.generator, chunkX, chunkZ) : null;
 	}
 

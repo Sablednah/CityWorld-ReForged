@@ -26,7 +26,7 @@ public final class Furniture {
 
     /** True on a MODERN world — the gate every decoration here honours. */
     public static boolean modern(CityWorldGenerator generator) {
-        return generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN;
+        return generator.isModernStyle();
     }
 
     /** A bookshelf material — MODERN mixes in chiseled bookshelves (per-call, so a wall reads as a blend). */

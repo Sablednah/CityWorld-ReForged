@@ -180,7 +180,7 @@ public class MaterialProvider {
     private final boolean modern;
 
     public MaterialProvider(CityWorldGenerator generator) {
-        this.modern = generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN;
+        this.modern = generator.isModernStyle();
 
         // MODERN: retire plain STONE from the build pools (the ore pass peppers it) and fold the whole
         // decorative-stone palette in with equal weight, so a MODERN city grows blackstone, mud-brick,

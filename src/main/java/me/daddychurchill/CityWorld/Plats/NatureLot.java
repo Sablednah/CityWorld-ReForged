@@ -47,7 +47,7 @@ public class NatureLot extends IsolatedLot {
 		// In MODERN, vanilla decorates the wild (biome-appropriate trees/flowers), so don't also plant
 		// CityWorld's own trees here — that doubling was making forests read too dense. Other styles keep
 		// placing them. The grass/snow surface is still laid down either way (vanilla needs it to plant on).
-		boolean cityworldTrees = generator.worldStyle != CityWorldGenerator.WorldStyle.MODERN;
+		boolean cityworldTrees = !generator.isModernStyle();
 		generateSurface(generator, chunk, cityworldTrees);
 
 		// Biome-signature ground (sand deserts, badlands, mycelium, snowy plains) is applied by the base
@@ -57,7 +57,7 @@ public class NatureLot extends IsolatedLot {
 		// shot through with water pools — only the low, flat interior is brought flush to the water table;
 		// rises just get muddied in place (never flattened) and edges feather to a dry bank. Vanilla then
 		// adds lily pads, mangrove roots and blue orchids.
-		if (generator.worldStyle == CityWorldGenerator.WorldStyle.MODERN
+		if (generator.isModernStyle()
 				&& chunk.isSwampBiome(8, getBlockY(8, 8), 8))
 			generateSwampSurface(generator, chunk);
 
