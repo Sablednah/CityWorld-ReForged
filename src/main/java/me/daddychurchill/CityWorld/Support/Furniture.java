@@ -181,6 +181,21 @@ public final class Furniture {
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
+    /** A little bathroom: a cauldron sink/bath, a quartz "toilet", and a tiled mat. */
+    public static void bathroom(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
+            int z1, int z2) {
+        if (clearFloor(chunk, x1 + 1, y, z1 + 1))
+            chunk.setCauldron(x1 + 1, y, z1 + 1, odds); // sink/bath
+        if (clearFloor(chunk, x2 - 1, y, z1 + 1)) { // a "toilet": quartz seat + a slab cistern above
+            chunk.setBlock(x2 - 1, y, z1 + 1, Material.QUARTZ_STAIRS, BlockFace.SOUTH);
+            chunk.setBlock(x2 - 1, y + 1, z1 + 1, Material.SMOOTH_QUARTZ_SLAB);
+        }
+        int mx = (x1 + x2) / 2, mz = (z1 + z2) / 2; // a tiled bathmat
+        if (clearFloor(chunk, mx, y, mz))
+            chunk.setBlock(mx, y, mz, odds.flipCoin() ? Material.WHITE_CARPET : Material.LIGHT_BLUE_CARPET);
+        accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+    }
+
     private static boolean placeIfClear(RealBlocks chunk, int x, int y, int z, Material mat, BlockFace facing) {
         if (!clearFloor(chunk, x, y, z))
             return false;

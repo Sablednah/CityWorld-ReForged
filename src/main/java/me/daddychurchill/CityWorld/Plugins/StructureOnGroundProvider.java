@@ -364,7 +364,9 @@ public class StructureOnGroundProvider extends Provider {
 					int thisRoomWidthZ = getRoomWidth(odds, minRoomWidth, maxRoomWidth);
 					int thisRoomWidthX = getRoomWidth(odds, minRoomWidth, maxRoomWidth);
 					boolean thisRoomHasWalls = true;
-					Room.Style thisRoomStyle = Room.Style.BED;
+					// bedrooms by default, but every so often a bathroom (the ground floor's KITCHEN/DINING/
+					// LIVING are assigned explicitly below and override this)
+					Room.Style thisRoomStyle = odds.getRandomInt(3) == 0 ? Room.Style.BATHROOM : Room.Style.BED;
 
 					// create the room
 					rooms[f][x][z] = new Room(thisRoomMissing, thisRoomWidthZ, thisRoomWidthX, thisRoomHasWalls,
@@ -776,7 +778,7 @@ public class StructureOnGroundProvider extends Provider {
 	// the description of a single room
 	private final static class Room {
 		public enum Style {
-			BED, KITCHEN, DINING, ENTRY, LIVING
+			BED, KITCHEN, DINING, ENTRY, LIVING, BATHROOM
 		}
 
 		int widthX;
@@ -1113,6 +1115,9 @@ public class StructureOnGroundProvider extends Provider {
 				break;
 			case BED:
 				me.daddychurchill.CityWorld.Support.Furniture.bedroom(generator, chunk, odds, x1, x2, y1, z1, z2);
+				break;
+			case BATHROOM:
+				me.daddychurchill.CityWorld.Support.Furniture.bathroom(generator, chunk, odds, x1, x2, y1, z1, z2);
 				break;
 			}
 

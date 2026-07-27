@@ -71,10 +71,14 @@ public final class ShopFitter {
         int wx = inChunk(fx, fz) ? fx : x, wz = inChunk(fx, fz) ? fz : z;
         generator.spawnProvider.spawnWorker(generator, chunk, odds, wx, y, wz, shop.trade().profession());
 
-        // a storage barrel beside the counter (perpendicular to the facing)
+        // storage/wares flanking the counter (both perpendicular sides): a barrel one side, and a
+        // decorated pot or a second barrel the other, so it reads as a stocked counter
         int sx = x - facing.getModZ(), sz = z + facing.getModX();
         if (inChunk(sx, sz) && chunk.isEmpty(sx, y, sz) && solid(chunk, sx, y - 1, sz))
             chunk.setBlock(sx, y, sz, Material.BARREL, facing);
+        int sx2 = x + facing.getModZ(), sz2 = z - facing.getModX();
+        if (inChunk(sx2, sz2) && chunk.isEmpty(sx2, y, sz2) && solid(chunk, sx2, y - 1, sz2))
+            chunk.setBlock(sx2, y, sz2, odds.flipCoin() ? Material.DECORATED_POT : Material.BARREL, facing);
 
         // the shop's name (one name, used on both signs)
         String[] name = generator.odonymProvider.generateShopName(generator, odds, shop.trade().displayName());
