@@ -322,6 +322,12 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		setActualBlock(x, y, z, with(stateOf(material), BlockStateProperties.HANGING, true));
 	}
 
+	/** A trapdoor set OPEN — it stands vertical on its {@code facing} side, a raised panel: a toilet lid, a
+	 *  cabinet door, a shelf front. A plain {@code setBlock} gives it flat (closed). */
+	public final void setOpenTrapdoor(int x, int y, int z, Material material, BlockFace facing) {
+		setActualBlock(x, y, z, with(withDirection(stateOf(material), facing), BlockStateProperties.OPEN, true));
+	}
+
 	/** Leaves that never decay — sets PERSISTENT so hand-built trees (zoo/biodome/decor) keep their canopy
 	 *  even when the trunk is thin or interrupted. A plain {@code setBlock} leaves PERSISTENT false, so
 	 *  leaves more than a few blocks from a log rot away. */

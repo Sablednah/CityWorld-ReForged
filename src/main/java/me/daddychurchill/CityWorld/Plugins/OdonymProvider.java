@@ -16,6 +16,12 @@ public abstract class OdonymProvider extends Provider {
 
 	public abstract String generateVillagerName(CityWorldGenerator generator, Odds odds);
 
+	/** Just a given (first) name — for composing a household where members share a surname. */
+	public abstract String generateGivenName(CityWorldGenerator generator, Odds odds);
+
+	/** Just a family (sur)name — one per household, shared across its members. */
+	public abstract String generateSurname(CityWorldGenerator generator, Odds odds);
+
 	/**
 	 * A role-themed name for an employed villager — a given name plus an occupational surname fitting the
 	 * trade (a fletcher becomes "Alice Fletcher", a fisher "Bob Angler"). {@code professionPath} is the

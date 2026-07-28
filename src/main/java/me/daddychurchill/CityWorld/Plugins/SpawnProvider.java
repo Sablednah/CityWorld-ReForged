@@ -224,6 +224,49 @@ public class SpawnProvider extends Provider {
             spawnGoodOrBad(generator, blocks, odds, x, y, z, goody, baddy);
     }
 
+    /**
+     * A rural household: 1-4 residents sharing a surname, a mix of grown-ups and kids (gender isn't
+     * modelled — everyone's welcome here). Rolls {@code spawnBeings} like a lone resident would; when it
+     * fires, a whole family moves into the house rather than a single villager.
+     */
+    public final void spawnFamily(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y,
+            int z) {
+        if (!odds.playOdds(generator.getSettings().spawnBeings))
+            return;
+        String surname = generator.getSettings().nameVillagers
+                ? generator.odonymProvider.generateSurname(generator, odds)
+                : null;
+        int count = 1 + odds.getRandomInt(4); // 1..4 in the household
+        int adults = Math.min(count, 1 + odds.getRandomInt(2)); // 1 or 2 grown-ups, the rest kids
+        for (int i = 0; i < count; i++)
+            spawnHouseholdMember(generator, blocks, odds, blocks.clampXZ(x + (i % 3) - 1), y,
+                    blocks.clampXZ(z + i / 3), surname, i >= adults);
+    }
+
+    private void spawnHouseholdMember(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y,
+            int z, String surname, boolean child) {
+        if (!blocks.isEmpty(x, y, z) || blocks.isEmpty(x, y - 1, z))
+            return; // want a clear spot standing on a solid floor
+        Location at = blocks.getBlockLocation(x, y, z);
+        LevelAccessor level = at.getLevel();
+        if (!(level instanceof ServerLevelAccessor server))
+            return;
+        Entity being = EntityType.VILLAGER.getType().create(server.getLevel(), EntitySpawnReason.CHUNK_GENERATION);
+        if (!(being instanceof Villager villager))
+            return;
+        villager.snapTo(at.getBlockX() + 0.5, at.getBlockY(), at.getBlockZ() + 0.5, 0.0F, 0.0F);
+        EventHooks.finalizeMobSpawn(villager, server, server.getCurrentDifficultyAt(villager.blockPosition()),
+                EntitySpawnReason.CHUNK_GENERATION, null);
+        villager.setBaby(child);
+        if (surname != null) {
+            villager.setCustomName(Component.literal(
+                    generator.odonymProvider.generateGivenName(generator, odds) + " " + surname));
+            if (generator.getSettings().showVillagersNames)
+                villager.setCustomNameVisible(true);
+        }
+        server.addFreshEntityWithPassengers(villager);
+    }
+
     public final void spawnVagrants(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y,
             int z) {
         EntityType goodies = itemsEntities_Vagrants.getRandomEntity(odds);

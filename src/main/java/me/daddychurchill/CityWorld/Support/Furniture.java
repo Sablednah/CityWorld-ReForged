@@ -295,9 +295,12 @@ public final class Furniture {
             int z1, int z2) {
         if (clearFloor(chunk, x1 + 1, y, z1 + 1))
             chunk.setCauldron(x1 + 1, y, z1 + 1, odds); // sink/bath
-        if (clearFloor(chunk, x2 - 1, y, z1 + 1)) { // a "toilet": quartz seat + a slab cistern above
-            chunk.setBlock(x2 - 1, y, z1 + 1, Material.QUARTZ_STAIRS, BlockFace.SOUTH);
-            chunk.setBlock(x2 - 1, y + 1, z1 + 1, Material.SMOOTH_QUARTZ_SLAB);
+        if (clearFloor(chunk, x2 - 1, y, z1 + 1)) {
+            // a toilet that actually reads as one: a quartz-stair seat opening into the room, with a raised
+            // lid (an open trapdoor stood up against the wall behind it)
+            int tx = x2 - 1, tz = z1 + 1;
+            chunk.setBlock(tx, y, tz, Material.QUARTZ_STAIRS, BlockFace.SOUTH);
+            chunk.setOpenTrapdoor(tx, y + 1, tz, Material.BIRCH_TRAPDOOR, BlockFace.NORTH);
         }
         int mx = (x1 + x2) / 2, mz = (z1 + z2) / 2; // a tiled bathmat
         if (clearFloor(chunk, mx, y, mz))

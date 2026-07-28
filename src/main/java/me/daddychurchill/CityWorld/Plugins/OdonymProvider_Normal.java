@@ -246,8 +246,17 @@ public class OdonymProvider_Normal extends OdonymProvider {
 
 	@Override
 	public String generateVillagerName(CityWorldGenerator generator, Odds odds) {
-		return villagerPrefixes.get(odds.getRandomInt(villagerPrefixes.size())) + " "
-				+ villagerSuffixes.get(odds.getRandomInt(villagerSuffixes.size()));
+		return generateGivenName(generator, odds) + " " + generateSurname(generator, odds);
+	}
+
+	@Override
+	public String generateGivenName(CityWorldGenerator generator, Odds odds) {
+		return villagerPrefixes.get(odds.getRandomInt(villagerPrefixes.size()));
+	}
+
+	@Override
+	public String generateSurname(CityWorldGenerator generator, Odds odds) {
+		return villagerSuffixes.get(odds.getRandomInt(villagerSuffixes.size()));
 	}
 
 	@Override

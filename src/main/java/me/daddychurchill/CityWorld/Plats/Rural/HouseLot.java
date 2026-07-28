@@ -60,7 +60,7 @@ public class HouseLot extends IsolatedLot {
 			destroyBuilding(generator, atY, floors);
 		else
 			generateSurface(generator, chunk, false);
-		generator.spawnProvider.spawnBeing(generator, chunk, chunkOdds, 5, atY, 5);
+		generator.spawnProvider.spawnFamily(generator, chunk, chunkOdds, 5, atY, 5);
 	}
 
 }
