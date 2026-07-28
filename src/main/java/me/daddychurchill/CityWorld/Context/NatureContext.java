@@ -231,11 +231,12 @@ public class NatureContext extends UncivilizedContext {
 				break;
 			case SEA:
 				if (generator.getSettings().includeAirborneStructures) {
-					if (generator.isModernStyle() && platmapOdds.playOdds(Odds.oddsTremendouslyUnlikely))
-						current = new AirshipLot(platmap, platmap.originX + x, platmap.originZ + z);
-					else if (platmapOdds.playOdds(Odds.oddsEnormouslyUnlikely))
+					// rarity gradient: saucers ultra-rare, blimps almost as rare, balloons quite rare
+					if (platmapOdds.playOdds(Odds.oddsEffinUnlikely))
 						current = new FlyingSaucerLot(platmap, platmap.originX + x, platmap.originZ + z);
-					else if (platmapOdds.playOdds(Odds.oddsSomewhatLikely))
+					else if (generator.isModernStyle() && platmapOdds.playOdds(Odds.oddsTremendouslyUnlikely))
+						current = new AirshipLot(platmap, platmap.originX + x, platmap.originZ + z);
+					else if (platmapOdds.playOdds(Odds.oddsPrettyUnlikely))
 						current = new HotairBalloonLot(platmap, platmap.originX + x, platmap.originZ + z);
 
 					// TODO boat!
@@ -245,11 +246,12 @@ public class NatureContext extends UncivilizedContext {
 //				break;
 			case LOWLAND:
 				if (generator.getSettings().includeAirborneStructures) {
-					if (generator.isModernStyle() && platmapOdds.playOdds(Odds.oddsTremendouslyUnlikely))
-						current = new AirshipLot(platmap, platmap.originX + x, platmap.originZ + z);
-					else if (platmapOdds.playOdds(Odds.oddsEnormouslyUnlikely))
+					// rarity gradient: saucers ultra-rare, blimps almost as rare, balloons quite rare
+					if (platmapOdds.playOdds(Odds.oddsEffinUnlikely))
 						current = new FlyingSaucerLot(platmap, platmap.originX + x, platmap.originZ + z);
-					else if (platmapOdds.playOdds(Odds.oddsSomewhatLikely))
+					else if (generator.isModernStyle() && platmapOdds.playOdds(Odds.oddsTremendouslyUnlikely))
+						current = new AirshipLot(platmap, platmap.originX + x, platmap.originZ + z);
+					else if (platmapOdds.playOdds(Odds.oddsPrettyUnlikely))
 						current = new HotairBalloonLot(platmap, platmap.originX + x, platmap.originZ + z);
 
 					// TODO statue overlooking the city?
