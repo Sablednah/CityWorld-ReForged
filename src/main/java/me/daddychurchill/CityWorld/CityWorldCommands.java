@@ -14,6 +14,7 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import me.daddychurchill.CityWorld.Clipboard.Clipboard;
 import me.daddychurchill.CityWorld.Clipboard.ClipboardLot;
 import me.daddychurchill.CityWorld.Clipboard.SchematicLibrary;
+import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.api.CityWorldAPI;
@@ -70,6 +71,17 @@ public final class CityWorldCommands {
     private static final SuggestionProvider<CommandSourceStack> SUGGEST_SCHEMATICS =
             (ctx, builder) -> SharedSuggestionProvider.suggest(SchematicLibrary.names(), builder);
 
+    /** The well-known landmark lot kinds offered as tab-completions for {@code /cityfind lot}. The match
+     *  itself is a free substring against every lot's class name (so any lot type is findable — e.g.
+     *  "office", "warehouse"), but these are the fun, rare ones worth pointing people at. */
+    private static final java.util.List<String> LOT_KINDS = java.util.List.of(
+            "zoo", "biodome", "saucer", "balloon", "blimp", "fishpond", "cornershop", "castle",
+            "oilplatform", "radiotower", "watertower", "monument", "library", "museum", "campground",
+            "mineentrance", "bunker", "farm", "park");
+
+    private static final SuggestionProvider<CommandSourceStack> SUGGEST_LOTKINDS =
+            (ctx, builder) -> SharedSuggestionProvider.suggest(LOT_KINDS, builder);
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("cityinfo")
                 .executes(CityWorldCommands::cityInfo));
@@ -90,12 +102,26 @@ public final class CityWorldCommands {
 
         // /cityfind <name>  (report nearest) or  /cityfind tp <name>  (and teleport there). tp is a
         // literal before the name because the name is greedy (schematic names have spaces).
+        //   /cityfind lot <kind> [tp order: lot tp <kind>]  finds a lot by TYPE (zoo, biodome, saucer,
+        //   balloon, castle, …) rather than a schematic name — the rare landmarks are hard to stumble on.
+        //   /cityfind lots  lists the well-known kinds. (Literals win over the greedy name arg in Brigadier,
+        //   so "lot"/"lots" never get swallowed as a schematic name — same trick the "tp" literal uses.)
         dispatcher.register(Commands.literal("cityfind")
                 .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .then(Commands.literal("tp")
                         .then(Commands.argument("name", StringArgumentType.greedyString())
                                 .suggests(SUGGEST_SCHEMATICS)
                                 .executes(ctx -> findSchematic(ctx, true))))
+                .then(Commands.literal("lots")
+                        .executes(CityWorldCommands::listLotKinds))
+                .then(Commands.literal("lot")
+                        .then(Commands.literal("tp")
+                                .then(Commands.argument("kind", StringArgumentType.word())
+                                        .suggests(SUGGEST_LOTKINDS)
+                                        .executes(ctx -> findLot(ctx, true))))
+                        .then(Commands.argument("kind", StringArgumentType.word())
+                                .suggests(SUGGEST_LOTKINDS)
+                                .executes(ctx -> findLot(ctx, false))))
                 .then(Commands.argument("name", StringArgumentType.greedyString())
                         .suggests(SUGGEST_SCHEMATICS)
                         .executes(ctx -> findSchematic(ctx, false))));
@@ -291,6 +317,118 @@ public final class CityWorldCommands {
             }
         }
         return best;
+    }
+
+    // ------------------------------------------------------------------ /cityfind lot <kind>
+
+    private static int listLotKinds(CommandContext<CommandSourceStack> ctx) {
+        ctx.getSource().sendSuccess(() -> Component.literal(
+                "Findable lot kinds (any lot's type also works as a substring): "
+                        + String.join(", ", LOT_KINDS)), false);
+        return 1;
+    }
+
+    /** Find the nearest lot whose class name matches {@code kind} (e.g. "saucer" -> FlyingSaucerLot). Same
+     *  off-thread ring-search as {@link #findSchematic}, matching on the planned lot's TYPE rather than a
+     *  schematic name — the way to hunt down the rare landmarks (zoos, biodomes, saucers, castles). */
+    private static int findLot(CommandContext<CommandSourceStack> ctx, boolean teleport)
+            throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        ServerLevel level = player.level();
+        MinecraftServer server = ctx.getSource().getServer();
+        String kind = StringArgumentType.getString(ctx, "kind").trim().toLowerCase(Locale.ROOT);
+
+        ChunkGenerator generator = level.getChunkSource().getGenerator();
+        if (!(generator instanceof CityWorldChunkGenerator cityGenerator)) {
+            ctx.getSource().sendFailure(Component.literal("This world is not generated by CityWorld."));
+            return 0;
+        }
+        CityWorldGenerator context = cityGenerator.getContext(level);
+        ChunkPos pos = player.chunkPosition();
+        double playerX = player.getX();
+        double playerZ = player.getZ();
+
+        ctx.getSource().sendSuccess(() -> Component.literal("Searching for a '" + kind + "' lot..."), false);
+
+        Thread t = new Thread(() -> {
+            int[] reachedRing = { 0 };
+            Found best = searchLot(context, kind, pos.x, pos.z, playerX, playerZ, reachedRing);
+            server.execute(() -> {
+                if (best == null) {
+                    player.sendSystemMessage(Component.literal("Found no '" + kind + "' lot within "
+                            + (reachedRing[0] * PlatMap.Width * 16) + " blocks (searched as far as it could in "
+                            + "the time budget — it may be rare, style-specific, or further out; try again "
+                            + "from closer). /cityfind lots lists the well-known kinds."));
+                    return;
+                }
+                player.sendSystemMessage(Component.literal("Nearest " + best.name() + " [" + best.family()
+                        + "] at x=" + best.x() + " z=" + best.z() + "  (" + Math.round(best.dist())
+                        + " blocks " + best.compass() + ")"));
+                if (teleport) {
+                    level.getChunk(best.x() >> 4, best.z() >> 4);
+                    int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, best.x(), best.z());
+                    player.teleportTo(level, best.x() + 0.5, y, best.z() + 0.5, Set.<Relative>of(), player.getYRot(),
+                            player.getXRot(), false);
+                    player.sendSystemMessage(Component.literal("Teleported to the nearest " + best.name() + "."));
+                }
+            });
+        }, "cityworld-findlot");
+        t.setDaemon(true);
+        t.start();
+        return 1;
+    }
+
+    private static Found searchLot(CityWorldGenerator context, String kind, int px, int pz,
+            double playerX, double playerZ, int[] reachedRing) {
+        int pmX0 = Math.floorDiv(px, PlatMap.Width) * PlatMap.Width;
+        int pmZ0 = Math.floorDiv(pz, PlatMap.Width) * PlatMap.Width;
+        Found best = null;
+        int foundRing = -1;
+        long deadline = System.nanoTime() + FIND_BUDGET_MS * 1_000_000L;
+        for (int r = 0; r <= FIND_MAX_RINGS; r++) {
+            for (int dx = -r; dx <= r; dx++)
+                for (int dz = -r; dz <= r; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r)
+                        continue;
+                    PlatMap pm = context.getPlatMap(pmX0 + dx * PlatMap.Width, pmZ0 + dz * PlatMap.Width);
+                    Found hit = scanPlatMapForLot(pm, kind, playerX, playerZ);
+                    if (hit != null && (best == null || hit.dist() < best.dist()))
+                        best = hit;
+                }
+            reachedRing[0] = r;
+            if (best != null && foundRing < 0)
+                foundRing = r;
+            if (foundRing >= 0 && r >= foundRing + 1)
+                break;
+            if (best == null && System.nanoTime() > deadline)
+                break;
+        }
+        return best;
+    }
+
+    private static Found scanPlatMapForLot(PlatMap pm, String kind, double playerX, double playerZ) {
+        Found best = null;
+        for (int x = 0; x < PlatMap.Width; x++)
+            for (int z = 0; z < PlatMap.Width; z++) {
+                PlatLot lot = pm.getLot(x, z);
+                if (lot == null)
+                    continue;
+                if (!lot.getClass().getSimpleName().toLowerCase(Locale.ROOT).contains(kind))
+                    continue;
+                int wx = lot.getChunkX() * 16 + 8;
+                int wz = lot.getChunkZ() * 16 + 8;
+                double dist = Math.hypot(wx - playerX, wz - playerZ);
+                if (best == null || dist < best.dist())
+                    best = new Found(prettyLotName(lot.getClass().getSimpleName()), lot.style.name(), wx, wz,
+                            dist, compass(wx - playerX, wz - playerZ));
+            }
+        return best;
+    }
+
+    /** "FlyingSaucerLot" -> "Flying Saucer" — drop the Lot suffix and space the camel-case for the report. */
+    private static String prettyLotName(String simpleName) {
+        String base = simpleName.endsWith("Lot") ? simpleName.substring(0, simpleName.length() - 3) : simpleName;
+        return base.replaceAll("(?<=[a-z0-9])(?=[A-Z])", " ");
     }
 
     private static String compass(double dx, double dz) {
