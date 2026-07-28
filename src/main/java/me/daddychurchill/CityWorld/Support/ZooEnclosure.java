@@ -80,6 +80,21 @@ public final class ZooEnclosure {
         }
     }
 
+    /** Draw just the connected fence ring of a pen (world bounds, inclusive) from {@code y1} to {@code y2}.
+     *  For the small single-chunk pens, whose fence would otherwise be loose posts. */
+    public static void fencePerimeter(RealBlocks chunk, int penX1, int penX2, int penZ1, int penZ2, int y1, int y2) {
+        int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
+        for (int lx = 0; lx < 16; lx++)
+            for (int lz = 0; lz < 16; lz++) {
+                int wx = oX + lx, wz = oZ + lz;
+                if (!isPerimeter(wx, wz, penX1, penX2, penZ1, penZ2))
+                    continue;
+                BlockFace[] c = fenceCons(wx, wz, penX1, penX2, penZ1, penZ2);
+                for (int y = y1; y <= y2; y++)
+                    chunk.setPipeBlock(lx, y, lz, Material.OAK_FENCE, c);
+            }
+    }
+
     /** Which of the 4 horizontal faces this perimeter fence connects along — to its neighbours that are also
      *  on the pen perimeter (handles straight runs and corners, across chunk seams). */
     private static BlockFace[] fenceCons(int wx, int wz, int penX1, int penX2, int penZ1, int penZ2) {

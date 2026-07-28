@@ -89,8 +89,10 @@ public class ZooLot extends IsolatedLot {
         // themed ground across the pen interior
         chunk.setLayer(y, groundFor(theme));
 
-        // a low fence pen (inset 2) with a gate on the south side
-        chunk.setWalls(2, 14, y + 1, y + 2, 2, 14, Material.OAK_FENCE);
+        // a low fence pen (inset 2) with a gate on the south side — connected fences (not loose posts)
+        int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
+        me.daddychurchill.CityWorld.Support.ZooEnclosure.fencePerimeter(chunk, oX + 2, oX + 13, oZ + 2, oZ + 13,
+                y + 1, y + 2);
         chunk.setGate(7, y + 1, 13, Material.OAK_FENCE_GATE, BlockFace.SOUTH, false);
 
         // theme features + a pool where the animal wants water
@@ -100,11 +102,9 @@ public class ZooLot extends IsolatedLot {
             digPool(chunk, y);
         addFeatures(generator, chunk, odds(), y);
 
-        // a name sign on a post at the pen's front-left corner
-        chunk.setBlocks(3, y + 1, y + 3, 2, Material.OAK_FENCE);
-        if (chunk.isEmpty(3, y + 3, 2))
-            chunk.setBlock(3, y + 3, 2, Material.OAK_PLANKS);
-        chunk.setSignPost(3, y + 2, 2, Material.OAK_HANGING_SIGN, BlockFace.SOUTH, new String[] { "The Zoo", theme.name });
+        // a name sign on a post at the pen's front-left corner — a plain standing signpost
+        chunk.setBlocks(3, y + 1, y + 2, 2, Material.OAK_FENCE);
+        chunk.setSignPost(3, y + 3, 2, Material.OAK_SIGN, BlockFace.SOUTH, new String[] { "The Zoo", theme.name });
 
         // and the residents
         stock(generator, chunk, y);
