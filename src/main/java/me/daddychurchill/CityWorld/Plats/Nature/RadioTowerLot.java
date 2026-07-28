@@ -189,9 +189,13 @@ public class RadioTowerLot extends ConstructLot {
 
 				// top of the tallest one?
 				if (antennaHeight == heightTallest) {
-					chunk.setBlocks(x, x + 2, y + antennaHeight, z, z + 2, Material.END_ROD); // @@ really should be a
-					// lantern or something
-					// like that
+					chunk.setBlocks(x, x + 2, y + antennaHeight, z, z + 2, Material.END_ROD); // a lit beacon crown
+					// ...spiked with a lightning rod above the crown. The tallest structure for miles, so it
+					// genuinely takes the strikes — stand back on a storm and watch it light up.
+					chunk.setBlock(x, y + antennaHeight + 1, z, Material.LIGHTNING_ROD);
+				} else {
+					// cap every other antenna with a lightning rod at its apex too
+					chunk.setBlock(x, y + antennaHeight, z, Material.LIGHTNING_ROD);
 				}
 			}
 		}

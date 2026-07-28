@@ -10,10 +10,10 @@ below). What genuinely remains is small:
 - **Finer decay knobs** — graduated per-category demolition control. Apocalypse uses the coarse on/off
   flags (`includeDecayedRoads/Buildings/Nature`); the owner wants finer knobs. Unblocked. See
   [[cityworld-demolition-more-options-later]].
-- **A few interior deco blocks not yet woven in** — candles/lanterns/chains, copper chests, lightning
-  rods, decorated pots (the `Furniture` pass covered shelves/tables/lamps/job-blocks, not these). See
-  [[cityworld-interiors-decoration-ideas]].
-- **Building copper weathering** — parked by the owner ("leave for now").
+- ~~A few interior deco blocks not yet woven in~~ **DONE (2026-07)** — chains (chandeliers), copper
+  chests, richer candles + candle-cake, decorated pots all in the `Furniture` accent vocabulary; lightning
+  rods on highrise roofs + radio-tower aerials; hanging lanterns in the mines. See the deco log below.
+- ~~Building copper weathering~~ **CLOSED (owner: a-ok, leave as-is 2026-07)** — not doing it.
 
 **Two things this doc *used* to list as remaining are actually DONE** (verified 2026-07): schematic
 **rotation is applied** (random 1-of-4 in `PlatMap.placeSpecificClip`; mirroring too, but opt-in per
@@ -42,6 +42,23 @@ campgrounds generate in normal worlds). The stale claims below are corrected.
 - **`/cityfind lot <kind> [tp]`**: locate rare landmark lots by type (zoo, biodome, saucer, balloon,
   castle, oilplatform, radiotower, …) — free substring match on the lot's class name, reusing the
   schematic finder's off-thread ring-search + budget. `/cityfind lots` lists the well-known kinds.
+
+**Decoration blocks pass (2026-07).** The remaining "weave in the new deco blocks" list is cleared:
+- **Interiors** (`Support.Furniture` accent vocabulary, MODERN): chandeliers (an `IRON_CHAIN` dropping
+  from the ceiling with a hung lantern — new `SupportBlocks.setHangingLantern` sets the HANGING state),
+  wall-backed **copper chests**, **candle clusters** (colour variety + the odd lit `CANDLE_CAKE`), on top
+  of the existing plant/lamp/pot/amethyst. Note: the mines already place `COPPER_CHEST` loot, so verify
+  interior copper chests **above street level** to avoid counting mine loot.
+- **Lightning rods**: on **highrise roofs** (`Furniture.rooftopLightningRod`, from the decoration seam —
+  self-limits to roofs >16 above street, so only the skyline gets them) and on **radio-tower aerials**
+  (`RadioTowerLot` caps every antenna apex, the tallest crowned with an END_ROD beacon + a rod above it
+  at y≈193 — the tallest thing for miles, so it genuinely draws the strike).
+- **Hanging lanterns in the mines**: `PlatLot.scatterMineLanterns` hangs lanterns (plain/soul/copper)
+  from the corridor ceiling so drifts read as worked and lit.
+- New materials via `gen_material.py`: `LIGHTNING_ROD`, `ORANGE/LIGHT_GRAY/RED_CANDLE`, `CANDLE_CAKE`
+  (`IRON_CHAIN`, `COPPER_CHEST`, `CANDLE`/`WHITE_CANDLE`, lanterns already existed). Verified by probe:
+  office carried rooftop rod (y=118) + chains + candles + copper chest; radio tower 3 aerial rods (y=193);
+  62–122 hanging mine lanterns. **Building copper weathering: closed — owner is a-ok leaving it as-is.**
 
 **The shop *classification layer* is now built (the foundation interiors keys off).** A store no longer
 just "is a `StoreBuildingLot`" — it carries a seed-deterministic `ShopType(ShopScale, ShopTrade)`, a

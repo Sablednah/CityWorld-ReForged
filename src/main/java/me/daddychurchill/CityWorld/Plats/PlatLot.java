@@ -256,6 +256,11 @@ public abstract class PlatLot {
 		if (generator.worldStyle == CityWorldGenerator.WorldStyle.APOCALYPSE && style == LotStyle.STRUCTURE)
 			me.daddychurchill.CityWorld.Support.ApocalypseSpawners.apply(generator, this, chunk, chunkOdds);
 
+		// MODERN: crown the tall buildings with a rooftop lightning rod (highrises only — it self-limits
+		// to roofs well above street, the skyline that actually takes the strikes).
+		if (generator.isModernStyle() && style == LotStyle.STRUCTURE)
+			me.daddychurchill.CityWorld.Support.Furniture.rooftopLightningRod(generator, chunk, chunkOdds);
+
 		// Shops: a classified shop gets its trade's villager job block dropped on the ground floor, so a
 		// store reads as its trade. MODERN dressing (gated); runs after the interior is drawn so the
 		// counter lands in open floor. getShopType() is only non-null for shop lots.
@@ -670,6 +675,9 @@ public abstract class PlatLot {
 		// miners' camp clutter — furnaces, stonecutters and the like on the ledge opposite the track
 		scatterMineProps(generator, chunk, floorY, ns, we);
 
+		// lanterns hung from the corridor ceiling so the drift isn't pitch black
+		scatterMineLanterns(chunk, floorY, ns, we);
+
 		// ore veins exposed in the walls (depth-graded), gravel fall-in hazards, the odd cave-in rubble
 		veinAndHazard(generator, chunk, floorY, ns, we);
 	}
@@ -939,6 +947,30 @@ public abstract class PlatLot {
 		} else {
 			chunk.setBlock(x, y, z, prop, facing);
 		}
+	}
+
+	// Lanterns hung from the corridor ceiling (at floorY+2, dangling under the floorY+3 rock) so the drift
+	// reads as a worked, lit mine rather than a black hole — a soft chain of light along the ledge.
+	private final static Material[] mineLanterns = { Material.LANTERN, Material.SOUL_LANTERN,
+			Material.COPPER_LANTERN };
+	private final static double oddsOfMineLantern = Odds.oddsUnlikely;
+
+	private void scatterMineLanterns(SupportBlocks chunk, int floorY, boolean ns, boolean we) {
+		int y = floorY + 2; // just under the carved ceiling
+		if (ns)
+			for (int z = 2; z < 15; z++)
+				hangMineLantern(chunk, 6, y, z);
+		if (we)
+			for (int x = 2; x < 15; x++)
+				hangMineLantern(chunk, x, y, 6);
+	}
+
+	private void hangMineLantern(SupportBlocks chunk, int x, int y, int z) {
+		if (!chunkOdds.playOdds(oddsOfMineLantern))
+			return;
+		if (!chunk.isEmpty(x, y, z) || chunk.isEmpty(x, y + 1, z))
+			return; // an empty cell with a solid ceiling above to hang from
+		chunk.setHangingLantern(x, y, z, mineLanterns[chunkOdds.getRandomInt(mineLanterns.length)]);
 	}
 
 	private final static double oddsOfMineLift = Odds.oddsLikely;

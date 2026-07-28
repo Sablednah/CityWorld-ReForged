@@ -316,6 +316,12 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		setActualBlock(x, y, z, with(stateOf(material), BlockStateProperties.LIT, light));
 	}
 
+	/** A lantern (or soul/copper lantern) hung <em>under</em> a block or chain — sets the HANGING state so
+	 *  it dangles instead of standing (a plain {@code setBlock} gives the floor-standing variant). */
+	public final void setHangingLantern(int x, int y, int z, Material material) {
+		setActualBlock(x, y, z, with(stateOf(material), BlockStateProperties.HANGING, true));
+	}
+
 	/**
 	 * Place a block whose state carries a magnitude, from a 0..1 fraction of its range — the old
 	 * {@code Ageable} / {@code Levelled} / {@code Snow} trio. Each of those exposed its own

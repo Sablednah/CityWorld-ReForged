@@ -735,7 +735,7 @@ public final class Material {
     public static final Material WOOD_DOOR = of(Blocks.OAK_DOOR); // legacy generic wooden door -> oak
     public static final Material WOOD_STEP = of(Blocks.OAK_SLAB); // legacy generic wooden slab -> oak
 
-    // ---- Modern extras (123) — blocks the 1.14 vocabulary never had -------------
+    // ---- Modern extras (128) — blocks the 1.14 vocabulary never had -------------
     public static final Material AMETHYST_CLUSTER = of(Blocks.AMETHYST_CLUSTER); // P12 interior: sparkle accent
     public static final Material ANCIENT_DEBRIS = of(Blocks.ANCIENT_DEBRIS); // P9: rare prize in the deepest mines (the reason they dug so far)
     public static final Material ANVIL = of(Blocks.ANVIL); // P9 mine prop: miners' camp
@@ -752,6 +752,7 @@ public final class Material {
     public static final Material BLAST_FURNACE = of(Blocks.BLAST_FURNACE); // P9 mine prop: miners' camp
     public static final Material BLUE_ICE = of(Blocks.BLUE_ICE); // P8 MODERN: glacier-blue ice for the highest peaks; 1.14 had none
     public static final Material CANDLE = of(Blocks.CANDLE); // P12 interior: tabletop/shelf candle accent
+    public static final Material CANDLE_CAKE = of(Blocks.CANDLE_CAKE); // P14 interior: lit-cake accent on a table
     public static final Material CARTOGRAPHY_TABLE = of(Blocks.CARTOGRAPHY_TABLE); // P9 mine prop: miners' camp (drawing up plans)
     public static final Material CAVE_VINES = of(Blocks.CAVE_VINES); // P10 overgrowth: glow-berry vines hanging from ledges
     public static final Material CHISELED_BOOKSHELF = of(Blocks.CHISELED_BOOKSHELF); // P12 interior: studies/libraries
@@ -800,6 +801,8 @@ public final class Material {
     public static final Material LANTERN = of(Blocks.LANTERN); // P9: mine lighting
     public static final Material LEAF_LITTER = of(Blocks.LEAF_LITTER); // P10 overgrowth: fallen leaves littering floors (1.21.4 multiface)
     public static final Material LECTERN = of(Blocks.LECTERN); // P11 shop: newsagent/bookshop job block
+    public static final Material LIGHTNING_ROD = of(Blocks.LIGHTNING_ROD); // P14 rooftop: lightning rod on MODERN building roofs
+    public static final Material LIGHT_GRAY_CANDLE = of(Blocks.LIGHT_GRAY_CANDLE); // P14 interior: candle accent (neutral colour)
     public static final Material LILY_PAD = of(Blocks.LILY_PAD); // P11 farm: lily pads on the rare fish-pond farm variant
     public static final Material LOOM = of(Blocks.LOOM); // P11 shop: draper/tailor's job block
     public static final Material MANGROVE_LEAVES = of(Blocks.MANGROVE_LEAVES); // P13 biodome: swamp
@@ -815,6 +818,7 @@ public final class Material {
     public static final Material OAK_HANGING_SIGN = of(Blocks.OAK_HANGING_SIGN); // P9 mine entrance: the named-mine headframe sign
     public static final Material OAK_WALL_HANGING_SIGN = of(Blocks.OAK_WALL_HANGING_SIGN); // P12 shop: exterior shopfront sign above the door
     public static final Material OPEN_EYEBLOSSOM = of(Blocks.OPEN_EYEBLOSSOM); // P13 biodome: pale garden flower
+    public static final Material ORANGE_CANDLE = of(Blocks.ORANGE_CANDLE); // P14 interior: candle accent (warm colour)
     public static final Material OXIDIZED_COPPER_CHEST = of(Blocks.OXIDIZED_COPPER_CHEST); // P9 copper mine: loot chest (oxidized, deepest)
     public static final Material OXIDIZED_COPPER_GRATE = of(Blocks.OXIDIZED_COPPER_GRATE); // P9 copper mine: cage/machinery grate (oxidized, deepest)
     public static final Material OXIDIZED_CUT_COPPER = of(Blocks.OXIDIZED_CUT_COPPER); // P12 MODERN build stone
@@ -836,6 +840,7 @@ public final class Material {
     public static final Material POTTED_BAMBOO = of(Blocks.POTTED_BAMBOO); // P12 interior: potted plant accent
     public static final Material POTTED_FERN = of(Blocks.POTTED_FERN); // P12 interior: potted plant accent
     public static final Material POWDER_SNOW = of(Blocks.POWDER_SNOW); // P8 MODERN: powder-snow pockets on snowy slopes; a 1.17 block
+    public static final Material RED_CANDLE = of(Blocks.RED_CANDLE); // P14 interior: candle accent (warm colour)
     public static final Material RED_SAND = of(Blocks.RED_SAND); // P8 MODERN: badlands surface; the 1.14 Bukkit source never referenced it
     public static final Material RESIN_BRICKS = of(Blocks.RESIN_BRICKS); // P12 MODERN build stone
     public static final Material SHORT_GRASS = of(Blocks.SHORT_GRASS); // P10 overgrowth: grass tufts pushing through

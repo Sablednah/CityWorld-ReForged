@@ -24,9 +24,34 @@ public final class Furniture {
     private static final Material[] PLANTS = { Material.POTTED_FERN, Material.POTTED_AZALEA, Material.POTTED_BAMBOO,
             Material.FLOWER_POT };
 
+    private static final Material[] CANDLES = { Material.CANDLE, Material.WHITE_CANDLE, Material.ORANGE_CANDLE,
+            Material.LIGHT_GRAY_CANDLE, Material.RED_CANDLE };
+
     /** True on a MODERN world — the gate every decoration here honours. */
     public static boolean modern(CityWorldGenerator generator) {
         return generator.isModernStyle();
+    }
+
+    /**
+     * MODERN: a lightning rod on the roof of a tall building. Scans a near-centre column down from above
+     * the tallest builds to the first solid block (the roof); if that roof sits well above street level —
+     * a genuine highrise — plants a rod on top. Short buildings and open lots get nothing, so rods only
+     * ever crown the skyline (where lightning would strike anyway). Called from the decoration seam per
+     * STRUCTURE lot, so a multi-chunk tower can carry a couple.
+     */
+    public static void rooftopLightningRod(CityWorldGenerator generator, SupportBlocks chunk, Odds odds) {
+        if (!modern(generator) || !odds.playOdds(0.30))
+            return;
+        int x = 7 + odds.getRandomInt(2), z = 7 + odds.getRandomInt(2); // near the lot centre
+        int street = generator.streetLevel;
+        int roofY = -1;
+        for (int y = street + 200; y > street + 16; y--) // only tall builds (roof >16 above the street)
+            if (!chunk.isEmpty(x, y, z)) {
+                roofY = y;
+                break;
+            }
+        if (roofY >= 0 && chunk.isEmpty(x, roofY + 1, z))
+            chunk.setBlock(x, roofY + 1, z, Material.LIGHTNING_ROD);
     }
 
     /** A bookshelf material — MODERN mixes in chiseled bookshelves (per-call, so a wall reads as a blend). */
@@ -60,7 +85,7 @@ public final class Furniture {
     }
 
     private static void placeAccent(RealBlocks chunk, Odds odds, int x, int y, int z) {
-        switch (odds.getRandomInt(6)) {
+        switch (odds.getRandomInt(10)) {
         case 0:
         case 1:
             pottedPlant(chunk, odds, x, y, z);
@@ -72,11 +97,60 @@ public final class Furniture {
         case 4:
             chunk.setBlock(x, y, z, Material.DECORATED_POT);
             break;
+        case 5:
+            candleCluster(chunk, odds, x, y, z);
+            break;
+        case 6:
+            // a copper storage chest tucked against the wall (accentRoom prefers wall-backed cells)
+            chunk.setBlock(x, y, z, Material.COPPER_CHEST, wallward(chunk, x, y, z));
+            break;
+        case 7:
+            // a chandelier — a chain dropping from the ceiling with a lantern hung on the end, if there's
+            // a ceiling close enough above to hang it from; otherwise fall through to a floor piece
+            if (chandelier(chunk, odds, x, y, z))
+                break;
+            pottedPlant(chunk, odds, x, y, z);
+            break;
         default:
             // amethyst sparkle on the floor
             chunk.setBlock(x, y, z, Material.AMETHYST_CLUSTER, BlockFace.UP);
             break;
         }
+    }
+
+    /** One to three candles clustered on the floor — the odd one a lit birthday cake. */
+    private static void candleCluster(RealBlocks chunk, Odds odds, int x, int y, int z) {
+        if (odds.playOdds(0.15))
+            chunk.setBlock(x, y, z, Material.CANDLE_CAKE);
+        else
+            chunk.setBlock(x, y, z, CANDLES[odds.getRandomInt(CANDLES.length)]);
+    }
+
+    /** A chain-and-lantern chandelier hung from a ceiling within ~4 blocks above the floor cell. Returns
+     *  false if no ceiling is close enough (a tall/open room) so the caller can place a floor piece instead. */
+    private static boolean chandelier(RealBlocks chunk, Odds odds, int x, int y, int z) {
+        int ceil = -1;
+        for (int cy = y + 3; cy <= y + 5; cy++) // look for a solid ceiling 3..5 above the floor
+            if (!chunk.isEmpty(x, cy, z)) {
+                ceil = cy;
+                break;
+            }
+        if (ceil < 0)
+            return false;
+        int chainBottom = Math.max(y + 2, ceil - 2); // at most a couple of links, so the lantern hangs high
+        for (int cy = ceil - 1; cy >= chainBottom; cy--)
+            chunk.setBlock(x, cy, z, Material.IRON_CHAIN);
+        int lanternY = Math.max(y + 1, chainBottom - 1); // lantern on the end, never down at the floor
+        chunk.setHangingLantern(x, lanternY, z, odds.flipCoin() ? Material.LANTERN : Material.SOUL_LANTERN);
+        return true;
+    }
+
+    /** The face of a solid horizontal neighbour, so a chest/cabinet sits back against a wall facing out. */
+    private static BlockFace wallward(RealBlocks chunk, int x, int y, int z) {
+        if (solid(chunk, x - 1, y, z)) return BlockFace.EAST;
+        if (solid(chunk, x + 1, y, z)) return BlockFace.WEST;
+        if (solid(chunk, x, y, z - 1)) return BlockFace.SOUTH;
+        return BlockFace.NORTH;
     }
 
     /** A potted plant on the floor — instant "someone lives here". */
