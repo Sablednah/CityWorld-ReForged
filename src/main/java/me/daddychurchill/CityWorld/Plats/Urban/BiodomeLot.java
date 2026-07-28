@@ -84,20 +84,37 @@ public class BiodomeLot extends IsolatedLot {
         fill(generator, chunk, chunkOdds, y);
     }
 
-    /** A clear glass hemisphere with a solid base ring and a doorway. */
+    /** A gap-free clear glass hemisphere with a solid base ring and a clean doorway. The shell is built two
+     *  ways and unioned so it never leaks: horizontal rings close the near-vertical walls, and one glass cap
+     *  per column closes the roof/apex the rings alone leave open (the old "containment breach"). */
     private void buildDome(RealBlocks chunk, int y) {
-        for (int dy = 0; dy <= HEIGHT; dy++) {
-            double r = Math.sqrt((double) R * R - (double) dy * dy); // shell radius at this height
+        int base = y + 1;
+        // 1) horizontal shell rings — the walls
+        for (int dy = 0; dy <= R; dy++) {
+            double r = Math.sqrt((double) R * R - (double) dy * dy);
             for (int x = 1; x < 15; x++)
                 for (int z = 1; z < 15; z++) {
                     double d = dist(x, z);
-                    if (d <= r && d > r - 1.4)
-                        chunk.setBlock(x, y + 1 + dy, z, dy == 0 ? Material.SMOOTH_STONE : Material.GLASS);
+                    if (d <= r + 0.5 && d > r - 0.8)
+                        chunk.setBlock(x, base + dy, z, dy == 0 ? Material.SMOOTH_STONE : Material.GLASS);
                 }
         }
-        // a doorway on the south face
-        chunk.setBlocks(7, 9, y + 1, y + 3, CZ + R - 1, CZ + R, Material.AIR);
-        chunk.setDoor(8, y + 1, CZ + R - 1, Material.OAK_DOOR, BlockFace.SOUTH);
+        // 2) one glass cap per interior column at its analytic dome height — closes the roof/apex
+        for (int x = 1; x < 15; x++)
+            for (int z = 1; z < 15; z++) {
+                double d = dist(x, z);
+                if (d > R + 0.5)
+                    continue;
+                int domeY = (int) Math.round(Math.sqrt(Math.max(0.0, (double) R * R - d * d)));
+                if (domeY > 0)
+                    chunk.setBlock(x, base + domeY, z, Material.GLASS);
+            }
+        // a clean one-wide doorway on the south face (carve just the door column + the step out, so the
+        // glass wall either side stays intact)
+        int dz = CZ + R - 1;
+        chunk.setBlocks(CX, base, base + 1, dz, Material.AIR);
+        chunk.setBlocks(CX, base, base + 1, dz + 1, Material.AIR);
+        chunk.setDoor(CX, base, dz, Material.OAK_DOOR, BlockFace.SOUTH);
     }
 
     private double dist(int x, int z) {
@@ -160,10 +177,9 @@ public class BiodomeLot extends IsolatedLot {
             spawn(generator, chunk, EntityType.AXOLOTL);
         }
         case END -> {
-            for (int i = 0; i < 4; i++)
-                chunk.setBlocks(4 + odds.getRandomInt(8), y + 1, y + 2 + odds.getRandomInt(3),
-                        4 + odds.getRandomInt(8), Material.CHORUS_PLANT);
-            chunk.setBlock(7, y + 4, 7, Material.CHORUS_FLOWER);
+            chorusPlant(chunk, odds, 6, y, 6);
+            chorusPlant(chunk, odds, 10, y, 9);
+            chorusPlant(chunk, odds, 8, y, 11);
             scatter(chunk, odds, y, Material.PURPUR_BLOCK, 3);
         }
         case NETHER -> {
@@ -180,8 +196,27 @@ public class BiodomeLot extends IsolatedLot {
 
     private void tree(RealBlocks chunk, int x, int y, int z, Material log, Material leaves, int h) {
         chunk.setBlocks(x, y + 1, y + 1 + h, z, log);
-        chunk.setBlocks(x - 1, x + 2, y + h, y + h + 2, z - 1, z + 2, leaves);
-        chunk.setBlock(x, y + h + 2, z, leaves);
+        leafBox(chunk, x - 1, x + 2, y + h, y + h + 2, z - 1, z + 2, leaves);
+        chunk.setLeaves(x, y + h + 2, z, leaves);
+    }
+
+    /** Fill a box with non-decaying (PERSISTENT) leaves, so a hand-built canopy never rots when the trunk
+     *  is thin or a block is punched out of it. */
+    private void leafBox(RealBlocks chunk, int x1, int x2, int y1, int y2, int z1, int z2, Material leaves) {
+        for (int lx = x1; lx < x2; lx++)
+            for (int ly = y1; ly < y2; ly++)
+                for (int lz = z1; lz < z2; lz++)
+                    chunk.setLeaves(lx, ly, lz, leaves);
+    }
+
+    /** A connected chorus stalk topped with a chorus flower (the "fruit"), so the End dome reads as a proper
+     *  chorus plant instead of loose floating cubes — the connections are set explicitly (worldgen setBlock
+     *  doesn't run the neighbour update that would join them). */
+    private void chorusPlant(RealBlocks chunk, Odds odds, int x, int y, int z) {
+        int h = 2 + odds.getRandomInt(2); // 2..3 segments
+        for (int j = 0; j < h; j++)
+            chunk.setPipeBlock(x, y + 1 + j, z, Material.CHORUS_PLANT, BlockFace.DOWN, BlockFace.UP);
+        chunk.setBlock(x, y + 1 + h, z, Material.CHORUS_FLOWER);
     }
 
     private void scatter(RealBlocks chunk, Odds odds, int y, Material m, int count) {

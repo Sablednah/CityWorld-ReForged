@@ -322,6 +322,37 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		setActualBlock(x, y, z, with(stateOf(material), BlockStateProperties.HANGING, true));
 	}
 
+	/** Leaves that never decay — sets PERSISTENT so hand-built trees (zoo/biodome/decor) keep their canopy
+	 *  even when the trunk is thin or interrupted. A plain {@code setBlock} leaves PERSISTENT false, so
+	 *  leaves more than a few blocks from a log rot away. */
+	public final void setLeaves(int x, int y, int z, Material material) {
+		setActualBlock(x, y, z, with(stateOf(material), BlockStateProperties.PERSISTENT, true));
+	}
+
+	/** A "pipe" block (chorus plant, iron bars, glass pane, …) with the given side connections switched on,
+	 *  so a stalk/run actually joins up instead of rendering as loose cubes. Faces map to the block's
+	 *  {@code NORTH/SOUTH/EAST/WEST/UP/DOWN} boolean properties; absent ones are ignored. */
+	public final void setPipeBlock(int x, int y, int z, Material material, BlockFace... connections) {
+		BlockState state = stateOf(material);
+		for (BlockFace face : connections)
+			state = withPipe(state, face);
+		setActualBlock(x, y, z, state);
+	}
+
+	private static BlockState withPipe(BlockState state, BlockFace face) {
+		Direction dir = face.toDirection();
+		if (dir == null)
+			return state;
+		return with(state, switch (dir) {
+		case NORTH -> BlockStateProperties.NORTH;
+		case SOUTH -> BlockStateProperties.SOUTH;
+		case EAST -> BlockStateProperties.EAST;
+		case WEST -> BlockStateProperties.WEST;
+		case UP -> BlockStateProperties.UP;
+		case DOWN -> BlockStateProperties.DOWN;
+		}, true);
+	}
+
 	/**
 	 * Place a block whose state carries a magnitude, from a 0..1 fraction of its range — the old
 	 * {@code Ageable} / {@code Levelled} / {@code Snow} trio. Each of those exposed its own

@@ -19,8 +19,7 @@ public final class FlyingSaucerLot extends ConstructLot {
 
 	@Override
 	public PlatLot newLike(PlatMap platmap, int chunkX, int chunkZ) {
-		// TODO Auto-generated method stub
-		return null;
+		return new FlyingSaucerLot(platmap, chunkX, chunkZ);
 	}
 
 	@Override

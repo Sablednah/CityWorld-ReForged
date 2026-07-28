@@ -168,7 +168,9 @@ public class ZooLot extends IsolatedLot {
         }
         case BEE -> {
             smallTree(chunk, 7, y, 7, Material.OAK_LOG, Material.OAK_LEAVES);
-            chunk.setBlock(7, y + 3, 7, Material.BEE_NEST);
+            // nestle the hive in the canopy edge (a leaf spot), not buried in the trunk — the persistent
+            // leaves around it keep the canopy from rotting
+            chunk.setBlock(8, y + 4, 7, Material.BEE_NEST);
             chunk.setBlock(4, y + 1, 5, Material.DANDELION);
             chunk.setBlock(10, y + 1, 6, Material.POPPY);
         }
@@ -192,8 +194,12 @@ public class ZooLot extends IsolatedLot {
 
     private void smallTree(RealBlocks chunk, int x, int y, int z, Material log, Material leaves) {
         chunk.setBlocks(x, y + 1, y + 4, z, log);
-        chunk.setBlocks(x - 1, x + 2, y + 4, y + 6, z - 1, z + 2, leaves);
-        chunk.setBlock(x, y + 6, z, leaves);
+        // PERSISTENT leaves so the small canopy never rots (it's often too far from the short trunk)
+        for (int lx = x - 1; lx < x + 2; lx++)
+            for (int ly = y + 4; ly < y + 6; ly++)
+                for (int lz = z - 1; lz < z + 2; lz++)
+                    chunk.setLeaves(lx, ly, lz, leaves);
+        chunk.setLeaves(x, y + 6, z, leaves);
     }
 
     private void stock(CityWorldGenerator generator, RealBlocks chunk, int y) {

@@ -168,13 +168,20 @@ public final class Furniture {
      * A low coffee/side table with something on top — a slab surface on a fence leg, a candle or plant
      * set on it. Placed at (x,y,z) if that cell and the one above are clear.
      */
+    /** Full-block "table top" surfaces — an item set on top of these sits flush, unlike a bottom slab which
+     *  leaves the candle/plant floating half a block above it (the reason coffee-table clutter looked
+     *  levitated). Copper grate / scaffolding read as light modern side tables. */
+    private static final Material[] TABLE_TOPS = { Material.COPPER_GRATE, Material.EXPOSED_COPPER_GRATE,
+            Material.SCAFFOLDING, Material.SMOOTH_QUARTZ, Material.OAK_PLANKS };
+
     public static void sideTable(RealBlocks chunk, Odds odds, int x, int y, int z) {
         if (!clearFloor(chunk, x, y, z))
             return;
-        chunk.setBlock(x, y, z, Material.OAK_FENCE);
-        chunk.setBlock(x, y + 1, z, odds.flipCoin() ? Material.SMOOTH_QUARTZ_SLAB : Material.OAK_SLAB);
+        // a one-block table with a flush top, so anything set on it sits ON the surface
+        chunk.setBlock(x, y, z, TABLE_TOPS[odds.getRandomInt(TABLE_TOPS.length)]);
         if (odds.flipCoin())
-            chunk.setBlock(x, y + 2, z, odds.flipCoin() ? Material.CANDLE : Material.POTTED_FERN);
+            chunk.setBlock(x, y + 1, z, odds.flipCoin() ? CANDLES[odds.getRandomInt(CANDLES.length)]
+                    : Material.POTTED_FERN);
     }
 
     // --- house rooms (called from the colonial house's per-room styling) -----------------------
@@ -246,13 +253,41 @@ public final class Furniture {
     public static void bedroom(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
             int z1, int z2) {
         Material bed = BEDS[odds.getRandomInt(BEDS.length)];
-        // bed head to the north wall, foot toward room — needs two clear cells
-        if (clearFloor(chunk, x1 + 1, y, z1 + 1) && clearFloor(chunk, x1 + 1, y, z1 + 2))
-            chunk.setBed(x1 + 1, y, z1 + 1, bed, BlockFace.SOUTH);
-        placeIfClear(chunk, x1 + 2, y, z1 + 1, Material.BARREL, BlockFace.SOUTH); // nightstand
-        if (modern(generator) && x2 - 1 > x1 + 2)
+        int midX = (x1 + x2) / 2, midZ = (z1 + z2) / 2;
+        // Back the bed onto whichever wall sits nearest a chunk edge. Exterior walls (with windows) run
+        // toward x/z 0..15; interior partitions (which carry the doors) sit inward — so this keeps the bed
+        // off the door walls and stops it landing in a doorway (the old fixed NW corner did that a lot).
+        int dN = z1, dS = 15 - z2, dW = x1, dE = 15 - x2;
+        int best = Math.min(Math.min(dN, dS), Math.min(dW, dE));
+        if (best == dN)
+            placeBed(chunk, bed, midX, y, z1 + 1, BlockFace.SOUTH); // head to north wall
+        else if (best == dS)
+            placeBed(chunk, bed, midX, y, z2 - 2, BlockFace.NORTH); // head to south wall
+        else if (best == dW)
+            placeBed(chunk, bed, x1 + 1, y, midZ, BlockFace.EAST); // head to west wall
+        else
+            placeBed(chunk, bed, x2 - 2, y, midZ, BlockFace.WEST); // head to east wall
+
+        placeIfClear(chunk, x1 + 1, y, z1 + 1, Material.BARREL, BlockFace.SOUTH); // a nightstand where it fits
+        if (modern(generator))
             floorLampIfClear(chunk, odds, x2 - 1, y, z2 - 1);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+    }
+
+    /** Place a bed's two cells (anchor + the partner in {@code facing}), only if both are clear floor. */
+    private static boolean placeBed(RealBlocks chunk, Material bed, int x, int y, int z, BlockFace facing) {
+        int px = x, pz = z;
+        switch (facing) {
+        case NORTH, SOUTH -> pz = z + 1;
+        case EAST -> px = x + 1;
+        case WEST -> px = x - 1;
+        default -> {
+        }
+        }
+        if (!clearFloor(chunk, x, y, z) || !clearFloor(chunk, px, y, pz))
+            return false;
+        chunk.setBed(x, y, z, bed, facing);
+        return true;
     }
 
     /** A little bathroom: a cauldron sink/bath, a quartz "toilet", and a tiled mat. */

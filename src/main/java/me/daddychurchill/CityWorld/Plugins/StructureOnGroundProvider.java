@@ -716,6 +716,10 @@ public class StructureOnGroundProvider extends Provider {
 	private static final Material[] DOOR_MATS = { Material.BIRCH_DOOR, Material.OAK_DOOR, Material.SPRUCE_DOOR,
 			Material.DARK_OAK_DOOR, Material.JUNGLE_DOOR, Material.ACACIA_DOOR };
 	private static final BlockFace[] HORIZ = { BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST };
+	private static final Material[] BED_MATS = { Material.WHITE_BED, Material.ORANGE_BED, Material.MAGENTA_BED,
+			Material.LIGHT_BLUE_BED, Material.YELLOW_BED, Material.LIME_BED, Material.PINK_BED, Material.GRAY_BED,
+			Material.LIGHT_GRAY_BED, Material.CYAN_BED, Material.PURPLE_BED, Material.BLUE_BED, Material.BROWN_BED,
+			Material.GREEN_BED, Material.RED_BED, Material.BLACK_BED };
 
 	/**
 	 * Clear any furnishing left standing in a doorway. For every door (its lower half), the two
@@ -736,10 +740,8 @@ public class StructureOnGroundProvider extends Provider {
 							continue;
 						if (!chunk.isEmpty(nx, y + 2, nz))
 							continue; // solid above => this side is the wall, not the passage
-						if (!chunk.isEmpty(nx, y, nz))
-							chunk.setBlock(nx, y, nz, Material.AIR);
-						if (!chunk.isEmpty(nx, y + 1, nz))
-							chunk.setBlock(nx, y + 1, nz, Material.AIR);
+						clearFurniture(chunk, nx, y, nz);
+						clearFurniture(chunk, nx, y + 1, nz);
 					}
 				}
 	}
@@ -749,6 +751,27 @@ public class StructureOnGroundProvider extends Provider {
 			if (chunk.isType(x, y, z, d))
 				return true;
 		return false;
+	}
+
+	private boolean isBed(RealBlocks chunk, int x, int y, int z) {
+		for (Material b : BED_MATS)
+			if (chunk.isType(x, y, z, b))
+				return true;
+		return false;
+	}
+
+	/** Clear a blocking cell from a doorway — but if it's a bed, take the WHOLE bed (its paired half too),
+	 *  so we never leave a bisected "half bed" straddling the door frame. */
+	private void clearFurniture(RealBlocks chunk, int x, int y, int z) {
+		if (chunk.isEmpty(x, y, z))
+			return;
+		if (isBed(chunk, x, y, z))
+			for (BlockFace dir : HORIZ) {
+				int nx = x + dir.getModX(), nz = z + dir.getModZ();
+				if (nx >= 0 && nx < chunk.width && nz >= 0 && nz < chunk.width && isBed(chunk, nx, y, nz))
+					chunk.setBlock(nx, y, nz, Material.AIR);
+			}
+		chunk.setBlock(x, y, z, Material.AIR);
 	}
 
 	private HouseRoofStyle pickRoofStyle(Odds odds) {

@@ -3,6 +3,7 @@ package me.daddychurchill.CityWorld.Context;
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily;
 import me.daddychurchill.CityWorld.Plats.Nature.BunkerLot;
+import me.daddychurchill.CityWorld.Plats.Nature.AirshipLot;
 import me.daddychurchill.CityWorld.Plats.Nature.FlyingSaucerLot;
 import me.daddychurchill.CityWorld.Plats.Nature.HotairBalloonLot;
 import me.daddychurchill.CityWorld.Plats.Nature.MineEntranceLot;
@@ -230,7 +231,9 @@ public class NatureContext extends UncivilizedContext {
 				break;
 			case SEA:
 				if (generator.getSettings().includeAirborneStructures) {
-					if (platmapOdds.playOdds(Odds.oddsEnormouslyUnlikely))
+					if (generator.isModernStyle() && platmapOdds.playOdds(Odds.oddsTremendouslyUnlikely))
+						current = new AirshipLot(platmap, platmap.originX + x, platmap.originZ + z);
+					else if (platmapOdds.playOdds(Odds.oddsEnormouslyUnlikely))
 						current = new FlyingSaucerLot(platmap, platmap.originX + x, platmap.originZ + z);
 					else if (platmapOdds.playOdds(Odds.oddsSomewhatLikely))
 						current = new HotairBalloonLot(platmap, platmap.originX + x, platmap.originZ + z);
@@ -242,7 +245,9 @@ public class NatureContext extends UncivilizedContext {
 //				break;
 			case LOWLAND:
 				if (generator.getSettings().includeAirborneStructures) {
-					if (platmapOdds.playOdds(Odds.oddsEnormouslyUnlikely))
+					if (generator.isModernStyle() && platmapOdds.playOdds(Odds.oddsTremendouslyUnlikely))
+						current = new AirshipLot(platmap, platmap.originX + x, platmap.originZ + z);
+					else if (platmapOdds.playOdds(Odds.oddsEnormouslyUnlikely))
 						current = new FlyingSaucerLot(platmap, platmap.originX + x, platmap.originZ + z);
 					else if (platmapOdds.playOdds(Odds.oddsSomewhatLikely))
 						current = new HotairBalloonLot(platmap, platmap.originX + x, platmap.originZ + z);
