@@ -2,19 +2,46 @@
 
 ## ▶ Resume here (next task)
 
-**▶▶ NEXT: interiors + furniture + villager job blocks + shop-themed lowrise/midrise (owner, 2026-07).**
-The overgrowth arc (below) is done and shipped; the owner's queued next feature is making rooms feel
-lived-in. Three parts, in the owner's words: (1) **interiors/furniture** — research real MC
-interior-design/furniture build conventions (stairs+signs = chairs, barrel+trapdoor nightstands, item
-frames, etc.) and give the room-fitting a small furniture vocabulary; (2) **villager job blocks** so
-bundled/spawned villagers claim professions — e.g. composters on the farms, lecterns for librarians;
-(3) **theme lowrise/midrise buildings as shops** and drop the matching job block so a room reads as
-that trade — map seller = cartography table, fletcher = fletching table, cleric = brewing stand,
-armorer = blast furnace, butcher = smoker, mason = stonecutter, etc. (one theme per building/section).
-The shop/job-block half is concrete; the "furniture from build guides" half wants a design pass. See
-[[cityworld-interiors-decoration-ideas]] in memory. **MODERN-gate additions** (CLASSIC stays 1.8-era).
-Placement runs through the decoration seam (`RealBlocks` / room fitting), not terrain gen. A good model
-to copy: the `Support/Overgrowth` pass added this session (post-decoration, per-lot, block-state aware).
+**▶▶ NEXT: playtest polish + owner's pick. All the big content arcs have shipped.** Interiors/furniture,
+villager job blocks, shop-themed buildings, overgrowth, **park zones (zoo + biodome)**, the **APOCALYPSE
+world style**, and the **`/cityfind lot` landmark finder** are all done, verified and deployed (logged
+below). What genuinely remains is small:
+
+- **Finer decay knobs** — graduated per-category demolition control. Apocalypse uses the coarse on/off
+  flags (`includeDecayedRoads/Buildings/Nature`); the owner wants finer knobs. Unblocked. See
+  [[cityworld-demolition-more-options-later]].
+- **A few interior deco blocks not yet woven in** — candles/lanterns/chains, copper chests, lightning
+  rods, decorated pots (the `Furniture` pass covered shelves/tables/lamps/job-blocks, not these). See
+  [[cityworld-interiors-decoration-ideas]].
+- **Building copper weathering** — parked by the owner ("leave for now").
+
+**Two things this doc *used* to list as remaining are actually DONE** (verified 2026-07): schematic
+**rotation is applied** (random 1-of-4 in `PlatMap.placeSpecificClip`; mirroring too, but opt-in per
+schematic via `FlipableX/Z`, default off to protect signs/fronts), and the **outland context arm is wired
+and live** (`ShapeProvider_Normal` returns it for the nature 0.70–0.75 band, so gravelworks / woodworks /
+campgrounds generate in normal worlds). The stale claims below are corrected.
+
+**MODERN-gate any new deco** (CLASSIC stays 1.8-era). Placement runs through the decoration seam
+(`RealBlocks` / room fitting), not terrain gen; model new passes on `Support/Overgrowth` or
+`Support/ApocalypseSpawners` (post-decoration, per-lot, block-state aware).
+
+**Park zones + APOCALYPSE + landmark finder landed (2026-07, most recent).**
+- **Park zones**: `ZooLot` (themed fenced enclosures + matching animal + name sign; 10 themes) and
+  `BiodomeLot` (glass domes over a biome slice — jungle/swamp/flower-forest/pale-garden/cave, rarely
+  End/Nether), placed in park districts via a `ParkContext.getPark` override (~⅓ of park lots),
+  MODERN-family only. Both extend `IsolatedLot` (like the barn/fish-pond).
+- **APOCALYPSE world style**: a MODERN city gone to ruin. A new `CityWorldGenerator.isModernStyle()`
+  (MODERN ‖ APOCALYPSE) replaces the ~dozen `== MODERN` gameplay checks (behaviour-preserving for MODERN)
+  so it inherits the modern look; `validateSettingsAgainstWorldStyle` forces road+building decay on /
+  nature decay off / overgrowth @3.0 / `spawnBaddies` up / spawner toggles on; `Support.ApocalypseSpawners`
+  buries zombie spawners in a sealed 2-tall pocket UNDER basement floors (hidden, floor caps it), plus
+  zombie-heavy sewer/mine bags. **MODERN overgrowth now defaults OFF** (it's the apocalypse's signature).
+  **Gotcha: a new `WorldStyle` needs a matching case in EVERY exhaustive `switch (generator.worldStyle)`
+  provider loader (`ShapeProvider` + `SurfaceProvider`) or you get a null-provider NPE at gen time —
+  `OreProvider`/`CoverProvider` have `default:` so they're safe. Proxy check: `grep "case DESTROYED"`.**
+- **`/cityfind lot <kind> [tp]`**: locate rare landmark lots by type (zoo, biodome, saucer, balloon,
+  castle, oilplatform, radiotower, …) — free substring match on the lot's class name, reusing the
+  schematic finder's off-thread ring-search + budget. `/cityfind lots` lists the well-known kinds.
 
 **The shop *classification layer* is now built (the foundation interiors keys off).** A store no longer
 just "is a `StoreBuildingLot`" — it carries a seed-deterministic `ShopType(ShopScale, ShopTrade)`, a
@@ -96,9 +123,10 @@ out), and a new `FarmLot.CropType.HAYSTACK` renders a field of stacked bales in 
 MODERN crop pools). Verified: 40 houses richly furnished, 8 shop signs with names, 123 hay blocks / 60
 farms, 0 exceptions.
 
-**Decoration remainder (still to do): themed counters/shelves per shop trade (beyond the sign+barrel),
-bathrooms, more house variety; optional: starter trades on employed villagers, the rare barrel-less fish
-pond, and richer shop-name patterns.**
+**Decoration remainder — mostly cleared since:** themed shop counters/dressing and **bathrooms** both
+landed (bathroom rooms in houses; per-trade counters + hanging signs). Still open/optional: more house
+variety, starter trades on employed villagers, richer shop-name patterns. (The rare barrel-less fish pond
+the owner explicitly said is fine.)
 
 **Overgrowth landed + a big schematics/decay polish pass (2026-07, this session).** Nature now reclaims
 the built world behind the new `[overgrowth]` settings group (`enabled` / `intensity` / `capVines`; on
@@ -561,15 +589,14 @@ jar about to be handed over, and that is the only reason it didn't ship.
 So: a per-feature probe proves a feature. It does not prove a world. Do a whole-world pass over the
 artefact you are actually shipping — the interesting bugs live where two features meet.
 
-### Remaining families
+### ✔ Closed: all context families (outland landed 2026-07)
 
-The context ladder in `ShapeProvider_Normal.getContext(PlatMap)` is real and **nine of its ten arms
-are live** (park, highrise, construction, midrise, lowrise, neighborhood, municipal, farm,
-industrial). One remains:
-
-| arm | needs | how it's held back |
-|---|---|---|
-| outland | `CampgroundLot`, `GravelworksLot`, `WoodworksLot`, `MineEntranceLot`, … | **no setting guards this one** — its band falls through to nature, marked in `getContext` |
+The context ladder in `ShapeProvider_Normal.getContext(PlatMap)` is **fully live — all ten arms**: park,
+highrise, construction, midrise, lowrise, neighborhood, municipal, farm, industrial, and **outland**.
+The outland arm returns `outlandContext` for the `nature 0.70–0.75` band (`getContext`, ~5% of built
+bands), so `OutlandContext` and its lots — `GravelMineLot`, `GravelworksLot`, `WoodworksLot`,
+`CampgroundLot`, `MineEntranceLot` — generate in normal worlds. (An earlier draft of this section listed
+outland as unwired; that was stale — see "Outland landed" in the Resume log above.)
 
 ### ✔ Closed: industrial (2026-07)
 
@@ -1089,9 +1116,14 @@ Coupling inventory (from the 1.14 source):
       seed-deterministic `PlatMap` makes per-chunk regeneration viable). Migrate datapack loot
       tables to 1.21 format and bundle them in mod resources (drop the runtime extraction).
       `SpawnProvider` → modern `EntityType`.
-- [~] **P6 — Schematics.** *Largely done: conversion, library, paste command, worldgen placement,
-      multi-format loading, drop-in folder, data-fixing and block entities all landed and verified.
-      Remaining: schematic rotation/mirroring (FlipableX/Z parsed but not applied).* Formats read:
+- [x] **P6 — Schematics.** *Done: conversion, library, paste command, worldgen placement, multi-format
+      loading, drop-in folder, data-fixing, block entities, and **rotation/mirroring** all landed and
+      verified. Rotation IS applied — `PlatMap.placeSpecificClip` picks a random 1-of-4 orientation
+      (`Clipboard.ROTATIONS`) for every placed building (and roundabout statues via `RoadContext`).
+      Mirroring is applied too, but **opt-in per schematic**: it only fires when the `.yml` meta sets
+      `FlipableX`/`FlipableZ` (both default false, deliberately — a mirrored building with signs or a
+      deliberate front reads backwards). So "flip not used" is a per-schematic default, not a missing
+      feature.* Formats read:
       legacy `.schematic`, WorldEdit `.schem` (Sponge v2/v3), Litematica `.litematic`, and vanilla
       `.nbt` — each converted to a `StructureTemplate` and run through the vanilla structure data-fixer
       (`Templates.build`) so older files are upgraded rather than losing renamed blocks to air (a 2017
