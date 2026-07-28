@@ -88,33 +88,48 @@ public class BigBiodomeLot extends IsolatedLot {
         double cX = centreX(), cZ = centreZ();
         Material floor = floorFor(biome);
 
-        // floor + dome shell, computed per column from the shared structure centre
+        // floor + a watertight midpoint-sphere shell, computed per column from the shared structure centre
+        // (glass where the 3D distance rounds to radius — gap-free on the slopes, unlike stacked rings)
         for (int lx = 0; lx < 16; lx++)
             for (int lz = 0; lz < 16; lz++) {
                 double d = Math.hypot(oX + lx - cX, oZ + lz - cZ);
                 if (d <= radius - 1)
                     chunk.setBlock(lx, y, lz, floor);
-                // vertical shell rings (walls) — one pass over height per column
-                for (int dy = 0; dy <= radius; dy++) {
-                    double r = Math.sqrt((double) radius * radius - (double) dy * dy);
-                    if (d <= r + 0.5 && d > r - 0.8)
-                        chunk.setBlock(lx, y + 1 + dy, lz, dy == 0 ? Material.SMOOTH_STONE : Material.GLASS);
-                }
-                // roof cap — closes the apex the rings can't reach
-                if (d <= radius + 0.5) {
-                    int domeY = (int) Math.round(Math.sqrt(Math.max(0.0, (double) radius * radius - d * d)));
-                    if (domeY > 0)
-                        chunk.setBlock(lx, y + 1 + domeY, lz, Material.GLASS);
-                }
+                if (d <= radius + 0.5)
+                    for (int dy = 0; dy <= radius; dy++)
+                        if (Math.round(Math.sqrt(d * d + (double) dy * dy)) == radius)
+                            chunk.setBlock(lx, y + 1 + dy, lz, dy == 0 ? Material.SMOOTH_STONE : Material.GLASS);
             }
 
-        // one doorway on the south face of the whole structure — only the chunk that owns that column draws it
+        // light terraforming so the big floor isn't dead flat
+        for (int i = 0; i < 5; i++) {
+            int lx = chunkOdds.getRandomInt(16), lz = chunkOdds.getRandomInt(16);
+            if (Math.hypot(oX + lx - cX, oZ + lz - cZ) > radius - 3)
+                continue;
+            int h = 1 + chunkOdds.getRandomInt(2);
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dz = -1; dz <= 1; dz++) {
+                    int mx = lx + dx, mz = lz + dz;
+                    if (mx < 0 || mx > 15 || mz < 0 || mz > 15
+                            || Math.hypot(oX + mx - cX, oZ + mz - cZ) > radius - 2)
+                        continue;
+                    for (int j = 1; j <= (dx == 0 && dz == 0 ? h : h - 1); j++)
+                        chunk.setBlock(mx, y + j, mz, floor);
+                }
+        }
+
+        // one doorway where the south wall meets the ground — only the chunk that owns that column draws it
         int doorWX = (int) Math.round(cX);
-        int doorWZ = (int) Math.round(cZ + radius - 1);
+        int doorWZ = (int) Math.round(cZ + radius);
         if (doorWX >= oX && doorWX < oX + 16 && doorWZ >= oZ && doorWZ < oZ + 16) {
             int lx = doorWX - oX, lz = doorWZ - oZ;
-            chunk.setBlocks(lx, y + 1, y + 3, lz, Material.AIR);
+            chunk.setBlocks(lx, y + 1, y + 2, lz, Material.AIR); // a clean 2-tall opening in the base wall
             chunk.setDoor(lx, y + 1, lz, Material.OAK_DOOR, BlockFace.SOUTH);
+            if (lz + 1 < 16) {
+                chunk.setBlocks(lx, y + 1, y + 2, lz + 1, Material.AIR); // step out
+                chunk.setWallSign(lx, y + 3, lz + 1, Material.OAK_WALL_SIGN, BlockFace.SOUTH,
+                        new String[] { "Biodome", nameFor(biome) }); // biome name over the door
+            }
         }
 
         fill(generator, chunk, oX, oZ, cX, cZ, y);
@@ -151,6 +166,18 @@ public class BigBiodomeLot extends IsolatedLot {
                     if (lx >= 0 && lx < 16 && lz >= 0 && lz < 16)
                         chunk.setLeaves(lx, ly, lz, leaves);
         chunk.setLeaves(x, y + h + 2, z, leaves);
+    }
+
+    private static String nameFor(int b) {
+        return switch (b) {
+        case JUNGLE -> "Jungle";
+        case SWAMP -> "Swamp";
+        case FLOWER_FOREST -> "Flower Forest";
+        case PALE_GARDEN -> "Pale Garden";
+        case CAVE -> "Cave";
+        case END -> "The End";
+        default -> "Nether";
+        };
     }
 
     private static Material floorFor(int b) {

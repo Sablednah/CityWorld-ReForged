@@ -101,27 +101,32 @@ public class BigZooLot extends IsolatedLot {
                         Material.OAK_FENCE_GATE, BlockFace.SOUTH, false);
         }
 
-        // a name sign on a post at the structure's NW corner
+        // a name sign at the structure's NW corner — a plain standing signpost on a fence post (no
+        // floating hanging-sign hardware)
         int signWX = nwX() + 1, signWZ = nwZ() + 1;
         if (owns(chunk, signWX, signWZ)) {
             int sx = signWX - chunk.getOriginX(), sz = signWZ - chunk.getOriginZ();
-            chunk.setBlocks(sx, y + 1, y + 3, sz, Material.OAK_FENCE);
-            chunk.setSignPost(sx, y + 2, sz, Material.OAK_HANGING_SIGN, BlockFace.SOUTH,
+            chunk.setBlocks(sx, y + 1, y + 2, sz, Material.OAK_FENCE);
+            chunk.setSignPost(sx, y + 3, sz, Material.OAK_SIGN, BlockFace.SOUTH,
                     new String[] { "The Zoo", NAMES[theme] });
         }
 
-        // a little planting + the residents, in whatever chunk holds pen floor
-        int animalY = ZooEnclosure.animalY(y, sunken);
         int floorY = sunken ? y - ZooEnclosure.PIT_DEPTH : y;
-        for (int i = 0; i < 3; i++) {
+        int animalY = floorY + 1;
+        // light terraforming so the pen floor isn't dead flat
+        ZooEnclosure.mounds(chunk, penX1, penX2, penZ1, penZ2, floorY, ground, chunkOdds, 2);
+        // plantings + the residents. ignoreFlood=true: a sunken pit floor sits below sea level but is dry,
+        // so a normal animal spawn would reject it as flooded and place nothing.
+        for (int i = 0; i < 4; i++) {
             int lx = 3 + chunkOdds.getRandomInt(10), lz = 3 + chunkOdds.getRandomInt(10);
             int wx = chunk.getOriginX() + lx, wz = chunk.getOriginZ() + lz;
-            if (wx <= penX1 || wx >= penX2 || wz <= penZ1 || wz >= penZ2)
-                continue; // inner floor only
-            if (chunkOdds.playOdds(0.4))
+            if (wx <= penX1 + 1 || wx >= penX2 - 1 || wz <= penZ1 + 1 || wz >= penZ2 - 1)
+                continue; // inner floor only (off the walls)
+            if (chunkOdds.playOdds(0.35))
                 feature(chunk, lx, floorY, lz);
             else
-                generator.spawnProvider.spawnAnimals(generator, chunk, chunkOdds, lx, animalY, lz, animalFor(theme));
+                generator.spawnProvider.spawnAnimals(generator, chunk, chunkOdds, lx, animalY, lz,
+                        animalFor(theme), true);
         }
     }
 

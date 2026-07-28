@@ -65,7 +65,7 @@ public class BiodomeLot extends IsolatedLot {
         chunk.setLayer(generator.streetLevel - 3, 3, Material.DIRT);
     }
 
-    private static final int CX = 8, CZ = 8, R = 7, HEIGHT = 9;
+    private static final int CX = 8, CZ = 8, R = 6;
 
     @Override
     protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
@@ -80,41 +80,62 @@ public class BiodomeLot extends IsolatedLot {
                 if (dist(x, z) <= R - 1)
                     chunk.setBlock(x, y, z, floor);
 
+        // a little terraforming so the floor isn't dead flat
+        for (int i = 0; i < 3; i++) {
+            int mx = 4 + chunkOdds.getRandomInt(9), mz = 4 + chunkOdds.getRandomInt(9);
+            if (dist(mx, mz) > R - 2)
+                continue;
+            int h = 1 + chunkOdds.getRandomInt(2);
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dz = -1; dz <= 1; dz++) {
+                    int cx = mx + dx, cz = mz + dz;
+                    if (dist(cx, cz) > R - 1)
+                        continue;
+                    for (int j = 1; j <= (dx == 0 && dz == 0 ? h : h - 1); j++)
+                        chunk.setBlock(cx, y + j, cz, floor);
+                }
+        }
+
         buildDome(chunk, y);
         fill(generator, chunk, chunkOdds, y);
     }
 
-    /** A gap-free clear glass hemisphere with a solid base ring and a clean doorway. The shell is built two
-     *  ways and unioned so it never leaks: horizontal rings close the near-vertical walls, and one glass cap
-     *  per column closes the roof/apex the rings alone leave open (the old "containment breach"). */
+    /** A gap-free clear glass hemisphere with a solid base ring and a clean doorway. Uses a midpoint-sphere
+     *  shell — a voxel is part of the shell exactly when its 3D distance from the dome centre <em>rounds</em>
+     *  to R. That is watertight by construction (no holes on the slopes, no glass bleeding into the interior),
+     *  unlike stacked horizontal rings which leak on the sides. */
     private void buildDome(RealBlocks chunk, int y) {
         int base = y + 1;
-        // 1) horizontal shell rings — the walls
-        for (int dy = 0; dy <= R; dy++) {
-            double r = Math.sqrt((double) R * R - (double) dy * dy);
-            for (int x = 1; x < 15; x++)
-                for (int z = 1; z < 15; z++) {
-                    double d = dist(x, z);
-                    if (d <= r + 0.5 && d > r - 0.8)
-                        chunk.setBlock(x, base + dy, z, dy == 0 ? Material.SMOOTH_STONE : Material.GLASS);
-                }
-        }
-        // 2) one glass cap per interior column at its analytic dome height — closes the roof/apex
         for (int x = 1; x < 15; x++)
             for (int z = 1; z < 15; z++) {
                 double d = dist(x, z);
                 if (d > R + 0.5)
                     continue;
-                int domeY = (int) Math.round(Math.sqrt(Math.max(0.0, (double) R * R - d * d)));
-                if (domeY > 0)
-                    chunk.setBlock(x, base + domeY, z, Material.GLASS);
+                for (int dy = 0; dy <= R; dy++)
+                    if (Math.round(Math.sqrt(d * d + (double) dy * dy)) == R)
+                        chunk.setBlock(x, base + dy, z, dy == 0 ? Material.SMOOTH_STONE : Material.GLASS);
             }
-        // a clean one-wide doorway on the south face (carve just the door column + the step out, so the
-        // glass wall either side stays intact)
-        int dz = CZ + R - 1;
+        // a clean one-wide doorway where the south wall meets the ground (d == R), plus a step out
+        int dz = CZ + R;
         chunk.setBlocks(CX, base, base + 1, dz, Material.AIR);
         chunk.setBlocks(CX, base, base + 1, dz + 1, Material.AIR);
         chunk.setDoor(CX, base, dz, Material.OAK_DOOR, BlockFace.SOUTH);
+        // a wall sign above the door naming the biome (mounted on the exterior of the glass over the door)
+        if (dz + 1 < 16)
+            chunk.setWallSign(CX, base + 2, dz + 1, Material.OAK_WALL_SIGN, BlockFace.SOUTH,
+                    new String[] { "Biodome", biomeName() });
+    }
+
+    private String biomeName() {
+        return switch (dome) {
+        case JUNGLE -> "Jungle";
+        case SWAMP -> "Swamp";
+        case FLOWER_FOREST -> "Flower Forest";
+        case PALE_GARDEN -> "Pale Garden";
+        case CAVE -> "Cave";
+        case END -> "The End";
+        case NETHER -> "Nether";
+        };
     }
 
     private double dist(int x, int z) {

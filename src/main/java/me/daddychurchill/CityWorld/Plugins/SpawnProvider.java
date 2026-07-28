@@ -149,27 +149,35 @@ public class SpawnProvider extends Provider {
 
     public final void spawnAnimals(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
             EntityType entity) {
+        spawnAnimals(generator, blocks, odds, x, y, z, entity, false);
+    }
+
+    /** As above, but {@code ignoreFlood} skips the "above the water table" check — needed for a dry
+     *  <em>sunken</em> enclosure whose floor sits below sea level (a normal spawn would reject it as
+     *  flooded and place nothing). */
+    public final void spawnAnimals(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
+            EntityType entity, boolean ignoreFlood) {
         if (!generator.getSettings().includeDecayedBuildings) {
             int herdSize = itemsEntities_Animals.getHerdSize(odds, entity);
             if (herdSize > 0)
-                spawnAnimal(generator, blocks, odds, x, y, z, entity);
+                spawnAnimal(generator, blocks, odds, x, y, z, entity, ignoreFlood);
             if (herdSize > 1)
-                spawnAnimal(generator, blocks, odds, x + 1, y, z, entity);
+                spawnAnimal(generator, blocks, odds, x + 1, y, z, entity, ignoreFlood);
             if (herdSize > 2)
-                spawnAnimal(generator, blocks, odds, x, y, z + 1, entity);
+                spawnAnimal(generator, blocks, odds, x, y, z + 1, entity, ignoreFlood);
             if (herdSize > 3)
-                spawnAnimal(generator, blocks, odds, x + 1, y, z + 1, entity);
+                spawnAnimal(generator, blocks, odds, x + 1, y, z + 1, entity, ignoreFlood);
             if (herdSize > 4)
-                spawnAnimal(generator, blocks, odds, x - 1, y, z, entity);
+                spawnAnimal(generator, blocks, odds, x - 1, y, z, entity, ignoreFlood);
             if (herdSize > 5)
-                spawnAnimal(generator, blocks, odds, x, y, z - 1, entity);
+                spawnAnimal(generator, blocks, odds, x, y, z - 1, entity, ignoreFlood);
         }
     }
 
     private void spawnAnimal(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
-            EntityType entity) {
+            EntityType entity, boolean ignoreFlood) {
         if (odds.playOdds(generator.getSettings().spawnAnimals) && blocks.insideXYZ(x, y, z))
-            spawnEntity(generator, blocks, odds, x, y, z, entity, false, true);
+            spawnEntity(generator, blocks, odds, x, y, z, entity, ignoreFlood, true);
     }
 
     public final void spawnSeaAnimals(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y,
