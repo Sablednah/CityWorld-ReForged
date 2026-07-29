@@ -494,6 +494,26 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		setDoorBlock(x, y + 1, z, material, facing, Half.TOP, hinge);
 	}
 
+	/** A door with a chosen hinge side — for building double doors (two leaves that meet in the middle). */
+	public void setDoor(int x, int y, int z, Material material, BlockFace facing, boolean rightHinge) {
+		clearBlock(x, y, z);
+		clearBlock(x, y + 1, z);
+		BlockFace f = fixFacing(facing).getOppositeFace();
+		DoorHingeSide hinge = rightHinge ? DoorHingeSide.RIGHT : DoorHingeSide.LEFT;
+		setDoorBlock(x, y, z, material, f, Half.BOTTOM, hinge);
+		setDoorBlock(x, y + 1, z, material, f, Half.TOP, hinge);
+	}
+
+	/** A 2-wide double door at (x,y,z): the second leaf sits one cell perpendicular to {@code facing}, the
+	 *  two hinged so they open apart — a grand entrance. */
+	public void setDoubleDoor(int x, int y, int z, Material material, BlockFace facing) {
+		boolean alongX = facing == BlockFace.NORTH || facing == BlockFace.SOUTH;
+		int x2 = alongX ? x + 1 : x;
+		int z2 = alongX ? z : z + 1;
+		setDoor(x, y, z, material, facing, false);
+		setDoor(x2, y, z2, material, facing, true);
+	}
+
 	public void setFenceDoor(int x, int y1, int y2, int z, Material material, BlockFace facing) {
 
 		facing = fixFacing(facing);

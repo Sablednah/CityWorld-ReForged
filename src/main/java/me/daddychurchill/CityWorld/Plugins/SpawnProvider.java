@@ -239,7 +239,9 @@ public class SpawnProvider extends Provider {
      */
     public final void spawnFamily(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y,
             int z) {
-        if (!odds.playOdds(generator.getSettings().spawnBeings))
+        // Only some rural houses are actually occupied — a family is 1-4 villagers, so without this extra
+        // gate (on top of the world's spawnBeings odds) the streets swarm. ~1/3 of would-be homes here.
+        if (!odds.playOdds(generator.getSettings().spawnBeings) || !odds.playOdds(Odds.oddsSomewhatLikely))
             return;
         String surname = generator.getSettings().nameVillagers
                 ? generator.odonymProvider.generateSurname(generator, odds)
@@ -288,6 +290,30 @@ public class SpawnProvider extends Provider {
             EntityType goody, EntityType baddy) {
         if (odds.playOdds(generator.getSettings().spawnVagrants))
             spawnGoodOrBad(generator, blocks, odds, x, y, z, goody, baddy);
+    }
+
+    /** A hospital doctor — a cleric villager named "Dr. &lt;surname&gt;". Rolls {@code spawnBeings}. */
+    public final void spawnMedic(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z) {
+        if (!blocks.isEmpty(x, y, z) || blocks.isEmpty(x, y - 1, z)
+                || !odds.playOdds(generator.getSettings().spawnBeings))
+            return;
+        Location at = blocks.getBlockLocation(x, y, z);
+        if (!(at.getLevel() instanceof ServerLevelAccessor server))
+            return;
+        Entity being = EntityType.VILLAGER.getType().create(server.getLevel(), EntitySpawnReason.CHUNK_GENERATION);
+        if (!(being instanceof Villager villager))
+            return;
+        villager.snapTo(at.getBlockX() + 0.5, at.getBlockY(), at.getBlockZ() + 0.5, 0.0F, 0.0F);
+        EventHooks.finalizeMobSpawn(villager, server, server.getCurrentDifficultyAt(villager.blockPosition()),
+                EntitySpawnReason.CHUNK_GENERATION, null);
+        employ(server.getLevel(), villager, Identifier.withDefaultNamespace("cleric"));
+        if (generator.getSettings().nameVillagers) {
+            villager.setCustomName(Component.literal(
+                    "Dr. " + generator.odonymProvider.generateSurname(generator, odds)));
+            if (generator.getSettings().showVillagersNames)
+                villager.setCustomNameVisible(true);
+        }
+        server.addFreshEntityWithPassengers(villager);
     }
 
     private void spawnGoodOrBad(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
