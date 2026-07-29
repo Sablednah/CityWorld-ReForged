@@ -2,7 +2,6 @@ Farm/crops_carrot.schematic
 Farm/crops_glados.schematic
 Farm/graveyard_knife.schematic
 Farm/richards_house.schematic
-Highrise/IMCHospital.schematic
 Highrise/liberty.schematic
 Highrise/tower.schematic
 Highrise/water_tower_richard.schematic
@@ -24,13 +23,11 @@ Lowrise/taco_church.schematic
 Lowrise/winchester.schematic
 Midrise/Condo.schematic
 Midrise/Hotel.schematic
-Midrise/IMCHospital.schematic
 Midrise/Randallsentry.schematic
 Midrise/pagoda_titan.schematic
 Midrise/taco_church.schematic
 Midrise/winchester.schematic
 Municipal/Hotel.schematic
-Municipal/IMCHospital.schematic
 Municipal/chayats-bank.schematic
 Municipal/gas_stop.schematic
 Municipal/midwich.schematic

@@ -1,7 +1,0 @@
-# CityWorld/WorldEdit schematic configuration
-GroundLevelY: 22
-FlipableX: false
-FlipableZ: false
-OddsOfAppearance: 0.4
-BroadcastLocation: false
-Decayable: true
