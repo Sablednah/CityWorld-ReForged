@@ -33,7 +33,6 @@ public class HospitalLot extends IsolatedLot {
 
     private static final Material WALL = Material.WHITE_CONCRETE;
     private static final Material TRIM = Material.LIGHT_GRAY_CONCRETE;
-    private static final Material PART = Material.WHITE_TERRACOTTA; // interior partition
     private static final Material WINDOW = Material.LIGHT_BLUE_STAINED_GLASS;
     private static final Material ROOF = Material.LIGHT_GRAY_CONCRETE;
     private static final Material CROSS = Material.GREEN_CONCRETE;
@@ -114,14 +113,6 @@ public class HospitalLot extends IsolatedLot {
                 || !isSolid(wx, wz + 1));
     }
 
-    /** A partition wall column (interior grid line), except at the 2-wide corridor doorways. */
-    private boolean partition(int rx, int rz) {
-        boolean line = rx % 7 == 0 || rz % 7 == 0;
-        boolean gap = (rx % 7 == 0 && (rz % 7 == 3 || rz % 7 == 4))
-                || (rz % 7 == 0 && (rx % 7 == 3 || rx % 7 == 4));
-        return line && !gap;
-    }
-
     @Override
     protected void generateActualChunk(CityWorldGenerator generator, PlatMap platmap, InitialBlocks chunk,
             BiomeGrid biomes, DataContext context, int platX, int platZ) {
@@ -158,9 +149,6 @@ public class HospitalLot extends IsolatedLot {
                             boolean win = yy == fy + 2 && ((wx + wz) & 1) == 0;
                             chunk.setBlock(lx, yy, lz, win ? WINDOW : WALL);
                         }
-                    } else if (main && partition(rx, rz)) {
-                        for (int yy = fy + 1; yy < fy + floorH; yy++)
-                            chunk.setBlock(lx, yy, lz, PART);
                     } else if (main && corridor(rx, rz)) {
                         chunk.setBlock(lx, fy + 1, lz, Material.LIGHT_GRAY_CARPET); // carpet runner
                     }
@@ -187,7 +175,9 @@ public class HospitalLot extends IsolatedLot {
         for (int k = 0; k < floors - 1; k++) { // between-floor flights only — don't climb into the roof
             int fy = street + k * floorH;
             for (int i = 0; i <= floorH; i++) {
-                air(chunk, cx, fy + floorH, cz + i, oX, oZ); // open the ceiling above the flight
+                if (i < floorH)
+                    air(chunk, cx, fy + floorH, cz + i, oX, oZ); // open the ceiling OVER the flight, but leave
+                                                                 // the landing block (cz+floorH) solid to step onto
                 air(chunk, cx, fy + 2 + i, cz + i, oX, oZ); // headroom
                 air(chunk, cx, fy + 3 + i, cz + i, oX, oZ);
             }
@@ -211,6 +201,12 @@ public class HospitalLot extends IsolatedLot {
                     int y = street + k * floorH + 1;
                     if (!chunk.isEmpty(lx, y, lz) || chunk.isEmpty(lx, y - 1, lz))
                         continue;
+                    // reception frontage: keep the room right by the main doors a plant/waiting spot, not a
+                    // ward jammed against the entrance
+                    if (main && rz >= sizeZ * 16 - 8 && Math.abs(rx - sizeX * 8) <= 4) {
+                        chunk.setBlock(lx, y, lz, Material.POTTED_FERN);
+                        continue;
+                    }
                     switch (Math.floorMod(wx * 13 + wz * 7 + k * 101, 12)) {
                     case 0, 1, 2, 3, 4 -> ward(chunk, lx, y, lz);
                     case 5 -> lab(chunk, lx, y, lz);
@@ -224,13 +220,13 @@ public class HospitalLot extends IsolatedLot {
             }
     }
 
-    /** A ward bay: a row of beds (heads to the north) with a white privacy curtain between each. The
-     *  clear-cell guards keep the beds/curtains inside the room, off the partition walls. */
+    /** A ward bay: two beds side by side (heads to the north) with a white privacy curtain between them.
+     *  Both beds sit a column in from the room centre and one row up (head at {@code z-1}), so each keeps a
+     *  clear gap to the partition walls on every side instead of being jammed against a divider. */
     private void ward(RealBlocks chunk, int x, int y, int z) {
-        for (int bx = x - 2; bx <= x + 2; bx += 2)
-            bed(chunk, bx, y, z);
-        for (int cx = x - 3; cx <= x + 3; cx += 2)
-            curtain(chunk, cx, y, z);
+        bed(chunk, x - 1, y, z - 1);
+        bed(chunk, x + 1, y, z - 1);
+        curtain(chunk, x, y, z - 1);
     }
 
     private void bed(RealBlocks chunk, int x, int y, int z) {
