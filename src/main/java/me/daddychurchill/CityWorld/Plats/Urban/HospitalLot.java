@@ -161,6 +161,8 @@ public class HospitalLot extends IsolatedLot {
                     } else if (main && partition(rx, rz)) {
                         for (int yy = fy + 1; yy < fy + floorH; yy++)
                             chunk.setBlock(lx, yy, lz, PART);
+                    } else if (main && corridor(rx, rz)) {
+                        chunk.setBlock(lx, fy + 1, lz, Material.LIGHT_GRAY_CARPET); // carpet runner
                     }
                 }
                 boolean skylight = !wall && rx % 6 == 3 && rz % 6 == 3;
@@ -182,7 +184,7 @@ public class HospitalLot extends IsolatedLot {
         int cx = nwX() + sizeX * 8, cz = nwZ() + 3;
         if (!isSolid(cx, cz) || isWall(cx, cz))
             return;
-        for (int k = 0; k < floors; k++) {
+        for (int k = 0; k < floors - 1; k++) { // between-floor flights only — don't climb into the roof
             int fy = street + k * floorH;
             for (int i = 0; i <= floorH; i++) {
                 air(chunk, cx, fy + floorH, cz + i, oX, oZ); // open the ceiling above the flight
@@ -222,12 +224,30 @@ public class HospitalLot extends IsolatedLot {
             }
     }
 
-    /** A ward bed with a bedside cabinet. */
+    /** A ward bay: a row of beds (heads to the north) with a white privacy curtain between each. The
+     *  clear-cell guards keep the beds/curtains inside the room, off the partition walls. */
     private void ward(RealBlocks chunk, int x, int y, int z) {
-        if (z + 1 < 16 && chunk.isEmpty(x, y, z + 1))
+        for (int bx = x - 2; bx <= x + 2; bx += 2)
+            bed(chunk, bx, y, z);
+        for (int cx = x - 3; cx <= x + 3; cx += 2)
+            curtain(chunk, cx, y, z);
+    }
+
+    private void bed(RealBlocks chunk, int x, int y, int z) {
+        if (x >= 0 && x < 16 && z + 1 < 16 && chunk.isEmpty(x, y, z) && chunk.isEmpty(x, y, z + 1)
+                && !chunk.isEmpty(x, y - 1, z))
             chunk.setBed(x, y, z, BEDS[Math.floorMod(x + z, BEDS.length)], BlockFace.SOUTH);
-        if (x + 1 < 16 && chunk.isEmpty(x + 1, y, z))
-            chunk.setBlock(x + 1, y, z, Material.BARREL);
+    }
+
+    private void curtain(RealBlocks chunk, int x, int y, int z) {
+        for (int dz = 0; dz <= 1; dz++)
+            for (int dy = 0; dy <= 1; dy++)
+                if (x >= 0 && x < 16 && z + dz < 16 && chunk.isEmpty(x, y + dy, z + dz))
+                    chunk.setBlock(x, y + dy, z + dz, Material.WHITE_WOOL);
+    }
+
+    private boolean corridor(int rx, int rz) {
+        return Math.abs(rx - sizeX * 8) <= 1 || Math.abs(rz - sizeZ * 8) <= 1; // the central cross corridor
     }
 
     /** A little lab: a brewing stand with a cauldron beside it. */
@@ -257,17 +277,20 @@ public class HospitalLot extends IsolatedLot {
     /** A grand double door on the south face at ground level, with a green cross and the name over it. */
     private void entrance(RealBlocks chunk, int street, int oX, int oZ) {
         int ex = nwX() + sizeX * 8 - 1; // south-centre (leaves room for the second door leaf)
-        int ez = nwZ() + sizeZ * 16 - (main ? 6 : 1) - 1;
+        int ez = nwZ() + sizeZ * 16 - 2; // the EXTERIOR south wall (inset 1 from the footprint edge)
         if (!owns(chunk, ex, ez) || !isWall(ex, ez))
             return;
         int lx = ex - oX, lz = ez - oZ;
-        if (lx + 1 >= 16)
-            return; // both leaves must sit in this chunk
+        boolean two = lx + 1 < 16; // room for the second leaf in this chunk?
         chunk.setBlocks(lx, street + 1, street + 2, lz, Material.AIR);
-        chunk.setBlocks(lx + 1, street + 1, street + 2, lz, Material.AIR);
-        chunk.setDoubleDoor(lx, street + 1, lz, Material.OAK_DOOR, BlockFace.SOUTH);
         chunk.setBlock(lx, street + 3, lz, CROSS);
-        chunk.setBlock(lx + 1, street + 3, lz, CROSS);
+        if (two) {
+            chunk.setBlocks(lx + 1, street + 1, street + 2, lz, Material.AIR);
+            chunk.setDoubleDoor(lx, street + 1, lz, Material.OAK_DOOR, BlockFace.SOUTH);
+            chunk.setBlock(lx + 1, street + 3, lz, CROSS);
+        } else {
+            chunk.setDoor(lx, street + 1, lz, Material.OAK_DOOR, BlockFace.SOUTH);
+        }
         if (lz + 1 < 16)
             chunk.setWallSign(lx, street + 3, lz + 1, Material.OAK_WALL_SIGN, BlockFace.SOUTH, signLines());
     }
@@ -284,7 +307,7 @@ public class HospitalLot extends IsolatedLot {
     private void wallCrosses(RealBlocks chunk, int street, int oX, int oZ) {
         int y = street + DataContext.FloorHeight + 2;
         for (int wx = nwX() + 3; wx < nwX() + sizeX * 16 - 3; wx += 7) {
-            int wz = nwZ() + sizeZ * 16 - (main ? 6 : 1) - 1;
+            int wz = nwZ() + sizeZ * 16 - 2; // the exterior south wall
             if (!isWall(wx, wz))
                 continue;
             green(chunk, wx, y, wz, oX, oZ);
