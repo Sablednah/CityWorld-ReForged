@@ -441,6 +441,14 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		setActualBlock(x, y, z, with(state, BlockStateProperties.STAIRS_SHAPE, shape));
 	}
 
+	/** An upside-down straight stair (HALF=TOP): solid on top, the step cut from the bottom on the side
+	 *  <em>opposite</em> {@code facing}. Two facing each other make a waisted pedestal (e.g. a toilet base). */
+	public final void setStairUpsideDown(int x, int y, int z, Material material, BlockFace facing) {
+		BlockState state = with(withDirection(stateOf(material), facing), BlockStateProperties.STAIRS_SHAPE,
+				StairsShape.STRAIGHT);
+		setActualBlock(x, y, z, with(state, BlockStateProperties.HALF, Half.TOP));
+	}
+
 	public final void drawCrane(DataContext context, Odds odds, int x, int y, int z) {
 		Colors colors = new Colors(odds);
 

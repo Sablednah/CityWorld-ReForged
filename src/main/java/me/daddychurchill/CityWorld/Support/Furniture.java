@@ -299,15 +299,17 @@ public final class Furniture {
         if (z1 + 2 <= z2 - 1 && clearFloor(chunk, tx, y, z1 + 2)) {
             // matches the community build: a 2-tall quartz cistern against the wall, a quartz bowl in front
             // with a flat (closed) birch-trapdoor seat on top, and a birch-button flush on the side of the tank
-            chunk.setBlock(tx, y, z1 + 1, Material.QUARTZ_BLOCK); // cistern (lower)
+            // the two base blocks are upside-down stairs facing each other (solid sides meeting), so the
+            // pedestal narrows to a central foot with the bowl/tank overhanging — the classic toilet base
+            chunk.setStairUpsideDown(tx, y, z1 + 1, Material.QUARTZ_STAIRS, BlockFace.SOUTH); // cistern base
             chunk.setBlock(tx, y + 1, z1 + 1, Material.QUARTZ_BLOCK); // cistern (upper — stands above the seat)
-            chunk.setBlock(tx, y, z1 + 2, Material.QUARTZ_BLOCK); // bowl
+            chunk.setStairUpsideDown(tx, y, z1 + 2, Material.QUARTZ_STAIRS, BlockFace.NORTH); // bowl base
             chunk.setBlock(tx, y + 1, z1 + 2, Material.BIRCH_TRAPDOOR); // flat seat (default state = closed, bottom)
             if (tx - 1 >= x1 && chunk.isEmpty(tx - 1, y + 1, z1 + 1))
                 chunk.setWallButton(tx - 1, y + 1, z1 + 1, Material.BIRCH_BUTTON, BlockFace.WEST); // flush handle
         } else if (clearFloor(chunk, tx, y, z1 + 1)) {
             // tight room: bowl straight against the wall with a flat seat, no separate cistern
-            chunk.setBlock(tx, y, z1 + 1, Material.QUARTZ_BLOCK);
+            chunk.setStairUpsideDown(tx, y, z1 + 1, Material.QUARTZ_STAIRS, BlockFace.NORTH);
             chunk.setBlock(tx, y + 1, z1 + 1, Material.BIRCH_TRAPDOOR);
         }
         int mx = (x1 + x2) / 2, mz = (z1 + z2) / 2; // a tiled bathmat
