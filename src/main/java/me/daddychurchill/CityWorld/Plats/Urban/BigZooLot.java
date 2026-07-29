@@ -113,29 +113,37 @@ public class BigZooLot extends IsolatedLot {
 
         int floorY = sunken ? y - ZooEnclosure.PIT_DEPTH : y;
         int animalY = floorY + 1;
-        // light terraforming so the pen floor isn't dead flat
-        ZooEnclosure.mounds(chunk, penX1, penX2, penZ1, penZ2, floorY, ground, chunkOdds, 2);
-        // plantings + the residents. ignoreFlood=true: a sunken pit floor sits below sea level but is dry,
-        // so a normal animal spawn would reject it as flooded and place nothing.
-        for (int i = 0; i < 4; i++) {
-            int lx = 3 + chunkOdds.getRandomInt(10), lz = 3 + chunkOdds.getRandomInt(10);
+        // rolling terrain — the deeper sunken pit has room for proper hummocks
+        ZooEnclosure.mounds(chunk, penX1, penX2, penZ1, penZ2, floorY, ground, chunkOdds, sunken ? 5 : 3);
+        // dense planting (a bamboo grove for pandas)
+        int plantings = theme == 0 ? 12 : 5;
+        for (int i = 0; i < plantings; i++) {
+            int lx = 2 + chunkOdds.getRandomInt(12), lz = 2 + chunkOdds.getRandomInt(12);
             int wx = chunk.getOriginX() + lx, wz = chunk.getOriginZ() + lz;
             if (wx <= penX1 + 1 || wx >= penX2 - 1 || wz <= penZ1 + 1 || wz >= penZ2 - 1)
                 continue; // inner floor only (off the walls)
-            if (chunkOdds.playOdds(0.35))
-                feature(chunk, lx, floorY, lz);
-            else
-                generator.spawnProvider.spawnAnimals(generator, chunk, chunkOdds, lx, animalY, lz,
-                        animalFor(theme), true);
+            feature(chunk, lx, floorY, lz);
         }
+        // the residents — ONE herd, spawned only by the chunk that owns the enclosure centre (was one herd
+        // per chunk per try, which packed the pen). ignoreFlood=true: the sunken floor is dry but below sea.
+        int ccx = (penX1 + penX2) / 2, ccz = (penZ1 + penZ2) / 2;
+        if (owns(chunk, ccx, ccz))
+            generator.spawnProvider.spawnAnimals(generator, chunk, chunkOdds, ccx - chunk.getOriginX(), animalY,
+                    ccz - chunk.getOriginZ(), animalFor(theme), true);
     }
 
     private void feature(RealBlocks chunk, int x, int floorY, int z) {
+        // sit on the actual ground top — mounds may have raised it a couple of blocks
+        int gy = floorY;
+        while (gy < floorY + 4 && !chunk.isEmpty(x, gy + 1, z))
+            gy++;
+        if (!chunk.isEmpty(x, gy + 1, z))
+            return;
         switch (theme) {
-        case 0 -> chunk.setBlocks(x, floorY + 1, floorY + 3 + chunkOdds.getRandomInt(2), z, Material.BAMBOO);
-        case 1 -> chunk.setBlocks(x, floorY + 1, floorY + 2, z, Material.CACTUS);
-        case 2, 8 -> chunk.setBlock(x, floorY + 1, z, Material.LILY_PAD);
-        default -> smallTree(chunk, x, floorY, z);
+        case 0 -> chunk.setBlocks(x, gy + 1, gy + 4 + chunkOdds.getRandomInt(3), z, Material.BAMBOO); // tall grove
+        case 1 -> chunk.setBlocks(x, gy + 1, gy + 2 + chunkOdds.getRandomInt(2), z, Material.CACTUS);
+        case 2, 8 -> chunk.setBlock(x, gy + 1, z, Material.LILY_PAD);
+        default -> smallTree(chunk, x, gy, z);
         }
     }
 

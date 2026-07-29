@@ -19,7 +19,7 @@ public final class ZooEnclosure {
 
     private ZooEnclosure() {}
 
-    public static final int PIT_DEPTH = 5;
+    public static final int PIT_DEPTH = 8;
 
     public static void draw(RealBlocks chunk, int penX1, int penX2, int penZ1, int penZ2, int streetY,
             boolean sunken, Material ground) {
@@ -129,17 +129,21 @@ public final class ZooEnclosure {
             Odds odds, int count) {
         int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
         for (int i = 0; i < count; i++) {
-            int lx = 1 + odds.getRandomInt(14), lz = 1 + odds.getRandomInt(14);
-            int wx = oX + lx, wz = oZ + lz;
-            if (wx <= x1 + 1 || wx >= x2 - 1 || wz <= z1 + 1 || wz >= z2 - 1)
-                continue; // keep a clear border off the walls
-            int h = 1 + odds.getRandomInt(2);
-            for (int dx = -1; dx <= 1; dx++)
-                for (int dz = -1; dz <= 1; dz++) {
+            int lx = odds.getRandomInt(16), lz = odds.getRandomInt(16);
+            int r = 2 + odds.getRandomInt(3); // radius 2-4 — broad, overlapping hummocks
+            int h = 1 + odds.getRandomInt(3); // up to 3 tall
+            for (int dx = -r; dx <= r; dx++)
+                for (int dz = -r; dz <= r; dz++) {
                     int mx = lx + dx, mz = lz + dz;
                     if (mx < 0 || mx > 15 || mz < 0 || mz > 15)
                         continue;
-                    int mh = dx == 0 && dz == 0 ? h : h - 1; // domed: centre tallest
+                    int wx = oX + mx, wz = oZ + mz;
+                    if (wx <= x1 + 1 || wx >= x2 - 1 || wz <= z1 + 1 || wz >= z2 - 1)
+                        continue; // keep the mound off the walls
+                    double d = Math.hypot(dx, dz);
+                    if (d > r + 0.4)
+                        continue;
+                    int mh = (int) Math.round(h * (1.0 - d / (r + 1.0))); // smooth domed falloff
                     for (int j = 1; j <= mh; j++)
                         chunk.setBlock(mx, floorY + j, mz, ground);
                 }
