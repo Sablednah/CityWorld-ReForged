@@ -3,6 +3,7 @@ package me.daddychurchill.CityWorld.Context;
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily;
 import me.daddychurchill.CityWorld.Plats.Nature.BunkerLot;
+import me.daddychurchill.CityWorld.Plats.Nature.VaultLot;
 import me.daddychurchill.CityWorld.Plats.Nature.AirshipLot;
 import me.daddychurchill.CityWorld.Plats.Nature.FlyingSaucerLot;
 import me.daddychurchill.CityWorld.Plats.Nature.HotairBalloonLot;
@@ -65,6 +66,11 @@ public class NatureContext extends UncivilizedContext {
 
 	private final static double oddsOfBunkers = Odds.oddsLikely;
 
+	// APOCALYPSE only: a buried structure is occasionally a Fallout-style Vault instead of a bunker. Rolled
+	// on top of the already-gated bunker roll, so it stays rare. TODO: dial rarer once the vault's
+	// multi-level room set lands (kept findable for now to verify the spike).
+	private final static double oddsOfVault = Odds.oddsUnlikely;
+
 	@Override
 	public void populateMap(CityWorldGenerator generator, PlatMap platmap) {
 
@@ -83,6 +89,8 @@ public class NatureContext extends UncivilizedContext {
 		// random stuff?
 		Odds platmapOdds = platmap.getOddsGenerator();
 		boolean doBunkers = generator.getSettings().includeBunkers && platmapOdds.playOdds(oddsOfBunkers);
+		boolean doVault = doBunkers && generator.worldStyle == CityWorldGenerator.WorldStyle.APOCALYPSE
+				&& platmapOdds.playOdds(oddsOfVault);
 		boolean didBunkerEntrance = false;
 
 		// where it all begins
@@ -147,7 +155,7 @@ public class NatureContext extends UncivilizedContext {
 							case MIDLAND:
 								if (doBunkers && minHeight > BunkerLot.calcBunkerMinHeight(generator)) {
 									current = createBuriedBuildingLot(generator, platmap, chunkX, chunkZ,
-											doBunkerEntrance);
+											doBunkerEntrance, doVault);
 
 								} else if (heights.isSortaFlat() && generator.shapeProvider
 										.isIsolatedConstructAt(originX + x, originZ + z, oddsOfIsolatedConstructs)) {
@@ -160,7 +168,7 @@ public class NatureContext extends UncivilizedContext {
 							case PEAK:
 								if (doBunkers) {
 									current = createBuriedBuildingLot(generator, platmap, chunkX, chunkZ,
-											doBunkerEntrance);
+											doBunkerEntrance, doVault);
 								}
 								break;
 							default:
@@ -188,10 +196,12 @@ public class NatureContext extends UncivilizedContext {
 	}
 
 	private PlatLot createBuriedBuildingLot(CityWorldGenerator generator, PlatMap platmap, int x, int z,
-			boolean firstOne) {
-		if (generator.getSettings().includeBunkers)
-			return new BunkerLot(platmap, x, z, firstOne);
-		return null;
+			boolean firstOne, boolean asVault) {
+		if (!generator.getSettings().includeBunkers)
+			return null;
+		if (asVault)
+			return new VaultLot(platmap, x, z, firstOne);
+		return new BunkerLot(platmap, x, z, firstOne);
 	}
 
 	protected PlatLot createSurfaceBuildingLot(CityWorldGenerator generator, PlatMap platmap, int x, int z,
