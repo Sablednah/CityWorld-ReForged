@@ -103,8 +103,8 @@ public class ZooLot extends IsolatedLot {
         addFeatures(generator, chunk, odds(), y);
 
         // a name sign on a post at the pen's front-left corner — a plain standing signpost
-        chunk.setBlocks(3, y + 1, y + 2, 2, Material.OAK_FENCE);
-        chunk.setSignPost(3, y + 3, 2, Material.OAK_SIGN, BlockFace.SOUTH, new String[] { "The Zoo", theme.name });
+        chunk.setBlock(3, y + 1, 2, Material.OAK_FENCE);
+        chunk.setSignPost(3, y + 2, 2, Material.OAK_SIGN, BlockFace.SOUTH, new String[] { "The Zoo", theme.name });
 
         // and the residents
         stock(generator, chunk, y);

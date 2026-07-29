@@ -106,8 +106,8 @@ public class BigZooLot extends IsolatedLot {
         int signWX = nwX() + 1, signWZ = nwZ() + 1;
         if (owns(chunk, signWX, signWZ)) {
             int sx = signWX - chunk.getOriginX(), sz = signWZ - chunk.getOriginZ();
-            chunk.setBlocks(sx, y + 1, y + 2, sz, Material.OAK_FENCE);
-            chunk.setSignPost(sx, y + 3, sz, Material.OAK_SIGN, BlockFace.SOUTH,
+            chunk.setBlock(sx, y + 1, sz, Material.OAK_FENCE);
+            chunk.setSignPost(sx, y + 2, sz, Material.OAK_SIGN, BlockFace.SOUTH,
                     new String[] { "The Zoo", NAMES[theme] });
         }
 
