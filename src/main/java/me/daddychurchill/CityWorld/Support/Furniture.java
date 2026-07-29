@@ -295,12 +295,18 @@ public final class Furniture {
             int z1, int z2) {
         if (clearFloor(chunk, x1 + 1, y, z1 + 1))
             chunk.setCauldron(x1 + 1, y, z1 + 1, odds); // sink/bath
-        if (clearFloor(chunk, x2 - 1, y, z1 + 1)) {
-            // a toilet that actually reads as one: a quartz-stair seat opening into the room, with a raised
-            // lid (an open trapdoor stood up against the wall behind it)
-            int tx = x2 - 1, tz = z1 + 1;
-            chunk.setBlock(tx, y, tz, Material.QUARTZ_STAIRS, BlockFace.SOUTH);
-            chunk.setOpenTrapdoor(tx, y + 1, tz, Material.BIRCH_TRAPDOOR, BlockFace.NORTH);
+        int tx = x2 - 1;
+        if (z1 + 2 <= z2 - 1 && clearFloor(chunk, tx, y, z1 + 2)) {
+            // a toilet that reads clearly: a cistern/tank against the wall, a quartz-stair seat in front of
+            // it (backrest to the tank, opening into the room), and a raised lid (an open trapdoor) between
+            // them. Seat faces NORTH so the tall/back of the stair is the tank side (SOUTH had it backwards).
+            chunk.setBlock(tx, y, z1 + 1, Material.QUARTZ_BLOCK); // cistern
+            chunk.setBlock(tx, y, z1 + 2, Material.QUARTZ_STAIRS, BlockFace.NORTH); // seat
+            chunk.setOpenTrapdoor(tx, y + 1, z1 + 2, Material.BIRCH_TRAPDOOR, BlockFace.NORTH); // lid
+        } else if (clearFloor(chunk, tx, y, z1 + 1)) {
+            // tight room: seat straight against the wall, no separate cistern
+            chunk.setBlock(tx, y, z1 + 1, Material.QUARTZ_STAIRS, BlockFace.NORTH);
+            chunk.setOpenTrapdoor(tx, y + 1, z1 + 1, Material.BIRCH_TRAPDOOR, BlockFace.NORTH);
         }
         int mx = (x1 + x2) / 2, mz = (z1 + z2) / 2; // a tiled bathmat
         if (clearFloor(chunk, mx, y, mz))
