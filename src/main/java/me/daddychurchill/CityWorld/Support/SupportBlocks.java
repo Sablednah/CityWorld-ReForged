@@ -9,6 +9,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.entity.SignText;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.ChestType;
@@ -326,6 +327,13 @@ public abstract class SupportBlocks extends AbstractBlocks {
 	 *  cabinet door, a shelf front. A plain {@code setBlock} gives it flat (closed). */
 	public final void setOpenTrapdoor(int x, int y, int z, Material material, BlockFace facing) {
 		setActualBlock(x, y, z, with(withDirection(stateOf(material), facing), BlockStateProperties.OPEN, true));
+	}
+
+	/** A button/lever attached to the SIDE of a block (attach-face WALL), sticking out toward {@code facing}
+	 *  (so it attaches to the block behind it). A plain {@code setBlock} gives the floor-standing variant. */
+	public final void setWallButton(int x, int y, int z, Material material, BlockFace facing) {
+		setActualBlock(x, y, z,
+				with(withDirection(stateOf(material), facing), BlockStateProperties.ATTACH_FACE, AttachFace.WALL));
 	}
 
 	/** Leaves that never decay — sets PERSISTENT so hand-built trees (zoo/biodome/decor) keep their canopy

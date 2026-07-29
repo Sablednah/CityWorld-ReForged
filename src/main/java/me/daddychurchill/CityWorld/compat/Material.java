@@ -735,7 +735,7 @@ public final class Material {
     public static final Material WOOD_DOOR = of(Blocks.OAK_DOOR); // legacy generic wooden door -> oak
     public static final Material WOOD_STEP = of(Blocks.OAK_SLAB); // legacy generic wooden slab -> oak
 
-    // ---- Modern extras (128) — blocks the 1.14 vocabulary never had -------------
+    // ---- Modern extras (129) — blocks the 1.14 vocabulary never had -------------
     public static final Material AMETHYST_CLUSTER = of(Blocks.AMETHYST_CLUSTER); // P12 interior: sparkle accent
     public static final Material ANCIENT_DEBRIS = of(Blocks.ANCIENT_DEBRIS); // P9: rare prize in the deepest mines (the reason they dug so far)
     public static final Material ANVIL = of(Blocks.ANVIL); // P9 mine prop: miners' camp
@@ -748,6 +748,7 @@ public final class Material {
     public static final Material BEE_NEST = of(Blocks.BEE_NEST); // P13 zoo: bee enclosure / flower-forest biodome
     public static final Material BELL = of(Blocks.BELL); // P9 mine prop: miners' signal bell
     public static final Material BIG_DRIPLEAF = of(Blocks.BIG_DRIPLEAF); // P10 overgrowth: big dripleaf
+    public static final Material BIRCH_BUTTON = of(Blocks.BIRCH_BUTTON); // P12 interior: toilet flush button on the cistern
     public static final Material BLACKSTONE = of(Blocks.BLACKSTONE); // P12 MODERN build stone
     public static final Material BLAST_FURNACE = of(Blocks.BLAST_FURNACE); // P9 mine prop: miners' camp
     public static final Material BLUE_ICE = of(Blocks.BLUE_ICE); // P8 MODERN: glacier-blue ice for the highest peaks; 1.14 had none

@@ -239,6 +239,8 @@ EXTRAS = {
     "CHORUS_PLANT": "P13 biodome: end",
     "CHORUS_FLOWER": "P13 biodome: end",
     "FLOWERING_AZALEA_LEAVES": "P13 biodome: flower forest / jungle canopy",
+    # P12 interior furniture: the toilet flush handle (a wall button on the cistern)
+    "BIRCH_BUTTON": "P12 interior: toilet flush button on the cistern",
 }
 
 # Copper "weathering" families are declared as `public static final WeatheringCopperBlocks NAME`
