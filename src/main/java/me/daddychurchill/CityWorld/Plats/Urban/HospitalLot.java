@@ -303,15 +303,16 @@ public class HospitalLot extends IsolatedLot {
         }
     }
 
-    /** A bed in one quarter, running away from the room centre, with a privacy screen toward the centre. */
+    /** A bed in one quarter: the bed sits on the inner column (toward the aisle, so it's accessible) with
+     *  the privacy screen on the outer column beside it. */
     private void bedQuarter(RealBlocks chunk, int x, int y, int z, int sx, int sz) {
-        int col = x + 2 * sx; // outer column of the quarter
+        int col = x + sx; // inner column (toward the room centre) — the bed
         int z0 = sz < 0 ? z - 2 : z + 1; // lower of the bed's two rows
         BlockFace face = sz < 0 ? BlockFace.SOUTH : BlockFace.NORTH; // head to the outer (room) side
         if (inRange(col) && inRange(z0) && inRange(z0 + 1) && chunk.isEmpty(col, y, z0)
                 && chunk.isEmpty(col, y, z0 + 1) && !chunk.isEmpty(col, y - 1, z0))
             chunk.setBed(col, y, z0, BEDS[Math.floorMod(col + z0, BEDS.length)], face);
-        curtain(chunk, x + sx, y, z0); // screen between the bed and the room centre
+        curtain(chunk, x + 2 * sx, y, z0); // screen on the outer side, beside the bed
     }
 
     /** A small office in one quarter: a desk with a chair drawn up to it and a supply cabinet beside it. */
