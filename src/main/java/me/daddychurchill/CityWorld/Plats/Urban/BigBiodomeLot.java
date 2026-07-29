@@ -38,7 +38,10 @@ public class BigBiodomeLot extends IsolatedLot {
         this.offX = offX;
         this.offZ = offZ;
         this.biome = biome;
-        this.radius = Math.min(sizeX, sizeZ) * 8 - 1; // fit the dome inside the footprint
+        // fit the dome inside the footprint. -2 (not -1) keeps the south doorway off the chunk seam:
+        // at -1 a 2x2 dome's door lands at local z=15, so the sign+step-out (which write z+1, the next
+        // chunk) were silently skipped — that was the "no sign on big domes" bug.
+        this.radius = Math.min(sizeX, sizeZ) * 8 - 2;
     }
 
     @Override
@@ -93,7 +96,7 @@ public class BigBiodomeLot extends IsolatedLot {
         for (int lx = 0; lx < 16; lx++)
             for (int lz = 0; lz < 16; lz++) {
                 double d = Math.hypot(oX + lx - cX, oZ + lz - cZ);
-                if (d <= radius - 1)
+                if (d <= radius) // floor right up to the wall (was radius-1, leaving a ring of bare grass)
                     chunk.setBlock(lx, y, lz, floor);
                 if (d <= radius + 0.5)
                     for (int dy = 0; dy <= radius; dy++)
@@ -137,6 +140,22 @@ public class BigBiodomeLot extends IsolatedLot {
 
     /** Scatter a little biome flora across this chunk's floor, and spawn the themed mob near the centre. */
     private void fill(CityWorldGenerator generator, RealBlocks chunk, int oX, int oZ, double cX, double cZ, int y) {
+        // swamp/cave domes get water pools (the swamp "froggy" dome had none)
+        if (biome == SWAMP || biome == CAVE)
+            for (int i = 0; i < 4; i++) {
+                int lx = 2 + chunkOdds.getRandomInt(12), lz = 2 + chunkOdds.getRandomInt(12);
+                if (Math.hypot(oX + lx - cX, oZ + lz - cZ) > radius - 3)
+                    continue;
+                int r = 1 + chunkOdds.getRandomInt(2);
+                for (int dx = -r; dx <= r; dx++)
+                    for (int dz = -r; dz <= r; dz++) {
+                        int px = lx + dx, pz = lz + dz;
+                        if (px < 1 || px > 14 || pz < 1 || pz > 14 || Math.hypot(dx, dz) > r + 0.3)
+                            continue;
+                        chunk.setBlock(px, y - 1, pz, Material.WATER);
+                        chunk.setBlock(px, y, pz, Material.WATER); // a 2-deep pool at floor level
+                    }
+            }
         Material plant = plantFor(biome), log = logFor(biome), leaf = leafFor(biome);
         for (int i = 0; i < 6; i++) {
             int lx = 2 + chunkOdds.getRandomInt(12), lz = 2 + chunkOdds.getRandomInt(12);
