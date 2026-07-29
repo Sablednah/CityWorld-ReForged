@@ -160,7 +160,10 @@ public class HospitalLot extends IsolatedLot {
             }
 
         stairCore(chunk, street, floorH, oX, oZ);
-        interiorFeatures(generator, chunk, street, floorH, oX, oZ);
+        if (main)
+            decorateWings(generator, chunk, street, floorH, oX, oZ); // wall-hugging beds/offices in the wings
+        else
+            interiorFeatures(generator, chunk, street, floorH, oX, oZ); // grid wards in the solid ancillary box
         entrance(chunk, street, oX, oZ);
         roofCross(chunk, roofY, oX, oZ);
         wallCrosses(chunk, street, oX, oZ);
@@ -186,6 +189,83 @@ public class HospitalLot extends IsolatedLot {
         }
     }
 
+    /** Decoration tuned to the courtyard hospital's narrow ring-wings: furniture hugs the walls (beds run
+     *  parallel to the wall, little desk-and-chair nooks tuck along it) so the corridor down the middle of
+     *  each wing stays clear. A mix of wards, offices, medics, medicine chests and lab stations, spaced out
+     *  along the wings and deterministic by world position so multi-chunk slices agree. */
+    private void decorateWings(CityWorldGenerator generator, RealBlocks chunk, int street, int floorH, int oX,
+            int oZ) {
+        int entX = sizeX * 8 - 1, entZ = sizeZ * 16 - 2; // keep the main doorway a clear reception space
+        for (int lx = 0; lx < 16; lx++)
+            for (int lz = 0; lz < 16; lz++) {
+                int wx = oX + lx, wz = oZ + lz;
+                if (!isSolid(wx, wz) || isWall(wx, wz))
+                    continue;
+                BlockFace wall = wallSide(wx, wz);
+                if (wall == null)
+                    continue; // middle-of-corridor lane — leave it open to walk down
+                int rx = wx - nwX(), rz = wz - nwZ();
+                if (Math.abs(rx - entX) <= 1 && rz >= entZ - 3)
+                    continue;
+                boolean runZ = wall == BlockFace.EAST || wall == BlockFace.WEST; // wing runs N-S along this wall
+                if (Math.floorMod(runZ ? wz : wx, 3) != 0)
+                    continue; // one piece every three cells so nothing runs together
+                for (int k = 0; k < floors; k++) {
+                    int y = street + k * floorH + 1;
+                    if (!chunk.isEmpty(lx, y, lz) || chunk.isEmpty(lx, y - 1, lz))
+                        continue;
+                    switch (Math.floorMod(wx * 13 + wz * 7 + k * 101, 10)) {
+                    case 0, 1, 2, 3 -> wingBed(chunk, lx, y, lz, runZ);
+                    case 4, 5, 6 -> officeNook(chunk, lx, y, lz, runZ);
+                    case 7 -> generator.spawnProvider.spawnMedic(generator, chunk, chunkOdds, lx, y, lz);
+                    case 8 -> medicineChest(chunk, lx, y, lz);
+                    default -> chunk.setBlock(lx, y, lz, Material.BREWING_STAND); // a little lab station
+                    }
+                }
+            }
+    }
+
+    /** Direction to an adjacent wall/void, or null if this cell has open floor on all four sides (a corridor
+     *  lane). Used so wing furniture only goes against a wall. */
+    private BlockFace wallSide(int wx, int wz) {
+        if (blocked(wx, wz - 1))
+            return BlockFace.NORTH;
+        if (blocked(wx, wz + 1))
+            return BlockFace.SOUTH;
+        if (blocked(wx - 1, wz))
+            return BlockFace.WEST;
+        if (blocked(wx + 1, wz))
+            return BlockFace.EAST;
+        return null;
+    }
+
+    private boolean blocked(int wx, int wz) {
+        return !isSolid(wx, wz) || isWall(wx, wz);
+    }
+
+    /** A bed running parallel to the wall so it hugs it instead of poking across the corridor. */
+    private void wingBed(RealBlocks chunk, int x, int y, int z, boolean runZ) {
+        Material bed = BEDS[Math.floorMod(x + z, BEDS.length)];
+        if (runZ) {
+            if (z + 1 < 16 && chunk.isEmpty(x, y, z + 1) && !chunk.isEmpty(x, y - 1, z))
+                chunk.setBed(x, y, z, bed, BlockFace.SOUTH);
+        } else if (x + 1 < 16 && chunk.isEmpty(x + 1, y, z) && !chunk.isEmpty(x, y - 1, z)) {
+            chunk.setBed(x, y, z, bed, BlockFace.EAST);
+        }
+    }
+
+    /** A desk with a chair drawn up to it, both hugging the wall along the wing. */
+    private void officeNook(RealBlocks chunk, int x, int y, int z, boolean runZ) {
+        chunk.setBlock(x, y, z, Material.QUARTZ_BLOCK); // the desk
+        chunk.setBlock(x, y + 1, z, Material.POTTED_FERN); // a little something on it
+        if (runZ) {
+            if (z + 1 < 16 && chunk.isEmpty(x, y, z + 1) && !chunk.isEmpty(x, y - 1, z + 1))
+                chunk.setBlock(x, y, z + 1, Material.QUARTZ_STAIRS, BlockFace.SOUTH); // chair faces the desk
+        } else if (x + 1 < 16 && chunk.isEmpty(x + 1, y, z) && !chunk.isEmpty(x + 1, y - 1, z)) {
+            chunk.setBlock(x + 1, y, z, Material.QUARTZ_STAIRS, BlockFace.EAST); // chair faces the desk
+        }
+    }
+
     /** One feature per interior room cell per storey: ward beds, a lab (brewing stand), a medicine chest,
      *  a "Dr." cleric, or a plant. Deterministic by world position so multi-chunk slices agree. */
     private void interiorFeatures(CityWorldGenerator generator, RealBlocks chunk, int street, int floorH, int oX,
@@ -201,12 +281,6 @@ public class HospitalLot extends IsolatedLot {
                     int y = street + k * floorH + 1;
                     if (!chunk.isEmpty(lx, y, lz) || chunk.isEmpty(lx, y - 1, lz))
                         continue;
-                    // reception frontage: keep the room right by the main doors a plant/waiting spot, not a
-                    // ward jammed against the entrance
-                    if (main && rz >= sizeZ * 16 - 8 && Math.abs(rx - sizeX * 8) <= 4) {
-                        chunk.setBlock(lx, y, lz, Material.POTTED_FERN);
-                        continue;
-                    }
                     switch (Math.floorMod(wx * 13 + wz * 7 + k * 101, 12)) {
                     case 0, 1, 2, 3, 4 -> ward(chunk, lx, y, lz);
                     case 5 -> lab(chunk, lx, y, lz);
