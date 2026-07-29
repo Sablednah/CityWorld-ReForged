@@ -156,6 +156,15 @@ public class BigBiodomeLot extends IsolatedLot {
                         chunk.setBlock(px, y, pz, Material.WATER); // a 2-deep pool at floor level
                     }
             }
+        // the End dome grows proper chorus plants (connected stalks + a flower), like the single dome
+        if (biome == END)
+            for (int i = 0; i < 5; i++) {
+                int lx = 2 + chunkOdds.getRandomInt(12), lz = 2 + chunkOdds.getRandomInt(12);
+                if (Math.hypot(oX + lx - cX, oZ + lz - cZ) > radius - 3 || !chunk.isEmpty(lx, y + 1, lz)
+                        || chunk.isEmpty(lx, y, lz))
+                    continue;
+                chorusPlant(chunk, lx, y, lz);
+            }
         Material plant = plantFor(biome), log = logFor(biome), leaf = leafFor(biome);
         for (int i = 0; i < 6; i++) {
             int lx = 2 + chunkOdds.getRandomInt(12), lz = 2 + chunkOdds.getRandomInt(12);
@@ -174,6 +183,15 @@ public class BigBiodomeLot extends IsolatedLot {
             if (mob != null)
                 generator.spawnProvider.spawnAnimals(generator, chunk, chunkOdds, mcx - oX, y + 1, mcz - oZ, mob);
         }
+    }
+
+    /** A connected chorus stalk topped with a flower — connections set explicitly (worldgen setBlock skips
+     *  the neighbour update that would otherwise join the cubes). Mirrors the single dome. */
+    private void chorusPlant(RealBlocks chunk, int x, int y, int z) {
+        int h = 2 + chunkOdds.getRandomInt(2); // 2..3 segments
+        for (int j = 0; j < h; j++)
+            chunk.setPipeBlock(x, y + 1 + j, z, Material.CHORUS_PLANT, BlockFace.DOWN, BlockFace.UP);
+        chunk.setBlock(x, y + 1 + h, z, Material.CHORUS_FLOWER);
     }
 
     private void smallTree(RealBlocks chunk, int x, int y, int z, Material log, Material leaves) {
