@@ -307,7 +307,7 @@ public class HospitalLot extends IsolatedLot {
 
     private void stair(RealBlocks chunk, int wx, int y, int wz, int oX, int oZ) {
         if (wx >= oX && wx < oX + 16 && wz >= oZ && wz < oZ + 16)
-            chunk.setBlock(wx - oX, y, wz - oZ, Material.QUARTZ_STAIRS, BlockFace.NORTH);
+            chunk.setBlock(wx - oX, y, wz - oZ, Material.QUARTZ_STAIRS, BlockFace.SOUTH);
     }
 
     private boolean owns(RealBlocks chunk, int wx, int wz) {
