@@ -62,8 +62,10 @@ public class CityWorldGenerator {
      */
     public enum WorldStyle {
         // Order matters: the single-player Customize style picker cycles in declaration order, and the
-        // two headline styles lead. MODERN is the default for new worlds; CLASSIC is the 1.8-era look.
+        // three headline styles lead. MODERN is the default for new worlds; APOCALYPSE is MODERN gone to
+        // ruin; CLASSIC is the 1.8-era look.
         MODERN, // uses modern MC — tall builds, modern blocks/ores/trees/ice; the default for new worlds
+        APOCALYPSE, // MODERN cities gone to ruin — heavy overgrowth, road/building decay, zombie-infested
         CLASSIC, // the faithful 1.8-era look — was NORMAL; the fieldless/legacy default
         FLOATING, // very low terrain with floating houses and cities
         FLOODED, // traditional terrain and cities but with raised sea level
@@ -74,8 +76,7 @@ public class CityWorldGenerator {
         NATURE, // just nature, no constructs anywhere
         METRO, // just buildings, no nature
         SPARSE, // a world of cities but away from each other
-        DESTROYED, // normal landscape with destroyed cities
-        APOCALYPSE // MODERN cities gone to ruin — heavy overgrowth, road/building decay, zombie-infested
+        DESTROYED // normal landscape with destroyed cities
     }
 
     /**

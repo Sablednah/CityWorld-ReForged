@@ -522,6 +522,8 @@ public class CityWorldSettings {
             includeDecayedBuildings = true; // DIFFERENT
             includeDecayedNature = false; // DIFFERENT — keep the wet green world
 
+            includeFires = false; // DIFFERENT — no lit campfires/fire pits in the ruins by default
+
             includeOvergrowth = true; // DIFFERENT
             overgrowthIntensity = 3.0; // DIFFERENT — fairly heavy
 
