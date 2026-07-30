@@ -735,7 +735,7 @@ public final class Material {
     public static final Material WOOD_DOOR = of(Blocks.OAK_DOOR); // legacy generic wooden door -> oak
     public static final Material WOOD_STEP = of(Blocks.OAK_SLAB); // legacy generic wooden slab -> oak
 
-    // ---- Modern extras (129) — blocks the 1.14 vocabulary never had -------------
+    // ---- Modern extras (130) — blocks the 1.14 vocabulary never had -------------
     public static final Material AMETHYST_CLUSTER = of(Blocks.AMETHYST_CLUSTER); // P12 interior: sparkle accent
     public static final Material ANCIENT_DEBRIS = of(Blocks.ANCIENT_DEBRIS); // P9: rare prize in the deepest mines (the reason they dug so far)
     public static final Material ANVIL = of(Blocks.ANVIL); // P9 mine prop: miners' camp
@@ -856,6 +856,7 @@ public final class Material {
     public static final Material SOUL_LANTERN = of(Blocks.SOUL_LANTERN); // P9 mine prop/light: soul lantern
     public static final Material SPORE_BLOSSOM = of(Blocks.SPORE_BLOSSOM); // P10 overgrowth: spore blossom on ceilings
     public static final Material STONECUTTER = of(Blocks.STONECUTTER); // P9 mine prop: miners' camp
+    public static final Material STONE_BUTTON = of(Blocks.STONE_BUTTON); // P15 vault: the surface-hut iron-door opener (industrial button)
     public static final Material WALL_TORCH = of(Blocks.WALL_TORCH); // P9: wall-mounted torches for mine corridors; the Bukkit source only used standing TORCH
     public static final Material WARPED_FUNGUS = of(Blocks.WARPED_FUNGUS); // P13 biodome: nether
     public static final Material WARPED_NYLIUM = of(Blocks.WARPED_NYLIUM); // P13 biodome: nether ground

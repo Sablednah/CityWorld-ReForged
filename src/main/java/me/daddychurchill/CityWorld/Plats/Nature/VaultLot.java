@@ -2,7 +2,6 @@ package me.daddychurchill.CityWorld.Plats.Nature;
 
 import me.daddychurchill.CityWorld.compat.BlockFace;
 import me.daddychurchill.CityWorld.compat.Material;
-import net.minecraft.world.level.block.state.properties.Half;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Context.DataContext;
@@ -188,9 +187,8 @@ public class VaultLot extends BunkerLot {
     /** Industrial dressing (Fallout × Black-Mesa): iron pillars, a copper trim ring, a lit ceiling grid,
      *  hanging lanterns, and a floor accent border. */
     static void decorateLobby(SupportBlocks chunk, int floorY, int ceilY) {
-        for (int[] p : new int[][] { { 1, 1 }, { 14, 1 }, { 1, 14 }, { 14, 14 }, { 8, 1 }, { 8, 14 }, { 1, 8 },
-                { 14, 8 } })
-            chunk.setBlocks(p[0], floorY + 1, ceilY, p[1], PILLAR);
+        for (int[] p : new int[][] { { 1, 1 }, { 14, 1 }, { 1, 14 }, { 14, 14 } }) // corner pillars only —
+            chunk.setBlocks(p[0], floorY + 1, ceilY, p[1], PILLAR); // mid-wall ones stood in the doorway
         chunk.setBlocks(1, 15, ceilY - 1, ceilY, 1, 2, Material.CUT_COPPER); // copper trim ring under the ceiling
         chunk.setBlocks(1, 15, ceilY - 1, ceilY, 14, 15, Material.CUT_COPPER);
         chunk.setBlocks(1, 2, ceilY - 1, ceilY, 1, 15, Material.CUT_COPPER);
@@ -210,14 +208,34 @@ public class VaultLot extends BunkerLot {
      *  way (so caves the shaft passes through can't leave a ladderless gap) and reaching this column's own
      *  surface height (not another column's, which left it short). */
     static void surfaceShaft(SupportBlocks chunk, int floorY, int ceilY, int surfaceY) {
-        // +4: getBlockY reports the base terrain height, a few short of the real top (snow/overgrowth on the
-        // surface), so punch a bit past it — better a hatch poking just above ground than buried under it
-        int topY = surfaceY + 4;
-        chunk.setBlocks(2, ceilY, topY + 1, 0, WALL); // solid backing all the way up
-        chunk.setBlocks(2, ceilY, topY + 2, 1, Material.AIR); // the climb slot
-        chunk.setBlocks(2, ceilY, topY + 2, 2, Material.AIR); // headroom beside the ladder
-        chunk.setLadder(2, floorY + 1, topY, 1, BlockFace.SOUTH);
-        chunk.setBlock(2, topY, 1, Material.BIRCH_TRAPDOOR, BlockFace.SOUTH, Half.TOP); // hatch at the surface
+        // hut floor ≈ the real ground top (+3: getBlockY reports the base terrain, a few short of the top)
+        int hutFloor = surfaceY + 3;
+        chunk.setBlocks(2, ceilY, hutFloor + 4, 0, WALL); // solid backing all the way up (incl. the hut ladder)
+        chunk.setBlocks(2, ceilY, hutFloor + 2, 1, Material.AIR); // the climb slot
+        chunk.setBlocks(2, ceilY, hutFloor + 2, 2, Material.AIR); // headroom beside the ladder
+        chunk.setLadder(2, floorY + 1, hutFloor + 2, 1, BlockFace.SOUTH); // up to the hut floor
+        surfaceHut(chunk, hutFloor);
+    }
+
+    /** A small concrete hut on the surface over the shaft, with an iron door (a button each side) at ground
+     *  level — a proper little vault entrance building instead of a hatch poking out of the hillside. */
+    static void surfaceHut(SupportBlocks chunk, int hutFloor) {
+        // 3x3 footprint (x1..3, z1..3): the ladder emerges at (2,1), you step south and out the door at (2,3)
+        chunk.setBlocks(1, 4, hutFloor, hutFloor + 1, 1, 4, WALL); // floor pad
+        chunk.setBlocks(1, 4, hutFloor + 1, hutFloor + 4, 1, 4, WALL); // fill the box...
+        chunk.setBlocks(2, 3, hutFloor + 1, hutFloor + 4, 1, 3, Material.AIR); // ...then hollow the interior
+        chunk.setBlocks(1, 4, hutFloor + 4, hutFloor + 5, 1, 4, WALL); // roof
+        // foundation skirt so the hut plints into the slope instead of floating on the downhill side
+        chunk.setBlocks(1, 4, hutFloor - 3, hutFloor, 1, 2, WALL);
+        chunk.setBlocks(1, 4, hutFloor - 3, hutFloor, 3, 4, WALL);
+        chunk.setBlocks(1, 2, hutFloor - 3, hutFloor, 1, 4, WALL);
+        chunk.setBlocks(3, 4, hutFloor - 3, hutFloor, 1, 4, WALL);
+        chunk.setBlocks(2, hutFloor - 3, hutFloor + 3, 1, Material.AIR); // keep the ladder column open (skirt + hut)
+        chunk.setLadder(2, hutFloor, hutFloor + 2, 1, BlockFace.SOUTH); // a couple more rungs into the hut
+        chunk.setBlocks(2, hutFloor + 1, hutFloor + 3, 3, Material.AIR); // door opening
+        chunk.setDoor(2, hutFloor + 1, 3, Material.IRON_DOOR_BLOCK, BlockFace.SOUTH);
+        chunk.setWallButton(2, hutFloor + 1, 2, Material.STONE_BUTTON, BlockFace.WEST); // inside opener (east wall)
+        chunk.setWallButton(3, hutFloor + 1, 4, Material.STONE_BUTTON, BlockFace.SOUTH); // outside opener (SE wall)
     }
 
     /** Choose which wall the doors go in — a side facing the vault interior (a vault neighbour), if any. */
