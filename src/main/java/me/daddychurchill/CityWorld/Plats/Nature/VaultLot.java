@@ -62,21 +62,36 @@ public class VaultLot extends BunkerLot {
                 entrance);
     }
 
-    /** Only the built band is hollow; everything else stays solid rock (no hollowed-out mountain). The
-     *  entrance lobby gets a taller band than the plain hall so the big door + decor feel grand. */
+    /** Only the built level bands are hollow; everything else stays solid rock (no hollowed-out mountain).
+     *  The entrance lobby gets a taller top band; a second level sits in a band below the first. */
     @Override
     public boolean isValidStrataY(CityWorldGenerator generator, int blockX, int blockY, int blockZ) {
-        int ceil = entrance ? lobbyCeilingY(bottomOfBunker, topOfBunker) : ceilingY(bottomOfBunker, topOfBunker);
-        return blockY < floorY(bottomOfBunker) || blockY > ceil;
+        return vaultIsValidStrataY(blockY, bottomOfBunker, topOfBunker, entrance);
+    }
+
+    static boolean vaultIsValidStrataY(int blockY, int bottom, int top, boolean entrance) {
+        int top1 = entrance ? lobbyCeilingY(bottom, top) : ceilingY(bottom, top);
+        boolean inL1 = blockY >= floorY(bottom) && blockY <= top1;
+        boolean inL2 = blockY >= floorY2(bottom) && blockY <= ceilY2(bottom);
+        return !inL1 && !inL2;
+    }
+
+    static int floorY2(int bottom) {
+        return floorY(bottom) - 8; // a second level in the band just below the first
+    }
+
+    static int ceilY2(int bottom) {
+        return floorY(bottom) - 2;
+    }
+
+    @Override
+    public int getBottomY(CityWorldGenerator generator) {
+        return floorY2(bottomOfBunker) - 1; // extend the lot's range down to cover the second level
     }
 
     @Override
     protected boolean isShaftableLevel(CityWorldGenerator generator, int blockY) {
         return false; // no mine shafts cutting through the vault
-    }
-
-    static boolean vaultIsValidStrataY(int blockY, int bottom, int top) {
-        return blockY < floorY(bottom) || blockY > ceilingY(bottom, top);
     }
 
     @Override
@@ -90,6 +105,10 @@ public class VaultLot extends BunkerLot {
         } else {
             generateVaultHall(chunk, bottomOfBunker, topOfBunker, walls);
         }
+        // a second level of corridors + rooms below, reached by a stairwell shaft on some interior chunks
+        generateLevel(chunk, floorY2(bottomOfBunker), ceilY2(bottomOfBunker), walls);
+        if (!entrance && Math.floorMod(getChunkX() * 7 + getChunkZ() * 13, 3) == 0)
+            stairwellDown(chunk, floorY(bottomOfBunker), floorY2(bottomOfBunker));
     }
 
     int vaultNumber() {
@@ -127,35 +146,66 @@ public class VaultLot extends BunkerLot {
         return platmap.getLot(x, z);
     }
 
-    /** The lit hall drawn into the hollow band: floor, ceiling, corner pillars, lights, and finished walls
-     *  only on the sides that face rock (so connected chunks join into one hall). */
+    /** The vault interior of one chunk: the corridor-and-rooms level. */
     static void generateVaultHall(SupportBlocks chunk, int bottom, int top, boolean[] wall) {
-        int floorY = floorY(bottom);
-        int ceilY = ceilingY(bottom, top);
+        generateLevel(chunk, floorY(bottom), ceilingY(bottom, top), wall);
+    }
 
+    /**
+     * One vault level in the hollow band {@code [floorY, ceilY]}: a central 2-wide cross corridor that
+     * reaches all four chunk edges (so connected chunks tile into one navigable corridor grid — the "maze"),
+     * with a room in each quadrant opening onto the corridor through a doorway. The rooms are furnished in a
+     * later phase; for now they're lit empty cells. Corridor centre is x/z 7-8 so it lines up with the
+     * centre-positioned lobby door.
+     */
+    static void generateLevel(SupportBlocks chunk, int floorY, int ceilY, boolean[] wall) {
         chunk.setLayer(floorY, FLOOR);
         chunk.setLayer(ceilY, CEIL);
-        chunk.setBlocks(0, 16, floorY + 1, ceilY, 0, 16, Material.AIR); // clear the room
+        chunk.setBlocks(0, 16, floorY + 1, ceilY, 0, 16, Material.AIR); // clear
 
-        if (wall[0])
-            chunk.setBlocks(0, 16, floorY + 1, ceilY, 0, 1, WALL); // north
-        if (wall[1])
-            chunk.setBlocks(0, 16, floorY + 1, ceilY, 15, 16, WALL); // south
-        if (wall[2])
-            chunk.setBlocks(15, 16, floorY + 1, ceilY, 0, 16, WALL); // east
-        if (wall[3])
-            chunk.setBlocks(0, 1, floorY + 1, ceilY, 0, 16, WALL); // west
-
-        chunk.setBlocks(0, floorY + 1, ceilY, 0, PILLAR); // corner pillars
-        chunk.setBlocks(15, floorY + 1, ceilY, 0, PILLAR);
-        chunk.setBlocks(0, floorY + 1, ceilY, 15, PILLAR);
-        chunk.setBlocks(15, floorY + 1, ceilY, 15, PILLAR);
-
-        for (int x = 3; x < 16; x += 6) // recessed floor + ceiling lights (mob-safe spawn hub)
-            for (int z = 3; z < 16; z += 6) {
-                chunk.setBlock(x, ceilY, z, LIGHT);
-                chunk.setBlock(x, floorY, z, LIGHT);
+        // partition into a cross corridor (x7-8, z7-8) + four quadrant rooms
+        for (int z = 0; z < 16; z++)
+            if (z < 7 || z > 8) {
+                chunk.setBlocks(6, floorY + 1, ceilY, z, WALL);
+                chunk.setBlocks(9, floorY + 1, ceilY, z, WALL);
             }
+        for (int x = 0; x < 16; x++)
+            if (x < 7 || x > 8) {
+                chunk.setBlocks(x, floorY + 1, ceilY, 6, WALL);
+                chunk.setBlocks(x, floorY + 1, ceilY, 9, WALL);
+            }
+        // a doorway from each quadrant room onto the corridor
+        chunk.setBlocks(6, 7, floorY + 1, floorY + 4, 2, 4, Material.AIR); // NW
+        chunk.setBlocks(9, 10, floorY + 1, floorY + 4, 2, 4, Material.AIR); // NE
+        chunk.setBlocks(6, 7, floorY + 1, floorY + 4, 12, 14, Material.AIR); // SW
+        chunk.setBlocks(9, 10, floorY + 1, floorY + 4, 12, 14, Material.AIR); // SE
+
+        // finished perimeter walls only on rock-facing sides (so the vault edge isn't bare rock)
+        if (wall[0])
+            chunk.setBlocks(0, 16, floorY + 1, ceilY, 0, 1, WALL);
+        if (wall[1])
+            chunk.setBlocks(0, 16, floorY + 1, ceilY, 15, 16, WALL);
+        if (wall[2])
+            chunk.setBlocks(15, 16, floorY + 1, ceilY, 0, 16, WALL);
+        if (wall[3])
+            chunk.setBlocks(0, 1, floorY + 1, ceilY, 0, 16, WALL);
+
+        // lights — corridor ceiling + each room
+        for (int[] p : new int[][] { { 7, 3 }, { 8, 12 }, { 3, 7 }, { 12, 8 }, { 3, 3 }, { 12, 3 }, { 3, 12 },
+                { 12, 12 } })
+            chunk.setBlock(p[0], ceilY, p[1], LIGHT);
+    }
+
+    /** A ladder shaft in the SE room dropping from this level ({@code floorY1}) to the one below
+     *  ({@code floorY2}) — the "lift" down between levels. */
+    static void stairwellDown(SupportBlocks chunk, int floorY1, int floorY2) {
+        int x = 12, z = 12; // inside the SE quadrant room
+        chunk.setBlocks(x - 1, floorY2, floorY1 + 1, z, WALL); // solid backing for the ladder across both levels
+        chunk.setBlocks(x, floorY2 + 1, floorY1 + 1, z, Material.AIR); // the shaft (a hole through the level-1 floor)
+        chunk.setBlocks(x, floorY2 + 1, floorY1 + 1, z + 1, Material.AIR); // 1x2 so you can step onto the ladder
+        chunk.setLadder(x, floorY2 + 1, floorY1 + 1, z, BlockFace.EAST); // faces east, backs onto x-1
+        chunk.setBlock(x + 1, floorY1 + 1, z, Material.IRON_BARS); // a little rail round the hole up top
+        chunk.setBlock(x + 1, floorY1 + 1, z + 1, Material.IRON_BARS);
     }
 
     /** The entrance chunk as a tall sealed LOBBY: full walls + decor, the surface-shaft ladder + hatch, and

@@ -34,7 +34,7 @@ public class RoadThroughVaultLot extends RoadLot {
 
     @Override
     public boolean isValidStrataY(CityWorldGenerator generator, int blockX, int blockY, int blockZ) {
-        return VaultLot.vaultIsValidStrataY(blockY, bottomOfVault, topOfVault);
+        return VaultLot.vaultIsValidStrataY(blockY, bottomOfVault, topOfVault, false);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class RoadThroughVaultLot extends RoadLot {
 
     @Override
     public int getBottomY(CityWorldGenerator generator) {
-        return bottomOfVault;
+        return VaultLot.floorY2(bottomOfVault) - 1; // extend down to cover the second level
     }
 
     @Override
@@ -70,8 +70,12 @@ public class RoadThroughVaultLot extends RoadLot {
         // the road (a mountain tunnel where the terrain is high, which is exactly where vaults sit)
         super.generateActualBlocks(generator, platmap, chunk, context, platX, platZ);
 
-        // the vault hall below, and a branch down into it from the tunnel
-        VaultLot.generateVaultHall(chunk, bottomOfVault, topOfVault, VaultLot.wallFlags(platmap, platX, platZ));
+        // the vault interior below (both levels), and a branch down into it from the tunnel
+        boolean[] walls = VaultLot.wallFlags(platmap, platX, platZ);
+        VaultLot.generateVaultHall(chunk, bottomOfVault, topOfVault, walls);
+        VaultLot.generateLevel(chunk, VaultLot.floorY2(bottomOfVault), VaultLot.ceilY2(bottomOfVault), walls);
+        if (Math.floorMod(getChunkX() * 7 + getChunkZ() * 13, 3) == 0)
+            VaultLot.stairwellDown(chunk, VaultLot.floorY(bottomOfVault), VaultLot.floorY2(bottomOfVault));
         tunnelBranch(generator, chunk); // a secondary entry from the road tunnel into the interior
         generator.reportLocation("Vault " + Math.floorMod(getChunkX() * 31 + getChunkZ() * 17, 100), chunk);
     }
