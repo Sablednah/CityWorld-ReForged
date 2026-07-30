@@ -64,6 +64,9 @@ public class CityWorldSettings {
     public boolean includeNamedRoads = true;
     public boolean includeDecayedRoads = false;
     public boolean includeDecayedBuildings = false;
+    /** Burning debris (netherrack + fire) sprinkled by the demolition pass. Separate from {@link #includeFires}
+     *  (lit campfires/fire pits) so a style can keep campfires but skip the burning ruins — APOCALYPSE does. */
+    public boolean includeDecayedFires = true;
 
     /**
      * When decay is on, the chance a given building/schematic is spared and stays pristine — so a
@@ -521,8 +524,7 @@ public class CityWorldSettings {
             includeDecayedRoads = true; // DIFFERENT
             includeDecayedBuildings = true; // DIFFERENT
             includeDecayedNature = false; // DIFFERENT — keep the wet green world
-
-            includeFires = false; // DIFFERENT — no lit campfires/fire pits in the ruins by default
+            includeDecayedFires = false; // DIFFERENT — no burning-debris fires in the ruins (campfires stay)
 
             includeOvergrowth = true; // DIFFERENT
             overgrowthIntensity = 3.0; // DIFFERENT — fairly heavy

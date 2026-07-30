@@ -515,7 +515,7 @@ public class CityWorldGenerator {
     public void destroyWithin(int x1, int x2, int y1, int y2, int z1, int z2, boolean withFire) {
         WorldBlocks blocks = decayBlocks.get();
         if (blocks != null)
-            blocks.destroyWithin(x1, x2, y1, y2, z1, z2, withFire && getSettings().includeFires);
+            blocks.destroyWithin(x1, x2, y1, y2, z1, z2, withFire && getSettings().includeDecayedFires);
     }
 
     /**
