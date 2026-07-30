@@ -63,10 +63,12 @@ public class VaultLot extends BunkerLot {
                 entrance);
     }
 
-    /** Only the hall band is hollow; everything else stays solid rock (no hollowed-out mountain). */
+    /** Only the built band is hollow; everything else stays solid rock (no hollowed-out mountain). The
+     *  entrance lobby gets a taller band than the plain hall so the big door + decor feel grand. */
     @Override
     public boolean isValidStrataY(CityWorldGenerator generator, int blockX, int blockY, int blockZ) {
-        return vaultIsValidStrataY(blockY, bottomOfBunker, topOfBunker);
+        int ceil = entrance ? lobbyCeilingY(bottomOfBunker, topOfBunker) : ceilingY(bottomOfBunker, topOfBunker);
+        return blockY < floorY(bottomOfBunker) || blockY > ceil;
     }
 
     @Override
@@ -84,7 +86,7 @@ public class VaultLot extends BunkerLot {
         boolean[] walls = wallFlags(platmap, platX, platZ);
         if (entrance) {
             int num = vaultNumber();
-            generateLobby(chunk, chunkOdds, bottomOfBunker, topOfBunker, blockYs.getBlockY(8, 8), num, walls);
+            generateLobby(chunk, chunkOdds, bottomOfBunker, topOfBunker, blockYs.getBlockY(2, 1), num, walls);
             generator.reportLocation("Vault " + num, chunk);
         } else {
             generateVaultHall(chunk, bottomOfBunker, topOfBunker, walls);
@@ -103,6 +105,11 @@ public class VaultLot extends BunkerLot {
     /** Ceiling of the hall — a ~6-high room, clamped inside the box. */
     static int ceilingY(int bottom, int top) {
         return Math.min(bottom + 7, top - 1);
+    }
+
+    /** Ceiling of the entrance lobby — taller than the hall, so the big door + decor read as grand. */
+    static int lobbyCeilingY(int bottom, int top) {
+        return Math.min(bottom + 12, top - 1);
     }
 
     /** {N, S, E, W}: true where this chunk faces rock (not another vault chunk) and so wants a finished wall. */
@@ -152,11 +159,12 @@ public class VaultLot extends BunkerLot {
             }
     }
 
-    /** The entrance chunk as a tight sealed LOBBY: full walls, the surface-shaft ladder + hatch, and the
-     *  big vault door + a service door as the ONLY openings into the vault interior beyond. */
+    /** The entrance chunk as a tall sealed LOBBY: full walls + decor, the surface-shaft ladder + hatch, and
+     *  the ONLY ways into the vault interior beyond — a grand part-open blast door and a glass-walled security
+     *  booth you route through (in one side, out the other). */
     static void generateLobby(SupportBlocks chunk, Odds odds, int bottom, int top, int surfaceY, int num,
             boolean[] wall) {
-        int floorY = floorY(bottom), ceilY = ceilingY(bottom, top);
+        int floorY = floorY(bottom), ceilY = lobbyCeilingY(bottom, top);
         chunk.setLayer(floorY, FLOOR);
         chunk.setLayer(ceilY, CEIL);
         chunk.setBlocks(0, 16, floorY + 1, ceilY, 0, 16, Material.AIR);
@@ -167,28 +175,49 @@ public class VaultLot extends BunkerLot {
         chunk.setBlocks(0, 1, floorY + 1, ceilY, 0, 16, WALL);
         chunk.setBlocks(15, 16, floorY + 1, ceilY, 0, 16, WALL);
 
-        for (int x = 3; x < 16; x += 6)
-            for (int z = 3; z < 16; z += 6) {
-                chunk.setBlock(x, ceilY, z, LIGHT);
-                chunk.setBlock(x, floorY, z, LIGHT);
-            }
-
+        decorateLobby(chunk, floorY, ceilY);
         surfaceShaft(chunk, floorY, ceilY, surfaceY);
 
         int side = doorSide(wall);
         bigVaultDoor(chunk, floorY, side);
-        secretDoor(chunk, floorY, side);
-        chunk.setSignPost(8, floorY + 1, 8, Material.OAK_SIGN, BlockFace.NORTH,
+        securityRoom(chunk, floorY, ceilY, side);
+        chunk.setSignPost(13, floorY + 1, 8, Material.OAK_SIGN, BlockFace.WEST,
                 new String[] { "VAULT", Integer.toString(num) });
     }
 
-    /** A ladder up one lobby wall (backed the whole way) through a carved slot in the rock to a surface hatch. */
+    /** Industrial dressing (Fallout × Black-Mesa): iron pillars, a copper trim ring, a lit ceiling grid,
+     *  hanging lanterns, and a floor accent border. */
+    static void decorateLobby(SupportBlocks chunk, int floorY, int ceilY) {
+        for (int[] p : new int[][] { { 1, 1 }, { 14, 1 }, { 1, 14 }, { 14, 14 }, { 8, 1 }, { 8, 14 }, { 1, 8 },
+                { 14, 8 } })
+            chunk.setBlocks(p[0], floorY + 1, ceilY, p[1], PILLAR);
+        chunk.setBlocks(1, 15, ceilY - 1, ceilY, 1, 2, Material.CUT_COPPER); // copper trim ring under the ceiling
+        chunk.setBlocks(1, 15, ceilY - 1, ceilY, 14, 15, Material.CUT_COPPER);
+        chunk.setBlocks(1, 2, ceilY - 1, ceilY, 1, 15, Material.CUT_COPPER);
+        chunk.setBlocks(14, 15, ceilY - 1, ceilY, 1, 15, Material.CUT_COPPER);
+        for (int x = 3; x < 15; x += 4)
+            for (int z = 3; z < 15; z += 4)
+                chunk.setBlock(x, ceilY, z, LIGHT); // lit ceiling grid
+        for (int[] p : new int[][] { { 3, 3 }, { 12, 3 }, { 3, 12 }, { 12, 12 } })
+            chunk.setHangingLantern(p[0], ceilY - 2, p[1], Material.LANTERN);
+        chunk.setBlocks(1, 15, floorY, floorY + 1, 1, 2, Material.GRAY_CONCRETE); // floor accent border
+        chunk.setBlocks(1, 15, floorY, floorY + 1, 14, 15, Material.GRAY_CONCRETE);
+        chunk.setBlocks(1, 2, floorY, floorY + 1, 1, 15, Material.GRAY_CONCRETE);
+        chunk.setBlocks(14, 15, floorY, floorY + 1, 1, 15, Material.GRAY_CONCRETE);
+    }
+
+    /** A ladder up the lobby's north wall to a surface hatch, with a SOLID concrete backing column the whole
+     *  way (so caves the shaft passes through can't leave a ladderless gap) and reaching this column's own
+     *  surface height (not another column's, which left it short). */
     static void surfaceShaft(SupportBlocks chunk, int floorY, int ceilY, int surfaceY) {
-        int topY = Math.max(surfaceY, ceilY + 4);
-        chunk.setBlocks(2, ceilY, topY + 1, 1, Material.AIR); // slot up through the rock (col x=2, z=1)
-        chunk.setBlocks(2, ceilY, topY + 1, 2, Material.AIR); // headroom beside the ladder
-        chunk.setLadder(2, floorY + 1, topY, 1, BlockFace.SOUTH); // against the north wall (solid backing all the way)
-        chunk.setBlock(2, topY, 1, Material.BIRCH_TRAPDOOR, BlockFace.SOUTH, Half.TOP); // hatch
+        // +4: getBlockY reports the base terrain height, a few short of the real top (snow/overgrowth on the
+        // surface), so punch a bit past it — better a hatch poking just above ground than buried under it
+        int topY = surfaceY + 4;
+        chunk.setBlocks(2, ceilY, topY + 1, 0, WALL); // solid backing all the way up
+        chunk.setBlocks(2, ceilY, topY + 2, 1, Material.AIR); // the climb slot
+        chunk.setBlocks(2, ceilY, topY + 2, 2, Material.AIR); // headroom beside the ladder
+        chunk.setLadder(2, floorY + 1, topY, 1, BlockFace.SOUTH);
+        chunk.setBlock(2, topY, 1, Material.BIRCH_TRAPDOOR, BlockFace.SOUTH, Half.TOP); // hatch at the surface
     }
 
     /** Choose which wall the doors go in — a side facing the vault interior (a vault neighbour), if any. */
@@ -204,44 +233,89 @@ public class VaultLot extends BunkerLot {
         return 1; // isolated vault: south fallback
     }
 
-    /** A big 5x5 iron-framed blast door recessed in the {@code side} wall, part-open (a 3x3 walkway carved
-     *  through the bottom-centre), leading into the vault interior. */
+    /** A grand 7x7 blast door recessed in the {@code side} wall — an iron frame ring, a copper gear ring, and
+     *  a concrete body — part-open (a 3-wide x 4-tall walkway carved through the bottom-centre). */
     static void bigVaultDoor(SupportBlocks chunk, int floorY, int side) {
         boolean zWall = side == 0 || side == 1;
         int fc = side == 1 || side == 2 ? 15 : 0; // S/E wall at 15, N/W at 0
-        int cy = floorY + 3;
-        for (int a = -2; a <= 2; a++)
-            for (int dy = -2; dy <= 2; dy++) {
+        int cy = floorY + 4;
+        for (int a = -3; a <= 3; a++)
+            for (int dy = -3; dy <= 3; dy++) {
                 double d = Math.hypot(a, dy);
-                Material m = d >= 1.5 && d <= 2.6 ? Material.IRON_BLOCK : d < 1.5 ? WALL : null;
+                Material m = d >= 2.4 && d <= 3.4 ? Material.IRON_BLOCK
+                        : d >= 1.2 && d < 2.4 ? Material.CUT_COPPER
+                        : d < 1.2 ? WALL : null;
                 if (m != null)
-                    put(chunk, zWall, 8 + a, cy + dy, fc, m);
+                    putWall(chunk, zWall, 8 + a, cy + dy, fc, m);
             }
-        for (int a = -1; a <= 1; a++) // part-open: carve the walkway through the door + wall
-            for (int dy = 0; dy <= 2; dy++)
-                put(chunk, zWall, 8 + a, floorY + 1 + dy, fc, Material.AIR);
+        for (int a = -1; a <= 1; a++) // part-open: the walkway through the bottom-centre
+            for (int dy = 0; dy <= 3; dy++)
+                putWall(chunk, zWall, 8 + a, floorY + 1 + dy, fc, Material.AIR);
     }
 
-    /** A plain service door flush in the same wall, a few blocks off the big door (the "secret" way in —
-     *  the disguise/mechanism is a later polish pass). */
-    static void secretDoor(SupportBlocks chunk, int floorY, int side) {
-        boolean zWall = side == 0 || side == 1;
-        int fc = side == 1 || side == 2 ? 15 : 0;
-        int along = 13;
-        put(chunk, zWall, along, floorY + 1, fc, Material.AIR);
-        put(chunk, zWall, along, floorY + 2, fc, Material.AIR);
-        BlockFace face = zWall ? (fc == 15 ? BlockFace.NORTH : BlockFace.SOUTH)
-                : (fc == 15 ? BlockFace.WEST : BlockFace.EAST);
-        if (zWall)
-            chunk.setDoor(along, floorY + 1, fc, Material.OAK_DOOR, face);
-        else
-            chunk.setDoor(fc, floorY + 1, along, Material.OAK_DOOR, face);
+    /** A glass-walled security booth in the corner of the door wall: you enter it from the lobby and exit the
+     *  far side into the vault interior — a "secret" way in that's watched over through the windows. */
+    static void securityRoom(SupportBlocks chunk, int floorY, int ceilY, int side) {
+        int roomTop = Math.min(floorY + 4, ceilY - 1);
+        // roof over the booth footprint (along 12..15, depth 0..4 — clear of the big door, which reaches x=11)
+        for (int a = 12; a <= 15; a++)
+            for (int dp = 0; dp <= 4; dp++)
+                setAt(chunk, side, a, roomTop, dp, CEIL);
+        // glass dividers facing the lobby: the depth=4 wall (along 12..15) and the along=12 wall (depth 0..4)
+        for (int a = 12; a <= 15; a++)
+            for (int y = floorY + 1; y <= roomTop; y++)
+                setAt(chunk, side, a, y, 4, y >= floorY + 2 ? Material.GLASS : WALL);
+        for (int dp = 0; dp <= 4; dp++)
+            for (int y = floorY + 1; y <= roomTop; y++)
+                setAt(chunk, side, 12, y, dp, y >= floorY + 2 ? Material.GLASS : WALL);
+        // entry door from the lobby (depth=4 divider) + exit door to the interior (depth=0 perimeter wall)
+        doorAt(chunk, side, 13, floorY, 4);
+        doorAt(chunk, side, 13, floorY, 0);
+        setAt(chunk, side, 13, roomTop, 2, LIGHT); // a light inside the booth
     }
 
-    private static void put(SupportBlocks chunk, boolean zWall, int along, int y, int fc, Material m) {
+    // --- wall-plane / booth coordinate mappers -------------------------------------------------
+
+    /** Place at a wall-plane cell: {@code zWall} means the wall runs along X at fixed z={@code fc}. */
+    private static void putWall(SupportBlocks chunk, boolean zWall, int along, int y, int fc, Material m) {
         if (zWall)
             chunk.setBlock(along, y, fc, m);
         else
             chunk.setBlock(fc, y, along, m);
+    }
+
+    private static void setAt(SupportBlocks chunk, int side, int along, int y, int depth, Material m) {
+        chunk.setBlock(mapX(side, along, depth), y, mapZ(side, along, depth), m);
+    }
+
+    private static void doorAt(SupportBlocks chunk, int side, int along, int floorY, int depth) {
+        chunk.setDoor(mapX(side, along, depth), floorY + 1, mapZ(side, along, depth), Material.OAK_DOOR,
+                outwardFace(side));
+    }
+
+    /** Map (along the wall, depth into the lobby from the door wall) to local X for the given door side. */
+    private static int mapX(int side, int along, int depth) {
+        return switch (side) {
+        case 2 -> 15 - depth; // east wall
+        case 3 -> depth; // west wall
+        default -> along; // N/S walls run along X
+        };
+    }
+
+    private static int mapZ(int side, int along, int depth) {
+        return switch (side) {
+        case 1 -> 15 - depth; // south wall
+        case 0 -> depth; // north wall
+        default -> along; // E/W walls run along Z
+        };
+    }
+
+    private static BlockFace outwardFace(int side) {
+        return switch (side) {
+        case 0 -> BlockFace.NORTH;
+        case 2 -> BlockFace.EAST;
+        case 3 -> BlockFace.WEST;
+        default -> BlockFace.SOUTH;
+        };
     }
 }
