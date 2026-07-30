@@ -72,12 +72,8 @@ public class RoadThroughVaultLot extends RoadLot {
 
         // the vault hall below, and a branch down into it from the tunnel
         VaultLot.generateVaultHall(chunk, bottomOfVault, topOfVault, VaultLot.wallFlags(platmap, platX, platZ));
-        tunnelBranch(generator, chunk);
-
-        int num = Math.floorMod(getChunkX() * 31 + getChunkZ() * 17, 100);
-        if (entrance)
-            VaultLot.generateEntrance(chunk, chunkOdds, bottomOfVault, topOfVault, blockYs.getBlockY(8, 8), num);
-        generator.reportLocation("Vault " + num, chunk);
+        tunnelBranch(generator, chunk); // a secondary entry from the road tunnel into the interior
+        generator.reportLocation("Vault " + Math.floorMod(getChunkX() * 31 + getChunkZ() * 17, 100), chunk);
     }
 
     /** Carve the trapdoor + ladder shaft from the tunnel floor down through the rock into the hall. */
