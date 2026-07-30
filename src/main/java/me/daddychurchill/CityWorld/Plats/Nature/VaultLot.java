@@ -163,8 +163,9 @@ public class VaultLot extends BunkerLot {
         chunk.setBlocks(5, 6, floorY + 1, topY + 1, 5, 10, WALL); // W wall
         chunk.setBlocks(9, 10, floorY + 1, topY + 1, 5, 10, WALL); // E wall
         chunk.setBlocks(6, 9, floorY + 1, topY + 1, 6, 9, Material.AIR); // hollow the shaft
-        // ladder on the shaft's north wall (z=5, which stays solid) so every rung has backing to cling to
-        chunk.setLadder(7, floorY, topY, 6, BlockFace.SOUTH);
+        // ladder on the shaft's north wall (z=5, which stays solid) so every rung has backing to cling to;
+        // start a block above the floor so the bottom rung isn't buried in the floor slab
+        chunk.setLadder(7, floorY + 1, topY, 6, BlockFace.SOUTH);
         chunk.setBlock(7, topY, 6, Material.BIRCH_TRAPDOOR, BlockFace.SOUTH, Half.TOP); // hatch at the top
 
         cogDoor(chunk, 8, floorY, 12); // the cog blast door across the hall

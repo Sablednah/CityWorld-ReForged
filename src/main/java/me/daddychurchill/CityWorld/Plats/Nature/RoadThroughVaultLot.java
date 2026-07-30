@@ -90,6 +90,6 @@ public class RoadThroughVaultLot extends RoadLot {
         chunk.setBlocks(6, floorY, streetY, 7, Material.AIR); // clear the ladder column through the rock
         chunk.setBlocks(7, floorY, streetY + 1, 7, VaultLot.CEIL); // backing wall for the ladder
         chunk.setBlock(6, streetY, 7, Material.BIRCH_TRAPDOOR, BlockFace.WEST, Half.TOP); // hatch in the tunnel floor
-        chunk.setLadder(6, floorY, streetY, 7, BlockFace.WEST);
+        chunk.setLadder(6, floorY + 1, streetY, 7, BlockFace.WEST); // +1 so the bottom rung isn't in the floor
     }
 }
