@@ -44,7 +44,7 @@ public class RoadThroughVaultLot extends RoadLot {
 
     @Override
     public int getBottomY(CityWorldGenerator generator) {
-        return VaultLot.floorY2(bottomOfVault) - 1; // extend down to cover the second level
+        return VaultLot.levelFloor(bottomOfVault, VaultLot.NUM_LEVELS - 1) - 1; // cover the deepest level
     }
 
     @Override
@@ -70,27 +70,31 @@ public class RoadThroughVaultLot extends RoadLot {
         // the road (a mountain tunnel where the terrain is high, which is exactly where vaults sit)
         super.generateActualBlocks(generator, platmap, chunk, context, platX, platZ);
 
-        // the vault interior below (both levels), and a branch down into it from the tunnel
+        // the vault interior below (all levels), and a branch down into it from the tunnel
         boolean[] walls = VaultLot.wallFlags(platmap, platX, platZ);
         int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
         VaultLot.generateVaultHall(chunk, bottomOfVault, topOfVault, walls, oX, oZ);
-        VaultLot.generateLevel(chunk, VaultLot.floorY2(bottomOfVault), VaultLot.ceilY2(bottomOfVault), walls, oX, oZ);
-        if (Math.floorMod(getChunkX() * 7 + getChunkZ() * 13, 3) == 0)
-            VaultLot.stairwellDown(chunk, VaultLot.floorY(bottomOfVault), VaultLot.floorY2(bottomOfVault));
-        tunnelBranch(generator, chunk); // a secondary entry from the road tunnel into the interior
+        VaultLot.generateLowerLevels(chunk, bottomOfVault, walls, oX, oZ, false, getChunkX(), getChunkZ());
+        tunnelBranch(generator, chunk); // the road-tunnel entry (routed through a vestibule + door)
         generator.reportLocation("Vault " + Math.floorMod(getChunkX() * 31 + getChunkZ() * 17, 100), chunk);
     }
 
-    /** Carve the trapdoor + ladder shaft from the tunnel floor down through the rock into the hall. */
+    /** Carve the trapdoor + ladder shaft from the tunnel floor down through the rock. It lands INSIDE the NE
+     *  quadrant room (which has its own doorway onto the corridor) + an iron door on that doorway, so the road
+     *  entry is a controlled way in through a door, not a bare drop into the main corridor. */
     private void tunnelBranch(CityWorldGenerator generator, RealBlocks chunk) {
         int streetY = generator.streetLevel;
         int floorY = VaultLot.floorY(bottomOfVault);
         int ceilY = VaultLot.ceilingY(bottomOfVault, topOfVault);
+        int lx = 11, lz = 3; // inside the NE room (x10-15, z1-5)
 
-        chunk.setBlocks(5, 8, ceilY, ceilY + 1, 6, 8, Material.AIR); // open the hall ceiling under the shaft
-        chunk.setBlocks(6, floorY, streetY, 7, Material.AIR); // clear the ladder column through the rock
-        chunk.setBlocks(7, floorY, streetY + 1, 7, VaultLot.CEIL); // backing wall for the ladder
-        chunk.setBlock(6, streetY, 7, Material.BIRCH_TRAPDOOR, BlockFace.WEST, Half.TOP); // hatch in the tunnel floor
-        chunk.setLadder(6, floorY + 1, streetY, 7, BlockFace.WEST); // +1 so the bottom rung isn't in the floor
+        chunk.setBlocks(lx - 1, lx + 2, ceilY, ceilY + 1, lz - 1, lz + 2, Material.AIR); // open the room ceiling
+        chunk.setBlocks(lx, floorY, streetY, lz, Material.AIR); // clear the ladder column through the rock
+        chunk.setBlocks(lx + 1, floorY, streetY + 1, lz, VaultLot.CEIL); // backing wall for the ladder
+        chunk.setBlock(lx, streetY, lz, Material.BIRCH_TRAPDOOR, BlockFace.WEST, Half.TOP); // hatch in the tunnel floor
+        chunk.setLadder(lx, floorY + 1, streetY, lz, BlockFace.WEST);
+        // a door on the NE room's corridor doorway (x=9, z 2-3), so you leave the entry through a door
+        chunk.setBlocks(9, 10, floorY + 1, floorY + 3, 2, 4, Material.AIR);
+        chunk.setDoor(9, floorY + 1, 3, Material.OAK_DOOR, BlockFace.WEST);
     }
 }

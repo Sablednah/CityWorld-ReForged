@@ -69,24 +69,28 @@ public class VaultLot extends BunkerLot {
         return vaultIsValidStrataY(blockY, bottomOfBunker, topOfBunker, entrance);
     }
 
+    static final int NUM_LEVELS = 4; // level 0 (entry) + three below
+
+    /** Floor of level {@code k} — the levels stack every 8 blocks below the entry level. */
+    static int levelFloor(int bottom, int k) {
+        return floorY(bottom) - 8 * k;
+    }
+
     static boolean vaultIsValidStrataY(int blockY, int bottom, int top, boolean entrance) {
-        int top1 = entrance ? lobbyCeilingY(bottom, top) : ceilingY(bottom, top);
-        boolean inL1 = blockY >= floorY(bottom) && blockY <= top1;
-        boolean inL2 = blockY >= floorY2(bottom) && blockY <= ceilY2(bottom);
-        return !inL1 && !inL2;
-    }
-
-    static int floorY2(int bottom) {
-        return floorY(bottom) - 8; // a second level in the band just below the first
-    }
-
-    static int ceilY2(int bottom) {
-        return floorY(bottom) - 2;
+        int c0 = entrance ? lobbyCeilingY(bottom, top) : ceilingY(bottom, top); // level 0 is taller for the lobby
+        if (blockY >= floorY(bottom) && blockY <= c0)
+            return false;
+        for (int k = 1; k < NUM_LEVELS; k++) {
+            int fk = levelFloor(bottom, k);
+            if (blockY >= fk && blockY <= fk + 6)
+                return false;
+        }
+        return true;
     }
 
     @Override
     public int getBottomY(CityWorldGenerator generator) {
-        return floorY2(bottomOfBunker) - 1; // extend the lot's range down to cover the second level
+        return levelFloor(bottomOfBunker, NUM_LEVELS - 1) - 1; // extend down to cover the deepest level
     }
 
     @Override
@@ -106,10 +110,18 @@ public class VaultLot extends BunkerLot {
         } else {
             generateVaultHall(chunk, bottomOfBunker, topOfBunker, walls, oX, oZ);
         }
-        // a second level of corridors + rooms below, reached by a stairwell shaft on some interior chunks
-        generateLevel(chunk, floorY2(bottomOfBunker), ceilY2(bottomOfBunker), walls, oX, oZ);
-        if (!entrance && Math.floorMod(getChunkX() * 7 + getChunkZ() * 13, 3) == 0)
-            stairwellDown(chunk, floorY(bottomOfBunker), floorY2(bottomOfBunker));
+        generateLowerLevels(chunk, bottomOfBunker, walls, oX, oZ, entrance, getChunkX(), getChunkZ());
+    }
+
+    /** The corridor-and-rooms levels beneath level 0, plus stairwell shafts down between levels (spread
+     *  across interior chunks, not the entrance chunk's top level). */
+    static void generateLowerLevels(SupportBlocks chunk, int bottom, boolean[] walls, int oX, int oZ,
+            boolean entrance, int chunkX, int chunkZ) {
+        for (int k = 1; k < NUM_LEVELS; k++)
+            generateLevel(chunk, levelFloor(bottom, k), levelFloor(bottom, k) + 6, walls, oX, oZ);
+        for (int k = 0; k < NUM_LEVELS - 1; k++)
+            if (!(entrance && k == 0) && Math.floorMod(chunkX * 7 + chunkZ * 13 + k * 29, 3) == 0)
+                stairwellDown(chunk, levelFloor(bottom, k), levelFloor(bottom, k + 1));
     }
 
     int vaultNumber() {
@@ -196,6 +208,22 @@ public class VaultLot extends BunkerLot {
                 { 12, 12 } })
             chunk.setBlock(p[0], ceilY, p[1], LIGHT);
 
+        // a copper trim band at head height along the corridor walls (Fallout-industrial accent) — only where
+        // there's actually a wall, so it never floats in the corridor or a doorway
+        for (int i = 0; i < 16; i++) {
+            copperTrim(chunk, 6, floorY + 4, i);
+            copperTrim(chunk, 9, floorY + 4, i);
+            copperTrim(chunk, i, floorY + 4, 6);
+            copperTrim(chunk, i, floorY + 4, 9);
+        }
+
+        // divide some merged rooms into smaller isolated rooms (coherent via the corner hash) so room sizes
+        // vary — a divided quadrant walls its corner-facing edges; an open one stays merged into a big hall
+        divideQuadrant(chunk, floorY, ceilY, 0, 5, 0, 5, oX, oZ); // NW, corner (oX,oZ)
+        divideQuadrant(chunk, floorY, ceilY, 10, 15, 0, 5, oX + 16, oZ); // NE
+        divideQuadrant(chunk, floorY, ceilY, 0, 5, 10, 15, oX, oZ + 16); // SW
+        divideQuadrant(chunk, floorY, ceilY, 10, 15, 10, 15, oX + 16, oZ + 16); // SE
+
         // furnish each quadrant — the room TYPE is keyed to the chunk-corner it belongs to, so all four
         // quadrants of a room merged across chunk boundaries agree and it reads as one coherent room
         furnishRoom(chunk, floorY, 1, 5, 1, 5, oX, oZ); // NW quadrant -> corner (oX, oZ)
@@ -216,17 +244,54 @@ public class VaultLot extends BunkerLot {
             int cornerZ) {
         int fy = floorY + 1; // furniture stands on the floor
         switch (Math.floorMod(cornerX * 13 + cornerZ * 7, 10)) {
-        case 0, 1, 2, 3, 4 -> livingQuarters(chunk, fy, x1, x2, z1, z2);
-        case 5, 6 -> office(chunk, fy, x1, x2, z1, z2);
-        case 7 -> lab(chunk, fy, x1, x2, z1, z2);
-        case 8 -> storage(chunk, fy, x1, x2, z1, z2);
-        default -> hydroponics(chunk, floorY, x1, x2, z1, z2);
+        case 0, 1, 2, 3 -> livingQuarters(chunk, fy, x1, x2, z1, z2);
+        case 4, 5 -> office(chunk, fy, x1, x2, z1, z2);
+        case 6 -> lab(chunk, fy, x1, x2, z1, z2);
+        case 7 -> storage(chunk, fy, x1, x2, z1, z2);
+        case 8 -> hydroponics(chunk, floorY, x1, x2, z1, z2);
+        default -> messHall(chunk, fy, x1, x2, z1, z2); // 9
         }
+    }
+
+    private static void messHall(SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
+        int tx = x1 + 1, tz = z1 + 1; // a dining table with chairs, and a bit of kitchen
+        if (chunk.isEmpty(tx, fy, tz) && !chunk.isEmpty(tx, fy - 1, tz))
+            chunk.setTable(tx, fy, tz, Material.QUARTZ_PILLAR, Material.SMOOTH_QUARTZ_SLAB);
+        chairAt(chunk, tx - 1, fy, tz, BlockFace.WEST);
+        chairAt(chunk, tx + 1, fy, tz, BlockFace.EAST);
+        put(chunk, x2, fy, z1, Material.BARREL); // kitchen store
+        put(chunk, x2, fy, z2, Material.CAULDRON); // a pot
+    }
+
+    private static void chairAt(SupportBlocks chunk, int x, int fy, int z, BlockFace facing) {
+        if (chunk.isEmpty(x, fy, z) && !chunk.isEmpty(x, fy - 1, z))
+            chunk.setBlock(x, fy, z, Material.QUARTZ_STAIRS, facing);
     }
 
     private static void put(SupportBlocks chunk, int x, int y, int z, Material m) {
         if (chunk.isEmpty(x, y, z) && !chunk.isEmpty(x, y - 1, z))
             chunk.setBlock(x, y, z, m);
+    }
+
+    private static void copperTrim(SupportBlocks chunk, int x, int y, int z) {
+        if (!chunk.isEmpty(x, y, z)) // only dress an actual wall, never float in the corridor/doorway
+            chunk.setBlock(x, y, z, Material.CUT_COPPER);
+    }
+
+    /** Wall a quadrant's chunk-boundary (corner-facing) edges so a merged room breaks into smaller isolated
+     *  rooms — decided by the corner hash so all four quadrants of a merged room agree. ~Half stay open. */
+    static void divideQuadrant(SupportBlocks chunk, int floorY, int ceilY, int x1, int x2, int z1, int z2,
+            int cornerX, int cornerZ) {
+        int h = cornerX * 374761393 + cornerZ * 668265263;
+        h = (h ^ (h >>> 13)) * 1274126177;
+        if ((h & 1) != 0)
+            return; // ~half the merged rooms stay open (big); the rest divide into smaller rooms
+        int xe = x1 == 0 ? 0 : 15; // the chunk-edge on the corner side
+        int ze = z1 == 0 ? 0 : 15;
+        for (int z = z1; z <= z2; z++)
+            chunk.setBlocks(xe, floorY + 1, ceilY, z, WALL);
+        for (int x = x1; x <= x2; x++)
+            chunk.setBlocks(x, floorY + 1, ceilY, ze, WALL);
     }
 
     private static void livingQuarters(SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
