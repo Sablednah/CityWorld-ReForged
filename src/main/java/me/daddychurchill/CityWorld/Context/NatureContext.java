@@ -66,10 +66,11 @@ public class NatureContext extends UncivilizedContext {
 
 	private final static double oddsOfBunkers = Odds.oddsLikely;
 
-	// APOCALYPSE only: a buried structure is occasionally a Fallout-style Vault instead of a bunker. Rolled
-	// on top of the already-gated bunker roll, so it stays rare. TODO: dial rarer once the vault's
-	// multi-level room set lands (kept findable for now to verify the spike).
-	private final static double oddsOfVault = Odds.oddsUnlikely;
+	// APOCALYPSE only: within a rare "vault region" every buried structure becomes a Fallout-style Vault
+	// instead of a bunker. Deciding it per REGION (not per platmap) makes vaults cluster into one big
+	// sprawling complex under a whole mountain mass, rather than the odd lonely 1-2 chunk stub.
+	private final static int VAULT_REGION = 3; // region = 3x3 platmaps (30x30 chunks)
+	private final static int VAULT_REGION_ODDS = 12; // ~1 region in 12 is a vault region
 
 	@Override
 	public void populateMap(CityWorldGenerator generator, PlatMap platmap) {
@@ -90,7 +91,7 @@ public class NatureContext extends UncivilizedContext {
 		Odds platmapOdds = platmap.getOddsGenerator();
 		boolean doBunkers = generator.getSettings().includeBunkers && platmapOdds.playOdds(oddsOfBunkers);
 		boolean doVault = doBunkers && generator.worldStyle == CityWorldGenerator.WorldStyle.APOCALYPSE
-				&& platmapOdds.playOdds(oddsOfVault);
+				&& isVaultRegion(generator, platmap);
 		boolean didBunkerEntrance = false;
 
 		// where it all begins
@@ -193,6 +194,19 @@ public class NatureContext extends UncivilizedContext {
 		// any special things to do?
 		populateSpecial(generator, platmap, maxHeightX, maxHeight, maxHeightZ, maxState);
 		populateSpecial(generator, platmap, minHeightX, minHeight, minHeightZ, minState);
+	}
+
+	/** Whether this platmap sits in a rare, seed-deterministic "vault region". Decided per coarse region so a
+	 *  whole mountain mass becomes one sprawling vault instead of scattered 1-2 chunk stubs. */
+	private static boolean isVaultRegion(CityWorldGenerator generator, PlatMap platmap) {
+		int span = PlatMap.Width * VAULT_REGION;
+		long rx = Math.floorDiv(platmap.originX, span);
+		long rz = Math.floorDiv(platmap.originZ, span);
+		long h = generator.getWorldSeed() ^ (rx * 0x2545F4914F6CDD1DL) ^ (rz * 0x9E3779B97F4A7C15L);
+		h ^= h >>> 29;
+		h *= 0xBF58476D1CE4E5B9L;
+		h ^= h >>> 32;
+		return Math.floorMod(h, VAULT_REGION_ODDS) == 0;
 	}
 
 	private PlatLot createBuriedBuildingLot(CityWorldGenerator generator, PlatMap platmap, int x, int z,
