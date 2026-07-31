@@ -72,8 +72,9 @@ public class RoadThroughVaultLot extends RoadLot {
 
         // the vault interior below (both levels), and a branch down into it from the tunnel
         boolean[] walls = VaultLot.wallFlags(platmap, platX, platZ);
-        VaultLot.generateVaultHall(chunk, bottomOfVault, topOfVault, walls);
-        VaultLot.generateLevel(chunk, VaultLot.floorY2(bottomOfVault), VaultLot.ceilY2(bottomOfVault), walls);
+        int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
+        VaultLot.generateVaultHall(chunk, bottomOfVault, topOfVault, walls, oX, oZ);
+        VaultLot.generateLevel(chunk, VaultLot.floorY2(bottomOfVault), VaultLot.ceilY2(bottomOfVault), walls, oX, oZ);
         if (Math.floorMod(getChunkX() * 7 + getChunkZ() * 13, 3) == 0)
             VaultLot.stairwellDown(chunk, VaultLot.floorY(bottomOfVault), VaultLot.floorY2(bottomOfVault));
         tunnelBranch(generator, chunk); // a secondary entry from the road tunnel into the interior

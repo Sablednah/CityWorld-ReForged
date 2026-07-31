@@ -98,15 +98,16 @@ public class VaultLot extends BunkerLot {
     protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
             DataContext context, int platX, int platZ) {
         boolean[] walls = wallFlags(platmap, platX, platZ);
+        int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
         if (entrance) {
             int num = vaultNumber();
             generateLobby(chunk, chunkOdds, bottomOfBunker, topOfBunker, blockYs.getBlockY(2, 1), num, walls);
             generator.reportLocation("Vault " + num, chunk);
         } else {
-            generateVaultHall(chunk, bottomOfBunker, topOfBunker, walls);
+            generateVaultHall(chunk, bottomOfBunker, topOfBunker, walls, oX, oZ);
         }
         // a second level of corridors + rooms below, reached by a stairwell shaft on some interior chunks
-        generateLevel(chunk, floorY2(bottomOfBunker), ceilY2(bottomOfBunker), walls);
+        generateLevel(chunk, floorY2(bottomOfBunker), ceilY2(bottomOfBunker), walls, oX, oZ);
         if (!entrance && Math.floorMod(getChunkX() * 7 + getChunkZ() * 13, 3) == 0)
             stairwellDown(chunk, floorY(bottomOfBunker), floorY2(bottomOfBunker));
     }
@@ -147,8 +148,8 @@ public class VaultLot extends BunkerLot {
     }
 
     /** The vault interior of one chunk: the corridor-and-rooms level. */
-    static void generateVaultHall(SupportBlocks chunk, int bottom, int top, boolean[] wall) {
-        generateLevel(chunk, floorY(bottom), ceilingY(bottom, top), wall);
+    static void generateVaultHall(SupportBlocks chunk, int bottom, int top, boolean[] wall, int oX, int oZ) {
+        generateLevel(chunk, floorY(bottom), ceilingY(bottom, top), wall, oX, oZ);
     }
 
     /**
@@ -158,7 +159,7 @@ public class VaultLot extends BunkerLot {
      * later phase; for now they're lit empty cells. Corridor centre is x/z 7-8 so it lines up with the
      * centre-positioned lobby door.
      */
-    static void generateLevel(SupportBlocks chunk, int floorY, int ceilY, boolean[] wall) {
+    static void generateLevel(SupportBlocks chunk, int floorY, int ceilY, boolean[] wall, int oX, int oZ) {
         chunk.setLayer(floorY, FLOOR);
         chunk.setLayer(ceilY, CEIL);
         chunk.setBlocks(0, 16, floorY + 1, ceilY, 0, 16, Material.AIR); // clear
@@ -194,6 +195,81 @@ public class VaultLot extends BunkerLot {
         for (int[] p : new int[][] { { 7, 3 }, { 8, 12 }, { 3, 7 }, { 12, 8 }, { 3, 3 }, { 12, 3 }, { 3, 12 },
                 { 12, 12 } })
             chunk.setBlock(p[0], ceilY, p[1], LIGHT);
+
+        // furnish each quadrant — the room TYPE is keyed to the chunk-corner it belongs to, so all four
+        // quadrants of a room merged across chunk boundaries agree and it reads as one coherent room
+        furnishRoom(chunk, floorY, 1, 5, 1, 5, oX, oZ); // NW quadrant -> corner (oX, oZ)
+        furnishRoom(chunk, floorY, 10, 14, 1, 5, oX + 16, oZ); // NE -> (oX+16, oZ)
+        furnishRoom(chunk, floorY, 1, 5, 10, 14, oX, oZ + 16); // SW -> (oX, oZ+16)
+        furnishRoom(chunk, floorY, 10, 14, 10, 14, oX + 16, oZ + 16); // SE -> (oX+16, oZ+16)
+    }
+
+    static final Material[] BEDS = { Material.WHITE_BED, Material.LIGHT_GRAY_BED, Material.LIGHT_BLUE_BED };
+
+    /**
+     * Furnish one quadrant. The room TYPE comes from the chunk-corner {@code (cornerX, cornerZ)} this
+     * quadrant belongs to (so merged rooms are coherent); the per-quadrant layout varies by its own
+     * position. Fallout-industrial × Black-Mesa mix: mostly living quarters, some labs/offices, the odd
+     * hydroponics or mess. Everything is guarded with empty-cell checks so nothing lands in a wall/doorway.
+     */
+    static void furnishRoom(SupportBlocks chunk, int floorY, int x1, int x2, int z1, int z2, int cornerX,
+            int cornerZ) {
+        int fy = floorY + 1; // furniture stands on the floor
+        switch (Math.floorMod(cornerX * 13 + cornerZ * 7, 10)) {
+        case 0, 1, 2, 3, 4 -> livingQuarters(chunk, fy, x1, x2, z1, z2);
+        case 5, 6 -> office(chunk, fy, x1, x2, z1, z2);
+        case 7 -> lab(chunk, fy, x1, x2, z1, z2);
+        case 8 -> storage(chunk, fy, x1, x2, z1, z2);
+        default -> hydroponics(chunk, floorY, x1, x2, z1, z2);
+        }
+    }
+
+    private static void put(SupportBlocks chunk, int x, int y, int z, Material m) {
+        if (chunk.isEmpty(x, y, z) && !chunk.isEmpty(x, y - 1, z))
+            chunk.setBlock(x, y, z, m);
+    }
+
+    private static void livingQuarters(SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
+        if (z1 + 1 <= z2 && chunk.isEmpty(x1, fy, z1) && chunk.isEmpty(x1, fy, z1 + 1)
+                && !chunk.isEmpty(x1, fy - 1, z1))
+            chunk.setBed(x1, fy, z1, BEDS[Math.floorMod(x1 + z1, BEDS.length)], BlockFace.SOUTH); // head to the wall
+        put(chunk, x2, fy, z1, Material.CHEST); // footlocker
+        put(chunk, x1, fy, z2, Material.CRAFTING_TABLE);
+        put(chunk, x2, fy, z2, Material.POTTED_FERN);
+    }
+
+    private static void office(SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
+        put(chunk, x1, fy, z1, Material.QUARTZ_BLOCK); // desk
+        put(chunk, x1, fy + 1, z1, Material.LECTERN); // a terminal on it
+        if (chunk.isEmpty(x1 + 1, fy, z1) && !chunk.isEmpty(x1 + 1, fy - 1, z1))
+            chunk.setBlock(x1 + 1, fy, z1, Material.QUARTZ_STAIRS, BlockFace.EAST); // chair facing the desk
+        put(chunk, x2, fy, z2, Material.CHEST); // filing
+        put(chunk, x2, fy, z1, Material.BARREL);
+    }
+
+    private static void lab(SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
+        put(chunk, x1, fy, z1, Material.BREWING_STAND);
+        put(chunk, x1 + 1, fy, z1, Material.CAULDRON);
+        put(chunk, x2, fy, z2, Material.CHISELED_BOOKSHELF);
+        put(chunk, x2, fy, z1, Material.CRAFTING_TABLE);
+        put(chunk, x1, fy, z2, Material.COPPER_BULB); // a lit lab lamp
+    }
+
+    private static void storage(SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
+        for (int x = x1; x <= x2; x += 2) // a row of crates along the back wall
+            put(chunk, x, fy, z1, Material.BARREL);
+        put(chunk, x1, fy, z2, Material.CHEST);
+        put(chunk, x2, fy, z2, Material.CHEST);
+    }
+
+    private static void hydroponics(SupportBlocks chunk, int floorY, int x1, int x2, int z1, int z2) {
+        for (int x = x1; x <= x2; x++)
+            for (int z = z1; z <= z2; z++) {
+                boolean water = ((x - x1) & 1) == 1; // alternating water channels
+                chunk.setBlock(x, floorY, z, water ? Material.WATER : Material.FARMLAND);
+                if (!water && chunk.isEmpty(x, floorY + 1, z))
+                    chunk.setBlock(x, floorY + 1, z, Material.WHEAT, 1.0); // grown crops
+            }
     }
 
     /** A ladder shaft in the SE room dropping from this level ({@code floorY1}) to the one below
