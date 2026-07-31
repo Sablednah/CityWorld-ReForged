@@ -316,8 +316,10 @@ public class VaultLot extends BunkerLot {
                 if (m != null)
                     putWall(chunk, zWall, 8 + a, cy + dy, fc, m);
             }
-        for (int a = -1; a <= 1; a++) // part-open: the walkway through the bottom-centre
-            for (int dy = 0; dy <= 3; dy++)
+        // part-open walkway — 4 wide (x6-9) so it frames the 2-wide corridor between its partition walls
+        // (x6/x9) instead of sitting half a block off, and a block taller
+        for (int a = -2; a <= 1; a++)
+            for (int dy = 0; dy <= 4; dy++)
                 putWall(chunk, zWall, 8 + a, floorY + 1 + dy, fc, Material.AIR);
     }
 
