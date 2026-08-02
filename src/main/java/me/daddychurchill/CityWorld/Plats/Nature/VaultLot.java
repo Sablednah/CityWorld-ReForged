@@ -327,13 +327,21 @@ public class VaultLot extends BunkerLot {
         put(chunk, x2, fy, z2, Material.CHEST);
     }
 
+    private static final Material[] CROPS = { Material.WHEAT, Material.CARROTS, Material.POTATOES,
+            Material.BEETROOTS };
+
     private static void hydroponics(SupportBlocks chunk, int floorY, int x1, int x2, int z1, int z2) {
+        Material crop = CROPS[Math.floorMod(x1 * 3 + z1 * 5, CROPS.length)]; // one crop per bay, varied by position
+        int ceilY = floorY + 6;
         for (int x = x1; x <= x2; x++)
             for (int z = z1; z <= z2; z++) {
                 boolean water = ((x - x1) & 1) == 1; // alternating water channels
                 chunk.setBlock(x, floorY, z, water ? Material.WATER : Material.FARMLAND);
                 if (!water && chunk.isEmpty(x, floorY + 1, z))
-                    chunk.setBlock(x, floorY + 1, z, Material.WHEAT, 1.0); // grown crops
+                    chunk.setBlock(x, floorY + 1, z, crop, 1.0); // fully grown
+                // grow-lights in the ceiling so the crops get enough light and don't pop off
+                if ((x - x1) % 2 == 0 && (z - z1) % 2 == 0)
+                    chunk.setBlock(x, ceilY, z, Material.SEA_LANTERN);
             }
     }
 
