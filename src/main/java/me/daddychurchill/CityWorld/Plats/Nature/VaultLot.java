@@ -208,13 +208,13 @@ public class VaultLot extends BunkerLot {
                 { 12, 12 } })
             chunk.setBlock(p[0], ceilY, p[1], LIGHT);
 
-        // a copper trim band at head height along the corridor walls (Fallout-industrial accent) — only where
-        // there's actually a wall, so it never floats in the corridor or a doorway
+        // a weathered copper trim band along the corridor walls (Fallout-industrial, rusted with age) — only
+        // where there's actually a wall, so it never floats in the corridor or a doorway
         for (int i = 0; i < 16; i++) {
-            copperTrim(chunk, 6, floorY + 4, i);
-            copperTrim(chunk, 9, floorY + 4, i);
-            copperTrim(chunk, i, floorY + 4, 6);
-            copperTrim(chunk, i, floorY + 4, 9);
+            trimAt(chunk, 6, floorY + 4, i, oX + 6, oZ + i);
+            trimAt(chunk, 9, floorY + 4, i, oX + 9, oZ + i);
+            trimAt(chunk, i, floorY + 4, 6, oX + i, oZ + 6);
+            trimAt(chunk, i, floorY + 4, 9, oX + i, oZ + 9);
         }
 
         // divide some merged rooms into smaller isolated rooms (coherent via the corner hash) so room sizes
@@ -230,6 +230,55 @@ public class VaultLot extends BunkerLot {
         furnishRoom(chunk, floorY, 10, 14, 1, 5, oX + 16, oZ); // NE -> (oX+16, oZ)
         furnishRoom(chunk, floorY, 1, 5, 10, 14, oX, oZ + 16); // SW -> (oX, oZ+16)
         furnishRoom(chunk, floorY, 10, 14, 10, 14, oX + 16, oZ + 16); // SE -> (oX+16, oZ+16)
+
+        dressLevel(chunk, floorY, ceilY, oX, oZ);
+    }
+
+    /** The abandoned-vault dressing (Fallout × Black-Mesa): hanging industrial lanterns down the corridor, and
+     *  sparse decay — creeping moss, cobwebs, the odd broken light — worn in but still lit and navigable. */
+    static void dressLevel(SupportBlocks chunk, int floorY, int ceilY, int oX, int oZ) {
+        hangLantern(chunk, 7, ceilY, 3); // industrial lanterns down the two corridor arms
+        hangLantern(chunk, 8, ceilY, 12);
+        hangLantern(chunk, 3, ceilY, 8);
+        hangLantern(chunk, 12, ceilY, 7);
+        for (int[] c : new int[][] { { 2, 2 }, { 13, 2 }, { 2, 13 }, { 13, 13 } }) // wear in the room corners
+            wear(chunk, floorY, ceilY, c[0], c[1], oX, oZ);
+    }
+
+    private static void hangLantern(SupportBlocks chunk, int x, int ceilY, int z) {
+        if (!chunk.isEmpty(x, ceilY - 1, z) || !chunk.isEmpty(x, ceilY - 2, z))
+            return; // only where the corridor is actually open below the ceiling
+        chunk.setBlock(x, ceilY - 1, z, Material.IRON_CHAIN);
+        chunk.setHangingLantern(x, ceilY - 2, z, Material.LANTERN);
+    }
+
+    /** A little decay in a room corner, sparse and deterministic — mostly nothing, occasionally a cobweb up
+     *  in the corner, a patch of creeping moss, or a burnt-out light. */
+    private static void wear(SupportBlocks chunk, int floorY, int ceilY, int x, int z, int oX, int oZ) {
+        switch (Math.floorMod((oX + x) * 5 + (oZ + z) * 11, 6)) {
+        case 0 -> {
+            if (chunk.isEmpty(x, ceilY - 1, z))
+                chunk.setBlock(x, ceilY - 1, z, Material.COBWEB);
+        }
+        case 1 -> put(chunk, x, floorY + 1, z, Material.MOSS_CARPET);
+        case 2 -> {
+            if (chunk.isEmpty(x, ceilY - 1, z))
+                chunk.setHangingLantern(x, ceilY - 1, z, Material.OXIDIZED_COPPER_LANTERN); // a dim, corroded light
+        }
+        default -> {
+        }
+        }
+    }
+
+    private static void trimAt(SupportBlocks chunk, int x, int y, int z, int wx, int wz) {
+        if (chunk.isEmpty(x, y, z))
+            return;
+        chunk.setBlock(x, y, z, switch (Math.floorMod(wx * 3 + wz * 7, 6)) {
+        case 0 -> Material.OXIDIZED_CUT_COPPER;
+        case 1 -> Material.WEATHERED_CUT_COPPER;
+        case 2, 3 -> Material.EXPOSED_CUT_COPPER;
+        default -> Material.CUT_COPPER;
+        });
     }
 
     static final Material[] BEDS = { Material.WHITE_BED, Material.LIGHT_GRAY_BED, Material.LIGHT_BLUE_BED };
@@ -273,11 +322,6 @@ public class VaultLot extends BunkerLot {
     private static void put(SupportBlocks chunk, int x, int y, int z, Material m) {
         if (chunk.isEmpty(x, y, z) && !chunk.isEmpty(x, y - 1, z))
             chunk.setBlock(x, y, z, m);
-    }
-
-    private static void copperTrim(SupportBlocks chunk, int x, int y, int z) {
-        if (!chunk.isEmpty(x, y, z)) // only dress an actual wall, never float in the corridor/doorway
-            chunk.setBlock(x, y, z, Material.CUT_COPPER);
     }
 
     /** Wall a quadrant's chunk-boundary (corner-facing) edges so a merged room breaks into smaller isolated
@@ -355,8 +399,14 @@ public class VaultLot extends BunkerLot {
         chunk.setBlocks(x, floorY2 + 1, floorY1 + 1, z, Material.AIR); // the shaft (a hole through the level-1 floor)
         chunk.setBlocks(x, floorY2 + 1, floorY1 + 1, z + 1, Material.AIR); // 1x2 so you can step onto the ladder
         chunk.setLadder(x, floorY2 + 1, floorY1 + 1, z, BlockFace.EAST); // faces east, backs onto x-1
-        chunk.setBlock(x + 1, floorY1 + 1, z, Material.IRON_BARS); // a little rail round the hole up top
+        chunk.setBlock(x + 1, floorY1 + 1, z, Material.IRON_BARS); // iron-bar rail round the hole up top
         chunk.setBlock(x + 1, floorY1 + 1, z + 1, Material.IRON_BARS);
+        chunk.setBlock(x, floorY1 + 1, z - 1, Material.IRON_BARS);
+        chunk.setBlock(x, floorY1 + 1, z + 2, Material.IRON_BARS);
+        // a signpost by the shaft
+        chunk.setBlock(x - 2, floorY1, z, PILLAR);
+        chunk.setSignPost(x - 2, floorY1 + 1, z, Material.OAK_SIGN, BlockFace.EAST,
+                new String[] { "SUB-LEVEL", "v  v  v" });
     }
 
     /** The entrance chunk as a tall sealed LOBBY: full walls + decor, the surface-shaft ladder + hatch, and
