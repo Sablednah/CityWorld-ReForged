@@ -243,7 +243,9 @@ public class VaultLot extends BunkerLot {
     static void furnishRoom(SupportBlocks chunk, int floorY, int x1, int x2, int z1, int z2, int cornerX,
             int cornerZ) {
         int fy = floorY + 1; // furniture stands on the floor
-        switch (Math.floorMod(cornerX * 13 + cornerZ * 7, 10)) {
+        // corners are multiples of 16, so hashing them raw is always even (types 7/9 never hit); divide to a
+        // chunk index first so every type can occur
+        switch (Math.floorMod((cornerX / 16) * 13 + (cornerZ / 16) * 7, 10)) {
         case 0, 1, 2, 3 -> livingQuarters(chunk, fy, x1, x2, z1, z2);
         case 4, 5 -> office(chunk, fy, x1, x2, z1, z2);
         case 6 -> lab(chunk, fy, x1, x2, z1, z2);
