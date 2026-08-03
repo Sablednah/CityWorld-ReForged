@@ -293,8 +293,9 @@ public class VaultLot extends BunkerLot {
             int cornerZ) {
         int fy = floorY + 1; // furniture stands on the floor
         // corners are multiples of 16, so hashing them raw is always even (types 7/9 never hit); divide to a
-        // chunk index first so every type can occur
-        switch (Math.floorMod((cornerX / 16) * 13 + (cornerZ / 16) * 7, 10)) {
+        // chunk index first so every type can occur. Mix in floorY so the type varies by level (each level
+        // isn't a copy of the one above) — still coherent since a merged room lives within one level.
+        switch (Math.floorMod((cornerX / 16) * 13 + (cornerZ / 16) * 7 + floorY, 10)) {
         case 0, 1, 2, 3 -> livingQuarters(chunk, fy, x1, x2, z1, z2);
         case 4, 5 -> office(chunk, fy, x1, x2, z1, z2);
         case 6 -> lab(chunk, fy, x1, x2, z1, z2);
@@ -328,7 +329,7 @@ public class VaultLot extends BunkerLot {
      *  rooms — decided by the corner hash so all four quadrants of a merged room agree. ~Half stay open. */
     static void divideQuadrant(SupportBlocks chunk, int floorY, int ceilY, int x1, int x2, int z1, int z2,
             int cornerX, int cornerZ) {
-        int h = cornerX * 374761393 + cornerZ * 668265263;
+        int h = cornerX * 374761393 + cornerZ * 668265263 + floorY * 972897521; // + floorY so it varies by level
         h = (h ^ (h >>> 13)) * 1274126177;
         if ((h & 1) != 0)
             return; // ~half the merged rooms stay open (big); the rest divide into smaller rooms
@@ -377,7 +378,7 @@ public class VaultLot extends BunkerLot {
             Material.BEETROOTS };
 
     private static void hydroponics(SupportBlocks chunk, int floorY, int x1, int x2, int z1, int z2) {
-        Material crop = CROPS[Math.floorMod(x1 * 3 + z1 * 5, CROPS.length)]; // one crop per bay, varied by position
+        Material crop = CROPS[Math.floorMod(x1 * 3 + z1 * 5 + floorY, CROPS.length)]; // varied by bay + level
         int ceilY = floorY + 6;
         for (int x = x1; x <= x2; x++)
             for (int z = z1; z <= z2; z++) {
