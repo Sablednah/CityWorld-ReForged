@@ -122,6 +122,57 @@ public class VaultLot extends BunkerLot {
         for (int k = 0; k < NUM_LEVELS - 1; k++)
             if (!(entrance && k == 0) && Math.floorMod(chunkX * 7 + chunkZ * 13 + k * 29, 3) == 0)
                 stairwellDown(chunk, levelFloor(bottom, k), levelFloor(bottom, k + 1));
+        if (!entrance && hasLift(chunkX, chunkZ))
+            generateLift(chunk, bottom); // a rare full-height lift shaft in the NW quadrant (fixed on every level)
+    }
+
+    /** Rare — a couple per big vault. The NW quadrant of these chunks is a lift shaft on EVERY level. */
+    static boolean hasLift(int chunkX, int chunkZ) {
+        return Math.floorMod(chunkX * 7 + chunkZ * 13, 70) == 0;
+    }
+
+    /** A decorative-but-usable lift in the NW quadrant, spanning all levels: a concrete-lined shaft with a
+     *  climbable ladder, chain "cables" down the middle, an oak door on each level (onto that level's
+     *  corridor doorway), and a parked iron box-car cabin at one middle level. */
+    static void generateLift(SupportBlocks chunk, int bottom) {
+        int topY = levelFloor(bottom, 0) + 6; // top level ceiling
+        int botY = levelFloor(bottom, NUM_LEVELS - 1); // deepest level floor
+
+        // line the 3x3 shaft (interior x2-4, z2-4) top to bottom
+        for (int y = botY; y <= topY + 1; y++) {
+            for (int x = 1; x <= 5; x++) {
+                chunk.setBlock(x, y, 1, WALL);
+                chunk.setBlock(x, y, 5, WALL);
+            }
+            for (int z = 2; z <= 4; z++) {
+                chunk.setBlock(1, y, z, WALL);
+                chunk.setBlock(5, y, z, WALL);
+            }
+        }
+        chunk.setBlocks(2, 5, botY, topY + 1, 2, 5, Material.AIR); // hollow the interior all the way
+        chunk.setBlocks(3, botY + 1, topY, 2, Material.IRON_CHAIN); // cable chains down the two centre lines
+        chunk.setBlocks(3, botY + 1, topY, 4, Material.IRON_CHAIN);
+
+        for (int k = 0; k < NUM_LEVELS; k++) { // a landing + door on each level (east wall -> corridor doorway)
+            int fy = levelFloor(bottom, k);
+            chunk.setBlock(3, fy, 3, WALL); // a landing ledge beside the ladder to step off onto
+            chunk.setBlock(4, fy, 3, WALL);
+            chunk.setBlocks(5, fy + 1, fy + 3, 3, Material.AIR);
+            chunk.setDoor(5, fy + 1, 3, Material.OAK_DOOR, BlockFace.EAST);
+        }
+
+        // a parked box-car cabin at a middle level: iron floor + roof, iron-bar cage, a lantern
+        int carLevel = 1 + Math.floorMod(botY / 7, Math.max(1, NUM_LEVELS - 1));
+        int cf = levelFloor(bottom, carLevel) + 1;
+        chunk.setBlocks(2, 5, cf, cf + 1, 2, 5, Material.IRON_BLOCK); // car floor
+        chunk.setBlocks(2, 5, cf + 3, cf + 4, 2, 5, Material.IRON_BLOCK); // car roof
+        for (int[] p : new int[][] { { 2, 2 }, { 4, 2 }, { 2, 4 }, { 4, 4 } })
+            chunk.setBlocks(p[0], cf + 1, cf + 3, p[1], Material.IRON_BARS); // cage posts
+        chunk.setHangingLantern(3, cf + 2, 3, Material.LANTERN);
+
+        // the ladder LAST so it cuts back through the car floor/roof — faces EAST so it backs onto the WEST
+        // wall (x=1), which is solid the whole height (WEST would look for backing in the open shaft interior)
+        chunk.setLadder(2, botY + 1, topY, 3, BlockFace.EAST);
     }
 
     int vaultNumber() {
