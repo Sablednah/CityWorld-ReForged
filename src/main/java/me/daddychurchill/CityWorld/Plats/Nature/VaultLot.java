@@ -126,9 +126,13 @@ public class VaultLot extends BunkerLot {
             generateLift(chunk, bottom); // a rare full-height lift shaft in the NW quadrant (fixed on every level)
     }
 
-    /** Rare — a couple per big vault. The NW quadrant of these chunks is a lift shaft on EVERY level. */
+    /** A few per big vault (uniform ~1 in 24). The NW quadrant of these chunks is a lift shaft on EVERY
+     *  level. Uses a bit-mixed hash — a plain {@code cx*7+cz*13 mod 70} only fires on every 7th chunk-row,
+     *  so whole vaults could miss it. */
     static boolean hasLift(int chunkX, int chunkZ) {
-        return Math.floorMod(chunkX * 7 + chunkZ * 13, 70) == 0;
+        int h = chunkX * 374761393 + chunkZ * 668265263;
+        h = (h ^ (h >>> 15)) * 0x85ebca6b;
+        return Math.floorMod(h ^ (h >>> 13), 24) == 0;
     }
 
     /** A decorative-but-usable lift in the NW quadrant, spanning all levels: a concrete-lined shaft with a
@@ -159,6 +163,9 @@ public class VaultLot extends BunkerLot {
             chunk.setBlock(4, fy, 3, WALL);
             chunk.setBlocks(5, fy + 1, fy + 3, 3, Material.AIR);
             chunk.setDoor(5, fy + 1, 3, Material.OAK_DOOR, BlockFace.EAST);
+            // a marker sign in the corridor so the lift is findable in the maze
+            if (chunk.isEmpty(7, fy + 1, 3) && !chunk.isEmpty(7, fy, 3))
+                chunk.setSignPost(7, fy + 1, 3, Material.OAK_SIGN, BlockFace.EAST, new String[] { "LIFT", "<---" });
         }
 
         // a parked box-car cabin at a middle level: iron floor + roof, iron-bar cage, a lantern
