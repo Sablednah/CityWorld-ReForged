@@ -135,9 +135,10 @@ public class VaultLot extends BunkerLot {
         return Math.floorMod(h ^ (h >>> 13), 24) == 0;
     }
 
-    /** A decorative-but-usable lift in the NW quadrant, spanning all levels: a concrete-lined shaft with a
-     *  climbable ladder, chain "cables" down the middle, an oak door on each level (onto that level's
-     *  corridor doorway), and a parked iron box-car cabin at one middle level. */
+    /** A lift in the NW quadrant spanning all levels: a concrete-lined shaft kept CLEAR (so a car could
+     *  travel it) apart from a central guide rail + chain cables and a maintenance ladder run flush against
+     *  them. Each level gets a door (with a threshold, no gantry poking into the shaft) onto the corridor and
+     *  a hanging LIFT sign over it, and a parked iron box-car cabin sits at one middle level, aligned to it. */
     static void generateLift(SupportBlocks chunk, int bottom) {
         int topY = levelFloor(bottom, 0) + 6; // top level ceiling
         int botY = levelFloor(bottom, NUM_LEVELS - 1); // deepest level floor
@@ -153,33 +154,42 @@ public class VaultLot extends BunkerLot {
                 chunk.setBlock(5, y, z, WALL);
             }
         }
-        chunk.setBlocks(2, 5, botY, topY + 1, 2, 5, Material.AIR); // hollow the interior all the way
-        chunk.setBlocks(3, botY + 1, topY, 2, Material.IRON_CHAIN); // cable chains down the two centre lines
+        chunk.setBlocks(2, 5, botY, topY + 1, 2, 5, Material.AIR); // clear shaft, so the car can travel it
+        chunk.setBlocks(3, botY + 1, topY, 3, WALL); // central guide rail (also the ladder's backing)
+        chunk.setBlocks(3, botY + 1, topY, 2, Material.IRON_CHAIN); // cable chains flanking the rail
         chunk.setBlocks(3, botY + 1, topY, 4, Material.IRON_CHAIN);
 
-        for (int k = 0; k < NUM_LEVELS; k++) { // a landing + door on each level (east wall -> corridor doorway)
+        for (int k = 0; k < NUM_LEVELS; k++) { // door + threshold + hanging sign on each level (no shaft gantry)
             int fy = levelFloor(bottom, k);
-            chunk.setBlock(3, fy, 3, WALL); // a landing ledge beside the ladder to step off onto
-            chunk.setBlock(4, fy, 3, WALL);
+            chunk.setBlock(5, fy, 3, WALL); // threshold in the door frame (in the wall, clear of the shaft)
             chunk.setBlocks(5, fy + 1, fy + 3, 3, Material.AIR);
             chunk.setDoor(5, fy + 1, 3, Material.OAK_DOOR, BlockFace.EAST);
-            // a marker sign in the corridor so the lift is findable in the maze
-            if (chunk.isEmpty(7, fy + 1, 3) && !chunk.isEmpty(7, fy, 3))
-                chunk.setSignPost(7, fy + 1, 3, Material.OAK_SIGN, BlockFace.EAST, new String[] { "LIFT", "<---" });
+            chunk.setSignPost(6, fy + 3, 3, Material.OAK_HANGING_SIGN, BlockFace.EAST,
+                    new String[] { "LIFT" }); // hangs over the door, corridor side
         }
 
-        // a parked box-car cabin at a middle level: iron floor + roof, iron-bar cage, a lantern
-        int carLevel = 1 + Math.floorMod(botY / 7, Math.max(1, NUM_LEVELS - 1));
-        int cf = levelFloor(bottom, carLevel) + 1;
-        chunk.setBlocks(2, 5, cf, cf + 1, 2, 5, Material.IRON_BLOCK); // car floor
-        chunk.setBlocks(2, 5, cf + 3, cf + 4, 2, 5, Material.IRON_BLOCK); // car roof
+        // a parked box-car cabin at a middle level — floor aligned to that level's door, 4 tall inside;
+        // solid iron floor + roof, an iron-bar cage, a lantern; the ladder passes through a trapdoor hatch in
+        // the floor and the roof (the hatches are punched over the ladder after it is placed, below)
+        int cf = levelFloor(bottom, 1 + Math.floorMod(botY / 7, Math.max(1, NUM_LEVELS - 1)));
+        chunk.setBlocks(2, 5, cf, cf + 1, 2, 5, Material.IRON_BLOCK); // car floor, level with the door
+        chunk.setBlocks(2, 5, cf + 5, cf + 6, 2, 5, Material.IRON_BLOCK); // car roof (4 blocks of headroom)
         for (int[] p : new int[][] { { 2, 2 }, { 4, 2 }, { 2, 4 }, { 4, 4 } })
-            chunk.setBlocks(p[0], cf + 1, cf + 3, p[1], Material.IRON_BARS); // cage posts
-        chunk.setHangingLantern(3, cf + 2, 3, Material.LANTERN);
+            chunk.setBlocks(p[0], cf + 1, cf + 5, p[1], Material.IRON_BARS); // cage posts
+        chunk.setHangingLantern(2, cf + 4, 3, Material.LANTERN);
 
-        // the ladder LAST so it cuts back through the car floor/roof — faces EAST so it backs onto the WEST
-        // wall (x=1), which is solid the whole height (WEST would look for backing in the open shaft interior)
-        chunk.setLadder(2, botY + 1, topY, 3, BlockFace.EAST);
+        // a copper grate directly above + below each chain, representing its winch/anchor machinery
+        for (int cz : new int[] { 2, 4 }) {
+            chunk.setBlock(3, topY + 1, cz, Material.COPPER_GRATE); // winch housing at the top of the chain
+            chunk.setBlock(3, botY, cz, Material.COPPER_GRATE); // anchor block at the foot of the chain
+        }
+
+        // the maintenance ladder — flush in front of the doors, backed by the guide rail at (3,3), so you
+        // climb it and step straight through each level's door (no landing needed)
+        chunk.setLadder(4, botY + 1, topY, 3, BlockFace.EAST);
+        // trapdoor hatches where the ladder passes through the car's floor + roof (open to climb through)
+        chunk.setBlock(4, cf, 3, Material.BIRCH_TRAPDOOR);
+        chunk.setBlock(4, cf + 5, 3, Material.BIRCH_TRAPDOOR);
     }
 
     int vaultNumber() {
