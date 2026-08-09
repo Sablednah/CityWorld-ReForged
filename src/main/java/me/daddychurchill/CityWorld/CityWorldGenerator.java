@@ -525,7 +525,9 @@ public class CityWorldGenerator {
     public void destroyArea(int x, int y, int z, int radius) {
         WorldBlocks blocks = decayBlocks.get();
         if (blocks != null)
-            blocks.destroyArea(x, y, z, radius, getSettings().includeFires);
+            // gate burning debris on includeDecayedFires too, exactly like destroyWithin — otherwise styles
+            // that turn decay-fires off (e.g. APOCALYPSE) still get netherrack+fire from the blast craters
+            blocks.destroyArea(x, y, z, radius, getSettings().includeFires && getSettings().includeDecayedFires);
     }
 
     /**
