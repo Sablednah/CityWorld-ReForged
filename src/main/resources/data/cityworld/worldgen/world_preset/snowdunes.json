@@ -8,7 +8,7 @@
         "style": "snowdunes",
         "biome_source": {
           "type": "minecraft:fixed",
-          "biome": "minecraft:plains"
+          "biome": "minecraft:snowy_plains"
         }
       }
     },

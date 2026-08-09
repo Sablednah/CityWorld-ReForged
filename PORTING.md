@@ -763,8 +763,11 @@ meets. Barn chests are the nicer confirmation — `FARMWORKS` is a coin-flip ins
 
 `BUNKER`, `WAREHOUSE` and `itemsEntities_Bunker` came alive with the industrial family — measured in
 a world: 13 bunker chests, 41 warehouse chests, and a blaze spawner. `STORAGE_SHED` became reachable
-with `StructureOnGroundProvider`. Still unreached: `WOODWORKS(_OUTPUT)` / `STONEWORKS(_OUTPUT)`, whose
-outland lots aren't ported. `RANDOM` has no caller outside the Astral styles.
+with `StructureOnGroundProvider`. **`WOODWORKS(_OUTPUT)` / `STONEWORKS(_OUTPUT)` are reachable too**
+(corrected 2026-08 — the outland lots ARE ported: `WoodworksLot` + `GravelworksLot`, wired into
+`OutlandContext`). Probe-verified in a city world: 506 woodworks / 407 gravelworks lots, and across 20
+sampled lots each, woodworks yielded 10 chests + crafting tables + furnaces and gravelworks 4 shed
+chests. `RANDOM` has no caller outside the Astral styles.
 
 Both former items here are now **DONE** (corrected 2026-08 — they were stale):
 - ~~`NatureContext.populateMap` lacks its set-pieces~~ **DONE** — `populateMap` is implemented and, via
@@ -959,7 +962,7 @@ backed by a **shim layer** for the remaining Bukkit surface. Not incremental fea
 |---|---:|---|
 | `Material` | 150 | ✅ done (`compat/Material`, all 557 constants) |
 | `block.BlockFace` | 82 | ✅ done (`compat/BlockFace`) |
-| `ChunkGenerator.BiomeGrid` + `block.Biome` | 56 uses, but only **12 files** | ✅ **shimmed** (`compat/Biome`, `compat/BiomeGrid`). The whole tree names only **12 biome constants**, and `BiomeGrid`'s entire used surface is `setBiome(x, z, biome)`. **4 of the 12 no longer exist** — the 1.18 rework deleted every `*_HILLS` variant plus `SNOWY_MOUNTAINS` — so they remap to the nearest survivor (`BIRCH_FOREST`, `TAIGA`, `DESERT`, `SNOWY_SLOPES`); costs colour/mob flavour, not terrain. The real change (CityWorld pushes biomes per column, modern gen pulls via `BiomeSource`) is still outstanding at P3/P4. |
+| `ChunkGenerator.BiomeGrid` + `block.Biome` | 56 uses, but only **12 files** | ✅ **shimmed** (`compat/Biome`, `compat/BiomeGrid`). The whole tree names only **12 biome constants**, and `BiomeGrid`'s entire used surface is `setBiome(x, z, biome)`. **4 of the 12 no longer exist** — the 1.18 rework deleted every `*_HILLS` variant plus `SNOWY_MOUNTAINS` — so they remap to the nearest survivor (`BIRCH_FOREST`, `TAIGA`, `DESERT`, `SNOWY_SLOPES`); costs colour/mob flavour, not terrain. The real change (CityWorld pushes biomes per column, modern gen pulls via `BiomeSource`) is **DONE** (2026-07/08): custom `cityworld:climate`/`cityworld:terrain` biome sources pull the same seed-deterministic terrain height and classify it, replacing the discarded push — see the biome entries near the end. |
 | `util.noise.*` (`NoiseGenerator`, `SimplexNoiseGenerator`, `SimplexOctaveGenerator`) | 25 | ✅ **done** — vendored verbatim into `compat/noise` (GPL-3 permits it; see licence section), preserving CityWorld's exact terrain shape. 5 classes: the 3 above plus `PerlinNoiseGenerator` and `OctaveGenerator` (their base classes). Only change: the `org.bukkit.World` convenience ctors are dropped. `NoiseGenerator.floor` is just `Mth.floor`, but it comes along with the vendored base anyway. |
 | `block.data.*` (`Bisected.Half`, `Slab.Type`, `Stairs`, `Rail.Shape`, `Bed`, `Door`, `Leaves`, `Snow`, `Chest`, …) | ~45 | ✅ done — **no shims needed**: each maps onto a vanilla property enum (`Half`, `SlabType`, `StairsShape`, `RailShape`, `BedPart`, `DoorHingeSide`, `ChestType`, …), and the `instanceof` chains became `hasProperty` guards in `SupportBlocks`. |
 | `World`, `Chunk`, `Location`, `Bukkit`, `Environment` | ~30 | Decoration-side → `WorldGenLevel`/`ServerLevel`. |
@@ -1464,8 +1467,11 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
   grass, water and foliage colour and biome mobs now follow the land (verified: ocean below sea, beach
   at the waterline, plains→forest→taiga→snowy up the height bands). The palette lives in the
   biome-source JSON, so CLASSIC and MODERN (and each style) can use different biomes for the same band.
-  Wired into the classic preset; the other style presets still use a fixed biome (their terrain is
-  unusual — do them per-style as needed).
+  Wired into the classic preset. **Extended 2026-08:** the `nature`, `metro` and `sparse` presets now
+  point at `cityworld:climate` too (varied biomes verified: 12 distinct in a nature world), and the
+  themed styles got their correct fixed biome (sanddunes→desert, snowdunes→snowy_plains, flooded→ocean)
+  instead of the placeholder plains. Still on a fixed/placeholder biome by choice: `destroyed` (owner's
+  active style — left untouched pending their call), `astral` (needs End biomes), `floating`, `maze`.
 
   **MODERN climate biomes done (2026-07):** `CityWorldClimateBiomeSource` (`cityworld:climate`) crosses
   CityWorld's elevation with a slow temperature+humidity field (`CityWorldGenerator.getTemperature/

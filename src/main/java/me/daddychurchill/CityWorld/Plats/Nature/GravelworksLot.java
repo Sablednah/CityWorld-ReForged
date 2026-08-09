@@ -19,8 +19,7 @@ public class GravelworksLot extends GravelLot {
 
 	@Override
 	public PlatLot newLike(PlatMap platmap, int chunkX, int chunkZ) {
-		// TODO Auto-generated method stub
-		return null;
+		return new GravelworksLot(platmap, chunkX, chunkZ);
 	}
 
 	@Override

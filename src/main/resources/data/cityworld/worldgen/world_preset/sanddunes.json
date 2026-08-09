@@ -8,7 +8,7 @@
         "style": "sanddunes",
         "biome_source": {
           "type": "minecraft:fixed",
-          "biome": "minecraft:plains"
+          "biome": "minecraft:desert"
         }
       }
     },

@@ -7,8 +7,7 @@
         "settings": "cityworld:default",
         "style": "sparse",
         "biome_source": {
-          "type": "minecraft:fixed",
-          "biome": "minecraft:plains"
+          "type": "cityworld:climate"
         }
       }
     },
