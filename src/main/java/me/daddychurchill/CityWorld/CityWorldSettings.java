@@ -535,10 +535,11 @@ public class CityWorldSettings {
             includeDecayedNature = true; // DIFFERENT
             includeAirborneStructures = false; // DIFFERENT;
 
-            // Heavy nuke / alien-invasion damage — deep collapse and burning ruins (fires stay ON here).
-            buildingDecayIntensity = 1.75; // DIFFERENT — hit hard
-            roadDecayIntensity = 1.5; // DIFFERENT
-            oddsOfDecayFire = Odds.oddsSomewhatLikely; // DIFFERENT — the ruins are burning
+            // Heavy war-zone damage, but the buildings still READ as buildings — a touch above baseline
+            // collapse, with scattered burning wreckage rather than a firestorm (fires stay ON here).
+            buildingDecayIntensity = 1.1; // DIFFERENT — heavier than a normal ruin, not obliterated
+            roadDecayIntensity = 1.1; // DIFFERENT
+            oddsOfDecayFire = 0.07; // DIFFERENT — the odd burning wreck, not a carpet of flame
 
             subSurfaceStyle = SubSurfaceStyle.NONE; // DIFFERENT
             break;
