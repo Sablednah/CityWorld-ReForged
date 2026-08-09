@@ -169,19 +169,19 @@ public class VaultLot extends BunkerLot {
                     new String[] { "LIFT" }); // hangs over the door, corridor side
         }
 
-        // a parked box-car cabin at a middle level — floor aligned to that level's door, 4 tall inside;
-        // solid iron floor + roof, an iron-bar cage, a lantern; the ladder passes through a trapdoor hatch in
-        // the floor and the roof (the hatches are punched over the ladder after it is placed, below)
+        // a parked box-car cabin at a middle level — floor aligned to that level's door, 4 tall inside; solid
+        // iron floor + roof, open inside so you can walk around, a lantern; the ladder passes through a
+        // trapdoor hatch in the floor and the roof (the hatches are punched over the ladder after it is placed)
         int cf = levelFloor(bottom, 1 + Math.floorMod(botY / 7, Math.max(1, NUM_LEVELS - 1)));
         chunk.setBlocks(2, 5, cf, cf + 1, 2, 5, Material.IRON_BLOCK); // car floor, level with the door
         chunk.setBlocks(2, 5, cf + 5, cf + 6, 2, 5, Material.IRON_BLOCK); // car roof (4 blocks of headroom)
-        for (int[] p : new int[][] { { 2, 2 }, { 4, 2 }, { 2, 4 }, { 4, 4 } })
-            chunk.setBlocks(p[0], cf + 1, cf + 5, p[1], Material.IRON_BARS); // cage posts
+        chunk.setBlocks(3, cf + 1, cf + 5, 2, Material.AIR); // clear the cables out of the car so it is walkable
+        chunk.setBlocks(3, cf + 1, cf + 5, 4, Material.AIR);
         chunk.setHangingLantern(2, cf + 4, 3, Material.LANTERN);
 
         // a copper grate directly above + below each chain, representing its winch/anchor machinery
         for (int cz : new int[] { 2, 4 }) {
-            chunk.setBlock(3, topY + 1, cz, Material.COPPER_GRATE); // winch housing at the top of the chain
+            chunk.setBlock(3, topY, cz, Material.COPPER_GRATE); // winch housing at the top of the chain
             chunk.setBlock(3, botY, cz, Material.COPPER_GRATE); // anchor block at the foot of the chain
         }
 
