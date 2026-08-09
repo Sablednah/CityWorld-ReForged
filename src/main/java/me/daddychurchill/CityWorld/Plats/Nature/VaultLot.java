@@ -2,6 +2,7 @@ package me.daddychurchill.CityWorld.Plats.Nature;
 
 import me.daddychurchill.CityWorld.compat.BlockFace;
 import me.daddychurchill.CityWorld.compat.Material;
+import net.minecraft.world.level.block.state.properties.Half;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Context.DataContext;
@@ -187,8 +188,9 @@ public class VaultLot extends BunkerLot {
         // the maintenance ladder — flush in front of the doors, backed by the guide rail at (3,3), so you
         // climb it and step straight through each level's door (no landing needed)
         chunk.setLadder(4, botY + 1, topY, 3, BlockFace.EAST);
-        // trapdoor hatches where the ladder passes through the car's floor + roof (open to climb through)
-        chunk.setBlock(4, cf, 3, Material.BIRCH_TRAPDOOR);
+        // trapdoor hatches where the ladder passes through the car's floor + roof (open to climb through);
+        // the floor hatch is TOP-half so it sits flush with the car floor, not sunk to the block's bottom
+        chunk.setBlock(4, cf, 3, Material.BIRCH_TRAPDOOR, BlockFace.EAST, Half.TOP);
         chunk.setBlock(4, cf + 5, 3, Material.BIRCH_TRAPDOOR);
     }
 
