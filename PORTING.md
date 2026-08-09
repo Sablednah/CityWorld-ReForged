@@ -766,14 +766,15 @@ a world: 13 bunker chests, 41 warehouse chests, and a blaze spawner. `STORAGE_SH
 with `StructureOnGroundProvider`. Still unreached: `WOODWORKS(_OUTPUT)` / `STONEWORKS(_OUTPUT)`, whose
 outland lots aren't ported. `RANDOM` has no caller outside the Astral styles.
 
-Also still outstanding:
-- **`NatureContext.populateMap` still lacks its set-pieces** — upstream seeds bunkers, radio towers,
-  oil platforms, flying saucers, hot air balloons and mine entrances by terrain type, and tracks the
-  platmap's highest and lowest spots to place two "special" lots. `BunkerLot` alone is 1037 lines.
-  Its `HeightState` switch is the only consumer of `HeightInfo`'s classification. **The survey
-  itself is ported and is not optional** — see the warning below.
-- **`PlatMap.placeSpecificClip`** and the schematic-backed roundabout centre — P6. A built
-  roundabout always gets the generated `RoundaboutCenterLot`, never a player's schematic.
+Both former items here are now **DONE** (corrected 2026-08 — they were stale):
+- ~~`NatureContext.populateMap` lacks its set-pieces~~ **DONE** — `populateMap` is implemented and, via
+  the ported `HeightInfo` height survey, seeds bunkers (+ entrances), the APOCALYPSE vault, and the
+  height-special lots (oil platforms, radio towers, flying saucers, hot-air balloons, mine entrances,
+  castle). Confirmed by `/cityfind lot <kind>` locating each.
+- ~~schematic-backed roundabout centre~~ **DONE** — `RoadContext.createRoundaboutStatueLot` pulls a
+  single-chunk `ROUNDABOUT` schematic (a statue) and places it as a `ClipboardLot` (with a random
+  rotation), falling back to the generated `RoundaboutCenterLot` only when none is available.
+  `PlatMap.placeSpecificClip` is fully implemented (rotation + opt-in per-schematic mirror).
 
 ### ✔ Closed: the "sea level might be 64" scare was a stale comment (2026-07)
 
