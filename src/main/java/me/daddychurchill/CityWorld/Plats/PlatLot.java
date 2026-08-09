@@ -354,10 +354,16 @@ public abstract class PlatLot {
 	}
 
 	protected void destroyLot(CityWorldGenerator generator, int y1, int y2) {
+		destroyLot(generator, y1, y2, generator.getSettings().buildingDecayIntensity);
+	}
+
+	/** As {@link #destroyLot(CityWorldGenerator, int, int)} but with an explicit demolition intensity —
+	 *  roads pass {@code roadDecayIntensity}, buildings {@code buildingDecayIntensity}. */
+	protected void destroyLot(CityWorldGenerator generator, int y1, int y2, double intensity) {
 		int x1 = chunkX * SupportBlocks.sectionBlockWidth;
 		int z1 = chunkZ * SupportBlocks.sectionBlockWidth;
 		generator.destroyWithin(x1, x1 + SupportBlocks.sectionBlockWidth, y1, y2, z1,
-				z1 + SupportBlocks.sectionBlockWidth);
+				z1 + SupportBlocks.sectionBlockWidth, intensity);
 	}
 
 	protected void destroyBuilding(CityWorldGenerator generator, int y, int floors) {
@@ -1262,6 +1268,26 @@ public abstract class PlatLot {
 			decayThisLot = pristine <= 0.0 || !new Odds(generator.getWorldSeed() + key).playOdds(pristine);
 		}
 		return decayThisLot;
+	}
+
+	/** Cached per-lot pristine-road roll: null until first asked. */
+	private Boolean roadDecayThisLot;
+
+	/**
+	 * Whether this road lot should wear its decay — {@code false} when decayed roads are off, and for the
+	 * fraction of road chunks that roll <em>pristine</em> and stay intact ({@code oddsOfPristineRoad}), so a
+	 * ruined grid still has stretches you can walk. The road counterpart of {@link #buildingsDecay}; rolled
+	 * per chunk (roads aren't one connected object) and cached, so a chunk is wholly intact or wholly decayed.
+	 */
+	public boolean roadsDecay(CityWorldGenerator generator) {
+		if (!generator.getSettings().includeDecayedRoads)
+			return false;
+		if (roadDecayThisLot == null) {
+			double pristine = generator.getSettings().oddsOfPristineRoad;
+			long key = chunkX * 341873128712L + chunkZ * 132897987541L;
+			roadDecayThisLot = pristine <= 0.0 || !new Odds(generator.getWorldSeed() + key).playOdds(pristine);
+		}
+		return roadDecayThisLot;
 	}
 
 	protected boolean isValidWithBones() {

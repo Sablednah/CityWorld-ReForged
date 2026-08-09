@@ -783,8 +783,8 @@ public class RoadLot extends ConnectedLot {
 			}
 
 			// not a happy place?
-			if (generator.getSettings().includeDecayedRoads)
-				destroyLot(generator, pavementLevel + 5, pavementLevel + 7);
+			if (roadsDecay(generator))
+				destroyLot(generator, pavementLevel + 5, pavementLevel + 7, generator.getSettings().roadDecayIntensity);
 
 			// half as likely in the middle of the road
 			generateEntities(generator, chunk, pavementLevel + 6);
@@ -997,7 +997,7 @@ public class RoadLot extends ConnectedLot {
 					sidewalkWidth, chunk.width - sidewalkWidth, crosswalkEast, doingTunnel);
 
 			// decay please
-			if (generator.getSettings().includeDecayedRoads) {
+			if (roadsDecay(generator)) {
 
 				// center bit
 				decayRoad(chunk, sidewalkWidth, chunk.width - sidewalkWidth, pavementLevel, sidewalkWidth,
@@ -1664,7 +1664,7 @@ public class RoadLot extends ConnectedLot {
 	protected boolean generateLightPost(CityWorldGenerator generator, RealBlocks chunk, DataContext context,
 			int sidewalkLevel, int x, int z) {
 		chunk.setBlock(x, sidewalkLevel, z, lightpostbaseMaterial);
-		if (generator.getSettings().includeDecayedRoads) {
+		if (roadsDecay(generator)) {
 			int y = sidewalkLevel + 1;
 			while (y < sidewalkLevel + lightpostHeight + 1) {
 				if (chunkOdds.playOdds(0.25))
@@ -1693,7 +1693,7 @@ public class RoadLot extends ConnectedLot {
 		int y = sidewalkLevel + lightpostHeight;
 
 		// decay or not?
-		if (generator.getSettings().includeDecayedRoads) {
+		if (roadsDecay(generator)) {
 
 			// put the signs up
 			if (chunkOdds.playOdds(oddsOfDecayedSign)) {

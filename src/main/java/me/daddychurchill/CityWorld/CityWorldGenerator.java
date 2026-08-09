@@ -508,14 +508,26 @@ public class CityWorldGenerator {
      * the decoration pass (e.g. a plan-only sweep with no live level).
      */
     public void destroyWithin(int x1, int x2, int y1, int y2, int z1, int z2) {
-        destroyWithin(x1, x2, y1, y2, z1, z2, getSettings().includeFires);
+        destroyWithin(x1, x2, y1, y2, z1, z2, getSettings().buildingDecayIntensity);
     }
 
-    /** Overload that can leave fire in the debris, gated on {@code includeFires}. */
-    public void destroyWithin(int x1, int x2, int y1, int y2, int z1, int z2, boolean withFire) {
+    /**
+     * Overload with an explicit demolition-<em>intensity</em> scalar — building lots pass
+     * {@code buildingDecayIntensity}, roads pass {@code roadDecayIntensity}. It scales the number and size
+     * of the collapse holes. Burning debris is gated on both {@code includeFires} and {@code includeDecayedFires}
+     * and sprinkled at the tunable {@code oddsOfDecayFire}.
+     */
+    public void destroyWithin(int x1, int x2, int y1, int y2, int z1, int z2, double intensity) {
+        destroyWithin(x1, x2, y1, y2, z1, z2, intensity, true);
+    }
+
+    /** As above but a caller can force fire OFF regardless of the world's decay-fire setting — for a ruin
+     *  that weathered rather than burned (the old ex-castle). */
+    public void destroyWithin(int x1, int x2, int y1, int y2, int z1, int z2, double intensity, boolean allowFire) {
         WorldBlocks blocks = decayBlocks.get();
         if (blocks != null)
-            blocks.destroyWithin(x1, x2, y1, y2, z1, z2, withFire && getSettings().includeDecayedFires);
+            blocks.destroyWithin(x1, x2, y1, y2, z1, z2, allowFire && decayFire(), getSettings().oddsOfDecayFire,
+                    intensity);
     }
 
     /**
@@ -523,11 +535,21 @@ public class CityWorldGenerator {
      * things. Delegates like {@link #destroyWithin}; a no-op outside the decoration pass.
      */
     public void destroyArea(int x, int y, int z, int radius) {
+        destroyArea(x, y, z, radius, getSettings().buildingDecayIntensity);
+    }
+
+    /** Overload that scales the blast {@code radius} by an intensity scalar (set-pieces are buildings). */
+    public void destroyArea(int x, int y, int z, int radius, double intensity) {
         WorldBlocks blocks = decayBlocks.get();
         if (blocks != null)
-            // gate burning debris on includeDecayedFires too, exactly like destroyWithin — otherwise styles
-            // that turn decay-fires off (e.g. APOCALYPSE) still get netherrack+fire from the blast craters
-            blocks.destroyArea(x, y, z, radius, getSettings().includeFires && getSettings().includeDecayedFires);
+            blocks.destroyArea(x, y, z, Math.max(1, (int) Math.round(radius * intensity)), decayFire(),
+                    getSettings().oddsOfDecayFire);
+    }
+
+    /** Burning demolition debris only when the world both keeps fires AND keeps decay-fires (campfires can
+     *  stay while burning rubble is off — APOCALYPSE does exactly that). */
+    private boolean decayFire() {
+        return getSettings().includeFires && getSettings().includeDecayedFires;
     }
 
     /**

@@ -67,6 +67,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
             includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, includeOvergrowth, capVines,
             includeShops;
     private double oddsOfPristineBuilding, overgrowthIntensity; // carried through untouched (no picker yet)
+    // decay group — carried through untouched (the world style sets these; datapack tunes them, no picker yet)
+    private double buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad;
     // spawns
     private Chance spawnBeings, spawnBaddies, spawnAnimals, spawnVagrants;
     private boolean nameVillagers, showVillagersNames;
@@ -130,6 +132,11 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         overgrowthIntensity = og.intensity();
         capVines = og.capVines();
         includeShops = initial.shops().enabled();
+        CityWorldSettingsData.Decay dk = initial.decay();
+        buildingDecayIntensity = dk.buildingIntensity();
+        roadDecayIntensity = dk.roadIntensity();
+        oddsOfDecayFire = dk.oddsOfDecayFire();
+        oddsOfPristineRoad = dk.oddsOfPristineRoad();
 
         CityWorldSettingsData.Spawns s = initial.spawns();
         spawnBeings = Chance.nearest(s.spawnBeings());
@@ -272,8 +279,10 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops);
+        CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
+                buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData data = new CityWorldSettingsData(
-                features, terrain, spawns, treasures, world, radius, naming, mobs, overgrowth, shops);
+                features, terrain, spawns, treasures, world, radius, naming, mobs, overgrowth, shops, decay);
         return new Result(style, data);
     }
 

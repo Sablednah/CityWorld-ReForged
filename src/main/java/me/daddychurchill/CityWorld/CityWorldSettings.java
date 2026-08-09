@@ -77,6 +77,20 @@ public class CityWorldSettings {
     public double oddsOfPristineBuilding = CityWorldSettingsData.Terrain.DEFAULT_ODDS_OF_PRISTINE;
 
     /**
+     * Fine demolition control (the {@code decay} settings group). {@link #buildingDecayIntensity} /
+     * {@link #roadDecayIntensity} scale HOW ruined a decayed building / road is — the number and size of
+     * the collapse holes (1.0 = baseline, &lt;1 lighter, &gt;1 heavier); each ruined style sets its own
+     * (APOCALYPSE a slow gentle decay, DESTROYED heavy nuke/invasion damage). {@link #oddsOfDecayFire} is
+     * the fraction of collapse rubble that catches fire (only bites when {@link #includeDecayedFires}).
+     * {@link #oddsOfPristineRoad} spares a fraction of roads intact — the road counterpart of
+     * {@link #oddsOfPristineBuilding}.
+     */
+    public double buildingDecayIntensity = CityWorldSettingsData.Decay.DEFAULT_INTENSITY;
+    public double roadDecayIntensity = CityWorldSettingsData.Decay.DEFAULT_INTENSITY;
+    public double oddsOfDecayFire = CityWorldSettingsData.Decay.DEFAULT_ODDS_OF_DECAY_FIRE;
+    public double oddsOfPristineRoad = 0.0;
+
+    /**
      * Whether the bundled classic schematics (the old zarp catalog) may be dropped into generated
      * cities. Upstream only placed schematics when a WorldEdit-loaded folder existed, so it was
      * effectively off for most players; here the catalog always ships, so this defaults off and is
@@ -289,6 +303,11 @@ public class CityWorldSettings {
         overgrowthIntensity = og.intensity();
         capVines = og.capVines();
         includeShops = data.shops().enabled();
+        CityWorldSettingsData.Decay dk = data.decay();
+        buildingDecayIntensity = dk.buildingIntensity();
+        roadDecayIntensity = dk.roadIntensity();
+        oddsOfDecayFire = dk.oddsOfDecayFire();
+        oddsOfPristineRoad = dk.oddsOfPristineRoad();
 
         CityWorldSettingsData.Spawns s = data.spawns();
         spawnBeings = s.spawnBeings();
@@ -393,8 +412,10 @@ public class CityWorldSettings {
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops);
+        CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
+                buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
-                overgrowth, shops);
+                overgrowth, shops, decay);
     }
 
     private static List<String> ids(List<EntityType> types) {
@@ -514,6 +535,11 @@ public class CityWorldSettings {
             includeDecayedNature = true; // DIFFERENT
             includeAirborneStructures = false; // DIFFERENT;
 
+            // Heavy nuke / alien-invasion damage — deep collapse and burning ruins (fires stay ON here).
+            buildingDecayIntensity = 1.75; // DIFFERENT — hit hard
+            roadDecayIntensity = 1.5; // DIFFERENT
+            oddsOfDecayFire = Odds.oddsSomewhatLikely; // DIFFERENT — the ruins are burning
+
             subSurfaceStyle = SubSurfaceStyle.NONE; // DIFFERENT
             break;
         case APOCALYPSE:
@@ -528,6 +554,12 @@ public class CityWorldSettings {
 
             includeOvergrowth = true; // DIFFERENT
             overgrowthIntensity = 3.0; // DIFFERENT — fairly heavy
+
+            // A slow, gentle decay the greenery is reclaiming (I Am Legend, not Mad Max): light collapse,
+            // no burning ruins (fires already off above), and a fair few roads still usable.
+            buildingDecayIntensity = 0.5; // DIFFERENT — gentle, weathered, not obliterated
+            roadDecayIntensity = 0.4; // DIFFERENT
+            oddsOfPristineRoad = 0.3; // DIFFERENT — ~30% of roads still pass
 
             spawnBaddies = Odds.oddsSomewhatLikely; // DIFFERENT — up the hostiles
             spawnersInMines = true; // DIFFERENT

@@ -61,8 +61,10 @@ public final class WorldBlocks extends SupportBlocks {
 		return isWater(x - 1, y, z) || isWater(x + 1, y, z) || isWater(x, y, z - 1) || isWater(x, y, z + 1);
 	}
 
-	public void destroyWithin(int x1, int x2, int y1, int y2, int z1, int z2, boolean withFire) {
-		int count = Math.max(1, (y2 - y1) / DataContext.FloorHeight);
+	public void destroyWithin(int x1, int x2, int y1, int y2, int z1, int z2, boolean withFire, double fireOdds,
+			double intensity) {
+		// intensity scales BOTH how many blast spheres (density) and how big each one is (severity)
+		int count = Math.max(1, (int) Math.round((y2 - y1) / (double) DataContext.FloorHeight * intensity));
 
 		// now destroy it
 		while (count > 0) {
@@ -71,17 +73,17 @@ public final class WorldBlocks extends SupportBlocks {
 			int cx = getBlockX(odds.getRandomInt(x2 - x1) + x1);
 			int cz = getBlockZ(odds.getRandomInt(z2 - z1) + z1);
 			int cy = odds.getRandomInt(Math.max(1, y2 - y1)) + y1;
-			int radius = odds.getRandomInt(3) + 3;
+			int radius = Math.max(1, (int) Math.round((odds.getRandomInt(3) + 3) * intensity));
 
 			// make it go away
-			destroyArea(cx, cy, cz, radius, withFire);
+			destroyArea(cx, cy, cz, radius, withFire, fireOdds);
 
 			// done with this round
 			count--;
 		}
 	}
 
-	public void destroyArea(int x, int y, int z, int radius, boolean withFire) {
+	public void destroyArea(int x, int y, int z, int radius, boolean withFire, double fireOdds) {
 
 		// debris
 		Stack<debrisItem> debris = new Stack<>();
@@ -90,7 +92,7 @@ public final class WorldBlocks extends SupportBlocks {
 		desperseSphere(x, y, z, radius, debris);
 
 		// now sprinkle blocks around
-		sprinkleDebris(x, y, z, radius, debris, withFire);
+		sprinkleDebris(x, y, z, radius, debris, withFire, fireOdds);
 	}
 
 	private static class debrisItem {
@@ -153,7 +155,8 @@ public final class WorldBlocks extends SupportBlocks {
 		disperseCircle(cx, cz, r, cy, debris);
 	}
 
-	private void sprinkleDebris(int cx, int cy, int cz, int radius, Stack<debrisItem> debris, boolean withFire) {
+	private void sprinkleDebris(int cx, int cy, int cz, int radius, Stack<debrisItem> debris, boolean withFire,
+			double fireOdds) {
 
 		// calculate a few things
 		int r2 = radius * 2;
@@ -199,7 +202,7 @@ public final class WorldBlocks extends SupportBlocks {
 						// other blocks?
 					} else {
 						boolean done = false;
-						if (withFire && odds.playOdds(Odds.oddsSomewhatUnlikely) && y > 1) {
+						if (withFire && odds.playOdds(fireOdds) && y > 1) {
 							if (!isEmpty(x, y - 1, z)) {
 								setBlock(x, y - 1, z, Material.NETHERRACK);
 								setBlock(x, y, z, Material.FIRE);

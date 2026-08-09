@@ -50,14 +50,15 @@ public record CityWorldSettingsData(
         Naming naming,
         Mobs mobs,
         Overgrowth overgrowth,
-        Shops shops) {
+        Shops shops,
+        Decay decay) {
 
     /** 1875000 chunks — the modern world-format radius ceiling (30,000,000 blocks / 16). */
     public static final int MAX_RADIUS = 30000000 / 16;
 
     public static final CityWorldSettingsData DEFAULT = new CityWorldSettingsData(
             Features.DEFAULT, Terrain.DEFAULT, Spawns.DEFAULT, Treasures.DEFAULT, World.DEFAULT, Radius.DEFAULT,
-            Naming.DEFAULT, Mobs.DEFAULT, Overgrowth.DEFAULT, Shops.DEFAULT);
+            Naming.DEFAULT, Mobs.DEFAULT, Overgrowth.DEFAULT, Shops.DEFAULT, Decay.DEFAULT);
 
     public static final Codec<CityWorldSettingsData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Features.CODEC.optionalFieldOf("features", Features.DEFAULT).forGetter(CityWorldSettingsData::features),
@@ -69,7 +70,8 @@ public record CityWorldSettingsData(
             Naming.CODEC.optionalFieldOf("naming", Naming.DEFAULT).forGetter(CityWorldSettingsData::naming),
             Mobs.CODEC.optionalFieldOf("mobs", Mobs.DEFAULT).forGetter(CityWorldSettingsData::mobs),
             Overgrowth.CODEC.optionalFieldOf("overgrowth", Overgrowth.DEFAULT).forGetter(CityWorldSettingsData::overgrowth),
-            Shops.CODEC.optionalFieldOf("shops", Shops.DEFAULT).forGetter(CityWorldSettingsData::shops)
+            Shops.CODEC.optionalFieldOf("shops", Shops.DEFAULT).forGetter(CityWorldSettingsData::shops),
+            Decay.CODEC.optionalFieldOf("decay", Decay.DEFAULT).forGetter(CityWorldSettingsData::decay)
     ).apply(i, CityWorldSettingsData::new));
 
     // --- what gets built ----------------------------------------------------------------------
@@ -197,6 +199,38 @@ public record CityWorldSettingsData(
         public static final Codec<Shops> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Shops::enabled)
         ).apply(i, Shops::new));
+    }
+
+    // --- how hard the ruined styles hit (its own group; would overflow Terrain's 16-field codec cap) --
+
+    /**
+     * Fine control over demolition, for the decayed styles. {@code buildingIntensity} / {@code roadIntensity}
+     * scale HOW ruined a decayed building / road is — the number and size of the collapse holes (1.0 = the
+     * tuned default, below 1 = lighter wear, above 1 = heavier rubble). {@code oddsOfDecayFire} is the fraction
+     * of collapsed rubble that catches fire (a netherrack+fire ember), and only bites when the style also keeps
+     * decay fires ({@code includeDecayedFires}). {@code oddsOfPristineRoad} spares a fraction of roads intact —
+     * the road counterpart of {@code oddsOfPristineBuilding}.
+     *
+     * <p>The world styles set their own intensity: APOCALYPSE is a slow, gentle decay that nature reclaims
+     * (low intensity, no fire); DESTROYED is heavy nuke/invasion damage (high intensity, fire on).
+     */
+    public record Decay(double buildingIntensity, double roadIntensity, double oddsOfDecayFire,
+            double oddsOfPristineRoad) {
+
+        /** 1.0 = the tuned baseline severity; scales the number + radius of the collapse holes. */
+        public static final double DEFAULT_INTENSITY = 1.0;
+        /** Matches the value the demolition pass used before this knob existed (behaviour-preserving default). */
+        public static final double DEFAULT_ODDS_OF_DECAY_FIRE = Odds.oddsSomewhatUnlikely;
+
+        public static final Decay DEFAULT = new Decay(DEFAULT_INTENSITY, DEFAULT_INTENSITY,
+                DEFAULT_ODDS_OF_DECAY_FIRE, 0.0);
+
+        public static final Codec<Decay> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.DOUBLE.optionalFieldOf("buildingIntensity", DEFAULT_INTENSITY).forGetter(Decay::buildingIntensity),
+                Codec.DOUBLE.optionalFieldOf("roadIntensity", DEFAULT_INTENSITY).forGetter(Decay::roadIntensity),
+                Codec.DOUBLE.optionalFieldOf("oddsOfDecayFire", DEFAULT_ODDS_OF_DECAY_FIRE).forGetter(Decay::oddsOfDecayFire),
+                Codec.DOUBLE.optionalFieldOf("oddsOfPristineRoad", 0.0).forGetter(Decay::oddsOfPristineRoad)
+        ).apply(i, Decay::new));
     }
 
     // --- who turns up, and how often -----------------------------------------------------------

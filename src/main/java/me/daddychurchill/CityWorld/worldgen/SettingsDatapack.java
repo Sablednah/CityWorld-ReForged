@@ -108,6 +108,14 @@ public final class SettingsDatapack {
         shopsJson.addProperty("enabled", shops.enabled());
         root.add("shops", shopsJson);
 
+        CityWorldSettingsData.Decay dk = d.decay();
+        JsonObject decay = new JsonObject();
+        decay.addProperty("buildingIntensity", dk.buildingIntensity());
+        decay.addProperty("roadIntensity", dk.roadIntensity());
+        decay.addProperty("oddsOfDecayFire", dk.oddsOfDecayFire());
+        decay.addProperty("oddsOfPristineRoad", dk.oddsOfPristineRoad());
+        root.add("decay", decay);
+
         CityWorldSettingsData.Spawns s = d.spawns();
         JsonObject spawns = new JsonObject();
         spawns.addProperty("spawnBeings", s.spawnBeings());

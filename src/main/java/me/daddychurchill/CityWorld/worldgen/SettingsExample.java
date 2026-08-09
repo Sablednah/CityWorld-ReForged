@@ -142,6 +142,20 @@ public final class SettingsExample {
                                growth can't lengthen it over time (and it reads as a lit tip).
 
             ============================================================================
+            decay  — fine control of demolition (pairs with the includeDecayed* toggles above)
+            ============================================================================
+            buildingIntensity   1.0   How ruined a decayed BUILDING is — scales the number AND size of
+                                      the collapse holes. 1.0 = default, below 1 = light weathering,
+                                      above 1 = heavy rubble. (APOCALYPSE uses 0.5, DESTROYED 1.75.)
+            roadIntensity       1.0   The same, for decayed ROADS. (APOCALYPSE 0.4, DESTROYED 1.5.)
+            oddsOfDecayFire     0.20  Fraction of collapse rubble that catches fire (netherrack + fire).
+                                      Only bites when includeFires AND includeDecayedFires are BOTH on,
+                                      so campfire-only worlds and APOCALYPSE stay unburnt. DESTROYED 0.33.
+            oddsOfPristineRoad  0.0   Chance a road chunk is spared and stays intact — the road version
+                                      of oddsOfPristineBuilding, so a ruined grid keeps stretches you can
+                                      walk. Range 0.0 .. 1.0. (APOCALYPSE uses 0.3.)
+
+            ============================================================================
             shops  — themed retail with villager job blocks (MODERN dressing)
             ============================================================================
             enabled     false  Villager job-site blocks so a store/farm reads as its trade and a
