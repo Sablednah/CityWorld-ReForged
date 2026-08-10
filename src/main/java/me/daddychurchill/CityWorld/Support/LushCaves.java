@@ -23,8 +23,8 @@ public final class LushCaves {
 
     private LushCaves() {}
 
-    private static final int REGION = 56; // lush-cave patch size in blocks (bigger patches)
-    private static final int REGION_PCT = 16; // ~this % of the coarse regions are lush (rarer -> more spaced)
+    private static final int REGION = 80; // lush-cave patch size in blocks (big patches)
+    private static final int REGION_PCT = 5; // ~this % of the coarse regions are lush (rare -> well spaced)
 
     public static void apply(CityWorldGenerator generator, PlatLot lot, SupportBlocks chunk, Odds odds) {
         if (!(chunk instanceof RealBlocks real))
@@ -139,13 +139,23 @@ public final class LushCaves {
 
     /** On a nature-lot surface over a lush cave: an azalea (sometimes flowering) on rooted dirt, roots below. */
     private static void surfaceAzalea(CityWorldGenerator generator, RealBlocks real, int oX, int oZ, Odds odds) {
-        int tries = 1 + odds.getRandomInt(2);
+        int tries = 6 + odds.getRandomInt(4); // a few, so a lush surface reads as a patch you can spot
         for (int i = 0; i < tries; i++) {
             int x = odds.getRandomInt(2, 13), z = odds.getRandomInt(2, 13);
-            int surfaceY = real.findLastEmptyAbove(x, generator.seaLevel + 40, z, generator.seaLevel - 4) - 1;
-            if (surfaceY <= generator.seaLevel || !real.isEmpty(x, surfaceY + 1, z) || real.isEmpty(x, surfaceY, z)
-                    || real.isWater(x, surfaceY, z))
-                continue;
+            if (!lushRegion(generator, oX + x, oZ + z))
+                continue; // keep the tell directly over a lush cave
+            // the terrain surface at this column (any elevation — nature lots are often mountains, which the
+            // old bounded scan sat above and always skipped)
+            // the ACTUAL top block: first solid cell (with air above) scanning down — findBlockY is only the
+            // base terrain height, a couple below the placed surface, so it never lined up.
+            int surfaceY = Integer.MIN_VALUE;
+            for (int y = generator.seaLevel + 140; y > generator.seaLevel; y--)
+                if (!real.isEmpty(x, y, z) && real.isEmpty(x, y + 1, z)) {
+                    surfaceY = y;
+                    break;
+                }
+            if (surfaceY == Integer.MIN_VALUE || real.isWater(x, surfaceY, z))
+                continue; // no land surface above sea here
             real.setBlock(x, surfaceY, z, Material.ROOTED_DIRT);
             if (odds.playOdds(0.4))
                 real.setBlock(x, surfaceY - 1, z, Material.HANGING_ROOTS); // roots dripping under the rooted dirt
