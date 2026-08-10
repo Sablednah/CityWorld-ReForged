@@ -259,6 +259,7 @@ public class ClipboardLot extends IsolatedLot {
 		int bx1 = Math.max(0, nwX - oX), bx2 = Math.min(chunk.width, nwX + rotSizeX - oX);
 		int bz1 = Math.max(0, nwZ - oZ), bz2 = Math.min(chunk.width, nwZ + rotSizeZ - oZ);
 
+		boolean snow = fillMat == Material.SNOW_BLOCK;
 		for (int x = bx1; x < bx2; x++)
 			for (int z = bz1; z < bz2; z++) {
 				int wx = oX + x, wz = oZ + z;
@@ -266,7 +267,9 @@ public class ClipboardLot extends IsolatedLot {
 				// the undulating drifts instead of getting a flat plateau (findFloodY carries the dune noise;
 				// it's flat for FLOODED, which is what we want there)
 				int top = generator.shapeProvider.findFloodY(generator, wx, wz);
-				for (int y = base; y <= top; y++) {
+				// snow finishes in a partial SNOW layer at `top` (like the terrain), the rest is solid below it
+				int bodyTop = snow ? top - 1 : top;
+				for (int y = base; y <= bodyTop; y++) {
 					BlockPos pos = new BlockPos(wx, y, wz);
 					BlockState st = level.getBlockState(pos);
 					if (st.isAir())
@@ -275,6 +278,11 @@ public class ClipboardLot extends IsolatedLot {
 							&& !st.getValue(BlockStateProperties.WATERLOGGED))
 						level.setBlock(pos, st.setValue(BlockStateProperties.WATERLOGGED, true), Block.UPDATE_CLIENTS);
 				}
+				// cap snow with a partial layer (height from the fractional flood Y) so it meets the terrain's
+				// snow-layer surface flush, not a full-block step
+				if (snow && level.getBlockState(new BlockPos(wx, top, wz)).isAir())
+					chunk.setBlock(x, top, z, Material.SNOW,
+							generator.shapeProvider.findPerciseFloodY(generator, wx, wz));
 			}
 	}
 
