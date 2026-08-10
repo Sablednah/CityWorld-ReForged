@@ -55,6 +55,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
 
     // Working state — mutated live by the widgets, read back in buildResult().
     private WorldStyle style;
+    // Which settings the current style locks (forces) — those widgets are greyed out. Recomputed on change.
+    private java.util.Set<String> lockedKeys;
 
     // features
     private boolean includeRoads, includeRoundabouts, includeSewers, includeCisterns, includeBasements,
@@ -89,12 +91,18 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         super(parent, Minecraft.getInstance().options, TITLE);
         this.onDone = onDone;
         this.style = initialStyle;
+        this.lockedKeys = me.daddychurchill.CityWorld.CityWorldSettings.styleLocks(initialStyle);
 
         this.radius = initial.radius();
         this.naming = initial.naming();
         this.mobs = initial.mobs();
 
-        CityWorldSettingsData.Features f = initial.features();
+        loadFrom(initial);
+    }
+
+    /** Load every editable field from a settings object — on open, and again on a style change (reset). */
+    private void loadFrom(CityWorldSettingsData data) {
+        CityWorldSettingsData.Features f = data.features();
         includeRoads = f.includeRoads();
         includeRoundabouts = f.includeRoundabouts();
         includeSewers = f.includeSewers();
@@ -112,7 +120,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         includeSchematics = f.includeSchematics();
         includeNamedRoads = f.includeNamedRoads();
 
-        CityWorldSettingsData.Terrain t = initial.terrain();
+        CityWorldSettingsData.Terrain t = data.terrain();
         includeCaves = t.includeCaves();
         includeLavaFields = t.includeLavaFields();
         includeSeas = t.includeSeas();
@@ -127,18 +135,18 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         includeDecayedBuildings = t.includeDecayedBuildings();
         includeDecayedNature = t.includeDecayedNature();
         oddsOfPristineBuilding = t.oddsOfPristineBuilding();
-        CityWorldSettingsData.Overgrowth og = initial.overgrowth();
+        CityWorldSettingsData.Overgrowth og = data.overgrowth();
         includeOvergrowth = og.enabled();
         overgrowthIntensity = og.intensity();
         capVines = og.capVines();
-        includeShops = initial.shops().enabled();
-        CityWorldSettingsData.Decay dk = initial.decay();
+        includeShops = data.shops().enabled();
+        CityWorldSettingsData.Decay dk = data.decay();
         buildingDecayIntensity = dk.buildingIntensity();
         roadDecayIntensity = dk.roadIntensity();
         oddsOfDecayFire = dk.oddsOfDecayFire();
         oddsOfPristineRoad = dk.oddsOfPristineRoad();
 
-        CityWorldSettingsData.Spawns s = initial.spawns();
+        CityWorldSettingsData.Spawns s = data.spawns();
         spawnBeings = Chance.nearest(s.spawnBeings());
         spawnBaddies = Chance.nearest(s.spawnBaddies());
         spawnAnimals = Chance.nearest(s.spawnAnimals());
@@ -146,7 +154,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         nameVillagers = s.nameVillagers();
         showVillagersNames = s.showVillagersNames();
 
-        CityWorldSettingsData.Treasures r = initial.treasures();
+        CityWorldSettingsData.Treasures r = data.treasures();
         treasuresInMines = r.treasuresInMines();
         spawnersInMines = r.spawnersInMines();
         treasuresInBunkers = r.treasuresInBunkers();
@@ -160,7 +168,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         oddsOfTreasureInBuildings = Chance.nearest(r.oddsOfTreasureInBuildings());
         oddsOfAlcoveInMines = Chance.nearest(r.oddsOfAlcoveInMines());
 
-        CityWorldSettingsData.World w = initial.world();
+        CityWorldSettingsData.World w = data.world();
         treeStyle = w.treeStyle();
         spawnTrees = Chance.nearest(w.spawnTrees());
         subSurfaceStyle = w.subSurfaceStyle();
@@ -173,7 +181,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         List<AbstractWidget> row = new ArrayList<>();
 
         this.list.addHeader(Component.literal("World style"));
-        addRow(cycle("Style", WorldStyle.values(), style, CityWorldCustomizeScreen::styleLabel, v -> style = v), null);
+        addRow(cycle("Style", WorldStyle.values(), style, CityWorldCustomizeScreen::styleLabel,
+                this::onStyleChanged), null);
 
         this.list.addHeader(Component.literal("Features"));
         pair(row, onOff("Roads", includeRoads, v -> includeRoads = v));
@@ -286,17 +295,42 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         return new Result(style, data);
     }
 
-    // ---- widget helpers ----------------------------------------------------------------------
-
-    private static CycleButton<Boolean> onOff(String label, boolean init, Consumer<Boolean> setter) {
-        return CycleButton.onOffBuilder(init)
-                .create(0, 0, WIDTH, HEIGHT, Component.literal(label), (b, v) -> setter.accept(v));
+    /**
+     * The Style picker changed: reset every option to the new style's defaults, recompute which settings that
+     * style locks, and rebuild the widgets so the values and the greyed-out (locked) ones both refresh.
+     */
+    private void onStyleChanged(WorldStyle newStyle) {
+        style = newStyle;
+        loadFrom(me.daddychurchill.CityWorld.CityWorldSettings.styleDefaults(newStyle));
+        lockedKeys = me.daddychurchill.CityWorld.CityWorldSettings.styleLocks(newStyle);
+        this.rebuildWidgets();
     }
 
-    private static CycleButton<Chance> chance(String label, Chance init, Consumer<Chance> setter) {
-        return CycleButton.<Chance>builder(c -> Component.literal(c.label), init)
+    // ---- widget helpers ----------------------------------------------------------------------
+
+    private CycleButton<Boolean> onOff(String label, boolean init, Consumer<Boolean> setter) {
+        CycleButton<Boolean> button = CycleButton.onOffBuilder(init)
+                .create(0, 0, WIDTH, HEIGHT, Component.literal(label), (b, v) -> setter.accept(v));
+        greyIfLocked(button, label);
+        return button;
+    }
+
+    private CycleButton<Chance> chance(String label, Chance init, Consumer<Chance> setter) {
+        CycleButton<Chance> button = CycleButton.<Chance>builder(c -> Component.literal(c.label), init)
                 .withValues(Chance.values())
                 .create(0, 0, WIDTH, HEIGHT, Component.literal(label), (b, v) -> setter.accept(v));
+        greyIfLocked(button, label);
+        return button;
+    }
+
+    /** Disable + tooltip a widget whose setting the current world style locks, so it reads as "you can't
+     *  change this here — the style forces it". */
+    private void greyIfLocked(AbstractWidget w, String label) {
+        if (lockedKeys.contains(label)) {
+            w.active = false;
+            w.setTooltip(net.minecraft.client.gui.components.Tooltip
+                    .create(Component.literal("Locked by the " + styleLabel(style).getString() + " style")));
+        }
     }
 
     private static <T> CycleButton<T> cycle(String label, T[] values, T init,

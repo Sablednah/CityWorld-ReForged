@@ -260,6 +260,84 @@ public class CityWorldSettings {
     }
 
     /**
+     * The default settings for a world style — the compiled defaults ({@link CityWorldSettingsData#DEFAULT})
+     * bent by the style's own {@link #validateSettingsAgainstWorldStyle}. The Customize screen loads this when
+     * you switch style, so picking a style resets the options to that style's defaults rather than carrying the
+     * previous style's over.
+     */
+    public static CityWorldSettingsData styleDefaults(WorldStyle style) {
+        return new CityWorldSettings(style, java.util.Optional.empty(), CityWorldSettingsData.DEFAULT).toData();
+    }
+
+    /**
+     * Which editable settings the given style <em>locks</em> (forces regardless of the datapack/toggles) — the
+     * Customize screen greys these out. Computed generically by running the style validation over two opposite
+     * baselines (all-on vs all-off) and keeping the keys whose result agrees: if the style pins a setting, both
+     * baselines land on the same value. Keys are the field names {@link CityWorldSettingsData} exposes.
+     */
+    public static java.util.Set<String> styleLocks(WorldStyle style) {
+        CityWorldSettingsData on = new CityWorldSettings(style, java.util.Optional.empty(),
+                allToggles(true)).toData();
+        CityWorldSettingsData off = new CityWorldSettings(style, java.util.Optional.empty(),
+                allToggles(false)).toData();
+        java.util.Set<String> locked = new java.util.HashSet<>();
+        java.util.function.BiConsumer<String, Boolean> mark = (k, same) -> {
+            if (same)
+                locked.add(k);
+        };
+        CityWorldSettingsData.Features fa = on.features(), fb = off.features();
+        mark.accept("Roads", fa.includeRoads() == fb.includeRoads());
+        mark.accept("Roundabouts", fa.includeRoundabouts() == fb.includeRoundabouts());
+        mark.accept("Sewers", fa.includeSewers() == fb.includeSewers());
+        mark.accept("Cisterns", fa.includeCisterns() == fb.includeCisterns());
+        mark.accept("Basements", fa.includeBasements() == fb.includeBasements());
+        mark.accept("Mines", fa.includeMines() == fb.includeMines());
+        mark.accept("Bunkers", fa.includeBunkers() == fb.includeBunkers());
+        mark.accept("Buildings", fa.includeBuildings() == fb.includeBuildings());
+        mark.accept("Houses", fa.includeHouses() == fb.includeHouses());
+        mark.accept("Farms", fa.includeFarms() == fb.includeFarms());
+        mark.accept("Municipalities", fa.includeMunicipalities() == fb.includeMunicipalities());
+        mark.accept("Industrial sectors", fa.includeIndustrialSectors() == fb.includeIndustrialSectors());
+        mark.accept("Airborne structures", fa.includeAirborneStructures() == fb.includeAirborneStructures());
+        mark.accept("Building interiors", fa.includeBuildingInteriors() == fb.includeBuildingInteriors());
+        mark.accept("Schematics", fa.includeSchematics() == fb.includeSchematics());
+        mark.accept("Named roads", fa.includeNamedRoads() == fb.includeNamedRoads());
+        CityWorldSettingsData.Terrain ta = on.terrain(), tb = off.terrain();
+        mark.accept("Caves", ta.includeCaves() == tb.includeCaves());
+        mark.accept("Lava fields", ta.includeLavaFields() == tb.includeLavaFields());
+        mark.accept("Seas", ta.includeSeas() == tb.includeSeas());
+        mark.accept("Mountains", ta.includeMountains() == tb.includeMountains());
+        mark.accept("Ores", ta.includeOres() == tb.includeOres());
+        mark.accept("Bones / fossils", ta.includeBones() == tb.includeBones());
+        mark.accept("Fires", ta.includeFires() == tb.includeFires());
+        mark.accept("Aboveground fluids", ta.includeAbovegroundFluids() == tb.includeAbovegroundFluids());
+        mark.accept("Underground fluids", ta.includeUndergroundFluids() == tb.includeUndergroundFluids());
+        mark.accept("Working lights", ta.includeWorkingLights() == tb.includeWorkingLights());
+        mark.accept("Decayed roads", ta.includeDecayedRoads() == tb.includeDecayedRoads());
+        mark.accept("Decayed buildings", ta.includeDecayedBuildings() == tb.includeDecayedBuildings());
+        mark.accept("Decayed nature", ta.includeDecayedNature() == tb.includeDecayedNature());
+        mark.accept("Overgrowth", on.overgrowth().enabled() == off.overgrowth().enabled());
+        mark.accept("Shops", on.shops().enabled() == off.shops().enabled());
+        return locked;
+    }
+
+    /** A {@link CityWorldSettingsData} with every boolean toggle set to {@code v} (doubles/enums/lists at the
+     *  compiled default) — the two baselines {@link #styleLocks} diffs to find what a style pins. */
+    private static CityWorldSettingsData allToggles(boolean v) {
+        CityWorldSettingsData d = CityWorldSettingsData.DEFAULT;
+        CityWorldSettingsData.Features f = new CityWorldSettingsData.Features(v, v, v, v, v, v, v, v, v, v, v, v, v,
+                v, v, v);
+        CityWorldSettingsData.Terrain t = d.terrain();
+        CityWorldSettingsData.Terrain t2 = new CityWorldSettingsData.Terrain(v, v, v, v, v, v, v, v, v, v, v, v, v,
+                t.oddsOfPristineBuilding());
+        CityWorldSettingsData.Overgrowth og = d.overgrowth();
+        CityWorldSettingsData.Overgrowth og2 = new CityWorldSettingsData.Overgrowth(v, og.intensity(), v);
+        CityWorldSettingsData.Shops sh = new CityWorldSettingsData.Shops(v);
+        return new CityWorldSettingsData(f, t2, d.spawns(), d.treasures(), d.world(), d.radius(), d.naming(),
+                d.mobs(), og2, sh, d.decay());
+    }
+
+    /**
      * Copies a {@link CityWorldSettingsData} (the datapack registry element) onto the runtime fields.
      * Grouped exactly as the record is — features, terrain, spawns, treasures, world, radius — so the
      * two stay easy to diff. Runs before the style/decay overrides in the constructor, so those win.
