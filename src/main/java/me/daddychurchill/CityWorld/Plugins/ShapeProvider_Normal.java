@@ -56,6 +56,7 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	private final SimplexNoiseGenerator wormShapeA;
 	private final SimplexNoiseGenerator wormShapeB;
 	private final SimplexNoiseGenerator cheeseShape;
+	private final SimplexNoiseGenerator lavaShape;
 	private final SimplexNoiseGenerator mineShape;
 	private final SimplexNoiseGenerator mineRegionShape;
 
@@ -107,6 +108,14 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	private final static double cheeseScaleY = cheeseScale * 2;
 	private final static double cheeseThreshold = 0.865; // lower -> bigger caverns (spacing kept via the scale)
 
+	// MODERN lava (scattered pools, denser with depth) instead of a flat lava sea: fill a void with lava
+	// where a noise field is above a bar that DROPS as you descend — rare small pools just under the lava
+	// level, lots of lava down near the world floor.
+	private final static double lavaScale = 1.0 / 30.0;
+	private final static double lavaScaleY = 1.0 / 20.0;
+	private final static double lavaTopThreshold = 0.62; // at the lava level: rare, scattered pools
+	private final static double lavaDepthGain = 0.55; // how far the bar falls from the level down to the floor
+
 	private final static double mineScale = 1.0 / 4.0;
 	public final static double mineScaleY = mineScale;
 
@@ -131,6 +140,7 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		wormShapeA = new SimplexNoiseGenerator(seed + 101);
 		wormShapeB = new SimplexNoiseGenerator(seed + 202);
 		cheeseShape = new SimplexNoiseGenerator(seed + 303);
+		lavaShape = new SimplexNoiseGenerator(seed + 404);
 		mineShape = new SimplexNoiseGenerator(seed + 1);
 		mineRegionShape = new SimplexNoiseGenerator(seed + 811);
 
@@ -522,6 +532,22 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		// Classic blob caves: a single noise field, carve its extremes.
 		double cave = caveShape.noise(blockX * caveScale, blockY * caveScaleY, blockZ * caveScale);
 		return !(cave > caveThreshold || cave < -caveThreshold);
+	}
+
+	@Override
+	public boolean lavaFillAt(CityWorldGenerator generator, int blockX, int blockY, int blockZ) {
+		int level = generator.oreProvider.lavaFieldLevel;
+		if (blockY > level)
+			return false; // no lava above the lava level, ever
+		if (!generator.isModernStyle())
+			return true; // classic and the rest keep the flat lava field
+
+		// MODERN: scattered pools whose bar drops with depth -> rare small pools up top, dense lava near the
+		// world floor. depth is 0 at the lava level and 1 at the world floor.
+		int floor = generator.worldMinY;
+		double depth = level <= floor ? 1.0 : (double) (level - blockY) / (level - floor);
+		double pool = lavaShape.noise(blockX * lavaScale, blockY * lavaScaleY, blockZ * lavaScale);
+		return pool > lavaTopThreshold - depth * lavaDepthGain;
 	}
 
 }

@@ -260,7 +260,8 @@ public abstract class ShapeProvider extends Provider {
 			if (lot.isValidStrataY(generator, blockX, y, blockZ)
 					&& generator.shapeProvider.notACave(generator, blockX, y, blockZ))
 				chunk.setBlock(x, y, z, generator.oreProvider.stratumMaterialAt(stratumMaterial, blockX, y, blockZ));
-			else if (y <= generator.oreProvider.lavaFieldLevel && generator.getSettings().includeLavaFields)
+			else if (generator.getSettings().includeLavaFields
+					&& generator.shapeProvider.lavaFillAt(generator, blockX, y, blockZ))
 				chunk.setBlock(x, y, z, Material.LAVA);
 
 		// aggregate bits
@@ -328,6 +329,13 @@ public abstract class ShapeProvider extends Provider {
 	// TODO refactor this so that it is a positive (maybe ifCave) instead of a
 	// negative
 	protected abstract boolean notACave(CityWorldGenerator generator, int blockX, int blockY, int blockZ);
+
+	/** Whether a below-ground void (cave) cell fills with lava. Default: the flat lava field — every void at
+	 *  or below {@code lavaFieldLevel} is lava. {@link ShapeProvider_Normal} overrides it for MODERN with
+	 *  scattered lava pools that grow denser with depth. */
+	public boolean lavaFillAt(CityWorldGenerator generator, int blockX, int blockY, int blockZ) {
+		return blockY <= generator.oreProvider.lavaFieldLevel;
+	}
 
 	// macro slots
 	private final static int macroRandomGeneratorSlot = 0;
