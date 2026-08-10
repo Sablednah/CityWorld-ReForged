@@ -735,7 +735,7 @@ public final class Material {
     public static final Material WOOD_DOOR = of(Blocks.OAK_DOOR); // legacy generic wooden door -> oak
     public static final Material WOOD_STEP = of(Blocks.OAK_SLAB); // legacy generic wooden slab -> oak
 
-    // ---- Modern extras (131) — blocks the 1.14 vocabulary never had -------------
+    // ---- Modern extras (133) — blocks the 1.14 vocabulary never had -------------
     public static final Material AMETHYST_CLUSTER = of(Blocks.AMETHYST_CLUSTER); // P12 interior: sparkle accent
     public static final Material ANCIENT_DEBRIS = of(Blocks.ANCIENT_DEBRIS); // P9: rare prize in the deepest mines (the reason they dug so far)
     public static final Material ANVIL = of(Blocks.ANVIL); // P9 mine prop: miners' camp
@@ -756,6 +756,7 @@ public final class Material {
     public static final Material CANDLE_CAKE = of(Blocks.CANDLE_CAKE); // P14 interior: lit-cake accent on a table
     public static final Material CARTOGRAPHY_TABLE = of(Blocks.CARTOGRAPHY_TABLE); // P9 mine prop: miners' camp (drawing up plans)
     public static final Material CAVE_VINES = of(Blocks.CAVE_VINES); // P10 overgrowth: glow-berry vines hanging from ledges
+    public static final Material CAVE_VINES_PLANT = of(Blocks.CAVE_VINES_PLANT); // lush caves: the ceiling-anchored top of a glow-berry vine
     public static final Material CHISELED_BOOKSHELF = of(Blocks.CHISELED_BOOKSHELF); // P12 interior: studies/libraries
     public static final Material CHISELED_COPPER = of(Blocks.CHISELED_COPPER); // P12 interior: decorative modern wall/counter block
     public static final Material CHISELED_POLISHED_BLACKSTONE = of(Blocks.CHISELED_POLISHED_BLACKSTONE); // P12 MODERN build stone
@@ -845,6 +846,7 @@ public final class Material {
     public static final Material RED_CANDLE = of(Blocks.RED_CANDLE); // P14 interior: candle accent (warm colour)
     public static final Material RED_SAND = of(Blocks.RED_SAND); // P8 MODERN: badlands surface; the 1.14 Bukkit source never referenced it
     public static final Material RESIN_BRICKS = of(Blocks.RESIN_BRICKS); // P12 MODERN build stone
+    public static final Material ROOTED_DIRT = of(Blocks.ROOTED_DIRT); // lush caves: rooted dirt under a surface azalea (hanging roots drip below)
     public static final Material SHORT_GRASS = of(Blocks.SHORT_GRASS); // P10 overgrowth: grass tufts pushing through
     public static final Material SHROOMLIGHT = of(Blocks.SHROOMLIGHT); // P13 biodome: nether light
     public static final Material SMALL_DRIPLEAF = of(Blocks.SMALL_DRIPLEAF); // P10 overgrowth: dripleaf in damp corners

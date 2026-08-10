@@ -213,6 +213,15 @@ public class SpawnProvider extends Provider {
         }
     }
 
+    /** Spawn a specific ambient critter at (x,y,z) for the lush-cave pass — axolotls/tropical fish in the
+     *  pools ({@code inWater} = true, ignore the flood check), frogs on the bank (land, needs headroom).
+     *  Rolls {@code spawnAnimals} like other ambient life. */
+    public final void spawnCritter(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
+            EntityType entity, boolean inWater) {
+        if (odds.playOdds(generator.getSettings().spawnAnimals))
+            spawnEntity(generator, blocks, odds, x, y, z, entity, inWater, !inWater);
+    }
+
     public final void spawnBeing(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z) {
         spawnBeing(generator, blocks, odds, x, y, z, itemsEntities_Goodies.getRandomEntity(odds),
                 itemsEntities_Baddies.getRandomEntity(odds));

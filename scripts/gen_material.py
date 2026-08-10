@@ -160,6 +160,8 @@ EXTRAS = {
     "SMALL_DRIPLEAF": "P10 overgrowth: dripleaf in damp corners",
     "BIG_DRIPLEAF": "P10 overgrowth: big dripleaf",
     "CAVE_VINES": "P10 overgrowth: glow-berry vines hanging from ledges",
+    "CAVE_VINES_PLANT": "lush caves: the ceiling-anchored top of a glow-berry vine",
+    "ROOTED_DIRT": "lush caves: rooted dirt under a surface azalea (hanging roots drip below)",
     "PINK_PETALS": "P10 overgrowth: petals scattered on the ground",
     "SHORT_GRASS": "P10 overgrowth: grass tufts pushing through",
     "DRIPSTONE_BLOCK": "P10 overgrowth: dripstone clumps underground",

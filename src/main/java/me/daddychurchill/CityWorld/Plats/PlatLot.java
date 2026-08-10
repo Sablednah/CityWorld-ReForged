@@ -250,6 +250,13 @@ public abstract class PlatLot {
 				&& (style == LotStyle.STRUCTURE || style == LotStyle.ROAD || style == LotStyle.ROUNDABOUT))
 			me.daddychurchill.CityWorld.Support.Overgrowth.apply(generator, this, chunk, chunkOdds);
 
+		// Lush caves (MODERN): a seed-coherent patch of the carved caves gets a lush-biome makeover — moss +
+		// clay floors, glow-berry vines and spore blossoms overhead, dripleaf, little pools with axolotls/
+		// frogs/tropical fish, and a surface azalea tell on nature lots. Runs under every lot (caves are below
+		// everything), on the already-carved caves.
+		if (generator.isModernStyle() && generator.getSettings().includeCaves)
+			me.daddychurchill.CityWorld.Support.LushCaves.apply(generator, this, chunk, chunkOdds);
+
 		// Apocalypse: hide zombie spawners in the ruins' cellars — some buried in a sealed pocket UNDER
 		// the basement floor so they can't be seen. Building lots only (they have the cellars); sewers and
 		// caves get their own zombie spawners through the enabled spawner bags.
