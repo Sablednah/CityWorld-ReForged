@@ -23,8 +23,8 @@ public final class LushCaves {
 
     private LushCaves() {}
 
-    private static final int REGION = 40; // lush-cave patch size in blocks
-    private static final int REGION_PCT = 24; // ~this % of the coarse regions are lush
+    private static final int REGION = 56; // lush-cave patch size in blocks (bigger patches)
+    private static final int REGION_PCT = 16; // ~this % of the coarse regions are lush (rarer -> more spaced)
 
     public static void apply(CityWorldGenerator generator, PlatLot lot, SupportBlocks chunk, Odds odds) {
         if (!(chunk instanceof RealBlocks real))
