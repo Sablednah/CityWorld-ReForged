@@ -123,6 +123,11 @@ public class ClipboardLot extends IsolatedLot {
 		// anchored — drop legs from its base to the real sea floor so it isn't perched on a rock stub.
 		if (clip.ocean)
 			finishOceanBuild(generator, chunk, level, nwX, nwZ);
+		else
+			// Otherwise integrate with a flooded / snow-buried world by refilling the footprint's empty cells
+			// with the world's own atmosphere material below the flood line (water in FLOODED, snow in
+			// SNOWDUNES), so the build doesn't leave dry air pockets poking through the surroundings.
+			finishStyleFill(generator, chunk, level, nwX, nwZ);
 
 		if (clip.decayable && generator.getSettings().includeDecayedBuildings && !isPristine(generator, nwX, nwZ)) {
 			int depth = surfaceLevel(generator) - clip.groundLevelY;
@@ -223,6 +228,45 @@ public class ClipboardLot extends IsolatedLot {
 					BlockPos pos = new BlockPos(wx, y, wz);
 					BlockState st = level.getBlockState(pos);
 					if (st.hasProperty(BlockStateProperties.WATERLOGGED)
+							&& !st.getValue(BlockStateProperties.WATERLOGGED))
+						level.setBlock(pos, st.setValue(BlockStateProperties.WATERLOGGED, true), Block.UPDATE_CLIENTS);
+				}
+			}
+	}
+
+	/**
+	 * Integrate a pasted schematic with a world whose empty space isn't air — refill the footprint's empty
+	 * cells with the world's atmosphere material below the flood line: WATER in FLOODED, SNOW_BLOCK in
+	 * SNOWDUNES, SAND in SANDDUNES (the very {@code findAtmosphereMaterialAt} the terrain gen fills with).
+	 * Without it a build leaves dry air pockets poking through the drowned / buried / sanded surroundings. A
+	 * no-op in normal worlds (atmosphere is air) or when the build stands above the flood line. Water flows
+	 * through waterloggable blocks (fences/slabs) rather than replacing them.
+	 */
+	private void finishStyleFill(CityWorldGenerator generator, RealBlocks chunk, ServerLevelAccessor level,
+			int nwX, int nwZ) {
+		int base = surfaceLevel(generator) - clip.groundLevelY; // the build's bottom row
+		if (generator.shapeProvider.findAtmosphereMaterialAt(generator, base) == Material.AIR)
+			return; // normal world, or the build stands above the flood line — nothing to fill
+
+		int floodY = generator.shapeProvider.findHighestFloodY(generator);
+		int rotSizeX = Clipboard.swapsFootprint(rotation) ? clip.sizeZ : clip.sizeX;
+		int rotSizeZ = Clipboard.swapsFootprint(rotation) ? clip.sizeX : clip.sizeZ;
+		int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
+		int bx1 = Math.max(0, nwX - oX), bx2 = Math.min(chunk.width, nwX + rotSizeX - oX);
+		int bz1 = Math.max(0, nwZ - oZ), bz2 = Math.min(chunk.width, nwZ + rotSizeZ - oZ);
+
+		for (int x = bx1; x < bx2; x++)
+			for (int z = bz1; z < bz2; z++) {
+				int wx = oX + x, wz = oZ + z;
+				for (int y = base; y <= floodY; y++) {
+					Material atmos = generator.shapeProvider.findAtmosphereMaterialAt(generator, y);
+					if (atmos == Material.AIR)
+						continue; // above the flood line for this column
+					BlockPos pos = new BlockPos(wx, y, wz);
+					BlockState st = level.getBlockState(pos);
+					if (st.isAir())
+						chunk.setBlock(x, y, z, atmos);
+					else if (atmos == Material.WATER && st.hasProperty(BlockStateProperties.WATERLOGGED)
 							&& !st.getValue(BlockStateProperties.WATERLOGGED))
 						level.setBlock(pos, st.setValue(BlockStateProperties.WATERLOGGED, true), Block.UPDATE_CLIENTS);
 				}
