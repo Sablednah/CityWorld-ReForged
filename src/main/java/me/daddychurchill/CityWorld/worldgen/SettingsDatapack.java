@@ -94,6 +94,7 @@ public final class SettingsDatapack {
         terrain.addProperty("includeDecayedBuildings", t.includeDecayedBuildings());
         terrain.addProperty("includeDecayedNature", t.includeDecayedNature());
         terrain.addProperty("oddsOfPristineBuilding", t.oddsOfPristineBuilding());
+        terrain.addProperty("windingCaves", t.windingCaves());
         root.add("terrain", terrain);
 
         CityWorldSettingsData.Overgrowth og = d.overgrowth();

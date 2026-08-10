@@ -53,6 +53,9 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	private final SimplexOctaveGenerator noiseShape;
 	private final SimplexOctaveGenerator featureShape;
 	private final SimplexNoiseGenerator caveShape;
+	private final SimplexNoiseGenerator wormShapeA;
+	private final SimplexNoiseGenerator wormShapeB;
+	private final SimplexNoiseGenerator cheeseShape;
 	private final SimplexNoiseGenerator mineShape;
 	private final SimplexNoiseGenerator mineRegionShape;
 
@@ -94,6 +97,16 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	private final static double caveScaleY = caveScale * 2;
 	private final static double caveThreshold = 0.75; // smaller the number the more larger the caves will be
 
+	// Winding "noodle" caves (MODERN): carve where TWO noise iso-surfaces cross (|a| < eps AND |b| < eps).
+	// The intersection of two surfaces is a 1-D curve, so this traces thin wandering, branching tunnels
+	// instead of the single-field blobs. A rare low-frequency "cheese" field opens the odd big cavern.
+	private final static double wormScale = 1.0 / 72.0;
+	private final static double wormScaleY = 1.0 / 48.0;
+	private final static double wormEps = 0.045; // half the tunnel thickness in noise space (bigger = wider)
+	private final static double cheeseScale = 1.0 / 48.0;
+	private final static double cheeseScaleY = cheeseScale * 2;
+	private final static double cheeseThreshold = 0.86; // rare big caverns
+
 	private final static double mineScale = 1.0 / 4.0;
 	public final static double mineScaleY = mineScale;
 
@@ -115,6 +128,9 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		featureShape.setScale(featureHorizontalScale);
 
 		caveShape = new SimplexNoiseGenerator(seed);
+		wormShapeA = new SimplexNoiseGenerator(seed + 101);
+		wormShapeB = new SimplexNoiseGenerator(seed + 202);
+		cheeseShape = new SimplexNoiseGenerator(seed + 303);
 		mineShape = new SimplexNoiseGenerator(seed + 1);
 		mineRegionShape = new SimplexNoiseGenerator(seed + 811);
 
@@ -489,11 +505,23 @@ public class ShapeProvider_Normal extends ShapeProvider {
 
 	@Override
 	public boolean notACave(CityWorldGenerator generator, int blockX, int blockY, int blockZ) {
-		if (generator.getSettings().includeCaves) {
-			double cave = caveShape.noise(blockX * caveScale, blockY * caveScaleY, blockZ * caveScale);
-			return !(cave > caveThreshold || cave < -caveThreshold);
-		} else
+		if (!generator.getSettings().includeCaves)
 			return true;
+
+		// Winding "noodle" caves: carve where two noise iso-surfaces cross — thin wandering tunnels that
+		// branch, plus the odd big "cheese" cavern. Default on for MODERN/APOCALYPSE, a toggle for the rest.
+		if (generator.getSettings().windingCaves) {
+			double a = wormShapeA.noise(blockX * wormScale, blockY * wormScaleY, blockZ * wormScale);
+			double b = wormShapeB.noise(blockX * wormScale, blockY * wormScaleY, blockZ * wormScale);
+			if (Math.abs(a) < wormEps && Math.abs(b) < wormEps)
+				return false; // on the intersection curve — a tunnel
+			double cheese = cheeseShape.noise(blockX * cheeseScale, blockY * cheeseScaleY, blockZ * cheeseScale);
+			return !(cheese > cheeseThreshold); // else solid, unless a rare cavern
+		}
+
+		// Classic blob caves: a single noise field, carve its extremes.
+		double cave = caveShape.noise(blockX * caveScale, blockY * caveScaleY, blockZ * caveScale);
+		return !(cave > caveThreshold || cave < -caveThreshold);
 	}
 
 }

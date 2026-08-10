@@ -111,6 +111,10 @@ public final class SettingsExample {
             terrain  — the land, its fluids, and decay
             ============================================================================
             includeCaves              true   Carve caves.
+            windingCaves              false  Winding "noodle" cave tunnels that wander + branch (vanilla-
+                                             like) instead of the classic noise blobs. On by default for
+                                             MODERN/APOCALYPSE; a free toggle for any style (needs
+                                             includeCaves). Never style-locked.
             includeLavaFields         true   Underground lava fields.
             includeSeas               true   Oceans/lakes. Off = a dry, land-only world.
             includeMountains          true   Mountainous terrain. Off = flatter.
