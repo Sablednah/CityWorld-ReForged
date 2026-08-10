@@ -229,6 +229,7 @@ EXTRAS = {
     "OPEN_EYEBLOSSOM": "P13 biodome: pale garden flower",
     "CRIMSON_STEM": "P13 biodome: nether",
     "WARPED_STEM": "P13 biodome: nether",
+    "MUSHROOM_STEM": "astral: giant-mushroom stem (was drawn with the cap block -> all one texture)",
     "NETHER_WART_BLOCK": "P13 biodome: nether",
     "WARPED_WART_BLOCK": "P13 biodome: nether",
     "CRIMSON_FUNGUS": "P13 biodome: nether",

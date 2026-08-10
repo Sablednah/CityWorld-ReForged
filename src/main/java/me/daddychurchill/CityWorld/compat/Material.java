@@ -735,7 +735,7 @@ public final class Material {
     public static final Material WOOD_DOOR = of(Blocks.OAK_DOOR); // legacy generic wooden door -> oak
     public static final Material WOOD_STEP = of(Blocks.OAK_SLAB); // legacy generic wooden slab -> oak
 
-    // ---- Modern extras (130) — blocks the 1.14 vocabulary never had -------------
+    // ---- Modern extras (131) — blocks the 1.14 vocabulary never had -------------
     public static final Material AMETHYST_CLUSTER = of(Blocks.AMETHYST_CLUSTER); // P12 interior: sparkle accent
     public static final Material ANCIENT_DEBRIS = of(Blocks.ANCIENT_DEBRIS); // P9: rare prize in the deepest mines (the reason they dug so far)
     public static final Material ANVIL = of(Blocks.ANVIL); // P9 mine prop: miners' camp
@@ -815,6 +815,7 @@ public final class Material {
     public static final Material MUD = of(Blocks.MUD); // P8 MODERN: muddy bottoms for carved swamp/mangrove pools; a 1.19 block
     public static final Material MUDDY_MANGROVE_ROOTS = of(Blocks.MUDDY_MANGROVE_ROOTS); // P13 biodome: swamp
     public static final Material MUD_BRICKS = of(Blocks.MUD_BRICKS); // P12 MODERN build stone
+    public static final Material MUSHROOM_STEM = of(Blocks.MUSHROOM_STEM); // astral: giant-mushroom stem (was drawn with the cap block -> all one texture)
     public static final Material NETHER_WART_BLOCK = of(Blocks.NETHER_WART_BLOCK); // P13 biodome: nether
     public static final Material OAK_HANGING_SIGN = of(Blocks.OAK_HANGING_SIGN); // P9 mine entrance: the named-mine headframe sign
     public static final Material OAK_WALL_HANGING_SIGN = of(Blocks.OAK_WALL_HANGING_SIGN); // P12 shop: exterior shopfront sign above the door

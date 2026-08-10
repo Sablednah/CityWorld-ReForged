@@ -78,7 +78,6 @@ public abstract class AstralMushroomsLot extends AstralNatureLot {
 	// the fine pore/stem texturing is the one cosmetic detail lost in the model change.
 	private static final BlockFace flesh = BlockFace.SELF;
 	private static final BlockFace shell = BlockFace.SELF;
-	private static final BlockFace trunk = BlockFace.DOWN;
 
 	private int mushX = 0;
 	private int mushZ = 0;
@@ -92,7 +91,9 @@ public abstract class AstralMushroomsLot extends AstralNatureLot {
 		mushZ = baseZ;
 		layerY = baseY + heightY;
 
-		blocks.setBlocks(mushX, baseY, layerY - 2, mushZ, getMushroomMaterial(), trunk);
+		// the STEM is its own block (stem texture on its sides) — drawing it with the cap block was what made
+		// the whole mushroom read as one flat texture
+		blocks.setBlocks(mushX, baseY, layerY - 2, mushZ, Material.MUSHROOM_STEM);
 	}
 
 	void nextMushroomLevel() {
