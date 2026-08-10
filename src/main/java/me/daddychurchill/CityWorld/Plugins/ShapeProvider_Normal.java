@@ -108,13 +108,11 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	private final static double cheeseScaleY = cheeseScale * 2;
 	private final static double cheeseThreshold = 0.865; // lower -> bigger caverns (spacing kept via the scale)
 
-	// MODERN lava (scattered pools, denser with depth) instead of a flat lava sea: fill a void with lava
-	// where a noise field is above a bar that DROPS as you descend — rare small pools just under the lava
-	// level, lots of lava down near the world floor.
-	private final static double lavaScale = 1.0 / 30.0;
-	private final static double lavaScaleY = 1.0 / 20.0;
-	private final static double lavaTopThreshold = 0.62; // at the lava level: rare, scattered pools
-	private final static double lavaDepthGain = 0.55; // how far the bar falls from the level down to the floor
+	// MODERN lava: scattered but FLAT-topped lava lakes instead of a flat sea (or 3D blobs). A 2D region
+	// field (no Y term, so a column is all-lava or all-not below the level) fills every void up to the lava
+	// level inside a lake — a flat lava surface, not blobs floating in the caves.
+	private final static double lavaScale = 1.0 / 80.0; // lava-lake region size (bigger = broader lakes)
+	private final static double lavaThreshold = 0.45; // higher -> rarer/smaller lava lakes
 
 	private final static double mineScale = 1.0 / 4.0;
 	public final static double mineScaleY = mineScale;
@@ -542,12 +540,9 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		if (!generator.isModernStyle())
 			return true; // classic and the rest keep the flat lava field
 
-		// MODERN: scattered pools whose bar drops with depth -> rare small pools up top, dense lava near the
-		// world floor. depth is 0 at the lava level and 1 at the world floor.
-		int floor = generator.worldMinY;
-		double depth = level <= floor ? 1.0 : (double) (level - blockY) / (level - floor);
-		double pool = lavaShape.noise(blockX * lavaScale, blockY * lavaScaleY, blockZ * lavaScale);
-		return pool > lavaTopThreshold - depth * lavaDepthGain;
+		// MODERN: a 2D lava-lake region (Y held at 0, so it's the same at every height) — inside a lake every
+		// void up to the level fills, so the lava has a flat top at the level, not blobs floating mid-cave.
+		return lavaShape.noise(blockX * lavaScale, 0.0, blockZ * lavaScale) > lavaThreshold;
 	}
 
 }
