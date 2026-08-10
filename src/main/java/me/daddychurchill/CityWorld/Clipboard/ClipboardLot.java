@@ -244,11 +244,15 @@ public class ClipboardLot extends IsolatedLot {
 	 */
 	private void finishStyleFill(CityWorldGenerator generator, RealBlocks chunk, ServerLevelAccessor level,
 			int nwX, int nwZ) {
-		int base = surfaceLevel(generator) - clip.groundLevelY; // the build's bottom row
-		if (generator.shapeProvider.findAtmosphereMaterialAt(generator, base) == Material.AIR)
-			return; // normal world, or the build stands above the flood line — nothing to fill
+		// what the world packs its empty space with below the flood line — water (FLOODED), snow (SNOWDUNES),
+		// sand (SANDDUNES). Sampled just under the LOWEST flood level so it's the fill even where dunes rise.
+		Material fillMat = generator.shapeProvider.findAtmosphereMaterialAt(generator,
+				generator.shapeProvider.findLowestFloodY(generator) - 1);
+		if (fillMat == Material.AIR)
+			return; // a normal (air) world — nothing to fill
 
-		int floodY = generator.shapeProvider.findHighestFloodY(generator);
+		int base = surfaceLevel(generator) - clip.groundLevelY; // the build's bottom row
+		boolean water = fillMat == Material.WATER;
 		int rotSizeX = Clipboard.swapsFootprint(rotation) ? clip.sizeZ : clip.sizeX;
 		int rotSizeZ = Clipboard.swapsFootprint(rotation) ? clip.sizeX : clip.sizeZ;
 		int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
@@ -258,15 +262,16 @@ public class ClipboardLot extends IsolatedLot {
 		for (int x = bx1; x < bx2; x++)
 			for (int z = bz1; z < bz2; z++) {
 				int wx = oX + x, wz = oZ + z;
-				for (int y = base; y <= floodY; y++) {
-					Material atmos = generator.shapeProvider.findAtmosphereMaterialAt(generator, y);
-					if (atmos == Material.AIR)
-						continue; // above the flood line for this column
+				// fill up to THIS column's flood/dune surface, not a flat level — so a snow/sand build follows
+				// the undulating drifts instead of getting a flat plateau (findFloodY carries the dune noise;
+				// it's flat for FLOODED, which is what we want there)
+				int top = generator.shapeProvider.findFloodY(generator, wx, wz);
+				for (int y = base; y <= top; y++) {
 					BlockPos pos = new BlockPos(wx, y, wz);
 					BlockState st = level.getBlockState(pos);
 					if (st.isAir())
-						chunk.setBlock(x, y, z, atmos);
-					else if (atmos == Material.WATER && st.hasProperty(BlockStateProperties.WATERLOGGED)
+						chunk.setBlock(x, y, z, fillMat);
+					else if (water && st.hasProperty(BlockStateProperties.WATERLOGGED)
 							&& !st.getValue(BlockStateProperties.WATERLOGGED))
 						level.setBlock(pos, st.setValue(BlockStateProperties.WATERLOGGED, true), Block.UPDATE_CLIENTS);
 				}
