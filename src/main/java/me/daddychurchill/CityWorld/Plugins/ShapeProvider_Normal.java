@@ -100,12 +100,12 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	// Winding "noodle" caves (MODERN): carve where TWO noise iso-surfaces cross (|a| < eps AND |b| < eps).
 	// The intersection of two surfaces is a 1-D curve, so this traces thin wandering, branching tunnels
 	// instead of the single-field blobs. A rare low-frequency "cheese" field opens the odd big cavern.
-	private final static double wormScale = 1.0 / 112.0; // lower frequency -> fewer, more-spaced tunnels
-	private final static double wormScaleY = 1.0 / 112.0; // isotropic -> tunnels tall enough to walk, not razor-thin
-	private final static double wormEps = 0.075; // half the tunnel thickness in noise space -> chunky, walkable
-	private final static double cheeseScale = 1.0 / 88.0; // lower frequency -> bigger, more-spaced caverns
+	private final static double wormScale = 1.0 / 112.0; // horizontal frequency -> tunnel count/spacing
+	private final static double wormScaleY = 1.0 / 88.0; // higher than wormScale -> keeps height in check as eps widens
+	private final static double wormEps = 0.095; // tunnel thickness -> wider (walkable); wormScaleY offsets the height
+	private final static double cheeseScale = 1.0 / 88.0; // frequency -> cavern spacing
 	private final static double cheeseScaleY = cheeseScale * 2;
-	private final static double cheeseThreshold = 0.88; // higher -> rarer caverns
+	private final static double cheeseThreshold = 0.865; // lower -> bigger caverns (spacing kept via the scale)
 
 	private final static double mineScale = 1.0 / 4.0;
 	public final static double mineScaleY = mineScale;
