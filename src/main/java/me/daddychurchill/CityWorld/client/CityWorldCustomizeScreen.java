@@ -300,10 +300,14 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
      * style locks, and rebuild the widgets so the values and the greyed-out (locked) ones both refresh.
      */
     private void onStyleChanged(WorldStyle newStyle) {
-        style = newStyle;
-        loadFrom(me.daddychurchill.CityWorld.CityWorldSettings.styleDefaults(newStyle));
-        lockedKeys = me.daddychurchill.CityWorld.CityWorldSettings.styleLocks(newStyle);
-        this.rebuildWidgets();
+        if (newStyle == style || this.minecraft == null)
+            return;
+        // Reopen the screen fresh for the new style rather than rebuilding in place: OptionsSubScreen keeps
+        // its scrolling list in a layout that rebuildWidgets() doesn't clear, so an in-place rebuild stacked
+        // a ghost list behind the options and jammed the style cycle on a stale button. A fresh screen loads
+        // the new style's defaults and recomputes the locks cleanly.
+        this.minecraft.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle,
+                me.daddychurchill.CityWorld.CityWorldSettings.styleDefaults(newStyle), this.onDone));
     }
 
     // ---- widget helpers ----------------------------------------------------------------------
