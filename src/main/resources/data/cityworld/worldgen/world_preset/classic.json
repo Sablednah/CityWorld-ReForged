@@ -11,8 +11,8 @@
           "deep_ocean": "minecraft:deep_ocean",
           "ocean": "minecraft:ocean",
           "beach": "minecraft:beach",
-          "low": "minecraft:plains",
-          "mid": "minecraft:forest",
+          "low": "minecraft:forest",
+          "mid": "minecraft:birch_forest",
           "high": "minecraft:taiga",
           "peak": "minecraft:snowy_slopes",
           "dry": "minecraft:desert"

@@ -78,19 +78,13 @@ public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes
         return low;
     }
 
-    // Land-biome bands as a fraction of the land's elevation range above sea level. Plains is kept
-    // thin so it hugs the flat city level; forest kicks in as soon as the land rises into hills; taiga
-    // and snowy take the higher slopes and peaks. (Deliberately NOT the shaper's tree-placement levels,
-    // which put plains→forest up at ~Y109 — far too tall a plains band for a mostly-flat city world.)
-    private static final int PLAINS_TOP_PCT = 8;
-    private static final int FOREST_TOP_PCT = 45;
-    private static final int TAIGA_TOP_PCT = 72;
-
     /**
-     * The biome for a column whose <em>terrain</em> (land, not water) surface sits at {@code terrainY}:
-     * deep ocean below the deep-sea line, ocean below sea, beach at the waterline, then a thin plains
-     * band and forest / taiga / snowy peaks up the slopes. A nature-decayed world is dry (desert)
-     * throughout, exactly as the shaper forced.
+     * The biome for a column whose <em>terrain</em> (land, not water) surface sits at {@code terrainY}.
+     * Replays 1.8 CityWorld's exact bands (see the ported {@code ShapeProvider_Normal}): deep ocean below
+     * the deep-sea line, ocean below sea, beach at the waterline, then FOREST from the waterline up to the
+     * shaper's {@code treeLevel}, BIRCH_FOREST to {@code evergreenLevel}, TAIGA to {@code snowLevel}, and
+     * snowy peaks above — keyed to the very same levels the shaper places trees at, not an approximation.
+     * A nature-decayed world is dry (desert) throughout, exactly as the shaper forced.
      */
     @Override
     public Holder<Biome> classify(CityWorldGenerator g, int terrainY, double temperature, double humidity,
@@ -102,15 +96,13 @@ public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes
         if (terrainY < g.seaLevel)
             return ocean;
         if (terrainY <= g.seaLevel)
-            return beach; // terrainY == seaLevel: the flush waterline
-        int range = Math.max(1, g.landRange);
-        int aboveSea = terrainY - g.seaLevel;
-        if (aboveSea <= range * PLAINS_TOP_PCT / 100)
-            return low;
-        if (aboveSea <= range * FOREST_TOP_PCT / 100)
-            return mid;
-        if (aboveSea <= range * TAIGA_TOP_PCT / 100)
-            return high;
-        return peak;
+            return beach; // the flush waterline
+        if (terrainY < g.treeLevel)
+            return low; // forest — from the waterline up (1.8 had no plains band)
+        if (terrainY < g.evergreenLevel)
+            return mid; // birch forest
+        if (terrainY < g.snowLevel)
+            return high; // taiga
+        return peak; // snowy peaks
     }
 }
