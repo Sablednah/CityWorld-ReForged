@@ -18,6 +18,9 @@ with statues, civic districts, factories and warehouses, farms with animals, par
 wild between them — with mines and sewers below, loot in the chests, and villagers (with names) in
 the streets.
 
+Battle-tested across 135 worlds and 3.2 million generated chunks — over 830 km² of procedurally
+generated city, more ground than New York City covers.
+
 ## What generates
 
 - **Terrain** faithful to the original — mountains, seas with beaches, caves — using CityWorld's own
