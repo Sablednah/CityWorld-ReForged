@@ -67,11 +67,11 @@ per-world, they ship as a **datapack**, not a global config: edit them by hand, 
 
 ## Commands
 
-- `/cityinfo` — what's under you: context, lot, nature %, the schematic underfoot.
-- `/cityworld` / `/cityworld leave` — teleport into/out of the CityWorld dimension.
-- `/cityschem <name>` / `/cityschem list` — paste or list catalog schematics.
-- `/cityfind <name>` / `/cityfind lot <kind>` — locate the nearest matching schematic or landmark lot.
-- `/cityexport [name]` — export the current world's settings as a datapack.
+`/cityinfo` tells you what's under your feet; `/cityfind`/`/cityfind lot`/`/cwlocate` track down a
+specific building, landmark or biome; `/cityschem` pastes catalog buildings by hand; `/cityexport`
+bottles a world's settings to hand to a server.
+
+**→ See the Commands page for every command with usage examples.**
 
 ## Requirements
 
