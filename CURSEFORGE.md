@@ -38,20 +38,22 @@ Pick **CityWorld** as your world type and you land in a living city:
 
 ## World styles
 
-Ten selectable styles, each its own world type (`cityworld:<style>`) or a click away on the **Customize**
-screen:
+Thirteen selectable styles, each its own world type (`cityworld:<style>`) or a click away on the
+**Customize** screen:
 
 | Style | What it is |
 |---|---|
-| **Normal** | The classic all-rounder — cities, farms and wild nature mixed. |
+| **Modern** | The default — full modern Minecraft: tall builds, modern blocks/ores/trees/ice, winding caves, lush cave patches, shop trades, employed villagers. |
+| **Classic** | The faithful 1.8-era CityWorld look — the original style this port is based on. |
+| **Apocalypse** | A Modern city gone to ruin — buildings slowly decaying, nature reclaiming, a rare hidden Fallout-style vault complex behind a blast door. |
+| **Destroyed** | Heavier war-zone damage, with fires. |
 | **Metro** | Wall-to-wall city, no gaps. |
 | **Nature** | All wild, no cities. |
 | **Sparse** | Cities, but far apart. |
-| **Apocalypse** | A modern city gone to ruin — buildings slowly decaying, nature reclaiming, a rare hidden Fallout-style vault complex behind a blast door. |
-| **Destroyed** | Heavier war-zone damage, with fires. |
 | **Flooded** | A drowned world. |
 | **Sand Dunes** | Buried in shifting desert. |
 | **Snow Dunes** | Buried in snowdrifts. |
+| **Floating** | Low terrain with houses and whole cities hovering in the air. |
 | **Maze** | A labyrinth of roads. |
 | **Astral** | Alien mushroom terrain. |
 

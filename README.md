@@ -10,7 +10,7 @@ mines, sewers, farms and wild nature**, all seed-deterministic.
 | **Loader** | NeoForge 21.11.42 |
 | **Java** | 21 |
 | **Licence** | GPL-3.0-only |
-| **Status** | ✅ Playable — full cities generate, inhabited and furnished, across 10 world styles |
+| **Status** | ✅ Playable — full cities generate, inhabited and furnished, across 13 world styles |
 
 Drop the jar in your `mods/` folder and pick **CityWorld** as the world type (or one of its styles),
 and you get endless procedurally-generated cities: named streets, furnished buildings, roundabouts
@@ -44,11 +44,13 @@ generated city, more ground than New York City covers.
 
 ## World styles
 
-Ten styles ship, each selectable as its own world type (`cityworld:<style>`) or via the **Customize**
-button on the create-world screen:
+Thirteen styles ship, each selectable as its own world type (`cityworld:<style>`) or via the
+**Customize** button on the create-world screen:
 
-`normal` · `metro` (all city) · `nature` (all wild) · `sparse` (cities far apart) · `destroyed`
-(ruined) · `flooded` · `sanddunes` · `snowdunes` · `maze` · `astral` (alien).
+`city`/**modern** (the default, full modern MC) · `classic` (the faithful 1.8-era look) · `apocalypse`
+(modern gone to ruin) · `destroyed` (heavier war-zone damage) · `metro` (all city) · `nature` (all wild)
+· `sparse` (cities far apart) · `flooded` · `sanddunes` · `snowdunes` · `floating` (houses/cities
+hovering over low terrain) · `maze` · `astral` (alien).
 
 ## Configuring a world
 
