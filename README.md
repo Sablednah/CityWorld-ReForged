@@ -21,15 +21,23 @@ the streets.
 ## What generates
 
 - **Terrain** faithful to the original — mountains, seas with beaches, caves — using CityWorld's own
-  vendored noise, extended down to the modern `-64..319` world with deepslate strata.
+  vendored noise, extended down to the modern `-64..319` world with deepslate strata. MODERN/APOCALYPSE
+  add wandering, branching "noodle" cave tunnels (a toggle, off by default elsewhere), rare lush-biome
+  cave patches (moss, glow-berry vines, dripleaf, pools with axolotls/frogs/tropical fish, surface
+  azaleas), and basalt-lined lava pools instead of a flat lava sea.
 - **Cities** — roads (with real street-name signs), sidewalks, roundabouts, bridges and tunnels;
   buildings from houses to highrises, furnished inside; municipal, industrial and farm districts.
-- **Underground** — mine networks, wet sewers, bunkers, basements and cisterns, with loot chests and
-  mob spawners.
-- **Inhabitants** — villagers (named), animals in the fields, fish in the seas, hostiles in the dark.
-- **Set-pieces** — oil platforms, castles, radio towers, flying saucers, hot-air balloons, campgrounds.
+- **Underground** — mine networks (with vertical lift shafts), wet sewers, bunkers, basements and
+  cisterns, with loot chests and mob spawners. APOCALYPSE hides a rare Fallout-style vault complex —
+  multiple furnished levels behind a blast door — off the road tunnels through big mountains.
+- **Inhabitants** — villagers (named, employed at their shop's trade), animals in the fields, fish in
+  the seas, hostiles in the dark.
+- **Set-pieces** — oil platforms, castles, radio towers, flying saucers, hot-air balloons, campgrounds,
+  zoos and biodomes.
 - **Schematics** — a bundled catalog of classic buildings, plus any you drop in yourself.
-- **Decay** — an optional "apocalypse" mode that chews ruins into the buildings and roads.
+- **Decay** — two ruined presets with independently tunable intensity, fire density and how much survives
+  intact: **apocalypse** (buildings slowly decaying, nature reclaiming, no fires) and **destroyed**
+  (heavier war-zone damage, fires on).
 
 ## World styles
 

@@ -257,6 +257,11 @@ public abstract class PlatLot {
 		if (generator.isModernStyle() && generator.getSettings().includeCaves)
 			me.daddychurchill.CityWorld.Support.LushCaves.apply(generator, this, chunk, chunkOdds);
 
+		// Lava lakes: line the cave walls/floor bordering a lava pool with basalt, so the pool's noise-region
+		// edge (a flat wall where it cuts across a cave tunnel) reads as a natural basalt-lined pocket instead.
+		if (generator.getSettings().includeLavaFields)
+			me.daddychurchill.CityWorld.Support.LavaLakes.apply(generator, this, chunk, chunkOdds);
+
 		// Apocalypse: hide zombie spawners in the ruins' cellars — some buried in a sealed pocket UNDER
 		// the basement floor so they can't be seen. Building lots only (they have the cellars); sewers and
 		// caves get their own zombie spawners through the enabled spawner bags.

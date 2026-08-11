@@ -76,7 +76,21 @@ public final class LushCaves {
     }
 
     private static boolean isCeiling(RealBlocks real, int x, int y, int z) {
-        return !real.isEmpty(x, y + 1, z) && !real.isWater(x, y + 1, z);
+        // require a broad, thick backing so we're decorating real ceiling, not a small floating remnant the
+        // cave-carving noise leaves behind (a single detached lump reads as a moss block hanging in mid-air
+        // once coloured — two-thick alone wasn't enough, it just needed to be a *wide* lump too)
+        if (real.isEmpty(x, y + 1, z) || real.isWater(x, y + 1, z) || real.isEmpty(x, y + 2, z))
+            return false;
+        int solidSides = 0;
+        if (!real.isEmpty(x + 1, y + 1, z))
+            solidSides++;
+        if (!real.isEmpty(x - 1, y + 1, z))
+            solidSides++;
+        if (!real.isEmpty(x, y + 1, z + 1))
+            solidSides++;
+        if (!real.isEmpty(x, y + 1, z - 1))
+            solidSides++;
+        return solidSides >= 3;
     }
 
     private static void decorateFloor(CityWorldGenerator generator, RealBlocks real, int x, int z, int y, Odds odds) {
@@ -127,13 +141,15 @@ public final class LushCaves {
             real.setBlock(x, y, z, Material.SPORE_BLOSSOM); // attaches under the solid ceiling above
     }
 
-    /** A glow-berry cave vine dangling from the ceiling — 1-4 lit segments while there's open air below. */
+    /** A cave vine dangling from the ceiling — 1-4 segments while there's open air below, most bare and only
+     *  the odd segment lit with a glow berry (a vine that's ALL berries reads as a string of lanterns). */
     private static void hangGlowVine(RealBlocks real, ServerLevelAccessor level, int x, int z, int wx, int y, int wz,
             Odds odds) {
         int len = 1 + odds.getRandomInt(4);
         for (int i = 0; i < len && real.isEmpty(x, y - i, z); i++)
             level.setBlock(new BlockPos(wx, y - i, wz),
-                    Blocks.CAVE_VINES_PLANT.defaultBlockState().setValue(BlockStateProperties.BERRIES, true),
+                    Blocks.CAVE_VINES_PLANT.defaultBlockState().setValue(BlockStateProperties.BERRIES,
+                            odds.playOdds(0.2)),
                     Block.UPDATE_CLIENTS);
     }
 
@@ -154,8 +170,10 @@ public final class LushCaves {
                     surfaceY = y;
                     break;
                 }
-            if (surfaceY == Integer.MIN_VALUE || real.isWater(x, surfaceY, z))
-                continue; // no land surface above sea here
+            // only onto actual grass — not tree canopy (floats) and not a building roof (mountain shacks);
+            // grass block only occurs on real, load-bearing terrain
+            if (surfaceY == Integer.MIN_VALUE || !real.isType(x, surfaceY, z, Material.GRASS_BLOCK))
+                continue;
             real.setBlock(x, surfaceY, z, Material.ROOTED_DIRT);
             if (odds.playOdds(0.4))
                 real.setBlock(x, surfaceY - 1, z, Material.HANGING_ROOTS); // roots dripping under the rooted dirt

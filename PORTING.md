@@ -2,18 +2,92 @@
 
 ## ▶ Resume here (next task)
 
-**▶▶ NEXT: playtest polish + owner's pick. All the big content arcs have shipped.** Interiors/furniture,
-villager job blocks, shop-themed buildings, overgrowth, **park zones (zoo + biodome)**, the **APOCALYPSE
-world style**, and the **`/cityfind lot` landmark finder** are all done, verified and deployed (logged
-below). What genuinely remains is small:
+**▶▶ NEXT: release packaging (CurseForge).** All content arcs — including every item this doc used to
+list as "remaining" — are done, verified and deployed. There is no open feature backlog; the playtest
+loop (owner plays, reports, fix, redeploy) closed out the last of it in 2026-08 (see the dated block
+below). What's left is publishing: pick a version scheme, cut a tagged GitHub release with a built jar,
+then a CurseForge project page pointing at it.
 
-- **Finer decay knobs** — graduated per-category demolition control. Apocalypse uses the coarse on/off
-  flags (`includeDecayedRoads/Buildings/Nature`); the owner wants finer knobs. Unblocked. See
-  [[cityworld-demolition-more-options-later]].
+- ~~Finer decay knobs~~ **DONE (2026-08)** — graduated per-category demolition control (intensity,
+  fire density, pristine-road sparing), with APOCALYPSE/DESTROYED presets encoding the owner's two-tier
+  vision (gentle reclaim vs heavy war damage). See [[cityworld-demolition-more-options-later]] and the
+  dated block below.
 - ~~A few interior deco blocks not yet woven in~~ **DONE (2026-07)** — chains (chandeliers), copper
   chests, richer candles + candle-cake, decorated pots all in the `Furniture` accent vocabulary; lightning
   rods on highrise roofs + radio-tower aerials; hanging lanterns in the mines. See the deco log below.
 - ~~Building copper weathering~~ **CLOSED (owner: a-ok, leave as-is 2026-07)** — not doing it.
+
+**Playtest-polish wave landed (2026-08, most recent — read this before the older entries below).** A long
+run of the owner playing a MODERN/APOCALYPSE world and reporting back, each fix redeployed and re-tested
+in-world (not just probed):
+
+- **Vault lift shafts reworked.** The original `hasLift` distribution (`cx*7+cz*13 mod 70`) was
+  mathematically stuck — only fires when `cz≡0 mod 7`, so most chunk-rows never got one — replaced with a
+  bit-mixed hash giving a uniform ~1/24. Geometry reworked from owner feedback across several rounds: the
+  per-level landing gantry (which fouled the moving car) is gone, the shaft is a clear vertical column with
+  a central wall guide-rail + `IRON_CHAIN` cables, a ladder run flush against each level's door (no
+  freestanding landing), a hanging `LIFT` sign over each door, `COPPER_GRATE` winch/anchor machinery above
+  and below each chain segment, and a 4-tall open-interior car (bars/chains removed so it's walkable) whose
+  floor and roof are `BIRCH_TRAPDOOR` hatches where the ladder passes through (floor hatch flush with the
+  floor, not the block below). **Confirmed perfect by the owner** after this round. See
+  [[cityworld-vault-feature]].
+- **Finer decay knobs + APOCALYPSE/DESTROYED split** (see the DONE bullet above) — plus a fire-gating bug:
+  `destroyArea`'s crater rubble only checked `includeFires`, not `includeDecayedFires` like `destroyWithin`
+  did, so APOCALYPSE (fires off, decayed-fires off) still caught its crater debris alight. Both paths now
+  gate identically. See [[cityworld-apocalypse-aesthetic]].
+- **CLASSIC now replicates 1.8 CityWorld's biomes**: dropped the plains band 1.8 never had, added birch
+  forest, and rebanded `CityWorldBiomeSource.classify` on the shaper's actual `treeLevel`/`evergreenLevel`/
+  `snowLevel` (the exact Y-levels the original Bukkit `setBiome` push used) instead of approximate percent
+  bands — forest-dominant cities, birch/taiga on hills, zero plains. Also filled in biome coverage that was
+  stuck on placeholder `plains` for `nature`/`metro`/`sparse` (→ `cityworld:climate`) and `sanddunes`/
+  `snowdunes`/`flooded` (→ desert/snowy_plains/ocean). See [[cityworld-biomes-and-outland]].
+- **Customize screen overhaul.** Switching the Style dropdown used to leave every other toggle as-is, so
+  settings from the previous style (e.g. Schematics, on by default) silently rode into styles that don't
+  use them. Fixed: changing style now reloads that style's own defaults and rebuilds the screen. Locked
+  settings (the ones `validateSettingsAgainstWorldStyle` forces) now grey out with a tooltip, detected
+  generically (`CityWorldSettings.styleLocks` — validates all-on vs all-off and keeps the keys that agree,
+  so it can't drift from the actual lock logic as styles evolve). A "soft default" pattern was introduced
+  for style-appropriate-but-overridable settings (set in `styleDefaults`/the datapack, never in `validate`,
+  so it stays toggleable and ungreyed) — used for `windingCaves` below. See
+  [[cityworld-style-testing-fixes]].
+- **Schematic covering fixed for FLOODED/SANDDUNES/SNOWDUNES**: pasted buildings left dry air pockets
+  because the fill only used the flat `findHighestFloodY`. `ClipboardLot.finishStyleFill` now fills each
+  column to its own `findFloodY` (following the dune surface, not a flat plateau) with the right material
+  (water/sand/snow), plus a partial snow-layer cap at the true edge instead of a solid-block step. Astral
+  mushroom stems were rendering with the cap-block texture (all-one-texture bug) — now use `MUSHROOM_STEM`.
+  See [[cityworld-style-testing-fixes]].
+- **Winding ("noodle") caves for MODERN** — a new `windingCaves` setting (default on for MODERN/
+  APOCALYPSE, off elsewhere but freely toggleable by any style) replaces single-noise-blob caves with
+  tunnels that wander and branch like vanilla, faked via the intersection of two simplex iso-surfaces
+  (`|wormA|<eps AND |wormB|<eps`, plus a rare low-frequency "cheese" cavern field) — vanilla `WorldCarver`s
+  aren't reachable from this generator (it extends the base `ChunkGenerator`, no `NoiseChunk`/
+  `CarvingContext`), so the shape is faked in `ShapeProvider_Normal.notACave` rather than carved for real.
+  Tuned over several owner-driven passes to a final set of knobs (`wormScale 1/112`, `wormScaleY 1/88`,
+  `wormEps 0.095`, `cheeseScale 1/88`, `cheeseThreshold 0.865`).
+- **Lush cave decoration pass** (`Support.LushCaves`, MODERN, gated on a seed-coherent ~5%-of-80-block
+  region so patches are rare and well-spaced): moss- and clay-lined floors, moss carpet, small/big
+  dripleaf, glow-berry cave vines and spore blossoms on the ceiling, rare 2×2 water pools stocked with
+  axolotls/frogs/tropical fish, and — on nature lots above a lush patch — a surface azalea on rooted dirt.
+  Two owner-reported bugs fixed after the first cut: (1) the surface azalea **never actually generated** —
+  the scan used `findBlockY` (the base noise terrain height, not the real placed surface) and a broken
+  empty-space search; fixed by scanning the real placed blocks top-down for the first solid-with-air-above
+  cell; (2) azaleas were floating / landing on tree canopies and building roofs — fixed by requiring the
+  surface block be an actual `GRASS_BLOCK`, not just "any solid block". Ceiling moss also read as floating
+  green cubes detached in mid-air (the noodle-cave noise can leave small-but-thick isolated rock lumps in a
+  cavern); fixed by requiring the ceiling to be both two-thick *and* backed on ≥3 of its 4 horizontal
+  neighbours before decorating it, so only a genuinely broad slab qualifies. Cave vines were also all
+  lit with glow berries (`BERRIES=true` on every segment); now only ~20% of segments carry a berry so a
+  hanging vine reads as mostly bare with the odd lit spot, not a string of lanterns. See
+  [[cityworld-winding-caves]] (also holds the lush + lava notes).
+- **Lava reworked from a flat sea (and then floating 3D blobs) to flat-topped pools.**
+  `ShapeProvider.lavaFillAt` is a per-block hook (base: flat field below `lavaFieldLevel`;
+  `ShapeProvider_Normal` overrides it for MODERN) — the first MODERN attempt used 3D noise, which reads as
+  floating blobs rather than pools. Fixed with a 2D lava-lake region field (noise sampled at `y=0`, i.e.
+  flat) so a lake fills every void up to its level with a genuinely flat top. Then, because the pool's
+  region boundary can cut straight across a winding-cave tunnel and leave an unnaturally flat vertical
+  wall of raw stone, a new decoration pass (`Support.LavaLakes`) lines the pool's sides and floor (never
+  the open top) with `BASALT` — but only where a lava cell has ≥2 lava neighbours, so a lone flowing drip
+  stays untouched. See [[cityworld-winding-caves]].
 
 **Two things this doc *used* to list as remaining are actually DONE** (verified 2026-07): schematic
 **rotation is applied** (random 1-of-4 in `PlatMap.placeSpecificClip`; mirroring too, but opt-in per
@@ -273,7 +347,9 @@ an "it stays in-chunk" assumption is only as good as the widest thing that can b
   ladders) scattered on the ledge *opposite the rail* so it never fouls the track.
 - **Vertical lift shafts** at 4-way crossings: a 5×5 cut-copper frame around a hollow 3×3 you can drop
   straight down, a chain cable down the centre, a ladder up one corner, and a copper-grate landing at
-  the bottom — carved through the crossing rails so nothing floats.
+  the bottom — carved through the crossing rails so nothing floats. **Reworked 2026-08** — see the
+  playtest-polish wave in "Resume here" above; the landing gantry and freestanding car interior described
+  here are gone, replaced by hanging signs, in-frame door thresholds, and trapdoor-hatch floors/roofs.
 - **Named entrances**: each mine mouth gets a dark-oak gallows headframe with an `OAK_HANGING_SIGN`
   swinging beneath, procedurally named from a 20×20 prefix/noun table ("Sable's Gorge", "Widow's Lode",
   … "Est. 18xx"). Signs write **both faces** so they read front and back.
