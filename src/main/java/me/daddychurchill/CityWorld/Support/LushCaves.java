@@ -155,7 +155,12 @@ public final class LushCaves {
 
     /** On a nature-lot surface over a lush cave: an azalea (sometimes flowering) on rooted dirt, roots below. */
     private static void surfaceAzalea(CityWorldGenerator generator, RealBlocks real, int oX, int oZ, Odds odds) {
-        int tries = 6 + odds.getRandomInt(4); // a few, so a lush surface reads as a patch you can spot
+        // A lush REGION spans several chunks, and this runs per chunk — 6-10 azaleas in every one of them
+        // stacked up into a thicket over the whole patch. Most chunks now get none, and the ones that do get
+        // one or two, so a region ends up with a scattered handful: a tell you notice, not a shrubbery.
+        if (!odds.playOdds(0.2))
+            return;
+        int tries = 1 + odds.getRandomInt(2);
         for (int i = 0; i < tries; i++) {
             int x = odds.getRandomInt(2, 13), z = odds.getRandomInt(2, 13);
             if (!lushRegion(generator, oX + x, oZ + z))

@@ -297,8 +297,23 @@ public final class Overgrowth {
                     : r < 97 ? Material.PALE_MOSS_CARPET
                     : r < 99 ? Material.BROWN_MUSHROOM : Material.RED_MUSHROOM;
 
-        if (!tryPlace(level, pos, pick.getBlockState()))
+        if (!tryPlace(level, pos, scatter(pick.getBlockState(), odds)))
             tryPlace(level, pos, Material.MOSS_CARPET.getBlockState()); // always-safe fallback
+    }
+
+    /** Vary a segmented ground cover's shape so a litter-strewn floor isn't a grid of identical tiles.
+     *  Leaf litter and pink petals are {@code SegmentableBlock}s: their default state is always 1 segment
+     *  facing north, so placing it raw made every scrap of debris look the same. Roll the segment count and
+     *  facing instead; blocks without those properties pass straight through untouched. */
+    private static BlockState scatter(BlockState state, Odds odds) {
+        if (state.hasProperty(BlockStateProperties.SEGMENT_AMOUNT))
+            // lean sparse — a floor of 4-segment blocks reads as full cover, not scattered debris
+            state = state.setValue(BlockStateProperties.SEGMENT_AMOUNT,
+                    odds.playOdds(0.55) ? 1 : odds.playOdds(0.6) ? 2 : odds.playOdds(0.6) ? 3 : 4);
+        if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING))
+            state = state.setValue(BlockStateProperties.HORIZONTAL_FACING,
+                    Direction.from2DDataValue(odds.getRandomInt(4)));
+        return state;
     }
 
     private static boolean tryPlace(ServerLevelAccessor level, BlockPos pos, BlockState state) {
