@@ -21,6 +21,81 @@ the streets.
 Battle-tested across 135 worlds and 3.2 million generated chunks — over 830 km² of procedurally
 generated city, more ground than New York City covers.
 
+![Skyline](screengrabs/skyline.jpg)
+
+## Screenshots
+
+### Cityscape
+
+![Street level](screengrabs/street-level.jpg)
+*Named streets, sidewalks, and crosswalks.*
+
+![Suburbs](screengrabs/suburbs.jpg)
+*A quiet suburb road winding through the trees.*
+
+![Bridge](screengrabs/bridge.jpg)
+*A road bridge into the city — that crane means there's more still going up.*
+
+![Tunnel](screengrabs/tunnel.jpg)
+*Road tunnels carve straight through the mountains.*
+
+![Furnished interior](screengrabs/inside.jpg)
+*Furnished interiors, right down to the dining table.*
+
+![Schematic building at night](screengrabs/schematics.jpg)
+*One of the bundled catalog schematics, lit up after dark.*
+
+### Nature and underground
+
+![Mountain through downtown](screengrabs/biomes.jpg)
+*CityWorld's own terrain pushes right through downtown — a peak between the towers.*
+
+![Castle on a snowy peak](screengrabs/peak.jpg)
+*A castle keep crowns a snow-capped peak, radio towers and skyline below.*
+
+![Lush cave pocket](screengrabs/lush-cave.jpg)
+*A lush cave pocket underground — moss, glow-berry vines, spore blossoms, and an axolotl pool.*
+
+![Basalt-lined lava pool](screengrabs/lava-pool.jpg)
+*Basalt-lined lava pools instead of a flat lava sea.*
+
+![Mine tunnel](screengrabs/mine-tunnel.jpg)
+*Copper-age mine tunnels — rails, lanterns, and (if you're unlucky) a cave-spider nest.*
+
+### Districts and set-pieces
+
+![Zoo enclosure](screengrabs/zoo.jpg)
+*A themed zoo enclosure in a park district — polar bears included.*
+
+![Biodome](screengrabs/biodome.jpg)
+*A glass biodome, one of the park district's catch-all attractions.*
+
+![Oil platform at night](screengrabs/oil-platform.jpg)
+*An oil platform at night, out past a flooded shoreline.*
+
+### Apocalypse style
+
+![Apocalypse district from above](screengrabs/apocalypse.jpg)
+*APOCALYPSE from above — nature reclaiming a ruined park district.*
+
+![Decayed high-rise](screengrabs/apocalypse-highrise.jpg)
+*Decay up close — collapsed floors and vines climbing a ruined high-rise.*
+
+![Ruined street](screengrabs/apocalypse-street.jpg)
+*A ruined street, cracked crosswalk, buildings gone to moss.*
+
+![Ruined skyline in daylight](screengrabs/apocalypse-ruins.jpg)
+*The same ruin, in daylight.*
+
+![Ruined plaza](screengrabs/apocalypse-plaza.jpg)
+*A ruined plaza — a roundabout statue still standing in the distance.*
+
+![Winchester Tavern](screengrabs/wait-for-it-to-blow-over.jpg)
+*The Winchester Tavern — one of the classic catalog schematics, waiting for all of this to blow over.*
+
+![Vault corridor](screengrabs/vault.jpg)
+*APOCALYPSE hides something extra: a rare Fallout-style vault behind a blast door.*
+
 ## What generates
 
 - **Terrain** faithful to the original — mountains, seas with beaches, caves — using CityWorld's own

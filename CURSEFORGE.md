@@ -64,8 +64,8 @@ toggles, city radius, decay intensity, even the villager-name and mob lists. Bec
 per-world, they ship as a **datapack**, not a global config: edit them by hand, or use the in-game
 **Customize** screen and export what you like with `/cityexport`.
 
-**→ See the Configuration page for the full settings reference, example datapacks, and guides
-(a gentler apocalypse, sparse cities, custom villager names, taller skyscrapers, and more).**
+**→ Full settings reference, example datapacks, and guides (a gentler apocalypse, sparse cities,
+custom villager names, taller skyscrapers, and more): [sablecraft.co.uk/cityworld-reforged](https://sablecraft.co.uk/cityworld-reforged/)**
 
 ## Commands
 
@@ -73,7 +73,7 @@ per-world, they ship as a **datapack**, not a global config: edit them by hand, 
 specific building, landmark or biome; `/cityschem` pastes catalog buildings by hand; `/cityexport`
 bottles a world's settings to hand to a server.
 
-**→ See the Commands page for every command with usage examples.**
+**→ Every command with usage examples: [sablecraft.co.uk/cityworld-reforged](https://sablecraft.co.uk/cityworld-reforged/)**
 
 ## Requirements
 
@@ -89,4 +89,5 @@ CityWorld is licensed under **GPL-3.0-only**.
 - Terrain noise vendored from Bukkit (GPL-3), in turn derived from Stefan Gustavson's public-domain
   simplex work.
 
+Full docs, screenshots and guides: **[sablecraft.co.uk/cityworld-reforged](https://sablecraft.co.uk/cityworld-reforged/)**
 Source, issue tracker and full port history: see the GitHub repository.
