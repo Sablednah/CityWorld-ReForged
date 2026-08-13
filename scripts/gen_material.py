@@ -155,6 +155,15 @@ EXTRAS = {
     "AZALEA": "P10 overgrowth: azalea bush reclaiming corners",
     "FLOWERING_AZALEA": "P10 overgrowth: flowering azalea bush",
     "AZALEA_LEAVES": "P10 overgrowth: azalea foliage for small reclaim bushes/trees",
+    # P14 overgrowth clutter: modern (1.20-1.21.5) vegetation, so a reclaimed street isn't just moss and
+    # azalea. Leaves come from the existing per-species constants; these are the ground-level scatter.
+    "BUSH": "P14 overgrowth: plain leafy bush (1.21.5)",
+    "FIREFLY_BUSH": "P14 overgrowth: rare glowing firefly bush (1.21.5)",
+    "WILDFLOWERS": "P14 overgrowth: segmented wildflower patch (1.21.5)",
+    "SWEET_BERRY_BUSH": "P14 overgrowth: berry bush gone feral",
+    "SHORT_DRY_GRASS": "P14 overgrowth: dry grass for arid/ruined ground (1.21.5)",
+    "TALL_DRY_GRASS": "P14 overgrowth: tall dry grass (1.21.5)",
+    "CHERRY_LEAVES": "P14 overgrowth: cherry foliage for biome-matched shrubs",
     "HANGING_ROOTS": "P10 overgrowth: roots dangling from ceilings/overhangs",
     "SPORE_BLOSSOM": "P10 overgrowth: spore blossom on ceilings",
     "SMALL_DRIPLEAF": "P10 overgrowth: dripleaf in damp corners",

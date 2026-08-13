@@ -171,7 +171,8 @@ Requires a JDK 21 (standard [NeoForge ModDevGradle](https://github.com/neoforged
 ./deploy.sh              # build + copy the jar into a NeoForge test instance
 ```
 
-See **`PORTING.md`** for the full port history, architecture notes, and the plan going forward.
+See **`CHANGELOG.md`** for what changed in each release, and **`PORTING.md`** for the full port
+history, architecture notes, and the plan going forward.
 
 ## Licence and credits
 

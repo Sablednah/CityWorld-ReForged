@@ -735,7 +735,7 @@ public final class Material {
     public static final Material WOOD_DOOR = of(Blocks.OAK_DOOR); // legacy generic wooden door -> oak
     public static final Material WOOD_STEP = of(Blocks.OAK_SLAB); // legacy generic wooden slab -> oak
 
-    // ---- Modern extras (133) — blocks the 1.14 vocabulary never had -------------
+    // ---- Modern extras (140) — blocks the 1.14 vocabulary never had -------------
     public static final Material AMETHYST_CLUSTER = of(Blocks.AMETHYST_CLUSTER); // P12 interior: sparkle accent
     public static final Material ANCIENT_DEBRIS = of(Blocks.ANCIENT_DEBRIS); // P9: rare prize in the deepest mines (the reason they dug so far)
     public static final Material ANVIL = of(Blocks.ANVIL); // P9 mine prop: miners' camp
@@ -752,11 +752,13 @@ public final class Material {
     public static final Material BLACKSTONE = of(Blocks.BLACKSTONE); // P12 MODERN build stone
     public static final Material BLAST_FURNACE = of(Blocks.BLAST_FURNACE); // P9 mine prop: miners' camp
     public static final Material BLUE_ICE = of(Blocks.BLUE_ICE); // P8 MODERN: glacier-blue ice for the highest peaks; 1.14 had none
+    public static final Material BUSH = of(Blocks.BUSH); // P14 overgrowth: plain leafy bush (1.21.5)
     public static final Material CANDLE = of(Blocks.CANDLE); // P12 interior: tabletop/shelf candle accent
     public static final Material CANDLE_CAKE = of(Blocks.CANDLE_CAKE); // P14 interior: lit-cake accent on a table
     public static final Material CARTOGRAPHY_TABLE = of(Blocks.CARTOGRAPHY_TABLE); // P9 mine prop: miners' camp (drawing up plans)
     public static final Material CAVE_VINES = of(Blocks.CAVE_VINES); // P10 overgrowth: glow-berry vines hanging from ledges
     public static final Material CAVE_VINES_PLANT = of(Blocks.CAVE_VINES_PLANT); // lush caves: the ceiling-anchored top of a glow-berry vine
+    public static final Material CHERRY_LEAVES = of(Blocks.CHERRY_LEAVES); // P14 overgrowth: cherry foliage for biome-matched shrubs
     public static final Material CHISELED_BOOKSHELF = of(Blocks.CHISELED_BOOKSHELF); // P12 interior: studies/libraries
     public static final Material CHISELED_COPPER = of(Blocks.CHISELED_COPPER); // P12 interior: decorative modern wall/counter block
     public static final Material CHISELED_POLISHED_BLACKSTONE = of(Blocks.CHISELED_POLISHED_BLACKSTONE); // P12 MODERN build stone
@@ -792,6 +794,7 @@ public final class Material {
     public static final Material EXPOSED_COPPER_CHEST = of(Blocks.EXPOSED_COPPER_CHEST); // P9 copper mine: loot chest (exposed)
     public static final Material EXPOSED_COPPER_GRATE = of(Blocks.EXPOSED_COPPER_GRATE); // P9 copper mine: cage/machinery grate (exposed)
     public static final Material EXPOSED_CUT_COPPER = of(Blocks.EXPOSED_CUT_COPPER); // P12 MODERN build stone
+    public static final Material FIREFLY_BUSH = of(Blocks.FIREFLY_BUSH); // P14 overgrowth: rare glowing firefly bush (1.21.5)
     public static final Material FLETCHING_TABLE = of(Blocks.FLETCHING_TABLE); // P11 shop: fletcher's job block
     public static final Material FLOWERING_AZALEA = of(Blocks.FLOWERING_AZALEA); // P10 overgrowth: flowering azalea bush
     public static final Material FLOWERING_AZALEA_LEAVES = of(Blocks.FLOWERING_AZALEA_LEAVES); // P13 biodome: flower forest / jungle canopy
@@ -847,6 +850,7 @@ public final class Material {
     public static final Material RED_SAND = of(Blocks.RED_SAND); // P8 MODERN: badlands surface; the 1.14 Bukkit source never referenced it
     public static final Material RESIN_BRICKS = of(Blocks.RESIN_BRICKS); // P12 MODERN build stone
     public static final Material ROOTED_DIRT = of(Blocks.ROOTED_DIRT); // lush caves: rooted dirt under a surface azalea (hanging roots drip below)
+    public static final Material SHORT_DRY_GRASS = of(Blocks.SHORT_DRY_GRASS); // P14 overgrowth: dry grass for arid/ruined ground (1.21.5)
     public static final Material SHORT_GRASS = of(Blocks.SHORT_GRASS); // P10 overgrowth: grass tufts pushing through
     public static final Material SHROOMLIGHT = of(Blocks.SHROOMLIGHT); // P13 biodome: nether light
     public static final Material SMALL_DRIPLEAF = of(Blocks.SMALL_DRIPLEAF); // P10 overgrowth: dripleaf in damp corners
@@ -860,6 +864,8 @@ public final class Material {
     public static final Material SPORE_BLOSSOM = of(Blocks.SPORE_BLOSSOM); // P10 overgrowth: spore blossom on ceilings
     public static final Material STONECUTTER = of(Blocks.STONECUTTER); // P9 mine prop: miners' camp
     public static final Material STONE_BUTTON = of(Blocks.STONE_BUTTON); // P15 vault: the surface-hut iron-door opener (industrial button)
+    public static final Material SWEET_BERRY_BUSH = of(Blocks.SWEET_BERRY_BUSH); // P14 overgrowth: berry bush gone feral
+    public static final Material TALL_DRY_GRASS = of(Blocks.TALL_DRY_GRASS); // P14 overgrowth: tall dry grass (1.21.5)
     public static final Material WALL_TORCH = of(Blocks.WALL_TORCH); // P9: wall-mounted torches for mine corridors; the Bukkit source only used standing TORCH
     public static final Material WARPED_FUNGUS = of(Blocks.WARPED_FUNGUS); // P13 biodome: nether
     public static final Material WARPED_NYLIUM = of(Blocks.WARPED_NYLIUM); // P13 biodome: nether ground
@@ -869,6 +875,7 @@ public final class Material {
     public static final Material WEATHERED_COPPER_GRATE = of(Blocks.WEATHERED_COPPER_GRATE); // P9 copper mine: cage/machinery grate (weathered)
     public static final Material WEATHERED_CUT_COPPER = of(Blocks.WEATHERED_CUT_COPPER); // P12 MODERN build stone
     public static final Material WHITE_CANDLE = of(Blocks.WHITE_CANDLE); // P12 interior: candle accent (white)
+    public static final Material WILDFLOWERS = of(Blocks.WILDFLOWERS); // P14 overgrowth: segmented wildflower patch (1.21.5)
 
     // ---- Copper weathering stages (12) — reached via WeatheringCopperBlocks accessors -
     public static final Material COPPER_BARS = of(Blocks.COPPER_BARS.unaffected()); // P9 copper mine: cage bars (fresh)

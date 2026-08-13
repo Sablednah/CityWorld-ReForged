@@ -6,7 +6,10 @@ import me.daddychurchill.CityWorld.compat.Material;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -284,21 +287,71 @@ public final class Overgrowth {
         // Weighted pool. Carpets/litter sit on any solid top; the leafy plants only take on soil, so
         // canSurvive() decides — a fern rolled onto a stone roof simply falls through to moss carpet.
         int r = odds.getRandomInt(100);
-        Material pick;
+        BlockState pick;
         if (road)
             // roads lean to thin, flat litter/grass rather than chunky moss carpet
-            pick = r < 62 ? Material.LEAF_LITTER : r < 74 ? Material.MOSS_CARPET
-                    : r < 88 ? Material.SHORT_GRASS : r < 96 ? Material.FERN : Material.PINK_PETALS;
+            pick = (r < 58 ? Material.LEAF_LITTER : r < 68 ? Material.MOSS_CARPET
+                    : r < 78 ? Material.SHORT_GRASS : r < 85 ? Material.FERN
+                    : r < 90 ? Material.PINK_PETALS : r < 95 ? Material.WILDFLOWERS
+                    : r < 98 ? Material.SHORT_DRY_GRASS : Material.DEAD_BUSH).getBlockState();
+        else if (r < 74)
+            pick = (r < 28 ? Material.MOSS_CARPET : r < 48 ? Material.LEAF_LITTER
+                    : r < 58 ? Material.SHORT_GRASS : r < 66 ? Material.FERN
+                    : Material.PINK_PETALS).getBlockState();
+        else if (r < 84)
+            // The shrub slot the azaleas used to hold on their own. Azalea bushes are a loud, distinctive
+            // silhouette, so ten percent of every reclaimed surface wearing them read as a thicket — a
+            // persistent leaf block of the local tree species is quieter and matches the trees around it.
+            pick = shrubLeaves(level, pos, odds);
         else
-            pick = r < 32 ? Material.MOSS_CARPET : r < 55 ? Material.LEAF_LITTER
-                    : r < 66 ? Material.SHORT_GRASS : r < 74 ? Material.FERN
-                    : r < 80 ? Material.PINK_PETALS : r < 86 ? Material.AZALEA
-                    : r < 90 ? Material.FLOWERING_AZALEA : r < 94 ? Material.SMALL_DRIPLEAF
-                    : r < 97 ? Material.PALE_MOSS_CARPET
-                    : r < 99 ? Material.BROWN_MUSHROOM : Material.RED_MUSHROOM;
+            pick = (r < 88 ? Material.SMALL_DRIPLEAF : r < 91 ? Material.WILDFLOWERS
+                    : r < 93 ? Material.BUSH : r < 95 ? Material.PALE_MOSS_CARPET
+                    : r < 96 ? Material.SWEET_BERRY_BUSH : r < 97 ? Material.TALL_DRY_GRASS
+                    : r < 98 ? Material.BROWN_MUSHROOM : r < 99 ? Material.RED_MUSHROOM
+                    : Material.FIREFLY_BUSH).getBlockState(); // 1% — a rare glow in the ruins
 
-        if (!tryPlace(level, pos, scatter(pick.getBlockState(), odds)))
+        if (!tryPlace(level, pos, scatter(pick, odds)))
             tryPlace(level, pos, Material.MOSS_CARPET.getBlockState()); // always-safe fallback
+    }
+
+    /** A persistent leaf block of whatever tree species suits the biome here — a reclaim shrub that
+     *  matches the woodland around it and, being {@code PERSISTENT}, never decays away once placed. */
+    private static BlockState shrubLeaves(ServerLevelAccessor level, BlockPos pos, Odds odds) {
+        Material leaves = biomeLeaves(level, pos, odds);
+        return leaves.getBlockState().setValue(BlockStateProperties.PERSISTENT, true);
+    }
+
+    /** The local biome's canopy species, falling back to oak wherever the biome can't be read. */
+    private static Material biomeLeaves(ServerLevelAccessor level, BlockPos pos, Odds odds) {
+        ResourceKey<Biome> key;
+        try {
+            key = level.getLevel().getBiome(pos).unwrapKey().orElse(null);
+        } catch (Throwable t) {
+            return Material.OAK_LEAVES; // off-server or mid-load: the safe default
+        }
+        if (key == null)
+            return Material.OAK_LEAVES;
+        if (key == Biomes.TAIGA || key == Biomes.OLD_GROWTH_PINE_TAIGA || key == Biomes.OLD_GROWTH_SPRUCE_TAIGA
+                || key == Biomes.SNOWY_TAIGA || key == Biomes.GROVE || key == Biomes.WINDSWEPT_FOREST)
+            return Material.SPRUCE_LEAVES;
+        if (key == Biomes.BIRCH_FOREST || key == Biomes.OLD_GROWTH_BIRCH_FOREST)
+            return Material.BIRCH_LEAVES;
+        if (key == Biomes.JUNGLE || key == Biomes.SPARSE_JUNGLE || key == Biomes.BAMBOO_JUNGLE)
+            return Material.JUNGLE_LEAVES;
+        if (key == Biomes.SAVANNA || key == Biomes.SAVANNA_PLATEAU || key == Biomes.WINDSWEPT_SAVANNA)
+            return Material.ACACIA_LEAVES;
+        if (key == Biomes.DARK_FOREST)
+            return Material.DARK_OAK_LEAVES;
+        if (key == Biomes.PALE_GARDEN)
+            return Material.PALE_OAK_LEAVES;
+        if (key == Biomes.MANGROVE_SWAMP)
+            return Material.MANGROVE_LEAVES;
+        if (key == Biomes.CHERRY_GROVE)
+            return Material.CHERRY_LEAVES;
+        if (key == Biomes.FLOWER_FOREST || key == Biomes.MEADOW)
+            // the one place the azaleas still belong — a flowering shrub among the wildflowers
+            return odds.playOdds(0.5) ? Material.FLOWERING_AZALEA_LEAVES : Material.AZALEA_LEAVES;
+        return Material.OAK_LEAVES;
     }
 
     /** Vary a segmented ground cover's shape so a litter-strewn floor isn't a grid of identical tiles.
@@ -313,6 +366,9 @@ public final class Overgrowth {
         if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING))
             state = state.setValue(BlockStateProperties.HORIZONTAL_FACING,
                     Direction.from2DDataValue(odds.getRandomInt(4)));
+        if (state.hasProperty(BlockStateProperties.AGE_3))
+            // a berry bush left to itself is grown, not the bare age-0 sprig the default state gives
+            state = state.setValue(BlockStateProperties.AGE_3, 1 + odds.getRandomInt(3));
         return state;
     }
 
