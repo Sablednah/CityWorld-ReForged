@@ -46,7 +46,10 @@ public final class Furniture {
         int street = generator.streetLevel;
         int roofY = -1;
         for (int y = street + 200; y > street + 16; y--) // only tall builds (roof >16 above the street)
-            if (!chunk.isEmpty(x, y, z)) {
+            // the roof proper, not whatever is lying on it: overgrowth drapes moss carpet and leaf litter
+            // across roofs, and those are "not empty" but can't carry a rod — a rod stood on one looks
+            // like it's floating a notch above the roof
+            if (!chunk.isEmpty(x, y, z) && chunk.isSturdyTop(x, y, z)) {
                 roofY = y;
                 break;
             }

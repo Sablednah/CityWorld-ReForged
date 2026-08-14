@@ -189,6 +189,16 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		return false;
 	}
 
+	/**
+	 * True if this block presents a solid, load-bearing top face — something you could stand a fitting
+	 * on. False for carpets, plants, snow layers and the rest of the loose cover that overgrowth drapes
+	 * over a roof, which {@link #isEmpty} still counts as filled.
+	 */
+	public final boolean isSturdyTop(int x, int y, int z) {
+		Block block = getActualBlock(x, y, z);
+		return block.getBlockData().isFaceSturdy(block.getLevel(), block.getPos(), Direction.UP);
+	}
+
 	public abstract boolean isSurroundedByEmpty(int x, int y, int z);
 
 	public final boolean isWater(int x, int y, int z) {

@@ -243,6 +243,12 @@ public abstract class PlatLot {
 		if (generator.isModernStyle() && wantsBiomeGround())
 			applyBiomeGround(generator, chunk);
 
+		// MODERN: crown the tall buildings with a rooftop lightning rod (highrises only — it self-limits
+		// to roofs well above street, the skyline that actually takes the strikes). Before overgrowth, so
+		// the rod is part of the building and the greenery creeps around it rather than under it.
+		if (generator.isModernStyle() && style == LotStyle.STRUCTURE)
+			me.daddychurchill.CityWorld.Support.Furniture.rooftopLightningRod(generator, chunk, chunkOdds);
+
 		// Overgrowth: let nature reclaim built things — moss, vines, leaf litter, small trees. Runs
 		// here, AFTER the lot's own decoration and any decay above, so the greenery isn't itself
 		// decayed. Buildings/roads/roundabouts/schematics only (nature lots grow their own cover).
@@ -267,11 +273,6 @@ public abstract class PlatLot {
 		// caves get their own zombie spawners through the enabled spawner bags.
 		if (generator.worldStyle == CityWorldGenerator.WorldStyle.APOCALYPSE && style == LotStyle.STRUCTURE)
 			me.daddychurchill.CityWorld.Support.ApocalypseSpawners.apply(generator, this, chunk, chunkOdds);
-
-		// MODERN: crown the tall buildings with a rooftop lightning rod (highrises only — it self-limits
-		// to roofs well above street, the skyline that actually takes the strikes).
-		if (generator.isModernStyle() && style == LotStyle.STRUCTURE)
-			me.daddychurchill.CityWorld.Support.Furniture.rooftopLightningRod(generator, chunk, chunkOdds);
 
 		// Shops: a classified shop gets its trade's villager job block dropped on the ground floor, so a
 		// store reads as its trade. MODERN dressing (gated); runs after the interior is drawn so the

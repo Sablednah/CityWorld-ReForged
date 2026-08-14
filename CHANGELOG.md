@@ -5,6 +5,17 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 5.0.2
+
+### Fixed
+
+- **Lightning rods stood on moss carpet.** The rooftop-rod pass ran after overgrowth and stopped its
+  downward scan at the first non-empty block — which, on a reclaimed roof, was the moss carpet or
+  leaf litter lying on it, so the rod sat a notch above the roof looking like it floated. The pass
+  now runs before overgrowth (the rod is part of the building, and the greenery creeps around it),
+  and its scan requires a solid, load-bearing top face, so loose cover can't be mistaken for a roof
+  either way.
+
 ## 5.0.1
 
 ### Fixed
