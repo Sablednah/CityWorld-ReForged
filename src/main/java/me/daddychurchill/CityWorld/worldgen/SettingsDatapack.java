@@ -151,6 +151,10 @@ public final class SettingsDatapack {
         world.addProperty("ruralnessLevel", w.ruralnessLevel());
         world.addProperty("maxBuildingFloors", w.maxBuildingFloors());
         world.addProperty("broadcastSpecialPlaces", w.broadcastSpecialPlaces());
+        JsonArray announced = new JsonArray();
+        for (String kind : w.announcedLandmarks())
+            announced.add(kind);
+        world.add("announcedLandmarks", announced);
         root.add("world", world);
 
         CityWorldSettingsData.Radius rad = d.radius();

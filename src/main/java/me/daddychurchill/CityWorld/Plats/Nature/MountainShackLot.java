@@ -32,7 +32,7 @@ public class MountainShackLot extends MountainFlatLot {
 	@Override
 	protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
 			DataContext context, int platX, int platZ) {
-		generator.reportLocation("Shack", chunk);
+		generator.reportLocation("shack", "Shack", chunk);
 
 		// now make a shack
 		int atY = blockYs.getAverageHeight() + 1;

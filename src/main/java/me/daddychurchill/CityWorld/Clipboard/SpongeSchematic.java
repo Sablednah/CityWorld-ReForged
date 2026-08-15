@@ -127,7 +127,8 @@ public final class SpongeSchematic {
         tag.put("palette", paletteList);
         tag.put("blocks", blockList);
         tag.put("entities", new ListTag());
-        return Templates.build(tag, dataVersion, blockGetter);
+        // this reader already applied its own keepAir filtering while building the tag
+        return Templates.build(tag, dataVersion, blockGetter, true);
     }
 
     /** Block entities keyed by flat schematic index, in the modern {@code {id, ...}} shape. */

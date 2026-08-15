@@ -131,10 +131,11 @@ public final class Clipboard {
             boolean keepAir) throws IOException {
         String lower = fileName.toLowerCase(Locale.ROOT);
         if (lower.endsWith(".nbt")) {
-            // A .nbt file already IS a structure tag; data-fix it (old files) then load. It keeps
-            // whatever air the file stored, so keepAir has no extra effect here.
+            // A .nbt file already IS a structure tag; data-fix it (old files) then load. Air handling
+            // matches the other formats: recorded air is stripped unless KeepAir — a structure-block
+            // export records explicit air for its whole box, which would stamp an air cuboid on terrain.
             CompoundTag tag = NbtIo.readCompressed(data, NbtAccounter.unlimitedHeap());
-            return Templates.build(tag, tag.getInt("DataVersion").orElse(0), blocks);
+            return Templates.build(tag, tag.getInt("DataVersion").orElse(0), blocks, keepAir);
         }
         if (lower.endsWith(".schem"))
             return SpongeSchematic.read(data).toTemplate(blocks, keepAir);
@@ -233,7 +234,7 @@ public final class Clipboard {
                     if (c < 0)
                         continue;
                     String key = line.substring(0, c).trim();
-                    String val = line.substring(c + 1).trim();
+                    String val = cleanValue(line.substring(c + 1));
                     try {
                         switch (key) {
                             case "GroundLevelY" -> m.groundLevelY = Math.max(0, Integer.parseInt(val));
@@ -243,7 +244,7 @@ public final class Clipboard {
                             case "Decayable" -> m.decayable = Boolean.parseBoolean(val);
                             case "PristineChance" -> m.pristineChance = clamp01(Double.parseDouble(val));
                             case "BroadcastLocation" -> m.broadcastLocation = Boolean.parseBoolean(val);
-                            case "Title" -> m.title = stripQuotes(val);
+                            case "Title" -> m.title = val;
                             case "Ocean" -> m.ocean = Boolean.parseBoolean(val);
                             case "KeepAir" -> m.keepAir = Boolean.parseBoolean(val);
                             case "Anchor" -> m.anchor = Boolean.parseBoolean(val);
@@ -261,11 +262,24 @@ public final class Clipboard {
             return Math.max(0.0, Math.min(1.0, v));
         }
 
-        /** YAML lets a value be quoted; a title is the one key where that is likely (it has spaces). */
-        private static String stripQuotes(String v) {
-            if (v.length() >= 2 && (v.startsWith("\"") && v.endsWith("\"") || v.startsWith("'") && v.endsWith("'")))
-                return v.substring(1, v.length() - 1);
-            return v;
+        /**
+         * Normalise a sidecar value the way a YAML-habituated author expects: honour quoting (so
+         * {@code Decayable: "true"} parses as true rather than silently inverting through
+         * {@code Boolean.parseBoolean("\"true\"")}), and drop an inline {@code #} comment — quoted
+         * values keep everything inside the quotes, unquoted ones cut at the first {@code " #"}.
+         * Applied to every key at extraction, not per key.
+         */
+        private static String cleanValue(String v) {
+            v = v.trim();
+            if (v.length() >= 2 && (v.charAt(0) == '"' || v.charAt(0) == '\'')) {
+                int end = v.indexOf(v.charAt(0), 1);
+                if (end > 0)
+                    return v.substring(1, end);
+            }
+            int hash = v.indexOf(" #");
+            if (hash >= 0)
+                v = v.substring(0, hash);
+            return v.trim();
         }
     }
 }

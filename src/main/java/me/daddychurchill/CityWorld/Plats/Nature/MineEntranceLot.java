@@ -47,7 +47,7 @@ public class MineEntranceLot extends ConstructLot {
 	@Override
 	protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
 			DataContext context, int platX, int platZ) {
-		generator.reportLocation("Mine Entrance", chunk);
+		generator.reportLocation("mineentrance", "Mine Entrance", chunk);
 
 		// find the bottom of the world
 		int shaftY = findHighestShaftableLevel(generator, context, chunk);

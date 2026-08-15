@@ -85,7 +85,7 @@ public class BigBiodomeLot extends IsolatedLot {
             DataContext context, int platX, int platZ) {
         int y = generator.streetLevel;
         if (offX == 0 && offZ == 0)
-            generator.reportLocation("Big Biodome " + sizeX + "x" + sizeZ, chunk);
+            generator.reportLocation("biodome", "Big Biodome " + sizeX + "x" + sizeZ, chunk);
 
         int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
         double cX = centreX(), cZ = centreZ();

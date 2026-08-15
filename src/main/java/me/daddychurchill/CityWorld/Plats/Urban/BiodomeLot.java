@@ -71,7 +71,7 @@ public class BiodomeLot extends IsolatedLot {
     protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
             DataContext context, int platX, int platZ) {
         int y = generator.streetLevel;
-        generator.reportLocation("Biodome: " + dome, chunk);
+        generator.reportLocation("biodome", "Biodome: " + dome, chunk);
 
         // the biome floor under the dome
         Material floor = floorFor(dome);

@@ -107,7 +107,7 @@ public class VaultLot extends BunkerLot {
         if (entrance) {
             int num = vaultNumber();
             generateLobby(chunk, chunkOdds, bottomOfBunker, topOfBunker, blockYs.getBlockY(2, 1), num, walls);
-            generator.reportLocation("Vault " + num, chunk);
+            generator.reportLocation("vault", "Vault " + num, chunk);
         } else {
             generateVaultHall(chunk, bottomOfBunker, topOfBunker, walls, oX, oZ);
         }

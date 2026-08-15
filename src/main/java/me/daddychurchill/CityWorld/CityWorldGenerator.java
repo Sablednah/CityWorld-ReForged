@@ -22,12 +22,18 @@ import me.daddychurchill.CityWorld.Plugins.TreeProvider;
 import me.daddychurchill.CityWorld.Support.AbstractBlocks;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
+import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.Support.WorldBlocks;
 import me.daddychurchill.CityWorld.compat.Environment;
 import me.daddychurchill.CityWorld.compat.Material;
 
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
 
 /**
  * Per-world context for the generator: the seed, the world's vertical layout, the settings, and the
@@ -562,37 +568,38 @@ public class CityWorldGenerator {
     }
 
     /**
-     * Announces a landmark's location — always to the log at debug, and, when the world's
-     * {@code broadcastSpecialPlaces} setting is on, to everyone in chat (upstream's behaviour).
+     * Announces a landmark's location — always to the log at debug; in chat only when the world's
+     * {@code broadcastSpecialPlaces} setting is on <em>and</em> {@code kind} is in its
+     * {@code announcedLandmarks} list (the genuine rares by default — see
+     * {@code CityWorldSettingsData.World#DEFAULT_ANNOUNCED}). Chat goes to the players in the world
+     * the landmark generated in, not the whole server.
      */
-    public void reportLocation(String title, AbstractBlocks chunk) {
-        reportLocation(title, chunk.getOriginX(), chunk.getOriginZ());
+    public void reportLocation(String kind, String title, AbstractBlocks chunk) {
+        ServerLevelAccessor level = chunk instanceof RealBlocks real ? real.getServerLevel() : null;
+        reportLocation(kind, title, level, chunk.getOriginX(), chunk.getOriginZ());
     }
 
-    public void reportLocation(String title, int originX, int originZ) {
-        LOGGER.debug("{} placed near {}, {}", title, originX, originZ);
-        if (getSettings().broadcastSpecialPlaces)
-            broadcastLocation(title, originX, originZ);
+    public void reportLocation(String kind, String title, ServerLevelAccessor level, int x, int z) {
+        LOGGER.debug("{} placed near {}, {}", title, x, z);
+        if (getSettings().broadcastSpecialPlaces && getSettings().announcedLandmarks.contains(kind))
+            broadcastLocation(level, title, x, z);
     }
 
     /**
-     * Chat-announce a landmark. Called from the worldgen workers, so it hops to the server thread
-     * before touching the player list — and is defensive about there being no server at all (a
-     * plan-only sweep, or generation racing shutdown), where it simply does nothing.
+     * Chat-announce a landmark to the generating world's own players. Called from the worldgen
+     * workers, so it hops to the server thread before touching the player list. A null {@code level}
+     * (a plan-only sweep with no live world) simply skips the chat — the debug log above still fired.
      */
-    private void broadcastLocation(String title, int originX, int originZ) {
-        try {
-            net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks
-                    .getCurrentServer();
-            if (server == null)
-                return;
-            net.minecraft.network.chat.Component message = net.minecraft.network.chat.Component
-                    .literal(String.format("%s generated near %d, %d", title, originX, originZ))
-                    .withStyle(net.minecraft.ChatFormatting.GRAY);
-            server.execute(() -> server.getPlayerList().broadcastSystemMessage(message, false));
-        } catch (Throwable t) {
-            LOGGER.debug("could not broadcast landmark {}", title, t); // never fail a chunk over chat
-        }
+    private void broadcastLocation(ServerLevelAccessor level, String title, int x, int z) {
+        if (level == null)
+            return;
+        ServerLevel world = level.getLevel();
+        Component message = Component.literal(String.format("%s generated near %d, %d", title, x, z))
+                .withStyle(ChatFormatting.GRAY);
+        world.getServer().execute(() -> {
+            for (ServerPlayer player : world.players())
+                player.sendSystemMessage(message);
+        });
     }
 
     public void reportMessage(String message) {

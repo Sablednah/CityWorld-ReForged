@@ -43,7 +43,7 @@ public class AirshipLot extends ConstructLot {
         generateSurface(generator, chunk, false);
 
         int atY = getBottomY(generator);
-        generator.reportLocation("Airship", chunk);
+        generator.reportLocation("airship", "Airship", chunk);
         int rangeY = Math.max(2, chunk.height - 40 - atY);
         generator.structureInAirProvider.generateBlimp(generator, chunk, atY + chunkOdds.getRandomInt(rangeY),
                 chunkOdds);

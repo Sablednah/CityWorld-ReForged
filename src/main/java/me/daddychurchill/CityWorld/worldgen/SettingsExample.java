@@ -213,11 +213,18 @@ public final class SettingsExample {
                                         ceiling follows this, clamped to the world's ceiling (319), so
                                         very high values give skyscrapers that use the full headroom.
                                         Sensible range 8..60.
-            broadcastSpecialPlaces false  Announce landmarks in chat as they generate ("Castle
-                                        generated near x, z"), to everyone on the server. Off by
-                                        default — chunks generate wherever anyone explores, so this
-                                        gets chatty on a busy server. The same events are always
-                                        written to the log at debug level either way.
+            broadcastSpecialPlaces false  Announce landmarks in chat as they generate ("Vault 42
+                                        generated near x, z"), to the players in the world it
+                                        happened in. Off by default — chunks generate wherever
+                                        anyone explores. The same events are always written to the
+                                        log at debug level either way.
+            announcedLandmarks [...]    Which landmark kinds may chat-announce (needs the toggle
+                                        above on). Default: ["airship", "saucer", "vault", "zoo",
+                                        "biodome", "hospital", "schematic"] — the genuine rares;
+                                        "schematic" covers builds whose .yml sets
+                                        BroadcastLocation: true. Other known kinds a server can add:
+                                        castle, oilplatform, radiotower, bunker, museum,
+                                        mineentrance, campground, shack, balloon, fishpond.
 
             ============================================================================
             radius  — where cities may appear   (distances in CHUNKS; 16 blocks each)

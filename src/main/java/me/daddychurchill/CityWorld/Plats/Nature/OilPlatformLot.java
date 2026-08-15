@@ -59,7 +59,7 @@ public class OilPlatformLot extends ConstructLot {
 	@Override
 	protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
 			DataContext context, int platX, int platZ) {
-		generator.reportLocation("Oil Platform", chunk);
+		generator.reportLocation("oilplatform", "Oil Platform", chunk);
 
 		Material platformMaterial = generator.materialProvider.itemsSelectMaterial_OilPlatformFloor.getRandomMaterial(chunkOdds, Material.STONE);
 		Material supportMaterial = generator.materialProvider.itemsSelectMaterial_OilPlatformColumn.getRandomMaterial(chunkOdds, Material.STONE);

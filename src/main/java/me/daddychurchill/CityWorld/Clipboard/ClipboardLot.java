@@ -120,9 +120,13 @@ public class ClipboardLot extends IsolatedLot {
 
 		// A build that asked to announce itself does so once — from the footprint's NW chunk, since every
 		// chunk of a multi-chunk building runs this. Uses the .yml Title if it set one, so a bare
-		// "winchester.schematic" can still read as "The Winchester Tavern".
+		// "winchester.schematic" can still read as "The Winchester Tavern". Known tradeoff: if a player
+		// only ever generates the other footprint chunks, the line waits until the NW chunk decorates
+		// (possibly never) — the same single-designated-chunk rule every procedural landmark uses; the
+		// alternative (first-chunk-wins) needs shared state across threaded workers and double-announces
+		// across restarts.
 		if (clip.broadcastLocation && lotX == 0 && lotZ == 0)
-			generator.reportLocation(clip.title, nwX, nwZ);
+			generator.reportLocation("schematic", clip.title, level, nwX, nwZ);
 
 		// An ocean build sits in open water: flood its below-waterline blocks so the sea flows through
 		// (waterlog fences/stairs/slabs/… rather than leaving dry pockets), and — if it asked to be

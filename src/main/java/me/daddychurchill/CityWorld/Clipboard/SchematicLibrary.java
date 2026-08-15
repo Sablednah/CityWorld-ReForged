@@ -24,16 +24,19 @@ import net.neoforged.fml.loading.FMLPaths;
  * the player has <b>dropped</b> into their instance.
  *
  * <p><b>Bundled:</b> jar resources cannot be directory-listed, so the build ships an {@code index.txt}
- * manifest ({@code Family/name.schematic} per line, generated from the asset tree).
+ * manifest ({@code Family/name.<ext>} per line, generated from the asset tree) — any supported format
+ * ({@code .schematic}/{@code .schem}/{@code .litematic}/{@code .nbt}; a build needing post-1.12 blocks
+ * must use a modern format, e.g. the copper {@code liberty.nbt}). Files not in the manifest are
+ * silently skipped, so regenerate it with every format in mind.
  *
  * <p><b>External:</b> a real folder <em>can</em> be listed, so on top of the manifest this scans
- * {@code config/cityworld/schematics/<Family>/} for {@code .schematic} (+ optional {@code .yml})
- * files and adds them — the drop-in extras folder (created on first run, see
+ * {@code config/cityworld/schematics/<Family>/} for the same formats (+ optional {@code .yml})
+ * and adds them — the drop-in extras folder (created on first run, see
  * {@link #ensureExternalFolder}). This is the modern stand-in for upstream's per-world
  * "Schematics for &lt;world&gt;" WorldEdit folder.
  *
- * <p>Each {@link Clipboard} is converted from its legacy {@code .schematic} on first use and cached —
- * the one-time legacy→{@code StructureTemplate} conversion happens at most once per building per run.
+ * <p>Each {@link Clipboard} is converted to a {@code StructureTemplate} on first use and cached —
+ * the one-time conversion happens at most once per building per run.
  * The class is intentionally free of any live-level or generator dependency.
  */
 public final class SchematicLibrary {
@@ -42,19 +45,9 @@ public final class SchematicLibrary {
 
     private static final String ROOT = "/cityworld/schematics/";
     private static final String INDEX = ROOT + "index.txt";
-    private static final String SCHEMATIC = ".schematic";
 
-    /** Extensions the loader understands, longest/most-specific first (so {@code .schematic} wins). */
+    /** Extensions the loader understands. */
     private static final String[] EXTS = { ".schematic", ".litematic", ".schem", ".nbt" };
-
-    /** The supported extension {@code file} ends with (case-insensitively), or null if it is not one. */
-    private static String extensionOf(String file) {
-        String lower = file.toLowerCase(java.util.Locale.ROOT);
-        for (String ext : EXTS)
-            if (lower.endsWith(ext))
-                return ext;
-        return null;
-    }
 
     /** For a bundled entry {@code path} is a classpath resource; for an external one, a filesystem path. */
     private record Entry(String name, SchematicFamily family, String path, boolean external) {}
@@ -101,7 +94,7 @@ public final class SchematicLibrary {
                     // Any format the loader understands, not just legacy .schematic — a bundled build
                     // that needs modern blocks (copper, say) has to ship as .nbt/.schem, since the
                     // legacy format can only name blocks that existed in 1.12.
-                    String ext = extensionOf(line);
+                    String ext = supportedExt(line);
                     if (ext == null)
                         continue;
                     int slash = line.indexOf('/');

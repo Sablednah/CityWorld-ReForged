@@ -190,7 +190,7 @@ public class OldCastleLot extends ConstructLot {
 	@Override
 	protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
 			DataContext context, int platX, int platZ) {
-		generator.reportLocation("Castle", chunk);
+		generator.reportLocation("castle", "Castle", chunk);
 
 		// main bits
 		int floorHeight = DataContext.FloorHeight;

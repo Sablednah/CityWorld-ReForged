@@ -32,7 +32,7 @@ public class CampgroundLot extends ConstructLot {
 	@Override
 	protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
 			DataContext context, int platX, int platZ) {
-		generator.reportLocation("Campground", chunk);
+		generator.reportLocation("campground", "Campground", chunk);
 
 		// place snow
 		generateSurface(generator, chunk, false);

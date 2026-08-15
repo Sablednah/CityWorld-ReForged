@@ -84,7 +84,7 @@ public class ZooLot extends IsolatedLot {
     protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
             DataContext context, int platX, int platZ) {
         int y = generator.streetLevel;
-        generator.reportLocation("Zoo: " + theme.name, chunk);
+        generator.reportLocation("zoo", "Zoo: " + theme.name, chunk);
 
         // themed ground across the pen interior
         chunk.setLayer(y, groundFor(theme));

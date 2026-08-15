@@ -62,7 +62,7 @@ public class FishPondLot extends IsolatedLot {
     @Override
     protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
             DataContext context, int platX, int platZ) {
-        generator.reportLocation("Fish Pond", chunk);
+        generator.reportLocation("fishpond", "Fish Pond", chunk);
 
         int surfaceY = generator.streetLevel;
         double cx = 7.5, cz = 7.5;

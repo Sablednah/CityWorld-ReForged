@@ -219,7 +219,8 @@ A few common asks, as complete `default.json` files.
 | `subSurfaceStyle` | `"LAND"` | What fills space under a FLOATING world's land: `NONE`, `LAND`, `CLOUD`, `LAVA`. Only the FLOATING style reads this. |
 | `ruralnessLevel` | `0.0` | Skews the world more rural (more nature, fewer cities) — up toward `1.0`. |
 | `maxBuildingFloors` | `20` | Tallest a building may rise, in floors (4 blocks each) above street level. 20 = the classic 1.8 look; MODERN ships taller. Sensible range 8–60. Also on the Customize screen. |
-| `broadcastSpecialPlaces` | `false` | Announce landmarks in chat as they generate ("Castle generated near 1520, -340"), to everyone on the server. Off by default — chunks generate wherever anyone explores, so this gets chatty on a busy server. The same events always go to the debug log regardless. Schematics join in only if their `.yml` also sets `BroadcastLocation: true`. |
+| `broadcastSpecialPlaces` | `false` | Announce landmarks in chat as they generate ("Vault 42 generated near 1520, -340"), to the players in the world it happened in. Off by default — chunks generate wherever anyone explores. The same events always go to the debug log regardless. Schematics join in only if their `.yml` also sets `BroadcastLocation: true`. |
+| `announcedLandmarks` | the rares | Which landmark kinds may chat-announce (with the toggle above on). Default `["airship","saucer","vault","zoo","biodome","hospital","schematic"]`; a server can add `castle`, `oilplatform`, `radiotower`, `bunker`, `museum`, `mineentrance`, `campground`, `shack`, `balloon`, `fishpond` — or trim the list down. |
 
 ### `radius` — where cities may appear (distances in chunks; 16 blocks each)
 

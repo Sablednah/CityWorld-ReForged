@@ -64,9 +64,13 @@ public final class Templates {
 
     /**
      * Data-fix (if the schematic is from an older version) then load a vanilla structure tag
-     * ({@code size}/{@code palette}/{@code blocks}/{@code entities}) into a template.
+     * ({@code size}/{@code palette}/{@code blocks}/{@code entities}) into a template. Unless
+     * {@code keepAir}, recorded air entries are stripped first — a structure-block export records
+     * explicit air for its whole bounding box, and placing that stamps an air cuboid over the terrain
+     * around the build; stripping matches what every other schematic format's reader does by default.
      */
-    public static StructureTemplate build(CompoundTag structureTag, int dataVersion, HolderGetter<Block> blocks) {
+    public static StructureTemplate build(CompoundTag structureTag, int dataVersion, HolderGetter<Block> blocks,
+            boolean keepAir) {
         CompoundTag tag = structureTag;
         if (dataVersion > 0 && dataVersion < SharedConstants.WORLD_VERSION) {
             try {
@@ -76,9 +80,37 @@ public final class Templates {
                 tag = structureTag;
             }
         }
+        if (!keepAir)
+            stripAir(tag);
         StructureTemplate template = new StructureTemplate();
         template.load(blocks, tag);
         return template;
+    }
+
+    /** Remove air block entries from a structure tag in place (palette indices stay valid — only the
+     *  {@code blocks} list is filtered). Handles the common single-{@code palette} shape; the rare
+     *  multi-{@code palettes} shape is left alone (all palettes share one blocks list, so a safe filter
+     *  would need every palette's index to agree on airness — not worth it for hand-dropped files). */
+    private static void stripAir(CompoundTag tag) {
+        ListTag palette = tag.getList("palette").orElse(null);
+        ListTag blocks = tag.getList("blocks").orElse(null);
+        if (palette == null || blocks == null)
+            return;
+        Set<Integer> air = new java.util.HashSet<>();
+        for (int i = 0; i < palette.size(); i++) {
+            String name = palette.getCompoundOrEmpty(i).getString("Name").orElse(null);
+            if (isAir(name))
+                air.add(i);
+        }
+        if (air.isEmpty())
+            return;
+        ListTag kept = new ListTag();
+        for (int i = 0; i < blocks.size(); i++) {
+            CompoundTag entry = blocks.getCompoundOrEmpty(i);
+            if (!air.contains(entry.getInt("state").orElse(-1)))
+                kept.add(entry);
+        }
+        tag.put("blocks", kept);
     }
 
     public static ListTag intList(int a, int b, int c) {

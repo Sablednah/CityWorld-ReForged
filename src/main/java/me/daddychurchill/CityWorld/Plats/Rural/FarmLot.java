@@ -490,7 +490,7 @@ public class FarmLot extends ConnectedLot {
 					generateSurface(generator, chunk, false);
 
 					// hot air balloon
-					generator.reportLocation("Hot Air Balloon, Landed", chunk);
+					generator.reportLocation("balloon", "Hot Air Balloon, Landed", chunk);
 					generator.structureInAirProvider.generateHotairBalloon(generator, chunk, context, cropY + 1,
 							chunkOdds);
 

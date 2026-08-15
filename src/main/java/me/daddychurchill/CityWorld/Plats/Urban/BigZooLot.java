@@ -85,7 +85,7 @@ public class BigZooLot extends IsolatedLot {
             DataContext context, int platX, int platZ) {
         int y = generator.streetLevel;
         if (offX == 0 && offZ == 0)
-            generator.reportLocation((sunken ? "Big Sunken Zoo: " : "Big Zoo: ") + NAMES[theme], chunk);
+            generator.reportLocation("zoo", (sunken ? "Big Sunken Zoo: " : "Big Zoo: ") + NAMES[theme], chunk);
 
         // pen interior in world coords (inset 2 from the structure edge for a walkway rim)
         int penX1 = nwX() + 2, penX2 = nwX() + sizeX * 16 - 3;

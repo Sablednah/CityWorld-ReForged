@@ -155,7 +155,7 @@ public class BunkerLot extends ConnectedLot {
 	protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
 			DataContext context, int platX, int platZ) {
 		if (buildingType == BunkerType.ENTRY)
-			generator.reportLocation("Bunker", chunk);
+			generator.reportLocation("bunker", "Bunker", chunk);
 
 		// where is the surface?
 //		int surfaceY = getSurfaceAtY(6, 6);

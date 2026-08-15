@@ -73,7 +73,7 @@ public final class LitematicSchematic {
             gMaxZ = Math.max(gMaxZ, minZ + Math.abs(r.sz) - 1);
         }
         if (regions.isEmpty() || gMinX > gMaxX)
-            return Templates.build(emptyTag(), 0, blockGetter);
+            return Templates.build(emptyTag(), 0, blockGetter, true);
 
         ListTag paletteList = new ListTag();
         Map<CompoundTag, Integer> paletteIndex = new HashMap<>();
@@ -126,7 +126,8 @@ public final class LitematicSchematic {
         tag.put("palette", paletteList);
         tag.put("blocks", blockList);
         tag.put("entities", new ListTag());
-        return Templates.build(tag, dataVersion, blockGetter);
+        // this reader already applied its own keepAir filtering while building the tag
+        return Templates.build(tag, dataVersion, blockGetter, true);
     }
 
     /** Region tile entities keyed by the region-local flat index, in {@code {id, ...}} shape. */

@@ -86,6 +86,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private Chance ruralnessLevel;
     private int maxBuildingFloors;
     private boolean broadcastSpecialPlaces;
+    private java.util.List<String> announcedLandmarks; // server-owner config: carried through, no widget
 
     public CityWorldCustomizeScreen(Screen parent, WorldStyle initialStyle, CityWorldSettingsData initial,
             Consumer<Result> onDone) {
@@ -175,8 +176,12 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         spawnTrees = Chance.nearest(w.spawnTrees());
         subSurfaceStyle = w.subSurfaceStyle();
         ruralnessLevel = Chance.nearest(w.ruralnessLevel());
-        maxBuildingFloors = w.maxBuildingFloors();
+        // snap to a picker rung so the button always shows exactly what Done will save (the Chance
+        // settings all behave this way); a hand-edited in-between value is preserved only if untouched
+        // by never entering the screen — same contract as everything else here.
+        maxBuildingFloors = nearestFloors(w.maxBuildingFloors());
         broadcastSpecialPlaces = w.broadcastSpecialPlaces();
+        announcedLandmarks = w.announcedLandmarks();
     }
 
     @Override
@@ -258,7 +263,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 e -> Component.literal(nice(e.name())), v -> subSurfaceStyle = v));
         pair(row, chance("Ruralness", ruralnessLevel, v -> ruralnessLevel = v));
         pair(row, cycle("Max building floors", FLOOR_CHOICES, nearestFloors(maxBuildingFloors),
-                v -> Component.literal(v + " floors"), v -> maxBuildingFloors = v));
+                v -> Component.literal(String.valueOf(v)), v -> maxBuildingFloors = v));
         pair(row, onOff("Announce landmarks", broadcastSpecialPlaces, v -> broadcastSpecialPlaces = v));
         flush(row);
     }
@@ -293,7 +298,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 oddsOfTreasureInSewers.value, oddsOfTreasureInBuildings.value, oddsOfAlcoveInMines.value);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
                 treeStyle, spawnTrees.value, subSurfaceStyle, ruralnessLevel.value, maxBuildingFloors,
-                broadcastSpecialPlaces);
+                broadcastSpecialPlaces, announcedLandmarks);
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops);
@@ -315,8 +320,18 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         // its scrolling list in a layout that rebuildWidgets() doesn't clear, so an in-place rebuild stacked
         // a ghost list behind the options and jammed the style cycle on a stale button. A fresh screen loads
         // the new style's defaults and recomputes the locks cleanly.
-        this.minecraft.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle,
-                me.daddychurchill.CityWorld.CityWorldSettings.styleDefaults(newStyle), this.onDone));
+        // The reset is for the EDITABLE options; the groups this screen has no widgets for (radius,
+        // naming, mobs, the announce list) came from the player's preset and must survive the cycle —
+        // resetting them silently discarded a datapack's custom city radius or mob lists.
+        CityWorldSettingsData defaults = me.daddychurchill.CityWorld.CityWorldSettings.styleDefaults(newStyle);
+        CityWorldSettingsData.World world = defaults.world();
+        CityWorldSettingsData carried = new CityWorldSettingsData(defaults.features(), defaults.terrain(),
+                defaults.spawns(), defaults.treasures(),
+                new CityWorldSettingsData.World(world.treeStyle(), world.spawnTrees(), world.subSurfaceStyle(),
+                        world.ruralnessLevel(), world.maxBuildingFloors(), world.broadcastSpecialPlaces(),
+                        announcedLandmarks),
+                radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay());
+        this.minecraft.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.onDone));
     }
 
     // ---- widget helpers ----------------------------------------------------------------------
@@ -354,7 +369,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private static Integer nearestFloors(int value) {
         Integer best = FLOOR_CHOICES[0];
         for (Integer choice : FLOOR_CHOICES)
-            if (Math.abs(choice - value) < Math.abs(best - value))
+            // long math: (choice - value) wraps for ints near Integer.MIN_VALUE
+            if (Math.abs((long) choice - value) < Math.abs((long) best - value))
                 best = choice;
         return best;
     }

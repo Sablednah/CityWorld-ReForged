@@ -129,7 +129,10 @@ public class HospitalLot extends IsolatedLot {
         int roofY = street + floors * floorH;
         int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
         if (offX == 0 && offZ == 0)
-            generator.reportLocation(main ? "Hospital: " + name() : "Hospital dept: " + name(), chunk);
+            // only the main department is a chat-worthy landmark; the ancillary departments would turn one
+            // campus into 4-7 chat lines, so they keep the debug-only "hospitaldept" key
+            generator.reportLocation(main ? "hospital" : "hospitaldept",
+                    main ? "Hospital: " + name() : "Hospital dept: " + name(), chunk);
 
         for (int lx = 0; lx < 16; lx++)
             for (int lz = 0; lz < 16; lz++) {

@@ -76,7 +76,9 @@ public class RoadThroughVaultLot extends RoadLot {
         VaultLot.generateVaultHall(chunk, bottomOfVault, topOfVault, walls, oX, oZ);
         VaultLot.generateLowerLevels(chunk, bottomOfVault, walls, oX, oZ, false, getChunkX(), getChunkZ());
         tunnelBranch(generator, chunk); // the road-tunnel entry (routed through a vestibule + door)
-        generator.reportLocation("Vault " + Math.floorMod(getChunkX() * 31 + getChunkZ() * 17, 100), chunk);
+        // "vaultroad" is off the default announce list: the entrance chunk (VaultLot) is the one true
+        // announcement — this fires per road chunk with a per-chunk hash, useful only as a debug trace.
+        generator.reportLocation("vaultroad", "Vault road " + Math.floorMod(getChunkX() * 31 + getChunkZ() * 17, 100), chunk);
     }
 
     /** Carve the trapdoor + ladder shaft from the tunnel floor down through the rock. It lands INSIDE the NE

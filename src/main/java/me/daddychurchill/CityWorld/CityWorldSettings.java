@@ -162,6 +162,9 @@ public class CityWorldSettings {
      */
     public boolean broadcastSpecialPlaces = false;
 
+    /** Which landmark kinds may chat-announce — see {@link CityWorldSettingsData.World#DEFAULT_ANNOUNCED}. */
+    public java.util.Set<String> announcedLandmarks = java.util.Set.copyOf(CityWorldSettingsData.World.DEFAULT_ANNOUNCED);
+
     /** Back on at upstream's default now that {@code RoundaboutCenterLot} is ported (wave 2b). */
     public boolean includeRoundabouts = true;
 
@@ -433,6 +436,7 @@ public class CityWorldSettings {
         ruralnessLevel = w.ruralnessLevel();
         maxBuildingFloors = w.maxBuildingFloors();
         broadcastSpecialPlaces = w.broadcastSpecialPlaces();
+        announcedLandmarks = java.util.Set.copyOf(w.announcedLandmarks());
 
         CityWorldSettingsData.Radius d = data.radius();
         centerPointOfChunkRadiusX = d.centerPointOfChunkRadiusX();
@@ -496,7 +500,8 @@ public class CityWorldSettings {
                 spawnersInSewers, treasuresInBuildings, oddsOfTreasureInMines, oddsOfTreasureInBunkers,
                 oddsOfTreasureInSewers, oddsOfTreasureInBuildings, oddsOfAlcoveInMines);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
-                treeStyle, spawnTrees, subSurfaceStyle, ruralnessLevel, maxBuildingFloors, broadcastSpecialPlaces);
+                treeStyle, spawnTrees, subSurfaceStyle, ruralnessLevel, maxBuildingFloors, broadcastSpecialPlaces,
+                java.util.List.copyOf(announcedLandmarks));
         CityWorldSettingsData.Radius radius = new CityWorldSettingsData.Radius(
                 centerPointOfChunkRadiusX, centerPointOfChunkRadiusZ, constructChunkRadius, roadChunkRadius,
                 cityChunkRadius, buildOutsideRadius, minInbetweenChunkDistanceOfCities);

@@ -7,6 +7,34 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ## 5.0.2
 
+### Changed (from a full review of the announce feature before release)
+
+- **Announcements are per-world and curated.** Chat goes to the players in the world the landmark
+  generated in (was: the whole server, with coordinates meaningless in other dimensions). And only
+  the genuine rares announce by default — vaults, zoos, biodomes, hospitals, airships, saucers and
+  flagged schematics; a new `world.announcedLandmarks` datapack list lets a server widen or narrow
+  the set (castle, oil platform, radio tower, mine entrance, campground, fish pond and more are
+  available keys). Previously every `reportLocation` call site would have hit chat: fish ponds,
+  shacks, campgrounds, and every hospital department separately.
+- **Vault road tunnels no longer announce.** Each road chunk through a vault was announcing its own
+  hash as a different "Vault N" — several contradictory lines for one vault, none matching the number
+  in the lobby. The entrance chunk's announcement is the only one now.
+- **`/cityfind` understands titles.** It now matches and displays the `.yml` `Title`, so the name a
+  player reads in chat ("The Statue of Liberty") is findable — previously only the raw file name
+  ("liberty") matched, and results printed the file name.
+- **Sidecar `.yml` values may be quoted anywhere.** Quoting was only honoured on `Title`, so ordinary
+  YAML habits like `Decayable: "true"` silently parsed as *false*. Quoting (and inline `#` comments)
+  now work on every key.
+- **`.nbt` drop-ins no longer stamp recorded air.** A structure-block export records explicit air for
+  its whole bounding box; placing one carved an air cuboid into the surrounding terrain, unlike every
+  other format. Recorded air is now stripped unless the sidecar sets `KeepAir: true`, matching
+  `.schematic`/`.schem`/`.litematic`.
+- **Customize screen fixes.** Cycling the Style no longer silently resets the groups the screen has
+  no widgets for (city radius, naming lists, mob bags) back to defaults — a datapack's custom values
+  survive the cycle. The floors picker now always shows exactly the value that will save (an
+  out-of-range datapack value used to display snapped but save raw), and its button no longer reads
+  "…floors: 24 floors".
+
 ### Added
 
 - **Landmark announcements.** A new `world.broadcastSpecialPlaces` setting (off by default) announces

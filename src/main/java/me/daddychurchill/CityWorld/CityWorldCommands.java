@@ -305,13 +305,17 @@ public final class CityWorldCommands {
         Found best = null;
         for (int x = 0; x < PlatMap.Width; x++) {
             for (int z = 0; z < PlatMap.Width; z++) {
+                // Match the file name OR the .yml Title, and display the title — the chat announce uses
+                // the title ("The Statue of Liberty"), so the finder must accept and echo the same name
+                // a player just read, not only the raw file name ("liberty"). Title defaults to the name.
                 if (pm.getLot(x, z) instanceof ClipboardLot clip
-                        && clip.getClip().name.toLowerCase(Locale.ROOT).contains(q)) {
+                        && (clip.getClip().name.toLowerCase(Locale.ROOT).contains(q)
+                                || clip.getClip().title.toLowerCase(Locale.ROOT).contains(q))) {
                     int wx = clip.getChunkX() * 16 + 8;
                     int wz = clip.getChunkZ() * 16 + 8;
                     double dist = Math.hypot(wx - playerX, wz - playerZ);
                     if (best == null || dist < best.dist())
-                        best = new Found(clip.getClip().name, clip.getClip().family.name(), wx, wz, dist,
+                        best = new Found(clip.getClip().title, clip.getClip().family.name(), wx, wz, dist,
                                 compass(wx - playerX, wz - playerZ));
                 }
             }
