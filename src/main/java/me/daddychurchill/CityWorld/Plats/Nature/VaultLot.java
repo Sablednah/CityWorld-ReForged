@@ -497,19 +497,24 @@ public class VaultLot extends BunkerLot {
         chunk.setBlocks(0, 1, floorY + 1, ceilY, 0, 16, WALL);
         chunk.setBlocks(15, 16, floorY + 1, ceilY, 0, 16, WALL);
 
-        decorateLobby(chunk, floorY, ceilY);
         surfaceShaft(chunk, floorY, ceilY, surfaceY);
 
         int side = doorSide(wall);
-        bigVaultDoor(chunk, floorY, side);
+        decorateLobby(chunk, floorY, ceilY, side);
+        bigVaultDoor(chunk, floorY, ceilY, side);
         securityRoom(chunk, floorY, ceilY, side);
-        chunk.setSignPost(13, floorY + 1, 8, Material.OAK_SIGN, BlockFace.WEST,
-                new String[] { "VAULT", Integer.toString(num) });
+        // "VAULT <num>" wall signs flanking the doorway (on the hazard jambs' outer columns), replacing
+        // the old free-standing signpost that stood in the middle of the room whatever wall the door used
+        chunk.setWallSign(mapX(side, 5, 1), floorY + 3, mapZ(side, 5, 1), outwardFace(side),
+                "VAULT", Integer.toString(num));
+        chunk.setWallSign(mapX(side, 10, 1), floorY + 3, mapZ(side, 10, 1), outwardFace(side),
+                "VAULT", Integer.toString(num));
     }
 
     /** Industrial dressing (Fallout × Black-Mesa): iron pillars, a copper trim ring, a lit ceiling grid,
-     *  hanging lanterns, and a floor accent border. */
-    static void decorateLobby(SupportBlocks chunk, int floorY, int ceilY) {
+     *  hanging lanterns, a floor accent border — plus the props that make it read as a working lobby:
+     *  a control console facing the door, a locker row along the back wall, and wall vents. */
+    static void decorateLobby(SupportBlocks chunk, int floorY, int ceilY, int side) {
         for (int[] p : new int[][] { { 1, 1 }, { 14, 1 }, { 1, 14 }, { 14, 14 } }) // corner pillars only —
             chunk.setBlocks(p[0], floorY + 1, ceilY, p[1], PILLAR); // mid-wall ones stood in the doorway
         chunk.setBlocks(1, 15, ceilY - 1, ceilY, 1, 2, Material.CUT_COPPER); // copper trim ring under the ceiling
@@ -525,19 +530,50 @@ public class VaultLot extends BunkerLot {
         chunk.setBlocks(1, 15, floorY, floorY + 1, 14, 15, Material.GRAY_CONCRETE);
         chunk.setBlocks(1, 2, floorY, floorY + 1, 1, 15, Material.GRAY_CONCRETE);
         chunk.setBlocks(14, 15, floorY, floorY + 1, 1, 15, Material.GRAY_CONCRETE);
+
+        // an overseer's control console facing the big door across the room: iron bank, quartz worktop
+        for (int a = 6; a <= 9; a++) {
+            setAt(chunk, side, a, floorY + 1, 8, Material.IRON_BLOCK);
+            setAt(chunk, side, a, floorY + 2, 8, Material.SMOOTH_QUARTZ_SLAB);
+        }
+        // a locker row along the back wall: barrels (some double-stacked) and a work anvil
+        for (int a = 3; a <= 6; a++) {
+            setAt(chunk, side, a, floorY + 1, 13, Material.BARREL);
+            if ((a & 1) == 1)
+                setAt(chunk, side, a, floorY + 2, 13, Material.BARREL);
+        }
+        setAt(chunk, side, 7, floorY + 1, 13, Material.ANVIL);
+        // air-system vents let into the flanking walls, high and low
+        for (int along : new int[] { 0, 15 })
+            for (int dp : new int[] { 6, 10 })
+                setAt(chunk, side, along, ceilY - 2, dp, Material.EXPOSED_COPPER_GRATE);
     }
 
     /** A ladder up the lobby's north wall to a surface hatch, with a SOLID concrete backing column the whole
      *  way (so caves the shaft passes through can't leave a ladderless gap) and reaching this column's own
      *  surface height (not another column's, which left it short). */
     static void surfaceShaft(SupportBlocks chunk, int floorY, int ceilY, int surfaceY) {
-        // hut floor ≈ the real ground top (+3: getBlockY reports the base terrain, a few short of the top)
-        int hutFloor = surfaceY + 3;
+        int hutFloor = groundedHutFloor(chunk, surfaceY);
         chunk.setBlocks(2, ceilY, hutFloor + 4, 0, WALL); // solid backing all the way up (incl. the hut ladder)
         chunk.setBlocks(2, ceilY, hutFloor + 2, 1, Material.AIR); // the climb slot
         chunk.setBlocks(2, ceilY, hutFloor + 2, 2, Material.AIR); // headroom beside the ladder
         chunk.setLadder(2, floorY + 1, hutFloor + 2, 1, BlockFace.SOUTH); // up to the hut floor
         surfaceHut(chunk, hutFloor);
+    }
+
+    /**
+     * The hut floor at the REAL surface: scan UP from below the cached terrain height for the first
+     * 2-tall air gap at the door-exit column. {@code blockYs.getBlockY} is the base terrain height
+     * and the old {@code +3} fudge overshot it on slopes, leaving the hut on a concrete stalk with
+     * its door metres in the air. Scanning up (not down) means a tree canopy over the column can't
+     * fool it — only a trunk planted exactly on the column could, which is rare and self-heals a
+     * block or two high rather than a whole hut high.
+     */
+    static int groundedHutFloor(SupportBlocks chunk, int surfaceY) {
+        for (int y = Math.max(surfaceY - 8, 1); y < surfaceY + 24; y++)
+            if (chunk.isEmpty(2, y, 4) && chunk.isEmpty(2, y + 1, 4))
+                return y - 1; // the top solid block: the door base sits level with it
+        return surfaceY + 3; // sealed column (shouldn't happen) — the old approximation
     }
 
     /** A small concrete hut on the surface over the shaft, with an iron door (a button each side) at ground
@@ -549,11 +585,12 @@ public class VaultLot extends BunkerLot {
         chunk.setBlocks(2, 3, hutFloor + 1, hutFloor + 4, 1, 3, Material.AIR); // ...then hollow the interior
         chunk.setBlocks(1, 4, hutFloor + 4, hutFloor + 5, 1, 4, WALL); // roof
         // foundation skirt so the hut plints into the slope instead of floating on the downhill side
-        chunk.setBlocks(1, 4, hutFloor - 3, hutFloor, 1, 2, WALL);
-        chunk.setBlocks(1, 4, hutFloor - 3, hutFloor, 3, 4, WALL);
-        chunk.setBlocks(1, 2, hutFloor - 3, hutFloor, 1, 4, WALL);
-        chunk.setBlocks(3, 4, hutFloor - 3, hutFloor, 1, 4, WALL);
-        chunk.setBlocks(2, hutFloor - 3, hutFloor + 3, 1, Material.AIR); // keep the ladder column open (skirt + hut)
+        chunk.setBlocks(1, 4, hutFloor - 5, hutFloor, 1, 2, WALL);
+        chunk.setBlocks(1, 4, hutFloor - 5, hutFloor, 3, 4, WALL);
+        chunk.setBlocks(1, 2, hutFloor - 5, hutFloor, 1, 4, WALL);
+        chunk.setBlocks(3, 4, hutFloor - 5, hutFloor, 1, 4, WALL);
+        chunk.setBlocks(2, hutFloor - 5, hutFloor + 3, 1, Material.AIR); // keep the ladder column open (skirt + hut)
+        chunk.setBlocks(2, hutFloor + 1, hutFloor + 4, 4, Material.AIR); // clear a step outside the door (uphill dirt)
         chunk.setLadder(2, hutFloor, hutFloor + 2, 1, BlockFace.SOUTH); // a couple more rungs into the hut
         chunk.setBlocks(2, hutFloor + 1, hutFloor + 3, 3, Material.AIR); // door opening
         chunk.setDoor(2, hutFloor + 1, 3, Material.IRON_DOOR_BLOCK, BlockFace.SOUTH);
@@ -574,26 +611,72 @@ public class VaultLot extends BunkerLot {
         return 1; // isolated vault: south fallback
     }
 
-    /** A grand 7x7 blast door recessed in the {@code side} wall — an iron frame ring, a copper gear ring, and
-     *  a concrete body — part-open (a 3-wide x 4-tall walkway carved through the bottom-centre). */
-    static void bigVaultDoor(SupportBlocks chunk, int floorY, int side) {
+    /**
+     * The Fallout cog door filling the {@code side} wall: a giant toothed steel gear — gray plate body,
+     * copper cross-spokes and hub, an iron rim with eight gear teeth — with a hazard-striped doorway
+     * "rolled open" through the bottom and grate-and-chain door machinery at the ceiling above it.
+     *
+     * <p>Everything is centred on {@code along = 7.5}, the seam between columns 7 and 8 — an
+     * even-width design, because the corridor beyond is the 2-wide 7/8 pair: the old odd-width door
+     * was centred on 8 and sat half a block off it.
+     */
+    static void bigVaultDoor(SupportBlocks chunk, int floorY, int ceilY, int side) {
         boolean zWall = side == 0 || side == 1;
         int fc = side == 1 || side == 2 ? 15 : 0; // S/E wall at 15, N/W at 0
-        int cy = floorY + 4;
-        for (int a = -3; a <= 3; a++)
-            for (int dy = -3; dy <= 3; dy++) {
-                double d = Math.hypot(a, dy);
-                Material m = d >= 2.4 && d <= 3.4 ? Material.IRON_BLOCK
-                        : d >= 1.2 && d < 2.4 ? Material.CUT_COPPER
-                        : d < 1.2 ? WALL : null;
+        double cy = floorY + 5.5; // disc centre sits between the hub rows
+
+        for (int a = 2; a <= 13; a++)
+            for (int y = floorY + 1; y <= floorY + 10 && y < ceilY; y++) {
+                double dx = a - 7.5, dy = y - cy;
+                double d = Math.hypot(dx, dy);
+                Material m = null;
+                if (d < 1.5)
+                    m = Material.CUT_COPPER; // hub
+                else if (d < 3.5)
+                    // plate body, with a copper cross-and-X of spokes radiating from the hub
+                    m = Math.min(Math.abs(dx), Math.abs(dy)) < 0.6
+                            || Math.abs(Math.abs(dx) - Math.abs(dy)) < 0.8 ? Material.CUT_COPPER : CEIL;
+                else if (d < 4.5)
+                    m = Material.IRON_BLOCK; // rim ring
+                else if (d < 5.6 && nearToothAngle(dx, dy))
+                    m = Material.IRON_BLOCK; // gear teeth, every 45 degrees
                 if (m != null)
-                    putWall(chunk, zWall, 8 + a, cy + dy, fc, m);
+                    putWall(chunk, zWall, a, y, fc, m);
             }
-        // part-open walkway — 4 wide (x6-9) so it frames the 2-wide corridor between its partition walls
-        // (x6/x9) instead of sitting half a block off, and a block taller
-        for (int a = -2; a <= 1; a++)
-            for (int dy = 0; dy <= 4; dy++)
-                putWall(chunk, zWall, 8 + a, floorY + 1 + dy, fc, Material.AIR);
+
+        // the doorway rolled through the bottom of the gear — exactly the corridor's 2-wide 7/8 pair
+        for (int a = 7; a <= 8; a++)
+            for (int dy = 1; dy <= 4; dy++)
+                putWall(chunk, zWall, a, floorY + dy, fc, Material.AIR);
+        // hazard-striped jambs and lintel around it
+        for (int dy = 1; dy <= 5; dy++) {
+            putWall(chunk, zWall, 6, floorY + dy, fc,
+                    (dy & 1) == 0 ? Material.BLACK_CONCRETE : Material.YELLOW_CONCRETE);
+            putWall(chunk, zWall, 9, floorY + dy, fc,
+                    (dy & 1) == 0 ? Material.YELLOW_CONCRETE : Material.BLACK_CONCRETE);
+        }
+        for (int a = 7; a <= 8; a++)
+            putWall(chunk, zWall, a, floorY + 5, fc, // parity chosen so the whole lintel row alternates
+                    (a & 1) == 1 ? Material.BLACK_CONCRETE : Material.YELLOW_CONCRETE);
+        // a striped threshold strip on the floor in front of the doorway
+        for (int a = 6; a <= 9; a++)
+            for (int dp = 1; dp <= 2; dp++)
+                setAt(chunk, side, a, floorY, dp,
+                        ((a + dp) & 1) == 0 ? Material.YELLOW_CONCRETE : Material.BLACK_CONCRETE);
+        // door machinery: a copper-grate winch housing across the ceiling over the gear, with chain
+        // cables dropping toward the rim
+        for (int a : new int[] { 5, 6, 9, 10 }) // two housings flanking the gear's top tooth
+            putWall(chunk, zWall, a, ceilY - 1, fc, Material.EXPOSED_COPPER_GRATE);
+        for (int along : new int[] { 5, 10 })
+            for (int y = ceilY - 2; y >= floorY + 8; y--)
+                setAt(chunk, side, along, y, 1, Material.IRON_CHAIN);
+    }
+
+    /** True within ~12 degrees of a 45-degree spoke angle — the eight gear-teeth directions. */
+    private static boolean nearToothAngle(double dx, double dy) {
+        double deg = Math.toDegrees(Math.atan2(dy, dx));
+        double t = Math.abs(((deg % 45) + 45) % 45);
+        return t < 12 || t > 33;
     }
 
     /** A glass-walled security booth in the corner of the door wall: you enter it from the lobby and exit the

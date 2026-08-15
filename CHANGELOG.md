@@ -62,8 +62,22 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   existed and worked from a datapack, but there was no UI control for it. Offers 8–60 floors; a
   hand-edited value in between displays as the nearest and is only overwritten if you turn the dial.
 
+### Changed
+
+- **The vault lobby got its Fallout glow-up.** The blast door is now a proper cog: a 10-block toothed
+  steel gear — gray plate body, copper cross-spokes and hub, iron rim, eight gear teeth — with a
+  hazard-striped doorway "rolled open" through the bottom, striped threshold, chain-and-grate winch
+  machinery overhead, and VAULT-number wall signs flanking the opening. The old door was also centred
+  half a block off the corridor (odd-width design against a 2-wide corridor); the gear is even-width
+  and lines up exactly. The lobby itself gains an overseer's control console, a locker row (barrels
+  and an anvil), and copper air vents let into the walls.
+
 ### Fixed
 
+- **The vault's surface hut stood metres above the hillside.** Its floor height came from the cached
+  base-terrain height plus a fudge, which overshoots on slopes — leaving a concrete stalk with a door
+  in the air. It now scans the actual placed terrain at the door column and sits at real grade, with
+  a deeper foundation skirt for the downhill side.
 - **Lightning rods stood on moss carpet.** The rooftop-rod pass ran after overgrowth and stopped its
   downward scan at the first non-empty block — which, on a reclaimed roof, was the moss carpet or
   leaf litter lying on it, so the rod sat a notch above the roof looking like it floated. The pass
