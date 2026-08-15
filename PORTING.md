@@ -13,9 +13,11 @@ actually left:
   building it). CurseForge has **no "Pages" feature** — that was an early wrong assumption, and
   `CURSEFORGE.md` now links to the website instead. `CURSEFORGE-CONFIGURATION.md` and
   `CURSEFORGE-COMMANDS.md` remain in the repo as the source material for those pages.
-- **`5.0.2` is an unreleased dev version.** It carries the lightning-rod fix; the owner's call was that
-  one small fix isn't worth a release, so further fixes stack under the `## 5.0.2` heading in
-  `CHANGELOG.md` until there's enough to cut. GitHub's latest release stays `v5.0.1`.
+- **`5.0.2` is an unreleased dev version — now substantial and worth cutting.** It carries the
+  lightning-rod fix, the landmark-announce feature (+ curation + titles), the copper Liberty, the
+  10-finding review batch, and the vault glow-up (see the dated block below). Cut a GitHub `v5.0.2`
+  release (tag + jar + notes lifted from `CHANGELOG.md`'s 5.0.2 section) once the owner confirms the
+  vault rework in-world. GitHub's latest release stays `v5.0.1` meanwhile.
 
 Deploying: `./deploy.sh` targets the `CityWork-ReForged` instance;
 `CITYWORLD_INSTANCE="/mnt/c/Users/darre/curseforge/minecraft/Instances/MobHealth - Forge" ./deploy.sh`
@@ -31,7 +33,45 @@ fail with "Permission denied" if that instance's Minecraft is open — close it 
   rods on highrise roofs + radio-tower aerials; hanging lanterns in the mines. See the deco log below.
 - ~~Building copper weathering~~ **CLOSED (owner: a-ok, leave as-is 2026-07)** — not doing it.
 
-**Release wave + post-release polish (2026-08-12→15, most recent).** Documentation, first public release,
+**Announce feature + vault glow-up (2026-08-15, most recent).** Built on owner request after the release
+wave below; all committed through `ae04ebe`, deployed to both instances, **not yet released** (stacks
+under `## 5.0.2` in `CHANGELOG.md` — owner cuts releases when there's enough, and this batch is enough):
+
+- **Landmark announcements** (`world.broadcastSpecialPlaces`, default off): chat lines as landmarks
+  generate, sent to the players **in the generating world** (not server-wide). Every `reportLocation`
+  call site now carries a stable kind key, gated through **`world.announcedLandmarks`** (a datapack
+  list) — the owner's curated default: `airship, saucer, vault, zoo, biodome, hospital, schematic`.
+  Everything else (fishpond, campground, shack, mineentrance, castle, oilplatform, radiotower, bunker,
+  museum, balloon, vaultroad, hospitaldept) stays debug-log-only unless a server adds its key.
+- **Schematic `.yml` grew `Title:`** ("The Statue of Liberty" instead of "liberty") — announcements and
+  `/cityfind` both use it (find matches name OR title, displays title). Sidecar parsing now honours
+  quoting and inline `#` comments on **every** key (was Title-only; `Decayable: "true"` parsed false).
+- **Curation applied**: 7 bundled landmarks announce with proper titles (liberty→Statue of Liberty,
+  midwich, spiritwind, dragon, water tower, hedge maze, pagoda). **Instance-side** (not in git!): 8
+  drop-ins in CityWork-ReForged's config announce (Big Ben, Lighthouse, Cathedral, Arch de Minecraft,
+  Freight Ship, Dredge, Cara Sutra, Sablednah); 5 titled-but-quiet; mini-castle odds fixed 0.1→0.02.
+- **Liberty reskinned in weathered copper** (was 13,563 light-blue wool — predates copper). Legacy
+  `.schematic` can't name post-1.12 blocks, so it's now a vanilla `.nbt` — which surfaced that the
+  bundled index only accepted `.schematic`; `loadBundled` now takes any supported format.
+- **A high-effort code review of this diff found 10 verified issues, all fixed** (commit `90b4191`):
+  per-world+curated broadcast (above), vault road chunks each announcing a different hashed number,
+  `.nbt` drop-ins stamping recorded air (now stripped unless `KeepAir`, matching other formats —
+  `Templates.build` takes a `keepAir` param; `.schem`/`.litematic` readers pass `true` since they
+  filter during tag construction), Customize style-cycle silently resetting radius/naming/mobs (now
+  carried), floors picker display-vs-save divergence, and a duplicate extension matcher.
+- **Vault glow-up** (owner screenshots): the lobby blast door is now a proper Fallout cog — 10-block
+  toothed gear (gray plate, copper spokes/hub, iron rim, 8 teeth), hazard-striped doorway/threshold,
+  winch machinery + chains, VAULT-number wall signs. **Root cause of the old "not lined up" look: an
+  odd-width design centred on column 8 against the 2-wide 7/8 corridor — half a block off. Even-width
+  designs centred on the 7.5 seam are the rule for anything framing a corridor.** Lobby furnished
+  (console, lockers, vents) via the `setAt/mapX/mapZ` door-side mapper so props rotate with the door
+  wall. The surface hut stood metres above slopes (`blockYs`+3 fudge) — now scans the live chunk at
+  the door column for real grade (scanning UP so canopies can't fool it). **Gotcha: wall signs face
+  AWAY from the block they hang on; `outwardFace(side)` points out through the wall, so signs need
+  `getOppositeFace()`.** The cog was ASCII-rendered off-line before shipping — cheap geometry check.
+- **Max building floors picker** in Customize (8–60, snaps at load so display == saved).
+
+**Release wave + post-release polish (2026-08-12→15).** Documentation, first public release,
 and the playtest fixes that followed it:
 
 - **Docs corrected and expanded.** The world-style table said "10 styles" and listed a single "Normal";
