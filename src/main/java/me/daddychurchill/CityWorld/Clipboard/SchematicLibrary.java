@@ -47,6 +47,15 @@ public final class SchematicLibrary {
     /** Extensions the loader understands, longest/most-specific first (so {@code .schematic} wins). */
     private static final String[] EXTS = { ".schematic", ".litematic", ".schem", ".nbt" };
 
+    /** The supported extension {@code file} ends with (case-insensitively), or null if it is not one. */
+    private static String extensionOf(String file) {
+        String lower = file.toLowerCase(java.util.Locale.ROOT);
+        for (String ext : EXTS)
+            if (lower.endsWith(ext))
+                return ext;
+        return null;
+    }
+
     /** For a bundled entry {@code path} is a classpath resource; for an external one, a filesystem path. */
     private record Entry(String name, SchematicFamily family, String path, boolean external) {}
 
@@ -87,7 +96,13 @@ public final class SchematicLibrary {
                 String line;
                 while ((line = r.readLine()) != null) {
                     line = line.trim();
-                    if (line.isEmpty() || !line.endsWith(SCHEMATIC))
+                    if (line.isEmpty())
+                        continue;
+                    // Any format the loader understands, not just legacy .schematic — a bundled build
+                    // that needs modern blocks (copper, say) has to ship as .nbt/.schem, since the
+                    // legacy format can only name blocks that existed in 1.12.
+                    String ext = extensionOf(line);
+                    if (ext == null)
                         continue;
                     int slash = line.indexOf('/');
                     if (slash <= 0)
@@ -96,7 +111,7 @@ public final class SchematicLibrary {
                     if (family == null)
                         continue;
                     String file = line.substring(slash + 1);
-                    String name = file.substring(0, file.length() - SCHEMATIC.length());
+                    String name = file.substring(0, file.length() - ext.length());
                     list.add(new Entry(name, family, ROOT + line, false));
                 }
             }

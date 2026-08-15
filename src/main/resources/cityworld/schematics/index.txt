@@ -2,7 +2,7 @@ Farm/crops_carrot.schematic
 Farm/crops_glados.schematic
 Farm/graveyard_knife.schematic
 Farm/richards_house.schematic
-Highrise/liberty.schematic
+Highrise/liberty.nbt
 Highrise/tower.schematic
 Highrise/water_tower_richard.schematic
 Industrial/G45station.schematic
