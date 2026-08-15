@@ -307,13 +307,14 @@ public record CityWorldSettingsData(
             double spawnTrees,
             SubSurfaceStyle subSurfaceStyle,
             double ruralnessLevel,
-            int maxBuildingFloors) {
+            int maxBuildingFloors,
+            boolean broadcastSpecialPlaces) {
 
         /** CLASSIC's default building-floor cap — the old hardcoded {@code absoluteAbsoluteMaximumFloorsAbove}. */
         public static final int DEFAULT_MAX_BUILDING_FLOORS = 20;
 
         public static final World DEFAULT = new World(TreeStyle.NORMAL, Odds.oddsLikely, SubSurfaceStyle.LAND, 0.0,
-                DEFAULT_MAX_BUILDING_FLOORS);
+                DEFAULT_MAX_BUILDING_FLOORS, false);
 
         private static final Codec<TreeStyle> TREE_STYLE_CODEC = Codec.STRING.xmap(
                 s -> parseEnum(TreeStyle.class, s, TreeStyle.NORMAL), TreeStyle::name);
@@ -325,7 +326,8 @@ public record CityWorldSettingsData(
                 Codec.DOUBLE.optionalFieldOf("spawnTrees", Odds.oddsLikely).forGetter(World::spawnTrees),
                 SUBSURFACE_CODEC.optionalFieldOf("subSurfaceStyle", SubSurfaceStyle.LAND).forGetter(World::subSurfaceStyle),
                 Codec.DOUBLE.optionalFieldOf("ruralnessLevel", 0.0).forGetter(World::ruralnessLevel),
-                Codec.INT.optionalFieldOf("maxBuildingFloors", DEFAULT_MAX_BUILDING_FLOORS).forGetter(World::maxBuildingFloors)
+                Codec.INT.optionalFieldOf("maxBuildingFloors", DEFAULT_MAX_BUILDING_FLOORS).forGetter(World::maxBuildingFloors),
+                Codec.BOOL.optionalFieldOf("broadcastSpecialPlaces", false).forGetter(World::broadcastSpecialPlaces)
         ).apply(i, World::new));
     }
 

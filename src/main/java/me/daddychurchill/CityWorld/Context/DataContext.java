@@ -19,10 +19,9 @@ import me.daddychurchill.CityWorld.compat.Material;
  * downtown, suburb, farm or wilderness. The odds below are the knobs that give each kind of district
  * its character.
  *
- * <p>Ported for real in wave 2, with one half deferred: the <b>schematic</b> methods
- * ({@code getSingleSchematic}, {@code populateSchematics}, {@code setSchematicFamily}) need
- * {@code Clipboard}/{@code PasteProvider}, which are P6. The schematic family a context declares is
- * still tracked so the P6 work has somewhere to land.
+ * <p>Fully ported, schematics included: {@code populateSchematics} and {@code getSingleSchematic}
+ * resolve the family this context declares through {@code SchematicLibrary}, gated on the world's
+ * {@code includeSchematics} setting.
  */
 public abstract class DataContext {
 
@@ -161,9 +160,9 @@ public abstract class DataContext {
 	}
 
 	// --- schematic family ----------------------------------------------------------------------
-	// What kind of place this context builds. Each context declares its own in its constructor, and
-	// P6 uses it to pick which of the player's schematics may land here. Tracked now so those
-	// declarations survive; nothing reads it until then.
+	// What kind of place this context builds. Each context declares its own in its constructor, and it
+	// picks which of the catalog's (and the player's) schematics may land here, footprint-filtered to
+	// this context's max.
 
 	private static final int schematicMax = 4;
 	private SchematicFamily schematicFamily = SchematicFamily.NATURE;

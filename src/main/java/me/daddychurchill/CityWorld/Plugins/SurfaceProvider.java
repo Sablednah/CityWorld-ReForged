@@ -74,9 +74,8 @@ public abstract class SurfaceProvider extends Provider {
 
 		switch (generator.worldStyle) {
 
-		// The style-specific surface variants land with their world styles at P8; each unported
-		// style surfaces as NORMAL rather than failing. NATURE/METRO/SPARSE/DESTROYED use Normal
-		// surfacing by design (see the reference switch).
+		// Every style is handled below. NATURE/METRO/SPARSE/DESTROYED/APOCALYPSE/CLASSIC/MODERN use
+		// Normal surfacing by design (see the reference switch); the rest have their own variant.
 		case FLOODED:
 			provider = new SurfaceProvider_Flooded(odds);
 			break;

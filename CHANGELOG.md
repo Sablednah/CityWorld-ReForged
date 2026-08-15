@@ -7,6 +7,22 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ## 5.0.2
 
+### Added
+
+- **Landmark announcements.** A new `world.broadcastSpecialPlaces` setting (off by default) announces
+  landmarks in chat as they generate — "Castle generated near 1520, -340" — to everyone on the
+  server. Upstream had this and the port had never implemented it. The same events are always
+  written to the debug log either way, so turning it off loses nothing but the chat.
+- **Schematics can announce themselves.** The `.yml` sidecar's `BroadcastLocation` key was being
+  parsed but never acted on; it now works, and fires once per building rather than once per chunk of
+  its footprint. It needs the world's `broadcastSpecialPlaces` on as well.
+- **`Title:` in schematic `.yml`.** Announcements previously could only use a schematic's filename,
+  so `winchester.schematic` announced as "winchester". A title lets it read "The Winchester Tavern".
+  Defaults to the filename, so a catalog already named nicely needs no change.
+- **A Max building floors picker** in the single-player Customize screen (World section). The setting
+  existed and worked from a datapack, but there was no UI control for it. Offers 8–60 floors; a
+  hand-edited value in between displays as the nearest and is only overwritten if you turn the dial.
+
 ### Fixed
 
 - **Lightning rods stood on moss carpet.** The rooftop-rod pass ran after overgrowth and stopped its

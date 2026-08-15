@@ -58,6 +58,13 @@ public final class Clipboard {
     public final boolean broadcastLocation;
 
     /**
+     * {@code Title:} in the {@code .yml} — the building's display name, used when it announces itself.
+     * Defaults to the file's own name, which is fine for a catalog already named "Fire Station" but not
+     * for a bare {@code winchester.schematic}: a title lets that read "The Winchester Tavern".
+     */
+    public final String title;
+
+    /**
      * {@code Ocean: true} in the {@code .yml} — an offshore build (rig, ship, lighthouse) that sits
      * <em>on</em> deep open water at the surface, on its own legs/hull, with no foundation: it places
      * only in genuinely deep water and the mod does nothing to the terrain, just drops the build in.
@@ -95,6 +102,7 @@ public final class Clipboard {
         this.decayable = meta.decayable;
         this.pristineChance = meta.pristineChance;
         this.broadcastLocation = meta.broadcastLocation;
+        this.title = meta.title == null || meta.title.isBlank() ? name : meta.title;
         this.ocean = meta.ocean;
         this.keepAir = meta.keepAir;
         this.anchor = meta.anchor;
@@ -208,6 +216,7 @@ public final class Clipboard {
         boolean decayable = true;
         double pristineChance = -1.0; // < 0 = use the world's oddsOfPristineBuilding
         boolean broadcastLocation = false;
+        String title = null; // null = fall back to the file's own name
         boolean ocean = false;
         boolean keepAir = false;
         boolean anchor = false;
@@ -234,6 +243,7 @@ public final class Clipboard {
                             case "Decayable" -> m.decayable = Boolean.parseBoolean(val);
                             case "PristineChance" -> m.pristineChance = clamp01(Double.parseDouble(val));
                             case "BroadcastLocation" -> m.broadcastLocation = Boolean.parseBoolean(val);
+                            case "Title" -> m.title = stripQuotes(val);
                             case "Ocean" -> m.ocean = Boolean.parseBoolean(val);
                             case "KeepAir" -> m.keepAir = Boolean.parseBoolean(val);
                             case "Anchor" -> m.anchor = Boolean.parseBoolean(val);
@@ -249,6 +259,13 @@ public final class Clipboard {
 
         private static double clamp01(double v) {
             return Math.max(0.0, Math.min(1.0, v));
+        }
+
+        /** YAML lets a value be quoted; a title is the one key where that is likely (it has spaces). */
+        private static String stripQuotes(String v) {
+            if (v.length() >= 2 && (v.startsWith("\"") && v.endsWith("\"") || v.startsWith("'") && v.endsWith("'")))
+                return v.substring(1, v.length() - 1);
+            return v;
         }
     }
 }

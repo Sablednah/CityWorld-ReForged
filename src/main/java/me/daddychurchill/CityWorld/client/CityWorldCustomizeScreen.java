@@ -84,7 +84,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private Chance spawnTrees;
     private SubSurfaceStyle subSurfaceStyle;
     private Chance ruralnessLevel;
-    private int maxBuildingFloors; // carried through untouched for now (no picker yet)
+    private int maxBuildingFloors;
+    private boolean broadcastSpecialPlaces;
 
     public CityWorldCustomizeScreen(Screen parent, WorldStyle initialStyle, CityWorldSettingsData initial,
             Consumer<Result> onDone) {
@@ -175,6 +176,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         subSurfaceStyle = w.subSurfaceStyle();
         ruralnessLevel = Chance.nearest(w.ruralnessLevel());
         maxBuildingFloors = w.maxBuildingFloors();
+        broadcastSpecialPlaces = w.broadcastSpecialPlaces();
     }
 
     @Override
@@ -255,6 +257,9 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, cycle("Under-floating fill", SubSurfaceStyle.values(), subSurfaceStyle,
                 e -> Component.literal(nice(e.name())), v -> subSurfaceStyle = v));
         pair(row, chance("Ruralness", ruralnessLevel, v -> ruralnessLevel = v));
+        pair(row, cycle("Max building floors", FLOOR_CHOICES, nearestFloors(maxBuildingFloors),
+                v -> Component.literal(v + " floors"), v -> maxBuildingFloors = v));
+        pair(row, onOff("Announce landmarks", broadcastSpecialPlaces, v -> broadcastSpecialPlaces = v));
         flush(row);
     }
 
@@ -287,7 +292,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 spawnersInSewers, treasuresInBuildings, oddsOfTreasureInMines.value, oddsOfTreasureInBunkers.value,
                 oddsOfTreasureInSewers.value, oddsOfTreasureInBuildings.value, oddsOfAlcoveInMines.value);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
-                treeStyle, spawnTrees.value, subSurfaceStyle, ruralnessLevel.value, maxBuildingFloors);
+                treeStyle, spawnTrees.value, subSurfaceStyle, ruralnessLevel.value, maxBuildingFloors,
+                broadcastSpecialPlaces);
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops);
@@ -338,6 +344,19 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
             w.setTooltip(net.minecraft.client.gui.components.Tooltip
                     .create(Component.literal("Locked by the " + styleLabel(style).getString() + " style")));
         }
+    }
+
+    /** The building heights the picker offers. The setting is a free int in the datapack, so a
+     *  hand-edited value between two choices displays as the nearest one (the same rounding
+     *  {@link Chance#nearest} does) and is only overwritten if the player actually turns the dial. */
+    private static final Integer[] FLOOR_CHOICES = { 8, 12, 16, 20, 24, 30, 40, 50, 60 };
+
+    private static Integer nearestFloors(int value) {
+        Integer best = FLOOR_CHOICES[0];
+        for (Integer choice : FLOOR_CHOICES)
+            if (Math.abs(choice - value) < Math.abs(best - value))
+                best = choice;
+        return best;
     }
 
     private static <T> CycleButton<T> cycle(String label, T[] values, T init,

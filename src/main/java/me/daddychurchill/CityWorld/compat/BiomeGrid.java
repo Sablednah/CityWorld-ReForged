@@ -9,10 +9,11 @@ package me.daddychurchill.CityWorld.compat;
  * modern implementation (P3/P4) has one method to satisfy rather than four to fake.
  *
  * <p>The impedance mismatch this hides: modern worldgen resolves biomes through a
- * {@code BiomeSource} queried by the engine, rather than letting the generator push them. The
- * likely landing is a {@code BiomeSource} backed by the same {@code ShapeProvider} maths, with an
- * implementation of this interface recording columns during generation. Until then a no-op
- * implementation is enough to run the terrain path — see PORTING.md.
+ * {@code BiomeSource} queried by the engine, rather than letting the generator push them. That
+ * landed as {@code CityWorldBiomeSource}/{@code CityWorldClimateBiomeSource}, pulling from the same
+ * {@code ShapeProvider} maths — so the columns pushed through here are now deliberately discarded
+ * ({@code CityWorldChunkGenerator.IGNORE_BIOMES}). The interface stays to keep the ported call sites
+ * compiling and readable.
  */
 public interface BiomeGrid {
 

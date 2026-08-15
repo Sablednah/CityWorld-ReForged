@@ -237,9 +237,10 @@ public class VaultLot extends BunkerLot {
     /**
      * One vault level in the hollow band {@code [floorY, ceilY]}: a central 2-wide cross corridor that
      * reaches all four chunk edges (so connected chunks tile into one navigable corridor grid — the "maze"),
-     * with a room in each quadrant opening onto the corridor through a doorway. The rooms are furnished in a
-     * later phase; for now they're lit empty cells. Corridor centre is x/z 7-8 so it lines up with the
-     * centre-positioned lobby door.
+     * with a room in each quadrant opening onto the corridor through a doorway. Quadrants are furnished by
+     * {@link #furnishRoom} into living quarters, offices, labs, storage, hydroponics or a mess hall, and
+     * some chunks carry a full-height lift shaft in their NW quadrant. Corridor centre is x/z 7-8 so it
+     * lines up with the centre-positioned lobby door.
      */
     static void generateLevel(SupportBlocks chunk, int floorY, int ceilY, boolean[] wall, int oX, int oZ) {
         chunk.setLayer(floorY, FLOOR);

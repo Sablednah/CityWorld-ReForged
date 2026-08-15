@@ -150,6 +150,7 @@ public final class SettingsDatapack {
         world.addProperty("subSurfaceStyle", w.subSurfaceStyle().name());
         world.addProperty("ruralnessLevel", w.ruralnessLevel());
         world.addProperty("maxBuildingFloors", w.maxBuildingFloors());
+        world.addProperty("broadcastSpecialPlaces", w.broadcastSpecialPlaces());
         root.add("world", world);
 
         CityWorldSettingsData.Radius rad = d.radius();

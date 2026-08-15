@@ -30,7 +30,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
  *
  * <p>There is no {@code isAlive()} here either. Bukkit's answered whether the type had a
  * {@code LivingEntity} class, and CityWorld used it to filter entity names supplied by per-world
- * YAML — which the port has no equivalent of (P7) — and to guard spawns from its own hardcoded
+ * YAML — here the datapack's mob bags, validated on load — and to guard spawns from its own hardcoded
  * lists, every member of which is alive. What the spawn path actually needs to know is whether the
  * type is a {@code Mob} (so it can be given a {@code finalizeSpawn}), and that is a plain
  * {@code instanceof} on the constructed entity, so {@code SpawnProvider} asks it that way.

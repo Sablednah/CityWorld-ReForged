@@ -213,6 +213,11 @@ public final class SettingsExample {
                                         ceiling follows this, clamped to the world's ceiling (319), so
                                         very high values give skyscrapers that use the full headroom.
                                         Sensible range 8..60.
+            broadcastSpecialPlaces false  Announce landmarks in chat as they generate ("Castle
+                                        generated near x, z"), to everyone on the server. Off by
+                                        default — chunks generate wherever anyone explores, so this
+                                        gets chatty on a busy server. The same events are always
+                                        written to the log at debug level either way.
 
             ============================================================================
             radius  — where cities may appear   (distances in CHUNKS; 16 blocks each)

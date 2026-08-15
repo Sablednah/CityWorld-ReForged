@@ -16,11 +16,11 @@ import net.minecraft.world.level.biome.Biomes;
  * vocabulary (passed around and compared, never switched on), so wrappers work where an enum would
  * force us to enumerate a registry that datapacks can extend.
  *
- * <p><b>This is deliberately a shim, not the destination.</b> CityWorld writes a biome per column
+ * <p><b>This is deliberately a shim.</b> CityWorld writes a biome per column
  * ({@code biomes.setBiome(x, z, …)}); modern worldgen assigns biomes through a {@code BiomeSource}
- * instead. Hiding that behind {@link BiomeGrid} lets the brain be ported now and the real
- * {@code BiomeSource} be hooked up at P3/P4 — see PORTING.md. The whole tree only ever names the
- * twelve constants below.
+ * instead. Hiding that behind {@link BiomeGrid} let the brain be ported as-is, and the real
+ * {@code CityWorldBiomeSource} now does the assigning. The whole tree only ever names the twelve
+ * constants below.
  */
 public final class Biome {
 
@@ -68,7 +68,7 @@ public final class Biome {
     // The 1.18 terrain rework deleted every "hills" variant along with SNOWY_MOUNTAINS, so these
     // four 1.14 names have no modern counterpart and are remapped to the nearest surviving biome.
     // They are only ever used to tint terrain CityWorld has already shaped itself, so the
-    // substitution costs colour/mob-spawn flavour, not terrain. Revisit at P4 with the BiomeSource.
+    // substitution costs colour/mob-spawn flavour, not terrain.
 
     /** 1.14 {@code BIRCH_FOREST_HILLS} — hills variants removed in 1.18. */
     public static final Biome BIRCH_FOREST_HILLS = of(Biomes.BIRCH_FOREST);

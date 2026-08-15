@@ -22,9 +22,9 @@ import me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData;
  * {@link CityWorldSettingsData#DEFAULT} mirrors, and cover the few runtime-only fields no datapack
  * entry carries (e.g. {@link #darkEnvironment}, set by the alien/nether styles).
  *
- * <p>Still to fold in: the villager-name / street-name / mob lists (upstream's
- * {@code VillagerGivenNames}, {@code Entities_For_*}, …) — a separate follow-up, since they need
- * reader plumbing back into {@code OdonymProvider} and the {@code AbstractEntityList} family.
+ * <p>The villager-name / street-name / mob lists (upstream's {@code VillagerGivenNames},
+ * {@code Entities_For_*}, …) are folded in too, as the datapack's {@code naming} and {@code mobs}
+ * groups: each list replaces the built-in bag, or adds to it with {@code "append": true}.
  */
 public class CityWorldSettings {
 
@@ -132,10 +132,10 @@ public class CityWorldSettings {
     public boolean includeHouses = true;
     /** Buried bunkers under the midlands and highlands, planned by NatureContext. */
     public boolean includeBunkers = true;
-    /** Balloons and blimps over the fields. The lots that carry them are P5/P8. */
+    /** Balloons, blimps and saucers over the fields (see {@code StructureInAirProvider}). */
     public boolean includeAirborneStructures = true;
 
-    /** Which family of trees a world grows. Only NORMAL is ported; SPOOKY/CRYSTAL are P8 styles. */
+    /** Which family of trees a world grows. Only NORMAL is ported; SPOOKY/CRYSTAL grow as NORMAL. */
     public TreeProvider.TreeStyle treeStyle = TreeProvider.TreeStyle.NORMAL;
     public double spawnTrees = Odds.oddsLikely;
     /** Set by the alien/nether styles; makes ground cover sparser. */
@@ -154,6 +154,13 @@ public class CityWorldSettings {
      * {@code DataContext} raises the building Y ceiling to fit this, clamped to the world ceiling.
      */
     public int maxBuildingFloors = CityWorldSettingsData.World.DEFAULT_MAX_BUILDING_FLOORS;
+
+    /**
+     * Announce landmarks in chat as they generate ("Castle placed near x, z") — upstream's
+     * {@code broadcastSpecialPlaces}. Off by default: chunks generate wherever players explore, so on a
+     * busy server this is chatty. Announcements go to everyone in the world the landmark generated in.
+     */
+    public boolean broadcastSpecialPlaces = false;
 
     /** Back on at upstream's default now that {@code RoundaboutCenterLot} is ported (wave 2b). */
     public boolean includeRoundabouts = true;
@@ -425,6 +432,7 @@ public class CityWorldSettings {
         subSurfaceStyle = w.subSurfaceStyle();
         ruralnessLevel = w.ruralnessLevel();
         maxBuildingFloors = w.maxBuildingFloors();
+        broadcastSpecialPlaces = w.broadcastSpecialPlaces();
 
         CityWorldSettingsData.Radius d = data.radius();
         centerPointOfChunkRadiusX = d.centerPointOfChunkRadiusX();
@@ -488,7 +496,7 @@ public class CityWorldSettings {
                 spawnersInSewers, treasuresInBuildings, oddsOfTreasureInMines, oddsOfTreasureInBunkers,
                 oddsOfTreasureInSewers, oddsOfTreasureInBuildings, oddsOfAlcoveInMines);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
-                treeStyle, spawnTrees, subSurfaceStyle, ruralnessLevel, maxBuildingFloors);
+                treeStyle, spawnTrees, subSurfaceStyle, ruralnessLevel, maxBuildingFloors, broadcastSpecialPlaces);
         CityWorldSettingsData.Radius radius = new CityWorldSettingsData.Radius(
                 centerPointOfChunkRadiusX, centerPointOfChunkRadiusZ, constructChunkRadius, roadChunkRadius,
                 cityChunkRadius, buildOutsideRadius, minInbetweenChunkDistanceOfCities);
@@ -536,8 +544,8 @@ public class CityWorldSettings {
 
     /**
      * Turns the raw radius knobs into the {@code checkXxxRange} gates that {@link #inCityRange} and
-     * friends consult. A verbatim port of upstream's "validate the range values" block, minus the
-     * YAML clamping (the radii are code-set for now). {@code buildOutsideRadius} inverts the sense:
+     * friends consult. A verbatim port of upstream's "validate the range values" block; the radii
+     * themselves come from the datapack's {@code radius} block. {@code buildOutsideRadius} inverts the sense:
      * build the ring <em>outside</em> the radius rather than the disc inside it.
      */
     private void deriveRangeFlags() {
@@ -599,7 +607,8 @@ public class CityWorldSettings {
         // anything commented out is up for user modification
         switch (style) {
         case CLASSIC:
-        case MODERN: // skeleton: same as CLASSIC for now; its modern facets land as later steps
+        case MODERN: // shares CLASSIC's only forced override here; MODERN's facets are style-conditional
+                    // elsewhere (isModernStyle) rather than settings this pass forces
         case METRO:
             subSurfaceStyle = SubSurfaceStyle.NONE; // DIFFERENT
             break;

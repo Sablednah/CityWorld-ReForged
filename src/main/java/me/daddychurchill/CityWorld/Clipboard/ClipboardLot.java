@@ -118,6 +118,12 @@ public class ClipboardLot extends IsolatedLot {
 		clip.pasteChunk(level, nwX, surfaceLevel(generator), nwZ,
 				chunk.getOriginX(), chunk.getOriginZ(), rotation, mirror, level.getRandom());
 
+		// A build that asked to announce itself does so once — from the footprint's NW chunk, since every
+		// chunk of a multi-chunk building runs this. Uses the .yml Title if it set one, so a bare
+		// "winchester.schematic" can still read as "The Winchester Tavern".
+		if (clip.broadcastLocation && lotX == 0 && lotZ == 0)
+			generator.reportLocation(clip.title, nwX, nwZ);
+
 		// An ocean build sits in open water: flood its below-waterline blocks so the sea flows through
 		// (waterlog fences/stairs/slabs/… rather than leaving dry pockets), and — if it asked to be
 		// anchored — drop legs from its base to the real sea floor so it isn't perched on a rock stub.
@@ -309,8 +315,8 @@ public class ClipboardLot extends IsolatedLot {
 	 * seen for urban schematics (and not for rural ones, where there is no raised sidewalk). So urban
 	 * families sit a block higher; rural families stay on the natural surface.
 	 *
-	 * <p>Keyed off the family rather than {@code inACity} because that setting is still a stub that
-	 * answers true everywhere until the P7 city-radius work lands.
+	 * <p>Keyed off the family rather than the city-radius test, which only narrows anything once a world
+	 * sets a radius (SPARSE does) and answers true everywhere on the default unbounded one.
 	 */
 	private int surfaceLevel(CityWorldGenerator generator) {
 		// An ocean build's "ground layer" is its waterline — put it at the sea surface so the deck rides

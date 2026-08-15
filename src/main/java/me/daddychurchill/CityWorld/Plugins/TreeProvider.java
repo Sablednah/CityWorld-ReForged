@@ -41,8 +41,7 @@ public abstract class TreeProvider {
 
 		// get the right defaults
 		switch (generator.getSettings().treeStyle) {
-		// _Spooky and _Crystal belong to the alien/decayed styles, which are P8. Until then every
-		// tree style grows NORMAL rather than failing.
+		// _Spooky and _Crystal were never ported, so those styles grow NORMAL rather than failing.
 		case SPOOKY:
 		case CRYSTAL:
 		case NORMAL:

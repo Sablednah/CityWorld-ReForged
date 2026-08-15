@@ -50,15 +50,15 @@ import net.minecraft.world.level.LevelAccessor;
  *
  * <p>The old lazy {@code initializeWorldInfo} is gone with it: the context is built in the
  * constructor, so there is no half-initialized window for the chunk pipeline's threads to observe.
- * Wiring the two together is P3.
+ * {@code CityWorldChunkGenerator} constructs one per world.
  */
 public class CityWorldGenerator {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
     /**
-     * World styles. Only {@code NORMAL} is wired up; the rest are the deferred
-     * {@code ShapeProvider} variants (PORTING.md P8 re-enables them).
+     * World styles. All of them ship; the providers dispatch on this in {@code ShapeProvider},
+     * {@code SurfaceProvider} and {@code SpawnProvider}.
      */
     public enum WorldStyle {
         // Order matters: the single-player Customize style picker cycles in declaration order, and the
@@ -562,8 +562,8 @@ public class CityWorldGenerator {
     }
 
     /**
-     * Announces a landmark's location. Upstream broadcast these to the server when
-     * {@code broadcastSpecialPlaces} was set; that setting is P7, so for now it just logs.
+     * Announces a landmark's location — always to the log at debug, and, when the world's
+     * {@code broadcastSpecialPlaces} setting is on, to everyone in chat (upstream's behaviour).
      */
     public void reportLocation(String title, AbstractBlocks chunk) {
         reportLocation(title, chunk.getOriginX(), chunk.getOriginZ());
@@ -571,6 +571,28 @@ public class CityWorldGenerator {
 
     public void reportLocation(String title, int originX, int originZ) {
         LOGGER.debug("{} placed near {}, {}", title, originX, originZ);
+        if (getSettings().broadcastSpecialPlaces)
+            broadcastLocation(title, originX, originZ);
+    }
+
+    /**
+     * Chat-announce a landmark. Called from the worldgen workers, so it hops to the server thread
+     * before touching the player list — and is defensive about there being no server at all (a
+     * plan-only sweep, or generation racing shutdown), where it simply does nothing.
+     */
+    private void broadcastLocation(String title, int originX, int originZ) {
+        try {
+            net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks
+                    .getCurrentServer();
+            if (server == null)
+                return;
+            net.minecraft.network.chat.Component message = net.minecraft.network.chat.Component
+                    .literal(String.format("%s generated near %d, %d", title, originX, originZ))
+                    .withStyle(net.minecraft.ChatFormatting.GRAY);
+            server.execute(() -> server.getPlayerList().broadcastSystemMessage(message, false));
+        } catch (Throwable t) {
+            LOGGER.debug("could not broadcast landmark {}", title, t); // never fail a chunk over chat
+        }
     }
 
     public void reportMessage(String message) {
