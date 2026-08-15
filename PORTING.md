@@ -2,11 +2,25 @@
 
 ## ▶ Resume here (next task)
 
-**▶▶ NEXT: release packaging (CurseForge).** All content arcs — including every item this doc used to
-list as "remaining" — are done, verified and deployed. There is no open feature backlog; the playtest
-loop (owner plays, reports, fix, redeploy) closed out the last of it in 2026-08 (see the dated block
-below). What's left is publishing: pick a version scheme, cut a tagged GitHub release with a built jar,
-then a CurseForge project page pointing at it.
+**▶▶ NEXT: the CurseForge upload itself.** All content arcs are done, verified and deployed; there is no
+open feature backlog. Publishing is now mostly done too — **`v5.0.1` is released on GitHub** with a jar
+attached, `CHANGELOG.md` tracks releases, and the CurseForge project description is written. What is
+actually left:
+
+- **Upload to CurseForge** — create the project, paste `CURSEFORGE.md` as the description, attach the
+  screenshots from `screengrabs/`, and upload the jar. Not yet done.
+- **`sablecraft.co.uk/cityworld-reforged/`** — the deep-dive docs home (a separate Claude session is
+  building it). CurseForge has **no "Pages" feature** — that was an early wrong assumption, and
+  `CURSEFORGE.md` now links to the website instead. `CURSEFORGE-CONFIGURATION.md` and
+  `CURSEFORGE-COMMANDS.md` remain in the repo as the source material for those pages.
+- **`5.0.2` is an unreleased dev version.** It carries the lightning-rod fix; the owner's call was that
+  one small fix isn't worth a release, so further fixes stack under the `## 5.0.2` heading in
+  `CHANGELOG.md` until there's enough to cut. GitHub's latest release stays `v5.0.1`.
+
+Deploying: `./deploy.sh` targets the `CityWork-ReForged` instance;
+`CITYWORLD_INSTANCE="/mnt/c/Users/darre/curseforge/minecraft/Instances/MobHealth - Forge" ./deploy.sh`
+targets the second test instance (where LegendQuest/ZombieMod test reacting to city locations). Both
+fail with "Permission denied" if that instance's Minecraft is open — close it and rerun.
 
 - ~~Finer decay knobs~~ **DONE (2026-08)** — graduated per-category demolition control (intensity,
   fire density, pristine-road sparing), with APOCALYPSE/DESTROYED presets encoding the owner's two-tier
@@ -17,7 +31,43 @@ then a CurseForge project page pointing at it.
   rods on highrise roofs + radio-tower aerials; hanging lanterns in the mines. See the deco log below.
 - ~~Building copper weathering~~ **CLOSED (owner: a-ok, leave as-is 2026-07)** — not doing it.
 
-**Playtest-polish wave landed (2026-08, most recent — read this before the older entries below).** A long
+**Release wave + post-release polish (2026-08-12→15, most recent).** Documentation, first public release,
+and the playtest fixes that followed it:
+
+- **Docs corrected and expanded.** The world-style table said "10 styles" and listed a single "Normal";
+  the enum actually has **13**, with MODERN and CLASSIC as separate styles (CLASSIC was formerly named
+  NORMAL) and FLOATING missing entirely. Fixed in `README.md` and `CURSEFORGE.md`. Added `CURSEFORGE.md`
+  (project description), `CURSEFORGE-CONFIGURATION.md` and `CURSEFORGE-COMMANDS.md` (deep dives, built by
+  reading `SettingsExample.java` and `CityWorldCommands.java` rather than from memory — the latter
+  documents `/cwlocate`, which had never appeared in any doc). 21 captioned screenshots added to the
+  README under `screengrabs/`, JPEG-compressed 23.4MB → 2.9MB.
+- **Promo stat, ground-truthed.** 135 saved worlds / 3,249,933 generated chunks / ~832 km², counted by
+  parsing the 1024 3-byte offset entries in each `.mca` region header across the test instance's `saves/`
+  — not estimated from file sizes.
+- **`v5.0.1` released** on GitHub (tag + jar + notes), `CHANGELOG.md` started.
+- **Overgrowth debris was all one tile.** `LEAF_LITTER` and `PINK_PETALS` are `SegmentableBlock`s whose
+  default state is always 1 segment facing north, so every scrap looked identical even though the material
+  pool was already mixed. `Overgrowth.scatter()` now rolls `SEGMENT_AMOUNT`, `HORIZONTAL_FACING` and
+  `AGE_3` (berry bushes) per placement; blocks without those properties pass through.
+- **Azaleas grew in thickets — two independent causes.** (1) `LushCaves.surfaceAzalea` ran per *chunk*
+  with 6–10 tries, but a lush *region* spans ~25 chunks, so a patch could stack up hundreds; now 80% of
+  lush chunks get none and the rest get 1–2. (2) Separately, `AZALEA`+`FLOWERING_AZALEA` were **10% of the
+  `Overgrowth` ground-cover pool** — the loud silhouette read as a thicket on APOCALYPSE. That slot now
+  takes a **`PERSISTENT` leaf block of the local biome's tree species** (spruce/birch/jungle/acacia/dark
+  oak/pale oak/mangrove/cherry, oak fallback; azalea foliage kept only for flower forest and meadow).
+  **Gotcha: fixing the visible pass first was wrong** — the two paths look identical in-world, and the
+  owner was on APOCALYPSE with overgrowth on, i.e. the *other* one.
+- **Richer nature clutter**: wildflowers, plain bushes, feral sweet-berry bushes, dry grass, dead bushes on
+  roads, and a ~1% `FIREFLY_BUSH`. New constants added via `scripts/gen_material.py` (**never hand-edit
+  `Material.java`**) and regenerated.
+- **Lightning rods stood on moss carpet.** The rooftop-rod pass ran *after* overgrowth and stopped its
+  downward scan at the first non-empty block — which on a reclaimed roof was the moss carpet, so the rod
+  perched a notch high. Fixed at both ends: the pass now runs **before** overgrowth (overgrowth already
+  skips non-sturdy tops, so it won't moss the rod), and the scan requires a solid top face via a new
+  **`SupportBlocks.isSturdyTop()`**. **Gotcha worth remembering: `isEmpty()` counts carpets/plants/snow as
+  filled**, so any "scan down to the surface" loop needs the sturdy test, not just `!isEmpty`.
+
+**Playtest-polish wave landed (2026-08, earlier).** A long
 run of the owner playing a MODERN/APOCALYPSE world and reporting back, each fix redeployed and re-tested
 in-world (not just probed):
 
