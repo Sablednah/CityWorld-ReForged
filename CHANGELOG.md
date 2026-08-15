@@ -24,6 +24,12 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   Great Pagoda. Previously exactly one schematic was flagged to announce and it had no title, so it
   would have said "liberty". Only distinctive landmarks were picked — the common flavour buildings
   stay quiet.
+- **The Statue of Liberty is copper now.** The build predates copper, so its skin was 13,563 light
+  blue wool blocks. Converted to a vanilla `.nbt` structure with the wool remapped to weathered
+  copper; every other block carries over unchanged.
+- **Bundled schematics may now ship in any supported format.** The bundled index only accepted legacy
+  `.schematic`, even though drop-in schematics could be `.schem`, `.litematic` or `.nbt` — which
+  meant no bundled build could use a block newer than 1.12.
 - **A Max building floors picker** in the single-player Customize screen (World section). The setting
   existed and worked from a datapack, but there was no UI control for it. Offers 8–60 floors; a
   hand-edited value in between displays as the nearest and is only overwritten if you turn the dial.
