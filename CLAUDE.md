@@ -19,7 +19,7 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 | Java | 21 |
 | Build | Gradle + ModDevGradle (`net.neoforged.moddev`) |
 | Licence | **GPL-3.0-only** (see below — non-negotiable) |
-| Branch | work happens on `neoforge-port` |
+| Branch | work happens on `master` (the `neoforge-port` branch was merged into it and deleted) |
 
 ## Licence — important
 
