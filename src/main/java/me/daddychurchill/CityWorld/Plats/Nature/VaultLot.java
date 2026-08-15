@@ -504,10 +504,13 @@ public class VaultLot extends BunkerLot {
         bigVaultDoor(chunk, floorY, ceilY, side);
         securityRoom(chunk, floorY, ceilY, side);
         // "VAULT <num>" wall signs flanking the doorway (on the hazard jambs' outer columns), replacing
-        // the old free-standing signpost that stood in the middle of the room whatever wall the door used
-        chunk.setWallSign(mapX(side, 5, 1), floorY + 3, mapZ(side, 5, 1), outwardFace(side),
+        // the old free-standing signpost that stood in the middle of the room whatever wall the door used.
+        // A wall sign FACES away from the block it hangs on, so to hang on the door wall it must face
+        // INTO the room — the opposite of outwardFace (which points out through the wall).
+        BlockFace intoRoom = outwardFace(side).getOppositeFace();
+        chunk.setWallSign(mapX(side, 5, 1), floorY + 3, mapZ(side, 5, 1), intoRoom,
                 "VAULT", Integer.toString(num));
-        chunk.setWallSign(mapX(side, 10, 1), floorY + 3, mapZ(side, 10, 1), outwardFace(side),
+        chunk.setWallSign(mapX(side, 10, 1), floorY + 3, mapZ(side, 10, 1), intoRoom,
                 "VAULT", Integer.toString(num));
     }
 
