@@ -19,6 +19,11 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 - **`Title:` in schematic `.yml`.** Announcements previously could only use a schematic's filename,
   so `winchester.schematic` announced as "winchester". A title lets it read "The Winchester Tavern".
   Defaults to the filename, so a catalog already named nicely needs no change.
+- **Seven bundled landmarks now announce themselves**, with proper names: the Statue of Liberty,
+  Midwich, the Spiritwind Monument, the Dragon Statue, the Old Water Tower, the Hedge Maze and the
+  Great Pagoda. Previously exactly one schematic was flagged to announce and it had no title, so it
+  would have said "liberty". Only distinctive landmarks were picked — the common flavour buildings
+  stay quiet.
 - **A Max building floors picker** in the single-player Customize screen (World section). The setting
   existed and worked from a datapack, but there was no UI control for it. Offers 8–60 floors; a
   hand-edited value in between displays as the nearest and is only overwritten if you turn the dial.

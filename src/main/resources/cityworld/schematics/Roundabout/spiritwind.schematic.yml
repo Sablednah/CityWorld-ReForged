@@ -3,5 +3,6 @@ GroundLevelY: 0
 FlipableX: false
 FlipableZ: false
 OddsOfAppearance: 0.02
-BroadcastLocation: false
+BroadcastLocation: true
 Decayable: true
+Title: "The Spiritwind Monument"
