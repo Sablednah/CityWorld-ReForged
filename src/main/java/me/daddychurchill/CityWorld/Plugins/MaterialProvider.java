@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
+import me.daddychurchill.CityWorld.Support.MaterialTags;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.MaterialList;
 import me.daddychurchill.CityWorld.compat.Material;
@@ -21,6 +22,17 @@ import me.daddychurchill.CityWorld.compat.Material;
  * <p>Only the lists the ported code reads are here; the rest arrive with their call sites. Reading
  * the overrides from config is P7 (upstream tracked every list in a {@code listOfLists} for exactly
  * that, which is why each carries its config tag name).
+ *
+ * <p><b>The repetitive colour/wood runs are block tags now.</b> Where a palette listed all six wood
+ * types, or all sixteen wools, it now names a {@code cityworld:build/…} tag weighted to occupy the
+ * same number of slots (see {@link MaterialList}). Two things follow: blocks Mojang adds later join
+ * the palette without a code change — planks went from the six 1.14 woods to twelve the day this
+ * landed — and a datapack can extend a palette with modded blocks by adding to the tag, which is how
+ * a "CityWorld × <i>some mod</i>" compatibility pack works.
+ *
+ * <p>Palettes that are a <em>deliberate curated look</em> rather than "all of a family" are left as
+ * explicit constants on purpose: the muted greyscale of unfinished buildings, the pale civic palette
+ * of government offices, the ordered road and maze lists. Widening those would lose the intent.
  */
 public class MaterialProvider {
 
@@ -86,34 +98,32 @@ public class MaterialProvider {
             Material.COBBLESTONE, Material.SANDSTONE, Material.BRICKS, Material.MOSSY_COBBLESTONE, Material.CLAY,
             Material.NETHERRACK, Material.SOUL_SAND, Material.STONE, Material.SMOOTH_STONE, Material.STONE_BRICKS,
             Material.NETHER_BRICKS, Material.QUARTZ_BLOCK, Material.CHISELED_STONE_BRICKS,
-            Material.CRACKED_STONE_BRICKS, Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS,
-            Material.JUNGLE_PLANKS, Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.WHITE_WOOL,
-            Material.ORANGE_WOOL, Material.MAGENTA_WOOL, Material.LIGHT_BLUE_WOOL, Material.YELLOW_WOOL,
-            Material.LIME_WOOL, Material.PINK_WOOL, Material.GRAY_WOOL, Material.LIGHT_GRAY_WOOL, Material.CYAN_WOOL);
+            Material.CRACKED_STONE_BRICKS)
+            .withTag(MaterialTags.BUILD_PLANKS, 6)
+            // Upstream listed only ten of the sixteen wools here. The tag carries all sixteen, but
+            // still occupies ten slots, so wool is no more likely than it was — just more varied.
+            .withTag(MaterialTags.BUILD_WOOL, 10);
 
     private final static String tagSelectMaterial_BuildingFoundation = "Materials_For_BuildingFoundation";
     public final MaterialList itemsSelectMaterial_BuildingFoundation = createList(tagSelectMaterial_BuildingFoundation,
             Material.COBBLESTONE, Material.SANDSTONE, Material.BRICKS, Material.MOSSY_COBBLESTONE, Material.CLAY,
             Material.NETHERRACK, Material.SMOOTH_STONE, Material.STONE_BRICKS, Material.NETHER_BRICKS,
-            Material.QUARTZ_BLOCK, Material.CHISELED_STONE_BRICKS, Material.CRACKED_STONE_BRICKS,
-            Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS, Material.JUNGLE_PLANKS,
-            Material.OAK_PLANKS, Material.SPRUCE_PLANKS);
+            Material.QUARTZ_BLOCK, Material.CHISELED_STONE_BRICKS, Material.CRACKED_STONE_BRICKS)
+            .withTag(MaterialTags.BUILD_PLANKS, 6);
 
     private final static String tagSelectMaterial_BuildingCeilings = "Materials_For_BuildingCeilings";
     public final MaterialList itemsSelectMaterial_BuildingCeilings = createList(tagSelectMaterial_BuildingCeilings,
             Material.COBBLESTONE, Material.SANDSTONE, Material.BRICKS, Material.MOSSY_COBBLESTONE, Material.CLAY,
             Material.NETHERRACK, Material.SMOOTH_STONE, Material.STONE_BRICKS, Material.NETHER_BRICKS,
-            Material.QUARTZ_BLOCK, Material.CHISELED_STONE_BRICKS, Material.CRACKED_STONE_BRICKS,
-            Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS, Material.JUNGLE_PLANKS,
-            Material.OAK_PLANKS, Material.SPRUCE_PLANKS);
+            Material.QUARTZ_BLOCK, Material.CHISELED_STONE_BRICKS, Material.CRACKED_STONE_BRICKS)
+            .withTag(MaterialTags.BUILD_PLANKS, 6);
 
     private final static String tagSelectMaterial_BuildingRoofs = "Materials_For_BuildingRoofs";
     public final MaterialList itemsSelectMaterial_BuildingRoofs = createList(tagSelectMaterial_BuildingRoofs,
             Material.COBBLESTONE, Material.SANDSTONE, Material.BRICKS, Material.MOSSY_COBBLESTONE, Material.CLAY,
             Material.NETHERRACK, Material.SMOOTH_STONE, Material.STONE_BRICKS, Material.NETHER_BRICKS,
-            Material.QUARTZ_BLOCK, Material.CHISELED_STONE_BRICKS, Material.CRACKED_STONE_BRICKS,
-            Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS, Material.JUNGLE_PLANKS,
-            Material.OAK_PLANKS, Material.SPRUCE_PLANKS);
+            Material.QUARTZ_BLOCK, Material.CHISELED_STONE_BRICKS, Material.CRACKED_STONE_BRICKS)
+            .withTag(MaterialTags.BUILD_PLANKS, 6);
 
     private final static String tagSelectMaterial_UnfinishedBuildings = "Materials_For_UnfinishedBuildings";
     public final MaterialList itemsSelectMaterial_UnfinishedBuildings = createList(
@@ -138,19 +148,13 @@ public class MaterialProvider {
 
     private final static String tagSelectMaterial_OilPlatformFloor = "Materials_For_OilPlatformFloor";
     public final MaterialList itemsSelectMaterial_OilPlatformFloor = createList(tagSelectMaterial_OilPlatformFloor,
-            Material.WHITE_CONCRETE, Material.ORANGE_CONCRETE, Material.MAGENTA_CONCRETE, Material.LIGHT_BLUE_CONCRETE,
-            Material.YELLOW_CONCRETE, Material.LIME_CONCRETE, Material.PINK_CONCRETE, Material.GRAY_CONCRETE,
-            Material.LIGHT_GRAY_CONCRETE, Material.CYAN_CONCRETE, Material.PURPLE_CONCRETE, Material.BLUE_CONCRETE,
-            Material.BROWN_CONCRETE, Material.GREEN_CONCRETE, Material.RED_CONCRETE, Material.BLACK_CONCRETE,
-            Material.STONE);
+            Material.STONE)
+            .withTag(MaterialTags.BUILD_CONCRETE, 16);
 
     private final static String tagSelectMaterial_OilPlatformColumn = "Materials_For_OilPlatformColumn";
     public final MaterialList itemsSelectMaterial_OilPlatformColumn = createList(tagSelectMaterial_OilPlatformColumn,
-            Material.WHITE_CONCRETE, Material.ORANGE_CONCRETE, Material.MAGENTA_CONCRETE, Material.LIGHT_BLUE_CONCRETE,
-            Material.YELLOW_CONCRETE, Material.LIME_CONCRETE, Material.PINK_CONCRETE, Material.GRAY_CONCRETE,
-            Material.LIGHT_GRAY_CONCRETE, Material.CYAN_CONCRETE, Material.PURPLE_CONCRETE, Material.BLUE_CONCRETE,
-            Material.BROWN_CONCRETE, Material.GREEN_CONCRETE, Material.RED_CONCRETE, Material.BLACK_CONCRETE,
-            Material.STONE);
+            Material.STONE)
+            .withTag(MaterialTags.BUILD_CONCRETE, 16);
 
     private final static String tagSelectMaterial_Castles = "Materials_For_Castles";
     public final MaterialList itemsSelectMaterial_Castles = createList(tagSelectMaterial_Castles, Material.COBBLESTONE,
@@ -179,8 +183,18 @@ public class MaterialProvider {
 
     private final boolean modern;
 
+    /**
+     * The MODERN decorative stones, resolved from {@code #cityworld:build/modern_stones} once per
+     * world. Falls back to {@link #MODERN_BUILD_STONES} if the tag is missing, so a broken or absent
+     * datapack costs variety rather than the whole MODERN look.
+     */
+    private final List<Material> modernStones;
+
     public MaterialProvider(CityWorldGenerator generator) {
         this.modern = generator.isModernStyle();
+
+        List<Material> stones = MaterialTags.resolve(MaterialTags.BUILD_MODERN_STONES);
+        this.modernStones = stones.isEmpty() ? List.of(MODERN_BUILD_STONES) : stones;
 
         // MODERN: retire plain STONE from the build pools (the ore pass peppers it) and fold the whole
         // decorative-stone palette in with equal weight, so a MODERN city grows blackstone, mud-brick,
@@ -196,7 +210,8 @@ public class MaterialProvider {
                     itemsSelectMaterial_FactoryInsides };
             for (MaterialList pool : buildPools) {
                 pool.remove(Material.STONE);
-                pool.add(MODERN_BUILD_STONES);
+                // Still one slot per stone, as when this was an array — the owner wants them common.
+                pool.addTag(MaterialTags.BUILD_MODERN_STONES, MODERN_BUILD_STONES.length);
             }
         }
     }
@@ -207,6 +222,9 @@ public class MaterialProvider {
      * peppers any {@code minecraft:stone} — including a stone wall or roof — with diorite/andesite/dirt
      * blobs. None of these are in the ore-replaceables tag, so they stay clean; the coppers also weather
      * for free. (The blackstone/basalt/etc. families are all here for variety.)
+     *
+     * <p>The live palette is the {@code #cityworld:build/modern_stones} tag, which ships with exactly
+     * these blocks; this array is the compiled-in fallback and the source of the pool's weight.
      */
     private static final Material[] MODERN_BUILD_STONES = {
             Material.BLACKSTONE, Material.POLISHED_BLACKSTONE, Material.POLISHED_BLACKSTONE_BRICKS,
@@ -227,63 +245,40 @@ public class MaterialProvider {
      */
     public Material deOre(Material m, Odds odds) {
         if (modern && m == Material.STONE)
-            return MODERN_BUILD_STONES[odds.getRandomInt(MODERN_BUILD_STONES.length)];
+            return modernStones.get(odds.getRandomInt(modernStones.size()));
         return m;
     }
 
     private final static String tagSelectMaterial_FactoryInsides = "Materials_For_FactoryInsides";
     public final MaterialList itemsSelectMaterial_FactoryInsides = createList(tagSelectMaterial_FactoryInsides,
-            Material.STONE, Material.SMOOTH_STONE, Material.QUARTZ_BLOCK, Material.CLAY, Material.WHITE_CONCRETE,
-            Material.ORANGE_CONCRETE, Material.MAGENTA_CONCRETE, Material.LIGHT_BLUE_CONCRETE, Material.YELLOW_CONCRETE,
-            Material.LIME_CONCRETE, Material.PINK_CONCRETE, Material.GRAY_CONCRETE, Material.LIGHT_GRAY_CONCRETE,
-            Material.CYAN_CONCRETE, Material.PURPLE_CONCRETE, Material.BLUE_CONCRETE, Material.BROWN_CONCRETE,
-            Material.GREEN_CONCRETE, Material.RED_CONCRETE, Material.BLACK_CONCRETE);
+            Material.STONE, Material.SMOOTH_STONE, Material.QUARTZ_BLOCK, Material.CLAY)
+            .withTag(MaterialTags.BUILD_CONCRETE, 16);
 
     private final static String tagSelectMaterial_FactoryTanks = "Materials_For_FactoryTanks";
     public final MaterialList itemsSelectMaterial_FactoryTanks = createList(tagSelectMaterial_FactoryTanks, Material.LAVA,
             Material.ICE, Material.PACKED_ICE, Material.SNOW_BLOCK, Material.SLIME_BLOCK, Material.COAL_BLOCK,
-            Material.SAND, Material.WATER, Material.GLASS, Material.WHITE_STAINED_GLASS, Material.ORANGE_STAINED_GLASS,
-            Material.MAGENTA_STAINED_GLASS, Material.LIGHT_BLUE_STAINED_GLASS, Material.YELLOW_STAINED_GLASS,
-            Material.LIME_STAINED_GLASS, Material.PINK_STAINED_GLASS, Material.GRAY_STAINED_GLASS,
-            Material.LIGHT_GRAY_STAINED_GLASS, Material.CYAN_STAINED_GLASS, Material.PURPLE_STAINED_GLASS,
-            Material.BLUE_STAINED_GLASS, Material.BROWN_STAINED_GLASS, Material.GREEN_STAINED_GLASS,
-            Material.RED_STAINED_GLASS, Material.BLACK_STAINED_GLASS, Material.TERRACOTTA, Material.WHITE_TERRACOTTA,
-            Material.ORANGE_TERRACOTTA, Material.MAGENTA_TERRACOTTA, Material.LIGHT_BLUE_TERRACOTTA,
-            Material.YELLOW_TERRACOTTA, Material.LIME_TERRACOTTA, Material.PINK_TERRACOTTA, Material.GRAY_TERRACOTTA,
-            Material.LIGHT_GRAY_TERRACOTTA, Material.CYAN_TERRACOTTA, Material.PURPLE_TERRACOTTA,
-            Material.BLUE_TERRACOTTA, Material.BROWN_TERRACOTTA, Material.GREEN_TERRACOTTA, Material.RED_TERRACOTTA,
-            Material.BLACK_TERRACOTTA, Material.WHITE_CONCRETE_POWDER, Material.ORANGE_CONCRETE_POWDER,
-            Material.MAGENTA_CONCRETE_POWDER, Material.LIGHT_BLUE_CONCRETE_POWDER, Material.YELLOW_CONCRETE_POWDER,
-            Material.LIME_CONCRETE_POWDER, Material.PINK_CONCRETE_POWDER, Material.GRAY_CONCRETE_POWDER,
-            Material.LIGHT_GRAY_CONCRETE_POWDER, Material.CYAN_CONCRETE_POWDER, Material.PURPLE_CONCRETE_POWDER,
-            Material.BLUE_CONCRETE_POWDER, Material.BROWN_CONCRETE_POWDER, Material.GREEN_CONCRETE_POWDER,
-            Material.RED_CONCRETE_POWDER, Material.BLACK_CONCRETE_POWDER);
+            Material.SAND, Material.WATER, Material.GLASS)
+            .withTag(MaterialTags.BUILD_STAINED_GLASS, 16)
+            // Weight 17: upstream listed plain terracotta alongside the sixteen dyed ones, and so
+            // does the vanilla tag this resolves to.
+            .withTag(MaterialTags.BUILD_TERRACOTTA, 17)
+            .withTag(MaterialTags.BUILD_CONCRETE_POWDER, 16);
 
     private final static String tagSelectMaterial_BunkerBuildings = "Materials_For_BunkerBuildings";
     public final MaterialList itemsSelectMaterial_BunkerBuildings = createList(tagSelectMaterial_BunkerBuildings,
-            Material.CLAY, Material.QUARTZ_BLOCK, Material.TERRACOTTA, Material.WHITE_TERRACOTTA,
-            Material.ORANGE_TERRACOTTA, Material.MAGENTA_TERRACOTTA, Material.LIGHT_BLUE_TERRACOTTA,
-            Material.YELLOW_TERRACOTTA, Material.LIME_TERRACOTTA, Material.PINK_TERRACOTTA, Material.GRAY_TERRACOTTA,
-            Material.LIGHT_GRAY_TERRACOTTA, Material.CYAN_TERRACOTTA, Material.PURPLE_TERRACOTTA,
-            Material.BLUE_TERRACOTTA, Material.BROWN_TERRACOTTA, Material.GREEN_TERRACOTTA, Material.RED_TERRACOTTA,
-            Material.BLACK_TERRACOTTA, Material.WHITE_TERRACOTTA, Material.WHITE_CONCRETE, Material.ORANGE_CONCRETE,
-            Material.MAGENTA_CONCRETE, Material.LIGHT_BLUE_CONCRETE, Material.YELLOW_CONCRETE, Material.LIME_CONCRETE,
-            Material.PINK_CONCRETE, Material.GRAY_CONCRETE, Material.LIGHT_GRAY_CONCRETE, Material.CYAN_CONCRETE,
-            Material.PURPLE_CONCRETE, Material.BLUE_CONCRETE, Material.BROWN_CONCRETE, Material.GREEN_CONCRETE,
-            Material.RED_CONCRETE, Material.BLACK_CONCRETE);
+            Material.CLAY, Material.QUARTZ_BLOCK,
+            // Upstream named WHITE_TERRACOTTA a second time after the run; kept explicit so bunkers
+            // still lean white.
+            Material.WHITE_TERRACOTTA)
+            .withTag(MaterialTags.BUILD_TERRACOTTA, 17)
+            .withTag(MaterialTags.BUILD_CONCRETE, 16);
 
     private final static String tagSelectMaterial_BunkerPlatforms = "Materials_For_BunkerPlatforms";
     public final MaterialList itemsSelectMaterial_BunkerPlatforms = createList(tagSelectMaterial_BunkerPlatforms,
             Material.CLAY, Material.QUARTZ_BLOCK, Material.QUARTZ_PILLAR, Material.CHISELED_QUARTZ_BLOCK,
-            Material.TERRACOTTA, Material.WHITE_TERRACOTTA, Material.ORANGE_TERRACOTTA, Material.MAGENTA_TERRACOTTA,
-            Material.LIGHT_BLUE_TERRACOTTA, Material.YELLOW_TERRACOTTA, Material.LIME_TERRACOTTA,
-            Material.PINK_TERRACOTTA, Material.GRAY_TERRACOTTA, Material.LIGHT_GRAY_TERRACOTTA,
-            Material.CYAN_TERRACOTTA, Material.PURPLE_TERRACOTTA, Material.BLUE_TERRACOTTA, Material.BROWN_TERRACOTTA,
-            Material.GREEN_TERRACOTTA, Material.RED_TERRACOTTA, Material.BLACK_TERRACOTTA, Material.WHITE_TERRACOTTA,
-            Material.WHITE_CONCRETE, Material.ORANGE_CONCRETE, Material.MAGENTA_CONCRETE, Material.LIGHT_BLUE_CONCRETE,
-            Material.YELLOW_CONCRETE, Material.LIME_CONCRETE, Material.PINK_CONCRETE, Material.GRAY_CONCRETE,
-            Material.LIGHT_GRAY_CONCRETE, Material.CYAN_CONCRETE, Material.PURPLE_CONCRETE, Material.BLUE_CONCRETE,
-            Material.BROWN_CONCRETE, Material.GREEN_CONCRETE, Material.RED_CONCRETE, Material.BLACK_CONCRETE);
+            Material.WHITE_TERRACOTTA) // the deliberate second helping of white, as above
+            .withTag(MaterialTags.BUILD_TERRACOTTA, 17)
+            .withTag(MaterialTags.BUILD_CONCRETE, 16);
 
     private final static String tagSelectMaterial_BunkerBilge = "Materials_For_BunkerBilge";
     public final MaterialList itemsSelectMaterial_BunkerBilge = createList(tagSelectMaterial_BunkerBilge, Material.AIR,
@@ -293,104 +288,70 @@ public class MaterialProvider {
     public final MaterialList itemsSelectMaterial_BunkerTanks = createList(tagSelectMaterial_BunkerTanks, Material.SPONGE,
             Material.REDSTONE_BLOCK, Material.END_STONE, Material.EMERALD_BLOCK, Material.LAVA, Material.ICE,
             Material.PACKED_ICE, Material.SNOW_BLOCK, Material.SLIME_BLOCK, Material.COAL_BLOCK, Material.SAND,
-            Material.WATER, Material.GLASS, Material.WHITE_STAINED_GLASS, Material.ORANGE_STAINED_GLASS,
-            Material.MAGENTA_STAINED_GLASS, Material.LIGHT_BLUE_STAINED_GLASS, Material.YELLOW_STAINED_GLASS,
-            Material.LIME_STAINED_GLASS, Material.PINK_STAINED_GLASS, Material.GRAY_STAINED_GLASS,
-            Material.LIGHT_GRAY_STAINED_GLASS, Material.CYAN_STAINED_GLASS, Material.PURPLE_STAINED_GLASS,
-            Material.BLUE_STAINED_GLASS, Material.BROWN_STAINED_GLASS, Material.GREEN_STAINED_GLASS,
-            Material.RED_STAINED_GLASS, Material.BLACK_STAINED_GLASS, Material.TERRACOTTA, Material.WHITE_TERRACOTTA,
-            Material.ORANGE_TERRACOTTA, Material.MAGENTA_TERRACOTTA, Material.LIGHT_BLUE_TERRACOTTA,
-            Material.YELLOW_TERRACOTTA, Material.LIME_TERRACOTTA, Material.PINK_TERRACOTTA, Material.GRAY_TERRACOTTA,
-            Material.LIGHT_GRAY_TERRACOTTA, Material.CYAN_TERRACOTTA, Material.PURPLE_TERRACOTTA,
-            Material.BLUE_TERRACOTTA, Material.BROWN_TERRACOTTA, Material.GREEN_TERRACOTTA, Material.RED_TERRACOTTA,
-            Material.BLACK_TERRACOTTA, Material.WHITE_CONCRETE_POWDER, Material.ORANGE_CONCRETE_POWDER,
-            Material.MAGENTA_CONCRETE_POWDER, Material.LIGHT_BLUE_CONCRETE_POWDER, Material.YELLOW_CONCRETE_POWDER,
-            Material.LIME_CONCRETE_POWDER, Material.PINK_CONCRETE_POWDER, Material.GRAY_CONCRETE_POWDER,
-            Material.LIGHT_GRAY_CONCRETE_POWDER, Material.CYAN_CONCRETE_POWDER, Material.PURPLE_CONCRETE_POWDER,
-            Material.BLUE_CONCRETE_POWDER, Material.BROWN_CONCRETE_POWDER, Material.GREEN_CONCRETE_POWDER,
-            Material.RED_CONCRETE_POWDER, Material.BLACK_CONCRETE_POWDER);
+            Material.WATER, Material.GLASS)
+            .withTag(MaterialTags.BUILD_STAINED_GLASS, 16)
+            .withTag(MaterialTags.BUILD_TERRACOTTA, 17)
+            .withTag(MaterialTags.BUILD_CONCRETE_POWDER, 16);
 
     private final static String tagSelectMaterial_HouseWalls = "Materials_For_HouseWalls";
     public final MaterialList itemsSelectMaterial_HouseWalls = createList(tagSelectMaterial_HouseWalls, Material.COBBLESTONE,
             Material.MOSSY_COBBLESTONE, Material.STONE, Material.SMOOTH_STONE, Material.SANDSTONE,
             Material.RED_SANDSTONE, Material.STONE_BRICKS, Material.NETHER_BRICKS, Material.BRICKS, Material.CLAY,
-            Material.TERRACOTTA, Material.WHITE_TERRACOTTA, Material.ORANGE_TERRACOTTA, Material.MAGENTA_TERRACOTTA,
-            Material.LIGHT_BLUE_TERRACOTTA, Material.YELLOW_TERRACOTTA, Material.LIME_TERRACOTTA,
-            Material.PINK_TERRACOTTA, Material.GRAY_TERRACOTTA, Material.LIGHT_GRAY_TERRACOTTA,
-            Material.CYAN_TERRACOTTA, Material.PURPLE_TERRACOTTA, Material.BLUE_TERRACOTTA, Material.BROWN_TERRACOTTA,
-            Material.GREEN_TERRACOTTA, Material.RED_TERRACOTTA, Material.BLACK_TERRACOTTA, Material.PRISMARINE,
-            Material.PURPUR_BLOCK, Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS,
-            Material.JUNGLE_PLANKS, Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.WHITE_CONCRETE,
-            Material.ORANGE_CONCRETE, Material.MAGENTA_CONCRETE, Material.LIGHT_BLUE_CONCRETE, Material.YELLOW_CONCRETE,
-            Material.LIME_CONCRETE, Material.PINK_CONCRETE, Material.GRAY_CONCRETE, Material.LIGHT_GRAY_CONCRETE,
-            Material.CYAN_CONCRETE, Material.PURPLE_CONCRETE, Material.BLUE_CONCRETE, Material.BROWN_CONCRETE,
-            Material.GREEN_CONCRETE, Material.RED_CONCRETE, Material.BLACK_CONCRETE, Material.END_STONE,
-            Material.END_STONE_BRICKS);
+            Material.PRISMARINE, Material.PURPUR_BLOCK, Material.END_STONE, Material.END_STONE_BRICKS)
+            .withTag(MaterialTags.BUILD_TERRACOTTA, 17)
+            .withTag(MaterialTags.BUILD_PLANKS, 6)
+            .withTag(MaterialTags.BUILD_CONCRETE, 16);
 
     private final static String tagSelectMaterial_HouseFloors = "Materials_For_HouseFloors";
     public final MaterialList itemsSelectMaterial_HouseFloors = createList(tagSelectMaterial_HouseFloors,
+            // The triples are upstream's weighting: plain cobble and stone floors are the common case.
             Material.COBBLESTONE, Material.COBBLESTONE, Material.COBBLESTONE, Material.STONE, Material.STONE,
-            Material.STONE, Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS,
-            Material.JUNGLE_PLANKS, Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.WHITE_WOOL,
-            Material.ORANGE_WOOL, Material.MAGENTA_WOOL, Material.LIGHT_BLUE_WOOL, Material.YELLOW_WOOL,
-            Material.LIME_WOOL, Material.PINK_WOOL, Material.GRAY_WOOL, Material.LIGHT_GRAY_WOOL, Material.CYAN_WOOL,
-            Material.PURPLE_WOOL, Material.BLUE_WOOL, Material.BROWN_WOOL, Material.GREEN_WOOL, Material.RED_WOOL,
-            Material.BLACK_WOOL, Material.TERRACOTTA, Material.WHITE_TERRACOTTA, Material.ORANGE_TERRACOTTA,
-            Material.MAGENTA_TERRACOTTA, Material.LIGHT_BLUE_TERRACOTTA, Material.YELLOW_TERRACOTTA,
-            Material.LIME_TERRACOTTA, Material.PINK_TERRACOTTA, Material.GRAY_TERRACOTTA,
-            Material.LIGHT_GRAY_TERRACOTTA, Material.CYAN_TERRACOTTA, Material.PURPLE_TERRACOTTA,
-            Material.BLUE_TERRACOTTA, Material.BROWN_TERRACOTTA, Material.GREEN_TERRACOTTA, Material.RED_TERRACOTTA,
-            Material.BLACK_TERRACOTTA, Material.BLACK_GLAZED_TERRACOTTA, Material.BLUE_GLAZED_TERRACOTTA,
-            Material.BROWN_GLAZED_TERRACOTTA, Material.CYAN_GLAZED_TERRACOTTA, Material.GRAY_GLAZED_TERRACOTTA,
-            Material.GREEN_GLAZED_TERRACOTTA, Material.LIGHT_BLUE_GLAZED_TERRACOTTA, Material.LIME_GLAZED_TERRACOTTA,
-            Material.MAGENTA_GLAZED_TERRACOTTA, Material.ORANGE_GLAZED_TERRACOTTA, Material.PINK_GLAZED_TERRACOTTA,
-            Material.PURPLE_GLAZED_TERRACOTTA, Material.RED_GLAZED_TERRACOTTA, Material.LIGHT_GRAY_GLAZED_TERRACOTTA,
-            Material.WHITE_GLAZED_TERRACOTTA, Material.YELLOW_GLAZED_TERRACOTTA);
+            Material.STONE)
+            .withTag(MaterialTags.BUILD_PLANKS, 6)
+            .withTag(MaterialTags.BUILD_WOOL, 16)
+            .withTag(MaterialTags.BUILD_TERRACOTTA, 17)
+            .withTag(MaterialTags.BUILD_GLAZED_TERRACOTTA, 16);
 
     private final static String tagSelectMaterial_HouseCeilings = "Materials_For_HouseCeilings";
     public final MaterialList itemsSelectMaterial_HouseCeilings = createList(tagSelectMaterial_HouseCeilings,
-            Material.COBBLESTONE, Material.SMOOTH_STONE, Material.SANDSTONE, Material.RED_SANDSTONE,
-            Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS, Material.JUNGLE_PLANKS,
-            Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.STONE);
+            Material.COBBLESTONE, Material.SMOOTH_STONE, Material.SANDSTONE, Material.RED_SANDSTONE, Material.STONE)
+            .withTag(MaterialTags.BUILD_PLANKS, 6);
 
     private final static String tagSelectMaterial_HouseRoofs = "Materials_For_HouseRoofs";
     public final MaterialList itemsSelectMaterial_HouseRoofs = createList(tagSelectMaterial_HouseRoofs, Material.COBBLESTONE,
             Material.MOSSY_COBBLESTONE, Material.SMOOTH_STONE, Material.SANDSTONE, Material.RED_SANDSTONE,
-            Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS, Material.JUNGLE_PLANKS,
-            Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.STONE);
+            Material.STONE)
+            .withTag(MaterialTags.BUILD_PLANKS, 6);
 
     private final static String tagSelectMaterial_ShackWalls = "Materials_For_ShackWalls";
     public final MaterialList itemsSelectMaterial_ShackWalls = createList(tagSelectMaterial_ShackWalls,
-            Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS, Material.JUNGLE_PLANKS,
-            Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.MOSSY_COBBLESTONE, Material.RED_SANDSTONE,
-            Material.STONE_BRICKS, Material.NETHER_BRICKS, Material.BRICKS, Material.STONE);
+            Material.MOSSY_COBBLESTONE, Material.RED_SANDSTONE, Material.STONE_BRICKS, Material.NETHER_BRICKS,
+            Material.BRICKS, Material.STONE)
+            .withTag(MaterialTags.BUILD_PLANKS, 6);
 
     private final static String tagSelectMaterial_ShackRoofs = "Materials_For_ShackRoofs";
-    public final MaterialList itemsSelectMaterial_ShackRoofs = createList(tagSelectMaterial_ShackRoofs,
-            Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS, Material.JUNGLE_PLANKS,
-            Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.STONE);
+    public final MaterialList itemsSelectMaterial_ShackRoofs = createList(tagSelectMaterial_ShackRoofs, Material.STONE)
+            .withTag(MaterialTags.BUILD_PLANKS, 6);
 
     private final static String tagSelectMaterial_ShedWalls = "Materials_For_ShedWalls";
     public final MaterialList itemsSelectMaterial_ShedWalls = createList(tagSelectMaterial_ShedWalls, Material.SANDSTONE,
-            Material.RED_SANDSTONE, Material.SPRUCE_PLANKS, Material.COBBLESTONE, Material.BRICKS,
-            Material.SMOOTH_STONE, Material.ACACIA_PLANKS, Material.BIRCH_PLANKS, Material.DARK_OAK_PLANKS,
-            Material.JUNGLE_PLANKS, Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.STONE);
+            Material.RED_SANDSTONE,
+            // Upstream named spruce once before the wood run and again inside it; the extra helping
+            // is preserved so sheds keep their weathered-spruce lean.
+            Material.SPRUCE_PLANKS,
+            Material.COBBLESTONE, Material.BRICKS, Material.SMOOTH_STONE, Material.STONE)
+            .withTag(MaterialTags.BUILD_PLANKS, 6);
 
     private final static String tagSelectMaterial_ShedRoofs = "Materials_For_ShedRoofs";
     public final MaterialList itemsSelectMaterial_ShedRoofs = createList(tagSelectMaterial_ShedRoofs, Material.STONE_SLAB,
             Material.BIRCH_SLAB);
 
     private final static String tagSelectMaterial_WaterTowers = "Materials_For_WaterTowers";
-    public final MaterialList itemsSelectMaterial_WaterTowers = createList(tagSelectMaterial_WaterTowers, Material.CLAY,
-            Material.WHITE_TERRACOTTA, Material.ORANGE_TERRACOTTA, Material.MAGENTA_TERRACOTTA,
-            Material.LIGHT_BLUE_TERRACOTTA, Material.YELLOW_TERRACOTTA, Material.LIME_TERRACOTTA,
-            Material.PINK_TERRACOTTA, Material.GRAY_TERRACOTTA, Material.LIGHT_GRAY_TERRACOTTA,
-            Material.CYAN_TERRACOTTA, Material.PURPLE_TERRACOTTA, Material.BLUE_TERRACOTTA, Material.BROWN_TERRACOTTA,
-            Material.GREEN_TERRACOTTA, Material.RED_TERRACOTTA, Material.BLACK_TERRACOTTA, Material.WHITE_CONCRETE,
-            Material.ORANGE_CONCRETE, Material.MAGENTA_CONCRETE, Material.LIGHT_BLUE_CONCRETE, Material.YELLOW_CONCRETE,
-            Material.LIME_CONCRETE, Material.PINK_CONCRETE, Material.GRAY_CONCRETE, Material.LIGHT_GRAY_CONCRETE,
-            Material.CYAN_CONCRETE, Material.PURPLE_CONCRETE, Material.BLUE_CONCRETE, Material.BROWN_CONCRETE,
-            Material.GREEN_CONCRETE, Material.RED_CONCRETE, Material.BLACK_CONCRETE);
+    // Weight 16, not 17: upstream used the sixteen dyed terracottas here without the plain one. The
+    // tag carries plain terracotta too, but at sixteen slots the family's share is unchanged.
+    public final MaterialList itemsSelectMaterial_WaterTowers = createList(tagSelectMaterial_WaterTowers, Material.CLAY)
+            .withTag(MaterialTags.BUILD_TERRACOTTA, 16)
+            .withTag(MaterialTags.BUILD_CONCRETE, 16);
 
     private MaterialList createList(String name, Material... materials) {
 

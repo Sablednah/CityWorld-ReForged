@@ -1,0 +1,28 @@
+{
+  "values": [
+    { "id": "minecraft:blackstone", "required": false },
+    { "id": "minecraft:polished_blackstone", "required": false },
+    { "id": "minecraft:polished_blackstone_bricks", "required": false },
+    { "id": "minecraft:chiseled_polished_blackstone", "required": false },
+    { "id": "minecraft:cracked_polished_blackstone_bricks", "required": false },
+    { "id": "minecraft:gilded_blackstone", "required": false },
+    { "id": "minecraft:polished_andesite", "required": false },
+    { "id": "minecraft:polished_diorite", "required": false },
+    { "id": "minecraft:polished_granite", "required": false },
+    { "id": "minecraft:mud_bricks", "required": false },
+    { "id": "minecraft:resin_bricks", "required": false },
+    { "id": "minecraft:basalt", "required": false },
+    { "id": "minecraft:polished_basalt", "required": false },
+    { "id": "minecraft:smooth_basalt", "required": false },
+    { "id": "minecraft:prismarine", "required": false },
+    { "id": "minecraft:prismarine_bricks", "required": false },
+    { "id": "minecraft:dark_prismarine", "required": false },
+    { "id": "minecraft:purpur_block", "required": false },
+    { "id": "minecraft:purpur_pillar", "required": false },
+    { "id": "minecraft:copper_block", "required": false },
+    { "id": "minecraft:cut_copper", "required": false },
+    { "id": "minecraft:exposed_cut_copper", "required": false },
+    { "id": "minecraft:weathered_cut_copper", "required": false },
+    { "id": "minecraft:oxidized_cut_copper", "required": false }
+  ]
+}

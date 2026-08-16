@@ -2,22 +2,34 @@
 
 ## ▶ Resume here (next task)
 
-**▶▶ NEXT: the CurseForge upload itself.** All content arcs are done, verified and deployed; there is no
-open feature backlog. Publishing is now mostly done too — **`v5.0.1` is released on GitHub** with a jar
-attached, `CHANGELOG.md` tracks releases, and the CurseForge project description is written. What is
-actually left:
+**Publishing is DONE — `v5.0.2` shipped everywhere** (GitHub release with jar, the owner's CurseForge
+upload, and `sablecraft.co.uk/cityworld-reforged/` live). The port branch is merged: **work happens on
+`master`**. All content arcs are done, verified and deployed.
 
-- **Upload to CurseForge** — create the project, paste `CURSEFORGE.md` as the description, attach the
-  screenshots from `screengrabs/`, and upload the jar. Not yet done.
-- **`sablecraft.co.uk/cityworld-reforged/`** — the deep-dive docs home (a separate Claude session is
-  building it). CurseForge has **no "Pages" feature** — that was an early wrong assumption, and
-  `CURSEFORGE.md` now links to the website instead. `CURSEFORGE-CONFIGURATION.md` and
-  `CURSEFORGE-COMMANDS.md` remain in the repo as the source material for those pages.
-- **`5.0.2` is an unreleased dev version — now substantial and worth cutting.** It carries the
-  lightning-rod fix, the landmark-announce feature (+ curation + titles), the copper Liberty, the
-  10-finding review batch, and the vault glow-up (see the dated block below). Cut a GitHub `v5.0.2`
-  release (tag + jar + notes lifted from `CHANGELOG.md`'s 5.0.2 section) once the owner confirms the
-  vault rework in-world. GitHub's latest release stays `v5.0.1` meanwhile.
+**▶▶ NEXT: the cross-version arc — supporting 1.21.11, 26.1, 26.2 and whatever follows.** Minecraft
+moved to calendar versioning with quarterly game drops, so this is a treadmill, not a one-off port.
+The agreed shape is three stages, and **stage 1 has landed**:
+
+1. **Harden on 1.21.11 first — data-driven palettes.** ✅ **DONE (2026-08, `5.0.3` dev)** — see the
+   dated block below. Backward-compatible, no branch, and it delivers a user-visible feature now.
+2. **Then port to 26.1 on a branch, and measure the real delta.** The blast radius is already
+   measured and small: of 386 java files only **59 import `net.minecraft`**, there are **2**
+   `new ChunkPos(...)`/`.asLong()` sites, **2** `new ItemStack` sites (both `HospitalLot`), and
+   **zero** `GuiGraphics` usages — so 26.1's and 26.2's rendering refactors miss us entirely. The
+   real work is toolchain (Java 25, Gradle 9.1+), the loot-registry `MapCodec` change, re-verifying
+   the `SignBlockEntity` access transformer, and re-running `gen_material.py` against 26.1 to find
+   any block constants that moved.
+3. **Then pick the steady state** — branch-per-version, or one tree with a source preprocessor and
+   per-version Gradle variants (the Sodium/JEI approach). Decide *after* seeing two real deltas, not
+   before. The owner's stated preference is a single cross-version codebase; testing, not building,
+   is expected to be the painful part.
+
+**The biggest single fragility is `compat/Material.java`**: 709 constants bound at compile time to
+**575 `Blocks.X` and 116 `Items.X`** field references, feeding 3,096 call sites. One renamed or
+removed vanilla field breaks the build outright, and over a quarterly cadence that is a certainty
+rather than a risk. It is generated, so the fix is generator-side — teach `gen_material.py` to report
+misses instead of emitting an unresolvable binding, and keep moving palettes off constants and onto
+tags (stage 1) so fewer of them matter.
 
 Deploying: `./deploy.sh` targets the `CityWork-ReForged` instance;
 `CITYWORLD_INSTANCE="/mnt/c/Users/darre/curseforge/minecraft/Instances/MobHealth - Forge" ./deploy.sh`
@@ -33,7 +45,37 @@ fail with "Permission denied" if that instance's Minecraft is open — close it 
   rods on highrise roofs + radio-tower aerials; hanging lanterns in the mines. See the deco log below.
 - ~~Building copper weathering~~ **CLOSED (owner: a-ok, leave as-is 2026-07)** — not doing it.
 
-**Announce feature + vault glow-up (2026-08-15, most recent).** Built on owner request after the release
+**Tag-backed building palettes (2026-08-16, most recent).** Stage 1 of the cross-version arc, and a
+feature in its own right. Stacks under `## 5.0.3`; `mod_version` bumped. Not yet released.
+
+- **Eight palettes moved from compiled constants to block tags** — `cityworld:build/{planks, wool,
+  terracotta, glazed_terracotta, concrete, concrete_powder, stained_glass, modern_stones}`, defined in
+  `src/main/resources/data/cityworld/tags/block/build/` and resolved by `Support/MaterialTags`.
+  Verified in-world by a temporary `ServerStartedEvent` probe (since removed): planks **6 → 12**,
+  wool **10 → 16**, terracotta 17, glazed 16, concrete 16, powder 16, stained glass 16, modern stones
+  24; no unbound-tag warnings.
+- **Weighting is preserved, and that is the whole trick.** `MaterialList` gained tag *pools*: a pool
+  occupies exactly the number of slots the constants it replaced did, so the odds of "some plank" are
+  unchanged and only *which* plank widens. Flattening the tag in instead would have doubled wood's
+  share of every wall, and a modpack with thirty wood types would have drowned every palette. Two
+  rolls per pick: one for the slot, one within the pool (reusing the slot offset would make a
+  weight-1 pool always yield its first block).
+- **Determinism trap, worth remembering:** tag iteration order is *not* stable across loads, versions
+  or packs, and every material choice indexes a list with a seeded `Odds` — so an unsorted pool would
+  mean the same seed grew a different city each load. `MaterialTags.resolve` **sorts by registry id**
+  before anything indexes it. Probe-verified: two runs of the same seed produced identical sequences.
+- **`c:` tags are the win for the families vanilla doesn't tag.** Vanilla ships 204 block tags but has
+  no `concrete` tag (only `concrete_powder`) and no generic "stones"; NeoForge's 123 common tags
+  supply `c:concretes`, `c:glazed_terracottas`, `c:stones`, `c:cobblestones`, `c:glass_blocks`,
+  `c:villager_job_sites` (a direct fit for the shop layer, still unused) and more.
+- **Modpack compatibility falls out for free** — a mod that tags conventionally appears in cities with
+  no patch at all; anything else is a datapack adding to `cityworld:build/*`. Documented for players
+  in the new **`PALETTES.md`** (also website source material), including the `"replace": false` /
+  `"required": false` traps and why a modded plank feels rare (slot weighting).
+- **Left as fixed lists on purpose:** unfinished buildings (muted greyscale), government offices (pale
+  civic), roads and maze walls (order carries meaning). Widening those loses the intent.
+
+**Announce feature + vault glow-up (2026-08-15).** Built on owner request after the release
 wave below; all committed through `ae04ebe`, deployed to both instances, **not yet released** (stacks
 under `## 5.0.2` in `CHANGELOG.md` — owner cuts releases when there's enough, and this batch is enough):
 

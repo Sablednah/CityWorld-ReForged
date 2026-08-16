@@ -5,6 +5,37 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 5.0.3
+
+### Added
+
+- **Building palettes are block tags now, so new blocks join them on their own.** The palettes used
+  to be runs of hand-written constants, which is why CityWorld was still building houses out of the
+  six 1.14 wood types. Eight of them — planks, wool, terracotta, glazed terracotta, concrete,
+  concrete powder, stained glass and the MODERN decorative stones — now resolve from
+  `cityworld:build/*` block tags at world creation. Planks went from six woods to **twelve** the day
+  this landed (pale oak, cherry, mangrove, bamboo, crimson and warped join the palette), and wool
+  from ten colours to all sixteen.
+- **Modded blocks arrive the same way.** A mod that tags its blocks conventionally — planks in
+  `#minecraft:planks`, stone in `#c:stones` — starts showing up in cities as soon as it is installed,
+  with no patch and no compatibility pack. For mods that don't tag their blocks, or for putting a
+  mod's blocks somewhere they wouldn't naturally go, a datapack can extend any palette directly. See
+  the new `PALETTES.md`.
+
+### Changed
+
+- **Palette odds are unchanged despite the wider contents.** Each tag occupies exactly the number of
+  slots the constants it replaced did, so wooden houses are no more common than in 5.0.2 — only
+  *which* wood varies. Without this a twelve-block planks tag would have doubled wood's share of
+  every wall in the world, and a modpack with thirty wood types would have drowned the palette
+  entirely.
+- Palettes that are a curated look rather than "all of a family" are deliberately left as fixed
+  lists: the muted greyscale of unfinished buildings, the pale civic palette of government offices,
+  and the ordered road and maze lists.
+
+> Because the palettes are wider, a seed generates slightly different **materials** than it did on
+> 5.0.2. The terrain and city layout are unchanged, and existing chunks never regenerate.
+
 ## 5.0.2
 
 ### Changed (from a full review of the announce feature before release)
