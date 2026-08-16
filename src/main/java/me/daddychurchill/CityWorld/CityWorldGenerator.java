@@ -499,7 +499,7 @@ public class CityWorldGenerator {
      * before running the lots, and pair with {@link #endDecoration()} in a {@code finally}.
      */
     public void beginDecoration(LevelAccessor level, ChunkPos pos) {
-        Odds odds = new Odds(worldSeed + ((long) pos.x << 32 ^ pos.z));
+        Odds odds = new Odds(worldSeed + ((long) pos.x() << 32 ^ pos.z()));
         decayBlocks.set(new WorldBlocks(this, level, odds));
     }
 

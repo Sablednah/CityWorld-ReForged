@@ -10,26 +10,99 @@ upload, and `sablecraft.co.uk/cityworld-reforged/` live). The port branch is mer
 moved to calendar versioning with quarterly game drops, so this is a treadmill, not a one-off port.
 The agreed shape is three stages, and **stage 1 has landed**:
 
-1. **Harden on 1.21.11 first — data-driven palettes.** ✅ **DONE (2026-08, `5.0.3` dev)** — see the
+1. **Harden on 1.21.11 first — data-driven palettes.** ✅ **DONE (2026-08, `5.0.3`)** — see the
    dated block below. Backward-compatible, no branch, and it delivers a user-visible feature now.
-2. **Then port to 26.1 on a branch, and measure the real delta.** The blast radius is already
-   measured and small: of 386 java files only **59 import `net.minecraft`**, there are **2**
-   `new ChunkPos(...)`/`.asLong()` sites, **2** `new ItemStack` sites (both `HospitalLot`), and
-   **zero** `GuiGraphics` usages — so 26.1's and 26.2's rendering refactors miss us entirely. The
-   real work is toolchain (Java 25, Gradle 9.1+), the loot-registry `MapCodec` change, re-verifying
-   the `SignBlockEntity` access transformer, and re-running `gen_material.py` against 26.1 to find
-   any block constants that moved.
-3. **Then pick the steady state** — branch-per-version, or one tree with a source preprocessor and
-   per-version Gradle variants (the Sodium/JEI approach). Decide *after* seeing two real deltas, not
-   before. The owner's stated preference is a single cross-version codebase; testing, not building,
-   is expected to be the painful part.
+2. **Then port to 26.1 on a branch, and measure the real delta.** ✅ **DONE (2026-08-16, branch
+   `mc26.1`)** — see "The measured 26.1 delta" immediately below. Headline: **one** API change
+   touching **12 lines**, and the feared `Material.java` breakage did not happen at all.
+3. **▶▶ NEXT: pick the steady state** — branch-per-version, or one tree with a source preprocessor
+   and per-version Gradle variants (the Sodium/JEI approach). The owner's stated preference is a
+   single cross-version codebase; testing, not building, is expected to be the painful part. One
+   real delta is now measured; **26.2 is already released** (2026-06-16) and is the obvious second
+   data point before committing to a mechanism.
 
-**The biggest single fragility is `compat/Material.java`**: 709 constants bound at compile time to
-**575 `Blocks.X` and 116 `Items.X`** field references, feeding 3,096 call sites. One renamed or
-removed vanilla field breaks the build outright, and over a quarterly cadence that is a certainty
-rather than a risk. It is generated, so the fix is generator-side — teach `gen_material.py` to report
-misses instead of emitting an unresolvable binding, and keep moving palettes off constants and onto
-tags (stage 1) so fewer of them matter.
+## The measured 26.1 delta (2026-08-16, branch `mc26.1`)
+
+Stage 2's actual deliverable. Target: **Minecraft 26.1.2 / NeoForge 26.1.2.95** (the last patch of
+the 26.1 line). Builds clean, runs, and generates cities. **The port cost was far lower than
+predicted.**
+
+**The entire source delta is one API change:**
+
+- **`ChunkPos` became a record**, so the public `x`/`z` fields are now accessors — `pos.x` →
+  `pos.x()`. That is **20 compiler errors across 12 lines in 6 files**, and it is *all* of them.
+  `new ChunkPos(x, z)` still works (it is the canonical constructor); the predicted
+  `new ChunkPos(BlockPos)` → `containing()` and `.asLong()` → `.pack()` renames exist in 26.1 but
+  this codebase never used those forms.
+
+**Predictions that did not bite:**
+
+- **`compat/Material.java` — the "biggest single fragility" — cost nothing.** Re-running
+  `gen_material.py` against 26.1 produced a file **byte-identical** to the 1.21.11 one. All 691
+  `Blocks.X`/`Items.X` bindings survived. The generator already fails loudly on unmapped names,
+  `EXTRAS`, and `EXTRAS_EXPR`, so this was a real check, not a silent pass.
+- **The loot-registry `MapCodec` change misses us** — every `getType()` hit in the tree is our own
+  method, not a vanilla loot type.
+- **The rendering refactors miss us**, as predicted (0 `GuiGraphics` usages).
+- **`new ItemStack(...)` still works** in `HospitalLot`; `ItemStackTemplate` was not forced on us.
+- **The access transformer needed no change.** `SignBlockEntity.frontText`/`backText` still exist
+  and the AT still widens them (verified in the transformed 26.1 sources, not just inferred from a
+  green build).
+
+**Toolchain changes** (`gradle.properties`, `build.gradle`, `deploy.sh`):
+
+- **Java 21 → 25** (26.1 ships `java-runtime-epsilon`; JDK at `./tools/jdk25`, git-ignored like
+  `jdk21`). `deploy.sh` now prefers `jdk25` and falls back to `jdk21`, honouring a preset `JAVA_HOME`.
+- **ModDevGradle 2.0.141 → 2.0.144.** The Gradle wrapper was **already** 9.2.1, so the "Gradle 9.1+"
+  requirement cost nothing.
+- **Parchment stays disabled** — 26.1 dropped obfuscation entirely, so it would only add parameter
+  names. The properties are already blank; nothing to do.
+- **The jar now carries its Minecraft version** — `cityworld-5.0.3+mc26.1.2.jar`. Both lines share a
+  mod version, and two files both called `cityworld-5.0.3.jar` are indistinguishable in a mods folder
+  or on a releases page. The version *inside* `neoforge.mods.toml` stays a plain `5.0.3`.
+
+**Three cross-version traps found in `scripts/gen_material.py`** — all silent-wrong-answer bugs that
+only appear once a second version exists on the machine, now fixed:
+
+1. It globbed `sourcesAndCompiledWithNeoForge_*` and took **`jars[0]` of an unsorted glob**. With one
+   MC version cached that is always right; with two it regenerates `Material.java` against whichever
+   happens to sort first.
+2. **The NeoForm artifact was renamed** — 26.1 produces `mergeWithSources_*_output.jar`, so the old
+   glob does not match it at all and would silently fall back to a stale 1.21.11 jar.
+3. **The decompiled-source cache was shared across versions** (`/tmp/cityworld-portgen/mcsrc`), so
+   after retargeting the build it would serve the *previous* version's `Blocks.java`.
+
+   The fix picks the jar by fingerprint: read `minecraft_version` from `gradle.properties`, get that
+   release's `world_version` from NeoForm's cached `minecraft_<ver>_client.jar` (`version.json`), and
+   match it against `SharedConstants.WORLD_VERSION` in each candidate jar. No hand-maintained table,
+   no network call, and it dies loudly rather than guessing. The cache is now per-version.
+
+**Verified in-world**, not just compiled (temporary `Port261Probe`, since deleted):
+
+- The overworld really is on our generator — asked the live server:
+  `minecraft:overworld -> CityWorldChunkGenerator / CityWorldClimateBiomeSource`. **`level-type` still
+  works on 26.1.**
+- Planning sweep over 961 platmaps × MODERN/APOCALYPSE/CLASSIC: **11 contexts and 35–41 lot classes
+  each**, no throws — the whole `ShapeProvider ↔ PlatMap ↔ PlatLot ↔ Context ↔ Plugins` cycle runs.
+  Hospitals, zoos, biodomes, airships, saucers and castles all appear.
+- Decoration read-back: forced a `RoadLot` chunk to FULL and read it back — 25 distinct blocks
+  including cyan terracotta, stone bricks, a birch door, a chest, glowstone and iron bars. **Block
+  writing and block entities work.** Zero exceptions across the whole server run.
+
+**⚠ Two traps for the next port, both of which cost time here:**
+
+- **`level.dat` no longer stores worldgen settings in 26.1.** There is no `WorldGenSettings` key. A
+  world generated by our generator therefore looks identical to a vanilla one if you inspect
+  `level.dat` — which briefly, and wrongly, looked like the port had regressed to vanilla worldgen.
+  **Ask the running server** (`level.getChunkSource().getGenerator()`) instead.
+- **`WorldData.worldGenOptions()` is gone.** The documented probe recipe uses it to fetch the seed;
+  use `server.overworld().getSeed()` on 26.1. This does not affect the mod, only probes.
+
+**What this says about stage 3.** The `compat/` seam did its job: 26.1's breakage was one record
+conversion, not a port. But note the shape of it — `pos.x` vs `pos.x()` has **no syntax that compiles
+on both versions**, so a genuinely single tree needs either a shim (`Compat.chunkX(pos)`) or a source
+preprocessor. That was left out deliberately here so this branch measures the raw delta rather than
+an abstraction built from a single data point. Do 26.2 next, then decide with two deltas in hand.
 
 Deploying: `./deploy.sh` targets the `CityWork-ReForged` instance;
 `CITYWORLD_INSTANCE="/mnt/c/Users/darre/curseforge/minecraft/Instances/MobHealth - Forge" ./deploy.sh`

@@ -87,7 +87,7 @@ public final class CityWorldAPI {
         m.put("contextclass", i.contextClass());
         m.put("lot", i.lotStyle().toString());
         m.put("lotclass", i.lotClass());
-        m.put("at", i.chunk().x + "|" + i.chunk().z);
+        m.put("at", i.chunk().x() + "|" + i.chunk().z());
         m.put("roads", Integer.toString(i.roadCount()));
         if (i.schematicName() != null)
             m.put("schematic", i.schematicName());

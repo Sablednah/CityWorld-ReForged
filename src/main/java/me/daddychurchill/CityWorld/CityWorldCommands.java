@@ -157,7 +157,7 @@ public final class CityWorldCommands {
         }
         LotInfo info = maybe.get();
 
-        line(ctx, "at", "chunk " + info.chunk().x + ", " + info.chunk().z);
+        line(ctx, "at", "chunk " + info.chunk().x() + ", " + info.chunk().z());
         line(ctx, "context", info.contextClass() + " (" + info.contextFamily() + ")");
         line(ctx, "lot", info.lotClass() + " (" + info.lotStyle() + ")");
         if (info.shop() != null)
@@ -242,7 +242,7 @@ public final class CityWorldCommands {
         // result is delivered back on the server thread via server.execute.
         Thread t = new Thread(() -> {
             int[] reachedRing = { 0 };
-            Found best = search(context, query, pos.x, pos.z, playerX, playerZ, reachedRing);
+            Found best = search(context, query, pos.x(), pos.z(), playerX, playerZ, reachedRing);
             server.execute(() -> {
                 if (best == null) {
                     player.sendSystemMessage(Component.literal("Found no '" + query + "' within "
@@ -356,7 +356,7 @@ public final class CityWorldCommands {
 
         Thread t = new Thread(() -> {
             int[] reachedRing = { 0 };
-            Found best = searchLot(context, kind, pos.x, pos.z, playerX, playerZ, reachedRing);
+            Found best = searchLot(context, kind, pos.x(), pos.z(), playerX, playerZ, reachedRing);
             server.execute(() -> {
                 if (best == null) {
                     player.sendSystemMessage(Component.literal("Found no '" + kind + "' lot within "
@@ -477,7 +477,7 @@ public final class CityWorldCommands {
         // The classify is pure and deterministic (terrain height + climate noise), so scan off the server
         // thread like /cityfind; deliver the result back on the server thread.
         Thread t = new Thread(() -> {
-            Found best = searchBiome(context, classifier, query, decayed, pos.x, pos.z, playerX, playerZ);
+            Found best = searchBiome(context, classifier, query, decayed, pos.x(), pos.z(), playerX, playerZ);
             server.execute(() -> {
                 if (best == null) {
                     player.sendSystemMessage(Component.literal("Found no biome matching '" + query + "' within "

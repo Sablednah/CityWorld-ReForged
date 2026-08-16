@@ -247,8 +247,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState,
             StructureManager structureManager, ChunkAccess chunk) {
         CityWorldGenerator context = context(chunk);
-        int chunkX = chunk.getPos().x;
-        int chunkZ = chunk.getPos().z;
+        int chunkX = chunk.getPos().x();
+        int chunkZ = chunk.getPos().z();
 
         InitialBlocks blocks = new InitialBlocks(context, chunk, chunkX, chunkZ);
 
@@ -354,7 +354,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         CityWorldGenerator context = context(level);
         ChunkPos pos = chunk.getPos();
 
-        PlatMap platmap = context.getPlatMap(pos.x, pos.z);
+        PlatMap platmap = context.getPlatMap(pos.x(), pos.z());
 
         // Bind the thread-local demolition tool to this chunk's live level for the duration of the
         // pass, so lots that call generator.destroyWithin/destroyArea (castles, radio towers, oil
@@ -374,7 +374,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // terrain. Vanilla's decoration respects the WorldGenRegion radius, so top risk #2 is its own
         // problem here, not ours.
         if (context.isModernStyle()) {
-            me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x, pos.z);
+            me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x(), pos.z());
             if (lot != null && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE
                     && lot.allowsWildDecoration()) {
                 super.applyBiomeDecoration(level, chunk, structureManager);

@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.141'
+    id 'net.neoforged.moddev' version '2.0.144'
     id 'idea'
 }
 
@@ -9,7 +9,10 @@ tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
-version = mod_version
+// The jar carries the Minecraft version it was built against: the 1.21.11 and 26.1 lines share a
+// mod version, and two files both called cityworld-5.0.3.jar are indistinguishable in a mods folder
+// or a releases page. The mod's own version (in neoforge.mods.toml) stays plain ${mod_version}.
+version = "${mod_version}+mc${minecraft_version}"
 group = mod_group_id
 
 sourceSets.main.resources {
@@ -26,8 +29,9 @@ base {
     archivesName = mod_id
 }
 
-// Mojang ships Java 21 to end users, so mods should target Java 21.
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+// Minecraft 26.1 ships the java-runtime-epsilon JRE (Java 25) to end users, so mods target Java 25.
+// (On the 1.21.11 line this was 21 / java-runtime-delta.)
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 neoForge {
     // SignBlockEntity's only public way to set text insists on notifying its level, which is a

@@ -29,8 +29,8 @@ public final class RealBlocks extends SupportBlocks {
 	public RealBlocks(CityWorldGenerator generator, LevelAccessor world, ChunkPos pos) {
 		super(generator, world);
 
-		sectionX = pos.x;
-		sectionZ = pos.z;
+		sectionX = pos.x();
+		sectionZ = pos.z();
 	}
 
 	@Override

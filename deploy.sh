@@ -8,7 +8,16 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-export JAVA_HOME="$ROOT/tools/jdk21"
+# Minecraft 1.21.x builds on JDK 21; 26.1+ needs JDK 25. Prefer the newest we have,
+# and let JAVA_HOME from the environment win if it is already set.
+if [ -z "${JAVA_HOME:-}" ]; then
+    for candidate in jdk25 jdk21; do
+        if [ -x "$ROOT/tools/$candidate/bin/java" ]; then
+            export JAVA_HOME="$ROOT/tools/$candidate"
+            break
+        fi
+    done
+fi
 export PATH="$JAVA_HOME/bin:$PATH"
 
 # Target NeoForge instance (a NeoForge 1.21.11 CurseForge instance).

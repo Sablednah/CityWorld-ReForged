@@ -10,6 +10,7 @@ Partitions every `Material.X` constant referenced by the original Bukkit source 
 Run:  python3 gen_material.py
 """
 import glob
+import json
 import pathlib
 import re
 import subprocess
@@ -22,8 +23,14 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 # Bootstrap cache lives outside the repo so it is never committed.
 SCRATCH = pathlib.Path(tempfile.gettempdir()) / "cityworld-portgen"
 REF = SCRATCH / "bukkit-ref/src"
-MCSRC = SCRATCH / "mcsrc"
 OUT = REPO / "src/main/java/me/daddychurchill/CityWorld/compat/Material.java"
+
+# The Minecraft version we are generating against, read from gradle.properties so the generator
+# always follows the build rather than whatever happens to be lying in the NeoForm cache.
+MC_VERSION = None
+# Decompiled MC sources are cached per version — a shared directory would silently serve the
+# previous version's Blocks.java after the build was retargeted.
+MCSRC = None
 
 # A file that only ever existed in the Bukkit tree — used to locate the pre-port commit.
 SENTINEL = "src/me/daddychurchill/CityWorld/Support/AbstractBlocks.java"
@@ -54,18 +61,65 @@ def ensure_bukkit_ref():
     tar.unlink()
 
 
-def ensure_mc_sources():
-    """Extract the decompiled Blocks/Items sources from the NeoForm cache."""
-    if all((MCSRC / f).exists() for f in MC_FILES):
-        return
-    jars = glob.glob(str(pathlib.Path.home() /
-                         ".gradle/caches/neoformruntime/intermediate_results/"
-                         "sourcesAndCompiledWithNeoForge_*_output.jar"))
+def target_mc_version():
+    """The Minecraft version the build currently targets, straight from gradle.properties."""
+    for line in (REPO / "gradle.properties").read_text().splitlines():
+        if line.strip().startswith("minecraft_version="):
+            return line.split("=", 1)[1].strip()
+    sys.exit("minecraft_version not found in gradle.properties")
+
+
+def target_world_version(mc_version):
+    """The data ('world') version of the target release, read from the cached client jar.
+
+    Every Minecraft release stamps a unique world_version into version.json, and NeoForm caches
+    the client jar under a filename that carries the version. That pair lets us fingerprint a
+    decompiled sources jar without a hand-maintained table or a network call.
+    """
+    client = (pathlib.Path.home() / ".gradle/caches/neoformruntime/artifacts" /
+              f"minecraft_{mc_version}_client.jar")
+    if not client.exists():
+        sys.exit(f"NeoForm has not cached {client.name} — run ./gradlew build first.")
+    with zipfile.ZipFile(client) as z:
+        return json.loads(z.read("version.json"))["world_version"]
+
+
+def find_mc_sources_jar(mc_version):
+    """Pick the cached sources jar that really belongs to mc_version.
+
+    The cache accumulates one jar per version built on this machine, and the NeoForm runtime has
+    changed the artifact's name over time ('sourcesAndCompiledWithNeoForge_*' on the 1.21 line,
+    'mergeWithSources_*' from 26.1). Globbing and taking the first hit would happily regenerate
+    Material.java against whichever Minecraft happened to sort first — a silent, and very
+    confusing, wrong answer. Match on the decompiled SharedConstants.WORLD_VERSION instead.
+    """
+    want = target_world_version(mc_version)
+    cache = pathlib.Path.home() / ".gradle/caches/neoformruntime/intermediate_results"
+    jars = sorted(glob.glob(str(cache / "mergeWithSources_*_output.jar")) +
+                  glob.glob(str(cache / "sourcesAndCompiledWithNeoForge_*_output.jar")))
     if not jars:
         sys.exit("NeoForm sources jar not found — run ./gradlew build first.")
+    for jar in jars:
+        try:
+            with zipfile.ZipFile(jar) as z:
+                src = z.read("net/minecraft/SharedConstants.java").decode("utf8", "replace")
+        except (KeyError, zipfile.BadZipFile):
+            continue
+        found = re.search(r"WORLD_VERSION\s*=\s*(\d+)", src)
+        if found and int(found.group(1)) == want:
+            return jar
+    sys.exit(f"No cached sources jar has WORLD_VERSION {want} (Minecraft {mc_version}) — "
+             f"checked {len(jars)}. Run ./gradlew build for this version first.")
+
+
+def ensure_mc_sources():
+    """Extract the decompiled Blocks/Items sources for the targeted MC version."""
+    if all((MCSRC / f).exists() for f in MC_FILES):
+        return
+    jar = find_mc_sources_jar(MC_VERSION)
     MCSRC.mkdir(parents=True, exist_ok=True)
-    print(f"bootstrapping MC sources from {pathlib.Path(jars[0]).name}")
-    with zipfile.ZipFile(jars[0]) as z:
+    print(f"bootstrapping MC {MC_VERSION} sources from {pathlib.Path(jar).name}")
+    with zipfile.ZipFile(jar) as z:
         for f in MC_FILES:
             z.extract(f, MCSRC)
 
@@ -289,6 +343,11 @@ def fields(java_file, decl):
 
 
 def main():
+    global MC_VERSION, MCSRC
+    MC_VERSION = target_mc_version()
+    MCSRC = SCRATCH / "mcsrc" / MC_VERSION
+    print(f"generating against Minecraft {MC_VERSION}")
+
     ensure_bukkit_ref()
     ensure_mc_sources()
 
