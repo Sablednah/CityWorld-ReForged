@@ -89,6 +89,30 @@ only appear once a second version exists on the machine, now fixed:
   including cyan terracotta, stone bricks, a birch door, a chest, glowstone and iron bars. **Block
   writing and block entities work.** Zero exceptions across the whole server run.
 
+**Verified in a real client** (owner, 2026-08-16, a CurseForge `26.1.2` instance on
+neoforge-26.1.2.95, CityWorld the only mod). This covers what `runServer` structurally cannot:
+
+- **The Customize screen works** — the client-only world-creation UI was the single largest untested
+  surface on 26.1 (the dedicated server never loads those `@OnlyIn(CLIENT)` classes), and it needed
+  no changes.
+- **Street-name signs render their text**, and a mine-entrance headframe read *"Gallows Adit / Est.
+  1888" on both faces*. That is the strongest result of the whole port: it proves the `frontText`
+  **and** `backText` access transformers still apply and that the direct field writes still survive
+  decoration. Had either failed, the symptom would not have been a blank sign — the chunk would have
+  failed outright and world teardown would have hung on "Saving world".
+- **The 5.0.3 tag-backed palettes behave identically** — the owner's read was "like 5.0.3 with an
+  expanded but weighted palette", i.e. wider materials with the original odds intact, exactly as on
+  1.21.11. The tag layer needed no version-specific work.
+- **Named villagers, overgrowth, biomes and schematics all work.** Each of these is a separate risky
+  surface and all four came through unchanged: entity spawning during chunk generation
+  (`EntitySpawnReason.CHUNK_GENERATION`), the post-decay overgrowth pass, the custom
+  `CityWorldClimateBiomeSource`, and the whole schematic pipeline — multi-format load, data-fixing
+  from 1.12-era files, block entities, rotation and mirroring.
+
+**Net: the 26.1 port is complete and verified end to end.** Every major subsystem has now been seen
+working on 26.1 — worldgen, decoration, signs, spawning, biomes, overgrowth, schematics, palettes and
+the client UI. Nothing on the 26.1 line is outstanding.
+
 **⚠ Two traps for the next port, both of which cost time here:**
 
 - **`level.dat` no longer stores worldgen settings in 26.1.** There is no `WorldGenSettings` key. A
