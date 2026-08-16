@@ -331,7 +331,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                         world.ruralnessLevel(), world.maxBuildingFloors(), world.broadcastSpecialPlaces(),
                         announcedLandmarks),
                 radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay());
-        this.minecraft.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.onDone));
+        // 26.2 moved screen switching from Minecraft onto its Gui (Minecraft.setScreen is gone).
+        this.minecraft.gui.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.onDone));
     }
 
     // ---- widget helpers ----------------------------------------------------------------------

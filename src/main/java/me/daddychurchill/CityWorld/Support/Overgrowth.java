@@ -213,10 +213,10 @@ public final class Overgrowth {
         int step = dir == Direction.DOWN ? -1 : 1;
         boolean tall = odds.playOdds(0.4) && replaceable(level, wx, anchorY + step, wz); // air or water
         if (tall) {
-            setDrip(level, wx, anchorY, wz, dir, net.minecraft.world.level.block.state.properties.DripstoneThickness.FRUSTUM);
-            setDrip(level, wx, anchorY + step, wz, dir, net.minecraft.world.level.block.state.properties.DripstoneThickness.TIP);
+            setDrip(level, wx, anchorY, wz, dir, net.minecraft.world.level.block.state.properties.SpeleothemThickness.FRUSTUM);
+            setDrip(level, wx, anchorY + step, wz, dir, net.minecraft.world.level.block.state.properties.SpeleothemThickness.TIP);
         } else {
-            setDrip(level, wx, anchorY, wz, dir, net.minecraft.world.level.block.state.properties.DripstoneThickness.TIP);
+            setDrip(level, wx, anchorY, wz, dir, net.minecraft.world.level.block.state.properties.SpeleothemThickness.TIP);
         }
     }
 
@@ -226,13 +226,13 @@ public final class Overgrowth {
     }
 
     private static void setDrip(ServerLevelAccessor level, int wx, int y, int wz, Direction dir,
-            net.minecraft.world.level.block.state.properties.DripstoneThickness thickness) {
+            net.minecraft.world.level.block.state.properties.SpeleothemThickness thickness) {
         BlockPos pos = new BlockPos(wx, y, wz);
         // if it lands in water (a flooded cistern), waterlog it so it sits sunk instead of a dry pocket
         boolean water = !level.getBlockState(pos).getFluidState().isEmpty();
         BlockState drip = Blocks.POINTED_DRIPSTONE.defaultBlockState()
                 .setValue(BlockStateProperties.VERTICAL_DIRECTION, dir)
-                .setValue(BlockStateProperties.DRIPSTONE_THICKNESS, thickness);
+                .setValue(BlockStateProperties.SPELEOTHEM_THICKNESS, thickness);
         if (water)
             drip = drip.setValue(BlockStateProperties.WATERLOGGED, true);
         level.setBlock(pos, drip, Block.UPDATE_CLIENTS);

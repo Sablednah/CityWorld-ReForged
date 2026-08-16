@@ -79,73 +79,73 @@ public final class EntityType {
     }
 
     // Beings — the goodies, the baddies, and the things in the dark.
-    public static final EntityType VILLAGER = of(net.minecraft.world.entity.EntityType.VILLAGER);
-    public static final EntityType ZOMBIE_VILLAGER = of(net.minecraft.world.entity.EntityType.ZOMBIE_VILLAGER);
-    public static final EntityType WITCH = of(net.minecraft.world.entity.EntityType.WITCH);
-    public static final EntityType CREEPER = of(net.minecraft.world.entity.EntityType.CREEPER);
-    public static final EntityType SKELETON = of(net.minecraft.world.entity.EntityType.SKELETON);
-    public static final EntityType SKELETON_HORSE = of(net.minecraft.world.entity.EntityType.SKELETON_HORSE);
-    public static final EntityType ZOMBIE = of(net.minecraft.world.entity.EntityType.ZOMBIE);
-    public static final EntityType ZOMBIE_HORSE = of(net.minecraft.world.entity.EntityType.ZOMBIE_HORSE);
-    public static final EntityType SPIDER = of(net.minecraft.world.entity.EntityType.SPIDER);
-    public static final EntityType CAVE_SPIDER = of(net.minecraft.world.entity.EntityType.CAVE_SPIDER);
-    public static final EntityType ENDERMAN = of(net.minecraft.world.entity.EntityType.ENDERMAN);
-    public static final EntityType ENDERMITE = of(net.minecraft.world.entity.EntityType.ENDERMITE);
-    public static final EntityType PHANTOM = of(net.minecraft.world.entity.EntityType.PHANTOM);
-    public static final EntityType BLAZE = of(net.minecraft.world.entity.EntityType.BLAZE);
-    public static final EntityType BAT = of(net.minecraft.world.entity.EntityType.BAT);
-    public static final EntityType EVOKER = of(net.minecraft.world.entity.EntityType.EVOKER);
-    public static final EntityType ILLUSIONER = of(net.minecraft.world.entity.EntityType.ILLUSIONER);
-    public static final EntityType MAGMA_CUBE = of(net.minecraft.world.entity.EntityType.MAGMA_CUBE);
-    public static final EntityType SHULKER = of(net.minecraft.world.entity.EntityType.SHULKER);
-    public static final EntityType WITHER = of(net.minecraft.world.entity.EntityType.WITHER);
-    public static final EntityType IRON_GOLEM = of(net.minecraft.world.entity.EntityType.IRON_GOLEM);
+    public static final EntityType VILLAGER = of(net.minecraft.world.entity.EntityTypes.VILLAGER);
+    public static final EntityType ZOMBIE_VILLAGER = of(net.minecraft.world.entity.EntityTypes.ZOMBIE_VILLAGER);
+    public static final EntityType WITCH = of(net.minecraft.world.entity.EntityTypes.WITCH);
+    public static final EntityType CREEPER = of(net.minecraft.world.entity.EntityTypes.CREEPER);
+    public static final EntityType SKELETON = of(net.minecraft.world.entity.EntityTypes.SKELETON);
+    public static final EntityType SKELETON_HORSE = of(net.minecraft.world.entity.EntityTypes.SKELETON_HORSE);
+    public static final EntityType ZOMBIE = of(net.minecraft.world.entity.EntityTypes.ZOMBIE);
+    public static final EntityType ZOMBIE_HORSE = of(net.minecraft.world.entity.EntityTypes.ZOMBIE_HORSE);
+    public static final EntityType SPIDER = of(net.minecraft.world.entity.EntityTypes.SPIDER);
+    public static final EntityType CAVE_SPIDER = of(net.minecraft.world.entity.EntityTypes.CAVE_SPIDER);
+    public static final EntityType ENDERMAN = of(net.minecraft.world.entity.EntityTypes.ENDERMAN);
+    public static final EntityType ENDERMITE = of(net.minecraft.world.entity.EntityTypes.ENDERMITE);
+    public static final EntityType PHANTOM = of(net.minecraft.world.entity.EntityTypes.PHANTOM);
+    public static final EntityType BLAZE = of(net.minecraft.world.entity.EntityTypes.BLAZE);
+    public static final EntityType BAT = of(net.minecraft.world.entity.EntityTypes.BAT);
+    public static final EntityType EVOKER = of(net.minecraft.world.entity.EntityTypes.EVOKER);
+    public static final EntityType ILLUSIONER = of(net.minecraft.world.entity.EntityTypes.ILLUSIONER);
+    public static final EntityType MAGMA_CUBE = of(net.minecraft.world.entity.EntityTypes.MAGMA_CUBE);
+    public static final EntityType SHULKER = of(net.minecraft.world.entity.EntityTypes.SHULKER);
+    public static final EntityType WITHER = of(net.minecraft.world.entity.EntityTypes.WITHER);
+    public static final EntityType IRON_GOLEM = of(net.minecraft.world.entity.EntityTypes.IRON_GOLEM);
 
     /** 1.14's {@code PIG_ZOMBIE}. */
-    public static final EntityType ZOMBIFIED_PIGLIN = of(net.minecraft.world.entity.EntityType.ZOMBIFIED_PIGLIN);
+    public static final EntityType ZOMBIFIED_PIGLIN = of(net.minecraft.world.entity.EntityTypes.ZOMBIFIED_PIGLIN);
     /** 1.14's {@code SNOWMAN}. */
-    public static final EntityType SNOW_GOLEM = of(net.minecraft.world.entity.EntityType.SNOW_GOLEM);
+    public static final EntityType SNOW_GOLEM = of(net.minecraft.world.entity.EntityTypes.SNOW_GOLEM);
 
     // Animals.
-    public static final EntityType HORSE = of(net.minecraft.world.entity.EntityType.HORSE);
-    public static final EntityType DONKEY = of(net.minecraft.world.entity.EntityType.DONKEY);
-    public static final EntityType LLAMA = of(net.minecraft.world.entity.EntityType.LLAMA);
-    public static final EntityType COW = of(net.minecraft.world.entity.EntityType.COW);
-    public static final EntityType SHEEP = of(net.minecraft.world.entity.EntityType.SHEEP);
-    public static final EntityType PIG = of(net.minecraft.world.entity.EntityType.PIG);
-    public static final EntityType CHICKEN = of(net.minecraft.world.entity.EntityType.CHICKEN);
-    public static final EntityType RABBIT = of(net.minecraft.world.entity.EntityType.RABBIT);
-    public static final EntityType PARROT = of(net.minecraft.world.entity.EntityType.PARROT);
-    public static final EntityType WOLF = of(net.minecraft.world.entity.EntityType.WOLF);
-    public static final EntityType OCELOT = of(net.minecraft.world.entity.EntityType.OCELOT);
-    public static final EntityType CAT = of(net.minecraft.world.entity.EntityType.CAT);
-    public static final EntityType FOX = of(net.minecraft.world.entity.EntityType.FOX);
-    public static final EntityType POLAR_BEAR = of(net.minecraft.world.entity.EntityType.POLAR_BEAR);
+    public static final EntityType HORSE = of(net.minecraft.world.entity.EntityTypes.HORSE);
+    public static final EntityType DONKEY = of(net.minecraft.world.entity.EntityTypes.DONKEY);
+    public static final EntityType LLAMA = of(net.minecraft.world.entity.EntityTypes.LLAMA);
+    public static final EntityType COW = of(net.minecraft.world.entity.EntityTypes.COW);
+    public static final EntityType SHEEP = of(net.minecraft.world.entity.EntityTypes.SHEEP);
+    public static final EntityType PIG = of(net.minecraft.world.entity.EntityTypes.PIG);
+    public static final EntityType CHICKEN = of(net.minecraft.world.entity.EntityTypes.CHICKEN);
+    public static final EntityType RABBIT = of(net.minecraft.world.entity.EntityTypes.RABBIT);
+    public static final EntityType PARROT = of(net.minecraft.world.entity.EntityTypes.PARROT);
+    public static final EntityType WOLF = of(net.minecraft.world.entity.EntityTypes.WOLF);
+    public static final EntityType OCELOT = of(net.minecraft.world.entity.EntityTypes.OCELOT);
+    public static final EntityType CAT = of(net.minecraft.world.entity.EntityTypes.CAT);
+    public static final EntityType FOX = of(net.minecraft.world.entity.EntityTypes.FOX);
+    public static final EntityType POLAR_BEAR = of(net.minecraft.world.entity.EntityTypes.POLAR_BEAR);
     /** 1.14's {@code MUSHROOM_COW}. */
-    public static final EntityType MOOSHROOM = of(net.minecraft.world.entity.EntityType.MOOSHROOM);
+    public static final EntityType MOOSHROOM = of(net.minecraft.world.entity.EntityTypes.MOOSHROOM);
 
     // Sea animals.
-    public static final EntityType SQUID = of(net.minecraft.world.entity.EntityType.SQUID);
-    public static final EntityType DOLPHIN = of(net.minecraft.world.entity.EntityType.DOLPHIN);
-    public static final EntityType COD = of(net.minecraft.world.entity.EntityType.COD);
-    public static final EntityType SALMON = of(net.minecraft.world.entity.EntityType.SALMON);
-    public static final EntityType PUFFERFISH = of(net.minecraft.world.entity.EntityType.PUFFERFISH);
-    public static final EntityType TROPICAL_FISH = of(net.minecraft.world.entity.EntityType.TROPICAL_FISH);
-    public static final EntityType TURTLE = of(net.minecraft.world.entity.EntityType.TURTLE);
-    public static final EntityType GUARDIAN = of(net.minecraft.world.entity.EntityType.GUARDIAN);
-    public static final EntityType ELDER_GUARDIAN = of(net.minecraft.world.entity.EntityType.ELDER_GUARDIAN);
+    public static final EntityType SQUID = of(net.minecraft.world.entity.EntityTypes.SQUID);
+    public static final EntityType DOLPHIN = of(net.minecraft.world.entity.EntityTypes.DOLPHIN);
+    public static final EntityType COD = of(net.minecraft.world.entity.EntityTypes.COD);
+    public static final EntityType SALMON = of(net.minecraft.world.entity.EntityTypes.SALMON);
+    public static final EntityType PUFFERFISH = of(net.minecraft.world.entity.EntityTypes.PUFFERFISH);
+    public static final EntityType TROPICAL_FISH = of(net.minecraft.world.entity.EntityTypes.TROPICAL_FISH);
+    public static final EntityType TURTLE = of(net.minecraft.world.entity.EntityTypes.TURTLE);
+    public static final EntityType GUARDIAN = of(net.minecraft.world.entity.EntityTypes.GUARDIAN);
+    public static final EntityType ELDER_GUARDIAN = of(net.minecraft.world.entity.EntityTypes.ELDER_GUARDIAN);
 
     // P13 zoo: themed-enclosure animals
-    public static final EntityType PANDA = of(net.minecraft.world.entity.EntityType.PANDA);
-    public static final EntityType CAMEL = of(net.minecraft.world.entity.EntityType.CAMEL);
-    public static final EntityType FROG = of(net.minecraft.world.entity.EntityType.FROG);
-    public static final EntityType BEE = of(net.minecraft.world.entity.EntityType.BEE);
-    public static final EntityType GOAT = of(net.minecraft.world.entity.EntityType.GOAT);
-    public static final EntityType AXOLOTL = of(net.minecraft.world.entity.EntityType.AXOLOTL);
-    public static final EntityType SNIFFER = of(net.minecraft.world.entity.EntityType.SNIFFER);
-    public static final EntityType ARMADILLO = of(net.minecraft.world.entity.EntityType.ARMADILLO);
-    public static final EntityType ALLAY = of(net.minecraft.world.entity.EntityType.ALLAY);
-    public static final EntityType GLOW_SQUID = of(net.minecraft.world.entity.EntityType.GLOW_SQUID);
-    public static final EntityType STRIDER = of(net.minecraft.world.entity.EntityType.STRIDER);
-    public static final EntityType HOGLIN = of(net.minecraft.world.entity.EntityType.HOGLIN);
+    public static final EntityType PANDA = of(net.minecraft.world.entity.EntityTypes.PANDA);
+    public static final EntityType CAMEL = of(net.minecraft.world.entity.EntityTypes.CAMEL);
+    public static final EntityType FROG = of(net.minecraft.world.entity.EntityTypes.FROG);
+    public static final EntityType BEE = of(net.minecraft.world.entity.EntityTypes.BEE);
+    public static final EntityType GOAT = of(net.minecraft.world.entity.EntityTypes.GOAT);
+    public static final EntityType AXOLOTL = of(net.minecraft.world.entity.EntityTypes.AXOLOTL);
+    public static final EntityType SNIFFER = of(net.minecraft.world.entity.EntityTypes.SNIFFER);
+    public static final EntityType ARMADILLO = of(net.minecraft.world.entity.EntityTypes.ARMADILLO);
+    public static final EntityType ALLAY = of(net.minecraft.world.entity.EntityTypes.ALLAY);
+    public static final EntityType GLOW_SQUID = of(net.minecraft.world.entity.EntityTypes.GLOW_SQUID);
+    public static final EntityType STRIDER = of(net.minecraft.world.entity.EntityTypes.STRIDER);
+    public static final EntityType HOGLIN = of(net.minecraft.world.entity.EntityTypes.HOGLIN);
 }

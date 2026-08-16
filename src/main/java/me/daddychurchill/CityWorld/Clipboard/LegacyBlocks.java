@@ -6,7 +6,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import me.daddychurchill.CityWorld.CityWorldMod;
 
 import net.minecraft.core.Direction;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.ColorCollection;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
@@ -38,42 +40,31 @@ public final class LegacyBlocks {
     private static final BlockState AIR = Blocks.AIR.defaultBlockState();
     private static final BlockState FALLBACK = Blocks.STONE.defaultBlockState();
 
-    private static final BlockState[] WOOL = {
-        Blocks.WHITE_WOOL.defaultBlockState(), Blocks.ORANGE_WOOL.defaultBlockState(),
-        Blocks.MAGENTA_WOOL.defaultBlockState(), Blocks.LIGHT_BLUE_WOOL.defaultBlockState(),
-        Blocks.YELLOW_WOOL.defaultBlockState(), Blocks.LIME_WOOL.defaultBlockState(),
-        Blocks.PINK_WOOL.defaultBlockState(), Blocks.GRAY_WOOL.defaultBlockState(),
-        Blocks.LIGHT_GRAY_WOOL.defaultBlockState(), Blocks.CYAN_WOOL.defaultBlockState(),
-        Blocks.PURPLE_WOOL.defaultBlockState(), Blocks.BLUE_WOOL.defaultBlockState(),
-        Blocks.BROWN_WOOL.defaultBlockState(), Blocks.GREEN_WOOL.defaultBlockState(),
-        Blocks.RED_WOOL.defaultBlockState(), Blocks.BLACK_WOOL.defaultBlockState(),
-    };
+    // 26.2 stopped declaring the sixteen dyed variants of a family as sixteen Blocks fields; each
+    // family is now one ColorCollection indexed by DyeColor. That suits these tables better than the
+    // old spelled-out lists did: a legacy (pre-1.13) block's data value IS the dye id, so the table
+    // is exactly the collection in DyeColor order. Kept as arrays so the lookup sites are unchanged.
+    private static Block[] byDye(ColorCollection<Block> family) {
+        Block[] out = new Block[DyeColor.values().length];
+        for (int i = 0; i < out.length; i++)
+            out[i] = family.pick(DyeColor.byId(i));
+        return out;
+    }
+
+    private static BlockState[] byDyeStates(ColorCollection<Block> family) {
+        Block[] blocks = byDye(family);
+        BlockState[] out = new BlockState[blocks.length];
+        for (int i = 0; i < blocks.length; i++)
+            out[i] = blocks[i].defaultBlockState();
+        return out;
+    }
+
+    private static final BlockState[] WOOL = byDyeStates(Blocks.WOOL);
     // Dye-order colour tables (white, orange, magenta, light_blue, yellow, lime, pink, gray, light_gray,
     // cyan, purple, blue, brown, green, red, black) — the same order as legacy wool/glass/clay data.
-    private static final Block[] STAINED_GLASS = {
-        Blocks.WHITE_STAINED_GLASS, Blocks.ORANGE_STAINED_GLASS, Blocks.MAGENTA_STAINED_GLASS,
-        Blocks.LIGHT_BLUE_STAINED_GLASS, Blocks.YELLOW_STAINED_GLASS, Blocks.LIME_STAINED_GLASS,
-        Blocks.PINK_STAINED_GLASS, Blocks.GRAY_STAINED_GLASS, Blocks.LIGHT_GRAY_STAINED_GLASS,
-        Blocks.CYAN_STAINED_GLASS, Blocks.PURPLE_STAINED_GLASS, Blocks.BLUE_STAINED_GLASS,
-        Blocks.BROWN_STAINED_GLASS, Blocks.GREEN_STAINED_GLASS, Blocks.RED_STAINED_GLASS,
-        Blocks.BLACK_STAINED_GLASS,
-    };
-    private static final Block[] STAINED_GLASS_PANE = {
-        Blocks.WHITE_STAINED_GLASS_PANE, Blocks.ORANGE_STAINED_GLASS_PANE, Blocks.MAGENTA_STAINED_GLASS_PANE,
-        Blocks.LIGHT_BLUE_STAINED_GLASS_PANE, Blocks.YELLOW_STAINED_GLASS_PANE, Blocks.LIME_STAINED_GLASS_PANE,
-        Blocks.PINK_STAINED_GLASS_PANE, Blocks.GRAY_STAINED_GLASS_PANE, Blocks.LIGHT_GRAY_STAINED_GLASS_PANE,
-        Blocks.CYAN_STAINED_GLASS_PANE, Blocks.PURPLE_STAINED_GLASS_PANE, Blocks.BLUE_STAINED_GLASS_PANE,
-        Blocks.BROWN_STAINED_GLASS_PANE, Blocks.GREEN_STAINED_GLASS_PANE, Blocks.RED_STAINED_GLASS_PANE,
-        Blocks.BLACK_STAINED_GLASS_PANE,
-    };
-    private static final Block[] TERRACOTTA = {
-        Blocks.WHITE_TERRACOTTA, Blocks.ORANGE_TERRACOTTA, Blocks.MAGENTA_TERRACOTTA,
-        Blocks.LIGHT_BLUE_TERRACOTTA, Blocks.YELLOW_TERRACOTTA, Blocks.LIME_TERRACOTTA,
-        Blocks.PINK_TERRACOTTA, Blocks.GRAY_TERRACOTTA, Blocks.LIGHT_GRAY_TERRACOTTA,
-        Blocks.CYAN_TERRACOTTA, Blocks.PURPLE_TERRACOTTA, Blocks.BLUE_TERRACOTTA,
-        Blocks.BROWN_TERRACOTTA, Blocks.GREEN_TERRACOTTA, Blocks.RED_TERRACOTTA,
-        Blocks.BLACK_TERRACOTTA,
-    };
+    private static final Block[] STAINED_GLASS = byDye(Blocks.STAINED_GLASS);
+    private static final Block[] STAINED_GLASS_PANE = byDye(Blocks.STAINED_GLASS_PANE);
+    private static final Block[] TERRACOTTA = byDye(Blocks.DYED_TERRACOTTA);
     private static final Block[] PLANKS = {
         Blocks.OAK_PLANKS, Blocks.SPRUCE_PLANKS, Blocks.BIRCH_PLANKS,
         Blocks.JUNGLE_PLANKS, Blocks.ACACIA_PLANKS, Blocks.DARK_OAK_PLANKS,
@@ -410,7 +401,8 @@ public final class LegacyBlocks {
     }
 
     private static BlockState bed(int data) {
-        return Blocks.RED_BED.defaultBlockState()
+        // Legacy beds (pre-1.13 id 26) carried no colour — every one was red.
+        return Blocks.BED.pick(DyeColor.RED).defaultBlockState()
                 .setValue(BlockStateProperties.HORIZONTAL_FACING, rot4Facing(data))
                 .setValue(BlockStateProperties.BED_PART, (data & 8) != 0 ? BedPart.HEAD : BedPart.FOOT)
                 .setValue(BlockStateProperties.OCCUPIED, false);
