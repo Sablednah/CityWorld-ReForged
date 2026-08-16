@@ -52,3 +52,7 @@ repo/
 
 # Personal staging area for schematics to test (third-party downloads, not for commit)
 /Schematics/
+
+# Self-test reports and logs (build/ is already ignored, but be explicit).
+/build/selftest/
+/run/cityworld-selftest.json

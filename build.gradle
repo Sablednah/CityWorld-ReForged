@@ -65,6 +65,15 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
+        // Headless worldgen verification: generates a CityWorld world, checks the generator is
+        // installed, sweeps the planner, reads a built chunk back, and halts. Used by
+        // scripts/selftest.sh to compare every supported Minecraft version. See CityWorldSelfTest.
+        selfTest {
+            server()
+            programArgument '--nogui'
+            systemProperty 'cityworld.selftest', 'true'
+        }
+
         data {
             data()
             programArguments.addAll '--mod', project.mod_id, '--all',
