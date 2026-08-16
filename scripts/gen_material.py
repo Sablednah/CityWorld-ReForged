@@ -315,18 +315,18 @@ EXTRAS = {
 # blocks are reached through accessors (Blocks.COPPER_CHAIN.exposed()) rather than a bare field.
 # Emit those via raw expressions instead of the of(Blocks.NAME) shortcut EXTRAS uses.
 EXTRAS_EXPR = {
-    "COPPER_CHAIN":           ("Blocks.COPPER_CHAIN.unaffected()", "P9 copper mine: lift-shaft chain (fresh)"),
-    "EXPOSED_COPPER_CHAIN":   ("Blocks.COPPER_CHAIN.exposed()",    "P9 copper mine: lift-shaft chain (exposed)"),
-    "WEATHERED_COPPER_CHAIN": ("Blocks.COPPER_CHAIN.weathered()",  "P9 copper mine: lift-shaft chain (weathered)"),
-    "OXIDIZED_COPPER_CHAIN":  ("Blocks.COPPER_CHAIN.oxidized()",   "P9 copper mine: lift-shaft chain (oxidized, deepest)"),
-    "COPPER_BARS":            ("Blocks.COPPER_BARS.unaffected()",  "P9 copper mine: cage bars (fresh)"),
-    "EXPOSED_COPPER_BARS":    ("Blocks.COPPER_BARS.exposed()",     "P9 copper mine: cage bars (exposed)"),
-    "WEATHERED_COPPER_BARS":  ("Blocks.COPPER_BARS.weathered()",   "P9 copper mine: cage bars (weathered)"),
-    "OXIDIZED_COPPER_BARS":   ("Blocks.COPPER_BARS.oxidized()",    "P9 copper mine: cage bars (oxidized, deepest)"),
-    "COPPER_LANTERN":           ("Blocks.COPPER_LANTERN.unaffected()", "P9 mine prop/light: copper lantern (fresh)"),
-    "EXPOSED_COPPER_LANTERN":   ("Blocks.COPPER_LANTERN.exposed()",    "P9 mine prop/light: copper lantern (exposed)"),
-    "WEATHERED_COPPER_LANTERN": ("Blocks.COPPER_LANTERN.weathered()",  "P9 mine prop/light: copper lantern (weathered)"),
-    "OXIDIZED_COPPER_LANTERN":  ("Blocks.COPPER_LANTERN.oxidized()",   "P9 mine prop/light: copper lantern (oxidized)"),
+    "COPPER_CHAIN":             "P9 copper mine: lift-shaft chain (fresh)",
+    "EXPOSED_COPPER_CHAIN":     "P9 copper mine: lift-shaft chain (exposed)",
+    "WEATHERED_COPPER_CHAIN":   "P9 copper mine: lift-shaft chain (weathered)",
+    "OXIDIZED_COPPER_CHAIN":    "P9 copper mine: lift-shaft chain (oxidized, deepest)",
+    "COPPER_BARS":              "P9 copper mine: cage bars (fresh)",
+    "EXPOSED_COPPER_BARS":      "P9 copper mine: cage bars (exposed)",
+    "WEATHERED_COPPER_BARS":    "P9 copper mine: cage bars (weathered)",
+    "OXIDIZED_COPPER_BARS":     "P9 copper mine: cage bars (oxidized, deepest)",
+    "COPPER_LANTERN":           "P9 mine prop/light: copper lantern (fresh)",
+    "EXPOSED_COPPER_LANTERN":   "P9 mine prop/light: copper lantern (exposed)",
+    "WEATHERED_COPPER_LANTERN": "P9 mine prop/light: copper lantern (weathered)",
+    "OXIDIZED_COPPER_LANTERN":  "P9 mine prop/light: copper lantern (oxidized)",
 }
 
 
@@ -342,6 +342,79 @@ def fields(java_file, decl):
     return set(re.findall(r"public static final %s ([A-Z][A-Z_0-9]*)" % decl, text))
 
 
+def color_collections(java_file, element):
+    """The `ColorCollection<element>` fields declared in java_file.
+
+    Minecraft 26.2 stopped declaring the sixteen dyed variants of a family as sixteen separate
+    fields. `Blocks.BLACK_WOOL` and its 143 siblings are gone; the family is one
+    `ColorCollection<Block>` indexed by `DyeColor` — `Blocks.WOOL.pick(DyeColor.BLACK)`. Empty on
+    1.21.11 and 26.1, where the flat fields still exist and are used in preference.
+    """
+    text = (MCSRC / java_file).read_text()
+    return set(re.findall(r"public static final ColorCollection<%s> ([A-Z][A-Z_0-9]*)" % element, text))
+
+
+# The dye colours, longest first so BLACK_LIGHT_... style ambiguity can't bite: a name is split at
+# the longest colour prefix that matches (LIGHT_GRAY before GRAY, LIGHT_BLUE before BLUE).
+DYE_COLORS = sorted([
+    "WHITE", "ORANGE", "MAGENTA", "LIGHT_BLUE", "YELLOW", "LIME", "PINK", "GRAY",
+    "LIGHT_GRAY", "CYAN", "PURPLE", "BLUE", "BROWN", "GREEN", "RED", "BLACK",
+], key=len, reverse=True)
+
+
+def weathering_collections(java_file, element):
+    """The `WeatheringCopperCollection<element>` fields declared in java_file.
+
+    26.2 gave copper the same treatment as dye: the `WeatheringCopperBlocks` record (four direct
+    accessors) became `WeatheringCopperCollection`, whose stages hang off `weathering()`. It also
+    swallowed blocks that used to be plain fields — `CUT_COPPER`, `COPPER_GRATE`, `COPPER_CHEST`,
+    `COPPER_BULB`, `CHISELED_COPPER`, `COPPER_BLOCK` and `LIGHTNING_ROD`. Empty before 26.2.
+    """
+    text = (MCSRC / java_file).read_text()
+    return set(re.findall(
+        r"public static final WeatheringCopperCollection<%s> ([A-Z][A-Z_0-9]*)" % element, text))
+
+
+# Weathering-stage prefixes -> the accessor that reaches that stage. An unprefixed name is the
+# fresh, unweathered block.
+WEATHER_STATES = [("EXPOSED", "exposed"), ("WEATHERED", "weathered"), ("OXIDIZED", "oxidized")]
+
+
+def as_weathering_pick(name, records, collections, holder):
+    """Render `EXPOSED_CUT_COPPER` as the right copper-stage expression for this MC version.
+
+    Returns the `WeatheringCopperCollection` form on 26.2+, the flat-record form on 1.21.11 and
+    26.1, and None when the family isn't a weathering one at all.
+    """
+    state, family = "unaffected", name
+    for prefix, accessor in WEATHER_STATES:
+        if name.startswith(prefix + "_"):
+            state, family = accessor, name[len(prefix) + 1:]
+            break
+    if family in collections:
+        return f"{holder}.{family}.weathering().{state}()"
+    if family in records:
+        return f"{holder}.{family}.{state}()"
+    return None
+
+
+def as_color_pick(name, collections, holder):
+    """Render `BLACK_WOOL` as `Blocks.WOOL.pick(DyeColor.BLACK)`, or None if it isn't one.
+
+    The family's collection is usually named after the family, but some carry a `DYED_` prefix to
+    leave the undyed block its plain name (`Blocks.TERRACOTTA` is the undyed one, so the dyed family
+    is `DYED_TERRACOTTA`). Try both rather than hand-maintaining the exceptions.
+    """
+    for color in DYE_COLORS:
+        if not name.startswith(color + "_"):
+            continue
+        family = name[len(color) + 1:]
+        for candidate in (family, "DYED_" + family):
+            if candidate in collections:
+                return f"{holder}.{candidate}.pick(DyeColor.{color})"
+    return None
+
+
 def main():
     global MC_VERSION, MCSRC
     MC_VERSION = target_mc_version()
@@ -355,8 +428,19 @@ def main():
     blocks = fields("net/minecraft/world/level/block/Blocks.java", "Block")
     weathering = fields("net/minecraft/world/level/block/Blocks.java", "WeatheringCopperBlocks")
     items = fields("net/minecraft/world/item/Items.java", "Item")
+    block_colors = color_collections("net/minecraft/world/level/block/Blocks.java", "Block")
+    item_colors = color_collections("net/minecraft/world/item/Items.java", "Item")
+    weathering_colls = weathering_collections("net/minecraft/world/level/block/Blocks.java", "Block")
+
+    def block_expr(target):
+        """Resolve a block name to whatever expression reaches it on this MC version."""
+        if target in blocks:
+            return f"Blocks.{target}"
+        return (as_color_pick(target, block_colors, "Blocks")
+                or as_weathering_pick(target, weathering, weathering_colls, "Blocks"))
 
     block_names, item_names, legacy_names, unknown = [], [], [], []
+    color_blocks, color_items = {}, {}
     for n in names:
         if n in LEGACY:
             legacy_names.append(n)
@@ -364,16 +448,22 @@ def main():
             block_names.append(n)
         elif n in items:
             item_names.append(n)
+        elif as_color_pick(n, block_colors, "Blocks"):
+            color_blocks[n] = as_color_pick(n, block_colors, "Blocks")
+        elif as_color_pick(n, item_colors, "Items"):
+            color_items[n] = as_color_pick(n, item_colors, "Items")
         else:
             unknown.append(n)
 
     # Fail loudly rather than silently emitting something that won't compile.
     if unknown:
         sys.exit("Unmapped names (add to LEGACY): %s" % ", ".join(unknown))
-    bad = [f"{k}->{v[0]}" for k, v in LEGACY.items() if v[0] not in blocks]
+    # A LEGACY target may itself be a dyed block, which on 26.2+ lives in a ColorCollection rather
+    # than as a field (BED_BLOCK -> WHITE_BED).
+    bad = [f"{k}->{v[0]}" for k, v in LEGACY.items() if not block_expr(v[0])]
     if bad:
         sys.exit("LEGACY targets missing from Blocks: %s" % ", ".join(bad))
-    missing_extras = [n for n in EXTRAS if n not in blocks]
+    missing_extras = [n for n in EXTRAS if not block_expr(n)]
     if missing_extras:
         sys.exit("EXTRAS missing from Blocks: %s" % ", ".join(missing_extras))
     # An EXTRA that the Bukkit source turns out to reference is just a normal block constant, and
@@ -383,10 +473,10 @@ def main():
         sys.exit("EXTRAS already emitted as block constants (drop them): %s" % ", ".join(dupe_extras))
     # EXTRAS_EXPR: validate the WeatheringCopperBlocks base field each accessor hangs off exists,
     # and that no name collides with another emitted constant.
-    missing_expr = [n for n, (e, _) in EXTRAS_EXPR.items()
-                    if e.split("Blocks.", 1)[1].split(".", 1)[0] not in weathering]
+    missing_expr = [n for n in EXTRAS_EXPR
+                    if not as_weathering_pick(n, weathering, weathering_colls, "Blocks")]
     if missing_expr:
-        sys.exit("EXTRAS_EXPR base not a WeatheringCopperBlocks field: %s" % ", ".join(missing_expr))
+        sys.exit("EXTRAS_EXPR names are not a copper weathering family: %s" % ", ".join(missing_expr))
     dupe_expr = [n for n in EXTRAS_EXPR if n in block_names or n in item_names
                  or n in legacy_names or n in EXTRAS]
     if dupe_expr:
@@ -402,30 +492,52 @@ def main():
                  % len(legacy_names))
     for n in legacy_names:
         target, why = LEGACY[n]
-        lines.append(f"    public static final Material {n} = of(Blocks.{target}); // {why}")
+        lines.append(f"    public static final Material {n} = of({block_expr(target)}); // {why}")
     lines.append("")
+    if color_blocks:
+        lines.append("    // ---- Dyed blocks (%d) — one ColorCollection per family since 26.2, --------"
+                     % len(color_blocks))
+        lines.append("    // ---- indexed by DyeColor instead of sixteen separate Blocks fields. -------")
+        for n in sorted(color_blocks):
+            lines.append(f"    public static final Material {n} = of({color_blocks[n]});")
+        lines.append("")
     lines.append("    // ---- Modern extras (%d) — blocks the 1.14 vocabulary never had -------------"
                  % len(EXTRAS))
     for n in sorted(EXTRAS):
-        lines.append(f"    public static final Material {n} = of(Blocks.{n}); // {EXTRAS[n]}")
+        lines.append(f"    public static final Material {n} = of({block_expr(n)}); // {EXTRAS[n]}")
     lines.append("")
     lines.append("    // ---- Copper weathering stages (%d) — reached via WeatheringCopperBlocks accessors -"
                  % len(EXTRAS_EXPR))
     for n in sorted(EXTRAS_EXPR):
-        expr, why = EXTRAS_EXPR[n]
-        lines.append(f"    public static final Material {n} = of({expr}); // {why}")
+        expr = as_weathering_pick(n, weathering, weathering_colls, "Blocks")
+        lines.append(f"    public static final Material {n} = of({expr}); // {EXTRAS_EXPR[n]}")
     lines.append("")
     lines.append("    // ---- Items (%d) — Bukkit's Material spanned blocks AND items; these are ----"
                  % len(item_names))
     lines.append("    // ---- item-only (loot/chest contents). They carry no block state. -----------")
     for n in item_names:
         lines.append(f"    public static final Material {n} = ofItem(Items.{n});")
+    if color_items:
+        lines.append("")
+        lines.append("    // ---- Dyed items (%d) — the item-side ColorCollections (26.2+) -------------"
+                     % len(color_items))
+        for n in sorted(color_items):
+            lines.append(f"    public static final Material {n} = ofItem({color_items[n]});")
 
     constants = "\n".join(lines)
-    OUT.write_text(TEMPLATE.replace("//__CONSTANTS__", constants))
+    text = TEMPLATE.replace("//__CONSTANTS__", constants)
+    # DyeColor is only referenced by the ColorCollection picks, which exist from 26.2. Dropping the
+    # import when nothing needs it keeps older versions' output byte-identical to what they had
+    # before this generator learned about colour collections.
+    if not (color_blocks or color_items):
+        text = text.replace("import net.minecraft.world.item.DyeColor;\n", "")
+    OUT.write_text(text)
 
+    total = (len(block_names) + len(legacy_names) + len(item_names)
+             + len(color_blocks) + len(color_items))
     print(f"blocks={len(block_names)} legacy={len(legacy_names)} items={len(item_names)} "
-          f"total={len(block_names)+len(legacy_names)+len(item_names)} (referenced={len(names)})")
+          f"dyed_blocks={len(color_blocks)} dyed_items={len(color_items)} "
+          f"total={total} (referenced={len(names)})")
     print(f"wrote {OUT}")
 
 
@@ -437,6 +549,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
