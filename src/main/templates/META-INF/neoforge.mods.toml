@@ -2,7 +2,8 @@
 modLoader="javafml"
 loaderVersion="${loader_version_range}"
 license="${mod_license}"
-issueTrackerURL="https://github.com/echurchill/CityWorld/issues"
+# Bugs come here, not to the original author: this is a fork and upstream cannot fix it.
+issueTrackerURL="https://github.com/Sablednah/CityWorld-ReForged/issues"
 
 [[mods]]
 modId="${mod_id}"
@@ -12,8 +13,8 @@ authors="${mod_authors}"
 description='''
 ${mod_description}
 '''
-displayURL="https://www.spigotmc.org/resources/cityworld.2250/"
-#logoFile="cityworld.png"
+displayURL="${mod_homepage}"
+logoFile="cityworld.png"
 logoBlur=false
 
 [[dependencies.${mod_id}]]
