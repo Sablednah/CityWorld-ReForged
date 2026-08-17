@@ -5,6 +5,24 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 5.1.0
+
+### Added
+
+- **CityWorld runs on Minecraft 26.1 and 26.2** as well as 1.21.11. Minecraft moved to quarterly
+  calendar releases, so the mod is now built and tested against several versions at once. Jars carry
+  the version they are for — `cityworld-5.1.0+mc26.2.jar` — so there is no guessing which is which.
+- **The mod has its icon and its own links in the mod list.** It previously showed no logo, and its
+  home and issue links still pointed at the original author's pages — so bug reports would have gone
+  to someone who cannot fix them. Issues now point at this fork's GitHub tracker.
+
+### Fixed
+
+- **26.2's block changes are absorbed without any visible difference.** 26.2 stopped declaring dyed
+  blocks and copper as individual blocks — 145 of the blocks CityWorld builds with, including every
+  colour of wool, terracotta, concrete, stained glass and beds, plus the whole copper family. Cities
+  look exactly as they did; a given seed still produces the same city on every supported version.
+
 ## 5.0.3
 
 ### Added
