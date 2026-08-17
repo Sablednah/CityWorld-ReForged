@@ -36,6 +36,18 @@ import net.neoforged.neoforge.event.server.ServerStartedEvent;
  * players never pay for it. Use {@code ./gradlew runSelfTest}, or {@code scripts/selftest.sh} to run
  * it across every supported version and compare them.
  *
+ * <p><b>This ships in the release jar, deliberately — do not strip it out.</b> Two reasons. It must
+ * test <em>the artifact players actually get</em>; excluding it would mean verifying a different jar
+ * from the one shipped, which undermines the point of having it. And it is a known quantity from
+ * 5.1.0 onward, so a reviewer diffing a later version sees it as pre-existing rather than something
+ * newly slipped in.
+ *
+ * <p>Worth being aware of how it reads to someone auditing the jar: a dormant code path, switched on
+ * by a flag, that ends in {@link net.minecraft.server.MinecraftServer#halt}. That shape is what
+ * plugin backdoors used to look like. It is benign — setting a system property requires launch-time
+ * access to the server, so anyone who can trigger it can already stop the server directly, and there
+ * is no network trigger and no privilege change — but expect it to draw a careful read.
+ *
  * <p><b>What makes it cross-version useful.</b> Planning never touches the block registry, so for a
  * fixed seed the plan is a pure function of the seed and must be <em>identical</em> on every
  * Minecraft version. The harness hashes it, and {@code scripts/selftest.sh} fails the run if two
