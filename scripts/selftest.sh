@@ -100,14 +100,21 @@ rm -rf "$ROOT/run/world"
 
 PROPS="$ROOT/run/server.properties"
 touch "$PROPS"
+# One code path, deliberately. This used to sed when the key existed and append when it didn't, and
+# the two disagreed about backslashes: the append wrote 'cityworld\\:city' where sed wrote
+# 'cityworld\:city'. On a developer's machine the key always existed, so it always took the sed path
+# and worked; on a fresh checkout (CI) it took the append path, the level type failed to parse, and
+# the server fell back to VANILLA worldgen — generating a perfectly normal-looking world that was
+# not CityWorld at all. Rewriting the file avoids the escaping question entirely.
 set_prop() {
-    if grep -qE "^$1=" "$PROPS"; then
-        sed -i "s|^$1=.*|$1=$2|" "$PROPS"
-    else
-        echo "$1=$2" >> "$PROPS"
-    fi
+    local key="$1" value="$2"
+    { grep -v "^$key=" "$PROPS" || true; } > "$PROPS.tmp"
+    echo "$key=$value" >> "$PROPS.tmp"
+    mv "$PROPS.tmp" "$PROPS"
 }
-set_prop "level-type" "cityworld\\\\:city"
+# No backslash needed: java.util.Properties splits on the FIRST unescaped '=' or ':', which is the
+# '=' after the key, so everything past it — colon included — is the value.
+set_prop "level-type" "cityworld:city"
 set_prop "level-seed" "$SEED"
 set_prop "online-mode" "false"
 
