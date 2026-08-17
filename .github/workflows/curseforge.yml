@@ -88,7 +88,9 @@ jobs:
             echo "::group::$(basename "$jar") -> Minecraft $mc"
             # Keep going if one version fails, so a single bad upload does not strand the others,
             # then fail the job at the end so the failure is not silent.
-            ./scripts/curseforge-upload.sh "$jar" "$mc" dist/changelog.md "$RELEASE_TYPE" || failed=1
+            # Invoked via bash rather than as ./script: this repo lives on an NTFS drive with
+            # core.fileMode=false, so exec bits are easily lost again on a future commit.
+            bash scripts/curseforge-upload.sh "$jar" "$mc" dist/changelog.md "$RELEASE_TYPE" || failed=1
             echo "::endgroup::"
           done
           [ "$failed" -eq 0 ] || { echo "::error::At least one upload failed."; exit 1; }
