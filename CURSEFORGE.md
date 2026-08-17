@@ -67,6 +67,15 @@ per-world, they ship as a **datapack**, not a global config: edit them by hand, 
 **→ Full settings reference, example datapacks, and guides (a gentler apocalypse, sparse cities,
 custom villager names, taller skyscrapers, and more): [sablecraft.co.uk/cityworld-reforged](https://sablecraft.co.uk/cityworld-reforged/)**
 
+### Your other mods' blocks build cities too
+
+CityWorld's building palettes are **block tags**, not a fixed list. A mod that tags its blocks the
+normal way — planks in `#minecraft:planks`, stone in `#c:stones` — starts appearing in cities the
+moment you install it, with no patch and no compatibility pack. The odds stay put as the palette
+widens, so a heavily modded world gets *more variety*, not more wooden houses. For mods that don't tag
+their blocks, or to put a mod's blocks somewhere they wouldn't naturally go, a small datapack extends
+any palette directly.
+
 ## Commands
 
 `/cityinfo` tells you what's under your feet; `/cityfind`/`/cityfind lot`/`/cwlocate` track down a
@@ -77,7 +86,19 @@ bottles a world's settings to hand to a server.
 
 ## Requirements
 
-Minecraft **1.21.11**, NeoForge **21.11.42**.
+CityWorld runs on **three Minecraft versions**. Download the file for yours — the Minecraft version is
+in the filename, so there is no guessing which is which.
+
+| Minecraft | NeoForge | Java | File |
+|---|---|---|---|
+| 1.21.11 | 21.11.42+ | 21 | `cityworld-5.1.0+mc1.21.11.jar` |
+| 26.1.2 | 26.1.2.95+ | 25 | `cityworld-5.1.0+mc26.1.2.jar` |
+| 26.2 | 26.2.0.59+ | 25 | `cityworld-5.1.0+mc26.2.jar` |
+
+**A given seed builds the same city on all three.** The layout — terrain, roads, districts, which
+building stands where — is identical across versions; only the materials shift slightly, because newer
+Minecraft versions bring new blocks into the building palettes. Every version is verified automatically
+before release, generating a real world and checking the cities, signs and biomes come out right.
 
 ## Credits and licence
 
