@@ -62,6 +62,13 @@ Measured 2026-08-17, all three passing and agreeing:
 The identical plan hashes are the point: same seed, same city, three Minecraft versions. The distinct
 block counts differing by two is the expected material variance, not a fault.
 
+**Only the plan hash is an invariant — the rest of the table is indicative.** Re-running an unchanged
+1.21.11 build gave 66 signs and 64 fronts where it had given 67 and 65: decoration of chunks at the
+edge of the surveyed block depends on which neighbours happen to be loaded, so counts wobble by one
+or two between runs. The harness therefore asserts *presence* (signs exist, fronts exist, backs
+exist, blocks were written), never exact counts. **Do not tighten those into equality assertions** —
+it would produce a test that fails at random and teaches everyone to ignore it.
+
 **⚠ A trap this harness fell into itself, worth not repeating.** Its first version located test
 chunks by rebuilding a `CityWorldGenerator` and asking it for `RoadLot`s — and reported "no signs
 found", which read exactly like a 26.2 regression. It was not: `PlatMap.getMapLot()` subtracts the
