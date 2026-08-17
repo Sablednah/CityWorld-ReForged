@@ -30,6 +30,107 @@ sites. 26.1 touched none of them. 26.2 broke **145**. Because the file is *gener
 repair was teaching `scripts/gen_material.py` new resolution rules; not one of the 3,096 call sites
 changed. That is the strongest argument in the whole arc for keeping generated code generated.
 
+## ▶ Next up (queued 2026-08-17, owner still researching)
+
+In rough priority order. Nothing here is started.
+
+### 1. ⚠ Vanilla structures never generate — including strongholds
+
+`CityWorldChunkGenerator.createState` returns `ChunkGeneratorStructureState.createForFlat(…,
+Stream.empty())`, so **no vanilla structure is ever placed**. That is deliberate for villages and
+mineshafts — CityWorld builds its own — but it takes strongholds with it, and **no stronghold means
+no End portal**. Eyes of ender have nothing to find, so as far as I can tell a CityWorld world cannot
+reach the End by normal play. *Read from the code, not yet confirmed in-game — verify before acting
+on it.*
+
+Worth deciding as a gameplay question, not just a feature: does a CityWorld world want to be
+completable? If yes, the minimum is placing strongholds somewhere sensible and making
+`findNearestMapStructure` agree with where they went, or eyes will point at nothing.
+
+### 2. "Put a structure here" — ancient cities, trial chambers, strongholds
+
+The owner's idea, and it stacks on top of #1: let the planner deliberately place vanilla underground
+structures, the way it already places its own vaults and mines. Ancient City and Trial Chambers are
+jigsaw structures, so this means driving the jigsaw generator at a chosen position rather than
+copying a template.
+
+The eye-of-ender caveat the owner raised is real and bigger than it looks: vanilla places strongholds
+on a fixed ring pattern and the eye asks the *structure placement system* where they are. A
+hand-placed stronghold that the placement system does not know about is a stronghold the eye cannot
+find.
+
+### 3. Decorative caves as a pool, not just lush
+
+Generalise the existing lush-cave patch mechanic into **one decorative cave type drawn from a pool**:
+lush, **sulfur** (26.2's sulfur caves, with sulfur dripstone), **deep-dark / sculk** (ancient-city
+flavour without necessarily the city), and room for modded and future types. The owner explicitly
+wants this data-driven enough that a new cave type — vanilla or modded — can slot in without a code
+change. Alex's Caves is the obvious modded case.
+
+**⚠ The blocker under this, #1 and #2 alike: the biome source emits no cave biomes and cannot.**
+Verified: the biomes it can produce are all *surface* biomes — no `DEEP_DARK`, no `LUSH_CAVES`, no
+`DRIPSTONE_CAVES`. And `createBiomes` classifies **per column (2D)** — "classify once per (quartX,
+quartZ) and reuse down the column" — so biome cannot vary with depth at all. Today's lush-cave
+patches are decorative *block placement*, not the lush caves biome.
+
+Consequences, and they are the crux of this whole group of ideas:
+
+- **Ancient City cannot place**, because it is gated on `deep_dark` (the owner spotted this).
+- Anything biome-driven underground is unavailable: sculk spread, warden spawning, cave ambience.
+- **Modded cave mods that define their own biomes (Alex's Caves) will not appear either**, for the
+  same reason — so this is the same problem as the worldgen half of #5.
+
+So "decorative cave pool" splits into two very different jobs: *decorative blocks* (cheap, extends
+what already works) versus *real cave biomes* (needs the biome source to become 3D, which is a
+genuine piece of architecture and would unlock ancient cities and modded caves at the same time).
+Worth deciding which one is actually wanted before starting.
+
+### 4. 26.2's new stone families are not in any palette
+
+26.2 ships full **cinnabar** and **sulfur** families (`CINNABAR`, `CINNABAR_BRICKS`,
+`CHISELED_CINNABAR`, `SULFUR`, `SULFUR_BRICKS`, `POLISHED_SULFUR`, `CHISELED_SULFUR`,
+`POTENT_SULFUR`, plus slabs/stairs/walls) and CityWorld uses none of them. Two reasons, both worth
+remembering:
+
+- They are absent from `Material.java`, which is generated from names the 1.14 Bukkit source used
+  plus a curated `EXTRAS` list. Post-1.14 blocks only exist there because someone added them.
+- `cityworld:build/modern_stones` is 24 explicitly-listed blocks, **not** a reference to `#c:stones`.
+  Deliberate — it is a curated look — but it means the tag layer widens *within* chosen families and
+  cannot discover a new one.
+
+**This is the honest limit of the 5.0.3 tag work**: six woods became twelve automatically, but a
+brand-new stone family still needs a human. Both would suit MODERN (the palette is light on warm
+colours) and sulfur is an obvious mine-wall accent. 26.2 branch only; `"required": false` keeps the
+same tag file safe on older versions.
+
+**⚠ 26.3 is reported to add wool and concrete slabs and stairs — check the tags when it lands.** Our
+palettes assume every block in a tag is a **full cube**: they are used as walls, floors and ceilings.
+If Mojang puts wool slabs into `#minecraft:wool` (rather than a separate `#minecraft:wool_slabs`),
+CityWorld would start building *walls out of slabs* — holes in houses, wherever wool came up. Cheap
+to check, unpleasant to discover from a bug report. The same caution applies to `#c:concretes`.
+
+The upside is real too: slab and stair variants of wool and concrete are exactly what the builders
+lack for edges, steps and roof trim, so they are worth wiring in deliberately — as their own shape
+vocabulary, not by widening the wall palettes.
+
+### 5. Per-mod compatibility datapacks
+
+The owner is choosing mods. The useful split is by **what the mod needs from us**, because tags only
+decide what a block is *made of* — anything needing placement semantics needs a new seam first:
+
+- **Free or a trivial datapack** (blocks joining existing palettes): Twilight Forest, Biomes O' Plenty
+  blocks, Apotheosis bookshelves.
+- **Needs a new tag seam, then datapack-able**: Farmer's Delight crops (farm fields are not
+  tag-driven yet), Apotheosis spawners, cave decoration (#3).
+- **Needs real feature work**: Fantasy's Furniture. The owner's instinct is right — furniture carries
+  orientation and semantics (a chair faces a table), which no block tag can express. It would extend
+  the `Support/Furniture` vocabulary, not a palette.
+
+Also worth checking before promising anything: mods that add **worldgen** (Alex's Caves, Biomes O'
+Plenty biomes) may not appear at all, because CityWorld suppresses carvers and structures and drives
+its own biome source. That is a compatibility question of a different kind from palettes, and
+probably the first thing to test with a big content mod installed.
+
 ## Releasing — GitHub, and CurseForge automatically
 
 Publishing a GitHub release now publishes to CurseForge too, via
