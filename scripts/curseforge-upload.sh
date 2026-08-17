@@ -50,8 +50,18 @@ fi
 LOADER_ID="$(jq -r 'map(select(.name == "NeoForge")) | .[0].id // empty' <<<"$VERSIONS_JSON")"
 [ -n "$LOADER_ID" ] || echo "!! Warning: no 'NeoForge' modloader tag found; uploading without it." >&2
 
-GAME_VERSIONS="[$MC_ID${LOADER_ID:+,$LOADER_ID}]"
-echo "   Minecraft $MC_VERSION = $MC_ID${LOADER_ID:+, NeoForge = $LOADER_ID}"
+# CurseForge rejects an upload that names no environment ("You must select at least one version from
+# the environment group of versions"). CityWorld needs both sides: the server generates the world,
+# and the client supplies the world-type and Customize screens.
+CLIENT_ID="$(jq -r 'map(select(.name == "Client")) | .[0].id // empty' <<<"$VERSIONS_JSON")"
+SERVER_ID="$(jq -r 'map(select(.name == "Server")) | .[0].id // empty' <<<"$VERSIONS_JSON")"
+if [ -z "$CLIENT_ID" ] || [ -z "$SERVER_ID" ]; then
+    echo "!! Could not find the Client/Server environment tags CurseForge requires." >&2
+    exit 1
+fi
+
+GAME_VERSIONS="[$MC_ID${LOADER_ID:+,$LOADER_ID},$CLIENT_ID,$SERVER_ID]"
+echo "   Minecraft $MC_VERSION = $MC_ID${LOADER_ID:+, NeoForge = $LOADER_ID}, Client = $CLIENT_ID, Server = $SERVER_ID"
 
 METADATA="$(jq -n \
     --rawfile changelog "$CHANGELOG_FILE" \
