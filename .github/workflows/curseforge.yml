@@ -33,6 +33,10 @@ on:
         required: false
         default: false
         type: boolean
+      only:
+        description: Upload only jars whose name contains this (e.g. mc26.2) — for testing
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -76,6 +80,7 @@ jobs:
           CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
           RELEASE_TYPE: ${{ inputs.release_type || 'release' }}
           CURSEFORGE_DEBUG: ${{ inputs.debug && '1' || '' }}
+          ONLY: ${{ inputs.only }}
         run: |
           shopt -s nullglob
           jars=(dist/*.jar)
@@ -89,6 +94,10 @@ jobs:
             mc="$(basename "$jar" .jar | sed -n 's/.*+mc\(.*\)$/\1/p')"
             if [ -z "$mc" ]; then
               echo "::warning::Cannot read a Minecraft version from $(basename "$jar") — skipping it."
+              continue
+            fi
+            if [ -n "$ONLY" ] && [[ "$(basename "$jar")" != *"$ONLY"* ]]; then
+              echo "Skipping $(basename "$jar") — does not match '$ONLY'."
               continue
             fi
             echo "::group::$(basename "$jar") -> Minecraft $mc"

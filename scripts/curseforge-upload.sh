@@ -60,12 +60,33 @@ if [ -z "$CLIENT_ID" ] || [ -z "$SERVER_ID" ]; then
     exit 1
 fi
 
-GAME_VERSIONS="[$MC_ID${LOADER_ID:+,$LOADER_ID},$CLIENT_ID,$SERVER_ID]"
-echo "   Minecraft $MC_VERSION = $MC_ID${LOADER_ID:+, NeoForge = $LOADER_ID}, Client = $CLIENT_ID, Server = $SERVER_ID"
+# The Java tag, so the file's requirements are visible on the site without reading the description.
+# Minecraft 26.x ships the Java 25 runtime; the 1.21 line ships Java 21.
+case "$MC_VERSION" in
+    1.*) JAVA_VERSION=21 ;;
+    *)   JAVA_VERSION=25 ;;
+esac
+JAVA_ID="$(jq -r --arg j "Java $JAVA_VERSION" 'map(select(.name == $j)) | .[0].id // empty' <<<"$VERSIONS_JSON")"
+# Optional, unlike the environment: if CurseForge has not added a Java version yet (likely right
+# after a new one ships) that must not block the upload, so warn and carry on without it.
+[ -n "$JAVA_ID" ] || echo "!! Warning: CurseForge does not list 'Java $JAVA_VERSION'; uploading without a Java tag." >&2
+
+GAME_VERSIONS="[$MC_ID${LOADER_ID:+,$LOADER_ID},$CLIENT_ID,$SERVER_ID${JAVA_ID:+,$JAVA_ID}]"
+echo "   Minecraft $MC_VERSION = $MC_ID${LOADER_ID:+, NeoForge = $LOADER_ID}, Client = $CLIENT_ID, Server = $SERVER_ID${JAVA_ID:+, Java $JAVA_VERSION = $JAVA_ID}"
+
+# "CityWorld 5.1.0 / MC 26.2" reads far better in the file list than the raw filename does. The mod
+# version comes out of the filename (cityworld-5.1.0+mc26.2.jar), falling back to the whole basename
+# if a jar is ever named differently. The file itself keeps its original name either way.
+MOD_VERSION="$(basename "$JAR" .jar | sed -n 's/^cityworld-\(.*\)+mc.*$/\1/p')"
+if [ -n "$MOD_VERSION" ]; then
+    DISPLAY_NAME="CityWorld $MOD_VERSION / MC $MC_VERSION"
+else
+    DISPLAY_NAME="$(basename "$JAR" .jar)"
+fi
 
 METADATA="$(jq -n \
     --rawfile changelog "$CHANGELOG_FILE" \
-    --arg displayName "$(basename "$JAR" .jar)" \
+    --arg displayName "$DISPLAY_NAME" \
     --arg releaseType "$RELEASE_TYPE" \
     --argjson gameVersions "$GAME_VERSIONS" \
     '{changelog: $changelog, changelogType: "markdown", displayName: $displayName,
