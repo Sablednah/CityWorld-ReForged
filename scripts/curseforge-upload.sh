@@ -62,9 +62,13 @@ METADATA="$(jq -n \
       releaseType: $releaseType, gameVersions: $gameVersions}')"
 
 echo ">> Uploading $(basename "$JAR") to project $CURSEFORGE_PROJECT_ID ($RELEASE_TYPE)"
+# --form-string, not -F: curl gives ';', a leading '@' and a leading '<' special meaning inside an
+# -F value, and a changelog containing any of them silently mangles the JSON. CurseForge then
+# answers "Error in field `metadata`: Invalid JSON", which reads like a bug in the JSON we built.
+# --form-string sends the value literally. The jar still needs -F, since @ there is the point.
 RESPONSE="$(curl -sS --max-time 600 -w '\n%{http_code}' \
     -H "X-Api-Token: $CURSEFORGE_TOKEN" \
-    -F "metadata=$METADATA" \
+    --form-string "metadata=$METADATA" \
     -F "file=@$JAR" \
     "$BASE/api/projects/$CURSEFORGE_PROJECT_ID/upload-file")"
 
