@@ -28,6 +28,11 @@ on:
         default: release
         type: choice
         options: [release, beta, alpha]
+      debug:
+        description: Print the upload metadata (contains no credentials)
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -70,6 +75,7 @@ jobs:
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
           CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
           RELEASE_TYPE: ${{ inputs.release_type || 'release' }}
+          CURSEFORGE_DEBUG: ${{ inputs.debug && '1' || '' }}
         run: |
           shopt -s nullglob
           jars=(dist/*.jar)

@@ -71,6 +71,12 @@ METADATA="$(jq -n \
     '{changelog: $changelog, changelogType: "markdown", displayName: $displayName,
       releaseType: $releaseType, gameVersions: $gameVersions}')"
 
+if [ -n "${CURSEFORGE_DEBUG:-}" ]; then
+    # The metadata carries no credentials, so it is safe to print when diagnosing a rejection.
+    echo ">> metadata:"
+    jq . <<<"$METADATA" | sed 's/^/     /'
+fi
+
 echo ">> Uploading $(basename "$JAR") to project $CURSEFORGE_PROJECT_ID ($RELEASE_TYPE)"
 # --form-string, not -F: curl gives ';', a leading '@' and a leading '<' special meaning inside an
 # -F value, and a changelog containing any of them silently mangles the JSON. CurseForge then
