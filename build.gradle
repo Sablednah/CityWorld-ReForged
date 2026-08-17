@@ -9,7 +9,10 @@ tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
-version = mod_version
+// The jar carries the Minecraft version it was built against. All supported versions share a mod
+// version, so three files called cityworld-5.1.0.jar would be indistinguishable in a mods folder or
+// on a releases page. The mod's own version (in neoforge.mods.toml) stays a plain ${mod_version}.
+version = "${mod_version}+mc${minecraft_version}"
 group = mod_group_id
 
 sourceSets.main.resources {

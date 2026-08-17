@@ -30,6 +30,30 @@ sites. 26.1 touched none of them. 26.2 broke **145**. Because the file is *gener
 repair was teaching `scripts/gen_material.py` new resolution rules; not one of the 3,096 call sites
 changed. That is the strongest argument in the whole arc for keeping generated code generated.
 
+## Releasing — GitHub, and CurseForge automatically
+
+Publishing a GitHub release now publishes to CurseForge too, via
+`.github/workflows/curseforge.yml`. It downloads every jar attached to the release, reads the
+Minecraft version out of each filename (`cityworld-5.1.0+mc26.2.jar` → `26.2`), and uploads them
+with the release body as the changelog.
+
+**One-time setup (owner only — the token must never be pasted into a chat or committed):**
+
+1. Create a token at <https://legacy.curseforge.com/account/api-tokens>.
+2. Repo **Settings → Secrets and variables → Actions → Secrets**: add `CURSEFORGE_TOKEN`.
+3. Same screen, **Variables** tab: add `CURSEFORGE_PROJECT_ID` — the numeric project ID shown on the
+   CurseForge project page.
+
+Until both exist the workflow **skips rather than fails**, so it will not put a red cross on a
+release. `workflow_dispatch` re-uploads an existing tag by hand.
+
+`scripts/curseforge-upload.sh` does the actual upload and can be run locally. CurseForge wants
+numeric game-version IDs, and those change as versions are added, so it resolves them from
+`/api/game/versions` on every run rather than hardcoding them — and fails with the list of names
+CurseForge *does* know if a Minecraft version is not listed yet. **That is the expected failure
+right after a Minecraft release**: CurseForge has to add the version before anything can be uploaded
+against it.
+
 ## Verifying a version — `scripts/selftest.sh`
 
 Hand-playtesting every supported version does not scale at four drops a year, so verification is
