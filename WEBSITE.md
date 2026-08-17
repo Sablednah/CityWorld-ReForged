@@ -19,10 +19,25 @@ the source text lives, and what is currently outstanding.
 `/styles/` child pages are deliberately version-agnostic — that is why a release does not invalidate
 them, and it is worth preserving.
 
-## Outstanding as of 5.1.0 (2026-08-17)
+## 5.1.0 (2026-08-17) — ✅ DONE, deployed by the site session
 
-Reviewed the landing page and all three child pages. The child pages need **no changes**. Two items
-on the landing page:
+Both items below were handed over and are live. What the site session did, for the record:
+
+- Landing page requirements rewritten with the three-version table, plus the "same seed, same city"
+  note. It also went further than asked and made the **hero tags version-agnostic** ("3 Minecraft
+  versions" / "NeoForge" instead of pinned numbers) so they cannot go stale on the next release —
+  worth knowing, because it means future releases may need no landing-page edit at all.
+- A full **Building palettes** section added to `/settings/` from `PALETTES.md`, with a teaser on the
+  hub page so it is discoverable.
+- `/commands/` and `/styles/` left untouched, as recommended.
+- It also found and fixed a stale version string on the `/game-plugins/` card — same bug, outside the
+  review scope.
+
+**⚠ Deployment is not visibility: Cloudflare must be purged** before changes reach real visitors.
+The site session flags this to the owner; expect the live URL to serve stale content until then, and
+do not conclude from a fetch that a deploy failed.
+
+The two items, kept for reference:
 
 ### 1. Version statements are stale — the important one
 
