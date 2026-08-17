@@ -1,0 +1,144 @@
+name: Worldgen self-test
+
+# Generates a real CityWorld world on every supported Minecraft version and checks it came out
+# right: the generator is installed, the planner produces a full spread of contexts and lots,
+# decoration writes blocks, and signs carry text on both faces (the access-transformer canary).
+#
+# Then it does the part that only makes sense across versions: planning never touches the block
+# registry, so a fixed seed must plan an IDENTICAL city on every version. The compare job fails if
+# two versions disagree — which is how a change that alters worldgen on one version only gets caught.
+# Materials are deliberately excluded from that comparison; they legitimately widen as newer
+# Minecraft versions add blocks to the palette tags.
+#
+# Cost, so it isn't a surprise: a cold run has to let NeoForm decompile Minecraft, which takes
+# 10-15 minutes per version. Warm (cache hit) is a few minutes. The three versions run in parallel.
+
+on:
+  push:
+    branches: [master, mc26.1, mc26.2]
+    # Docs-only commits are frequent and cannot affect worldgen, so don't spend 3 runners on them.
+    paths-ignore:
+      - '**.md'
+      - 'branding/**'
+      - 'screengrabs/**'
+  pull_request:
+    branches: [master, mc26.1, mc26.2]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # A newer push supersedes an in-flight run of the same ref; these jobs are long.
+  group: selftest-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  selftest:
+    name: ${{ matrix.branch }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false # one broken version must not hide the state of the other two
+      matrix:
+        branch: [master, mc26.1, mc26.2]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
+
+      - name: Read the target versions
+        id: target
+        run: |
+          mc="$(grep -E '^minecraft_version=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')"
+          neo="$(grep -E '^neo_version=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')"
+          # Minecraft 26.x ships the Java 25 runtime; the 1.21 line ships Java 21.
+          case "$mc" in
+            1.*) java=21 ;;
+            *)   java=25 ;;
+          esac
+          echo "mc=$mc" >> "$GITHUB_OUTPUT"
+          echo "neo=$neo" >> "$GITHUB_OUTPUT"
+          echo "java=$java" >> "$GITHUB_OUTPUT"
+          echo "$mc / NeoForge $neo / Java $java" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ steps.target.outputs.java }}
+          # selftest.sh only falls back to ./tools/jdkNN when JAVA_HOME is unset, and those are
+          # git-ignored local installs — so setting JAVA_HOME here is what makes it work on CI.
+
+      - name: Cache Gradle and the decompiled Minecraft
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          # Keyed on the NeoForge version: the expensive part is the NeoForm decompile, and that is
+          # only valid for one Minecraft/NeoForge pair.
+          key: gradle-${{ runner.os }}-neo${{ steps.target.outputs.neo }}-${{ hashFiles('**/*.gradle', 'gradle.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-neo${{ steps.target.outputs.neo }}-
+
+      - name: Run the self-test
+        run: ./scripts/selftest.sh
+
+      - name: Publish the result
+        if: always()
+        run: |
+          report="build/selftest/${{ steps.target.outputs.mc }}.json"
+          {
+            echo "### Minecraft ${{ steps.target.outputs.mc }}"
+            if [ -f "$report" ]; then
+              for key in overworld.generator plan.MODERN.hash plan.APOCALYPSE.hash plan.CLASSIC.hash \
+                         readback.chunksSurveyed readback.distinctBlocks readback.signsSeen \
+                         readback.signsWithFrontText readback.signsWithBackText; do
+                value="$(grep -o "\"$key\": \"[^\"]*\"" "$report" | cut -d'"' -f4)"
+                [ -n "$value" ] && echo "- \`$key\` = $value"
+              done
+            else
+              echo "No report produced — the run failed before the harness finished."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: selftest-${{ matrix.branch }}
+          path: |
+            build/selftest/*.json
+            build/selftest/*.log
+          retention-days: 14
+          if-no-files-found: warn
+
+  compare:
+    name: Same seed, same city
+    needs: selftest
+    if: always() # still worth comparing whichever versions did produce a report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect every version's report
+        uses: actions/download-artifact@v4
+        with:
+          pattern: selftest-*
+          merge-multiple: true
+          path: build/selftest
+
+      - name: Compare the plan hashes
+        run: |
+          ls -la build/selftest || true
+          count="$(ls build/selftest/*.json 2>/dev/null | wc -l)"
+          if [ "$count" -lt 2 ]; then
+            echo "::warning::Only $count report(s) available — nothing to compare."
+            exit 0
+          fi
+          ./scripts/selftest.sh --compare | tee compare.txt
+          {
+            echo "### Cross-version comparison"
+            echo '```'
+            cat compare.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
