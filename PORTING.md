@@ -83,6 +83,18 @@ It is dormant unless `-Dcityworld.selftest=true`. Run it with `./scripts/selftes
 right JDK from `minecraft_version`), then `./scripts/selftest.sh --compare` once several versions
 have been run.
 
+**It also runs in CI** — `.github/workflows/selftest.yml`, on every push to the three version
+branches and on demand. A three-branch matrix runs the harness on each version, then a compare job
+fails if any two disagree on the plan hash. Warm, that is **4–5 minutes per version in parallel**;
+cold it has to let NeoForm decompile Minecraft, which is 10–15 minutes and is why the cache is keyed
+on the NeoForge version. Docs-only pushes are ignored.
+
+**It earned its keep immediately.** The first green-building CI run caught that on a *fresh
+checkout* the server silently fell back to vanilla `NoiseBasedChunkGenerator`: `set_prop` had two
+paths that disagreed about backslashes, and a developer's `run/` directory always took the working
+one. The world generated, looked entirely normal, and was not CityWorld. That is exactly the failure
+the generator-identity check exists for, and nothing but a clean environment would have surfaced it.
+
 **The comparison is the clever half.** Planning never touches the block registry, so for a fixed seed
 the plan is a pure function of the seed and must be *identical* on every Minecraft version. The
 harness hashes it and `--compare` fails if two versions disagree — that catches a change that
