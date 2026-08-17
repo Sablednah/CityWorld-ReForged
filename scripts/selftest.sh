@@ -26,21 +26,6 @@ mc_version() {
     grep -E '^minecraft_version=' "$ROOT/gradle.properties" | cut -d= -f2 | tr -d '[:space:]'
 }
 
-# The JDK follows the target: Minecraft 26.x ships the Java 25 runtime, the 1.21 line Java 21.
-# Picking by hand is the sort of thing you get wrong once per version, so derive it.
-if [ -z "${JAVA_HOME:-}" ]; then
-    case "$(mc_version)" in
-        1.*) wanted="jdk21" ;;
-        *)   wanted="jdk25" ;;
-    esac
-    if [ -x "$ROOT/tools/$wanted/bin/java" ]; then
-        export JAVA_HOME="$ROOT/tools/$wanted"
-    else
-        echo "!! Minecraft $(mc_version) needs $ROOT/tools/$wanted, which is missing." >&2
-        exit 1
-    fi
-fi
-export PATH="$JAVA_HOME/bin:$PATH"
 
 compare_reports() {
     if ! ls "$REPORTS"/*.json >/dev/null 2>&1; then
@@ -82,10 +67,28 @@ compare_reports() {
     echo ">> All versions agree."
 }
 
+# --compare only reads the JSON reports, so it must run before the JDK is chosen: on CI it runs in
+# a separate job that builds nothing, and demanding a JDK there would fail before doing any work.
 if [ "${1:-}" = "--compare" ]; then
     compare_reports
     exit 0
 fi
+
+# The JDK follows the target: Minecraft 26.x ships the Java 25 runtime, the 1.21 line Java 21.
+# Picking by hand is the sort of thing you get wrong once per version, so derive it.
+if [ -z "${JAVA_HOME:-}" ]; then
+    case "$(mc_version)" in
+        1.*) wanted="jdk21" ;;
+        *)   wanted="jdk25" ;;
+    esac
+    if [ -x "$ROOT/tools/$wanted/bin/java" ]; then
+        export JAVA_HOME="$ROOT/tools/$wanted"
+    else
+        echo "!! Minecraft $(mc_version) needs $ROOT/tools/$wanted, which is missing." >&2
+        exit 1
+    fi
+fi
+export PATH="$JAVA_HOME/bin:$PATH"
 
 VERSION="$(mc_version)"
 echo ">> CityWorld self-test — Minecraft $VERSION"
