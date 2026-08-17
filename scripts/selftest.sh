@@ -22,19 +22,25 @@ REPORTS="$ROOT/build/selftest"
 # The plan hash is only comparable if every version plans the same world, so pin the seed.
 SEED="8675309"
 
-if [ -z "${JAVA_HOME:-}" ]; then
-    for candidate in jdk25 jdk21; do
-        if [ -x "$ROOT/tools/$candidate/bin/java" ]; then
-            export JAVA_HOME="$ROOT/tools/$candidate"
-            break
-        fi
-    done
-fi
-export PATH="$JAVA_HOME/bin:$PATH"
-
 mc_version() {
     grep -E '^minecraft_version=' "$ROOT/gradle.properties" | cut -d= -f2 | tr -d '[:space:]'
 }
+
+# The JDK follows the target: Minecraft 26.x ships the Java 25 runtime, the 1.21 line Java 21.
+# Picking by hand is the sort of thing you get wrong once per version, so derive it.
+if [ -z "${JAVA_HOME:-}" ]; then
+    case "$(mc_version)" in
+        1.*) wanted="jdk21" ;;
+        *)   wanted="jdk25" ;;
+    esac
+    if [ -x "$ROOT/tools/$wanted/bin/java" ]; then
+        export JAVA_HOME="$ROOT/tools/$wanted"
+    else
+        echo "!! Minecraft $(mc_version) needs $ROOT/tools/$wanted, which is missing." >&2
+        exit 1
+    fi
+fi
+export PATH="$JAVA_HOME/bin:$PATH"
 
 compare_reports() {
     if ! ls "$REPORTS"/*.json >/dev/null 2>&1; then
