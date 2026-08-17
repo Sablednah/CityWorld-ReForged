@@ -54,6 +54,20 @@ CurseForge *does* know if a Minecraft version is not listed yet. **That is the e
 right after a Minecraft release**: CurseForge has to add the version before anything can be uploaded
 against it.
 
+**⚠ HTTP 200 means accepted, not published.** Moderation runs afterwards, and this is where the
+confusing failures live:
+
+- **CurseForge dedupes by file content.** The same jar cannot exist twice on a project, so
+  re-uploading a release that is already up gets each file *rejected as a duplicate* — even though
+  the API returned a file ID. Delete the old files first, or don't re-run.
+- **Rejected files are hidden from the authors file list by default**, so they do not look rejected;
+  they look like they never arrived. Everything appears to have silently done nothing.
+- **Some files land in "Under Manual Review"** and stay off the public page for a while. Nothing is
+  wrong; it clears on its own.
+
+All three bit during the 5.1.0 upload. The authoritative view, always, is
+`https://authors.curseforge.com/#/projects/<id>/files` — the public Files tab lags behind it.
+
 ## Verifying a version — `scripts/selftest.sh`
 
 Hand-playtesting every supported version does not scale at four drops a year, so verification is

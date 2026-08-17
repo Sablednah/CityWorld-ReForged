@@ -115,6 +115,13 @@ BODY="$(sed '$d' <<<"$RESPONSE")"
 if [ "$STATUS" = "200" ]; then
     FILE_ID="$(jq -r '.id // empty' <<<"$BODY" 2>/dev/null || true)"
     echo ">> Uploaded${FILE_ID:+ as file $FILE_ID}"
+    # A 200 means CurseForge accepted the file, NOT that it is published. Moderation runs afterwards
+    # and can still reject it — most often as a duplicate, because CurseForge dedupes by file
+    # content and will not host the same jar twice on one project. Re-running an upload for a
+    # release that is already up therefore produces rejections, not duplicates. Rejected files are
+    # hidden from the authors file list by default, so they look like they simply never arrived.
+    echo ">> Note: moderation runs after this. Check the project's file list if it does not appear:"
+    echo "   https://authors.curseforge.com/#/projects/$CURSEFORGE_PROJECT_ID/files"
     exit 0
 fi
 
