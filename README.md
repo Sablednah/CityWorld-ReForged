@@ -1,16 +1,25 @@
-# CityWorld (NeoForge)
+<p align="center">
+  <img src="branding/cityworld-banner.png" alt="CityWorld ReForged" width="600">
+</p>
 
 A **NeoForge** port of the classic [CityWorld](https://www.spigotmc.org/resources/cityworld.2250/)
 Bukkit plugin — a procedural world generator that fills the world with **cities, roads, buildings,
 mines, sewers, farms and wild nature**, all seed-deterministic.
 
+**[Download on CurseForge](https://www.curseforge.com/minecraft/mc-mods/cityworld-reforged)** ·
+**[Documentation](https://sablecraft.co.uk/cityworld-reforged/)** ·
+**[Report a bug](https://github.com/Sablednah/CityWorld-ReForged/issues)**
+
 | | |
 |---|---|
-| **Minecraft** | 1.21.11 |
-| **Loader** | NeoForge 21.11.42 |
-| **Java** | 21 |
+| **Minecraft** | 1.21.11, 26.1.2, 26.2 |
+| **Loader** | NeoForge 21.11.42 / 26.1.2.95 / 26.2.0.59 |
+| **Java** | 21 (1.21.x) · 25 (26.x) |
 | **Licence** | GPL-3.0-only |
 | **Status** | ✅ Playable — full cities generate, inhabited and furnished, across 13 world styles |
+
+Jars are named for the Minecraft version they target — `cityworld-5.1.0+mc26.2.jar` — and a given
+seed generates the same city on every supported version.
 
 Drop the jar in your `mods/` folder and pick **CityWorld** as the world type (or one of its styles),
 and you get endless procedurally-generated cities: named streets, furnished buildings, roundabouts
