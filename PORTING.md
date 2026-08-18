@@ -49,6 +49,39 @@ completable? If yes, the minimum is placing strongholds somewhere sensible and m
 
 ### 2. "Put a structure here" — ancient cities, trial chambers, strongholds
 
+**Researched 2026-08-17 against the 26.2 data — the answers are more encouraging than expected.**
+
+**Suppression can be selective, easily.** `createState` passes `Stream.empty()` to
+`ChunkGeneratorStructureState.createForFlat`, and that argument is a stream of `StructureSet`
+holders — pass a *filtered* stream and exactly those come back. Vanilla even does the hard part:
+both factory methods drop any set whose biomes the biome source cannot produce
+(`hasBiomesForStructureSet`), so unavailable structures exclude themselves with no special-casing.
+
+**The placement conditions, from `data/minecraft/worldgen/structure_set/` in 26.2:**
+
+| | Placement | Biome requirement (`tags/worldgen/biome/has_structure/`) |
+|---|---|---|
+| Stronghold | `concentric_rings` — count 128, distance 32, spread 3 | `#minecraft:is_overworld` — *any* overworld biome |
+| Trial chambers | `random_spread` — spacing 34, separation 12 | a long list of ordinary **surface** biomes |
+| Ancient city | `random_spread` — spacing 24, separation 8 | **`minecraft:deep_dark` only** |
+
+So **strongholds and trial chambers need no cave biome and would work today** — the surface biomes
+CityWorld emits already satisfy both. **Ancient cities cannot**, and will be silently filtered out
+until the biome source can emit `deep_dark` (see #3).
+
+**Geodes are not structures.** `amethyst_geode` is a *placed feature* (underground decoration), which
+is why they already appear in CityWorld worlds while strongholds do not: we run vanilla decoration on
+nature chunks but zero the structure state. Features and structures are separate pipelines — ores
+arrive the same way geodes do. Worth keeping straight, since "I can see geodes" naturally reads as
+"structures work".
+
+**⚠ The wrinkle, so this doesn't look like a five-minute change.** `createForFlat` passes `0L` as the
+concentric-rings seed where `createForNormal` passes the level seed — and that seed is precisely what
+positions strongholds. Re-enabling them through the current call would put every CityWorld world's
+strongholds in *identical* places. The constructor taking both seeds is **private**, so the options
+are `createForNormal` (enables everything the biome source supports, not a chosen subset) or an
+access transformer. The selective part is trivial; the correctly-seeded part is the actual work.
+
 The owner's idea, and it stacks on top of #1: let the planner deliberately place vanilla underground
 structures, the way it already places its own vaults and mines. Ancient City and Trial Chambers are
 jigsaw structures, so this means driving the jigsaw generator at a chosen position rather than
