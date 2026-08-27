@@ -8,6 +8,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderGetter;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
@@ -31,6 +34,9 @@ import net.minecraft.world.level.biome.Climate;
 public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes {
 
     public static final MapCodec<CityWorldBiomeSource> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            // Not a JSON field — a handle on the biome registry, so the shared cave pool can be resolved
+            // by key alongside the eight hand-picked band biomes below.
+            RegistryOps.retrieveGetter(Registries.BIOME),
             Biome.CODEC.fieldOf("deep_ocean").forGetter(s -> s.deepOcean),
             Biome.CODEC.fieldOf("ocean").forGetter(s -> s.ocean),
             Biome.CODEC.fieldOf("beach").forGetter(s -> s.beach),
@@ -41,6 +47,7 @@ public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes
             Biome.CODEC.fieldOf("dry").forGetter(s -> s.dry)
     ).apply(i, CityWorldBiomeSource::new));
 
+    private final HolderGetter<Biome> biomes;
     private final Holder<Biome> deepOcean;
     private final Holder<Biome> ocean;
     private final Holder<Biome> beach;
@@ -50,8 +57,16 @@ public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes
     private final Holder<Biome> peak;
     private final Holder<Biome> dry;
 
-    public CityWorldBiomeSource(Holder<Biome> deepOcean, Holder<Biome> ocean, Holder<Biome> beach, Holder<Biome> low,
-            Holder<Biome> mid, Holder<Biome> high, Holder<Biome> peak, Holder<Biome> dry) {
+    /** The per-world context; see {@link CityWorldBiomes#bindContext}. */
+    private volatile CityWorldGenerator context;
+
+    /** The cave pool, resolved from the tag on first use; see {@link #cavePool()}. */
+    private volatile CaveRegions.Pool cavePool;
+
+    public CityWorldBiomeSource(HolderGetter<Biome> biomes, Holder<Biome> deepOcean, Holder<Biome> ocean,
+            Holder<Biome> beach, Holder<Biome> low, Holder<Biome> mid, Holder<Biome> high, Holder<Biome> peak,
+            Holder<Biome> dry) {
+        this.biomes = biomes;
         this.deepOcean = deepOcean;
         this.ocean = ocean;
         this.beach = beach;
@@ -67,15 +82,61 @@ public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes
         return CODEC;
     }
 
+    /**
+     * The eight band biomes plus the cave pool. The pool has to be here, not just in
+     * {@code createBiomes}: {@code possibleBiomes()} is what decides which structure sets survive
+     * {@code ChunkGeneratorStructureState}, and which biomes' features vanilla will even consider.
+     */
     @Override
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
-        return Stream.of(deepOcean, ocean, beach, low, mid, high, peak, dry);
+        return Stream.concat(Stream.of(deepOcean, ocean, beach, low, mid, high, peak, dry),
+                cavePool().biomes()).distinct();
     }
 
-    /** Plains fallback — the real per-column choice is made in {@code createBiomes}; this is only hit for off-chunk queries. */
+    @Override
+    public HolderGetter<Biome> biomeRegistry() {
+        return biomes;
+    }
+
+    /** Lazily resolved — see {@link CityWorldBiomes#cavePool()}. */
+    @Override
+    public CaveRegions.Pool cavePool() {
+        CaveRegions.Pool local = cavePool;
+        if (local == null) {
+            synchronized (this) {
+                local = cavePool;
+                if (local == null)
+                    cavePool = local = CaveRegions.of(biomes);
+            }
+        }
+        return local;
+    }
+
+    @Override
+    public void bindContext(CityWorldGenerator context) {
+        CityWorldGenerator bound = this.context;
+        if (bound == context)
+            return;
+        if (bound != null)
+            throw new IllegalStateException("CityWorld: this biome source is already bound to another world's "
+                    + "context; rebinding would classify every biome against the wrong terrain.");
+        this.context = context;
+    }
+
+    @Override
+    public CityWorldGenerator boundContext() {
+        return context;
+    }
+
+    /**
+     * The real, three-dimensional answer — the elevation bands at the surface, the cave pool
+     * underground. Falls back to the lowland band only in the pre-chunk window before the context is
+     * bound (stronghold ring layout); see {@link CityWorldBiomeLookup}.
+     */
     @Override
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
-        return low;
+        Holder<Biome> biome = CityWorldBiomeLookup.biomeAt(this, x, y, z);
+        return biome != null ? biome : low;
     }
 
     /**

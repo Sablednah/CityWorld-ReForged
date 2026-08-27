@@ -53,9 +53,32 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
     private final HolderGetter<Biome> biomes;
     private final List<Holder<Biome>> possible;
 
+    /** The per-world context; see {@link CityWorldBiomes#bindContext}. */
+    private volatile CityWorldGenerator context;
+
+    /** The cave pool, resolved from the tag on first use; see {@link #cavePool()}. */
+    private volatile CaveRegions.Pool cavePool;
+
     public CityWorldClimateBiomeSource(HolderGetter<Biome> biomes) {
         this.biomes = biomes;
         this.possible = PALETTE.stream().map(k -> (Holder<Biome>) biomes.getOrThrow(k)).toList();
+    }
+
+    /**
+     * Lazily resolved — see {@link CityWorldBiomes#cavePool()}. Double-checked rather than
+     * synchronized-on-every-call: {@code getNoiseBiome} runs on every worldgen worker.
+     */
+    @Override
+    public CaveRegions.Pool cavePool() {
+        CaveRegions.Pool local = cavePool;
+        if (local == null) {
+            synchronized (this) {
+                local = cavePool;
+                if (local == null)
+                    cavePool = local = CaveRegions.of(biomes);
+            }
+        }
+        return local;
     }
 
     @Override
@@ -63,15 +86,50 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
         return CODEC;
     }
 
+    /**
+     * The palette plus whatever the cave pool resolved to.
+     *
+     * <p>The pool has to be here: {@code possibleBiomes()} is what gates which structure sets survive
+     * {@code ChunkGeneratorStructureState.hasBiomesForStructureSet} and which biomes' features vanilla
+     * will consider at all — so {@code deep_dark} missing from this set means ancient cities are
+     * filtered out before generation starts. Vanilla calls this lazily and memoizes it, which is late
+     * enough for the tag to have bound.
+     */
     @Override
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
-        return possible.stream();
+        return Stream.concat(possible.stream(), cavePool().biomes()).distinct();
     }
 
-    /** Plains fallback for off-chunk queries; the real per-column choice happens in createBiomes. */
+    @Override
+    public HolderGetter<Biome> biomeRegistry() {
+        return biomes;
+    }
+
+    @Override
+    public void bindContext(CityWorldGenerator context) {
+        CityWorldGenerator bound = this.context;
+        if (bound == context)
+            return;
+        if (bound != null)
+            throw new IllegalStateException("CityWorld: this biome source is already bound to another world's "
+                    + "context; rebinding would classify every biome against the wrong terrain.");
+        this.context = context;
+    }
+
+    @Override
+    public CityWorldGenerator boundContext() {
+        return context;
+    }
+
+    /**
+     * The real, three-dimensional answer — terrain height × climate at the surface, the cave pool
+     * underground. Falls back to plains only in the pre-chunk window before the context is bound
+     * (stronghold ring layout); see {@link CityWorldBiomeLookup}.
+     */
     @Override
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
-        return b(Biomes.PLAINS);
+        Holder<Biome> biome = CityWorldBiomeLookup.biomeAt(this, x, y, z);
+        return biome != null ? biome : b(Biomes.PLAINS);
     }
 
     private Holder<Biome> b(ResourceKey<Biome> key) {
