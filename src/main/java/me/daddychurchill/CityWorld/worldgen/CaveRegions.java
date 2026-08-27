@@ -114,15 +114,37 @@ public final class CaveRegions {
      * dripstone is. Spikes grow in sulfur rock, so with no sulfur rock there are no spikes. Painting the
      * rock is therefore what makes the biome appear <em>and</em> what lets vanilla decorate it.
      *
-     * <p>Named, not a {@code Blocks} constant, so this file still compiles and runs on versions with no
-     * sulfur; the block is looked up at runtime and the entry ignored if absent.
+     * <p><b>It is veined, not a solid skin</b>, and copying vanilla's bands matters to how it reads.
+     * The rule keys off a 3D noise and lays down <em>two</em> rocks with bare stone between them:
+     * cinnabar in the outer bands, sulfur in the middle, plain stone in the gaps. A uniform sulfur
+     * lining — the first version here — loses the cinnabar entirely and looks painted on.
+     *
+     * <p>Named, not {@code Blocks} constants, so this file still compiles and runs on versions with
+     * neither block; the lookup happens at runtime and the entry is ignored if absent.
      */
-    private static final Map<String, String> WALL_ROCK = Map.of(
-            "minecraft:sulfur_caves", "minecraft:sulfur");
+    private static final Map<String, List<WallBand>> WALL_ROCK = Map.of(
+            "minecraft:sulfur_caves", List.of(
+                    new WallBand(-0.4, -0.1, "minecraft:cinnabar"),
+                    new WallBand(0.0, 0.4, "minecraft:sulfur"),
+                    new WallBand(0.4, Double.MAX_VALUE, "minecraft:cinnabar")));
 
-    /** The rock a cave biome's walls should be made of, or {@code null} if its look comes from features. */
-    public static @Nullable String wallRockFor(String biomeId) {
-        return WALL_ROCK.get(biomeId);
+    /**
+     * One band of a cave biome's wall rock: the noise range that selects it, and the block.
+     * Ranges are vanilla's, read off the {@code sulfur_cave_gradient} surface rule.
+     */
+    private record WallBand(double min, double max, String block) {
+    }
+
+    /**
+     * Frequency of the wall-rock noise. Vanilla's {@code sulfur_cave_gradient} is
+     * {@code firstOctave: -5}, i.e. a base wavelength of 32 blocks; matching it keeps the veins the same
+     * size as vanilla's even though the noise itself is ours.
+     */
+    private static final double WALL_NOISE_SCALE = 1.0 / 32.0;
+
+    /** Whether this biome's walls are painted at all — cheap test before touching noise. */
+    public static boolean hasWallRock(String biomeId) {
+        return WALL_ROCK.containsKey(biomeId);
     }
 
     /** One resolved entry: a biome that exists here, plus how its patches are shaped. */
@@ -174,15 +196,56 @@ public final class CaveRegions {
          * never disagree with the biome.
          */
         public @Nullable String wallRockAt(long worldSeed, int blockX, int blockY, int blockZ) {
+            List<WallBand> bands = wallBandsAt(worldSeed, blockX, blockY, blockZ);
+            if (bands == null)
+                return null;
+            double n = noise(worldSeed).noise(blockX * WALL_NOISE_SCALE, blockY * WALL_NOISE_SCALE,
+                    blockZ * WALL_NOISE_SCALE);
+            for (WallBand band : bands)
+                if (n >= band.min() && n < band.max())
+                    return band.block();
+            return null; // in a gap between bands — vanilla leaves plain stone here, and so do we
+        }
+
+        /** The bands for this column's cave type, or {@code null} if it has none / this Y is outside it. */
+        private @Nullable List<WallBand> wallBandsAt(long worldSeed, int blockX, int blockY, int blockZ) {
             for (Patch patch : patches) {
                 if (!inCell(worldSeed, patch, blockX, blockZ))
                     continue;
                 if (blockY < patch.minY() || blockY > patch.maxY())
                     return null;
-                return wallRockFor(idOf(patch.biome()));
+                return WALL_ROCK.get(idOf(patch.biome()));
             }
             return null;
         }
+
+        /** Whether this column paints its walls at all — lets a caller skip the whole column cheaply. */
+        public boolean paintsWalls(long worldSeed, int blockX, int blockZ) {
+            for (Patch patch : patches) {
+                if (!inCell(worldSeed, patch, blockX, blockZ))
+                    continue;
+                return hasWallRock(idOf(patch.biome()));
+            }
+            return false;
+        }
+
+        /**
+         * The wall-rock noise, built once per world. Ours, not vanilla's — we cannot read
+         * {@code sulfur_cave_gradient} — but at the same frequency, so the veins come out the same size.
+         */
+        private me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator noise(long worldSeed) {
+            me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator local = wallNoise;
+            if (local == null)
+                synchronized (this) {
+                    local = wallNoise;
+                    if (local == null)
+                        wallNoise = local =
+                                new me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator(worldSeed ^ 0x5C1FL);
+                }
+            return local;
+        }
+
+        private volatile me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator wallNoise;
 
         /**
          * The cave biome at a block position, or {@code null} for "not in a patch — keep the surface
