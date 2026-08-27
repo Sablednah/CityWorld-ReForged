@@ -627,9 +627,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             for (int dx = 0; dx < 16; dx++)
                 for (int dz = 0; dz < 16; dz++) {
                     int x = originX + dx, z = originZ + dz;
-                    // Cheap reject: the column's cave type is fixed, so ask once at the band's midpoint.
-                    if (pool.wallRockAt(seed, x, (bottom + top) / 2, z) == null
-                            && pool.wallRockAt(seed, x, bottom, z) == null)
+                    // Cheap reject: the column's cave type is fixed, so one question answers the column.
+                    if (!pool.paintsWalls(seed, x, z))
                         continue;
                     for (int y = bottom; y <= top; y++) {
                         String rockId = pool.wallRockAt(seed, x, y, z);
@@ -647,7 +646,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                         .map(net.minecraft.world.level.block.Block::defaultBlockState)
                                         .orElse(null));
                         if (rock == null)
-                            return; // this version has no such block (sulfur before 26.2) — nothing to do
+                            continue; // this version has no such block (sulfur/cinnabar before 26.2)
                         level.setBlock(cursor, rock, net.minecraft.world.level.block.Block.UPDATE_NONE);
                     }
                 }
