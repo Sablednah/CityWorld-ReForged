@@ -52,11 +52,19 @@ public final class LushCaves {
             surfaceAzalea(generator, real, oX, oZ, odds);
     }
 
-    /** Coarse, seed-stable region test: ~{@link #REGION_PCT}% of {@link #REGION}-block cells are lush. */
+    /**
+     * Coarse, seed-stable region test — now <b>the same grid the {@code lush_caves} biome uses</b>.
+     *
+     * <p>This pass predates real cave biomes and had its own cell function ({@link #REGION} at
+     * {@link #REGION_PCT}%). Now that the biome source genuinely emits {@code lush_caves} in patches,
+     * an independent grid would scatter hand-decorated caves across cells that are <em>not</em> the
+     * lush biome — two disjoint sets of lush-looking places, only one of them labelled lush, and only
+     * that one getting vanilla's own vegetation. Delegating means a lush patch gets both: vanilla's
+     * moss and glow berries, plus this pass's axolotl pools, spore blossoms and surface azalea.
+     */
     private static boolean lushRegion(CityWorldGenerator generator, int wx, int wz) {
-        long h = (long) Math.floorDiv(wx, REGION) * 341873128712L
-                + (long) Math.floorDiv(wz, REGION) * 132897987541L;
-        return Math.floorMod(generator.getWorldSeed() + h, 100) < REGION_PCT;
+        return me.daddychurchill.CityWorld.worldgen.CaveRegions.inCellOf("minecraft:lush_caves",
+                generator.getWorldSeed(), wx, wz);
     }
 
     private static void decorateColumn(CityWorldGenerator generator, RealBlocks real, ServerLevelAccessor level,
