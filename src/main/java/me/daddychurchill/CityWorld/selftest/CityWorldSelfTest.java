@@ -14,6 +14,7 @@ import me.daddychurchill.CityWorld.CityWorldMod;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.worldgen.CityWorldBiomes;
+import me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
@@ -314,6 +315,40 @@ public final class CityWorldSelfTest {
         if (poolHits == 0)
             fail("no cave-pool biome (" + poolNames + ") anywhere in the sweep — "
                     + "deep_dark unreachable means ancient cities can never place");
+
+        checkCaveDecorationVocabulary(level);
+    }
+
+    /**
+     * The features the cave-decoration pass will place under a city.
+     *
+     * <p>This filter is the whole safety argument for that pass, and it is the thing most likely to be
+     * quietly wrong. Lush caves keep their character in {@code VEGETAL_DECORATION} — the step that also
+     * plants trees, which {@code dripstone_caves} and {@code deep_dark} both carry
+     * ({@code trees_plains}, {@code patch_pumpkin}). Keeping only features no non-cave biome has is what
+     * stops a city growing a forest down its high street, so the test asserts both halves: the cave
+     * vocabulary is present, and nothing tree-shaped survived.
+     */
+    private void checkCaveDecorationVocabulary(ServerLevel level) {
+        if (!(level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator generator))
+            return;
+        java.util.Set<String> names = new java.util.TreeSet<>();
+        generator.caveOnlyFeatures()
+                .forEach(h -> h.unwrapKey().ifPresent(k -> names.add(k.identifier().getPath())));
+        report.put("biome.caveFeatures", names.toString());
+
+        if (names.isEmpty()) {
+            fail("no cave-only features resolved — cave biomes would be labelled but never decorated");
+            return;
+        }
+        for (String surfaceish : List.of("trees_", "patch_pumpkin", "flower_plains", "patch_grass_plain"))
+            for (String name : names)
+                if (name.startsWith(surfaceish) || name.equals(surfaceish))
+                    fail("cave decoration would place '" + name + "' — a surface feature reached the "
+                            + "cave-only set, so cities will grow trees and pumpkins on their roads");
+        if (names.stream().noneMatch(n -> n.contains("lush") || n.contains("dripstone") || n.contains("sculk")))
+            fail("the cave-only set has none of lush/dripstone/sculk (" + names
+                    + ") — the filter is excluding the very features the pass exists to place");
     }
 
     /**

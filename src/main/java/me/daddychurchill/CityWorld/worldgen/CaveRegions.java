@@ -150,6 +150,27 @@ public final class CaveRegions {
         return new Pool(biomes);
     }
 
+    /**
+     * Whether {@code (x, z)} falls in the patch grid of a named cave biome — without needing a resolved
+     * pool, and so without needing a biome registry.
+     *
+     * <p>Exists for {@code Support.LushCaves}, CityWorld's own hand-built lush decoration (axolotl
+     * pools, spore blossoms, the surface azalea tell). That pass predates real cave biomes and had its
+     * own region function, which would have scattered hand-decorated lush caves across cells that are
+     * <em>not</em> the lush biome — two disjoint sets of lush-looking places, only one of them labelled
+     * lush. Pointing both at the same grid makes the biome and the hand decoration agree, so a lush
+     * patch gets vanilla's vegetation and CityWorld's extras in the same cave.
+     *
+     * @return false for a biome with no geometry entry, since there is no grid to be in
+     */
+    public static boolean inCellOf(String biomeId, long worldSeed, int blockX, int blockZ) {
+        int[] g = GEOMETRY.get(biomeId);
+        if (g == null)
+            return false;
+        return inCell(worldSeed, new Patch(null, g[0], g[1], g[2], g[3], biomeId.hashCode() * 0x9E3779B97F4A7C15L),
+                blockX, blockZ);
+    }
+
     private static String idOf(Holder<Biome> holder) {
         return holder.unwrapKey().map(k -> k.identifier().toString()).orElse("");
     }
