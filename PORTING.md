@@ -30,11 +30,12 @@ sites. 26.1 touched none of them. 26.2 broke **145**. Because the file is *gener
 repair was teaching `scripts/gen_material.py` new resolution rules; not one of the 3,096 call sites
 changed. That is the strongest argument in the whole arc for keeping generated code generated.
 
-## ▶ Next up (queued 2026-08-17, owner still researching)
+## ▶ Next up (queued 2026-08-17)
 
-In rough priority order. Nothing here is started.
+In rough priority order. **#1 and #2 are DONE (2026-08-27) and the biome half of #3 with them — see
+"Caves, structures and 3D biomes" below.** #3's decorative half, #4 and #5 remain.
 
-### 1. ⚠ Vanilla structures never generate — including strongholds
+### 1. ~~⚠ Vanilla structures never generate — including strongholds~~ **DONE (2026-08-27)**
 
 `CityWorldChunkGenerator.createState` returns `ChunkGeneratorStructureState.createForFlat(…,
 Stream.empty())`, so **no vanilla structure is ever placed**. That is deliberate for villages and
@@ -47,7 +48,7 @@ Worth deciding as a gameplay question, not just a feature: does a CityWorld worl
 completable? If yes, the minimum is placing strongholds somewhere sensible and making
 `findNearestMapStructure` agree with where they went, or eyes will point at nothing.
 
-### 2. "Put a structure here" — ancient cities, trial chambers, strongholds
+### 2. ~~"Put a structure here" — ancient cities, trial chambers, strongholds~~ **DONE (2026-08-27)**
 
 **Researched 2026-08-17 against the 26.2 data — the answers are more encouraging than expected.**
 
@@ -92,7 +93,13 @@ on a fixed ring pattern and the eye asks the *structure placement system* where 
 hand-placed stronghold that the placement system does not know about is a stronghold the eye cannot
 find.
 
-### 3. Decorative caves as a pool, not just lush
+### 3. Decorative caves as a pool, not just lush — **half done (2026-08-27)**
+
+**The blocker described below is gone: the biome source is 3D and emits real cave biomes.** What
+remains is the *decoration* half — running vanilla's `UNDERGROUND_DECORATION` step so those biomes
+actually grow moss and sculk, and moving `CaveRegions`' pool into a datapack so a modded cave biome
+slots in without a code change. See the dated block below for why the decoration half is now nearly
+free. **The analysis below is kept for its research value but its conclusion is superseded.**
 
 Generalise the existing lush-cave patch mechanic into **one decorative cave type drawn from a pool**:
 lush, **sulfur** (26.2's sulfur caves, with sulfur dripstone), **deep-dark / sculk** (ancient-city
@@ -163,6 +170,161 @@ Also worth checking before promising anything: mods that add **worldgen** (Alex'
 Plenty biomes) may not appear at all, because CityWorld suppresses carvers and structures and drives
 its own biome source. That is a compatibility question of a different kind from palettes, and
 probably the first thing to test with a big content mod installed.
+
+## Caves, structures and 3D biomes (2026-08-27) — waves A and B
+
+Queued items #1 and #2 are done, and the blocker under #3 with them. **1.21.11 only so far; not yet
+cherry-picked to `mc26.1`/`mc26.2`.**
+
+### The three were one bug, and it was not the one that was queued
+
+`Structure.isValidBiome` asks **`chunkGenerator.getBiomeSource().getNoiseBiome(qx, qy, qz, sampler)`**
+— the *biome source*, at the `STRUCTURE_STARTS` chunk stage. CityWorld's `getNoiseBiome` was a stub
+returning `PLAINS`, because the real classification lived in `createBiomes`, which runs later and is
+invisible to the structure pipeline. So every structure was biome-gated against plains at every
+height: ancient cities (gated on `deep_dark`) could never place, and trial chambers would have placed
+uniformly everywhere.
+
+**Fixing `getNoiseBiome` for real, in 3D, unlocked all three items from one change.** Vanilla's own
+`createBiomes` is nothing but `fillBiomesFromNoise(biomeSource, sampler)`, so our override collapsed
+to a `super` call — the hand-rolled resolver it replaced was producing correct chunks while leaving
+the method vanilla actually consults a constant. **That is the shape of this bug worth remembering: a
+seam that is right for the caller you were thinking about and stubbed for the one you weren't.**
+
+### Two corrections to the queued research
+
+- **No access transformer is needed.** The queued note called the correctly-seeded path "the actual
+  work", because `createForFlat` hardcodes the concentric-rings seed to `0L` (which would put every
+  world's strongholds in identical places) and the two-seed constructor is private. But
+  `createForNormal` reads its `HolderLookup` through **`listElements()` and nothing else** — so a
+  ~20-line filtering delegate gives selective sets *and* the level seed. Vanilla even ships
+  `HolderLookup.RegistryLookup.filterElements(Predicate)`. What was billed as the hard half was the
+  easy one.
+- **There was a blocker nobody had spotted.** Structure **pieces** are placed inside
+  `ChunkGenerator.applyBiomeDecoration` (interleaved with features, in the same step loop) — the
+  method CityWorld overrides and only calls `super` on for MODERN nature lots. Re-enabling starts
+  without addressing this would have produced strongholds *sliced to whichever chunks happened to be
+  wild*: a bug that looks like corrupt worldgen and reads like a vanilla fault. `placeStructures` is
+  now the structure-only slice of that method, exactly as `placeUndergroundOres` is the ore-only
+  slice, and it mirrors vanilla's `setDecorationSeed`/`setFeatureSeed` sequence so a structure lands
+  identically whether this placed it or `super` did on the wild chunk next door.
+
+### What landed
+
+| | |
+|---|---|
+| `worldgen/CaveRegions.java` | the cave pool — seed-stable 2D cells, each a biome + a Y band |
+| `worldgen/CityWorldBiomeLookup.java` | the shared 3D `getNoiseBiome` body + per-thread column cache |
+| both biome sources | real `getNoiseBiome`; cave pool in `possibleBiomes()`; context binding |
+| `CityWorldChunkGenerator` | `createForNormal` + `onlyAllowed`; `placeStructures`; `createBiomes` → `super` |
+| `data/cityworld/tags/worldgen/structure_set/allowed.json` | which vanilla structures a CityWorld world keeps |
+| `data/cityworld/tags/worldgen/biome/cave_pool.json` | which cave biomes the pool draws from (sulfur optional) |
+
+**Cave biomes are patches, not vanilla's 3D banding** (owner's call). Vanilla fills its whole
+underground with cave biomes by noise, which would change mob spawning *everywhere* and make wardens
+routine. Cells are picked from `(x, z)` and apply only within their own Y band, which gives vertical
+variation without a 3D noise field and stacks the pool by depth for free. `deep_dark` sits below
+`y = -24` because that is where ancient cities generate — a shallower band would advertise the biome
+without ever being able to host the structure gated on it.
+
+### The cave pool is a biome tag, and it had to be
+
+`#cityworld:cave_pool` — `deep_dark`, `lush_caves`, `dripstone_caves`, and **`sulfur_caves` marked
+`"required": false`**. 26.2 added sulfur caves and it is the *only* new biome in that drop (measured
+by diffing the two jars' biome lists), so it must be in the pool on 26.2 and absent elsewhere, from
+one shared source file. A `Biomes.SULFUR_CAVES` constant would exist on 26.2 alone and break the
+cherry-pick.
+
+**⚠ The obvious alternative does not work, and fails in a way that looks unrelated.** The first
+attempt resolved pool biomes by `ResourceKey` and used `HolderGetter.get(key).isPresent()` to skip
+ones this version lacks. That crashes world load with:
+
+```
+java.lang.IllegalStateException: Unbound values in registry
+    ResourceKey[minecraft:root / minecraft:worldgen/biome]: [minecraft:sulfur_caves]
+```
+
+The `HolderGetter` handed out by `RegistryOps.retrieveGetter` during datapack decode **creates an
+unbound promise for a key it does not have** — that is how forward references between datapack files
+work — so *asking whether a biome exists is what makes it not exist*. There is no "does this key
+exist" question you can safely ask that getter. **Tags are the mechanism built for this**, and
+`"required": false` is exactly the feature. Same discipline as the block-palette tags.
+
+It also buys the data-driven half of queued item #3 early: anything added to the tag becomes a cave
+type, and an entry with no geometry in `CaveRegions.GEOMETRY` gets a sensible default — so a modded
+cave biome (Alex's Caves) needs a datapack line and no code. Patch salts are derived from the biome
+id, so a new type gets an independent cell grid without anyone inventing a constant.
+
+**Tag resolution must be lazy.** Tags are not bound when the codec builds the biome source, so
+resolving in a constructor caches an empty pool forever. `cavePool()` is double-checked-lazy, and
+`collectPossibleBiomes()` is late enough because vanilla memoizes it on first call.
+
+### Ancient cities cannot reach CityWorld's sewers or cisterns (measured)
+
+The owner's worry was a deep-dark city opening into a sewer. It cannot happen:
+
+| | y |
+|---|---|
+| ancient city, **measured** from two generated starts | **−64 … −10** |
+| CityWorld cistern floor (`streetLevel - FloorHeight*4 + 1`) | 49 |
+| CityWorld sewers | 57 … 62 |
+
+59 blocks of clearance. Note `start_height` in the structure JSON is an *absolute* `y = -27` and is
+only where the jigsaw starts — the real extent had to be read off a generated `StructureStart`'s
+bounding box, which is what `checkAncientCityDepth` now does on every version. Mines *do* reach that
+deep, and the owner explicitly wants that collision: it reads as the miners having downed tools when
+they broke through.
+
+**The allow-list is a tag, not a config field** — `#cityworld:allowed` on the structure-set registry,
+so a datapack (or a mod's) can widen it with no code change, the same seam the block palettes use.
+**An absent tag means no vanilla structures**, so a stripped datapack fails to the old behaviour
+rather than letting villages and mineshafts loose in a world that builds its own.
+
+### Verified, not assumed
+
+`checkBiomeDepth` and `checkStructures` were added to the self-test, so CI checks these on every
+version. Measured on 1.21.11, seed 8675309:
+
+| | |
+|---|---|
+| columns whose biome varies with depth | 603 / 4225 |
+| cave-pool samples hit | 1669 |
+| `deep_dark`/`lush_caves`/`dripstone_caves` | in the deep set, **absent from the surface set** |
+| cave pool resolved from the tag | `deep_dark, dripstone_caves, lush_caves` (sulfur absent, as it should be) |
+| structure sets surviving selection | exactly `ancient_cities`, `strongholds`, `trial_chambers` |
+| stronghold ring positions | 128, first at chunk `3,-145` |
+| trial chamber read back | chunk `12,11`, **with its own block entities** |
+| ancient city extent | `y -64 … -10` |
+| MODERN plan hash | `28fc3789` — unchanged |
+
+Each row is load-bearing. `ancient_cities` surviving selection is the only cheap proof that
+`deep_dark` is genuinely reachable (a set is dropped if the biome source cannot produce its biomes).
+The trial-chamber *block entities* are the only proof that pieces are placed rather than merely
+started — the failure mode `placeStructures` exists to prevent would still pass a starts-only check.
+And the unchanged plan hash confirms biomes do not touch city planning, so the cross-version compare
+stays valid.
+
+**⚠ The rough edges to playtest, both by design rather than defect:**
+
+- **Vanilla structures now generate under cities.** `placeStructures` runs *after* CityWorld's build,
+  mirroring where `super` sits in the wild branch — so both branches order the world identically and
+  a structure wins where the two overlap. A trial chamber landing under a city core (one did, at
+  chunk `12,11`) may be exactly what is wanted or may need a city-core exclusion.
+- **Ancient cities will meet the mines** — wanted, per the owner. They cannot reach sewers or
+  cisterns; see the measurement above.
+- **Underground mob spawning has changed** wherever a patch landed: cave biomes carry thin spawn
+  lists and `deep_dark` carries none at all (plus wardens). Owner has signed off on this.
+
+### Multi-version: measured, not assumed
+
+All four load-bearing classes — `ChunkGeneratorStructureState`, `BiomeSource`, `Structure`,
+`ChunkGenerator` — were diffed across 1.21.11 / 26.1.2 / 26.2. **The differences are decompiler
+parameter renames and brace reshuffling; zero API-shape change.** `StructureStart.placeInChunk` is
+identical too. So waves A and B should cherry-pick clean.
+
+One genuine 26.2 behaviour change worth knowing: `ChunkGenerator.findNearestMapStructure` now
+early-returns when the world's "Generate Structures" option is off, so that world-creation checkbox
+now actually gates `/locate` — it did not on 1.21.11.
 
 ## Releasing — GitHub, and CurseForge automatically
 

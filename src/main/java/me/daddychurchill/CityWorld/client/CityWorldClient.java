@@ -92,6 +92,7 @@ public final class CityWorldClient {
         net.minecraft.world.level.biome.BiomeSource biomeSource = modernFamily
                 ? new CityWorldClimateBiomeSource(biomeReg)
                 : new CityWorldBiomeSource(
+                        biomeReg,
                         biomeReg.getOrThrow(Biomes.DEEP_OCEAN),
                         biomeReg.getOrThrow(Biomes.OCEAN),
                         biomeReg.getOrThrow(Biomes.BEACH),
