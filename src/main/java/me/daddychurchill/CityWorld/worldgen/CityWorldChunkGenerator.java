@@ -22,9 +22,15 @@ import net.minecraft.util.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.QuartPos;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.RegistryFileCodec;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.TagKey;
 import net.minecraft.server.level.WorldGenRegion;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
@@ -209,6 +215,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     local = new CityWorldGenerator(levelSeed, TERRAIN_CEILING, UPSTREAM_SEA_LEVEL,
                             CityWorldGenerator.parseStyle(style), level.getMinY(), level.getMaxY(), decayed,
                             settingsData);
+                    // The biome source answers getNoiseBiome from this context (terrain height + climate),
+                    // so hand it over the moment it exists — this is the earliest point it can be had.
+                    if (this.biomeSource instanceof CityWorldBiomes cityBiomes)
+                        cityBiomes.bindContext(local);
                     context = local;
                 }
             }
@@ -277,45 +287,71 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     /**
      * Fills the chunk's biomes from CityWorld's own terrain instead of the flat plains a fixed source
      * would give — ocean in the deeps, beaches at the waterline, forest/hills/snowy peaks up the
-     * mountains — so grass, water and foliage colour follow the land. The classification lives in
-     * {@link CityWorldBiomeSource#classify} (and its configurable palette); the seeded terrain height
-     * only the generator has, so it drives it here. Runs before {@link #fillFromNoise}, but the shaper
-     * is deterministic, so {@code findBlockY} agrees with what the terrain pass will build.
+     * mountains, and the cave pool underground — so grass, water and foliage colour follow the land.
      *
-     * <p>If the dimension isn't using a {@link CityWorldBiomeSource} (e.g. a plain fixed source), this
-     * falls back to vanilla's behaviour.
+     * <p><b>This used to do the classifying itself, and that was the bug.</b> Vanilla's own
+     * {@code createBiomes} is nothing but {@code fillBiomesFromNoise(biomeSource, sampler)}, so a
+     * hand-rolled resolver here produced the right chunk and left {@code getNoiseBiome} a constant stub
+     * — which is the method the <em>structure</em> pipeline consults, at an earlier chunk stage. Every
+     * structure therefore saw "plains, at every height". Classification now lives in the biome source
+     * where vanilla looks for it ({@link CityWorldBiomeLookup}), and this override does nothing but
+     * make sure the context is built — and so handed to the source — before the fill runs.
      */
     @Override
     public CompletableFuture<ChunkAccess> createBiomes(RandomState randomState, Blender blender,
             StructureManager structureManager, ChunkAccess chunk) {
-        if (!(this.getBiomeSource() instanceof CityWorldBiomes source))
-            return super.createBiomes(randomState, blender, structureManager, chunk);
-
-        return CompletableFuture.supplyAsync(() -> {
-            CityWorldGenerator context = context(chunk);
-            boolean decayedNature = context.getSettings().includeDecayedNature;
-            // Biome is per column (2D), so classify once per (quartX, quartZ) and reuse down the column.
-            // CLASSIC's source ignores the climate; MODERN's crosses it with elevation.
-            java.util.Map<Long, Holder<Biome>> perColumn = new java.util.HashMap<>();
-            BiomeResolver resolver = (qx, qy, qz, sampler) -> perColumn.computeIfAbsent(
-                    ((long) qx << 32) | (qz & 0xFFFFFFFFL),
-                    key -> {
-                        int bx = QuartPos.toBlock(qx), bz = QuartPos.toBlock(qz);
-                        int h = context.shapeProvider.findBlockY(context, bx, bz);
-                        return source.classify(context, h, context.getTemperature(bx, bz),
-                                context.getHumidity(bx, bz), decayedNature);
-                    });
-            chunk.fillBiomesFromNoise(resolver, randomState.sampler());
-            return chunk;
-        }, Util.backgroundExecutor().forName("cityworld_biomes"));
+        context(chunk);
+        return super.createBiomes(randomState, blender, structureManager, chunk);
     }
 
     /**
-     * Suppress vanilla structures (villages, mineshafts, trial chambers, strongholds, …) by giving
-     * the structure state an empty set — CityWorld generates its own structures.
+     * Places structure starts — overridden only to build the context first.
      *
-     * <p>Future idea (see PORTING.md "Future ideas"): rather than discard these, harvest the points
-     * where vanilla <em>would</em> have placed structures and reuse them as city anchors.
+     * <p>This is the <em>earliest</em> chunk stage ({@code STRUCTURE_STARTS} runs before
+     * {@code BIOMES}), and it is where {@code Structure.isValidBiome} calls
+     * {@code getBiomeSource().getNoiseBiome(...)}. Without the context bound by now, the source would
+     * answer with its fallback constant and every structure would be biome-gated against plains — which
+     * is precisely the state this wave exists to fix. The chunk doubles as the {@code LevelHeightAccessor}
+     * the context needs, which is why binding can happen here and not in {@link #createState}.
+     */
+    @Override
+    public void createStructures(RegistryAccess registryAccess, ChunkGeneratorStructureState structureState,
+            StructureManager structureManager, ChunkAccess chunk, StructureTemplateManager templateManager,
+            ResourceKey<net.minecraft.world.level.Level> dimension) {
+        context(chunk);
+        super.createStructures(registryAccess, structureState, structureManager, chunk, templateManager, dimension);
+    }
+
+    /**
+     * The structure-set tag that decides which vanilla structures a CityWorld world keeps.
+     *
+     * <p>Shipped as {@code data/cityworld/tags/worldgen/structure_set/allowed.json} with strongholds,
+     * trial chambers and ancient cities. A datapack can widen it — including to a <em>mod's</em>
+     * structure set — with no code change, which is the same seam the block palettes use.
+     *
+     * <p><b>Absent means none.</b> If the tag is missing, no vanilla structure places: an empty tag
+     * fails to today's behaviour rather than silently letting villages and mineshafts loose in a world
+     * that builds its own.
+     */
+    private static final TagKey<StructureSet> ALLOWED_STRUCTURE_SETS = TagKey.create(Registries.STRUCTURE_SET,
+            Identifier.fromNamespaceAndPath("cityworld", "allowed"));
+
+    /**
+     * Selectively re-enables vanilla structures — CityWorld builds its own cities, but it has no
+     * stronghold, and no stronghold means no End portal and nothing for an eye of ender to find.
+     *
+     * <p><b>Why {@code createForNormal} and not the {@code createForFlat} this used to call.</b> The
+     * flat factory takes a stream of sets, which looks like the natural way to pass a chosen few — but
+     * it also hardcodes {@code 0L} as the <em>concentric-rings seed</em>, where the normal factory
+     * passes the level seed. That seed is exactly what positions strongholds, so the flat path would
+     * put every CityWorld world's strongholds in identical places. The constructor taking both seeds is
+     * private, so the selective-and-correctly-seeded combination has to come from somewhere else.
+     *
+     * <p>It comes from {@link #onlyAllowed}: {@code createForNormal} reads the lookup through
+     * {@code listElements()} and nothing else, so a filtering delegate gives us both halves with no
+     * access transformer. Vanilla then does the rest of the work itself — both factories drop any set
+     * whose biomes the biome source cannot produce, so a structure we allow but cannot host (ancient
+     * cities, before the biome source could emit {@code deep_dark}) excludes itself.
      */
     @Override
     public ChunkGeneratorStructureState createState(HolderLookup<StructureSet> lookup,
@@ -323,8 +359,43 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // Doubles as the one place vanilla tells a ChunkGenerator its world seed — see context().
         this.levelSeed = seed;
         this.levelSeedKnown = true;
-        return ChunkGeneratorStructureState.createForFlat(
-                randomState, seed, this.biomeSource, Stream.<Holder<StructureSet>>empty());
+        return ChunkGeneratorStructureState.createForNormal(
+                randomState, seed, this.biomeSource, onlyAllowed(lookup));
+    }
+
+    /**
+     * The structure-set registry as seen through {@link #ALLOWED_STRUCTURE_SETS} — every element not in
+     * the tag simply isn't there.
+     *
+     * <p>Only {@code listElements()} actually needs filtering ({@code createForNormal} calls nothing
+     * else), but {@code get(ResourceKey)} is filtered too so the view can't answer inconsistently if a
+     * future vanilla version starts asking that way instead.
+     */
+    private static HolderLookup<StructureSet> onlyAllowed(HolderLookup<StructureSet> all) {
+        HolderSet<StructureSet> allowed = all.get(ALLOWED_STRUCTURE_SETS)
+                .<HolderSet<StructureSet>>map(named -> named)
+                .orElseGet(HolderSet::direct); // absent tag -> empty -> no vanilla structures
+        return new HolderLookup<>() {
+            @Override
+            public Stream<Holder.Reference<StructureSet>> listElements() {
+                return all.listElements().filter(allowed::contains);
+            }
+
+            @Override
+            public Stream<HolderSet.Named<StructureSet>> listTags() {
+                return all.listTags();
+            }
+
+            @Override
+            public Optional<Holder.Reference<StructureSet>> get(ResourceKey<StructureSet> key) {
+                return all.get(key).filter(allowed::contains);
+            }
+
+            @Override
+            public Optional<HolderSet.Named<StructureSet>> get(TagKey<StructureSet> key) {
+                return all.get(key);
+            }
+        };
     }
 
     /**
@@ -373,25 +444,107 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // check gates it; runs after CityWorld's own pass so vanilla's features sit on the finished
         // terrain. Vanilla's decoration respects the WorldGenRegion radius, so top risk #2 is its own
         // problem here, not ours.
-        if (context.isModernStyle()) {
-            me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x(), pos.z());
-            if (lot != null && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE
-                    && lot.allowsWildDecoration()) {
-                super.applyBiomeDecoration(level, chunk, structureManager);
-                // On iced peaks, vanilla's cold-biome decoration drops snow layers onto our packed/blue
-                // ice — the illegal, cascading state the MODERN icecap exists to avoid. Strip any that
-                // landed on ice. Only peak lots pay for the scan.
-                if (lot.getMaxTerrainY() > context.snowLevel)
-                    stripSnowOnIce(chunk);
-            } else {
-                // City / road / structure / construct chunks skip the full wild pass (no trees, lakes or
-                // springs carving into the build). But they still want ORE underground — run just the
-                // UNDERGROUND_ORES step of the chunk's biome so vanilla ore veins fill the stone beneath
-                // the city exactly as they do in the wild.
+        me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x(), pos.z());
+        boolean wild = context.isModernStyle() && lot != null
+                && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE
+                && lot.allowsWildDecoration();
+
+        if (wild) {
+            // The full vanilla pass: biome-appropriate trees, flowers, coral, sugar cane — and the
+            // structure pieces, which vanilla interleaves into the same step loop.
+            super.applyBiomeDecoration(level, chunk, structureManager);
+            // On iced peaks, vanilla's cold-biome decoration drops snow layers onto our packed/blue
+            // ice — the illegal, cascading state the MODERN icecap exists to avoid. Strip any that
+            // landed on ice. Only peak lots pay for the scan.
+            if (lot != null && lot.getMaxTerrainY() > context.snowLevel)
+                stripSnowOnIce(chunk);
+        } else {
+            // City / road / structure / construct chunks skip the full wild pass (no trees, lakes or
+            // springs carving into the build) — but they must still get the two slices of it that a
+            // city wants: the vanilla structures allowed by the tag, and ore.
+            placeStructures(level, chunk, structureManager);
+            // Ore: just the UNDERGROUND_ORES step of the chunk's biome, so vanilla ore veins fill the
+            // stone beneath the city exactly as they do in the wild. MODERN only, as before.
+            if (context.isModernStyle())
                 placeUndergroundOres(level, chunk);
-            }
         }
     }
+
+    /**
+     * Places the pieces of any allowed vanilla structure that reaches into this chunk — the structure
+     * half of {@code ChunkGenerator.applyBiomeDecoration}, on its own.
+     *
+     * <p><b>This is the half that was silently missing.</b> Structure <em>starts</em> are decided at the
+     * {@code STRUCTURE_STARTS} chunk stage, but the blocks are laid down here, inside
+     * {@code applyBiomeDecoration} — the method CityWorld overrides and, for anything but a MODERN
+     * nature lot, does not call {@code super} on. So re-enabling structures without this would have
+     * produced strongholds sliced down to whichever chunks happened to be wild: a bug that looks like
+     * corrupt worldgen and reads like a vanilla fault.
+     *
+     * <p>It mirrors vanilla's seeding exactly — {@code setDecorationSeed} on the chunk origin, then
+     * {@code setFeatureSeed(seed, indexWithinStep, step)} — so a structure lands in the same place
+     * whether it was placed here or by {@code super} on a neighbouring wild chunk. That equivalence is
+     * the point: without it, a structure straddling a city/wild boundary would generate as two
+     * mismatched halves.
+     *
+     * <p>Runs <em>after</em> CityWorld's own build, which is exactly where {@code super} sits in the
+     * wild branch — so both branches order the world the same way, and the city wins where the two
+     * overlap. Wrapped so a structure can never take chunk generation down, the same as ore.
+     */
+    private void placeStructures(WorldGenLevel level, ChunkAccess chunk, StructureManager structureManager) {
+        if (!structureManager.shouldGenerateStructures())
+            return;
+        try {
+            ChunkPos pos = chunk.getPos();
+            net.minecraft.core.SectionPos sectionPos = net.minecraft.core.SectionPos.of(pos, level.getMinSectionY());
+            BlockPos origin = sectionPos.origin();
+            net.minecraft.core.Registry<net.minecraft.world.level.levelgen.structure.Structure> structures =
+                    level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
+
+            net.minecraft.world.level.levelgen.WorldgenRandom random =
+                    new net.minecraft.world.level.levelgen.WorldgenRandom(
+                            new net.minecraft.world.level.levelgen.XoroshiroRandomSource(
+                                    net.minecraft.world.level.levelgen.RandomSupport.generateUniqueSeed()));
+            long decoSeed = random.setDecorationSeed(level.getSeed(), origin.getX(), origin.getZ());
+
+            // Vanilla groups structures by their generation step and numbers them within it; both feed
+            // the feature seed, so the grouping has to be reproduced, not flattened.
+            java.util.Map<Integer, java.util.List<net.minecraft.world.level.levelgen.structure.Structure>> byStep =
+                    structures.stream().collect(java.util.stream.Collectors.groupingBy(s -> s.step().ordinal()));
+
+            net.minecraft.world.level.levelgen.structure.BoundingBox writable = writableArea(chunk);
+
+            for (int step = 0; step < net.minecraft.world.level.levelgen.GenerationStep.Decoration.values().length;
+                    step++) {
+                int index = 0;
+                for (net.minecraft.world.level.levelgen.structure.Structure structure :
+                        byStep.getOrDefault(step, java.util.List.of())) {
+                    random.setFeatureSeed(decoSeed, index++, step);
+                    for (net.minecraft.world.level.levelgen.structure.StructureStart start :
+                            structureManager.startsForStructure(sectionPos, structure))
+                        start.placeInChunk(level, structureManager, this, random, writable, pos);
+                }
+            }
+        } catch (Throwable t) {
+            // a structure must never break chunk generation
+            LOGGER_STRUCTURES.error("CityWorld: structure placement failed for chunk {}", chunk.getPos(), t);
+        }
+    }
+
+    /**
+     * The box a structure may write into for this chunk — the chunk's own columns, full height.
+     * Vanilla's equivalent ({@code ChunkGenerator.getWritableArea}) is private, and it is four lines.
+     */
+    private static net.minecraft.world.level.levelgen.structure.BoundingBox writableArea(ChunkAccess chunk) {
+        ChunkPos pos = chunk.getPos();
+        LevelHeightAccessor height = chunk.getHeightAccessorForGeneration();
+        int x = pos.getMinBlockX(), z = pos.getMinBlockZ();
+        return new net.minecraft.world.level.levelgen.structure.BoundingBox(
+                x, height.getMinY() + 1, z, x + 15, height.getMaxY(), z + 15);
+    }
+
+    private static final org.slf4j.Logger LOGGER_STRUCTURES =
+            com.mojang.logging.LogUtils.getLogger();
 
     /**
      * Run only vanilla's {@code UNDERGROUND_ORES} decoration step for the chunk's biome — the ore and

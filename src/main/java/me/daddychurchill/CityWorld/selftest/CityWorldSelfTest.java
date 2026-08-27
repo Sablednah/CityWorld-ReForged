@@ -13,14 +13,25 @@ import me.daddychurchill.CityWorld.CityWorldGenerator.WorldStyle;
 import me.daddychurchill.CityWorld.CityWorldMod;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Support.PlatMap;
+import me.daddychurchill.CityWorld.worldgen.CityWorldBiomes;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.QuartPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.biome.BiomeSource;
+import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.levelgen.structure.StructureSet;
+import net.minecraft.world.level.levelgen.structure.placement.ConcentricRingsStructurePlacement;
+import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 
@@ -77,6 +88,58 @@ public final class CityWorldSelfTest {
     /** A built chunk should contain at least this many non-air blocks, else decoration did nothing. */
     private static final int MIN_BUILT_BLOCKS = 200;
 
+    /**
+     * Half-width, in blocks, of the biome sweep — ±2048 stepping 64 is 4,225 columns over 4km. Wide
+     * because the cave pool is deliberately patchy (cells up to 176 blocks at 4%); it costs no chunk
+     * generation, only noise.
+     */
+    private static final int BIOME_SWEEP_BLOCKS = 2048;
+    private static final int BIOME_SWEEP_STEP = 64;
+
+    /** Sampled well above any terrain, so it is always the surface classification. */
+    private static final int BIOME_SWEEP_SURFACE_Y = 96;
+
+    /** Depths sampled per column — one in each of the cave pool's Y bands. */
+    private static final int[] BIOME_SWEEP_DEPTHS = { -56, -32, 0, 32 };
+
+    /**
+     * How far out to look for a chunk the trial-chamber placement claims. Spacing is 34 chunks, so 40
+     * is comfortably more than one grid cell in every direction.
+     */
+    private static final int STRUCTURE_SCAN_CHUNKS = 40;
+
+    /** Cap on how many claimed chunks are actually generated — each one is real worldgen. */
+    private static final int STRUCTURE_SCAN_CANDIDATES = 8;
+
+    /**
+     * How far to look for an ancient city. Spacing is 24 chunks but only the {@code deep_dark} patches
+     * can host one, so the search has to cover many grid cells to find any at all — it is cheap,
+     * because the filter runs before anything is generated.
+     */
+    private static final int ANCIENT_CITY_SCAN_CHUNKS = 256;
+
+    /** How many confirmed ancient-city chunks to actually generate and measure. */
+    private static final int ANCIENT_CITY_SAMPLES = 3;
+
+    /** The structure's own {@code start_height} — an absolute Y, so the biome gate is asked there. */
+    private static final int ANCIENT_CITY_START_Y = -27;
+
+    /**
+     * The floor of the deepest thing CityWorld hangs off street level — the park/roundabout
+     * <b>cistern</b>, at {@code streetLevel - cisternDepth + 1} = {@code 64 - 16 + 1}. Sewers are
+     * shallower ({@code y 57-62}), so the cistern is what an ancient city would reach first.
+     *
+     * <p>Mines are excluded deliberately: they go far deeper and are <em>expected</em> to run into a
+     * deep-dark city — that reads as the miners having downed tools when they broke through, which is
+     * the good version of this collision. A cistern opening into one does not.
+     */
+    private static final int CITYWORLD_SHALLOWEST_UNDERGROUND_FLOOR = 49;
+
+    /** Block entities only a trial chamber places, so finding one proves pieces really landed. */
+    private static final java.util.Set<String> TRIAL_CHAMBER_BLOCK_ENTITIES = java.util.Set.of(
+            "minecraft:trial_spawner", "minecraft:vault");
+
+
     public static boolean enabled() {
         return Boolean.getBoolean(ENABLE_PROPERTY);
     }
@@ -103,6 +166,8 @@ public final class CityWorldSelfTest {
         try {
             checkGeneratorInstalled(server);
             checkPlanning();
+            checkBiomeDepth(server);
+            checkStructures(server);
             checkDecorationAndSigns(server);
         } catch (Throwable t) {
             fail("harness threw: " + t);
@@ -173,6 +238,268 @@ public final class CityWorldSelfTest {
             if (contexts.isEmpty() || lots.isEmpty())
                 fail(style + " planned nothing at all");
         }
+    }
+
+    /**
+     * The biome map must be genuinely <b>three-dimensional</b>, and the cave pool must be reachable.
+     *
+     * <p>This is the canary for the thing that kept vanilla structures from ever placing: CityWorld
+     * used to classify columns in {@code createBiomes} and leave {@code BiomeSource.getNoiseBiome} a
+     * constant stub — but {@code getNoiseBiome} is the method {@code Structure.isValidBiome} consults,
+     * so every structure was gated against one biome at every height. A regression here would be
+     * invisible in a world you fly around: the surface would look completely normal.
+     *
+     * <p>It asks the biome source directly rather than loading chunks. That is not "predicting the
+     * world" — the source <em>is</em> the thing under test, and querying it costs no chunk generation,
+     * so the sweep can cover kilometres instead of the 169 chunks the block survey manages. The cave
+     * pool is patchy by design ({@link CaveRegions}), so a survey the size of the block one would find
+     * nothing and the check would fail at random.
+     *
+     * <p>Both assertions are presence-based, per this harness's rule: "at least one" and "any of",
+     * never an exact count.
+     */
+    private void checkBiomeDepth(MinecraftServer server) {
+        ServerLevel level = server.overworld();
+        ChunkGenerator generator = level.getChunkSource().getGenerator();
+        BiomeSource source = generator.getBiomeSource();
+        Climate.Sampler sampler = level.getChunkSource().randomState().sampler();
+
+        report.put("biome.possible", Integer.toString(source.possibleBiomes().size()));
+
+        // The pool as this Minecraft version actually resolved it — sulfur caves is 26.2+, so this
+        // legitimately differs between versions and is reported rather than asserted.
+        java.util.Set<String> poolNames = new java.util.TreeSet<>();
+        if (source instanceof CityWorldBiomes cityBiomes)
+            cityBiomes.cavePool().biomes().forEach(
+                    h -> h.unwrapKey().ifPresent(k -> poolNames.add(k.identifier().getPath())));
+        report.put("biome.cavePool", poolNames.toString());
+        if (poolNames.isEmpty())
+            fail("the cityworld:cave_pool tag resolved to nothing — no cave biomes at all, so ancient "
+                    + "cities cannot place and cave decoration has nothing to key off");
+
+        Map<String, Integer> deepBiomes = new TreeMap<>();
+        Map<String, Integer> surfaceBiomes = new TreeMap<>();
+        int columns = 0, columnsVaryingWithDepth = 0, poolHits = 0;
+
+        for (int x = -BIOME_SWEEP_BLOCKS; x <= BIOME_SWEEP_BLOCKS; x += BIOME_SWEEP_STEP)
+            for (int z = -BIOME_SWEEP_BLOCKS; z <= BIOME_SWEEP_BLOCKS; z += BIOME_SWEEP_STEP) {
+                columns++;
+                int qx = QuartPos.fromBlock(x), qz = QuartPos.fromBlock(z);
+                String surface = biomeName(source, qx, QuartPos.fromBlock(BIOME_SWEEP_SURFACE_Y), qz, sampler);
+                surfaceBiomes.merge(surface, 1, Integer::sum);
+
+                boolean varies = false;
+                for (int y : BIOME_SWEEP_DEPTHS) {
+                    String deep = biomeName(source, qx, QuartPos.fromBlock(y), qz, sampler);
+                    deepBiomes.merge(deep, 1, Integer::sum);
+                    if (!deep.equals(surface))
+                        varies = true;
+                    if (poolNames.contains(deep))
+                        poolHits++;
+                }
+                if (varies)
+                    columnsVaryingWithDepth++;
+            }
+
+        report.put("biome.sweep.columns", Integer.toString(columns));
+        report.put("biome.sweep.varyingWithDepth", Integer.toString(columnsVaryingWithDepth));
+        report.put("biome.sweep.surface", surfaceBiomes.keySet().toString());
+        report.put("biome.sweep.deep", deepBiomes.keySet().toString());
+        report.put("biome.sweep.poolHits", Integer.toString(poolHits));
+
+        if (columnsVaryingWithDepth == 0)
+            fail("biome never varies with depth across " + columns
+                    + " columns — getNoiseBiome is still answering per column (2D), so structures "
+                    + "are gated against the surface biome at every height");
+        if (poolHits == 0)
+            fail("no cave-pool biome (" + poolNames + ") anywhere in the sweep — "
+                    + "deep_dark unreachable means ancient cities can never place");
+    }
+
+    /**
+     * The vanilla structures a CityWorld world keeps must survive selection, be positioned off the
+     * <em>world</em> seed, and actually put blocks in the ground.
+     *
+     * <p>Three distinct things can break here, and only the third is visible from a player's chair:
+     * <ul>
+     *   <li><b>Selection</b> — a set is dropped if the biome source cannot produce any of its biomes.
+     *       Ancient cities are the canary: they are gated on {@code deep_dark}, so if the cave pool
+     *       regresses they vanish from this list with no other symptom.
+     *   <li><b>Seeding</b> — strongholds are laid out on concentric rings from a seed that
+     *       {@code createForFlat} hardcodes to {@code 0L}. Non-empty ring positions prove the normal,
+     *       level-seeded path is in use; the first ring position is recorded so a human diffing two
+     *       reports can see it move if that regresses.
+     *   <li><b>Placement</b> — starts are decided at one chunk stage and the blocks are laid down in
+     *       {@code applyBiomeDecoration}, which CityWorld overrides. Getting the first two right and
+     *       the third wrong yields structures sliced to a few chunks, which reads like corrupt
+     *       worldgen. Hence the read-back below: find a chunk the placement math claims, generate it,
+     *       and look for the structure's own block entities.
+     * </ul>
+     */
+    private void checkStructures(MinecraftServer server) {
+        ServerLevel level = server.overworld();
+        ChunkGeneratorStructureState state = level.getChunkSource().getGeneratorState();
+
+        Map<String, Holder<StructureSet>> sets = new TreeMap<>();
+        for (Holder<StructureSet> set : state.possibleStructureSets())
+            set.unwrapKey().ifPresent(k -> sets.put(k.identifier().toString(), set));
+        report.put("structures.sets", sets.keySet().toString());
+
+        if (sets.isEmpty()) {
+            fail("no structure sets survived selection — no stronghold means no End portal, so eyes "
+                    + "of ender have nothing to find");
+            return;
+        }
+        for (String wanted : List.of("minecraft:strongholds", "minecraft:trial_chambers", "minecraft:ancient_cities"))
+            if (!sets.containsKey(wanted))
+                fail("structure set " + wanted + " did not survive selection — either it is missing from "
+                        + "the cityworld:allowed tag, or the biome source cannot produce any biome it needs");
+
+        // --- seeding: the stronghold rings ---------------------------------------------------------
+        Holder<StructureSet> strongholds = sets.get("minecraft:strongholds");
+        if (strongholds != null
+                && strongholds.value().placement() instanceof ConcentricRingsStructurePlacement rings) {
+            List<ChunkPos> ringPositions = state.getRingPositionsFor(rings);
+            int count = ringPositions == null ? 0 : ringPositions.size();
+            report.put("structures.stronghold.ringPositions", Integer.toString(count));
+            if (count == 0)
+                fail("stronghold ring positions are empty — nothing for an eye of ender to point at");
+            else
+                report.put("structures.stronghold.firstRing",
+                        ringPositions.get(0).x() + "," + ringPositions.get(0).z());
+        } else {
+            fail("the stronghold set is not on a concentric-rings placement — eyes of ender rely on it");
+        }
+
+        // --- placement: does a claimed chunk actually contain structure blocks? --------------------
+        Holder<StructureSet> trials = sets.get("minecraft:trial_chambers");
+        if (trials == null)
+            return;
+        StructurePlacement placement = trials.value().placement();
+        int examined = 0, withStarts = 0, structureBlockEntities = 0;
+        String foundAt = "none";
+
+        outer:
+        for (int r = 0; r <= STRUCTURE_SCAN_CHUNKS; r++)
+            for (int cx = -r; cx <= r; cx++)
+                for (int cz = -r; cz <= r; cz++) {
+                    if (Math.max(Math.abs(cx), Math.abs(cz)) != r)
+                        continue; // outer ring only
+                    if (!placement.isStructureChunk(state, cx, cz))
+                        continue;
+                    if (++examined > STRUCTURE_SCAN_CANDIDATES)
+                        break outer;
+                    final int fx = cx, fz = cz;
+                    LevelChunk chunk = server.submit(() -> level.getChunk(fx, fz)).join();
+                    if (chunk.getAllStarts().isEmpty())
+                        continue; // claimed by the spread, but the biome check rejected it
+                    withStarts++;
+                    for (BlockEntity entity : chunk.getBlockEntities().values()) {
+                        String id = String.valueOf(BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(entity.getType()));
+                        if (TRIAL_CHAMBER_BLOCK_ENTITIES.contains(id))
+                            structureBlockEntities++;
+                    }
+                    if (structureBlockEntities > 0) {
+                        foundAt = fx + "," + fz;
+                        break outer;
+                    }
+                }
+
+        report.put("structures.trial.candidatesExamined", Integer.toString(examined));
+        report.put("structures.trial.chunksWithStarts", Integer.toString(withStarts));
+        report.put("structures.trial.blockEntities", Integer.toString(structureBlockEntities));
+        report.put("structures.trial.foundAt", foundAt);
+
+        checkAncientCityDepth(server, sets.get("minecraft:ancient_cities"));
+
+        if (examined == 0)
+            fail("the trial-chamber placement claimed no chunk within " + STRUCTURE_SCAN_CHUNKS
+                    + " chunks of spawn — placement math is not running");
+        else if (withStarts == 0)
+            fail("no claimed trial-chamber chunk carried a structure start — the biome gate is "
+                    + "rejecting every candidate (getNoiseBiome answering wrongly?)");
+        else if (structureBlockEntities == 0)
+            fail("trial-chamber starts exist but the chunk holds none of " + TRIAL_CHAMBER_BLOCK_ENTITIES
+                    + " — starts are being decided and then never placed, which is what happens when "
+                    + "applyBiomeDecoration skips the structure step");
+    }
+
+    /**
+     * How high an ancient city actually reaches — measured, because it decides whether they can collide
+     * with CityWorld's own underground.
+     *
+     * <p>The structure's {@code start_height} is an absolute {@code y = -27}, but that is only where the
+     * jigsaw <em>starts</em>; pieces connect outward and upward from there, so the real ceiling has to
+     * be read off a generated start's bounding box rather than inferred from the JSON. CityWorld's
+     * sewers sit just under the road (street level 64, less two 4-block floors ≈ y 57–62) and its mines
+     * go far deeper, so the question is only ever "do the two bands overlap".
+     *
+     * <p><b>Also a cross-version canary.</b> If a future Minecraft moves the deep dark or reshapes the
+     * city, this number moves and the report shows it — which is cheaper than finding out from a
+     * screenshot of a sewer opening into a warden's lair.
+     *
+     * <p>Costs almost nothing to search: {@code isStructureChunk} is pure maths and the biome gate can
+     * be asked of the biome source directly, so only the handful of chunks that pass both are ever
+     * generated.
+     */
+    private void checkAncientCityDepth(MinecraftServer server, Holder<StructureSet> ancientCities) {
+        if (ancientCities == null)
+            return;
+        ServerLevel level = server.overworld();
+        ChunkGeneratorStructureState state = level.getChunkSource().getGeneratorState();
+        BiomeSource source = level.getChunkSource().getGenerator().getBiomeSource();
+        Climate.Sampler sampler = level.getChunkSource().randomState().sampler();
+        StructurePlacement placement = ancientCities.value().placement();
+
+        int candidates = 0, generated = 0, minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
+        String at = "none";
+
+        outer:
+        for (int r = 0; r <= ANCIENT_CITY_SCAN_CHUNKS; r++)
+            for (int cx = -r; cx <= r; cx++)
+                for (int cz = -r; cz <= r; cz++) {
+                    if (Math.max(Math.abs(cx), Math.abs(cz)) != r)
+                        continue;
+                    if (!placement.isStructureChunk(state, cx, cz))
+                        continue;
+                    candidates++;
+                    // Ask the biome source before generating anything: an ancient city only starts where
+                    // the biome at its own start height is deep_dark.
+                    String biome = biomeName(source, QuartPos.fromBlock(cx * 16 + 8),
+                            QuartPos.fromBlock(ANCIENT_CITY_START_Y), QuartPos.fromBlock(cz * 16 + 8), sampler);
+                    if (!"deep_dark".equals(biome))
+                        continue;
+                    if (++generated > ANCIENT_CITY_SAMPLES)
+                        break outer;
+                    final int fx = cx, fz = cz;
+                    LevelChunk chunk = server.submit(() -> level.getChunk(fx, fz)).join();
+                    for (var start : chunk.getAllStarts().values()) {
+                        if (!start.isValid())
+                            continue;
+                        minY = Math.min(minY, start.getBoundingBox().minY());
+                        maxY = Math.max(maxY, start.getBoundingBox().maxY());
+                        at = fx + "," + fz;
+                    }
+                }
+
+        report.put("structures.ancientCity.candidates", Integer.toString(candidates));
+        report.put("structures.ancientCity.generated", Integer.toString(generated));
+        report.put("structures.ancientCity.foundAt", at);
+        if (minY <= maxY) {
+            report.put("structures.ancientCity.minY", Integer.toString(minY));
+            report.put("structures.ancientCity.maxY", Integer.toString(maxY));
+            if (maxY >= CITYWORLD_SHALLOWEST_UNDERGROUND_FLOOR)
+                fail("an ancient city reaches y=" + maxY + ", at or above CityWorld's cistern floor (y="
+                        + CITYWORLD_SHALLOWEST_UNDERGROUND_FLOOR
+                        + ") — cisterns and sewers can now open into one");
+        }
+    }
+
+    /** The biome's registry path at a quart position, or {@code "?"} if it carries no key. */
+    private static String biomeName(BiomeSource source, int quartX, int quartY, int quartZ,
+            Climate.Sampler sampler) {
+        return source.getNoiseBiome(quartX, quartY, quartZ, sampler).unwrapKey()
+                .map(k -> k.identifier().getPath()).orElse("?");
     }
 
     /**
