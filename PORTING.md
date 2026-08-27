@@ -32,8 +32,8 @@ changed. That is the strongest argument in the whole arc for keeping generated c
 
 ## ▶ Next up (queued 2026-08-17)
 
-In rough priority order. **#1 and #2 are DONE (2026-08-27) and the biome half of #3 with them — see
-"Caves, structures and 3D biomes" below.** #3's decorative half, #4 and #5 remain.
+In rough priority order. **#1, #2 and #3 are DONE (2026-08-27) — see "Caves, structures and 3D
+biomes" and "Wave C" below.** #4 (26.2's stone families) and #5 (per-mod compat packs) remain.
 
 ### 1. ~~⚠ Vanilla structures never generate — including strongholds~~ **DONE (2026-08-27)**
 
@@ -93,13 +93,13 @@ on a fixed ring pattern and the eye asks the *structure placement system* where 
 hand-placed stronghold that the placement system does not know about is a stronghold the eye cannot
 find.
 
-### 3. Decorative caves as a pool, not just lush — **half done (2026-08-27)**
+### 3. ~~Decorative caves as a pool, not just lush~~ **DONE (2026-08-27)**
 
-**The blocker described below is gone: the biome source is 3D and emits real cave biomes.** What
-remains is the *decoration* half — running vanilla's `UNDERGROUND_DECORATION` step so those biomes
-actually grow moss and sculk, and moving `CaveRegions`' pool into a datapack so a modded cave biome
-slots in without a code change. See the dated block below for why the decoration half is now nearly
-free. **The analysis below is kept for its research value but its conclusion is superseded.**
+Biomes in wave A, decoration in wave C — see both dated blocks below. The pool is the datapack tag
+`#cityworld:cave_pool`, so a new cave type (vanilla's or a mod's) needs no code. **The analysis below
+is kept for its research value but its conclusion is superseded** — in particular, the decoration
+half turned out *not* to be "run `UNDERGROUND_DECORATION`"; see wave C for why that would have put
+trees on the roads.
 
 Generalise the existing lush-cave patch mechanic into **one decorative cave type drawn from a pool**:
 lush, **sulfur** (26.2's sulfur caves, with sulfur dripstone), **deep-dark / sculk** (ancient-city
@@ -339,6 +339,52 @@ divergence is the one that was designed in** — which is exactly what the tag m
 **⚠ `PORTING.md` conflicts on every cherry-pick** and always will, because it is maintained on
 `master` while the version branches carry a truncated copy. Resolve with
 `git checkout HEAD -- PORTING.md` before committing the pick; do not try to merge it.
+
+## Wave C: cave decoration (2026-08-27)
+
+Queued item #3 is now **fully done**. Cave biomes grow their own character under a city.
+
+**It is keyed on features, not on a generation step — and the obvious version is a trap.** Running
+`UNDERGROUND_DECORATION` the way `placeUndergroundOres` runs `UNDERGROUND_ORES` looks right and is
+wrong twice:
+
+- **Lush caves put nothing in `UNDERGROUND_DECORATION`.** Their entire vocabulary —
+  `lush_caves_vegetation`, `cave_vines`, `spore_blossom`, `rooted_azalea_tree`, `lush_caves_clay` —
+  is in `VEGETAL_DECORATION`.
+- **`VEGETAL_DECORATION` is the step that plants trees**, and `dripstone_caves` and `deep_dark` both
+  list `trees_plains`, `flower_plains` and `patch_pumpkin` in it. Vanilla gets away with that because
+  those biomes are never at the surface; running the step on a city chunk would **sprout trees on the
+  roads**.
+
+So `caveOnlyFeatures()` keeps only features that **no non-cave biome in this world also has**,
+computed against `possibleBiomes()` rather than a hardcoded list so it stays correct as the palette or
+the pool changes. `PlacedFeature.placeWithBiomeCheck` then confines what survives to the patches —
+that method asks whether the biome *at the position* has the feature, which is precisely the gate we
+want and is why this pass needs to know nothing about what it is placing.
+
+Measured — the filter is the whole safety argument, so the self-test asserts both halves (cave
+vocabulary present, nothing tree-shaped surviving):
+
+| | |
+|---|---|
+| kept (1.21.11, 12) | `cave_vines`, `classic_vines_cave_feature`, `dripstone_cluster`, `large_dripstone`, `lush_caves_ceiling_vegetation`, `lush_caves_clay`, `lush_caves_vegetation`, `pointed_dripstone`, `rooted_azalea_tree`, `sculk_patch_deep_dark`, `sculk_vein`, `spore_blossom` |
+| kept (26.2, +2) | `sulfur_spike`, `sulfur_spike_cluster` |
+| dropped | `trees_plains`, `flower_plains`, `patch_pumpkin`, `patch_grass_plain`, `glow_lichen`, `amethyst_geode` |
+
+**26.2 picking up the two sulfur features with no code change is the pool mechanism proving itself
+end to end** — a new cave biome on a new Minecraft version brought its own decoration through the tag
+alone. Shared features (`glow_lichen`, `amethyst_geode`) are the deliberate cost of the exclusion
+rule; the wild pass still places them normally.
+
+**`Support/LushCaves` now shares the pool's cell grid** (`CaveRegions.inCellOf`). That hand-built pass
+predates real cave biomes and had its own region function, which would have scattered hand-decorated
+caves across cells that are *not* the lush biome — two disjoint sets of lush-looking places, only one
+labelled lush and only that one getting vanilla's vegetation. Now a lush patch gets both: vanilla's
+moss and glow berries plus CityWorld's axolotl pools, spore blossoms and surface azalea. **Worth a
+look in-game — that is deliberately the densest cave type now, and may be too dense.**
+
+All three versions pass and `--compare` agrees. Jars deployed to the `CityWork-ReForged`, `26.1.2` and
+`26.2` CurseForge instances for playtest.
 
 One genuine 26.2 behaviour change worth knowing: `ChunkGenerator.findNearestMapStructure` now
 early-returns when the world's "Generate Structures" option is off, so that world-creation checkbox
