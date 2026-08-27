@@ -98,6 +98,11 @@ mkdir -p "$REPORTS" "$ROOT/run"
 # A fresh world every time: existing chunks never regenerate, so a stale one would test nothing.
 rm -rf "$ROOT/run/world"
 
+# And a fresh report. Without this, a run that dies before writing one leaves the PREVIOUS run's file
+# in place, which is then copied out under THIS version's name — so a failed 1.21.11 run publishes
+# 26.2's numbers and the comparison silently agrees with itself. Observed, not hypothetical.
+rm -f "$ROOT/run/cityworld-selftest.json"
+
 PROPS="$ROOT/run/server.properties"
 touch "$PROPS"
 # One code path, deliberately. This used to sed when the key existed and append when it didn't, and
@@ -117,6 +122,12 @@ set_prop() {
 set_prop "level-type" "cityworld:city"
 set_prop "level-seed" "$SEED"
 set_prop "online-mode" "false"
+# Off the default port. The harness never accepts a connection, but binding 25565 makes it collide
+# with any dev server already running — including one from a *different* mod in the same workspace.
+# The collision surfaces as "Failed to initialize server" plus an NPE in overworld() on shutdown,
+# which reads exactly like a CityWorld fault and is not one (see CLAUDE.md). Override with
+# CITYWORLD_SELFTEST_PORT if 25599 is taken too.
+set_prop "server-port" "${CITYWORLD_SELFTEST_PORT:-25599}"
 
 echo ">> Running (generates a world, verifies, then halts)..."
 LOG="$ROOT/build/selftest/$VERSION.log"

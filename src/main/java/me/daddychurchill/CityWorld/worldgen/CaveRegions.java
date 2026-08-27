@@ -31,9 +31,17 @@ import org.jspecify.annotations.Nullable;
  *
  * <p><b>Cells are 2D, with a Y band.</b> A cell is picked from {@code (x, z)} only and applies just
  * within its own {@code minY..maxY}; above that band the column reverts to its surface biome. That
- * gives a 3D biome map its vertical variation without paying for a 3D noise field, and stacks the pool
- * by depth for free. The first entry whose cell and Y band both match wins, so the rarest and deepest
- * are ordered first.
+ * gives a 3D biome map its vertical variation without paying for a 3D noise field. The first entry
+ * whose <em>cell</em> matches owns the column, and its Y band then decides how much of that column is
+ * cave, so the rarest and deepest are ordered first.
+ *
+ * <p><b>⚠ One cave type per column — do not fall through to a second type when the Y band misses.</b>
+ * The first version did, and it stacked biomes vertically: a column in both a {@code deep_dark} cell and
+ * a {@code dripstone_caves} cell became deep dark below {@code y -24} and dripstone above, with a hard
+ * seam between. Two things showed up in-game — lush caves sitting directly on a deep dark, and worse,
+ * <b>large dripstone placed just above the seam hanging down into the deep dark below</b>, which reads
+ * as broken worldgen. Vanilla's per-position biome check cannot catch that: the feature's origin is
+ * legitimately in the dripstone quart and only its body crosses the boundary.
  *
  * <p><b>Membership comes from the tag {@code #cityworld:cave_pool}, and that is load-bearing twice
  * over.</b>
@@ -89,6 +97,34 @@ public final class CaveRegions {
     /** What an unrecognised (modded, datapack-added) cave biome gets: a mid-depth, modest patch. */
     private static final int[] DEFAULT_GEOMETRY = { 96, 5, -60, 20 };
 
+    /**
+     * Cave biomes whose <em>rock</em> has to be painted for them to look like anything, and what to
+     * paint it with.
+     *
+     * <p><b>Sulfur caves are the case that needs this, and the reason is not obvious.</b> Lush,
+     * dripstone and deep dark all get their look from <em>features</em>, which CityWorld now runs. Sulfur
+     * gets its look from a <em>surface rule</em> ({@code sulfur_cave_gradient} in the overworld noise
+     * settings) — and CityWorld's {@code buildSurface} is deliberately a no-op, because the ported shaper
+     * lays its own strata. So a sulfur cave arrives with its fog and water colour (both client-side biome
+     * effects) and plain stone walls.
+     *
+     * <p>That also silently disables its features: {@code sulfur_spike} and {@code sulfur_spike_cluster}
+     * declare {@code replaceable_blocks} of {@code #minecraft:sulfur_spike_replaceable_blocks}, which is
+     * <em>only</em> {@code sulfur} and {@code cinnabar} — not {@code #base_stone_overworld} the way
+     * dripstone is. Spikes grow in sulfur rock, so with no sulfur rock there are no spikes. Painting the
+     * rock is therefore what makes the biome appear <em>and</em> what lets vanilla decorate it.
+     *
+     * <p>Named, not a {@code Blocks} constant, so this file still compiles and runs on versions with no
+     * sulfur; the block is looked up at runtime and the entry ignored if absent.
+     */
+    private static final Map<String, String> WALL_ROCK = Map.of(
+            "minecraft:sulfur_caves", "minecraft:sulfur");
+
+    /** The rock a cave biome's walls should be made of, or {@code null} if its look comes from features. */
+    public static @Nullable String wallRockFor(String biomeId) {
+        return WALL_ROCK.get(biomeId);
+    }
+
     /** One resolved entry: a biome that exists here, plus how its patches are shaped. */
     private record Patch(Holder<Biome> biome, int cell, int percent, int minY, int maxY, long salt) {
     }
@@ -131,15 +167,36 @@ public final class CaveRegions {
         }
 
         /**
+         * The rock this column's cave walls should be painted with, or {@code null} for "leave the stone
+         * alone" — which is every cave type whose look comes from features. See {@link #WALL_ROCK}.
+         *
+         * <p>Takes the same "first matching cell owns the column" path as {@link #at}, so the paint can
+         * never disagree with the biome.
+         */
+        public @Nullable String wallRockAt(long worldSeed, int blockX, int blockY, int blockZ) {
+            for (Patch patch : patches) {
+                if (!inCell(worldSeed, patch, blockX, blockZ))
+                    continue;
+                if (blockY < patch.minY() || blockY > patch.maxY())
+                    return null;
+                return wallRockFor(idOf(patch.biome()));
+            }
+            return null;
+        }
+
+        /**
          * The cave biome at a block position, or {@code null} for "not in a patch — keep the surface
          * biome". Pure and seed-deterministic, so it is safe on any worldgen worker.
          */
         public @Nullable Holder<Biome> at(long worldSeed, int blockX, int blockY, int blockZ) {
             for (Patch patch : patches) {
-                if (blockY < patch.minY() || blockY > patch.maxY())
+                if (!inCell(worldSeed, patch, blockX, blockZ))
                     continue;
-                if (inCell(worldSeed, patch, blockX, blockZ))
-                    return patch.biome();
+                // The first matching CELL owns the whole column; its Y band then decides whether this
+                // particular point is inside the patch or back to the surface biome. Deliberately NOT
+                // "first matching cell AND band", which would let a second type claim the rest of the
+                // column — see the class note on stacking.
+                return blockY >= patch.minY() && blockY <= patch.maxY() ? patch.biome() : null;
             }
             return null;
         }
