@@ -297,7 +297,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * vertical offset is zero anywhere inside the box, so the beard is at full strength throughout it
      * and the 12-block kernel only softens the edges. We lose the soft edge, not the cavern.
      */
-    private static void carveForStructures(StructureManager structureManager, ChunkAccess chunk) {
+    private void carveForStructures(StructureManager structureManager, ChunkAccess chunk) {
         try {
             ChunkPos pos = chunk.getPos();
             List<net.minecraft.world.level.levelgen.structure.StructureStart> starts =
@@ -306,28 +306,109 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 return;
 
             int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
-            net.minecraft.world.level.block.state.BlockState air =
-                    net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
-            net.minecraft.core.BlockPos.MutableBlockPos cursor = new net.minecraft.core.BlockPos.MutableBlockPos();
-
+            // Only the piece boxes whose *halo* reaches this chunk matter. Collected first so the
+            // per-block loop can take the nearest piece rather than re-walking every piece of a
+            // 7-deep jigsaw for every block.
+            List<net.minecraft.world.level.levelgen.structure.BoundingBox> boxes = new java.util.ArrayList<>();
+            int regionMinY = Integer.MAX_VALUE, regionMaxY = Integer.MIN_VALUE;
             for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts)
                 for (net.minecraft.world.level.levelgen.structure.StructurePiece piece : start.getPieces()) {
                     net.minecraft.world.level.levelgen.structure.BoundingBox box = piece.getBoundingBox();
-                    int x0 = Math.max(box.minX(), minX), x1 = Math.min(box.maxX(), minX + 15);
-                    int z0 = Math.max(box.minZ(), minZ), z1 = Math.min(box.maxZ(), minZ + 15);
-                    if (x0 > x1 || z0 > z1)
+                    if (box.maxX() + CARVE_HALO < minX || box.minX() - CARVE_HALO > minX + 15
+                            || box.maxZ() + CARVE_HALO < minZ || box.minZ() - CARVE_HALO > minZ + 15)
                         continue;
-                    // minY + 1 keeps the bedrock floor intact, exactly as vanilla's writable area does.
-                    int y0 = Math.max(box.minY(), chunk.getMinY() + 1);
-                    int y1 = Math.min(box.maxY(), chunk.getMaxY());
-                    for (int x = x0; x <= x1; x++)
-                        for (int z = z0; z <= z1; z++)
-                            for (int y = y0; y <= y1; y++)
-                                chunk.setBlockState(cursor.set(x, y, z), air);
+                    boxes.add(box);
+                    regionMinY = Math.min(regionMinY, box.minY());
+                    regionMaxY = Math.max(regionMaxY, box.maxY() + CARVE_HALO_UP);
                 }
+            if (boxes.isEmpty())
+                return;
+
+            net.minecraft.world.level.block.state.BlockState air =
+                    net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+            net.minecraft.core.BlockPos.MutableBlockPos cursor = new net.minecraft.core.BlockPos.MutableBlockPos();
+            me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator noise = carveNoise();
+
+            // minY + 1 keeps the bedrock floor intact, exactly as vanilla's writable area does.
+            int y0 = Math.max(regionMinY, chunk.getMinY() + 1);
+            int y1 = Math.min(regionMaxY, chunk.getMaxY());
+
+            for (int x = minX; x <= minX + 15; x++)
+                for (int z = minZ; z <= minZ + 15; z++)
+                    for (int y = y0; y <= y1; y++) {
+                        double t = outsideness(boxes, x, y, z);
+                        if (t >= 1.0)
+                            continue;
+                        // Inside a piece box, always carve. Outside, carve with a probability that
+                        // falls off to nothing at the halo's edge — driven by smooth noise rather than
+                        // randomness so the result is a ragged cave wall, not static.
+                        if (t > 0.0
+                                && noise.noise(x * CARVE_NOISE_SCALE, y * CARVE_NOISE_SCALE, z * CARVE_NOISE_SCALE)
+                                        <= t * 2.0 - 1.0)
+                            continue;
+                        cursor.set(x, y, z);
+                        if (!chunk.getBlockState(cursor).isAir())
+                            chunk.setBlockState(cursor, air);
+                    }
         } catch (Throwable t) {
             // never let terrain adaptation break chunk generation
         }
+    }
+
+    /**
+     * How far outside the nearest piece box this point is, as {@code 0.0} (inside) to {@code 1.0} (at
+     * or beyond the halo). Horizontal and upward distances are normalised separately, because the halo
+     * is asymmetric.
+     */
+    private static double outsideness(List<net.minecraft.world.level.levelgen.structure.BoundingBox> boxes,
+            int x, int y, int z) {
+        double best = 1.0;
+        for (net.minecraft.world.level.levelgen.structure.BoundingBox box : boxes) {
+            int dx = Math.max(0, Math.max(box.minX() - x, x - box.maxX()));
+            int dz = Math.max(0, Math.max(box.minZ() - z, z - box.maxZ()));
+            // Below the box is never carved: vanilla's beard ADDS material underneath to support the
+            // structure, so digging there would leave the city hanging over a void.
+            if (y < box.minY())
+                continue;
+            int dy = Math.max(0, y - box.maxY());
+            double t = Math.max(Math.max(dx, dz) / (double) CARVE_HALO, dy / (double) CARVE_HALO_UP);
+            if (t < best)
+                best = t;
+            if (best <= 0.0)
+                return 0.0;
+        }
+        return best;
+    }
+
+    /**
+     * How far the carve tapers past a piece box, horizontally and upward.
+     *
+     * <p>Vanilla's beard kernel has a radius of 12 and its contribution falls off smoothly over that
+     * distance. Carving only the box — the first version of this — left flat rectangular walls and
+     * ceilings, and left the gaps *between* pieces solid, so an ancient city read as a set of boxes
+     * rather than a cavern. A halo of this size closes those gaps and softens the edges.
+     */
+    private static final int CARVE_HALO = 10;
+
+    /** Upward halo. Bigger than none, smaller than {@link #CARVE_HALO}: headroom, not a chimney. */
+    private static final int CARVE_HALO_UP = 6;
+
+    /** Wavelength of the raggedness on the carve's edge — small, so it reads as rock, not as hills. */
+    private static final double CARVE_NOISE_SCALE = 1.0 / 9.0;
+
+    private volatile me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator carveNoise;
+
+    /** The carve's edge noise, built once per world so the taper is reproducible. */
+    private me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator carveNoise() {
+        me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator local = carveNoise;
+        if (local == null)
+            synchronized (this) {
+                local = carveNoise;
+                if (local == null)
+                    carveNoise = local =
+                            new me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator(levelSeed ^ 0xBEA5DL);
+            }
+        return local;
     }
 
     /** Whether this structure expects terrain to be carved away from it (a beard), rather than piled on. */
