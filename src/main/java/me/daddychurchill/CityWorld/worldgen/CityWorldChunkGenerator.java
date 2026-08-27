@@ -467,7 +467,152 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             // stone beneath the city exactly as they do in the wild. MODERN only, as before.
             if (context.isModernStyle())
                 placeUndergroundOres(level, chunk);
+            // Cave biomes decorate themselves — moss and glow berries in lush, dripstone clusters,
+            // sculk in the deep dark, sulfur on 26.2. See placeCaveDecoration.
+            placeCaveDecoration(level, chunk);
         }
+    }
+
+    /**
+     * Lets a cave biome under a city grow its own character — the decoration half of the cave pool.
+     *
+     * <p>Once the biome map became 3D, this is nearly free: {@code PlacedFeature.placeWithBiomeCheck}
+     * asks whether the biome <em>at the position</em> has the feature, so vanilla's own lush/dripstone/
+     * sculk/sulfur features confine themselves to the patches without CityWorld knowing anything about
+     * what they place. A new cave type — vanilla's or a mod's — decorates itself the moment it joins
+     * {@code #cityworld:cave_pool}.
+     *
+     * <p><b>⚠ Why this cannot simply run a generation step.</b> The obvious implementation — run
+     * {@code UNDERGROUND_DECORATION} the way {@link #placeUndergroundOres} runs {@code UNDERGROUND_ORES}
+     * — gets lush caves wrong and cities badly wrong:
+     * <ul>
+     *   <li>Lush caves put <em>nothing</em> in {@code UNDERGROUND_DECORATION}. Their whole vocabulary
+     *       ({@code lush_caves_vegetation}, {@code cave_vines}, {@code spore_blossom},
+     *       {@code rooted_azalea_tree}) is in {@code VEGETAL_DECORATION}.
+     *   <li>But {@code VEGETAL_DECORATION} is also the step that plants <em>trees</em> — and
+     *       {@code dripstone_caves} and {@code deep_dark} both list {@code trees_plains},
+     *       {@code flower_plains} and {@code patch_pumpkin} in it. Vanilla gets away with that because
+     *       those biomes are never at the surface. Running the step on a city chunk would sprout trees
+     *       on the roads.
+     * </ul>
+     *
+     * <p>So the pass is keyed on <em>features</em>, not steps: {@link #caveOnlyFeatures} keeps only the
+     * features that no non-cave biome in this world also has. {@code lush_caves_vegetation} survives
+     * (only lush caves has it); {@code trees_plains} does not (plains has it too). The biome check then
+     * confines what is left to the patches.
+     */
+    private void placeCaveDecoration(WorldGenLevel level, ChunkAccess chunk) {
+        try {
+            List<Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature>> features = caveOnlyFeatures();
+            if (features.isEmpty() || !containsCaveBiome(chunk))
+                return;
+
+            net.minecraft.core.SectionPos sectionPos = net.minecraft.core.SectionPos.of(chunk.getPos(),
+                    level.getMinSectionY());
+            BlockPos origin = sectionPos.origin();
+            net.minecraft.world.level.levelgen.WorldgenRandom random =
+                    new net.minecraft.world.level.levelgen.WorldgenRandom(
+                            new net.minecraft.world.level.levelgen.XoroshiroRandomSource(level.getSeed()));
+            long decoSeed = random.setDecorationSeed(level.getSeed(), origin.getX(), origin.getZ());
+
+            int step = net.minecraft.world.level.levelgen.GenerationStep.Decoration.UNDERGROUND_DECORATION.ordinal();
+            int index = 0;
+            for (Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature> feature : features) {
+                random.setFeatureSeed(decoSeed, index++, step);
+                feature.value().placeWithBiomeCheck(level, this, random, origin);
+            }
+        } catch (Throwable t) {
+            // cave decoration must never break chunk generation
+        }
+    }
+
+    /** Whether any section of this chunk carries a cave-pool biome — cheap gate before doing the work. */
+    private boolean containsCaveBiome(ChunkAccess chunk) {
+        if (!(this.biomeSource instanceof CityWorldBiomes cityBiomes))
+            return false;
+        java.util.Set<Holder<Biome>> pool = cityBiomes.cavePool().biomes()
+                .collect(java.util.stream.Collectors.toSet());
+        if (pool.isEmpty())
+            return false;
+        boolean[] found = { false };
+        for (net.minecraft.world.level.chunk.LevelChunkSection section : chunk.getSections()) {
+            section.getBiomes().getAll(b -> {
+                if (pool.contains(b))
+                    found[0] = true;
+            });
+            if (found[0])
+                return true;
+        }
+        return false;
+    }
+
+    /** Memoized; see {@link #caveOnlyFeatures}. */
+    private volatile List<Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature>> caveOnlyFeatures;
+
+    /**
+     * The features that belong to cave-pool biomes and to <em>nothing else this world can generate</em>.
+     *
+     * <p>The exclusion is what makes the pass safe on a city chunk (see {@link #placeCaveDecoration}),
+     * and it is computed against {@code possibleBiomes()} rather than a hardcoded list, so it stays
+     * correct as the palette or the pool changes. Shared features are the deliberate cost:
+     * {@code glow_lichen} and {@code amethyst_geode} are in half the overworld, so they are dropped
+     * here — the wild pass still places them normally.
+     */
+    public List<Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature>> caveOnlyFeatures() {
+        List<Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature>> local = caveOnlyFeatures;
+        if (local != null)
+            return local;
+        synchronized (this) {
+            if (caveOnlyFeatures != null)
+                return caveOnlyFeatures;
+            List<Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature>> built = List.of();
+            if (this.biomeSource instanceof CityWorldBiomes cityBiomes) {
+                java.util.Set<Holder<Biome>> pool = cityBiomes.cavePool().biomes()
+                        .collect(java.util.stream.Collectors.toSet());
+                // Everything a non-cave biome of this world can place, in the three steps a cave biome
+                // keeps its character in.
+                java.util.Set<net.minecraft.world.level.levelgen.placement.PlacedFeature> elsewhere =
+                        new java.util.HashSet<>();
+                for (Holder<Biome> biome : this.biomeSource.possibleBiomes())
+                    if (!pool.contains(biome))
+                        collectCaveSteps(biome, elsewhere::add);
+                java.util.LinkedHashSet<Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature>> keep =
+                        new java.util.LinkedHashSet<>();
+                for (Holder<Biome> biome : pool)
+                    collectCaveStepHolders(biome, h -> {
+                        if (!elsewhere.contains(h.value()))
+                            keep.add(h);
+                    });
+                built = List.copyOf(keep);
+            }
+            caveOnlyFeatures = built;
+            return built;
+        }
+    }
+
+    /**
+     * The generation steps a cave biome keeps its own look in: {@code LOCAL_MODIFICATIONS}
+     * (large dripstone), {@code UNDERGROUND_DECORATION} (dripstone clusters, sculk) and
+     * {@code VEGETAL_DECORATION} (all of lush caves). Fluid springs are deliberately excluded — those
+     * carve water into whatever is above them.
+     */
+    private static final int[] CAVE_STEPS = {
+            net.minecraft.world.level.levelgen.GenerationStep.Decoration.LOCAL_MODIFICATIONS.ordinal(),
+            net.minecraft.world.level.levelgen.GenerationStep.Decoration.UNDERGROUND_DECORATION.ordinal(),
+            net.minecraft.world.level.levelgen.GenerationStep.Decoration.VEGETAL_DECORATION.ordinal() };
+
+    private static void collectCaveSteps(Holder<Biome> biome,
+            java.util.function.Consumer<net.minecraft.world.level.levelgen.placement.PlacedFeature> sink) {
+        collectCaveStepHolders(biome, h -> sink.accept(h.value()));
+    }
+
+    private static void collectCaveStepHolders(Holder<Biome> biome,
+            java.util.function.Consumer<Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature>> sink) {
+        List<net.minecraft.core.HolderSet<net.minecraft.world.level.levelgen.placement.PlacedFeature>> byStep =
+                biome.value().getGenerationSettings().features();
+        for (int step : CAVE_STEPS)
+            if (step < byStep.size())
+                byStep.get(step).forEach(sink);
     }
 
     /**
