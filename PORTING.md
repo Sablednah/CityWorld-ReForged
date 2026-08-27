@@ -173,8 +173,8 @@ probably the first thing to test with a big content mod installed.
 
 ## Caves, structures and 3D biomes (2026-08-27) — waves A and B
 
-Queued items #1 and #2 are done, and the blocker under #3 with them. **1.21.11 only so far; not yet
-cherry-picked to `mc26.1`/`mc26.2`.**
+Queued items #1 and #2 are done, and the blocker under #3 with them. **On all three versions —
+`master`, `mc26.1` and `mc26.2` — self-test green and plan hashes agreeing.**
 
 ### The three were one bug, and it was not the one that was queued
 
@@ -315,12 +315,30 @@ stays valid.
 - **Underground mob spawning has changed** wherever a patch landed: cave biomes carry thin spawn
   lists and `deep_dark` carries none at all (plus wardens). Owner has signed off on this.
 
-### Multi-version: measured, not assumed
+### Multi-version: done, and all three agree
 
 All four load-bearing classes — `ChunkGeneratorStructureState`, `BiomeSource`, `Structure`,
-`ChunkGenerator` — were diffed across 1.21.11 / 26.1.2 / 26.2. **The differences are decompiler
+`ChunkGenerator` — were diffed across 1.21.11 / 26.1.2 / 26.2 first. **The differences are decompiler
 parameter renames and brace reshuffling; zero API-shape change.** `StructureStart.placeInChunk` is
-identical too. So waves A and B should cherry-pick clean.
+identical too.
+
+**Cherry-picked to `mc26.1` and `mc26.2`; all three pass and `--compare` agrees on every style.** The
+whole cost was the *already-known* 26.1 delta — `ChunkPos` is a record, so `pos.x` → `pos.x()`, in
+two places (`applyBiomeDecoration` and the harness's ring-position report). Nothing else conflicted.
+
+| version | possible biomes | cave pool | columns varying with depth |
+|---|---|---|---|
+| 1.21.11 | 52 | deep_dark, dripstone_caves, lush_caves | 586 |
+| 26.1.2 | 52 | deep_dark, dripstone_caves, lush_caves | 586 |
+| 26.2 | **53** | + **sulfur_caves** | 780 |
+
+Everything else is byte-identical across the three: same structure sets, same first stronghold ring
+(`3,-145`), same ancient city extent (`-64..-10`), same trial chamber (`12,11`). **The only
+divergence is the one that was designed in** — which is exactly what the tag mechanism was for.
+
+**⚠ `PORTING.md` conflicts on every cherry-pick** and always will, because it is maintained on
+`master` while the version branches carry a truncated copy. Resolve with
+`git checkout HEAD -- PORTING.md` before committing the pick; do not try to merge it.
 
 One genuine 26.2 behaviour change worth knowing: `ChunkGenerator.findNearestMapStructure` now
 early-returns when the world's "Generate Structures" option is off, so that world-creation checkbox
