@@ -268,7 +268,73 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         PlatMap platmap = context.getPlatMap(chunkX, chunkZ);
         platmap.generateChunk(blocks, IGNORE_BIOMES);
 
+        // Make room for any structure that expects the terrain to get out of its way. Vanilla does this
+        // in the same pass, via the Beardifier density function — see carveForStructures.
+        carveForStructures(structureManager, chunk);
+
         return CompletableFuture.completedFuture(chunk);
+    }
+
+    /**
+     * Clears terrain out of the way of structures whose {@code terrain_adaptation} is a <em>beard</em>.
+     *
+     * <p><b>This is CityWorld's stand-in for vanilla's {@code Beardifier}, and without it ancient cities
+     * generate buried.</b> Vanilla feeds {@code Beardifier.forStructuresInChunk} into the density
+     * function that shapes terrain, so the ground is pushed away from a structure before a single block
+     * is placed. CityWorld's terrain is not density-based — the ported shaper writes blocks directly —
+     * so there is nothing to feed, and the structure ends up stamped into solid rock.
+     *
+     * <p>Which structures need it is exactly the {@code terrain_adaptation} field, and only the beards
+     * carve:
+     * <ul>
+     *   <li>{@code stronghold} is {@code bury} — vanilla piles terrain <em>onto</em> it, and it already
+     *       generates correctly here. Carving would be wrong.
+     *   <li>{@code trial_chambers} is {@code encapsulate}, and likewise already correct.
+     *   <li>{@code ancient_city} is {@code beard_box} — the one that was broken.
+     * </ul>
+     *
+     * <p>Carving the piece's own bounding box is a fair stand-in: for {@code BEARD_BOX}, vanilla's
+     * vertical offset is zero anywhere inside the box, so the beard is at full strength throughout it
+     * and the 12-block kernel only softens the edges. We lose the soft edge, not the cavern.
+     */
+    private static void carveForStructures(StructureManager structureManager, ChunkAccess chunk) {
+        try {
+            ChunkPos pos = chunk.getPos();
+            List<net.minecraft.world.level.levelgen.structure.StructureStart> starts =
+                    structureManager.startsForStructure(pos, CityWorldChunkGenerator::carvesTerrain);
+            if (starts.isEmpty())
+                return;
+
+            int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
+            net.minecraft.world.level.block.state.BlockState air =
+                    net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+            net.minecraft.core.BlockPos.MutableBlockPos cursor = new net.minecraft.core.BlockPos.MutableBlockPos();
+
+            for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts)
+                for (net.minecraft.world.level.levelgen.structure.StructurePiece piece : start.getPieces()) {
+                    net.minecraft.world.level.levelgen.structure.BoundingBox box = piece.getBoundingBox();
+                    int x0 = Math.max(box.minX(), minX), x1 = Math.min(box.maxX(), minX + 15);
+                    int z0 = Math.max(box.minZ(), minZ), z1 = Math.min(box.maxZ(), minZ + 15);
+                    if (x0 > x1 || z0 > z1)
+                        continue;
+                    // minY + 1 keeps the bedrock floor intact, exactly as vanilla's writable area does.
+                    int y0 = Math.max(box.minY(), chunk.getMinY() + 1);
+                    int y1 = Math.min(box.maxY(), chunk.getMaxY());
+                    for (int x = x0; x <= x1; x++)
+                        for (int z = z0; z <= z1; z++)
+                            for (int y = y0; y <= y1; y++)
+                                chunk.setBlockState(cursor.set(x, y, z), air);
+                }
+        } catch (Throwable t) {
+            // never let terrain adaptation break chunk generation
+        }
+    }
+
+    /** Whether this structure expects terrain to be carved away from it (a beard), rather than piled on. */
+    private static boolean carvesTerrain(net.minecraft.world.level.levelgen.structure.Structure structure) {
+        net.minecraft.world.level.levelgen.structure.TerrainAdjustment adjustment = structure.terrainAdaptation();
+        return adjustment == net.minecraft.world.level.levelgen.structure.TerrainAdjustment.BEARD_BOX
+                || adjustment == net.minecraft.world.level.levelgen.structure.TerrainAdjustment.BEARD_THIN;
     }
 
     @Override
@@ -444,6 +510,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // check gates it; runs after CityWorld's own pass so vanilla's features sit on the finished
         // terrain. Vanilla's decoration respects the WorldGenRegion radius, so top risk #2 is its own
         // problem here, not ours.
+        // Paint cave rock BEFORE any decoration — vanilla's sulfur spikes can only replace sulfur, so
+        // the walls have to exist before either branch below tries to grow anything on them.
+        paintCaveWalls(context, level, chunk);
+
         me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x, pos.z);
         boolean wild = context.isModernStyle() && lot != null
                 && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE
@@ -524,6 +594,82 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         } catch (Throwable t) {
             // cave decoration must never break chunk generation
         }
+    }
+
+    /**
+     * Skins the cave walls of a patch whose biome needs its rock painted rather than decorated —
+     * sulfur caves, today. See {@link CaveRegions#wallRockFor} for why that is a real distinction and not
+     * an optimisation.
+     *
+     * <p>Only stone that is actually <em>exposed to the cave</em> is replaced, so this reads as a lining
+     * on the walls, floor and ceiling rather than a solid block of sulfur buried in the rock. Restricted
+     * to {@code #base_stone_overworld} so it can never eat a CityWorld build, an ore vein, or bedrock.
+     *
+     * <p>Runs before both decoration branches: vanilla's sulfur spikes only replace sulfur, so the rock
+     * must be there first or the features silently no-op — which is exactly how this bug presented, as a
+     * biome with fog and water colour and nothing else.
+     */
+    private void paintCaveWalls(CityWorldGenerator context, WorldGenLevel level, ChunkAccess chunk) {
+        if (!(this.biomeSource instanceof CityWorldBiomes cityBiomes))
+            return;
+        try {
+            CaveRegions.Pool pool = cityBiomes.cavePool();
+            if (pool.isEmpty())
+                return;
+            ChunkPos pos = chunk.getPos();
+            int originX = pos.getMinBlockX(), originZ = pos.getMinBlockZ();
+            long seed = context.getWorldSeed();
+            int bottom = chunk.getMinY() + 1;
+            int top = Math.min(chunk.getMaxY(), context.seaLevel);
+            net.minecraft.core.BlockPos.MutableBlockPos cursor = new net.minecraft.core.BlockPos.MutableBlockPos();
+            java.util.Map<String, net.minecraft.world.level.block.state.BlockState> rocks = new java.util.HashMap<>();
+
+            for (int dx = 0; dx < 16; dx++)
+                for (int dz = 0; dz < 16; dz++) {
+                    int x = originX + dx, z = originZ + dz;
+                    // Cheap reject: the column's cave type is fixed, so ask once at the band's midpoint.
+                    if (pool.wallRockAt(seed, x, (bottom + top) / 2, z) == null
+                            && pool.wallRockAt(seed, x, bottom, z) == null)
+                        continue;
+                    for (int y = bottom; y <= top; y++) {
+                        String rockId = pool.wallRockAt(seed, x, y, z);
+                        if (rockId == null)
+                            continue;
+                        cursor.set(x, y, z);
+                        net.minecraft.world.level.block.state.BlockState state = level.getBlockState(cursor);
+                        if (!state.is(net.minecraft.tags.BlockTags.BASE_STONE_OVERWORLD))
+                            continue;
+                        if (!touchesCaveAir(level, cursor))
+                            continue;
+                        net.minecraft.world.level.block.state.BlockState rock = rocks.computeIfAbsent(rockId,
+                                id -> net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                                        .getOptional(Identifier.parse(id))
+                                        .map(net.minecraft.world.level.block.Block::defaultBlockState)
+                                        .orElse(null));
+                        if (rock == null)
+                            return; // this version has no such block (sulfur before 26.2) — nothing to do
+                        level.setBlock(cursor, rock, net.minecraft.world.level.block.Block.UPDATE_NONE);
+                    }
+                }
+        } catch (Throwable t) {
+            // cave skinning must never break chunk generation
+        }
+    }
+
+    /** Whether this solid block has cave air (or water) against any face — i.e. it is a cave surface. */
+    private static boolean touchesCaveAir(WorldGenLevel level,
+            net.minecraft.core.BlockPos.MutableBlockPos cursor) {
+        int x = cursor.getX(), y = cursor.getY(), z = cursor.getZ();
+        for (net.minecraft.core.Direction face : net.minecraft.core.Direction.values()) {
+            cursor.set(x + face.getStepX(), y + face.getStepY(), z + face.getStepZ());
+            net.minecraft.world.level.block.state.BlockState neighbour = level.getBlockState(cursor);
+            if (neighbour.isAir() || neighbour.getFluidState().is(net.minecraft.world.level.material.Fluids.WATER)) {
+                cursor.set(x, y, z);
+                return true;
+            }
+        }
+        cursor.set(x, y, z);
+        return false;
     }
 
     /** Whether any section of this chunk carries a cave-pool biome — cheap gate before doing the work. */

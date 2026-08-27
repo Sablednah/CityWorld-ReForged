@@ -136,6 +136,13 @@ public final class CityWorldSelfTest {
      */
     private static final int CITYWORLD_SHALLOWEST_UNDERGROUND_FLOOR = 49;
 
+    /**
+     * How much of an ancient city's bounding box must be air for it to count as excavated rather than
+     * entombed. Deliberately low — the box includes the city's own walls, floors and pillars, so even a
+     * healthy one is mostly solid. Buried measured near zero; this only has to separate the two.
+     */
+    private static final int ANCIENT_CITY_MIN_AIR_PCT = 15;
+
     /** Block entities only a trial chamber places, so finding one proves pieces really landed. */
     private static final java.util.Set<String> TRIAL_CHAMBER_BLOCK_ENTITIES = java.util.Set.of(
             "minecraft:trial_spawner", "minecraft:vault");
@@ -487,6 +494,7 @@ public final class CityWorldSelfTest {
         StructurePlacement placement = ancientCities.value().placement();
 
         int candidates = 0, generated = 0, minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
+        long airInBox = 0, boxBlocks = 0;
         String at = "none";
 
         outer:
@@ -514,6 +522,8 @@ public final class CityWorldSelfTest {
                         minY = Math.min(minY, start.getBoundingBox().minY());
                         maxY = Math.max(maxY, start.getBoundingBox().maxY());
                         at = fx + "," + fz;
+                        airInBox += countAir(chunk, start.getBoundingBox());
+                        boxBlocks += boxVolumeInChunk(chunk, start.getBoundingBox());
                     }
                 }
 
@@ -523,11 +533,49 @@ public final class CityWorldSelfTest {
         if (minY <= maxY) {
             report.put("structures.ancientCity.minY", Integer.toString(minY));
             report.put("structures.ancientCity.maxY", Integer.toString(maxY));
+
+            // Is it actually walkable, or stamped into solid rock? An ancient city is terrain_adaptation
+            // "beard_box": vanilla carves the terrain away from it via the Beardifier density function,
+            // which CityWorld has no equivalent of unless carveForStructures runs. Without it the city
+            // generates and /locate finds it, but it is entombed — which is what shipped first and is
+            // invisible to every other check here.
+            int airPct = boxBlocks == 0 ? 0 : (int) (airInBox * 100 / boxBlocks);
+            report.put("structures.ancientCity.airPercent", Integer.toString(airPct));
+            if (airPct < ANCIENT_CITY_MIN_AIR_PCT)
+                fail("an ancient city's bounding box is only " + airPct + "% air (want >= "
+                        + ANCIENT_CITY_MIN_AIR_PCT + ") — it is buried in solid terrain, so terrain "
+                        + "adaptation (carveForStructures) is not running for beard_box structures");
             if (maxY >= CITYWORLD_SHALLOWEST_UNDERGROUND_FLOOR)
                 fail("an ancient city reaches y=" + maxY + ", at or above CityWorld's cistern floor (y="
                         + CITYWORLD_SHALLOWEST_UNDERGROUND_FLOOR
                         + ") — cisterns and sewers can now open into one");
         }
+    }
+
+    /** Air blocks inside the part of {@code box} that lies in this chunk. */
+    private static long countAir(LevelChunk chunk, net.minecraft.world.level.levelgen.structure.BoundingBox box) {
+        ChunkPos pos = chunk.getPos();
+        int x0 = Math.max(box.minX(), pos.getMinBlockX()), x1 = Math.min(box.maxX(), pos.getMinBlockX() + 15);
+        int z0 = Math.max(box.minZ(), pos.getMinBlockZ()), z1 = Math.min(box.maxZ(), pos.getMinBlockZ() + 15);
+        int y0 = Math.max(box.minY(), chunk.getMinY()), y1 = Math.min(box.maxY(), chunk.getMaxY());
+        long air = 0;
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        for (int x = x0; x <= x1; x++)
+            for (int z = z0; z <= z1; z++)
+                for (int y = y0; y <= y1; y++)
+                    if (chunk.getBlockState(cursor.set(x, y, z)).isAir())
+                        air++;
+        return air;
+    }
+
+    /** Total blocks in the part of {@code box} that lies in this chunk — the denominator for the above. */
+    private static long boxVolumeInChunk(LevelChunk chunk,
+            net.minecraft.world.level.levelgen.structure.BoundingBox box) {
+        ChunkPos pos = chunk.getPos();
+        long w = Math.max(0, Math.min(box.maxX(), pos.getMinBlockX() + 15) - Math.max(box.minX(), pos.getMinBlockX()) + 1);
+        long d = Math.max(0, Math.min(box.maxZ(), pos.getMinBlockZ() + 15) - Math.max(box.minZ(), pos.getMinBlockZ()) + 1);
+        long h = Math.max(0, Math.min(box.maxY(), chunk.getMaxY()) - Math.max(box.minY(), chunk.getMinY()) + 1);
+        return w * d * h;
     }
 
     /** The biome's registry path at a quart position, or {@code "?"} if it carries no key. */
