@@ -51,14 +51,15 @@ public record CityWorldSettingsData(
         Mobs mobs,
         Overgrowth overgrowth,
         Shops shops,
-        Decay decay) {
+        Decay decay,
+        Caves caves) {
 
     /** 1875000 chunks — the modern world-format radius ceiling (30,000,000 blocks / 16). */
     public static final int MAX_RADIUS = 30000000 / 16;
 
     public static final CityWorldSettingsData DEFAULT = new CityWorldSettingsData(
             Features.DEFAULT, Terrain.DEFAULT, Spawns.DEFAULT, Treasures.DEFAULT, World.DEFAULT, Radius.DEFAULT,
-            Naming.DEFAULT, Mobs.DEFAULT, Overgrowth.DEFAULT, Shops.DEFAULT, Decay.DEFAULT);
+            Naming.DEFAULT, Mobs.DEFAULT, Overgrowth.DEFAULT, Shops.DEFAULT, Decay.DEFAULT, Caves.DEFAULT);
 
     public static final Codec<CityWorldSettingsData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Features.CODEC.optionalFieldOf("features", Features.DEFAULT).forGetter(CityWorldSettingsData::features),
@@ -71,7 +72,8 @@ public record CityWorldSettingsData(
             Mobs.CODEC.optionalFieldOf("mobs", Mobs.DEFAULT).forGetter(CityWorldSettingsData::mobs),
             Overgrowth.CODEC.optionalFieldOf("overgrowth", Overgrowth.DEFAULT).forGetter(CityWorldSettingsData::overgrowth),
             Shops.CODEC.optionalFieldOf("shops", Shops.DEFAULT).forGetter(CityWorldSettingsData::shops),
-            Decay.CODEC.optionalFieldOf("decay", Decay.DEFAULT).forGetter(CityWorldSettingsData::decay)
+            Decay.CODEC.optionalFieldOf("decay", Decay.DEFAULT).forGetter(CityWorldSettingsData::decay),
+            Caves.CODEC.optionalFieldOf("caves", Caves.DEFAULT).forGetter(CityWorldSettingsData::caves)
     ).apply(i, CityWorldSettingsData::new));
 
     // --- what gets built ----------------------------------------------------------------------
@@ -171,6 +173,72 @@ public record CityWorldSettingsData(
      * (1.0 = default, higher = lusher); {@code capVines} finishes each outer wall-vine string with a glow
      * lichen so live vine growth can't lengthen it over time.
      */
+    /**
+     * The underground dials: how big a cavern a vanilla structure gets, and how the cave-biome patches
+     * are shaped.
+     *
+     * <p>Which cave biomes exist at all is the datapack tag {@code #cityworld:cave_pool}, and which
+     * vanilla structures generate is {@code #cityworld:allowed} — this group is the numbers those two
+     * cannot express.
+     *
+     * @param structureCarveHalo   how far, horizontally, terrain is cleared past a beard structure's
+     *                             pieces. Vanilla's beard kernel is radius 12 and tapers; this is the
+     *                             equivalent for a generator that writes blocks rather than density.
+     *                             Bigger means a roomier ancient city; too small and it reads as a row
+     *                             of boxes rather than one cavern.
+     * @param structureCarveHaloUp the same, upward. Deliberately smaller — headroom, not a chimney.
+     *                             Nothing is ever carved <em>below</em> a piece, because vanilla's beard
+     *                             adds material there to hold the structure up.
+     * @param surfaceMargin        how far below the terrain surface a cave patch starts, so a patch
+     *                             cannot bleed into surface grass and foliage colour on a hillside.
+     * @param patches              per-biome patch shaping. <b>Empty means the built-in defaults</b>;
+     *                             listing any entry replaces the lot, so a pack can retune the whole
+     *                             underground — or give a modded cave biome real geometry instead of
+     *                             the fallback it gets from the tag alone.
+     */
+    public record Caves(int structureCarveHalo, int structureCarveHaloUp, int surfaceMargin,
+            List<CavePatch> patches) {
+
+        public static final int DEFAULT_CARVE_HALO = 10;
+        public static final int DEFAULT_CARVE_HALO_UP = 6;
+        public static final int DEFAULT_SURFACE_MARGIN = 8;
+
+        public static final Caves DEFAULT = new Caves(DEFAULT_CARVE_HALO, DEFAULT_CARVE_HALO_UP,
+                DEFAULT_SURFACE_MARGIN, List.of());
+
+        public static final Codec<Caves> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.INT.optionalFieldOf("structureCarveHalo", DEFAULT_CARVE_HALO)
+                        .forGetter(Caves::structureCarveHalo),
+                Codec.INT.optionalFieldOf("structureCarveHaloUp", DEFAULT_CARVE_HALO_UP)
+                        .forGetter(Caves::structureCarveHaloUp),
+                Codec.INT.optionalFieldOf("surfaceMargin", DEFAULT_SURFACE_MARGIN)
+                        .forGetter(Caves::surfaceMargin),
+                CavePatch.CODEC.listOf().optionalFieldOf("patches", List.of()).forGetter(Caves::patches)
+        ).apply(i, Caves::new));
+    }
+
+    /**
+     * How one cave biome's patches are shaped. Order matters: the first entry whose cell matches owns
+     * the column, so list the rarest and deepest first.
+     *
+     * @param biome   the biome id. It still has to be in {@code #cityworld:cave_pool} to appear at all —
+     *                this only shapes it.
+     * @param cell    cell size in blocks; bigger means bigger, further-apart patches
+     * @param percent roughly what share of cells are this type, out of 100
+     * @param minY    lowest block Y the patch applies at, inclusive
+     * @param maxY    highest block Y the patch applies at, inclusive
+     */
+    public record CavePatch(String biome, int cell, int percent, int minY, int maxY) {
+
+        public static final Codec<CavePatch> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.STRING.fieldOf("biome").forGetter(CavePatch::biome),
+                Codec.INT.optionalFieldOf("cell", 96).forGetter(CavePatch::cell),
+                Codec.INT.optionalFieldOf("percent", 5).forGetter(CavePatch::percent),
+                Codec.INT.optionalFieldOf("minY", -60).forGetter(CavePatch::minY),
+                Codec.INT.optionalFieldOf("maxY", 20).forGetter(CavePatch::maxY)
+        ).apply(i, CavePatch::new));
+    }
+
     public record Overgrowth(boolean enabled, double intensity, boolean capVines) {
 
         /** Density multiplier: 1.0 = the tuned default, higher = more and longer vines/plants. */
