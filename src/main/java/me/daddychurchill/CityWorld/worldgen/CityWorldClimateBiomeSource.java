@@ -114,6 +114,9 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
             throw new IllegalStateException("CityWorld: this biome source is already bound to another world's "
                     + "context; rebinding would classify every biome against the wrong terrain.");
         this.context = context;
+        // The pool's membership came from the tag before any settings were reachable; now that this
+        // world's settings are, let them re-shape its geometry.
+        cavePool().configure(context.getSettings().caves);
     }
 
     @Override

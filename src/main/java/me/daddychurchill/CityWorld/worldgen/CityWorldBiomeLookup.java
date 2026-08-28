@@ -42,11 +42,6 @@ public final class CityWorldBiomeLookup {
     private CityWorldBiomeLookup() {
     }
 
-    /**
-     * How far below the terrain surface the cave pool starts applying. Keeps patches from bleeding
-     * into the surface biome (and its grass/foliage colour) on a hillside.
-     */
-    private static final int CAVE_MARGIN = 8;
 
     /**
      * The biome at a quart position, or {@code null} if the world context isn't bound yet (see the
@@ -63,8 +58,9 @@ public final class CityWorldBiomeLookup {
 
         Column column = COLUMNS.get().at(context, blockX, blockZ);
 
-        // Underground and inside a cave patch? Then the patch's biome wins over the surface's.
-        if (blockY < column.terrainY - CAVE_MARGIN) {
+        // Underground and inside a cave patch? Then the patch's biome wins over the surface's. The
+        // margin keeps a patch from bleeding into surface grass and foliage colour on a hillside.
+        if (blockY < column.terrainY - context.getSettings().caves.surfaceMargin()) {
             Holder<Biome> cave = source.cavePool().at(context.getWorldSeed(), blockX, blockY, blockZ);
             if (cave != null)
                 return cave;

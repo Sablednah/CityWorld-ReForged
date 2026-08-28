@@ -270,7 +270,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
         // Make room for any structure that expects the terrain to get out of its way. Vanilla does this
         // in the same pass, via the Beardifier density function — see carveForStructures.
-        carveForStructures(structureManager, chunk);
+        carveForStructures(context, structureManager, chunk);
 
         return CompletableFuture.completedFuture(chunk);
     }
@@ -297,8 +297,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * vertical offset is zero anywhere inside the box, so the beard is at full strength throughout it
      * and the 12-block kernel only softens the edges. We lose the soft edge, not the cavern.
      */
-    private void carveForStructures(StructureManager structureManager, ChunkAccess chunk) {
+    private void carveForStructures(CityWorldGenerator context, StructureManager structureManager,
+            ChunkAccess chunk) {
         try {
+            int halo = Math.max(0, context.getSettings().caves.structureCarveHalo());
+            int haloUp = Math.max(0, context.getSettings().caves.structureCarveHaloUp());
             ChunkPos pos = chunk.getPos();
             List<net.minecraft.world.level.levelgen.structure.StructureStart> starts =
                     structureManager.startsForStructure(pos, CityWorldChunkGenerator::carvesTerrain);
@@ -314,12 +317,12 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts)
                 for (net.minecraft.world.level.levelgen.structure.StructurePiece piece : start.getPieces()) {
                     net.minecraft.world.level.levelgen.structure.BoundingBox box = piece.getBoundingBox();
-                    if (box.maxX() + CARVE_HALO < minX || box.minX() - CARVE_HALO > minX + 15
-                            || box.maxZ() + CARVE_HALO < minZ || box.minZ() - CARVE_HALO > minZ + 15)
+                    if (box.maxX() + halo < minX || box.minX() - halo > minX + 15
+                            || box.maxZ() + halo < minZ || box.minZ() - halo > minZ + 15)
                         continue;
                     boxes.add(box);
                     regionMinY = Math.min(regionMinY, box.minY());
-                    regionMaxY = Math.max(regionMaxY, box.maxY() + CARVE_HALO_UP);
+                    regionMaxY = Math.max(regionMaxY, box.maxY() + haloUp);
                 }
             if (boxes.isEmpty())
                 return;
@@ -336,7 +339,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             for (int x = minX; x <= minX + 15; x++)
                 for (int z = minZ; z <= minZ + 15; z++)
                     for (int y = y0; y <= y1; y++) {
-                        double t = outsideness(boxes, x, y, z);
+                        double t = outsideness(boxes, x, y, z, halo, haloUp);
                         if (t >= 1.0)
                             continue;
                         // Inside a piece box, always carve. Outside, carve with a probability that
@@ -361,7 +364,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * is asymmetric.
      */
     private static double outsideness(List<net.minecraft.world.level.levelgen.structure.BoundingBox> boxes,
-            int x, int y, int z) {
+            int x, int y, int z, int halo, int haloUp) {
         double best = 1.0;
         for (net.minecraft.world.level.levelgen.structure.BoundingBox box : boxes) {
             int dx = Math.max(0, Math.max(box.minX() - x, x - box.maxX()));
@@ -371,7 +374,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             if (y < box.minY())
                 continue;
             int dy = Math.max(0, y - box.maxY());
-            double t = Math.max(Math.max(dx, dz) / (double) CARVE_HALO, dy / (double) CARVE_HALO_UP);
+            double t = Math.max(halo == 0 ? (dx + dz > 0 ? 1.0 : 0.0) : Math.max(dx, dz) / (double) halo,
+                    haloUp == 0 ? (dy > 0 ? 1.0 : 0.0) : dy / (double) haloUp);
             if (t < best)
                 best = t;
             if (best <= 0.0)
@@ -379,19 +383,6 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         }
         return best;
     }
-
-    /**
-     * How far the carve tapers past a piece box, horizontally and upward.
-     *
-     * <p>Vanilla's beard kernel has a radius of 12 and its contribution falls off smoothly over that
-     * distance. Carving only the box — the first version of this — left flat rectangular walls and
-     * ceilings, and left the gaps *between* pieces solid, so an ancient city read as a set of boxes
-     * rather than a cavern. A halo of this size closes those gaps and softens the edges.
-     */
-    private static final int CARVE_HALO = 10;
-
-    /** Upward halo. Bigger than none, smaller than {@link #CARVE_HALO}: headroom, not a chimney. */
-    private static final int CARVE_HALO_UP = 6;
 
     /** Wavelength of the raggedness on the carve's edge — small, so it reads as rock, not as hills. */
     private static final double CARVE_NOISE_SCALE = 1.0 / 9.0;

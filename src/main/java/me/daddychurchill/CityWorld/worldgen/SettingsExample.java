@@ -162,6 +162,52 @@ public final class SettingsExample {
                                       walk. Range 0.0 .. 1.0. (APOCALYPSE uses 0.3.)
 
             ============================================================================
+            caves  — the underground dials (cave biomes and structure caverns)
+            ============================================================================
+            WHICH cave biomes exist is the tag #cityworld:cave_pool, and WHICH vanilla structures
+            generate is #cityworld:allowed. This group is the numbers those two can't express.
+
+            structureCarveHalo    10  How far, horizontally, terrain is cleared past the pieces of a
+                                      structure whose terrain_adaptation is a "beard" — an ancient
+                                      city, in practice. Vanilla carves these with a density function
+                                      CityWorld has no equivalent of, so this stands in for it.
+                                      Too small and the city reads as a row of boxes instead of one
+                                      cavern; larger gives a roomier, emptier hall.
+            structureCarveHaloUp   6  The same, upward. Deliberately smaller — headroom, not a
+                                      chimney. Nothing is EVER carved below a piece: vanilla's beard
+                                      adds material there to hold the structure up, and digging it
+                                      out leaves the city hanging over a void.
+            surfaceMargin          8  How far below the terrain surface a cave patch begins, so a
+                                      patch can't bleed into surface grass/foliage colour on a
+                                      hillside.
+            patches               []  Per-biome patch shaping. EMPTY MEANS THE BUILT-IN DEFAULTS;
+                                      listing any entry replaces the lot, in the order given — and
+                                      order matters, because the first entry whose cell matches owns
+                                      the whole column (one cave type per column, never stacked). So
+                                      list the rarest and deepest first. A biome still has to be in
+                                      #cityworld:cave_pool to appear at all; this only shapes it —
+                                      which is also how you give a MODDED cave biome real geometry
+                                      instead of the fallback it gets from the tag alone.
+
+                                      Each entry: biome (required), cell, percent, minY, maxY.
+                                        cell     patch grid size in blocks — bigger means bigger,
+                                                 further-apart patches
+                                        percent  roughly what share of cells are this type, of 100
+                                        minY/maxY  the depth band the patch applies in
+
+                                      The built-in defaults, if you want to start from them:
+                                        deep_dark        cell 176  percent 4  minY -64  maxY -24
+                                        sulfur_caves     cell 112  percent 5  minY -64  maxY  -8
+                                        lush_caves       cell  80  percent 5  minY -40  maxY  40
+                                        dripstone_caves  cell  96  percent 6  minY -60  maxY  20
+
+                                      deep_dark's band stops at -24 for a reason: that is where
+                                      vanilla's ancient city generates (a real one spans -64..-10).
+                                      Raise its maxY and you advertise the biome above the depth
+                                      anything can use it. It is also what keeps ancient cities
+                                      clear of CityWorld's own cisterns (y 49) and sewers (y 57-62).
+
+            ============================================================================
             shops  — themed retail with villager job blocks (MODERN dressing)
             ============================================================================
             enabled     false  Villager job-site blocks so a store/farm reads as its trade and a
