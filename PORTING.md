@@ -2433,16 +2433,19 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
   {@code super.applyBiomeDecoration} (vanilla biome features) after CityWorld's pass, gated on
   {@code lot.style == NATURE} and {@code MODERN}. Verified: 841 chunks force-loaded, 0 failures, and
   the nature lots grow biome-appropriate vanilla vegetation — acacia/cherry/dark-oak/jungle/mangrove/
-  spruce/birch trees, bamboo, a full coral reef + seagrass in warm oceans, mushrooms. **Open (owner to
-  eyeball):** CityWorld's nature lots still place their own cover too, so wild forests may read *dense*
-  (CityWorld trees + vanilla trees); if so, suppress CityWorld's nature cover on MODERN nature lots so
-  vanilla is the sole wild decorator. Gaps vanilla can't place from terrain (mushroom fields, cave
-  biomes, deep dark) → the "bio-dome" set-piece. City-area cover (CityWorld's) is unchanged.
+  spruce/birch trees, bamboo, a full coral reef + seagrass in warm oceans, mushrooms. ~~**Open (owner to
+  eyeball):**~~ **CLOSED 2026-08-28 — owner: "nothing in nature is looking too much, whatever it's at
+  now looks good."** CityWorld's nature lots keep placing their own cover alongside vanilla's; the
+  doubled density that was feared did not materialise, so leave both in. City-area cover unchanged.
 
-- **"Zoo" / "Bio Dome" lot to cover biome-block gaps (owner, 2026-07).** If MODERN can't get *every*
-  naturally-spawning vanilla block to appear in the wild, add a cheeky special lot — a zoo or botanical
-  bio-dome — that showcases the stragglers (rare biome blocks, plants, spawn eggs' mobs) in one build.
-  A fun catch-all and a landmark. Rides the NatureContext set-piece machinery.
+- ~~**"Zoo" / "Bio Dome" lot to cover biome-block gaps (owner, 2026-07).**~~ **DONE** — both landed as
+  park-district attractions (themed zoo pens with animals, glass biome domes).
+
+  **Revisit only when Minecraft adds a weird animal or a rare biome worth showcasing** (owner,
+  2026-08-28). At that point the right move is not to hand-edit the lot: make the *contents*
+  data-driven — a datapack describing what is in each zoo pen and each biodome, so a new animal or
+  biome is a datapack line rather than a code change. Same treatment `#cityworld:cave_pool` got. Not
+  worth doing speculatively; do it the first time the hand-edit is actually needed.
 
 - **MODERN "overgrown" look + full 1.21 palette (owner, 2026-07).** Use the whole modern block range in
   MODERN's providers — and for a decayed/overgrown MODERN, drape **moss carpet, vines, leaf litter,
@@ -2512,3 +2515,41 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
   landmark building, a plaza, an underground vault, or a themed district at a would-be village /
   trial-chamber location. The placement machinery already computes good spots; we'd be repurposing
   them as hints rather than throwing them away.
+
+  **Considerably more approachable since 2026-08-27:** `createState` now builds a real, correctly
+  seeded `ChunkGeneratorStructureState` instead of an empty one, so the placement maths being read is
+  live rather than zeroed.
+
+  **Owner's steer (2026-08-28): fill those anchors from *schematics*, not new lot classes.** A
+  `village/` folder, an `outpost/` folder and so on; a spot rolls against the matching folder, and
+  **falls back to generating normally if the folder is empty or the roll comes up short**. That gives
+  server owners a drop-in way to theme the anchors — the schematics pipeline already supports a
+  drop-in folder — without a code change per structure type. *"One to think on."*
+
+  **⚠ The open question is footprint.** CityWorld plans in whole chunks and a lot has to know its own
+  shape before it builds; a schematic's dimensions are only known once it is read. So this needs a
+  decision about who adapts to whom: index the folder up front and pick a schematic that fits the lot,
+  reserve a lot group big enough for the biggest schematic in the folder, or let a schematic claim
+  neighbouring chunks the way the hospital campus does. Worth settling *before* writing any of it —
+  it is the difference between a small feature and a replanning change.
+
+- **Teach interiors what furniture *is*, via datapack (owner, 2026-08-28).** Today `Support/Furniture`
+  knows a fixed vocabulary of blocks. The idea: name the *roles* instead — `chair`, `table`,
+  `bookshelf`, `lighting`, `wall_decor`, `tabletop`, `bed`, `furniture` — so blocks can be added to a
+  role and pulled out of it from a pack, exactly as the build palettes work now.
+
+  **This is timely.** 26.3 reportedly adds **cushions** (a seat), **straw beds** (a bed) and **concrete
+  and wool steps** (more chairs) — three new blocks that would slot into three existing roles with no
+  code at all. Note the same 26.3 change is *also* the palette hazard already logged in queued item #4:
+  wool and concrete stairs are a gift to the furniture vocabulary and a menace to the wall palettes,
+  which assume full cubes. One drop, two opposite consequences — check both on day one.
+
+  **⚠ Tags alone are not enough, and this is the crux.** A tag says *what a block is*, not *which way it
+  faces*, and furniture is meaningless without orientation — a chair faces a table, a wall decoration
+  faces into the room. That is what the earlier "needs real feature work" note in queued item #5 was
+  getting at. **The mechanism that does solve it is NeoForge *data maps*** — `DataMapType`, attachable
+  to registry entries from a datapack (already visible in `HolderLookup.RegistryLookup.getData`). A
+  data map can carry per-block facts a tag cannot: which property holds the facing, whether the block
+  seats an entity, how tall it sits, whether it wants a wall behind it. **So the owner's instinct that
+  this should be datapack-driven is achievable — it is just data maps rather than tags.** Worth a spike
+  on one role (`chair`) before committing to the whole vocabulary.
