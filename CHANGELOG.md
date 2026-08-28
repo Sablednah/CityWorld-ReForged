@@ -5,6 +5,41 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 5.2.0
+
+### Added
+
+- **The End is reachable again — strongholds generate.** CityWorld suppressed every vanilla structure
+  so it could own the chunk, and that quietly took strongholds with it: no stronghold means no End
+  portal, so eyes of ender had nothing to find and a CityWorld world could not be finished by normal
+  play. Strongholds are back, on vanilla's own ring placement, so `/locate` and eyes of ender agree
+  with where they actually are.
+- **Trial chambers and ancient cities generate too.** Which vanilla structures a world keeps is the
+  block tag `#cityworld:allowed`, so a datapack can widen it — including to a structure from another
+  mod — without touching the mod.
+- **Real cave biomes underground: lush, dripstone and deep dark** — and **sulfur caves on Minecraft
+  26.2**. They come in patches rather than filling the whole underground, so they stay a find. Each
+  one decorates itself the way it does in a vanilla world: moss and glow berries, dripstone clusters,
+  sculk, sulfur and cinnabar veins. Which biomes are in the pool is the tag `#cityworld:cave_pool`,
+  so a modded cave biome can join it from a datapack.
+- **Biome varies with depth, not just position.** The biome map is three-dimensional now, which is
+  what lets cave biomes exist at all — and, as a side effect, what let ancient cities work, since
+  vanilla only places them in deep dark.
+- **The underground is tunable from a datapack** — a new `caves` settings group controls how big a
+  cavern an ancient city gets, how far below the surface cave patches start, and the size, rarity and
+  depth band of every cave type. Empty means the shipped defaults. See the configuration docs.
+
+### Changed
+
+- **Underground mob spawning differs where a cave biome landed.** Cave biomes carry their own spawn
+  lists — thinner than open caves, and the deep dark carries none at all, plus wardens. That is the
+  point of having real cave biomes rather than cave-shaped decoration, but it is a genuine gameplay
+  change and not only a cosmetic one.
+- **Vanilla structures can generate under a city.** A trial chamber may cut into a basement or a
+  sewer. Ancient cities sit far below both (they top out around y −10, where cisterns bottom out at
+  y 49), so those meet only the mine networks — which reads rather well, as though the miners downed
+  tools when they broke through.
+
 ## 5.1.0
 
 ### Added
