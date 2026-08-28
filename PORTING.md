@@ -588,6 +588,97 @@ own. Three consequences, all wanted:
 The open piece remains orientation — a chair has to face the table — which tags cannot carry and
 NeoForge **data maps** can. See the furniture entry in the parking lot.
 
+## Mod compatibility: what is actually portable (researched 2026-08-29)
+
+Read from the **Modrinth API and the mod jars themselves**, not from blog round-ups — every "best
+furniture mods 2026" article returns 1.21.1 mods, which is the trap this section exists to avoid.
+
+### ⚠ Almost nothing has ported to 1.21.11+/26.x yet
+
+That is the single most important fact for planning compat work, and it kills two of the three mods
+that were on the shortlist.
+
+| Mod | Downloads | Status on our versions |
+|---|---|---|
+| **Macaw's — the whole family** (furniture, doors, windows, roofs, fences, trapdoors, lights, paths, paintings, stairs, bridges) | ~70M combined | ✅ **1.21.9/10/11, 26.1, 26.1.1, 26.1.2, 26.2** |
+| **Biomes O' Plenty** | 33.8M | ✅ 1.21.9/10/11, 26.1.2, 26.2 |
+| Rechiseled | 7.7M | ✅ current |
+| **Fantasy's Furniture** | 1.2M | ✅ 1.21.10/11, 26.1.x, 26.2 |
+| FramedBlocks | 2.0M | ⚠ 26.1.x only |
+| Apotheosis | — | ⚠ 26.1.2 only |
+| **Twilight Forest** | — | ❌ 1.21.1 |
+| **Alex's Caves** | 10.4M | ❌ 1.20.1 |
+| Create / Farmer's Delight / Supplementaries / Another Furniture / Immersive Furniture / MrCrayfish's | huge | ❌ 1.21.1 or older |
+
+**Do not write the Twilight Forest or Alex's Caves packs yet.** Both were the owner's first picks and
+both are stranded. A pack for an absent mod is inert (all entries `"required": false`), so writing one
+costs nothing at runtime — but its block ids cannot be verified, and Alex's Caves is four versions
+back, where ids churn. Wait.
+
+### ✅ The best-behaved mods need no pack at all — verified
+
+**Biomes O' Plenty already contributes to 57 vanilla block tags**, including putting all of its planks
+into `#minecraft:planks`. Since 5.0.3 the CityWorld palettes resolve from those very tags, so **BoP
+woods already build CityWorld cities with zero configuration** — no datapack, no code, nothing to
+ship. That is `PALETTES.md`'s "no pack required" claim, now actually demonstrated against a 33M-download
+mod rather than asserted.
+
+**The lesson for planning:** compat work is only needed where a mod does *not* tag by vanilla vocabulary
+— which is exactly furniture, because vanilla has no furniture vocabulary to tag into.
+
+### 🪑 Macaw's Furniture is the right first target, and it is cheaper than expected
+
+Macaw's ships **its own per-kind block tags** — `#mcwfurnitures:chair`, `couch`, `desk`, `coffee_table`,
+`end_table`, `bookshelf`, `counter`, `kitchen_sink`, `wardrobe`, `drawer`, … 31 of them. So set
+*membership* is a one-line tag reference each, not an enumeration:
+
+```json
+{ "values": [ { "id": "#mcwfurnitures:chair", "required": false } ] }
+```
+
+…and it stays correct as Macaw's adds wood types. That is the same "reference whole tags" trick
+`PALETTES.md` already recommends to pack authors, paying off for us.
+
+Their block shapes, read from the blockstates:
+
+| Kind | Properties | What it means for us |
+|---|---|---|
+| `chair`, `stool_chair`, `striped_chair`, `modern_chair` | `facing` (4) | needs orientation — the hard case |
+| `table`, `glass_table` | `north/east/south/west` booleans | **self-connecting, like a fence** — no orientation at all, just place them adjacent |
+| `bookshelf_drawer`, counters | `facing` + `connection` (single/left/middle/right) | orientation, and self-connects along a run |
+| `kitchen_sink` | `facing` + `water` | orientation |
+
+**So a good half of the vocabulary needs no orientation data at all** — tables and counters arrange
+themselves. That makes a first pass much smaller than "solve furniture": ship the sets, place the
+self-connecting kinds, and only chairs and fronted cabinets need the data map.
+
+### ⚠ The orientation question is genuinely undecidable from data — it must be declared
+
+Vanilla's furnace maps `facing=north` to `y=0`; Macaw's chair maps `facing=west` to `y=0`. **That
+difference alone is only model authoring, not semantics** — the rotations could compensate. What
+cannot be read out of any JSON is the thing that actually matters: whether `facing=north` on a chair
+means *the sitter looks north* or *the chair's back is to the north*. Nothing in the blockstate, model
+or tag says which.
+
+**Therefore the data map cannot be generated — each entry needs a human to place one block and look.**
+That is a small, bounded, once-per-mod cost, and it is the honest reason this cannot be fully
+automated. It also settles the design: the data map must carry `facing_property` **and** a
+`front_is` semantic, because assuming a convention will be wrong for somebody.
+
+### Suggested order of work
+
+1. **Nothing** for Biomes O' Plenty — verify in-game and write it up as a supported mod. Free win.
+2. **`cityworld:furniture/*` sets**, designed against Macaw's since it is the only richly-tagged
+   furniture mod that is current. Start with the self-connecting kinds (tables, counters) which need
+   no orientation, and one chair to prove the data map.
+3. **Macaw's compat pack** — 31 tag references, plus a data map for the fronted kinds.
+4. Revisit Twilight Forest and Alex's Caves when they port; Alex's Caves is then one `#cityworld:cave_pool`
+   line, which is the whole point of having built that seam.
+
+**Fantasy's Furniture is not the place to start** despite being current: it ships only 23 blockstates
+and builds its furniture through a "furniture station" with dynamic variants, so there is no simple
+block-per-item vocabulary to tag. That is what the earlier "needs real feature work" note was sensing.
+
 ## Releasing — GitHub, and CurseForge automatically
 
 Publishing a GitHub release now publishes to CurseForge too, via
