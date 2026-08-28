@@ -143,11 +143,13 @@ brand-new stone family still needs a human. Both would suit MODERN (the palette 
 colours) and sulfur is an obvious mine-wall accent. 26.2 branch only; `"required": false` keeps the
 same tag file safe on older versions.
 
-**⚠ 26.3 is reported to add wool and concrete slabs and stairs — check the tags when it lands.** Our
-palettes assume every block in a tag is a **full cube**: they are used as walls, floors and ceilings.
-If Mojang puts wool slabs into `#minecraft:wool` (rather than a separate `#minecraft:wool_slabs`),
-CityWorld would start building *walls out of slabs* — holes in houses, wherever wool came up. Cheap
-to check, unpleasant to discover from a bug report. The same caution applies to `#c:concretes`.
+~~**⚠ 26.3 is reported to add wool and concrete slabs and stairs — check the tags when it lands.**~~
+**CHECKED 2026-08-28 against 26.3-snapshot-10: the hazard does not happen.** The worry was that our
+palettes assume every block in a tag is a **full cube** (they are used as walls, floors and ceilings),
+so wool slabs landing in `#minecraft:wool` would have had CityWorld building *walls out of slabs*.
+Mojang put them in **separate tags** — `#minecraft:wool_slabs`, `wool_stairs`, `concrete_slabs`,
+`concrete_stairs` — and `#minecraft:wool` still holds exactly the sixteen full cubes. Terracotta and
+concrete powder are untouched. **No action needed.** See the 26.3 reconnaissance below.
 
 The upside is real too: slab and stair variants of wool and concrete are exactly what the builders
 lack for edges, steps and roof trim, so they are worth wiring in deliberately — as their own shape
@@ -483,6 +485,53 @@ biome id** rather than being stored, so retuning a patch's size or rarity does n
 
 Defaults verified unchanged when this landed — same 43% ancient-city air, same pool, same plan hash.
 **That is the bar for any future "make it configurable" change**: it must not move the default world.
+
+## 26.3 reconnaissance (2026-08-28, snapshot 10)
+
+Read straight out of the server jar (`26.3-snapshot-10`, world version **5015**) before NeoForge has a
+release for it. NeoForge's `port/26.3` branch is live and moving — most recent commit the same day,
+*"Update NeoForm to fix worldgen deadlock"*, which is worth watching given how much of CityWorld is
+worldgen.
+
+### ✅ The palette hazard does not happen
+
+`#minecraft:wool` still holds exactly the sixteen full cubes. The new shapes are in **their own tags**
+(`wool_slabs`, `wool_stairs`, `concrete_slabs`, `concrete_stairs`), and 26.3 also adds a vanilla
+`#minecraft:concrete` of sixteen full cubes alongside the `#c:concretes` we use. Nothing to do.
+
+**The upside still stands and is now unblocked:** slab and stair variants of wool and concrete are
+exactly what the builders lack for edges, steps and roof trim — worth wiring in deliberately as their
+own shape vocabulary, off those new tags, never by widening the wall palettes.
+
+### 🎁 A whole wood family arrives for free
+
+26.3 adds **poplar** — 21 blocks, the full family (log, planks, stairs, slab, door, fence, gate, sign,
+hanging sign, shelf, button, pressure plate, trapdoor, sapling, stripped variants) plus **orange, red
+and yellow poplar leaves**. `poplar_planks` is already in `#minecraft:planks` and all three leaf
+colours in `#minecraft:leaves`, so **thirteen woods with no code at all**. This is the 5.0.3 tag work
+paying out exactly as designed, and the strongest argument yet for tag-first palettes.
+
+The autumn leaf colours are new in kind, not just in count — worth a look at whether the tree
+providers should use them deliberately rather than only as palette filler.
+
+### 🔧 Two catches for the furniture-roles idea
+
+Both of the owner's motivating examples turn out to have a wrinkle, and both push the same way:
+
+- **Cushions are entities, not blocks.** `world/entity/decoration/Cushion` extends
+  `BlockAttachedEntity` — the item-frame/painting family — and carries `removePassenger`, so they are
+  genuinely **sittable**: Minecraft has added sitting, which is why a cushion is not a block. The only
+  block-side tag is `cushion_uses_collision_shape` (what a cushion may rest *on*: cauldrons, hopper,
+  composter); `#minecraft:cushions` is an **item** tag. **A block tag or data map cannot place one** —
+  it needs the entity path, and it needs a supporting block underneath.
+- **`straw_bed` is not in `#minecraft:beds`.** It is `mineable/hoe` and `washed_away_by_fluids` —
+  tagged as straw, whatever `StrawBedBlock` does behaviourally. A `bed` role keyed off vanilla's tag
+  would silently miss it.
+
+**So the roles want to be our own `cityworld:furniture/*` tags, not aliases of vanilla ones** — which
+is what the owner proposed. Vanilla's tags describe what a block *is made of* or *how it is mined*,
+not what it is *for*, and those diverge exactly where furniture lives. Cushions then sit outside the
+block scheme entirely and want an `entity` role of their own if they are wanted at all.
 
 ## Releasing — GitHub, and CurseForge automatically
 
@@ -2543,6 +2592,12 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
   code at all. Note the same 26.3 change is *also* the palette hazard already logged in queued item #4:
   wool and concrete stairs are a gift to the furniture vocabulary and a menace to the wall palettes,
   which assume full cubes. One drop, two opposite consequences — check both on day one.
+
+  **⚠ Checked against 26.3-snapshot-10 (2026-08-28) — both motivating examples have a catch.**
+  Cushions are **entities** (sittable, `BlockAttachedEntity`), so no block tag or data map can place
+  one; `straw_bed` is **not** in `#minecraft:beds`. Conclusion: the roles must be our own
+  `cityworld:furniture/*` tags rather than aliases of vanilla's, because vanilla tags describe what a
+  block is made of, not what it is for. Details in "26.3 reconnaissance" above.
 
   **⚠ Tags alone are not enough, and this is the crux.** A tag says *what a block is*, not *which way it
   faces*, and furniture is meaningless without orientation — a chair faces a table, a wall decoration
