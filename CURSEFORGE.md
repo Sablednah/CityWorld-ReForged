@@ -1,3 +1,5 @@
+![CityWorld — reforged for NeoForge](https://media.forgecdn.net/attachments/description/1648913/description_c782ad1e-4ae0-4f12-a2b3-11b8862c5669.png)
+
 # CityWorld — reforged for NeoForge
 
 **Drop into an endless, hand-crafted-feeling city** — procedurally generated, seed-deterministic, and
