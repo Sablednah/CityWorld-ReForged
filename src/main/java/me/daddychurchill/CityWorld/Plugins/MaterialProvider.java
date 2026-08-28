@@ -223,8 +223,18 @@ public class MaterialProvider {
      * blobs. None of these are in the ore-replaceables tag, so they stay clean; the coppers also weather
      * for free. (The blackstone/basalt/etc. families are all here for variety.)
      *
-     * <p>The live palette is the {@code #cityworld:build/modern_stones} tag, which ships with exactly
-     * these blocks; this array is the compiled-in fallback and the source of the pool's weight.
+     * <p>The live palette is the {@code #cityworld:build/modern_stones} tag; this array is the
+     * compiled-in fallback and the source of the pool's <em>weight</em>.
+     *
+     * <p><b>The tag is deliberately wider than this array, and cannot not be.</b> It also carries 26.2's
+     * cinnabar and sulfur families, which have no {@code Material} constants — {@code Material.java} is
+     * generated from the 1.14 Bukkit names plus a curated extras list, and a constant for a block that
+     * exists on one Minecraft version and not the others could not compile across all three branches.
+     * Naming them in the tag with {@code "required": false} is what lets one file serve every version.
+     *
+     * <p>Note the weight is {@code MODERN_BUILD_STONES.length}, not the resolved tag size, so widening
+     * the tag diversifies <em>which</em> stone appears without making stone buildings any more common.
+     * That is the intended behaviour: keep it that way when adding families.
      */
     private static final Material[] MODERN_BUILD_STONES = {
             Material.BLACKSTONE, Material.POLISHED_BLACKSTONE, Material.POLISHED_BLACKSTONE_BRICKS,

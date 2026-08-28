@@ -5,6 +5,19 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **26.2's cinnabar and sulfur build with the rest.** Both new stone families join the MODERN and
+  APOCALYPSE decorative palette, so cities on Minecraft 26.2 grow deep-red cinnabar and yellow sulfur
+  buildings alongside the blackstone and copper ones. They are warm colours in a palette that was
+  short of them. Stone buildings do not become any *more* common — the palette just has more stones in
+  it. On earlier Minecraft versions the entries are simply absent.
+- **Palettes document how to take a block out**, not just how to add one. NeoForge tags support a
+  `remove` list, so a datapack can drop a single block — the sulfur, say — without replacing the whole
+  palette. See PALETTES.md.
+
 ## 5.2.0
 
 ### Added
