@@ -533,6 +533,61 @@ is what the owner proposed. Vanilla's tags describe what a block *is made of* or
 not what it is *for*, and those diverge exactly where furniture lives. Cushions then sit outside the
 block scheme entirely and want an `entity` role of their own if they are wanted at all.
 
+### 🏕 Vanilla has added abandoned camps
+
+`minecraft:abandoned_camp` is a real structure set in 26.3 — `random_spread`, spacing 37, separation 8,
+with **19 per-biome variants** (forest, taiga, cherry grove, savanna, swamp, pale garden, …) each a
+jigsaw whose start pool is `abandoned_camp/tent/<biome>`, at `surface_structures`. The owner's reaction,
+CityWorld having shipped campgrounds for a while: *"they stole our abandoned campsite idea (jk!)"*.
+
+Three practical notes:
+
+- **`terrain_adaptation` is `beard_thin`, which `carveForStructures` already handles** — it carves for
+  both beard kinds. So if the set were added to `#cityworld:allowed` it would adapt correctly with no
+  new code.
+- **But it is a *surface* structure**, so unlike strongholds/trials/ancient cities it competes with what
+  CityWorld builds. If it is ever allowed, it wants gating to nature lots rather than the whole world.
+- **The tents are built from wool stairs** — which is the owner's idea below, arriving from the same drop.
+
+Also new: **one genuine new biome, `dappled_forest`** (the other "new biome" entries are
+`tags/worldgen/biome/has_structure/` files, not biomes). It is a surface biome, so it belongs in the
+MODERN climate palette when 26.3 is ported — a small, concrete task rather than a decision.
+
+### 🎪 Wool stairs as tents (owner, 2026-08-28)
+
+Once 26.3 ships, CityWorld's own campgrounds can build **tents out of wool stairs** — two stair blocks
+back to back read as a pitched tent, in any of sixteen colours. 26.3-and-later only, so it wants the
+same `"required": false` treatment everything else version-specific gets, with the current campground
+as the fallback.
+
+## The direction: build "sets", fill them from tags (owner, 2026-08-28)
+
+**This is the architectural line to hold**, and it came out of the furniture discussion but generalises
+to everything CityWorld places:
+
+> Build **sets** for everything we can — then either auto-pull members from tags (wood, stone,
+> concrete: things vanilla already tags well), or top them up by hand each release for the unusual
+> things nobody tags.
+
+A "set" is a role — `chair`, `table`, `bookshelf`, `lighting`, `wall_decor`, `tabletop`, `bed`, and
+their equivalents for zoo pens, biodome contents, cave pools and build palettes. Each set is a tag we
+own. Three consequences, all wanted:
+
+- **Most growth is free.** Poplar joined thirteen woods with no code because planks are tagged. Any set
+  that maps onto a well-tagged vanilla family maintains itself.
+- **The unusual is a known, bounded cost.** A cushion, a straw bed, a sulfur family — things vanilla
+  does not tag by *purpose* — get added by hand once per release. That is the honest limit, and it is
+  small and predictable rather than open-ended.
+- **⭐ Third-party packs extend the same seam.** Because the sets are *our* tags, Apotheosis bookshelves
+  or a furniture mod's chairs join by adding to `cityworld:furniture/bookshelf` — no CityWorld release
+  required, and no per-mod code. This is what turns "per-mod compatibility datapacks" (queued item #5)
+  from a stack of bespoke work into one mechanism, and it is why the sets must be ours rather than
+  aliases of vanilla's tags: **vanilla tags describe what a block is made of, ours describe what it is
+  for**, and only the second is extensible by someone else.
+
+The open piece remains orientation — a chair has to face the table — which tags cannot carry and
+NeoForge **data maps** can. See the furniture entry in the parking lot.
+
 ## Releasing — GitHub, and CurseForge automatically
 
 Publishing a GitHub release now publishes to CurseForge too, via
