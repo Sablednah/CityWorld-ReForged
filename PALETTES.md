@@ -35,7 +35,7 @@ you add start appearing in that palette.
 | `cityworld:build/concrete` | house walls, factories, bunkers, oil platforms, water towers | `#c:concretes` |
 | `cityworld:build/concrete_powder` | factory and bunker tanks | `#minecraft:concrete_powder` |
 | `cityworld:build/stained_glass` | factory and bunker tanks | the sixteen dyed glasses |
-| `cityworld:build/modern_stones` | the decorative stone palette used by the MODERN and APOCALYPSE styles | 24 curated blocks |
+| `cityworld:build/modern_stones` | the decorative stone palette used by the MODERN and APOCALYPSE styles | 32 curated blocks (8 of them Minecraft 26.2+) |
 
 Palettes that are a **deliberate look** rather than "all of a family" are not tags and are not meant
 to be extended: the muted greyscale of unfinished buildings, the pale civic palette of government
@@ -66,6 +66,29 @@ Three things to know:
 - **You can reference whole tags**, not just blocks — `{ "id": "#examplemod:planks", "required":
   false }` picks up everything that mod tags, including blocks it adds later.
 
+### Taking one block *out* of a palette
+
+Don't like something CityWorld builds with? NeoForge tags support a `remove` list, so you can subtract
+a single block without `"replace": true` and re-listing everything else. To keep the cinnabar but drop
+the sulfur from the MODERN stone palette:
+
+`data/cityworld/tags/block/build/modern_stones.json`
+
+```json
+{
+  "values": [],
+  "remove": [
+    "minecraft:sulfur",
+    "minecraft:sulfur_bricks",
+    "minecraft:polished_sulfur",
+    "minecraft:chiseled_sulfur"
+  ]
+}
+```
+
+`values` still has to be present, even when empty. This is a NeoForge extension — it does nothing on
+other loaders, where the only options are add or wholesale replace.
+
 Drop the pack in the world's `datapacks/` folder, or in `config/openloader/data/` if you use
 OpenLoader, and **create a new world** — palettes are resolved once, when a world is first
 generated.
@@ -85,7 +108,7 @@ deliberate — it stops a heavily modded world from turning every city into a ti
 mean that in a pack with lots of wood, any one specific plank becomes uncommon.
 
 If you want a mod's blocks to be genuinely prominent, add them to a palette with fewer competitors
-(`cityworld:build/modern_stones` has 24) rather than to the biggest one.
+(`cityworld:build/modern_stones` has 32) rather than to the biggest one.
 
 ## Determinism
 
