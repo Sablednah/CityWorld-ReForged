@@ -158,15 +158,41 @@ public final class CaveRegions {
      */
     public static final class Pool {
 
-        private final List<Patch> patches;
+        private final List<Holder<Biome>> members;
+        private volatile List<Patch> patches;
 
         private Pool(HolderGetter<Biome> biomes) {
-            List<Holder<Biome>> members = biomes.get(CAVE_POOL)
+            this.members = biomes.get(CAVE_POOL)
                     .<HolderSet<Biome>>map(named -> named)
                     .map(set -> set.stream().map(h -> (Holder<Biome>) h).toList())
                     .orElse(List.of());
+            this.patches = build(List.of());
+        }
 
+        /**
+         * Re-shapes the pool from a world's settings. Membership still comes from the tag — this only
+         * changes geometry — so a settings entry for a biome outside the tag is ignored rather than
+         * conjuring it.
+         *
+         * <p>Separate from the constructor because the pool is built when {@code possibleBiomes()} is
+         * first asked, which happens before any chunk exists and therefore before the settings are
+         * reachable. Membership is all that early caller needs; geometry is only consulted once
+         * generation starts, by which point the context has bound and called this.
+         */
+        void configure(me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Caves caves) {
+            this.patches = build(caves.patches());
+        }
+
+        private List<Patch> build(List<CityWorldSettingsData.CavePatch> overrides) {
             List<Patch> built = new ArrayList<>(members.size());
+            if (!overrides.isEmpty()) {
+                // A pack that lists any patch is retuning the whole underground, in its own order.
+                for (CityWorldSettingsData.CavePatch o : overrides)
+                    members.stream().filter(h -> o.biome().equals(idOf(h))).findFirst()
+                            .ifPresent(h -> built.add(new Patch(h, o.cell(), o.percent(), o.minY(), o.maxY(),
+                                    saltFor(idOf(h)))));
+                return List.copyOf(built);
+            }
             // Named order first, so the rare/deep ones win a shared cell...
             for (String id : ORDER)
                 members.stream().filter(h -> id.equals(idOf(h))).findFirst()
@@ -175,7 +201,7 @@ public final class CaveRegions {
             for (Holder<Biome> h : members)
                 if (!ORDER.contains(idOf(h)))
                     built.add(patch(h));
-            this.patches = List.copyOf(built);
+            return List.copyOf(built);
         }
 
         /** Every pool biome available here — these must be in the biome source's {@code possibleBiomes()}. */
@@ -298,9 +324,16 @@ public final class CaveRegions {
     private static Patch patch(Holder<Biome> biome) {
         String id = idOf(biome);
         int[] g = GEOMETRY.getOrDefault(id, DEFAULT_GEOMETRY);
-        // Salt from the biome's own id, so every type — including one a datapack adds — gets an
-        // independent cell grid without anyone having to invent a constant for it.
-        return new Patch(biome, g[0], g[1], g[2], g[3], id.hashCode() * 0x9E3779B97F4A7C15L);
+        return new Patch(biome, g[0], g[1], g[2], g[3], saltFor(id));
+    }
+
+    /**
+     * Salt from the biome's own id, so every type — including one a datapack adds — gets an independent
+     * cell grid without anyone having to invent a constant for it. Derived, not stored, so retuning a
+     * patch's geometry in settings does not move its cells.
+     */
+    private static long saltFor(String biomeId) {
+        return biomeId.hashCode() * 0x9E3779B97F4A7C15L;
     }
 
     /**

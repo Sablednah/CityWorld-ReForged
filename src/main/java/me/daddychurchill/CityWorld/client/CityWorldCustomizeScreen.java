@@ -52,6 +52,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private final CityWorldSettingsData.Radius radius;
     private final CityWorldSettingsData.Naming naming;
     private final CityWorldSettingsData.Mobs mobs;
+    /** The underground dials (carve halo, cave patch shaping) — datapack-only, no widget here. */
+    private final CityWorldSettingsData.Caves caves;
 
     // Working state — mutated live by the widgets, read back in buildResult().
     private WorldStyle style;
@@ -98,6 +100,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         this.radius = initial.radius();
         this.naming = initial.naming();
         this.mobs = initial.mobs();
+        this.caves = initial.caves();
 
         loadFrom(initial);
     }
@@ -305,7 +308,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData data = new CityWorldSettingsData(
-                features, terrain, spawns, treasures, world, radius, naming, mobs, overgrowth, shops, decay);
+                features, terrain, spawns, treasures, world, radius, naming, mobs, overgrowth, shops, decay,
+                caves);
         return new Result(style, data);
     }
 
@@ -321,8 +325,9 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         // a ghost list behind the options and jammed the style cycle on a stale button. A fresh screen loads
         // the new style's defaults and recomputes the locks cleanly.
         // The reset is for the EDITABLE options; the groups this screen has no widgets for (radius,
-        // naming, mobs, the announce list) came from the player's preset and must survive the cycle —
-        // resetting them silently discarded a datapack's custom city radius or mob lists.
+        // naming, mobs, the announce list, the cave dials) came from the player's preset and must
+        // survive the cycle — resetting them silently discarded a datapack's custom city radius or
+        // mob lists.
         CityWorldSettingsData defaults = me.daddychurchill.CityWorld.CityWorldSettings.styleDefaults(newStyle);
         CityWorldSettingsData.World world = defaults.world();
         CityWorldSettingsData carried = new CityWorldSettingsData(defaults.features(), defaults.terrain(),
@@ -330,7 +335,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 new CityWorldSettingsData.World(world.treeStyle(), world.spawnTrees(), world.subSurfaceStyle(),
                         world.ruralnessLevel(), world.maxBuildingFloors(), world.broadcastSpecialPlaces(),
                         announcedLandmarks),
-                radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay());
+                radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves);
         this.minecraft.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.onDone));
     }
 

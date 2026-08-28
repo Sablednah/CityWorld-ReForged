@@ -110,6 +110,13 @@ public class CityWorldSettings {
 
     /** Overgrowth density multiplier: 1.0 = tuned default, higher = more and longer vines/plants. */
     public double overgrowthIntensity = CityWorldSettingsData.Overgrowth.DEFAULT_INTENSITY;
+
+    /**
+     * The underground dials — structure carve halo, cave-patch surface margin, and per-biome patch
+     * shaping. Carried through whole rather than flattened into fields: {@code patches} is a list, and
+     * the two consumers ({@code CaveRegions} and the chunk generator's carve) want the group as a unit.
+     */
+    public CityWorldSettingsData.Caves caves = CityWorldSettingsData.Caves.DEFAULT;
     /** Cap each outer wall-vine string with a glow lichen so live vine growth can't extend it. */
     public boolean capVines = false;
 
@@ -353,7 +360,7 @@ public class CityWorldSettings {
         CityWorldSettingsData.Overgrowth og2 = new CityWorldSettingsData.Overgrowth(v, og.intensity(), v);
         CityWorldSettingsData.Shops sh = new CityWorldSettingsData.Shops(v);
         return new CityWorldSettingsData(f, t2, d.spawns(), d.treasures(), d.world(), d.radius(), d.naming(),
-                d.mobs(), og2, sh, d.decay());
+                d.mobs(), og2, sh, d.decay(), d.caves());
     }
 
     /**
@@ -400,6 +407,7 @@ public class CityWorldSettings {
         includeOvergrowth = og.enabled();
         overgrowthIntensity = og.intensity();
         capVines = og.capVines();
+        caves = data.caves();
         includeShops = data.shops().enabled();
         CityWorldSettingsData.Decay dk = data.decay();
         buildingDecayIntensity = dk.buildingIntensity();
@@ -517,7 +525,7 @@ public class CityWorldSettings {
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
-                overgrowth, shops, decay);
+                overgrowth, shops, decay, caves);
     }
 
     private static List<String> ids(List<EntityType> types) {
