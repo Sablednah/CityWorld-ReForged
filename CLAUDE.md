@@ -51,6 +51,22 @@ export PATH="$JAVA_HOME/bin:$PATH"
   `runServer` generates using our generator. **Delete `run/world` to force regeneration.**
 - Gradle can't forward piped stdin to the server console — to verify in-world behaviour, register a
   temporary `ServerStartedEvent` listener that logs what you need, rather than piping commands.
+- **Build the version branches in their worktrees, don't switch branches here.** `master` is 1.21.11;
+  `mc26.1` and `mc26.2` are checked out permanently at
+  `../CityWorld-ReForged-worktrees/mc26.{1,2}`, each with a `tools` symlink back to this checkout's
+  JDKs (`tools/` is git-ignored, so a worktree has none of its own). Build with an explicit
+  `JAVA_HOME` — **1.21.11 needs JDK 21, 26.1+ needs JDK 25**:
+
+  ```bash
+  cd ../CityWorld-ReForged-worktrees/mc26.2
+  JAVA_HOME="$PWD/tools/jdk25" PATH="$PWD/tools/jdk25/bin:$PATH" ./gradlew build
+  ```
+
+  **Why, and it is not just tidiness:** the owner often has a second Claude session working in this
+  repo (the sablecraft.co.uk website one). Switching branches in the shared checkout rewrites its
+  files underneath it — `WEBSITE.md` does not exist on the version branches at all, so a switch tries
+  to delete it and aborts (or worse, lands mid-edit). Worktrees keep `master`'s tree still. They share
+  the Gradle cache, so a build there is no slower after the first.
 - **Kill the previous `runServer` before starting another.** A backgrounded one keeps port 25565, and
   the second run fails with `bind(..) failed: Address already in use` → `Failed to initialize server`
   → a crash report and an NPE in `overworld()` on shutdown. That reads like a code fault and isn't
