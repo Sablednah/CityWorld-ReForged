@@ -386,6 +386,76 @@ look in-game — that is deliberately the densest cave type now, and may be too 
 All three versions pass and `--compare` agrees. Jars deployed to the `CityWork-ReForged`, `26.1.2` and
 `26.2` CurseForge instances for playtest.
 
+## What the playtest found (2026-08-27/28) — all fixed, owner signed off
+
+The self-test proved every one of these *present and correctly formed*. It could not tell that two of
+them were **unusable**, which is the lesson worth keeping: presence checks do not catch aesthetics or
+enclosure.
+
+**Verified good on sight:** strongholds (eyes of ender point at them and they form), trial chambers,
+lush and dripstone caves, the deep dark reading as deep dark.
+
+### 1. Ancient cities generated entombed — no cavern
+
+`terrain_adaptation` is the field that decides this, and only the *beards* need terrain moved:
+stronghold is `bury` and trial chambers `encapsulate`, which is exactly why those two were right from
+the start. `ancient_city` is `beard_box`, and vanilla carves for it with the **`Beardifier` density
+function** fed into terrain generation. CityWorld's terrain is not density-based, so there was nothing
+to feed and the city was stamped into solid rock: locatable, perfectly built, sealed.
+
+**`carveForStructures` in `fillFromNoise` is the stand-in — and carving the piece boxes was not
+enough.** The first version cleared each bounding box exactly. That un-buried the city but produced
+flat rectangular walls and ceilings, and left the gaps *between* piece boxes solid, so it read as a
+row of boxes. Vanilla's beard kernel has a radius of 12 and falls off smoothly across it. So the carve
+now has a **halo** (`CARVE_HALO` 10 horizontal, `CARVE_HALO_UP` 6) in which it carves
+probabilistically against smooth simplex — ragged rock rather than static — and the halo is what
+closes the inter-piece gaps into one cavern. Owner: *"messy edges that looked natural, not carved or
+artificial — spot on."*
+
+**⚠ Never carve below a piece.** Vanilla's beard *adds* material underneath to support the structure;
+digging there hangs the city over a void.
+
+Measured air inside an ancient city's bounding box: **35%** box-only → **43%** with the halo. The
+self-test now asserts it, so entombment cannot come back unnoticed.
+
+### 2. Large dripstone hanging down into the deep dark
+
+The cave pool matched a type *per Y band*, so a column in both a `deep_dark` cell and a
+`dripstone_caves` cell became deep dark below `y -24` and dripstone above, with a hard seam. Dripstone
+placed just above the seam hung through it. **Vanilla's per-position biome check cannot catch this** —
+the feature's origin is legitimately in the dripstone quart, only its body crosses. Now the first
+matching *cell* owns the whole column: one cave type per column. Same root cause as lush caves sitting
+directly on top of a deep dark.
+
+### 3. Sulfur caves had fog and green water and nothing else
+
+**Sulfur is the one cave type whose look is a surface rule, not features.** Lush, dripstone and deep
+dark all decorate themselves through `PlacedFeature`s, which CityWorld now runs. Sulfur's rock comes
+from `sulfur_cave_gradient` in the overworld noise settings — and `buildSurface` is deliberately a
+no-op here because the ported shaper lays its own strata. So the biome arrived with only its
+client-side effects.
+
+That also silently disabled its features: `sulfur_spike` declares `replaceable_blocks` of
+`#minecraft:sulfur_spike_replaceable_blocks`, which is **only `sulfur` and `cinnabar`** — not
+`#base_stone_overworld` the way dripstone is. No sulfur rock, no spikes.
+
+`paintCaveWalls` lines the exposed cave surfaces, and it must be **veined, using both blocks**. Vanilla's
+rule is a 3D noise with cinnabar in the outer bands (`-0.4..-0.1`, `>0.4`), sulfur in the middle
+(`0.0..0.4`) and bare stone in the gaps. A uniform sulfur skin — the first attempt — loses the cinnabar
+entirely and looks painted on. Thresholds are vanilla's exactly; the noise is ours at `1/32` to match
+its `firstOctave: -5`, so the veins come out the same size.
+
+### 4. Two self-test faults found while chasing the above
+
+- **It bound port 25565** and collided with another mod's dev server in the same workspace. That
+  surfaces as `Failed to initialize server` plus an NPE in `overworld()` on shutdown — it reads exactly
+  like a CityWorld fault and is not one. Now 25599, override with `CITYWORLD_SELFTEST_PORT`.
+- **A failed run republished the previous run's report.** The script copies
+  `run/cityworld-selftest.json` out under the current version's name; a run that died before writing
+  one left the last run's file in place, so a failed 1.21.11 run published 26.2's numbers and the
+  cross-version compare agreed with itself. Observed, not hypothetical — it briefly had me believing
+  1.21.11 had sulfur caves. The file is now deleted before each run.
+
 One genuine 26.2 behaviour change worth knowing: `ChunkGenerator.findNearestMapStructure` now
 early-returns when the world's "Generate Structures" option is off, so that world-creation checkbox
 now actually gates `/locate` — it did not on 1.21.11.
