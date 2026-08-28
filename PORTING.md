@@ -460,6 +460,30 @@ One genuine 26.2 behaviour change worth knowing: `ChunkGenerator.findNearestMapS
 early-returns when the world's "Generate Structures" option is off, so that world-creation checkbox
 now actually gates `/locate` — it did not on 1.21.11.
 
+## The underground is datapack-tunable (2026-08-28)
+
+Everything in this arc is now configurable without touching code, and it splits three ways by
+mechanism — worth keeping straight, because the split is deliberate:
+
+| what | where | why there |
+|---|---|---|
+| which vanilla structures generate | tag `#cityworld:allowed` | a list of ids |
+| which cave biomes exist | tag `#cityworld:cave_pool` | a list of ids, and `"required": false` is how sulfur caves ship cross-version |
+| the numbers | `caves` settings group | tags cannot express geometry |
+
+`caves` carries `structureCarveHalo`/`structureCarveHaloUp` (the beard carve), `surfaceMargin`, and
+`patches` — per-biome `cell`/`percent`/`minY`/`maxY`. **Empty `patches` means the built-in defaults;
+listing any entry replaces the lot, in the order given.** That is also how a modded cave biome gets
+real geometry rather than the fallback it gets from the tag alone.
+
+**Two implementation notes.** Geometry is applied on `bindContext`, not at pool construction: the pool
+is built when `possibleBiomes()` is first asked, which is before any chunk exists and therefore before
+settings are reachable — membership is all that early caller needs. And patch **salts derive from the
+biome id** rather than being stored, so retuning a patch's size or rarity does not move its cells.
+
+Defaults verified unchanged when this landed — same 43% ancient-city air, same pool, same plan hash.
+**That is the bar for any future "make it configurable" change**: it must not move the default world.
+
 ## Releasing — GitHub, and CurseForge automatically
 
 Publishing a GitHub release now publishes to CurseForge too, via

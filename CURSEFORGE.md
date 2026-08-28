@@ -27,8 +27,14 @@ Pick **CityWorld** as your world type and you land in a living city:
   cave-spider nests, hanging lanterns, and vertical lift shafts; wet sewers; bunkers and basements with
   loot and mob spawners.
 - **Nature and caves** — mountains, seas with beaches, and (in MODERN/APOCALYPSE) wandering, branching
-  cave tunnels like vanilla's, rare **lush cave patches** (moss, glow-berry vines, dripleaf, pools with
-  axolotls/frogs/tropical fish, surface azaleas), and basalt-lined lava pools instead of a flat lava sea.
+  cave tunnels like vanilla's, and basalt-lined lava pools instead of a flat lava sea. Underground you
+  will find real **cave biomes** in patches — lush (moss, glow-berry vines, dripleaf, pools with
+  axolotls/frogs/tropical fish, surface azaleas), dripstone, deep dark, and sulfur caves on Minecraft
+  26.2 — each decorated the way vanilla decorates it.
+- **Vanilla structures where they belong** — **strongholds** (so eyes of ender work and the End is
+  reachable), **trial chambers**, and **ancient cities** in the deep dark. Villages and mineshafts stay
+  off: CityWorld builds its own. A datapack tag can widen the list, including to another mod's
+  structures.
 - **Inhabitants** — named villagers employed at their shop's actual trade, animals in the fields, fish in
   the sea, hostiles lurking in mines, sewers and the dark.
 - **Set-pieces** — castles, radio towers, oil platforms, flying saucers, hot-air balloons, campgrounds —
