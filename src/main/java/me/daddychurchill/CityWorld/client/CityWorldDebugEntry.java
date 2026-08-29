@@ -61,9 +61,11 @@ public class CityWorldDebugEntry implements DebugScreenEntry {
                 if (info.schematicName() != null)
                     displayer.addLine("[CityWorld] schematic " + info.schematicName());
             }
-            displayer.addLine(String.format("[CityWorld] street %d  sea %d  tree %d  evergreen %d  snow %d  maxFloors %d",
-                    context.streetLevel, context.seaLevel, context.treeLevel, context.evergreenLevel,
-                    context.snowLevel, context.getSettings().maxBuildingFloors));
+            // Two lines, not one: the single combined line ran past the width of the F3 overlay.
+            displayer.addLine(String.format("[CityWorld] street %d  sea %d  maxFloors %d",
+                    context.streetLevel, context.seaLevel, context.getSettings().maxBuildingFloors));
+            displayer.addLine(String.format("[CityWorld] tree %d  evergreen %d  snow %d",
+                    context.treeLevel, context.evergreenLevel, context.snowLevel));
         } catch (Throwable t) {
             // Never let the debug overlay crash the client; show that something went wrong instead.
             displayer.addLine("[CityWorld] (info unavailable)");

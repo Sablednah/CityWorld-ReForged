@@ -48,12 +48,10 @@ public class NatureLot extends IsolatedLot {
 		// CityWorld's own trees here — that doubling was making forests read too dense. Other styles keep
 		// placing them. The grass/snow surface is still laid down either way (vanilla needs it to plant on).
 		boolean cityworldTrees = !generator.isModernStyle();
-		// wildDecoration=VANILLA hands the wild over entirely: skip CityWorld's surface pass so vanilla
-		// (and any biome mod) is the sole decorator. The ground itself is already laid by the terrain
-		// pass, so there is still grass to plant on — this only drops CityWorld's own cover, cactus and
-		// MODERN icecap.
-		if (generator.getSettings().cityworldDecoratesWild())
-			generateSurface(generator, chunk, cityworldTrees);
+		// Always run the surface pass — wildDecoration=VANILLA suppresses CityWorld's *plants* inside it
+		// (see SurfaceProvider_Normal) rather than skipping the pass, so the MODERN icecap survives.
+		// Skipping the whole pass was the first version and it left the peaks bare.
+		generateSurface(generator, chunk, cityworldTrees);
 
 		// Biome-signature ground (sand deserts, badlands, mycelium, snowy plains) is applied by the base
 		// PlatLot.generateBlocks after this returns — so it covers farms/houses too, not just the wild.

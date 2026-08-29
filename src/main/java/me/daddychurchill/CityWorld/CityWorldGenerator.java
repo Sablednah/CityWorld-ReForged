@@ -327,7 +327,12 @@ public class CityWorldGenerator {
      * across the elevation bands.
      */
     public double getTemperature(int x, int z) {
-        return climate01(temperatureShape.noise(x, z, 0.5, 0.8));
+        double t = climate01(temperatureShape.noise(x, z, 0.5, 0.8));
+        // Lean the field warm without narrowing it: an exponent keeps 0 at 0 and 1 at 1 and lifts
+        // everything between, where a flat offset would clip the hot end off and delete the coldest
+        // ground. See World.DEFAULT_CLIMATE_WARMTH for why the default is not zero.
+        double warmth = settings == null ? 0.0 : settings.climateWarmth;
+        return warmth <= 0.0 ? t : Math.pow(t, Math.max(0.05, 1.0 - warmth));
     }
 
     public double getHumidity(int x, int z) {
