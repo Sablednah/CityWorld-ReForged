@@ -76,7 +76,13 @@ public final class CaveRegions {
      * shares with a later one. Biomes in the tag but not named here are appended in tag order.
      */
     private static final List<String> ORDER = List.of(
-            "minecraft:deep_dark", "minecraft:sulfur_caves", "minecraft:lush_caves", "minecraft:dripstone_caves");
+            "minecraft:deep_dark", "minecraft:sulfur_caves", "minecraft:lush_caves", "minecraft:dripstone_caves",
+            // Biomes O' Plenty's four underground biomes. Named here, and in the shipped cave_pool tag
+            // with "required": false, so they cost nothing when BoP is absent — the same trick that lets
+            // 26.2's sulfur caves ship from a source tree that also builds on 1.21.11. They are listed
+            // after the vanilla four so a vanilla type wins a shared cell.
+            "biomesoplenty:glowing_grotto", "biomesoplenty:crystalline_chasm",
+            "biomesoplenty:spider_nest", "biomesoplenty:fungal_jungle");
 
     /**
      * Per-biome patch geometry: {@code {cell size, percent of cells, minY, maxY}}.
@@ -92,7 +98,14 @@ public final class CaveRegions {
             "minecraft:deep_dark", new int[] { 176, 4, -64, -24 },
             "minecraft:sulfur_caves", new int[] { 112, 5, -64, -8 },
             "minecraft:lush_caves", new int[] { 80, 5, -40, 40 },
-            "minecraft:dripstone_caves", new int[] { 96, 6, -60, 20 });
+            "minecraft:dripstone_caves", new int[] { 96, 6, -60, 20 },
+            // BoP's underground four. Rarer than the vanilla types so a modded world still reads as
+            // CityWorld with guests, not as a BoP world; spider_nest rarest of all, since it is the one
+            // that bites.
+            "biomesoplenty:glowing_grotto", new int[] { 96, 4, -60, 0 },
+            "biomesoplenty:crystalline_chasm", new int[] { 112, 3, -64, -16 },
+            "biomesoplenty:spider_nest", new int[] { 128, 2, -48, 8 },
+            "biomesoplenty:fungal_jungle", new int[] { 96, 4, -40, 16 });
 
     /** What an unrecognised (modded, datapack-added) cave biome gets: a mid-depth, modest patch. */
     private static final int[] DEFAULT_GEOMETRY = { 96, 5, -60, 20 };
