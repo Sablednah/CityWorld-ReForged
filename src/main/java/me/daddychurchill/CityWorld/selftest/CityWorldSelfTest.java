@@ -100,6 +100,13 @@ public final class CityWorldSelfTest {
     /** Sampled well above any terrain, so it is always the surface classification. */
     private static final int BIOME_SWEEP_SURFACE_Y = 96;
 
+    /**
+     * The wide-coverage sweep: ±4km at 32-block steps, so 66,049 samples. Fine enough that "a few blocks
+     * wide" shows up as fragmentation rather than being stepped straight over.
+     */
+    private static final int WIDE_BLOCKS = 4096;
+    private static final int WIDE_STEP = 32;
+
     /** Depths sampled per column — one in each of the cave pool's Y bands. */
     private static final int[] BIOME_SWEEP_DEPTHS = { -56, -32, 0, 32 };
 
@@ -344,6 +351,7 @@ public final class CityWorldSelfTest {
 
         checkCaveDecorationVocabulary(level);
         checkTerraBlender(level, source, sampler);
+        checkWideBiomeCoverage(level, source, sampler);
     }
 
     /**
@@ -416,11 +424,23 @@ public final class CityWorldSelfTest {
             fail("no cave-only features resolved — cave biomes would be labelled but never decorated");
             return;
         }
+        // A cave biome may legitimately own a tree — BoP's fungal_jungle grows giant mushrooms, and its
+        // trees_fungal_jungle is exclusive to it, so the cave-only filter passes it through correctly.
+        // Those are safe: the pool only ever assigns a cave biome underground, so the "tree" is a cave
+        // tree. What must never appear is a feature belonging to a biome the SURFACE can produce.
+        java.util.Set<String> caveOwned = new java.util.TreeSet<>();
+        if (level.getChunkSource().getGenerator().getBiomeSource() instanceof CityWorldBiomes cb)
+            cb.cavePool().biomes().forEach(
+                    h -> h.unwrapKey().ifPresent(k -> caveOwned.add(k.identifier().getPath())));
         for (String surfaceish : List.of("trees_", "patch_pumpkin", "flower_plains", "patch_grass_plain"))
-            for (String name : names)
-                if (name.startsWith(surfaceish) || name.equals(surfaceish))
-                    fail("cave decoration would place '" + name + "' — a surface feature reached the "
-                            + "cave-only set, so cities will grow trees and pumpkins on their roads");
+            for (String name : names) {
+                if (!(name.startsWith(surfaceish) || name.equals(surfaceish)))
+                    continue;
+                if (caveOwned.stream().anyMatch(name::contains))
+                    continue; // named for a cave biome — its own, and only placed underground
+                fail("cave decoration would place '" + name + "' — a surface feature reached the "
+                        + "cave-only set, so cities will grow trees and pumpkins on their roads");
+            }
         if (names.stream().noneMatch(n -> n.contains("lush") || n.contains("dripstone") || n.contains("sculk")))
             fail("the cave-only set has none of lush/dripstone/sculk (" + names
                     + ") — the filter is excluding the very features the pass exists to place");
@@ -644,6 +664,75 @@ public final class CityWorldSelfTest {
         long d = Math.max(0, Math.min(box.maxZ(), pos.getMinBlockZ() + 15) - Math.max(box.minZ(), pos.getMinBlockZ()) + 1);
         long h = Math.max(0, Math.min(box.maxY(), chunk.getMaxY()) - Math.max(box.minY(), chunk.getMinY()) + 1);
         return w * d * h;
+    }
+
+    /**
+     * A wide, fine-grained sweep of the surface biome map — how much ground each biome actually covers,
+     * and how fragmented the result is.
+     *
+     * <p><b>Distinct-biome counts flatter a biome map.</b> A biome that appears as a handful of
+     * three-block slivers counts the same as one covering a province, so "86 biomes reachable" can
+     * coexist with a world that reads as noise. This samples every {@value #WIDE_STEP} blocks over
+     * ±{@value #WIDE_BLOCKS} and reports **share of ground** and an **edge density** — the percentage
+     * of samples whose eastern or southern neighbour is a different biome.
+     *
+     * <p>Edge density is the fragmentation number. Large coherent regions give a low figure; a
+     * speckled, sliver-ridden map gives a high one. It has no single "right" value, so it is reported
+     * rather than asserted — but comparing it between a modded and an unmodded world says plainly
+     * whether the modded path is fragmenting the map.
+     */
+    private void checkWideBiomeCoverage(ServerLevel level, BiomeSource source, Climate.Sampler sampler) {
+        int side = (WIDE_BLOCKS * 2) / WIDE_STEP + 1;
+        String[][] grid = new String[side][side];
+        Map<String, Integer> counts = new TreeMap<>();
+        int total = 0;
+
+        for (int ix = 0; ix < side; ix++)
+            for (int iz = 0; iz < side; iz++) {
+                int x = -WIDE_BLOCKS + ix * WIDE_STEP, z = -WIDE_BLOCKS + iz * WIDE_STEP;
+                String b = biomeId(source, QuartPos.fromBlock(x),
+                        QuartPos.fromBlock(BIOME_SWEEP_SURFACE_Y), QuartPos.fromBlock(z), sampler);
+                grid[ix][iz] = b;
+                counts.merge(b, 1, Integer::sum);
+                total++;
+            }
+
+        int edges = 0, pairs = 0;
+        for (int ix = 0; ix < side; ix++)
+            for (int iz = 0; iz < side; iz++) {
+                if (ix + 1 < side) { pairs++; if (!grid[ix][iz].equals(grid[ix + 1][iz])) edges++; }
+                if (iz + 1 < side) { pairs++; if (!grid[ix][iz].equals(grid[ix][iz + 1])) edges++; }
+            }
+
+        final int samples = total;
+        int modded = counts.entrySet().stream()
+                .filter(e -> !e.getKey().startsWith("minecraft:"))
+                .mapToInt(Map.Entry::getValue).sum();
+
+        report.put("biome.wide.columns", Integer.toString(total));
+        report.put("biome.wide.stepBlocks", Integer.toString(WIDE_STEP));
+        report.put("biome.wide.distinct", Integer.toString(counts.size()));
+        report.put("biome.wide.edgeDensityPct", Integer.toString(edges * 100 / Math.max(1, pairs)));
+        report.put("biome.wide.moddedGroundPct", Integer.toString(modded * 100 / Math.max(1, total)));
+
+        // Top biomes by ground covered — the share is what "does this biome really exist" means.
+        String top = counts.entrySet().stream()
+                .sorted((a, b) -> b.getValue() - a.getValue()).limit(20)
+                .map(e -> e.getKey() + "=" + (e.getValue() * 1000 / Math.max(1, samples)) / 10.0 + "%")
+                .toList().toString();
+        report.put("biome.wide.top", top);
+
+        // And the tail: biomes present but on almost no ground, which is what "a few blocks wide" looks
+        // like in the data.
+        long slivers = counts.values().stream().filter(v -> v * 1000 / Math.max(1, samples) < 1).count();
+        report.put("biome.wide.sliverBiomes", Long.toString(slivers) + " of " + counts.size() + " under 0.1%");
+    }
+
+    /** Full {@code namespace:path} — the wide probe needs the namespace to tell modded from vanilla. */
+    private static String biomeId(BiomeSource source, int quartX, int quartY, int quartZ,
+            Climate.Sampler sampler) {
+        return source.getNoiseBiome(quartX, quartY, quartZ, sampler).unwrapKey()
+                .map(k -> k.identifier().toString()).orElse("?");
     }
 
     /** The biome's registry path at a quart position, or {@code "?"} if it carries no key. */
