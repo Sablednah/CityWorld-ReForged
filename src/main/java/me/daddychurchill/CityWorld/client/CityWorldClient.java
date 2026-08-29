@@ -90,7 +90,12 @@ public final class CityWorldClient {
         var biomeReg = registries.lookupOrThrow(Registries.BIOME);
         boolean modernFamily = result.style() == WorldStyle.MODERN || result.style() == WorldStyle.APOCALYPSE;
         net.minecraft.world.level.biome.BiomeSource biomeSource = modernFamily
-                ? new CityWorldClimateBiomeSource(biomeReg)
+                // Both arguments, and the second one matters: it is the registry the TerraBlender
+                // bridge harvests from. Passing only the getter left it null, so a world created from
+                // this screen had NO modded surface biomes until it was restarted — at which point it
+                // reloads through the codec, which does supply it, and they appear. Cave biomes were
+                // never affected (they use the getter), which is exactly how the bug presented.
+                ? new CityWorldClimateBiomeSource(biomeReg, biomeReg)
                 : new CityWorldBiomeSource(
                         biomeReg,
                         biomeReg.getOrThrow(Biomes.DEEP_OCEAN),
