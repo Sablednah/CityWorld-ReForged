@@ -9,6 +9,17 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Added
 
+- **Biome mods work in CityWorld worlds.** Biomes O' Plenty and most other modern biome mods register
+  their biomes through **TerraBlender**, which CityWorld's own biome source never saw — so a CityWorld
+  world with BoP installed got its 450 blocks and none of its 69 biomes. It now reads what those mods
+  registered and folds them into the world. Measured with BoP installed: 113 biomes offered, 86 of them
+  actually appearing. **On by default** — installing a biome mod is the intent; turning them off is the
+  deliberate act (`world.useModdedBiomes`, or the Customize screen when such a mod is present). Costs
+  nothing when you have no biome mods.
+- **Biomes O' Plenty's cave biomes join the cave pool** — glowing grotto, crystalline chasm, spider
+  nest and fungal jungle turn up underground alongside the vanilla four. Shipped inert, so it does
+  nothing unless BoP is installed.
+
 - **26.2's cinnabar and sulfur build with the rest.** Both new stone families join the MODERN and
   APOCALYPSE decorative palette, so cities on Minecraft 26.2 grow deep-red cinnabar and yellow sulfur
   buildings alongside the blackstone and copper ones. They are warm colours in a palette that was

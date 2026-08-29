@@ -120,10 +120,16 @@ public class CityWorldSettings {
 
     /**
      * Let installed TerraBlender biome mods (Biomes O' Plenty and most others) contribute biomes.
-     * <b>Off by default</b> — it visibly changes what a world looks like, and it can only be judged by
-     * looking, so it is opt-in rather than a surprise. No effect when TerraBlender is absent.
+     *
+     * <p><b>On by default, deliberately.</b> Installing a biome mod is itself the statement of intent —
+     * a player who added Biomes O' Plenty expects to see its biomes, and having to find a switch to get
+     * them would read as CityWorld being broken. Turning them <em>off</em> is the deliberate act. It is
+     * also the consistent choice: BoP's blocks already appear on their own through the palette tags, so
+     * gating its biomes behind a toggle was the odd one out.
+     *
+     * <p>Costs nothing when no such mod is installed — the bridge simply finds no regions.
      */
-    public boolean useModdedBiomes = false;
+    public boolean useModdedBiomes = true;
     /** Cap each outer wall-vine string with a glow lichen so live vine growth can't extend it. */
     public boolean capVines = false;
 

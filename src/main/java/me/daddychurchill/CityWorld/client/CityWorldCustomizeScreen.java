@@ -89,7 +89,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private int maxBuildingFloors;
     private boolean broadcastSpecialPlaces;
     private java.util.List<String> announcedLandmarks; // server-owner config: carried through, no widget
-    private boolean useModdedBiomes; // datapack-only toggle: carried through, no widget
+    /** Shown only when TerraBlender is installed; otherwise carried through untouched. */
+    private boolean useModdedBiomes;
 
     public CityWorldCustomizeScreen(Screen parent, WorldStyle initialStyle, CityWorldSettingsData initial,
             Consumer<Result> onDone) {
@@ -270,6 +271,10 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, cycle("Max building floors", FLOOR_CHOICES, nearestFloors(maxBuildingFloors),
                 v -> Component.literal(String.valueOf(v)), v -> maxBuildingFloors = v));
         pair(row, onOff("Announce landmarks", broadcastSpecialPlaces, v -> broadcastSpecialPlaces = v));
+        // Only worth showing when a TerraBlender biome mod is actually installed — otherwise it is a
+        // switch that visibly does nothing, which reads as a bug rather than as "you have no such mod".
+        if (me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.present())
+            pair(row, onOff("Modded biomes", useModdedBiomes, v -> useModdedBiomes = v));
         flush(row);
     }
 
