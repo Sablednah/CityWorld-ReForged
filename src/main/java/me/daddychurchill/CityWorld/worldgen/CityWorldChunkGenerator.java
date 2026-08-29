@@ -587,7 +587,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         paintCaveWalls(context, level, chunk);
 
         me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x, pos.z);
-        boolean wild = context.isModernStyle() && lot != null
+        boolean wild = context.isModernStyle() && context.getSettings().vanillaNatureDecoration && lot != null
                 && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE
                 && lot.allowsWildDecoration();
 

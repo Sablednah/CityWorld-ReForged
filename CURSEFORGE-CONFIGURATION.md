@@ -272,6 +272,7 @@ Cave biomes bring their own mobs. The deep dark carries none at all, plus warden
 
 | Setting | Default | What it does |
 |---|---|---|
+| `vanillaNatureDecoration` | `true` | On wild (nature) land in MODERN/APOCALYPSE, run **vanilla's** biome decoration as well as CityWorld's — biome-appropriate trees, flowers, coral, sugar cane. Both passes run, so wild land is denser than either alone; set `false` to let CityWorld's own cover be the only decorator. Never applies to city, road or structure land, where vanilla decoration would carve lakes and trees through a build. |
 | `useModdedBiomes` | `true` | Let installed biome mods (Biomes O' Plenty and anything else built on **TerraBlender**) contribute biomes to the world. On by default, because installing a biome mod is itself the request — set it `false` to keep CityWorld's own biome selection. Does nothing at all if you have no such mod. Oceans, shores and peaks always stay CityWorld's, since those follow the terrain exactly. |
 
 ### `radius` — where cities may appear (distances in chunks; 16 blocks each)

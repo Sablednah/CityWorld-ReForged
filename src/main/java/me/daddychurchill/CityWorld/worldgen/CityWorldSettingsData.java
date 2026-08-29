@@ -378,7 +378,8 @@ public record CityWorldSettingsData(
             int maxBuildingFloors,
             boolean broadcastSpecialPlaces,
             java.util.List<String> announcedLandmarks,
-            boolean useModdedBiomes) {
+            boolean useModdedBiomes,
+            boolean vanillaNatureDecoration) {
 
         /** CLASSIC's default building-floor cap — the old hardcoded {@code absoluteAbsoluteMaximumFloorsAbove}. */
         public static final int DEFAULT_MAX_BUILDING_FLOORS = 20;
@@ -394,7 +395,7 @@ public record CityWorldSettingsData(
                 "airship", "saucer", "vault", "zoo", "biodome", "hospital", "schematic");
 
         public static final World DEFAULT = new World(TreeStyle.NORMAL, Odds.oddsLikely, SubSurfaceStyle.LAND, 0.0,
-                DEFAULT_MAX_BUILDING_FLOORS, false, DEFAULT_ANNOUNCED, true);
+                DEFAULT_MAX_BUILDING_FLOORS, false, DEFAULT_ANNOUNCED, true, true);
 
         private static final Codec<TreeStyle> TREE_STYLE_CODEC = Codec.STRING.xmap(
                 s -> parseEnum(TreeStyle.class, s, TreeStyle.NORMAL), TreeStyle::name);
@@ -410,7 +411,9 @@ public record CityWorldSettingsData(
                 Codec.BOOL.optionalFieldOf("broadcastSpecialPlaces", false).forGetter(World::broadcastSpecialPlaces),
                 Codec.STRING.listOf().optionalFieldOf("announcedLandmarks", DEFAULT_ANNOUNCED)
                         .forGetter(World::announcedLandmarks),
-                Codec.BOOL.optionalFieldOf("useModdedBiomes", true).forGetter(World::useModdedBiomes)
+                Codec.BOOL.optionalFieldOf("useModdedBiomes", true).forGetter(World::useModdedBiomes),
+                Codec.BOOL.optionalFieldOf("vanillaNatureDecoration", true)
+                        .forGetter(World::vanillaNatureDecoration)
         ).apply(i, World::new));
     }
 
