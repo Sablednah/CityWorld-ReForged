@@ -89,6 +89,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private int maxBuildingFloors;
     private boolean broadcastSpecialPlaces;
     private java.util.List<String> announcedLandmarks; // server-owner config: carried through, no widget
+    private boolean useModdedBiomes; // datapack-only toggle: carried through, no widget
 
     public CityWorldCustomizeScreen(Screen parent, WorldStyle initialStyle, CityWorldSettingsData initial,
             Consumer<Result> onDone) {
@@ -101,6 +102,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         this.naming = initial.naming();
         this.mobs = initial.mobs();
         this.caves = initial.caves();
+        this.useModdedBiomes = initial.world().useModdedBiomes();
 
         loadFrom(initial);
     }
@@ -301,7 +303,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 oddsOfTreasureInSewers.value, oddsOfTreasureInBuildings.value, oddsOfAlcoveInMines.value);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
                 treeStyle, spawnTrees.value, subSurfaceStyle, ruralnessLevel.value, maxBuildingFloors,
-                broadcastSpecialPlaces, announcedLandmarks);
+                broadcastSpecialPlaces, announcedLandmarks, useModdedBiomes);
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops);
@@ -334,7 +336,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 defaults.spawns(), defaults.treasures(),
                 new CityWorldSettingsData.World(world.treeStyle(), world.spawnTrees(), world.subSurfaceStyle(),
                         world.ruralnessLevel(), world.maxBuildingFloors(), world.broadcastSpecialPlaces(),
-                        announcedLandmarks),
+                        announcedLandmarks, useModdedBiomes),
                 radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves);
         this.minecraft.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.onDone));
     }

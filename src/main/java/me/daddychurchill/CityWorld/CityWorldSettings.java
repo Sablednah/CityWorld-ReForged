@@ -117,6 +117,13 @@ public class CityWorldSettings {
      * the two consumers ({@code CaveRegions} and the chunk generator's carve) want the group as a unit.
      */
     public CityWorldSettingsData.Caves caves = CityWorldSettingsData.Caves.DEFAULT;
+
+    /**
+     * Let installed TerraBlender biome mods (Biomes O' Plenty and most others) contribute biomes.
+     * <b>Off by default</b> — it visibly changes what a world looks like, and it can only be judged by
+     * looking, so it is opt-in rather than a surprise. No effect when TerraBlender is absent.
+     */
+    public boolean useModdedBiomes = false;
     /** Cap each outer wall-vine string with a glow lichen so live vine growth can't extend it. */
     public boolean capVines = false;
 
@@ -438,6 +445,7 @@ public class CityWorldSettings {
         oddsOfAlcoveInMines = r.oddsOfAlcoveInMines();
 
         CityWorldSettingsData.World w = data.world();
+        useModdedBiomes = w.useModdedBiomes();
         treeStyle = w.treeStyle();
         spawnTrees = w.spawnTrees();
         subSurfaceStyle = w.subSurfaceStyle();
@@ -509,7 +517,7 @@ public class CityWorldSettings {
                 oddsOfTreasureInSewers, oddsOfTreasureInBuildings, oddsOfAlcoveInMines);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
                 treeStyle, spawnTrees, subSurfaceStyle, ruralnessLevel, maxBuildingFloors, broadcastSpecialPlaces,
-                java.util.List.copyOf(announcedLandmarks));
+                java.util.List.copyOf(announcedLandmarks), useModdedBiomes);
         CityWorldSettingsData.Radius radius = new CityWorldSettingsData.Radius(
                 centerPointOfChunkRadiusX, centerPointOfChunkRadiusZ, constructChunkRadius, roadChunkRadius,
                 cityChunkRadius, buildOutsideRadius, minInbetweenChunkDistanceOfCities);

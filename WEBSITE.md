@@ -85,3 +85,20 @@ It would sit naturally as a short section on `/settings/`, with `PALETTES.md` as
 1. Update the requirements block **only if** the supported version matrix changed.
 2. Add anything genuinely new and player-visible from `CHANGELOG.md`.
 3. Leave the child pages alone unless a command, setting or style actually changed.
+
+## 5.2.0 (2026-08-28) — DONE
+
+Version matrix unchanged (still 1.21.11/26.1.2/26.2), so no requirements-table edit needed. What
+shipped and what changed on the site:
+
+- **Strongholds, trial chambers and ancient cities generate again** (CityWorld had suppressed all
+  vanilla structures, which silently broke the End - no stronghold, no portal). **Real cave biomes**
+  underground now too - lush, dripstone, deep dark, sulfur (26.2 only) - via a new 3D biome-by-depth
+  map. Updated the hub's "Underground" and "Nature & caves" feature cards, and added a callout box
+  about the End being reachable again plus the real gameplay change (cave biomes carry their own,
+  thinner mob-spawn lists; deep dark has none but wardens).
+- New `caves` settings group (`structureCarveHalo`/`structureCarveHaloUp`/`surfaceMargin`/`patches`) -
+  added to `/settings/`, values verified against `CityWorldSettingsData.java`'s `Caves`/`CavePatch`
+  records directly, not the changelog prose.
+- `/commands/` and `/styles/` left untouched, per this file's own checklist - nothing in 5.2.0 touched
+  either.
