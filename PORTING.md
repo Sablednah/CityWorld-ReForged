@@ -747,6 +747,52 @@ described.
 **Scale, for prioritisation:** BoP alone is 69 biomes and 33.8M downloads, and TerraBlender lists
 thousands of dependent files. This is the single widest-reach item in the parking lot.
 
+## Do we still need to hand-map vanilla biomes? (2026-08-29)
+
+Owner's question once the TerraBlender bridge existed: the MODERN source hand-maps 49 vanilla biomes
+through a 21-branch `classify` matrix — is that still necessary, and would 26.3's `dappled_forest` slot
+in on its own?
+
+**Short answer: no we don't strictly need it, yes it would slot in — but keep the hand map anyway.**
+
+### Vanilla's own climate map is harvestable, exactly like TerraBlender's
+
+`OverworldBiomeBuilder.addBiomes(Consumer<Pair<Climate.ParameterPoint, ResourceKey<Biome>>>)` is the
+authoritative vanilla biome-to-climate map. It is `protected`, but the class is public and non-final, so
+a subclass can expose it — and the result feeds the *same* `Climate.ParameterList` path the TerraBlender
+bridge already uses. The two are one mechanism with two sources.
+
+**And `dappled_forest` is already in it** (verified in 26.3-snapshot-10 bytecode: `OverworldBiomeBuilder`
+references `Biomes.DAPPLED_FOREST`). So on that path, every future vanilla biome arrives free.
+
+**⚠ Do not read `multi_noise_biome_source_parameter_list/overworld.json` and conclude anything** — it is
+literally `{"preset": "minecraft:overworld"}`, a reference to the code-built preset. It lists no biomes,
+which looks exactly like "the new biome is missing" if you grep it. It cost a wrong conclusion here.
+
+### Why the hand map stays the default anyway
+
+Vanilla's map is tuned for terrain generated *from* those climate axes. Ours is tuned for CityWorld's
+terrain, and does things vanilla's cannot:
+
+- **Decayed-nature worlds** desert everything — a whole-world mood no climate point expresses.
+- **The waterline** is exact. We know where the sea is, so beach/shore/deep-ocean follow terrain rather
+  than a continentalness guess.
+- **Elevation bands key to `treeLevel`/`evergreenLevel`/`snowLevel`** — the shaper's own numbers, so
+  biome and vegetation agree by construction.
+- **Deliberate rarities** — mushroom fields only in the warm, very-humid corner, swamp widened for
+  marshy shores.
+
+Switching wholesale would drop all of that and change every existing seed's biomes.
+
+**So: keep `classify` as the default, and offer vanilla's list as another opt-in source alongside
+TerraBlender's** — the plumbing is already there, it is one more harvest into the same parameter list.
+
+### And for `dappled_forest` specifically: just add it
+
+It is one entry in `PALETTE` and one branch in `classify` when 26.3 is ported. **Do not re-architect the
+biome source to avoid a two-line change** — that would be paying a large, world-changing cost to dodge a
+small, controlled one. The architecture question above is worth deciding on its own merits, not on this.
+
 ## Releasing — GitHub, and CurseForge automatically
 
 Publishing a GitHub release now publishes to CurseForge too, via
