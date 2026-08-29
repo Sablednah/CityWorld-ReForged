@@ -141,7 +141,17 @@ public class CityWorldSettings {
      * this off to let CityWorld's cover be the only decorator. City, road and structure lots are never
      * touched by it either way — vanilla decoration would carve lakes and trees through a build.
      */
-    public boolean vanillaNatureDecoration = true;
+    public CityWorldSettingsData.WildDecoration wildDecoration = CityWorldSettingsData.WildDecoration.BOTH;
+
+    /** Whether vanilla's biome features run on wild land. */
+    public boolean vanillaDecoratesWild() {
+        return wildDecoration != CityWorldSettingsData.WildDecoration.CITYWORLD;
+    }
+
+    /** Whether CityWorld's own surface pass runs on wild land. */
+    public boolean cityworldDecoratesWild() {
+        return wildDecoration != CityWorldSettingsData.WildDecoration.VANILLA;
+    }
     /** Cap each outer wall-vine string with a glow lichen so live vine growth can't extend it. */
     public boolean capVines = false;
 
@@ -464,7 +474,7 @@ public class CityWorldSettings {
 
         CityWorldSettingsData.World w = data.world();
         useModdedBiomes = w.useModdedBiomes();
-        vanillaNatureDecoration = w.vanillaNatureDecoration();
+        wildDecoration = w.wildDecoration();
         treeStyle = w.treeStyle();
         spawnTrees = w.spawnTrees();
         subSurfaceStyle = w.subSurfaceStyle();
@@ -536,7 +546,7 @@ public class CityWorldSettings {
                 oddsOfTreasureInSewers, oddsOfTreasureInBuildings, oddsOfAlcoveInMines);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
                 treeStyle, spawnTrees, subSurfaceStyle, ruralnessLevel, maxBuildingFloors, broadcastSpecialPlaces,
-                java.util.List.copyOf(announcedLandmarks), useModdedBiomes, vanillaNatureDecoration);
+                java.util.List.copyOf(announcedLandmarks), useModdedBiomes, wildDecoration);
         CityWorldSettingsData.Radius radius = new CityWorldSettingsData.Radius(
                 centerPointOfChunkRadiusX, centerPointOfChunkRadiusZ, constructChunkRadius, roadChunkRadius,
                 cityChunkRadius, buildOutsideRadius, minInbetweenChunkDistanceOfCities);

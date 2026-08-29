@@ -370,6 +370,26 @@ public record CityWorldSettingsData(
      *        highrises use the -64..319 headroom. The generator raises the building Y ceiling to fit
      *        this, clamped to the world's actual ceiling.
      */
+    /**
+     * Who decorates wild (nature) land in the MODERN family — CityWorld, vanilla, or both.
+     *
+     * <p>Only meaningful on MODERN/APOCALYPSE nature lots. City, road and structure land is always
+     * CityWorld's alone: vanilla decoration would carve lakes and plant trees through a build.
+     */
+    public enum WildDecoration {
+        /** Both passes run. The default, and the densest — CityWorld's cover under vanilla's. */
+        BOTH,
+        /** CityWorld's cover only; vanilla's biome features are skipped on wild land. */
+        CITYWORLD,
+        /**
+         * Vanilla's biome features only — and whatever biome mods add, which is the point of having it.
+         * CityWorld's surface pass is skipped entirely on wild land, so its cactus and its MODERN
+         * blue-ice peaks go too; peaks get vanilla's snow instead. (No CityWorld ice also means the
+         * illegal snow-on-ice state cannot arise, so nothing is lost but the look.)
+         */
+        VANILLA
+    }
+
     public record World(
             TreeStyle treeStyle,
             double spawnTrees,
@@ -379,7 +399,7 @@ public record CityWorldSettingsData(
             boolean broadcastSpecialPlaces,
             java.util.List<String> announcedLandmarks,
             boolean useModdedBiomes,
-            boolean vanillaNatureDecoration) {
+            WildDecoration wildDecoration) {
 
         /** CLASSIC's default building-floor cap — the old hardcoded {@code absoluteAbsoluteMaximumFloorsAbove}. */
         public static final int DEFAULT_MAX_BUILDING_FLOORS = 20;
@@ -395,10 +415,12 @@ public record CityWorldSettingsData(
                 "airship", "saucer", "vault", "zoo", "biodome", "hospital", "schematic");
 
         public static final World DEFAULT = new World(TreeStyle.NORMAL, Odds.oddsLikely, SubSurfaceStyle.LAND, 0.0,
-                DEFAULT_MAX_BUILDING_FLOORS, false, DEFAULT_ANNOUNCED, true, true);
+                DEFAULT_MAX_BUILDING_FLOORS, false, DEFAULT_ANNOUNCED, true, WildDecoration.BOTH);
 
         private static final Codec<TreeStyle> TREE_STYLE_CODEC = Codec.STRING.xmap(
                 s -> parseEnum(TreeStyle.class, s, TreeStyle.NORMAL), TreeStyle::name);
+        private static final Codec<WildDecoration> WILD_DECORATION_CODEC = Codec.STRING.xmap(
+                s -> parseEnum(WildDecoration.class, s, WildDecoration.BOTH), WildDecoration::name);
         private static final Codec<SubSurfaceStyle> SUBSURFACE_CODEC = Codec.STRING.xmap(
                 s -> parseEnum(SubSurfaceStyle.class, s, SubSurfaceStyle.LAND), SubSurfaceStyle::name);
 
@@ -412,8 +434,8 @@ public record CityWorldSettingsData(
                 Codec.STRING.listOf().optionalFieldOf("announcedLandmarks", DEFAULT_ANNOUNCED)
                         .forGetter(World::announcedLandmarks),
                 Codec.BOOL.optionalFieldOf("useModdedBiomes", true).forGetter(World::useModdedBiomes),
-                Codec.BOOL.optionalFieldOf("vanillaNatureDecoration", true)
-                        .forGetter(World::vanillaNatureDecoration)
+                WILD_DECORATION_CODEC.optionalFieldOf("wildDecoration", WildDecoration.BOTH)
+                        .forGetter(World::wildDecoration)
         ).apply(i, World::new));
     }
 
