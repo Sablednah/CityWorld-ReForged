@@ -68,10 +68,13 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
     /** The cave pool, resolved from the tag on first use; see {@link #cavePool()}. */
     private volatile CaveRegions.Pool cavePool;
 
-    public CityWorldClimateBiomeSource(HolderGetter<Biome> biomes) {
-        this(biomes, null);
-    }
-
+    /**
+     * <b>There is deliberately no getter-only constructor.</b> One existed, defaulting the lookup to
+     * {@code null}, and the single caller that used it (the Customize screen) silently produced worlds
+     * with no modded surface biomes — working only after a restart reloaded them through the codec.
+     * A constructor whose omission costs a feature and reports nothing is a trap; requiring both
+     * arguments makes the mistake impossible rather than merely documented.
+     */
     public CityWorldClimateBiomeSource(HolderGetter<Biome> biomes,
             net.minecraft.core.HolderLookup.RegistryLookup<Biome> lookup) {
         this.biomes = biomes;
