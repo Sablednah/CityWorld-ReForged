@@ -1735,6 +1735,25 @@ also what suppresses vanilla's own decoration. **Neighbour access is the live co
 #2): a `WorldGenRegion` only permits writes near the chunk being decorated, which is why
 `RealBlocks` refusing to look past its chunk edge matters more now than it did under Bukkit.
 
+### ⚠ Lesson: a Customize picker whose steps miss the default silently edits it
+
+`world.climateWarmth` (default `0.25`) was first wired to the screen's `Chance` widget. Two faults, and
+the invisible one is the one to remember.
+
+**Visible:** `Chance`'s labels are *probabilities* — "Never / Rare / Unlikely / Likely / Always" — so a
+temperature bias displayed as **"Unlikely"**, which means nothing.
+
+**Invisible, and worse:** `Chance.nearest(0.25)` snaps to the closest step, `UNLIKELY = 0.2`. The screen
+does not just *show* the wrong thing, it **hands 0.2 back to `buildResult()`**. Opening the Customize
+screen and pressing Done — touching nothing — would have silently changed the setting. The player sees
+a plausible label and gets a different world.
+
+**The rule: a picker's step list must contain the setting's own default, exactly.** If it does not, the
+widget is a value-editing round-trip masquerading as a display. When adding a knob, either reuse a
+scale whose steps already include the default, or give it its own — `WARMTH_CHOICES` and
+`FLOOR_CHOICES` are both purpose-built for this reason. `Chance` is for genuine odds only (treasure
+chances, spawn rates), never for a value that merely happens to be a `0..1` double.
+
 ### ⚠ Lesson: a "simplified" stub silently rewired the whole world
 
 `NatureContext.populateMap` was stubbed to a no-op in wave 2 on the reasoning that its job was to
