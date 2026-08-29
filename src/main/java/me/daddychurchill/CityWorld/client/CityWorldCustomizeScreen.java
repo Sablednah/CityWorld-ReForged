@@ -91,7 +91,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private java.util.List<String> announcedLandmarks; // server-owner config: carried through, no widget
     /** Shown only when TerraBlender is installed; otherwise carried through untouched. */
     private boolean useModdedBiomes;
-    private boolean vanillaNatureDecoration;
+    private CityWorldSettingsData.WildDecoration wildDecoration;
 
     public CityWorldCustomizeScreen(Screen parent, WorldStyle initialStyle, CityWorldSettingsData initial,
             Consumer<Result> onDone) {
@@ -105,7 +105,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         this.mobs = initial.mobs();
         this.caves = initial.caves();
         this.useModdedBiomes = initial.world().useModdedBiomes();
-        this.vanillaNatureDecoration = initial.world().vanillaNatureDecoration();
+        this.wildDecoration = initial.world().wildDecoration();
 
         loadFrom(initial);
     }
@@ -273,7 +273,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, cycle("Max building floors", FLOOR_CHOICES, nearestFloors(maxBuildingFloors),
                 v -> Component.literal(String.valueOf(v)), v -> maxBuildingFloors = v));
         pair(row, onOff("Announce landmarks", broadcastSpecialPlaces, v -> broadcastSpecialPlaces = v));
-        pair(row, onOff("Vanilla wild plants", vanillaNatureDecoration, v -> vanillaNatureDecoration = v));
+        pair(row, cycle("Wild plants", CityWorldSettingsData.WildDecoration.values(), wildDecoration,
+                e -> Component.literal(nice(e.name())), v -> wildDecoration = v));
         // Only worth showing when a TerraBlender biome mod is actually installed — otherwise it is a
         // switch that visibly does nothing, which reads as a bug rather than as "you have no such mod".
         if (me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.present())
@@ -311,7 +312,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 oddsOfTreasureInSewers.value, oddsOfTreasureInBuildings.value, oddsOfAlcoveInMines.value);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
                 treeStyle, spawnTrees.value, subSurfaceStyle, ruralnessLevel.value, maxBuildingFloors,
-                broadcastSpecialPlaces, announcedLandmarks, useModdedBiomes, vanillaNatureDecoration);
+                broadcastSpecialPlaces, announcedLandmarks, useModdedBiomes, wildDecoration);
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops);
@@ -344,7 +345,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 defaults.spawns(), defaults.treasures(),
                 new CityWorldSettingsData.World(world.treeStyle(), world.spawnTrees(), world.subSurfaceStyle(),
                         world.ruralnessLevel(), world.maxBuildingFloors(), world.broadcastSpecialPlaces(),
-                        announcedLandmarks, useModdedBiomes, vanillaNatureDecoration),
+                        announcedLandmarks, useModdedBiomes, wildDecoration),
                 radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves);
         this.minecraft.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.onDone));
     }
