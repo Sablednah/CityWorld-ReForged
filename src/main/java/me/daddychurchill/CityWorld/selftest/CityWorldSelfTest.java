@@ -324,6 +324,55 @@ public final class CityWorldSelfTest {
                     + "deep_dark unreachable means ancient cities can never place");
 
         checkCaveDecorationVocabulary(level);
+        checkTerraBlender(level, source, sampler);
+    }
+
+    /**
+     * How much of an installed TerraBlender mod's biome set CityWorld can actually reach.
+     *
+     * <p><b>Reachability is the measurement that matters, not presence.</b> Vanilla's climate points
+     * have seven axes and CityWorld models a subset; if the mapping from CityWorld's climate into those
+     * axes is too narrow, the parameter list keeps returning the same handful of biomes and the
+     * integration looks like it works while doing almost nothing. That failure is silent — no
+     * exception, no missing mod, just a suspiciously dull world. So this reports **harvested vs
+     * actually reachable** and lets a human judge the ratio.
+     *
+     * <p>Reports only, never fails: with no TerraBlender installed the honest answer is zero, and that
+     * is not a fault.
+     */
+    private void checkTerraBlender(ServerLevel level, BiomeSource source, Climate.Sampler sampler) {
+        report.put("terraBlender.modPresent", Boolean.toString(
+                me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.present()));
+        if (!(source instanceof me.daddychurchill.CityWorld.worldgen.CityWorldClimateBiomeSource climate))
+            return;
+        var bridge = climate.terraBlender();
+        if (bridge == null) {
+            report.put("terraBlender.harvested", "0");
+            return;
+        }
+        report.put("terraBlender.harvested", Integer.toString(bridge.biomes().size()));
+
+        if (!(level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator generator))
+            return;
+        CityWorldGenerator context = generator.getContext(level);
+
+        // Sweep the same grid the biome sweep uses, asking the bridge directly with CityWorld's axes —
+        // so this measures the axis mapping, independent of whether useModdedBiomes is switched on.
+        java.util.Set<String> reached = new java.util.TreeSet<>();
+        for (int x = -BIOME_SWEEP_BLOCKS; x <= BIOME_SWEEP_BLOCKS; x += BIOME_SWEEP_STEP)
+            for (int z = -BIOME_SWEEP_BLOCKS; z <= BIOME_SWEEP_BLOCKS; z += BIOME_SWEEP_STEP) {
+                var hit = bridge.find(Climate.target(
+                        (float) (context.getTemperature(x, z) * 2.0 - 1.0),
+                        (float) (context.getHumidity(x, z) * 2.0 - 1.0),
+                        (float) context.getContinentalness(x, z),
+                        (float) context.getErosion(x, z),
+                        0.0F,
+                        (float) context.getWeirdness(x, z)));
+                if (hit != null)
+                    hit.unwrapKey().ifPresent(k -> reached.add(k.identifier().toString()));
+            }
+        report.put("terraBlender.reachable", Integer.toString(reached.size()));
+        report.put("terraBlender.reachedSample", reached.stream().limit(24).toList().toString());
     }
 
     /**

@@ -735,6 +735,38 @@ Whatever TerraBlender can produce has to be in the biome source's `possibleBiome
 filters those biomes' features out and drops any structure set gated on them — the exact failure that
 made ancient cities impossible before wave A. Harvest the biome list once at bind time and fold it in.
 
+### ✅ Measured with TerraBlender + Biomes O' Plenty actually installed (2026-08-29)
+
+Not a thought experiment — the two mods (plus **GlitchCore**, which BoP requires and which is easy to
+forget) were dropped into `run/mods/` and the self-test run against them:
+
+| | |
+|---|---|
+| `terraBlender.modPresent` | `true` |
+| **biomes harvested** from TerraBlender regions | **113** |
+| **reachable through CityWorld's axes** | **86** (76%) |
+| `possibleBiomes()` | 52 → **113** |
+| MODERN plan hash | `28fc3789` — unchanged |
+
+Reached biomes are real and varied — `bayou`, `lavender_field`, `ominous_woods`, `redwood_forest`,
+`pumpkin_patch`, `jade_cliffs`, `hot_springs`, `mediterranean_forest`, `auroral_garden`…
+
+**86 of 113 is the number that matters**, because the predicted failure was the mapping collapsing to a
+handful. It did not. Three modelled axes plus a terrain-derived continentalness reach three quarters of
+a large modded biome set.
+
+**The ~27 unreachable are explained, not mysterious.** The bridge is queried at `depth = 0` (a surface
+point), so anything wanting depth — BoP's `glowing_grotto`, `crystalline_chasm`, `spider_nest`,
+`fungal_jungle` — cannot be selected, and nor can biomes needing continentalness extremes our terrain
+never produces. **That is an opportunity rather than a defect:** BoP's cave biomes belong in
+`#cityworld:cave_pool`, where they would work today via a datapack, not in the surface lookup.
+
+**⚠ Repeating this measurement:** put TerraBlender, BoP **and GlitchCore** in `run/mods/` and run
+`scripts/selftest.sh`. Without GlitchCore, BoP refuses to load with *"requires glitchcore 21.11.0.3 or
+above"* and the run fails before any of this is reached. The jars are deliberately **not** left there —
+they change `biome.possible` from 52 to 113 and would make the baseline report confusing for anyone who
+did not expect it.
+
 ### Related gap this exposes
 
 `CityWorldClimateBiomeSource` has **49 biomes hardcoded in Java** and a hand-written climate matrix (21
