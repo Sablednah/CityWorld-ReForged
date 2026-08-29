@@ -315,6 +315,25 @@ public final class CityWorldSelfTest {
         report.put("biome.sweep.deep", deepBiomes.keySet().toString());
         report.put("biome.sweep.poolHits", Integer.toString(poolHits));
 
+        // The climate itself, not just which biomes exist. climateWarmth leans the temperature field
+        // warm, and "did it actually move, and by how much" is only answerable as a mean — a list of
+        // distinct biomes shows presence, never proportion.
+        if (level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator gen) {
+            CityWorldGenerator ctx = gen.getContext(level);
+            double sum = 0; int n = 0, warm = 0, cold = 0;
+            for (int x = -BIOME_SWEEP_BLOCKS; x <= BIOME_SWEEP_BLOCKS; x += BIOME_SWEEP_STEP)
+                for (int z = -BIOME_SWEEP_BLOCKS; z <= BIOME_SWEEP_BLOCKS; z += BIOME_SWEEP_STEP) {
+                    double t = ctx.getTemperature(x, z);
+                    sum += t; n++;
+                    if (t >= 0.6) warm++;
+                    else if (t < 0.35) cold++;
+                }
+            report.put("climate.meanTemperature", String.format("%.4f", sum / Math.max(1, n)));
+            report.put("climate.warmColumnsPct", Integer.toString(warm * 100 / Math.max(1, n)));
+            report.put("climate.coldColumnsPct", Integer.toString(cold * 100 / Math.max(1, n)));
+            report.put("climate.warmthSetting", String.format("%.2f", ctx.getSettings().climateWarmth));
+        }
+
         if (columnsVaryingWithDepth == 0)
             fail("biome never varies with depth across " + columns
                     + " columns — getNoiseBiome is still answering per column (2D), so structures "
