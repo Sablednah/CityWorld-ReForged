@@ -169,6 +169,14 @@ public class CityWorldGenerator {
     private final me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator temperatureShape;
     private final me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator humidityShape;
 
+    /**
+     * The two extra climate axes vanilla's biome parameters use and CityWorld had no equivalent of —
+     * see {@link #getErosion} and {@link #getWeirdness}. Only consulted when something asks for a full
+     * vanilla-shaped climate point, i.e. the TerraBlender bridge.
+     */
+    private final me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator erosionShape;
+    private final me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator weirdnessShape;
+
     /** Seeded terracotta colour table for badlands, sampled by elevation; see {@link #badlandsBandAt}. */
     private final me.daddychurchill.CityWorld.compat.Material[] badlandsBands;
     private final me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator badlandsOffsetShape;
@@ -268,6 +276,18 @@ public class CityWorldGenerator {
         humidityShape = new me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator(worldSeed + 137, 2);
         humidityShape.setScale(0.0012);
 
+        // Erosion and weirdness: two MORE independent fields, on their own seeds and their own scales.
+        // Vanilla generates continentalness, erosion and ridges as three separate 2D noises and derives
+        // terrain FROM them; CityWorld goes the other way, so the honest equivalent is to add the axes
+        // it lacks rather than to compute them from the terrain it already has. Deriving them from
+        // elevation would put several axes on one scale, and any modded biome asking for a combination
+        // we cannot express — high erosion at low elevation, say — could then never be chosen.
+        // Continentalness is the deliberate exception; see getContinentalness.
+        erosionShape = new me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator(worldSeed + 211, 2);
+        erosionShape.setScale(0.0011);
+        weirdnessShape = new me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator(worldSeed + 313, 2);
+        weirdnessShape.setScale(0.0016);
+
         // Badlands terracotta bands: a seeded colour table sampled by elevation, with a gentle low-freq
         // offset so the stripes undulate instead of being dead flat (mirrors vanilla's mesa surface).
         badlandsBands = buildBadlandsBands(worldSeed);
@@ -312,6 +332,50 @@ public class CityWorldGenerator {
 
     public double getHumidity(int x, int z) {
         return climate01(humidityShape.noise(x, z, 0.5, 0.8));
+    }
+
+    /**
+     * Vanilla's <em>erosion</em> axis, in {@code -1..1} — how worn-down the land reads as. Its own noise
+     * field, independent of terrain and of the other axes.
+     */
+    public double getErosion(int x, int z) {
+        return clampUnit(erosionShape.noise(x, z, 0.5, 0.8));
+    }
+
+    /**
+     * Vanilla's <em>weirdness</em> axis (its "ridges"), in {@code -1..1} — what picks biome variants.
+     * Its own noise field, likewise independent.
+     */
+    public double getWeirdness(int x, int z) {
+        return clampUnit(weirdnessShape.noise(x, z, 0.5, 0.8));
+    }
+
+    /**
+     * Vanilla's <em>continentalness</em> axis, in {@code -1..1} — and the one axis deliberately taken
+     * from the terrain rather than from a fresh noise field.
+     *
+     * <p>Continentalness means "how far inland is this", which in CityWorld is a fact we already know
+     * exactly: the column's height against sea level. Rolling a separate noise for it would put ocean
+     * biomes on dry hilltops, which is a worse failure than the correlation it would avoid.
+     *
+     * <p><b>This is not the same axis as depth</b>, even though both touch elevation. Depth varies
+     * <em>within</em> a column (surface to bedrock) and continentalness does not vary with Y at all;
+     * they are perpendicular, so tying both to the height map costs nothing.
+     */
+    public double getContinentalness(int x, int z) {
+        int terrainY = getFarBlockY(x, z);
+        if (terrainY <= seaLevel) {
+            // Below the waterline: -1 at the bottom of the deep sea, ~0 at the shore.
+            int deep = Math.max(1, seaLevel - deepseaLevel);
+            return clampUnit(-1.0 + (double) (terrainY - deepseaLevel) / deep);
+        }
+        // Above it: 0 at the shore rising towards +1 at the top of the land range.
+        return clampUnit((double) (terrainY - seaLevel) / Math.max(1, landRange));
+    }
+
+    /** Clamp to vanilla's {@code -1..1} climate range. */
+    private static double clampUnit(double noise) {
+        return Math.max(-1.0, Math.min(1.0, noise));
     }
 
     private static double climate01(double noise) {
