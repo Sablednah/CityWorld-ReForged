@@ -277,7 +277,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, onOff("Announce landmarks", broadcastSpecialPlaces, v -> broadcastSpecialPlaces = v));
         pair(row, cycle("Wild plants", CityWorldSettingsData.WildDecoration.values(), wildDecoration,
                 e -> Component.literal(nice(e.name())), v -> wildDecoration = v));
-        pair(row, chance("Climate warmth", Chance.nearest(climateWarmth), v -> climateWarmth = v.value));
+        pair(row, cycle("Climate warmth", WARMTH_CHOICES, nearestWarmth(climateWarmth),
+                CityWorldCustomizeScreen::warmthLabel, v -> climateWarmth = v));
         // Only worth showing when a TerraBlender biome mod is actually installed — otherwise it is a
         // switch that visibly does nothing, which reads as a bug rather than as "you have no such mod".
         if (me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.present())
@@ -385,6 +386,33 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
      *  hand-edited value between two choices displays as the nearest one (the same rounding
      *  {@link Chance#nearest} does) and is only overwritten if the player actually turns the dial. */
     private static final Integer[] FLOOR_CHOICES = { 8, 12, 16, 20, 24, 30, 40, 50, 60 };
+
+    /**
+     * Climate-warmth steps.
+     *
+     * <p><b>Deliberately not the {@link Chance} widget.</b> This was first wired to it and the screen
+     * showed the 0.25 default as <em>"Unlikely"</em> — Chance's labels are probabilities, which this is
+     * not. Worse, {@code Chance.nearest(0.25)} snapped to {@code UNLIKELY} = 0.2, so simply opening the
+     * screen and saving would have quietly changed the setting. Its own scale, with its own words.
+     */
+    private static final Double[] WARMTH_CHOICES = { 0.0, 0.10, 0.20, 0.25, 0.35, 0.50 };
+
+    private static Component warmthLabel(double v) {
+        String name = v <= 0.0 ? "Off"
+                : v < 0.15 ? "Slightly warmer"
+                : v < 0.23 ? "Warmer"
+                : v < 0.30 ? "Warmer (default)"
+                : v < 0.45 ? "Much warmer" : "Tropical";
+        return Component.literal(name);
+    }
+
+    private static Double nearestWarmth(double value) {
+        Double best = WARMTH_CHOICES[0];
+        for (Double choice : WARMTH_CHOICES)
+            if (Math.abs(choice - value) < Math.abs(best - value))
+                best = choice;
+        return best;
+    }
 
     private static Integer nearestFloors(int value) {
         Integer best = FLOOR_CHOICES[0];
