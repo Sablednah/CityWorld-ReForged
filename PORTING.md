@@ -679,6 +679,74 @@ automated. It also settles the design: the data map must carry `facing_property`
 and builds its furniture through a "furniture station" with dynamic variants, so there is no simple
 block-per-item vocabulary to tag. That is what the earlier "needs real feature work" note was sensing.
 
+## ⭐ TerraBlender: one integration, most biome mods (researched 2026-08-29)
+
+**The highest-leverage compat idea found so far, and the API supports it.** The owner spotted that BoP
+does not register biomes itself — it hooks **TerraBlender**, the library nearly every modern biome mod
+uses. Supporting TerraBlender once would make all of them contribute to CityWorld worlds.
+
+**TerraBlender is fully current** — 37.8M downloads, NeoForge, on 1.21.9/10/11, 26.1.x and 26.2.
+
+### The read path exists and is public — verified from the jar
+
+This was the thing in doubt: TerraBlender's API is built for *registering* regions, and CityWorld needs
+to *read* them. It can.
+
+```java
+List<Region> regions = Regions.get(RegionType.OVERWORLD);        // public static
+region.addBiomes(biomeRegistry, pair -> collect(pair));          // public
+//   pair = Pair<Climate.ParameterPoint, ResourceKey<Biome>>
+Climate.ParameterList<ResourceKey<Biome>> list = new Climate.ParameterList<>(collected);
+ResourceKey<Biome> biome = list.findValue(Climate.target(temp, humid, cont, erosion, depth, weird));
+```
+
+So CityWorld can harvest every `(climate parameter point → biome)` pair that **every installed
+TerraBlender mod** registered, build a parameter list from them, and ask it a question. That is the
+whole integration in five lines of API surface.
+
+### Soft dependency, per the owner: "use it if it's there"
+
+`ModList.get().isLoaded("terrablender")`, with every TerraBlender-touching line in **one class that is
+only ever loaded behind that check** — otherwise the JVM class-loads it eagerly and a world without
+TerraBlender dies on a `NoClassDefFoundError`. No compile-time hard dependency; the mod must run
+identically with it absent, which is also how it stays buildable on all three branches.
+
+### The real design problem: we only have three of the seven axes
+
+`Climate.ParameterPoint` has **seven** axes (temperature, humidity, continentalness, erosion, depth,
+weirdness, offset). CityWorld natively models **temperature and humidity** (`getTemperature`/
+`getHumidity`) and has elevation, which maps to depth. The other three would have to be synthesised —
+continentalness from distance-to-sea or elevation, erosion and weirdness from new noise fields or
+pinned to mid-range.
+
+**⚠ That is where this can quietly fail.** Pin the unmodelled axes to constants and the parameter list
+will keep returning the same handful of biomes, because most of the variety in a modded biome set lives
+in exactly those axes. The result would look like "TerraBlender support that does nothing" rather than
+an error.
+
+**So the acceptance test has to be a spread, not a smoke test.** The self-test already sweeps 4,225
+columns and reports distinct biomes (`biome.sweep.*`); the same harness should assert that a
+TerraBlender world reaches a *meaningfully larger* biome set than a vanilla-palette one. Measure before
+believing it works.
+
+### ⚠ And `possibleBiomes()` must include them — the lesson from the cave pool, again
+
+Whatever TerraBlender can produce has to be in the biome source's `possibleBiomes()`, or vanilla
+filters those biomes' features out and drops any structure set gated on them — the exact failure that
+made ancient cities impossible before wave A. Harvest the biome list once at bind time and fold it in.
+
+### Related gap this exposes
+
+`CityWorldClimateBiomeSource` has **49 biomes hardcoded in Java** and a hand-written climate matrix (21
+`return` sites). That is why BoP's 69 biomes are invisible today, and it is the one big palette that is
+*not* data-driven. TerraBlender support would route around it rather than fix it. Worth deciding which
+is wanted: a TerraBlender bridge (wide reach, no control over placement) or a data-driven surface
+matrix (full control, only what a pack author lists) — or both, TerraBlender feeding the pool the owner
+described.
+
+**Scale, for prioritisation:** BoP alone is 69 biomes and 33.8M downloads, and TerraBlender lists
+thousands of dependent files. This is the single widest-reach item in the parking lot.
+
 ## Releasing — GitHub, and CurseForge automatically
 
 Publishing a GitHub release now publishes to CurseForge too, via
