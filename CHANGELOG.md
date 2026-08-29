@@ -16,6 +16,10 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   actually appearing. **On by default** — installing a biome mod is the intent; turning them off is the
   deliberate act (`world.useModdedBiomes`, or the Customize screen when such a mod is present). Costs
   nothing when you have no biome mods.
+- **Wild plants are now a switch.** On MODERN/APOCALYPSE, wild land gets vanilla's own biome
+  decoration *as well as* CityWorld's — both passes run, which is why wild forests read lush.
+  `world.vanillaNatureDecoration` (and a "Vanilla wild plants" toggle on the Customize screen) turns
+  vanilla's half off if you would rather CityWorld's cover stood alone.
 - **Biomes O' Plenty's cave biomes join the cave pool** — glowing grotto, crystalline chasm, spider
   nest and fungal jungle turn up underground alongside the vanilla four. Shipped inert, so it does
   nothing unless BoP is installed.
