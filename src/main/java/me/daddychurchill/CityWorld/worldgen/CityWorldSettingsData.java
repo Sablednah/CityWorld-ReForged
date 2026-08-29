@@ -394,7 +394,7 @@ public record CityWorldSettingsData(
                 "airship", "saucer", "vault", "zoo", "biodome", "hospital", "schematic");
 
         public static final World DEFAULT = new World(TreeStyle.NORMAL, Odds.oddsLikely, SubSurfaceStyle.LAND, 0.0,
-                DEFAULT_MAX_BUILDING_FLOORS, false, DEFAULT_ANNOUNCED, false);
+                DEFAULT_MAX_BUILDING_FLOORS, false, DEFAULT_ANNOUNCED, true);
 
         private static final Codec<TreeStyle> TREE_STYLE_CODEC = Codec.STRING.xmap(
                 s -> parseEnum(TreeStyle.class, s, TreeStyle.NORMAL), TreeStyle::name);
@@ -410,7 +410,7 @@ public record CityWorldSettingsData(
                 Codec.BOOL.optionalFieldOf("broadcastSpecialPlaces", false).forGetter(World::broadcastSpecialPlaces),
                 Codec.STRING.listOf().optionalFieldOf("announcedLandmarks", DEFAULT_ANNOUNCED)
                         .forGetter(World::announcedLandmarks),
-                Codec.BOOL.optionalFieldOf("useModdedBiomes", false).forGetter(World::useModdedBiomes)
+                Codec.BOOL.optionalFieldOf("useModdedBiomes", true).forGetter(World::useModdedBiomes)
         ).apply(i, World::new));
     }
 
