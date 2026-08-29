@@ -399,7 +399,18 @@ public record CityWorldSettingsData(
             boolean broadcastSpecialPlaces,
             java.util.List<String> announcedLandmarks,
             boolean useModdedBiomes,
-            WildDecoration wildDecoration) {
+            WildDecoration wildDecoration,
+            double climateWarmth) {
+
+        /**
+         * How far the temperature field leans warm, {@code 0.0} (unchanged) to about {@code 0.5}.
+         *
+         * <p>Applied as an exponent, {@code t' = t^(1 - warmth)}, so the <em>range</em> is untouched —
+         * 0 stays 0 and 1 stays 1 — while the average moves up. A flat offset would have clipped the
+         * hot end and deleted the coldest ground instead. The default {@code 0.25} lifts the mean by
+         * roughly 14%, which is the owner's "10–20%" after a dozen worlds read too cold.
+         */
+        public static final double DEFAULT_CLIMATE_WARMTH = 0.25;
 
         /** CLASSIC's default building-floor cap — the old hardcoded {@code absoluteAbsoluteMaximumFloorsAbove}. */
         public static final int DEFAULT_MAX_BUILDING_FLOORS = 20;
@@ -415,7 +426,8 @@ public record CityWorldSettingsData(
                 "airship", "saucer", "vault", "zoo", "biodome", "hospital", "schematic");
 
         public static final World DEFAULT = new World(TreeStyle.NORMAL, Odds.oddsLikely, SubSurfaceStyle.LAND, 0.0,
-                DEFAULT_MAX_BUILDING_FLOORS, false, DEFAULT_ANNOUNCED, true, WildDecoration.BOTH);
+                DEFAULT_MAX_BUILDING_FLOORS, false, DEFAULT_ANNOUNCED, true, WildDecoration.BOTH,
+                DEFAULT_CLIMATE_WARMTH);
 
         private static final Codec<TreeStyle> TREE_STYLE_CODEC = Codec.STRING.xmap(
                 s -> parseEnum(TreeStyle.class, s, TreeStyle.NORMAL), TreeStyle::name);
@@ -435,7 +447,9 @@ public record CityWorldSettingsData(
                         .forGetter(World::announcedLandmarks),
                 Codec.BOOL.optionalFieldOf("useModdedBiomes", true).forGetter(World::useModdedBiomes),
                 WILD_DECORATION_CODEC.optionalFieldOf("wildDecoration", WildDecoration.BOTH)
-                        .forGetter(World::wildDecoration)
+                        .forGetter(World::wildDecoration),
+                Codec.DOUBLE.optionalFieldOf("climateWarmth", DEFAULT_CLIMATE_WARMTH)
+                        .forGetter(World::climateWarmth)
         ).apply(i, World::new));
     }
 

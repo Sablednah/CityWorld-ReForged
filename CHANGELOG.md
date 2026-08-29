@@ -16,6 +16,13 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   actually appearing. **On by default** — installing a biome mod is the intent; turning them off is the
   deliberate act (`world.useModdedBiomes`, or the Customize screen when such a mod is present). Costs
   nothing when you have no biome mods.
+- **Worlds are warmer, and ice caps mean something.** Across a dozen worlds the world read cold — snowy
+  biomes *and* iced peaks everywhere, and little desert. Two causes: the temperature field sat neutral,
+  and **the MODERN ice cap was purely a matter of height**, so every mountain iced over even standing in
+  a desert. The ice line now rises with temperature, so caps belong to cold places rather than to all
+  high places; and `world.climateWarmth` (default `0.25`, on the Customize screen too) leans the whole
+  field warm — about 17% — without narrowing its range, so frozen peaks and deserts both still happen.
+- **The F3 readout fits on screen.** The level line was running past the edge; it is two lines now.
 - **You choose who decorates the wild.** On MODERN/APOCALYPSE, wild land was getting vanilla's biome
   features *and* CityWorld's cover, with no way to change it — which is why wild forests read lush.
   `world.wildDecoration` (and a "Wild plants" picker on the Customize screen) now takes `BOTH` (the

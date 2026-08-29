@@ -15,6 +15,17 @@ public class SurfaceProvider_Normal extends SurfaceProvider {
 	// how far below the snow line MODERN begins icing the peaks — makes bare frozen tips less rare
 	private final static int MODERN_ICE_DROP = 5;
 
+	/**
+	 * How much higher a <em>warm</em> region has to be before MODERN ice caps it.
+	 *
+	 * <p>The icecap used to be purely elevation-based, so <b>every</b> mountain iced over — including
+	 * ones standing in a desert. Across a dozen worlds that read as a world far colder than its climate
+	 * map actually was, and it is the reason ice peaks and snowy biomes seemed to be everywhere at once.
+	 * Lifting the ice line with temperature means cold regions cap as before while hot ones simply never
+	 * get high enough, so the caps become a feature of cold places rather than of all high places.
+	 */
+	private final static int MODERN_ICE_WARM_LIFT = 40;
+
 	// share of icecap cells that become a flush powder-snow pocket (a real fall-in hazard, findable)
 	private final static double POWDER_SNOW_ODDS = 0.15;
 
@@ -27,6 +38,12 @@ public class SurfaceProvider_Normal extends SurfaceProvider {
 	public SurfaceProvider_Normal(Odds odds) {
 		super(odds);
 		// TODO Auto-generated constructor stub
+	}
+
+	/** Whether CityWorld's own cover belongs on this lot — always, except wild land in VANILLA mode. */
+	private static boolean cityworldPlants(CityWorldGenerator generator, PlatLot lot) {
+		return generator.getSettings().cityworldDecoratesWild()
+				|| lot == null || lot.style != PlatLot.LotStyle.NATURE;
 	}
 
 	@Override
@@ -42,7 +59,12 @@ public class SurfaceProvider_Normal extends SurfaceProvider {
 		// top of the world? MODERN starts the ice a touch lower than the snow line so bare peaks aren't
 		// so rare (playtest: the caps looked great but too seldom).
 		boolean modern = generator.isModernStyle();
-		int iceStart = modern ? generator.snowLevel - MODERN_ICE_DROP : generator.snowLevel;
+		int iceStart = generator.snowLevel;
+		if (modern) {
+			// Ice where it is cold, not merely where it is high — see MODERN_ICE_WARM_LIFT.
+			double warmth = generator.getTemperature(chunk.getOriginX() + x, chunk.getOriginZ() + z);
+			iceStart = generator.snowLevel - MODERN_ICE_DROP + (int) Math.round(warmth * MODERN_ICE_WARM_LIFT);
+		}
 		if (y >= iceStart) {
 			if (modern)
 				// MODERN: ice the peaks properly with stable full blocks (snow / packed / blue ice /
@@ -54,7 +76,10 @@ public class SurfaceProvider_Normal extends SurfaceProvider {
 						(byte) NoiseGenerator.floor((perciseY - Math.floor(perciseY)) * 8.0));
 
 			// are on a plantable spot?
-		} else if (foliage.isPlantable(generator, chunk, x, y, z)) {
+			// wildDecoration=VANILLA hands wild land to vanilla (and to any biome mod): CityWorld places
+			// no plants, cactus or reeds there. Deliberately gated here rather than by skipping the whole
+			// surface pass, because the icecap above must still run — dropping it left the peaks bare.
+		} else if (cityworldPlants(generator, lot) && foliage.isPlantable(generator, chunk, x, y, z)) {
 
 			// below sea level and plantable.. then cactus?
 			if (y <= generator.seaLevel) {
