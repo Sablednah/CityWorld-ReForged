@@ -33,8 +33,17 @@ import net.minecraft.world.level.biome.Climate;
  */
 public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorldBiomes {
 
+    /**
+     * Takes the biome <em>registry lookup</em> as well as the getter. {@code Registry} implements
+     * {@code HolderLookup.RegistryLookup}, so at world load this is the real frozen registry — which is
+     * what {@link TerraBlenderBridge} needs and cannot get any other way. It has to arrive here at
+     * decode time because {@code possibleBiomes()} is memoized on first call, so the modded biomes must
+     * be known before anything asks.
+     */
     public static final MapCodec<CityWorldClimateBiomeSource> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-            RegistryOps.retrieveGetter(Registries.BIOME)).apply(i, CityWorldClimateBiomeSource::new));
+            RegistryOps.retrieveGetter(Registries.BIOME),
+            RegistryOps.retrieveRegistryLookup(Registries.BIOME).forGetter(s -> s.biomeLookup))
+            .apply(i, CityWorldClimateBiomeSource::new));
 
     // Every biome the matrix below can return — also this source's possibleBiomes().
     private static final List<ResourceKey<Biome>> PALETTE = List.of(
@@ -60,8 +69,41 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
     private volatile CaveRegions.Pool cavePool;
 
     public CityWorldClimateBiomeSource(HolderGetter<Biome> biomes) {
+        this(biomes, null);
+    }
+
+    public CityWorldClimateBiomeSource(HolderGetter<Biome> biomes,
+            net.minecraft.core.HolderLookup.RegistryLookup<Biome> lookup) {
         this.biomes = biomes;
+        this.biomeLookup = lookup;
         this.possible = PALETTE.stream().map(k -> (Holder<Biome>) biomes.getOrThrow(k)).toList();
+    }
+
+    /** See the codec — the real registry, needed by {@link TerraBlenderBridge}. May be null. */
+    private final net.minecraft.core.HolderLookup.RegistryLookup<Biome> biomeLookup;
+
+    /** Harvested once, on the first {@code possibleBiomes()}; null when TerraBlender is absent. */
+    private volatile TerraBlenderBridge bridge;
+    private volatile boolean bridgeHarvested;
+
+    /**
+     * Every biome installed TerraBlender mods can contribute, or {@code null} if none can.
+     *
+     * <p>Harvested lazily but <b>exactly once, before {@code possibleBiomes()} answers</b>: vanilla
+     * memoizes that set, so a biome discovered later could never join it — and a biome outside it has
+     * its features filtered and its structures dropped.
+     */
+    public TerraBlenderBridge terraBlender() {
+        if (!bridgeHarvested)
+            synchronized (this) {
+                if (!bridgeHarvested) {
+                    bridge = (biomeLookup instanceof net.minecraft.core.Registry<Biome> registry)
+                            ? TerraBlenderBridge.harvest(registry, biomes)
+                            : null;
+                    bridgeHarvested = true;
+                }
+            }
+        return bridge;
     }
 
     /**
@@ -97,7 +139,11 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
      */
     @Override
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
-        return Stream.concat(possible.stream(), cavePool().biomes()).distinct();
+        Stream<Holder<Biome>> all = Stream.concat(possible.stream(), cavePool().biomes());
+        TerraBlenderBridge tb = terraBlender();
+        if (tb != null)
+            all = Stream.concat(all, tb.biomes().stream());
+        return all.distinct();
     }
 
     @Override

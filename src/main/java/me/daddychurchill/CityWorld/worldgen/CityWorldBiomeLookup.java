@@ -7,6 +7,7 @@ import me.daddychurchill.CityWorld.CityWorldGenerator;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Climate;
 
 import org.jspecify.annotations.Nullable;
 
@@ -66,8 +67,49 @@ public final class CityWorldBiomeLookup {
                 return cave;
         }
 
+        // Above the waterline, an installed TerraBlender mod may have a biome for this climate. Opt-in,
+        // and only for land: oceans, shores and peaks stay CityWorld's, because those are decided by
+        // terrain facts we know exactly and a climate lookup would only get wrong.
+        if (context.getSettings().useModdedBiomes && blockY > context.seaLevel) {
+            Holder<Biome> modded = moddedBiome(source, context, column, blockX, blockZ);
+            if (modded != null)
+                return modded;
+        }
+
         return source.classify(context, column.terrainY, column.temperature, column.humidity,
                 context.getSettings().includeDecayedNature);
+    }
+
+    /**
+     * Asks the TerraBlender bridge for a biome at this column's climate, or {@code null} if there is no
+     * bridge (TerraBlender absent, or no mod registered any overworld region).
+     *
+     * <p><b>The axes are the whole story here.</b> Vanilla's climate point has seven; CityWorld natively
+     * models temperature and humidity, derives continentalness from the terrain it already knows, and
+     * generates erosion and weirdness as their own noise fields. Those last two exist purely for this —
+     * see {@code CityWorldGenerator.getErosion}. Deriving them from elevation instead would have put
+     * several axes on one scale, and any modded biome wanting a combination we could not express would
+     * simply never be picked.
+     *
+     * <p>Temperature and humidity are CityWorld's {@code 0..1}; vanilla's parameters are {@code -1..1}.
+     * Getting that mapping wrong does not fail loudly — it quietly confines every lookup to one corner
+     * of the climate space, which looks like "the mod only added three biomes".
+     */
+    private static @Nullable Holder<Biome> moddedBiome(CityWorldBiomes source, CityWorldGenerator context,
+            Column column, int blockX, int blockZ) {
+        if (!(source instanceof CityWorldClimateBiomeSource climate))
+            return null;
+        TerraBlenderBridge bridge = climate.terraBlender();
+        if (bridge == null)
+            return null;
+        float temperature = (float) (column.temperature * 2.0 - 1.0);
+        float humidity = (float) (column.humidity * 2.0 - 1.0);
+        float continentalness = (float) context.getContinentalness(blockX, blockZ);
+        float erosion = (float) context.getErosion(blockX, blockZ);
+        float weirdness = (float) context.getWeirdness(blockX, blockZ);
+        // Surface lookup: vanilla's depth is ~0 at the surface and grows downward, and this path only
+        // runs above sea level, so a surface point is the honest query.
+        return bridge.find(Climate.target(temperature, humidity, continentalness, erosion, 0.0F, weirdness));
     }
 
     // --- the per-column cache -------------------------------------------------------------------
