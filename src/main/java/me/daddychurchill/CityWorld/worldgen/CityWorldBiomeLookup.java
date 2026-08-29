@@ -104,12 +104,25 @@ public final class CityWorldBiomeLookup {
             return null;
         float temperature = (float) (column.temperature * 2.0 - 1.0);
         float humidity = (float) (column.humidity * 2.0 - 1.0);
-        float continentalness = (float) context.getContinentalness(blockX, blockZ);
+        float continentalness = (float) column.continentalness;
         float erosion = (float) context.getErosion(blockX, blockZ);
         float weirdness = (float) context.getWeirdness(blockX, blockZ);
         // Surface lookup: vanilla's depth is ~0 at the surface and grows downward, and this path only
         // runs above sea level, so a surface point is the honest query.
-        return bridge.find(Climate.target(temperature, humidity, continentalness, erosion, 0.0F, weirdness));
+        Holder<Biome> hit = bridge.find(Climate.target(temperature, humidity, continentalness, erosion,
+                0.0F, weirdness));
+        if (hit == null)
+            return null;
+
+        // ⚠ Take the answer ONLY when it is actually a modded biome. TerraBlender's regions carry the
+        // vanilla biomes too, so accepting every hit did not *add* to CityWorld's pool, it *replaced*
+        // it: measured over 8km, swamp fell 11.6% -> 2.2%, desert rose 3.6% -> 8.7%, meadow left the
+        // top twenty, and river appeared at 4.3% despite never being in CityWorld's palette at all.
+        // Falling through on a vanilla hit keeps CityWorld's own tuned matrix in charge of vanilla
+        // ground and lets the mod contribute only what CityWorld could not have chosen itself.
+        boolean modded = hit.unwrapKey()
+                .map(k -> !k.identifier().toString().startsWith("minecraft:")).orElse(false);
+        return modded ? hit : null;
     }
 
     // --- the per-column cache -------------------------------------------------------------------
@@ -119,6 +132,8 @@ public final class CityWorldBiomeLookup {
         int terrainY;
         double temperature;
         double humidity;
+        /** Cached because it is nine noise samples now — see {@code CityWorldGenerator.regionalHeight}. */
+        double continentalness;
     }
 
     /**
@@ -160,6 +175,7 @@ public final class CityWorldBiomeLookup {
             column.terrainY = context.getFarBlockY(blockX, blockZ);
             column.temperature = context.getTemperature(blockX, blockZ);
             column.humidity = context.getHumidity(blockX, blockZ);
+            column.continentalness = context.getContinentalness(blockX, blockZ);
             keys[slot] = key;
             filled[slot] = true;
             return column;

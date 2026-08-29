@@ -368,7 +368,7 @@ public class CityWorldGenerator {
      * they are perpendicular, so tying both to the height map costs nothing.
      */
     public double getContinentalness(int x, int z) {
-        int terrainY = getFarBlockY(x, z);
+        int terrainY = regionalHeight(x, z);
         if (terrainY <= seaLevel) {
             // Below the waterline: -1 at the bottom of the deep sea, ~0 at the shore.
             int deep = Math.max(1, seaLevel - deepseaLevel);
@@ -377,6 +377,31 @@ public class CityWorldGenerator {
         // Above it: 0 at the shore rising towards +1 at the top of the land range.
         return clampUnit((double) (terrainY - seaLevel) / Math.max(1, landRange));
     }
+
+    /**
+     * Terrain height averaged over a wide window — the <em>regional</em> elevation, not this column's.
+     *
+     * <p><b>Continentalness must be smooth or it shreds the biome map.</b> Taken from the raw column
+     * height it inherits every bump in CityWorld's terrain, so a climate lookup flips between parameter
+     * cells every few blocks and modded biomes arrive as slivers a few blocks wide — measured at 22 of
+     * 94 biomes under 0.1% of ground, with edge density up from 32% to 41%. Vanilla does not have this
+     * problem because its continentalness *is* a smooth low-frequency noise and terrain is derived from
+     * it; CityWorld runs the other way, so the smoothing has to be put back by hand.
+     *
+     * <p>Nine samples on a {@value #CONTINENT_SMOOTH}-block grid, so the window is about 200 blocks —
+     * biome-region scale rather than hill scale. Called once per column and cached by
+     * {@code CityWorldBiomeLookup}, so the extra noise calls do not land per quart.
+     */
+    private int regionalHeight(int x, int z) {
+        int total = 0;
+        for (int dx = -1; dx <= 1; dx++)
+            for (int dz = -1; dz <= 1; dz++)
+                total += getFarBlockY(x + dx * CONTINENT_SMOOTH, z + dz * CONTINENT_SMOOTH);
+        return total / 9;
+    }
+
+    /** Half-width of the continentalness smoothing window; see {@link #regionalHeight}. */
+    private static final int CONTINENT_SMOOTH = 96;
 
     /** Clamp to vanilla's {@code -1..1} climate range. */
     private static double clampUnit(double noise) {
