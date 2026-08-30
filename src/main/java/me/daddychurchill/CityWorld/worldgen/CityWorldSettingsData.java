@@ -400,7 +400,8 @@ public record CityWorldSettingsData(
             java.util.List<String> announcedLandmarks,
             boolean useModdedBiomes,
             WildDecoration wildDecoration,
-            double climateWarmth) {
+            double climateWarmth,
+            double biomeScale) {
 
         /**
          * How far the temperature field leans warm, {@code 0.0} (unchanged) to about {@code 0.5}.
@@ -411,6 +412,16 @@ public record CityWorldSettingsData(
          * roughly 14%, which is the owner's "10–20%" after a dozen worlds read too cold.
          */
         public static final double DEFAULT_CLIMATE_WARMTH = 0.25;
+
+        /**
+         * How large biome regions are, as a multiplier. {@code 1.0} is the tuned default; {@code 2.0}
+         * makes every climate region twice as wide, {@code 0.75} slightly tighter.
+         *
+         * <p>Divides the frequency of the temperature, humidity, erosion and weirdness fields, and
+         * widens the continentalness smoothing window to match — all four axes together, because
+         * scaling some and not others would just change which biome you get rather than how big it is.
+         */
+        public static final double DEFAULT_BIOME_SCALE = 1.0;
 
         /** CLASSIC's default building-floor cap — the old hardcoded {@code absoluteAbsoluteMaximumFloorsAbove}. */
         public static final int DEFAULT_MAX_BUILDING_FLOORS = 20;
@@ -427,7 +438,7 @@ public record CityWorldSettingsData(
 
         public static final World DEFAULT = new World(TreeStyle.NORMAL, Odds.oddsLikely, SubSurfaceStyle.LAND, 0.0,
                 DEFAULT_MAX_BUILDING_FLOORS, false, DEFAULT_ANNOUNCED, true, WildDecoration.BOTH,
-                DEFAULT_CLIMATE_WARMTH);
+                DEFAULT_CLIMATE_WARMTH, DEFAULT_BIOME_SCALE);
 
         private static final Codec<TreeStyle> TREE_STYLE_CODEC = Codec.STRING.xmap(
                 s -> parseEnum(TreeStyle.class, s, TreeStyle.NORMAL), TreeStyle::name);
@@ -449,7 +460,8 @@ public record CityWorldSettingsData(
                 WILD_DECORATION_CODEC.optionalFieldOf("wildDecoration", WildDecoration.BOTH)
                         .forGetter(World::wildDecoration),
                 Codec.DOUBLE.optionalFieldOf("climateWarmth", DEFAULT_CLIMATE_WARMTH)
-                        .forGetter(World::climateWarmth)
+                        .forGetter(World::climateWarmth),
+                Codec.DOUBLE.optionalFieldOf("biomeScale", DEFAULT_BIOME_SCALE).forGetter(World::biomeScale)
         ).apply(i, World::new));
     }
 

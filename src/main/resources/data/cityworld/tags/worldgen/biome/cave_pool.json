@@ -9,7 +9,6 @@
 
     { "id": "biomesoplenty:glowing_grotto", "required": false },
     { "id": "biomesoplenty:crystalline_chasm", "required": false },
-    { "id": "biomesoplenty:spider_nest", "required": false },
-    { "id": "biomesoplenty:fungal_jungle", "required": false }
+    { "id": "biomesoplenty:spider_nest", "required": false }
   ]
 }
