@@ -82,7 +82,7 @@ public final class CaveRegions {
             // 26.2's sulfur caves ship from a source tree that also builds on 1.21.11. They are listed
             // after the vanilla four so a vanilla type wins a shared cell.
             "biomesoplenty:glowing_grotto", "biomesoplenty:crystalline_chasm",
-            "biomesoplenty:spider_nest", "biomesoplenty:fungal_jungle");
+            "biomesoplenty:spider_nest");
 
     /**
      * Per-biome patch geometry: {@code {cell size, percent of cells, minY, maxY}}.
@@ -99,13 +99,19 @@ public final class CaveRegions {
             "minecraft:sulfur_caves", new int[] { 112, 5, -64, -8 },
             "minecraft:lush_caves", new int[] { 80, 5, -40, 40 },
             "minecraft:dripstone_caves", new int[] { 96, 6, -60, 20 },
-            // BoP's underground four. Rarer than the vanilla types so a modded world still reads as
+            // BoP's underground three. Rarer than the vanilla types so a modded world still reads as
             // CityWorld with guests, not as a BoP world; spider_nest rarest of all, since it is the one
             // that bites.
+            //
+            // ⚠ fungal_jungle was here and should not have been. Its name reads like a cave, but it is a
+            // SURFACE biome: has_precipitation, sugar cane, seagrass, and features placed on the
+            // heightmap (huge_toadstool, trees_fungal_jungle). Underground, the heightmap sits in
+            // whatever biome is at the actual surface, so the biome filter rejected every one of them —
+            // the biome generated and nothing whatsoever grew in it. Check a candidate's feature
+            // PLACEMENT, not its name: height_range means underground, heightmap means surface.
             "biomesoplenty:glowing_grotto", new int[] { 96, 4, -60, 0 },
             "biomesoplenty:crystalline_chasm", new int[] { 112, 3, -64, -16 },
-            "biomesoplenty:spider_nest", new int[] { 128, 2, -48, 8 },
-            "biomesoplenty:fungal_jungle", new int[] { 96, 4, -40, 16 });
+            "biomesoplenty:spider_nest", new int[] { 128, 2, -48, 8 });
 
     /** What an unrecognised (modded, datapack-added) cave biome gets: a mid-depth, modest patch. */
     private static final int[] DEFAULT_GEOMETRY = { 96, 5, -60, 20 };
