@@ -11,6 +11,7 @@ import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Context.DataContext;
 import me.daddychurchill.CityWorld.Plats.IsolatedLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
+import me.daddychurchill.CityWorld.Plugins.LootProvider;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
 import me.daddychurchill.CityWorld.Support.Odds;
@@ -90,7 +91,8 @@ public class FishPondLot extends IsolatedLot {
             bx++;
         int[] barrelCell = { bx, 8 };
         chunk.setBlock(bx, surfaceY, 8, generator.oreProvider.surfaceMaterial);
-        chunk.setBlock(bx, surfaceY + 1, 8, Material.BARREL, BlockFace.WEST);
+        chunk.setChest(generator, bx, surfaceY + 1, 8, BlockFace.WEST, chunkOdds, generator.lootProvider,
+                LootProvider.LootLocation.POND, Material.BARREL);
 
         // reeds on the bank (not on the barrel), lily pads on the water
         for (int[] b : banks) {

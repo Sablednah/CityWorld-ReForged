@@ -6,6 +6,7 @@ import java.util.List;
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.compat.BlockFace;
 import me.daddychurchill.CityWorld.compat.Material;
+import me.daddychurchill.CityWorld.Plugins.LootProvider;
 
 /**
  * A small vocabulary of MODERN interior decoration — the "clever block trick" furniture and the
@@ -84,10 +85,10 @@ public final class Furniture {
         if (pick.isEmpty())
             return;
         int[] c = pick.get(odds.getRandomInt(pick.size()));
-        placeAccent(chunk, odds, c[0], y, c[1]);
+        placeAccent(generator, chunk, odds, c[0], y, c[1]);
     }
 
-    private static void placeAccent(RealBlocks chunk, Odds odds, int x, int y, int z) {
+    private static void placeAccent(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x, int y, int z) {
         switch (odds.getRandomInt(10)) {
         case 0:
         case 1:
@@ -105,7 +106,8 @@ public final class Furniture {
             break;
         case 6:
             // a copper storage chest tucked against the wall (accentRoom prefers wall-backed cells)
-            chunk.setBlock(x, y, z, Material.COPPER_CHEST, wallward(chunk, x, y, z));
+            chunk.setChest(generator, x, y, z, wallward(chunk, x, y, z), odds, generator.lootProvider,
+                    LootProvider.LootLocation.NIGHTSTAND, Material.COPPER_CHEST);
             break;
         case 7:
             // a chandelier — a chain dropping from the ceiling with a lantern hung on the end, if there's
@@ -195,7 +197,8 @@ public final class Furniture {
     public static void kitchen(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
             int z1, int z2) {
         int z = z1 + 1;
-        placeIfClear(chunk, x1 + 1, y, z, Material.BARREL, BlockFace.SOUTH);
+        chunk.setChest(generator, x1 + 1, y, z, BlockFace.SOUTH, odds, generator.lootProvider,
+                LootProvider.LootLocation.NIGHTSTAND, Material.BARREL);
         if (clearFloor(chunk, x1 + 2, y, z))
             chunk.setCauldron(x1 + 2, y, z, odds);
         if (x1 + 3 <= x2 - 1)
@@ -271,7 +274,8 @@ public final class Furniture {
         else
             placeBed(chunk, bed, x2 - 2, y, midZ, BlockFace.WEST); // head to east wall
 
-        placeIfClear(chunk, x1 + 1, y, z1 + 1, Material.BARREL, BlockFace.SOUTH); // a nightstand where it fits
+        chunk.setChest(generator, x1 + 1, y, z1 + 1, BlockFace.SOUTH, odds, generator.lootProvider,
+                LootProvider.LootLocation.NIGHTSTAND, Material.BARREL); // a nightstand where it fits
         if (modern(generator))
             floorLampIfClear(chunk, odds, x2 - 1, y, z2 - 1);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
