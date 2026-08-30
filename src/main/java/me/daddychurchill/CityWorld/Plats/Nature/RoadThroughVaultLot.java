@@ -73,8 +73,8 @@ public class RoadThroughVaultLot extends RoadLot {
         // the vault interior below (all levels), and a branch down into it from the tunnel
         boolean[] walls = VaultLot.wallFlags(platmap, platX, platZ);
         int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
-        VaultLot.generateVaultHall(chunk, bottomOfVault, topOfVault, walls, oX, oZ);
-        VaultLot.generateLowerLevels(chunk, bottomOfVault, walls, oX, oZ, false, getChunkX(), getChunkZ());
+        VaultLot.generateVaultHall(generator, chunkOdds, chunk, bottomOfVault, topOfVault, walls, oX, oZ);
+        VaultLot.generateLowerLevels(generator, chunkOdds, chunk, bottomOfVault, walls, oX, oZ, false, getChunkX(), getChunkZ());
         tunnelBranch(generator, chunk); // the road-tunnel entry (routed through a vestibule + door)
         // "vaultroad" is off the default announce list: the entrance chunk (VaultLot) is the one true
         // announcement — this fires per road chunk with a per-chunk hash, useful only as a debug trace.

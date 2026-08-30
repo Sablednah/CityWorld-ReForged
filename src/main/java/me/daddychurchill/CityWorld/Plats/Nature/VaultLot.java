@@ -11,6 +11,7 @@ import me.daddychurchill.CityWorld.Plats.RoadLot;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
+import me.daddychurchill.CityWorld.Plugins.LootProvider;
 import me.daddychurchill.CityWorld.Support.SupportBlocks;
 
 /**
@@ -106,20 +107,20 @@ public class VaultLot extends BunkerLot {
         int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
         if (entrance) {
             int num = vaultNumber();
-            generateLobby(chunk, chunkOdds, bottomOfBunker, topOfBunker, blockYs.getBlockY(2, 1), num, walls);
+            generateLobby(generator, chunk, chunkOdds, bottomOfBunker, topOfBunker, blockYs.getBlockY(2, 1), num, walls);
             generator.reportLocation("vault", "Vault " + num, chunk);
         } else {
-            generateVaultHall(chunk, bottomOfBunker, topOfBunker, walls, oX, oZ);
+            generateVaultHall(generator, chunkOdds, chunk, bottomOfBunker, topOfBunker, walls, oX, oZ);
         }
-        generateLowerLevels(chunk, bottomOfBunker, walls, oX, oZ, entrance, getChunkX(), getChunkZ());
+        generateLowerLevels(generator, chunkOdds, chunk, bottomOfBunker, walls, oX, oZ, entrance, getChunkX(), getChunkZ());
     }
 
     /** The corridor-and-rooms levels beneath level 0, plus stairwell shafts down between levels (spread
      *  across interior chunks, not the entrance chunk's top level). */
-    static void generateLowerLevels(SupportBlocks chunk, int bottom, boolean[] walls, int oX, int oZ,
+    static void generateLowerLevels(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int bottom, boolean[] walls, int oX, int oZ,
             boolean entrance, int chunkX, int chunkZ) {
         for (int k = 1; k < NUM_LEVELS; k++)
-            generateLevel(chunk, levelFloor(bottom, k), levelFloor(bottom, k) + 6, walls, oX, oZ);
+            generateLevel(generator, odds, chunk, levelFloor(bottom, k), levelFloor(bottom, k) + 6, walls, oX, oZ);
         for (int k = 0; k < NUM_LEVELS - 1; k++)
             if (!(entrance && k == 0) && Math.floorMod(chunkX * 7 + chunkZ * 13 + k * 29, 3) == 0)
                 stairwellDown(chunk, levelFloor(bottom, k), levelFloor(bottom, k + 1));
@@ -230,8 +231,8 @@ public class VaultLot extends BunkerLot {
     }
 
     /** The vault interior of one chunk: the corridor-and-rooms level. */
-    static void generateVaultHall(SupportBlocks chunk, int bottom, int top, boolean[] wall, int oX, int oZ) {
-        generateLevel(chunk, floorY(bottom), ceilingY(bottom, top), wall, oX, oZ);
+    static void generateVaultHall(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int bottom, int top, boolean[] wall, int oX, int oZ) {
+        generateLevel(generator, odds, chunk, floorY(bottom), ceilingY(bottom, top), wall, oX, oZ);
     }
 
     /**
@@ -242,7 +243,7 @@ public class VaultLot extends BunkerLot {
      * some chunks carry a full-height lift shaft in their NW quadrant. Corridor centre is x/z 7-8 so it
      * lines up with the centre-positioned lobby door.
      */
-    static void generateLevel(SupportBlocks chunk, int floorY, int ceilY, boolean[] wall, int oX, int oZ) {
+    static void generateLevel(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int floorY, int ceilY, boolean[] wall, int oX, int oZ) {
         chunk.setLayer(floorY, FLOOR);
         chunk.setLayer(ceilY, CEIL);
         chunk.setBlocks(0, 16, floorY + 1, ceilY, 0, 16, Material.AIR); // clear
@@ -290,17 +291,17 @@ public class VaultLot extends BunkerLot {
 
         // divide some merged rooms into smaller isolated rooms (coherent via the corner hash) so room sizes
         // vary — a divided quadrant walls its corner-facing edges; an open one stays merged into a big hall
-        divideQuadrant(chunk, floorY, ceilY, 0, 5, 0, 5, oX, oZ); // NW, corner (oX,oZ)
-        divideQuadrant(chunk, floorY, ceilY, 10, 15, 0, 5, oX + 16, oZ); // NE
-        divideQuadrant(chunk, floorY, ceilY, 0, 5, 10, 15, oX, oZ + 16); // SW
-        divideQuadrant(chunk, floorY, ceilY, 10, 15, 10, 15, oX + 16, oZ + 16); // SE
+        divideQuadrant(generator, odds, chunk, floorY, ceilY, 0, 5, 0, 5, oX, oZ); // NW, corner (oX,oZ)
+        divideQuadrant(generator, odds, chunk, floorY, ceilY, 10, 15, 0, 5, oX + 16, oZ); // NE
+        divideQuadrant(generator, odds, chunk, floorY, ceilY, 0, 5, 10, 15, oX, oZ + 16); // SW
+        divideQuadrant(generator, odds, chunk, floorY, ceilY, 10, 15, 10, 15, oX + 16, oZ + 16); // SE
 
         // furnish each quadrant — the room TYPE is keyed to the chunk-corner it belongs to, so all four
         // quadrants of a room merged across chunk boundaries agree and it reads as one coherent room
-        furnishRoom(chunk, floorY, 1, 5, 1, 5, oX, oZ); // NW quadrant -> corner (oX, oZ)
-        furnishRoom(chunk, floorY, 10, 14, 1, 5, oX + 16, oZ); // NE -> (oX+16, oZ)
-        furnishRoom(chunk, floorY, 1, 5, 10, 14, oX, oZ + 16); // SW -> (oX, oZ+16)
-        furnishRoom(chunk, floorY, 10, 14, 10, 14, oX + 16, oZ + 16); // SE -> (oX+16, oZ+16)
+        furnishRoom(generator, odds, chunk, floorY, 1, 5, 1, 5, oX, oZ); // NW quadrant -> corner (oX, oZ)
+        furnishRoom(generator, odds, chunk, floorY, 10, 14, 1, 5, oX + 16, oZ); // NE -> (oX+16, oZ)
+        furnishRoom(generator, odds, chunk, floorY, 1, 5, 10, 14, oX, oZ + 16); // SW -> (oX, oZ+16)
+        furnishRoom(generator, odds, chunk, floorY, 10, 14, 10, 14, oX + 16, oZ + 16); // SE -> (oX+16, oZ+16)
 
         dressLevel(chunk, floorY, ceilY, oX, oZ);
     }
@@ -360,35 +361,46 @@ public class VaultLot extends BunkerLot {
      * position. Fallout-industrial × Black-Mesa mix: mostly living quarters, some labs/offices, the odd
      * hydroponics or mess. Everything is guarded with empty-cell checks so nothing lands in a wall/doorway.
      */
-    static void furnishRoom(SupportBlocks chunk, int floorY, int x1, int x2, int z1, int z2, int cornerX,
+    static void furnishRoom(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int floorY, int x1, int x2, int z1, int z2, int cornerX,
             int cornerZ) {
         int fy = floorY + 1; // furniture stands on the floor
         // corners are multiples of 16, so hashing them raw is always even (types 7/9 never hit); divide to a
         // chunk index first so every type can occur. Mix in floorY so the type varies by level (each level
         // isn't a copy of the one above) — still coherent since a merged room lives within one level.
         switch (Math.floorMod((cornerX / 16) * 13 + (cornerZ / 16) * 7 + floorY, 10)) {
-        case 0, 1, 2, 3 -> livingQuarters(chunk, fy, x1, x2, z1, z2);
-        case 4, 5 -> office(chunk, fy, x1, x2, z1, z2);
-        case 6 -> lab(chunk, fy, x1, x2, z1, z2);
-        case 7 -> storage(chunk, fy, x1, x2, z1, z2);
+        case 0, 1, 2, 3 -> livingQuarters(generator, odds, chunk, fy, x1, x2, z1, z2);
+        case 4, 5 -> office(generator, odds, chunk, fy, x1, x2, z1, z2);
+        case 6 -> lab(generator, odds, chunk, fy, x1, x2, z1, z2);
+        case 7 -> storage(generator, odds, chunk, fy, x1, x2, z1, z2);
         case 8 -> hydroponics(chunk, floorY, x1, x2, z1, z2);
-        default -> messHall(chunk, fy, x1, x2, z1, z2); // 9
+        default -> messHall(generator, odds, chunk, fy, x1, x2, z1, z2); // 9
         }
     }
 
-    private static void messHall(SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
+    private static void messHall(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
         int tx = x1 + 1, tz = z1 + 1; // a dining table with chairs, and a bit of kitchen
         if (chunk.isEmpty(tx, fy, tz) && !chunk.isEmpty(tx, fy - 1, tz))
             chunk.setTable(tx, fy, tz, Material.QUARTZ_PILLAR, Material.SMOOTH_QUARTZ_SLAB);
         chairAt(chunk, tx - 1, fy, tz, BlockFace.WEST);
         chairAt(chunk, tx + 1, fy, tz, BlockFace.EAST);
-        put(chunk, x2, fy, z1, Material.BARREL); // kitchen store
+        putLoot(generator, odds, chunk, x2, fy, z1, Material.BARREL, LootProvider.LootLocation.FOOD); // kitchen store
         put(chunk, x2, fy, z2, Material.CAULDRON); // a pot
     }
 
     private static void chairAt(SupportBlocks chunk, int x, int fy, int z, BlockFace facing) {
         if (chunk.isEmpty(x, fy, z) && !chunk.isEmpty(x, fy - 1, z))
             chunk.setBlock(x, fy, z, Material.QUARTZ_STAIRS, facing);
+    }
+
+    /**
+     * A container with a loot table, placed under the same "only on solid ground, only into air" guard
+     * as {@link #put}. The vault's footlockers, filing cabinets and stores used to be bare blocks — a
+     * findable landmark behind a blast door whose every container was empty.
+     */
+    private static void putLoot(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int x, int y,
+            int z, Material m, LootProvider.LootLocation loot) {
+        if (chunk.isEmpty(x, y, z) && !chunk.isEmpty(x, y - 1, z))
+            chunk.setChest(generator, x, y, z, odds, generator.lootProvider, loot, m);
     }
 
     private static void put(SupportBlocks chunk, int x, int y, int z, Material m) {
@@ -398,7 +410,7 @@ public class VaultLot extends BunkerLot {
 
     /** Wall a quadrant's chunk-boundary (corner-facing) edges so a merged room breaks into smaller isolated
      *  rooms — decided by the corner hash so all four quadrants of a merged room agree. ~Half stay open. */
-    static void divideQuadrant(SupportBlocks chunk, int floorY, int ceilY, int x1, int x2, int z1, int z2,
+    static void divideQuadrant(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int floorY, int ceilY, int x1, int x2, int z1, int z2,
             int cornerX, int cornerZ) {
         int h = cornerX * 374761393 + cornerZ * 668265263 + floorY * 972897521; // + floorY so it varies by level
         h = (h ^ (h >>> 13)) * 1274126177;
@@ -412,25 +424,25 @@ public class VaultLot extends BunkerLot {
             chunk.setBlocks(x, floorY + 1, ceilY, ze, WALL);
     }
 
-    private static void livingQuarters(SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
+    private static void livingQuarters(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
         if (z1 + 1 <= z2 && chunk.isEmpty(x1, fy, z1) && chunk.isEmpty(x1, fy, z1 + 1)
                 && !chunk.isEmpty(x1, fy - 1, z1))
             chunk.setBed(x1, fy, z1, BEDS[Math.floorMod(x1 + z1, BEDS.length)], BlockFace.SOUTH); // head to the wall
-        put(chunk, x2, fy, z1, Material.CHEST); // footlocker
+        putLoot(generator, odds, chunk, x2, fy, z1, Material.CHEST, LootProvider.LootLocation.VAULT_QUARTERS); // footlocker
         put(chunk, x1, fy, z2, Material.CRAFTING_TABLE);
         put(chunk, x2, fy, z2, Material.POTTED_FERN);
     }
 
-    private static void office(SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
+    private static void office(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
         put(chunk, x1, fy, z1, Material.QUARTZ_BLOCK); // desk
         put(chunk, x1, fy + 1, z1, Material.LECTERN); // a terminal on it
         if (chunk.isEmpty(x1 + 1, fy, z1) && !chunk.isEmpty(x1 + 1, fy - 1, z1))
             chunk.setBlock(x1 + 1, fy, z1, Material.QUARTZ_STAIRS, BlockFace.EAST); // chair facing the desk
-        put(chunk, x2, fy, z2, Material.CHEST); // filing
-        put(chunk, x2, fy, z1, Material.BARREL);
+        putLoot(generator, odds, chunk, x2, fy, z2, Material.CHEST, LootProvider.LootLocation.VAULT_OFFICE); // filing
+        putLoot(generator, odds, chunk, x2, fy, z1, Material.BARREL, LootProvider.LootLocation.VAULT_OFFICE);
     }
 
-    private static void lab(SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
+    private static void lab(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
         put(chunk, x1, fy, z1, Material.BREWING_STAND);
         put(chunk, x1 + 1, fy, z1, Material.CAULDRON);
         put(chunk, x2, fy, z2, Material.CHISELED_BOOKSHELF);
@@ -438,11 +450,11 @@ public class VaultLot extends BunkerLot {
         put(chunk, x1, fy, z2, Material.COPPER_BULB); // a lit lab lamp
     }
 
-    private static void storage(SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
+    private static void storage(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
         for (int x = x1; x <= x2; x += 2) // a row of crates along the back wall
-            put(chunk, x, fy, z1, Material.BARREL);
-        put(chunk, x1, fy, z2, Material.CHEST);
-        put(chunk, x2, fy, z2, Material.CHEST);
+            putLoot(generator, odds, chunk, x, fy, z1, Material.BARREL, LootProvider.LootLocation.VAULT_ARMOURY);
+        putLoot(generator, odds, chunk, x1, fy, z2, Material.CHEST, LootProvider.LootLocation.VAULT_ARMOURY);
+        putLoot(generator, odds, chunk, x2, fy, z2, Material.CHEST, LootProvider.LootLocation.VAULT_ARMOURY);
     }
 
     private static final Material[] CROPS = { Material.WHEAT, Material.CARROTS, Material.POTATOES,
@@ -484,7 +496,7 @@ public class VaultLot extends BunkerLot {
     /** The entrance chunk as a tall sealed LOBBY: full walls + decor, the surface-shaft ladder + hatch, and
      *  the ONLY ways into the vault interior beyond — a grand part-open blast door and a glass-walled security
      *  booth you route through (in one side, out the other). */
-    static void generateLobby(SupportBlocks chunk, Odds odds, int bottom, int top, int surfaceY, int num,
+    static void generateLobby(CityWorldGenerator generator, SupportBlocks chunk, Odds odds, int bottom, int top, int surfaceY, int num,
             boolean[] wall) {
         int floorY = floorY(bottom), ceilY = lobbyCeilingY(bottom, top);
         chunk.setLayer(floorY, FLOOR);
@@ -500,7 +512,7 @@ public class VaultLot extends BunkerLot {
         surfaceShaft(chunk, floorY, ceilY, surfaceY);
 
         int side = doorSide(wall);
-        decorateLobby(chunk, floorY, ceilY, side);
+        decorateLobby(generator, odds, chunk, floorY, ceilY, side);
         bigVaultDoor(chunk, floorY, ceilY, side);
         securityRoom(chunk, floorY, ceilY, side);
         // "VAULT <num>" wall signs flanking the doorway (on the hazard jambs' outer columns), replacing
@@ -517,7 +529,7 @@ public class VaultLot extends BunkerLot {
     /** Industrial dressing (Fallout × Black-Mesa): iron pillars, a copper trim ring, a lit ceiling grid,
      *  hanging lanterns, a floor accent border — plus the props that make it read as a working lobby:
      *  a control console facing the door, a locker row along the back wall, and wall vents. */
-    static void decorateLobby(SupportBlocks chunk, int floorY, int ceilY, int side) {
+    static void decorateLobby(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int floorY, int ceilY, int side) {
         for (int[] p : new int[][] { { 1, 1 }, { 14, 1 }, { 1, 14 }, { 14, 14 } }) // corner pillars only —
             chunk.setBlocks(p[0], floorY + 1, ceilY, p[1], PILLAR); // mid-wall ones stood in the doorway
         chunk.setBlocks(1, 15, ceilY - 1, ceilY, 1, 2, Material.CUT_COPPER); // copper trim ring under the ceiling
