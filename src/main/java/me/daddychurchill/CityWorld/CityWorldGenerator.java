@@ -271,10 +271,12 @@ public class CityWorldGenerator {
         // biome source lays across CityWorld's elevation, so warm/dry vs cool/wet regions pick
         // different biomes. Seeded off the world (independent of terrain) so climate and terrain don't
         // correlate; scale set for biome-sized (~hundreds of blocks) patches.
+        // biomeScale divides the frequency: 2.0 halves it, so regions come out twice as wide.
+        double biomeScale = Math.max(0.1, settings.biomeScale);
         temperatureShape = new me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator(worldSeed + 71, 2);
-        temperatureShape.setScale(0.0009);
+        temperatureShape.setScale(0.0009 / biomeScale);
         humidityShape = new me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator(worldSeed + 137, 2);
-        humidityShape.setScale(0.0012);
+        humidityShape.setScale(0.0012 / biomeScale);
 
         // Erosion and weirdness: two MORE independent fields, on their own seeds and their own scales.
         // Vanilla generates continentalness, erosion and ridges as three separate 2D noises and derives
@@ -284,9 +286,9 @@ public class CityWorldGenerator {
         // we cannot express — high erosion at low elevation, say — could then never be chosen.
         // Continentalness is the deliberate exception; see getContinentalness.
         erosionShape = new me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator(worldSeed + 211, 2);
-        erosionShape.setScale(0.0011);
+        erosionShape.setScale(0.0011 / biomeScale);
         weirdnessShape = new me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator(worldSeed + 313, 2);
-        weirdnessShape.setScale(0.0016);
+        weirdnessShape.setScale(0.0016 / biomeScale);
 
         // Badlands terracotta bands: a seeded colour table sampled by elevation, with a gentle low-freq
         // offset so the stripes undulate instead of being dead flat (mirrors vanilla's mesa surface).
@@ -396,12 +398,17 @@ public class CityWorldGenerator {
         int total = 0;
         for (int dx = -1; dx <= 1; dx++)
             for (int dz = -1; dz <= 1; dz++)
-                total += getFarBlockY(x + dx * CONTINENT_SMOOTH, z + dz * CONTINENT_SMOOTH);
+                total += getFarBlockY(x + dx * continentSmooth(), z + dz * continentSmooth());
         return total / 9;
     }
 
     /** Half-width of the continentalness smoothing window; see {@link #regionalHeight}. */
     private static final int CONTINENT_SMOOTH = 96;
+
+    /** The smoothing window scales with biome size, or big biomes would keep small-scale coastlines. */
+    private int continentSmooth() {
+        return Math.max(16, (int) Math.round(CONTINENT_SMOOTH * Math.max(0.1, settings.biomeScale)));
+    }
 
     /** Clamp to vanilla's {@code -1..1} climate range. */
     private static double clampUnit(double noise) {

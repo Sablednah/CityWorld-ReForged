@@ -93,6 +93,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private boolean useModdedBiomes;
     private CityWorldSettingsData.WildDecoration wildDecoration;
     private double climateWarmth;
+    private double biomeScale;
 
     public CityWorldCustomizeScreen(Screen parent, WorldStyle initialStyle, CityWorldSettingsData initial,
             Consumer<Result> onDone) {
@@ -108,6 +109,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         this.useModdedBiomes = initial.world().useModdedBiomes();
         this.wildDecoration = initial.world().wildDecoration();
         this.climateWarmth = initial.world().climateWarmth();
+        this.biomeScale = initial.world().biomeScale();
 
         loadFrom(initial);
     }
@@ -279,6 +281,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 e -> Component.literal(nice(e.name())), v -> wildDecoration = v));
         pair(row, cycle("Climate warmth", WARMTH_CHOICES, nearestWarmth(climateWarmth),
                 CityWorldCustomizeScreen::warmthLabel, v -> climateWarmth = v));
+        pair(row, cycle("Biome scale", BIOME_SCALE_CHOICES, nearestScale(biomeScale),
+                CityWorldCustomizeScreen::scaleLabel, v -> biomeScale = v));
         // Only worth showing when a TerraBlender biome mod is actually installed — otherwise it is a
         // switch that visibly does nothing, which reads as a bug rather than as "you have no such mod".
         if (me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.present())
@@ -316,7 +320,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 oddsOfTreasureInSewers.value, oddsOfTreasureInBuildings.value, oddsOfAlcoveInMines.value);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
                 treeStyle, spawnTrees.value, subSurfaceStyle, ruralnessLevel.value, maxBuildingFloors,
-                broadcastSpecialPlaces, announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth);
+                broadcastSpecialPlaces, announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale);
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops);
@@ -349,7 +353,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 defaults.spawns(), defaults.treasures(),
                 new CityWorldSettingsData.World(world.treeStyle(), world.spawnTrees(), world.subSurfaceStyle(),
                         world.ruralnessLevel(), world.maxBuildingFloors(), world.broadcastSpecialPlaces(),
-                        announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth),
+                        announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale),
                 radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves);
         // 26.2 moved screen switching from Minecraft onto its Gui (Minecraft.setScreen is gone).
         this.minecraft.gui.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.onDone));
@@ -396,6 +400,26 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
      * screen and saving would have quietly changed the setting. Its own scale, with its own words.
      */
     private static final Double[] WARMTH_CHOICES = { 0.0, 0.10, 0.20, 0.25, 0.35, 0.50 };
+
+    /** Biome-size steps. 1.0 must be in the list — it is the default; see the Chance lesson above. */
+    private static final Double[] BIOME_SCALE_CHOICES = { 0.75, 1.0, 1.5, 2.0, 3.0, 4.0 };
+
+    private static Component scaleLabel(double v) {
+        String name = v < 0.9 ? "Tighter"
+                : v < 1.2 ? "Default"
+                : v < 1.8 ? "Larger"
+                : v < 2.5 ? "Much larger"
+                : v < 3.5 ? "Huge" : "Continental";
+        return Component.literal(name);
+    }
+
+    private static Double nearestScale(double value) {
+        Double best = BIOME_SCALE_CHOICES[0];
+        for (Double choice : BIOME_SCALE_CHOICES)
+            if (Math.abs(choice - value) < Math.abs(best - value))
+                best = choice;
+        return best;
+    }
 
     private static Component warmthLabel(double v) {
         String name = v <= 0.0 ? "Off"
