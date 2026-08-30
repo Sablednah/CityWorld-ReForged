@@ -8,6 +8,7 @@ import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Context.DataContext;
 import me.daddychurchill.CityWorld.Plats.IsolatedLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
+import me.daddychurchill.CityWorld.Plugins.LootProvider;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
 import me.daddychurchill.CityWorld.Support.PlatMap;
@@ -223,7 +224,7 @@ public class HospitalLot extends IsolatedLot {
                     case 0, 1, 2, 3 -> wingBed(chunk, lx, y, lz, runZ);
                     case 4, 5, 6 -> officeNook(chunk, lx, y, lz, runZ);
                     case 7 -> generator.spawnProvider.spawnMedic(generator, chunk, chunkOdds, lx, y, lz);
-                    case 8 -> medicineChest(chunk, lx, y, lz);
+                    case 8 -> medicineChest(generator, chunk, lx, y, lz);
                     default -> chunk.setBlock(lx, y, lz, Material.BREWING_STAND); // a little lab station
                     }
                 }
@@ -330,7 +331,7 @@ public class HospitalLot extends IsolatedLot {
         if (inRange(chairX) && inRange(deskZ) && chunk.isEmpty(chairX, y, deskZ) && !chunk.isEmpty(chairX, y - 1, deskZ))
             chunk.setBlock(chairX, y, deskZ, Material.QUARTZ_STAIRS, chairFace);
         if (inRange(deskX) && inRange(cabZ) && chunk.isEmpty(deskX, y, cabZ) && !chunk.isEmpty(deskX, y - 1, cabZ))
-            medicineChest(chunk, deskX, y, cabZ); // the cabinet = a supply chest (heal potions + bandages)
+            medicineChest(generator, chunk, deskX, y, cabZ); // the cabinet = a supply chest (heal potions + bandages)
         if (Math.floorMod(x * 7 + z * 11, 3) == 0 && inRange(chairX) && inRange(cabZ) && chunk.isEmpty(chairX, y, cabZ)
                 && !chunk.isEmpty(chairX, y - 1, cabZ))
             generator.spawnProvider.spawnMedic(generator, chunk, chunkOdds, chairX, y, cabZ); // a doctor on shift
@@ -395,8 +396,9 @@ public class HospitalLot extends IsolatedLot {
     /** A medicine chest — a few Potions of Healing and some "Bandage" paper. Uses the region-level block
      *  entity ({@code getActualBlock().getState()}, how signs/spawners are written during worldgen) — the
      *  underlying ServerLevel can't see a block just set in the generation region yet. */
-    private void medicineChest(RealBlocks chunk, int x, int y, int z) {
-        chunk.setBlock(x, y, z, Material.CHEST, BlockFace.SOUTH);
+    private void medicineChest(CityWorldGenerator generator, RealBlocks chunk, int x, int y, int z) {
+        chunk.setChest(generator, x, y, z, BlockFace.SOUTH, chunkOdds, generator.lootProvider,
+                LootProvider.LootLocation.HOSPITAL);
         if (!(chunk.getActualBlock(x, y, z).getState() instanceof ChestBlockEntity chest))
             return;
         for (int s = 0; s < 3; s++) {

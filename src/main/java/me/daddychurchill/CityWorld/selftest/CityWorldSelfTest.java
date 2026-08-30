@@ -399,7 +399,7 @@ public final class CityWorldSelfTest {
                     hit.unwrapKey().ifPresent(k -> reached.add(k.identifier().toString()));
             }
         report.put("terraBlender.reachable", Integer.toString(reached.size()));
-        report.put("terraBlender.reachedSample", reached.stream().limit(24).toList().toString());
+        report.put("terraBlender.reachedSample", reached.stream().limit(200).toList().toString());
     }
 
     /**

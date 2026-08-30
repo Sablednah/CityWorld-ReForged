@@ -43,7 +43,12 @@ public abstract class LootProvider extends Provider {
      */
     public enum LootLocation {
         EMPTY, RANDOM, SEWER, MINE, BUNKER, BUILDING, WAREHOUSE, FOOD, STORAGE_SHED, FARMWORKS, FARMWORKS_OUTPUT,
-        WOODWORKS, WOODWORKS_OUTPUT, STONEWORKS, STONEWORKS_OUTPUT
+        WOODWORKS, WOODWORKS_OUTPUT, STONEWORKS, STONEWORKS_OUTPUT,
+        // Containers that used to be placed bare. Each name maps to cityworld:chests/<lowercase>, and
+        // each of those tables ends with a reference to an EMPTY cityworld:chests/<name>_extra that we
+        // also ship — a mod or pack replaces just that file to drop its own items in without touching
+        // (or clashing with) CityWorld's own contents. Ammo in nightstands, guns in the armoury.
+        HOSPITAL, NIGHTSTAND, VAULT_QUARTERS, VAULT_OFFICE, VAULT_ARMOURY, SHOP, POND
     }
 
     public abstract void setLoot(CityWorldGenerator generator, Odds odds, LootLocation lootLocation, Block block);
