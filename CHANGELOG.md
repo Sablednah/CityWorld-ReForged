@@ -5,6 +5,16 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 5.3.2
+
+### Fixed
+
+- **No more lily pads in the fields.** Biomes O' Plenty registers `waterlily` into
+  `#minecraft:small_flowers`, so the farm flower pool inherited it and planted lily pads on tilled
+  earth — they want water beneath them, so they read as broken rather than merely odd. Removed with
+  NeoForge's `remove` list rather than by hand-listing flowers, so every future BoP flower still
+  arrives on its own. BoP's End and Nether blooms are left in: strange in a field, but not wrong.
+
 ## 5.3.1
 
 ### Fixed
