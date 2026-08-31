@@ -812,6 +812,42 @@ interior. So this is a **remapping of an existing signal**, not new noise that h
 **`fungal_jungle` is in the 25**, so it was never a range problem — which is why putting it in the cave
 pool was wrong twice over: wrong that it is a cave biome, and wrong that reach was the issue.
 
+### ✅ Both fixes built and measured (2026-08-31)
+
+The analysis said the two halves needed different work, so both were done — and measured on the same
+seed with TerraBlender + BoP + GlitchCore actually installed.
+
+**Continentalness now uses its whole range.** The ends are measured instead of assumed: sample the
+regional height over a fixed grid, take the 2nd/98th percentiles, scale to those, with sea level pinned
+at 0 and each side scaled independently (biomes gate ocean against land on the sign, so one straight
+stretch would move the shoreline off zero).
+
+| | before | after |
+|---|---|---|
+| continentalness emitted | −0.78 … 0.54 | **−1.00 … 1.00** |
+| biomes blamed on continentalness | 6 | **4** |
+| distinct biomes on the ground | 94 | **104** |
+| slivers (under 0.1% of ground) | 22 of 94 | **13 of 104** |
+
+**The reserved share reaches the ones widening could not.** `world.moddedBiomeShare` (default `0.35`)
+marks a share of the map — by its own coarse noise field, so a mod gets regions you can walk across
+rather than static — and there the climate lookup runs with vanilla's points removed, so the 25
+also-rans compete only with each other.
+
+| modded biomes | direct wins only | with the share |
+|---|---|---|
+| distinct reachable | 34 | **52** |
+| ground covered | 12.4% | **36.1%** |
+
+CityWorld still names about two thirds of the ground. `0.0` restores the old behaviour exactly.
+
+**⚠ `terraBlender.reachable` is not a count of modded biomes, and reading it as one is a trap I fell
+into.** It counts *every* hit, and TerraBlender's regions carry vanilla biomes that win most points —
+81 hits, of which only 34 were modded. The historical "86 of 113 reachable" therefore never measured
+what a mod contributes, and comparing a modded-only figure against it makes a feature look like a
+regression. `reachableModdedDirect` vs `reachableWithShare` are the comparable pair, recorded in one
+run so the baseline is the same seed and the same mods.
+
 ### Related gap this exposes
 
 `CityWorldClimateBiomeSource` has **49 biomes hardcoded in Java** and a hand-written climate matrix (21
