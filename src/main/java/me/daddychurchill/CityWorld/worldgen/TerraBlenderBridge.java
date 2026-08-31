@@ -64,10 +64,24 @@ public final class TerraBlenderBridge {
 
     private final Climate.ParameterList<Holder<Biome>> parameters;
     private final List<Holder<Biome>> biomes;
+    private final List<Pair<Climate.ParameterPoint, Holder<Biome>>> points;
 
-    private TerraBlenderBridge(Climate.ParameterList<Holder<Biome>> parameters, List<Holder<Biome>> biomes) {
+    private TerraBlenderBridge(Climate.ParameterList<Holder<Biome>> parameters, List<Holder<Biome>> biomes,
+            List<Pair<Climate.ParameterPoint, Holder<Biome>>> points) {
         this.parameters = parameters;
         this.biomes = biomes;
+        this.points = points;
+    }
+
+    /**
+     * The raw {@code (climate point, biome)} pairs, for diagnosis.
+     *
+     * <p>Exposed so the self-test can answer <em>why</em> a biome is unreachable: comparing the ranges
+     * a biome asks for against the ranges CityWorld actually produces says which axis is the gap, and
+     * therefore whether the fix is widening an axis or overriding that biome's conditions.
+     */
+    public List<Pair<Climate.ParameterPoint, Holder<Biome>>> points() {
+        return points;
     }
 
     /**
@@ -129,7 +143,8 @@ public final class TerraBlenderBridge {
 
             if (collected.isEmpty())
                 return null;
-            return new TerraBlenderBridge(new Climate.ParameterList<>(collected), List.copyOf(distinct));
+            return new TerraBlenderBridge(new Climate.ParameterList<>(collected), List.copyOf(distinct),
+                    List.copyOf(collected));
         } catch (Throwable t) {
             // Any surprise at all — API moved, mod half-loaded — means no bridge, not a broken world.
             return null;

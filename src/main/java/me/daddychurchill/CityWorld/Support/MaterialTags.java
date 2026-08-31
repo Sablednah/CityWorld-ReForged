@@ -53,6 +53,20 @@ public final class MaterialTags {
     public static final TagKey<Block> BUILD_STAINED_GLASS = key("cityworld:build/stained_glass");
     public static final TagKey<Block> BUILD_MODERN_STONES = key("cityworld:build/modern_stones");
 
+    /**
+     * What a farm field can be planted with, and what a flower bed can draw from.
+     *
+     * <p>The crop pool is the seam Farmer's Delight and friends were always going to need: farm fields
+     * used to be a fixed {@code CropType} enum feeding a switch, so a mod's crops could never appear
+     * however well it tagged them. Vanilla has no "is a crop" tag to borrow — {@code #minecraft:crops}
+     * does not exist — so this is ours.
+     *
+     * <p>Ships with the four vanilla crops plus a few Farmer's Delight ids marked
+     * {@code "required": false}, which cost nothing while that mod has no build for our versions.
+     */
+    public static final TagKey<Block> FARM_CROPS = key("cityworld:farm/crops");
+    public static final TagKey<Block> FARM_FLOWERS = key("cityworld:farm/flowers");
+
     /** A block tag key from a namespaced id, e.g. {@code "minecraft:planks"} or {@code "c:stones"}. */
     public static TagKey<Block> key(String id) {
         return TagKey.create(Registries.BLOCK, Identifier.parse(id));
