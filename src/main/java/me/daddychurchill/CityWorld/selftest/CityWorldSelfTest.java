@@ -183,6 +183,7 @@ public final class CityWorldSelfTest {
                 server.getServerVersion());
         try {
             checkGeneratorInstalled(server);
+            checkPermissionNodes();
             checkPlanning();
             checkFarmCrops();
             checkBiomeDepth(server);
@@ -223,6 +224,36 @@ public final class CityWorldSelfTest {
             fail("overworld generator is " + generator + ", not CityWorld's — check level-type");
         if (!biomeSource.startsWith("me.daddychurchill.CityWorld"))
             fail("overworld biome source is " + biomeSource + ", not CityWorld's");
+    }
+
+    /**
+     * The permission nodes are declared to NeoForge and the handler knows them.
+     *
+     * <p><b>This is not a formality.</b> {@code PermissionAPI.getPermission} <em>throws</em>
+     * {@code UnregisteredPermissionException} for a node the active handler has not seen — so if the
+     * {@code PermissionGatherEvent.Nodes} subscription were ever dropped or misregistered, every
+     * CityWorld command would fail the moment a player (not the console) ran it, while the console
+     * kept working through the fallback path. That is a bug that hides from exactly the person most
+     * likely to test it.
+     */
+    private void checkPermissionNodes() {
+        var registered = net.neoforged.neoforge.server.permission.PermissionAPI.getRegisteredNodes();
+        var ours = List.of(
+                me.daddychurchill.CityWorld.CityWorldPermissions.INFO,
+                me.daddychurchill.CityWorld.CityWorldPermissions.TELEPORT,
+                me.daddychurchill.CityWorld.CityWorldPermissions.FIND,
+                me.daddychurchill.CityWorld.CityWorldPermissions.SCHEMATIC,
+                me.daddychurchill.CityWorld.CityWorldPermissions.EXPORT);
+        java.util.List<String> missing = new ArrayList<>();
+        for (var node : ours)
+            if (!registered.contains(node))
+                missing.add(node.getNodeName());
+        report.put("permissions.handler", String.valueOf(
+                net.neoforged.neoforge.server.permission.PermissionAPI.getActivePermissionHandler()));
+        report.put("permissions.nodes", ours.stream().map(n -> n.getNodeName()).toList().toString());
+        if (!missing.isEmpty())
+            fail("permission nodes not registered: " + missing
+                    + " — every command using them throws UnregisteredPermissionException for players");
     }
 
     /**
