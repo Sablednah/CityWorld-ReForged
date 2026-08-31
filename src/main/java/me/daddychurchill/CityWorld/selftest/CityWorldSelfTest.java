@@ -387,7 +387,8 @@ public final class CityWorldSelfTest {
         // so this measures the axis mapping, independent of whether useModdedBiomes is switched on.
         java.util.Set<String> reached = new java.util.TreeSet<>();
         java.util.Set<String> withShare = new java.util.TreeSet<>();
-        int shareColumns = 0, total = 0;
+        java.util.Set<String> directOnly = new java.util.TreeSet<>();
+        int shareColumns = 0, total = 0, directGround = 0, shareGround = 0;
         double share = context.getSettings().moddedBiomeShare;
         for (int x = -BIOME_SWEEP_BLOCKS; x <= BIOME_SWEEP_BLOCKS; x += BIOME_SWEEP_STEP)
             for (int z = -BIOME_SWEEP_BLOCKS; z <= BIOME_SWEEP_BLOCKS; z += BIOME_SWEEP_STEP) {
@@ -409,14 +410,29 @@ public final class CityWorldSelfTest {
                 boolean reserved = share > 0.0 && context.getModdedShare(x, z) < share;
                 if (reserved)
                     shareColumns++;
-                var effective = hit != null
-                        && me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.isModded(hit) ? hit
-                        : reserved ? bridge.findModded(target) : null;
-                if (effective != null)
+                boolean directWin = hit != null
+                        && me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.isModded(hit);
+                if (directWin) {
+                    directGround++;
+                    hit.unwrapKey().ifPresent(k -> directOnly.add(k.identifier().toString()));
+                }
+                var effective = directWin ? hit : reserved ? bridge.findModded(target) : null;
+                if (effective != null) {
+                    shareGround++;
                     effective.unwrapKey().ifPresent(k -> withShare.add(k.identifier().toString()));
+                }
             }
+        // ⚠ `reachable` counts EVERY hit, vanilla included — TerraBlender's regions carry vanilla biomes
+        // and they win most points. It measures the axis mapping, not what a mod contributes, so it
+        // reads far higher than the number of modded biomes a player can actually meet. The two
+        // *modded* counts below are the comparable pair, and the honest before/after for the share.
         report.put("terraBlender.reachable", Integer.toString(reached.size()));
+        report.put("terraBlender.reachableModdedDirect", Integer.toString(directOnly.size()));
         report.put("terraBlender.reachableWithShare", Integer.toString(withShare.size()));
+        report.put("terraBlender.moddedGroundDirectPct",
+                total == 0 ? "0" : String.format(java.util.Locale.ROOT, "%.1f%%", 100.0 * directGround / total));
+        report.put("terraBlender.moddedGroundWithSharePct",
+                total == 0 ? "0" : String.format(java.util.Locale.ROOT, "%.1f%%", 100.0 * shareGround / total));
         report.put("terraBlender.shareOfGround",
                 total == 0 ? "0" : String.format(java.util.Locale.ROOT, "%.1f%%", 100.0 * shareColumns / total));
         analyseUnreachable(bridge, context, reached);
