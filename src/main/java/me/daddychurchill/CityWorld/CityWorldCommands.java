@@ -84,16 +84,17 @@ public final class CityWorldCommands {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("cityinfo")
+                .requires(CityWorldPermissions.check(CityWorldPermissions.INFO))
                 .executes(CityWorldCommands::cityInfo));
 
         dispatcher.register(Commands.literal("cityworld")
-                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .requires(CityWorldPermissions.check(CityWorldPermissions.TELEPORT))
                 .executes(ctx -> teleport(ctx, CITY, "Entering the city..."))
                 .then(Commands.literal("leave")
                         .executes(ctx -> teleport(ctx, Level.OVERWORLD, "Leaving CityWorld... come back soon!"))));
 
         dispatcher.register(Commands.literal("cityschem")
-                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .requires(CityWorldPermissions.check(CityWorldPermissions.SCHEMATIC))
                 .then(Commands.literal("list")
                         .executes(CityWorldCommands::listSchematics))
                 .then(Commands.argument("name", StringArgumentType.greedyString())
@@ -107,7 +108,7 @@ public final class CityWorldCommands {
         //   /cityfind lots  lists the well-known kinds. (Literals win over the greedy name arg in Brigadier,
         //   so "lot"/"lots" never get swallowed as a schematic name — same trick the "tp" literal uses.)
         dispatcher.register(Commands.literal("cityfind")
-                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .requires(CityWorldPermissions.check(CityWorldPermissions.FIND))
                 .then(Commands.literal("tp")
                         .then(Commands.argument("name", StringArgumentType.greedyString())
                                 .suggests(SUGGEST_SCHEMATICS)
@@ -127,7 +128,7 @@ public final class CityWorldCommands {
                         .executes(ctx -> findSchematic(ctx, false))));
 
         dispatcher.register(Commands.literal("cityexport")
-                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .requires(CityWorldPermissions.check(CityWorldPermissions.EXPORT))
                 .executes(ctx -> exportSettings(ctx, "cityworld-settings"))
                 .then(Commands.argument("name", StringArgumentType.greedyString())
                         .executes(ctx -> exportSettings(ctx, StringArgumentType.getString(ctx, "name")))));
@@ -136,7 +137,7 @@ public final class CityWorldCommands {
         // (vanilla /locate is blind here: the biome source only reports a plains fallback). Add "tp" to
         // teleport to the match.
         dispatcher.register(Commands.literal("cwlocate")
-                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .requires(CityWorldPermissions.check(CityWorldPermissions.FIND))
                 .then(Commands.argument("biome", StringArgumentType.word())
                         .executes(ctx -> locateBiome(ctx, false))
                         .then(Commands.literal("tp")
