@@ -185,9 +185,9 @@ generator salts them into cities. Filenames may contain spaces.
 | `/cwlocate <biome>` | op | Find the nearest matching biome. Add `tp` to teleport. |
 | `/cityexport [name]` | op | Export this world's settings as a datapack. |
 
-Only `/cityinfo` is open to everyone; the rest need operator level 2. CityWorld declares no
-permission nodes, so a permissions manager cannot currently grant them individually — see
-[`NODES.md`](NODES.md).
+`/cityinfo` is open to everyone and the rest default to operator level 2 — but each is a
+**permission node**, so LuckPerms (or any NeoForge permissions manager) can hand out finding and
+world-jumping without handing out schematic pasting. See [`NODES.md`](NODES.md).
 
 ## Building from source
 

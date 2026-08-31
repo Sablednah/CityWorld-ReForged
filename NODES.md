@@ -1,62 +1,54 @@
-# Permissions and access
+# Permission nodes
 
 **Status: accurate as of 5.3.2, and hand-written** — like Factions' `NODES.md` and unlike Standards',
-which is generated from its source because it has 72 nodes to generate from.
+which is generated because it has 72 nodes to generate from. Five is a table you can read.
 
-## CityWorld declares no permission nodes
+CityWorld asks NeoForge's `PermissionAPI` for every one of these, so they work with LuckPerms, with
+Standards' own handler (`/rank`), or with nothing installed at all — in which case the **Default**
+column is the whole answer.
 
-Worth stating plainly, because a file called `NODES.md` implies a table of nodes: `grep -r
-PermissionNode src/` returns nothing. CityWorld does not call NeoForge's `PermissionAPI` at all.
+| Default | Means |
+|---|---|
+| `everyone` | Every player has it unless a permissions mod takes it away. |
+| `ops` | Operators (level 2, the vanilla `gamemaster` level) have it; anybody else needs it granted. |
 
-Every command gates on **vanilla operator level** instead, through
-`Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)` — op level 2, the same level vanilla requires
-for `/gamemode` and `/tp`.
+## The nodes
 
-That means **a permissions manager cannot currently grant or deny any CityWorld command**. Standards'
-`/rank`, LuckPerms and everything else are out of the loop; the only lever a server owner has is
-whether somebody is an operator. See "The gap" below, because this is probably not what you want now
-that Standards has a permission manager.
-
-## The commands
-
-| Command | Who | What it does |
+| Node | Default | What it allows |
 |---|---|---|
-| `/cityinfo` | **anybody** | Reports the world's style, seed-derived settings and the lot under your feet. Read-only. |
-| `/cityworld` | op level 2 | Teleport into the CityWorld dimension. `/cityworld leave` returns you to the overworld. |
-| `/cityfind <name>` | op level 2 | Find the nearest named landmark or schematic; `/cityfind tp <name>` teleports. |
-| `/cityfind lots` | op level 2 | List the lot kinds you can search for. |
-| `/cityfind lot <kind>` | op level 2 | Find the nearest lot of a kind; `/cityfind lot tp <kind>` teleports. |
-| `/cwlocate <biome>` | op level 2 | Find the nearest matching biome; `/cwlocate <biome> tp` teleports. |
-| `/cityschem list` | op level 2 | List the loaded schematics. |
-| `/cityschem <name>` | op level 2 | Paste a schematic at your position. **Writes blocks.** |
-| `/cityexport [name]` | op level 2 | Write this world's settings out as a datapack JSON. **Writes a file.** |
+| `cityworld.info` | `everyone` | `/cityinfo` — read the plan under your feet: world style, context, lot, nature percentage, and the name of the schematic you are standing in. Reads only. |
+| `cityworld.teleport` | `ops` | `/cityworld` and `/cityworld leave` — jump in and out of the `cityworld:city` dimension. |
+| `cityworld.find` | `ops` | `/cityfind`, `/cityfind lot`, `/cityfind lots` and `/cwlocate` — search for a landmark, a lot kind or a biome. **Includes the `tp` forms**, so this grants travelling to what was found. |
+| `cityworld.schematic` | `ops` | `/cityschem list` and `/cityschem <name>` — list and paste schematics. **Writes blocks into the world.** |
+| `cityworld.export` | `ops` | `/cityexport [name]` — write this world's settings out as a datapack JSON. **Writes a file to the server.** |
 
-`/cityinfo` is the only ungated command, deliberately: it reads, it teleports nobody, and it writes
-nothing. Everything else either moves a player or changes the world.
+## Notes worth having before you configure
 
-## The gap: none of this is grantable
+**`cityworld.find` is the one most worth delegating.** Finding a hospital, a vault or a biome is a
+guide's tool rather than an administrator's, and it is the obvious candidate to grant to moderators or
+to everybody on an exploration server. Be deliberate about it though: the `tp` forms ride on the same
+node, because a search you cannot travel to is of little use. Granting `find` grants fast travel to
+anything CityWorld can name.
 
-Three of these are ordinary player-facing conveniences that a server might reasonably want to hand
-out without making somebody an operator — `/cityinfo` already is, but `/cityfind` and `/cwlocate` are
-exactly the sort of thing an adventure server gives its players. There is no way to do that today
-short of op, which also hands them `/cityschem` and `/cityexport`.
+**`cityworld.info` is open by default** because it reads, moves nobody and writes nothing. Revoke it
+if you would rather players not see how the world is put together.
 
-Wiring these to `PermissionAPI` would be a small, contained change — the reference pattern is already
-in the family, in `MobHealth-Forge`'s `MobHealthPermissions.java`: declare the nodes, register them
-on `PermissionGatherEvent.Nodes`, and give each a default resolver that falls back to the current op
-level. Nothing changes for a server with no permissions manager installed, and a server with one gets
-per-command control.
+**`schematic` and `export` are separate from everything else on purpose.** One writes blocks and the
+other writes files; neither is in the same category as looking something up. Splitting them is most of
+the reason these nodes exist — before them, handing somebody `/cityfind` meant making them an
+operator, which handed them both of these too.
 
-The likely node names, if and when that happens:
+**The console, command blocks and functions are unaffected.** `PermissionAPI` answers about a player,
+and those have no player to ask about, so they fall back to the vanilla operator-level check. A server
+console can always run every CityWorld command.
 
-| Node | Would default to | For |
-|---|---|---|
-| `cityworld.info` | everyone | `/cityinfo` |
-| `cityworld.teleport` | ops | `/cityworld`, `/cityworld leave` |
-| `cityworld.find` | ops | `/cityfind`, `/cwlocate` |
-| `cityworld.schematic` | ops | `/cityschem` |
-| `cityworld.export` | ops | `/cityexport` |
+**With no permissions manager installed nothing changes.** Each node's default resolver returns
+exactly what the old op-level gate returned, so an unmanaged server behaves as it did before nodes
+existed. These are a new lever, not a new policy.
 
-**This table is a proposal, not a description — do not configure against it.** Those nodes do not
-exist yet. When they do, this section becomes the node table and the "declares no permission nodes"
-heading above comes out.
+## Where they live
+
+Declared in `src/main/java/me/daddychurchill/CityWorld/CityWorldPermissions.java` and registered from
+`CityWorldServerEvents` on `PermissionGatherEvent.Nodes`. The self-test asserts all five are
+registered with the active handler — `PermissionAPI.getPermission` throws for an unregistered node, so
+a dropped registration would break every command for players while leaving the console working.

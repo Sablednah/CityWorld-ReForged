@@ -7,6 +7,17 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ## 5.3.2
 
+### Added
+
+- **Permission nodes for every command.** CityWorld gated purely on operator level, so a permissions
+  manager could not grant or deny any of it — and op is all-or-nothing: handing a moderator
+  `/cityfind` also handed them `/cityschem`, which writes blocks, and `/cityexport`, which writes
+  files. Five nodes now split them up: `cityworld.info` (default everyone), `cityworld.teleport`,
+  `cityworld.find`, `cityworld.schematic` and `cityworld.export` (default operators). Works with
+  LuckPerms, SableCraft Standards' `/rank`, or nothing at all — **with no permissions manager
+  installed the behaviour is exactly as before**, since each node's default is the old op check. The
+  console keeps working regardless. See [`NODES.md`](NODES.md).
+
 ### Fixed
 
 - **Flower fields plant again, and grow the whole pool.** Fields of tulips, poppies and daisies were
