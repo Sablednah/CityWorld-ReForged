@@ -386,21 +386,47 @@ public final class CityWorldSelfTest {
         // Sweep the same grid the biome sweep uses, asking the bridge directly with CityWorld's axes —
         // so this measures the axis mapping, independent of whether useModdedBiomes is switched on.
         java.util.Set<String> reached = new java.util.TreeSet<>();
+        java.util.Set<String> withShare = new java.util.TreeSet<>();
+        int shareColumns = 0, total = 0;
+        double share = context.getSettings().moddedBiomeShare;
         for (int x = -BIOME_SWEEP_BLOCKS; x <= BIOME_SWEEP_BLOCKS; x += BIOME_SWEEP_STEP)
             for (int z = -BIOME_SWEEP_BLOCKS; z <= BIOME_SWEEP_BLOCKS; z += BIOME_SWEEP_STEP) {
-                var hit = bridge.find(Climate.target(
+                Climate.TargetPoint target = Climate.target(
                         (float) (context.getTemperature(x, z) * 2.0 - 1.0),
                         (float) (context.getHumidity(x, z) * 2.0 - 1.0),
                         (float) context.getContinentalness(x, z),
                         (float) context.getErosion(x, z),
                         0.0F,
-                        (float) context.getWeirdness(x, z)));
+                        (float) context.getWeirdness(x, z));
+                var hit = bridge.find(target);
+                total++;
                 if (hit != null)
                     hit.unwrapKey().ifPresent(k -> reached.add(k.identifier().toString()));
+
+                // What a player would actually meet: the direct win where there is one, and on the
+                // reserved share the modded-only answer. This is the number the share dial exists to
+                // move, so measuring only the direct wins would report the feature as doing nothing.
+                boolean reserved = share > 0.0 && context.getModdedShare(x, z) < share;
+                if (reserved)
+                    shareColumns++;
+                var effective = hit != null
+                        && me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.isModded(hit) ? hit
+                        : reserved ? bridge.findModded(target) : null;
+                if (effective != null)
+                    effective.unwrapKey().ifPresent(k -> withShare.add(k.identifier().toString()));
             }
         report.put("terraBlender.reachable", Integer.toString(reached.size()));
+        report.put("terraBlender.reachableWithShare", Integer.toString(withShare.size()));
+        report.put("terraBlender.shareOfGround",
+                total == 0 ? "0" : String.format(java.util.Locale.ROOT, "%.1f%%", 100.0 * shareColumns / total));
         analyseUnreachable(bridge, context, reached);
         report.put("terraBlender.reachedSample", reached.stream().limit(200).toList().toString());
+
+        // The share must not become "modded biomes everywhere" — the failure the modded-hit check was
+        // added to prevent, which cost swamp 80% of its ground before it was caught.
+        if (share > 0.0 && share < 1.0 && total > 0 && shareColumns > total * 0.9)
+            fail("the modded share claimed " + shareColumns + " of " + total + " columns at share=" + share
+                    + " — the share field is not selective, so CityWorld's own palette is being replaced");
     }
 
     /**

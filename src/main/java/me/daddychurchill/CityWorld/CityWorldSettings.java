@@ -149,6 +149,9 @@ public class CityWorldSettings {
     /** Biome region size multiplier; see {@code World.DEFAULT_BIOME_SCALE}. */
     public double biomeScale = CityWorldSettingsData.World.DEFAULT_BIOME_SCALE;
 
+    /** Share of contested ground handed to modded biomes; see {@code World.DEFAULT_MODDED_SHARE}. */
+    public double moddedBiomeShare = CityWorldSettingsData.World.DEFAULT_MODDED_SHARE;
+
     /** Whether vanilla's biome features run on wild land. */
     public boolean vanillaDecoratesWild() {
         return wildDecoration != CityWorldSettingsData.WildDecoration.CITYWORLD;
@@ -483,6 +486,7 @@ public class CityWorldSettings {
         wildDecoration = w.wildDecoration();
         climateWarmth = w.climateWarmth();
         biomeScale = w.biomeScale();
+        moddedBiomeShare = w.moddedBiomeShare();
         treeStyle = w.treeStyle();
         spawnTrees = w.spawnTrees();
         subSurfaceStyle = w.subSurfaceStyle();
@@ -554,7 +558,8 @@ public class CityWorldSettings {
                 oddsOfTreasureInSewers, oddsOfTreasureInBuildings, oddsOfAlcoveInMines);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
                 treeStyle, spawnTrees, subSurfaceStyle, ruralnessLevel, maxBuildingFloors, broadcastSpecialPlaces,
-                java.util.List.copyOf(announcedLandmarks), useModdedBiomes, wildDecoration, climateWarmth, biomeScale);
+                java.util.List.copyOf(announcedLandmarks), useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
+                moddedBiomeShare);
         CityWorldSettingsData.Radius radius = new CityWorldSettingsData.Radius(
                 centerPointOfChunkRadiusX, centerPointOfChunkRadiusZ, constructChunkRadius, roadChunkRadius,
                 cityChunkRadius, buildOutsideRadius, minInbetweenChunkDistanceOfCities);

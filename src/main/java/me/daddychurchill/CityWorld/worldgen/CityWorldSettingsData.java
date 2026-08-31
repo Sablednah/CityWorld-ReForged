@@ -401,7 +401,8 @@ public record CityWorldSettingsData(
             boolean useModdedBiomes,
             WildDecoration wildDecoration,
             double climateWarmth,
-            double biomeScale) {
+            double biomeScale,
+            double moddedBiomeShare) {
 
         /**
          * How far the temperature field leans warm, {@code 0.0} (unchanged) to about {@code 0.5}.
@@ -423,6 +424,24 @@ public record CityWorldSettingsData(
          */
         public static final double DEFAULT_BIOME_SCALE = 1.0;
 
+        /**
+         * How much land a biome mod may own outright, {@code 0.0}–{@code 1.0}, where CityWorld's own
+         * palette would otherwise have won.
+         *
+         * <p><b>This exists because reach and range turned out to be different problems.</b> A modded
+         * biome is normally picked only when it beats every vanilla point in the climate lookup, and 25
+         * of BoP's biomes were measured overlapping CityWorld's emitted ranges on every axis yet never
+         * winning, because a nearer neighbour always existed. No amount of widening reaches those. On
+         * the reserved share the same lookup runs with vanilla's points removed, so they compete only
+         * with each other.
+         *
+         * <p>{@code 0.35} by default — enough that a mod's long tail actually appears, while CityWorld
+         * still names about two thirds of the ground it would have. {@code 0.0} restores the previous
+         * behaviour exactly (modded biomes only where they outright win); {@code 1.0} gives every
+         * contested column to the mod, which is a fair choice for a "play BoP with cities" world.
+         */
+        public static final double DEFAULT_MODDED_SHARE = 0.35;
+
         /** CLASSIC's default building-floor cap — the old hardcoded {@code absoluteAbsoluteMaximumFloorsAbove}. */
         public static final int DEFAULT_MAX_BUILDING_FLOORS = 20;
 
@@ -438,7 +457,7 @@ public record CityWorldSettingsData(
 
         public static final World DEFAULT = new World(TreeStyle.NORMAL, Odds.oddsLikely, SubSurfaceStyle.LAND, 0.0,
                 DEFAULT_MAX_BUILDING_FLOORS, false, DEFAULT_ANNOUNCED, true, WildDecoration.BOTH,
-                DEFAULT_CLIMATE_WARMTH, DEFAULT_BIOME_SCALE);
+                DEFAULT_CLIMATE_WARMTH, DEFAULT_BIOME_SCALE, DEFAULT_MODDED_SHARE);
 
         private static final Codec<TreeStyle> TREE_STYLE_CODEC = Codec.STRING.xmap(
                 s -> parseEnum(TreeStyle.class, s, TreeStyle.NORMAL), TreeStyle::name);
@@ -461,7 +480,9 @@ public record CityWorldSettingsData(
                         .forGetter(World::wildDecoration),
                 Codec.DOUBLE.optionalFieldOf("climateWarmth", DEFAULT_CLIMATE_WARMTH)
                         .forGetter(World::climateWarmth),
-                Codec.DOUBLE.optionalFieldOf("biomeScale", DEFAULT_BIOME_SCALE).forGetter(World::biomeScale)
+                Codec.DOUBLE.optionalFieldOf("biomeScale", DEFAULT_BIOME_SCALE).forGetter(World::biomeScale),
+                Codec.DOUBLE.optionalFieldOf("moddedBiomeShare", DEFAULT_MODDED_SHARE)
+                        .forGetter(World::moddedBiomeShare)
         ).apply(i, World::new));
     }
 
