@@ -756,16 +756,61 @@ handful. It did not. Three modelled axes plus a terrain-derived continentalness 
 a large modded biome set.
 
 **The ~27 unreachable are explained, not mysterious.** The bridge is queried at `depth = 0` (a surface
-point), so anything wanting depth — BoP's `glowing_grotto`, `crystalline_chasm`, `spider_nest`,
-`fungal_jungle` — cannot be selected, and nor can biomes needing continentalness extremes our terrain
-never produces. **That is an opportunity rather than a defect:** BoP's cave biomes belong in
-`#cityworld:cave_pool`, where they would work today via a datapack, not in the surface lookup.
+point), so anything wanting depth — BoP's `glowing_grotto`, `crystalline_chasm`, `spider_nest` —
+cannot be selected, and nor can biomes needing continentalness extremes our terrain never produces.
+**That is an opportunity rather than a defect:** BoP's cave biomes belong in `#cityworld:cave_pool`,
+where they would work today via a datapack, not in the surface lookup.
+
+> **⚠ That paragraph was reasoning, not measurement, and it is partly wrong — see the axis analysis
+> below.** Depth explains only some of it; `fungal_jungle` in that list is a *surface* biome and was
+> put in the cave pool on the strength of this guess, where it generated nothing. Two thirds of the
+> unreachable set has no axis gap at all.
 
 **⚠ Repeating this measurement:** put TerraBlender, BoP **and GlitchCore** in `run/mods/` and run
 `scripts/selftest.sh`. Without GlitchCore, BoP refuses to load with *"requires glitchcore 21.11.0.3 or
 above"* and the run fails before any of this is reached. The jars are deliberately **not** left there —
 they change `biome.possible` from 52 to 113 and would make the baseline report confusing for anyone who
 did not expect it.
+
+### ✅ Why the unreachable ones are unreachable — measured per axis (2026-08-31)
+
+"31 of 113 unreachable" says a problem exists but not what to do about it, and the two candidate fixes
+the owner named — *widen our axes* vs *help the biomes individually* — need different work. So the
+self-test now measures **what CityWorld produces** on each axis against **what each biome demands**,
+and names the axes with no overlap (`axes.cityworld.*`, `axes.blamedAxis`, `axes.examples` in the
+report).
+
+**What CityWorld actually produces**, sweeping the plan grid:
+
+| Axis | Range emitted |
+|---|---|
+| temperature | −1.00 … 1.00 |
+| humidity | −1.00 … 1.00 |
+| erosion | −1.00 … 1.00 |
+| weirdness | −1.00 … 1.00 |
+| **continentalness** | **−0.78 … 0.54** ← the only narrow one |
+
+**The 31 split cleanly, and not the way the guess above assumed:**
+
+- **6 have a real gap, all on continentalness.** Widening that axis fixes them, and nothing else does.
+- **25 have no gap on any axis.** They overlap our ranges everywhere and *still* lose, because
+  `Climate.ParameterList.findValue` takes the **nearest** point in 7-D space — a closer neighbour
+  always wins. Widening cannot help these at all. Examples: `bog`, `coniferous_forest`, `dryland`,
+  `field`, `fir_clearing`, `forested_field`, `fungal_jungle`, `lush_savanna`, `moor`, `mystic_grove`.
+
+**Continentalness is narrow for a reason, and it is a fixable one.** It is derived from terrain height,
+and CityWorld's terrain never reaches vanilla's extremes — no abyssal ocean floor, no deep continental
+interior. So this is a **remapping of an existing signal**, not new noise that has to be invented.
+
+**The two fixes are genuinely different work**, which is the useful part of the finding:
+
+| | Fixes | Work |
+|---|---|---|
+| Widen continentalness | 6 | Remap height → continentalness over a wider output range |
+| Beat nearest-match | 25 | Needs a *different mechanism* — a reserved share of the map, or per-biome overrides. No amount of range widening touches it |
+
+**`fungal_jungle` is in the 25**, so it was never a range problem — which is why putting it in the cave
+pool was wrong twice over: wrong that it is a cave biome, and wrong that reach was the issue.
 
 ### Related gap this exposes
 
