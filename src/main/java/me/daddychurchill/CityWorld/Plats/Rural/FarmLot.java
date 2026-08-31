@@ -907,29 +907,68 @@ public class FarmLot extends ConnectedLot {
 
 	// MODERN biome-climate crop palettes — each favours crops/plants/trees that fit the surrounding
 	// biome (see ClimateZone). Water-hungry crops still fall back to fallow if aboveground fluids are off.
-	private final static CropType[] modernColdCrops = { CropType.FALLOW, CropType.POTATO, CropType.BEETROOT,
-			CropType.WHEAT, CropType.FERN, CropType.TALL_FERN, CropType.PINE_TREE, CropType.PINE_TREE,
-			CropType.OAK_SAPLING, CropType.ALLIUM, CropType.OXEYE_DAISY, CropType.PADDOCK, CropType.PADDOCK, CropType.HAYSTACK };
+	// ⚠ These pools are WEIGHTED BY REPETITION — an entry listed twice is twice as likely.
+	//
+	// The owner's intended ordering, by share of farm lots:
+	//     tilled > animals > ground crops > trees > flowers > grass/ferns > fallow
+	//
+	// The even split that came before put tilled crops — the thing a farm is FOR — at 11.5%, below
+	// trees, flowers and ground crops, while fallow and ferns took ground that reads as empty from the
+	// air. Verified with the self-test's farm census (farm.crops), not by eye.
+	//
+	// Collapsing the four tulips into fewer entries costs no variety any more: a flower field draws its
+	// species from #cityworld:farm/flowers at generation time, so one RED_TULIP entry can grow any of
+	// the 40 flowers in the pool. The enum now sets how OFTEN a flower field appears, not which flower.
 
-	private final static CropType[] modernTemperateCrops = { CropType.FALLOW, CropType.WHEAT, CropType.CARROT,
-			CropType.POTATO, CropType.BEETROOT, CropType.GRASS, CropType.TALL_GRASS, CropType.POPPY, CropType.DANDELION,
-			CropType.RED_TULIP, CropType.ORANGE_TULIP, CropType.WHITE_TULIP, CropType.PINK_TULIP, CropType.OXEYE_DAISY,
-			CropType.ALLIUM, CropType.OAK_TREE, CropType.BIRCH_TREE, CropType.OAK_SAPLING, CropType.BIRCH_SAPLING,
-			CropType.SHORT_FLOWERS, CropType.ALL_FLOWERS, CropType.PADDOCK, CropType.PADDOCK, CropType.HAYSTACK };
+	// cold — root-crop country: potatoes and beets, spruce, hardy flowers
+	private final static CropType[] modernColdCrops = { CropType.POTATO, CropType.POTATO, CropType.BEETROOT,
+			CropType.BEETROOT, CropType.WHEAT, CropType.WHEAT, CropType.CARROT,
+			CropType.PADDOCK, CropType.PADDOCK, CropType.PADDOCK, CropType.HAYSTACK, CropType.HAYSTACK,
+			CropType.PUMPKIN, CropType.PUMPKIN,
+			CropType.PINE_TREE, CropType.PINE_TREE, CropType.OAK_SAPLING,
+			CropType.ALLIUM, CropType.OXEYE_DAISY,
+			CropType.FERN,
+			CropType.FALLOW };
 
-	// warm + dry — savanna: acacia, hardy grasses, a little wheat, sunflowers
-	private final static CropType[] modernSavannaCrops = { CropType.FALLOW, CropType.WHEAT, CropType.MELON,
-			CropType.GRASS, CropType.TALL_GRASS, CropType.SUNFLOWER, CropType.DEAD_BUSH, CropType.ACACIA_TREE,
-			CropType.ACACIA_SAPLING, CropType.PADDOCK, CropType.PADDOCK, CropType.HAYSTACK };
+	// temperate — the classic mixed farm: tilled fields, pasture, an orchard, a meadow
+	private final static CropType[] modernTemperateCrops = { CropType.WHEAT, CropType.WHEAT, CropType.WHEAT,
+			CropType.CARROT, CropType.CARROT, CropType.CARROT, CropType.POTATO, CropType.POTATO,
+			CropType.BEETROOT, CropType.BEETROOT,
+			CropType.PADDOCK, CropType.PADDOCK, CropType.PADDOCK, CropType.PADDOCK, CropType.PADDOCK,
+			CropType.HAYSTACK, CropType.HAYSTACK,
+			CropType.MELON, CropType.MELON, CropType.MELON, CropType.PUMPKIN, CropType.PUMPKIN,
+			CropType.OAK_TREE, CropType.BIRCH_TREE, CropType.OAK_SAPLING, CropType.BIRCH_SAPLING,
+			CropType.POPPY, CropType.RED_TULIP, CropType.SHORT_FLOWERS, CropType.ALL_FLOWERS,
+			CropType.GRASS, CropType.TALL_GRASS,
+			CropType.FALLOW };
 
-	// warm/hot + wet — swamp/jungle: melons, pumpkins, cane, jungle trees, orchids, ferns
-	private final static CropType[] modernJungleCrops = { CropType.MELON, CropType.PUMPKIN, CropType.REED,
-			CropType.JUNGLE_TREE, CropType.JUNGLE_SAPLING, CropType.SWAMP_TREE, CropType.FERN, CropType.BLUE_ORCHID,
-			CropType.EDIBLE_PLANTS, CropType.PADDOCK };
+	// warm + dry — savanna: wheat and pasture, acacia, hardy grasses
+	private final static CropType[] modernSavannaCrops = { CropType.WHEAT, CropType.WHEAT, CropType.WHEAT,
+			CropType.CARROT, CropType.BEETROOT,
+			CropType.PADDOCK, CropType.PADDOCK, CropType.PADDOCK, CropType.HAYSTACK,
+			CropType.MELON, CropType.MELON, CropType.REED,
+			CropType.ACACIA_TREE, CropType.ACACIA_SAPLING,
+			CropType.SUNFLOWER,
+			CropType.GRASS, CropType.DEAD_BUSH,
+			CropType.FALLOW };
 
-	// hot + dry — desert/badlands: cactus, dead bush, cane by the water, the odd melon patch
-	private final static CropType[] modernDesertCrops = { CropType.FALLOW, CropType.CACTUS, CropType.CACTUS,
-			CropType.DEAD_BUSH, CropType.REED, CropType.MELON, CropType.PUMPKIN, CropType.ACACIA_TREE };
+	// warm/hot + wet — swamp/jungle: paddy-ish plots, melons, cane, jungle trees
+	private final static CropType[] modernJungleCrops = { CropType.CARROT, CropType.CARROT, CropType.POTATO,
+			CropType.BEETROOT, CropType.WHEAT,
+			CropType.PADDOCK, CropType.PADDOCK, CropType.HAYSTACK,
+			CropType.MELON, CropType.PUMPKIN, CropType.REED,
+			CropType.JUNGLE_TREE, CropType.JUNGLE_SAPLING, CropType.SWAMP_TREE,
+			CropType.BLUE_ORCHID, CropType.ALL_FLOWERS,
+			CropType.FERN, CropType.EDIBLE_PLANTS };
+
+	// hot + dry — desert/badlands: irrigated plots exist, but cactus and cane hold the ground
+	private final static CropType[] modernDesertCrops = { CropType.WHEAT, CropType.CARROT, CropType.BEETROOT,
+			CropType.PADDOCK, CropType.PADDOCK, CropType.HAYSTACK,
+			CropType.CACTUS, CropType.CACTUS, CropType.REED, CropType.MELON, CropType.PUMPKIN,
+			CropType.ACACIA_TREE,
+			CropType.SHORT_FLOWERS,
+			CropType.DEAD_BUSH,
+			CropType.FALLOW };
 
 	protected CropType setModernCrop(ClimateZone zone) {
 		CropType[] pool;
