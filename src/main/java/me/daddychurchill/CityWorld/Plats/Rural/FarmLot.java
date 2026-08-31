@@ -455,13 +455,13 @@ public class FarmLot extends ConnectedLot {
 				plantField(generator, chunk, cropY, CoverageType.NETHERWART, 1, 2);
 				break;
 			case SHORT_FLOWERS:
-				plantField(generator, chunk, cropY, CoverageSets.SHORT_FLOWERS, 1, 2);
+				plantPooledFlowers(generator, chunk, cropY, CoverageSets.SHORT_FLOWERS, 1, 2);
 				break;
 			case TALL_FLOWERS:
 				plantField(generator, chunk, cropY, CoverageSets.TALL_FLOWERS, 1, 2);
 				break;
 			case ALL_FLOWERS:
-				plantField(generator, chunk, cropY, CoverageSets.ALL_FLOWERS, 1, 2);
+				plantPooledFlowers(generator, chunk, cropY, CoverageSets.ALL_FLOWERS, 1, 2);
 				break;
 			case SHORT_PLANTS:
 				plantField(generator, chunk, cropY, CoverageSets.SHORT_PLANTS, 1, 2);
@@ -612,6 +612,42 @@ public class FarmLot extends ConnectedLot {
 	private void setGrownCrop(SupportBlocks chunk, int x, int y, int z, Material crop) {
 		chunk.setBlockIfNot(x, y - 1, z, Material.FARMLAND);
 		chunk.setBlock(x, y, z, crop, chunkOdds.getRandomDouble());
+	}
+
+	/**
+	 * A flower field drawn from {@code #cityworld:farm/flowers}, so a biome mod's flowers grow here too.
+	 *
+	 * <p><b>Drawn per block, not per field</b> — the opposite of {@link #plantPooledField}. A wheat field
+	 * is one crop in rows because that is what a farmed field looks like; a flower field that picked a
+	 * single species would read as a monoculture where the hand-written {@code CoverageSets} it replaces
+	 * gave a mixed meadow.
+	 *
+	 * <p>Flowers sit on the surface rather than on tilled earth, so unlike the crop path this lays no
+	 * farmland — {@code generateSurface} has already made the ground.
+	 */
+	private void plantPooledFlowers(CityWorldGenerator generator, SupportBlocks chunk, int croplevel,
+			CoverageSets coverageSet, int stepRow, int stepCol) {
+		java.util.List<Material> pool = MaterialTags.resolve(MaterialTags.FARM_FLOWERS);
+		if (pool.isEmpty()) {
+			plantField(generator, chunk, croplevel, coverageSet, stepRow, stepCol);
+			return;
+		}
+		if (directionNorthSouth) {
+			for (int x = 1; x < 15; x += stepCol)
+				for (int z = 1; z < 15; z += stepRow)
+					if (chunkOdds.playOdds(oddsOfCrop))
+						chunk.setBlock(x, croplevel, z, pool.get(chunkOdds.getRandomInt(pool.size())));
+		} else {
+			for (int z = 1; z < 15; z += stepCol)
+				for (int x = 1; x < 15; x += stepRow)
+					if (chunkOdds.playOdds(oddsOfCrop))
+						chunk.setBlock(x, croplevel, z, pool.get(chunkOdds.getRandomInt(pool.size())));
+		}
+	}
+
+	/** The crop this field grows — for the self-test's census of how many farms are bare. */
+	public CropType getCropType() {
+		return cropType;
 	}
 
 	private void plantField(CityWorldGenerator generator, SupportBlocks chunk, int croplevel, CoverageType coverageType,

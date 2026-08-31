@@ -181,6 +181,7 @@ public final class CityWorldSelfTest {
         try {
             checkGeneratorInstalled(server);
             checkPlanning();
+            checkFarmCrops();
             checkBiomeDepth(server);
             checkStructures(server);
             checkDecorationAndSigns(server);
@@ -218,6 +219,49 @@ public final class CityWorldSelfTest {
             fail("overworld generator is " + generator + ", not CityWorld's — check level-type");
         if (!biomeSource.startsWith("me.daddychurchill.CityWorld"))
             fail("overworld biome source is " + biomeSource + ", not CityWorld's");
+    }
+
+    /**
+     * What the farms actually grow — a census of every {@code FarmLot} in the MODERN plan.
+     *
+     * <p><b>Added because "the fields look empty" needed an answer, not a theory.</b> Bare fields are
+     * partly by design: {@code FALLOW} and {@code TRELLIS} plant nothing, and {@code makeConnected}
+     * copies a lot's crop across its neighbours, so a single bare roll paints a whole multi-chunk farm
+     * region rather than one chunk. That makes bare farms far more conspicuous than their share of the
+     * rolls suggests, which is exactly how it looked from the air.
+     *
+     * <p>So this records the split rather than asserting a feeling, and fails only if the tilled crops
+     * vanish entirely — the regression that switching fields to a tag-driven pool could actually cause.
+     */
+    private void checkFarmCrops() {
+        Map<String, Integer> crops = new TreeMap<>();
+        int farms = 0, bare = 0, tilled = 0;
+        CityWorldGenerator gen = new CityWorldGenerator(PLAN_SEED, 256, 63, WorldStyle.MODERN, -64, 320);
+        for (int cx = -PLAN_RADIUS; cx <= PLAN_RADIUS; cx += PlatMap.Width)
+            for (int cz = -PLAN_RADIUS; cz <= PLAN_RADIUS; cz += PlatMap.Width) {
+                PlatMap platmap = gen.getPlatMap(cx, cz);
+                for (int x = 0; x < PlatMap.Width; x++)
+                    for (int z = 0; z < PlatMap.Width; z++) {
+                        if (!(platmap.getLot(x, z) instanceof me.daddychurchill.CityWorld.Plats.Rural.FarmLot farm))
+                            continue;
+                        farms++;
+                        var type = farm.getCropType();
+                        crops.merge(type.name(), 1, Integer::sum);
+                        switch (type) {
+                        case FALLOW, TRELLIS -> bare++;
+                        case WHEAT, CARROT, POTATO, BEETROOT -> tilled++;
+                        default -> { }
+                        }
+                    }
+            }
+        report.put("farm.lots", Integer.toString(farms));
+        report.put("farm.crops", crops.toString());
+        report.put("farm.barePct", farms == 0 ? "0"
+                : String.format(java.util.Locale.ROOT, "%.1f%%", 100.0 * bare / farms));
+        report.put("farm.tilledPct", farms == 0 ? "0"
+                : String.format(java.util.Locale.ROOT, "%.1f%%", 100.0 * tilled / farms));
+        if (farms > 0 && tilled == 0)
+            fail("no farm grows a tilled crop — the crop pool is planting nothing");
     }
 
     /**
