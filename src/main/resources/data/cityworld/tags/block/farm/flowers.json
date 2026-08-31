@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:small_flowers",
+
+    { "id": "biomesoplenty:wildflower", "required": false },
+    { "id": "biomesoplenty:violet", "required": false },
+    { "id": "biomesoplenty:lavender", "required": false },
+    { "id": "biomesoplenty:goldenrod", "required": false },
+    { "id": "biomesoplenty:pink_daffodil", "required": false },
+    { "id": "biomesoplenty:glowflower", "required": false }
+  ]
+}

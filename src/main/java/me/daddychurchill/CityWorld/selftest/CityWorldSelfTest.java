@@ -399,6 +399,7 @@ public final class CityWorldSelfTest {
                     hit.unwrapKey().ifPresent(k -> reached.add(k.identifier().toString()));
             }
         report.put("terraBlender.reachable", Integer.toString(reached.size()));
+        analyseUnreachable(bridge, context, reached);
         report.put("terraBlender.reachedSample", reached.stream().limit(200).toList().toString());
     }
 
@@ -726,6 +727,90 @@ public final class CityWorldSelfTest {
         // like in the data.
         long slivers = counts.values().stream().filter(v -> v * 1000 / Math.max(1, samples) < 1).count();
         report.put("biome.wide.sliverBiomes", Long.toString(slivers) + " of " + counts.size() + " under 0.1%");
+    }
+
+    /**
+     * Why each unreachable biome is unreachable — which climate axis is the gap.
+     *
+     * <p>"31 of 113 unreachable" says a problem exists but not what to do about it. This measures the
+     * range CityWorld actually <em>produces</em> on each axis, measures the range each biome
+     * <em>demands</em>, and names the axes that do not overlap. That distinguishes the two fixes: an
+     * axis CityWorld under-produces across many biomes argues for widening that axis, while a biome
+     * demanding something no axis of ours could express argues for overriding it directly.
+     *
+     * <p>Depth is excluded from the verdict: the bridge deliberately queries at the surface, so a
+     * biome wanting depth is out of scope by design rather than by accident.
+     */
+    private void analyseUnreachable(me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge bridge,
+            CityWorldGenerator context, java.util.Set<String> reached) {
+        // What CityWorld actually produces, sampled over the same grid.
+        double tLo = 9, tHi = -9, hLo = 9, hHi = -9, cLo = 9, cHi = -9, eLo = 9, eHi = -9, wLo = 9, wHi = -9;
+        for (int x = -BIOME_SWEEP_BLOCKS; x <= BIOME_SWEEP_BLOCKS; x += BIOME_SWEEP_STEP)
+            for (int z = -BIOME_SWEEP_BLOCKS; z <= BIOME_SWEEP_BLOCKS; z += BIOME_SWEEP_STEP) {
+                double t = context.getTemperature(x, z) * 2.0 - 1.0, h = context.getHumidity(x, z) * 2.0 - 1.0;
+                double c = context.getContinentalness(x, z), e = context.getErosion(x, z),
+                        w = context.getWeirdness(x, z);
+                tLo = Math.min(tLo, t); tHi = Math.max(tHi, t);
+                hLo = Math.min(hLo, h); hHi = Math.max(hHi, h);
+                cLo = Math.min(cLo, c); cHi = Math.max(cHi, c);
+                eLo = Math.min(eLo, e); eHi = Math.max(eHi, e);
+                wLo = Math.min(wLo, w); wHi = Math.max(wHi, w);
+            }
+        report.put("axes.cityworld.temperature", range(tLo, tHi));
+        report.put("axes.cityworld.humidity", range(hLo, hHi));
+        report.put("axes.cityworld.continentalness", range(cLo, cHi));
+        report.put("axes.cityworld.erosion", range(eLo, eHi));
+        report.put("axes.cityworld.weirdness", range(wLo, wHi));
+
+        double[][] ours = { { tLo, tHi }, { hLo, hHi }, { cLo, cHi }, { eLo, eHi }, { wLo, wHi } };
+        String[] axisNames = { "temperature", "humidity", "continentalness", "erosion", "weirdness" };
+
+        // Per biome, the union of what its points demand on each axis.
+        Map<String, double[][]> demand = new TreeMap<>();
+        for (var pair : bridge.points()) {
+            String id = pair.getSecond().unwrapKey().map(k -> k.identifier().toString()).orElse("?");
+            Climate.ParameterPoint pt = pair.getFirst();
+            Climate.Parameter[] axes = { pt.temperature(), pt.humidity(), pt.continentalness(), pt.erosion(),
+                    pt.weirdness() };
+            double[][] d = demand.computeIfAbsent(id, k -> {
+                double[][] init = new double[5][2];
+                for (double[] a : init) { a[0] = 9; a[1] = -9; }
+                return init;
+            });
+            for (int i = 0; i < 5; i++) {
+                d[i][0] = Math.min(d[i][0], Climate.unquantizeCoord(axes[i].min()));
+                d[i][1] = Math.max(d[i][1], Climate.unquantizeCoord(axes[i].max()));
+            }
+        }
+
+        Map<String, Integer> blamed = new TreeMap<>();
+        List<String> detail = new ArrayList<>();
+        for (var e : demand.entrySet()) {
+            String id = e.getKey();
+            if (reached.contains(id))
+                continue;
+            List<String> gaps = new ArrayList<>();
+            for (int i = 0; i < 5; i++) {
+                double[] d = e.getValue()[i];
+                if (d[1] < ours[i][0] || d[0] > ours[i][1]) { // no overlap at all
+                    gaps.add(axisNames[i] + " wants " + range(d[0], d[1]));
+                    blamed.merge(axisNames[i], 1, Integer::sum);
+                }
+            }
+            if (gaps.isEmpty())
+                blamed.merge("(overlaps on every axis — lost to a nearer biome)", 1, Integer::sum);
+            if (detail.size() < 12)
+                detail.add(id.replace("biomesoplenty:", "") + ": "
+                        + (gaps.isEmpty() ? "no single-axis gap" : String.join("; ", gaps)));
+        }
+        report.put("axes.unreachableCount", Integer.toString(
+                (int) demand.keySet().stream().filter(k -> !reached.contains(k)).count()));
+        report.put("axes.blamedAxis", blamed.toString());
+        report.put("axes.examples", detail.toString());
+    }
+
+    private static String range(double lo, double hi) {
+        return String.format("%.2f..%.2f", lo, hi);
     }
 
     /** Full {@code namespace:path} — the wide probe needs the namespace to tell modded from vanilla. */
