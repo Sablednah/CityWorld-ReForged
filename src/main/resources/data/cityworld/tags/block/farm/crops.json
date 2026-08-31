@@ -9,6 +9,8 @@
     { "id": "farmersdelight:cabbages", "required": false },
     { "id": "farmersdelight:tomatoes", "required": false },
     { "id": "farmersdelight:onions", "required": false },
-    { "id": "farmersdelight:rice_crop", "required": false }
+    { "id": "farmersdelight:rice_crop", "required": false },
+
+    { "id": "biomesoplenty:barley", "required": false }
   ]
 }
