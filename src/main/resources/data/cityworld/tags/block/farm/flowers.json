@@ -3,5 +3,8 @@
   "values": [
     "#minecraft:small_flowers",
     "#cityworld:farm/tall_flowers"
+  ],
+  "remove": [
+    { "id": "biomesoplenty:waterlily", "required": false }
   ]
 }
