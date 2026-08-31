@@ -115,7 +115,7 @@ possible:
 
 - **`AbstractBlocks`** → **`InitialBlocks`** (generation side, on `ChunkAccess`) — **done**.
 - **`SupportBlocks`** → `RealBlocks`/`RelativeBlocks`/`WorldBlocks`/`CornerBlocks` (decoration side,
-  on `LevelAccessor`) — **in progress**. Rests on one abstract method, `getActualBlock(x,y,z)`.
+  on `LevelAccessor`) — **done**. Rests on one abstract method, `getActualBlock(x,y,z)`.
 - **`PlatMap`** — a 10×10 grid of chunks; the unit of city planning. Seed-deterministic (important
   for the multithreaded modern chunk pipeline).
 - **`PlatLot`** subclasses (`RoadLot`, `BuildingLot`, `ConnectedLot`, `NatureLot`, …) — one chunk's
@@ -131,9 +131,17 @@ Plugins ↔ Rooms ↔ Clipboard`) — measured: every seed yields the same 316-f
 edges are often thin (single method signatures), so they can be stubbed to break it.
 
 Modern worldgen wraps this in a codec-registered `ChunkGenerator` (`worldgen/CityWorldChunkGenerator`,
-registered `cityworld:city`), exposed as both a dimension and a world preset. It currently generates
-**placeholder flat terrain** — the pipeline is proven end-to-end; the brain isn't wired in yet. It
-also suppresses vanilla structures/decoration/carvers so CityWorld owns the chunk.
+registered `cityworld:city`), exposed as both a dimension and a world preset. **The port is complete
+and the brain is wired in** — it generates real CityWorld terrain, cities, interiors, mines, caves and
+decoration across 13 world styles, on three Minecraft versions. It suppresses *most* vanilla
+structures/decoration/carvers so CityWorld owns the chunk, with deliberate exceptions: strongholds,
+trial chambers and ancient cities are placed (see PORTING.md), and vanilla biome features may decorate
+wild land depending on `world.wildDecoration`.
+
+**Verify changes with `scripts/selftest.sh`** — a headless dedicated server on a fixed seed that
+checks ~88 things and writes a JSON report per Minecraft version. It exists because "looks right in
+game" repeatedly disagreed with what the code did; several bugs in this project were a feature
+silently doing nothing while looking exactly like working software.
 
 ## Reference port
 

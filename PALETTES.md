@@ -37,6 +37,24 @@ you add start appearing in that palette.
 | `cityworld:build/stained_glass` | factory and bunker tanks | the sixteen dyed glasses |
 | `cityworld:build/modern_stones` | the decorative stone palette used by the MODERN and APOCALYPSE styles | 32 curated blocks (8 of them Minecraft 26.2+) |
 
+### Farms
+
+Farm fields draw from these too, so a mod's crops and flowers grow on CityWorld's farmland.
+
+| Tag | Used for | Ships as |
+|---|---|---|
+| `cityworld:farm/crops` | tilled fields — one crop is drawn per field, so a field reads as *a field of something* | the four vanilla crops, plus Farmer's Delight and Biomes O' Plenty entries marked optional |
+| `cityworld:farm/flowers` | flower fields and mixed meadows | `#minecraft:small_flowers` + `#cityworld:farm/tall_flowers`, minus BoP's `waterlily` |
+| `cityworld:farm/tall_flowers` | the tall flower fields (sunflower, lilac and friends) | the five vanilla tall flowers, plus five BoP ones marked optional |
+
+**Two-block plants work.** A crop or flower that places as a `half=lower`/`half=upper` pair — BoP's
+barley, or any modded tall crop — is detected and both halves are placed. You do not need to declare
+anything for that.
+
+**A plant that cannot live there is skipped**, and the vanilla one grows instead. CityWorld asks the
+block itself (`canSurvive`) before planting, which is why an End or Nether bloom inherited from
+`#minecraft:small_flowers` does not leave a bald patch.
+
 Palettes that are a **deliberate look** rather than "all of a family" are not tags and are not meant
 to be extended: the muted greyscale of unfinished buildings, the pale civic palette of government
 offices, and the ordered road and maze lists.
