@@ -9,6 +9,21 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Fixed
 
+- **Flower fields plant again, and grow the whole pool.** Fields of tulips, poppies and daisies were
+  coming out bare. The hardcoded path guarded every placement on the ground below being
+  grass/dirt/coarse dirt/farmland; drawing the species from a tag dropped that guard, and because the
+  species is drawn *once per field*, a single plant that could not stand there emptied the entire
+  field — about a fifth of all farm lots. Placement now asks the block whether it
+  `canSurvive` there and falls back to the vanilla flower where it cannot, which also handles the
+  flowers we inherit but never chose (BoP tags End and Nether blooms into `#minecraft:small_flowers`,
+  and those want end stone or netherrack). Crops were never affected — they lay farmland first.
+- **Farms look like farms.** The crop mix was an even split, which put tilled fields — the thing a farm
+  is *for* — at 11.5% of farm lots, behind trees, flowers, ground crops, pasture and grass, while
+  fallow and ferns held ground that reads as empty from the air. The MODERN pools are now weighted:
+  **tilled 27.3%, pasture 22.7%, ground crops 14.1%, trees 12.7%, flowers 10.2%, grass 8.4%, fallow
+  4.7%** — measured over 3,074 farm lots, not eyeballed. Each climate keeps its character: potatoes
+  and beets in the cold, cane and melons in the jungle, cactus in the desert.
+
 - **No more lily pads in the fields.** Biomes O' Plenty registers `waterlily` into
   `#minecraft:small_flowers`, so the farm flower pool inherited it and planted lily pads on tilled
   earth — they want water beneath them, so they read as broken rather than merely odd. Removed with
