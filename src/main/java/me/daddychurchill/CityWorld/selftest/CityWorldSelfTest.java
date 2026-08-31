@@ -85,6 +85,9 @@ public final class CityWorldSelfTest {
 
     /** Chunk radius surveyed in the real world. 6 -> 169 chunks: enough to reach a city from spawn. */
     private static final int CHUNK_SURVEY_RADIUS = 6;
+    /** How far to hunt for farm chunks, and how many to read back; spawn is city, so farms are not near. */
+    private static final int FARM_SEARCH_RADIUS = 80;
+    private static final int FARM_CHUNKS = 24;
 
     /** A built chunk should contain at least this many non-air blocks, else decoration did nothing. */
     private static final int MIN_BUILT_BLOCKS = 200;
@@ -296,10 +299,20 @@ public final class CityWorldSelfTest {
         CityWorldGenerator context = generator.getContext(level);
         int lo = context.streetLevel - 3, hi = context.streetLevel + 4;
 
+        // ⚠ Hunt for farm chunks rather than scanning a block around the origin. The first version of
+        // this check swept CHUNK_SURVEY_RADIUS and found zero farmland — spawn is city, so it measured
+        // the wrong ground entirely and reported a confident nothing.
+        List<int[]> farmChunks = new ArrayList<>();
+        for (int cx = -FARM_SEARCH_RADIUS; cx <= FARM_SEARCH_RADIUS && farmChunks.size() < FARM_CHUNKS; cx++)
+            for (int cz = -FARM_SEARCH_RADIUS; cz <= FARM_SEARCH_RADIUS && farmChunks.size() < FARM_CHUNKS; cz++)
+                if (lotAt(context, cx, cz) instanceof me.daddychurchill.CityWorld.Plats.Rural.FarmLot)
+                    farmChunks.add(new int[] { cx, cz });
+        report.put("farmland.chunksFound", Integer.toString(farmChunks.size()));
+
         Map<String, Integer> onFarmland = new TreeMap<>();
         int farmland = 0, bare = 0, shortFlowers = 0, tallFlowers = 0;
-        for (int cx = -CHUNK_SURVEY_RADIUS; cx <= CHUNK_SURVEY_RADIUS; cx++)
-            for (int cz = -CHUNK_SURVEY_RADIUS; cz <= CHUNK_SURVEY_RADIUS; cz++) {
+        for (int[] coord : farmChunks) {
+                final int cx = coord[0], cz = coord[1];
                 final int fx = cx, fz = cz;
                 LevelChunk chunk = server.submit(() -> level.getChunk(fx, fz)).join();
                 for (int x = 0; x < 16; x++)
@@ -334,7 +347,7 @@ public final class CityWorldSelfTest {
                                 shortFlowers++;
                             }
                         }
-            }
+        }
         report.put("farmland.blocks", Integer.toString(farmland));
         report.put("farmland.bare", bare + (farmland == 0 ? ""
                 : String.format(java.util.Locale.ROOT, " (%.1f%%)", 100.0 * bare / farmland)));
