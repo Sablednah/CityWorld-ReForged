@@ -611,7 +611,32 @@ public class FarmLot extends ConnectedLot {
 	 */
 	private void setGrownCrop(SupportBlocks chunk, int x, int y, int z, Material crop) {
 		chunk.setBlockIfNot(x, y - 1, z, Material.FARMLAND);
-		chunk.setBlock(x, y, z, crop, chunkOdds.getRandomDouble());
+		placePlant(chunk, x, y, z, crop, true);
+	}
+
+	/**
+	 * Places one plant, whether it is one block tall or two.
+	 *
+	 * <p><b>Two-block plants are why this exists.</b> BoP's {@code barley} is a farm crop to look at but
+	 * a {@code half=lower}/{@code half=upper} pair to place, like tall grass rather than like wheat.
+	 * Setting a single block would leave a lower half with no top — a broken stub that vanilla removes
+	 * the moment anything updates it. Checking the state for the property handles it for <em>any</em>
+	 * modded plant, which matters because the whole point of a tag-driven pool is that we never saw the
+	 * blocks in it.
+	 *
+	 * <p>Growth stages only apply to the single-block kind: a levelled setter would find {@code half}
+	 * is an enum, not an integer, and quietly do nothing. Farmland underneath is still right for both —
+	 * {@code BushBlock} accepts farmland as ground, so a tall crop stands in a tilled field happily.
+	 */
+	private void placePlant(SupportBlocks chunk, int x, int y, int z, Material plant, boolean levelled) {
+		var state = plant.getBlockState();
+		if (state != null && state.hasProperty(
+				net.minecraft.world.level.block.state.properties.BlockStateProperties.DOUBLE_BLOCK_HALF))
+			chunk.setTallBlock(x, y, z, plant);
+		else if (levelled)
+			chunk.setBlock(x, y, z, plant, chunkOdds.getRandomDouble());
+		else
+			chunk.setBlock(x, y, z, plant);
 	}
 
 	/**
@@ -636,12 +661,12 @@ public class FarmLot extends ConnectedLot {
 			for (int x = 1; x < 15; x += stepCol)
 				for (int z = 1; z < 15; z += stepRow)
 					if (chunkOdds.playOdds(oddsOfCrop))
-						chunk.setBlock(x, croplevel, z, pool.get(chunkOdds.getRandomInt(pool.size())));
+						placePlant(chunk, x, croplevel, z, pool.get(chunkOdds.getRandomInt(pool.size())), false);
 		} else {
 			for (int z = 1; z < 15; z += stepCol)
 				for (int x = 1; x < 15; x += stepRow)
 					if (chunkOdds.playOdds(oddsOfCrop))
-						chunk.setBlock(x, croplevel, z, pool.get(chunkOdds.getRandomInt(pool.size())));
+						placePlant(chunk, x, croplevel, z, pool.get(chunkOdds.getRandomInt(pool.size())), false);
 		}
 	}
 
