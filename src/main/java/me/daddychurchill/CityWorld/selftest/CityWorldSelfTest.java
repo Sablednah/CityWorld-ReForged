@@ -185,6 +185,7 @@ public final class CityWorldSelfTest {
             checkBiomeDepth(server);
             checkStructures(server);
             checkDecorationAndSigns(server);
+            checkFarmPlanting(server);
         } catch (Throwable t) {
             fail("harness threw: " + t);
             CityWorldMod.LOGGER.error("SELFTEST: harness threw", t);
@@ -277,6 +278,69 @@ public final class CityWorldSelfTest {
                 : String.format(java.util.Locale.ROOT, "%.1f%%", 100.0 * tilled / farms));
         if (farms > 0 && tilled == 0)
             fail("no farm grows a tilled crop — the crop pool is planting nothing");
+    }
+
+    /**
+     * What is actually standing in the fields — counted from generated chunks, not from the plan.
+     *
+     * <p><b>The planning census cannot answer "the fields look empty".</b> It says which crop a lot
+     * intends to grow; it cannot see a plant that was never placed, or one placed and then removed. So
+     * this walks generated ground and counts farmland with something on it against farmland with air
+     * above, and splits the flowers by height — the two things reported from in-world that the plan-side
+     * numbers were blind to.
+     */
+    private void checkFarmPlanting(MinecraftServer server) {
+        ServerLevel level = server.overworld();
+        if (!(level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator generator))
+            return;
+        CityWorldGenerator context = generator.getContext(level);
+        int lo = context.streetLevel - 3, hi = context.streetLevel + 4;
+
+        Map<String, Integer> onFarmland = new TreeMap<>();
+        int farmland = 0, bare = 0, shortFlowers = 0, tallFlowers = 0;
+        for (int cx = -CHUNK_SURVEY_RADIUS; cx <= CHUNK_SURVEY_RADIUS; cx++)
+            for (int cz = -CHUNK_SURVEY_RADIUS; cz <= CHUNK_SURVEY_RADIUS; cz++) {
+                final int fx = cx, fz = cz;
+                LevelChunk chunk = server.submit(() -> level.getChunk(fx, fz)).join();
+                for (int x = 0; x < 16; x++)
+                    for (int z = 0; z < 16; z++)
+                        for (int y = lo; y <= hi; y++) {
+                            BlockPos pos = new BlockPos(cx * 16 + x, y, cz * 16 + z);
+                            BlockState state = chunk.getBlockState(pos);
+                            if (state.is(net.minecraft.world.level.block.Blocks.FARMLAND)) {
+                                farmland++;
+                                BlockState above = chunk.getBlockState(pos.above());
+                                if (above.isAir())
+                                    bare++;
+                                else
+                                    onFarmland.merge(String.valueOf(
+                                            BuiltInRegistries.BLOCK.getKey(above.getBlock())), 1, Integer::sum);
+                                continue;
+                            }
+                            // Flowers stand on grass, not farmland, so they are counted separately —
+                            // and by height, since "every flower field is two blocks tall" was the report.
+                            if (!(state.getBlock() instanceof net.minecraft.world.level.block.FlowerBlock)
+                                    && !state.is(net.minecraft.tags.BlockTags.SMALL_FLOWERS)
+                                    && !(state.getBlock() instanceof net.minecraft.world.level.block.DoublePlantBlock))
+                                continue;
+                            if (state.hasProperty(net.minecraft.world.level.block.state.properties
+                                    .BlockStateProperties.DOUBLE_BLOCK_HALF)) {
+                                // count the pair once
+                                if (state.getValue(net.minecraft.world.level.block.state.properties
+                                        .BlockStateProperties.DOUBLE_BLOCK_HALF)
+                                        == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER)
+                                    tallFlowers++;
+                            } else {
+                                shortFlowers++;
+                            }
+                        }
+            }
+        report.put("farmland.blocks", Integer.toString(farmland));
+        report.put("farmland.bare", bare + (farmland == 0 ? ""
+                : String.format(java.util.Locale.ROOT, " (%.1f%%)", 100.0 * bare / farmland)));
+        report.put("farmland.growing", onFarmland.toString());
+        report.put("flowers.singleBlock", Integer.toString(shortFlowers));
+        report.put("flowers.doubleBlock", Integer.toString(tallFlowers));
     }
 
     /** First few entries of a resolved pool, named, for eyeballing what a mod contributed. */
