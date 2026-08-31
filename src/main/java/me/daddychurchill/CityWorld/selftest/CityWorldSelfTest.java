@@ -254,6 +254,21 @@ public final class CityWorldSelfTest {
                         }
                     }
             }
+        // What the field pools actually resolve to, with whatever mods are installed. A field falls back
+        // to its hardcoded vanilla flower when its pool is empty, and that fallback looks exactly like
+        // "the feature does nothing" from in-world — so the pool contents are worth stating outright.
+        var flowers = me.daddychurchill.CityWorld.Support.MaterialTags
+                .resolve(me.daddychurchill.CityWorld.Support.MaterialTags.FARM_FLOWERS);
+        var tall = me.daddychurchill.CityWorld.Support.MaterialTags
+                .resolve(me.daddychurchill.CityWorld.Support.MaterialTags.FARM_TALL_FLOWERS);
+        var seeds = me.daddychurchill.CityWorld.Support.MaterialTags
+                .resolve(me.daddychurchill.CityWorld.Support.MaterialTags.FARM_CROPS);
+        report.put("farm.pool.flowers", flowers.size() + ": " + sample(flowers));
+        report.put("farm.pool.tallFlowers", tall.size() + ": " + sample(tall));
+        report.put("farm.pool.crops", seeds.size() + ": " + sample(seeds));
+        if (flowers.isEmpty() || tall.isEmpty() || seeds.isEmpty())
+            fail("a farm pool resolved empty — fields will silently fall back to one hardcoded vanilla plant");
+
         report.put("farm.lots", Integer.toString(farms));
         report.put("farm.crops", crops.toString());
         report.put("farm.barePct", farms == 0 ? "0"
@@ -262,6 +277,17 @@ public final class CityWorldSelfTest {
                 : String.format(java.util.Locale.ROOT, "%.1f%%", 100.0 * tilled / farms));
         if (farms > 0 && tilled == 0)
             fail("no farm grows a tilled crop — the crop pool is planting nothing");
+    }
+
+    /** First few entries of a resolved pool, named, for eyeballing what a mod contributed. */
+    private static String sample(java.util.List<me.daddychurchill.CityWorld.compat.Material> pool) {
+        return pool.stream().limit(60)
+                .map(m -> {
+                    var block = m.getBlock();
+                    return block == null ? "?"
+                            : net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block).toString();
+                })
+                .toList().toString();
     }
 
     /**
