@@ -415,14 +415,15 @@ public record CityWorldSettingsData(
         public static final double DEFAULT_CLIMATE_WARMTH = 0.25;
 
         /**
-         * How large biome regions are, as a multiplier. {@code 1.0} is the tuned default; {@code 2.0}
-         * makes every climate region twice as wide, {@code 0.75} slightly tighter.
+         * How large biome regions are, as a multiplier. {@code 1.5} is the default — the owner played
+         * several worlds at each step and this is where the map reads best; {@code 1.0} is the older,
+         * tighter default and {@code 3.0} gives continent-sized regions.
          *
          * <p>Divides the frequency of the temperature, humidity, erosion and weirdness fields, and
          * widens the continentalness smoothing window to match — all four axes together, because
          * scaling some and not others would just change which biome you get rather than how big it is.
          */
-        public static final double DEFAULT_BIOME_SCALE = 1.0;
+        public static final double DEFAULT_BIOME_SCALE = 1.5;
 
         /**
          * How much land a biome mod may own outright, {@code 0.0}–{@code 1.0}, where CityWorld's own

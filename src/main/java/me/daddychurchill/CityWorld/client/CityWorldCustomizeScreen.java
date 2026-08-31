@@ -407,7 +407,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
      */
     private static final Double[] WARMTH_CHOICES = { 0.0, 0.10, 0.20, 0.25, 0.35, 0.50 };
 
-    /** Biome-size steps. 1.0 must be in the list — it is the default; see the Chance lesson above. */
+    /** Biome-size steps. 1.5 must be in the list — it is the default; see the Chance lesson above. */
     private static final Double[] BIOME_SCALE_CHOICES = { 0.75, 1.0, 1.5, 2.0, 3.0, 4.0 };
 
     /**
@@ -433,11 +433,12 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         return best;
     }
 
+    /** Labels are relative to the 1.5 default, so "Default" names the step the setting actually starts on. */
     private static Component scaleLabel(double v) {
-        String name = v < 0.9 ? "Tighter"
-                : v < 1.2 ? "Default"
-                : v < 1.8 ? "Larger"
-                : v < 2.5 ? "Much larger"
+        String name = v < 0.9 ? "Much tighter"
+                : v < 1.2 ? "Tighter"
+                : v < 1.8 ? "Default"
+                : v < 2.5 ? "Larger"
                 : v < 3.5 ? "Huge" : "Continental";
         return Component.literal(name);
     }
