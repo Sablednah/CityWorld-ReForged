@@ -5,6 +5,18 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 5.3.1
+
+### Fixed
+
+- **Flower fields were falling back to one hardcoded vanilla flower**, so 5.3.0's tag-driven flowers
+  did nothing in-world — every tall flower field was a sunflower, and no modded flower could appear.
+  `#minecraft:tall_flowers` is not a block tag (vanilla lists the tall flowers individually inside
+  `#minecraft:flowers`), and **a missing required tag reference makes the loader discard the whole
+  tag** — so that one bad line also took out `#minecraft:small_flowers` and every BoP flower with it.
+  The pools now resolve to 41 flowers and 10 tall flowers with BoP installed, and the self-test fails
+  the build if a farm pool ever resolves empty again.
+
 ## 5.3.0
 
 ### Added
