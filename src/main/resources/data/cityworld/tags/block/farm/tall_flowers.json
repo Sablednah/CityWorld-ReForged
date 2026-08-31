@@ -1,7 +1,11 @@
 {
   "replace": false,
   "values": [
-    "#minecraft:tall_flowers",
+    "minecraft:sunflower",
+    "minecraft:lilac",
+    "minecraft:peony",
+    "minecraft:rose_bush",
+    "minecraft:pitcher_plant",
 
     { "id": "biomesoplenty:blue_hydrangea", "required": false },
     { "id": "biomesoplenty:icy_iris", "required": false },
