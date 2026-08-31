@@ -63,12 +63,15 @@ public final class TerraBlenderBridge {
     }
 
     private final Climate.ParameterList<Holder<Biome>> parameters;
+    private final Climate.@Nullable ParameterList<Holder<Biome>> moddedOnly;
     private final List<Holder<Biome>> biomes;
     private final List<Pair<Climate.ParameterPoint, Holder<Biome>>> points;
 
-    private TerraBlenderBridge(Climate.ParameterList<Holder<Biome>> parameters, List<Holder<Biome>> biomes,
+    private TerraBlenderBridge(Climate.ParameterList<Holder<Biome>> parameters,
+            Climate.@Nullable ParameterList<Holder<Biome>> moddedOnly, List<Holder<Biome>> biomes,
             List<Pair<Climate.ParameterPoint, Holder<Biome>>> points) {
         this.parameters = parameters;
+        this.moddedOnly = moddedOnly;
         this.biomes = biomes;
         this.points = points;
     }
@@ -143,7 +146,11 @@ public final class TerraBlenderBridge {
 
             if (collected.isEmpty())
                 return null;
-            return new TerraBlenderBridge(new Climate.ParameterList<>(collected), List.copyOf(distinct),
+            // The modded-only view, for the reserved share — see findModded.
+            List<Pair<Climate.ParameterPoint, Holder<Biome>>> mods = collected.stream()
+                    .filter(p -> isModded(p.getSecond())).toList();
+            return new TerraBlenderBridge(new Climate.ParameterList<>(collected),
+                    mods.isEmpty() ? null : new Climate.ParameterList<>(mods), List.copyOf(distinct),
                     List.copyOf(collected));
         } catch (Throwable t) {
             // Any surprise at all — API moved, mod half-loaded — means no bridge, not a broken world.
@@ -171,5 +178,29 @@ public final class TerraBlenderBridge {
      */
     public @Nullable Holder<Biome> find(Climate.TargetPoint target) {
         return parameters == null ? null : parameters.findValue(target);
+    }
+
+    /**
+     * The best <em>modded</em> biome for a climate point, ignoring the vanilla biomes TerraBlender's
+     * regions also carry. {@code null} if no mod contributed any biome.
+     *
+     * <p><b>Why this exists — measured, not assumed.</b> {@link #find} answers with the nearest point in
+     * 7-D space, and a region's vanilla entries compete on equal terms. 25 of BoP's 31 unreachable
+     * biomes were found to overlap CityWorld's emitted ranges on <em>every</em> axis and lose anyway,
+     * simply because some other point sat closer; widening an axis cannot reach them, because there is
+     * no gap to widen. Asking the same question with vanilla's points removed does, since it changes
+     * <em>who</em> is competing rather than where the query lands.
+     *
+     * <p>This must not be the only lookup, or modded biomes would take the whole map — the failure the
+     * modded-hit check in {@code CityWorldBiomeLookup} was added to prevent. It is for the reserved
+     * share, where CityWorld has already decided a mod may own this ground.
+     */
+    public @Nullable Holder<Biome> findModded(Climate.TargetPoint target) {
+        return moddedOnly == null ? null : moddedOnly.findValue(target);
+    }
+
+    /** Whether a biome came from a mod rather than {@code minecraft:}. */
+    public static boolean isModded(Holder<Biome> biome) {
+        return biome.unwrapKey().map(k -> !k.identifier().toString().startsWith("minecraft:")).orElse(false);
     }
 }

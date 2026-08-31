@@ -1,5 +1,6 @@
 package me.daddychurchill.CityWorld;
 
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -176,6 +177,7 @@ public class CityWorldGenerator {
      */
     private final me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator erosionShape;
     private final me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator weirdnessShape;
+    private final me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator moddedShareShape;
 
     /** Seeded terracotta colour table for badlands, sampled by elevation; see {@link #badlandsBandAt}. */
     private final me.daddychurchill.CityWorld.compat.Material[] badlandsBands;
@@ -290,6 +292,11 @@ public class CityWorldGenerator {
         weirdnessShape = new me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator(worldSeed + 313, 2);
         weirdnessShape.setScale(0.0016 / biomeScale);
 
+        // Which ground a biome mod may own outright — see getModdedShare. Coarser than the climate
+        // fields on purpose: this decides regions, not biomes.
+        moddedShareShape = new me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator(worldSeed + 419, 1);
+        moddedShareShape.setScale(0.0006 / biomeScale);
+
         // Badlands terracotta bands: a seeded colour table sampled by elevation, with a gentle low-freq
         // offset so the stripes undulate instead of being dead flat (mirrors vanilla's mesa surface).
         badlandsBands = buildBadlandsBands(worldSeed);
@@ -358,6 +365,20 @@ public class CityWorldGenerator {
     }
 
     /**
+     * How strongly this ground is "a mod's to name", {@code 0..1} — the reserved share that lets modded
+     * biomes appear where CityWorld's own palette would otherwise have won.
+     *
+     * <p>A separate field, and a coarse one, because the alternative reads as a bug. Deciding per column
+     * by coin-flip would scatter single-chunk modded biomes through CityWorld ground like static; this
+     * is smoother than the climate axes (0.0006 against 0.0009–0.0016), so a mod's biomes arrive as a
+     * region you can walk across and leave. Its own seed offset, so it does not correlate with the
+     * climate deciding <em>which</em> modded biome lands here.
+     */
+    public double getModdedShare(int x, int z) {
+        return climate01(moddedShareShape.noise(x, z, 0.5, 0.8));
+    }
+
+    /**
      * Vanilla's <em>continentalness</em> axis, in {@code -1..1} — and the one axis deliberately taken
      * from the terrain rather than from a fresh noise field.
      *
@@ -371,14 +392,75 @@ public class CityWorldGenerator {
      */
     public double getContinentalness(int x, int z) {
         int terrainY = regionalHeight(x, z);
+        calibrateContinentalness();
         if (terrainY <= seaLevel) {
-            // Below the waterline: -1 at the bottom of the deep sea, ~0 at the shore.
-            int deep = Math.max(1, seaLevel - deepseaLevel);
-            return clampUnit(-1.0 + (double) (terrainY - deepseaLevel) / deep);
+            // Below the waterline: -1 at the deepest regional low, ~0 at the shore.
+            return clampUnit(-1.0 + (double) (terrainY - continentLow) / Math.max(1, seaLevel - continentLow));
         }
-        // Above it: 0 at the shore rising towards +1 at the top of the land range.
-        return clampUnit((double) (terrainY - seaLevel) / Math.max(1, landRange));
+        // Above it: 0 at the shore rising towards +1 at the highest regional high.
+        return clampUnit((double) (terrainY - seaLevel) / Math.max(1, continentHigh - seaLevel));
     }
+
+    /**
+     * Finds the regional heights this world actually reaches, so continentalness can use its whole
+     * {@code -1..1} range instead of the middle of it.
+     *
+     * <p><b>The theoretical range is not the emitted one, and the difference cost us six biomes.</b>
+     * Scaling against {@code deepseaLevel} and {@code landRange} assumes the terrain visits both
+     * extremes, and it does not: {@link #regionalHeight} averages nine samples over ~200 blocks
+     * precisely so the axis is smooth, and averaging pulls extremes toward the mean. Measured output was
+     * {@code -0.78..0.54} where every other axis spans {@code -1..1} — and the self-test found six
+     * TerraBlender biomes whose only unmet demand was continentalness. They ask for values our terrain
+     * can shape but our <em>scaling</em> could not express.
+     *
+     * <p>So the ends are measured rather than assumed: sample the regional height over a wide
+     * deterministic grid and take the 2nd/98th percentiles, which ignore a freak spike without
+     * flattening the axis the way min/max would.
+     *
+     * <p><b>Sea level stays pinned at 0</b> and each side is scaled independently. Continentalness is
+     * not merely an ordering — vanilla and modded biomes alike gate ocean against land on the sign, so
+     * stretching across the whole span in one line would move the shoreline off zero and put ocean
+     * biomes on dry ground. Two half-scales keep the meaning and still reach both ends.
+     *
+     * <p>Deterministic and seed-derived (the grid is fixed, the heights come from the seed), so two
+     * worlds with the same seed calibrate identically — a world whose biomes depended on which chunk
+     * was generated first would not be reproducible.
+     */
+    private void calibrateContinentalness() {
+        if (continentCalibrated)
+            return;
+        synchronized (continentLock) {
+            if (continentCalibrated)
+                return;
+            int[] heights = new int[CONTINENT_CALIBRATION_STEPS * CONTINENT_CALIBRATION_STEPS];
+            int span = (int) Math.round(CONTINENT_CALIBRATION_SPAN * Math.max(0.1, settings.biomeScale));
+            int step = Math.max(1, span * 2 / CONTINENT_CALIBRATION_STEPS);
+            int i = 0;
+            for (int gx = 0; gx < CONTINENT_CALIBRATION_STEPS; gx++)
+                for (int gz = 0; gz < CONTINENT_CALIBRATION_STEPS; gz++)
+                    heights[i++] = regionalHeight(-span + gx * step, -span + gz * step);
+            Arrays.sort(heights);
+            int low = heights[Math.max(0, heights.length * 2 / 100)];
+            int high = heights[Math.min(heights.length - 1, heights.length * 98 / 100)];
+
+            // A world with no ocean (or no hills) leaves that half with nothing to measure; fall back to
+            // the theoretical end rather than dividing by a zero-width range.
+            continentLow = low < seaLevel ? low : deepseaLevel;
+            continentHigh = high > seaLevel ? high : seaLevel + landRange;
+            continentCalibrated = true;
+        }
+    }
+
+    /** Guards the one-time continentalness calibration; see {@link #calibrateContinentalness}. */
+    private final Object continentLock = new Object();
+    private volatile boolean continentCalibrated;
+    /** Regional heights mapping to continentalness {@code -1} and {@code +1}. */
+    private int continentLow;
+    private int continentHigh;
+
+    /** Calibration grid: {@value} points a side, over ±{@value #CONTINENT_CALIBRATION_SPAN} blocks. */
+    private static final int CONTINENT_CALIBRATION_STEPS = 28;
+    private static final int CONTINENT_CALIBRATION_SPAN = 6144;
 
     /**
      * Terrain height averaged over a wide window — the <em>regional</em> elevation, not this column's.
