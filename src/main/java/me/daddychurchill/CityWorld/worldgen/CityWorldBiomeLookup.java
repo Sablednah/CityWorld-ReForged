@@ -120,9 +120,19 @@ public final class CityWorldBiomeLookup {
         // top twenty, and river appeared at 4.3% despite never being in CityWorld's palette at all.
         // Falling through on a vanilla hit keeps CityWorld's own tuned matrix in charge of vanilla
         // ground and lets the mod contribute only what CityWorld could not have chosen itself.
-        boolean modded = hit.unwrapKey()
-                .map(k -> !k.identifier().toString().startsWith("minecraft:")).orElse(false);
-        return modded ? hit : null;
+        if (TerraBlenderBridge.isModded(hit))
+            return hit;
+
+        // A vanilla point won. That is the common case and usually right — but on its own it made 25 of
+        // BoP's biomes unreachable *with no axis gap to widen*: they overlap everything CityWorld emits
+        // and simply never sit nearest. So a share of the map is reserved, and there the same query is
+        // asked again with vanilla's points removed. The share is regional (see getModdedShare), so this
+        // hands a mod whole areas rather than sprinkling it through CityWorld's own ground.
+        double share = context.getSettings().moddedBiomeShare;
+        if (share <= 0.0 || context.getModdedShare(blockX, blockZ) >= share)
+            return null;
+        return bridge.findModded(Climate.target(temperature, humidity, continentalness, erosion,
+                0.0F, weirdness));
     }
 
     // --- the per-column cache -------------------------------------------------------------------

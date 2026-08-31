@@ -94,6 +94,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private CityWorldSettingsData.WildDecoration wildDecoration;
     private double climateWarmth;
     private double biomeScale;
+    private double moddedBiomeShare;
 
     public CityWorldCustomizeScreen(Screen parent, WorldStyle initialStyle, CityWorldSettingsData initial,
             Consumer<Result> onDone) {
@@ -110,6 +111,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         this.wildDecoration = initial.world().wildDecoration();
         this.climateWarmth = initial.world().climateWarmth();
         this.biomeScale = initial.world().biomeScale();
+        this.moddedBiomeShare = initial.world().moddedBiomeShare();
 
         loadFrom(initial);
     }
@@ -285,8 +287,11 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 CityWorldCustomizeScreen::scaleLabel, v -> biomeScale = v));
         // Only worth showing when a TerraBlender biome mod is actually installed — otherwise it is a
         // switch that visibly does nothing, which reads as a bug rather than as "you have no such mod".
-        if (me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.present())
+        if (me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.present()) {
             pair(row, onOff("Modded biomes", useModdedBiomes, v -> useModdedBiomes = v));
+            pair(row, cycle("Modded biome share", MODDED_SHARE_CHOICES, nearestShare(moddedBiomeShare),
+                    CityWorldCustomizeScreen::shareLabel, v -> moddedBiomeShare = v));
+        }
         flush(row);
     }
 
@@ -320,7 +325,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 oddsOfTreasureInSewers.value, oddsOfTreasureInBuildings.value, oddsOfAlcoveInMines.value);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
                 treeStyle, spawnTrees.value, subSurfaceStyle, ruralnessLevel.value, maxBuildingFloors,
-                broadcastSpecialPlaces, announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale);
+                broadcastSpecialPlaces, announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
+                moddedBiomeShare);
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops);
@@ -353,7 +359,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 defaults.spawns(), defaults.treasures(),
                 new CityWorldSettingsData.World(world.treeStyle(), world.spawnTrees(), world.subSurfaceStyle(),
                         world.ruralnessLevel(), world.maxBuildingFloors(), world.broadcastSpecialPlaces(),
-                        announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale),
+                        announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
+                        moddedBiomeShare),
                 radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves);
         // 26.2 moved screen switching from Minecraft onto its Gui (Minecraft.setScreen is gone).
         this.minecraft.gui.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.onDone));
@@ -403,6 +410,29 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
 
     /** Biome-size steps. 1.0 must be in the list — it is the default; see the Chance lesson above. */
     private static final Double[] BIOME_SCALE_CHOICES = { 0.75, 1.0, 1.5, 2.0, 3.0, 4.0 };
+
+    /**
+     * Share steps. <b>0.35 must be in the list</b> — it is the default, and a picker whose steps omit the
+     * default silently rewrites the setting the first time the screen is opened and saved.
+     */
+    private static final Double[] MODDED_SHARE_CHOICES = { 0.0, 0.15, 0.35, 0.5, 0.75, 1.0 };
+
+    private static Component shareLabel(double v) {
+        String name = v <= 0.0 ? "Only where they win"
+                : v < 0.25 ? "A little"
+                : v < 0.45 ? "Some (default)"
+                : v < 0.6 ? "Half"
+                : v < 0.9 ? "Mostly" : "All contested ground";
+        return Component.literal(name);
+    }
+
+    private static Double nearestShare(double value) {
+        Double best = MODDED_SHARE_CHOICES[0];
+        for (Double choice : MODDED_SHARE_CHOICES)
+            if (Math.abs(choice - value) < Math.abs(best - value))
+                best = choice;
+        return best;
+    }
 
     private static Component scaleLabel(double v) {
         String name = v < 0.9 ? "Tighter"
