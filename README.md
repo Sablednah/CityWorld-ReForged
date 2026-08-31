@@ -153,6 +153,20 @@ is per-instance, they are delivered as a **datapack**:
 Settings apply to **newly generated chunks** — existing chunks never regenerate, so start a fresh
 world to see terrain-shaping changes.
 
+## Biome mods
+
+CityWorld replaces the biome source outright, so biome mods used to be invisible to it. It now reads
+whatever any **TerraBlender**-based mod registered — Biomes O' Plenty and most of the modern biome
+mods — and folds those biomes into its own map. Measured with BoP installed: **52 of its biomes
+appear, over about a third of the ground**, while CityWorld still names the rest.
+
+On by default (installing a biome mod is itself the request); `world.useModdedBiomes` turns it off and
+`world.moddedBiomeShare` sets how much contested ground the mod may own. Costs nothing when no such
+mod is present. Oceans, shores and peaks stay CityWorld's, since those follow the terrain exactly.
+
+Block palettes, farm crops and farm flowers are **block tags**, so a mod's blocks, crops and flowers
+appear in buildings and fields without any patch — see [`PALETTES.md`](PALETTES.md).
+
 ## Custom schematics
 
 Drop your own building schematics into `config/cityworld/schematics/<Family>/` (legacy `.schematic`,
@@ -167,7 +181,13 @@ generator salts them into cities. Filenames may contain spaces.
 | `/cityworld` / `/cityworld leave` | op | Teleport into/out of the `cityworld:city` dimension. |
 | `/cityschem <name>` / `/cityschem list` | op | Paste / list catalog schematics (tab-completes). |
 | `/cityfind <name>` | op | Find the nearest matching schematic building (tab-completes). |
+| `/cityfind lot <kind>` / `/cityfind lots` | op | Find the nearest lot of a kind, or list the kinds. Add `tp` to teleport. |
+| `/cwlocate <biome>` | op | Find the nearest matching biome. Add `tp` to teleport. |
 | `/cityexport [name]` | op | Export this world's settings as a datapack. |
+
+Only `/cityinfo` is open to everyone; the rest need operator level 2. CityWorld declares no
+permission nodes, so a permissions manager cannot currently grant them individually — see
+[`NODES.md`](NODES.md).
 
 ## Building from source
 
