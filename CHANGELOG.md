@@ -5,9 +5,33 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
-## Unreleased
+## 5.3.0
 
 ### Added
+
+- **Modded biomes get ground they can win.** Two separate problems were measured, and both are fixed.
+  Continentalness was scaled against extremes CityWorld's terrain never reaches, so it only ever
+  emitted `-0.78..0.54` where every other axis spans `-1..1`; it now measures its own ends and uses the
+  full range. That alone was not enough — most unreachable biomes overlapped our ranges on *every* axis
+  and still lost, because the climate lookup picks the nearest point and TerraBlender's regions field
+  vanilla's biomes as competitors. So `world.moddedBiomeShare` (default `0.35`, on the Customize
+  screen) reserves a share of the map where the lookup runs with vanilla's points removed. Measured
+  with BoP: **34 → 52 distinct modded biomes, 12.4% → 36.1% of ground**, with CityWorld still naming
+  about two thirds. `0.0` restores the previous behaviour exactly.
+- **Bigger biome regions by default.** `world.biomeScale` now defaults to `1.5` rather than `1.0` —
+  regions you can walk across rather than change three times on the way to the shops. The Customize
+  labels moved with it, so "Default" names the step the setting actually starts on.
+- **Farm fields are a tag, so mods can grow in them.** Crops come from `#cityworld:farm/crops` and
+  flowers from `#cityworld:farm/flowers` (with `#cityworld:farm/tall_flowers` for the tall fields),
+  each drawn per field so a field still reads as *a field of something*. Ships Farmer's Delight and
+  Biomes O' Plenty entries marked optional, so they cost nothing until those mods are installed.
+  **Two-block crops work**: BoP's barley is a `half=lower`/`half=upper` plant rather than an aged crop,
+  so the planter checks for that and places both halves — which means any modded tall crop works, not
+  just barley. Every vanilla flower is in the pool now, tall ones included.
+- **Every bare container has themed loot**, with a modder seam. Hospital, nightstand, shop, pond and
+  the three vault rooms each get their own table, and each has an empty `_extra` companion table that
+  a datapack can fill without touching CityWorld's own — so a gun mod can drop ammo into nightstands
+  and rifles into the vault armoury.
 
 - **Biome mods work in CityWorld worlds.** Biomes O' Plenty and most other modern biome mods register
   their biomes through **TerraBlender**, which CityWorld's own biome source never saw — so a CityWorld
@@ -29,9 +53,10 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   default, unchanged), `CITYWORLD` for CityWorld's cover alone, or `VANILLA` to hand the wild over
   entirely — which is the interesting one if you have a biome mod installed, since it lets that mod's
   own plants and trees stand on their own.
-- **Biomes O' Plenty's cave biomes join the cave pool** — glowing grotto, crystalline chasm, spider
-  nest and fungal jungle turn up underground alongside the vanilla four. Shipped inert, so it does
-  nothing unless BoP is installed.
+- **Biomes O' Plenty's cave biomes join the cave pool** — glowing grotto, crystalline chasm and
+  spider nest turn up underground alongside the vanilla four. Shipped inert, so it does nothing unless
+  BoP is installed. (Fungal jungle was in this list and has been taken out: it is a *surface* biome —
+  its features are placed on the heightmap — so underground it generated bare stone.)
 
 - **26.2's cinnabar and sulfur build with the rest.** Both new stone families join the MODERN and
   APOCALYPSE decorative palette, so cities on Minecraft 26.2 grow deep-red cinnabar and yellow sulfur
