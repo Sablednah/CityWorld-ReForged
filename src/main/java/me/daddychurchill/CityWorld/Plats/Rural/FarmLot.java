@@ -661,12 +661,12 @@ public class FarmLot extends ConnectedLot {
 			for (int x = 1; x < 15; x += stepCol)
 				for (int z = 1; z < 15; z += stepRow)
 					if (chunkOdds.playOdds(oddsOfCrop))
-						placePlant(chunk, x, croplevel, z, pool.get(chunkOdds.getRandomInt(pool.size())), false);
+						plantMixed(generator, chunk, x, croplevel, z, pool, coverageSet);
 		} else {
 			for (int z = 1; z < 15; z += stepCol)
 				for (int x = 1; x < 15; x += stepRow)
 					if (chunkOdds.playOdds(oddsOfCrop))
-						placePlant(chunk, x, croplevel, z, pool.get(chunkOdds.getRandomInt(pool.size())), false);
+						plantMixed(generator, chunk, x, croplevel, z, pool, coverageSet);
 		}
 	}
 
@@ -696,13 +696,55 @@ public class FarmLot extends ConnectedLot {
 			for (int x = 1; x < 15; x += stepCol)
 				for (int z = 1; z < 15; z += stepRow)
 					if (chunkOdds.playOdds(oddsOfCrop))
-						placePlant(chunk, x, croplevel, z, species, false);
+						plantOrFallBack(generator, chunk, x, croplevel, z, species, fallback);
 		} else {
 			for (int z = 1; z < 15; z += stepCol)
 				for (int x = 1; x < 15; x += stepRow)
 					if (chunkOdds.playOdds(oddsOfCrop))
-						placePlant(chunk, x, croplevel, z, species, false);
+						plantOrFallBack(generator, chunk, x, croplevel, z, species, fallback);
 		}
+	}
+
+	/**
+	 * Plants the drawn species where it can actually live, and the hardcoded vanilla flower where it
+	 * cannot.
+	 *
+	 * <p><b>Without this a whole field comes out bare, which is how this was found.</b> The old
+	 * hardcoded path guarded every placement on the ground below being grass/dirt/coarse dirt/farmland;
+	 * drawing from a pool dropped that guard, and unlike the crop path — which lays farmland first —
+	 * flower fields plant straight onto whatever the surface is. Because the species is drawn <em>once
+	 * per field</em>, one plant that cannot stand there empties the entire field rather than thinning
+	 * it, which is exactly what "the fields of tulips and poppies have gone" looked like.
+	 *
+	 * <p>Asking {@code canSurvive} rather than re-listing valid ground also handles the flowers we
+	 * inherit but never chose: a mod's tag can hand us an End or Nether bloom that wants end stone or
+	 * netherrack, and it simply declines the spot instead of vanishing after placement.
+	 */
+	private void plantOrFallBack(CityWorldGenerator generator, SupportBlocks chunk, int x, int y, int z,
+			Material species, CoverageType fallback) {
+		if (canGrowHere(chunk, x, y, z, species))
+			placePlant(chunk, x, y, z, species, false);
+		else
+			// generateCoverage carries its own ground guard, so this is safe on stone, water or a path.
+			generator.coverProvider.generateCoverage(generator, chunk, x, y, z, fallback);
+	}
+
+	/** Whether this plant can stand at this spot, asked of the block itself rather than guessed. */
+	private boolean canGrowHere(SupportBlocks chunk, int x, int y, int z, Material plant) {
+		var state = plant.getBlockState();
+		if (state == null)
+			return false;
+		return state.canSurvive(chunk.getWorld(), chunk.getActualBlock(x, y, z).getPos());
+	}
+
+	/** One block of a mixed meadow: a drawn flower if it can live here, else the vanilla set's own. */
+	private void plantMixed(CityWorldGenerator generator, SupportBlocks chunk, int x, int y, int z,
+			java.util.List<Material> pool, CoverageSets coverageSet) {
+		Material flower = pool.get(chunkOdds.getRandomInt(pool.size()));
+		if (canGrowHere(chunk, x, y, z, flower))
+			placePlant(chunk, x, y, z, flower, false);
+		else
+			generator.coverProvider.generateCoverage(generator, chunk, x, y, z, coverageSet);
 	}
 
 	/** The crop this field grows — for the self-test's census of how many farms are bare. */
