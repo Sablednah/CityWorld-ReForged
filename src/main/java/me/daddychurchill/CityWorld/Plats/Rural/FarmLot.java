@@ -17,6 +17,7 @@ import me.daddychurchill.CityWorld.Support.InitialBlocks;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
+import me.daddychurchill.CityWorld.Support.MaterialTags;
 import me.daddychurchill.CityWorld.Support.SupportBlocks;
 import me.daddychurchill.CityWorld.Support.SurroundingLots;
 
@@ -427,16 +428,16 @@ public class FarmLot extends ConnectedLot {
 				plantTrees(generator, chunk, cropY, CoverageSets.SWAMP_TREES);
 				break;
 			case WHEAT:
-				plantField(generator, chunk, cropY, CoverageType.WHEAT, 1, 2);
+				plantPooledField(generator, chunk, cropY, CoverageType.WHEAT, 1, 2);
 				break;
 			case CARROT:
-				plantField(generator, chunk, cropY, CoverageType.CARROTS, 1, 2);
+				plantPooledField(generator, chunk, cropY, CoverageType.CARROTS, 1, 2);
 				break;
 			case POTATO:
-				plantField(generator, chunk, cropY, CoverageType.POTATO, 1, 2);
+				plantPooledField(generator, chunk, cropY, CoverageType.POTATO, 1, 2);
 				break;
 			case BEETROOT:
-				plantField(generator, chunk, cropY, CoverageType.BEETROOT, 1, 2);
+				plantPooledField(generator, chunk, cropY, CoverageType.BEETROOT, 1, 2);
 				break;
 			case MELON:
 				plantField(generator, chunk, cropY, CoverageType.MELON, 1, 3);
@@ -564,6 +565,53 @@ public class FarmLot extends ConnectedLot {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Plants a field from the {@code #cityworld:farm/crops} pool — one crop for the whole field, so it
+	 * still reads as a farmed field rather than a patchwork.
+	 *
+	 * <p>Farm fields used to be a fixed {@code CropType} enum feeding a switch, which meant a mod's
+	 * crops could never appear however correctly it tagged them; Farmer's Delight was the case
+	 * PORTING.md predicted would need a new seam. Now the pool decides, so barley or cabbages turn up
+	 * in a CityWorld field from a datapack alone.
+	 *
+	 * <p>Falls back to {@code coverageType} — the crop this field would have grown — whenever the pool
+	 * is empty or unbound, so a broken datapack costs variety rather than the farm.
+	 */
+	private void plantPooledField(CityWorldGenerator generator, SupportBlocks chunk, int croplevel,
+			CoverageType coverageType, int stepRow, int stepCol) {
+		java.util.List<Material> pool = MaterialTags.resolve(MaterialTags.FARM_CROPS);
+		if (pool.isEmpty()) {
+			plantField(generator, chunk, croplevel, coverageType, stepRow, stepCol);
+			return;
+		}
+		// One draw for the whole field. Sorted resolution plus the chunk's own Odds keeps it
+		// seed-deterministic, so the same seed grows the same field.
+		Material crop = pool.get(chunkOdds.getRandomInt(pool.size()));
+		if (directionNorthSouth) {
+			for (int x = 1; x < 15; x += stepCol)
+				for (int z = 1; z < 15; z += stepRow)
+					if (chunkOdds.playOdds(oddsOfCrop))
+						setGrownCrop(chunk, x, croplevel, z, crop);
+		} else {
+			for (int z = 1; z < 15; z += stepCol)
+				for (int x = 1; x < 15; x += stepRow)
+					if (chunkOdds.playOdds(oddsOfCrop))
+						setGrownCrop(chunk, x, croplevel, z, crop);
+		}
+	}
+
+	/**
+	 * Places a crop at a random growth stage, so a field reads as farmed rather than just sown.
+	 *
+	 * <p>Uses the existing scaled-level setter, which finds whichever integer property the block
+	 * actually carries — so a modded crop whose maximum differs from wheat's (beetroot stops at 3) ages
+	 * correctly without being special-cased anywhere.
+	 */
+	private void setGrownCrop(SupportBlocks chunk, int x, int y, int z, Material crop) {
+		chunk.setBlockIfNot(x, y - 1, z, Material.FARMLAND);
+		chunk.setBlock(x, y, z, crop, chunkOdds.getRandomDouble());
 	}
 
 	private void plantField(CityWorldGenerator generator, SupportBlocks chunk, int croplevel, CoverageType coverageType,
