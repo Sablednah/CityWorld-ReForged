@@ -1,6 +1,13 @@
 {
   "replace": false,
   "values": [
-    "#minecraft:small_flowers"
+    "#minecraft:small_flowers",
+    "#minecraft:tall_flowers",
+
+    { "id": "biomesoplenty:blue_hydrangea", "required": false },
+    { "id": "biomesoplenty:icy_iris", "required": false },
+    { "id": "biomesoplenty:tall_lavender", "required": false },
+    { "id": "biomesoplenty:tall_white_lavender", "required": false },
+    { "id": "biomesoplenty:goldenrod", "required": false }
   ]
 }
