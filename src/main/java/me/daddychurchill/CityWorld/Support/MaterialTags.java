@@ -66,6 +66,7 @@ public final class MaterialTags {
      */
     public static final TagKey<Block> FARM_CROPS = key("cityworld:farm/crops");
     public static final TagKey<Block> FARM_FLOWERS = key("cityworld:farm/flowers");
+    public static final TagKey<Block> FARM_TALL_FLOWERS = key("cityworld:farm/tall_flowers");
 
     /** A block tag key from a namespaced id, e.g. {@code "minecraft:planks"} or {@code "c:stones"}. */
     public static TagKey<Block> key(String id) {

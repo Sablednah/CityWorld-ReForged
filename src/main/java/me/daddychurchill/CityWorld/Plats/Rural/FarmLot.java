@@ -337,43 +337,43 @@ public class FarmLot extends ConnectedLot {
 				plantField(generator, chunk, cropY, CoverageType.REED, 1, 2);
 				break;
 			case DANDELION:
-				plantField(generator, chunk, cropY, CoverageType.DANDELION, 1, 2);
+				plantOneSpecies(generator, chunk, cropY, CoverageType.DANDELION, MaterialTags.FARM_FLOWERS, 1, 2);
 				break;
 			case DEAD_BUSH:
 				plantField(generator, chunk, cropY, CoverageType.DEAD_BUSH, 1, 2);
 				break;
 			case POPPY:
-				plantField(generator, chunk, cropY, CoverageType.POPPY, 1, 2);
+				plantOneSpecies(generator, chunk, cropY, CoverageType.POPPY, MaterialTags.FARM_FLOWERS, 1, 2);
 				break;
 			case BLUE_ORCHID:
-				plantField(generator, chunk, cropY, CoverageType.BLUE_ORCHID, 1, 2);
+				plantOneSpecies(generator, chunk, cropY, CoverageType.BLUE_ORCHID, MaterialTags.FARM_FLOWERS, 1, 2);
 				break;
 			case ALLIUM:
-				plantField(generator, chunk, cropY, CoverageType.ALLIUM, 1, 2);
+				plantOneSpecies(generator, chunk, cropY, CoverageType.ALLIUM, MaterialTags.FARM_FLOWERS, 1, 2);
 				break;
 			case AZURE_BLUET:
-				plantField(generator, chunk, cropY, CoverageType.AZURE_BLUET, 1, 2);
+				plantOneSpecies(generator, chunk, cropY, CoverageType.AZURE_BLUET, MaterialTags.FARM_FLOWERS, 1, 2);
 				break;
 			case OXEYE_DAISY:
-				plantField(generator, chunk, cropY, CoverageType.OXEYE_DAISY, 1, 2);
+				plantOneSpecies(generator, chunk, cropY, CoverageType.OXEYE_DAISY, MaterialTags.FARM_FLOWERS, 1, 2);
 				break;
 			case RED_TULIP:
-				plantField(generator, chunk, cropY, CoverageType.RED_TULIP, 1, 2);
+				plantOneSpecies(generator, chunk, cropY, CoverageType.RED_TULIP, MaterialTags.FARM_FLOWERS, 1, 2);
 				break;
 			case ORANGE_TULIP:
-				plantField(generator, chunk, cropY, CoverageType.ORANGE_TULIP, 1, 2);
+				plantOneSpecies(generator, chunk, cropY, CoverageType.ORANGE_TULIP, MaterialTags.FARM_FLOWERS, 1, 2);
 				break;
 			case WHITE_TULIP:
-				plantField(generator, chunk, cropY, CoverageType.WHITE_TULIP, 1, 2);
+				plantOneSpecies(generator, chunk, cropY, CoverageType.WHITE_TULIP, MaterialTags.FARM_FLOWERS, 1, 2);
 				break;
 			case PINK_TULIP:
-				plantField(generator, chunk, cropY, CoverageType.PINK_TULIP, 1, 2);
+				plantOneSpecies(generator, chunk, cropY, CoverageType.PINK_TULIP, MaterialTags.FARM_FLOWERS, 1, 2);
 				break;
 			case SUNFLOWER:
-				plantField(generator, chunk, cropY, CoverageType.SUNFLOWER, 1, 2);
+				plantOneSpecies(generator, chunk, cropY, CoverageType.SUNFLOWER, MaterialTags.FARM_TALL_FLOWERS, 1, 2);
 				break;
 			case LILAC:
-				plantField(generator, chunk, cropY, CoverageType.LILAC, 1, 2);
+				plantOneSpecies(generator, chunk, cropY, CoverageType.LILAC, MaterialTags.FARM_TALL_FLOWERS, 1, 2);
 				break;
 			case TALL_GRASS:
 				plantField(generator, chunk, cropY, CoverageType.TALL_FERN, 1, 2);
@@ -382,10 +382,10 @@ public class FarmLot extends ConnectedLot {
 				plantField(generator, chunk, cropY, CoverageType.TALL_FERN, 1, 2);
 				break;
 			case ROSE_BUSH:
-				plantField(generator, chunk, cropY, CoverageType.ROSE_BUSH, 1, 2);
+				plantOneSpecies(generator, chunk, cropY, CoverageType.ROSE_BUSH, MaterialTags.FARM_TALL_FLOWERS, 1, 2);
 				break;
 			case PEONY:
-				plantField(generator, chunk, cropY, CoverageType.PEONY, 1, 2);
+				plantOneSpecies(generator, chunk, cropY, CoverageType.PEONY, MaterialTags.FARM_TALL_FLOWERS, 1, 2);
 				break;
 			case EMERALD_GREEN:
 				plantField(generator, chunk, cropY, CoverageType.EMERALD_GREEN, 2, 2);
@@ -667,6 +667,41 @@ public class FarmLot extends ConnectedLot {
 				for (int x = 1; x < 15; x += stepRow)
 					if (chunkOdds.playOdds(oddsOfCrop))
 						placePlant(chunk, x, croplevel, z, pool.get(chunkOdds.getRandomInt(pool.size())), false);
+		}
+	}
+
+	/**
+	 * A field of ONE flower species, drawn from a tag — the single-species counterpart to
+	 * {@link #plantPooledFlowers}.
+	 *
+	 * <p>These crop types (a poppy field, a tulip field) each planted one hardcoded vanilla flower, so
+	 * a biome mod's flowers could never appear in them however well tagged. Keeping one species per
+	 * field preserves what they are — a field of tulips reads differently from a meadow — while letting
+	 * the species be a mod's. The enum entries still decide how often a flower field appears at all;
+	 * only the flower it grows is now open.
+	 *
+	 * <p>The fallback keeps the exact vanilla flower if the tag is empty, so a stripped-down pack loses
+	 * the variety rather than the field.
+	 */
+	private void plantOneSpecies(CityWorldGenerator generator, SupportBlocks chunk, int croplevel,
+			CoverageType fallback, net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> tag,
+			int stepRow, int stepCol) {
+		java.util.List<Material> pool = MaterialTags.resolve(tag);
+		if (pool.isEmpty()) {
+			plantField(generator, chunk, croplevel, fallback, stepRow, stepCol);
+			return;
+		}
+		Material species = pool.get(chunkOdds.getRandomInt(pool.size()));
+		if (directionNorthSouth) {
+			for (int x = 1; x < 15; x += stepCol)
+				for (int z = 1; z < 15; z += stepRow)
+					if (chunkOdds.playOdds(oddsOfCrop))
+						placePlant(chunk, x, croplevel, z, species, false);
+		} else {
+			for (int z = 1; z < 15; z += stepCol)
+				for (int x = 1; x < 15; x += stepRow)
+					if (chunkOdds.playOdds(oddsOfCrop))
+						placePlant(chunk, x, croplevel, z, species, false);
 		}
 	}
 
