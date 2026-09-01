@@ -528,15 +528,34 @@ public final class CityWorldCommands {
         return best;
     }
 
+    /**
+     * The biome this chunk really has — asked through the same lookup the world generates from.
+     *
+     * <p><b>It used to call {@code classify} directly, and so could only ever find CityWorld's own
+     * biomes.</b> Everything that arrives by another route was invisible to the search: biome-mod
+     * biomes from the TerraBlender bridge, the surface and shore pools, the cave pool. Reported as
+     * "/cwlocate can't find BoP biomes when vanilla /locate can" — and vanilla could, because vanilla
+     * asks the biome source rather than one branch inside it.
+     *
+     * <p>Falls back to {@code classify} only if the lookup declines (no bound context), which is the
+     * same fallback {@code getNoiseBiome} itself uses.
+     */
     private static String biomeAt(CityWorldGenerator context, CityWorldBiomes classifier, boolean decayed, int cx,
             int cz) {
         try {
             AbstractCachedYs ys = context.shapeProvider.getCachedYs(context, cx, cz);
             int terrainY = ys.getBlockY(8, 8);
-            double temp = context.getTemperature(cx * 16 + 8, cz * 16 + 8);
-            double humid = context.getHumidity(cx * 16 + 8, cz * 16 + 8);
-            return classifier.classify(context, terrainY, temp, humid, decayed).unwrapKey()
-                    .map(k -> k.identifier().getPath()).orElse(null);
+            int wx = cx * 16 + 8, wz = cz * 16 + 8;
+            var found = me.daddychurchill.CityWorld.worldgen.CityWorldBiomeLookup.biomeAt(classifier,
+                    net.minecraft.core.QuartPos.fromBlock(wx),
+                    net.minecraft.core.QuartPos.fromBlock(terrainY + 1),
+                    net.minecraft.core.QuartPos.fromBlock(wz));
+            if (found == null) {
+                double temp = context.getTemperature(wx, wz);
+                double humid = context.getHumidity(wx, wz);
+                found = classifier.classify(context, terrainY, temp, humid, decayed);
+            }
+            return found.unwrapKey().map(k -> k.identifier().getPath()).orElse(null);
         } catch (Throwable t) {
             return null;
         }
