@@ -1,0 +1,6 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "biomesoplenty:gravel_beach", "required": false }
+  ]
+}

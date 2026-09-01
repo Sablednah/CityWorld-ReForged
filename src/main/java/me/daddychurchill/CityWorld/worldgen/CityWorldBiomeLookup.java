@@ -70,14 +70,63 @@ public final class CityWorldBiomeLookup {
         // Above the waterline, an installed TerraBlender mod may have a biome for this climate. Opt-in,
         // and only for land: oceans, shores and peaks stay CityWorld's, because those are decided by
         // terrain facts we know exactly and a climate lookup would only get wrong.
-        if (context.getSettings().useModdedBiomes && blockY > context.seaLevel) {
-            Holder<Biome> modded = moddedBiome(source, context, column, blockX, blockZ);
-            if (modded != null)
-                return modded;
+        if (context.getSettings().useModdedBiomes) {
+            // A pool patch outranks the climate lookup, which is the whole point: these are the biomes
+            // the lookup would never choose, so asking it first would guarantee they never appear.
+            Holder<Biome> pooled = pooledBiome(source, context, column, blockX, blockY, blockZ);
+            if (pooled != null)
+                return pooled;
+
+            if (blockY > context.seaLevel) {
+                Holder<Biome> modded = moddedBiome(source, context, column, blockX, blockZ);
+                if (modded != null)
+                    return modded;
+            }
         }
 
         return source.classify(context, column.terrainY, column.temperature, column.humidity,
                 context.getSettings().includeDecayedNature);
+    }
+
+    /**
+     * A surface- or shore-pool biome for this column, or {@code null}.
+     *
+     * <p>Which pool is asked comes from the terrain, not from a guess: at or below sea level the
+     * column is a shore — that is exactly the test {@code classify} uses to return a beach — so only
+     * shore variants may stand in. Above it, the surface pool applies.
+     *
+     * <p>Both are gated on the biome's own declared climate, so a patch lands where its author said it
+     * belongs. A biome the bridge never saw (a vanilla one a pack added to the tag) has no declared
+     * ranges and is allowed anywhere its cell falls — the pack listed it deliberately, and inventing a
+     * climate for it would be us guessing.
+     */
+    private static @Nullable Holder<Biome> pooledBiome(CityWorldBiomes source, CityWorldGenerator context,
+            Column column, int blockX, int blockY, int blockZ) {
+        SurfaceRegions.Pools pools = source.surfacePools();
+        boolean shore = column.terrainY <= context.seaLevel;
+        SurfaceRegions.Pool pool = shore ? pools.shore() : pools.surface();
+        if (pool.isEmpty())
+            return null;
+        // Above the waterline only for the surface pool: a patch hanging over the sea would paint
+        // water with a land biome.
+        if (!shore && blockY <= context.seaLevel)
+            return null;
+
+        float temperature = (float) (column.temperature * 2.0 - 1.0);
+        float humidity = (float) (column.humidity * 2.0 - 1.0);
+        float continentalness = (float) column.continentalness;
+        float erosion = (float) context.getErosion(blockX, blockZ);
+        float weirdness = (float) context.getWeirdness(blockX, blockZ);
+        TerraBlenderBridge bridge = source instanceof CityWorldClimateBiomeSource climate
+                ? climate.terraBlender() : null;
+
+        return pool.at(context.getWorldSeed(), blockX, blockZ, biome -> {
+            if (bridge == null)
+                return true;
+            var point = bridge.pointFor(biome);
+            return point == null || SurfaceRegions.climateFits(point, temperature, humidity,
+                    continentalness, erosion, weirdness);
+        });
     }
 
     /**
