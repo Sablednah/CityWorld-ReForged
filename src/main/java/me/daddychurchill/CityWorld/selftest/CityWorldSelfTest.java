@@ -674,6 +674,15 @@ public final class CityWorldSelfTest {
         generator.caveOnlyFeatures()
                 .forEach(h -> h.unwrapKey().ifPresent(k -> names.add(k.identifier().getPath())));
         report.put("biome.caveFeatures", names.toString());
+        // Pool membership, stated outright — an empty pool silently produces nothing, which is
+        // indistinguishable from a pool that is working but rare.
+        if (level.getChunkSource().getGenerator().getBiomeSource() instanceof CityWorldBiomes cb) {
+            var pools = cb.surfacePools();
+            report.put("biome.surfacePool", pools.surface().biomes()
+                    .map(h -> h.unwrapKey().map(k -> k.identifier().toString()).orElse("?")).toList().toString());
+            report.put("biome.shorePool", pools.shore().biomes()
+                    .map(h -> h.unwrapKey().map(k -> k.identifier().toString()).orElse("?")).toList().toString());
+        }
 
         if (names.isEmpty()) {
             fail("no cave-only features resolved — cave biomes would be labelled but never decorated");
