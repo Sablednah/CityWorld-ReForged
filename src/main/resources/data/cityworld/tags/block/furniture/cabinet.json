@@ -1,0 +1,601 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "mcwfurnitures:acacia_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:acacia_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:acacia_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:acacia_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:birch_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:birch_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:birch_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:black_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:black_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:blue_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:blue_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:brown_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:brown_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cherry_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cherry_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cherry_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:crimson_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:crimson_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:crimson_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cyan_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cyan_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:dark_oak_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:dark_oak_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:dark_oak_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:gray_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:gray_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:green_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:green_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:jungle_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:jungle_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:jungle_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:lime_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:lime_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:magenta_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:magenta_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:mangrove_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:mangrove_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:mangrove_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:oak_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:oak_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:oak_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:orange_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:orange_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pale_oak_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pale_oak_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pale_oak_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pink_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pink_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:purple_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:purple_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:red_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:red_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:spruce_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:spruce_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:spruce_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:warped_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:warped_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:warped_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:white_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:white_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:yellow_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:yellow_kitchen_storage_cabinet",
+      "required": false
+    }
+  ]
+}

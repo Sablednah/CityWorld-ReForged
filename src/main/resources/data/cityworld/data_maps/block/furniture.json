@@ -1,0 +1,1710 @@
+{
+  "replace": false,
+  "values": {
+    "mcwfurnitures:acacia_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:acacia_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:acacia_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:acacia_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:birch_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:birch_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:birch_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:birch_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:cherry_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:cherry_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:cherry_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:cherry_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:crimson_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:crimson_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:crimson_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:crimson_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:dark_oak_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:dark_oak_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:dark_oak_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:dark_oak_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:jungle_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:jungle_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:jungle_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:jungle_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:mangrove_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:mangrove_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:mangrove_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:mangrove_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:oak_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:oak_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:oak_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:oak_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:pale_oak_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:pale_oak_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:pale_oak_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:pale_oak_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:spruce_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:spruce_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:spruce_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:spruce_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_acacia_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_acacia_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_acacia_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_acacia_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_birch_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_birch_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_birch_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_birch_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_cherry_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_cherry_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_cherry_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_cherry_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_crimson_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_crimson_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_crimson_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_crimson_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_dark_oak_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_dark_oak_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_dark_oak_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_dark_oak_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_jungle_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_jungle_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_jungle_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_jungle_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_mangrove_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_mangrove_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_mangrove_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_mangrove_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_oak_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_oak_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_oak_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_oak_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_pale_oak_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_pale_oak_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_pale_oak_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_pale_oak_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_spruce_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_spruce_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_spruce_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_spruce_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_warped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_warped_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_warped_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:stripped_warped_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:warped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:warped_modern_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:warped_stool_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "mcwfurnitures:warped_striped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "refurbished_furniture:acacia_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:birch_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:black_stool": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:blue_stool": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:brown_stool": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:cherry_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:crimson_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:cyan_stool": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:dark_oak_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:gray_stool": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:green_stool": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:jungle_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:lime_stool": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:magenta_stool": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:mangrove_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:oak_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:orange_stool": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:pale_oak_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:pink_stool": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:purple_stool": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:red_stool": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:spruce_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:warped_chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:white_stool": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:yellow_stool": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "mcwfurnitures:black_chaise": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:black_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:blue_chaise": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:blue_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:brown_chaise": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:brown_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:cyan_chaise": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:cyan_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:gray_chaise": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:gray_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:green_chaise": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:green_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:lime_chaise": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:lime_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:magenta_chaise": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:magenta_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:orange_chaise": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:orange_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:pink_chaise": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:pink_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:purple_chaise": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:purple_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:red_chaise": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:red_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:white_chaise": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:white_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:yellow_chaise": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:yellow_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "refurbished_furniture:black_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:blue_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:brown_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:cyan_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:gray_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:green_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:lime_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:magenta_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:orange_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:pink_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:purple_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:red_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:white_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:yellow_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    }
+  }
+}

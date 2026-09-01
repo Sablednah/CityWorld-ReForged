@@ -1,0 +1,61 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "refurbished_furniture:black_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:blue_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:brown_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cyan_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:gray_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:green_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:lime_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:magenta_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:orange_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pink_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:purple_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:red_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:white_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:yellow_lamp",
+      "required": false
+    }
+  ]
+}

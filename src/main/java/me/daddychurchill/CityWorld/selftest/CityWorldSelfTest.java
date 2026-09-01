@@ -302,6 +302,36 @@ public final class CityWorldSelfTest {
         }
         report.put("biome.groundDataMap", dataMapped.size() + ": " + dataMapped);
 
+        // Furniture: what each role resolves to, and whether the seats declare a facing offset. A role
+        // that resolves empty is simply "no furniture mod installed" and is not a failure — but a seat
+        // pool with NO offsets declared would mean every chair is placed on the default convention,
+        // which is wrong for two of the three conventions actually measured in the wild.
+        Map<String, Integer> roles = new TreeMap<>();
+        for (var role : List.of("chair", "table", "sofa", "desk", "counter", "cabinet", "bookshelf",
+                "sink", "toilet", "bath", "lamp")) {
+            var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK,
+                    net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", "furniture/" + role));
+            int n = me.daddychurchill.CityWorld.Support.MaterialTags.resolve(tag).size();
+            if (n > 0)
+                roles.put(role, n);
+        }
+        report.put("furniture.roles", roles.toString());
+        if (!roles.isEmpty()) {
+            int declared = 0, seats = 0;
+            for (var role : List.of(me.daddychurchill.CityWorld.Support.FurnitureTags.CHAIR,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.SOFA))
+                for (var piece : me.daddychurchill.CityWorld.Support.MaterialTags.resolve(role)) {
+                    seats++;
+                    if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.facingOffsetFor(piece) != 0)
+                        declared++;
+                }
+            report.put("furniture.seatsWithOffset", declared + " of " + seats);
+            if (seats > 0 && declared == 0)
+                fail("furniture seats resolved (" + seats + ") but none declares a facing offset — every "
+                        + "chair will be placed on the default convention, which is wrong for two of the "
+                        + "three conventions measured across the two big furniture mods");
+        }
+
         // The checklist: modded biomes CityWorld gives its default ground to. A biome whose look comes
         // from grass colour or features (bog, snowblossom_grove) is right to be here; one whose look is
         // its surface block (a volcano, a desert) is not, and will read as ordinary grass until tagged.

@@ -1133,8 +1133,13 @@ public class StructureOnGroundProvider extends Provider {
 
 				break;
 			case LIVING:
-
-				me.daddychurchill.CityWorld.Support.Furniture.living(generator, chunk, odds, x1, x2, y1, z1, z2);
+				// With a furniture mod installed some of these become a study instead — a desk, a chair
+				// and a bookshelf. Uses the LIVING slot rather than a new room type so room assignment
+				// is untouched; study() no-ops without a desk, so an unmodded world is unchanged.
+				if (odds.playOdds(me.daddychurchill.CityWorld.Support.Odds.oddsUnlikely))
+					me.daddychurchill.CityWorld.Support.Furniture.study(generator, chunk, odds, x1, x2, y1, z1, z2);
+				else
+					me.daddychurchill.CityWorld.Support.Furniture.living(generator, chunk, odds, x1, x2, y1, z1, z2);
 				break;
 			case BED:
 				me.daddychurchill.CityWorld.Support.Furniture.bedroom(generator, chunk, odds, x1, x2, y1, z1, z2);
