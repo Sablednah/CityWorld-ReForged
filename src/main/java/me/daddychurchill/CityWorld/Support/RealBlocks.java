@@ -83,6 +83,22 @@ public final class RealBlocks extends SupportBlocks {
 		}
 	}
 
+	/**
+	 * The biome <em>holder</em> at this column, or {@code null}. Needed as well as the key because tag
+	 * membership is asked of a holder — which is what lets a datapack say "this modded biome's ground is
+	 * gravel" without CityWorld naming the biome.
+	 */
+	public net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> getBiomeHolder(int x, int y, int z) {
+		try {
+			ServerLevelAccessor sla = getServerLevel();
+			if (sla == null)
+				return null;
+			return sla.getLevel().getBiome(new net.minecraft.core.BlockPos(getOriginX() + x, y, getOriginZ() + z));
+		} catch (Throwable t) {
+			return null;
+		}
+	}
+
 	/** True if the biome assigned at this column is a swamp or mangrove swamp — used to carve the water
 	 *  pools that make MODERN swamps actually swampy. Defensive: false off the server or on any hiccup. */
 	public boolean isSwampBiome(int x, int y, int z) {

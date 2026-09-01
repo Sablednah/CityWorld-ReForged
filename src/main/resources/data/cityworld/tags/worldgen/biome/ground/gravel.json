@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:stony_shore",
+    { "id": "biomesoplenty:gravel_beach", "required": false }
+  ]
+}
