@@ -84,11 +84,35 @@ widens, so a heavily modded world gets *more variety*, not more wooden houses. F
 their blocks, or to put a mod's blocks somewhere they wouldn't naturally go, a small datapack extends
 any palette directly.
 
+### And your biome mod's biomes
+
+Install **Biomes O' Plenty** — or anything else built on **TerraBlender** — and its biomes generate in
+your CityWorld world. Not a handful of them: with BoP installed, **all 59 of its overworld biomes**
+appear, over about a third of the ground, with CityWorld still naming the rest. Its cave biomes go
+underground where they belong, and biomes whose look is their *ground* — gravel beaches, volcanic
+plains, salt wastes — get their real blocks rather than a grass stand-in.
+
+On by default, because installing a biome mod is itself the request. `world.moddedBiomeShare` sets how
+much ground a mod may own, `world.useModdedBiomes` turns it off entirely, and both cost nothing when
+you have no such mod.
+
+### Farms grow your mods' crops
+
+Crops and flowers come from tags too, so **Farmer's Delight** cabbages or a biome mod's wildflowers
+grow in CityWorld's fields. Two-block crops work — Biomes O' Plenty's barley stands full height — and
+a plant that can't survive where it was sown is quietly swapped for one that can, so a field is never
+left bare.
+
 ## Commands
 
 `/cityinfo` tells you what's under your feet; `/cityfind`/`/cityfind lot`/`/cwlocate` track down a
 specific building, landmark or biome; `/cityschem` pastes catalog buildings by hand; `/cityexport`
 bottles a world's settings to hand to a server.
+
+Every command is a **permission node** (`cityworld.info`, `.teleport`, `.find`, `.schematic`,
+`.export`), so LuckPerms — or any NeoForge permissions manager — can hand out finding and
+world-jumping without handing out schematic pasting. With no permissions manager installed nothing
+changes: the defaults are the operator levels the commands always used.
 
 **→ Every command with usage examples: [sablecraft.co.uk/cityworld-reforged](https://sablecraft.co.uk/cityworld-reforged/)**
 
@@ -99,9 +123,9 @@ in the filename, so there is no guessing which is which.
 
 | Minecraft | NeoForge | Java | File |
 |---|---|---|---|
-| 1.21.11 | 21.11.42+ | 21 | `cityworld-5.1.0+mc1.21.11.jar` |
-| 26.1.2 | 26.1.2.95+ | 25 | `cityworld-5.1.0+mc26.1.2.jar` |
-| 26.2 | 26.2.0.59+ | 25 | `cityworld-5.1.0+mc26.2.jar` |
+| 1.21.11 | 21.11.42+ | 21 | `cityworld-5.4.0+mc1.21.11.jar` |
+| 26.1.2 | 26.1.2.95+ | 25 | `cityworld-5.4.0+mc26.1.2.jar` |
+| 26.2 | 26.2.0.59+ | 25 | `cityworld-5.4.0+mc26.2.jar` |
 
 **A given seed builds the same city on all three.** The layout — terrain, roads, districts, which
 building stands where — is identical across versions; only the materials shift slightly, because newer
