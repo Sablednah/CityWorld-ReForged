@@ -1,0 +1,76 @@
+{
+  "replace": false,
+  "values": {
+    "biomesoplenty:lush_desert": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "biomesoplenty"
+        }
+      ],
+      "value": {
+        "surface": "biomesoplenty:orange_sand",
+        "subsurface": "biomesoplenty:orange_sandstone"
+      }
+    },
+    "biomesoplenty:lush_savanna": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "biomesoplenty"
+        }
+      ],
+      "value": {
+        "surface": "biomesoplenty:orange_sand",
+        "subsurface": "biomesoplenty:orange_sandstone"
+      }
+    },
+    "biomesoplenty:volcanic_plains": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "biomesoplenty"
+        }
+      ],
+      "value": {
+        "surface": "biomesoplenty:black_sand",
+        "subsurface": "biomesoplenty:black_sandstone"
+      }
+    },
+    "biomesoplenty:wasteland": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "biomesoplenty"
+        }
+      ],
+      "value": {
+        "surface": "biomesoplenty:dried_salt"
+      }
+    },
+    "biomesoplenty:origin_valley": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "biomesoplenty"
+        }
+      ],
+      "value": {
+        "surface": "biomesoplenty:origin_grass_block",
+        "subsurface": "minecraft:dirt"
+      }
+    },
+    "biomesoplenty:wintry_origin_valley": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "biomesoplenty"
+        }
+      ],
+      "value": {
+        "surface": "biomesoplenty:origin_grass_block",
+        "subsurface": "minecraft:dirt"
+      }
+    }
+  }
+}

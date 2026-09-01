@@ -262,6 +262,26 @@ public final class CityWorldSelfTest {
             }));
         report.put("biome.groundTagged", mapped.toString());
 
+        // The data map, which is the only route that can name a modded block. A conditioned entry for
+        // an absent mod is correctly skipped, so this reports what resolved rather than asserting a
+        // count — but an entry that resolves to the WRONG block is a bug worth failing on.
+        Map<String, String> dataMapped = new TreeMap<>();
+        for (var holder : biomes.listElements().toList()) {
+            var ground = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.groundFor(holder);
+            if (ground == null)
+                continue;
+            String id = holder.unwrapKey().map(k -> k.identifier().toString()).orElse("?");
+            var got = me.daddychurchill.CityWorld.Support.BiomeSurface.surface(holder,
+                    holder.unwrapKey().orElse(null));
+            String want = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                    .getKey(ground.surface()).toString();
+            dataMapped.put(id, want);
+            if (got == null || got.getBlock() != ground.surface())
+                fail("biome " + id + " has a ground data map entry for " + want
+                        + " but resolves to " + got + " — the map is not reaching the surface pass");
+        }
+        report.put("biome.groundDataMap", dataMapped.size() + ": " + dataMapped);
+
         // The checklist: modded biomes CityWorld gives its default ground to. A biome whose look comes
         // from grass colour or features (bog, snowblossom_grove) is right to be here; one whose look is
         // its surface block (a volcano, a desert) is not, and will read as ordinary grass until tagged.
