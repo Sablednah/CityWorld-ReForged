@@ -6,7 +6,8 @@
     "windingCaves": true
   },
   "world": {
-    "maxBuildingFloors": 40
+    "maxBuildingFloors": 40,
+    "wildDecoration": "VANILLA"
   },
   "overgrowth": {
     "enabled": false,
