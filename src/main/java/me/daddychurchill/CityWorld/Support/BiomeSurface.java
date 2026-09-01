@@ -50,6 +50,11 @@ public final class BiomeSurface {
 	 * falls through to the hardcoded map exactly as before.
 	 */
 	public static Material surface(net.minecraft.core.Holder<Biome> holder, ResourceKey<Biome> b) {
+		// The data map wins: it is the only mechanism that can name a block CityWorld does not know,
+		// so a pack using it has been more specific than any tag can be.
+		var ground = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.groundFor(holder);
+		if (ground != null)
+			return Material.of(ground.surface());
 		if (holder != null) {
 			if (holder.is(GROUND_GRAVEL))
 				return Material.GRAVEL;
@@ -73,6 +78,9 @@ public final class BiomeSurface {
 
 	/** Subsurface for a tagged biome: gravel and stone sit on stone, sands on their sandstone. */
 	public static Material subsurface(net.minecraft.core.Holder<Biome> holder, ResourceKey<Biome> b) {
+		var ground = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.groundFor(holder);
+		if (ground != null && ground.subsurface().isPresent())
+			return Material.of(ground.subsurface().get());
 		if (holder != null) {
 			if (holder.is(GROUND_GRAVEL) || holder.is(GROUND_STONE))
 				return Material.STONE;

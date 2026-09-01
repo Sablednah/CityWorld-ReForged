@@ -36,6 +36,8 @@ public class CityWorldMod {
         // Register the custom ChunkGenerator codec (cityworld:city). The dimension and world
         // preset that reference it live in src/main/resources/data/cityworld/...
         CityWorldRegistries.register(modEventBus);
+        // Biome -> ground block, so a mod's biome can name a block only that mod has.
+        modEventBus.addListener(me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps::register);
 
         // Per-world settings are datapack-driven (the cityworld:world_settings registry, registered
         // above), not a per-instance config — see CityWorldSettingsData / PORTING.md top risk #4.
