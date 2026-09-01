@@ -60,6 +60,18 @@ public final class SurfaceRegions {
             Identifier.fromNamespaceAndPath("cityworld", "shore_pool"));
 
     /**
+     * Ocean variants that may stand in for CityWorld's own ocean and deep ocean.
+     *
+     * <p>Same reasoning as the shore pool, one band lower. CityWorld picks its oceans from terrain
+     * depth and temperature, and the modded climate lookup only runs above the waterline — so a mod's
+     * ocean biome could never be chosen, however well it declared itself. Biomes O' Plenty adds no
+     * overworld oceans, so this ships empty; it exists because "modded oceans are silently impossible"
+     * is a gap worth closing for the mods that do add them, not a BoP-shaped one.
+     */
+    public static final TagKey<Biome> OCEAN_POOL = TagKey.create(Registries.BIOME,
+            Identifier.fromNamespaceAndPath("cityworld", "ocean_pool"));
+
+    /**
      * Patch grid, in blocks, and the share of cells a pool biome claims.
      *
      * <p>Bigger cells than the cave pool's (which is underground, where a patch is a cave system) —
@@ -113,16 +125,17 @@ public final class SurfaceRegions {
         }
     }
 
-    /** Both pools for a world, resolved together. */
-    public record Pools(Pool surface, Pool shore) {
+    /** All three pools for a world, resolved together. */
+    public record Pools(Pool surface, Pool shore, Pool ocean) {
 
         public Stream<Holder<Biome>> biomes() {
-            return Stream.concat(surface.biomes(), shore.biomes());
+            return Stream.concat(surface.biomes(), Stream.concat(shore.biomes(), ocean.biomes()));
         }
     }
 
     public static Pools of(HolderGetter<Biome> biomes) {
-        return new Pools(new Pool(biomes, SURFACE_POOL), new Pool(biomes, SHORE_POOL));
+        return new Pools(new Pool(biomes, SURFACE_POOL), new Pool(biomes, SHORE_POOL),
+                new Pool(biomes, OCEAN_POOL));
     }
 
     /**
