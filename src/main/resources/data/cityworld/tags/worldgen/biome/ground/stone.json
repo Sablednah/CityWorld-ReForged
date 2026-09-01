@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "biomesoplenty:crag", "required": false },
+    { "id": "biomesoplenty:rocky_shrubland", "required": false }
+  ]
+}
