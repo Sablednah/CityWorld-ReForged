@@ -990,6 +990,26 @@ public final class CityWorldSelfTest {
         // like in the data.
         long slivers = counts.values().stream().filter(v -> v * 1000 / Math.max(1, samples) < 1).count();
         report.put("biome.wide.sliverBiomes", Long.toString(slivers) + " of " + counts.size() + " under 0.1%");
+
+        // ⚠ A pool biome that never appears is the pool silently doing nothing — the exact failure that
+        // shipped once already, where the patches were rejected by a too-strict climate gate and the
+        // only symptom was a distinct-count that did not move. These biomes are in the pool BECAUSE
+        // nothing else will ever place them, so if the pool does not, nothing does.
+        if (source instanceof CityWorldBiomes cb) {
+            var pools = cb.surfacePools();
+            java.util.List<String> missing = new ArrayList<>();
+            java.util.List<String> present = new ArrayList<>();
+            pools.biomes().forEach(h -> h.unwrapKey().ifPresent(k -> {
+                String id = k.identifier().toString();
+                (counts.containsKey(id) ? present : missing).add(id);
+            }));
+            report.put("biome.pool.present", present.toString());
+            report.put("biome.pool.missing", missing.toString());
+            if (!missing.isEmpty())
+                fail("pool biomes never generated: " + missing
+                        + " — they are pooled precisely because nothing else places them, so the pool "
+                        + "is doing nothing for them");
+        }
     }
 
     /**
