@@ -848,6 +848,30 @@ what a mod contributes, and comparing a modded-only figure against it makes a fe
 regression. `reachableModdedDirect` vs `reachableWithShare` are the comparable pair, recorded in one
 run so the baseline is the same seed and the same mods.
 
+### ✅ The last few: biomes no dial can reach (2026-09-01)
+
+With BoP installed, **54 of 59** modded biomes generate through the ordinary climate route. Of the
+five that never did, `spider_nest` was already fine — it is a cave-pool biome, and the surface sweep
+simply could not see that route. The other four split by cause, and needed different fixes:
+
+- **`bog`, `fungal_jungle`, `snowblossom_grove`** lose the nearest-match *everywhere* — against
+  vanilla, and against other modded biomes at `moddedBiomeShare = 1.0`. No gap to widen, no share that
+  reaches them. **`#cityworld:surface_pool`** hands them a share of cells outright.
+- **`gravel_beach`** was never *asked* about: shores come from terrain and the modded lookup is limited
+  to land above the waterline. **`#cityworld:shore_pool`** substitutes on shore ground instead.
+- **`#cityworld:ocean_pool`** closes the same gap below the waterline. Ships empty; BoP adds no
+  overworld oceans.
+
+**Confirmed in-world**: fungal jungle generates with its own giant mushrooms, which also proves pool
+biomes reach `possibleBiomes()` — vanilla filters biome *features* against that set.
+
+**⚠ Two mistakes worth keeping.** Gating patches on all five climate axes produced *nothing*: the
+"overlaps on every axis" finding is marginal overlap measured one axis at a time, and no column sits
+inside the joint box. Gating on temperature and humidity works. And the shore band was written
+`terrainY <= seaLevel`, which is the *ocean* condition — `classify` puts the beach at exactly
+`terrainY == seaLevel` — so a beach biome was painted across open water, and the sweep passed it
+because it only asked whether a biome appeared, never where.
+
 ### Related gap this exposes
 
 `CityWorldClimateBiomeSource` has **49 biomes hardcoded in Java** and a hand-written climate matrix (21
