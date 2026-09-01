@@ -44,6 +44,13 @@ public interface CityWorldBiomes {
     CaveRegions.Pool cavePool();
 
     /**
+     * The surface and shore pools, resolved from their tags on first use — biomes that get ground
+     * outright because the climate lookup would never choose them. Lazy for the same reason as
+     * {@link #cavePool()}: tags bind after codec decode.
+     */
+    SurfaceRegions.Pools surfacePools();
+
+    /**
      * Hands the source the per-world context — the seeded terrain shaper and climate it needs to answer
      * {@code getNoiseBiome} for real.
      *
