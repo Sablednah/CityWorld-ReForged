@@ -9,6 +9,18 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Added
 
+- **Biomes look like themselves.** CityWorld lays its own surface and never runs a biome's surface
+  rules, so a biome whose identity *is* its ground generated as ordinary grass or sand — BoP's gravel
+  beaches were sand, its volcanoes grass. Ground is now data-driven two ways: biome tags
+  (`#cityworld:ground/gravel`, `/sand`, `/podzol`, `/coarse_dirt`, `/terracotta`, `/basalt`, `/mud`,
+  `/stone`) for vanilla materials, and a **`cityworld:ground` data map** for anything else — which is
+  what lets BoP's `lush_desert` get its own orange sand, `wasteland` its dried salt and
+  `origin_valley` its own grass, rather than a vanilla stand-in. Mappings came from BoP's own surface
+  rules, not guesswork. A pack can add or override any of it.
+- **Three vanilla biomes were wrong too**, in every world, mods or not: `old_growth_pine_taiga` and
+  `old_growth_spruce_taiga` now get their **podzol** floor, `mangrove_swamp` its **mud**, and `grove`
+  its snow dusting — a grove is a snowy forest at ordinary height, so it fell between the biome list
+  and the elevation-based snow cap and got neither.
 - **The last few biome-mod biomes get a route to the ground.** With Biomes O' Plenty installed, 54 of
   its 59 biomes already generated. Of the rest, `spider_nest` was fine (it is a cave-pool biome), and
   four never appeared for two different reasons. `bog`, `fungal_jungle` and `snowblossom_grove` lose
@@ -30,6 +42,14 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Fixed
 
+- **`/cwlocate` finds every biome the world has.** It searched CityWorld's own biome matrix rather
+  than the biome source, so biome-mod biomes, the surface/shore pools and cave biomes were invisible
+  to it — vanilla's `/locate biome` could find them and CityWorld's could not. It now asks the same
+  lookup the world generates from (and unlike vanilla's, it teleports).
+- **Wild plants are vanilla's on MODERN and APOCALYPSE.** Running CityWorld's cover *and* vanilla's
+  biome features doubled the planting and read as unnaturally lush. Vanilla's pass is also the half a
+  biome mod extends, so on the modern styles it is the one worth keeping. Still switchable to `BOTH`
+  or `CITYWORLD` per world.
 - **Flower fields plant again, and grow the whole pool.** Fields of tulips, poppies and daisies were
   coming out bare. The hardcoded path guarded every placement on the ground below being
   grass/dirt/coarse dirt/farmland; drawing the species from a tag dropped that guard, and because the
