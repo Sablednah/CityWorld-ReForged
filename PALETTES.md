@@ -37,6 +37,23 @@ you add start appearing in that palette.
 | `cityworld:build/stained_glass` | factory and bunker tanks | the sixteen dyed glasses |
 | `cityworld:build/modern_stones` | the decorative stone palette used by the MODERN and APOCALYPSE styles | 32 curated blocks (8 of them Minecraft 26.2+) |
 
+### Biome pools
+
+Three biome tags decide which biomes CityWorld places by a route other than climate. All ship with
+Biomes O' Plenty ids marked optional, so they cost nothing without it — and any biome mod can be added
+the same way.
+
+| Tag | What it does |
+|---|---|
+| `cityworld:cave_pool` | Biomes placed **underground**, as patches, with their own decoration. |
+| `cityworld:surface_pool` | Biomes given a share of surface cells **outright**, for biomes the climate lookup would never choose. |
+| `cityworld:shore_pool` | Beach variants that may **stand in for CityWorld's own beach** where the terrain says shore. |
+
+The surface and shore pools exist because some biomes cannot win a climate lookup at all: they overlap
+CityWorld's climate on every axis and still never sit nearest, so no amount of widening or
+`moddedBiomeShare` reaches them. Listing one hands it ground directly. Patches still respect the
+temperature and humidity that biome declared for itself, so a bog will not appear in a desert.
+
 ### Farms
 
 Farm fields draw from these too, so a mod's crops and flowers grow on CityWorld's farmland.

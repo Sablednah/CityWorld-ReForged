@@ -9,6 +9,16 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Added
 
+- **The last few biome-mod biomes get a route to the ground.** With Biomes O' Plenty installed, 54 of
+  its 59 biomes already generated. Of the rest, `spider_nest` was fine (it is a cave-pool biome), and
+  four never appeared for two different reasons. `bog`, `fungal_jungle` and `snowblossom_grove` lose
+  the climate lookup everywhere — against vanilla, and against other modded biomes even at
+  `moddedBiomeShare = 1.0` — so there is no gap to widen and no share that reaches them;
+  **`#cityworld:surface_pool`** now hands a listed biome a share of cells outright. `gravel_beach` was
+  never *asked* about: shores are decided from terrain, and the modded lookup is deliberately limited
+  to land above the waterline, so **`#cityworld:shore_pool`** stands a variant in on ground already
+  ruled a shore. Patches respect the temperature and humidity the biome declared for itself, so a bog
+  will not turn up in a desert. Both tags are datapack-driven, so the next biome mod needs no code.
 - **Permission nodes for every command.** CityWorld gated purely on operator level, so a permissions
   manager could not grant or deny any of it — and op is all-or-nothing: handing a moderator
   `/cityfind` also handed them `/cityschem`, which writes blocks, and `/cityexport`, which writes
