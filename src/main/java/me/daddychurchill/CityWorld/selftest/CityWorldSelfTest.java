@@ -566,6 +566,7 @@ public final class CityWorldSelfTest {
         java.util.Set<String> reached = new java.util.TreeSet<>();
         java.util.Set<String> withShare = new java.util.TreeSet<>();
         java.util.Set<String> directOnly = new java.util.TreeSet<>();
+        java.util.Set<String> moddedReachable = new java.util.TreeSet<>();
         int shareColumns = 0, total = 0, directGround = 0, shareGround = 0;
         double share = context.getSettings().moddedBiomeShare;
         for (int x = -BIOME_SWEEP_BLOCKS; x <= BIOME_SWEEP_BLOCKS; x += BIOME_SWEEP_STEP)
@@ -594,6 +595,12 @@ public final class CityWorldSelfTest {
                     directGround++;
                     hit.unwrapKey().ifPresent(k -> directOnly.add(k.identifier().toString()));
                 }
+                // Ask the modded-only list at EVERY point, not just reserved ones: this measures what
+                // the share could ever reach, so the answer does not move when the dial does.
+                var moddedBest = bridge.findModded(target);
+                if (moddedBest != null)
+                    moddedBest.unwrapKey().ifPresent(k -> moddedReachable.add(k.identifier().toString()));
+
                 var effective = directWin ? hit : reserved ? bridge.findModded(target) : null;
                 if (effective != null) {
                     shareGround++;
@@ -611,6 +618,18 @@ public final class CityWorldSelfTest {
                 total == 0 ? "0" : String.format(java.util.Locale.ROOT, "%.1f%%", 100.0 * directGround / total));
         report.put("terraBlender.moddedGroundWithSharePct",
                 total == 0 ? "0" : String.format(java.util.Locale.ROOT, "%.1f%%", 100.0 * shareGround / total));
+        // Who needs an explicit route, independent of the share dial. A biome missing from the
+        // MODDED-ONLY lookup is one that loses to other modded biomes wherever it is asked — turning
+        // moddedBiomeShare up to 1.0 cannot reach it, so it needs a different mechanism entirely.
+        java.util.Set<String> moddedAll = new java.util.TreeSet<>();
+        for (var holder : bridge.biomes())
+            if (me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.isModded(holder))
+                holder.unwrapKey().ifPresent(k -> moddedAll.add(k.identifier().toString()));
+        java.util.Set<String> needsHelp = new java.util.TreeSet<>(moddedAll);
+        needsHelp.removeAll(moddedReachable);
+        report.put("terraBlender.moddedTotal", Integer.toString(moddedAll.size()));
+        report.put("terraBlender.needsAssistance", needsHelp.size() + ": " + needsHelp);
+
         report.put("terraBlender.shareOfGround",
                 total == 0 ? "0" : String.format(java.util.Locale.ROOT, "%.1f%%", 100.0 * shareColumns / total));
         analyseUnreachable(bridge, context, reached);
