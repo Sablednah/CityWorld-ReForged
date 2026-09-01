@@ -625,9 +625,18 @@ public final class CityWorldSelfTest {
         for (var holder : bridge.biomes())
             if (me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.isModded(holder))
                 holder.unwrapKey().ifPresent(k -> moddedAll.add(k.identifier().toString()));
+        // ⚠ Subtract EVERY route a biome could have been seen by, not just the modded-only lookup.
+        // Taking the modded-only set alone named 13 biomes as unreachable, two of which (lavender_field,
+        // pumpkin_patch) had been observed generating — the two Climate.ParameterList instances break
+        // ties differently, so a biome can win the full list at a point where the modded-only list
+        // answers with a neighbour. Union of the routes is the honest "was this ever produced".
+        java.util.Set<String> everSeen = new java.util.TreeSet<>(moddedReachable);
+        everSeen.addAll(directOnly);
+        everSeen.addAll(withShare);
         java.util.Set<String> needsHelp = new java.util.TreeSet<>(moddedAll);
-        needsHelp.removeAll(moddedReachable);
+        needsHelp.removeAll(everSeen);
         report.put("terraBlender.moddedTotal", Integer.toString(moddedAll.size()));
+        report.put("terraBlender.moddedEverSeen", Integer.toString(everSeen.size()));
         report.put("terraBlender.needsAssistance", needsHelp.size() + ": " + needsHelp);
 
         report.put("terraBlender.shareOfGround",
