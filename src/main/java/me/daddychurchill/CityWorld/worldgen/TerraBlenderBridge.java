@@ -199,6 +199,19 @@ public final class TerraBlenderBridge {
         return moddedOnly == null ? null : moddedOnly.findValue(target);
     }
 
+    /**
+     * The climate ranges a biome declared, or {@code null} if this bridge never saw it.
+     *
+     * <p>Used to keep a surface-pool patch inside the ground its own author intended. A biome may
+     * declare several points; the first is enough to say "roughly here".
+     */
+    public Climate.@Nullable ParameterPoint pointFor(Holder<Biome> biome) {
+        for (Pair<Climate.ParameterPoint, Holder<Biome>> pair : points)
+            if (pair.getSecond().equals(biome))
+                return pair.getFirst();
+        return null;
+    }
+
     /** Whether a biome came from a mod rather than {@code minecraft:}. */
     public static boolean isModded(Holder<Biome> biome) {
         return biome.unwrapKey().map(k -> !k.identifier().toString().startsWith("minecraft:")).orElse(false);

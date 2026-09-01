@@ -109,6 +109,22 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
         return bridge;
     }
 
+    private volatile SurfaceRegions.@org.jspecify.annotations.Nullable Pools surfacePools;
+
+    /** Lazily resolved — see {@link CityWorldBiomes#surfacePools()}. */
+    @Override
+    public SurfaceRegions.Pools surfacePools() {
+        SurfaceRegions.Pools local = surfacePools;
+        if (local == null) {
+            synchronized (this) {
+                local = surfacePools;
+                if (local == null)
+                    surfacePools = local = SurfaceRegions.of(biomes);
+            }
+        }
+        return local;
+    }
+
     /**
      * Lazily resolved — see {@link CityWorldBiomes#cavePool()}. Double-checked rather than
      * synchronized-on-every-call: {@code getNoiseBiome} runs on every worldgen worker.
@@ -142,7 +158,8 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
      */
     @Override
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
-        Stream<Holder<Biome>> all = Stream.concat(possible.stream(), cavePool().biomes());
+        Stream<Holder<Biome>> all = Stream.concat(possible.stream(),
+                Stream.concat(cavePool().biomes(), surfacePools().biomes()));
         TerraBlenderBridge tb = terraBlender();
         if (tb != null)
             all = Stream.concat(all, tb.biomes().stream());

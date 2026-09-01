@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "biomesoplenty:bog", "required": false },
+    { "id": "biomesoplenty:fungal_jungle", "required": false },
+    { "id": "biomesoplenty:snowblossom_grove", "required": false }
+  ]
+}

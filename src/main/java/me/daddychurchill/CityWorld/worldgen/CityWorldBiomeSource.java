@@ -90,12 +90,28 @@ public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes
     @Override
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
         return Stream.concat(Stream.of(deepOcean, ocean, beach, low, mid, high, peak, dry),
-                cavePool().biomes()).distinct();
+                Stream.concat(cavePool().biomes(), surfacePools().biomes())).distinct();
     }
 
     @Override
     public HolderGetter<Biome> biomeRegistry() {
         return biomes;
+    }
+
+    private volatile SurfaceRegions.@org.jspecify.annotations.Nullable Pools surfacePools;
+
+    /** Lazily resolved — see {@link CityWorldBiomes#surfacePools()}. */
+    @Override
+    public SurfaceRegions.Pools surfacePools() {
+        SurfaceRegions.Pools local = surfacePools;
+        if (local == null) {
+            synchronized (this) {
+                local = surfacePools;
+                if (local == null)
+                    surfacePools = local = SurfaceRegions.of(biomes);
+            }
+        }
+        return local;
     }
 
     /** Lazily resolved — see {@link CityWorldBiomes#cavePool()}. */
