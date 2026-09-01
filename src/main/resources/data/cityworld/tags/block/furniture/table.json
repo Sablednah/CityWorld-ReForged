@@ -1,0 +1,401 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "mcwfurnitures:acacia_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_coffee_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_end_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_glass_table",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_table",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:acacia_table",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:birch_table",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cherry_table",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:crimson_table",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:dark_oak_table",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:jungle_table",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:mangrove_table",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:oak_table",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pale_oak_table",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:spruce_table",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:warped_table",
+      "required": false
+    }
+  ]
+}

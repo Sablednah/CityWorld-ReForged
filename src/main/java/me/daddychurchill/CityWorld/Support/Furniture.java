@@ -197,6 +197,25 @@ public final class Furniture {
     public static void kitchen(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
             int z1, int z2) {
         int z = z1 + 1;
+        Material counter = FurnitureTags.pick(FurnitureTags.COUNTER, odds);
+        if (counter != null) {
+            // A run of counter along the back wall, with a sink in it and cabinets either side — the
+            // shape a real kitchen has, instead of a barrel and a furnace in a row.
+            Material sink = FurnitureTags.pick(FurnitureTags.SINK, odds);
+            Material cabinet = FurnitureTags.pick(FurnitureTags.CABINET, odds);
+            int mid = (x1 + x2) / 2;
+            for (int cx = x1 + 1; cx <= x2 - 1; cx++) {
+                Material piece = cx == mid && sink != null ? sink : counter;
+                if (cx == x1 + 1 && cabinet != null)
+                    piece = cabinet;
+                placeIfClear(chunk, cx, y, z, piece, BlockFace.SOUTH);
+            }
+            if (x1 + 3 <= x2 - 1)
+                placeIfClear(chunk, x2 - 1, y, z, modern(generator) ? Material.SMOKER : Material.FURNACE,
+                        BlockFace.SOUTH);
+            accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+            return;
+        }
         chunk.setChest(generator, x1 + 1, y, z, BlockFace.SOUTH, odds, generator.lootProvider,
                 LootProvider.LootLocation.NIGHTSTAND, Material.BARREL);
         if (clearFloor(chunk, x1 + 2, y, z))
@@ -210,6 +229,28 @@ public final class Furniture {
     public static void dining(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
             int z1, int z2) {
         int cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
+        Material table = FurnitureTags.pick(FurnitureTags.TABLE, odds);
+        Material chair = FurnitureTags.pick(FurnitureTags.CHAIR, odds);
+        if (table != null) {
+            // A real dining set. Furniture-mod tables auto-connect like fences, so a 2x1 top needs no
+            // orientation — and the chairs are told which way to LOOK, with FurnitureTags applying
+            // whatever rotation that mod's model wants.
+            boolean wide = cx + 1 <= x2 - 1;
+            if (clearFloor(chunk, cx, y, cz))
+                chunk.setBlock(cx, y, cz, table);
+            if (wide && clearFloor(chunk, cx + 1, y, cz))
+                chunk.setBlock(cx + 1, y, cz, table);
+            if (chair != null) {
+                seat(chunk, cx, y, cz - 1, chair, BlockFace.SOUTH);   // north of the table, looking south
+                seat(chunk, cx, y, cz + 1, chair, BlockFace.NORTH);   // south of it, looking north
+                if (wide) {
+                    seat(chunk, cx + 1, y, cz - 1, chair, BlockFace.SOUTH);
+                    seat(chunk, cx + 1, y, cz + 1, chair, BlockFace.NORTH);
+                }
+            }
+            accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+            return;
+        }
         if (clearFloor(chunk, cx, y, cz)) {
             chunk.setBlock(cx, y, cz, Material.OAK_FENCE);
             chunk.setBlock(cx, y + 1, cz, modern(generator) ? Material.SMOOTH_QUARTZ_SLAB : Material.WHITE_CARPET);
@@ -225,6 +266,24 @@ public final class Furniture {
     public static void living(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
             int z1, int z2) {
         int cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
+        Material sofa = FurnitureTags.pick(FurnitureTags.SOFA, odds);
+        if (sofa != null) {
+            // A sofa run against the north wall looking into the room, a table in front of it, and a
+            // lamp in the corner. The sofa is told where its occupant looks, like any other seat.
+            Material lamp = FurnitureTags.pick(FurnitureTags.LAMP, odds);
+            Material table = FurnitureTags.pick(FurnitureTags.TABLE, odds);
+            boolean placed = false;
+            for (int sx = x1 + 1; sx <= x2 - 1; sx++)
+                placed |= seat(chunk, sx, y, z1 + 1, sofa, BlockFace.SOUTH);
+            if (placed && table != null && z1 + 3 <= z2 - 1)
+                placeIfClear(chunk, cx, y, z1 + 3, table, BlockFace.SOUTH);
+            if (lamp != null)
+                placeIfClear(chunk, x2 - 1, y, z2 - 1, lamp, BlockFace.WEST);
+            if (placed) {
+                accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+                return;
+            }
+        }
         // try the south wall (couch faces it), then east, then north, then west — first that fits wins
         if (couchAlongX(chunk, x1, x2, y, z2 - 1, BlockFace.SOUTH))
             sideTable(chunk, odds, cx, y, z2 - 2);
@@ -300,6 +359,24 @@ public final class Furniture {
     /** A little bathroom: a cauldron sink/bath, a quartz "toilet", and a tiled mat. */
     public static void bathroom(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
             int z1, int z2) {
+        Material bath = FurnitureTags.pick(FurnitureTags.BATH, odds);
+        Material toilet = FurnitureTags.pick(FurnitureTags.TOILET, odds);
+        Material basin = FurnitureTags.pick(FurnitureTags.SINK, odds);
+        if (bath != null || toilet != null || basin != null) {
+            // A plumbed bathroom: bath in the far corner, basin beside it, toilet against the near wall.
+            // Each is optional on its own, so one mod supplying only some of them still improves things.
+            if (bath != null)
+                placeIfClear(chunk, x1 + 1, y, z1 + 1, bath, BlockFace.SOUTH);
+            if (basin != null && x1 + 2 <= x2 - 1)
+                placeIfClear(chunk, x1 + 2, y, z1 + 1, basin, BlockFace.SOUTH);
+            if (toilet != null && z1 + 2 <= z2 - 1)
+                placeIfClear(chunk, x2 - 1, y, z1 + 2, toilet, BlockFace.WEST);
+            int bx = (x1 + x2) / 2, bz = (z1 + z2) / 2;
+            if (clearFloor(chunk, bx, y, bz))
+                chunk.setBlock(bx, y, bz, odds.flipCoin() ? Material.WHITE_CARPET : Material.LIGHT_BLUE_CARPET);
+            accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+            return;
+        }
         if (clearFloor(chunk, x1 + 1, y, z1 + 1))
             chunk.setCauldron(x1 + 1, y, z1 + 1, odds); // sink/bath
         int tx = x2 - 1;
@@ -323,6 +400,43 @@ public final class Furniture {
         if (clearFloor(chunk, mx, y, mz))
             chunk.setBlock(mx, y, mz, odds.flipCoin() ? Material.WHITE_CARPET : Material.LIGHT_BLUE_CARPET);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+    }
+
+    /**
+     * Places a seat so its occupant looks {@code look}.
+     *
+     * <p>The caller says which way the sitter should face and never touches the block's own
+     * {@code facing} — {@link FurnitureTags#facingFor} converts, because the mods disagree about what
+     * {@code facing} means and one of them disagrees with itself between chairs and sofas.
+     */
+    /**
+     * A study: a desk against the wall, a chair pulled up to it, and a bookshelf beside it.
+     *
+     * <p>New with the furniture mods, because CityWorld had no vanilla blocks that read as a desk — a
+     * room type the mods make possible rather than one they merely redecorate. Does nothing at all
+     * without a desk to place, so an unmodded world is unchanged.
+     */
+    public static void study(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
+            int z1, int z2) {
+        Material desk = FurnitureTags.pick(FurnitureTags.DESK, odds);
+        if (desk == null)
+            return;
+        int cx = (x1 + x2) / 2;
+        // Desk against the north wall; the chair sits south of it looking north, into the desk.
+        placeIfClear(chunk, cx, y, z1 + 1, desk, BlockFace.SOUTH);
+        if (cx + 1 <= x2 - 1)
+            placeIfClear(chunk, cx + 1, y, z1 + 1, desk, BlockFace.SOUTH);
+        Material chair = FurnitureTags.pick(FurnitureTags.CHAIR, odds);
+        if (chair != null && z1 + 2 <= z2 - 1)
+            seat(chunk, cx, y, z1 + 2, chair, BlockFace.NORTH);
+        Material shelf = FurnitureTags.pick(FurnitureTags.BOOKSHELF, odds);
+        if (shelf != null)
+            placeIfClear(chunk, x1 + 1, y, z1 + 1, shelf, BlockFace.SOUTH);
+        accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+    }
+
+    private static boolean seat(RealBlocks chunk, int x, int y, int z, Material piece, BlockFace look) {
+        return placeIfClear(chunk, x, y, z, piece, FurnitureTags.facingFor(piece, look));
     }
 
     private static boolean placeIfClear(RealBlocks chunk, int x, int y, int z, Material mat, BlockFace facing) {

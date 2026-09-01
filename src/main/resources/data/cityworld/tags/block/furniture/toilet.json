@@ -1,0 +1,105 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "refurbished_furniture:acacia_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:birch_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:black_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:blue_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:brown_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cherry_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:crimson_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cyan_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:dark_oak_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:gray_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:green_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:jungle_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:lime_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:magenta_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:mangrove_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:oak_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:orange_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pale_oak_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pink_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:purple_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:red_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:spruce_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:warped_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:white_toilet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:yellow_toilet",
+      "required": false
+    }
+  ]
+}

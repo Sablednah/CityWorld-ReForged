@@ -1,0 +1,313 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "mcwfurnitures:acacia_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_modern_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_covered_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_desk",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_modern_desk",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:acacia_desk",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:birch_desk",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cherry_desk",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:crimson_desk",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:dark_oak_desk",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:jungle_desk",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:mangrove_desk",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:oak_desk",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pale_oak_desk",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:spruce_desk",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:warped_desk",
+      "required": false
+    }
+  ]
+}

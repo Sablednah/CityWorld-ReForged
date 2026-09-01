@@ -1,0 +1,173 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "mcwfurnitures:black_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:black_couch",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:blue_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:blue_couch",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:brown_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:brown_couch",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cyan_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cyan_couch",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:gray_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:gray_couch",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:green_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:green_couch",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:lime_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:lime_couch",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:magenta_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:magenta_couch",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:orange_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:orange_couch",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pink_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pink_couch",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:purple_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:purple_couch",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:red_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:red_couch",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:white_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:white_couch",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:yellow_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:yellow_couch",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:black_sofa",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:blue_sofa",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:brown_sofa",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cyan_sofa",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:gray_sofa",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:green_sofa",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:lime_sofa",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:magenta_sofa",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:orange_sofa",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pink_sofa",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:purple_sofa",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:red_sofa",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:white_sofa",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:yellow_sofa",
+      "required": false
+    }
+  ]
+}

@@ -61,9 +61,47 @@ public final class CityWorldDataMaps {
             .builder(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "ground"), Registries.BIOME, Ground.CODEC)
             .build();
 
+    /**
+     * How a furniture block's {@code facing} relates to the way its occupant looks, in degrees
+     * clockwise.
+     *
+     * <p>Needed because furniture mods disagree, and measurably so: Macaw's chair uses {@code facing}
+     * for the direction the sitter looks, Macaw's <em>sofa</em> is 90° off that, and Refurbished uses
+     * it for the direction the backrest points. A boolean "front or back?" cannot express three
+     * conventions, and one mod contradicting itself rules out declaring it per mod.
+     */
+    public record Facing(int facingOffset) {
+
+        public static final Codec<Facing> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.INT.optionalFieldOf("facingOffset", 0).forGetter(Facing::facingOffset)
+        ).apply(i, Facing::new));
+    }
+
+    public static final DataMapType<Block, Facing> FURNITURE = DataMapType
+            .builder(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "furniture"), Registries.BLOCK,
+                    Facing.CODEC)
+            .build();
+
     /** Registered from {@code CityWorldMod} on the mod event bus. */
     public static void register(RegisterDataMapTypesEvent event) {
         event.register(GROUND);
+        event.register(FURNITURE);
+    }
+
+    /** The declared facing offset for a furniture block, or {@code 0} if it declares none. */
+    public static int facingOffsetFor(me.daddychurchill.CityWorld.compat.Material piece) {
+        if (piece == null)
+            return 0;
+        Block block = piece.getBlock();
+        if (block == null)
+            return 0;
+        Holder<Block> holder = BuiltInRegistries.BLOCK.wrapAsHolder(block);
+        if (holder instanceof Holder.Reference<Block> reference) {
+            Facing facing = reference.getData(FURNITURE);
+            if (facing != null)
+                return facing.facingOffset();
+        }
+        return 0;
     }
 
     /**
