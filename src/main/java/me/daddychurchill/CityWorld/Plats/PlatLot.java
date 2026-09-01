@@ -309,6 +309,7 @@ public abstract class PlatLot {
 				if (!chunk.isOfTypes(x, top, z, Material.GRASS_BLOCK, Material.DIRT, Material.COARSE_DIRT,
 						Material.PODZOL))
 					continue; // only natural grassy ground — never a build, farmland, road or swamp pool
+				var biomeHolder = chunk.getBiomeHolder(x, top, z);
 				var biome = chunk.getBiomeKey(x, top, z);
 				if (biome == null)
 					continue;
@@ -322,7 +323,7 @@ public abstract class PlatLot {
 					continue;
 				}
 
-				Material surf = me.daddychurchill.CityWorld.Support.BiomeSurface.surface(biome);
+				Material surf = me.daddychurchill.CityWorld.Support.BiomeSurface.surface(biomeHolder, biome);
 				boolean doSnow = me.daddychurchill.CityWorld.Support.BiomeSurface.snowy(biome) && biomeGroundSnows();
 				if (surf == null && !doSnow)
 					continue; // grass biome, or a road that owns its own snow — leave it
@@ -332,7 +333,7 @@ public abstract class PlatLot {
 
 				if (surf != null) {
 					chunk.setBlock(x, top, z, surf);
-					Material sub = me.daddychurchill.CityWorld.Support.BiomeSurface.subsurface(biome);
+					Material sub = me.daddychurchill.CityWorld.Support.BiomeSurface.subsurface(biomeHolder, biome);
 					if (sub != null)
 						chunk.setBlocks(x, top - 3, top, z, sub);
 				}

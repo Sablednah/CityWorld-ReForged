@@ -20,6 +20,58 @@ public final class BiomeSurface {
 	private BiomeSurface() {}
 
 	/** Top block for the biome, or null to keep grass. */
+	/**
+	 * Ground tags, so a datapack can give a modded biome a signature block.
+	 *
+	 * <p><b>Labelling a column is not the same as building it.</b> CityWorld lays its own surface and
+	 * never runs a biome's surface rules, so tagging a shore column {@code gravel_beach} changed the
+	 * fog, the water tint and the mob list — and left the ground sand. The biome was "working" and
+	 * invisible at the same time. These tags close that gap: membership decides the block, so any
+	 * modded biome can look like itself without CityWorld knowing its name.
+	 */
+	public static final net.minecraft.tags.TagKey<Biome> GROUND_GRAVEL = groundTag("gravel");
+	public static final net.minecraft.tags.TagKey<Biome> GROUND_SAND = groundTag("sand");
+	public static final net.minecraft.tags.TagKey<Biome> GROUND_RED_SAND = groundTag("red_sand");
+	public static final net.minecraft.tags.TagKey<Biome> GROUND_STONE = groundTag("stone");
+
+	private static net.minecraft.tags.TagKey<Biome> groundTag(String name) {
+		return net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BIOME,
+				net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", "ground/" + name));
+	}
+
+	/**
+	 * The surface block for a biome, consulting the ground tags first.
+	 *
+	 * <p>Tags win over the built-in vanilla answers so a pack can retune those too; a biome in no tag
+	 * falls through to the hardcoded map exactly as before.
+	 */
+	public static Material surface(net.minecraft.core.Holder<Biome> holder, ResourceKey<Biome> b) {
+		if (holder != null) {
+			if (holder.is(GROUND_GRAVEL))
+				return Material.GRAVEL;
+			if (holder.is(GROUND_SAND))
+				return Material.SAND;
+			if (holder.is(GROUND_RED_SAND))
+				return Material.RED_SAND;
+			if (holder.is(GROUND_STONE))
+				return Material.STONE;
+		}
+		return surface(b);
+	}
+
+	/** Subsurface for a tagged biome: gravel and stone sit on stone, sands on their sandstone. */
+	public static Material subsurface(net.minecraft.core.Holder<Biome> holder, ResourceKey<Biome> b) {
+		if (holder != null) {
+			if (holder.is(GROUND_GRAVEL) || holder.is(GROUND_STONE))
+				return Material.STONE;
+			if (holder.is(GROUND_SAND))
+				return Material.SANDSTONE;
+			if (holder.is(GROUND_RED_SAND))
+				return Material.RED_SANDSTONE;
+		}
+		return subsurface(b);
+	}
+
 	public static Material surface(ResourceKey<Biome> b) {
 		if (b == null)
 			return null;
