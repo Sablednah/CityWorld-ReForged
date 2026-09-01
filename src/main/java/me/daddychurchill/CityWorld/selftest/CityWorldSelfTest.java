@@ -227,6 +227,10 @@ public final class CityWorldSelfTest {
             fail("overworld biome source is " + biomeSource + ", not CityWorld's");
     }
 
+    private static ServerLevel level(MinecraftServer server) {
+        return server.overworld();
+    }
+
     /**
      * A biome tagged with a ground material actually gets that block.
      *
@@ -257,6 +261,26 @@ public final class CityWorldSelfTest {
                             + got + " — it will generate with the wrong surface block and look like plain ground");
             }));
         report.put("biome.groundTagged", mapped.toString());
+
+        // The checklist: modded biomes CityWorld gives its default ground to. A biome whose look comes
+        // from grass colour or features (bog, snowblossom_grove) is right to be here; one whose look is
+        // its surface block (a volcano, a desert) is not, and will read as ordinary grass until tagged.
+        // CityWorld never runs a biome's surface rules, so this list cannot shrink on its own.
+        java.util.List<String> untagged = new ArrayList<>();
+        if (level(server).getChunkSource().getGenerator().getBiomeSource()
+                instanceof me.daddychurchill.CityWorld.worldgen.CityWorldClimateBiomeSource climate) {
+            var bridge = climate.terraBlender();
+            if (bridge != null)
+                for (var holder : bridge.biomes()) {
+                    if (!me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.isModded(holder))
+                        continue;
+                    var key = holder.unwrapKey().orElse(null);
+                    if (me.daddychurchill.CityWorld.Support.BiomeSurface.surface(holder, key) == null)
+                        untagged.add(key == null ? "?" : key.identifier().getPath());
+                }
+        }
+        java.util.Collections.sort(untagged);
+        report.put("biome.groundDefault", untagged.size() + ": " + untagged);
     }
 
     /**
