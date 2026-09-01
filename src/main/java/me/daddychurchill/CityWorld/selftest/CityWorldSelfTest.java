@@ -244,11 +244,27 @@ public final class CityWorldSelfTest {
         var biomes = server.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.BIOME);
         record Check(net.minecraft.tags.TagKey<net.minecraft.world.level.biome.Biome> tag,
                 me.daddychurchill.CityWorld.compat.Material expected) { }
+        // ⚠ Every ground tag, not a sample. An earlier version listed only gravel and sand, so the
+        // podzol and mud tags went unchecked and the report read as though they had failed to load —
+        // a check that covers half the thing it names is worse than no check, because its silence is
+        // mistaken for a pass.
         var checks = List.of(
                 new Check(me.daddychurchill.CityWorld.Support.BiomeSurface.GROUND_GRAVEL,
                         me.daddychurchill.CityWorld.compat.Material.GRAVEL),
                 new Check(me.daddychurchill.CityWorld.Support.BiomeSurface.GROUND_SAND,
-                        me.daddychurchill.CityWorld.compat.Material.SAND));
+                        me.daddychurchill.CityWorld.compat.Material.SAND),
+                new Check(me.daddychurchill.CityWorld.Support.BiomeSurface.GROUND_STONE,
+                        me.daddychurchill.CityWorld.compat.Material.STONE),
+                new Check(me.daddychurchill.CityWorld.Support.BiomeSurface.GROUND_PODZOL,
+                        me.daddychurchill.CityWorld.compat.Material.PODZOL),
+                new Check(me.daddychurchill.CityWorld.Support.BiomeSurface.GROUND_COARSE_DIRT,
+                        me.daddychurchill.CityWorld.compat.Material.COARSE_DIRT),
+                new Check(me.daddychurchill.CityWorld.Support.BiomeSurface.GROUND_TERRACOTTA,
+                        me.daddychurchill.CityWorld.compat.Material.TERRACOTTA),
+                new Check(me.daddychurchill.CityWorld.Support.BiomeSurface.GROUND_BASALT,
+                        me.daddychurchill.CityWorld.compat.Material.SMOOTH_BASALT),
+                new Check(me.daddychurchill.CityWorld.Support.BiomeSurface.GROUND_MUD,
+                        me.daddychurchill.CityWorld.compat.Material.MUD));
         Map<String, String> mapped = new TreeMap<>();
         for (Check check : checks)
             biomes.get(check.tag()).ifPresent(set -> set.forEach(holder -> {
