@@ -1,7 +1,6 @@
 {
   "replace": false,
   "values": [
-    { "id": "biomesoplenty:volcano", "required": false },
-    { "id": "biomesoplenty:volcanic_plains", "required": false }
+    { "id": "biomesoplenty:volcano", "required": false }
   ]
 }

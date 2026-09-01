@@ -252,6 +252,10 @@ public final class CityWorldSelfTest {
         Map<String, String> mapped = new TreeMap<>();
         for (Check check : checks)
             biomes.get(check.tag()).ifPresent(set -> set.forEach(holder -> {
+                // A data map entry outranks the tag by design — it can name a block the tag cannot —
+                // so a biome carrying both is correct, not broken. Only the tag-only ones are asserted.
+                if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.groundFor(holder) != null)
+                    return;
                 var key = holder.unwrapKey().orElse(null);
                 var got = me.daddychurchill.CityWorld.Support.BiomeSurface.surface(holder, key);
                 String id = key == null ? "?" : key.identifier().toString();
