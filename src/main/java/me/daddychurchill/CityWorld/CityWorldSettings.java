@@ -334,8 +334,13 @@ public class CityWorldSettings {
         // Soft, toggleable per-style defaults — set here rather than in validation so they DON'T lock (the
         // screen greys only what validation forces). MODERN/APOCALYPSE ship winding caves on; any style can
         // turn them on or off.
-        if (style == WorldStyle.MODERN || style == WorldStyle.APOCALYPSE)
+        if (style == WorldStyle.MODERN || style == WorldStyle.APOCALYPSE) {
             s.windingCaves = true;
+            // Wild land is vanilla's to decorate on the modern styles. Running both passes doubled the
+            // planting and read as unnaturally lush, and vanilla's own decoration is the half that a
+            // biome mod extends — so on the styles built around modern Minecraft, hand it over.
+            s.wildDecoration = CityWorldSettingsData.WildDecoration.VANILLA;
+        }
         return s.toData();
     }
 
