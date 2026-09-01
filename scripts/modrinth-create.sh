@@ -180,7 +180,7 @@ ORDER=0
 while IFS=$'\t' read -r FILE FEATURED TITLE DESC; do
     [ -n "${FILE:-}" ] || continue
     ORDER=$((ORDER + 1))
-    IMG="$HERE/screenshots/$FILE"
+    IMG="$HERE/screengrabs/$FILE"
     [ -f "$IMG" ] || { echo "   !! missing $IMG - skipping" >&2; continue; }
     if grep -Fxq "$TITLE" <<<"$HAVE"; then
         echo "   $ORDER. $FILE - already uploaded, skipping"
