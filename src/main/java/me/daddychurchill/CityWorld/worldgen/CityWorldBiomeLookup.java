@@ -102,14 +102,22 @@ public final class CityWorldBiomeLookup {
      */
     private static @Nullable Holder<Biome> pooledBiome(CityWorldBiomes source, CityWorldGenerator context,
             Column column, int blockX, int blockY, int blockZ) {
+        // ⚠ Match classify's bands EXACTLY. It reads:
+        //     terrainY <  deepseaLevel -> deep ocean
+        //     terrainY <  seaLevel     -> ocean
+        //     terrainY <= seaLevel     -> shore     (so the beach is the single course at sea level)
+        //     terrainY >  seaLevel     -> land
+        // An earlier version tested `terrainY <= seaLevel` for shore, which swallowed every ocean and
+        // deep-ocean column and painted open water with a beach biome. Bands that disagree with
+        // classify do not produce a subtle difference; they put the wrong biome on the wrong ground.
         SurfaceRegions.Pools pools = source.surfacePools();
-        boolean shore = column.terrainY <= context.seaLevel;
-        SurfaceRegions.Pool pool = shore ? pools.shore() : pools.surface();
+        boolean land = column.terrainY > context.seaLevel;
+        boolean shore = column.terrainY == context.seaLevel;
+        SurfaceRegions.Pool pool = land ? pools.surface() : shore ? pools.shore() : pools.ocean();
         if (pool.isEmpty())
             return null;
-        // Above the waterline only for the surface pool: a patch hanging over the sea would paint
-        // water with a land biome.
-        if (!shore && blockY <= context.seaLevel)
+        // A land patch must not hang in the air over the sea.
+        if (land && blockY <= context.seaLevel)
             return null;
 
         float temperature = (float) (column.temperature * 2.0 - 1.0);
