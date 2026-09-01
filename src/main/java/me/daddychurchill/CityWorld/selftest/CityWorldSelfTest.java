@@ -633,6 +633,12 @@ public final class CityWorldSelfTest {
         java.util.Set<String> everSeen = new java.util.TreeSet<>(moddedReachable);
         everSeen.addAll(directOnly);
         everSeen.addAll(withShare);
+        // The cave pool places biomes underground by its own route, which this surface sweep cannot
+        // see — spider_nest generates perfectly well and was being reported as needing rescue.
+        if (level.getChunkSource().getGenerator().getBiomeSource() instanceof CityWorldBiomes cb)
+            cb.cavePool().biomes().forEach(h -> h.unwrapKey()
+                    .ifPresent(k -> everSeen.add(k.identifier().toString())));
+
         java.util.Set<String> needsHelp = new java.util.TreeSet<>(moddedAll);
         needsHelp.removeAll(everSeen);
         report.put("terraBlender.moddedTotal", Integer.toString(moddedAll.size()));
