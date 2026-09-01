@@ -54,6 +54,77 @@ CityWorld's climate on every axis and still never sit nearest, so no amount of w
 `moddedBiomeShare` reaches them. Listing one hands it ground directly. Patches still respect the
 temperature and humidity that biome declared for itself, so a bog will not appear in a desert.
 
+### Furniture
+
+CityWorld furnishes rooms from **role tags** — "something to sit on", "something to eat at" — so a
+furniture mod appears in kitchens, dining rooms, lounges, bathrooms and studies without CityWorld
+knowing anything about it.
+
+| Tag | Used for |
+|---|---|
+| `cityworld:furniture/chair` | dining chairs, desk chairs, stools |
+| `cityworld:furniture/table` | dining tables, coffee tables |
+| `cityworld:furniture/sofa` | lounge seating runs |
+| `cityworld:furniture/desk` | studies |
+| `cityworld:furniture/counter` | kitchen counter runs |
+| `cityworld:furniture/cabinet` `…/drawer` `…/wardrobe` | storage |
+| `cityworld:furniture/sink` | kitchen sinks, bathroom basins |
+| `cityworld:furniture/bath` `…/toilet` | bathrooms |
+| `cityworld:furniture/bookshelf` `…/lamp` | studies and lounges |
+
+#### Mod authors: supporting CityWorld from your side
+
+**You do not need us to add your mod.** Ship these two files in your own jar and CityWorld picks your
+furniture up the moment both mods are installed. Neither file does anything without CityWorld, so
+there is no dependency and no harm in shipping them always.
+
+**1. Say what your blocks are.** `data/cityworld/tags/block/furniture/chair.json` in *your* jar:
+
+```json
+{
+  "replace": false,
+  "values": [
+    "yourmod:oak_dining_chair",
+    "yourmod:birch_dining_chair"
+  ]
+}
+```
+
+`"replace": false` matters — it merges with everyone else's rather than replacing them. Your own block
+ids always exist when your mod is loaded, so they need no `"required": false`.
+
+#### 2. Say which way they face
+
+⚠ **This is the part worth reading**, because getting it wrong seats everybody with their back to the
+table, and the two big furniture mods disagree about it — one of them disagrees with *itself* between
+its chairs and its sofas.
+
+CityWorld tells a seat **which way its occupant should look**. Your block's `facing` may mean something
+different, so declare the difference in `data/cityworld/data_maps/block/furniture.json`:
+
+```json
+{
+  "replace": false,
+  "values": {
+    "yourmod:oak_dining_chair": { "facingOffset": 0 }
+  }
+}
+```
+
+`facingOffset` is **how far clockwise to turn the look direction to get the value you want in
+`facing`**, in degrees — one of `0`, `90`, `180`, `270`.
+
+- `0` — your `facing` already *is* the direction the sitter looks.
+- `180` — your `facing` points at the backrest (very common).
+- `90` / `270` — your model was authored on a different axis to its blockstate.
+
+To work it out without guessing: find the variant in your blockstate with **no `y` rotation**, look at
+where the backrest sits in that model, and the occupant looks the opposite way. The offset is the turn
+from that look direction to that variant's `facing` value.
+
+Only seats need this. Tables, counters and cabinets either auto-connect or read the same from any
+side, so leave them out.
+
 ### Farms
 
 Farm fields draw from these too, so a mod's crops and flowers grow on CityWorld's farmland.
