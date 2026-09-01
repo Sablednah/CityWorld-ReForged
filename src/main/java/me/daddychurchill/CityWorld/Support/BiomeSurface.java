@@ -37,6 +37,7 @@ public final class BiomeSurface {
 	public static final net.minecraft.tags.TagKey<Biome> GROUND_COARSE_DIRT = groundTag("coarse_dirt");
 	public static final net.minecraft.tags.TagKey<Biome> GROUND_TERRACOTTA = groundTag("terracotta");
 	public static final net.minecraft.tags.TagKey<Biome> GROUND_BASALT = groundTag("basalt");
+	public static final net.minecraft.tags.TagKey<Biome> GROUND_MUD = groundTag("mud");
 
 	private static net.minecraft.tags.TagKey<Biome> groundTag(String name) {
 		return net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BIOME,
@@ -72,6 +73,8 @@ public final class BiomeSurface {
 				return Material.TERRACOTTA;
 			if (holder.is(GROUND_BASALT))
 				return Material.SMOOTH_BASALT;
+			if (holder.is(GROUND_MUD))
+				return Material.MUD;
 		}
 		return surface(b);
 	}
@@ -134,8 +137,17 @@ public final class BiomeSurface {
 
 	/** Cold biomes that want a snow layer laid over their ground (at low elevation; peaks are iced by
 	 *  the icecap pass). Excludes ice spikes, which get a solid snow-block surface above instead. */
+	/**
+	 * Biomes whose ground carries a dusting of snow.
+	 *
+	 * <p>{@code GROVE} is here for a reason worth stating: the surface provider caps high ground with
+	 * snow and ice by <em>elevation</em>, which covers the peaks and snowy slopes without anyone naming
+	 * them — but a grove is a snowy forest at ordinary height, so it fell between the two and generated
+	 * as plain grass.
+	 */
 	public static boolean snowy(ResourceKey<Biome> b) {
-		return b == Biomes.SNOWY_PLAINS || b == Biomes.SNOWY_TAIGA || b == Biomes.SNOWY_BEACH;
+		return b == Biomes.SNOWY_PLAINS || b == Biomes.SNOWY_TAIGA || b == Biomes.SNOWY_BEACH
+				|| b == Biomes.GROVE;
 	}
 
 	/** Badlands family — gets red sand over striped terracotta bands rather than the flat sub-surface. */
