@@ -33,6 +33,10 @@ public final class BiomeSurface {
 	public static final net.minecraft.tags.TagKey<Biome> GROUND_SAND = groundTag("sand");
 	public static final net.minecraft.tags.TagKey<Biome> GROUND_RED_SAND = groundTag("red_sand");
 	public static final net.minecraft.tags.TagKey<Biome> GROUND_STONE = groundTag("stone");
+	public static final net.minecraft.tags.TagKey<Biome> GROUND_PODZOL = groundTag("podzol");
+	public static final net.minecraft.tags.TagKey<Biome> GROUND_COARSE_DIRT = groundTag("coarse_dirt");
+	public static final net.minecraft.tags.TagKey<Biome> GROUND_TERRACOTTA = groundTag("terracotta");
+	public static final net.minecraft.tags.TagKey<Biome> GROUND_BASALT = groundTag("basalt");
 
 	private static net.minecraft.tags.TagKey<Biome> groundTag(String name) {
 		return net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BIOME,
@@ -55,6 +59,14 @@ public final class BiomeSurface {
 				return Material.RED_SAND;
 			if (holder.is(GROUND_STONE))
 				return Material.STONE;
+			if (holder.is(GROUND_PODZOL))
+				return Material.PODZOL;
+			if (holder.is(GROUND_COARSE_DIRT))
+				return Material.COARSE_DIRT;
+			if (holder.is(GROUND_TERRACOTTA))
+				return Material.TERRACOTTA;
+			if (holder.is(GROUND_BASALT))
+				return Material.SMOOTH_BASALT;
 		}
 		return surface(b);
 	}
@@ -68,6 +80,13 @@ public final class BiomeSurface {
 				return Material.SANDSTONE;
 			if (holder.is(GROUND_RED_SAND))
 				return Material.RED_SANDSTONE;
+			if (holder.is(GROUND_BASALT))
+				return Material.BASALT;
+			if (holder.is(GROUND_TERRACOTTA))
+				return Material.TERRACOTTA;
+			// podzol and coarse dirt sit on ordinary dirt, as they do in vanilla forests
+			if (holder.is(GROUND_PODZOL) || holder.is(GROUND_COARSE_DIRT))
+				return Material.DIRT;
 		}
 		return subsurface(b);
 	}
