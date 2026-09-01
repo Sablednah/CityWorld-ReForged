@@ -126,18 +126,25 @@ public final class SurfaceRegions {
     }
 
     /**
-     * Whether this climate is inside what the biome asked TerraBlender for, plus {@value #SLACK} slack.
+     * Whether this climate suits the biome: <b>temperature and humidity only</b>, plus {@value #SLACK}
+     * slack.
      *
-     * <p>Depth is skipped deliberately — this is a surface lookup, and several biomes declare a depth
-     * band that a surface query would never satisfy.
+     * <p><b>Gating on all five axes was measured and produced nothing at all.</b> The analysis that
+     * justified this pool said these biomes "overlap CityWorld's ranges on every axis" — but that is
+     * <em>marginal</em> overlap, measured one axis at a time. Requiring a column to sit inside the
+     * biome's box on all five axes simultaneously is a far stronger condition, and no column satisfied
+     * it: every patch was rejected and the ground was unchanged. Overlapping on each axis separately
+     * says nothing about whether any single point lands inside the joint box.
+     *
+     * <p>Temperature and humidity are the right two to keep. They are what a player reads off a
+     * landscape — a bog in a desert is the failure worth preventing — while continentalness, erosion
+     * and weirdness are terrain-shape axes that CityWorld derives on its own terms and which say little
+     * about whether a biome looks at home. Depth is skipped for the same reason it always was: this is
+     * a surface lookup.
      */
     public static boolean climateFits(net.minecraft.world.level.biome.Climate.ParameterPoint point,
             float temperature, float humidity, float continentalness, float erosion, float weirdness) {
-        return within(point.temperature(), temperature)
-                && within(point.humidity(), humidity)
-                && within(point.continentalness(), continentalness)
-                && within(point.erosion(), erosion)
-                && within(point.weirdness(), weirdness);
+        return within(point.temperature(), temperature) && within(point.humidity(), humidity);
     }
 
     private static boolean within(net.minecraft.world.level.biome.Climate.Parameter range, float value) {
