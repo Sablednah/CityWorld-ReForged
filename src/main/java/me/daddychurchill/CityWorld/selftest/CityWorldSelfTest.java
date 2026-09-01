@@ -184,6 +184,7 @@ public final class CityWorldSelfTest {
         try {
             checkGeneratorInstalled(server);
             checkPermissionNodes();
+            checkBiomeGroundTags(server);
             checkPlanning();
             checkFarmCrops();
             checkBiomeDepth(server);
@@ -224,6 +225,38 @@ public final class CityWorldSelfTest {
             fail("overworld generator is " + generator + ", not CityWorld's — check level-type");
         if (!biomeSource.startsWith("me.daddychurchill.CityWorld"))
             fail("overworld biome source is " + biomeSource + ", not CityWorld's");
+    }
+
+    /**
+     * A biome tagged with a ground material actually gets that block.
+     *
+     * <p><b>A biome can be placed perfectly and still be invisible.</b> CityWorld lays its own surface
+     * and never runs a biome's surface rules, so BoP's {@code gravel_beach} generated across a wide
+     * shore — correct label, correct fog, correct mobs — on sand. The ground tags fix that, and this
+     * asserts the mapping resolves, because a tag that fails to load degrades to "looks like vanilla
+     * ground" rather than to an error.
+     */
+    private void checkBiomeGroundTags(MinecraftServer server) {
+        var biomes = server.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.BIOME);
+        record Check(net.minecraft.tags.TagKey<net.minecraft.world.level.biome.Biome> tag,
+                me.daddychurchill.CityWorld.compat.Material expected) { }
+        var checks = List.of(
+                new Check(me.daddychurchill.CityWorld.Support.BiomeSurface.GROUND_GRAVEL,
+                        me.daddychurchill.CityWorld.compat.Material.GRAVEL),
+                new Check(me.daddychurchill.CityWorld.Support.BiomeSurface.GROUND_SAND,
+                        me.daddychurchill.CityWorld.compat.Material.SAND));
+        Map<String, String> mapped = new TreeMap<>();
+        for (Check check : checks)
+            biomes.get(check.tag()).ifPresent(set -> set.forEach(holder -> {
+                var key = holder.unwrapKey().orElse(null);
+                var got = me.daddychurchill.CityWorld.Support.BiomeSurface.surface(holder, key);
+                String id = key == null ? "?" : key.identifier().toString();
+                mapped.put(id, got == null ? "null" : got.name());
+                if (got != check.expected())
+                    fail("biome " + id + " is tagged " + check.tag().location() + " but its ground resolves to "
+                            + got + " — it will generate with the wrong surface block and look like plain ground");
+            }));
+        report.put("biome.groundTagged", mapped.toString());
     }
 
     /**
