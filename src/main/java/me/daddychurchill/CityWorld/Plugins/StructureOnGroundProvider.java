@@ -976,11 +976,9 @@ public class StructureOnGroundProvider extends Provider {
 					doorEast = roomEast;
 				}
 
-				me.daddychurchill.CityWorld.Support.Furniture.kitchen(generator, chunk, odds, x1, x2, y1, z1, z2);
 				break;
 			case DINING:
 
-				me.daddychurchill.CityWorld.Support.Furniture.dining(generator, chunk, odds, x1, x2, y1, z1, z2);
 				break;
 			case ENTRY:
 
@@ -1126,30 +1124,7 @@ public class StructureOnGroundProvider extends Provider {
 					}
 				}
 
-				// the ground-floor entry is the room you walk into — furnish it as a living area (the
-				// couch fits around the stairwell; a single-floor foyer has the whole room). Upper
-				// floors of this room are the LANDING, which playtested as bare — a console piece,
-				// a runner rug and the accent pass; clearFloor keeps it all off the stair opening.
-				if (floor == 0)
-					me.daddychurchill.CityWorld.Support.Furniture.living(generator, chunk, odds, x1, x2, y1, z1, z2);
-				else
-					me.daddychurchill.CityWorld.Support.Furniture.hallway(generator, chunk, odds, x1, x2, y1, z1, z2);
 
-				break;
-			case LIVING:
-				// With a furniture mod installed some of these become a study instead — a desk, a chair
-				// and a bookshelf. Uses the LIVING slot rather than a new room type so room assignment
-				// is untouched; study() no-ops without a desk, so an unmodded world is unchanged.
-				if (odds.playOdds(me.daddychurchill.CityWorld.Support.Odds.oddsUnlikely))
-					me.daddychurchill.CityWorld.Support.Furniture.study(generator, chunk, odds, x1, x2, y1, z1, z2);
-				else
-					me.daddychurchill.CityWorld.Support.Furniture.living(generator, chunk, odds, x1, x2, y1, z1, z2);
-				break;
-			case BED:
-				me.daddychurchill.CityWorld.Support.Furniture.bedroom(generator, chunk, odds, x1, x2, y1, z1, z2);
-				break;
-			case BATHROOM:
-				me.daddychurchill.CityWorld.Support.Furniture.bathroom(generator, chunk, odds, x1, x2, y1, z1, z2);
 				break;
 			}
 
@@ -1201,6 +1176,41 @@ public class StructureOnGroundProvider extends Provider {
 					if (hallEast)
 						chunk.setDoor(x2, y1, z2 - 2, Material.BIRCH_DOOR, BlockFace.EAST_SOUTH_EAST);
 				}
+			}
+
+			// Furnish AFTER the walls and doors exist — this ordering is load-bearing. Furniture can
+			// now refuse doorway approaches (a bed parked in front of a door twice in playtest),
+			// wall art has real interior walls to hang on (before this there were none yet, which is
+			// why no painting ever appeared), and the bed/bath "wall nearest the chunk edge" trick
+			// becomes a preference rather than the only defence.
+			switch (style) {
+			case KITCHEN:
+				me.daddychurchill.CityWorld.Support.Furniture.kitchen(generator, chunk, odds, x1, x2, y1, z1, z2);
+				break;
+			case DINING:
+				me.daddychurchill.CityWorld.Support.Furniture.dining(generator, chunk, odds, x1, x2, y1, z1, z2);
+				break;
+			case ENTRY:
+				// ground floor: the living area you walk into; upper floors: the LANDING (console,
+				// rug, wall decor), with clearFloor keeping everything off the stair opening
+				if (floor == 0)
+					me.daddychurchill.CityWorld.Support.Furniture.living(generator, chunk, odds, x1, x2, y1, z1, z2);
+				else
+					me.daddychurchill.CityWorld.Support.Furniture.hallway(generator, chunk, odds, x1, x2, y1, z1, z2);
+				break;
+			case LIVING:
+				// some become a study with a furniture mod installed; study() no-ops without a desk
+				if (odds.playOdds(me.daddychurchill.CityWorld.Support.Odds.oddsUnlikely))
+					me.daddychurchill.CityWorld.Support.Furniture.study(generator, chunk, odds, x1, x2, y1, z1, z2);
+				else
+					me.daddychurchill.CityWorld.Support.Furniture.living(generator, chunk, odds, x1, x2, y1, z1, z2);
+				break;
+			case BED:
+				me.daddychurchill.CityWorld.Support.Furniture.bedroom(generator, chunk, odds, x1, x2, y1, z1, z2);
+				break;
+			case BATHROOM:
+				me.daddychurchill.CityWorld.Support.Furniture.bathroom(generator, chunk, odds, x1, x2, y1, z1, z2);
+				break;
 			}
 		}
 	}

@@ -56,7 +56,11 @@ FACING_OFFSET = {
     # modern_chair: 180 was measured from a TRUNCATED element dump and the playtest falsified it —
     # the tall (y18) backrest posts sit at +X like the classic chair. All mcw chairs are 0.
     ("mcwfurnitures", "modern_chair"): 0,
-    ("mcwfurnitures", "sofa"): 270,       # couch family maps to the sofa role
+    # ⚠ keys are FAMILY SUFFIXES (block-name endings), not role names. This entry was once keyed
+    # "sofa" (the role) and silently matched nothing — F3 in playtest showed couches placed with
+    # no offset at all, which is what the round-2 "couch corners" really were.
+    ("mcwfurnitures", "couch"): 270,
+    ("mcwfurnitures", "chaise"): 270,     # same family shape (chaises carry no facing; harmless)
     ("mcwfurnitures", "counter"): 180,
     ("mcwfurnitures", "drawer_counter"): 180,
     ("mcwfurnitures", "double_drawer_counter"): 180,

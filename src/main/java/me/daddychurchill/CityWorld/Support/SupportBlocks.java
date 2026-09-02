@@ -757,6 +757,29 @@ public abstract class SupportBlocks extends AbstractBlocks {
 	}
 
 	/**
+	 * Whether a horizontal neighbour of this cell is a door — i.e. the cell is a doorway approach.
+	 * Furnishing runs after the walls and doors are drawn precisely so this can be asked; a bed or
+	 * wardrobe parked here would block the door (playtested, twice).
+	 */
+	/** Whether this block offers a sturdy full face in the given direction — what a painting, item
+	 *  frame or sconce needs behind it. Window panes are "not empty" but fail this, which is what
+	 *  keeps art off the glass (hanging entities pop off non-sturdy backing on first tick). */
+	public final boolean isSturdyFace(int x, int y, int z, BlockFace face) {
+		Block block = getActualBlock(x, y, z);
+		Direction direction = face.toDirection();
+		return direction != null
+				&& block.getBlockData().isFaceSturdy(block.getLevel(), block.getPos(), direction);
+	}
+
+	public final boolean isBesideDoor(int x, int y, int z) {
+		for (int[] d : new int[][] { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } })
+			if (getActualBlock(x + d[0], y, z + d[1]).getBlockData()
+					.getBlock() instanceof net.minecraft.world.level.block.DoorBlock)
+				return true;
+		return false;
+	}
+
+	/**
 	 * Place a two-part bed-like furniture piece (the Refurbished baths): {@code type=bottom} at the
 	 * anchor, {@code type=head} one cell toward {@code extendDir}, both halves sharing the facing.
 	 * The property is found by <em>name</em> because the bottom/head enum is the furniture mod's own
