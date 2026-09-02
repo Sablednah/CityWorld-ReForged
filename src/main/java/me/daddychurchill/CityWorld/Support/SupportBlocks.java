@@ -771,6 +771,12 @@ public abstract class SupportBlocks extends AbstractBlocks {
 				&& block.getBlockData().isFaceSturdy(block.getLevel(), block.getPos(), direction);
 	}
 
+	/** Whether the block at this cell is a door. */
+	public final boolean isDoor(int x, int y, int z) {
+		return getActualBlock(x, y, z).getBlockData()
+				.getBlock() instanceof net.minecraft.world.level.block.DoorBlock;
+	}
+
 	public final boolean isBesideDoor(int x, int y, int z) {
 		for (int[] d : new int[][] { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } })
 			if (getActualBlock(x + d[0], y, z + d[1]).getBlockData()
