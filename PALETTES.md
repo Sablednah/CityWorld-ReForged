@@ -111,19 +111,46 @@ different, so declare the difference in `data/cityworld/data_maps/block/furnitur
 }
 ```
 
-`facingOffset` is **how far clockwise to turn the look direction to get the value you want in
+`facingOffset` is **how far clockwise to turn the front direction to get the value you want in
 `facing`**, in degrees — one of `0`, `90`, `180`, `270`.
 
-- `0` — your `facing` already *is* the direction the sitter looks.
-- `180` — your `facing` points at the backrest (very common).
+- `0` — your `facing` already *is* the direction the piece fronts (the way a sitter looks, the way a
+  cabinet's doors open).
+- `180` — your `facing` points at the back (very common: backrests, cistern side, the wall side of a
+  counter).
 - `90` / `270` — your model was authored on a different axis to its blockstate.
 
 To work it out without guessing: find the variant in your blockstate with **no `y` rotation**, look at
-where the backrest sits in that model, and the occupant looks the opposite way. The offset is the turn
-from that look direction to that variant's `facing` value.
+where the identifying geometry sits in that model — backrest, door and handle, taps, cistern — and the
+front is the opposite side. The offset is the clockwise turn from that front direction to that
+variant's `facing` value.
 
-Only seats need this. Tables, counters and cabinets either auto-connect or read the same from any
-side, so leave them out.
+**Every oriented block wants an offset**, not just seats — counters, cabinets, sinks, toilets,
+drawers, wardrobes and bookshelves are all placed fronting into the room. Measure per *family*, not
+per mod: one of the big mods uses `0` for its classic chair and `180` for its modern chair. Tables
+that auto-connect (fence-style booleans) and blocks with no `facing` at all need nothing.
+
+**Two-block furniture** (bed-like — a bath): declare `"parts": 2` in the same entry. CityWorld then
+places `type=bottom` at the anchor and `type=head` one cell along `facing`, both halves sharing the
+facing value — the vanilla bed contract, with the `type` property found by name so your own
+bottom/head enum works.
+
+```json
+"yourmod:oak_bath": { "facingOffset": 180, "parts": 2 }
+```
+
+#### 3. Decoration pools (optional)
+
+Loose decoration is drawn from three placement pools, and you can add to them the same way:
+
+| Tag | Meaning |
+|---|---|
+| `cityworld:decor/floor` | stands on the ground (potted plants, big vases) |
+| `cityworld:decor/surface` | belongs ON a table — CityWorld puts one underneath (table lamps, candles, crockery) |
+| `cityworld:decor/wall` | wall-mounted at eye height (sconces, wall lights) |
+
+The floor/surface split is why a table lamp never ends up standing on the carpet: if your lamp is a
+table lamp, tag it `surface`, and if it is a freestanding floor lamp, tag it `floor`.
 
 ### Farms
 

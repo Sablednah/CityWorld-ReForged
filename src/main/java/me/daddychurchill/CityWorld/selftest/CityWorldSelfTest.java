@@ -330,6 +330,55 @@ public final class CityWorldSelfTest {
                 fail("furniture seats resolved (" + seats + ") but none declares a facing offset — every "
                         + "chair will be placed on the default convention, which is wrong for two of the "
                         + "three conventions measured across the two big furniture mods");
+
+            // The non-seat oriented roles need offsets too — this was the playtested defect where
+            // every kitchen set faced the wall and the toilet sat backwards: chair/sofa had offsets,
+            // everything else silently defaulted to 0.
+            int orientedDeclared = 0, orientedPieces = 0;
+            for (var role : List.of(me.daddychurchill.CityWorld.Support.FurnitureTags.COUNTER,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.CABINET,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.SINK,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.TOILET,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.DRAWER,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.WARDROBE,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.BOOKSHELF))
+                for (var piece : me.daddychurchill.CityWorld.Support.MaterialTags.resolve(role)) {
+                    orientedPieces++;
+                    if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.facingOffsetFor(piece) != 0)
+                        orientedDeclared++;
+                }
+            report.put("furniture.orientedWithOffset", orientedDeclared + " of " + orientedPieces);
+            if (orientedPieces > 0 && orientedDeclared == 0)
+                fail("oriented furniture resolved (" + orientedPieces + " counters/cabinets/sinks/toilets…) "
+                        + "but none declares a facing offset — kitchens will face the wall again");
+
+            // Two-part furniture: the Refurbished baths are bed-like. If the bath role resolves but
+            // nothing is declared two-part, the data map has been lost or trimmed and baths go back
+            // to being placed as a single orphaned half.
+            int baths = 0, twoPart = 0;
+            for (var piece : me.daddychurchill.CityWorld.Support.MaterialTags
+                    .resolve(me.daddychurchill.CityWorld.Support.FurnitureTags.BATH)) {
+                baths++;
+                if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.partsFor(piece) == 2)
+                    twoPart++;
+            }
+            report.put("furniture.twoPartBaths", twoPart + " of " + baths);
+            if (baths > 0 && twoPart == 0)
+                fail("baths resolved (" + baths + ") but none is declared two-part — they will be "
+                        + "placed as single orphaned halves");
+        }
+
+        // The decoration pools carry vanilla seeds in our own resources, so they can NEVER legitimately
+        // resolve empty — an empty pool means the tag file was discarded whole (the missing-required-
+        // reference trap) and the accent pass is silently falling back.
+        for (var pool : List.of(me.daddychurchill.CityWorld.Support.FurnitureTags.FLOOR_DECOR,
+                me.daddychurchill.CityWorld.Support.FurnitureTags.SURFACE_DECOR,
+                me.daddychurchill.CityWorld.Support.FurnitureTags.WALL_DECOR)) {
+            int n = me.daddychurchill.CityWorld.Support.MaterialTags.resolve(pool).size();
+            report.put("decor." + pool.location().getPath(), String.valueOf(n));
+            if (n == 0)
+                fail("decor pool " + pool.location() + " resolved empty — it ships vanilla seeds, so "
+                        + "empty means the whole tag file was discarded");
         }
 
         // The checklist: modded biomes CityWorld gives its default ground to. A biome whose look comes

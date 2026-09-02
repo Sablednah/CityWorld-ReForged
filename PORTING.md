@@ -32,6 +32,38 @@ changed. That is the strongest argument in the whole arc for keeping generated c
 
 ## ▶ Furniture mods — built, playtested, and what is left (2026-09-02)
 
+**Status 2026-09-02 (later the same day): all five items below are FIXED in code, awaiting playtest.**
+What changed, and what the diagnoses turned out to be:
+
+1. **Half baths** — fixed. `parts: 2` on the data map entry; `SupportBlocks.setTwoPartFurniture`
+   places `type=bottom` at the anchor and `type=head` one cell along `facing` (measured from
+   `BathBlock.setPlacedBy` — it is exactly the vanilla bed contract). The `type` property is found by
+   *name*, so any mod following that contract works.
+2. **"Half tables" — identified without Jade.** Not a two-block model at all: it is **one-sided
+   auto-connect**. Placing piece B beside piece A fires `updateShape` on A only (the world updates
+   neighbours; the placed block's own connection state comes from `getStateForPlacement`, which only
+   players trigger). So A dropped its legs toward B while B kept its complete standalone default —
+   one legless "half table" beside a whole one, on every multi-piece run. Fixed with
+   `SupportBlocks.reconnect` (`Block.updateFromNeighbourShapes`) after each furniture placement.
+   The mcw coffee table's `connection=center` model (a floating legless top) is what makes this so
+   visible.
+3. **Kitchen fronts / 4. toilet** — fixed. `FACING_OFFSET` now covers every oriented family and
+   every placement routes through `facingFor`. ⚠ The measured conventions are wilder than "per mod,
+   per role": **Macaw's classic chair is 0 but its modern_chair is 180**; its counters/kitchen
+   cabinets/sinks are 180 while its drawers/wardrobes/bookshelves are 270 (fronts at −X like its
+   sofa). Refurbished is uniformly 180 (one shared base class, six families verified). Offsets are
+   keyed per (namespace, family suffix), longest suffix wins. Macaw desks are deliberately absent:
+   their facing is a custom two-value axis property (north|east) that `withFacing` cannot set, and
+   the models read the same front-and-back.
+5. **Three decoration pools** — built: `#cityworld:decor/{floor,surface,wall}`, generated with
+   vanilla seeds; modded lamps land in `surface` and get an end table stood under them (in the
+   lounge corner and in the accent pass). Wall pieces mount at eye height on the wall the cell backs
+   onto; glow-lichen-style face-attached blocks attach toward the wall while torch-style blocks face
+   away (`hasFaces()` distinguishes).
+
+Self-test now also fails if oriented furniture resolves with no offsets, if baths resolve with no
+two-part declaration, or if a decor pool resolves empty. The original brief follows for the record.
+
 **Read this before touching furniture.** The concept is proven in-world; four specific things are
 wrong and all of them are diagnosed with measurements below, so none of it needs re-deriving.
 

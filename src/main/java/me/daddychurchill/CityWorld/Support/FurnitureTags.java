@@ -44,8 +44,23 @@ public final class FurnitureTags {
     public static final TagKey<Block> BATH = key("bath");
     public static final TagKey<Block> LAMP = key("lamp");
 
+    /**
+     * The three decoration pools — placement classes, not furniture roles. {@code FLOOR_DECOR}
+     * stands on the ground, {@code SURFACE_DECOR} belongs on a tabletop (the placer puts a table
+     * underneath), {@code WALL_DECOR} mounts on a wall. Modded table lamps are generated into
+     * {@code surface}, which is the whole reason the split exists: Refurbished lamps are y 0–14
+     * with no facing — table lamps — and read wrong standing on the floor.
+     */
+    public static final TagKey<Block> FLOOR_DECOR = decorKey("floor");
+    public static final TagKey<Block> SURFACE_DECOR = decorKey("surface");
+    public static final TagKey<Block> WALL_DECOR = decorKey("wall");
+
     private static TagKey<Block> key(String role) {
         return TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath("cityworld", "furniture/" + role));
+    }
+
+    private static TagKey<Block> decorKey(String pool) {
+        return TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath("cityworld", "decor/" + pool));
     }
 
     /**
