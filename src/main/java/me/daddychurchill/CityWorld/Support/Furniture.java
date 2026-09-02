@@ -122,7 +122,10 @@ public final class Furniture {
             pottedPlant(chunk, odds, x, y, z);
             break;
         case 8:
-            // something mounted on the wall this cell backs onto; open cells get a plant instead
+            // something on the wall this cell backs onto — art (a painting or a framed keepsake)
+            // or a sconce; open cells get a plant instead
+            if (odds.flipCoin() && wallArt(chunk, odds, x, y, z))
+                break;
             if (wallSconce(chunk, odds, x, y, z))
                 break;
             pottedPlant(chunk, odds, x, y, z);
@@ -168,6 +171,51 @@ public final class Furniture {
         chunk.setBlock(x, y, z, table != null ? table : TABLE_TOPS[odds.getRandomInt(TABLE_TOPS.length)]);
         chunk.reconnect(x, y, z);
         chunk.setBlock(x, y + 1, z, piece);
+    }
+
+    /** What ends up inside an item frame — the "nice things" of the owner's brief. */
+    private static final net.minecraft.world.item.Item[] FRAMED = { net.minecraft.world.item.Items.CLOCK,
+            net.minecraft.world.item.Items.COMPASS, net.minecraft.world.item.Items.AMETHYST_SHARD,
+            net.minecraft.world.item.Items.BOOK, net.minecraft.world.item.Items.SUNFLOWER,
+            net.minecraft.world.item.Items.GOLDEN_APPLE };
+
+    /**
+     * A painting or an item frame hung at eye height on the wall this cell backs onto.
+     *
+     * <p>These are ENTITIES, not blocks — the same worldgen-region spawn path the villagers use
+     * ({@code addFreshEntityWithPassengers} on the {@code ServerLevelAccessor}). Two cautions,
+     * both learned elsewhere in this codebase: the position must stay inside this chunk, because
+     * {@code WorldGenRegion.addFreshEntity} throws rather than declines outside its cache (room
+     * coordinates are in-chunk, so that holds); and {@code Painting.create} + {@code survives()}
+     * do the fitting — the painting picks a variant that fits the wall, and anything that cannot
+     * hang simply is not spawned.
+     */
+    private static boolean wallArt(RealBlocks chunk, Odds odds, int x, int y, int z) {
+        BlockFace out = wallwardOrNull(chunk, x, y + 2, z);
+        if (out == null || !chunk.isEmpty(x, y + 2, z))
+            return false;
+        me.daddychurchill.CityWorld.compat.Location at = chunk.getBlockLocation(x, y + 2, z);
+        if (!(at.getLevel() instanceof net.minecraft.world.level.ServerLevelAccessor server))
+            return false;
+        net.minecraft.core.Direction dir = out.toDirection();
+        if (dir == null)
+            return false;
+        net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(at.getBlockX(), at.getBlockY(),
+                at.getBlockZ());
+        if (odds.flipCoin()) {
+            var painting = net.minecraft.world.entity.decoration.painting.Painting.create(server.getLevel(), pos,
+                    dir);
+            if (painting.isEmpty() || !painting.get().survives())
+                return false;
+            server.addFreshEntityWithPassengers(painting.get());
+            return true;
+        }
+        var frame = new net.minecraft.world.entity.decoration.ItemFrame(server.getLevel(), pos, dir);
+        if (!frame.survives())
+            return false;
+        frame.setItem(new net.minecraft.world.item.ItemStack(FRAMED[odds.getRandomInt(FRAMED.length)]), false);
+        server.addFreshEntityWithPassengers(frame);
+        return true;
     }
 
     /**
