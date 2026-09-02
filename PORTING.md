@@ -78,6 +78,14 @@ instead of staring at the basin; amethyst is table decor (surface pool) now.
 surfaces. Add a `furniture/ceiling_fan` role (or `decor/ceiling`) to the generator, measure
 whether fans carry facing, and hang them from room ceilings the way the chandelier does.**
 
+**Owner's in-game scouting (2026-09-02, Refurbished):** TVs; **fridge — a vertical two-block**
+(like the bath but stacked, so `parts` needs an UP direction or a second marker); stove that can
+take a frying pan; cutting board (counter surface piece); bin; light switches (wall piece —
+harmless without wiring); **a whole power system we deliberately avoid**. Ceiling: fans AND
+hanging lanterns (chandelier already hangs lanterns — reuse that). Macaw wardrobes/bookshelves
+connect **vertically** (`connection=bottom/top`, measured earlier) as well as horizontally —
+a 2-tall wardrobe stack is possible where ceilings allow.
+
 **Queued from round 2, not yet built:**
 - **Furnish after doors** — the wall-nearest-edge trick dodges most door clashes, but the real fix
   is ordering: find where the colonial house cuts doors vs. styles rooms and furnish afterwards.
