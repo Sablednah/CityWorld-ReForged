@@ -417,8 +417,83 @@ public final class Furniture {
 
         chunk.setChest(generator, x1 + 1, y, z1 + 1, BlockFace.SOUTH, odds, generator.lootProvider,
                 LootProvider.LootLocation.NIGHTSTAND, Material.BARREL); // a nightstand where it fits
+
+        // Playtest: bedrooms were "mostly bed + barrel". Wardrobe and drawers flank the bed on ITS
+        // wall — the bed backs onto the wall nearest the chunk edge (exterior), and interior walls
+        // get doors cut AFTER furnishing, so pieces there would block doorways. Corners of the bed
+        // wall are the safe storage spots. The rug and lamp stay MODERN-only so CLASSIC keeps its
+        // 1.8 look; the modded picks are null without a furniture mod either way.
+        Material wardrobe = FurnitureTags.pick(FurnitureTags.WARDROBE, odds);
+        Material drawer = FurnitureTags.pick(FurnitureTags.DRAWER, odds);
+        int[][] corners; // the two corners of the bed wall
+        BlockFace front;
+        if (best == dN || best == dS) {
+            int wz = best == dN ? z1 + 1 : z2 - 1;
+            front = best == dN ? BlockFace.SOUTH : BlockFace.NORTH;
+            corners = new int[][] { { x1 + 1, wz }, { x2 - 1, wz } };
+        } else {
+            int wx = best == dW ? x1 + 1 : x2 - 1;
+            front = best == dW ? BlockFace.EAST : BlockFace.WEST;
+            corners = new int[][] { { wx, z1 + 1 }, { wx, z2 - 1 } };
+        }
+        // first free corner each (the barrel nightstand may hold one of them)
+        for (Material piece : new Material[] { wardrobe, drawer })
+            if (piece != null)
+                for (int[] c : corners)
+                    if (placeFacing(chunk, c[0], y, c[1], piece, front))
+                        break;
+        if (modern(generator)) {
+            rug(chunk, odds, midX, y, midZ);
+            // a bedside lamp most of the time now, not the rare treat it was
+            Material lamp = FurnitureTags.pick(FurnitureTags.LAMP, odds);
+            if (lamp == null || !tableLamp(chunk, odds, x2 - 1, y, z2 - 1, lamp))
+                floorLampIfClear(chunk, odds, x2 - 1, y, z2 - 1);
+        }
+        accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+    }
+
+    private static final Material[] RUGS = { Material.WHITE_CARPET, Material.LIGHT_GRAY_CARPET,
+            Material.CYAN_CARPET, Material.RED_CARPET, Material.MOSS_CARPET };
+
+    /** A small rug: a carpet plus-shape centred on (x,z), skipping cells that aren't clear floor. */
+    private static void rug(RealBlocks chunk, Odds odds, int x, int y, int z) {
+        Material carpet = RUGS[odds.getRandomInt(RUGS.length)];
+        for (int[] c : new int[][] { { x, z }, { x + 1, z }, { x - 1, z }, { x, z + 1 }, { x, z - 1 } })
+            if (clearFloor(chunk, c[0], y, c[1]))
+                chunk.setBlock(c[0], y, c[1], carpet);
+    }
+
+    /**
+     * An upstairs landing — the stairwell room on floors above ground, which playtested as bare.
+     * A console piece (drawers, else a cabinet, else a side table) against the exterior wall, a
+     * runner rug, and the accent pass for wall/surface decoration. Deliberately light: the room
+     * contains the stairwell opening and its ladder, and {@code clearFloor} keeps everything off
+     * the hole. Interior walls get doors cut after furnishing, so the console keeps to the wall
+     * nearest the chunk edge, same trick as the bed and the bath.
+     */
+    public static void hallway(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
+            int z1, int z2) {
+        Material console = FurnitureTags.pick(FurnitureTags.DRAWER, odds);
+        if (console == null)
+            console = FurnitureTags.pick(FurnitureTags.CABINET, odds);
+        int dN = z1, dS = 15 - z2, dW = x1, dE = 15 - x2;
+        int best = Math.min(Math.min(dN, dS), Math.min(dW, dE));
+        int cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
+        boolean placed = false;
+        if (console != null) {
+            if (best == dN)
+                placed = placeFacing(chunk, cx, y, z1 + 1, console, BlockFace.SOUTH);
+            else if (best == dS)
+                placed = placeFacing(chunk, cx, y, z2 - 1, console, BlockFace.NORTH);
+            else if (best == dW)
+                placed = placeFacing(chunk, x1 + 1, y, cz, console, BlockFace.EAST);
+            else
+                placed = placeFacing(chunk, x2 - 1, y, cz, console, BlockFace.WEST);
+        }
+        if (!placed && modern(generator))
+            sideTable(chunk, odds, cx, y, cz);
         if (modern(generator))
-            floorLampIfClear(chunk, odds, x2 - 1, y, z2 - 1);
+            rug(chunk, odds, cx, y, cz);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
