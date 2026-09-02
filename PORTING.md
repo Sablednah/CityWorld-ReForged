@@ -30,6 +30,109 @@ sites. 26.1 touched none of them. 26.2 broke **145**. Because the file is *gener
 repair was teaching `scripts/gen_material.py` new resolution rules; not one of the 3,096 call sites
 changed. That is the strongest argument in the whole arc for keeping generated code generated.
 
+## ▶ Furniture mods — built, playtested, and what is left (2026-09-02)
+
+**Read this before touching furniture.** The concept is proven in-world; four specific things are
+wrong and all of them are diagnosed with measurements below, so none of it needs re-deriving.
+
+### What exists
+
+- `scripts/gen_furniture_tags.py` — **generates** the role tags and the facing data map from installed
+  furniture mods. 982 blocks across 13 roles from Macaw's Furniture + Refurbished Furniture. Re-run it
+  when a mod updates; nothing here is hand-maintained.
+- `#cityworld:furniture/<role>` — chair, table, sofa, desk, counter, cabinet, drawer, wardrobe,
+  bookshelf, sink, toilet, bath, lamp. All entries `"required": false`.
+- `cityworld:furniture` data map — `{"facingOffset": degrees}` per block.
+- `Support/FurnitureTags.java` — `pick(role, odds)`, `has(role)`, `facingFor(piece, look)`.
+- `Support/Furniture.java` — kitchen / dining / living / bathroom / **study** (new) draw from the pools
+  and fall back to the old vanilla-block furniture when a role is empty.
+- Self-test reports `furniture.roles` and `furniture.seatsWithOffset`, and fails if seats resolve with
+  no offsets declared.
+
+### Playtest verdict (owner, 2026-09-02)
+
+> "the concepts seem sound — houses have rooms and the rooms have been kitted out. lounges have
+> couches — cabinets in kitchens — all good… chairs seem to be correct everywhere so that bit worked."
+
+So: role tags, room wiring, the fallback, and the **chair** facing offsets are all confirmed working
+in-world. What follows are the four defects.
+
+### ⚠ 1. Half baths — multi-block furniture is placed as one block
+
+**Cause, measured:** Refurbished baths carry `type=bottom|head` — they are two-block furniture like a
+bed. 27 blocks, and they are the *only* multi-block furniture in either mod. A scan of every
+blockstate property across both jars:
+
+| property | mod | count | on |
+|---|---|---|---|
+| `type=bottom\|head` | refurbished | 27 | **baths — the two-blockers** |
+| `shape` | mcw | 16 | couches |
+| `shape` | refurbished | 59 | kitchen cabinetry |
+| `left`/`right` | refurbished | 22 | desks, drawers |
+| `tucked` | refurbished | 11 | chairs |
+
+**Fix:** place both halves, the way `placeBed` already does in `Furniture.java`. Needs a
+"two-block" marker — cleanest as a field on the data map entry (`{"parts": 2}`), since the data map
+already carries these blocks and a tag would be a second place to look.
+
+### ⚠ 2. "Half tables" — not yet identified
+
+Tables in **both** mods are connection-based (`north/east/west/south` booleans, like fences), not
+multi-block, so a lone table block is legitimate. The owner saw something table-shaped that is clearly
+meant to be two blocks. Candidates, by property: Refurbished **desks** (`left`/`right`), Refurbished
+**kitchen cabinetry** (`shape`), Macaw **couches** (`shape=single/left/middle/right`).
+
+**Do not guess.** Jade is installed in the 26.2 instance — get the block id from in-world and work from
+that.
+
+### ⚠ 3. Kitchen fronts face the wall — non-seat roles have no facing offset
+
+**This is one bug, not several.** Offsets were only declared for `chair` and `sofa`; every other
+oriented role got the default 0, so counters, cabinets and sinks were placed with their backs to the
+room. Measured from model geometry against each blockstate's rotation table:
+
+| block | unrotated variant | geometry | `facing` means | offset needed |
+|---|---|---|---|---|
+| mcw `oak_kitchen_cabinet` | `facing=east` | door + handle at **x 4.9–6 (west)**, body east | the **back** | **180** |
+| mcw `oak_kitchen_sink` | `facing=south` | raised tap rim at **z 1–3 (north)** | the **back** | **180** |
+| refurbished `oak_toilet` | `facing=north` | cistern **z 0–5 (north)**, bowl z 5–15 | the **back** | **180** |
+
+(#4 below is the same defect — the toilet is just the most obvious instance.)
+
+**Fix:** extend `FACING_OFFSET` in the generator to cover counter, cabinet, sink, toilet, bath, desk,
+drawer, wardrobe, bookshelf, and have the room code route *every* oriented placement through
+`FurnitureTags.facingFor` rather than passing a raw `BlockFace`.
+
+### ⚠ 4. Toilet backwards — same cause as #3
+
+### ⚠ 5. Decoration needs three placement pools
+
+Owner's design call, and it is the right shape:
+
+> "I think 3 pools of decorations are needed — 'on the floor', 'on a surface', 'on a wall'."
+
+Refurbished lamps are single-block, **y 0–14, and carry no `facing`** — they are *table* lamps, which
+is why they read wrong standing on the floor. The fix is not to move them but to classify:
+
+- **floor** — sofas, tables, cabinets, counters, beds: placed on the ground.
+- **surface** — lamps, plates, toasters, potted plants, candles: **require a surface beneath**, so the
+  placer puts a table/end table/counter under them, or only places them on one already there.
+- **wall** — anything wall-mounted (paintings, wall lamps, shelves).
+
+Whether a *freestanding* floor lamp exists in either mod is unchecked — if it does it belongs in the
+floor pool and the tabletop ones in surface.
+
+### How to derive a facing offset (the method, so it need not be rediscovered)
+
+1. Open the block's blockstate JSON, find the variant with **no `y` rotation**.
+2. Open that variant's model (follow `parent` until you reach `elements`).
+3. Find the identifying geometry — a chair's backrest, a cabinet's door and handle, a toilet's cistern.
+4. The piece's **front** is the opposite side to the back. The offset is the clockwise turn from that
+   front direction to the variant's own `facing` value.
+
+⚠ **The mods disagree, and one disagrees with itself** — Macaw's chair is offset 0 while Macaw's sofa
+is 270 — so offsets must be measured per (mod, role), never assumed per mod.
+
 ## ▶ Next up (queued 2026-08-17)
 
 In rough priority order. **#1, #2 and #3 are DONE (2026-08-27) — see "Caves, structures and 3D
