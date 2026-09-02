@@ -64,6 +64,28 @@ What changed, and what the diagnoses turned out to be:
 Self-test now also fails if oriented furniture resolves with no offsets, if baths resolve with no
 two-part declaration, or if a decor pool resolves empty. The original brief follows for the record.
 
+**Playtest round 2 (2026-09-02 evening) — fixed same day (`37f59c6`):** modern_chair offset was a
+false measurement (truncated element dump; all Macaw chairs are 0); **reconnect corrupted Macaw
+couch runs into corner shapes** (their `updateShape` reads neighbours via THEIR facing convention,
+which our offset-rotated facing disagrees with — reconnect is now explicit-only, for
+counters/tables/desks which playtested good); the bath moved to the **window wall** (nearest chunk
+edge, like beds) because a door cut after furnishing beheaded it; toilet centres on an adjacent wall
+instead of staring at the basin; amethyst is table decor (surface pool) now.
+
+**Queued from round 2, not yet built:**
+- **Furnish after doors** — the wall-nearest-edge trick dodges most door clashes, but the real fix
+  is ordering: find where the colonial house cuts doors vs. styles rooms and furnish afterwards.
+- **Bedroom variance** — mostly bed+barrel today. Add a wardrobe/drawer against a wall, a rug, and
+  make the bedside-table-with-lamp appear more often.
+- **Wall decor pass with paintings + item frames** — owner wants paintings and item frames (holding
+  clocks and such). These are ENTITIES, not blocks: the decoration `LevelAccessor` is a
+  `WorldGenRegion` (a `ServerLevelAccessor`), so `addFreshEntity` works — structures spawn entities
+  this way. New capability, worth its own careful pass.
+- **Hallways/landings are empty** — a console table, cupboards, and the wall pass belong there.
+  Find where the house room-splitter labels hallway cells.
+- **Lectern stood on a chest** in a Newsagent corner shop looks odd — that's the shop fitter, not
+  the furniture pass; check whether it predates this work before touching it.
+
 **Read this before touching furniture.** The concept is proven in-world; four specific things are
 wrong and all of them are diagnosed with measurements below, so none of it needs re-deriving.
 
