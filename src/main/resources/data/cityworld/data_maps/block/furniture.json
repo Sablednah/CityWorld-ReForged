@@ -145,6 +145,30 @@
         "parts": 2
       }
     },
+    "refurbished_furniture:light_blue_bath": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180,
+        "parts": 2
+      }
+    },
+    "refurbished_furniture:light_gray_bath": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180,
+        "parts": 2
+      }
+    },
     "refurbished_furniture:lime_bath": {
       "neoforge:conditions": [
         {
@@ -299,6 +323,17 @@
       "value": {
         "facingOffset": 180,
         "parts": 2
+      }
+    },
+    "refurbished_furniture:recycle_bin": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
       }
     },
     "mcwfurnitures:acacia_bookshelf": {
@@ -1841,6 +1876,50 @@
         "facingOffset": 180
       }
     },
+    "refurbished_furniture:light_blue_kitchen_cabinetry": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:light_blue_kitchen_storage_cabinet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:light_gray_kitchen_cabinetry": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:light_gray_kitchen_storage_cabinet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
     "refurbished_furniture:lime_kitchen_cabinetry": {
       "neoforge:conditions": [
         {
@@ -2172,6 +2251,248 @@
       }
     },
     "refurbished_furniture:yellow_kitchen_storage_cabinet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:acacia_dark_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:acacia_light_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:birch_dark_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:birch_light_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:cherry_dark_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:cherry_light_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:crimson_dark_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:crimson_light_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:dark_oak_dark_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:dark_oak_light_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:jungle_dark_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:jungle_light_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:mangrove_dark_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:mangrove_light_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:oak_dark_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:oak_light_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:pale_oak_dark_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:pale_oak_light_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:spruce_dark_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:spruce_light_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:warped_dark_ceiling_fan": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:warped_light_ceiling_fan": {
       "neoforge:conditions": [
         {
           "type": "neoforge:mod_loaded",
@@ -3265,6 +3586,127 @@
         {
           "type": "neoforge:mod_loaded",
           "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:acacia_cutting_board": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:birch_cutting_board": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:cherry_cutting_board": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:crimson_cutting_board": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:dark_oak_cutting_board": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:jungle_cutting_board": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:mangrove_cutting_board": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:oak_cutting_board": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:pale_oak_cutting_board": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:spruce_cutting_board": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:warped_cutting_board": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
         }
       ],
       "value": {
@@ -5284,6 +5726,28 @@
         "facingOffset": 180
       }
     },
+    "refurbished_furniture:light_blue_kitchen_drawer": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:light_gray_kitchen_drawer": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
     "refurbished_furniture:lime_kitchen_drawer": {
       "neoforge:conditions": [
         {
@@ -5472,6 +5936,72 @@
       }
     },
     "refurbished_furniture:yellow_kitchen_drawer": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:dark_freezer": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:light_freezer": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:dark_fridge": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:light_fridge": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:dark_microwave": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:light_microwave": {
       "neoforge:conditions": [
         {
           "type": "neoforge:mod_loaded",
@@ -5988,6 +6518,50 @@
         "facingOffset": 180
       }
     },
+    "refurbished_furniture:light_blue_basin": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:light_blue_kitchen_sink": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:light_gray_basin": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:light_gray_kitchen_sink": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
     "refurbished_furniture:lime_basin": {
       "neoforge:conditions": [
         {
@@ -6340,6 +6914,28 @@
         "facingOffset": 180
       }
     },
+    "refurbished_furniture:light_blue_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:light_gray_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
     "refurbished_furniture:lime_sofa": {
       "neoforge:conditions": [
         {
@@ -6418,6 +7014,50 @@
       }
     },
     "refurbished_furniture:yellow_sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:dark_stove": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:light_stove": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:dark_toaster": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:light_toaster": {
       "neoforge:conditions": [
         {
           "type": "neoforge:mod_loaded",
@@ -6550,6 +7190,28 @@
       }
     },
     "refurbished_furniture:jungle_toilet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:light_blue_toilet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:light_gray_toilet": {
       "neoforge:conditions": [
         {
           "type": "neoforge:mod_loaded",
@@ -6693,6 +7355,17 @@
       }
     },
     "refurbished_furniture:yellow_toilet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "refurbished_furniture:television": {
       "neoforge:conditions": [
         {
           "type": "neoforge:mod_loaded",

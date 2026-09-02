@@ -186,6 +186,22 @@
       "required": false
     },
     {
+      "id": "refurbished_furniture:light_blue_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_blue_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_gray_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_gray_kitchen_sink",
+      "required": false
+    },
+    {
       "id": "refurbished_furniture:lime_basin",
       "required": false
     },

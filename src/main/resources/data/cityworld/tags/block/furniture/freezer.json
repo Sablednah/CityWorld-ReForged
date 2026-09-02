@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "refurbished_furniture:dark_freezer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_freezer",
+      "required": false
+    }
+  ]
+}

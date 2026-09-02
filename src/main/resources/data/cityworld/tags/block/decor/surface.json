@@ -66,6 +66,14 @@
       "required": false
     },
     {
+      "id": "refurbished_furniture:light_blue_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_gray_lamp",
+      "required": false
+    },
+    {
       "id": "refurbished_furniture:lime_lamp",
       "required": false
     },

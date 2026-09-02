@@ -474,6 +474,22 @@
       "required": false
     },
     {
+      "id": "refurbished_furniture:light_blue_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_blue_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_gray_kitchen_cabinetry",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_gray_kitchen_storage_cabinet",
+      "required": false
+    },
+    {
       "id": "refurbished_furniture:lime_kitchen_cabinetry",
       "required": false
     },

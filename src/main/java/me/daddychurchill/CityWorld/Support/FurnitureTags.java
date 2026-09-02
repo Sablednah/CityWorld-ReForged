@@ -44,6 +44,18 @@ public final class FurnitureTags {
     public static final TagKey<Block> BATH = key("bath");
     public static final TagKey<Block> LAMP = key("lamp");
 
+    // the appliance round: Refurbished's household pieces. The fridge "double block" is a fridge
+    // with a separate freezer block stacked on top.
+    public static final TagKey<Block> CEILING_FAN = key("ceiling_fan");
+    public static final TagKey<Block> TV = key("tv");
+    public static final TagKey<Block> FRIDGE = key("fridge");
+    public static final TagKey<Block> FREEZER = key("freezer");
+    public static final TagKey<Block> STOVE = key("stove");
+    public static final TagKey<Block> MICROWAVE = key("microwave");
+    public static final TagKey<Block> TOASTER = key("toaster");
+    public static final TagKey<Block> CUTTING_BOARD = key("cutting_board");
+    public static final TagKey<Block> BIN = key("bin");
+
     /**
      * The three decoration pools — placement classes, not furniture roles. {@code FLOOR_DECOR}
      * stands on the ground, {@code SURFACE_DECOR} belongs on a tabletop (the placer puts a table

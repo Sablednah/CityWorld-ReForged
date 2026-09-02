@@ -402,6 +402,14 @@
       "required": false
     },
     {
+      "id": "refurbished_furniture:light_blue_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_gray_stool",
+      "required": false
+    },
+    {
       "id": "refurbished_furniture:lime_stool",
       "required": false
     },

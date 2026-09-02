@@ -119,10 +119,20 @@ ROLES = {
     "lamp": "lamp",
     "drawer": "drawer", "kitchen_drawer": "drawer",
     "wardrobe": "wardrobe",
+    # the appliance round (owner-scouted, Refurbished): the fridge "double block" is really a
+    # fridge with a freezer stacked on top — two separate blocks, placed as a stack
+    "ceiling_fan": "ceiling_fan",
+    "television": "tv",
+    "fridge": "fridge", "freezer": "freezer",
+    "stove": "stove", "microwave": "microwave", "toaster": "toaster",
+    "cutting_board": "cutting_board",
+    "recycle_bin": "bin",
 }
 
-# Blocks whose name matches a role but which are not the thing itself.
-EXCLUDE = re.compile(r"(item|slab|stair|door|trapdoor|wall|fence|pane|_top$|_bottom$|light_)")
+# Blocks whose name matches a role but which are not the thing itself. ⚠ This used to contain a
+# bare `light_`, which silently ate every `light_fridge`/`light_stove`/`light_ceiling_fan` — half
+# of Refurbished's appliance palette. Only the lightswitch itself needs excluding.
+EXCLUDE = re.compile(r"(item|slab|stair|door|trapdoor|wall|fence|pane|_top$|_bottom$|lightswitch)")
 
 
 def role_of(name: str):
