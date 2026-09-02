@@ -53,7 +53,9 @@ DATAMAP = os.path.join(ROOT, "data_maps", "block", "furniture.json")
 FACING_OFFSET = {
     ("mcwfurnitures", "chair"): 0,
     ("mcwfurnitures", "striped_chair"): 0,
-    ("mcwfurnitures", "modern_chair"): 180,
+    # modern_chair: 180 was measured from a TRUNCATED element dump and the playtest falsified it —
+    # the tall (y18) backrest posts sit at +X like the classic chair. All mcw chairs are 0.
+    ("mcwfurnitures", "modern_chair"): 0,
     ("mcwfurnitures", "sofa"): 270,       # couch family maps to the sofa role
     ("mcwfurnitures", "counter"): 180,
     ("mcwfurnitures", "drawer_counter"): 180,
@@ -96,7 +98,8 @@ DECOR = {
               "minecraft:potted_azalea_bush", "minecraft:potted_bamboo"],
     "surface": ["minecraft:candle", "minecraft:white_candle", "minecraft:orange_candle",
                 "minecraft:light_gray_candle", "minecraft:red_candle", "minecraft:lantern",
-                "minecraft:soul_lantern", "minecraft:potted_fern", "minecraft:decorated_pot"],
+                "minecraft:soul_lantern", "minecraft:potted_fern", "minecraft:decorated_pot",
+                "minecraft:amethyst_cluster"],  # owner: "good decor for a hippy's table, not the floor"
     "wall": ["minecraft:wall_torch", "minecraft:soul_wall_torch", "minecraft:glow_lichen"],
 }
 
