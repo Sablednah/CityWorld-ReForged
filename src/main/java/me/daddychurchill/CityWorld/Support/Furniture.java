@@ -156,6 +156,8 @@ public final class Furniture {
         Material table = FurnitureTags.pick(FurnitureTags.TABLE, odds);
         chunk.setBlock(x, y, z, table != null ? table : TABLE_TOPS[odds.getRandomInt(TABLE_TOPS.length)]);
         chunk.reconnect(x, y, z);
+        if (chunk.isEmpty(x, y, z))
+            return false; // the table did not take (fell, broke) — never leave a floating topper
         chunk.setBlock(x, y + 1, z, lamp);
         return true;
     }
@@ -170,7 +172,29 @@ public final class Furniture {
         Material table = FurnitureTags.pick(FurnitureTags.TABLE, odds);
         chunk.setBlock(x, y, z, table != null ? table : TABLE_TOPS[odds.getRandomInt(TABLE_TOPS.length)]);
         chunk.reconnect(x, y, z);
+        if (chunk.isEmpty(x, y, z))
+            return; // never leave a floating topper
         chunk.setBlock(x, y + 1, z, piece);
+    }
+
+    /**
+     * One piece of wall decoration for a room — art (painting/item frame) or a sconce on a random
+     * wall-backed cell. This is the direct pass the rooms call; the accent switch also rolls it,
+     * but at 1-in-12-of-40% nothing was ever visible in playtest.
+     */
+    public static void wallDecor(RealBlocks chunk, Odds odds, int x1, int x2, int y, int z1, int z2) {
+        if (!odds.playOdds(0.6))
+            return;
+        List<int[]> cells = new ArrayList<>();
+        for (int cx = x1 + 1; cx <= x2 - 1; cx++)
+            for (int cz = z1 + 1; cz <= z2 - 1; cz++)
+                if (chunk.isEmpty(cx, y + 2, cz) && wallwardOrNull(chunk, cx, y + 2, cz) != null)
+                    cells.add(new int[] { cx, cz });
+        if (cells.isEmpty())
+            return;
+        int[] c = cells.get(odds.getRandomInt(cells.size()));
+        if (!wallArt(chunk, odds, c[0], y, c[1]))
+            wallSconce(chunk, odds, c[0], y, c[1]);
     }
 
     /** What ends up inside an item frame — the "nice things" of the owner's brief. */
@@ -193,6 +217,9 @@ public final class Furniture {
     private static boolean wallArt(RealBlocks chunk, Odds odds, int x, int y, int z) {
         BlockFace out = wallwardOrNull(chunk, x, y + 2, z);
         if (out == null || !chunk.isEmpty(x, y + 2, z))
+            return false;
+        // the backing must be a sturdy full face — art hung on window glass pops off on first tick
+        if (!chunk.isSturdyFace(x - out.getModX(), y + 2, z - out.getModZ(), out))
             return false;
         me.daddychurchill.CityWorld.compat.Location at = chunk.getBlockLocation(x, y + 2, z);
         if (!(at.getLevel() instanceof net.minecraft.world.level.ServerLevelAccessor server))
@@ -309,8 +336,10 @@ public final class Furniture {
     /** Full-block "table top" surfaces — an item set on top of these sits flush, unlike a bottom slab which
      *  leaves the candle/plant floating half a block above it (the reason coffee-table clutter looked
      *  levitated). Copper grate / scaffolding read as light modern side tables. */
+    // no SCAFFOLDING here: it collapses without support, leaving whatever stood on it floating —
+    // the free-floating candle of playtest round 4
     private static final Material[] TABLE_TOPS = { Material.COPPER_GRATE, Material.EXPOSED_COPPER_GRATE,
-            Material.SCAFFOLDING, Material.SMOOTH_QUARTZ, Material.OAK_PLANKS };
+            Material.SMOOTH_QUARTZ, Material.OAK_PLANKS };
 
     public static void sideTable(RealBlocks chunk, Odds odds, int x, int y, int z) {
         if (!clearFloor(chunk, x, y, z))
@@ -369,7 +398,8 @@ public final class Furniture {
                             : FurnitureTags.pick(FurnitureTags.CUTTING_BOARD, odds);
             if (topper != null && chunk.isEmpty(x1 + 2, y + 1, z) && !chunk.isEmpty(x1 + 2, y, z))
                 chunk.setBlock(x1 + 2, y + 1, z, topper, FurnitureTags.facingFor(topper, BlockFace.SOUTH));
-            accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+            wallDecor(chunk, odds, x1, x2, y, z1, z2);
+        accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
             return;
         }
         chunk.setChest(generator, x1 + 1, y, z, BlockFace.SOUTH, odds, generator.lootProvider,
@@ -378,6 +408,7 @@ public final class Furniture {
             chunk.setCauldron(x1 + 2, y, z, odds);
         if (x1 + 3 <= x2 - 1)
             placeIfClear(chunk, x1 + 3, y, z, modern(generator) ? Material.SMOKER : Material.FURNACE, BlockFace.SOUTH);
+        wallDecor(chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
@@ -409,7 +440,8 @@ public final class Furniture {
                 }
             }
             ceilingPiece(chunk, odds, cx, y, cz); // a fan or lantern over the dining table
-            accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+            wallDecor(chunk, odds, x1, x2, y, z1, z2);
+        accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
             return;
         }
         if (clearFloor(chunk, cx, y, cz)) {
@@ -420,6 +452,7 @@ public final class Furniture {
         // backrests AWAY from the table so the diners face it
         placeIfClear(chunk, cx - 1, y, cz, Material.OAK_STAIRS, BlockFace.WEST);
         placeIfClear(chunk, cx + 1, y, cz, Material.OAK_STAIRS, BlockFace.EAST);
+        wallDecor(chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
@@ -454,7 +487,8 @@ public final class Furniture {
             }
             ceilingPiece(chunk, odds, cx, y, cz);
             if (placed) {
-                accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+                wallDecor(chunk, odds, x1, x2, y, z1, z2);
+        accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
                 return;
             }
         }
@@ -467,6 +501,7 @@ public final class Furniture {
             sideTable(chunk, odds, cx, y, z1 + 2);
         else if (couchAlongZ(chunk, x1 + 1, y, z1, z2, BlockFace.WEST))
             sideTable(chunk, odds, x1 + 2, y, cz);
+        wallDecor(chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
@@ -498,14 +533,18 @@ public final class Furniture {
         // off the door walls and stops it landing in a doorway (the old fixed NW corner did that a lot).
         int dN = z1, dS = 15 - z2, dW = x1, dE = 15 - x2;
         int best = Math.min(Math.min(dN, dS), Math.min(dW, dE));
-        if (best == dN)
-            placeBed(chunk, bed, midX, y, z1 + 1, BlockFace.SOUTH); // head to north wall
-        else if (best == dS)
-            placeBed(chunk, bed, midX, y, z2 - 2, BlockFace.NORTH); // head to south wall
-        else if (best == dW)
-            placeBed(chunk, bed, x1 + 1, y, midZ, BlockFace.EAST); // head to west wall
-        else
-            placeBed(chunk, bed, x2 - 2, y, midZ, BlockFace.WEST); // head to east wall
+        // Try walls nearest the chunk edge first, but fall through to the others — now that
+        // furnishing runs after the doors are cut, clearFloor refuses doorway approaches, and a
+        // bed refused its first wall must get another rather than not existing (or, worse, the
+        // old behaviour: parking in front of the door).
+        record Wall(int dist, int bx, int bz, BlockFace facing) {}
+        java.util.List<Wall> tries = new ArrayList<>(List.of(
+                new Wall(dN, midX, z1 + 1, BlockFace.SOUTH), new Wall(dS, midX, z2 - 2, BlockFace.NORTH),
+                new Wall(dW, x1 + 1, midZ, BlockFace.EAST), new Wall(dE, x2 - 2, midZ, BlockFace.WEST)));
+        tries.sort(java.util.Comparator.comparingInt(Wall::dist));
+        for (Wall w : tries)
+            if (placeBed(chunk, bed, w.bx(), y, w.bz(), w.facing()))
+                break;
 
         chunk.setChest(generator, x1 + 1, y, z1 + 1, BlockFace.SOUTH, odds, generator.lootProvider,
                 LootProvider.LootLocation.NIGHTSTAND, Material.BARREL); // a nightstand where it fits
@@ -542,6 +581,7 @@ public final class Furniture {
                 floorLampIfClear(chunk, odds, x2 - 1, y, z2 - 1);
         }
         ceilingPiece(chunk, odds, midX, y, midZ);
+        wallDecor(chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
@@ -600,6 +640,7 @@ public final class Furniture {
         if (modern(generator))
             rug(chunk, odds, cx, y, cz);
         ceilingPiece(chunk, odds, cx, y, cz);
+        wallDecor(chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
@@ -677,22 +718,24 @@ public final class Furniture {
                     placeFacing(chunk, wallX, y, z1 + along, basin,
                             best == dW ? BlockFace.EAST : BlockFace.WEST);
             }
+            if (basin != null)
+                along++;
             if (toilet != null) {
-                // opposite side to the bath wall where possible, centred along it
-                if (alongX) {
-                    int tz = Math.max(z1 + 2, (z1 + z2) / 2);
-                    if (tz <= z2 - 1)
-                        placeFacing(chunk, x2 - 1, y, tz, toilet, BlockFace.WEST);
-                } else {
-                    int tx = Math.max(x1 + 2, (x1 + x2) / 2);
-                    if (tx <= x2 - 1)
-                        placeFacing(chunk, tx, y, z2 - 1, toilet, BlockFace.NORTH);
-                }
+                // the toilet JOINS the run — next along the wall after the basin, fronting into
+                // the room like everything else. Standing it on the far wall facing along the row
+                // read as "toilet staring at the sink" (playtested, twice).
+                if (alongX && x1 + along <= x2 - 1)
+                    placeFacing(chunk, x1 + along, y, wallZ, toilet,
+                            best == dN ? BlockFace.SOUTH : BlockFace.NORTH);
+                else if (!alongX && z1 + along <= z2 - 1)
+                    placeFacing(chunk, wallX, y, z1 + along, toilet,
+                            best == dW ? BlockFace.EAST : BlockFace.WEST);
             }
             int bx = (x1 + x2) / 2, bz = (z1 + z2) / 2;
             if (clearFloor(chunk, bx, y, bz))
                 chunk.setBlock(bx, y, bz, odds.flipCoin() ? Material.WHITE_CARPET : Material.LIGHT_BLUE_CARPET);
-            accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+            wallDecor(chunk, odds, x1, x2, y, z1, z2);
+        accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
             return;
         }
         if (clearFloor(chunk, x1 + 1, y, z1 + 1))
@@ -717,6 +760,7 @@ public final class Furniture {
         int mx = (x1 + x2) / 2, mz = (z1 + z2) / 2; // a tiled bathmat
         if (clearFloor(chunk, mx, y, mz))
             chunk.setBlock(mx, y, mz, odds.flipCoin() ? Material.WHITE_CARPET : Material.LIGHT_BLUE_CARPET);
+        wallDecor(chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
@@ -746,6 +790,7 @@ public final class Furniture {
         Material shelf = FurnitureTags.pick(FurnitureTags.BOOKSHELF, odds);
         if (shelf != null)
             placeFacing(chunk, x1 + 1, y, z1 + 1, shelf, BlockFace.SOUTH);
+        wallDecor(chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
@@ -798,9 +843,14 @@ public final class Furniture {
 
     // --- checks --------------------------------------------------------------------------------
 
-    /** Air at (x,y,z) and above, solid underfoot — a genuinely empty spot to stand a piece on. */
+    /**
+     * Air at (x,y,z) and above, solid underfoot, and not the approach to a door — a genuinely
+     * usable spot. The door check is why furnishing runs after the walls are drawn: a bed or a
+     * wardrobe parked in front of a doorway blocked it (playtested, twice).
+     */
     private static boolean clearFloor(RealBlocks chunk, int x, int y, int z) {
-        return chunk.isEmpty(x, y, z) && chunk.isEmpty(x, y + 1, z) && !chunk.isEmpty(x, y - 1, z);
+        return chunk.isEmpty(x, y, z) && chunk.isEmpty(x, y + 1, z) && !chunk.isEmpty(x, y - 1, z)
+                && !chunk.isBesideDoor(x, y, z);
     }
 
     /** Whether a horizontal neighbour is solid — a piece here backs onto a wall/shelf, not marooned. */

@@ -6848,6 +6848,182 @@
         "facingOffset": 180
       }
     },
+    "mcwfurnitures:black_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:blue_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:brown_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:cyan_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:gray_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:green_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:light_blue_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:light_gray_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:lime_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:magenta_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:orange_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:pink_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:purple_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:red_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:white_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
+    "mcwfurnitures:yellow_couch": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "mcwfurnitures"
+        }
+      ],
+      "value": {
+        "facingOffset": 270
+      }
+    },
     "refurbished_furniture:black_sofa": {
       "neoforge:conditions": [
         {
