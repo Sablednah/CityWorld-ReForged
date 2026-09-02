@@ -202,17 +202,29 @@ public final class Furniture {
             return false;
         net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(at.getBlockX(), at.getBlockY(),
                 at.getBlockZ());
+        // ⚠ Never call Painting.create or survives() here: both run collision and entity queries
+        // against the real ServerLevel, and from the worldgen thread that blocks on unloaded
+        // chunks until the watchdog kills the server (observed, not hypothetical). We verified
+        // the wall and the air cell ourselves; construct directly and only ever hang 1x1 pieces,
+        // which is exactly the space we checked.
         if (odds.flipCoin()) {
-            var painting = net.minecraft.world.entity.decoration.painting.Painting.create(server.getLevel(), pos,
-                    dir);
-            if (painting.isEmpty() || !painting.get().survives())
+            var variants = new java.util.ArrayList<net.minecraft.core.Holder<net.minecraft.world.entity.decoration.painting.PaintingVariant>>();
+            server.getLevel().registryAccess()
+                    .lookupOrThrow(net.minecraft.core.registries.Registries.PAINTING_VARIANT)
+                    .getTagOrEmpty(net.minecraft.tags.PaintingVariantTags.PLACEABLE)
+                    .forEach(holder -> {
+                        if (holder.value().width() == 1 && holder.value().height() == 1)
+                            variants.add(holder);
+                    });
+            if (variants.isEmpty())
                 return false;
-            server.addFreshEntityWithPassengers(painting.get());
+            var painting = new net.minecraft.world.entity.decoration.painting.Painting(server.getLevel(), pos, dir,
+                    variants.get(odds.getRandomInt(variants.size())));
+            server.addFreshEntityWithPassengers(painting);
             return true;
         }
         var frame = new net.minecraft.world.entity.decoration.ItemFrame(server.getLevel(), pos, dir);
-        if (!frame.survives())
-            return false;
+        frame.setSilent(true); // setItem would otherwise playSound on the real level mid-worldgen
         frame.setItem(new net.minecraft.world.item.ItemStack(FRAMED[odds.getRandomInt(FRAMED.length)]), false);
         server.addFreshEntityWithPassengers(frame);
         return true;
