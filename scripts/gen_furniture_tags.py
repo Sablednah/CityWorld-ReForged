@@ -131,6 +131,10 @@ ROLES = {
     "stove": "stove", "microwave": "microwave", "toaster": "toaster",
     "cutting_board": "cutting_board",
     "recycle_bin": "bin",
+    # the interiors round: offices, warehouses and workshops draw these
+    "computer": "computer",
+    "crate": "crate",
+    "workbench": "workbench",
 }
 
 # Blocks whose name matches a role but which are not the thing itself. ⚠ This used to contain a

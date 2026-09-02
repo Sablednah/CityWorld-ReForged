@@ -2624,6 +2624,17 @@
         "facingOffset": 180
       }
     },
+    "refurbished_furniture:computer": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
     "mcwfurnitures:acacia_counter": {
       "neoforge:conditions": [
         {
@@ -8276,6 +8287,17 @@
       ],
       "value": {
         "facingOffset": 270
+      }
+    },
+    "refurbished_furniture:workbench": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "refurbished_furniture"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
       }
     }
   }

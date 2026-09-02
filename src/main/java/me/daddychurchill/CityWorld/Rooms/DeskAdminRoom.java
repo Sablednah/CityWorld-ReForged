@@ -22,28 +22,28 @@ public class DeskAdminRoom extends DeskRoom {
 		switch (sideWithWall) {
 		default:
 		case NORTH:
-			chunk.setTable(x, x + 1, y, z, z + 2, tableLeg, tableTop);
+			drawDesk(generator, chunk, odds, x, x + 1, y, z, z + 2, sideWithWall.getOppositeFace());
 			chunk.setBlock(x, y, z + 2, Material.BOOKSHELF);
 			chunk.setBlock(x, y + 1, z + 2, tableTop);
-			chunk.setBlock(x + 1, y, z + 1, Material.BIRCH_STAIRS, BlockFace.EAST);
+			drawSeat(chunk, odds, x + 1, y, z + 1, BlockFace.EAST);
 			break;
 		case SOUTH:
-			chunk.setTable(x + 2, x + 3, y, z + 1, z + 3, tableLeg, tableTop);
+			drawDesk(generator, chunk, odds, x + 2, x + 3, y, z + 1, z + 3, sideWithWall.getOppositeFace());
 			chunk.setBlock(x + 2, y, z, Material.BOOKSHELF);
 			chunk.setBlock(x + 2, y + 1, z, tableTop);
-			chunk.setBlock(x + 1, y, z + 1, Material.BIRCH_STAIRS, BlockFace.WEST);
+			drawSeat(chunk, odds, x + 1, y, z + 1, BlockFace.WEST);
 			break;
 		case WEST:
-			chunk.setTable(x, x + 2, y, z + 2, z + 3, tableLeg, tableTop);
+			drawDesk(generator, chunk, odds, x, x + 2, y, z + 2, z + 3, sideWithWall.getOppositeFace());
 			chunk.setBlock(x + 2, y, z + 2, Material.BOOKSHELF);
 			chunk.setBlock(x + 2, y + 1, z + 2, tableTop);
-			chunk.setBlock(x + 1, y, z + 1, Material.BIRCH_STAIRS, BlockFace.NORTH);
+			drawSeat(chunk, odds, x + 1, y, z + 1, BlockFace.NORTH);
 			break;
 		case EAST:
-			chunk.setTable(x + 1, x + 3, y, z, z + 1, tableLeg, tableTop);
+			drawDesk(generator, chunk, odds, x + 1, x + 3, y, z, z + 1, sideWithWall.getOppositeFace());
 			chunk.setBlock(x, y, z, Material.BOOKSHELF);
 			chunk.setBlock(x, y + 1, z, tableTop);
-			chunk.setBlock(x + 1, y, z + 1, Material.BIRCH_STAIRS, BlockFace.SOUTH);
+			drawSeat(chunk, odds, x + 1, y, z + 1, BlockFace.SOUTH);
 			break;
 		}
 	}

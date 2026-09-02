@@ -26,6 +26,17 @@ public class MuseumBuildingLot extends FinishedBuildingLot {
 		interiorStyle = InteriorStyle.EMPTY;
 	}
 
+	// museums stood empty before the civic-interiors round
+	private static final me.daddychurchill.CityWorld.Plugins.RoomProvider contentsExhibits =
+			new me.daddychurchill.CityWorld.Rooms.Populators.MuseumWithExhibits();
+
+	@Override
+	public me.daddychurchill.CityWorld.Plugins.RoomProvider roomProviderForFloor(
+			me.daddychurchill.CityWorld.CityWorldGenerator generator,
+			me.daddychurchill.CityWorld.Support.SupportBlocks chunk, int floor, int floorY) {
+		return contentsExhibits;
+	}
+
 	@Override
 	public PlatLot newLike(PlatMap platmap, int chunkX, int chunkZ) {
 		return new MuseumBuildingLot(platmap, chunkX, chunkZ);

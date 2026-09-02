@@ -19,9 +19,11 @@ public class OfficeBuildingLot extends FinishedBuildingLot {
 	private static final RoomProvider contentsCubes = new OfficeWithCubicles();
 	private static final RoomProvider contentsRooms = new OfficeWithRooms();
 	private static final RoomProvider contentsLounges = new OfficeWithLounges();
+	private static final RoomProvider contentsFlats =
+			new me.daddychurchill.CityWorld.Rooms.Populators.ApartmentWithFlats();
 
 	public enum ContentStyle {
-		RANDOM, EMPTY, OFFICES, CUBICLES
+		RANDOM, EMPTY, OFFICES, CUBICLES, APARTMENTS
 	}
 
 	protected ContentStyle contentStyle;
@@ -48,13 +50,17 @@ public class OfficeBuildingLot extends FinishedBuildingLot {
 		case 9:
 			return ContentStyle.RANDOM;
 		default:
-			return ContentStyle.EMPTY;
+			// residential towers: apartment blocks were never a thing before the interiors round
+			return chunkOdds.flipCoin() ? ContentStyle.APARTMENTS : ContentStyle.EMPTY;
 		}
 	}
 
 	@Override
 	public RoomProvider roomProviderForFloor(CityWorldGenerator generator, SupportBlocks chunk, int floor, int floorY) {
 		switch (contentStyle) {
+		case APARTMENTS:
+			// ground floor is the lobby; everything above is flats
+			return floor == 0 ? contentsLounges : contentsFlats;
 		case OFFICES:
 			switch (chunkOdds.getRandomInt(10)) {
 			case 1:

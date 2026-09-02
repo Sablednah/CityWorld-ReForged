@@ -22,6 +22,25 @@ public class GovernmentBuildingLot extends FinishedBuildingLot {
 
 		depth = 0;
 		height = chunkOdds.calcRandomRange(2, 4);
+
+		// which civic institution is this? one flavour per building, so every floor agrees
+		switch (chunkOdds.getRandomInt(3)) {
+		case 0 -> civicRooms = contentsCityHall;
+		case 1 -> civicRooms = contentsCourthouse;
+		default -> civicRooms = contentsSchool;
+		}
+	}
+
+	// Government buildings stood entirely EMPTY before the civic-interiors round — the default
+	// room provider is EmptyWithNothing. Each building is a city hall, a courthouse or a school.
+	private static final RoomProvider contentsCityHall = new me.daddychurchill.CityWorld.Rooms.Populators.CivicWithOffices();
+	private static final RoomProvider contentsCourthouse = new me.daddychurchill.CityWorld.Rooms.Populators.CivicWithCourtrooms();
+	private static final RoomProvider contentsSchool = new me.daddychurchill.CityWorld.Rooms.Populators.CivicWithClassrooms();
+	private RoomProvider civicRooms;
+
+	@Override
+	public RoomProvider roomProviderForFloor(CityWorldGenerator generator, SupportBlocks chunk, int floor, int floorY) {
+		return civicRooms;
 	}
 
 	@Override

@@ -17,27 +17,28 @@ public class LoungeCouchRoom extends LoungeRoom {
 	@Override
 	public void drawFixture(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int floor, int x, int y, int z,
 			int width, int height, int depth, BlockFace sideWithWall, Material materialWall, Material materialGlass) {
+		Material sofa = pooledSofa(odds);
 		int tx = x + width / 2, tz = z + depth / 2; // a coffee table in the middle of the room
 		switch (sideWithWall) {
 		default:
 		case NORTH:
 			for (int x1 = x; x1 < x + width; x1++)
-				chunk.setBlock(x1, y, z, Material.BIRCH_STAIRS, BlockFace.NORTH);
+				drawCouchSeat(chunk, sofa, x1, y, z, BlockFace.NORTH);
 			tz = z + 1;
 			break;
 		case SOUTH:
 			for (int x1 = x; x1 < x + width; x1++)
-				chunk.setBlock(x1, y, z + depth - 1, Material.BIRCH_STAIRS, BlockFace.SOUTH);
+				drawCouchSeat(chunk, sofa, x1, y, z + depth - 1, BlockFace.SOUTH);
 			tz = z + depth - 2;
 			break;
 		case WEST:
 			for (int z1 = z; z1 < z + depth; z1++)
-				chunk.setBlock(x, y, z1, Material.BIRCH_STAIRS, BlockFace.WEST);
+				drawCouchSeat(chunk, sofa, x, y, z1, BlockFace.WEST);
 			tx = x + 1;
 			break;
 		case EAST:
 			for (int z1 = z; z1 < z + depth; z1++)
-				chunk.setBlock(x + width - 1, y, z1, Material.BIRCH_STAIRS, BlockFace.EAST);
+				drawCouchSeat(chunk, sofa, x + width - 1, y, z1, BlockFace.EAST);
 			tx = x + width - 2;
 			break;
 		}

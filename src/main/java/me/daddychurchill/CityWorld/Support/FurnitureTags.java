@@ -55,6 +55,9 @@ public final class FurnitureTags {
     public static final TagKey<Block> TOASTER = key("toaster");
     public static final TagKey<Block> CUTTING_BOARD = key("cutting_board");
     public static final TagKey<Block> BIN = key("bin");
+    public static final TagKey<Block> COMPUTER = key("computer");
+    public static final TagKey<Block> CRATE = key("crate");
+    public static final TagKey<Block> WORKBENCH = key("workbench");
 
     /**
      * The three decoration pools — placement classes, not furniture roles. {@code FLOOR_DECOR}

@@ -16,16 +16,17 @@ public class LoungeQuadRoom extends LoungeRoom {
 	@Override
 	public void drawFixture(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int floor, int x, int y, int z,
 			int width, int height, int depth, BlockFace sideWithWall, Material materialWall, Material materialGlass) {
+		Material sofa = pooledSofa(odds);
 
-		chunk.setBlock(x + 1, y, z, Material.BIRCH_STAIRS, BlockFace.NORTH);
-		chunk.setBlock(x + 1, y, z + 2, Material.BIRCH_STAIRS, BlockFace.SOUTH);
-		chunk.setBlock(x, y, z + 1, Material.BIRCH_STAIRS, BlockFace.WEST);
-		chunk.setBlock(x + 2, y, z + 1, Material.BIRCH_STAIRS, BlockFace.EAST);
+		drawCouchSeat(chunk, sofa, x + 1, y, z, BlockFace.NORTH);
+		drawCouchSeat(chunk, sofa, x + 1, y, z + 2, BlockFace.SOUTH);
+		drawCouchSeat(chunk, sofa, x, y, z + 1, BlockFace.WEST);
+		drawCouchSeat(chunk, sofa, x + 2, y, z + 1, BlockFace.EAST);
 
 		Material tableLeg = getTableLeg(odds);
 		Material tableTop = getTableTop(odds);
 
-		chunk.setTable(x + 1, y, z + 1, tableLeg, tableTop);
+		drawTable(generator, chunk, odds, x + 1, y, z + 1);
 	}
 
 }
