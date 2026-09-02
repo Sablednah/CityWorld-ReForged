@@ -86,6 +86,19 @@ hanging lanterns (chandelier already hangs lanterns — reuse that). Macaw wardr
 connect **vertically** (`connection=bottom/top`, measured earlier) as well as horizontally —
 a 2-tall wardrobe stack is possible where ceilings allow.
 
+**The interiors round (overnight 2026-09-02→03, `6e1b62e`).** The Rooms system (42 room types +
+per-building populators, inherited from upstream) predates the pools; 17 room types were converted
+to pooled primitives on `PlatRoom` (`drawDesk`/`drawTable`/`drawSeat`/`drawCouchSeat` — stair
+fallback keeps the classic look, and `drawCouchSeat` takes the room's single sofa pick because
+PlatRooms are SHARED instances, no state allowed). New roles: computer/crate/workbench. New rooms:
+ClassRoom, CourtRoom, ExhibitRoom, WorkshopRoom, BedNookRoom. **Government buildings (previously
+EMPTY — the BuildingLot default provider is EmptyWithNothing) are now city halls / courthouses /
+schools, one flavour per building; museums get exhibit floors; factories get workshops; warehouse
+stacks blend crates; ~half of formerly-empty office towers are residential (lobby + flats).**
+LoungeTVRoom honours upstream's 12-year-old `// TODO add picture to wall` with a television.
+Not touched: UnfinishedBuildingLot (construction props idea remains open) and HospitalLot (has its
+own campus interiors).
+
 **Queued from round 2, not yet built:**
 - **Furnish after doors** — the wall-nearest-edge trick dodges most door clashes, but the real fix
   is ordering: find where the colonial house cuts doors vs. styles rooms and furnish afterwards.
