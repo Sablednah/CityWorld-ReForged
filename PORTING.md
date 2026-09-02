@@ -72,6 +72,12 @@ counters/tables/desks which playtested good); the bath moved to the **window wal
 edge, like beds) because a door cut after furnishing beheaded it; toilet centres on an adjacent wall
 instead of staring at the basin; amethyst is table decor (surface pool) now.
 
+**Owner's accepted order (2026-09-02): 1) bedroom + hallway variance, 2) wall decor pass
+(paintings + item frames with clocks etc.), 3) ceiling pass — Refurbished ships
+`<wood>_dark/light_ceiling_fan` blocks (28 of them; Macaw has none) plus microwaves for kitchen
+surfaces. Add a `furniture/ceiling_fan` role (or `decor/ceiling`) to the generator, measure
+whether fans carry facing, and hang them from room ceilings the way the chandelier does.**
+
 **Queued from round 2, not yet built:**
 - **Furnish after doors** — the wall-nearest-edge trick dodges most door clashes, but the real fix
   is ordering: find where the colonial house cuts doors vs. styles rooms and furnish afterwards.
