@@ -89,15 +89,20 @@ public final class Furniture {
     }
 
     private static void placeAccent(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x, int y, int z) {
-        switch (odds.getRandomInt(10)) {
+        switch (odds.getRandomInt(12)) {
         case 0:
         case 1:
             pottedPlant(chunk, odds, x, y, z);
             break;
         case 2:
-        case 3:
-            floorLamp(chunk, odds, x, y, z);
+        case 3: {
+            // a lamp — a modded one is a TABLE lamp (single block, no facing), so it gets an end
+            // table stood under it; the vanilla fence-and-lantern is genuinely freestanding
+            Material lamp = FurnitureTags.pick(FurnitureTags.LAMP, odds);
+            if (lamp == null || !tableLamp(chunk, odds, x, y, z, lamp))
+                floorLamp(chunk, odds, x, y, z);
             break;
+        }
         case 4:
             chunk.setBlock(x, y, z, Material.DECORATED_POT);
             break;
@@ -116,11 +121,66 @@ public final class Furniture {
                 break;
             pottedPlant(chunk, odds, x, y, z);
             break;
+        case 8:
+            // something mounted on the wall this cell backs onto; open cells get a plant instead
+            if (wallSconce(chunk, odds, x, y, z))
+                break;
+            pottedPlant(chunk, odds, x, y, z);
+            break;
+        case 9:
+            // something that belongs ON a surface, with the surface put underneath it
+            surfacePiece(chunk, odds, x, y, z);
+            break;
         default:
             // amethyst sparkle on the floor
             chunk.setBlock(x, y, z, Material.AMETHYST_CLUSTER, BlockFace.UP);
             break;
         }
+    }
+
+    /**
+     * A table lamp on an end table — the {@code surface} half of the floor/surface split. Uses a
+     * modded table from the pool when one exists (it auto-connects politely), else a flush-top
+     * vanilla block. Returns false if the cell isn't free so the caller can fall back.
+     */
+    private static boolean tableLamp(RealBlocks chunk, Odds odds, int x, int y, int z, Material lamp) {
+        if (!clearFloor(chunk, x, y, z))
+            return false;
+        Material table = FurnitureTags.pick(FurnitureTags.TABLE, odds);
+        chunk.setBlock(x, y, z, table != null ? table : TABLE_TOPS[odds.getRandomInt(TABLE_TOPS.length)]);
+        chunk.reconnect(x, y, z);
+        chunk.setBlock(x, y + 1, z, lamp);
+        return true;
+    }
+
+    /** A piece from the surface pool (candles, lanterns, table lamps…) stood on a table put under it. */
+    private static void surfacePiece(RealBlocks chunk, Odds odds, int x, int y, int z) {
+        Material piece = FurnitureTags.pick(FurnitureTags.SURFACE_DECOR, odds);
+        if (piece == null) {
+            pottedPlant(chunk, odds, x, y, z);
+            return;
+        }
+        Material table = FurnitureTags.pick(FurnitureTags.TABLE, odds);
+        chunk.setBlock(x, y, z, table != null ? table : TABLE_TOPS[odds.getRandomInt(TABLE_TOPS.length)]);
+        chunk.reconnect(x, y, z);
+        chunk.setBlock(x, y + 1, z, piece);
+    }
+
+    /**
+     * A piece from the wall pool mounted at eye height on whichever wall this cell backs onto.
+     * Torch-like blocks face away from the wall; face-attached blocks (glow lichen) attach toward
+     * it — {@code hasFaces()} distinguishes, since the two families mean opposite things by the
+     * same parameter.
+     */
+    private static boolean wallSconce(RealBlocks chunk, Odds odds, int x, int y, int z) {
+        Material piece = FurnitureTags.pick(FurnitureTags.WALL_DECOR, odds);
+        if (piece == null || !chunk.isEmpty(x, y + 2, z))
+            return false;
+        BlockFace out = wallwardOrNull(chunk, x, y + 2, z);
+        if (out == null)
+            return false;
+        chunk.setBlock(x, y + 2, z, piece, piece.hasFaces() ? out.getOppositeFace() : out);
+        return true;
     }
 
     /** One to three candles clustered on the floor — the odd one a lit birthday cake. */
@@ -152,15 +212,24 @@ public final class Furniture {
 
     /** The face of a solid horizontal neighbour, so a chest/cabinet sits back against a wall facing out. */
     private static BlockFace wallward(RealBlocks chunk, int x, int y, int z) {
+        BlockFace out = wallwardOrNull(chunk, x, y, z);
+        return out != null ? out : BlockFace.NORTH;
+    }
+
+    /** As {@link #wallward}, but {@code null} when no wall backs this cell — for wall-mounted pieces
+     *  that must not be placed floating. */
+    private static BlockFace wallwardOrNull(RealBlocks chunk, int x, int y, int z) {
         if (solid(chunk, x - 1, y, z)) return BlockFace.EAST;
         if (solid(chunk, x + 1, y, z)) return BlockFace.WEST;
         if (solid(chunk, x, y, z - 1)) return BlockFace.SOUTH;
-        return BlockFace.NORTH;
+        if (solid(chunk, x, y, z + 1)) return BlockFace.NORTH;
+        return null;
     }
 
-    /** A potted plant on the floor — instant "someone lives here". */
+    /** A potted plant (or anything else from the floor pool) — instant "someone lives here". */
     public static void pottedPlant(RealBlocks chunk, Odds odds, int x, int y, int z) {
-        chunk.setBlock(x, y, z, PLANTS[odds.getRandomInt(PLANTS.length)]);
+        Material piece = FurnitureTags.pick(FurnitureTags.FLOOR_DECOR, odds);
+        chunk.setBlock(x, y, z, piece != null ? piece : PLANTS[odds.getRandomInt(PLANTS.length)]);
     }
 
     /** A little standing lamp: a fence post topped with a lantern that actually casts light. */
@@ -208,10 +277,12 @@ public final class Furniture {
                 Material piece = cx == mid && sink != null ? sink : counter;
                 if (cx == x1 + 1 && cabinet != null)
                     piece = cabinet;
-                placeIfClear(chunk, cx, y, z, piece, BlockFace.SOUTH);
+                // fronts open SOUTH into the room — placeFacing applies each mod's own idea of
+                // what `facing` means, which is how the doors stopped facing the wall
+                placeFacing(chunk, cx, y, z, piece, BlockFace.SOUTH);
             }
             if (x1 + 3 <= x2 - 1)
-                placeIfClear(chunk, x2 - 1, y, z, modern(generator) ? Material.SMOKER : Material.FURNACE,
+                placeFacing(chunk, x2 - 1, y, z, modern(generator) ? Material.SMOKER : Material.FURNACE,
                         BlockFace.SOUTH);
             accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
             return;
@@ -236,16 +307,20 @@ public final class Furniture {
             // orientation — and the chairs are told which way to LOOK, with FurnitureTags applying
             // whatever rotation that mod's model wants.
             boolean wide = cx + 1 <= x2 - 1;
-            if (clearFloor(chunk, cx, y, cz))
+            if (clearFloor(chunk, cx, y, cz)) {
                 chunk.setBlock(cx, y, cz, table);
-            if (wide && clearFloor(chunk, cx + 1, y, cz))
+                chunk.reconnect(cx, y, cz);
+            }
+            if (wide && clearFloor(chunk, cx + 1, y, cz)) {
                 chunk.setBlock(cx + 1, y, cz, table);
+                chunk.reconnect(cx + 1, y, cz);
+            }
             if (chair != null) {
-                seat(chunk, cx, y, cz - 1, chair, BlockFace.SOUTH);   // north of the table, looking south
-                seat(chunk, cx, y, cz + 1, chair, BlockFace.NORTH);   // south of it, looking north
+                placeFacing(chunk, cx, y, cz - 1, chair, BlockFace.SOUTH);   // north of the table, looking south
+                placeFacing(chunk, cx, y, cz + 1, chair, BlockFace.NORTH);   // south of it, looking north
                 if (wide) {
-                    seat(chunk, cx + 1, y, cz - 1, chair, BlockFace.SOUTH);
-                    seat(chunk, cx + 1, y, cz + 1, chair, BlockFace.NORTH);
+                    placeFacing(chunk, cx + 1, y, cz - 1, chair, BlockFace.SOUTH);
+                    placeFacing(chunk, cx + 1, y, cz + 1, chair, BlockFace.NORTH);
                 }
             }
             accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
@@ -274,11 +349,13 @@ public final class Furniture {
             Material table = FurnitureTags.pick(FurnitureTags.TABLE, odds);
             boolean placed = false;
             for (int sx = x1 + 1; sx <= x2 - 1; sx++)
-                placed |= seat(chunk, sx, y, z1 + 1, sofa, BlockFace.SOUTH);
+                placed |= placeFacing(chunk, sx, y, z1 + 1, sofa, BlockFace.SOUTH);
             if (placed && table != null && z1 + 3 <= z2 - 1)
-                placeIfClear(chunk, cx, y, z1 + 3, table, BlockFace.SOUTH);
+                placeFacing(chunk, cx, y, z1 + 3, table, BlockFace.SOUTH);
             if (lamp != null)
-                placeIfClear(chunk, x2 - 1, y, z2 - 1, lamp, BlockFace.WEST);
+                // modded lamps are TABLE lamps (single block, no facing) — stand one on an end
+                // table in the corner rather than on the floor
+                tableLamp(chunk, odds, x2 - 1, y, z2 - 1, lamp);
             if (placed) {
                 accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
                 return;
@@ -363,14 +440,18 @@ public final class Furniture {
         Material toilet = FurnitureTags.pick(FurnitureTags.TOILET, odds);
         Material basin = FurnitureTags.pick(FurnitureTags.SINK, odds);
         if (bath != null || toilet != null || basin != null) {
-            // A plumbed bathroom: bath in the far corner, basin beside it, toilet against the near wall.
-            // Each is optional on its own, so one mod supplying only some of them still improves things.
-            if (bath != null)
-                placeIfClear(chunk, x1 + 1, y, z1 + 1, bath, BlockFace.SOUTH);
-            if (basin != null && x1 + 2 <= x2 - 1)
-                placeIfClear(chunk, x1 + 2, y, z1 + 1, basin, BlockFace.SOUTH);
+            // A plumbed bathroom: bath along the far wall, basin beside it, toilet against the near
+            // wall. Each is optional on its own, so one mod supplying only some of them still
+            // improves things. The Refurbished baths are two-block (bed-like), so the bath runs
+            // east along the wall and the basin moves over to make room for both halves.
+            int basinX = x1 + 2;
+            if (bath != null && placePiece(chunk, x1 + 1, y, z1 + 1, bath, BlockFace.SOUTH, BlockFace.EAST))
+                basinX = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.partsFor(bath) == 2
+                        ? x1 + 3 : x1 + 2;
+            if (basin != null && basinX <= x2 - 1)
+                placeFacing(chunk, basinX, y, z1 + 1, basin, BlockFace.SOUTH);
             if (toilet != null && z1 + 2 <= z2 - 1)
-                placeIfClear(chunk, x2 - 1, y, z1 + 2, toilet, BlockFace.WEST);
+                placeFacing(chunk, x2 - 1, y, z1 + 2, toilet, BlockFace.WEST);
             int bx = (x1 + x2) / 2, bz = (z1 + z2) / 2;
             if (clearFloor(chunk, bx, y, bz))
                 chunk.setBlock(bx, y, bz, odds.flipCoin() ? Material.WHITE_CARPET : Material.LIGHT_BLUE_CARPET);
@@ -403,13 +484,6 @@ public final class Furniture {
     }
 
     /**
-     * Places a seat so its occupant looks {@code look}.
-     *
-     * <p>The caller says which way the sitter should face and never touches the block's own
-     * {@code facing} — {@link FurnitureTags#facingFor} converts, because the mods disagree about what
-     * {@code facing} means and one of them disagrees with itself between chairs and sofas.
-     */
-    /**
      * A study: a desk against the wall, a chair pulled up to it, and a bookshelf beside it.
      *
      * <p>New with the furniture mods, because CityWorld had no vanilla blocks that read as a desk — a
@@ -423,20 +497,54 @@ public final class Furniture {
             return;
         int cx = (x1 + x2) / 2;
         // Desk against the north wall; the chair sits south of it looking north, into the desk.
-        placeIfClear(chunk, cx, y, z1 + 1, desk, BlockFace.SOUTH);
+        // (Macaw's desks are axis pieces — facing has only north|east — so the front request is a
+        // no-op there and the X-run default happens to be right; Refurbished desks rotate properly.)
+        placeFacing(chunk, cx, y, z1 + 1, desk, BlockFace.SOUTH);
         if (cx + 1 <= x2 - 1)
-            placeIfClear(chunk, cx + 1, y, z1 + 1, desk, BlockFace.SOUTH);
+            placeFacing(chunk, cx + 1, y, z1 + 1, desk, BlockFace.SOUTH);
         Material chair = FurnitureTags.pick(FurnitureTags.CHAIR, odds);
         if (chair != null && z1 + 2 <= z2 - 1)
-            seat(chunk, cx, y, z1 + 2, chair, BlockFace.NORTH);
+            placeFacing(chunk, cx, y, z1 + 2, chair, BlockFace.NORTH);
         Material shelf = FurnitureTags.pick(FurnitureTags.BOOKSHELF, odds);
         if (shelf != null)
-            placeIfClear(chunk, x1 + 1, y, z1 + 1, shelf, BlockFace.SOUTH);
+            placeFacing(chunk, x1 + 1, y, z1 + 1, shelf, BlockFace.SOUTH);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
-    private static boolean seat(RealBlocks chunk, int x, int y, int z, Material piece, BlockFace look) {
-        return placeIfClear(chunk, x, y, z, piece, FurnitureTags.facingFor(piece, look));
+    /**
+     * Places a furniture piece so its <em>front</em> points {@code front} — for a seat, the way the
+     * occupant looks; for a counter or toilet, the way it opens into the room.
+     *
+     * <p>The caller never touches the block's own {@code facing} — {@link FurnitureTags#facingFor}
+     * converts, because the mods disagree about what {@code facing} means and Macaw's disagrees with
+     * itself between families. Vanilla pieces pass through unchanged (no declared offset).
+     *
+     * <p>After placing, {@link SupportBlocks#reconnect} recomputes the piece's connections: the world
+     * only fires shape updates at already-placed neighbours, so without this the <em>last</em> piece
+     * of every run kept its standalone look while its neighbour went legless — the "half table".
+     */
+    private static boolean placeFacing(RealBlocks chunk, int x, int y, int z, Material piece, BlockFace front) {
+        if (!placeIfClear(chunk, x, y, z, piece, FurnitureTags.facingFor(piece, front)))
+            return false;
+        chunk.reconnect(x, y, z);
+        return true;
+    }
+
+    /**
+     * Places a piece that may be declared two-block (the Refurbished baths — bed-like, bottom plus
+     * head along {@code extendDir}). Falls back to a single-block placement when the piece isn't.
+     */
+    private static boolean placePiece(RealBlocks chunk, int x, int y, int z, Material piece, BlockFace front,
+            BlockFace extendDir) {
+        if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.partsFor(piece) == 2) {
+            int hx = x + (extendDir == BlockFace.EAST ? 1 : extendDir == BlockFace.WEST ? -1 : 0);
+            int hz = z + (extendDir == BlockFace.SOUTH ? 1 : extendDir == BlockFace.NORTH ? -1 : 0);
+            if (!clearFloor(chunk, x, y, z) || !clearFloor(chunk, hx, y, hz))
+                return false;
+            chunk.setTwoPartFurniture(x, y, z, piece, extendDir);
+            return true;
+        }
+        return placeFacing(chunk, x, y, z, piece, front);
     }
 
     private static boolean placeIfClear(RealBlocks chunk, int x, int y, int z, Material mat, BlockFace facing) {

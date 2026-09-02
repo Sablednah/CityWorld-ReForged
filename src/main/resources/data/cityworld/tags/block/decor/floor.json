@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "minecraft:decorated_pot",
+      "required": false
+    },
+    {
+      "id": "minecraft:flower_pot",
+      "required": false
+    },
+    {
+      "id": "minecraft:potted_fern",
+      "required": false
+    },
+    {
+      "id": "minecraft:potted_azalea_bush",
+      "required": false
+    },
+    {
+      "id": "minecraft:potted_bamboo",
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "minecraft:candle",
+      "required": false
+    },
+    {
+      "id": "minecraft:white_candle",
+      "required": false
+    },
+    {
+      "id": "minecraft:orange_candle",
+      "required": false
+    },
+    {
+      "id": "minecraft:light_gray_candle",
+      "required": false
+    },
+    {
+      "id": "minecraft:red_candle",
+      "required": false
+    },
+    {
+      "id": "minecraft:lantern",
+      "required": false
+    },
+    {
+      "id": "minecraft:soul_lantern",
+      "required": false
+    },
+    {
+      "id": "minecraft:potted_fern",
+      "required": false
+    },
+    {
+      "id": "minecraft:decorated_pot",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:black_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:blue_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:brown_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cyan_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:gray_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:green_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:lime_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:magenta_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:orange_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pink_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:purple_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:red_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:white_lamp",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:yellow_lamp",
+      "required": false
+    }
+  ]
+}

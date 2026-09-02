@@ -756,6 +756,63 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		}
 	}
 
+	/**
+	 * Place a two-part bed-like furniture piece (the Refurbished baths): {@code type=bottom} at the
+	 * anchor, {@code type=head} one cell toward {@code extendDir}, both halves sharing the facing.
+	 * The property is found by <em>name</em> because the bottom/head enum is the furniture mod's own
+	 * class — any mod following the bed contract works without CityWorld referencing its code.
+	 */
+	public final void setTwoPartFurniture(int x, int y, int z, Material material, BlockFace extendDir) {
+		BlockState base = withDirection(stateOf(material), extendDir);
+		int hx = x, hz = z;
+		switch (extendDir) {
+		case NORTH -> hz = z - 1;
+		case SOUTH -> hz = z + 1;
+		case EAST -> hx = x + 1;
+		case WEST -> hx = x - 1;
+		default -> {
+		}
+		}
+		setActualBlock(x, y, z, withNamedValue(base, "type", "bottom"));
+		setActualBlock(hx, y, hz, withNamedValue(base, "type", "head"));
+	}
+
+	/** Set a property by its serialized name and value, leaving the state alone if either is unknown. */
+	private static BlockState withNamedValue(BlockState state, String name, String value) {
+		for (Property<?> property : state.getProperties())
+			if (property.getName().equals(name))
+				return withParsedValue(state, property, value);
+		return state;
+	}
+
+	private static <T extends Comparable<T>> BlockState withParsedValue(BlockState state, Property<T> property,
+			String value) {
+		return property.getValue(value).map(v -> state.setValue(property, v)).orElse(state);
+	}
+
+	/**
+	 * Recompute this block's connection state from its neighbours — the placed-block half of
+	 * auto-connecting furniture.
+	 *
+	 * <p>When piece B lands next to piece A, the world fires {@code updateShape} on <em>A</em> (the
+	 * neighbour) but nothing recomputes <em>B</em> — in survival that half is
+	 * {@code getStateForPlacement}, which worldgen never calls. The asymmetry is exactly the
+	 * "half table" defect: A drops its legs on the shared side while B keeps its complete default.
+	 * Calling this after placement closes the loop; earlier neighbours were already updated by the
+	 * placement itself.
+	 *
+	 * <p>Never lets the recomputation destroy the block: {@code updateShape} can legitimately return
+	 * air for a support it dislikes, and a decoration pass must not delete what it just placed.
+	 */
+	public final void reconnect(int x, int y, int z) {
+		Block block = getActualBlock(x, y, z);
+		BlockState current = block.getBlockData();
+		BlockState updated = net.minecraft.world.level.block.Block.updateFromNeighbourShapes(current,
+				block.getLevel(), block.getPos());
+		if (updated != current && !updated.isAir())
+			block.setBlockData(updated);
+	}
+
 	private void connectDoubleChest(int x, int y, int z, BlockFace facing) {
 		connectDoubleChest(x, y, z, facing, Material.CHEST);
 	}
