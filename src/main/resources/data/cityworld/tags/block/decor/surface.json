@@ -38,6 +38,10 @@
       "required": false
     },
     {
+      "id": "minecraft:amethyst_cluster",
+      "required": false
+    },
+    {
       "id": "refurbished_furniture:black_lamp",
       "required": false
     },

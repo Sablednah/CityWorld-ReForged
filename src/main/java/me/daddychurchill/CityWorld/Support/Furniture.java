@@ -132,8 +132,12 @@ public final class Furniture {
             surfacePiece(chunk, odds, x, y, z);
             break;
         default:
-            // amethyst sparkle on the floor
-            chunk.setBlock(x, y, z, Material.AMETHYST_CLUSTER, BlockFace.UP);
+            // amethyst moved from the floor to the surface pool (owner: table decor, not floor
+            // decor) — so the remaining default is another surface piece or a plant
+            if (odds.flipCoin())
+                surfacePiece(chunk, odds, x, y, z);
+            else
+                pottedPlant(chunk, odds, x, y, z);
             break;
         }
     }
@@ -279,7 +283,8 @@ public final class Furniture {
                     piece = cabinet;
                 // fronts open SOUTH into the room — placeFacing applies each mod's own idea of
                 // what `facing` means, which is how the doors stopped facing the wall
-                placeFacing(chunk, cx, y, z, piece, BlockFace.SOUTH);
+                if (placeFacing(chunk, cx, y, z, piece, BlockFace.SOUTH))
+                    chunk.reconnect(cx, y, z); // counters join into a run (verified good in playtest)
             }
             if (x1 + 3 <= x2 - 1)
                 placeFacing(chunk, x2 - 1, y, z, modern(generator) ? Material.SMOKER : Material.FURNACE,
@@ -440,18 +445,45 @@ public final class Furniture {
         Material toilet = FurnitureTags.pick(FurnitureTags.TOILET, odds);
         Material basin = FurnitureTags.pick(FurnitureTags.SINK, odds);
         if (bath != null || toilet != null || basin != null) {
-            // A plumbed bathroom: bath along the far wall, basin beside it, toilet against the near
-            // wall. Each is optional on its own, so one mod supplying only some of them still
-            // improves things. The Refurbished baths are two-block (bed-like), so the bath runs
-            // east along the wall and the basin moves over to make room for both halves.
-            int basinX = x1 + 2;
-            if (bath != null && placePiece(chunk, x1 + 1, y, z1 + 1, bath, BlockFace.SOUTH, BlockFace.EAST))
-                basinX = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.partsFor(bath) == 2
-                        ? x1 + 3 : x1 + 2;
-            if (basin != null && basinX <= x2 - 1)
-                placeFacing(chunk, basinX, y, z1 + 1, basin, BlockFace.SOUTH);
-            if (toilet != null && z1 + 2 <= z2 - 1)
-                placeFacing(chunk, x2 - 1, y, z1 + 2, toilet, BlockFace.WEST);
+            // A plumbed bathroom. The bath runs along the wall nearest the chunk edge — the
+            // EXTERIOR (window) wall, same trick as the bed — because interior walls carry the
+            // doors, and a door cut after furnishing beheaded a two-block bath in playtest.
+            // Basin sits beside the bath on the same wall; toilet takes an adjacent wall, centred
+            // (at z1+2 in a small room it sat beside the basin, staring at it — playtested).
+            int dN = z1, dS = 15 - z2, dW = x1, dE = 15 - x2;
+            int best = Math.min(Math.min(dN, dS), Math.min(dW, dE));
+            boolean alongX = best == dN || best == dS; // bath run direction
+            int wallZ = best == dS ? z2 - 1 : z1 + 1, wallX = best == dE ? x2 - 1 : x1 + 1;
+            int parts = bath == null ? 0
+                    : me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.partsFor(bath);
+            boolean bathPlaced = false;
+            if (bath != null)
+                bathPlaced = alongX
+                        ? placePiece(chunk, x1 + 1, y, wallZ, bath,
+                                best == dN ? BlockFace.SOUTH : BlockFace.NORTH, BlockFace.EAST)
+                        : placePiece(chunk, wallX, y, z1 + 1, bath,
+                                best == dW ? BlockFace.EAST : BlockFace.WEST, BlockFace.SOUTH);
+            int along = bathPlaced ? 1 + Math.max(parts, 1) : 1; // next free cell along the wall
+            if (basin != null) {
+                if (alongX && x1 + along <= x2 - 1)
+                    placeFacing(chunk, x1 + along, y, wallZ, basin,
+                            best == dN ? BlockFace.SOUTH : BlockFace.NORTH);
+                else if (!alongX && z1 + along <= z2 - 1)
+                    placeFacing(chunk, wallX, y, z1 + along, basin,
+                            best == dW ? BlockFace.EAST : BlockFace.WEST);
+            }
+            if (toilet != null) {
+                // opposite side to the bath wall where possible, centred along it
+                if (alongX) {
+                    int tz = Math.max(z1 + 2, (z1 + z2) / 2);
+                    if (tz <= z2 - 1)
+                        placeFacing(chunk, x2 - 1, y, tz, toilet, BlockFace.WEST);
+                } else {
+                    int tx = Math.max(x1 + 2, (x1 + x2) / 2);
+                    if (tx <= x2 - 1)
+                        placeFacing(chunk, tx, y, z2 - 1, toilet, BlockFace.NORTH);
+                }
+            }
             int bx = (x1 + x2) / 2, bz = (z1 + z2) / 2;
             if (clearFloor(chunk, bx, y, bz))
                 chunk.setBlock(bx, y, bz, odds.flipCoin() ? Material.WHITE_CARPET : Material.LIGHT_BLUE_CARPET);
@@ -499,9 +531,10 @@ public final class Furniture {
         // Desk against the north wall; the chair sits south of it looking north, into the desk.
         // (Macaw's desks are axis pieces — facing has only north|east — so the front request is a
         // no-op there and the X-run default happens to be right; Refurbished desks rotate properly.)
-        placeFacing(chunk, cx, y, z1 + 1, desk, BlockFace.SOUTH);
-        if (cx + 1 <= x2 - 1)
-            placeFacing(chunk, cx + 1, y, z1 + 1, desk, BlockFace.SOUTH);
+        if (placeFacing(chunk, cx, y, z1 + 1, desk, BlockFace.SOUTH))
+            chunk.reconnect(cx, y, z1 + 1);
+        if (cx + 1 <= x2 - 1 && placeFacing(chunk, cx + 1, y, z1 + 1, desk, BlockFace.SOUTH))
+            chunk.reconnect(cx + 1, y, z1 + 1);
         Material chair = FurnitureTags.pick(FurnitureTags.CHAIR, odds);
         if (chair != null && z1 + 2 <= z2 - 1)
             placeFacing(chunk, cx, y, z1 + 2, chair, BlockFace.NORTH);
@@ -519,15 +552,14 @@ public final class Furniture {
      * converts, because the mods disagree about what {@code facing} means and Macaw's disagrees with
      * itself between families. Vanilla pieces pass through unchanged (no declared offset).
      *
-     * <p>After placing, {@link SupportBlocks#reconnect} recomputes the piece's connections: the world
-     * only fires shape updates at already-placed neighbours, so without this the <em>last</em> piece
-     * of every run kept its standalone look while its neighbour went legless — the "half table".
+     * <p>⚠ Deliberately does NOT {@link SupportBlocks#reconnect}. Reconnect recomputes connections
+     * using the MOD's own idea of what {@code facing} means, and for pieces whose facing we
+     * offset-rotated for the correct look (Macaw's couches) the two conventions disagree — a
+     * straight sofa run reconnected into corner shapes in playtest. Callers that place runs of
+     * connection-safe pieces (tables, desks, kitchen counters) reconnect explicitly.
      */
     private static boolean placeFacing(RealBlocks chunk, int x, int y, int z, Material piece, BlockFace front) {
-        if (!placeIfClear(chunk, x, y, z, piece, FurnitureTags.facingFor(piece, front)))
-            return false;
-        chunk.reconnect(x, y, z);
-        return true;
+        return placeIfClear(chunk, x, y, z, piece, FurnitureTags.facingFor(piece, front));
     }
 
     /**
