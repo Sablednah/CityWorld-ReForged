@@ -25,12 +25,12 @@ public class LoungeTableRoom extends LoungeRoom {
 		case NORTH:
 		case SOUTH:
 			offset = odds.getRandomInt(width);
-			chunk.setTable(x + offset, x + 1 + offset, y, z, z + depth, tableLeg, tableTop);
+			drawTable(generator, chunk, odds, x + offset, x + 1 + offset, y, z, z + depth);
 			break;
 		case WEST:
 		case EAST:
 			offset = odds.getRandomInt(depth);
-			chunk.setTable(x, x + width, y, z + offset, z + 1 + offset, tableLeg, tableTop);
+			drawTable(generator, chunk, odds, x, x + width, y, z + offset, z + 1 + offset);
 			break;
 		}
 	}

@@ -24,23 +24,23 @@ public class MeetingForFourRoom extends MeetingRoom {
 		default:
 		case NORTH:
 		case SOUTH:
-			chunk.setBlock(x, y, z, Material.BIRCH_STAIRS, BlockFace.WEST);
-			chunk.setBlock(x, y, z + 2, Material.BIRCH_STAIRS, BlockFace.WEST);
+			drawSeat(chunk, odds, x, y, z, BlockFace.WEST);
+			drawSeat(chunk, odds, x, y, z + 2, BlockFace.WEST);
 
-			chunk.setTable(x + 1, x + 2, y, z, z + 3, tableLeg, tableTop);
+			drawTable(generator, chunk, odds, x + 1, x + 2, y, z, z + 3);
 
-			chunk.setBlock(x + 2, y, z, Material.BIRCH_STAIRS, BlockFace.EAST);
-			chunk.setBlock(x + 2, y, z + 2, Material.BIRCH_STAIRS, BlockFace.EAST);
+			drawSeat(chunk, odds, x + 2, y, z, BlockFace.EAST);
+			drawSeat(chunk, odds, x + 2, y, z + 2, BlockFace.EAST);
 			break;
 		case WEST:
 		case EAST:
-			chunk.setBlock(x, y, z, Material.BIRCH_STAIRS, BlockFace.NORTH);
-			chunk.setBlock(x + 2, y, z, Material.BIRCH_STAIRS, BlockFace.NORTH);
+			drawSeat(chunk, odds, x, y, z, BlockFace.NORTH);
+			drawSeat(chunk, odds, x + 2, y, z, BlockFace.NORTH);
 
-			chunk.setTable(x, x + 3, y, z + 1, z + 2, tableLeg, tableTop);
+			drawTable(generator, chunk, odds, x, x + 3, y, z + 1, z + 2);
 
-			chunk.setBlock(x, y, z + 2, Material.BIRCH_STAIRS, BlockFace.SOUTH);
-			chunk.setBlock(x + 2, y, z + 2, Material.BIRCH_STAIRS, BlockFace.SOUTH);
+			drawSeat(chunk, odds, x, y, z + 2, BlockFace.SOUTH);
+			drawSeat(chunk, odds, x + 2, y, z + 2, BlockFace.SOUTH);
 			break;
 		}
 	}

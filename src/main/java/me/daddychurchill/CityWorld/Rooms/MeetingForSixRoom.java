@@ -24,13 +24,13 @@ public class MeetingForSixRoom extends MeetingForFourRoom {
 		default:
 		case NORTH:
 		case SOUTH:
-			chunk.setBlock(x, y, z + 1, Material.BIRCH_STAIRS, BlockFace.WEST);
-			chunk.setBlock(x + 2, y, z + 1, Material.BIRCH_STAIRS, BlockFace.EAST);
+			drawSeat(chunk, odds, x, y, z + 1, BlockFace.WEST);
+			drawSeat(chunk, odds, x + 2, y, z + 1, BlockFace.EAST);
 			break;
 		case WEST:
 		case EAST:
-			chunk.setBlock(x + 1, y, z, Material.BIRCH_STAIRS, BlockFace.NORTH);
-			chunk.setBlock(x + 1, y, z + 2, Material.BIRCH_STAIRS, BlockFace.SOUTH);
+			drawSeat(chunk, odds, x + 1, y, z, BlockFace.NORTH);
+			drawSeat(chunk, odds, x + 1, y, z + 2, BlockFace.SOUTH);
 			break;
 		}
 	}
