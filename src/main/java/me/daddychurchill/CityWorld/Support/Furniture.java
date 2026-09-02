@@ -276,6 +276,23 @@ public final class Furniture {
             // shape a real kitchen has, instead of a barrel and a furnace in a row.
             Material sink = FurnitureTags.pick(FurnitureTags.SINK, odds);
             Material cabinet = FurnitureTags.pick(FurnitureTags.CABINET, odds);
+            // Appliances land FIRST, at the end of the wall, or the counter run swallows their
+            // cells — the old smoker was silently lost to exactly that. Stove at the end; fridge
+            // beside it with the freezer stacked on top (Refurbished's "tall fridge" is two
+            // separate blocks).
+            Material stove = FurnitureTags.pick(FurnitureTags.STOVE, odds);
+            if (x1 + 3 <= x2 - 1) {
+                Material cooker = stove != null ? stove
+                        : modern(generator) ? Material.SMOKER : Material.FURNACE;
+                placeFacing(chunk, x2 - 1, y, z, cooker, BlockFace.SOUTH);
+            }
+            Material fridge = FurnitureTags.pick(FurnitureTags.FRIDGE, odds);
+            if (fridge != null && x1 + 4 <= x2 - 2 && placeFacing(chunk, x2 - 2, y, z, fridge, BlockFace.SOUTH)) {
+                Material freezer = FurnitureTags.pick(FurnitureTags.FREEZER, odds);
+                if (freezer != null && chunk.isEmpty(x2 - 2, y + 1, z))
+                    chunk.setBlock(x2 - 2, y + 1, z, freezer,
+                            FurnitureTags.facingFor(freezer, BlockFace.SOUTH));
+            }
             int mid = (x1 + x2) / 2;
             for (int cx = x1 + 1; cx <= x2 - 1; cx++) {
                 Material piece = cx == mid && sink != null ? sink : counter;
@@ -286,9 +303,12 @@ public final class Furniture {
                 if (placeFacing(chunk, cx, y, z, piece, BlockFace.SOUTH))
                     chunk.reconnect(cx, y, z); // counters join into a run (verified good in playtest)
             }
-            if (x1 + 3 <= x2 - 1)
-                placeFacing(chunk, x2 - 1, y, z, modern(generator) ? Material.SMOKER : Material.FURNACE,
-                        BlockFace.SOUTH);
+            // counter-top clutter: microwave / toaster / cutting board stood ON the counter run
+            Material topper = odds.flipCoin() ? FurnitureTags.pick(FurnitureTags.MICROWAVE, odds)
+                    : odds.flipCoin() ? FurnitureTags.pick(FurnitureTags.TOASTER, odds)
+                            : FurnitureTags.pick(FurnitureTags.CUTTING_BOARD, odds);
+            if (topper != null && chunk.isEmpty(x1 + 2, y + 1, z) && !chunk.isEmpty(x1 + 2, y, z))
+                chunk.setBlock(x1 + 2, y + 1, z, topper, FurnitureTags.facingFor(topper, BlockFace.SOUTH));
             accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
             return;
         }
@@ -328,6 +348,7 @@ public final class Furniture {
                     placeFacing(chunk, cx + 1, y, cz + 1, chair, BlockFace.NORTH);
                 }
             }
+            ceilingPiece(chunk, odds, cx, y, cz); // a fan or lantern over the dining table
             accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
             return;
         }
@@ -361,6 +382,17 @@ public final class Furniture {
                 // modded lamps are TABLE lamps (single block, no facing) — stand one on an end
                 // table in the corner rather than on the floor
                 tableLamp(chunk, odds, x2 - 1, y, z2 - 1, lamp);
+            // a television on a stand against the far wall, screen facing the sofa
+            Material tv = FurnitureTags.pick(FurnitureTags.TV, odds);
+            if (tv != null && z1 + 4 <= z2 - 1) {
+                Material stand = FurnitureTags.pick(FurnitureTags.DRAWER, odds);
+                if (stand == null)
+                    stand = TABLE_TOPS[odds.getRandomInt(TABLE_TOPS.length)];
+                if (placeFacing(chunk, cx, y, z2 - 1, stand, BlockFace.NORTH)
+                        && chunk.isEmpty(cx, y + 1, z2 - 1))
+                    chunk.setBlock(cx, y + 1, z2 - 1, tv, FurnitureTags.facingFor(tv, BlockFace.NORTH));
+            }
+            ceilingPiece(chunk, odds, cx, y, cz);
             if (placed) {
                 accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
                 return;
@@ -449,6 +481,7 @@ public final class Furniture {
             if (lamp == null || !tableLamp(chunk, odds, x2 - 1, y, z2 - 1, lamp))
                 floorLampIfClear(chunk, odds, x2 - 1, y, z2 - 1);
         }
+        ceilingPiece(chunk, odds, midX, y, midZ);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
@@ -492,9 +525,46 @@ public final class Furniture {
         }
         if (!placed && modern(generator))
             sideTable(chunk, odds, cx, y, cz);
+        // a bin tucked beside the console now and then
+        Material bin = FurnitureTags.pick(FurnitureTags.BIN, odds);
+        if (placed && bin != null && odds.flipCoin()) {
+            if (best == dN)
+                placeFacing(chunk, cx + 1, y, z1 + 1, bin, BlockFace.SOUTH);
+            else if (best == dS)
+                placeFacing(chunk, cx + 1, y, z2 - 1, bin, BlockFace.NORTH);
+            else if (best == dW)
+                placeFacing(chunk, x1 + 1, y, cz + 1, bin, BlockFace.EAST);
+            else
+                placeFacing(chunk, x2 - 1, y, cz + 1, bin, BlockFace.WEST);
+        }
         if (modern(generator))
             rug(chunk, odds, cx, y, cz);
+        ceilingPiece(chunk, odds, cx, y, cz);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+    }
+
+    /**
+     * A ceiling fan (Refurbished, hung with {@code facing=down}) or a hanging lantern under the
+     * ceiling above (x,z). Fans stay dark and still — the mod's power system is deliberately
+     * unwired — but they read as ceiling furniture all the same. Quiet no-op when there is no
+     * ceiling within reach or the cell is taken.
+     */
+    private static void ceilingPiece(RealBlocks chunk, Odds odds, int x, int y, int z) {
+        if (!odds.playOdds(0.35))
+            return;
+        int ceil = -1;
+        for (int cy = y + 3; cy <= y + 5; cy++)
+            if (!chunk.isEmpty(x, cy, z)) {
+                ceil = cy;
+                break;
+            }
+        if (ceil < 0 || !chunk.isEmpty(x, ceil - 1, z))
+            return;
+        Material fan = FurnitureTags.pick(FurnitureTags.CEILING_FAN, odds);
+        if (fan != null && odds.playOdds(0.7))
+            chunk.setBlock(x, ceil - 1, z, fan, BlockFace.DOWN);
+        else
+            chunk.setHangingLantern(x, ceil - 1, z, odds.flipCoin() ? Material.LANTERN : Material.SOUL_LANTERN);
     }
 
     /** Place a bed's two cells (anchor + the partner in {@code facing}), only if both are clear floor. */

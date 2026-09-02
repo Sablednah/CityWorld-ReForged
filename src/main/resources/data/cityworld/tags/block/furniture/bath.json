@@ -50,6 +50,14 @@
       "required": false
     },
     {
+      "id": "refurbished_furniture:light_blue_bath",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_gray_bath",
+      "required": false
+    },
+    {
       "id": "refurbished_furniture:lime_bath",
       "required": false
     },

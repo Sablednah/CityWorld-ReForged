@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "refurbished_furniture:dark_stove",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_stove",
+      "required": false
+    }
+  ]
+}

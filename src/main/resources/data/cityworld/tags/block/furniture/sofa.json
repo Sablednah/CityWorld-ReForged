@@ -50,6 +50,22 @@
       "required": false
     },
     {
+      "id": "mcwfurnitures:light_blue_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:light_blue_couch",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:light_gray_chaise",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:light_gray_couch",
+      "required": false
+    },
+    {
       "id": "mcwfurnitures:lime_chaise",
       "required": false
     },
@@ -135,6 +151,14 @@
     },
     {
       "id": "refurbished_furniture:green_sofa",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_blue_sofa",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_gray_sofa",
       "required": false
     },
     {

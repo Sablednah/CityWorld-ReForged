@@ -690,6 +690,14 @@
       "required": false
     },
     {
+      "id": "refurbished_furniture:light_blue_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_gray_kitchen_drawer",
+      "required": false
+    },
+    {
       "id": "refurbished_furniture:lime_kitchen_drawer",
       "required": false
     },
