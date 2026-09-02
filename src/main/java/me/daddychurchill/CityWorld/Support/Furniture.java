@@ -392,12 +392,19 @@ public final class Furniture {
                 if (placeFacing(chunk, cx, y, z, piece, BlockFace.SOUTH))
                     chunk.reconnect(cx, y, z); // counters join into a run (verified good in playtest)
             }
-            // counter-top clutter: microwave / toaster / cutting board stood ON the counter run
+            // counter-top clutter: microwave / toaster / cutting board stood ON the counter run —
+            // but never on the SINK cell (a toaster in the sink, playtested, "unless one grows
+            // weary of this mortal coil")
             Material topper = odds.flipCoin() ? FurnitureTags.pick(FurnitureTags.MICROWAVE, odds)
                     : odds.flipCoin() ? FurnitureTags.pick(FurnitureTags.TOASTER, odds)
                             : FurnitureTags.pick(FurnitureTags.CUTTING_BOARD, odds);
-            if (topper != null && chunk.isEmpty(x1 + 2, y + 1, z) && !chunk.isEmpty(x1 + 2, y, z))
-                chunk.setBlock(x1 + 2, y + 1, z, topper, FurnitureTags.facingFor(topper, BlockFace.SOUTH));
+            if (topper != null)
+                for (int tx : new int[] { x1 + 2, x1 + 3, mid + 1 })
+                    if (tx != mid && tx <= x2 - 1 && chunk.isEmpty(tx, y + 1, z)
+                            && !chunk.isEmpty(tx, y, z)) {
+                        chunk.setBlock(tx, y + 1, z, topper, FurnitureTags.facingFor(topper, BlockFace.SOUTH));
+                        break;
+                    }
             wallDecor(chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
             return;
@@ -691,45 +698,43 @@ public final class Furniture {
         Material toilet = FurnitureTags.pick(FurnitureTags.TOILET, odds);
         Material basin = FurnitureTags.pick(FurnitureTags.SINK, odds);
         if (bath != null || toilet != null || basin != null) {
-            // A plumbed bathroom. The bath runs along the wall nearest the chunk edge — the
-            // EXTERIOR (window) wall, same trick as the bed — because interior walls carry the
-            // doors, and a door cut after furnishing beheaded a two-block bath in playtest.
-            // Basin sits beside the bath on the same wall; toilet takes an adjacent wall, centred
-            // (at z1+2 in a small room it sat beside the basin, staring at it — playtested).
+            // A plumbed bathroom, spread around the room — everything on one wall read as a
+            // showroom, not a bathroom (playtested). The bath keeps the exterior (window) wall;
+            // the basin takes the next wall around with its working space in FRONT guaranteed
+            // clear; the toilet takes the wall opposite the bath. And the toilet places FIRST:
+            // it is the one piece a bathroom may not lack, and when it was last in a single-wall
+            // run, small rooms ran out of wall and had none (playtested).
             int dN = z1, dS = 15 - z2, dW = x1, dE = 15 - x2;
             int best = Math.min(Math.min(dN, dS), Math.min(dW, dE));
-            boolean alongX = best == dN || best == dS; // bath run direction
-            int wallZ = best == dS ? z2 - 1 : z1 + 1, wallX = best == dE ? x2 - 1 : x1 + 1;
-            int parts = bath == null ? 0
-                    : me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.partsFor(bath);
-            boolean bathPlaced = false;
-            if (bath != null)
-                bathPlaced = alongX
-                        ? placePiece(chunk, x1 + 1, y, wallZ, bath,
-                                best == dN ? BlockFace.SOUTH : BlockFace.NORTH, BlockFace.EAST)
-                        : placePiece(chunk, wallX, y, z1 + 1, bath,
-                                best == dW ? BlockFace.EAST : BlockFace.WEST, BlockFace.SOUTH);
-            int along = bathPlaced ? 1 + Math.max(parts, 1) : 1; // next free cell along the wall
-            if (basin != null) {
-                if (alongX && x1 + along <= x2 - 1)
-                    placeFacing(chunk, x1 + along, y, wallZ, basin,
-                            best == dN ? BlockFace.SOUTH : BlockFace.NORTH);
-                else if (!alongX && z1 + along <= z2 - 1)
-                    placeFacing(chunk, wallX, y, z1 + along, basin,
-                            best == dW ? BlockFace.EAST : BlockFace.WEST);
-            }
-            if (basin != null)
-                along++;
+            int bathWall = best == dN ? 0 : best == dE ? 1 : best == dS ? 2 : 3;
             if (toilet != null) {
-                // the toilet JOINS the run — next along the wall after the basin, fronting into
-                // the room like everything else. Standing it on the far wall facing along the row
-                // read as "toilet staring at the sink" (playtested, twice).
-                if (alongX && x1 + along <= x2 - 1)
-                    placeFacing(chunk, x1 + along, y, wallZ, toilet,
-                            best == dN ? BlockFace.SOUTH : BlockFace.NORTH);
-                else if (!alongX && z1 + along <= z2 - 1)
-                    placeFacing(chunk, wallX, y, z1 + along, toilet,
-                            best == dW ? BlockFace.EAST : BlockFace.WEST);
+                // preferred spot: the wall OPPOSITE THE DOOR (visible, reachable, never in the
+                // way — the owner's read of the rooms), then opposite the bath, then whatever
+                // else isn't the bath wall
+                int door = doorWall(chunk, y, x1, x2, z1, z2);
+                int[] walls = { door >= 0 ? (door + 2) % 4 : -1, (bathWall + 2) % 4,
+                        (bathWall + 1) % 4, (bathWall + 3) % 4 };
+                placing: for (int w : walls) {
+                    if (w < 0 || w == bathWall)
+                        continue;
+                    int len = wallLen(w, x1, x2, z1, z2);
+                    for (int t : new int[] { len - 1, 1, len / 2 })
+                        if (t >= 1 && t <= len - 1
+                                && placeOnWall(chunk, y, toilet, w, t, x1, x2, z1, z2))
+                            break placing;
+                }
+            }
+            if (bath != null) {
+                int[] s = wallSpot(bathWall, x1, x2, z1, z2, 1);
+                placePiece(chunk, s[0], y, s[1], bath, intoRoom(bathWall),
+                        bathWall == 0 || bathWall == 2 ? BlockFace.EAST : BlockFace.SOUTH);
+            }
+            if (basin != null) {
+                int w = (bathWall + 1) % 4, len = wallLen(w, x1, x2, z1, z2);
+                for (int t : new int[] { len / 2, len / 2 + 1, len - 1 })
+                    if (t >= 1 && t <= len - 1
+                            && placeOnWall(chunk, y, basin, w, t, x1, x2, z1, z2))
+                        break;
             }
             int bx = (x1 + x2) / 2, bz = (z1 + z2) / 2;
             if (clearFloor(chunk, bx, y, bz))
@@ -839,6 +844,62 @@ public final class Furniture {
     private static void floorLampIfClear(RealBlocks chunk, Odds odds, int x, int y, int z) {
         if (clearFloor(chunk, x, y, z))
             floorLamp(chunk, odds, x, y, z);
+    }
+
+    // --- wall geometry (walls indexed 0=N, 1=E, 2=S, 3=W) --------------------------------------
+
+    /** The direction a piece on this wall fronts — into the room. */
+    private static BlockFace intoRoom(int wall) {
+        return switch (wall) {
+        case 0 -> BlockFace.SOUTH;
+        case 1 -> BlockFace.WEST;
+        case 2 -> BlockFace.NORTH;
+        default -> BlockFace.EAST;
+        };
+    }
+
+    private static int wallLen(int wall, int x1, int x2, int z1, int z2) {
+        return wall == 0 || wall == 2 ? x2 - x1 : z2 - z1;
+    }
+
+    /** The floor cell {@code t} steps along this wall's interior row, from its low corner. */
+    private static int[] wallSpot(int wall, int x1, int x2, int z1, int z2, int t) {
+        return switch (wall) {
+        case 0 -> new int[] { x1 + t, z1 + 1 };
+        case 2 -> new int[] { x1 + t, z2 - 1 };
+        case 1 -> new int[] { x2 - 1, z1 + t };
+        default -> new int[] { x1 + 1, z1 + t };
+        };
+    }
+
+    /**
+     * Place a piece against a wall, fronting into the room, only if its working space — the cell
+     * in FRONT of it — is clear too. Nobody can use a sink they cannot stand at.
+     */
+    private static boolean placeOnWall(RealBlocks chunk, int y, Material piece, int wall, int t, int x1, int x2,
+            int z1, int z2) {
+        int[] s = wallSpot(wall, x1, x2, z1, z2, t);
+        BlockFace front = intoRoom(wall);
+        if (!clearFloor(chunk, s[0] + front.getModX(), y, s[1] + front.getModZ()))
+            return false;
+        return placeFacing(chunk, s[0], y, s[1], piece, front);
+    }
+
+    /** Which wall carries a door, or -1 — askable because furnishing runs after the doors are cut. */
+    private static int doorWall(RealBlocks chunk, int y, int x1, int x2, int z1, int z2) {
+        for (int x = x1; x <= x2; x++) {
+            if (chunk.isDoor(x, y, z1))
+                return 0;
+            if (chunk.isDoor(x, y, z2))
+                return 2;
+        }
+        for (int z = z1; z <= z2; z++) {
+            if (chunk.isDoor(x1, y, z))
+                return 3;
+            if (chunk.isDoor(x2, y, z))
+                return 1;
+        }
+        return -1;
     }
 
     // --- checks --------------------------------------------------------------------------------
