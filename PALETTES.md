@@ -35,6 +35,7 @@ you add start appearing in that palette.
 | `cityworld:build/concrete` | house walls, factories, bunkers, oil platforms, water towers | `#c:concretes` |
 | `cityworld:build/concrete_powder` | factory and bunker tanks | `#minecraft:concrete_powder` |
 | `cityworld:build/stained_glass` | factory and bunker tanks | the sixteen dyed glasses |
+| `cityworld:build/chemicals` | what industrial tanks and silos hold when fluids are enabled | concrete powders, water, lava — add your mod's fluid blocks here (Mekanism ids will be added once verified against its jar) |
 | `cityworld:build/modern_stones` | the decorative stone palette used by the MODERN and APOCALYPSE styles | 32 curated blocks (8 of them Minecraft 26.2+) |
 
 ### Biome pools

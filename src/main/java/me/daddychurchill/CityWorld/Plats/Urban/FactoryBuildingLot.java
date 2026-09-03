@@ -208,6 +208,12 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 					.itemsSelectMaterial_FactoryInsides.getRandomMaterial(chunkOdds, Material.CLAY), chunkOdds);
 			Material fluidMat = generator.materialProvider.itemsSelectMaterial_FactoryTanks.getRandomMaterial(chunkOdds,
 					Material.WATER);
+			// With fluids enabled, tanks hold CHEMICALS — the #cityworld:build/chemicals palette
+			// (concrete powders, water, lava, plus whatever fluids a mod tags in). With fluids
+			// off (APOCALYPSE), the old dry palette stays: dried-out residue.
+			if (generator.getSettings().includeAbovegroundFluids)
+				fluidMat = generator.materialProvider.itemsSelectMaterial_Chemicals.getRandomMaterial(chunkOdds,
+						Material.WATER);
 
 			switch (contentStyle) {
 			case BUILDING_SMOKESTACK:
