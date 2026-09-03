@@ -71,15 +71,16 @@ public final class ChunkProbe {
                 CityWorldMod.LOGGER.warn("PROBE row x={}: {}", x, row);
             }
             // name the blocks on the floor band y 67..69 that are NOT structure (sample list)
-            java.util.Map<String, Integer> tally = new java.util.TreeMap<>();
-            for (int x = 0; x < 16; x++)
-                for (int z = 0; z < 16; z++)
-                    for (int y = 66; y <= 72; y++) {
+            for (int y = 66; y <= 76; y++) {
+                java.util.Map<String, Integer> tally = new java.util.TreeMap<>();
+                for (int x = 0; x < 16; x++)
+                    for (int z = 0; z < 16; z++) {
                         var state = chunk.getBlockState(new BlockPos(x, y, z));
                         if (!state.isAir())
                             tally.merge(state.getBlock().getName().getString(), 1, Integer::sum);
                     }
-            CityWorldMod.LOGGER.warn("PROBE tally y66-72: {}", tally);
+                CityWorldMod.LOGGER.warn("PROBE y={}: {}", y, tally);
+            }
         } catch (Throwable t) {
             CityWorldMod.LOGGER.error("PROBE failed", t);
         } finally {
