@@ -77,7 +77,9 @@ public class GovernmentBuildingLot extends FinishedBuildingLot {
 		insetInsetMidAt = 1;
 		insetInsetHighAt = 1;
 		insetStyle = InsetStyle.STRAIGHT;
-		interiorStyle = InteriorStyle.COLUMNS_ONLY;
+		interiorStyle = InteriorStyle.COLUMNS_OFFICES; // columns AND rooms — COLUMNS_ONLY was why
+		// government buildings stayed empty even after they got room providers: _ONLY styles
+		// never call drawInteriorRooms at all
 		rounded = false;
 //		roofStyle = RoofStyle.PEAKS;
 		roofFeature = RoofFeature.PLAIN;

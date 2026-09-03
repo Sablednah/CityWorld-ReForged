@@ -23,7 +23,7 @@ public class MuseumBuildingLot extends FinishedBuildingLot {
 		depth = 0;
 		rounded = false;
 		roofFeature = roofFeature == RoofFeature.ANTENNAS ? RoofFeature.CONDITIONERS : roofFeature;
-		interiorStyle = InteriorStyle.EMPTY;
+		interiorStyle = InteriorStyle.COLUMNS_OFFICES; // EMPTY never draws rooms — no exhibits
 	}
 
 	// museums stood empty before the civic-interiors round

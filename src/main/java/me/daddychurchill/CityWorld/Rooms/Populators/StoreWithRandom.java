@@ -14,6 +14,8 @@ public class StoreWithRandom extends RoomProvider {
 		super();
 
 		roomTypes.add(new StorageDoubleShelvesRoom());
+		roomTypes.add(new me.daddychurchill.CityWorld.Rooms.ShelfRoom());
+		roomTypes.add(new me.daddychurchill.CityWorld.Rooms.ShelfRoom());
 		roomTypes.add(new StorageDoubleShelvesRoom());
 		roomTypes.add(new StorageSingleRowRoom(Material.BOOKSHELF));
 		roomTypes.add(new StorageSingleRowRoom(Material.BOOKSHELF));

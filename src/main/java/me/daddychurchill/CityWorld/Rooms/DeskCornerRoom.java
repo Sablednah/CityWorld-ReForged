@@ -22,25 +22,25 @@ public class DeskCornerRoom extends DeskRoom {
 		switch (sideWithWall) {
 		default:
 		case NORTH:
-			drawDesk(generator, chunk, odds, x, x + 3, y, z, z + 1, sideWithWall.getOppositeFace());
+			drawDesk(generator, chunk, odds, x, x + 3, y, z, z + 1, BlockFace.SOUTH);
 			chunk.setBlocks(x, x + 1, y, z + 1, z + 3, Material.BOOKSHELF);
 			chunk.setBlocks(x, x + 1, y + 1, z + 1, z + 3, tableTop);
 			drawSeat(chunk, odds, x + 1, y, z + 1, BlockFace.SOUTH);
 			break;
 		case SOUTH:
-			drawDesk(generator, chunk, odds, x, x + 3, y, z + 2, z + 3, sideWithWall.getOppositeFace());
+			drawDesk(generator, chunk, odds, x, x + 3, y, z + 2, z + 3, BlockFace.NORTH);
 			chunk.setBlocks(x + 2, x + 3, y, z, z + 2, Material.BOOKSHELF);
 			chunk.setBlocks(x + 2, x + 3, y + 1, z, z + 2, tableTop);
 			drawSeat(chunk, odds, x + 1, y, z + 1, BlockFace.NORTH);
 			break;
 		case WEST:
-			drawDesk(generator, chunk, odds, x, x + 1, y, z, z + 3, sideWithWall.getOppositeFace());
+			drawDesk(generator, chunk, odds, x, x + 1, y, z, z + 3, BlockFace.EAST);
 			chunk.setBlocks(x + 1, x + 3, y, z + 2, z + 3, Material.BOOKSHELF);
 			chunk.setBlocks(x + 1, x + 3, y + 1, z + 2, z + 3, tableTop);
 			drawSeat(chunk, odds, x + 1, y, z + 1, BlockFace.EAST);
 			break;
 		case EAST:
-			drawDesk(generator, chunk, odds, x + 2, x + 3, y, z, z + 3, sideWithWall.getOppositeFace());
+			drawDesk(generator, chunk, odds, x + 2, x + 3, y, z, z + 3, BlockFace.WEST);
 			chunk.setBlocks(x, x + 2, y, z, z + 1, Material.BOOKSHELF);
 			chunk.setBlocks(x, x + 2, y + 1, z, z + 1, tableTop);
 			drawSeat(chunk, odds, x + 1, y, z + 1, BlockFace.WEST);
