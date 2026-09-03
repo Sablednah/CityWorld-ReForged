@@ -1,0 +1,14 @@
+{
+  "values": [
+    {
+      "id": "#minecraft:concrete_powder",
+      "required": false
+    },
+    {
+      "id": "#minecraft:concrete_powders",
+      "required": false
+    },
+    "minecraft:water",
+    "minecraft:lava"
+  ]
+}
