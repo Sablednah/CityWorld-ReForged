@@ -1068,6 +1068,12 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 					floorHeight, insetNS, insetWE, allowRounded, materialWall, materialGlass, stairLocation, heights);
 		}
 
+		// light the floor — interiors were pitch dark (playtested by night vision). Lights HANG in
+		// the air below the ceiling because the ceiling block is the next floor's floor. EMPTY
+		// style stays dark on purpose: those are the derelict shells.
+		if (style != InteriorStyle.EMPTY)
+			lightInterior(chunk, floorAt, aboveFloorHeight);
+
 		// more stairs and such
 		if (drawStairs) {
 			drawStairs(generator, chunk, floorAt, aboveFloorHeight, stairLocation, materialStair, materialPlatform);
@@ -1076,6 +1082,33 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 
 		drawExteriorDoors(generator, chunk, context, floor, floorAt, floorHeight, insetNS, insetWE, allowRounded,
 				materialWall, materialGlass, stairLocation, heights);
+	}
+
+	/**
+	 * Hang lights below the ceiling on a loose grid. One fixture type per floor (a floor of
+	 * mismatched lanterns reads as a jumble), drawn from {@code #cityworld:decor/hanging_light} so
+	 * mods can contribute their own hanging lights; vanilla seeds are lantern and soul lantern.
+	 * Each position scans up for its own ceiling and skips outdoors/inset positions that find none.
+	 */
+	private void lightInterior(RealBlocks chunk, int floorAt, int floorHeight) {
+		me.daddychurchill.CityWorld.compat.Material light = me.daddychurchill.CityWorld.Support.FurnitureTags
+				.pick(me.daddychurchill.CityWorld.Support.FurnitureTags.HANGING_LIGHT, chunkOdds);
+		if (light == null)
+			return; // the pool ships vanilla seeds; empty means the tag was discarded whole
+		for (int[] p : new int[][] { { 3, 3 }, { 3, 12 }, { 12, 3 }, { 12, 12 }, { 7, 7 } }) {
+			if (!chunkOdds.playOdds(0.75))
+				continue;
+			int ceil = -1;
+			for (int cy = floorAt + 2; cy <= floorAt + floorHeight; cy++)
+				if (!chunk.isEmpty(p[0], cy, p[1])) {
+					ceil = cy;
+					break;
+				}
+			// need a ceiling with clear air under it — never light the inside of a wall or a shelf
+			if (ceil < 0 || !chunk.isEmpty(p[0], ceil - 1, p[1]) || !chunk.isEmpty(p[0], ceil - 2, p[1]))
+				continue;
+			chunk.setHangingLantern(p[0], ceil - 1, p[1], light);
+		}
 	}
 
 	/**

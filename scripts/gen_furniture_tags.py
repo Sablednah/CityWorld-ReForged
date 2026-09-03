@@ -105,6 +105,9 @@ DECOR = {
                 "minecraft:soul_lantern", "minecraft:potted_fern", "minecraft:decorated_pot",
                 "minecraft:amethyst_cluster"],  # owner: "good decor for a hippy's table, not the floor"
     "wall": ["minecraft:wall_torch", "minecraft:soul_wall_torch", "minecraft:glow_lichen"],
+    # interior lighting hung below ceilings (a ceiling block IS the next floor's floor, so light
+    # blocks can't go in it) — mods add their hanging lights here
+    "hanging_light": ["minecraft:lantern", "minecraft:soul_lantern"],
 }
 
 # Kind suffix -> CityWorld role. Longest suffix wins, so `kitchen_sink` beats `sink` and

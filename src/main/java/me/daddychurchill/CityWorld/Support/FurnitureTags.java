@@ -67,6 +67,9 @@ public final class FurnitureTags {
      * with no facing — table lamps — and read wrong standing on the floor.
      */
     public static final TagKey<Block> FLOOR_DECOR = decorKey("floor");
+    /** Interior lighting hung below ceilings — ceilings are the next floor's floor, so light
+     *  blocks can't be set INTO them; these hang in the air cell beneath. */
+    public static final TagKey<Block> HANGING_LIGHT = decorKey("hanging_light");
     public static final TagKey<Block> SURFACE_DECOR = decorKey("surface");
     public static final TagKey<Block> WALL_DECOR = decorKey("wall");
 
