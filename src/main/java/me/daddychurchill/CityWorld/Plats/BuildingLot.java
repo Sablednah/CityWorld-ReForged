@@ -238,8 +238,12 @@ public abstract class BuildingLot extends ConnectedLot {
 		if (where == StairWell.NONE)
 			return;
 		StairAt at = new StairAt(chunk, stairLength, where);
-		for (int x = at.X - 1; x <= at.X + stairLength; x++)
-			for (int z = at.Z - 1; z <= at.Z + 4; z++)
+		// The REAL footprint, measured from the drawing code: nothing ever places beyond
+		// at.X+3 / at.Z+4 — tall floors switchback within it. Claiming stairLength (= floor
+		// height) swallowed entire double-height lobbies: the empty School ground floor, while
+		// its 4-tall upper floors furnished fine (seed 2720459862006157221, block 90 69 -107).
+		for (int x = at.X - 1; x <= at.X + 4; x++)
+			for (int z = at.Z - 1; z <= at.Z + 5; z++)
 				if (x >= 0 && x < 16 && z >= 0 && z < 16)
 					stairClaim[x * 16 + z] = true;
 	}
