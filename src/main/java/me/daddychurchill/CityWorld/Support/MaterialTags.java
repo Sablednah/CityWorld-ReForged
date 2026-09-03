@@ -53,7 +53,7 @@ public final class MaterialTags {
 
     /** What industrial tanks and silos hold: concrete powders, water, lava — and whatever fluids a
      *  mod tags in (see PALETTES.md; Mekanism ids to be added once verified against its jar). */
-    public static final TagKey<Block> BUILD_CHEMICALS = key("build/chemicals");
+    public static final TagKey<Block> BUILD_CHEMICALS = key("cityworld:build/chemicals");
     public static final TagKey<Block> BUILD_STAINED_GLASS = key("cityworld:build/stained_glass");
     public static final TagKey<Block> BUILD_MODERN_STONES = key("cityworld:build/modern_stones");
 
