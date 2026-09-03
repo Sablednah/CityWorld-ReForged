@@ -1654,6 +1654,29 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 						: best == dS ? BlockFace.SOUTH : best == dW ? BlockFace.WEST : BlockFace.EAST;
 				drawInteriorRoom(generator, chunk, rooms, floor, cx, y1, cz, height, side, materialWall,
 						materialGlass);
+				claimRect(cx - 1, cz - 1, cx + roomWidth, cz + roomDepth); // footprint + access ring
+			}
+
+		// 2x2 pass — a seat and its side table — everywhere a 3x3 could not line up
+		for (int cx = ix1; cx + 1 <= ix2; cx += 3)
+			for (int cz = iz1; cz + 1 <= iz2; cz += 3) {
+				if (!chunkOdds.playOdds(0.5))
+					continue;
+				boolean bare = true;
+				for (int dx = 0; dx <= 1 && bare; dx++)
+					for (int dz = 0; dz <= 1 && bare; dz++)
+						bare = !isStairClaimed(cx + dx, cz + dz) && chunk.isEmpty(cx + dx, y1, cz + dz)
+								&& chunk.isEmpty(cx + dx, y1 + 1, cz + dz)
+								&& !chunk.isEmpty(cx + dx, y1 - 1, cz + dz);
+				if (!bare)
+					continue;
+				me.daddychurchill.CityWorld.Support.Furniture.sideTable(chunk, chunkOdds, cx, y1, cz);
+				Material chair = me.daddychurchill.CityWorld.Support.FurnitureTags
+						.pick(me.daddychurchill.CityWorld.Support.FurnitureTags.CHAIR, chunkOdds);
+				if (chair != null)
+					chunk.setBlock(cx + 1, y1, cz + 1, chair, me.daddychurchill.CityWorld.Support.FurnitureTags
+							.facingFor(chair, BlockFace.NORTH));
+				claimRect(cx - 1, cz - 1, cx + 2, cz + 2);
 			}
 
 		// Small-cell fallback: tight interiors (one-chunk civic strips, floors dominated by the

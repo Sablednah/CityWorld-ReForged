@@ -249,6 +249,15 @@ public abstract class BuildingLot extends ConnectedLot {
 		return x >= 0 && x < 16 && z >= 0 && z < 16 && stairClaim[x * 16 + z];
 	}
 
+	/** Claim a placed room's footprint too (owner's cascade: each pass claims what it uses plus
+	 *  access, and smaller passes fill what remains). Shares the stair mask — one claim grid. */
+	protected final void claimRect(int x1, int z1, int x2, int z2) {
+		for (int x = x1; x <= x2; x++)
+			for (int z = z1; z <= z2; z++)
+				if (x >= 0 && x < 16 && z >= 0 && z < 16)
+					stairClaim[x * 16 + z] = true;
+	}
+
 	StairWell getStairWellLocation(boolean allowRounded, Surroundings heights) {
 		if (heights.toNorth() && heights.toWest() && !heights.toSouth() && !heights.toEast())
 			return StairWell.NORTHWEST;
