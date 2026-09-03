@@ -52,6 +52,7 @@ public class CityWorldDebugEntry implements DebugScreenEntry {
             // /cityinfo never disagree; the level datums below still come straight off the generator.
             LotInfo info = CityWorldAPI.lotAt(level, pos).orElse(null);
             if (info != null) {
+                displayer.addLine("[CityWorld] " + BUILD_STAMP);
                 displayer.addLine(String.format("[CityWorld] %s  %s (%s)  nature %.0f%%",
                         cw.resolvedStyle(), info.lotClass(), info.lotStyle(), info.naturePercent() * 100.0));
                 displayer.addLine(String.format("[CityWorld] context %s (%s)",
@@ -71,6 +72,26 @@ public class CityWorldDebugEntry implements DebugScreenEntry {
         } catch (Throwable t) {
             // Never let the debug overlay crash the client; show that something went wrong instead.
             displayer.addLine("[CityWorld] (info unavailable)");
+        }
+    }
+
+    /** Version plus the jar's own modification time — the one stamp that provably changes on every
+     *  deploy, so "is the game running the jar I just copied in?" is answerable from F3 alone. */
+    private static final String BUILD_STAMP = buildStamp();
+
+    private static String buildStamp() {
+        try {
+            var file = net.neoforged.fml.ModList.get().getModFileById("cityworld").getFile().getFilePath();
+            String version = net.neoforged.fml.ModList.get().getModContainerById("cityworld")
+                    .map(c -> c.getModInfo().getVersion().toString()).orElse("?");
+            if (java.nio.file.Files.isRegularFile(file)) {
+                var time = java.nio.file.Files.getLastModifiedTime(file).toInstant()
+                        .atZone(java.time.ZoneId.systemDefault());
+                return version + " jar " + time.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM HH:mm:ss"));
+            }
+            return version + " (dev)";
+        } catch (Exception e) {
+            return "build stamp unavailable";
         }
     }
 }
