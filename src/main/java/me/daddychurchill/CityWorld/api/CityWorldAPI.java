@@ -75,7 +75,8 @@ public final class CityWorldAPI {
                     platmap.getNaturePercent(),
                     platmap.getNumberOfRoads(),
                     schematic,
-                    lot.getShopType()));
+                    lot.getShopType(),
+                    lot.getInteriorDescription()));
         } catch (RuntimeException e) {
             return Optional.empty(); // never let a lookup throw into a caller
         }
@@ -86,6 +87,8 @@ public final class CityWorldAPI {
         m.put("context", i.contextFamily().toString());
         m.put("contextclass", i.contextClass());
         m.put("lot", i.lotStyle().toString());
+        if (i.interior() != null)
+            m.put("interior", i.interior());
         m.put("lotclass", i.lotClass());
         m.put("at", i.chunk().x + "|" + i.chunk().z);
         m.put("roads", Integer.toString(i.roadCount()));

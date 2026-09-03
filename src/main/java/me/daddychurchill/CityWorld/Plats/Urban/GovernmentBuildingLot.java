@@ -25,9 +25,9 @@ public class GovernmentBuildingLot extends FinishedBuildingLot {
 
 		// which civic institution is this? one flavour per building, so every floor agrees
 		switch (chunkOdds.getRandomInt(3)) {
-		case 0 -> civicRooms = contentsCityHall;
-		case 1 -> civicRooms = contentsCourthouse;
-		default -> civicRooms = contentsSchool;
+		case 0 -> { civicRooms = contentsCityHall; civicName = "City hall"; }
+		case 1 -> { civicRooms = contentsCourthouse; civicName = "Courthouse"; }
+		default -> { civicRooms = contentsSchool; civicName = "School"; }
 		}
 	}
 
@@ -37,10 +37,16 @@ public class GovernmentBuildingLot extends FinishedBuildingLot {
 	private static final RoomProvider contentsCourthouse = new me.daddychurchill.CityWorld.Rooms.Populators.CivicWithCourtrooms();
 	private static final RoomProvider contentsSchool = new me.daddychurchill.CityWorld.Rooms.Populators.CivicWithClassrooms();
 	private RoomProvider civicRooms;
+	private String civicName;
 
 	@Override
 	public RoomProvider roomProviderForFloor(CityWorldGenerator generator, SupportBlocks chunk, int floor, int floorY) {
 		return civicRooms;
+	}
+
+	@Override
+	public String getInteriorDescription() {
+		return civicName;
 	}
 
 	@Override
