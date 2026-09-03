@@ -123,6 +123,13 @@ own campus interiors).
   grid rooms draw BEFORE stairs and never check the floor. Likely right fix: draw stairs FIRST,
   then grid rooms with a bareFloor check, then the sweep with a stair-adjacency margin — one
   ordering, all three symptoms.
+  **Deeper design note (owner: "we yo-yo — fix it and then furniture clips"):** every yo-yo came
+  from a furnishing stage INFERRING stair positions — geometric guesses, emptiness probes, each at
+  a different pipeline moment, each wrong differently. The reliable shape: `drawStairs` (and the
+  stairwell walls) RECORDS the cells it claims — footprint plus the approach/exit cells — into a
+  per-floor claim mask on the lot, and every furnisher (grid rooms, sweep, decorateLanding,
+  accents) consults that mask instead of guessing. One source of truth, ordering-insensitive, and
+  exit cells are claimable without being solid — which no emptiness probe can ever see.
 - **Hospitals + vaults: light furnishing pass** — structurally fine, just want orientation-aware
   pool furniture (the placeFacing/pool machinery, not new layouts).
 - **Debug diagnostics mode** — normally-off logging (config/system property) that reports silent
