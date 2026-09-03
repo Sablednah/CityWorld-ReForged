@@ -1630,8 +1630,11 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			return;
 		int ix1 = Math.max(1, insetWE + 1), ix2 = Math.min(14, 14 - insetWE);
 		int iz1 = Math.max(1, insetNS + 1), iz2 = Math.min(14, 14 - insetNS);
-		for (int cx = ix1; cx + roomWidth - 1 <= ix2; cx += roomWidth + 1)
-			for (int cz = iz1; cz + roomDepth - 1 <= iz2; cz += roomDepth + 1) {
+		// two passes, the second offset by 2: the CROSSED stair footprint can clip every cell of
+		// one alignment while a whole bare strip sits between them (playtested)
+		for (int pass = 0; pass < 2; pass++)
+		for (int cx = ix1 + pass * 2; cx + roomWidth - 1 <= ix2; cx += roomWidth + 1)
+			for (int cz = iz1 + pass * 2; cz + roomDepth - 1 <= iz2; cz += roomDepth + 1) {
 				if (!chunkOdds.playOdds(0.8) || !bareFloor(chunk, cx, y1, cz))
 					continue;
 				int dW = cx, dE = 15 - (cx + roomWidth - 1), dN = cz, dS = 15 - (cz + roomDepth - 1);
