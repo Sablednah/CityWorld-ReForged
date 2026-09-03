@@ -223,6 +223,32 @@ public abstract class BuildingLot extends ConnectedLot {
 		}
 	}
 
+	// ---- the stairwell claim mask -------------------------------------------------------------
+	// You don't move furniture in until the stairs are built (owner's framing). Every furnisher
+	// used to INFER where the stairs were — geometric guesses, emptiness probes — each wrong
+	// differently, which is why fixing one clip caused the next. Instead the stairwell CLAIMS its
+	// cells (footprint plus a one-cell approach ring, which is air and thus invisible to any
+	// emptiness probe), computed from the same StairAt math drawStairs uses, and everything that
+	// places furniture asks first.
+
+	private final boolean[] stairClaim = new boolean[256];
+
+	protected void claimStairs(RealBlocks chunk, int stairLength, StairWell where) {
+		java.util.Arrays.fill(stairClaim, false);
+		if (where == StairWell.NONE)
+			return;
+		StairAt at = new StairAt(chunk, stairLength, where);
+		for (int x = at.X - 1; x <= at.X + stairLength; x++)
+			for (int z = at.Z - 1; z <= at.Z + 4; z++)
+				if (x >= 0 && x < 16 && z >= 0 && z < 16)
+					stairClaim[x * 16 + z] = true;
+	}
+
+	/** Whether the stairwell claims this cell — footprint plus the approach ring. */
+	protected final boolean isStairClaimed(int x, int z) {
+		return x >= 0 && x < 16 && z >= 0 && z < 16 && stairClaim[x * 16 + z];
+	}
+
 	StairWell getStairWellLocation(boolean allowRounded, Surroundings heights) {
 		if (heights.toNorth() && heights.toWest() && !heights.toSouth() && !heights.toEast())
 			return StairWell.NORTHWEST;
