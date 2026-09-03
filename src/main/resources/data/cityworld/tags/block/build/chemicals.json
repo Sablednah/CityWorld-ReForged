@@ -9,6 +9,7 @@
       "required": false
     },
     "minecraft:water",
-    "minecraft:lava"
+    "minecraft:lava",
+    "minecraft:slime_block"
   ]
 }

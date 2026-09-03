@@ -1081,7 +1081,9 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		}
 
 		// the coverage sweep runs AFTER the stairs so bare-floor detection sees them
-		if (style == InteriorStyle.COLUMNS_OFFICES || style == InteriorStyle.WALLS_OFFICES)
+		// _ONLY styles too: per-floor style resolution hands some floors of furnished buildings a
+		// roomless style, which playtested as broken-empty stair strips, not intentional bareness
+		if (style != InteriorStyle.EMPTY && style != InteriorStyle.RANDOM)
 			sweepBareFloor(generator, chunk, rooms, floor, floorAt, floorHeight, insetNS, insetWE, materialWall,
 					materialGlass);
 
