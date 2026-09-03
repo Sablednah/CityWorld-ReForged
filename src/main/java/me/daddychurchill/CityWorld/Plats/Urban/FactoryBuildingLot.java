@@ -185,6 +185,10 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 			Material materialStairWall, Material materialPlatform, boolean drawStairWall, boolean drawStairs,
 			boolean topFloor, boolean singleFloor, Surroundings heights) {
 
+		// factories bypass the standard interior path, so they missed the lighting pass entirely
+		// (playtested: pitch dark halls)
+		lightInterior(chunk, floorAt, floorHeight);
+
 		if (singleFloor) {
 			int groundY = generator.structureLevel + 2;
 			int skywalkHeight = firstFloorHeight / 2;
