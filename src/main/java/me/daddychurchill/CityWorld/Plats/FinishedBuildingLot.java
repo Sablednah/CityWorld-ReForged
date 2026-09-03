@@ -1080,6 +1080,11 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			decorateLanding(generator, chunk, floorAt, aboveFloorHeight, stairLocation);
 		}
 
+		// the coverage sweep runs AFTER the stairs so bare-floor detection sees them
+		if (style == InteriorStyle.COLUMNS_OFFICES || style == InteriorStyle.WALLS_OFFICES)
+			sweepBareFloor(generator, chunk, rooms, floor, floorAt, floorHeight, insetNS, insetWE, materialWall,
+					materialGlass);
+
 		drawExteriorDoors(generator, chunk, context, floor, floorAt, floorHeight, insetNS, insetWE, allowRounded,
 				materialWall, materialGlass, stairLocation, heights);
 	}
@@ -1608,30 +1613,25 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 
 		drawInteriorRoomsGrid(generator, chunk, context, drawNarrowInteriors, rooms, floor, y1, height, insetNS,
 				insetWE, allowRounded, materialWall, materialGlass, stairsLocation, heights);
+	}
 
-		// Coverage fallback — the grid above keys entirely off NEIGHBOUR chunks, so a standalone
-		// building draws NOTHING (every empty school, city hall and unfurnished flat in playtest),
-		// and corner stairwells starve their adjacent quadrants. Sweep the interior for bare 3x3
-		// cells and fill most of them; grid rooms already occupy their cells, so the bare check
-		// composes with whatever the grid managed.
-		int stairX = -99, stairZ = -99;
-		if (stairsLocation != StairWell.NONE) {
-			StairAt at = new StairAt(chunk, height, stairsLocation);
-			stairX = at.X;
-			stairZ = at.Z;
-		}
+	/**
+	 * Coverage sweep — the grid keys off NEIGHBOUR chunks and starves standalone buildings and
+	 * stair-adjacent quadrants. Runs AFTER the stairs are drawn, so {@code bareFloor} simply SEES
+	 * the staircase and no stair geometry needs guessing — the earlier geometric exclusion scaled
+	 * with floor height and emptied tall ground floors entirely (playtested: the city-hall lobby
+	 * with an "allergy to stairs").
+	 */
+	protected void sweepBareFloor(CityWorldGenerator generator, RealBlocks chunk, RoomProvider rooms, int floor,
+			int y1, int height, int insetNS, int insetWE, Material materialWall, Material materialGlass) {
+		if (!generator.getSettings().includeBuildingInteriors)
+			return;
 		int ix1 = Math.max(1, insetWE + 1), ix2 = Math.min(14, 14 - insetWE);
 		int iz1 = Math.max(1, insetNS + 1), iz2 = Math.min(14, 14 - insetNS);
 		for (int cx = ix1; cx + roomWidth - 1 <= ix2; cx += roomWidth + 1)
 			for (int cz = iz1; cz + roomDepth - 1 <= iz2; cz += roomDepth + 1) {
-				// never build into the stair footprint (stairs draw AFTER rooms and would carve
-				// through the furniture); pad by one for the landing
-				if (cx + roomWidth > stairX - 1 && cx <= stairX + height && cz + roomDepth > stairZ - 1
-						&& cz <= stairZ + 4)
-					continue;
 				if (!chunkOdds.playOdds(0.8) || !bareFloor(chunk, cx, y1, cz))
 					continue;
-				// orient toward the nearest chunk edge, like the grid rooms do
 				int dW = cx, dE = 15 - (cx + roomWidth - 1), dN = cz, dS = 15 - (cz + roomDepth - 1);
 				int best = Math.min(Math.min(dN, dS), Math.min(dW, dE));
 				BlockFace side = best == dN ? BlockFace.NORTH
