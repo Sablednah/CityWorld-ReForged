@@ -1654,18 +1654,39 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		int ix2 = heights.toEast() ? 14 : Math.min(14, 14 - insetWE);
 		int iz1 = heights.toNorth() ? 1 : Math.max(1, insetNS + 1);
 		int iz2 = heights.toSouth() ? 14 : Math.min(14, 14 - insetNS);
+
+		// Self-calibrate the floor level. Overrides shift their interiors (Government raises them
+		// by `higher`), and an off-by-one here silently blanks a whole floor — the empty School
+		// lobby survived the claim fix because the sweep's y sat inside the raised slab, failing
+		// every standability check. Sample the interior and use the level where cells actually
+		// ARE standable, trying y1 upward.
+		int y1cal = y1;
+		calibrate: for (int dy = 0; dy <= 2; dy++) {
+			int standable = 0, sampled = 0;
+			for (int cx = ix1; cx <= ix2; cx += 3)
+				for (int cz = iz1; cz <= iz2; cz += 3) {
+					sampled++;
+					if (chunk.isEmpty(cx, y1 + dy, cz) && !chunk.isEmpty(cx, y1 + dy - 1, cz))
+						standable++;
+				}
+			if (sampled > 0 && standable * 2 > sampled) {
+				y1cal = y1 + dy;
+				break calibrate;
+			}
+		}
+		final int yf = y1cal;
 		// two passes, the second offset by 2: the CROSSED stair footprint can clip every cell of
 		// one alignment while a whole bare strip sits between them (playtested)
 		for (int pass = 0; pass < 2; pass++)
 		for (int cx = ix1 + pass * 2; cx + roomWidth - 1 <= ix2; cx += roomWidth + 1)
 			for (int cz = iz1 + pass * 2; cz + roomDepth - 1 <= iz2; cz += roomDepth + 1) {
-				if (!chunkOdds.playOdds(0.8) || !bareFloor(chunk, cx, y1, cz))
+				if (!chunkOdds.playOdds(0.8) || !bareFloor(chunk, cx, yf, cz))
 					continue;
 				int dW = cx, dE = 15 - (cx + roomWidth - 1), dN = cz, dS = 15 - (cz + roomDepth - 1);
 				int best = Math.min(Math.min(dN, dS), Math.min(dW, dE));
 				BlockFace side = best == dN ? BlockFace.NORTH
 						: best == dS ? BlockFace.SOUTH : best == dW ? BlockFace.WEST : BlockFace.EAST;
-				drawInteriorRoom(generator, chunk, rooms, floor, cx, y1, cz, height, side, materialWall,
+				drawInteriorRoom(generator, chunk, rooms, floor, cx, yf, cz, height, side, materialWall,
 						materialGlass);
 				claimRect(cx - 1, cz - 1, cx + roomWidth, cz + roomDepth); // footprint + access ring
 			}
@@ -1678,16 +1699,16 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 				boolean bare = true;
 				for (int dx = 0; dx <= 1 && bare; dx++)
 					for (int dz = 0; dz <= 1 && bare; dz++)
-						bare = !isStairClaimed(cx + dx, cz + dz) && chunk.isEmpty(cx + dx, y1, cz + dz)
-								&& chunk.isEmpty(cx + dx, y1 + 1, cz + dz)
-								&& !chunk.isEmpty(cx + dx, y1 - 1, cz + dz);
+						bare = !isStairClaimed(cx + dx, cz + dz) && chunk.isEmpty(cx + dx, yf, cz + dz)
+								&& chunk.isEmpty(cx + dx, yf + 1, cz + dz)
+								&& !chunk.isEmpty(cx + dx, yf - 1, cz + dz);
 				if (!bare)
 					continue;
-				me.daddychurchill.CityWorld.Support.Furniture.sideTable(chunk, chunkOdds, cx, y1, cz);
+				me.daddychurchill.CityWorld.Support.Furniture.sideTable(chunk, chunkOdds, cx, yf, cz);
 				Material chair = me.daddychurchill.CityWorld.Support.FurnitureTags
 						.pick(me.daddychurchill.CityWorld.Support.FurnitureTags.CHAIR, chunkOdds);
 				if (chair != null)
-					chunk.setBlock(cx + 1, y1, cz + 1, chair, me.daddychurchill.CityWorld.Support.FurnitureTags
+					chunk.setBlock(cx + 1, yf, cz + 1, chair, me.daddychurchill.CityWorld.Support.FurnitureTags
 							.facingFor(chair, BlockFace.NORTH));
 				claimRect(cx - 1, cz - 1, cx + 2, cz + 2);
 			}
@@ -1700,13 +1721,13 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			for (int cz = iz1; cz <= iz2; cz++) {
 				if (!chunkOdds.playOdds(0.08) || isStairClaimed(cx, cz))
 					continue;
-				if (!chunk.isEmpty(cx, y1, cz) || !chunk.isEmpty(cx, y1 + 1, cz)
-						|| chunk.isEmpty(cx, y1 - 1, cz))
+				if (!chunk.isEmpty(cx, yf, cz) || !chunk.isEmpty(cx, yf + 1, cz)
+						|| chunk.isEmpty(cx, yf - 1, cz))
 					continue;
 				switch (chunkOdds.getRandomInt(3)) {
-				case 0 -> me.daddychurchill.CityWorld.Support.Furniture.pottedPlant(chunk, chunkOdds, cx, y1, cz);
-				case 1 -> me.daddychurchill.CityWorld.Support.Furniture.sideTable(chunk, chunkOdds, cx, y1, cz);
-				default -> me.daddychurchill.CityWorld.Support.Furniture.floorLamp(chunk, chunkOdds, cx, y1, cz);
+				case 0 -> me.daddychurchill.CityWorld.Support.Furniture.pottedPlant(chunk, chunkOdds, cx, yf, cz);
+				case 1 -> me.daddychurchill.CityWorld.Support.Furniture.sideTable(chunk, chunkOdds, cx, yf, cz);
+				default -> me.daddychurchill.CityWorld.Support.Furniture.floorLamp(chunk, chunkOdds, cx, yf, cz);
 				}
 			}
 	}
