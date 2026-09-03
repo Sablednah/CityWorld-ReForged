@@ -99,6 +99,22 @@ LoungeTVRoom honours upstream's 12-year-old `// TODO add picture to wall` with a
 Not touched: UnfinishedBuildingLot (construction props idea remains open) and HospitalLot (has its
 own campus interiors).
 
+**Queued from the interiors playtest (2026-09-03), not yet built:**
+- **Fluids setting (BIG)** — owner wants an optional "fluids" toggle, default ON for MODERN, OFF
+  for APOCALYPSE: fills the industrial silos with a random fluid and the water towers with water.
+  Head start: `includeAbovegroundFluids` ALREADY EXISTS and `drawWaterTower` already checks it —
+  the job is per-style defaults + finding the silo drawing (IndustrialContext, the big round tanks)
+  and filling those too. Check what currently sets includeAbovegroundFluids.
+- **Basements (BIG)** — buildings have `depth` (basement floors exist). If the building is
+  occupied (not Vacant/Empty), furnish basement floors with a storage populator (WarehouseWith*
+  pool or similar). Find where basement floors call roomProviderForFloor (floor < 0? the
+  basementFloorHeight path around FinishedBuildingLot:854).
+- **Factory control panels** — the factory's room-within-a-room (machinery boxes / offices in the
+  tall halls, drawn in FactoryBuildingLot.drawInteriorParts singleFloor branch) wants control-panel
+  strips: levers/observers/redstone-ish blocks on the box walls.
+- **For-sale signs** — Vacant towers (OfficeBuildingLot EMPTY) and EmptyBuildingLot get a "For
+  Sale" wall sign by the ground-floor door. Sign text helpers exist (setSignText).
+
 **Queued from round 2, not yet built:**
 - **Furnish after doors** — the wall-nearest-edge trick dodges most door clashes, but the real fix
   is ordering: find where the colonial house cuts doors vs. styles rooms and furnish afterwards.
