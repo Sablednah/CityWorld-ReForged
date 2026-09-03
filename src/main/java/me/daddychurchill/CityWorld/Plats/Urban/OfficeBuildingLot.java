@@ -35,6 +35,15 @@ public class OfficeBuildingLot extends FinishedBuildingLot {
 		contentStyle = pickContentStyle();
 	}
 
+	@Override
+	protected void calculateOptions(me.daddychurchill.CityWorld.Context.DataContext context) {
+		super.calculateOptions(context);
+		// residential towers must draw rooms — a tower that rolled COLUMNS_ONLY would silently
+		// have no flats at all (the same trap that kept government buildings empty)
+		if (contentStyle == ContentStyle.APARTMENTS)
+			interiorStyle = InteriorStyle.WALLS_OFFICES;
+	}
+
 	private ContentStyle pickContentStyle() {
 		switch (chunkOdds.getRandomInt(10)) {
 		case 1:
@@ -47,8 +56,9 @@ public class OfficeBuildingLot extends FinishedBuildingLot {
 			return ContentStyle.CUBICLES;
 		case 7:
 		case 8:
-		case 9:
 			return ContentStyle.RANDOM;
+		case 9:
+			return ContentStyle.APARTMENTS;
 		default:
 			// residential towers: apartment blocks were never a thing before the interiors round
 			return chunkOdds.flipCoin() ? ContentStyle.APARTMENTS : ContentStyle.EMPTY;

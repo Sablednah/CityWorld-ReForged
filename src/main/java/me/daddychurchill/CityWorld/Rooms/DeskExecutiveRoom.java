@@ -22,19 +22,19 @@ public class DeskExecutiveRoom extends DeskRoom {
 		switch (sideWithWall) {
 		default:
 		case NORTH:
-			drawDesk(generator, chunk, odds, x, x + 3, y, z, z + 1, sideWithWall.getOppositeFace());
+			drawDesk(generator, chunk, odds, x, x + 3, y, z, z + 1, BlockFace.SOUTH);
 			drawSeat(chunk, odds, x + 1, y, z + 1, BlockFace.SOUTH);
 			break;
 		case SOUTH:
-			drawDesk(generator, chunk, odds, x, x + 3, y, z + 2, z + 3, sideWithWall.getOppositeFace());
+			drawDesk(generator, chunk, odds, x, x + 3, y, z + 2, z + 3, BlockFace.NORTH);
 			drawSeat(chunk, odds, x + 1, y, z + 1, BlockFace.NORTH);
 			break;
 		case WEST:
-			drawDesk(generator, chunk, odds, x, x + 1, y, z, z + 3, sideWithWall.getOppositeFace());
+			drawDesk(generator, chunk, odds, x, x + 1, y, z, z + 3, BlockFace.EAST);
 			drawSeat(chunk, odds, x + 1, y, z + 1, BlockFace.EAST);
 			break;
 		case EAST:
-			drawDesk(generator, chunk, odds, x + 2, x + 3, y, z, z + 3, sideWithWall.getOppositeFace());
+			drawDesk(generator, chunk, odds, x + 2, x + 3, y, z, z + 3, BlockFace.WEST);
 			drawSeat(chunk, odds, x + 1, y, z + 1, BlockFace.WEST);
 			break;
 		}
