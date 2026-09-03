@@ -873,6 +873,16 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			} else {
 				drawOtherPillars(chunk, floorAt, basementFloorHeight, StairWell.CENTER, wallMaterial);
 			}
+
+			// Occupied buildings keep STORAGE down here (owner request): the warehouse pool —
+			// crates, shelves, stacks — through the same claim cascade the floors above use.
+			// Vacant shells keep their bare basements; a for-sale building with a full cellar
+			// would be lying.
+			if (!"Vacant".equals(getInteriorDescription())) {
+				claimStairs(chunk, basementFloorHeight, needStairsDown ? stairLocation : StairWell.NONE);
+				sweepBareFloor(generator, chunk, basementStorage, -1 - floor, floorAt, basementFloorHeight, 0, 0,
+						wallMaterial, wallMaterial, neighborFloors);
+			}
 		}
 
 		// now the above ground floors
@@ -1606,6 +1616,9 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 				drawExteriorSNDoor(chunk, x2, y1, y2, 5, doorStyle, materialWall);
 		}
 	}
+
+	private static final RoomProvider basementStorage =
+			new me.daddychurchill.CityWorld.Rooms.Populators.WarehouseWithBoxes();
 
 	private static final int maxInsetForRooms = 2;
 
