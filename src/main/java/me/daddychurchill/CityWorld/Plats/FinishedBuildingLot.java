@@ -1005,6 +1005,9 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			Material materialStair, Material materialStairWall, Material materialPlatform, boolean drawStairWall,
 			boolean drawStairs, boolean topFloor, boolean singleFloor, Surroundings heights) {
 
+		// the stairwell claims its cells before ANY furnisher runs (see BuildingLot.claimStairs)
+		claimStairs(chunk, floorHeight, drawStairs ? stairLocation : StairWell.NONE);
+
 		// calculate initial door state
 		DoorStyle drawInteriorDoors = DoorStyle.NONE;
 
@@ -1650,7 +1653,8 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 	private boolean bareFloor(RealBlocks chunk, int x, int y, int z) {
 		for (int cx = x; cx < x + roomWidth; cx++)
 			for (int cz = z; cz < z + roomDepth; cz++)
-				if (!chunk.isEmpty(cx, y, cz) || !chunk.isEmpty(cx, y + 1, cz) || chunk.isEmpty(cx, y - 1, cz))
+				if (isStairClaimed(cx, cz) || !chunk.isEmpty(cx, y, cz) || !chunk.isEmpty(cx, y + 1, cz)
+						|| chunk.isEmpty(cx, y - 1, cz))
 					return false;
 		return true;
 	}
@@ -1861,6 +1865,10 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 	private void drawInteriorRoom(CityWorldGenerator generator, RealBlocks chunk, RoomProvider rooms, int floor, int x,
 			int y, int z, int height, BlockFace sideWithWall, Material materialWall, Material materialGlass) {
 
+		for (int cx = x; cx < x + roomWidth; cx++)
+			for (int cz = z; cz < z + roomDepth; cz++)
+				if (isStairClaimed(cx, cz))
+					return; // never build a room into the stairwell's claim
 		rooms.drawFixtures(generator, chunk, chunkOdds, floor, x, y, z, roomWidth, height, roomDepth, sideWithWall,
 				materialWall, materialGlass);
 
