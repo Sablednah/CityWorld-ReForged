@@ -116,6 +116,13 @@ own campus interiors).
   Sale" wall sign by the ground-floor door. Sign text helpers exist (setSignText).
 
 **Queued (2026-09-03 evening):**
+- **Stairwell/room interplay — the remaining interior defects (F3'd, three symptoms, one root):**
+  (1) sweep rooms now sit flush to stairs and furniture crowds the stair exit (needs a 1-cell
+  buffer around stair blocks); (2) the 90° corner-landing and 2-wide stair styles still leave bare
+  voids the 4-step sweep grid misses; (3) a GRID room's wall panel generated THROUGH a staircase —
+  grid rooms draw BEFORE stairs and never check the floor. Likely right fix: draw stairs FIRST,
+  then grid rooms with a bareFloor check, then the sweep with a stair-adjacency margin — one
+  ordering, all three symptoms.
 - **Hospitals + vaults: light furnishing pass** — structurally fine, just want orientation-aware
   pool furniture (the placeFacing/pool machinery, not new layouts).
 - **Debug diagnostics mode** — normally-off logging (config/system property) that reports silent
