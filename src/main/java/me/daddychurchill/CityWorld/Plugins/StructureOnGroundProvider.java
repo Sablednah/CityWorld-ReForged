@@ -1246,7 +1246,9 @@ public class StructureOnGroundProvider extends Provider {
 		chunk.setCircle(x + 4, x + 4, 3, y3 + 6, topMat, true);
 
 		if (generator.getSettings().includeAbovegroundFluids) {
-			chunk.setCircle(x + 4, x + 4, 3, y3 + 1, y3 + 2 + odds.getRandomInt(3),
+			// fill most of the tank, not a puddle at the bottom — 1-3 layers in a 5-tall tank was
+			// invisible from the rim and read as an empty tower (playtested)
+			chunk.setCircle(x + 4, x + 4, 3, y3 + 1, y3 + 4 + odds.getRandomInt(2),
 					generator.oreProvider.fluidFluidMaterial, true);
 		}
 	}
