@@ -116,6 +116,15 @@ own campus interiors).
   Sale" wall sign by the ground-floor door. Sign text helpers exist (setSignText).
 
 **Queued (2026-09-03 evening):**
+- **⚠ REPRO IN HAND — empty School/City-hall GROUND floors (upper floors fine).** Seed
+  2720459862006157221, block 90 69 -107 (chunk 5,-7), GovernmentBuildingLot interior=School,
+  MunicipalContext; confirmed on jar-stamped fresh world (F3 stamp works). Diagnosis so far:
+  GovernmentBuildingLot.drawInteriorParts passes `floorAt + higher` (higher=2) to super and draws
+  foundation columns AFTER furnishing; hypothesis: off-by-one between the raised y and the real
+  floor slab makes bareFloor's solid-underfoot test fail on every ground-floor cell → sweep places
+  nothing. Verify with the plan-probe workflow (memory: cityworld-worldgen-verify-probe) on the dev
+  server at that seed — CityWorld is seed-deterministic, so the dev server reproduces the exact
+  building.
 - **Stairwell/room interplay — the remaining interior defects (F3'd, three symptoms, one root):**
   (1) sweep rooms now sit flush to stairs and furniture crowds the stair exit (needs a 1-cell
   buffer around stair blocks); (2) the 90° corner-landing and 2-wide stair styles still leave bare
