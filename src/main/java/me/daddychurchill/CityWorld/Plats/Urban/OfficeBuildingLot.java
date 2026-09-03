@@ -29,10 +29,16 @@ public class OfficeBuildingLot extends FinishedBuildingLot {
 	protected ContentStyle contentStyle;
 
 	public OfficeBuildingLot(PlatMap platmap, int chunkX, int chunkZ) {
+		this(platmap, chunkX, chunkZ, false);
+	}
+
+	/** {@code residential} forces an apartment tower — the city planner deals some out directly
+	 *  (upstream even had a commented-out ApartmentBuildingLot; this is that wish, granted). */
+	public OfficeBuildingLot(PlatMap platmap, int chunkX, int chunkZ, boolean residential) {
 		super(platmap, chunkX, chunkZ);
 
 		rounded = false;
-		contentStyle = pickContentStyle();
+		contentStyle = residential ? ContentStyle.APARTMENTS : pickContentStyle();
 	}
 
 	@Override

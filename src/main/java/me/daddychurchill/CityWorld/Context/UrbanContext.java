@@ -145,21 +145,21 @@ public abstract class UrbanContext extends CivilizedContext {
 	}
 
 	protected PlatLot getBuilding(CityWorldGenerator generator, PlatMap platmap, Odds odds, int chunkX, int chunkZ) {
-		switch (odds.getRandomInt(6)) {
+		// Rebalanced (owner, 2026-09-03) from the old 6-way pick (office 50%, empty/store/library
+		// 17% each): more stores, fewer libraries and empties, and apartment towers dealt out
+		// directly — the upstream author's commented-out ApartmentBuildingLot, finally real.
+		switch (odds.getRandomInt(12)) {
 		case 1:
 			return new EmptyBuildingLot(platmap, chunkX, chunkZ);
 		case 2:
-			return new StoreBuildingLot(platmap, chunkX, chunkZ);
 		case 3:
+		case 4:
+			return new StoreBuildingLot(platmap, chunkX, chunkZ);
+		case 5:
 			return new LibraryBuildingLot(platmap, chunkX, chunkZ);
-//		case 4:
-//			return new ApartmentBuildingLot(platmap, chunkX, chunkZ);
-//		case 5:
-//			return new BankBuildingLot(platmap, chunkX, chunkZ);
-//		case 6:
-//			return new FactoryBuildingLot(platmap, chunkX, chunkZ);
-//		case 7:
-//			return new BlaBlaBuildingLot(platmap, chunkX, chunkZ);
+		case 6:
+		case 7:
+			return new OfficeBuildingLot(platmap, chunkX, chunkZ, true); // apartments
 		default:
 			return new OfficeBuildingLot(platmap, chunkX, chunkZ);
 		}
