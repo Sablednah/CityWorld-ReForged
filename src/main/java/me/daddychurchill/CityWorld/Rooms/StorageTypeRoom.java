@@ -26,6 +26,9 @@ abstract class StorageTypeRoom extends StorageRoom {
 				: null;
 		if (crate != null) {
 			chunk.setBlocks(x, x + 1, y1, y2, z, z + 1, crate);
+		} else if (odds.playOdds(0.25)) {
+			// barrels in the mix too (owner request) — warehouses read wrong as crates-only
+			chunk.setBlocks(x, x + 1, y1, y2, z, z + 1, Material.BARREL);
 		} else if (materialType == Material.PISTON) {
 			chunk.setBlocks(x, x + 1, y1, y2, z, z + 1, materialType, BlockFace.UP);
 		} else {

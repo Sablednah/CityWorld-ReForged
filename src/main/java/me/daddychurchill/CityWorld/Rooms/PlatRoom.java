@@ -102,8 +102,17 @@ public abstract class PlatRoom {
 		drawTable(generator, chunk, odds, x, x + 1, y, z, z + 1);
 	}
 
+	/** True when a seat here would stare into a wall — 2-high solid in the look direction. A desk
+	 *  or table in front is 1-high and fine; the apartment couch nose-to-stairwell was not. */
+	private static boolean facesWall(RealBlocks chunk, int x, int y, int z, BlockFace look) {
+		int lx = x + look.getModX(), lz = z + look.getModZ();
+		return !chunk.isEmpty(lx, y, lz) && !chunk.isEmpty(lx, y + 1, lz);
+	}
+
 	/** A single seat; {@code backrest} is the stair-fallback's facing, pooled chairs look opposite. */
 	void drawSeat(RealBlocks chunk, Odds odds, int x, int y, int z, BlockFace backrest) {
+		if (!chunk.isEmpty(x, y, z) || facesWall(chunk, x, y, z, backrest.getOppositeFace()))
+			return;
 		Material chair = me.daddychurchill.CityWorld.Support.FurnitureTags.pick(
 				me.daddychurchill.CityWorld.Support.FurnitureTags.CHAIR, odds);
 		if (chair != null)
@@ -123,6 +132,8 @@ public abstract class PlatRoom {
 	/** One cell of a couch run; same backrest convention as {@link #drawSeat}. PlatRooms are shared
 	 *  instances, so the room picks its sofa once and passes it here rather than holding state. */
 	void drawCouchSeat(RealBlocks chunk, Material sofa, int x, int y, int z, BlockFace backrest) {
+		if (!chunk.isEmpty(x, y, z) || facesWall(chunk, x, y, z, backrest.getOppositeFace()))
+			return;
 		if (sofa != null)
 			chunk.setBlock(x, y, z, sofa, me.daddychurchill.CityWorld.Support.FurnitureTags.facingFor(sofa,
 					backrest.getOppositeFace()));

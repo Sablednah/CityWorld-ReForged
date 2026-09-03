@@ -1090,7 +1090,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 	 * mods can contribute their own hanging lights; vanilla seeds are lantern and soul lantern.
 	 * Each position scans up for its own ceiling and skips outdoors/inset positions that find none.
 	 */
-	private void lightInterior(RealBlocks chunk, int floorAt, int floorHeight) {
+	protected void lightInterior(RealBlocks chunk, int floorAt, int floorHeight) {
 		me.daddychurchill.CityWorld.compat.Material light = me.daddychurchill.CityWorld.Support.FurnitureTags
 				.pick(me.daddychurchill.CityWorld.Support.FurnitureTags.HANGING_LIGHT, chunkOdds);
 		if (light == null)
@@ -1605,6 +1605,55 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		// skip the rooms?
 		if (!generator.getSettings().includeBuildingInteriors)
 			return;
+
+		drawInteriorRoomsGrid(generator, chunk, context, drawNarrowInteriors, rooms, floor, y1, height, insetNS,
+				insetWE, allowRounded, materialWall, materialGlass, stairsLocation, heights);
+
+		// Coverage fallback — the grid above keys entirely off NEIGHBOUR chunks, so a standalone
+		// building draws NOTHING (every empty school, city hall and unfurnished flat in playtest),
+		// and corner stairwells starve their adjacent quadrants. Sweep the interior for bare 3x3
+		// cells and fill most of them; grid rooms already occupy their cells, so the bare check
+		// composes with whatever the grid managed.
+		int stairX = -99, stairZ = -99;
+		if (stairsLocation != StairWell.NONE) {
+			StairAt at = new StairAt(chunk, height, stairsLocation);
+			stairX = at.X;
+			stairZ = at.Z;
+		}
+		int ix1 = Math.max(1, insetWE + 1), ix2 = Math.min(14, 14 - insetWE);
+		int iz1 = Math.max(1, insetNS + 1), iz2 = Math.min(14, 14 - insetNS);
+		for (int cx = ix1; cx + roomWidth - 1 <= ix2; cx += roomWidth + 1)
+			for (int cz = iz1; cz + roomDepth - 1 <= iz2; cz += roomDepth + 1) {
+				// never build into the stair footprint (stairs draw AFTER rooms and would carve
+				// through the furniture); pad by one for the landing
+				if (cx + roomWidth > stairX - 1 && cx <= stairX + height && cz + roomDepth > stairZ - 1
+						&& cz <= stairZ + 4)
+					continue;
+				if (!chunkOdds.playOdds(0.8) || !bareFloor(chunk, cx, y1, cz))
+					continue;
+				// orient toward the nearest chunk edge, like the grid rooms do
+				int dW = cx, dE = 15 - (cx + roomWidth - 1), dN = cz, dS = 15 - (cz + roomDepth - 1);
+				int best = Math.min(Math.min(dN, dS), Math.min(dW, dE));
+				BlockFace side = best == dN ? BlockFace.NORTH
+						: best == dS ? BlockFace.SOUTH : best == dW ? BlockFace.WEST : BlockFace.EAST;
+				drawInteriorRoom(generator, chunk, rooms, floor, cx, y1, cz, height, side, materialWall,
+						materialGlass);
+			}
+	}
+
+	/** Whether a roomWidth x roomDepth footprint is entirely empty standing room on solid floor. */
+	private boolean bareFloor(RealBlocks chunk, int x, int y, int z) {
+		for (int cx = x; cx < x + roomWidth; cx++)
+			for (int cz = z; cz < z + roomDepth; cz++)
+				if (!chunk.isEmpty(cx, y, cz) || !chunk.isEmpty(cx, y + 1, cz) || chunk.isEmpty(cx, y - 1, cz))
+					return false;
+		return true;
+	}
+
+	private void drawInteriorRoomsGrid(CityWorldGenerator generator, RealBlocks chunk, DataContext context,
+			boolean drawNarrowInteriors, RoomProvider rooms, int floor, int y1, int height, int insetNS, int insetWE,
+			boolean allowRounded, Material materialWall, Material materialGlass, StairWell stairsLocation,
+			Surroundings heights) {
 
 		// outer rooms?
 		boolean includeOuterRooms = insetNS <= maxInsetForRooms || insetWE <= maxInsetForRooms;
