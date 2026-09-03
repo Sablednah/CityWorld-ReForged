@@ -116,6 +116,17 @@ own campus interiors).
   Sale" wall sign by the ground-floor door. Sign text helpers exist (setSignText).
 
 **Queued (2026-09-03 evening):**
+- **▶ OVERNIGHT (2026-09-03→04): the four-times-escaped empty School lobby.** Jar-stamp-verified
+  on 22:56 build (claim-footprint fix AND sweep self-calibration both live, upstairs furnishes,
+  lobby still bare). Seed 2720459862006157221, block 90 69 -107, chunk (5,-7). STOP PATCHING —
+  instrument: probe-gated tracing inside sweepBareFloor + GovernmentBuildingLot.drawInteriorParts
+  (log per-floor: called-or-not, style, y1, calibrated yf, bounds, claim count, per-cell failure
+  tallies), a `-Dcityworld.probe=<chunkX>,<chunkZ>` ServerStarted listener that forces the region,
+  logs, halts. Run on the mc26.2 worktree dev server (mods present) with that seed in
+  run/server.properties (level-type cityworld:city, do NOT run selftest.sh — it overwrites seed).
+  Candidate causes the tracing must separate: sweep never called for floor 0 (style/skip path),
+  doBuilding(heights) false for this chunk, singleFloor special-casing, calibration finding no
+  standable level, bounds inverted by per-side insets, claim covering all (shouldn't now).
 - **⚠ REPRO IN HAND — empty School/City-hall GROUND floors (upper floors fine).** Seed
   2720459862006157221, block 90 69 -107 (chunk 5,-7), GovernmentBuildingLot interior=School,
   MunicipalContext; confirmed on jar-stamped fresh world (F3 stamp works). Diagnosis so far:
