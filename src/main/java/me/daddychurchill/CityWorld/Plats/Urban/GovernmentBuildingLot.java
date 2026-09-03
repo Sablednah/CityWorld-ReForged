@@ -167,16 +167,20 @@ public class GovernmentBuildingLot extends FinishedBuildingLot {
 					"TRACE gov drawInteriorParts floor={} doBuilding={} floorAt={} higher={}",
 					floor, doBuilding(heights), floorAt, higher);
 		if (doBuilding(heights)) {
-			// TODO Auto-generated method stub
-			super.drawInteriorParts(generator, blocks, context, rooms, floor, floorAt + higher, floorHeight, insetNS,
-					insetWE, allowRounded, materialWall, materialGlass, stairLocation, materialStair, materialStairWall,
-					materialPlatform, drawStairWall, drawStairs, topFloor, singleFloor, heights);
-
+			// Foundation FIRST — probe-measured (seed 2720459862006157221, chunk 5,-7): the raised
+			// lobby slab was drawn AFTER furnishing, so at sweep time y67 was air, every
+			// standability check honestly failed, and the slab then painted underneath an
+			// already-abandoned floor. Four playtest rounds of "empty School lobby" were the
+			// building pouring its own floor after the movers left.
 			if (floor == 0) {
 				drawFoundationSteps(blocks, floorAt, floorAt + 2, heights);
 				drawFoundationColumns(blocks, floorAt, 1, heights);
 			}
 			drawFoundationColumns(blocks, floorAt + higher - 1, DataContext.FloorHeight, heights);
+
+			super.drawInteriorParts(generator, blocks, context, rooms, floor, floorAt + higher, floorHeight, insetNS,
+					insetWE, allowRounded, materialWall, materialGlass, stairLocation, materialStair, materialStairWall,
+					materialPlatform, drawStairWall, drawStairs, topFloor, singleFloor, heights);
 		}
 	}
 
