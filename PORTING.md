@@ -115,6 +115,13 @@ own campus interiors).
 - **For-sale signs** — Vacant towers (OfficeBuildingLot EMPTY) and EmptyBuildingLot get a "For
   Sale" wall sign by the ground-floor door. Sign text helpers exist (setSignText).
 
+**Queued (2026-09-03 evening):**
+- **Hospitals + vaults: light furnishing pass** — structurally fine, just want orientation-aware
+  pool furniture (the placeFacing/pool machinery, not new layouts).
+- **Debug diagnostics mode** — normally-off logging (config/system property) that reports silent
+  fallbacks: "tag X resolved empty", "material Y not found", "offset undeclared for Z". Would have
+  caught the chemicals-namespace bug and every empty-pool trap this project keeps hitting.
+
 **Queued from round 2, not yet built:**
 - **Furnish after doors** — the wall-nearest-edge trick dodges most door clashes, but the real fix
   is ordering: find where the colonial house cuts doors vs. styles rooms and furnish afterwards.
