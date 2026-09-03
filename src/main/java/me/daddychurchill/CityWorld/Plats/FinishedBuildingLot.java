@@ -1655,6 +1655,24 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 				drawInteriorRoom(generator, chunk, rooms, floor, cx, y1, cz, height, side, materialWall,
 						materialGlass);
 			}
+
+		// Small-cell fallback: tight interiors (one-chunk civic strips, floors dominated by the
+		// stair claim) can have NO spot where a 3x3 lines up — "like bottling lightning"
+		// (playtested). Single bare cells get a small non-directional piece instead, so tight
+		// floors read furnished rather than abandoned.
+		for (int cx = ix1; cx <= ix2; cx++)
+			for (int cz = iz1; cz <= iz2; cz++) {
+				if (!chunkOdds.playOdds(0.08) || isStairClaimed(cx, cz))
+					continue;
+				if (!chunk.isEmpty(cx, y1, cz) || !chunk.isEmpty(cx, y1 + 1, cz)
+						|| chunk.isEmpty(cx, y1 - 1, cz))
+					continue;
+				switch (chunkOdds.getRandomInt(3)) {
+				case 0 -> me.daddychurchill.CityWorld.Support.Furniture.pottedPlant(chunk, chunkOdds, cx, y1, cz);
+				case 1 -> me.daddychurchill.CityWorld.Support.Furniture.sideTable(chunk, chunkOdds, cx, y1, cz);
+				default -> me.daddychurchill.CityWorld.Support.Furniture.floorLamp(chunk, chunkOdds, cx, y1, cz);
+				}
+			}
 	}
 
 	/** Whether a roomWidth x roomDepth footprint is entirely empty standing room on solid floor. */
