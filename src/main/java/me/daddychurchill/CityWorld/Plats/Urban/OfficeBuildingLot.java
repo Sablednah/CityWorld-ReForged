@@ -42,6 +42,17 @@ public class OfficeBuildingLot extends FinishedBuildingLot {
 	}
 
 	@Override
+	public String getInteriorDescription() {
+		return switch (contentStyle) {
+		case APARTMENTS -> "Apartments";
+		case CUBICLES -> "Office cubicles";
+		case OFFICES -> "Offices";
+		case RANDOM -> "Offices (mixed)";
+		case EMPTY -> "Vacant";
+		};
+	}
+
+	@Override
 	protected void calculateOptions(me.daddychurchill.CityWorld.Context.DataContext context) {
 		super.calculateOptions(context);
 		// residential towers must draw rooms — a tower that rolled COLUMNS_ONLY would silently

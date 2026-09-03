@@ -26,6 +26,7 @@ import org.jspecify.annotations.Nullable;
  * @param roadCount     number of road lots in this lot's platmap
  * @param schematicName the placed schematic's name, or {@code null} if this lot is not a schematic
  * @param shop          this lot's {@link ShopType}, or {@code null} if it is not a shop
+ * @param interior      what the interior is furnished as ("Courthouse", "Apartments"…), or {@code null}
  */
 public record LotInfo(
         ResourceKey<Level> dimension,
@@ -37,7 +38,8 @@ public record LotInfo(
         double naturePercent,
         int roadCount,
         @Nullable String schematicName,
-        @Nullable ShopType shop) {
+        @Nullable ShopType shop,
+        @Nullable String interior) {
 
     /** True if this lot is a placed schematic (see {@link #schematicName()}). */
     public boolean isSchematic() {

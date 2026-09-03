@@ -31,6 +31,11 @@ public class MuseumBuildingLot extends FinishedBuildingLot {
 			new me.daddychurchill.CityWorld.Rooms.Populators.MuseumWithExhibits();
 
 	@Override
+	public String getInteriorDescription() {
+		return "Museum exhibits";
+	}
+
+	@Override
 	public me.daddychurchill.CityWorld.Plugins.RoomProvider roomProviderForFloor(
 			me.daddychurchill.CityWorld.CityWorldGenerator generator,
 			me.daddychurchill.CityWorld.Support.SupportBlocks chunk, int floor, int floorY) {

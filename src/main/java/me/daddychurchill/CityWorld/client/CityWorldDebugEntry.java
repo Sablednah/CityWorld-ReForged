@@ -56,6 +56,8 @@ public class CityWorldDebugEntry implements DebugScreenEntry {
                         cw.resolvedStyle(), info.lotClass(), info.lotStyle(), info.naturePercent() * 100.0));
                 displayer.addLine(String.format("[CityWorld] context %s (%s)",
                         info.contextClass(), info.contextFamily()));
+                if (info.interior() != null)
+                    displayer.addLine("[CityWorld] interior " + info.interior());
                 if (info.shop() != null)
                     displayer.addLine("[CityWorld] shop " + info.shop().describe());
                 if (info.schematicName() != null)
