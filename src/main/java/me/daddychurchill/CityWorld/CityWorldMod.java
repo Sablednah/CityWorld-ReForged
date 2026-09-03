@@ -54,6 +54,10 @@ public class CityWorldMod {
         // The tag-pool diagnostics report: -Dcityworld.diagnostics=true (auto-on under the
         // self-test). Every worst bug here was a pool silently resolving empty; this makes them
         // shout at startup instead of costing a playtest round.
+        if (me.daddychurchill.CityWorld.Support.ChunkProbe.enabled())
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(
+                    new me.daddychurchill.CityWorld.Support.ChunkProbe());
+
         if (me.daddychurchill.CityWorld.Support.Diagnostics.enabled())
             net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(
                     new me.daddychurchill.CityWorld.Support.Diagnostics());

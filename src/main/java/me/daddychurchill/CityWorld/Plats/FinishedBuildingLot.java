@@ -1093,6 +1093,10 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			decorateLanding(generator, chunk, floorAt, aboveFloorHeight, stairLocation);
 		}
 
+		if (me.daddychurchill.CityWorld.Support.ChunkProbe.tracing())
+			me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+					"TRACE drawInteriorParts {} floor={} style={} floorAt={} drawStairs={} stairLoc={}",
+					getClass().getSimpleName(), floor, style, floorAt, drawStairs, stairLocation);
 		// the coverage sweep runs AFTER the stairs so bare-floor detection sees them
 		// _ONLY styles too: per-floor style resolution hands some floors of furnished buildings a
 		// roomless style, which playtested as broken-empty stair strips, not intentional bareness
@@ -1675,6 +1679,11 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			}
 		}
 		final int yf = y1cal;
+		if (me.daddychurchill.CityWorld.Support.ChunkProbe.tracing())
+			me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+					"TRACE sweep {} floor={} y1={} yf={} x[{}..{}] z[{}..{}] rooms={}",
+					getClass().getSimpleName(), floor, y1, yf, ix1, ix2, iz1, iz2,
+					rooms.getClass().getSimpleName());
 		// two passes, the second offset by 2: the CROSSED stair footprint can clip every cell of
 		// one alignment while a whole bare strip sits between them (playtested)
 		for (int pass = 0; pass < 2; pass++)

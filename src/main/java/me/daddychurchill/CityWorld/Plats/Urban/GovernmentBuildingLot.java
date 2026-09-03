@@ -162,6 +162,10 @@ public class GovernmentBuildingLot extends FinishedBuildingLot {
 			Material materialStairWall, Material materialPlatform, boolean drawStairWall, boolean drawStairs,
 			boolean topFloor, boolean singleFloor, Surroundings heights) {
 
+		if (me.daddychurchill.CityWorld.Support.ChunkProbe.tracing())
+			me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+					"TRACE gov drawInteriorParts floor={} doBuilding={} floorAt={} higher={}",
+					floor, doBuilding(heights), floorAt, higher);
 		if (doBuilding(heights)) {
 			// TODO Auto-generated method stub
 			super.drawInteriorParts(generator, blocks, context, rooms, floor, floorAt + higher, floorHeight, insetNS,
