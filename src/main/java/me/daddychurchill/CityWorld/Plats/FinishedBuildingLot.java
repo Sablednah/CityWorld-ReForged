@@ -1088,7 +1088,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		// roomless style, which playtested as broken-empty stair strips, not intentional bareness
 		if (style != InteriorStyle.EMPTY && style != InteriorStyle.RANDOM)
 			sweepBareFloor(generator, chunk, rooms, floor, floorAt, floorHeight, insetNS, insetWE, materialWall,
-					materialGlass);
+					materialGlass, heights);
 
 		drawExteriorDoors(generator, chunk, context, floor, floorAt, floorHeight, insetNS, insetWE, allowRounded,
 				materialWall, materialGlass, stairLocation, heights);
@@ -1134,8 +1134,10 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		StairAt at = new StairAt(chunk, floorHeight, where);
 		// the ring of cells around the stair footprint (stairs are ~floorHeight x 4)
 		int x1 = at.X - 1, x2 = at.X + floorHeight, z1 = at.Z - 1, z2 = at.Z + 4;
-		for (int[] c : new int[][] { { x1, z1 }, { x2, z2 }, { x1, z2 }, { x2, z1 },
-				{ (x1 + x2) / 2, z1 }, { (x1 + x2) / 2, z2 } }) {
+		// SIDE spots only — the end cells are the stair exits, and a flower pot at the top of
+		// the stairs is an ambush (playtested)
+		for (int[] c : new int[][] { { (x1 + x2) / 2, z1 }, { (x1 + x2) / 2, z2 },
+				{ x1, (z1 + z2) / 2 }, { x2, (z1 + z2) / 2 } }) {
 			if (!chunkOdds.playOdds(0.33))
 				continue;
 			int cx = c[0], cz = c[1];
@@ -1628,11 +1630,17 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 	 * with an "allergy to stairs").
 	 */
 	protected void sweepBareFloor(CityWorldGenerator generator, RealBlocks chunk, RoomProvider rooms, int floor,
-			int y1, int height, int insetNS, int insetWE, Material materialWall, Material materialGlass) {
+			int y1, int height, int insetNS, int insetWE, Material materialWall, Material materialGlass,
+			Surroundings heights) {
 		if (!generator.getSettings().includeBuildingInteriors)
 			return;
-		int ix1 = Math.max(1, insetWE + 1), ix2 = Math.min(14, 14 - insetWE);
-		int iz1 = Math.max(1, insetNS + 1), iz2 = Math.min(14, 14 - insetNS);
+		// Per-side insets: a side facing a NEIGHBOUR chunk has no wall there, so no inset — the
+		// symmetric version left bare bands along chunk seams and ate both halves of one-chunk
+		// municipal strips (owner's diagnosis: ".5 + .5 == no stuff")
+		int ix1 = heights.toWest() ? 1 : Math.max(1, insetWE + 1);
+		int ix2 = heights.toEast() ? 14 : Math.min(14, 14 - insetWE);
+		int iz1 = heights.toNorth() ? 1 : Math.max(1, insetNS + 1);
+		int iz2 = heights.toSouth() ? 14 : Math.min(14, 14 - insetNS);
 		// two passes, the second offset by 2: the CROSSED stair footprint can clip every cell of
 		// one alignment while a whole bare strip sits between them (playtested)
 		for (int pass = 0; pass < 2; pass++)
