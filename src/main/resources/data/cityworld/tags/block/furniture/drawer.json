@@ -2,6 +2,14 @@
   "replace": false,
   "values": [
     {
+      "id": "fantasyfurniture_dunmer:drawer",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_dunmer:dresser",
+      "required": false
+    },
+    {
       "id": "fantasyfurniture_necrolord:drawer",
       "required": false
     },

@@ -82,6 +82,13 @@ public abstract class PlatRoom {
 					chunk.setBlock(x, y + 1, z, computer,
 							me.daddychurchill.CityWorld.Support.FurnitureTags.facingFor(computer, front));
 					screenPlaced = true;
+				} else if (odds.playOdds(0.35) && chunk.isEmpty(x, y + 1, z)) {
+					// paper, books, a mug — the desk pool (owner: paper stacks belong in offices)
+					Material clutter = me.daddychurchill.CityWorld.Support.FurnitureTags.pick(
+							me.daddychurchill.CityWorld.Support.FurnitureTags.DESK_DECOR, odds);
+					if (clutter != null)
+						chunk.setFurniture(x, y + 1, z, clutter,
+								me.daddychurchill.CityWorld.Support.FurnitureTags.facingFor(clutter, front));
 				}
 			}
 	}

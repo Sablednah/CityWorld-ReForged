@@ -2,6 +2,14 @@
   "replace": false,
   "values": [
     {
+      "id": "fantasyfurniture_dunmer:bed_double",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_dunmer:bed_single",
+      "required": false
+    },
+    {
       "id": "fantasyfurniture_necrolord:bed_double",
       "required": false
     },

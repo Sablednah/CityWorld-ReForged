@@ -2,6 +2,10 @@
   "replace": false,
   "values": [
     {
+      "id": "fantasyfurniture_dunmer:bookshelf",
+      "required": false
+    },
+    {
       "id": "fantasyfurniture_necrolord:bookshelf",
       "required": false
     },

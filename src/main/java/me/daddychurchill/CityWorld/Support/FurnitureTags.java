@@ -85,6 +85,8 @@ public final class FurnitureTags {
      * ordinary pools, by the same floor/surface/wall placement split. A gravestone is floor-only;
      * skulls and bone piles read on a floor or a table; webs hang on walls.
      */
+    /** What sits on an office desk that has no computer — paper stacks, books, a mug. */
+    public static final TagKey<Block> DESK_DECOR = decorKey("desk");
     public static final TagKey<Block> GRIM_FLOOR = decorKey("grim_floor");
     public static final TagKey<Block> GRIM_SURFACE = decorKey("grim_surface");
     public static final TagKey<Block> GRIM_WALL = decorKey("grim_wall");

@@ -441,6 +441,7 @@ public final class CityWorldSelfTest {
                 me.daddychurchill.CityWorld.Support.FurnitureTags.WALL_DECOR,
                 me.daddychurchill.CityWorld.Support.FurnitureTags.HANGING_LIGHT,
                 me.daddychurchill.CityWorld.Support.FurnitureTags.RUG_DECOR,
+                me.daddychurchill.CityWorld.Support.FurnitureTags.DESK_DECOR,
                 me.daddychurchill.CityWorld.Support.FurnitureTags.GRIM_FLOOR,
                 me.daddychurchill.CityWorld.Support.FurnitureTags.GRIM_SURFACE,
                 me.daddychurchill.CityWorld.Support.FurnitureTags.GRIM_WALL)) {
@@ -1368,6 +1369,7 @@ public final class CityWorldSelfTest {
         Map<String, Integer> blockEntities = new TreeMap<>();
         Map<String, Integer> blocks = new TreeMap<>();
         int signsSeen = 0, signsWithFront = 0, signsWithBack = 0, chunks = 0;
+        int shelvesSeen = 0, shelvesStocked = 0;
         List<String> signSamples = new ArrayList<>();
 
         for (int cx = -radius; cx <= radius; cx++)
@@ -1382,6 +1384,12 @@ public final class CityWorldSelfTest {
                     blockEntities.merge(
                             String.valueOf(BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(entity.getType())),
                             1, Integer::sum);
+                    if (entity instanceof net.minecraft.world.level.block.entity.ShelfBlockEntity shelf) {
+                        shelvesSeen++;
+                        if (shelf.getItems().stream().anyMatch(stack -> !stack.isEmpty()))
+                            shelvesStocked++;
+                        continue;
+                    }
                     if (!(entity instanceof SignBlockEntity sign))
                         continue;
                     signsSeen++;
@@ -1418,6 +1426,13 @@ public final class CityWorldSelfTest {
         report.put("readback.signsWithFrontText", Integer.toString(signsWithFront));
         report.put("readback.signsWithBackText", Integer.toString(signsWithBack));
         report.put("readback.signSamples", signSamples.toString());
+        // Vanilla shelves are containers that display their items; CityWorld stocks them (a block
+        // stood on top of one reads wrong — they are shallow). Seen but never stocked means the
+        // block-entity write is not landing.
+        report.put("readback.shelves", shelvesStocked + " stocked of " + shelvesSeen);
+        if (shelvesSeen >= 3 && shelvesStocked == 0)
+            fail(shelvesSeen + " vanilla shelves placed but none holds an item — stockShelf is not "
+                    + "reaching the block entity");
 
         // Multi-block furniture integrity: every cell of a placed piece must still be there with
         // the right index. A half-chair (a Fantasy's chair is two blocks tall) means a later pass

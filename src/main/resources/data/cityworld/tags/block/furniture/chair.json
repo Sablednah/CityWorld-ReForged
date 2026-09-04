@@ -6,6 +6,22 @@
       "required": false
     },
     {
+      "id": "fantasyfurniture_dunmer:bench",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_dunmer:chair",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_dunmer:cushion",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_dunmer:stool",
+      "required": false
+    },
+    {
       "id": "fantasyfurniture_necrolord:bench",
       "required": false
     },

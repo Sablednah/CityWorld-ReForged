@@ -150,11 +150,9 @@ public final class FurnitureSets {
                     notes.add(ns.getKey() + ":" + name + " — vocabulary entry did not parse");
                     continue;
                 }
-                if (facing.multiBlock() && !indexAgrees(block, facing)) {
-                    notes.add(ns.getKey() + ":" + name + " — layout has " + facing.cells().size()
-                            + " cells but the block's " + facing.indexProperty() + " disagrees; skipped");
+                facing = reconcileLayout(block, facing, ns.getKey() + ":" + name, notes);
+                if (facing == null)
                     continue;
-                }
                 data.put(block, facing);
                 for (TagKey<Block> pool : poolsFor(spec))
                     pools.computeIfAbsent(pool, k -> new ArrayList<>()).add(block);
@@ -210,14 +208,63 @@ public final class FurnitureSets {
         return best;
     }
 
-    /** Whether the block carries the layout's index property with exactly one value per cell. */
-    private static boolean indexAgrees(Block block, Facing facing) {
-        if (facing.cells().stream().allMatch(c -> !c.props().isEmpty()))
-            return true; // the bed contract names every cell; no index property involved
+    /**
+     * The declaration to use for this block, given what the block itself says about its shape.
+     *
+     * <p>The vocabulary's layout is right for the sets it was measured on, but a set may reshape a
+     * piece — Dunmer's oven is two wide where Nordic's is one block. So the block's own index
+     * property is the authority on <em>how many</em> cells, and when the vocabulary disagrees the
+     * exact positions come from apexcore's {@code MultiBlock.getMultiBlockLocationPositions()},
+     * asked by reflection so CityWorld needs no compile-time dependency: its local {@code +z} is the
+     * viewer's right, {@code +x} the back, {@code +y} up — the same frame the data map uses. The
+     * bed contract (per-cell {@code part} props, no index) is left alone. Returns {@code null},
+     * with a note, only when nothing can vouch for the shape.
+     */
+    private static @Nullable Facing reconcileLayout(Block block, Facing facing, String id, List<String> notes) {
+        boolean namedCells = facing.multiBlock() && facing.cells().stream().allMatch(c -> !c.props().isEmpty());
+        if (namedCells)
+            return facing;
+        int indexValues = 0;
         for (Property<?> property : block.defaultBlockState().getProperties())
             if (property.getName().equals(facing.indexProperty()))
-                return property.getPossibleValues().size() == facing.cells().size();
-        return false;
+                indexValues = property.getPossibleValues().size();
+        int declared = facing.multiBlock() ? facing.cells().size() : 1;
+        if (indexValues == declared || (indexValues == 0 && declared == 1))
+            return facing;
+        if (indexValues == 0) {
+            // the vocabulary says multi-block, the block is a plain one — take the block's word
+            return new Facing(facing.facingOffset(), 1, List.of(), facing.props(), facing.vary(),
+                    facing.indexProperty(), facing.reconnect());
+        }
+        List<me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.Part> measured = apexcoreLayout(block);
+        if (measured == null || measured.size() != indexValues) {
+            notes.add(id + " — " + indexValues + " index values, vocabulary has " + declared
+                    + " cells, and the block did not describe its shape; skipped");
+            return null;
+        }
+        notes.add(id + " — shape taken from the block itself (" + measured.size() + " cells)");
+        return new Facing(facing.facingOffset(), 1, measured, facing.props(), facing.vary(), facing.indexProperty(),
+                facing.reconnect());
+    }
+
+    /** The block's own multi-block cells, via apexcore's API by reflection, or {@code null}. */
+    private static @Nullable List<me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.Part> apexcoreLayout(
+            Block block) {
+        try {
+            Class<?> api = Class.forName("dev.apexstudios.apexcore.api.multiblock.MultiBlock");
+            if (!api.isInstance(block))
+                return null;
+            Object positions = api.getMethod("getMultiBlockLocationPositions").invoke(block);
+            List<me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.Part> parts = new ArrayList<>();
+            for (Object position : (List<?>) positions) {
+                org.joml.Vector3ic local = (org.joml.Vector3ic) position;
+                parts.add(new me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.Part(local.z(), local.y(),
+                        local.x(), Map.of()));
+            }
+            return parts;
+        } catch (ReflectiveOperationException | ClassCastException | LinkageError e) {
+            return null;
+        }
     }
 
     private static Set<String> strings(JsonObject object, String key) {
