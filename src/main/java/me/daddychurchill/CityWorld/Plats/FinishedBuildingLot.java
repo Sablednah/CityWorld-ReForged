@@ -1090,7 +1090,6 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		// more stairs and such
 		if (drawStairs) {
 			drawStairs(generator, chunk, floorAt, aboveFloorHeight, stairLocation, materialStair, materialPlatform);
-			decorateLanding(generator, chunk, floorAt, aboveFloorHeight, stairLocation);
 		}
 
 		if (me.daddychurchill.CityWorld.Support.ChunkProbe.tracing())
@@ -1132,37 +1131,6 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			if (ceil < 0 || !chunk.isEmpty(p[0], ceil - 1, p[1]) || !chunk.isEmpty(p[0], ceil - 2, p[1]))
 				continue;
 			chunk.setHangingLantern(p[0], ceil - 1, p[1], light);
-		}
-	}
-
-	/**
-	 * A little life around the stairwell — potted plants and the odd side table with kitsch on it.
-	 * The open area beside the stairs was ALWAYS bare (playtested: "a shape in buildings that's
-	 * always empty"), because rooms are drawn around the stair region and nothing else claims it.
-	 * MODERN-only, and every spot is checked for clear floor first, so nothing lands on the steps.
-	 */
-	private void decorateLanding(CityWorldGenerator generator, RealBlocks chunk, int y1, int floorHeight,
-			StairWell where) {
-		if (!me.daddychurchill.CityWorld.Support.Furniture.modern(generator))
-			return;
-		StairAt at = new StairAt(chunk, floorHeight, where);
-		// the ring of cells around the stair footprint (stairs are ~floorHeight x 4)
-		int x1 = at.X - 1, x2 = at.X + floorHeight, z1 = at.Z - 1, z2 = at.Z + 4;
-		// SIDE spots only — the end cells are the stair exits, and a flower pot at the top of
-		// the stairs is an ambush (playtested)
-		for (int[] c : new int[][] { { (x1 + x2) / 2, z1 }, { (x1 + x2) / 2, z2 },
-				{ x1, (z1 + z2) / 2 }, { x2, (z1 + z2) / 2 } }) {
-			if (!chunkOdds.playOdds(0.33))
-				continue;
-			int cx = c[0], cz = c[1];
-			if (cx < 1 || cx > 14 || cz < 1 || cz > 14)
-				continue;
-			if (!chunk.isEmpty(cx, y1, cz) || !chunk.isEmpty(cx, y1 + 1, cz) || chunk.isEmpty(cx, y1 - 1, cz))
-				continue;
-			if (chunkOdds.flipCoin())
-				me.daddychurchill.CityWorld.Support.Furniture.pottedPlant(chunk, chunkOdds, cx, y1, cz);
-			else
-				me.daddychurchill.CityWorld.Support.Furniture.sideTable(chunk, chunkOdds, cx, y1, cz);
 		}
 	}
 
