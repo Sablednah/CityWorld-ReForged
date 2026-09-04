@@ -936,7 +936,7 @@ public final class CityWorldSelfTest {
                 fail("stronghold ring positions are empty — nothing for an eye of ender to point at");
             else
                 report.put("structures.stronghold.firstRing",
-                        ringPositions.get(0).x + "," + ringPositions.get(0).z);
+                        ringPositions.get(0).x() + "," + ringPositions.get(0).z());
         } else {
             fail("the stronghold set is not on a concentric-rings placement — eyes of ender rely on it");
         }
