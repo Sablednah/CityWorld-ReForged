@@ -2,6 +2,14 @@
   "replace": false,
   "values": [
     {
+      "id": "fantasyfurniture_necrolord:chest",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:chest",
+      "required": false
+    },
+    {
       "id": "refurbished_furniture:acacia_crate",
       "required": false
     },

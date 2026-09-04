@@ -104,6 +104,198 @@
     {
       "id": "refurbished_furniture:yellow_lamp",
       "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:beetroot_soup_bowl",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:berry_basket",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:blueberry_basket",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:boiled_creme_treats",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:book_stack_0",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:book_stack_1",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:bowl",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:candelabra_0",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:candelabra_1",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:candles_0",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:candles_1",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:chalices_0",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:chalices_1",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:chalices_2",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:chalices_3",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:cookie_jar",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:copper_coin_stack",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:crown",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:cushioned_crown",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:floating_tomes",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:food_0",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:food_1",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:food_2",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:food_3",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:golden_coin_stack",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:iron_coin_stack",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:mead_bottles",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:muffins_blueberry",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:muffins_chocolate",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:muffins_sweetberry",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:mushroom_stew_bowl",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:paper_stack",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:platter_0",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:platter_1",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:potion_bottles",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:soul_gems_dark",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:soul_gems_light",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:strawberry_basket",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:sweetberry_basket",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:sweetrolls",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:tankards",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:tankards_honeymead",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:tankards_milk",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:tankards_sweetberry",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:tea_cups",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:tea_set",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_necrolord:lockbox",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:lockbox",
+      "required": false
     }
   ]
 }

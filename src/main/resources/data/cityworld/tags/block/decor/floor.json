@@ -20,6 +20,38 @@
     {
       "id": "minecraft:potted_bamboo",
       "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:bolts_of_cloth",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:brewing_cauldron",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:mushrooms_brown",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:mushrooms_red",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:pottery_0",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:pottery_1",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:presents",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:stackable_pumpkins",
+      "required": false
     }
   ]
 }

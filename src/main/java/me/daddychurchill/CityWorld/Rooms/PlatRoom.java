@@ -53,8 +53,13 @@ public abstract class PlatRoom {
 	 *  MODERN), or the classic fence-and-plate table. */
 	void drawDesk(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y, int z1, int z2,
 			BlockFace front) {
+		// the region's extent along the desk's own right-hand axis (it fronts `front`) decides
+		// whether a two-wide piece (a Fantasy's desk) is even a candidate
+		boolean alongX = front == BlockFace.NORTH || front == BlockFace.SOUTH;
+		int width = alongX ? x2 - x1 : z2 - z1, depth = alongX ? z2 - z1 : x2 - x1;
 		Material desk = me.daddychurchill.CityWorld.Support.FurnitureTags.pick(
-				me.daddychurchill.CityWorld.Support.FurnitureTags.DESK, odds);
+				me.daddychurchill.CityWorld.Support.FurnitureTags.DESK, odds, Math.max(1, width), Math.max(1, depth),
+				2);
 		if (desk == null) {
 			chunk.setTable(x1, x2, y, z1, z2, getTableLeg(odds), getTableTop(odds));
 			return;
@@ -66,8 +71,12 @@ public abstract class PlatRoom {
 		boolean screenPlaced = false;
 		for (int x = x1; x < x2; x++)
 			for (int z = z1; z < z2; z++) {
-				chunk.setBlock(x, y, z, desk,
-						me.daddychurchill.CityWorld.Support.FurnitureTags.facingFor(desk, front));
+				// a multi-block desk fills its own cells as it goes and refuses to overlap, so
+				// walking every cell tiles the region: taken cells are skipped, a piece that will
+				// not fit at this cell is simply not placed here
+				if (!chunk.isEmpty(x, y, z) || !chunk.setFurniture(x, y, z, desk,
+						me.daddychurchill.CityWorld.Support.FurnitureTags.facingFor(desk, front)))
+					continue;
 				chunk.reconnect(x, y, z);
 				if (!screenPlaced && computer != null && odds.playOdds(0.5) && chunk.isEmpty(x, y + 1, z)) {
 					chunk.setBlock(x, y + 1, z, computer,
@@ -115,10 +124,9 @@ public abstract class PlatRoom {
 			return;
 		Material chair = me.daddychurchill.CityWorld.Support.FurnitureTags.pick(
 				me.daddychurchill.CityWorld.Support.FurnitureTags.CHAIR, odds);
-		if (chair != null)
-			chunk.setBlock(x, y, z, chair, me.daddychurchill.CityWorld.Support.FurnitureTags.facingFor(chair,
-					backrest.getOppositeFace()));
-		else
+		// setFurniture: a Fantasy's chair is two blocks tall, and is placed whole or not at all
+		if (chair == null || !chunk.setFurniture(x, y, z, chair,
+				me.daddychurchill.CityWorld.Support.FurnitureTags.facingFor(chair, backrest.getOppositeFace())))
 			chunk.setBlock(x, y, z, Material.BIRCH_STAIRS, backrest);
 	}
 
@@ -134,10 +142,13 @@ public abstract class PlatRoom {
 	void drawCouchSeat(RealBlocks chunk, Material sofa, int x, int y, int z, BlockFace backrest) {
 		if (!chunk.isEmpty(x, y, z) || facesWall(chunk, x, y, z, backrest.getOppositeFace()))
 			return;
-		if (sofa != null)
-			chunk.setBlock(x, y, z, sofa, me.daddychurchill.CityWorld.Support.FurnitureTags.facingFor(sofa,
-					backrest.getOppositeFace()));
-		else
+		if (sofa != null && chunk.setFurniture(x, y, z, sofa,
+				me.daddychurchill.CityWorld.Support.FurnitureTags.facingFor(sofa, backrest.getOppositeFace()))) {
+			// the run re-derives arms and middles as it grows, where the mod's connection logic
+			// agrees with our facing (declared per block; Macaw's couches must NOT be reconnected)
+			if (me.daddychurchill.CityWorld.Support.FurnitureTags.reconnects(sofa))
+				chunk.reconnect(x, y, z);
+		} else
 			chunk.setBlock(x, y, z, Material.BIRCH_STAIRS, backrest);
 	}
 }

@@ -12,6 +12,54 @@
     {
       "id": "minecraft:glow_lichen",
       "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:banner",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:fairy_lights",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:hanging_herbs",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:stocking",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:wall_mirror_large",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:wall_mirror_small",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_necrolord:painting_small",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_necrolord:painting_wide",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_necrolord:wall_light",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:painting_small",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:painting_wide",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:wall_light",
+      "required": false
     }
   ]
 }

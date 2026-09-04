@@ -2,6 +2,42 @@
   "replace": false,
   "values": [
     {
+      "id": "fantasyfurniture_decorations:floor_cushion",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_necrolord:bench",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_necrolord:chair",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_necrolord:cushion",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_necrolord:stool",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:bench",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:chair",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:cushion",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:stool",
+      "required": false
+    },
+    {
       "id": "mcwfurnitures:acacia_chair",
       "required": false
     },
