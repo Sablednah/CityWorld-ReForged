@@ -209,7 +209,7 @@ public final class Furniture {
         List<int[]> cells = new ArrayList<>();
         for (int cx = x1 + 1; cx <= x2 - 1; cx++)
             for (int cz = z1 + 1; cz <= z2 - 1; cz++)
-                if (chunk.isEmpty(cx, y + 2, cz) && wallwardOrNull(chunk, cx, y + 2, cz) != null)
+                if (chunk.isEmpty(cx, y + 2, cz) && sturdyWall(chunk, cx, y + 2, cz) != null)
                     cells.add(new int[] { cx, cz });
         if (cells.isEmpty())
             return;
@@ -243,7 +243,8 @@ public final class Furniture {
         if (out == null || !chunk.isEmpty(x, y + 2, z))
             return false;
         // the backing must be a sturdy full face — art hung on window glass pops off on first tick
-        if (!chunk.isSturdyFace(x - out.getModX(), y + 2, z - out.getModZ(), out))
+        if (!chunk.isSturdyFace(x - out.getModX(), y + 2, z - out.getModZ(), out)
+                || chunk.isGlass(x - out.getModX(), y + 2, z - out.getModZ()))
             return false;
         me.daddychurchill.CityWorld.compat.Location at = chunk.getBlockLocation(x, y + 2, z);
         if (!(at.getLevel() instanceof net.minecraft.world.level.ServerLevelAccessor server))
@@ -292,16 +293,41 @@ public final class Furniture {
             return false;
         var pool = grim && FurnitureTags.has(FurnitureTags.GRIM_WALL) ? FurnitureTags.GRIM_WALL
                 : FurnitureTags.WALL_DECOR;
-        BlockFace out = wallwardOrNull(chunk, x, y + 2, z);
+        BlockFace out = sturdyWall(chunk, x, y + 2, z);
         if (out == null)
             return false;
-        // a wide piece (a two-block painting, a large mirror) half the time — it runs along the wall
-        // to the viewer's right and is refused whole if that cell is taken, then a one-cell piece
-        Material piece = odds.flipCoin() ? FurnitureTags.pick(pool, odds, 2, 1, 1) : null;
+        // a third of the time a WIDE piece (a two-block painting) — it runs along the wall to the
+        // viewer's right and is refused whole if that cell is taken; a third a TALL piece (a large
+        // mirror, a banner), mounted a cell lower so it fits under a three-high ceiling and needs
+        // wall behind both cells; else a one-cell piece at eye height
+        int roll = odds.getRandomInt(3);
+        Material piece = roll == 0 ? FurnitureTags.pick(pool, odds, 2, 1, 1) : null;
         if (piece != null && mountOnWall(chunk, x, y + 2, z, piece, out))
+            return true;
+        piece = roll == 1 ? FurnitureTags.pick(pool, odds, 1, 1, 2) : null;
+        if (piece != null && FurnitureTags.footprint(piece).height() == 2 && chunk.isEmpty(x, y + 1, z)
+                && sturdyWall(chunk, x, y + 1, z) == out && mountOnWall(chunk, x, y + 1, z, piece, out))
             return true;
         piece = FurnitureTags.pick(pool, odds, 1, 1, 1);
         return piece != null && mountOnWall(chunk, x, y + 2, z, piece, out);
+    }
+
+    /**
+     * The face of a wall this cell backs onto that a piece can actually hang on — a sturdy full
+     * face that is not glass. Windows are "solid" to {@link #wallwardOrNull}, which is how art and
+     * sconces ended up on the glass (the owner's question, and a torch on a pane pops off anyway).
+     */
+    private static BlockFace wallwardSturdy(RealBlocks chunk, int x, int y, int z) {
+        for (BlockFace out : HORIZONTALS) {
+            int bx = x - out.getModX(), bz = z - out.getModZ();
+            if (solid(chunk, bx, y, bz) && !chunk.isGlass(bx, y, bz) && chunk.isSturdyFace(bx, y, bz, out))
+                return out;
+        }
+        return null;
+    }
+
+    private static BlockFace sturdyWall(RealBlocks chunk, int x, int y, int z) {
+        return wallwardSturdy(chunk, x, y, z);
     }
 
     private static boolean mountOnWall(RealBlocks chunk, int x, int y, int z, Material piece, BlockFace out) {
@@ -316,9 +342,8 @@ public final class Furniture {
      * so the topper sits at the eye-height cell the rest of the wall pass uses.
      */
     private static boolean wallShelf(RealBlocks chunk, Odds odds, int x, int y, int z, boolean grim) {
-        BlockFace out = wallwardOrNull(chunk, x, y + 1, z);
-        if (out == null || !chunk.isEmpty(x, y + 1, z) || !chunk.isEmpty(x, y + 2, z)
-                || !chunk.isSturdyFace(x - out.getModX(), y + 1, z - out.getModZ(), out))
+        BlockFace out = sturdyWall(chunk, x, y + 1, z);
+        if (out == null || !chunk.isEmpty(x, y + 1, z) || !chunk.isEmpty(x, y + 2, z))
             return false;
         Material shelf = FurnitureTags.pick(FurnitureTags.SHELF, odds);
         if (shelf != null) {
@@ -330,12 +355,38 @@ public final class Furniture {
             chunk.setBlock(x, y + 1, z, SHELF_SLABS[odds.getRandomInt(SHELF_SLABS.length)],
                     net.minecraft.world.level.block.state.properties.SlabType.TOP);
         }
-        surfaceTopper(chunk, odds, x, y + 1, z, grim);
+        // a vanilla shelf is a container that shows its items on its face, and it is too shallow to
+        // stand anything on (playtested) — so it gets stocked instead; anything else gets a topper
+        net.minecraft.world.item.Item[] stock = grim ? GRIM_SHELF_ITEMS : SHELF_ITEMS;
+        net.minecraft.world.item.Item[] chosen = new net.minecraft.world.item.Item[3];
+        for (int i = 0; i < 3; i++)
+            chosen[i] = odds.playOdds(0.7) ? stock[odds.getRandomInt(stock.length)] : null;
+        if (chosen[0] == null && chosen[1] == null && chosen[2] == null)
+            chosen[1] = stock[odds.getRandomInt(stock.length)]; // never an empty shelf
+        if (!chunk.stockShelf(x, y + 1, z, chosen))
+            surfaceTopper(chunk, odds, x, y + 1, z, grim);
         return true;
     }
 
     private static final Material[] SHELF_SLABS = { Material.OAK_SLAB, Material.SPRUCE_SLAB, Material.DARK_OAK_SLAB,
             Material.STONE_SLAB };
+
+    /** What a vanilla shelf displays: the small keepsakes of a lived-in room. */
+    private static final net.minecraft.world.item.Item[] SHELF_ITEMS = { net.minecraft.world.item.Items.BOOK,
+            net.minecraft.world.item.Items.WRITABLE_BOOK, net.minecraft.world.item.Items.CLOCK,
+            net.minecraft.world.item.Items.COMPASS, net.minecraft.world.item.Items.GLASS_BOTTLE,
+            net.minecraft.world.item.Items.CANDLE, net.minecraft.world.item.Items.FLOWER_POT,
+            net.minecraft.world.item.Items.BREAD, net.minecraft.world.item.Items.APPLE,
+            net.minecraft.world.item.Items.PAPER, net.minecraft.world.item.Items.SPYGLASS,
+            net.minecraft.world.item.Items.BRUSH, net.minecraft.world.item.Items.LANTERN,
+            net.minecraft.world.item.Items.AMETHYST_SHARD, net.minecraft.world.item.Items.GOLD_NUGGET };
+
+    /** The APOCALYPSE shelf: what was left behind. */
+    private static final net.minecraft.world.item.Item[] GRIM_SHELF_ITEMS = { net.minecraft.world.item.Items.BONE,
+            net.minecraft.world.item.Items.SKELETON_SKULL, net.minecraft.world.item.Items.SPIDER_EYE,
+            net.minecraft.world.item.Items.GLASS_BOTTLE, net.minecraft.world.item.Items.CANDLE,
+            net.minecraft.world.item.Items.ROTTEN_FLESH, net.minecraft.world.item.Items.BOOK,
+            net.minecraft.world.item.Items.STRING, net.minecraft.world.item.Items.GUNPOWDER };
 
     /** One to three candles clustered on the floor — the odd one a lit birthday cake. */
     private static void candleCluster(RealBlocks chunk, Odds odds, int x, int y, int z) {

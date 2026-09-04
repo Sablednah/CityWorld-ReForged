@@ -1739,6 +1739,13 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 				default -> me.daddychurchill.CityWorld.Support.Furniture.floorLamp(chunk, chunkOdds, cx, yf, cz);
 				}
 			}
+
+		// The wall pass — art, sconces, shelves — for offices, shops and flats, which only had the
+		// per-room accent until now (the house rooms call it themselves). A few rolls per floor,
+		// each picking its own wall-backed cell, so a floor gets a couple of pieces, not a gallery.
+		for (int i = 0; i < 3; i++)
+			me.daddychurchill.CityWorld.Support.Furniture.wallDecor(generator, chunk, chunkOdds, ix1 - 1, ix2 + 1, yf,
+					iz1 - 1, iz2 + 1);
 	}
 
 	/** Whether a roomWidth x roomDepth footprint is entirely empty standing room on solid floor. */

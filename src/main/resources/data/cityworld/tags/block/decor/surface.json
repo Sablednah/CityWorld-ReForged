@@ -290,6 +290,10 @@
       "required": false
     },
     {
+      "id": "fantasyfurniture_dunmer:lockbox",
+      "required": false
+    },
+    {
       "id": "fantasyfurniture_necrolord:lockbox",
       "required": false
     },

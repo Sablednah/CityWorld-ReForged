@@ -73,7 +73,7 @@ knowing anything about it.
 | `cityworld:furniture/bath` `…/toilet` | bathrooms |
 | `cityworld:furniture/bookshelf` `…/lamp` | studies and lounges |
 | `cityworld:furniture/bed` | bedrooms — ships the sixteen vanilla beds, so modded singles and doubles join one pool |
-| `cityworld:furniture/shelf` | wall shelves at waist height with something stood on them — ships the vanilla `*_shelf` blocks; a top-half slab stands in when nothing resolves |
+| `cityworld:furniture/shelf` | wall shelves at waist height — ships the vanilla `*_shelf` blocks, which are containers and get **stocked** with keepsakes (books, a clock, bottles…); a modded shelf gets something from the surface pool stood on it, and a top-half slab stands in when nothing resolves |
 | `cityworld:furniture/floor_lamp` | freestanding (two-tall) floor lamps — the fence-and-lantern is the fallback |
 | `cityworld:furniture/crate` `…/stove` `…/fridge` … | warehouses, workshops, kitchens (the appliance and interiors roles) |
 

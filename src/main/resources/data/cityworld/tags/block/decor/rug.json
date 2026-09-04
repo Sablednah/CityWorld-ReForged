@@ -22,6 +22,10 @@
       "required": false
     },
     {
+      "id": "fantasyfurniture_dunmer:carpet",
+      "required": false
+    },
+    {
       "id": "fantasyfurniture_necrolord:carpet",
       "required": false
     },

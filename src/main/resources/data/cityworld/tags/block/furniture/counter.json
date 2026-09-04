@@ -2,6 +2,10 @@
   "replace": false,
   "values": [
     {
+      "id": "fantasyfurniture_dunmer:counter",
+      "required": false
+    },
+    {
       "id": "fantasyfurniture_necrolord:counter",
       "required": false
     },

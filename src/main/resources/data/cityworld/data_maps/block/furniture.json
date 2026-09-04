@@ -511,6 +511,301 @@
         ]
       }
     },
+    "fantasyfurniture_dunmer:bed_double": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "facingOffset": 180,
+        "layout": [
+          {
+            "props": {
+              "part": "foot"
+            }
+          },
+          {
+            "back": -1,
+            "props": {
+              "part": "head"
+            }
+          },
+          {
+            "back": -1,
+            "right": -1,
+            "props": {
+              "part": "head"
+            }
+          },
+          {
+            "right": -1,
+            "props": {
+              "part": "foot"
+            }
+          }
+        ]
+      }
+    },
+    "fantasyfurniture_dunmer:bed_single": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
+    "fantasyfurniture_dunmer:bench": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "layout": [
+          {},
+          {
+            "right": 1
+          }
+        ]
+      }
+    },
+    "fantasyfurniture_dunmer:bookshelf": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "layout": [
+          {},
+          {
+            "right": 1
+          },
+          {
+            "up": 1
+          },
+          {
+            "right": 1,
+            "up": 1
+          }
+        ]
+      }
+    },
+    "fantasyfurniture_dunmer:chair": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "layout": [
+          {},
+          {
+            "up": 1
+          }
+        ]
+      }
+    },
+    "fantasyfurniture_dunmer:chest": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "layout": [
+          {},
+          {
+            "right": 1
+          }
+        ]
+      }
+    },
+    "fantasyfurniture_dunmer:counter": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "reconnect": true
+      }
+    },
+    "fantasyfurniture_dunmer:desk_left": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "layout": [
+          {},
+          {
+            "right": 1
+          }
+        ]
+      }
+    },
+    "fantasyfurniture_dunmer:desk_right": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "layout": [
+          {},
+          {
+            "right": 1
+          }
+        ]
+      }
+    },
+    "fantasyfurniture_dunmer:dresser": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "layout": [
+          {},
+          {
+            "right": 1
+          }
+        ]
+      }
+    },
+    "fantasyfurniture_dunmer:floor_light": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "layout": [
+          {},
+          {
+            "up": 1
+          }
+        ]
+      }
+    },
+    "fantasyfurniture_dunmer:oven": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "layout": [
+          {},
+          {
+            "right": 1
+          }
+        ]
+      }
+    },
+    "fantasyfurniture_dunmer:painting_wide": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "layout": [
+          {},
+          {
+            "right": 1
+          }
+        ]
+      }
+    },
+    "fantasyfurniture_dunmer:shelf": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "props": {
+          "connection": "single"
+        },
+        "reconnect": true
+      }
+    },
+    "fantasyfurniture_dunmer:sofa": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "props": {
+          "connection": "single"
+        },
+        "reconnect": true
+      }
+    },
+    "fantasyfurniture_dunmer:table": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "reconnect": true
+      }
+    },
+    "fantasyfurniture_dunmer:wardrobe": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_dunmer"
+        }
+      ],
+      "value": {
+        "layout": [
+          {},
+          {
+            "right": 1
+          },
+          {
+            "up": 1
+          },
+          {
+            "right": 1,
+            "up": 1
+          },
+          {
+            "up": 2
+          },
+          {
+            "right": 1,
+            "up": 2
+          }
+        ]
+      }
+    },
     "fantasyfurniture_necrolord:bed_double": {
       "neoforge:conditions": [
         {
@@ -556,20 +851,7 @@
         }
       ],
       "value": {
-        "facingOffset": 180,
-        "layout": [
-          {
-            "props": {
-              "part": "foot"
-            }
-          },
-          {
-            "back": -1,
-            "props": {
-              "part": "head"
-            }
-          }
-        ]
+        "facingOffset": 180
       }
     },
     "fantasyfurniture_necrolord:bench": {
@@ -848,20 +1130,7 @@
         }
       ],
       "value": {
-        "facingOffset": 180,
-        "layout": [
-          {
-            "props": {
-              "part": "foot"
-            }
-          },
-          {
-            "back": -1,
-            "props": {
-              "part": "head"
-            }
-          }
-        ]
+        "facingOffset": 180
       }
     },
     "fantasyfurniture_nordic:bench": {
