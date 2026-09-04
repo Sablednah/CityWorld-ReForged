@@ -1114,24 +1114,26 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 	/** Find the ground-floor door and hang a FOR SALE sign on the wall beside it, facing the
 	 *  street. Wall signs face away from their wall (measured long ago, still true). */
 	private void placeForSaleSign(RealBlocks chunk, int y, int insetNS, int insetWE) {
+		// some landlords in this town (owner request)
+		String label = chunkOdds.flipCoin() ? "FOR SALE" : "TO LET";
 		int n = insetNS, w = insetWE, so = 15 - insetNS, e = 15 - insetWE;
 		for (int x = w + 1; x <= e - 1; x++) {
 			if (n > 0 && chunk.isDoor(x, y, n) && chunk.isEmpty(x + 1, y + 2, n - 1)) {
-				chunk.setWallSign(x + 1, y + 2, n - 1, BlockFace.NORTH, "", "FOR SALE", "enquire within", "");
+				chunk.setWallSign(x + 1, y + 2, n - 1, BlockFace.NORTH, "", label, "enquire within", "");
 				return;
 			}
 			if (so < 15 && chunk.isDoor(x, y, so) && chunk.isEmpty(x + 1, y + 2, so + 1)) {
-				chunk.setWallSign(x + 1, y + 2, so + 1, BlockFace.SOUTH, "", "FOR SALE", "enquire within", "");
+				chunk.setWallSign(x + 1, y + 2, so + 1, BlockFace.SOUTH, "", label, "enquire within", "");
 				return;
 			}
 		}
 		for (int z = n + 1; z <= so - 1; z++) {
 			if (w > 0 && chunk.isDoor(w, y, z) && chunk.isEmpty(w - 1, y + 2, z + 1)) {
-				chunk.setWallSign(w - 1, y + 2, z + 1, BlockFace.WEST, "", "FOR SALE", "enquire within", "");
+				chunk.setWallSign(w - 1, y + 2, z + 1, BlockFace.WEST, "", label, "enquire within", "");
 				return;
 			}
 			if (e < 15 && chunk.isDoor(e, y, z) && chunk.isEmpty(e + 1, y + 2, z + 1)) {
-				chunk.setWallSign(e + 1, y + 2, z + 1, BlockFace.EAST, "", "FOR SALE", "enquire within", "");
+				chunk.setWallSign(e + 1, y + 2, z + 1, BlockFace.EAST, "", label, "enquire within", "");
 				return;
 			}
 		}
