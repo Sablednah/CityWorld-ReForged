@@ -2,6 +2,22 @@
   "replace": false,
   "values": [
     {
+      "id": "fantasyfurniture_necrolord:drawer",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_necrolord:dresser",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:drawer",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:dresser",
+      "required": false
+    },
+    {
       "id": "mcwfurnitures:acacia_bookshelf_drawer",
       "required": false
     },

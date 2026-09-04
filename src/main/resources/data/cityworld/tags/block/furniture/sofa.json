@@ -2,6 +2,14 @@
   "replace": false,
   "values": [
     {
+      "id": "fantasyfurniture_necrolord:sofa",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:sofa",
+      "required": false
+    },
+    {
       "id": "mcwfurnitures:black_chaise",
       "required": false
     },

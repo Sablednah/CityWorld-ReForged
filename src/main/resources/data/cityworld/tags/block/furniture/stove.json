@@ -2,6 +2,14 @@
   "replace": false,
   "values": [
     {
+      "id": "fantasyfurniture_necrolord:oven",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:oven",
+      "required": false
+    },
+    {
       "id": "refurbished_furniture:dark_stove",
       "required": false
     },

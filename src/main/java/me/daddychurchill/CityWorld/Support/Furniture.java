@@ -158,7 +158,7 @@ public final class Furniture {
         chunk.reconnect(x, y, z);
         if (chunk.isEmpty(x, y, z))
             return false; // the table did not take (fell, broke) — never leave a floating topper
-        chunk.setBlock(x, y + 1, z, lamp);
+        chunk.setFurniture(x, y + 1, z, lamp, FurnitureTags.facingFor(lamp, anyFacing(odds)));
         return true;
     }
 
@@ -174,7 +174,16 @@ public final class Furniture {
         chunk.reconnect(x, y, z);
         if (chunk.isEmpty(x, y, z))
             return; // never leave a floating topper
-        chunk.setBlock(x, y + 1, z, piece);
+        // scatter with a facing turns a random way; stacks/colours vary by position (data map `vary`)
+        chunk.setFurniture(x, y + 1, z, piece, FurnitureTags.facingFor(piece, anyFacing(odds)));
+    }
+
+    /** Whatever the surface pool offers, stood ON the block at (x,y,z) — a shelf, a counter top. */
+    private static boolean surfaceTopper(RealBlocks chunk, Odds odds, int x, int y, int z) {
+        Material piece = FurnitureTags.pick(FurnitureTags.SURFACE_DECOR, odds);
+        if (piece == null || !chunk.isEmpty(x, y + 1, z))
+            return false;
+        return chunk.setFurniture(x, y + 1, z, piece, FurnitureTags.facingFor(piece, anyFacing(odds)));
     }
 
     /**
@@ -193,6 +202,9 @@ public final class Furniture {
         if (cells.isEmpty())
             return;
         int[] c = cells.get(odds.getRandomInt(cells.size()));
+        // a third of the time a shelf with something on it, else art, else a sconce
+        if (odds.playOdds(0.33) && wallShelf(chunk, odds, c[0], y, c[1]))
+            return;
         if (!wallArt(chunk, odds, c[0], y, c[1]))
             wallSconce(chunk, odds, c[0], y, c[1]);
     }
@@ -264,15 +276,52 @@ public final class Furniture {
      * same parameter.
      */
     private static boolean wallSconce(RealBlocks chunk, Odds odds, int x, int y, int z) {
-        Material piece = FurnitureTags.pick(FurnitureTags.WALL_DECOR, odds);
-        if (piece == null || !chunk.isEmpty(x, y + 2, z))
+        if (!chunk.isEmpty(x, y + 2, z))
             return false;
         BlockFace out = wallwardOrNull(chunk, x, y + 2, z);
         if (out == null)
             return false;
-        chunk.setBlock(x, y + 2, z, piece, piece.hasFaces() ? out.getOppositeFace() : out);
+        // a wide piece (a two-block painting, a large mirror) half the time — it runs along the wall
+        // to the viewer's right and is refused whole if that cell is taken, then a one-cell piece
+        Material piece = odds.flipCoin() ? FurnitureTags.pick(FurnitureTags.WALL_DECOR, odds, 2, 1, 1) : null;
+        if (piece != null && mountOnWall(chunk, x, y + 2, z, piece, out))
+            return true;
+        piece = FurnitureTags.pick(FurnitureTags.WALL_DECOR, odds, 1, 1, 1);
+        return piece != null && mountOnWall(chunk, x, y + 2, z, piece, out);
+    }
+
+    private static boolean mountOnWall(RealBlocks chunk, int x, int y, int z, Material piece, BlockFace out) {
+        return chunk.setFurniture(x, y, z, piece, piece.hasFaces() ? out.getOppositeFace()
+                : FurnitureTags.facingFor(piece, out));
+    }
+
+    /**
+     * A wall shelf at waist height with something stood on it — the owner's read of the Fantasy's
+     * shelves ("good to sit an item on"), which is also what a vanilla shelf or, failing both, a
+     * top-half slab does. The shelf mounts on the wall this cell backs onto, one above the floor,
+     * so the topper sits at the eye-height cell the rest of the wall pass uses.
+     */
+    private static boolean wallShelf(RealBlocks chunk, Odds odds, int x, int y, int z) {
+        BlockFace out = wallwardOrNull(chunk, x, y + 1, z);
+        if (out == null || !chunk.isEmpty(x, y + 1, z) || !chunk.isEmpty(x, y + 2, z)
+                || !chunk.isSturdyFace(x - out.getModX(), y + 1, z - out.getModZ(), out))
+            return false;
+        Material shelf = FurnitureTags.pick(FurnitureTags.SHELF, odds);
+        if (shelf != null) {
+            if (!chunk.setFurniture(x, y + 1, z, shelf, FurnitureTags.facingFor(shelf, out)))
+                return false;
+            if (FurnitureTags.reconnects(shelf))
+                chunk.reconnect(x, y + 1, z);
+        } else {
+            chunk.setBlock(x, y + 1, z, SHELF_SLABS[odds.getRandomInt(SHELF_SLABS.length)],
+                    net.minecraft.world.level.block.state.properties.SlabType.TOP);
+        }
+        surfaceTopper(chunk, odds, x, y + 1, z);
         return true;
     }
+
+    private static final Material[] SHELF_SLABS = { Material.OAK_SLAB, Material.SPRUCE_SLAB, Material.DARK_OAK_SLAB,
+            Material.STONE_SLAB };
 
     /** One to three candles clustered on the floor — the odd one a lit birthday cake. */
     private static void candleCluster(RealBlocks chunk, Odds odds, int x, int y, int z) {
@@ -320,11 +369,17 @@ public final class Furniture {
     /** A potted plant (or anything else from the floor pool) — instant "someone lives here". */
     public static void pottedPlant(RealBlocks chunk, Odds odds, int x, int y, int z) {
         Material piece = FurnitureTags.pick(FurnitureTags.FLOOR_DECOR, odds);
-        chunk.setBlock(x, y, z, piece != null ? piece : PLANTS[odds.getRandomInt(PLANTS.length)]);
+        if (piece == null)
+            piece = PLANTS[odds.getRandomInt(PLANTS.length)];
+        chunk.setFurniture(x, y, z, piece, FurnitureTags.facingFor(piece, anyFacing(odds)));
     }
 
-    /** A little standing lamp: a fence post topped with a lantern that actually casts light. */
+    /** A little standing lamp: a modded two-tall floor light when a set supplies one, else a fence
+     *  post topped with a lantern that actually casts light. */
     public static void floorLamp(RealBlocks chunk, Odds odds, int x, int y, int z) {
+        Material lamp = FurnitureTags.pick(FurnitureTags.FLOOR_LAMP, odds);
+        if (lamp != null && chunk.setFurniture(x, y, z, lamp, FurnitureTags.facingFor(lamp, anyFacing(odds))))
+            return;
         chunk.setBlock(x, y, z, Material.OAK_FENCE);
         chunk.setBlock(x, y + 1, z, odds.flipCoin() ? Material.LANTERN : Material.SOUL_LANTERN);
     }
@@ -476,6 +531,12 @@ public final class Furniture {
             boolean placed = false;
             for (int sx = x1 + 1; sx <= x2 - 1; sx++)
                 placed |= placeFacing(chunk, sx, y, z1 + 1, sofa, BlockFace.SOUTH);
+            // a run of sofas that connects safely (declared per block — Fantasy's do, Macaw's
+            // corner-shape when reconnected) gets its arms and middles re-derived once it is whole
+            if (placed && FurnitureTags.reconnects(sofa))
+                for (int sx = x1 + 1; sx <= x2 - 1; sx++)
+                    if (!chunk.isEmpty(sx, y, z1 + 1))
+                        chunk.reconnect(sx, y, z1 + 1);
             if (placed && table != null && z1 + 3 <= z2 - 1)
                 placeFacing(chunk, cx, y, z1 + 3, table, BlockFace.SOUTH);
             if (lamp != null)
@@ -533,7 +594,6 @@ public final class Furniture {
     /** A bed in the corner with a bedside barrel, and (MODERN) a lamp. */
     public static void bedroom(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
             int z1, int z2) {
-        Material bed = BEDS[odds.getRandomInt(BEDS.length)];
         int midX = (x1 + x2) / 2, midZ = (z1 + z2) / 2;
         // Back the bed onto whichever wall sits nearest a chunk edge. Exterior walls (with windows) run
         // toward x/z 0..15; interior partitions (which carry the doors) sit inward — so this keeps the bed
@@ -544,13 +604,14 @@ public final class Furniture {
         // furnishing runs after the doors are cut, clearFloor refuses doorway approaches, and a
         // bed refused its first wall must get another rather than not existing (or, worse, the
         // old behaviour: parking in front of the door).
-        record Wall(int dist, int bx, int bz, BlockFace facing) {}
+        // each wall as the FOOT cell and the way the sleeper looks (the head is behind, on the wall)
+        record Wall(int dist, int footX, int footZ, BlockFace look) {}
         java.util.List<Wall> tries = new ArrayList<>(List.of(
-                new Wall(dN, midX, z1 + 1, BlockFace.SOUTH), new Wall(dS, midX, z2 - 2, BlockFace.NORTH),
-                new Wall(dW, x1 + 1, midZ, BlockFace.EAST), new Wall(dE, x2 - 2, midZ, BlockFace.WEST)));
+                new Wall(dN, midX, z1 + 2, BlockFace.SOUTH), new Wall(dS, midX, z2 - 2, BlockFace.NORTH),
+                new Wall(dW, x1 + 2, midZ, BlockFace.EAST), new Wall(dE, x2 - 2, midZ, BlockFace.WEST)));
         tries.sort(java.util.Comparator.comparingInt(Wall::dist));
         for (Wall w : tries)
-            if (placeBed(chunk, bed, w.bx(), y, w.bz(), w.facing()))
+            if (placeBed(chunk, odds, w.footX(), y, w.footZ(), w.look()))
                 break;
 
         chunk.setChest(generator, x1 + 1, y, z1 + 1, BlockFace.SOUTH, odds, generator.lootProvider,
@@ -561,8 +622,11 @@ public final class Furniture {
         // get doors cut AFTER furnishing, so pieces there would block doorways. Corners of the bed
         // wall are the safe storage spots. The rug and lamp stay MODERN-only so CLASSIC keeps its
         // 1.8 look; the modded picks are null without a furniture mod either way.
-        Material wardrobe = FurnitureTags.pick(FurnitureTags.WARDROBE, odds);
-        Material drawer = FurnitureTags.pick(FurnitureTags.DRAWER, odds);
+        // a bedroom has the room for a 2-wide, 3-tall wardrobe and a 2-wide dresser; the piece runs
+        // along the wall from the corner, and the corner where it would run INTO the wall is simply
+        // refused by the placer, so the loop below gets to the other one
+        Material wardrobe = FurnitureTags.pick(FurnitureTags.WARDROBE, odds, 2, 1, 3);
+        Material drawer = FurnitureTags.pick(FurnitureTags.DRAWER, odds, 2, 1, 1);
         int[][] corners; // the two corners of the bed wall
         BlockFace front;
         if (best == dN || best == dS) {
@@ -597,7 +661,9 @@ public final class Furniture {
 
     /** A small rug: a carpet plus-shape centred on (x,z), skipping cells that aren't clear floor. */
     private static void rug(RealBlocks chunk, Odds odds, int x, int y, int z) {
-        Material carpet = RUGS[odds.getRandomInt(RUGS.length)];
+        Material carpet = FurnitureTags.pick(FurnitureTags.RUG_DECOR, odds);
+        if (carpet == null)
+            carpet = RUGS[odds.getRandomInt(RUGS.length)];
         for (int[] c : new int[][] { { x, z }, { x + 1, z }, { x - 1, z }, { x, z + 1 }, { x, z - 1 } })
             if (clearFloor(chunk, c[0], y, c[1]))
                 chunk.setBlock(c[0], y, c[1], carpet);
@@ -613,7 +679,7 @@ public final class Furniture {
      */
     public static void hallway(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
             int z1, int z2) {
-        Material console = FurnitureTags.pick(FurnitureTags.DRAWER, odds);
+        Material console = FurnitureTags.pick(FurnitureTags.DRAWER, odds, 2, 1, 1); // a 2-wide dresser will do
         if (console == null)
             console = FurnitureTags.pick(FurnitureTags.CABINET, odds);
         int dN = z1, dS = 15 - z2, dW = x1, dE = 15 - x2;
@@ -675,26 +741,34 @@ public final class Furniture {
             chunk.setHangingLantern(x, ceil - 1, z, odds.flipCoin() ? Material.LANTERN : Material.SOUL_LANTERN);
     }
 
-    /** Place a bed's two cells (anchor + the partner in {@code facing}), only if both are clear floor. */
-    private static boolean placeBed(RealBlocks chunk, Material bed, int x, int y, int z, BlockFace facing) {
-        int px = x, pz = z;
-        switch (facing) {
-        case NORTH, SOUTH -> pz = z + 1;
-        case EAST -> px = x + 1;
-        case WEST -> px = x - 1;
-        default -> {
+    /**
+     * A bed from the pool with its FOOT at (x,z) and the sleeper looking {@code look} — the head is
+     * behind the anchor, against the wall the caller chose. Vanilla beds, Fantasy's singles and
+     * its 2×2 doubles all come out of one pool; the double needs the cell beside the anchor too, so
+     * a bed that does not fit falls back to a one-wide pick before the caller tries another wall.
+     */
+    public static boolean placeBed(RealBlocks chunk, Odds odds, int footX, int y, int footZ, BlockFace look) {
+        Material bed = FurnitureTags.pick(FurnitureTags.BED, odds, 2, 2, 1);
+        if (bed == null || !me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.isDeclared(bed)) {
+            // no pool, or a pool without its data map — the classic vanilla bed by the old contract
+            int hx = footX - look.getModX(), hz = footZ - look.getModZ();
+            if (!clearFloor(chunk, footX, y, footZ) || !clearFloor(chunk, hx, y, hz))
+                return false;
+            chunk.setBed(Math.min(footX, hx), y, Math.min(footZ, hz), BEDS[odds.getRandomInt(BEDS.length)], look);
+            return true;
         }
-        }
-        if (!clearFloor(chunk, x, y, z) || !clearFloor(chunk, px, y, pz))
+        if (placeFacing(chunk, footX, y, footZ, bed, look))
+            return true;
+        if (FurnitureTags.footprint(bed).width() == 1)
             return false;
-        chunk.setBed(x, y, z, bed, facing);
-        return true;
+        bed = FurnitureTags.pick(FurnitureTags.BED, odds, 1, 2, 1); // the double did not fit; a single may
+        return bed != null && placeFacing(chunk, footX, y, footZ, bed, look);
     }
 
     /** A little bathroom: a cauldron sink/bath, a quartz "toilet", and a tiled mat. */
     public static void bathroom(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
             int z1, int z2) {
-        Material bath = FurnitureTags.pick(FurnitureTags.BATH, odds);
+        Material bath = FurnitureTags.pick(FurnitureTags.BATH, odds, 1, 2, 1); // baths are two long
         Material toilet = FurnitureTags.pick(FurnitureTags.TOILET, odds);
         Material basin = FurnitureTags.pick(FurnitureTags.SINK, odds);
         if (bath != null || toilet != null || basin != null) {
@@ -778,7 +852,10 @@ public final class Furniture {
      */
     public static void study(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
             int z1, int z2) {
-        Material desk = FurnitureTags.pick(FurnitureTags.DESK, odds);
+        // a two-cell desk is the room's two cells (a Fantasy's desk is one piece, two wide — it runs
+        // to the viewer's right, which fronting south is +x, the same two cells the run used)
+        boolean wide = (x1 + x2) / 2 + 1 <= x2 - 1;
+        Material desk = FurnitureTags.pick(FurnitureTags.DESK, odds, wide ? 2 : 1, 1, 2);
         if (desk == null)
             return;
         int cx = (x1 + x2) / 2;
@@ -787,14 +864,20 @@ public final class Furniture {
         // no-op there and the X-run default happens to be right; Refurbished desks rotate properly.)
         if (placeFacing(chunk, cx, y, z1 + 1, desk, BlockFace.SOUTH))
             chunk.reconnect(cx, y, z1 + 1);
-        if (cx + 1 <= x2 - 1 && placeFacing(chunk, cx + 1, y, z1 + 1, desk, BlockFace.SOUTH))
+        if (wide && FurnitureTags.footprint(desk).width() == 1
+                && placeFacing(chunk, cx + 1, y, z1 + 1, desk, BlockFace.SOUTH))
             chunk.reconnect(cx + 1, y, z1 + 1);
         Material chair = FurnitureTags.pick(FurnitureTags.CHAIR, odds);
         if (chair != null && z1 + 2 <= z2 - 1)
             placeFacing(chunk, cx, y, z1 + 2, chair, BlockFace.NORTH);
-        Material shelf = FurnitureTags.pick(FurnitureTags.BOOKSHELF, odds);
-        if (shelf != null)
-            placeFacing(chunk, x1 + 1, y, z1 + 1, shelf, BlockFace.SOUTH);
+        // a bookcase beside it — the 2×2 Fantasy's bookshelf when it fits, refused whole if not
+        Material shelf = FurnitureTags.pick(FurnitureTags.BOOKSHELF, odds, 2, 1, 2);
+        if (shelf != null && !placeFacing(chunk, x1 + 1, y, z1 + 1, shelf, BlockFace.SOUTH)
+                && FurnitureTags.footprint(shelf).width() > 1) {
+            shelf = FurnitureTags.pick(FurnitureTags.BOOKSHELF, odds, 1, 1, 2);
+            if (shelf != null)
+                placeFacing(chunk, x1 + 1, y, z1 + 1, shelf, BlockFace.SOUTH);
+        }
         wallDecor(chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
@@ -823,23 +906,33 @@ public final class Furniture {
      */
     private static boolean placePiece(RealBlocks chunk, int x, int y, int z, Material piece, BlockFace front,
             BlockFace extendDir) {
-        if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.partsFor(piece) == 2) {
-            int hx = x + (extendDir == BlockFace.EAST ? 1 : extendDir == BlockFace.WEST ? -1 : 0);
-            int hz = z + (extendDir == BlockFace.SOUTH ? 1 : extendDir == BlockFace.NORTH ? -1 : 0);
-            if (!clearFloor(chunk, x, y, z) || !clearFloor(chunk, hx, y, hz))
+        if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.furnitureFor(piece).parts() == 2) {
+            // the bed contract: the piece's facing IS the direction it extends, front be damned
+            if (!clearFloor(chunk, x, y, z))
                 return false;
-            chunk.setTwoPartFurniture(x, y, z, piece, extendDir);
-            return true;
+            return chunk.setFurniture(x, y, z, piece, extendDir);
         }
         return placeFacing(chunk, x, y, z, piece, front);
     }
 
+    /**
+     * Place a piece if its anchor cell is usable floor. Every cell of a multi-block piece is checked
+     * by {@link SupportBlocks#setFurniture} itself, so a 2×3 wardrobe that would overhang a
+     * stairwell or poke through a wall simply is not placed, and the caller hears about it.
+     */
     private static boolean placeIfClear(RealBlocks chunk, int x, int y, int z, Material mat, BlockFace facing) {
         if (!clearFloor(chunk, x, y, z))
             return false;
-        chunk.setBlock(x, y, z, mat, facing);
-        return true;
+        return chunk.setFurniture(x, y, z, mat, facing);
     }
+
+    /** A random horizontal direction — for scatter that carries a facing but has no wall to obey. */
+    private static BlockFace anyFacing(Odds odds) {
+        return HORIZONTALS[odds.getRandomInt(HORIZONTALS.length)];
+    }
+
+    private static final BlockFace[] HORIZONTALS = { BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH,
+            BlockFace.WEST };
 
     private static void floorLampIfClear(RealBlocks chunk, Odds odds, int x, int y, int z) {
         if (clearFloor(chunk, x, y, z))

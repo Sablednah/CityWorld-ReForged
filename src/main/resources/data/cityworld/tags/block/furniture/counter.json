@@ -2,6 +2,14 @@
   "replace": false,
   "values": [
     {
+      "id": "fantasyfurniture_necrolord:counter",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:counter",
+      "required": false
+    },
+    {
       "id": "mcwfurnitures:acacia_counter",
       "required": false
     },

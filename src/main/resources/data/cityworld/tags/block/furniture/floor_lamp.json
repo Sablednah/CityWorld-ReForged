@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "fantasyfurniture_necrolord:floor_light",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:floor_light",
+      "required": false
+    }
+  ]
+}

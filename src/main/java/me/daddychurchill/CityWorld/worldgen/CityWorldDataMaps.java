@@ -1,5 +1,7 @@
 package me.daddychurchill.CityWorld.worldgen;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.mojang.serialization.Codec;
@@ -75,12 +77,78 @@ public final class CityWorldDataMaps {
      * at the anchor, {@code type=head} one cell along {@code facing}, both halves sharing the facing —
      * measured from {@code BathBlock.setPlacedBy}, and exactly the vanilla bed contract.
      */
-    public record Facing(int facingOffset, int parts) {
+    public record Facing(int facingOffset, int parts, List<Part> layout, Map<String, String> props,
+            List<String> vary, String indexProperty, boolean reconnect) {
 
         public static final Codec<Facing> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.optionalFieldOf("facingOffset", 0).forGetter(Facing::facingOffset),
-                Codec.INT.optionalFieldOf("parts", 1).forGetter(Facing::parts)
+                Codec.INT.optionalFieldOf("parts", 1).forGetter(Facing::parts),
+                Part.CODEC.listOf().optionalFieldOf("layout", List.of()).forGetter(Facing::layout),
+                Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("props", Map.of())
+                        .forGetter(Facing::props),
+                Codec.STRING.listOf().optionalFieldOf("vary", List.of()).forGetter(Facing::vary),
+                Codec.STRING.optionalFieldOf("indexProperty", "multi_block_index").forGetter(Facing::indexProperty),
+                Codec.BOOL.optionalFieldOf("reconnect", false).forGetter(Facing::reconnect)
         ).apply(i, Facing::new));
+
+        /** The single-cell, undeclared piece. */
+        public static final Facing NONE = new Facing(0, 1, List.of(), Map.of(), List.of(), "multi_block_index",
+                false);
+
+        /**
+         * The cells this piece occupies, one per part, index {@code i} being the value the piece's
+         * index property takes at that cell. Always at least the origin. A legacy {@code parts: 2}
+         * declaration (the bed contract: {@code type=bottom} at the anchor, {@code type=head} one
+         * cell along facing) is expressed as the same two-part layout.
+         */
+        public List<Part> cells() {
+            if (!layout.isEmpty())
+                return layout;
+            if (parts == 2)
+                return BED_CONTRACT;
+            return List.of(Part.ORIGIN);
+        }
+
+        private static final List<Part> BED_CONTRACT = List.of(new Part(0, 0, 0, Map.of("type", "bottom")),
+                new Part(0, 0, -1, Map.of("type", "head")));
+
+        /** Whether this piece occupies more than one cell. */
+        public boolean multiBlock() {
+            return cells().size() > 1;
+        }
+    }
+
+    /**
+     * One cell of a multi-block piece, relative to its origin and to the piece's <em>own</em>
+     * {@code facing} value: stand where {@code facing} points and look back at the piece —
+     * {@code right} is on your right, {@code back} is away from you, {@code up} is up. Written this
+     * way because the mods rotate their local layouts by {@code facing}, and so does CityWorld.
+     * {@code props} are property values set on this cell only (a bed's {@code part=head}).
+     */
+    public record Part(int right, int up, int back, Map<String, String> props) {
+
+        public static final Codec<Part> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.INT.optionalFieldOf("right", 0).forGetter(Part::right),
+                Codec.INT.optionalFieldOf("up", 0).forGetter(Part::up),
+                Codec.INT.optionalFieldOf("back", 0).forGetter(Part::back),
+                Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("props", Map.of())
+                        .forGetter(Part::props)
+        ).apply(i, Part::new));
+
+        public static final Part ORIGIN = new Part(0, 0, 0, Map.of());
+    }
+
+    /**
+     * How much room a piece takes, in cells along its own right/back/up axes, so a placer can pick
+     * something that fits the space it has: a single block is 1×1×1, a vanilla bed 1 wide and 2
+     * deep, a wardrobe 2 wide and 3 tall.
+     */
+    public record Footprint(int width, int depth, int height) {
+        public static final Footprint SINGLE = new Footprint(1, 1, 1);
+
+        public boolean fits(int maxWidth, int maxDepth, int maxHeight) {
+            return width <= maxWidth && depth <= maxDepth && height <= maxHeight;
+        }
     }
 
     public static final DataMapType<Block, Facing> FURNITURE = DataMapType
@@ -100,10 +168,37 @@ public final class CityWorldDataMaps {
         return facing == null ? 0 : facing.facingOffset();
     }
 
-    /** How many blocks this furniture piece occupies — {@code 1} unless declared bed-like. */
+    /** How many blocks this furniture piece occupies — {@code 1} unless declared bed-like or laid out. */
     public static int partsFor(me.daddychurchill.CityWorld.compat.Material piece) {
+        return furnitureFor(piece).cells().size();
+    }
+
+    /** Whether the piece has a data map entry at all — the self-test's "is the map reaching us" probe. */
+    public static boolean isDeclared(me.daddychurchill.CityWorld.compat.Material piece) {
+        return furnitureDataFor(piece) != null;
+    }
+
+    /** The piece's declaration, or {@link Facing#NONE} for an undeclared single block. */
+    public static Facing furnitureFor(me.daddychurchill.CityWorld.compat.Material piece) {
         Facing facing = furnitureDataFor(piece);
-        return facing == null ? 1 : facing.parts();
+        return facing == null ? Facing.NONE : facing;
+    }
+
+    /** The space a piece takes along its own axes — see {@link Footprint}. */
+    public static Footprint footprintFor(me.daddychurchill.CityWorld.compat.Material piece) {
+        List<Part> cells = furnitureFor(piece).cells();
+        if (cells.size() == 1)
+            return Footprint.SINGLE;
+        int minR = 0, maxR = 0, minB = 0, maxB = 0, minU = 0, maxU = 0;
+        for (Part part : cells) {
+            minR = Math.min(minR, part.right());
+            maxR = Math.max(maxR, part.right());
+            minB = Math.min(minB, part.back());
+            maxB = Math.max(maxB, part.back());
+            minU = Math.min(minU, part.up());
+            maxU = Math.max(maxU, part.up());
+        }
+        return new Footprint(maxR - minR + 1, maxB - minB + 1, maxU - minU + 1);
     }
 
     private static @Nullable Facing furnitureDataFor(me.daddychurchill.CityWorld.compat.Material piece) {
