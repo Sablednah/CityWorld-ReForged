@@ -128,6 +128,9 @@ DECOR = {
     # rugs: the carpets a bedroom/hallway rug is cut from (the old hard-coded RUGS array)
     "rug": ["minecraft:white_carpet", "minecraft:light_gray_carpet", "minecraft:cyan_carpet",
             "minecraft:red_carpet", "minecraft:moss_carpet"],
+    # what sits on an office desk that got no computer — paper and books first (owner: "paper
+    # stacks would work great in offices"); vanilla can only offer a candle and a pot
+    "desk": ["minecraft:candle", "minecraft:flower_pot"],
     # the grim pools (APOCALYPSE draws on these beside the ordinary ones — the owner's "long in the
     # tooth goth"): skulls and webs read on a floor OR a table, gravestones are floor-only, webs
     # hang on walls. Vanilla skulls seed them; the Decorations add-on's macabre pieces join.
@@ -265,8 +268,8 @@ DECORATIONS = {
     "berry_basket": dict(decor="surface"), "blueberry_basket": dict(decor="surface"),
     "strawberry_basket": dict(decor="surface"), "sweetberry_basket": dict(decor="surface"),
     "boiled_creme_treats": dict(decor="surface", vary=["count"]),
-    "book_stack_0": dict(decor="surface", vary=["count"]),
-    "book_stack_1": dict(decor="surface", vary=["count"]),
+    "book_stack_0": dict(decor=["surface", "desk"], vary=["count"]),
+    "book_stack_1": dict(decor=["surface", "desk"], vary=["count"]),
     "candles_0": dict(decor="surface", props={"lit": "true"}),
     "candles_1": dict(decor="surface", props={"lit": "true"}),
     "chalices_0": dict(decor="surface", vary=["count"]),
@@ -283,15 +286,15 @@ DECORATIONS = {
     "muffins_blueberry": dict(decor="surface", vary=["count"]),
     "muffins_chocolate": dict(decor="surface", vary=["count"]),
     "muffins_sweetberry": dict(decor="surface", vary=["count"]),
-    "paper_stack": dict(decor="surface"),
+    "paper_stack": dict(decor=["surface", "desk"]),
     "platter_0": dict(decor="surface", vary=["count"]),
     "platter_1": dict(decor="surface", vary=["count"]),
     "sweetrolls": dict(decor="surface", vary=["count"]),
-    "tankards": dict(decor="surface", vary=["count"]),
+    "tankards": dict(decor=["surface", "desk"], vary=["count"]),
     "tankards_honeymead": dict(decor="surface", vary=["count"]),
     "tankards_milk": dict(decor="surface", vary=["count"]),
     "tankards_sweetberry": dict(decor="surface", vary=["count"]),
-    "tea_cups": dict(decor="surface", vary=["count"]),
+    "tea_cups": dict(decor=["surface", "desk"], vary=["count"]),
     "tea_set": dict(decor="surface", layout=MB_1x1x2),
     # on the floor
     "bolts_of_cloth": dict(decor="floor"),
@@ -356,6 +359,28 @@ def depends_on_fantasyfurniture(z: zipfile.ZipFile) -> bool:
     return re.search(r'\[\[dependencies\.[a-z0-9_]+\]\][^\[]*?modId\s*=\s*"fantasyfurniture"', toml) is not None
 
 
+def infer_layout(state: dict):
+    """A two-part layout read off the blockstate's model names (`oven_left`/`oven_right` is two
+    wide, `_bottom`/`_top` two tall) — how a set that reshapes a vocabulary piece (Dunmer's oven)
+    still gets a correct layout at build time. Anything larger is left to the runtime scan, which
+    asks apexcore's MultiBlock API for the exact cells."""
+    models = {}
+    for key, variant in state.get("variants", {}).items():
+        props = dict(kv.split("=", 1) for kv in key.split(",") if "=" in kv)
+        if "multi_block_index" not in props:
+            continue
+        variant = variant[0] if isinstance(variant, list) else variant
+        models.setdefault(int(props["multi_block_index"]), variant["model"].split("/")[-1])
+    if sorted(models) != [0, 1]:
+        return None
+    first, second = models[0], models[1]
+    if first.endswith("_left") and second.endswith("_right"):
+        return MB_1x1x2
+    if first.endswith("_bottom") and second.endswith("_top"):
+        return MB_1x2x1
+    return None
+
+
 def index_values(state: dict) -> int:
     """How many multi_block_index values a blockstate declares (0 when it has none)."""
     values = set()
@@ -410,10 +435,18 @@ def main():
                         layout = spec.get("layout")
                         declared = index_values(state)
                         if declared and (layout is None or len(layout) != declared):
-                            # the mod grew or reshaped a piece — say so, place nothing, never guess
-                            print(f"  !! {ns}:{name} declares {declared} multi_block_index values but the "
-                                  f"table says {len(layout) if layout else 1} — skipped, re-measure it")
-                            continue
+                            # the set reshaped a vocabulary piece: read a two-part shape off its model
+                            # names, else say so, place nothing, and leave it to the runtime scan
+                            inferred = infer_layout(state)
+                            if inferred is None:
+                                print(f"  !! {ns}:{name} declares {declared} multi_block_index values but the "
+                                      f"table says {len(layout) if layout else 1} and the models do not say "
+                                      f"which way — skipped here; the runtime scan asks apexcore for the shape")
+                                continue
+                            print(f"  .. {ns}:{name} reshaped: {declared} cells, read off its models")
+                            layout = inferred
+                        elif not declared:
+                            layout = None  # a plain block where the vocabulary expected a multi-block
                         block_id = f"{ns}:{path}"
                         if "role" in spec:
                             found[spec["role"]].append(block_id)

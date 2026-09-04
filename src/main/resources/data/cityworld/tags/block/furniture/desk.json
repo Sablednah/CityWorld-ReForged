@@ -2,6 +2,14 @@
   "replace": false,
   "values": [
     {
+      "id": "fantasyfurniture_dunmer:desk_left",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_dunmer:desk_right",
+      "required": false
+    },
+    {
       "id": "fantasyfurniture_necrolord:desk_left",
       "required": false
     },

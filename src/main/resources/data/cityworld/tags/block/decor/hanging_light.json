@@ -10,6 +10,10 @@
       "required": false
     },
     {
+      "id": "fantasyfurniture_dunmer:chandelier",
+      "required": false
+    },
+    {
       "id": "fantasyfurniture_necrolord:chandelier",
       "required": false
     },

@@ -779,6 +779,13 @@ public abstract class SupportBlocks extends AbstractBlocks {
 				&& block.getBlockData().isFaceSturdy(block.getLevel(), block.getPos(), direction);
 	}
 
+	/** Whether the block here is glass (a pane or a full block) — a window, not a wall to hang on. */
+	public final boolean isGlass(int x, int y, int z) {
+		var block = getActualBlock(x, y, z).getBlockData().getBlock();
+		return block instanceof net.minecraft.world.level.block.TransparentBlock
+				|| block instanceof net.minecraft.world.level.block.IronBarsBlock;
+	}
+
 	/** Whether the block at this cell is a door. */
 	public final boolean isDoor(int x, int y, int z) {
 		return getActualBlock(x, y, z).getBlockData()
@@ -1104,6 +1111,24 @@ public abstract class SupportBlocks extends AbstractBlocks {
 	 * text <em>is</em> the whole operation — which is why the sign needs no level at all, and is not
 	 * given one.
 	 */
+	/**
+	 * Put items <em>inside</em> a vanilla shelf (the 1.21.9+ {@code *_shelf} blocks are containers
+	 * that display their three slots on the shelf face — shallow ones, so a block stood on top reads
+	 * wrong, playtested). Returns false if the block here is not a vanilla shelf, so the caller can
+	 * decorate a modded or slab shelf by standing something on it instead. A plain list write, like
+	 * the sign text above: no {@code setItem}, whose {@code setChanged} reaches for the level.
+	 */
+	public final boolean stockShelf(int x, int y, int z, net.minecraft.world.item.Item... items) {
+		BlockEntity entity = getActualBlock(x, y, z).getState();
+		if (!(entity instanceof net.minecraft.world.level.block.entity.ShelfBlockEntity shelf))
+			return false;
+		var slots = shelf.getItems();
+		for (int i = 0; i < items.length && i < slots.size(); i++)
+			if (items[i] != null)
+				slots.set(i, new net.minecraft.world.item.ItemStack(items[i]));
+		return true;
+	}
+
 	private void setSignText(Block block, String... lines) {
 		BlockEntity entity = block.getState();
 		if (!(entity instanceof SignBlockEntity sign))

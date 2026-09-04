@@ -2,6 +2,10 @@
   "replace": false,
   "values": [
     {
+      "id": "fantasyfurniture_dunmer:oven",
+      "required": false
+    },
+    {
       "id": "fantasyfurniture_necrolord:oven",
       "required": false
     },

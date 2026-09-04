@@ -38,6 +38,18 @@
       "required": false
     },
     {
+      "id": "fantasyfurniture_dunmer:painting_small",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_dunmer:painting_wide",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_dunmer:wall_light",
+      "required": false
+    },
+    {
       "id": "fantasyfurniture_necrolord:painting_small",
       "required": false
     },

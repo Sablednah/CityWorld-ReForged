@@ -1,0 +1,33 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "minecraft:candle",
+      "required": false
+    },
+    {
+      "id": "minecraft:flower_pot",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:book_stack_0",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:book_stack_1",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:paper_stack",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:tankards",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:tea_cups",
+      "required": false
+    }
+  ]
+}
