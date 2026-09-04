@@ -67,6 +67,20 @@ export PATH="$JAVA_HOME/bin:$PATH"
   files underneath it — `WEBSITE.md` does not exist on the version branches at all, so a switch tries
   to delete it and aborts (or worse, lands mid-edit). Worktrees keep `master`'s tree still. They share
   the Gradle cache, so a build there is no slower after the first.
+- **The ship loop** (used ~30 times in the furniture arc, every trap below hit at least once):
+  commit on master → `git cherry-pick <EXPLICIT SHA>` in the worktree (**never `$(git rev-parse
+  HEAD)` in a chain — it resolves to the worktree's own HEAD**; hit six times) → **one commit per
+  cherry-pick invocation** (multi-commit picks stall the sequencer) → **verify `git log` shows your
+  sha before building** (a `| tail -1` once masked a conflict through three "successful" deploys) →
+  PALETTES/PORTING/CHANGELOG conflicts resolve `--ours` (docs live on master) → build → deploy →
+  `DEPLOYED-$(git log --format=%h -1)` stamp → selftest. F3 shows a jar mtime stamp in-game, so
+  "is the game on the new jar" is checkable at a glance.
+- **Debugging worldgen: measure, don't hypothesize.** `-Dcityworld.diagnostics=true` sweeps every
+  tag pool at startup and shouts empties (the classic silent-fallback bug class);
+  `-Dcityworld.probe=<chunkX>,<chunkZ>` (via `JAVA_TOOL_OPTIONS` on `runServer`, seed pinned in
+  `run/server.properties`, `rm -rf run/world`) force-generates a region, dumps per-layer block
+  tallies + furnishing traces, and halts. The probe solved in two runs what four patch-and-playtest
+  rounds could not. Verify fixes by re-probe BEFORE deploying.
 - **Kill the previous `runServer` before starting another.** A backgrounded one keeps port 25565, and
   the second run fails with `bind(..) failed: Address already in use` → `Failed to initialize server`
   → a crash report and an NPE in `overworld()` on shutdown. That reads like a code fault and isn't
