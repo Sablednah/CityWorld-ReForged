@@ -460,8 +460,18 @@ def main():
                             value["layout"] = layout
                         if spec.get("props"):
                             value["props"] = spec["props"]
-                        if spec.get("vary"):
-                            value["vary"] = spec["vary"]
+                        # what to randomise: the table's say, plus anything the blockstate itself
+                        # declares as a stack count, a dye colour or a fill level — so the next
+                        # stackable decoration varies without a table edit (owner: "tea cups work
+                        # like candles, platters stack a lot more")
+                        vary = list(spec.get("vary", []))
+                        if table is DECORATIONS:
+                            for prop in ("count", "color", "fullness"):
+                                if prop not in vary and any(f"{prop}=" in k.split(",")[0] or f",{prop}=" in k
+                                                            for k in state.get("variants", {})):
+                                    vary.append(prop)
+                        if vary:
+                            value["vary"] = vary
                         if spec.get("reconnect"):
                             value["reconnect"] = True
                         if value:
