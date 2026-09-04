@@ -166,6 +166,18 @@ apocalypse-ruins.jpg	false	Ruins	Enough structure left to read what it was.
 schematics.jpg	false	Drop in your own buildings	Your schematics get salted into the cities alongside the generated ones.
 lava-pool.jpg	false	Underground hazards	Lava fields and open shafts, down where the mines run.
 wait-for-it-to-blow-over.jpg	false	Shelter	Sometimes you just wait for it to blow over.
+school-classroom.jpg	false	The school	Blackboards, desks and computers — government buildings are schools, courthouses and city halls inside.
+meeting-room-mixed-chairs.jpg	false	The meeting room	Office floors with cubicles, meeting tables and whoever's chairs those are.
+apartment-lounge-tv.jpg	false	Apartment living	Residential towers: lounges, TVs, beds and kitchenettes above a street-level lobby.
+furnished-study-lounge.jpg	false	A study	Desks with computers, bookshelves and a couch — furniture mods furnish the whole city.
+bedroom-ceiling-fan.jpg	false	A bedroom	Bed, wardrobe, TV and a ceiling fan that has seen things.
+kitchen-with-stove.jpg	false	A kitchen	Cabinet, sink and stove in a row; the fridge keeps its freezer on top.
+warehouse-crates.jpg	false	The warehouse	Racked crates and barrels; occupied buildings keep storage in the basement too.
+stairwell-landing-console.jpg	false	The landing	Even stairwell landings get a console table and a lamp.
+vault-blast-door-spectator.jpg	false	Behind the blast door	The vault in cross-section: furnished levels behind a hazard-striped door, mines beyond.
+mines-under-the-city-spectator.jpg	false	Under the city	The copper-age mine network sprawling beneath the towers.
+bop-fungi-meet-the-skyline.jpg	false	Modded biomes downtown	A Biomes O' Plenty fungal forest growing right up to the high-rises.
+giant-flowers-downtown.jpg	false	Giant flowers on the plaza	Modded flora takes the civic square.
 ENTRIES
 )
 
