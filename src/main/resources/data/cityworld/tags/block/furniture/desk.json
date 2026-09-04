@@ -2,6 +2,22 @@
   "replace": false,
   "values": [
     {
+      "id": "fantasyfurniture_necrolord:desk_left",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_necrolord:desk_right",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:desk_left",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:desk_right",
+      "required": false
+    },
+    {
       "id": "mcwfurnitures:acacia_covered_desk",
       "required": false
     },

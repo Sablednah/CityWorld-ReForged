@@ -115,14 +115,55 @@ own campus interiors).
 - **For-sale signs** — Vacant towers (OfficeBuildingLot EMPTY) and EmptyBuildingLot get a "For
   Sale" wall sign by the ground-floor door. Sign text helpers exist (setSignText).
 
-**▶ RESUME HERE (fresh slate, post-5.5.0, 2026-09-04).** The furniture + interiors arc is
-COMPLETE and released everywhere (see CHANGELOG 5.5.0; publish gotchas in the release memory).
-Next push, owner-ordered:
-1. **New furniture mods** — the owner has more to integrate; the pipeline is: drop in the 26.2
-   instance mods/, scan blockstates, classify into `gen_furniture_tags.py` roles, MEASURE facing
-   per family (method in PALETTES.md), regen, selftest, playtest.
-2. Watch-list: the line-of-blocks building (owner will drop coords when re-spotted — probe it);
-   CurseForge review + Modrinth approval pending; owner pastes CURSEFORGE.md; site lags a release.
+**▶ RESUME HERE (Fantasy's Furniture, 2026-09-04).** The furniture + interiors arc shipped in
+5.5.0; the next mod family — **Fantasy's Furniture** (base + Nordic + Necrolord sets + Decorations,
+all 26.2.4 on apexcore 26.2.3) — is integrated in code and awaiting playtest. What was built:
+
+- **The sets are one vocabulary.** Every `fantasyfurniture_<set>` mod registers the same 39 block
+  names through the base mod's `FurnitureUtil`, so `gen_furniture_tags.py` has a `SET` table keyed by
+  block name (chair/stool/cushion/bench → chair, sofa, table, desk_left/right → desk, counter,
+  drawer/dresser → drawer, wardrobe, bookshelf, chest → crate, oven → stove, bed_single/double → bed,
+  floor_light → floor_lamp, shelf → shelf, lockbox → surface decor, chandelier → hanging_light,
+  wall_light/paintings → wall decor, carpet → rug). A set is recognised by its `neoforge.mods.toml`
+  dependency on `fantasyfurniture` (or the namespace prefix); unknown block names are REPORTED, and
+  a layout whose part count disagrees with the blockstate's `multi_block_index` values is skipped
+  with a shout. Planks/wool join palettes via vanilla tags; Necrolord bricks were hand-added to
+  `build/modern_stones`.
+- **Multi-block placement is generic now.** Data map `Facing` gained `layout` (cells as right/up/back
+  relative to the piece's OWN facing, + per-cell `props`), `props`, `vary`, `indexProperty`,
+  `reconnect`. `SupportBlocks.setFurniture` is the one placer: rotates the layout exactly as
+  apexcore's `MultiBlock.rotate` does (+z local = facing.getCounterClockWise = viewer's right, +x =
+  facing.getOpposite = back), writes whole-or-nothing (all cells in-chunk + empty; grounded cells
+  need support), sets the index and named props per cell, randomises `vary` props by
+  `Mth.getSeed(pos)`. `setTwoPartFurniture` is gone — `parts: 2` synthesises the bed-contract layout.
+  `FurnitureTags.pick(role, odds)` now filters to 1×1×2 footprints; `pick(role, odds, w, d, h)` for
+  callers with room (bedroom bed/wardrobe/dresser, study desk/bookcase, hallway console, bathroom
+  bath, PlatRoom.drawDesk tiles a region by walking cells and skipping filled ones).
+- **Measured conventions (fantasyfurniture):** facing = FRONT for everything (one apexcore base
+  class, `getHorizontalDirection().getOpposite()`; geometry at facing=north: chair/sofa backrests,
+  painting canvas, wall light all at +Z). Beds are vanilla-contract (offset 180, head at back −1);
+  the double is origin + (−1,0,0) + (−1,0,−1) + (0,0,−1), head = indices 1,2. Sofa/shelf DEFAULT
+  state is `connection=center` (armless middle) → `props: connection=single` + `reconnect` (safe:
+  their connection logic reads the same facing we write). Sets do not cross-link (same-block check)
+  — irrelevant, rooms pick one piece per role.
+- **New in rooms:** bed pool (16 vanilla + modded, foot-cell anchors, double falls back to single);
+  wall shelf at waist height + surface topper (Fantasy's shelf / vanilla `*_shelf` / top-half slab
+  fallback, owner's idea) as a third of `wallDecor`; freestanding floor-lamp role; rug pool; decor
+  placers apply `vary` + a random facing; wall pass tries a 2-wide piece (painting_wide, large
+  mirror) half the time.
+- **Self-test:** offsets check now "is declared" (a fantasy-only world has offsets of 0); new checks:
+  multi-block layouts match the block's index property; every installed `fantasyfurniture_*` set
+  has ≥6 pieces in the pools; hanging_light + rug pools non-empty.
+
+**NEXT:** cherry-pick to `mc26.2`, build (JDK25), selftest with the fantasy jars in the worktree's
+`run/mods`, deploy to the 26.2 instance, playtest: chairs 2-tall in dining/offices, wardrobes in
+bedrooms, double beds, sofa runs (arms at the ends), shelf+topper, decorations on tables. Watch for:
+a piece that never appears (footprint filter too strict) and mis-rotated 2-wide pieces (the
+right-hand rule). Ideas parked: an APOCALYPSE-only pool for the macabre decorations (bone piles,
+spider webs, gravestones), plushies (block-entity backed), the base mod's furniture_station as a
+workshop workbench.
+- Watch-list: the line-of-blocks building (owner will drop coords when re-spotted — probe it);
+  CurseForge review + Modrinth approval pending; owner pastes CURSEFORGE.md; site lags a release.
 Everything below this line is historical record of the arc.
 
 **Queued (2026-09-03 evening):**

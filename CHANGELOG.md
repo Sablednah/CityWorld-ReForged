@@ -5,6 +5,27 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **Fantasy's Furniture furnishes the city too** — every set (Nordic, Necrolord, and any set its
+  author adds later, since they all share one block vocabulary) plus the Decorations add-on. Its
+  pieces are **multi-block**: two-tall chairs, two-wide desks, dressers and benches, 2×2 bookcases,
+  2×3 wardrobes and **2×2 double beds** now place whole or not at all, via per-cell layouts in the
+  furniture data map. Beds of every kind (vanilla, modded singles, doubles) come from one pool.
+- **Wall shelves with something on them** — a third of wall decoration is now a shelf at waist height
+  (Fantasy's, vanilla `*_shelf`, or a top-half slab) with a piece from the surface pool stood on it.
+- **Tabletop and wall scatter with variety** — the Decorations add-on's books, bottles, food, candles,
+  coins, mirrors and fairy lights join the decoration pools; stack heights and colours vary per
+  placement. Freestanding floor lamps, a rug pool, and Necrolord bricks in the modern stone palette.
+
+### Changed
+
+- The furniture data map grew `layout`, `props`, `vary`, `indexProperty` and `reconnect` (see
+  `PALETTES.md`); `parts: 2` still works. Furniture picks are footprint-aware, so a wide piece is only
+  chosen where a room has the space for it.
+
 ## 5.5.0
 
 ### Added

@@ -72,6 +72,23 @@ knowing anything about it.
 | `cityworld:furniture/sink` | kitchen sinks, bathroom basins |
 | `cityworld:furniture/bath` `…/toilet` | bathrooms |
 | `cityworld:furniture/bookshelf` `…/lamp` | studies and lounges |
+| `cityworld:furniture/bed` | bedrooms — ships the sixteen vanilla beds, so modded singles and doubles join one pool |
+| `cityworld:furniture/shelf` | wall shelves at waist height with something stood on them — ships the vanilla `*_shelf` blocks; a top-half slab stands in when nothing resolves |
+| `cityworld:furniture/floor_lamp` | freestanding (two-tall) floor lamps — the fence-and-lantern is the fallback |
+| `cityworld:furniture/crate` `…/stove` `…/fridge` … | warehouses, workshops, kitchens (the appliance and interiors roles) |
+
+**Fantasy's Furniture is supported as a family.** Every one of its sets (Nordic, Necrolord, and any
+set its author adds later) registers the same 39 block names, so `scripts/gen_furniture_tags.py`
+classifies a set by *name* — `chair`, `wardrobe`, `bed_double`, `oven` — and writes the multi-block
+layouts once for all of them. A future set is picked up by re-running the generator against a mods
+folder that contains it; a set that introduces a block name the table has never seen is reported
+rather than guessed at. Sets do not link to each other in-game (a Nordic sofa will not join a
+Necrolord one — the mod's connection logic requires the same block), which is fine: CityWorld picks
+one piece per role per room, so a run is always one set. The sets' planks and wool join the building
+palettes by themselves (they are tagged `#minecraft:planks` / `#minecraft:wool`); Necrolord's bricks
+are only in `#c:stones`, so they are listed in `build/modern_stones` by hand. The Decorations add-on's
+tabletop, floor and wall scatter is classified into the decoration pools, with stack heights and
+colours randomised per placement.
 
 #### Mod authors: supporting CityWorld from your side
 
@@ -140,6 +157,33 @@ bottom/head enum works.
 "yourmod:oak_bath": { "facingOffset": 180, "parts": 2 }
 ```
 
+**Multi-block furniture of any shape** — a two-tall chair, a 2×3 wardrobe, a 2×2 double bed — is
+declared as a `layout`: one entry per cell, relative to the piece's origin and to its **own `facing`
+value**. Stand where `facing` points and look back at the piece: `right` is on your right, `back` is
+away from you, `up` is up. The list index is the value written into the piece's index property
+(`multi_block_index` by default; name yours with `indexProperty`), and a cell can carry `props` of its
+own — the way a bed's head differs from its foot. CityWorld places the whole piece or none of it:
+every cell must be inside the chunk and empty, and a floor-standing piece never overhangs a hole.
+
+```json
+"yourmod:wardrobe": { "layout": [ {}, {"right": 1}, {"up": 1}, {"right": 1, "up": 1},
+                                  {"up": 2}, {"right": 1, "up": 2} ] },
+"yourmod:double_bed": { "facingOffset": 180, "layout": [
+    {"props": {"part": "foot"}}, {"back": -1, "props": {"part": "head"}},
+    {"back": -1, "right": -1, "props": {"part": "head"}}, {"right": -1, "props": {"part": "foot"}} ] }
+```
+
+Three more optional keys, all per block:
+
+- `props` — property values to set on every placement, by name: a sofa whose *default* state is the
+  armless middle piece wants `{"connection": "single"}`.
+- `vary` — property names to randomise per placement (deterministically, by position): `["count"]`
+  makes a stack of books sometimes one and sometimes three; `["count", "color"]` gives a row of potion
+  bottles more than one colour.
+- `reconnect: true` — CityWorld may re-derive a run's connections after placing it. Only say so when
+  your connection logic reads `facing` the way CityWorld writes it (offset 0): the one mod whose
+  couches are offset 270 reconnected into corner shapes.
+
 #### 3. Decoration pools (optional)
 
 Loose decoration is drawn from three placement pools, and you can add to them the same way:
@@ -148,7 +192,9 @@ Loose decoration is drawn from three placement pools, and you can add to them th
 |---|---|
 | `cityworld:decor/floor` | stands on the ground (potted plants, big vases) |
 | `cityworld:decor/surface` | belongs ON a table — CityWorld puts one underneath (table lamps, candles, crockery) |
-| `cityworld:decor/wall` | wall-mounted at eye height (sconces, wall lights) |
+| `cityworld:decor/wall` | wall-mounted at eye height (sconces, wall lights, paintings, mirrors — two-wide pieces declare a `layout` and run along the wall) |
+| `cityworld:decor/hanging_light` | hung in the air cell below a ceiling (lanterns, chandeliers) |
+| `cityworld:decor/rug` | the carpets a bedroom or hallway rug is cut from |
 
 The floor/surface split is why a table lamp never ends up standing on the carpet: if your lamp is a
 table lamp, tag it `surface`, and if it is a freestanding floor lamp, tag it `floor`.

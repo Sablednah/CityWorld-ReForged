@@ -2,6 +2,14 @@
   "replace": false,
   "values": [
     {
+      "id": "fantasyfurniture_necrolord:bookshelf",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:bookshelf",
+      "required": false
+    },
+    {
       "id": "mcwfurnitures:acacia_bookshelf",
       "required": false
     },

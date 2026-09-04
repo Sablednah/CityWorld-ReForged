@@ -308,7 +308,7 @@ public final class CityWorldSelfTest {
         // which is wrong for two of the three conventions actually measured in the wild.
         Map<String, Integer> roles = new TreeMap<>();
         for (var role : List.of("chair", "table", "sofa", "desk", "counter", "cabinet", "bookshelf",
-                "sink", "toilet", "bath", "lamp")) {
+                "sink", "toilet", "bath", "lamp", "bed", "floor_lamp", "shelf")) {
             var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK,
                     net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", "furniture/" + role));
             int n = me.daddychurchill.CityWorld.Support.MaterialTags.resolve(tag).size();
@@ -322,7 +322,7 @@ public final class CityWorldSelfTest {
                     me.daddychurchill.CityWorld.Support.FurnitureTags.SOFA))
                 for (var piece : me.daddychurchill.CityWorld.Support.MaterialTags.resolve(role)) {
                     seats++;
-                    if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.facingOffsetFor(piece) != 0)
+                    if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.isDeclared(piece))
                         declared++;
                 }
             report.put("furniture.seatsWithOffset", declared + " of " + seats);
@@ -344,7 +344,7 @@ public final class CityWorldSelfTest {
                     me.daddychurchill.CityWorld.Support.FurnitureTags.BOOKSHELF))
                 for (var piece : me.daddychurchill.CityWorld.Support.MaterialTags.resolve(role)) {
                     orientedPieces++;
-                    if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.facingOffsetFor(piece) != 0)
+                    if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.isDeclared(piece))
                         orientedDeclared++;
                 }
             report.put("furniture.orientedWithOffset", orientedDeclared + " of " + orientedPieces);
@@ -366,6 +366,68 @@ public final class CityWorldSelfTest {
             if (baths > 0 && twoPart == 0)
                 fail("baths resolved (" + baths + ") but none is declared two-part — they will be "
                         + "placed as single orphaned halves");
+
+            // Multi-block pieces (Fantasy's Furniture: 2-tall chairs, 2×3 wardrobes, 2×2 beds): a
+            // declared layout must match the block's own index property, else every cell after the
+            // first would be written with a value the block cannot take and the piece would be a
+            // row of origins. Bed-contract pieces (part/type by name) carry no index property.
+            int multi = 0;
+            List<String> badLayouts = new ArrayList<>();
+            for (var role : List.of(me.daddychurchill.CityWorld.Support.FurnitureTags.CHAIR,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.DESK,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.DRAWER,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.WARDROBE,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.BOOKSHELF,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.BED,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.CRATE,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.FLOOR_LAMP))
+                for (var piece : me.daddychurchill.CityWorld.Support.MaterialTags.resolve(role)) {
+                    var spec = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.furnitureFor(piece);
+                    if (!spec.multiBlock())
+                        continue;
+                    multi++;
+                    var state = piece.getBlockState();
+                    boolean byName = spec.cells().stream().allMatch(c -> !c.props().isEmpty());
+                    if (byName)
+                        continue; // bed contract: part/type per cell, no index
+                    boolean ok = false;
+                    for (var property : state.getProperties())
+                        if (property.getName().equals(spec.indexProperty())
+                                && property.getPossibleValues().size() == spec.cells().size())
+                            ok = true;
+                    if (!ok)
+                        badLayouts.add(blockId(piece));
+                }
+            report.put("furniture.multiBlock", multi + " pieces, " + badLayouts.size() + " mismatched");
+            if (!badLayouts.isEmpty())
+                fail("multi-block furniture whose layout does not match the block's index property: "
+                        + badLayouts + " — the mod reshaped the piece; re-measure it in gen_furniture_tags.py");
+
+            // Every Fantasy's Furniture SET installed must have been classified: the sets share one
+            // block vocabulary, so a new set the generator was never run against should still land
+            // its chair/sofa/bed/wardrobe in the pools — if it does not, the vocabulary changed.
+            var sets = new TreeMap<String, Integer>();
+            for (var id : net.minecraft.core.registries.BuiltInRegistries.BLOCK.keySet())
+                if (id.getNamespace().startsWith("fantasyfurniture_")
+                        && !id.getNamespace().equals("fantasyfurniture_decorations"))
+                    sets.merge(id.getNamespace(), 1, Integer::sum);
+            for (var set : sets.keySet()) {
+                int inPools = 0;
+                for (var role : List.of(me.daddychurchill.CityWorld.Support.FurnitureTags.CHAIR,
+                        me.daddychurchill.CityWorld.Support.FurnitureTags.SOFA,
+                        me.daddychurchill.CityWorld.Support.FurnitureTags.TABLE,
+                        me.daddychurchill.CityWorld.Support.FurnitureTags.BED,
+                        me.daddychurchill.CityWorld.Support.FurnitureTags.WARDROBE,
+                        me.daddychurchill.CityWorld.Support.FurnitureTags.COUNTER))
+                    for (var piece : me.daddychurchill.CityWorld.Support.MaterialTags.resolve(role))
+                        if (blockId(piece).startsWith(set + ":"))
+                            inPools++;
+                report.put("furniture.set." + set, inPools + " pooled of " + sets.get(set) + " blocks");
+                if (inPools < 6)
+                    fail("Fantasy's Furniture set " + set + " is installed but only " + inPools
+                            + " of its pieces reached the role pools — re-run scripts/gen_furniture_tags.py "
+                            + "against a mods folder containing it");
+            }
         }
 
         // The decoration pools carry vanilla seeds in our own resources, so they can NEVER legitimately
@@ -373,7 +435,9 @@ public final class CityWorldSelfTest {
         // reference trap) and the accent pass is silently falling back.
         for (var pool : List.of(me.daddychurchill.CityWorld.Support.FurnitureTags.FLOOR_DECOR,
                 me.daddychurchill.CityWorld.Support.FurnitureTags.SURFACE_DECOR,
-                me.daddychurchill.CityWorld.Support.FurnitureTags.WALL_DECOR)) {
+                me.daddychurchill.CityWorld.Support.FurnitureTags.WALL_DECOR,
+                me.daddychurchill.CityWorld.Support.FurnitureTags.HANGING_LIGHT,
+                me.daddychurchill.CityWorld.Support.FurnitureTags.RUG_DECOR)) {
             int n = me.daddychurchill.CityWorld.Support.MaterialTags.resolve(pool).size();
             report.put("decor." + pool.location().getPath(), String.valueOf(n));
             if (n == 0)
@@ -1438,5 +1502,12 @@ public final class CityWorldSelfTest {
 
     private static String escape(String raw) {
         return raw.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", " ");
+    }
+
+    /** The registry id of a material's block, e.g. {@code fantasyfurniture_nordic:chair}. */
+    private static String blockId(me.daddychurchill.CityWorld.compat.Material piece) {
+        var block = piece.getBlock();
+        return block == null ? String.valueOf(piece)
+                : net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block).toString();
     }
 }

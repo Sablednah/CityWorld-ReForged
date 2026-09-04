@@ -59,6 +59,12 @@ public final class FurnitureTags {
     public static final TagKey<Block> CRATE = key("crate");
     public static final TagKey<Block> WORKBENCH = key("workbench");
 
+    // the Fantasy's Furniture round: beds join a pool (vanilla seeds + modded singles and 2×2
+    // doubles), freestanding floor lamps, and wall shelves that something can stand on
+    public static final TagKey<Block> BED = key("bed");
+    public static final TagKey<Block> FLOOR_LAMP = key("floor_lamp");
+    public static final TagKey<Block> SHELF = key("shelf");
+
     /**
      * The three decoration pools — placement classes, not furniture roles. {@code FLOOR_DECOR}
      * stands on the ground, {@code SURFACE_DECOR} belongs on a tabletop (the placer puts a table
@@ -72,6 +78,8 @@ public final class FurnitureTags {
     public static final TagKey<Block> HANGING_LIGHT = decorKey("hanging_light");
     public static final TagKey<Block> SURFACE_DECOR = decorKey("surface");
     public static final TagKey<Block> WALL_DECOR = decorKey("wall");
+    /** The carpets a rug is cut from — vanilla seeds plus every furniture set's own carpet. */
+    public static final TagKey<Block> RUG_DECOR = decorKey("rug");
 
     private static TagKey<Block> key(String role) {
         return TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath("cityworld", "furniture/" + role));
@@ -88,13 +96,46 @@ public final class FurnitureTags {
      * back to the vanilla-block furniture CityWorld has always built. Nothing here is required.
      */
     public static Material pick(TagKey<Block> role, Odds odds) {
+        return pick(role, odds, 1, 1, 2);
+    }
+
+    /**
+     * A random piece for this role that fits in {@code width} cells across, {@code depth} cells
+     * back and {@code height} cells up — the room a caller actually has for it. The plain
+     * {@link #pick(TagKey, Odds)} allows one cell across and back and two up, because every
+     * existing placer checks exactly that (the cell and the one above it clear), and a Fantasy's
+     * Furniture chair is two blocks tall; wider pieces (2×2 double beds, 2-wide desks and dressers,
+     * 2×3 wardrobes) only come out when a caller says it has the space.
+     */
+    public static Material pick(TagKey<Block> role, Odds odds, int width, int depth, int height) {
         List<Material> pool = MaterialTags.resolve(role);
-        return pool.isEmpty() ? null : pool.get(odds.getRandomInt(pool.size()));
+        if (pool.isEmpty())
+            return null;
+        List<Material> fitting = new java.util.ArrayList<>(pool.size());
+        for (Material piece : pool)
+            if (footprint(piece).fits(width, depth, height))
+                fitting.add(piece);
+        return fitting.isEmpty() ? null : fitting.get(odds.getRandomInt(fitting.size()));
     }
 
     /** Whether any mod supplies this role. */
     public static boolean has(TagKey<Block> role) {
         return !MaterialTags.resolve(role).isEmpty();
+    }
+
+    /** The cells a piece takes along its own axes (1×1×1 for anything undeclared). */
+    public static me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.Footprint footprint(Material piece) {
+        return me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.footprintFor(piece);
+    }
+
+    /**
+     * Whether a run of this piece may be re-derived with {@link SupportBlocks#reconnect} after
+     * placement. Declared per block, because it is only safe when the mod's own connection logic
+     * reads the same {@code facing} we wrote: a Macaw's couch run reconnected into corner shapes
+     * (its facing is offset 270 from ours), while Fantasy's sofas and shelves connect correctly.
+     */
+    public static boolean reconnects(Material piece) {
+        return me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.furnitureFor(piece).reconnect();
     }
 
     /**

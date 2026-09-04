@@ -8,6 +8,14 @@
     {
       "id": "minecraft:soul_lantern",
       "required": false
+    },
+    {
+      "id": "fantasyfurniture_necrolord:chandelier",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_nordic:chandelier",
+      "required": false
     }
   ]
 }

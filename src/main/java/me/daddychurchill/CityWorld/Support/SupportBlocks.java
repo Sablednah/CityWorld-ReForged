@@ -786,24 +786,88 @@ public abstract class SupportBlocks extends AbstractBlocks {
 	}
 
 	/**
-	 * Place a two-part bed-like furniture piece (the Refurbished baths): {@code type=bottom} at the
-	 * anchor, {@code type=head} one cell toward {@code extendDir}, both halves sharing the facing.
-	 * The property is found by <em>name</em> because the bottom/head enum is the furniture mod's own
-	 * class — any mod following the bed contract works without CityWorld referencing its code.
+	 * Place a furniture piece — every cell of it — with the given {@code facing} value, the property
+	 * defaults it declares, the properties it asks to have randomised, and, for a multi-block piece,
+	 * the index each cell carries. This is the one placement path that understands the
+	 * {@code cityworld:furniture} data map's {@code layout}: a Fantasy's Furniture chair is two
+	 * blocks tall, its wardrobe two wide and three tall, its double bed 2×2, a vanilla or Refurbished
+	 * bed/bath two long — all described as cells relative to the piece's own facing, and rotated
+	 * here exactly as the mods rotate them.
+	 *
+	 * <p>A single-cell piece is written unconditionally, like {@link #setBlock}. A multi-cell piece is
+	 * written whole or not at all: every cell must be inside this chunk and empty, and if the anchor
+	 * stands on something, so must every other ground-level cell (a wardrobe never overhangs a
+	 * stairwell). Returns whether it was placed, so a caller can try elsewhere or fall back — the
+	 * silent alternative, a half-placed piece, is the "half table" class of defect this project
+	 * already met once.
+	 *
+	 * <p>Properties are set by <em>name</em> ({@code part}, {@code type}, {@code connection},
+	 * {@code multi_block_index}), because the enums are the furniture mod's own classes — any mod
+	 * following the same contracts works without CityWorld referencing its code.
 	 */
-	public final void setTwoPartFurniture(int x, int y, int z, Material material, BlockFace extendDir) {
-		BlockState base = withDirection(stateOf(material), extendDir);
-		int hx = x, hz = z;
-		switch (extendDir) {
-		case NORTH -> hz = z - 1;
-		case SOUTH -> hz = z + 1;
-		case EAST -> hx = x + 1;
-		case WEST -> hx = x - 1;
-		default -> {
+	public final boolean setFurniture(int x, int y, int z, Material piece, BlockFace facing) {
+		var spec = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.furnitureFor(piece);
+		BlockState base = withDirection(stateOf(piece), facing);
+		for (var prop : spec.props().entrySet())
+			base = withNamedValue(base, prop.getKey(), prop.getValue());
+		if (!spec.vary().isEmpty())
+			base = withVaried(base, spec.vary(), x, y, z);
+		var cells = spec.cells();
+		if (cells.size() == 1) {
+			setActualBlock(x, y, z, base);
+			return true;
 		}
+		// the frame the layout is written in: stand where the piece's facing points, look at it
+		Direction front = facing.toDirection();
+		if (front == null || !front.getAxis().isHorizontal())
+			front = base.hasProperty(BlockStateProperties.HORIZONTAL_FACING)
+					? base.getValue(BlockStateProperties.HORIZONTAL_FACING)
+					: Direction.NORTH;
+		Direction right = front.getCounterClockWise(), back = front.getOpposite();
+		boolean grounded = !isEmpty(x, y - 1, z);
+		int[][] at = new int[cells.size()][];
+		for (int i = 0; i < cells.size(); i++) {
+			var part = cells.get(i);
+			int px = x + right.getStepX() * part.right() + back.getStepX() * part.back();
+			int py = y + part.up();
+			int pz = z + right.getStepZ() * part.right() + back.getStepZ() * part.back();
+			if (!insideXYZ(px, py, pz) || !isEmpty(px, py, pz))
+				return false;
+			if (grounded && part.up() == 0 && isEmpty(px, py - 1, pz))
+				return false;
+			at[i] = new int[] { px, py, pz };
 		}
-		setActualBlock(x, y, z, withNamedValue(base, "type", "bottom"));
-		setActualBlock(hx, y, hz, withNamedValue(base, "type", "head"));
+		for (int i = 0; i < cells.size(); i++) {
+			BlockState state = withNamedValue(base, spec.indexProperty(), Integer.toString(i));
+			for (var prop : cells.get(i).props().entrySet())
+				state = withNamedValue(state, prop.getKey(), prop.getValue());
+			setActualBlock(at[i][0], at[i][1], at[i][2], state);
+		}
+		return true;
+	}
+
+	/**
+	 * Give each named property a value chosen by the cell's world position — deterministic (the same
+	 * seed builds the same city) without needing an {@code Odds} threaded through every placer. This
+	 * is how a stack of books is sometimes one book and sometimes three, and a row of potion
+	 * bottles comes in more than one colour.
+	 */
+	private BlockState withVaried(BlockState state, java.util.List<String> names, int x, int y, int z) {
+		var pos = getActualBlock(x, y, z).getPos();
+		long seed = Mth.getSeed(pos.getX(), pos.getY(), pos.getZ());
+		for (String name : names) {
+			for (Property<?> property : state.getProperties())
+				if (property.getName().equals(name)) {
+					state = withNthValue(state, property, Math.floorMod(seed, property.getPossibleValues().size()));
+					break;
+				}
+			seed = seed * 6364136223846793005L + 1442695040888963407L;
+		}
+		return state;
+	}
+
+	private static <T extends Comparable<T>> BlockState withNthValue(BlockState state, Property<T> property, int n) {
+		return state.setValue(property, property.getPossibleValues().get(n));
 	}
 
 	/** Set a property by its serialized name and value, leaving the state alone if either is unknown. */
