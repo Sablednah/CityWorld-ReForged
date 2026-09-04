@@ -38,7 +38,8 @@ AUTH="Authorization: $MODRINTH_TOKEN"
 [ -f "$ICON" ]      || { echo "!! No icon at $ICON - regenerate it, see RELEASE.md" >&2; exit 1; }
 [ -f "$BODY_FILE" ] || { echo "!! No description at $BODY_FILE" >&2; exit 1; }
 
-# The icon must be square and under 256 KiB. Checked here rather than discovered as a 400, because
+# The icon is the BANNER, deliberately non-square: the square art (AI-generated) trips Modrinth's
+# AI-image filters during review; the banner reads as a wordmark and passes. Under 256 KiB. Checked here rather than discovered as a 400, because
 # the failure reads as an auth problem otherwise.
 ICON_BYTES="$(wc -c < "$ICON")"
 [ "$ICON_BYTES" -le 262144 ] || {
