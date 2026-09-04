@@ -208,9 +208,12 @@ public final class CityWorldDataMaps {
         if (block == null)
             return null;
         Holder<Block> holder = BuiltInRegistries.BLOCK.wrapAsHolder(block);
-        if (holder instanceof Holder.Reference<Block> reference)
-            return reference.getData(FURNITURE);
-        return null;
+        if (holder instanceof Holder.Reference<Block> reference) {
+            Facing declared = reference.getData(FURNITURE);
+            if (declared != null)
+                return declared; // a datapack entry always wins over a runtime-derived one
+        }
+        return me.daddychurchill.CityWorld.Support.FurnitureSets.dataFor(block);
     }
 
     /**

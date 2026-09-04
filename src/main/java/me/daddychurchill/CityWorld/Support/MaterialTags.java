@@ -90,6 +90,10 @@ public final class MaterialTags {
         List<Block> blocks = new ArrayList<>();
         for (Holder<Block> holder : BuiltInRegistries.BLOCK.getTagOrEmpty(tag))
             blocks.add(holder.value());
+        // furniture sets recognised at runtime (no tag file needed) join the same pool, once each
+        for (Block block : FurnitureSets.extra(tag))
+            if (!blocks.contains(block))
+                blocks.add(block);
 
         if (blocks.isEmpty()) {
             CityWorldMod.LOGGER.warn("CityWorld: block tag #{} is empty or unbound; "

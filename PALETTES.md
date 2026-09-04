@@ -77,12 +77,17 @@ knowing anything about it.
 | `cityworld:furniture/floor_lamp` | freestanding (two-tall) floor lamps — the fence-and-lantern is the fallback |
 | `cityworld:furniture/crate` `…/stove` `…/fridge` … | warehouses, workshops, kitchens (the appliance and interiors roles) |
 
-**Fantasy's Furniture is supported as a family.** Every one of its sets (Nordic, Necrolord, and any
-set its author adds later) registers the same 39 block names, so `scripts/gen_furniture_tags.py`
-classifies a set by *name* — `chair`, `wardrobe`, `bed_double`, `oven` — and writes the multi-block
-layouts once for all of them. A future set is picked up by re-running the generator against a mods
-folder that contains it; a set that introduces a block name the table has never seen is reported
-rather than guessed at. Sets do not link to each other in-game (a Nordic sofa will not join a
+**Fantasy's Furniture is supported as a family, at runtime.** Every one of its sets (Nordic,
+Necrolord, and any set its author adds later) registers the same 39 block names, so CityWorld
+carries one vocabulary — `chair`, `wardrobe`, `bed_double`, `oven`, with their multi-block layouts —
+in `cityworld/furniture_vocabulary/fantasyfurniture.json` inside the jar. At startup CityWorld scans
+the block registry for any namespace holding that vocabulary and pools its pieces on the spot, so
+**a set CityWorld was never built against still furnishes the city**, a jar carrying two sets is two
+namespaces and needs nothing special, and a datapack entry always overrides a derived one. The same
+JSON drives `scripts/gen_furniture_tags.py`, which additionally bakes tag files for the sets present
+at build time and reports any block name the vocabulary does not know. A set that reshapes a piece
+(its `multi_block_index` no longer matching the layout) is skipped with a log line, never placed as a
+row of origins; the self-test reports `furniture.setsDetected` and `furniture.setNotes`. Sets do not link to each other in-game (a Nordic sofa will not join a
 Necrolord one — the mod's connection logic requires the same block), which is fine: CityWorld picks
 one piece per role per room, so a run is always one set. The sets' planks and wool join the building
 palettes by themselves (they are tagged `#minecraft:planks` / `#minecraft:wool`); Necrolord's bricks
@@ -195,6 +200,7 @@ Loose decoration is drawn from three placement pools, and you can add to them th
 | `cityworld:decor/wall` | wall-mounted at eye height (sconces, wall lights, paintings, mirrors — two-wide pieces declare a `layout` and run along the wall) |
 | `cityworld:decor/hanging_light` | hung in the air cell below a ceiling (lanterns, chandeliers) |
 | `cityworld:decor/rug` | the carpets a bedroom or hallway rug is cut from |
+| `cityworld:decor/grim_floor` `…/grim_surface` `…/grim_wall` | **APOCALYPSE only** — half of that style's floor, table and wall decoration draws from these instead: vanilla skulls and cobwebs seed them, Fantasy's Decorations adds bone piles, gravestones (floor only), spider webs (walls), soul gems and potion bottles. A pack can add to them the same way, and other styles never see them. |
 
 The floor/surface split is why a table lamp never ends up standing on the carpet: if your lamp is a
 table lamp, tag it `surface`, and if it is a freestanding floor lamp, tag it `floor`.

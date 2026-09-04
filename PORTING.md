@@ -163,7 +163,17 @@ cell only. That overload now hands any data-map-declared piece to `setFurniture`
 site, present and future, places whole or not at all; the self-test's `readback.multiBlockPieces`
 integrity check (recomputes each cell's origin from the layout) is what caught it.
 
-**NEXT:** playtest on the 26.2 instance: chairs 2-tall in dining/offices, wardrobes in
+**Follow-up (same day):** (1) **runtime set detection** — `Support/FurnitureSets` scans the block
+registry at first use for any namespace holding ≥4 of the vocabulary's `detect` names (bed_single,
+desk_left, floor_light, lockbox… — names no other mod uses), derives roles/layouts from
+`src/main/resources/cityworld/furniture_vocabulary/fantasyfurniture.json` (the ONE source of truth,
+also read by the generator), unions into `MaterialTags.resolve` and backs `furnitureDataFor`
+(datapack entry wins). Proven by building a jar whose generated tags omit the sets and watching the
+self-test still pool both. (2) **Grim pools** `decor/grim_{floor,surface,wall}`, vanilla-seeded
+(skulls with `vary: rotation`, cobwebs), Decorations' macabre pieces; `Furniture.grim()` = APOCALYPSE
+&& coin flip, threaded through placeAccent/wallDecor (which now takes the generator)/wallShelf.
+
+**NEXT:** playtest on the 26.2 instance (and an APOCALYPSE world for the grim pools): chairs 2-tall in dining/offices, wardrobes in
 bedrooms, double beds, sofa runs (arms at the ends), shelf+topper, decorations on tables. Watch for:
 a piece that never appears (footprint filter too strict) and mis-rotated 2-wide pieces (the
 right-hand rule). Ideas parked: an APOCALYPSE-only pool for the macabre decorations (bone piles,

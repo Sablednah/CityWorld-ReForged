@@ -88,11 +88,17 @@ public final class Furniture {
         placeAccent(generator, chunk, odds, c[0], y, c[1]);
     }
 
+    /** On APOCALYPSE, half of the decoration draws from the grim pools; on every other style, none. */
+    private static boolean grim(CityWorldGenerator generator, Odds odds) {
+        return generator.isApocalypseStyle() && odds.playOdds(0.5);
+    }
+
     private static void placeAccent(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x, int y, int z) {
+        boolean grim = grim(generator, odds);
         switch (odds.getRandomInt(12)) {
         case 0:
         case 1:
-            pottedPlant(chunk, odds, x, y, z);
+            floorPiece(chunk, odds, x, y, z, grim);
             break;
         case 2:
         case 3: {
@@ -119,28 +125,28 @@ public final class Furniture {
             // a ceiling close enough above to hang it from; otherwise fall through to a floor piece
             if (chandelier(chunk, odds, x, y, z))
                 break;
-            pottedPlant(chunk, odds, x, y, z);
+            floorPiece(chunk, odds, x, y, z, grim);
             break;
         case 8:
             // something on the wall this cell backs onto — art (a painting or a framed keepsake)
             // or a sconce; open cells get a plant instead
             if (odds.flipCoin() && wallArt(chunk, odds, x, y, z))
                 break;
-            if (wallSconce(chunk, odds, x, y, z))
+            if (wallSconce(chunk, odds, x, y, z, grim))
                 break;
-            pottedPlant(chunk, odds, x, y, z);
+            floorPiece(chunk, odds, x, y, z, grim);
             break;
         case 9:
             // something that belongs ON a surface, with the surface put underneath it
-            surfacePiece(chunk, odds, x, y, z);
+            surfacePiece(chunk, odds, x, y, z, grim);
             break;
         default:
             // amethyst moved from the floor to the surface pool (owner: table decor, not floor
             // decor) — so the remaining default is another surface piece or a plant
             if (odds.flipCoin())
-                surfacePiece(chunk, odds, x, y, z);
+                surfacePiece(chunk, odds, x, y, z, grim);
             else
-                pottedPlant(chunk, odds, x, y, z);
+                floorPiece(chunk, odds, x, y, z, grim);
             break;
         }
     }
@@ -163,10 +169,12 @@ public final class Furniture {
     }
 
     /** A piece from the surface pool (candles, lanterns, table lamps…) stood on a table put under it. */
-    private static void surfacePiece(RealBlocks chunk, Odds odds, int x, int y, int z) {
-        Material piece = FurnitureTags.pick(FurnitureTags.SURFACE_DECOR, odds);
+    private static void surfacePiece(RealBlocks chunk, Odds odds, int x, int y, int z, boolean grim) {
+        Material piece = grim ? FurnitureTags.pick(FurnitureTags.GRIM_SURFACE, odds) : null;
+        if (piece == null)
+            piece = FurnitureTags.pick(FurnitureTags.SURFACE_DECOR, odds);
         if (piece == null) {
-            pottedPlant(chunk, odds, x, y, z);
+            floorPiece(chunk, odds, x, y, z, grim);
             return;
         }
         Material table = FurnitureTags.pick(FurnitureTags.TABLE, odds);
@@ -179,8 +187,10 @@ public final class Furniture {
     }
 
     /** Whatever the surface pool offers, stood ON the block at (x,y,z) — a shelf, a counter top. */
-    private static boolean surfaceTopper(RealBlocks chunk, Odds odds, int x, int y, int z) {
-        Material piece = FurnitureTags.pick(FurnitureTags.SURFACE_DECOR, odds);
+    private static boolean surfaceTopper(RealBlocks chunk, Odds odds, int x, int y, int z, boolean grim) {
+        Material piece = grim ? FurnitureTags.pick(FurnitureTags.GRIM_SURFACE, odds) : null;
+        if (piece == null)
+            piece = FurnitureTags.pick(FurnitureTags.SURFACE_DECOR, odds);
         if (piece == null || !chunk.isEmpty(x, y + 1, z))
             return false;
         return chunk.setFurniture(x, y + 1, z, piece, FurnitureTags.facingFor(piece, anyFacing(odds)));
@@ -191,9 +201,11 @@ public final class Furniture {
      * wall-backed cell. This is the direct pass the rooms call; the accent switch also rolls it,
      * but at 1-in-12-of-40% nothing was ever visible in playtest.
      */
-    public static void wallDecor(RealBlocks chunk, Odds odds, int x1, int x2, int y, int z1, int z2) {
+    public static void wallDecor(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int x1, int x2, int y,
+            int z1, int z2) {
         if (!odds.playOdds(0.6))
             return;
+        boolean grim = grim(generator, odds);
         List<int[]> cells = new ArrayList<>();
         for (int cx = x1 + 1; cx <= x2 - 1; cx++)
             for (int cz = z1 + 1; cz <= z2 - 1; cz++)
@@ -203,10 +215,10 @@ public final class Furniture {
             return;
         int[] c = cells.get(odds.getRandomInt(cells.size()));
         // a third of the time a shelf with something on it, else art, else a sconce
-        if (odds.playOdds(0.33) && wallShelf(chunk, odds, c[0], y, c[1]))
+        if (odds.playOdds(0.33) && wallShelf(chunk, odds, c[0], y, c[1], grim))
             return;
         if (!wallArt(chunk, odds, c[0], y, c[1]))
-            wallSconce(chunk, odds, c[0], y, c[1]);
+            wallSconce(chunk, odds, c[0], y, c[1], grim);
     }
 
     /** What ends up inside an item frame — the "nice things" of the owner's brief. */
@@ -275,18 +287,20 @@ public final class Furniture {
      * it — {@code hasFaces()} distinguishes, since the two families mean opposite things by the
      * same parameter.
      */
-    private static boolean wallSconce(RealBlocks chunk, Odds odds, int x, int y, int z) {
+    private static boolean wallSconce(RealBlocks chunk, Odds odds, int x, int y, int z, boolean grim) {
         if (!chunk.isEmpty(x, y + 2, z))
             return false;
+        var pool = grim && FurnitureTags.has(FurnitureTags.GRIM_WALL) ? FurnitureTags.GRIM_WALL
+                : FurnitureTags.WALL_DECOR;
         BlockFace out = wallwardOrNull(chunk, x, y + 2, z);
         if (out == null)
             return false;
         // a wide piece (a two-block painting, a large mirror) half the time — it runs along the wall
         // to the viewer's right and is refused whole if that cell is taken, then a one-cell piece
-        Material piece = odds.flipCoin() ? FurnitureTags.pick(FurnitureTags.WALL_DECOR, odds, 2, 1, 1) : null;
+        Material piece = odds.flipCoin() ? FurnitureTags.pick(pool, odds, 2, 1, 1) : null;
         if (piece != null && mountOnWall(chunk, x, y + 2, z, piece, out))
             return true;
-        piece = FurnitureTags.pick(FurnitureTags.WALL_DECOR, odds, 1, 1, 1);
+        piece = FurnitureTags.pick(pool, odds, 1, 1, 1);
         return piece != null && mountOnWall(chunk, x, y + 2, z, piece, out);
     }
 
@@ -301,7 +315,7 @@ public final class Furniture {
      * top-half slab does. The shelf mounts on the wall this cell backs onto, one above the floor,
      * so the topper sits at the eye-height cell the rest of the wall pass uses.
      */
-    private static boolean wallShelf(RealBlocks chunk, Odds odds, int x, int y, int z) {
+    private static boolean wallShelf(RealBlocks chunk, Odds odds, int x, int y, int z, boolean grim) {
         BlockFace out = wallwardOrNull(chunk, x, y + 1, z);
         if (out == null || !chunk.isEmpty(x, y + 1, z) || !chunk.isEmpty(x, y + 2, z)
                 || !chunk.isSturdyFace(x - out.getModX(), y + 1, z - out.getModZ(), out))
@@ -316,7 +330,7 @@ public final class Furniture {
             chunk.setBlock(x, y + 1, z, SHELF_SLABS[odds.getRandomInt(SHELF_SLABS.length)],
                     net.minecraft.world.level.block.state.properties.SlabType.TOP);
         }
-        surfaceTopper(chunk, odds, x, y + 1, z);
+        surfaceTopper(chunk, odds, x, y + 1, z, grim);
         return true;
     }
 
@@ -368,7 +382,14 @@ public final class Furniture {
 
     /** A potted plant (or anything else from the floor pool) — instant "someone lives here". */
     public static void pottedPlant(RealBlocks chunk, Odds odds, int x, int y, int z) {
-        Material piece = FurnitureTags.pick(FurnitureTags.FLOOR_DECOR, odds);
+        floorPiece(chunk, odds, x, y, z, false);
+    }
+
+    /** A floor-pool piece — the grim pool's (a skull, a gravestone) when asked and it has one. */
+    private static void floorPiece(RealBlocks chunk, Odds odds, int x, int y, int z, boolean grim) {
+        Material piece = grim ? FurnitureTags.pick(FurnitureTags.GRIM_FLOOR, odds) : null;
+        if (piece == null)
+            piece = FurnitureTags.pick(FurnitureTags.FLOOR_DECOR, odds);
         if (piece == null)
             piece = PLANTS[odds.getRandomInt(PLANTS.length)];
         chunk.setFurniture(x, y, z, piece, FurnitureTags.facingFor(piece, anyFacing(odds)));
@@ -462,7 +483,7 @@ public final class Furniture {
                         chunk.setBlock(tx, y + 1, z, topper, FurnitureTags.facingFor(topper, BlockFace.SOUTH));
                         break;
                     }
-            wallDecor(chunk, odds, x1, x2, y, z1, z2);
+            wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
             return;
         }
@@ -472,7 +493,7 @@ public final class Furniture {
             chunk.setCauldron(x1 + 2, y, z, odds);
         if (x1 + 3 <= x2 - 1)
             placeIfClear(chunk, x1 + 3, y, z, modern(generator) ? Material.SMOKER : Material.FURNACE, BlockFace.SOUTH);
-        wallDecor(chunk, odds, x1, x2, y, z1, z2);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
@@ -504,7 +525,7 @@ public final class Furniture {
                 }
             }
             ceilingPiece(chunk, odds, cx, y, cz); // a fan or lantern over the dining table
-            wallDecor(chunk, odds, x1, x2, y, z1, z2);
+            wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
             return;
         }
@@ -516,7 +537,7 @@ public final class Furniture {
         // backrests AWAY from the table so the diners face it
         placeIfClear(chunk, cx - 1, y, cz, Material.OAK_STAIRS, BlockFace.WEST);
         placeIfClear(chunk, cx + 1, y, cz, Material.OAK_STAIRS, BlockFace.EAST);
-        wallDecor(chunk, odds, x1, x2, y, z1, z2);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
@@ -557,7 +578,7 @@ public final class Furniture {
             }
             ceilingPiece(chunk, odds, cx, y, cz);
             if (placed) {
-                wallDecor(chunk, odds, x1, x2, y, z1, z2);
+                wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
                 return;
             }
@@ -571,7 +592,7 @@ public final class Furniture {
             sideTable(chunk, odds, cx, y, z1 + 2);
         else if (couchAlongZ(chunk, x1 + 1, y, z1, z2, BlockFace.WEST))
             sideTable(chunk, odds, x1 + 2, y, cz);
-        wallDecor(chunk, odds, x1, x2, y, z1, z2);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
@@ -654,7 +675,7 @@ public final class Furniture {
                 floorLampIfClear(chunk, odds, x2 - 1, y, z2 - 1);
         }
         ceilingPiece(chunk, odds, midX, y, midZ);
-        wallDecor(chunk, odds, x1, x2, y, z1, z2);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
@@ -715,7 +736,7 @@ public final class Furniture {
         if (modern(generator))
             rug(chunk, odds, cx, y, cz);
         ceilingPiece(chunk, odds, cx, y, cz);
-        wallDecor(chunk, odds, x1, x2, y, z1, z2);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
@@ -815,7 +836,7 @@ public final class Furniture {
             int bx = (x1 + x2) / 2, bz = (z1 + z2) / 2;
             if (clearFloor(chunk, bx, y, bz))
                 chunk.setBlock(bx, y, bz, odds.flipCoin() ? Material.WHITE_CARPET : Material.LIGHT_BLUE_CARPET);
-            wallDecor(chunk, odds, x1, x2, y, z1, z2);
+            wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
             return;
         }
@@ -841,7 +862,7 @@ public final class Furniture {
         int mx = (x1 + x2) / 2, mz = (z1 + z2) / 2; // a tiled bathmat
         if (clearFloor(chunk, mx, y, mz))
             chunk.setBlock(mx, y, mz, odds.flipCoin() ? Material.WHITE_CARPET : Material.LIGHT_BLUE_CARPET);
-        wallDecor(chunk, odds, x1, x2, y, z1, z2);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 
@@ -880,7 +901,7 @@ public final class Furniture {
             if (shelf != null)
                 placeFacing(chunk, x1 + 1, y, z1 + 1, shelf, BlockFace.SOUTH);
         }
-        wallDecor(chunk, odds, x1, x2, y, z1, z2);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
     }
 

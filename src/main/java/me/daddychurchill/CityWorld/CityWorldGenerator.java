@@ -96,6 +96,11 @@ public class CityWorldGenerator {
         return worldStyle == WorldStyle.MODERN || worldStyle == WorldStyle.APOCALYPSE;
     }
 
+    /** The ruined world — the one style whose interiors draw on the grim decoration pools. */
+    public boolean isApocalypseStyle() {
+        return worldStyle == WorldStyle.APOCALYPSE;
+    }
+
     /**
      * Resolves the generator's {@code "style"} JSON field (a case-insensitive style name, or empty)
      * to a {@link WorldStyle}. Absent or unrecognised falls back to {@link WorldStyle#CLASSIC} —

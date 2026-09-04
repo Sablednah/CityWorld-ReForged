@@ -16,6 +16,12 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   furniture data map. Beds of every kind (vanilla, modded singles, doubles) come from one pool.
 - **Wall shelves with something on them** — a third of wall decoration is now a shelf at waist height
   (Fantasy's, vanilla `*_shelf`, or a top-half slab) with a piece from the surface pool stood on it.
+- **Any Fantasy's Furniture set works without a CityWorld update.** The sets share one block
+  vocabulary, and CityWorld now recognises it in the block registry at startup — a set released
+  after this version is furnished on the spot, two sets in one jar included.
+- **Grim decoration on APOCALYPSE.** Skulls, cobwebs, bone piles, gravestones, spider webs, soul
+  gems and potion bottles fill half of the ruined world's floor, table and wall decoration, from
+  three new `decor/grim_*` pools; the other styles never see them.
 - **Tabletop and wall scatter with variety** — the Decorations add-on's books, bottles, food, candles,
   coins, mirrors and fairy lights join the decoration pools; stack heights and colours vary per
   placement. Freestanding floor lamps, a rug pool, and Necrolord bricks in the modern stone palette.
