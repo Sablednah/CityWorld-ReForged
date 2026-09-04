@@ -168,8 +168,9 @@ registry at first use for any namespace holding ≥4 of the vocabulary's `detect
 desk_left, floor_light, lockbox… — names no other mod uses), derives roles/layouts from
 `src/main/resources/cityworld/furniture_vocabulary/fantasyfurniture.json` (the ONE source of truth,
 also read by the generator), unions into `MaterialTags.resolve` and backs `furnitureDataFor`
-(datapack entry wins). Proven by building a jar whose generated tags omit the sets and watching the
-self-test still pool both. (2) **Grim pools** `decor/grim_{floor,surface,wall}`, vanilla-seeded
+(datapack entry wins). PROVEN 2026-09-04: a 26.2 jar generated against a mods folder WITHOUT the fantasy jars
+(0 baked entries) still self-tested PASS with `setsDetected=[necrolord, nordic]`, 50 pieces pooled,
+72 multi-block pieces whole. Final full jar deployed as `DEPLOYED-19b0550`; 1.21.11 PASS; mc26.1 built. (2) **Grim pools** `decor/grim_{floor,surface,wall}`, vanilla-seeded
 (skulls with `vary: rotation`, cobwebs), Decorations' macabre pieces; `Furniture.grim()` = APOCALYPSE
 && coin flip, threaded through placeAccent/wallDecor (which now takes the generator)/wallShelf.
 
