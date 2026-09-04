@@ -1,0 +1,138 @@
+name: Publish to Modrinth
+
+# Publishing a GitHub release publishes to Modrinth too, the same way curseforge.yml does. Every jar
+# attached to the release becomes its own Modrinth version, labelled from its +mc filename suffix.
+#
+# Setup, once:
+#   1. Create a PAT at https://modrinth.com/settings/pats with the scopes
+#      PROJECT_CREATE, PROJECT_WRITE, VERSION_CREATE
+#   2. Add it as the repository secret MODRINTH_TOKEN
+#      (Settings -> Secrets and variables -> Actions -> New repository secret)
+#   3. Optionally add the repository variable MODRINTH_SLUG if it is ever not cityworld-reforged
+#
+# Unlike CurseForge, Modrinth CAN create the project - that is what the create-project action below
+# is for, and it means the token never has to be pasted anywhere outside GitHub.
+#
+# The three steps are deliberately separate:
+#   create-project    creates a private DRAFT, sets the icon, uploads the gallery. Re-runnable.
+#   upload-versions   attaches the jars from a release. Re-runnable per new version number.
+#   submit-for-review Checks the draft is ready and points you at the website. Submission itself is
+#                     done there, because the form asks for an AI-use declaration that v2 does not
+#                     expose - see the header of scripts/modrinth-submit.sh.
+#
+# Until the secret exists this workflow skips rather than fails, so it will not redden a release.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      action:
+        description: What to do
+        required: true
+        default: create-project
+        type: choice
+        options: [create-project, upload-versions, submit-for-review]
+      tag:
+        description: Release tag to upload jars from (upload-versions only, e.g. v5.4.0)
+        required: false
+        default: ''
+      release_type:
+        description: Modrinth release channel
+        required: false
+        default: release
+        type: choice
+        options: [release, beta, alpha]
+      debug:
+        description: Print the version metadata (contains no credentials)
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  modrinth:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the Modrinth token is configured
+        id: guard
+        env:
+          TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "MODRINTH_TOKEN secret not set - skipping."
+            echo "See the comments at the top of .github/workflows/modrinth.yml for setup."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.guard.outputs.configured == 'true'
+
+      # A release publish always means "upload the jars"; a manual run does whatever was chosen.
+      - name: Decide what this run is doing
+        id: what
+        if: steps.guard.outputs.configured == 'true'
+        env:
+          ACTION: ${{ github.event_name == 'release' && 'upload-versions' || inputs.action }}
+        run: echo "action=$ACTION" >> "$GITHUB_OUTPUT"
+
+      - name: Create the project (draft), icon and gallery
+        if: steps.guard.outputs.configured == 'true' && steps.what.outputs.action == 'create-project'
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          MODRINTH_SLUG: ${{ vars.MODRINTH_SLUG }}
+        # Invoked via bash rather than as ./script: this repo lives on an NTFS drive with
+        # core.fileMode=false, so exec bits are easily lost again on a future commit.
+        run: bash scripts/modrinth-create.sh
+
+      - name: Download the release jars and changelog
+        if: steps.guard.outputs.configured == 'true' && steps.what.outputs.action == 'upload-versions'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          if [ -z "$TAG" ]; then
+            echo "::error::upload-versions needs a tag. Pass one in the 'tag' input."
+            exit 1
+          fi
+          mkdir -p dist
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.jar' --dir dist
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body --jq '.body' > dist/changelog.md
+          ls -la dist
+
+      - name: Upload each jar as a version
+        if: steps.guard.outputs.configured == 'true' && steps.what.outputs.action == 'upload-versions'
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          MODRINTH_SLUG: ${{ vars.MODRINTH_SLUG }}
+          RELEASE_TYPE: ${{ inputs.release_type || 'release' }}
+          MODRINTH_DEBUG: ${{ inputs.debug && '1' || '' }}
+        run: |
+          shopt -s nullglob
+          jars=(dist/*.jar)
+          if [ ${#jars[@]} -eq 0 ]; then
+            echo "::error::No jars attached to the release - nothing to upload."
+            exit 1
+          fi
+          failed=0
+          for jar in "${jars[@]}"; do
+            echo "::group::$(basename "$jar")"
+            # Keep going if one fails, so a single bad upload does not strand the others, then fail
+            # the job at the end so the failure is not silent. The script reads the Minecraft
+            # version off the jar's own +mc filename suffix, which is the only place a jar states
+            # what it was built against - gradle.properties at this tag describes one of the three.
+            bash scripts/modrinth-upload.sh "$jar" dist/changelog.md "" "$RELEASE_TYPE" || failed=1
+            echo "::endgroup::"
+          done
+          [ "$failed" -eq 0 ] || { echo "::error::At least one upload failed."; exit 1; }
+
+      - name: Check the draft is ready to submit
+        if: steps.guard.outputs.configured == 'true' && steps.what.outputs.action == 'submit-for-review'
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          MODRINTH_SLUG: ${{ vars.MODRINTH_SLUG }}
+        run: bash scripts/modrinth-submit.sh

@@ -586,7 +586,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // the walls have to exist before either branch below tries to grow anything on them.
         paintCaveWalls(context, level, chunk);
 
-        me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x(), pos.z());
+        me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x(), pos.z()); // 26.1: ChunkPos is a record
         boolean wild = context.isModernStyle() && context.getSettings().vanillaDecoratesWild() && lot != null
                 && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE
                 && lot.allowsWildDecoration();

@@ -264,6 +264,12 @@ public class MaterialProvider {
             Material.STONE, Material.SMOOTH_STONE, Material.QUARTZ_BLOCK, Material.CLAY)
             .withTag(MaterialTags.BUILD_CONCRETE, 16);
 
+    private final static String tagSelectMaterial_Chemicals = "Materials_For_Chemicals";
+    /** Tank/silo contents when fluids are enabled — the owner's "chemicals" palette. */
+    public final MaterialList itemsSelectMaterial_Chemicals = createList(tagSelectMaterial_Chemicals,
+            Material.WATER, Material.LAVA)
+            .withTag(me.daddychurchill.CityWorld.Support.MaterialTags.BUILD_CHEMICALS, 18);
+
     private final static String tagSelectMaterial_FactoryTanks = "Materials_For_FactoryTanks";
     public final MaterialList itemsSelectMaterial_FactoryTanks = createList(tagSelectMaterial_FactoryTanks, Material.LAVA,
             Material.ICE, Material.PACKED_ICE, Material.SNOW_BLOCK, Material.SLIME_BLOCK, Material.COAL_BLOCK,

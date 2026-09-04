@@ -27,13 +27,13 @@ public class LoungeGameRoom extends LoungeChairsRoom {
 		default:
 		case NORTH:
 		case SOUTH:
-			chunk.setTable(x + 1, y, z, tableLeg, tableTop);
-			chunk.setTable(x + 1, y, z + 2, tableLeg, tableTop);
+			drawTable(generator, chunk, odds, x + 1, y, z);
+			drawTable(generator, chunk, odds, x + 1, y, z + 2);
 			break;
 		case WEST:
 		case EAST:
-			chunk.setTable(x, y, z + 1, tableLeg, tableTop);
-			chunk.setTable(x + 2, y, z + 1, tableLeg, tableTop);
+			drawTable(generator, chunk, odds, x, y, z + 1);
+			drawTable(generator, chunk, odds, x + 2, y, z + 1);
 			break;
 		}
 	}

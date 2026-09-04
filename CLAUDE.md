@@ -51,6 +51,22 @@ export PATH="$JAVA_HOME/bin:$PATH"
   `runServer` generates using our generator. **Delete `run/world` to force regeneration.**
 - Gradle can't forward piped stdin to the server console — to verify in-world behaviour, register a
   temporary `ServerStartedEvent` listener that logs what you need, rather than piping commands.
+- **Build the version branches in their worktrees, don't switch branches here.** `master` is 1.21.11;
+  `mc26.1` and `mc26.2` are checked out permanently at
+  `../CityWorld-ReForged-worktrees/mc26.{1,2}`, each with a `tools` symlink back to this checkout's
+  JDKs (`tools/` is git-ignored, so a worktree has none of its own). Build with an explicit
+  `JAVA_HOME` — **1.21.11 needs JDK 21, 26.1+ needs JDK 25**:
+
+  ```bash
+  cd ../CityWorld-ReForged-worktrees/mc26.2
+  JAVA_HOME="$PWD/tools/jdk25" PATH="$PWD/tools/jdk25/bin:$PATH" ./gradlew build
+  ```
+
+  **Why, and it is not just tidiness:** the owner often has a second Claude session working in this
+  repo (the sablecraft.co.uk website one). Switching branches in the shared checkout rewrites its
+  files underneath it — `WEBSITE.md` does not exist on the version branches at all, so a switch tries
+  to delete it and aborts (or worse, lands mid-edit). Worktrees keep `master`'s tree still. They share
+  the Gradle cache, so a build there is no slower after the first.
 - **Kill the previous `runServer` before starting another.** A backgrounded one keeps port 25565, and
   the second run fails with `bind(..) failed: Address already in use` → `Failed to initialize server`
   → a crash report and an NPE in `overworld()` on shutdown. That reads like a code fault and isn't
@@ -99,7 +115,7 @@ possible:
 
 - **`AbstractBlocks`** → **`InitialBlocks`** (generation side, on `ChunkAccess`) — **done**.
 - **`SupportBlocks`** → `RealBlocks`/`RelativeBlocks`/`WorldBlocks`/`CornerBlocks` (decoration side,
-  on `LevelAccessor`) — **in progress**. Rests on one abstract method, `getActualBlock(x,y,z)`.
+  on `LevelAccessor`) — **done**. Rests on one abstract method, `getActualBlock(x,y,z)`.
 - **`PlatMap`** — a 10×10 grid of chunks; the unit of city planning. Seed-deterministic (important
   for the multithreaded modern chunk pipeline).
 - **`PlatLot`** subclasses (`RoadLot`, `BuildingLot`, `ConnectedLot`, `NatureLot`, …) — one chunk's
@@ -115,9 +131,17 @@ Plugins ↔ Rooms ↔ Clipboard`) — measured: every seed yields the same 316-f
 edges are often thin (single method signatures), so they can be stubbed to break it.
 
 Modern worldgen wraps this in a codec-registered `ChunkGenerator` (`worldgen/CityWorldChunkGenerator`,
-registered `cityworld:city`), exposed as both a dimension and a world preset. It currently generates
-**placeholder flat terrain** — the pipeline is proven end-to-end; the brain isn't wired in yet. It
-also suppresses vanilla structures/decoration/carvers so CityWorld owns the chunk.
+registered `cityworld:city`), exposed as both a dimension and a world preset. **The port is complete
+and the brain is wired in** — it generates real CityWorld terrain, cities, interiors, mines, caves and
+decoration across 13 world styles, on three Minecraft versions. It suppresses *most* vanilla
+structures/decoration/carvers so CityWorld owns the chunk, with deliberate exceptions: strongholds,
+trial chambers and ancient cities are placed (see PORTING.md), and vanilla biome features may decorate
+wild land depending on `world.wildDecoration`.
+
+**Verify changes with `scripts/selftest.sh`** — a headless dedicated server on a fixed seed that
+checks ~88 things and writes a JSON report per Minecraft version. It exists because "looks right in
+game" repeatedly disagreed with what the code did; several bugs in this project were a feature
+silently doing nothing while looking exactly like working software.
 
 ## Reference port
 

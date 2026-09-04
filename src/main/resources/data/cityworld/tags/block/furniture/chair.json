@@ -1,0 +1,465 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "mcwfurnitures:acacia_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_striped_chair",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:acacia_chair",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:birch_chair",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:black_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:blue_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:brown_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cherry_chair",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:crimson_chair",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cyan_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:dark_oak_chair",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:gray_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:green_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:jungle_chair",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_blue_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_gray_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:lime_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:magenta_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:mangrove_chair",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:oak_chair",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:orange_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pale_oak_chair",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pink_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:purple_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:red_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:spruce_chair",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:warped_chair",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:white_stool",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:yellow_stool",
+      "required": false
+    }
+  ]
+}

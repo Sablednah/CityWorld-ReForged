@@ -5,6 +5,129 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 5.4.0
+
+### Added
+
+- **Biome mods work in CityWorld worlds.** Biomes O' Plenty and most other modern biome mods register
+  their biomes through **TerraBlender**, which CityWorld's own biome source never saw — so a CityWorld
+  world with BoP installed got its 450 blocks and none of its 69 biomes. It now reads what those mods
+  registered and folds them into the world. Measured with BoP installed: 113 biomes offered, 86 of them
+  actually appearing. **On by default** — installing a biome mod is the intent; turning them off is the
+  deliberate act (`world.useModdedBiomes`, or the Customize screen when such a mod is present). Costs
+  nothing when you have no biome mods.
+
+- **Modded biomes get ground they can win.** Two separate problems were measured, and both are fixed.
+  Continentalness was scaled against extremes CityWorld's terrain never reaches, so it only ever
+  emitted `-0.78..0.54` where every other axis spans `-1..1`; it now measures its own ends and uses the
+  full range. That alone was not enough — most unreachable biomes overlapped our ranges on *every* axis
+  and still lost, because the climate lookup picks the nearest point and TerraBlender's regions field
+  vanilla's biomes as competitors. So `world.moddedBiomeShare` (default `0.35`, on the Customize
+  screen) reserves a share of the map where the lookup runs with vanilla's points removed. Measured
+  with BoP: **34 → 52 distinct modded biomes, 12.4% → 36.1% of ground**, with CityWorld still naming
+  about two thirds. `0.0` restores the previous behaviour exactly.
+
+- **The last few biome-mod biomes get a route to the ground.** With Biomes O' Plenty installed, 54 of
+  its 59 biomes already generated. Of the rest, `spider_nest` was fine (it is a cave-pool biome), and
+  four never appeared for two different reasons. `bog`, `fungal_jungle` and `snowblossom_grove` lose
+  the climate lookup everywhere — against vanilla, and against other modded biomes even at
+  `moddedBiomeShare = 1.0` — so there is no gap to widen and no share that reaches them;
+  **`#cityworld:surface_pool`** now hands a listed biome a share of cells outright. `gravel_beach` was
+  never *asked* about: shores are decided from terrain, and the modded lookup is deliberately limited
+  to land above the waterline, so **`#cityworld:shore_pool`** stands a variant in on ground already
+  ruled a shore. Patches respect the temperature and humidity the biome declared for itself, so a bog
+  will not turn up in a desert. Both tags are datapack-driven, so the next biome mod needs no code.
+
+- **Biomes look like themselves.** CityWorld lays its own surface and never runs a biome's surface
+  rules, so a biome whose identity *is* its ground generated as ordinary grass or sand — BoP's gravel
+  beaches were sand, its volcanoes grass. Ground is now data-driven two ways: biome tags
+  (`#cityworld:ground/gravel`, `/sand`, `/podzol`, `/coarse_dirt`, `/terracotta`, `/basalt`, `/mud`,
+  `/stone`) for vanilla materials, and a **`cityworld:ground` data map** for anything else — which is
+  what lets BoP's `lush_desert` get its own orange sand, `wasteland` its dried salt and
+  `origin_valley` its own grass, rather than a vanilla stand-in. Mappings came from BoP's own surface
+  rules, not guesswork. A pack can add or override any of it.
+
+- **Three vanilla biomes were wrong too**, in every world, mods or not: `old_growth_pine_taiga` and
+  `old_growth_spruce_taiga` now get their **podzol** floor, `mangrove_swamp` its **mud**, and `grove`
+  its snow dusting — a grove is a snowy forest at ordinary height, so it fell between the biome list
+  and the elevation-based snow cap and got neither.
+
+- **Biomes O' Plenty's cave biomes join the cave pool** — glowing grotto, crystalline chasm and
+  spider nest turn up underground alongside the vanilla four. Shipped inert, so it does nothing unless
+  BoP is installed. (Fungal jungle was in this list and has been taken out: it is a *surface* biome —
+  its features are placed on the heightmap — so underground it generated bare stone.)
+
+- **Bigger biome regions by default.** `world.biomeScale` now defaults to `1.5` rather than `1.0` —
+  regions you can walk across rather than change three times on the way to the shops. The Customize
+  labels moved with it, so "Default" names the step the setting actually starts on.
+
+- **Worlds are warmer, and ice caps mean something.** Across a dozen worlds the world read cold — snowy
+  biomes *and* iced peaks everywhere, and little desert. Two causes: the temperature field sat neutral,
+  and **the MODERN ice cap was purely a matter of height**, so every mountain iced over even standing in
+  a desert. The ice line now rises with temperature, so caps belong to cold places rather than to all
+  high places; and `world.climateWarmth` (default `0.25`, on the Customize screen too) leans the whole
+  field warm — about 17% — without narrowing its range, so frozen peaks and deserts both still happen.
+
+- **Farm fields are a tag, so mods can grow in them.** Crops come from `#cityworld:farm/crops` and
+  flowers from `#cityworld:farm/flowers` (with `#cityworld:farm/tall_flowers` for the tall fields),
+  each drawn per field so a field still reads as *a field of something*. Ships Farmer's Delight and
+  Biomes O' Plenty entries marked optional, so they cost nothing until those mods are installed.
+  **Two-block crops work**: BoP's barley is a `half=lower`/`half=upper` plant rather than an aged crop,
+  so the planter checks for that and places both halves — which means any modded tall crop works, not
+  just barley. Every vanilla flower is in the pool now, tall ones included.
+
+- **Farms look like farms.** The crop mix was an even split, which put tilled fields — the thing a farm
+  is *for* — at 11.5% of farm lots, behind trees, flowers, ground crops, pasture and grass, while
+  fallow and ferns held ground that reads as empty from the air. The MODERN pools are now weighted:
+  **tilled 27.3%, pasture 22.7%, ground crops 14.1%, trees 12.7%, flowers 10.2%, grass 8.4%, fallow
+  4.7%** — measured over 3,074 farm lots, not eyeballed. Each climate keeps its character: potatoes
+  and beets in the cold, cane and melons in the jungle, cactus in the desert.
+
+- **Every bare container has themed loot**, with a modder seam. Hospital, nightstand, shop, pond and
+  the three vault rooms each get their own table, and each has an empty `_extra` companion table that
+  a datapack can fill without touching CityWorld's own — so a gun mod can drop ammo into nightstands
+  and rifles into the vault armoury.
+
+- **Permission nodes for every command.** CityWorld gated purely on operator level, so a permissions
+  manager could not grant or deny any of it — and op is all-or-nothing: handing a moderator
+  `/cityfind` also handed them `/cityschem`, which writes blocks, and `/cityexport`, which writes
+  files. Five nodes now split them up: `cityworld.info` (default everyone), `cityworld.teleport`,
+  `cityworld.find`, `cityworld.schematic` and `cityworld.export` (default operators). Works with
+  LuckPerms, SableCraft Standards' `/rank`, or nothing at all — **with no permissions manager
+  installed the behaviour is exactly as before**, since each node's default is the old op check. The
+  console keeps working regardless. See [`NODES.md`](NODES.md).
+
+- **You choose who decorates the wild.** On MODERN/APOCALYPSE, wild land was getting vanilla's biome
+  features *and* CityWorld's cover, with no way to change it — which is why wild forests read lush.
+  `world.wildDecoration` (and a "Wild plants" picker on the Customize screen) now takes `BOTH` (the
+  default, unchanged), `CITYWORLD` for CityWorld's cover alone, or `VANILLA` to hand the wild over
+  entirely — which is the interesting one if you have a biome mod installed, since it lets that mod's
+  own plants and trees stand on their own.
+
+- **26.2's cinnabar and sulfur build with the rest.** Both new stone families join the MODERN and
+  APOCALYPSE decorative palette, so cities on Minecraft 26.2 grow deep-red cinnabar and yellow sulfur
+  buildings alongside the blackstone and copper ones. They are warm colours in a palette that was
+  short of them. Stone buildings do not become any *more* common — the palette just has more stones in
+  it. On earlier Minecraft versions the entries are simply absent.
+
+- **Palettes document how to take a block out**, not just how to add one. NeoForge tags support a
+  `remove` list, so a datapack can drop a single block — the sulfur, say — without replacing the whole
+  palette. See PALETTES.md.
+
+### Fixed
+
+- **`/cwlocate` finds every biome the world has.** It searched CityWorld's own biome matrix rather
+  than the biome source, so biome-mod biomes, the surface/shore pools and cave biomes were invisible
+  to it — vanilla's `/locate biome` could find them and CityWorld's could not. It now asks the same
+  lookup the world generates from (and unlike vanilla's, it teleports).
+
+- **Wild plants are vanilla's on MODERN and APOCALYPSE.** Running CityWorld's cover *and* vanilla's
+  biome features doubled the planting and read as unnaturally lush. Vanilla's pass is also the half a
+  biome mod extends, so on the modern styles it is the one worth keeping. Still switchable to `BOTH`
+  or `CITYWORLD` per world.
+
+- **The F3 readout fits on screen.** The level line was running past the edge; it is two lines now.
+
 ## 5.2.0
 
 ### Added

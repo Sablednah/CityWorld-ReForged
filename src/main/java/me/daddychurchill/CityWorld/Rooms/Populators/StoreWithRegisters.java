@@ -13,7 +13,8 @@ public class StoreWithRegisters extends RoomProvider {
 		super();
 
 		roomTypes.add(new StorageSingleRowRoom(Material.BOOKSHELF));
-		roomTypes.add(new EmptyRoom());
+		roomTypes.add(new me.daddychurchill.CityWorld.Rooms.ShelfRoom());
+		roomTypes.add(new me.daddychurchill.CityWorld.Rooms.ShelfRoom());
 		roomTypes.add(new EmptyRoom());
 		roomTypes.add(new RegisterRoom());
 		roomTypes.add(new RegisterRoom());

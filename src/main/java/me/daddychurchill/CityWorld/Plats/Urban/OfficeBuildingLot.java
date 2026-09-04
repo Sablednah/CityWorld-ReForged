@@ -19,18 +19,46 @@ public class OfficeBuildingLot extends FinishedBuildingLot {
 	private static final RoomProvider contentsCubes = new OfficeWithCubicles();
 	private static final RoomProvider contentsRooms = new OfficeWithRooms();
 	private static final RoomProvider contentsLounges = new OfficeWithLounges();
+	private static final RoomProvider contentsFlats =
+			new me.daddychurchill.CityWorld.Rooms.Populators.ApartmentWithFlats();
 
 	public enum ContentStyle {
-		RANDOM, EMPTY, OFFICES, CUBICLES
+		RANDOM, EMPTY, OFFICES, CUBICLES, APARTMENTS
 	}
 
 	protected ContentStyle contentStyle;
 
 	public OfficeBuildingLot(PlatMap platmap, int chunkX, int chunkZ) {
+		this(platmap, chunkX, chunkZ, false);
+	}
+
+	/** {@code residential} forces an apartment tower — the city planner deals some out directly
+	 *  (upstream even had a commented-out ApartmentBuildingLot; this is that wish, granted). */
+	public OfficeBuildingLot(PlatMap platmap, int chunkX, int chunkZ, boolean residential) {
 		super(platmap, chunkX, chunkZ);
 
 		rounded = false;
-		contentStyle = pickContentStyle();
+		contentStyle = residential ? ContentStyle.APARTMENTS : pickContentStyle();
+	}
+
+	@Override
+	public String getInteriorDescription() {
+		return switch (contentStyle) {
+		case APARTMENTS -> "Apartments";
+		case CUBICLES -> "Office cubicles";
+		case OFFICES -> "Offices";
+		case RANDOM -> "Offices (mixed)";
+		case EMPTY -> "Vacant";
+		};
+	}
+
+	@Override
+	protected void calculateOptions(me.daddychurchill.CityWorld.Context.DataContext context) {
+		super.calculateOptions(context);
+		// residential towers must draw rooms — a tower that rolled COLUMNS_ONLY would silently
+		// have no flats at all (the same trap that kept government buildings empty)
+		if (contentStyle == ContentStyle.APARTMENTS)
+			interiorStyle = InteriorStyle.WALLS_OFFICES;
 	}
 
 	private ContentStyle pickContentStyle() {
@@ -45,16 +73,21 @@ public class OfficeBuildingLot extends FinishedBuildingLot {
 			return ContentStyle.CUBICLES;
 		case 7:
 		case 8:
-		case 9:
 			return ContentStyle.RANDOM;
+		case 9:
+			return ContentStyle.APARTMENTS;
 		default:
-			return ContentStyle.EMPTY;
+			// residential towers: apartment blocks were never a thing before the interiors round
+			return chunkOdds.flipCoin() ? ContentStyle.APARTMENTS : ContentStyle.EMPTY;
 		}
 	}
 
 	@Override
 	public RoomProvider roomProviderForFloor(CityWorldGenerator generator, SupportBlocks chunk, int floor, int floorY) {
 		switch (contentStyle) {
+		case APARTMENTS:
+			// ground floor is the lobby; everything above is flats
+			return floor == 0 ? contentsLounges : contentsFlats;
 		case OFFICES:
 			switch (chunkOdds.getRandomInt(10)) {
 			case 1:

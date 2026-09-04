@@ -185,6 +185,10 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 			Material materialStairWall, Material materialPlatform, boolean drawStairWall, boolean drawStairs,
 			boolean topFloor, boolean singleFloor, Surroundings heights) {
 
+		// factories bypass the standard interior path, so they missed the lighting pass entirely
+		// (playtested: pitch dark halls)
+		lightInterior(chunk, floorAt, floorHeight);
+
 		if (singleFloor) {
 			int groundY = generator.structureLevel + 2;
 			int skywalkHeight = firstFloorHeight / 2;
@@ -204,6 +208,12 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 					.itemsSelectMaterial_FactoryInsides.getRandomMaterial(chunkOdds, Material.CLAY), chunkOdds);
 			Material fluidMat = generator.materialProvider.itemsSelectMaterial_FactoryTanks.getRandomMaterial(chunkOdds,
 					Material.WATER);
+			// With fluids enabled, tanks hold CHEMICALS — the #cityworld:build/chemicals palette
+			// (concrete powders, water, lava, plus whatever fluids a mod tags in). With fluids
+			// off (APOCALYPSE), the old dry palette stays: dried-out residue.
+			if (generator.getSettings().includeAbovegroundFluids)
+				fluidMat = generator.materialProvider.itemsSelectMaterial_Chemicals.getRandomMaterial(chunkOdds,
+						Material.WATER);
 
 			switch (contentStyle) {
 			case BUILDING_SMOKESTACK:
@@ -291,6 +301,7 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 		chunk.setWalls(3, 13, groundY + 2, skywalkAt, 3, 13, officeMat);
 		chunk.setBlocks(3, 13, skywalkAt, 3, 13, officeMat);
 		generateOpenings(chunk, groundY);
+		fitControlRoom(generator, chunk, groundY);
 		generator.spawnProvider.spawnBeing(generator, chunk, chunkOdds, 7, groundY, 7);
 
 		// room for middle floor?
@@ -306,10 +317,46 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 		chunk.setWalls(3, 13, skywalkAt + 3, skywalkAt + 4, 3, 13, officeMat);
 		chunk.setBlocks(3, 13, skywalkAt + 4, 3, 13, officeMat);
 		generateOpenings(chunk, skywalkAt + 1);
+		fitControlRoom(generator, chunk, skywalkAt + 1);
 		generator.spawnProvider.spawnBeing(generator, chunk, chunkOdds, 7, skywalkAt + 1, 7);
 
 		chunk.setBlocks(5, groundY, skywalkAt + 2, 5, officeMat);
 		chunk.setLadder(5, groundY, skywalkAt + 2, 6, BlockFace.SOUTH); // fixed
+	}
+
+	/** The control-room fit for the factory's glass inner office (playtested empty): a console
+	 *  bank along the north wall — panel faces, indicator lamps, the odd screen — with operator
+	 *  chairs facing it. All vanilla except the pooled computer, which no-ops without a mod. */
+	private void fitControlRoom(CityWorldGenerator generator, RealBlocks chunk, int y) {
+		Material computer = me.daddychurchill.CityWorld.Support.FurnitureTags.pick(
+				me.daddychurchill.CityWorld.Support.FurnitureTags.COMPUTER, chunkOdds);
+		for (int x = 5; x <= 10; x++) {
+			if (!chunk.isEmpty(x, y, 4))
+				continue;
+			chunk.setBlock(x, y, 4, Material.CHISELED_QUARTZ_BLOCK);
+			switch (chunkOdds.getRandomInt(4)) {
+			case 0 -> chunk.setBlock(x, y + 1, 4, Material.IRON_BLOCK); // panel housing
+			case 1 -> chunk.setBlock(x, y + 1, 4, Material.CHISELED_QUARTZ_BLOCK);
+			case 2 -> {
+				if (computer != null)
+					chunk.setBlock(x, y + 1, 4, computer, me.daddychurchill.CityWorld.Support.FurnitureTags
+							.facingFor(computer, BlockFace.SOUTH));
+				else
+					chunk.setBlock(x, y + 1, 4, Material.REDSTONE_LAMP);
+			}
+			default -> chunk.setBlock(x, y + 1, 4, Material.REDSTONE_LAMP);
+			}
+		}
+		Material chair = me.daddychurchill.CityWorld.Support.FurnitureTags.pick(
+				me.daddychurchill.CityWorld.Support.FurnitureTags.CHAIR, chunkOdds);
+		if (chair != null) {
+			if (chunk.isEmpty(6, y, 6))
+				chunk.setBlock(6, y, 6, chair, me.daddychurchill.CityWorld.Support.FurnitureTags
+						.facingFor(chair, BlockFace.NORTH));
+			if (chunk.isEmpty(9, y, 6))
+				chunk.setBlock(9, y, 6, chair, me.daddychurchill.CityWorld.Support.FurnitureTags
+						.facingFor(chair, BlockFace.NORTH));
+		}
 	}
 
 	private void generateSmokeStackArea(CityWorldGenerator generator, RealBlocks chunk, Surroundings heights,

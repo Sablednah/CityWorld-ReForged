@@ -16,6 +16,8 @@ public class FactoryWithStuff extends RoomProvider {
 		super();
 
 		roomTypes.add(new EmptyRoom());
+		roomTypes.add(new me.daddychurchill.CityWorld.Rooms.WorkshopRoom());
+		roomTypes.add(new me.daddychurchill.CityWorld.Rooms.WorkshopRoom());
 		roomTypes.add(new StorageSingleShelvesRoom());
 		roomTypes.add(new StorageDoubleShelvesRoom());
 		roomTypes.add(new StorageSingleRowRoom(Material.BOOKSHELF));

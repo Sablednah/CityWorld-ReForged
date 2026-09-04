@@ -6,20 +6,1266 @@
 upload, and `sablecraft.co.uk/cityworld-reforged/` live). The port branch is merged: **work happens on
 `master`**. All content arcs are done, verified and deployed.
 
-**▶▶ NEXT: the cross-version arc — supporting 1.21.11, 26.1, 26.2 and whatever follows.** Minecraft
-moved to calendar versioning with quarterly game drops, so this is a treadmill, not a one-off port.
-The agreed shape is three stages, and **stage 1 has landed**:
+**The cross-version arc: 1.21.11, 26.1 and 26.2 all build, run and generate cities.** Minecraft moved
+to calendar versioning with quarterly drops, so this is a treadmill, not a one-off port. Stages 1 and
+2 are done; **stage 3 — choosing the steady state — is what remains.**
 
-1. **Harden on 1.21.11 first — data-driven palettes.** ✅ **DONE (2026-08, `5.0.3`)** — see the
-   dated block below. Backward-compatible, no branch, and it delivers a user-visible feature now.
-2. **Then port to 26.1 on a branch, and measure the real delta.** ✅ **DONE (2026-08-16, branch
-   `mc26.1`)** — see "The measured 26.1 delta" immediately below. Headline: **one** API change
-   touching **12 lines**, and the feared `Material.java` breakage did not happen at all.
-3. **▶▶ NEXT: pick the steady state** — branch-per-version, or one tree with a source preprocessor
-   and per-version Gradle variants (the Sodium/JEI approach). The owner's stated preference is a
-   single cross-version codebase; testing, not building, is expected to be the painful part. One
-   real delta is now measured; **26.2 is already released** (2026-06-16) and is the obvious second
-   data point before committing to a mechanism.
+1. **Harden on 1.21.11 first — data-driven palettes.** ✅ **DONE (2026-08, `5.0.3`)** — see the dated
+   block below. This turned out to matter more than expected: because palettes resolve from block
+   tags, 26.2 deleting 144 dyed block fields did not touch them at all.
+2. **Port to 26.1 and 26.2 on branches, and measure.** ✅ **DONE (2026-08-16/17)** — branches
+   **`mc26.1`** and **`mc26.2`**. See "The measured 26.1 delta" and "The measured 26.2 delta" below.
+3. **▶▶ NEXT: pick the steady state.** Two deltas are now in hand and they point in opposite
+   directions — 26.1 cost 12 lines, 26.2 cost a block-model rewrite. The recommendation and the
+   evidence for it are in "Stage 3: what the two deltas say" below. **Nothing is committed to yet.**
+
+**Where the versions live.** One branch per version for now: `master` = 1.21.11, `mc26.1` = 26.1.2,
+`mc26.2` = 26.2. Jars carry their target (`cityworld-5.0.3+mc26.2.jar`); the version inside
+`neoforge.mods.toml` stays a plain `5.0.3`. Documentation (this file) is maintained on `master` and
+the version branches carry code only, so the write-up does not have to be merged three ways.
+
+**`compat/Material.java` was the predicted fragility, and the prediction was right — but the defence
+held.** 691 constants bound at compile time to vanilla `Blocks`/`Items` fields, feeding 3,096 call
+sites. 26.1 touched none of them. 26.2 broke **145**. Because the file is *generated*, the entire
+repair was teaching `scripts/gen_material.py` new resolution rules; not one of the 3,096 call sites
+changed. That is the strongest argument in the whole arc for keeping generated code generated.
+
+## ▶ Furniture mods — built, playtested, and what is left (2026-09-02)
+
+**Status 2026-09-02 (later the same day): all five items below are FIXED in code, awaiting playtest.**
+What changed, and what the diagnoses turned out to be:
+
+1. **Half baths** — fixed. `parts: 2` on the data map entry; `SupportBlocks.setTwoPartFurniture`
+   places `type=bottom` at the anchor and `type=head` one cell along `facing` (measured from
+   `BathBlock.setPlacedBy` — it is exactly the vanilla bed contract). The `type` property is found by
+   *name*, so any mod following that contract works.
+2. **"Half tables" — identified without Jade.** Not a two-block model at all: it is **one-sided
+   auto-connect**. Placing piece B beside piece A fires `updateShape` on A only (the world updates
+   neighbours; the placed block's own connection state comes from `getStateForPlacement`, which only
+   players trigger). So A dropped its legs toward B while B kept its complete standalone default —
+   one legless "half table" beside a whole one, on every multi-piece run. Fixed with
+   `SupportBlocks.reconnect` (`Block.updateFromNeighbourShapes`) after each furniture placement.
+   The mcw coffee table's `connection=center` model (a floating legless top) is what makes this so
+   visible.
+3. **Kitchen fronts / 4. toilet** — fixed. `FACING_OFFSET` now covers every oriented family and
+   every placement routes through `facingFor`. ⚠ The measured conventions are wilder than "per mod,
+   per role": **Macaw's classic chair is 0 but its modern_chair is 180**; its counters/kitchen
+   cabinets/sinks are 180 while its drawers/wardrobes/bookshelves are 270 (fronts at −X like its
+   sofa). Refurbished is uniformly 180 (one shared base class, six families verified). Offsets are
+   keyed per (namespace, family suffix), longest suffix wins. Macaw desks are deliberately absent:
+   their facing is a custom two-value axis property (north|east) that `withFacing` cannot set, and
+   the models read the same front-and-back.
+5. **Three decoration pools** — built: `#cityworld:decor/{floor,surface,wall}`, generated with
+   vanilla seeds; modded lamps land in `surface` and get an end table stood under them (in the
+   lounge corner and in the accent pass). Wall pieces mount at eye height on the wall the cell backs
+   onto; glow-lichen-style face-attached blocks attach toward the wall while torch-style blocks face
+   away (`hasFaces()` distinguishes).
+
+Self-test now also fails if oriented furniture resolves with no offsets, if baths resolve with no
+two-part declaration, or if a decor pool resolves empty. The original brief follows for the record.
+
+**Playtest round 2 (2026-09-02 evening) — fixed same day (`37f59c6`):** modern_chair offset was a
+false measurement (truncated element dump; all Macaw chairs are 0); **reconnect corrupted Macaw
+couch runs into corner shapes** (their `updateShape` reads neighbours via THEIR facing convention,
+which our offset-rotated facing disagrees with — reconnect is now explicit-only, for
+counters/tables/desks which playtested good); the bath moved to the **window wall** (nearest chunk
+edge, like beds) because a door cut after furnishing beheaded it; toilet centres on an adjacent wall
+instead of staring at the basin; amethyst is table decor (surface pool) now.
+
+**Owner's accepted order (2026-09-02): 1) bedroom + hallway variance, 2) wall decor pass
+(paintings + item frames with clocks etc.), 3) ceiling pass — Refurbished ships
+`<wood>_dark/light_ceiling_fan` blocks (28 of them; Macaw has none) plus microwaves for kitchen
+surfaces. Add a `furniture/ceiling_fan` role (or `decor/ceiling`) to the generator, measure
+whether fans carry facing, and hang them from room ceilings the way the chandelier does.**
+
+**Owner's in-game scouting (2026-09-02, Refurbished):** TVs; **fridge — a vertical two-block**
+(like the bath but stacked, so `parts` needs an UP direction or a second marker); stove that can
+take a frying pan; cutting board (counter surface piece); bin; light switches (wall piece —
+harmless without wiring); **a whole power system we deliberately avoid**. Ceiling: fans AND
+hanging lanterns (chandelier already hangs lanterns — reuse that). Macaw wardrobes/bookshelves
+connect **vertically** (`connection=bottom/top`, measured earlier) as well as horizontally —
+a 2-tall wardrobe stack is possible where ceilings allow.
+
+**The interiors round (overnight 2026-09-02→03, `6e1b62e`).** The Rooms system (42 room types +
+per-building populators, inherited from upstream) predates the pools; 17 room types were converted
+to pooled primitives on `PlatRoom` (`drawDesk`/`drawTable`/`drawSeat`/`drawCouchSeat` — stair
+fallback keeps the classic look, and `drawCouchSeat` takes the room's single sofa pick because
+PlatRooms are SHARED instances, no state allowed). New roles: computer/crate/workbench. New rooms:
+ClassRoom, CourtRoom, ExhibitRoom, WorkshopRoom, BedNookRoom. **Government buildings (previously
+EMPTY — the BuildingLot default provider is EmptyWithNothing) are now city halls / courthouses /
+schools, one flavour per building; museums get exhibit floors; factories get workshops; warehouse
+stacks blend crates; ~half of formerly-empty office towers are residential (lobby + flats).**
+LoungeTVRoom honours upstream's 12-year-old `// TODO add picture to wall` with a television.
+Not touched: UnfinishedBuildingLot (construction props idea remains open) and HospitalLot (has its
+own campus interiors).
+
+**Queued from the interiors playtest (2026-09-03), not yet built:**
+- **Fluids setting (BIG)** — owner wants an optional "fluids" toggle, default ON for MODERN, OFF
+  for APOCALYPSE: fills the industrial silos with a random fluid and the water towers with water.
+  Head start: `includeAbovegroundFluids` ALREADY EXISTS and `drawWaterTower` already checks it —
+  the job is per-style defaults + finding the silo drawing (IndustrialContext, the big round tanks)
+  and filling those too. Check what currently sets includeAbovegroundFluids.
+- **Basements (BIG)** — buildings have `depth` (basement floors exist). If the building is
+  occupied (not Vacant/Empty), furnish basement floors with a storage populator (WarehouseWith*
+  pool or similar). Find where basement floors call roomProviderForFloor (floor < 0? the
+  basementFloorHeight path around FinishedBuildingLot:854).
+- **Factory control panels** — the factory's room-within-a-room (machinery boxes / offices in the
+  tall halls, drawn in FactoryBuildingLot.drawInteriorParts singleFloor branch) wants control-panel
+  strips: levers/observers/redstone-ish blocks on the box walls.
+- **For-sale signs** — Vacant towers (OfficeBuildingLot EMPTY) and EmptyBuildingLot get a "For
+  Sale" wall sign by the ground-floor door. Sign text helpers exist (setSignText).
+
+**Queued (2026-09-03 evening):**
+- **▶ OVERNIGHT (2026-09-03→04): the four-times-escaped empty School lobby.** Jar-stamp-verified
+  on 22:56 build (claim-footprint fix AND sweep self-calibration both live, upstairs furnishes,
+  lobby still bare). Seed 2720459862006157221, block 90 69 -107, chunk (5,-7). STOP PATCHING —
+  instrument: probe-gated tracing inside sweepBareFloor + GovernmentBuildingLot.drawInteriorParts
+  (log per-floor: called-or-not, style, y1, calibrated yf, bounds, claim count, per-cell failure
+  tallies), a `-Dcityworld.probe=<chunkX>,<chunkZ>` ServerStarted listener that forces the region,
+  logs, halts. Run on the mc26.2 worktree dev server (mods present) with that seed in
+  run/server.properties (level-type cityworld:city, do NOT run selftest.sh — it overwrites seed).
+  Candidate causes the tracing must separate: sweep never called for floor 0 (style/skip path),
+  doBuilding(heights) false for this chunk, singleFloor special-casing, calibration finding no
+  standable level, bounds inverted by per-side insets, claim covering all (shouldn't now).
+- **⚠ REPRO IN HAND — empty School/City-hall GROUND floors (upper floors fine).** Seed
+  2720459862006157221, block 90 69 -107 (chunk 5,-7), GovernmentBuildingLot interior=School,
+  MunicipalContext; confirmed on jar-stamped fresh world (F3 stamp works). Diagnosis so far:
+  GovernmentBuildingLot.drawInteriorParts passes `floorAt + higher` (higher=2) to super and draws
+  foundation columns AFTER furnishing; hypothesis: off-by-one between the raised y and the real
+  floor slab makes bareFloor's solid-underfoot test fail on every ground-floor cell → sweep places
+  nothing. Verify with the plan-probe workflow (memory: cityworld-worldgen-verify-probe) on the dev
+  server at that seed — CityWorld is seed-deterministic, so the dev server reproduces the exact
+  building.
+- **Stairwell/room interplay — the remaining interior defects (F3'd, three symptoms, one root):**
+  (1) sweep rooms now sit flush to stairs and furniture crowds the stair exit (needs a 1-cell
+  buffer around stair blocks); (2) the 90° corner-landing and 2-wide stair styles still leave bare
+  voids the 4-step sweep grid misses; (3) a GRID room's wall panel generated THROUGH a staircase —
+  grid rooms draw BEFORE stairs and never check the floor. Likely right fix: draw stairs FIRST,
+  then grid rooms with a bareFloor check, then the sweep with a stair-adjacency margin — one
+  ordering, all three symptoms.
+  **Deeper design note (owner: "we yo-yo — fix it and then furniture clips"):** every yo-yo came
+  from a furnishing stage INFERRING stair positions — geometric guesses, emptiness probes, each at
+  a different pipeline moment, each wrong differently. The reliable shape: `drawStairs` (and the
+  stairwell walls) RECORDS the cells it claims — footprint plus the approach/exit cells — into a
+  per-floor claim mask on the lot, and every furnisher (grid rooms, sweep, decorateLanding,
+  accents) consults that mask instead of guessing. One source of truth, ordering-insensitive, and
+  exit cells are claimable without being solid — which no emptiness probe can ever see.
+- **Hospitals + vaults: light furnishing pass** — structurally fine, just want orientation-aware
+  pool furniture (the placeFacing/pool machinery, not new layouts).
+- **Debug diagnostics mode** — normally-off logging (config/system property) that reports silent
+  fallbacks: "tag X resolved empty", "material Y not found", "offset undeclared for Z". Would have
+  caught the chemicals-namespace bug and every empty-pool trap this project keeps hitting.
+
+**Queued from round 2, not yet built:**
+- **Furnish after doors** — the wall-nearest-edge trick dodges most door clashes, but the real fix
+  is ordering: find where the colonial house cuts doors vs. styles rooms and furnish afterwards.
+- **Bedroom variance** — mostly bed+barrel today. Add a wardrobe/drawer against a wall, a rug, and
+  make the bedside-table-with-lamp appear more often.
+- **Wall decor pass with paintings + item frames** — owner wants paintings and item frames (holding
+  clocks and such). These are ENTITIES, not blocks: the decoration `LevelAccessor` is a
+  `WorldGenRegion` (a `ServerLevelAccessor`), so `addFreshEntity` works — structures spawn entities
+  this way. New capability, worth its own careful pass.
+- **Hallways/landings are empty** — a console table, cupboards, and the wall pass belong there.
+  Find where the house room-splitter labels hallway cells.
+- **Lectern stood on a chest** in a Newsagent corner shop looks odd — that's the shop fitter, not
+  the furniture pass; check whether it predates this work before touching it.
+
+**Read this before touching furniture.** The concept is proven in-world; four specific things are
+wrong and all of them are diagnosed with measurements below, so none of it needs re-deriving.
+
+### What exists
+
+- `scripts/gen_furniture_tags.py` — **generates** the role tags and the facing data map from installed
+  furniture mods. 982 blocks across 13 roles from Macaw's Furniture + Refurbished Furniture. Re-run it
+  when a mod updates; nothing here is hand-maintained.
+- `#cityworld:furniture/<role>` — chair, table, sofa, desk, counter, cabinet, drawer, wardrobe,
+  bookshelf, sink, toilet, bath, lamp. All entries `"required": false`.
+- `cityworld:furniture` data map — `{"facingOffset": degrees}` per block.
+- `Support/FurnitureTags.java` — `pick(role, odds)`, `has(role)`, `facingFor(piece, look)`.
+- `Support/Furniture.java` — kitchen / dining / living / bathroom / **study** (new) draw from the pools
+  and fall back to the old vanilla-block furniture when a role is empty.
+- Self-test reports `furniture.roles` and `furniture.seatsWithOffset`, and fails if seats resolve with
+  no offsets declared.
+
+### Playtest verdict (owner, 2026-09-02)
+
+> "the concepts seem sound — houses have rooms and the rooms have been kitted out. lounges have
+> couches — cabinets in kitchens — all good… chairs seem to be correct everywhere so that bit worked."
+
+So: role tags, room wiring, the fallback, and the **chair** facing offsets are all confirmed working
+in-world. What follows are the four defects.
+
+### ⚠ 1. Half baths — multi-block furniture is placed as one block
+
+**Cause, measured:** Refurbished baths carry `type=bottom|head` — they are two-block furniture like a
+bed. 27 blocks, and they are the *only* multi-block furniture in either mod. A scan of every
+blockstate property across both jars:
+
+| property | mod | count | on |
+|---|---|---|---|
+| `type=bottom\|head` | refurbished | 27 | **baths — the two-blockers** |
+| `shape` | mcw | 16 | couches |
+| `shape` | refurbished | 59 | kitchen cabinetry |
+| `left`/`right` | refurbished | 22 | desks, drawers |
+| `tucked` | refurbished | 11 | chairs |
+
+**Fix:** place both halves, the way `placeBed` already does in `Furniture.java`. Needs a
+"two-block" marker — cleanest as a field on the data map entry (`{"parts": 2}`), since the data map
+already carries these blocks and a tag would be a second place to look.
+
+### ⚠ 2. "Half tables" — not yet identified
+
+Tables in **both** mods are connection-based (`north/east/west/south` booleans, like fences), not
+multi-block, so a lone table block is legitimate. The owner saw something table-shaped that is clearly
+meant to be two blocks. Candidates, by property: Refurbished **desks** (`left`/`right`), Refurbished
+**kitchen cabinetry** (`shape`), Macaw **couches** (`shape=single/left/middle/right`).
+
+**Do not guess.** Jade is installed in the 26.2 instance — get the block id from in-world and work from
+that.
+
+### ⚠ 3. Kitchen fronts face the wall — non-seat roles have no facing offset
+
+**This is one bug, not several.** Offsets were only declared for `chair` and `sofa`; every other
+oriented role got the default 0, so counters, cabinets and sinks were placed with their backs to the
+room. Measured from model geometry against each blockstate's rotation table:
+
+| block | unrotated variant | geometry | `facing` means | offset needed |
+|---|---|---|---|---|
+| mcw `oak_kitchen_cabinet` | `facing=east` | door + handle at **x 4.9–6 (west)**, body east | the **back** | **180** |
+| mcw `oak_kitchen_sink` | `facing=south` | raised tap rim at **z 1–3 (north)** | the **back** | **180** |
+| refurbished `oak_toilet` | `facing=north` | cistern **z 0–5 (north)**, bowl z 5–15 | the **back** | **180** |
+
+(#4 below is the same defect — the toilet is just the most obvious instance.)
+
+**Fix:** extend `FACING_OFFSET` in the generator to cover counter, cabinet, sink, toilet, bath, desk,
+drawer, wardrobe, bookshelf, and have the room code route *every* oriented placement through
+`FurnitureTags.facingFor` rather than passing a raw `BlockFace`.
+
+### ⚠ 4. Toilet backwards — same cause as #3
+
+### ⚠ 5. Decoration needs three placement pools
+
+Owner's design call, and it is the right shape:
+
+> "I think 3 pools of decorations are needed — 'on the floor', 'on a surface', 'on a wall'."
+
+Refurbished lamps are single-block, **y 0–14, and carry no `facing`** — they are *table* lamps, which
+is why they read wrong standing on the floor. The fix is not to move them but to classify:
+
+- **floor** — sofas, tables, cabinets, counters, beds: placed on the ground.
+- **surface** — lamps, plates, toasters, potted plants, candles: **require a surface beneath**, so the
+  placer puts a table/end table/counter under them, or only places them on one already there.
+- **wall** — anything wall-mounted (paintings, wall lamps, shelves).
+
+Whether a *freestanding* floor lamp exists in either mod is unchecked — if it does it belongs in the
+floor pool and the tabletop ones in surface.
+
+### How to derive a facing offset (the method, so it need not be rediscovered)
+
+1. Open the block's blockstate JSON, find the variant with **no `y` rotation**.
+2. Open that variant's model (follow `parent` until you reach `elements`).
+3. Find the identifying geometry — a chair's backrest, a cabinet's door and handle, a toilet's cistern.
+4. The piece's **front** is the opposite side to the back. The offset is the clockwise turn from that
+   front direction to the variant's own `facing` value.
+
+⚠ **The mods disagree, and one disagrees with itself** — Macaw's chair is offset 0 while Macaw's sofa
+is 270 — so offsets must be measured per (mod, role), never assumed per mod.
+
+## ▶ Next up (queued 2026-08-17)
+
+In rough priority order. **#1, #2 and #3 are DONE (2026-08-27) — see "Caves, structures and 3D
+biomes" and "Wave C" below.** #4 (26.2's stone families) and #5 (per-mod compat packs) remain.
+
+### 1. ~~⚠ Vanilla structures never generate — including strongholds~~ **DONE (2026-08-27)**
+
+`CityWorldChunkGenerator.createState` returns `ChunkGeneratorStructureState.createForFlat(…,
+Stream.empty())`, so **no vanilla structure is ever placed**. That is deliberate for villages and
+mineshafts — CityWorld builds its own — but it takes strongholds with it, and **no stronghold means
+no End portal**. Eyes of ender have nothing to find, so as far as I can tell a CityWorld world cannot
+reach the End by normal play. *Read from the code, not yet confirmed in-game — verify before acting
+on it.*
+
+Worth deciding as a gameplay question, not just a feature: does a CityWorld world want to be
+completable? If yes, the minimum is placing strongholds somewhere sensible and making
+`findNearestMapStructure` agree with where they went, or eyes will point at nothing.
+
+### 2. ~~"Put a structure here" — ancient cities, trial chambers, strongholds~~ **DONE (2026-08-27)**
+
+**Researched 2026-08-17 against the 26.2 data — the answers are more encouraging than expected.**
+
+**Suppression can be selective, easily.** `createState` passes `Stream.empty()` to
+`ChunkGeneratorStructureState.createForFlat`, and that argument is a stream of `StructureSet`
+holders — pass a *filtered* stream and exactly those come back. Vanilla even does the hard part:
+both factory methods drop any set whose biomes the biome source cannot produce
+(`hasBiomesForStructureSet`), so unavailable structures exclude themselves with no special-casing.
+
+**The placement conditions, from `data/minecraft/worldgen/structure_set/` in 26.2:**
+
+| | Placement | Biome requirement (`tags/worldgen/biome/has_structure/`) |
+|---|---|---|
+| Stronghold | `concentric_rings` — count 128, distance 32, spread 3 | `#minecraft:is_overworld` — *any* overworld biome |
+| Trial chambers | `random_spread` — spacing 34, separation 12 | a long list of ordinary **surface** biomes |
+| Ancient city | `random_spread` — spacing 24, separation 8 | **`minecraft:deep_dark` only** |
+
+So **strongholds and trial chambers need no cave biome and would work today** — the surface biomes
+CityWorld emits already satisfy both. **Ancient cities cannot**, and will be silently filtered out
+until the biome source can emit `deep_dark` (see #3).
+
+**Geodes are not structures.** `amethyst_geode` is a *placed feature* (underground decoration), which
+is why they already appear in CityWorld worlds while strongholds do not: we run vanilla decoration on
+nature chunks but zero the structure state. Features and structures are separate pipelines — ores
+arrive the same way geodes do. Worth keeping straight, since "I can see geodes" naturally reads as
+"structures work".
+
+**⚠ The wrinkle, so this doesn't look like a five-minute change.** `createForFlat` passes `0L` as the
+concentric-rings seed where `createForNormal` passes the level seed — and that seed is precisely what
+positions strongholds. Re-enabling them through the current call would put every CityWorld world's
+strongholds in *identical* places. The constructor taking both seeds is **private**, so the options
+are `createForNormal` (enables everything the biome source supports, not a chosen subset) or an
+access transformer. The selective part is trivial; the correctly-seeded part is the actual work.
+
+The owner's idea, and it stacks on top of #1: let the planner deliberately place vanilla underground
+structures, the way it already places its own vaults and mines. Ancient City and Trial Chambers are
+jigsaw structures, so this means driving the jigsaw generator at a chosen position rather than
+copying a template.
+
+The eye-of-ender caveat the owner raised is real and bigger than it looks: vanilla places strongholds
+on a fixed ring pattern and the eye asks the *structure placement system* where they are. A
+hand-placed stronghold that the placement system does not know about is a stronghold the eye cannot
+find.
+
+### 3. ~~Decorative caves as a pool, not just lush~~ **DONE (2026-08-27)**
+
+Biomes in wave A, decoration in wave C — see both dated blocks below. The pool is the datapack tag
+`#cityworld:cave_pool`, so a new cave type (vanilla's or a mod's) needs no code. **The analysis below
+is kept for its research value but its conclusion is superseded** — in particular, the decoration
+half turned out *not* to be "run `UNDERGROUND_DECORATION`"; see wave C for why that would have put
+trees on the roads.
+
+Generalise the existing lush-cave patch mechanic into **one decorative cave type drawn from a pool**:
+lush, **sulfur** (26.2's sulfur caves, with sulfur dripstone), **deep-dark / sculk** (ancient-city
+flavour without necessarily the city), and room for modded and future types. The owner explicitly
+wants this data-driven enough that a new cave type — vanilla or modded — can slot in without a code
+change. Alex's Caves is the obvious modded case.
+
+**⚠ The blocker under this, #1 and #2 alike: the biome source emits no cave biomes and cannot.**
+Verified: the biomes it can produce are all *surface* biomes — no `DEEP_DARK`, no `LUSH_CAVES`, no
+`DRIPSTONE_CAVES`. And `createBiomes` classifies **per column (2D)** — "classify once per (quartX,
+quartZ) and reuse down the column" — so biome cannot vary with depth at all. Today's lush-cave
+patches are decorative *block placement*, not the lush caves biome.
+
+Consequences, and they are the crux of this whole group of ideas:
+
+- **Ancient City cannot place**, because it is gated on `deep_dark` (the owner spotted this).
+- Anything biome-driven underground is unavailable: sculk spread, warden spawning, cave ambience.
+- **Modded cave mods that define their own biomes (Alex's Caves) will not appear either**, for the
+  same reason — so this is the same problem as the worldgen half of #5.
+
+So "decorative cave pool" splits into two very different jobs: *decorative blocks* (cheap, extends
+what already works) versus *real cave biomes* (needs the biome source to become 3D, which is a
+genuine piece of architecture and would unlock ancient cities and modded caves at the same time).
+Worth deciding which one is actually wanted before starting.
+
+### 4. 26.2's new stone families are not in any palette
+
+26.2 ships full **cinnabar** and **sulfur** families (`CINNABAR`, `CINNABAR_BRICKS`,
+`CHISELED_CINNABAR`, `SULFUR`, `SULFUR_BRICKS`, `POLISHED_SULFUR`, `CHISELED_SULFUR`,
+`POTENT_SULFUR`, plus slabs/stairs/walls) and CityWorld uses none of them. Two reasons, both worth
+remembering:
+
+- They are absent from `Material.java`, which is generated from names the 1.14 Bukkit source used
+  plus a curated `EXTRAS` list. Post-1.14 blocks only exist there because someone added them.
+- `cityworld:build/modern_stones` is 24 explicitly-listed blocks, **not** a reference to `#c:stones`.
+  Deliberate — it is a curated look — but it means the tag layer widens *within* chosen families and
+  cannot discover a new one.
+
+**This is the honest limit of the 5.0.3 tag work**: six woods became twelve automatically, but a
+brand-new stone family still needs a human. Both would suit MODERN (the palette is light on warm
+colours) and sulfur is an obvious mine-wall accent. 26.2 branch only; `"required": false` keeps the
+same tag file safe on older versions.
+
+~~**⚠ 26.3 is reported to add wool and concrete slabs and stairs — check the tags when it lands.**~~
+**CHECKED 2026-08-28 against 26.3-snapshot-10: the hazard does not happen.** The worry was that our
+palettes assume every block in a tag is a **full cube** (they are used as walls, floors and ceilings),
+so wool slabs landing in `#minecraft:wool` would have had CityWorld building *walls out of slabs*.
+Mojang put them in **separate tags** — `#minecraft:wool_slabs`, `wool_stairs`, `concrete_slabs`,
+`concrete_stairs` — and `#minecraft:wool` still holds exactly the sixteen full cubes. Terracotta and
+concrete powder are untouched. **No action needed.** See the 26.3 reconnaissance below.
+
+The upside is real too: slab and stair variants of wool and concrete are exactly what the builders
+lack for edges, steps and roof trim, so they are worth wiring in deliberately — as their own shape
+vocabulary, not by widening the wall palettes.
+
+### 5. Per-mod compatibility datapacks
+
+The owner is choosing mods. The useful split is by **what the mod needs from us**, because tags only
+decide what a block is *made of* — anything needing placement semantics needs a new seam first:
+
+- **Free or a trivial datapack** (blocks joining existing palettes): Twilight Forest, Biomes O' Plenty
+  blocks, Apotheosis bookshelves.
+- **Needs a new tag seam, then datapack-able**: Farmer's Delight crops (farm fields are not
+  tag-driven yet), Apotheosis spawners, cave decoration (#3).
+- **Needs real feature work**: Fantasy's Furniture. The owner's instinct is right — furniture carries
+  orientation and semantics (a chair faces a table), which no block tag can express. It would extend
+  the `Support/Furniture` vocabulary, not a palette.
+
+Also worth checking before promising anything: mods that add **worldgen** (Alex's Caves, Biomes O'
+Plenty biomes) may not appear at all, because CityWorld suppresses carvers and structures and drives
+its own biome source. That is a compatibility question of a different kind from palettes, and
+probably the first thing to test with a big content mod installed.
+
+## Caves, structures and 3D biomes (2026-08-27) — waves A and B
+
+Queued items #1 and #2 are done, and the blocker under #3 with them. **On all three versions —
+`master`, `mc26.1` and `mc26.2` — self-test green and plan hashes agreeing.**
+
+### The three were one bug, and it was not the one that was queued
+
+`Structure.isValidBiome` asks **`chunkGenerator.getBiomeSource().getNoiseBiome(qx, qy, qz, sampler)`**
+— the *biome source*, at the `STRUCTURE_STARTS` chunk stage. CityWorld's `getNoiseBiome` was a stub
+returning `PLAINS`, because the real classification lived in `createBiomes`, which runs later and is
+invisible to the structure pipeline. So every structure was biome-gated against plains at every
+height: ancient cities (gated on `deep_dark`) could never place, and trial chambers would have placed
+uniformly everywhere.
+
+**Fixing `getNoiseBiome` for real, in 3D, unlocked all three items from one change.** Vanilla's own
+`createBiomes` is nothing but `fillBiomesFromNoise(biomeSource, sampler)`, so our override collapsed
+to a `super` call — the hand-rolled resolver it replaced was producing correct chunks while leaving
+the method vanilla actually consults a constant. **That is the shape of this bug worth remembering: a
+seam that is right for the caller you were thinking about and stubbed for the one you weren't.**
+
+### Two corrections to the queued research
+
+- **No access transformer is needed.** The queued note called the correctly-seeded path "the actual
+  work", because `createForFlat` hardcodes the concentric-rings seed to `0L` (which would put every
+  world's strongholds in identical places) and the two-seed constructor is private. But
+  `createForNormal` reads its `HolderLookup` through **`listElements()` and nothing else** — so a
+  ~20-line filtering delegate gives selective sets *and* the level seed. Vanilla even ships
+  `HolderLookup.RegistryLookup.filterElements(Predicate)`. What was billed as the hard half was the
+  easy one.
+- **There was a blocker nobody had spotted.** Structure **pieces** are placed inside
+  `ChunkGenerator.applyBiomeDecoration` (interleaved with features, in the same step loop) — the
+  method CityWorld overrides and only calls `super` on for MODERN nature lots. Re-enabling starts
+  without addressing this would have produced strongholds *sliced to whichever chunks happened to be
+  wild*: a bug that looks like corrupt worldgen and reads like a vanilla fault. `placeStructures` is
+  now the structure-only slice of that method, exactly as `placeUndergroundOres` is the ore-only
+  slice, and it mirrors vanilla's `setDecorationSeed`/`setFeatureSeed` sequence so a structure lands
+  identically whether this placed it or `super` did on the wild chunk next door.
+
+### What landed
+
+| | |
+|---|---|
+| `worldgen/CaveRegions.java` | the cave pool — seed-stable 2D cells, each a biome + a Y band |
+| `worldgen/CityWorldBiomeLookup.java` | the shared 3D `getNoiseBiome` body + per-thread column cache |
+| both biome sources | real `getNoiseBiome`; cave pool in `possibleBiomes()`; context binding |
+| `CityWorldChunkGenerator` | `createForNormal` + `onlyAllowed`; `placeStructures`; `createBiomes` → `super` |
+| `data/cityworld/tags/worldgen/structure_set/allowed.json` | which vanilla structures a CityWorld world keeps |
+| `data/cityworld/tags/worldgen/biome/cave_pool.json` | which cave biomes the pool draws from (sulfur optional) |
+
+**Cave biomes are patches, not vanilla's 3D banding** (owner's call). Vanilla fills its whole
+underground with cave biomes by noise, which would change mob spawning *everywhere* and make wardens
+routine. Cells are picked from `(x, z)` and apply only within their own Y band, which gives vertical
+variation without a 3D noise field and stacks the pool by depth for free. `deep_dark` sits below
+`y = -24` because that is where ancient cities generate — a shallower band would advertise the biome
+without ever being able to host the structure gated on it.
+
+### The cave pool is a biome tag, and it had to be
+
+`#cityworld:cave_pool` — `deep_dark`, `lush_caves`, `dripstone_caves`, and **`sulfur_caves` marked
+`"required": false`**. 26.2 added sulfur caves and it is the *only* new biome in that drop (measured
+by diffing the two jars' biome lists), so it must be in the pool on 26.2 and absent elsewhere, from
+one shared source file. A `Biomes.SULFUR_CAVES` constant would exist on 26.2 alone and break the
+cherry-pick.
+
+**⚠ The obvious alternative does not work, and fails in a way that looks unrelated.** The first
+attempt resolved pool biomes by `ResourceKey` and used `HolderGetter.get(key).isPresent()` to skip
+ones this version lacks. That crashes world load with:
+
+```
+java.lang.IllegalStateException: Unbound values in registry
+    ResourceKey[minecraft:root / minecraft:worldgen/biome]: [minecraft:sulfur_caves]
+```
+
+The `HolderGetter` handed out by `RegistryOps.retrieveGetter` during datapack decode **creates an
+unbound promise for a key it does not have** — that is how forward references between datapack files
+work — so *asking whether a biome exists is what makes it not exist*. There is no "does this key
+exist" question you can safely ask that getter. **Tags are the mechanism built for this**, and
+`"required": false` is exactly the feature. Same discipline as the block-palette tags.
+
+It also buys the data-driven half of queued item #3 early: anything added to the tag becomes a cave
+type, and an entry with no geometry in `CaveRegions.GEOMETRY` gets a sensible default — so a modded
+cave biome (Alex's Caves) needs a datapack line and no code. Patch salts are derived from the biome
+id, so a new type gets an independent cell grid without anyone inventing a constant.
+
+**Tag resolution must be lazy.** Tags are not bound when the codec builds the biome source, so
+resolving in a constructor caches an empty pool forever. `cavePool()` is double-checked-lazy, and
+`collectPossibleBiomes()` is late enough because vanilla memoizes it on first call.
+
+### Ancient cities cannot reach CityWorld's sewers or cisterns (measured)
+
+The owner's worry was a deep-dark city opening into a sewer. It cannot happen:
+
+| | y |
+|---|---|
+| ancient city, **measured** from two generated starts | **−64 … −10** |
+| CityWorld cistern floor (`streetLevel - FloorHeight*4 + 1`) | 49 |
+| CityWorld sewers | 57 … 62 |
+
+59 blocks of clearance. Note `start_height` in the structure JSON is an *absolute* `y = -27` and is
+only where the jigsaw starts — the real extent had to be read off a generated `StructureStart`'s
+bounding box, which is what `checkAncientCityDepth` now does on every version. Mines *do* reach that
+deep, and the owner explicitly wants that collision: it reads as the miners having downed tools when
+they broke through.
+
+**The allow-list is a tag, not a config field** — `#cityworld:allowed` on the structure-set registry,
+so a datapack (or a mod's) can widen it with no code change, the same seam the block palettes use.
+**An absent tag means no vanilla structures**, so a stripped datapack fails to the old behaviour
+rather than letting villages and mineshafts loose in a world that builds its own.
+
+### Verified, not assumed
+
+`checkBiomeDepth` and `checkStructures` were added to the self-test, so CI checks these on every
+version. Measured on 1.21.11, seed 8675309:
+
+| | |
+|---|---|
+| columns whose biome varies with depth | 603 / 4225 |
+| cave-pool samples hit | 1669 |
+| `deep_dark`/`lush_caves`/`dripstone_caves` | in the deep set, **absent from the surface set** |
+| cave pool resolved from the tag | `deep_dark, dripstone_caves, lush_caves` (sulfur absent, as it should be) |
+| structure sets surviving selection | exactly `ancient_cities`, `strongholds`, `trial_chambers` |
+| stronghold ring positions | 128, first at chunk `3,-145` |
+| trial chamber read back | chunk `12,11`, **with its own block entities** |
+| ancient city extent | `y -64 … -10` |
+| MODERN plan hash | `28fc3789` — unchanged |
+
+Each row is load-bearing. `ancient_cities` surviving selection is the only cheap proof that
+`deep_dark` is genuinely reachable (a set is dropped if the biome source cannot produce its biomes).
+The trial-chamber *block entities* are the only proof that pieces are placed rather than merely
+started — the failure mode `placeStructures` exists to prevent would still pass a starts-only check.
+And the unchanged plan hash confirms biomes do not touch city planning, so the cross-version compare
+stays valid.
+
+**⚠ The rough edges to playtest, both by design rather than defect:**
+
+- **Vanilla structures now generate under cities.** `placeStructures` runs *after* CityWorld's build,
+  mirroring where `super` sits in the wild branch — so both branches order the world identically and
+  a structure wins where the two overlap. A trial chamber landing under a city core (one did, at
+  chunk `12,11`) may be exactly what is wanted or may need a city-core exclusion.
+- **Ancient cities will meet the mines** — wanted, per the owner. They cannot reach sewers or
+  cisterns; see the measurement above.
+- **Underground mob spawning has changed** wherever a patch landed: cave biomes carry thin spawn
+  lists and `deep_dark` carries none at all (plus wardens). Owner has signed off on this.
+
+### Multi-version: done, and all three agree
+
+All four load-bearing classes — `ChunkGeneratorStructureState`, `BiomeSource`, `Structure`,
+`ChunkGenerator` — were diffed across 1.21.11 / 26.1.2 / 26.2 first. **The differences are decompiler
+parameter renames and brace reshuffling; zero API-shape change.** `StructureStart.placeInChunk` is
+identical too.
+
+**Cherry-picked to `mc26.1` and `mc26.2`; all three pass and `--compare` agrees on every style.** The
+whole cost was the *already-known* 26.1 delta — `ChunkPos` is a record, so `pos.x` → `pos.x()`, in
+two places (`applyBiomeDecoration` and the harness's ring-position report). Nothing else conflicted.
+
+| version | possible biomes | cave pool | columns varying with depth |
+|---|---|---|---|
+| 1.21.11 | 52 | deep_dark, dripstone_caves, lush_caves | 586 |
+| 26.1.2 | 52 | deep_dark, dripstone_caves, lush_caves | 586 |
+| 26.2 | **53** | + **sulfur_caves** | 780 |
+
+Everything else is byte-identical across the three: same structure sets, same first stronghold ring
+(`3,-145`), same ancient city extent (`-64..-10`), same trial chamber (`12,11`). **The only
+divergence is the one that was designed in** — which is exactly what the tag mechanism was for.
+
+**⚠ `PORTING.md` conflicts on every cherry-pick** and always will, because it is maintained on
+`master` while the version branches carry a truncated copy. Resolve with
+`git checkout HEAD -- PORTING.md` before committing the pick; do not try to merge it.
+
+## Wave C: cave decoration (2026-08-27)
+
+Queued item #3 is now **fully done**. Cave biomes grow their own character under a city.
+
+**It is keyed on features, not on a generation step — and the obvious version is a trap.** Running
+`UNDERGROUND_DECORATION` the way `placeUndergroundOres` runs `UNDERGROUND_ORES` looks right and is
+wrong twice:
+
+- **Lush caves put nothing in `UNDERGROUND_DECORATION`.** Their entire vocabulary —
+  `lush_caves_vegetation`, `cave_vines`, `spore_blossom`, `rooted_azalea_tree`, `lush_caves_clay` —
+  is in `VEGETAL_DECORATION`.
+- **`VEGETAL_DECORATION` is the step that plants trees**, and `dripstone_caves` and `deep_dark` both
+  list `trees_plains`, `flower_plains` and `patch_pumpkin` in it. Vanilla gets away with that because
+  those biomes are never at the surface; running the step on a city chunk would **sprout trees on the
+  roads**.
+
+So `caveOnlyFeatures()` keeps only features that **no non-cave biome in this world also has**,
+computed against `possibleBiomes()` rather than a hardcoded list so it stays correct as the palette or
+the pool changes. `PlacedFeature.placeWithBiomeCheck` then confines what survives to the patches —
+that method asks whether the biome *at the position* has the feature, which is precisely the gate we
+want and is why this pass needs to know nothing about what it is placing.
+
+Measured — the filter is the whole safety argument, so the self-test asserts both halves (cave
+vocabulary present, nothing tree-shaped surviving):
+
+| | |
+|---|---|
+| kept (1.21.11, 12) | `cave_vines`, `classic_vines_cave_feature`, `dripstone_cluster`, `large_dripstone`, `lush_caves_ceiling_vegetation`, `lush_caves_clay`, `lush_caves_vegetation`, `pointed_dripstone`, `rooted_azalea_tree`, `sculk_patch_deep_dark`, `sculk_vein`, `spore_blossom` |
+| kept (26.2, +2) | `sulfur_spike`, `sulfur_spike_cluster` |
+| dropped | `trees_plains`, `flower_plains`, `patch_pumpkin`, `patch_grass_plain`, `glow_lichen`, `amethyst_geode` |
+
+**26.2 picking up the two sulfur features with no code change is the pool mechanism proving itself
+end to end** — a new cave biome on a new Minecraft version brought its own decoration through the tag
+alone. Shared features (`glow_lichen`, `amethyst_geode`) are the deliberate cost of the exclusion
+rule; the wild pass still places them normally.
+
+**`Support/LushCaves` now shares the pool's cell grid** (`CaveRegions.inCellOf`). That hand-built pass
+predates real cave biomes and had its own region function, which would have scattered hand-decorated
+caves across cells that are *not* the lush biome — two disjoint sets of lush-looking places, only one
+labelled lush and only that one getting vanilla's vegetation. Now a lush patch gets both: vanilla's
+moss and glow berries plus CityWorld's axolotl pools, spore blossoms and surface azalea. **Worth a
+look in-game — that is deliberately the densest cave type now, and may be too dense.**
+
+All three versions pass and `--compare` agrees. Jars deployed to the `CityWork-ReForged`, `26.1.2` and
+`26.2` CurseForge instances for playtest.
+
+## What the playtest found (2026-08-27/28) — all fixed, owner signed off
+
+The self-test proved every one of these *present and correctly formed*. It could not tell that two of
+them were **unusable**, which is the lesson worth keeping: presence checks do not catch aesthetics or
+enclosure.
+
+**Verified good on sight:** strongholds (eyes of ender point at them and they form), trial chambers,
+lush and dripstone caves, the deep dark reading as deep dark.
+
+### 1. Ancient cities generated entombed — no cavern
+
+`terrain_adaptation` is the field that decides this, and only the *beards* need terrain moved:
+stronghold is `bury` and trial chambers `encapsulate`, which is exactly why those two were right from
+the start. `ancient_city` is `beard_box`, and vanilla carves for it with the **`Beardifier` density
+function** fed into terrain generation. CityWorld's terrain is not density-based, so there was nothing
+to feed and the city was stamped into solid rock: locatable, perfectly built, sealed.
+
+**`carveForStructures` in `fillFromNoise` is the stand-in — and carving the piece boxes was not
+enough.** The first version cleared each bounding box exactly. That un-buried the city but produced
+flat rectangular walls and ceilings, and left the gaps *between* piece boxes solid, so it read as a
+row of boxes. Vanilla's beard kernel has a radius of 12 and falls off smoothly across it. So the carve
+now has a **halo** (`CARVE_HALO` 10 horizontal, `CARVE_HALO_UP` 6) in which it carves
+probabilistically against smooth simplex — ragged rock rather than static — and the halo is what
+closes the inter-piece gaps into one cavern. Owner: *"messy edges that looked natural, not carved or
+artificial — spot on."*
+
+**⚠ Never carve below a piece.** Vanilla's beard *adds* material underneath to support the structure;
+digging there hangs the city over a void.
+
+Measured air inside an ancient city's bounding box: **35%** box-only → **43%** with the halo. The
+self-test now asserts it, so entombment cannot come back unnoticed.
+
+### 2. Large dripstone hanging down into the deep dark
+
+The cave pool matched a type *per Y band*, so a column in both a `deep_dark` cell and a
+`dripstone_caves` cell became deep dark below `y -24` and dripstone above, with a hard seam. Dripstone
+placed just above the seam hung through it. **Vanilla's per-position biome check cannot catch this** —
+the feature's origin is legitimately in the dripstone quart, only its body crosses. Now the first
+matching *cell* owns the whole column: one cave type per column. Same root cause as lush caves sitting
+directly on top of a deep dark.
+
+### 3. Sulfur caves had fog and green water and nothing else
+
+**Sulfur is the one cave type whose look is a surface rule, not features.** Lush, dripstone and deep
+dark all decorate themselves through `PlacedFeature`s, which CityWorld now runs. Sulfur's rock comes
+from `sulfur_cave_gradient` in the overworld noise settings — and `buildSurface` is deliberately a
+no-op here because the ported shaper lays its own strata. So the biome arrived with only its
+client-side effects.
+
+That also silently disabled its features: `sulfur_spike` declares `replaceable_blocks` of
+`#minecraft:sulfur_spike_replaceable_blocks`, which is **only `sulfur` and `cinnabar`** — not
+`#base_stone_overworld` the way dripstone is. No sulfur rock, no spikes.
+
+`paintCaveWalls` lines the exposed cave surfaces, and it must be **veined, using both blocks**. Vanilla's
+rule is a 3D noise with cinnabar in the outer bands (`-0.4..-0.1`, `>0.4`), sulfur in the middle
+(`0.0..0.4`) and bare stone in the gaps. A uniform sulfur skin — the first attempt — loses the cinnabar
+entirely and looks painted on. Thresholds are vanilla's exactly; the noise is ours at `1/32` to match
+its `firstOctave: -5`, so the veins come out the same size.
+
+### 4. Two self-test faults found while chasing the above
+
+- **It bound port 25565** and collided with another mod's dev server in the same workspace. That
+  surfaces as `Failed to initialize server` plus an NPE in `overworld()` on shutdown — it reads exactly
+  like a CityWorld fault and is not one. Now 25599, override with `CITYWORLD_SELFTEST_PORT`.
+- **A failed run republished the previous run's report.** The script copies
+  `run/cityworld-selftest.json` out under the current version's name; a run that died before writing
+  one left the last run's file in place, so a failed 1.21.11 run published 26.2's numbers and the
+  cross-version compare agreed with itself. Observed, not hypothetical — it briefly had me believing
+  1.21.11 had sulfur caves. The file is now deleted before each run.
+
+One genuine 26.2 behaviour change worth knowing: `ChunkGenerator.findNearestMapStructure` now
+early-returns when the world's "Generate Structures" option is off, so that world-creation checkbox
+now actually gates `/locate` — it did not on 1.21.11.
+
+## The underground is datapack-tunable (2026-08-28)
+
+Everything in this arc is now configurable without touching code, and it splits three ways by
+mechanism — worth keeping straight, because the split is deliberate:
+
+| what | where | why there |
+|---|---|---|
+| which vanilla structures generate | tag `#cityworld:allowed` | a list of ids |
+| which cave biomes exist | tag `#cityworld:cave_pool` | a list of ids, and `"required": false` is how sulfur caves ship cross-version |
+| the numbers | `caves` settings group | tags cannot express geometry |
+
+`caves` carries `structureCarveHalo`/`structureCarveHaloUp` (the beard carve), `surfaceMargin`, and
+`patches` — per-biome `cell`/`percent`/`minY`/`maxY`. **Empty `patches` means the built-in defaults;
+listing any entry replaces the lot, in the order given.** That is also how a modded cave biome gets
+real geometry rather than the fallback it gets from the tag alone.
+
+**Two implementation notes.** Geometry is applied on `bindContext`, not at pool construction: the pool
+is built when `possibleBiomes()` is first asked, which is before any chunk exists and therefore before
+settings are reachable — membership is all that early caller needs. And patch **salts derive from the
+biome id** rather than being stored, so retuning a patch's size or rarity does not move its cells.
+
+Defaults verified unchanged when this landed — same 43% ancient-city air, same pool, same plan hash.
+**That is the bar for any future "make it configurable" change**: it must not move the default world.
+
+## 26.3 reconnaissance (2026-08-28, snapshot 10)
+
+Read straight out of the server jar (`26.3-snapshot-10`, world version **5015**) before NeoForge has a
+release for it. NeoForge's `port/26.3` branch is live and moving — most recent commit the same day,
+*"Update NeoForm to fix worldgen deadlock"*, which is worth watching given how much of CityWorld is
+worldgen.
+
+### ✅ The palette hazard does not happen
+
+`#minecraft:wool` still holds exactly the sixteen full cubes. The new shapes are in **their own tags**
+(`wool_slabs`, `wool_stairs`, `concrete_slabs`, `concrete_stairs`), and 26.3 also adds a vanilla
+`#minecraft:concrete` of sixteen full cubes alongside the `#c:concretes` we use. Nothing to do.
+
+**The upside still stands and is now unblocked:** slab and stair variants of wool and concrete are
+exactly what the builders lack for edges, steps and roof trim — worth wiring in deliberately as their
+own shape vocabulary, off those new tags, never by widening the wall palettes.
+
+### 🎁 A whole wood family arrives for free
+
+26.3 adds **poplar** — 21 blocks, the full family (log, planks, stairs, slab, door, fence, gate, sign,
+hanging sign, shelf, button, pressure plate, trapdoor, sapling, stripped variants) plus **orange, red
+and yellow poplar leaves**. `poplar_planks` is already in `#minecraft:planks` and all three leaf
+colours in `#minecraft:leaves`, so **thirteen woods with no code at all**. This is the 5.0.3 tag work
+paying out exactly as designed, and the strongest argument yet for tag-first palettes.
+
+The autumn leaf colours are new in kind, not just in count — worth a look at whether the tree
+providers should use them deliberately rather than only as palette filler.
+
+### 🔧 Two catches for the furniture-roles idea
+
+Both of the owner's motivating examples turn out to have a wrinkle, and both push the same way:
+
+- **Cushions are entities, not blocks.** `world/entity/decoration/Cushion` extends
+  `BlockAttachedEntity` — the item-frame/painting family — and carries `removePassenger`, so they are
+  genuinely **sittable**: Minecraft has added sitting, which is why a cushion is not a block. The only
+  block-side tag is `cushion_uses_collision_shape` (what a cushion may rest *on*: cauldrons, hopper,
+  composter); `#minecraft:cushions` is an **item** tag. **A block tag or data map cannot place one** —
+  it needs the entity path, and it needs a supporting block underneath.
+- **`straw_bed` is not in `#minecraft:beds`.** It is `mineable/hoe` and `washed_away_by_fluids` —
+  tagged as straw, whatever `StrawBedBlock` does behaviourally. A `bed` role keyed off vanilla's tag
+  would silently miss it.
+
+**So the roles want to be our own `cityworld:furniture/*` tags, not aliases of vanilla ones** — which
+is what the owner proposed. Vanilla's tags describe what a block *is made of* or *how it is mined*,
+not what it is *for*, and those diverge exactly where furniture lives. Cushions then sit outside the
+block scheme entirely and want an `entity` role of their own if they are wanted at all.
+
+### 🏕 Vanilla has added abandoned camps
+
+`minecraft:abandoned_camp` is a real structure set in 26.3 — `random_spread`, spacing 37, separation 8,
+with **19 per-biome variants** (forest, taiga, cherry grove, savanna, swamp, pale garden, …) each a
+jigsaw whose start pool is `abandoned_camp/tent/<biome>`, at `surface_structures`. The owner's reaction,
+CityWorld having shipped campgrounds for a while: *"they stole our abandoned campsite idea (jk!)"*.
+
+Three practical notes:
+
+- **`terrain_adaptation` is `beard_thin`, which `carveForStructures` already handles** — it carves for
+  both beard kinds. So if the set were added to `#cityworld:allowed` it would adapt correctly with no
+  new code.
+- **But it is a *surface* structure**, so unlike strongholds/trials/ancient cities it competes with what
+  CityWorld builds. If it is ever allowed, it wants gating to nature lots rather than the whole world.
+- **The tents are built from wool stairs** — which is the owner's idea below, arriving from the same drop.
+
+Also new: **one genuine new biome, `dappled_forest`** (the other "new biome" entries are
+`tags/worldgen/biome/has_structure/` files, not biomes). It is a surface biome, so it belongs in the
+MODERN climate palette when 26.3 is ported — a small, concrete task rather than a decision.
+
+### 🎪 Wool stairs as tents (owner, 2026-08-28)
+
+Once 26.3 ships, CityWorld's own campgrounds can build **tents out of wool stairs** — two stair blocks
+back to back read as a pitched tent, in any of sixteen colours. 26.3-and-later only, so it wants the
+same `"required": false` treatment everything else version-specific gets, with the current campground
+as the fallback.
+
+## The direction: build "sets", fill them from tags (owner, 2026-08-28)
+
+**This is the architectural line to hold**, and it came out of the furniture discussion but generalises
+to everything CityWorld places:
+
+> Build **sets** for everything we can — then either auto-pull members from tags (wood, stone,
+> concrete: things vanilla already tags well), or top them up by hand each release for the unusual
+> things nobody tags.
+
+A "set" is a role — `chair`, `table`, `bookshelf`, `lighting`, `wall_decor`, `tabletop`, `bed`, and
+their equivalents for zoo pens, biodome contents, cave pools and build palettes. Each set is a tag we
+own. Three consequences, all wanted:
+
+- **Most growth is free.** Poplar joined thirteen woods with no code because planks are tagged. Any set
+  that maps onto a well-tagged vanilla family maintains itself.
+- **The unusual is a known, bounded cost.** A cushion, a straw bed, a sulfur family — things vanilla
+  does not tag by *purpose* — get added by hand once per release. That is the honest limit, and it is
+  small and predictable rather than open-ended.
+- **⭐ Third-party packs extend the same seam.** Because the sets are *our* tags, Apotheosis bookshelves
+  or a furniture mod's chairs join by adding to `cityworld:furniture/bookshelf` — no CityWorld release
+  required, and no per-mod code. This is what turns "per-mod compatibility datapacks" (queued item #5)
+  from a stack of bespoke work into one mechanism, and it is why the sets must be ours rather than
+  aliases of vanilla's tags: **vanilla tags describe what a block is made of, ours describe what it is
+  for**, and only the second is extensible by someone else.
+
+The open piece remains orientation — a chair has to face the table — which tags cannot carry and
+NeoForge **data maps** can. See the furniture entry in the parking lot.
+
+## Mod compatibility: what is actually portable (researched 2026-08-29)
+
+Read from the **Modrinth API and the mod jars themselves**, not from blog round-ups — every "best
+furniture mods 2026" article returns 1.21.1 mods, which is the trap this section exists to avoid.
+
+### ⚠ Almost nothing has ported to 1.21.11+/26.x yet
+
+That is the single most important fact for planning compat work, and it kills two of the three mods
+that were on the shortlist.
+
+| Mod | Downloads | Status on our versions |
+|---|---|---|
+| **Macaw's — the whole family** (furniture, doors, windows, roofs, fences, trapdoors, lights, paths, paintings, stairs, bridges) | ~70M combined | ✅ **1.21.9/10/11, 26.1, 26.1.1, 26.1.2, 26.2** |
+| **Biomes O' Plenty** | 33.8M | ✅ 1.21.9/10/11, 26.1.2, 26.2 |
+| Rechiseled | 7.7M | ✅ current |
+| **Fantasy's Furniture** | 1.2M | ✅ 1.21.10/11, 26.1.x, 26.2 |
+| FramedBlocks | 2.0M | ⚠ 26.1.x only |
+| Apotheosis | — | ⚠ 26.1.2 only |
+| **Twilight Forest** | — | ❌ 1.21.1 |
+| **Alex's Caves** | 10.4M | ❌ 1.20.1 |
+| Create / Farmer's Delight / Supplementaries / Another Furniture / Immersive Furniture / MrCrayfish's | huge | ❌ 1.21.1 or older |
+
+**Do not write the Twilight Forest or Alex's Caves packs yet.** Both were the owner's first picks and
+both are stranded. A pack for an absent mod is inert (all entries `"required": false`), so writing one
+costs nothing at runtime — but its block ids cannot be verified, and Alex's Caves is four versions
+back, where ids churn. Wait.
+
+### ✅ The best-behaved mods need no pack at all — verified
+
+**Biomes O' Plenty already contributes to 57 vanilla block tags**, including putting all of its planks
+into `#minecraft:planks`. Since 5.0.3 the CityWorld palettes resolve from those very tags, so **BoP
+woods already build CityWorld cities with zero configuration** — no datapack, no code, nothing to
+ship. That is `PALETTES.md`'s "no pack required" claim, now actually demonstrated against a 33M-download
+mod rather than asserted.
+
+**The lesson for planning:** compat work is only needed where a mod does *not* tag by vanilla vocabulary
+— which is exactly furniture, because vanilla has no furniture vocabulary to tag into.
+
+### 🪑 Macaw's Furniture is the right first target, and it is cheaper than expected
+
+Macaw's ships **its own per-kind block tags** — `#mcwfurnitures:chair`, `couch`, `desk`, `coffee_table`,
+`end_table`, `bookshelf`, `counter`, `kitchen_sink`, `wardrobe`, `drawer`, … 31 of them. So set
+*membership* is a one-line tag reference each, not an enumeration:
+
+```json
+{ "values": [ { "id": "#mcwfurnitures:chair", "required": false } ] }
+```
+
+…and it stays correct as Macaw's adds wood types. That is the same "reference whole tags" trick
+`PALETTES.md` already recommends to pack authors, paying off for us.
+
+Their block shapes, read from the blockstates:
+
+| Kind | Properties | What it means for us |
+|---|---|---|
+| `chair`, `stool_chair`, `striped_chair`, `modern_chair` | `facing` (4) | needs orientation — the hard case |
+| `table`, `glass_table` | `north/east/south/west` booleans | **self-connecting, like a fence** — no orientation at all, just place them adjacent |
+| `bookshelf_drawer`, counters | `facing` + `connection` (single/left/middle/right) | orientation, and self-connects along a run |
+| `kitchen_sink` | `facing` + `water` | orientation |
+
+**So a good half of the vocabulary needs no orientation data at all** — tables and counters arrange
+themselves. That makes a first pass much smaller than "solve furniture": ship the sets, place the
+self-connecting kinds, and only chairs and fronted cabinets need the data map.
+
+### ⚠ The orientation question is genuinely undecidable from data — it must be declared
+
+Vanilla's furnace maps `facing=north` to `y=0`; Macaw's chair maps `facing=west` to `y=0`. **That
+difference alone is only model authoring, not semantics** — the rotations could compensate. What
+cannot be read out of any JSON is the thing that actually matters: whether `facing=north` on a chair
+means *the sitter looks north* or *the chair's back is to the north*. Nothing in the blockstate, model
+or tag says which.
+
+**Therefore the data map cannot be generated — each entry needs a human to place one block and look.**
+That is a small, bounded, once-per-mod cost, and it is the honest reason this cannot be fully
+automated. It also settles the design: the data map must carry `facing_property` **and** a
+`front_is` semantic, because assuming a convention will be wrong for somebody.
+
+### Suggested order of work
+
+1. **Nothing** for Biomes O' Plenty — verify in-game and write it up as a supported mod. Free win.
+2. **`cityworld:furniture/*` sets**, designed against Macaw's since it is the only richly-tagged
+   furniture mod that is current. Start with the self-connecting kinds (tables, counters) which need
+   no orientation, and one chair to prove the data map.
+3. **Macaw's compat pack** — 31 tag references, plus a data map for the fronted kinds.
+4. Revisit Twilight Forest and Alex's Caves when they port; Alex's Caves is then one `#cityworld:cave_pool`
+   line, which is the whole point of having built that seam.
+
+**Fantasy's Furniture is not the place to start** despite being current: it ships only 23 blockstates
+and builds its furniture through a "furniture station" with dynamic variants, so there is no simple
+block-per-item vocabulary to tag. That is what the earlier "needs real feature work" note was sensing.
+
+## ⭐ TerraBlender: one integration, most biome mods (researched 2026-08-29)
+
+**The highest-leverage compat idea found so far, and the API supports it.** The owner spotted that BoP
+does not register biomes itself — it hooks **TerraBlender**, the library nearly every modern biome mod
+uses. Supporting TerraBlender once would make all of them contribute to CityWorld worlds.
+
+**TerraBlender is fully current** — 37.8M downloads, NeoForge, on 1.21.9/10/11, 26.1.x and 26.2.
+
+### The read path exists and is public — verified from the jar
+
+This was the thing in doubt: TerraBlender's API is built for *registering* regions, and CityWorld needs
+to *read* them. It can.
+
+```java
+List<Region> regions = Regions.get(RegionType.OVERWORLD);        // public static
+region.addBiomes(biomeRegistry, pair -> collect(pair));          // public
+//   pair = Pair<Climate.ParameterPoint, ResourceKey<Biome>>
+Climate.ParameterList<ResourceKey<Biome>> list = new Climate.ParameterList<>(collected);
+ResourceKey<Biome> biome = list.findValue(Climate.target(temp, humid, cont, erosion, depth, weird));
+```
+
+So CityWorld can harvest every `(climate parameter point → biome)` pair that **every installed
+TerraBlender mod** registered, build a parameter list from them, and ask it a question. That is the
+whole integration in five lines of API surface.
+
+### Soft dependency, per the owner: "use it if it's there"
+
+`ModList.get().isLoaded("terrablender")`, with every TerraBlender-touching line in **one class that is
+only ever loaded behind that check** — otherwise the JVM class-loads it eagerly and a world without
+TerraBlender dies on a `NoClassDefFoundError`. No compile-time hard dependency; the mod must run
+identically with it absent, which is also how it stays buildable on all three branches.
+
+### The real design problem: we only have three of the seven axes
+
+`Climate.ParameterPoint` has **seven** axes (temperature, humidity, continentalness, erosion, depth,
+weirdness, offset). CityWorld natively models **temperature and humidity** (`getTemperature`/
+`getHumidity`) and has elevation, which maps to depth. The other three would have to be synthesised —
+continentalness from distance-to-sea or elevation, erosion and weirdness from new noise fields or
+pinned to mid-range.
+
+**⚠ That is where this can quietly fail.** Pin the unmodelled axes to constants and the parameter list
+will keep returning the same handful of biomes, because most of the variety in a modded biome set lives
+in exactly those axes. The result would look like "TerraBlender support that does nothing" rather than
+an error.
+
+**So the acceptance test has to be a spread, not a smoke test.** The self-test already sweeps 4,225
+columns and reports distinct biomes (`biome.sweep.*`); the same harness should assert that a
+TerraBlender world reaches a *meaningfully larger* biome set than a vanilla-palette one. Measure before
+believing it works.
+
+### ⚠ And `possibleBiomes()` must include them — the lesson from the cave pool, again
+
+Whatever TerraBlender can produce has to be in the biome source's `possibleBiomes()`, or vanilla
+filters those biomes' features out and drops any structure set gated on them — the exact failure that
+made ancient cities impossible before wave A. Harvest the biome list once at bind time and fold it in.
+
+### ✅ Measured with TerraBlender + Biomes O' Plenty actually installed (2026-08-29)
+
+Not a thought experiment — the two mods (plus **GlitchCore**, which BoP requires and which is easy to
+forget) were dropped into `run/mods/` and the self-test run against them:
+
+| | |
+|---|---|
+| `terraBlender.modPresent` | `true` |
+| **biomes harvested** from TerraBlender regions | **113** |
+| **reachable through CityWorld's axes** | **86** (76%) |
+| `possibleBiomes()` | 52 → **113** |
+| MODERN plan hash | `28fc3789` — unchanged |
+
+Reached biomes are real and varied — `bayou`, `lavender_field`, `ominous_woods`, `redwood_forest`,
+`pumpkin_patch`, `jade_cliffs`, `hot_springs`, `mediterranean_forest`, `auroral_garden`…
+
+**86 of 113 is the number that matters**, because the predicted failure was the mapping collapsing to a
+handful. It did not. Three modelled axes plus a terrain-derived continentalness reach three quarters of
+a large modded biome set.
+
+**The ~27 unreachable are explained, not mysterious.** The bridge is queried at `depth = 0` (a surface
+point), so anything wanting depth — BoP's `glowing_grotto`, `crystalline_chasm`, `spider_nest` —
+cannot be selected, and nor can biomes needing continentalness extremes our terrain never produces.
+**That is an opportunity rather than a defect:** BoP's cave biomes belong in `#cityworld:cave_pool`,
+where they would work today via a datapack, not in the surface lookup.
+
+> **⚠ That paragraph was reasoning, not measurement, and it is partly wrong — see the axis analysis
+> below.** Depth explains only some of it; `fungal_jungle` in that list is a *surface* biome and was
+> put in the cave pool on the strength of this guess, where it generated nothing. Two thirds of the
+> unreachable set has no axis gap at all.
+
+**⚠ Repeating this measurement:** put TerraBlender, BoP **and GlitchCore** in `run/mods/` and run
+`scripts/selftest.sh`. Without GlitchCore, BoP refuses to load with *"requires glitchcore 21.11.0.3 or
+above"* and the run fails before any of this is reached. The jars are deliberately **not** left there —
+they change `biome.possible` from 52 to 113 and would make the baseline report confusing for anyone who
+did not expect it.
+
+### ✅ Why the unreachable ones are unreachable — measured per axis (2026-08-31)
+
+"31 of 113 unreachable" says a problem exists but not what to do about it, and the two candidate fixes
+the owner named — *widen our axes* vs *help the biomes individually* — need different work. So the
+self-test now measures **what CityWorld produces** on each axis against **what each biome demands**,
+and names the axes with no overlap (`axes.cityworld.*`, `axes.blamedAxis`, `axes.examples` in the
+report).
+
+**What CityWorld actually produces**, sweeping the plan grid:
+
+| Axis | Range emitted |
+|---|---|
+| temperature | −1.00 … 1.00 |
+| humidity | −1.00 … 1.00 |
+| erosion | −1.00 … 1.00 |
+| weirdness | −1.00 … 1.00 |
+| **continentalness** | **−0.78 … 0.54** ← the only narrow one |
+
+**The 31 split cleanly, and not the way the guess above assumed:**
+
+- **6 have a real gap, all on continentalness.** Widening that axis fixes them, and nothing else does.
+- **25 have no gap on any axis.** They overlap our ranges everywhere and *still* lose, because
+  `Climate.ParameterList.findValue` takes the **nearest** point in 7-D space — a closer neighbour
+  always wins. Widening cannot help these at all. Examples: `bog`, `coniferous_forest`, `dryland`,
+  `field`, `fir_clearing`, `forested_field`, `fungal_jungle`, `lush_savanna`, `moor`, `mystic_grove`.
+
+**Continentalness is narrow for a reason, and it is a fixable one.** It is derived from terrain height,
+and CityWorld's terrain never reaches vanilla's extremes — no abyssal ocean floor, no deep continental
+interior. So this is a **remapping of an existing signal**, not new noise that has to be invented.
+
+**The two fixes are genuinely different work**, which is the useful part of the finding:
+
+| | Fixes | Work |
+|---|---|---|
+| Widen continentalness | 6 | Remap height → continentalness over a wider output range |
+| Beat nearest-match | 25 | Needs a *different mechanism* — a reserved share of the map, or per-biome overrides. No amount of range widening touches it |
+
+**`fungal_jungle` is in the 25**, so it was never a range problem — which is why putting it in the cave
+pool was wrong twice over: wrong that it is a cave biome, and wrong that reach was the issue.
+
+### ✅ Both fixes built and measured (2026-08-31)
+
+The analysis said the two halves needed different work, so both were done — and measured on the same
+seed with TerraBlender + BoP + GlitchCore actually installed.
+
+**Continentalness now uses its whole range.** The ends are measured instead of assumed: sample the
+regional height over a fixed grid, take the 2nd/98th percentiles, scale to those, with sea level pinned
+at 0 and each side scaled independently (biomes gate ocean against land on the sign, so one straight
+stretch would move the shoreline off zero).
+
+| | before | after |
+|---|---|---|
+| continentalness emitted | −0.78 … 0.54 | **−1.00 … 1.00** |
+| biomes blamed on continentalness | 6 | **4** |
+| distinct biomes on the ground | 94 | **104** |
+| slivers (under 0.1% of ground) | 22 of 94 | **13 of 104** |
+
+**The reserved share reaches the ones widening could not.** `world.moddedBiomeShare` (default `0.35`)
+marks a share of the map — by its own coarse noise field, so a mod gets regions you can walk across
+rather than static — and there the climate lookup runs with vanilla's points removed, so the 25
+also-rans compete only with each other.
+
+| modded biomes | direct wins only | with the share |
+|---|---|---|
+| distinct reachable | 34 | **52** |
+| ground covered | 12.4% | **36.1%** |
+
+CityWorld still names about two thirds of the ground. `0.0` restores the old behaviour exactly.
+
+**⚠ `terraBlender.reachable` is not a count of modded biomes, and reading it as one is a trap I fell
+into.** It counts *every* hit, and TerraBlender's regions carry vanilla biomes that win most points —
+81 hits, of which only 34 were modded. The historical "86 of 113 reachable" therefore never measured
+what a mod contributes, and comparing a modded-only figure against it makes a feature look like a
+regression. `reachableModdedDirect` vs `reachableWithShare` are the comparable pair, recorded in one
+run so the baseline is the same seed and the same mods.
+
+### ✅ The last few: biomes no dial can reach (2026-09-01)
+
+With BoP installed, **54 of 59** modded biomes generate through the ordinary climate route. Of the
+five that never did, `spider_nest` was already fine — it is a cave-pool biome, and the surface sweep
+simply could not see that route. The other four split by cause, and needed different fixes:
+
+- **`bog`, `fungal_jungle`, `snowblossom_grove`** lose the nearest-match *everywhere* — against
+  vanilla, and against other modded biomes at `moddedBiomeShare = 1.0`. No gap to widen, no share that
+  reaches them. **`#cityworld:surface_pool`** hands them a share of cells outright.
+- **`gravel_beach`** was never *asked* about: shores come from terrain and the modded lookup is limited
+  to land above the waterline. **`#cityworld:shore_pool`** substitutes on shore ground instead.
+- **`#cityworld:ocean_pool`** closes the same gap below the waterline. Ships empty; BoP adds no
+  overworld oceans.
+
+**Confirmed in-world**: fungal jungle generates with its own giant mushrooms, which also proves pool
+biomes reach `possibleBiomes()` — vanilla filters biome *features* against that set.
+
+**⚠ Two mistakes worth keeping.** Gating patches on all five climate axes produced *nothing*: the
+"overlaps on every axis" finding is marginal overlap measured one axis at a time, and no column sits
+inside the joint box. Gating on temperature and humidity works. And the shore band was written
+`terrainY <= seaLevel`, which is the *ocean* condition — `classify` puts the beach at exactly
+`terrainY == seaLevel` — so a beach biome was painted across open water, and the sweep passed it
+because it only asked whether a biome appeared, never where.
+
+### Related gap this exposes
+
+`CityWorldClimateBiomeSource` has **49 biomes hardcoded in Java** and a hand-written climate matrix (21
+`return` sites). That is why BoP's 69 biomes are invisible today, and it is the one big palette that is
+*not* data-driven. TerraBlender support would route around it rather than fix it. Worth deciding which
+is wanted: a TerraBlender bridge (wide reach, no control over placement) or a data-driven surface
+matrix (full control, only what a pack author lists) — or both, TerraBlender feeding the pool the owner
+described.
+
+**Scale, for prioritisation:** BoP alone is 69 biomes and 33.8M downloads, and TerraBlender lists
+thousands of dependent files. This is the single widest-reach item in the parking lot.
+
+## Do we still need to hand-map vanilla biomes? (2026-08-29)
+
+Owner's question once the TerraBlender bridge existed: the MODERN source hand-maps 49 vanilla biomes
+through a 21-branch `classify` matrix — is that still necessary, and would 26.3's `dappled_forest` slot
+in on its own?
+
+**Short answer: no we don't strictly need it, yes it would slot in — but keep the hand map anyway.**
+
+### Vanilla's own climate map is harvestable, exactly like TerraBlender's
+
+`OverworldBiomeBuilder.addBiomes(Consumer<Pair<Climate.ParameterPoint, ResourceKey<Biome>>>)` is the
+authoritative vanilla biome-to-climate map. It is `protected`, but the class is public and non-final, so
+a subclass can expose it — and the result feeds the *same* `Climate.ParameterList` path the TerraBlender
+bridge already uses. The two are one mechanism with two sources.
+
+**And `dappled_forest` is already in it** (verified in 26.3-snapshot-10 bytecode: `OverworldBiomeBuilder`
+references `Biomes.DAPPLED_FOREST`). So on that path, every future vanilla biome arrives free.
+
+**⚠ Do not read `multi_noise_biome_source_parameter_list/overworld.json` and conclude anything** — it is
+literally `{"preset": "minecraft:overworld"}`, a reference to the code-built preset. It lists no biomes,
+which looks exactly like "the new biome is missing" if you grep it. It cost a wrong conclusion here.
+
+### Why the hand map stays the default anyway
+
+Vanilla's map is tuned for terrain generated *from* those climate axes. Ours is tuned for CityWorld's
+terrain, and does things vanilla's cannot:
+
+- **Decayed-nature worlds** desert everything — a whole-world mood no climate point expresses.
+- **The waterline** is exact. We know where the sea is, so beach/shore/deep-ocean follow terrain rather
+  than a continentalness guess.
+- **Elevation bands key to `treeLevel`/`evergreenLevel`/`snowLevel`** — the shaper's own numbers, so
+  biome and vegetation agree by construction.
+- **Deliberate rarities** — mushroom fields only in the warm, very-humid corner, swamp widened for
+  marshy shores.
+
+Switching wholesale would drop all of that and change every existing seed's biomes.
+
+**So: keep `classify` as the default, and offer vanilla's list as another opt-in source alongside
+TerraBlender's** — the plumbing is already there, it is one more harvest into the same parameter list.
+
+### And for `dappled_forest` specifically: just add it
+
+It is one entry in `PALETTE` and one branch in `classify` when 26.3 is ported. **Do not re-architect the
+biome source to avoid a two-line change** — that would be paying a large, world-changing cost to dodge a
+small, controlled one. The architecture question above is worth deciding on its own merits, not on this.
+
+## Releasing — GitHub, and CurseForge automatically
+
+Publishing a GitHub release now publishes to CurseForge too, via
+`.github/workflows/curseforge.yml`. It downloads every jar attached to the release, reads the
+Minecraft version out of each filename (`cityworld-5.1.0+mc26.2.jar` → `26.2`), and uploads them
+with the release body as the changelog.
+
+**One-time setup (owner only — the token must never be pasted into a chat or committed):**
+
+1. Create a token at <https://legacy.curseforge.com/account/api-tokens>.
+2. Repo **Settings → Secrets and variables → Actions → Secrets**: add `CURSEFORGE_TOKEN`.
+3. Same screen, **Variables** tab: add `CURSEFORGE_PROJECT_ID` — the numeric project ID shown on the
+   CurseForge project page.
+
+Until both exist the workflow **skips rather than fails**, so it will not put a red cross on a
+release. `workflow_dispatch` re-uploads an existing tag by hand.
+
+`scripts/curseforge-upload.sh` does the actual upload and can be run locally. CurseForge wants
+numeric game-version IDs, and those change as versions are added, so it resolves them from
+`/api/game/versions` on every run rather than hardcoding them — and fails with the list of names
+CurseForge *does* know if a Minecraft version is not listed yet. **That is the expected failure
+right after a Minecraft release**: CurseForge has to add the version before anything can be uploaded
+against it.
+
+**⚠ HTTP 200 means accepted, not published.** Moderation runs afterwards, and this is where the
+confusing failures live:
+
+- **CurseForge dedupes by file content.** The same jar cannot exist twice on a project, so
+  re-uploading a release that is already up gets each file *rejected as a duplicate* — even though
+  the API returned a file ID. Delete the old files first, or don't re-run.
+- **Rejected files are hidden from the authors file list by default**, so they do not look rejected;
+  they look like they never arrived. Everything appears to have silently done nothing.
+- **Some files land in "Under Manual Review"** and stay off the public page for a while. Nothing is
+  wrong; it clears on its own.
+
+All three bit during the 5.1.0 upload. The authoritative view, always, is
+`https://authors.curseforge.com/#/projects/<id>/files` — the public Files tab lags behind it.
+
+## Verifying a version — `scripts/selftest.sh`
+
+Hand-playtesting every supported version does not scale at four drops a year, so verification is
+automated. `selftest/CityWorldSelfTest` generates a real world on a fixed seed and checks:
+
+- the overworld is genuinely on `CityWorldChunkGenerator`/`CityWorldClimateBiomeSource` — **a silent
+  fall back to vanilla worldgen is the scariest failure and looks like nothing at all**;
+- the planner produces a full spread of contexts and lots across MODERN/APOCALYPSE/CLASSIC;
+- decoration actually writes blocks;
+- signs carry text **on both faces** — the canary for the `SignBlockEntity` access transformers.
+
+It is dormant unless `-Dcityworld.selftest=true`. Run it with `./scripts/selftest.sh` (it picks the
+right JDK from `minecraft_version`), then `./scripts/selftest.sh --compare` once several versions
+have been run.
+
+**It also runs in CI** — `.github/workflows/selftest.yml`, on every push to the three version
+branches and on demand. A three-branch matrix runs the harness on each version, then a compare job
+fails if any two disagree on the plan hash. Warm, that is **4–5 minutes per version in parallel**;
+cold it has to let NeoForm decompile Minecraft, which is 10–15 minutes and is why the cache is keyed
+on the NeoForge version. Docs-only pushes are ignored.
+
+**It earned its keep immediately.** The first green-building CI run caught that on a *fresh
+checkout* the server silently fell back to vanilla `NoiseBasedChunkGenerator`: `set_prop` had two
+paths that disagreed about backslashes, and a developer's `run/` directory always took the working
+one. The world generated, looked entirely normal, and was not CityWorld. That is exactly the failure
+the generator-identity check exists for, and nothing but a clean environment would have surfaced it.
+
+**The comparison is the clever half.** Planning never touches the block registry, so for a fixed seed
+the plan is a pure function of the seed and must be *identical* on every Minecraft version. The
+harness hashes it and `--compare` fails if two versions disagree — that catches a change that
+silently alters worldgen on one version only. Materials are deliberately **excluded** from the hash,
+because those legitimately widen as newer versions add blocks to the palette tags.
+
+Measured 2026-08-17, all three passing and agreeing:
+
+| version | plan hash | signs | front | back | distinct blocks | run |
+|---|---|---|---|---|---|---|
+| 1.21.11 | `28fc3789` | 67 | 65 | 30 | 136 | 233s |
+| 26.1.2  | `28fc3789` | 67 | 65 | 30 | 134 | 232s |
+| 26.2    | `28fc3789` | 67 | 65 | 30 | 136 | 261s |
+
+The identical plan hashes are the point: same seed, same city, three Minecraft versions. The distinct
+block counts differing by two is the expected material variance, not a fault.
+
+**Only the plan hash is an invariant — the rest of the table is indicative.** Re-running an unchanged
+1.21.11 build gave 66 signs and 64 fronts where it had given 67 and 65: decoration of chunks at the
+edge of the surveyed block depends on which neighbours happen to be loaded, so counts wobble by one
+or two between runs. The harness therefore asserts *presence* (signs exist, fronts exist, backs
+exist, blocks were written), never exact counts. **Do not tighten those into equality assertions** —
+it would produce a test that fails at random and teaches everyone to ignore it.
+
+**⚠ A trap this harness fell into itself, worth not repeating.** Its first version located test
+chunks by rebuilding a `CityWorldGenerator` and asking it for `RoadLot`s — and reported "no signs
+found", which read exactly like a 26.2 regression. It was not: `PlatMap.getMapLot()` subtracts the
+platmap's own origin, which is *not* aligned to a multiple of `PlatMap.Width`, so indexing `getLot()`
+with a `floorMod` silently reads a different lot. **Survey the world that was generated; do not
+predict it.** Reading `LevelChunk.getBlockEntities()` is both exact and far cheaper than scanning.
 
 ## The measured 26.1 delta (2026-08-16, branch `mc26.1`)
 
@@ -127,6 +1373,89 @@ conversion, not a port. But note the shape of it — `pos.x` vs `pos.x()` has **
 on both versions**, so a genuinely single tree needs either a shim (`Compat.chunkX(pos)`) or a source
 preprocessor. That was left out deliberately here so this branch measures the raw delta rather than
 an abstraction built from a single data point. Do 26.2 next, then decide with two deltas in hand.
+
+## The measured 26.2 delta (2026-08-17, branch `mc26.2`)
+
+Target: **Minecraft 26.2 / NeoForge 26.2.0.59**. Java 25 and ModDevGradle 2.0.144 again, so the
+toolchain cost nothing this time. **This is the drop where the treadmill stopped being free.**
+
+**26.2 rewrote how Minecraft declares whole families of blocks.**
+
+- **Dyed blocks are gone as fields.** `Blocks.BLACK_WOOL` and its siblings no longer exist — wool,
+  carpet, concrete, concrete powder, terracotta, glazed terracotta, stained glass, stained glass
+  panes and beds are each one `ColorCollection<Block>` indexed by `DyeColor`:
+  `Blocks.WOOL.pick(DyeColor.BLACK)`. **145 of our constants** were affected. Note the naming
+  exceptions — the dyed family takes a `DYED_` prefix where the undyed block keeps the plain name
+  (`Blocks.TERRACOTTA` is undyed, so dyed terracotta is `Blocks.DYED_TERRACOTTA`), likewise
+  `DYED_SHULKER_BOX`, `DYED_CANDLE`, `DYED_CANDLE_CAKE`.
+- **Copper went the same way.** The `WeatheringCopperBlocks` record became
+  `WeatheringCopperCollection`, whose stages hang off `weathering()` —
+  `Blocks.CUT_COPPER.weathering().exposed()`. It also swallowed blocks that used to be plain fields:
+  `CUT_COPPER`, `COPPER_GRATE`, `COPPER_CHEST`, `COPPER_BULB`, `CHISELED_COPPER`, `COPPER_BLOCK`
+  and `LIGHTNING_ROD`.
+- **`EntityType`'s constants moved to `EntityTypes`** (mirroring `BlockEntityType`/`BlockEntityTypes`).
+  59 references, one mechanical rename.
+- **`DripstoneThickness` is `SpeleothemThickness`**, and `BlockStateProperties.DRIPSTONE_THICKNESS`
+  is `SPELEOTHEM_THICKNESS`. Same enum constants.
+- **`Minecraft.setScreen` moved onto `Minecraft.gui`** — `this.minecraft.gui.setScreen(...)`.
+
+**Almost all of it landed in generated code, which is the whole point of having generated it.**
+`gen_material.py` now *derives* these expressions instead of naming fields, from rules rather than
+tables: split a name at its longest dye-colour prefix and look for a matching `ColorCollection`
+(trying `DYED_` too), or split a weathering-stage prefix and look for a `WeatheringCopperCollection`.
+The same generator therefore emits flat fields on 1.21.11 and 26.1 and collection picks on 26.2, and
+**regenerating on the two older versions produces byte-identical files — verified.** `EXTRAS_EXPR`'s
+twelve hand-written copper expressions are now derived the same way and can no longer rot.
+
+Only **three hand-written sites** needed touching: `LegacyBlocks` (its dye-ordered tables are now
+derived via `DyeColor.byId`, which is *better* code — a legacy block's data value simply is the dye
+id), `Overgrowth` (the speleothem rename) and `CityWorldCustomizeScreen` (the `gui.setScreen` move).
+
+**What did not break:** the palettes. Because `5.0.3` moved them onto block tags, 144 vanished block
+fields did not cost the palette layer a single line — the tags still resolve. Stage 1 paid for itself
+here. The access transformer, the codec registration, the schematic pipeline and the biome source all
+came through untouched as well.
+
+**⚠ Two infrastructure traps, neither of them code faults:**
+
+- **A zero-byte jar in the Gradle cache** (`error_prone_annotations-2.48.0.jar`, whose SHA-1 was
+  `da39a3ee…` — the hash of an empty file) failed the build with hundreds of bogus
+  "cannot access net.minecraft" errors. Maven Central served it fine; Gradle wrote it empty, twice.
+  Fixed by dropping the real jar into the cache under its correct SHA-1 directory.
+- **An OOM kill (exit 137)** mid-build while a dev client for another mod was running. It reads like
+  a build failure and is not one.
+
+## Stage 3: what the two deltas say
+
+The two data points disagree, which is itself the finding:
+
+| | 26.1 | 26.2 |
+|---|---|---|
+| hand-written source changes | 12 lines, 6 files | 3 files |
+| generated source changes | none (byte-identical) | 145 constants, all derived |
+| toolchain | Java 21 → 25, MDG bump | none |
+| nature of the change | one record conversion | block-declaration model rewrite |
+
+**A quarterly drop is not reliably cheap.** Planning for "12 lines every three months" would have
+been the wrong lesson to take from 26.1.
+
+**What actually carried the weight was not a clever build setup — it was two design decisions already
+in place:** the `compat/` seam (only 59 of 386 files touch `net.minecraft`), and generating
+`Material.java` instead of hand-writing it. 26.2's 145 broken constants cost *rules in one Python
+file*, not 145 edits, and none of the 3,096 call sites moved.
+
+**The open question for a single tree** is that the divergences have no syntax valid on both versions
+— `pos.x` vs `pos.x()`, `Blocks.BLACK_WOOL` vs `Blocks.WOOL.pick(DyeColor.BLACK)`. So a single tree
+needs either per-version source sets for a small compat shim, or a source preprocessor. The generated
+file is *already* effectively per-version, which suggests the shim approach: keep one shared tree,
+add `src/compat/<version>/java` holding only the handful of diverging methods, select it with a
+Gradle property. The hand-written divergence across three versions is currently **four call sites**,
+which is small enough to be worth doing and small enough that getting it wrong costs little.
+
+**Recommended before committing to it:** keep branch-per-version for one more drop (26.3, due ~Sept
+2026) to see whether the divergence set keeps shrinking or grows. Merging three branches into one
+tree is cheap now and cheap later; guessing wrong about the mechanism is not.
+
 
 Deploying: `./deploy.sh` targets the `CityWork-ReForged` instance;
 `CITYWORLD_INSTANCE="/mnt/c/Users/darre/curseforge/minecraft/Instances/MobHealth - Forge" ./deploy.sh`
@@ -751,6 +2080,25 @@ a `WorldGenLevel`, which is exactly what `RealBlocks` was built to take. Not cal
 also what suppresses vanilla's own decoration. **Neighbour access is the live constraint** (top risk
 #2): a `WorldGenRegion` only permits writes near the chunk being decorated, which is why
 `RealBlocks` refusing to look past its chunk edge matters more now than it did under Bukkit.
+
+### ⚠ Lesson: a Customize picker whose steps miss the default silently edits it
+
+`world.climateWarmth` (default `0.25`) was first wired to the screen's `Chance` widget. Two faults, and
+the invisible one is the one to remember.
+
+**Visible:** `Chance`'s labels are *probabilities* — "Never / Rare / Unlikely / Likely / Always" — so a
+temperature bias displayed as **"Unlikely"**, which means nothing.
+
+**Invisible, and worse:** `Chance.nearest(0.25)` snaps to the closest step, `UNLIKELY = 0.2`. The screen
+does not just *show* the wrong thing, it **hands 0.2 back to `buildResult()`**. Opening the Customize
+screen and pressing Done — touching nothing — would have silently changed the setting. The player sees
+a plausible label and gets a different world.
+
+**The rule: a picker's step list must contain the setting's own default, exactly.** If it does not, the
+widget is a value-editing round-trip masquerading as a display. When adding a knob, either reuse a
+scale whose steps already include the default, or give it its own — `WARMTH_CHOICES` and
+`FLOOR_CHOICES` are both purpose-built for this reason. `Chance` is for genuine odds only (treasure
+chances, spawn rates), never for a value that merely happens to be a `0..1` double.
 
 ### ⚠ Lesson: a "simplified" stub silently rewired the whole world
 
@@ -1722,6 +3070,33 @@ long-standing grey area in the modding ecosystem; many GPL mods ship regardless.
 Bukkit's `Location` carried its world. See "Closed: mobs and loot". The numbering above is kept as-is
 so older notes referring to "top risk #2" still point at neighbour access.
 
+## ⚠ Tag gotchas (learned the hard way, 2026-08-31)
+
+- **A missing *required* tag reference discards the WHOLE tag, not just that entry.**
+  `#cityworld:farm/flowers` referenced `#minecraft:tall_flowers`, which does not exist as a block tag —
+  and that one bad line silently took out `#minecraft:small_flowers` and every BoP flower with it. The
+  pool resolved to zero, every flower field fell back to its hardcoded vanilla flower, and the only
+  in-world symptom was "the feature does nothing", which is indistinguishable from looking at chunks
+  generated by an older jar. The log says it plainly if you look:
+  `Couldn't load tag cityworld:X as it is missing following references:`.
+  The `"required": false` habit protects *mod* ids and gave no protection here, because the broken
+  entry was the one written as required. **Verify a vanilla tag exists before referencing it** — the
+  block tags are in `data/minecraft/tags/block/` of the extracted server jar.
+- **There is no `minecraft:tall_flowers` block tag.** Vanilla lists sunflower/lilac/peony/rose_bush/
+  pitcher_plant individually inside `#minecraft:flowers` — which also carries cherry leaves, flowering
+  azalea, mangrove propagules, pink petals and chorus flowers, so it is the wrong tag to inherit for
+  anything plantable.
+- **Inheriting a mod's tag inherits its judgement.** BoP registers `waterlily` into
+  `#minecraft:small_flowers`, so a farm field planted lily pads on tilled earth. NeoForge's `remove`
+  list subtracts one entry while keeping the inheritance, which is better than hand-listing.
+- **An empty pool must fail loudly.** A pool that resolves to nothing degrades to a hardcoded default
+  and looks like working software. The self-test now reports what each farm pool resolves to and fails
+  the run if one is empty.
+- **⚠ `git rev-parse HEAD` inside a worktree resolves to that branch's HEAD.** Using it as a
+  cherry-pick argument from a worktree is a silent no-op that prints "nothing to commit" and exits
+  zero — so the verification run afterwards measures unchanged code and reports a confident wrong
+  answer. Resolve the hash in the master checkout and pass it explicitly.
+
 ## 1.21.11 API notes (verified against the decompiled NeoForge sources)
 
 These bit us / would bite anyone porting; confirmed by grepping the neoform sources jar
@@ -1791,16 +3166,19 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
   {@code super.applyBiomeDecoration} (vanilla biome features) after CityWorld's pass, gated on
   {@code lot.style == NATURE} and {@code MODERN}. Verified: 841 chunks force-loaded, 0 failures, and
   the nature lots grow biome-appropriate vanilla vegetation — acacia/cherry/dark-oak/jungle/mangrove/
-  spruce/birch trees, bamboo, a full coral reef + seagrass in warm oceans, mushrooms. **Open (owner to
-  eyeball):** CityWorld's nature lots still place their own cover too, so wild forests may read *dense*
-  (CityWorld trees + vanilla trees); if so, suppress CityWorld's nature cover on MODERN nature lots so
-  vanilla is the sole wild decorator. Gaps vanilla can't place from terrain (mushroom fields, cave
-  biomes, deep dark) → the "bio-dome" set-piece. City-area cover (CityWorld's) is unchanged.
+  spruce/birch trees, bamboo, a full coral reef + seagrass in warm oceans, mushrooms. ~~**Open (owner to
+  eyeball):**~~ **CLOSED 2026-08-28 — owner: "nothing in nature is looking too much, whatever it's at
+  now looks good."** CityWorld's nature lots keep placing their own cover alongside vanilla's; the
+  doubled density that was feared did not materialise, so leave both in. City-area cover unchanged.
 
-- **"Zoo" / "Bio Dome" lot to cover biome-block gaps (owner, 2026-07).** If MODERN can't get *every*
-  naturally-spawning vanilla block to appear in the wild, add a cheeky special lot — a zoo or botanical
-  bio-dome — that showcases the stragglers (rare biome blocks, plants, spawn eggs' mobs) in one build.
-  A fun catch-all and a landmark. Rides the NatureContext set-piece machinery.
+- ~~**"Zoo" / "Bio Dome" lot to cover biome-block gaps (owner, 2026-07).**~~ **DONE** — both landed as
+  park-district attractions (themed zoo pens with animals, glass biome domes).
+
+  **Revisit only when Minecraft adds a weird animal or a rare biome worth showcasing** (owner,
+  2026-08-28). At that point the right move is not to hand-edit the lot: make the *contents*
+  data-driven — a datapack describing what is in each zoo pen and each biodome, so a new animal or
+  biome is a datapack line rather than a code change. Same treatment `#cityworld:cave_pool` got. Not
+  worth doing speculatively; do it the first time the hand-edit is actually needed.
 
 - **MODERN "overgrown" look + full 1.21 palette (owner, 2026-07).** Use the whole modern block range in
   MODERN's providers — and for a decayed/overgrown MODERN, drape **moss carpet, vines, leaf litter,
@@ -1870,3 +3248,47 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
   landmark building, a plaza, an underground vault, or a themed district at a would-be village /
   trial-chamber location. The placement machinery already computes good spots; we'd be repurposing
   them as hints rather than throwing them away.
+
+  **Considerably more approachable since 2026-08-27:** `createState` now builds a real, correctly
+  seeded `ChunkGeneratorStructureState` instead of an empty one, so the placement maths being read is
+  live rather than zeroed.
+
+  **Owner's steer (2026-08-28): fill those anchors from *schematics*, not new lot classes.** A
+  `village/` folder, an `outpost/` folder and so on; a spot rolls against the matching folder, and
+  **falls back to generating normally if the folder is empty or the roll comes up short**. That gives
+  server owners a drop-in way to theme the anchors — the schematics pipeline already supports a
+  drop-in folder — without a code change per structure type. *"One to think on."*
+
+  **⚠ The open question is footprint.** CityWorld plans in whole chunks and a lot has to know its own
+  shape before it builds; a schematic's dimensions are only known once it is read. So this needs a
+  decision about who adapts to whom: index the folder up front and pick a schematic that fits the lot,
+  reserve a lot group big enough for the biggest schematic in the folder, or let a schematic claim
+  neighbouring chunks the way the hospital campus does. Worth settling *before* writing any of it —
+  it is the difference between a small feature and a replanning change.
+
+- **Teach interiors what furniture *is*, via datapack (owner, 2026-08-28).** Today `Support/Furniture`
+  knows a fixed vocabulary of blocks. The idea: name the *roles* instead — `chair`, `table`,
+  `bookshelf`, `lighting`, `wall_decor`, `tabletop`, `bed`, `furniture` — so blocks can be added to a
+  role and pulled out of it from a pack, exactly as the build palettes work now.
+
+  **This is timely.** 26.3 reportedly adds **cushions** (a seat), **straw beds** (a bed) and **concrete
+  and wool steps** (more chairs) — three new blocks that would slot into three existing roles with no
+  code at all. Note the same 26.3 change is *also* the palette hazard already logged in queued item #4:
+  wool and concrete stairs are a gift to the furniture vocabulary and a menace to the wall palettes,
+  which assume full cubes. One drop, two opposite consequences — check both on day one.
+
+  **⚠ Checked against 26.3-snapshot-10 (2026-08-28) — both motivating examples have a catch.**
+  Cushions are **entities** (sittable, `BlockAttachedEntity`), so no block tag or data map can place
+  one; `straw_bed` is **not** in `#minecraft:beds`. Conclusion: the roles must be our own
+  `cityworld:furniture/*` tags rather than aliases of vanilla's, because vanilla tags describe what a
+  block is made of, not what it is for. Details in "26.3 reconnaissance" above.
+
+  **⚠ Tags alone are not enough, and this is the crux.** A tag says *what a block is*, not *which way it
+  faces*, and furniture is meaningless without orientation — a chair faces a table, a wall decoration
+  faces into the room. That is what the earlier "needs real feature work" note in queued item #5 was
+  getting at. **The mechanism that does solve it is NeoForge *data maps*** — `DataMapType`, attachable
+  to registry entries from a datapack (already visible in `HolderLookup.RegistryLookup.getData`). A
+  data map can carry per-block facts a tag cannot: which property holds the facing, whether the block
+  seats an entity, how tall it sits, whether it wants a wall behind it. **So the owner's instinct that
+  this should be datapack-driven is achievable — it is just data maps rather than tags.** Worth a spike
+  on one role (`chair`) before committing to the whole vocabulary.

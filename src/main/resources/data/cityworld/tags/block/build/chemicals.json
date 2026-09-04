@@ -1,0 +1,87 @@
+{
+  "values": [
+    {
+      "id": "#minecraft:concrete_powder",
+      "required": false
+    },
+    {
+      "id": "#minecraft:concrete_powders",
+      "required": false
+    },
+    "minecraft:water",
+    "minecraft:lava",
+    "minecraft:slime_block",
+    {
+      "id": "mekanism:brine",
+      "required": false
+    },
+    {
+      "id": "mekanism:chlorine",
+      "required": false
+    },
+    {
+      "id": "mekanism:ethene",
+      "required": false
+    },
+    {
+      "id": "mekanism:heavy_water",
+      "required": false
+    },
+    {
+      "id": "mekanism:hydrofluoric_acid",
+      "required": false
+    },
+    {
+      "id": "mekanism:hydrogen",
+      "required": false
+    },
+    {
+      "id": "mekanism:hydrogen_chloride",
+      "required": false
+    },
+    {
+      "id": "mekanism:lithium",
+      "required": false
+    },
+    {
+      "id": "mekanism:nutritional_paste",
+      "required": false
+    },
+    {
+      "id": "mekanism:oxygen",
+      "required": false
+    },
+    {
+      "id": "mekanism:sodium",
+      "required": false
+    },
+    {
+      "id": "mekanism:steam",
+      "required": false
+    },
+    {
+      "id": "mekanism:sulfur_dioxide",
+      "required": false
+    },
+    {
+      "id": "mekanism:sulfur_trioxide",
+      "required": false
+    },
+    {
+      "id": "mekanism:sulfuric_acid",
+      "required": false
+    },
+    {
+      "id": "mekanism:superheated_sodium",
+      "required": false
+    },
+    {
+      "id": "mekanism:uranium_hexafluoride",
+      "required": false
+    },
+    {
+      "id": "mekanism:uranium_oxide",
+      "required": false
+    }
+  ]
+}

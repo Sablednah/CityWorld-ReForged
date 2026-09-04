@@ -22,6 +22,31 @@ public class GovernmentBuildingLot extends FinishedBuildingLot {
 
 		depth = 0;
 		height = chunkOdds.calcRandomRange(2, 4);
+
+		// which civic institution is this? one flavour per building, so every floor agrees
+		switch (chunkOdds.getRandomInt(3)) {
+		case 0 -> { civicRooms = contentsCityHall; civicName = "City hall"; }
+		case 1 -> { civicRooms = contentsCourthouse; civicName = "Courthouse"; }
+		default -> { civicRooms = contentsSchool; civicName = "School"; }
+		}
+	}
+
+	// Government buildings stood entirely EMPTY before the civic-interiors round — the default
+	// room provider is EmptyWithNothing. Each building is a city hall, a courthouse or a school.
+	private static final RoomProvider contentsCityHall = new me.daddychurchill.CityWorld.Rooms.Populators.CivicWithOffices();
+	private static final RoomProvider contentsCourthouse = new me.daddychurchill.CityWorld.Rooms.Populators.CivicWithCourtrooms();
+	private static final RoomProvider contentsSchool = new me.daddychurchill.CityWorld.Rooms.Populators.CivicWithClassrooms();
+	private RoomProvider civicRooms;
+	private String civicName;
+
+	@Override
+	public RoomProvider roomProviderForFloor(CityWorldGenerator generator, SupportBlocks chunk, int floor, int floorY) {
+		return civicRooms;
+	}
+
+	@Override
+	public String getInteriorDescription() {
+		return civicName;
 	}
 
 	@Override
@@ -58,7 +83,9 @@ public class GovernmentBuildingLot extends FinishedBuildingLot {
 		insetInsetMidAt = 1;
 		insetInsetHighAt = 1;
 		insetStyle = InsetStyle.STRAIGHT;
-		interiorStyle = InteriorStyle.COLUMNS_ONLY;
+		interiorStyle = InteriorStyle.COLUMNS_OFFICES; // columns AND rooms — COLUMNS_ONLY was why
+		// government buildings stayed empty even after they got room providers: _ONLY styles
+		// never call drawInteriorRooms at all
 		rounded = false;
 //		roofStyle = RoofStyle.PEAKS;
 		roofFeature = RoofFeature.PLAIN;
@@ -135,17 +162,25 @@ public class GovernmentBuildingLot extends FinishedBuildingLot {
 			Material materialStairWall, Material materialPlatform, boolean drawStairWall, boolean drawStairs,
 			boolean topFloor, boolean singleFloor, Surroundings heights) {
 
+		if (me.daddychurchill.CityWorld.Support.ChunkProbe.tracing())
+			me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+					"TRACE gov drawInteriorParts floor={} doBuilding={} floorAt={} higher={}",
+					floor, doBuilding(heights), floorAt, higher);
 		if (doBuilding(heights)) {
-			// TODO Auto-generated method stub
-			super.drawInteriorParts(generator, blocks, context, rooms, floor, floorAt + higher, floorHeight, insetNS,
-					insetWE, allowRounded, materialWall, materialGlass, stairLocation, materialStair, materialStairWall,
-					materialPlatform, drawStairWall, drawStairs, topFloor, singleFloor, heights);
-
+			// Foundation FIRST — probe-measured (seed 2720459862006157221, chunk 5,-7): the raised
+			// lobby slab was drawn AFTER furnishing, so at sweep time y67 was air, every
+			// standability check honestly failed, and the slab then painted underneath an
+			// already-abandoned floor. Four playtest rounds of "empty School lobby" were the
+			// building pouring its own floor after the movers left.
 			if (floor == 0) {
 				drawFoundationSteps(blocks, floorAt, floorAt + 2, heights);
 				drawFoundationColumns(blocks, floorAt, 1, heights);
 			}
 			drawFoundationColumns(blocks, floorAt + higher - 1, DataContext.FloorHeight, heights);
+
+			super.drawInteriorParts(generator, blocks, context, rooms, floor, floorAt + higher, floorHeight, insetNS,
+					insetWE, allowRounded, materialWall, materialGlass, stairLocation, materialStair, materialStairWall,
+					materialPlatform, drawStairWall, drawStairs, topFloor, singleFloor, heights);
 		}
 	}
 

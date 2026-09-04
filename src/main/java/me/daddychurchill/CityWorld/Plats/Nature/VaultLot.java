@@ -388,8 +388,18 @@ public class VaultLot extends BunkerLot {
     }
 
     private static void chairAt(SupportBlocks chunk, int x, int fy, int z, BlockFace facing) {
-        if (chunk.isEmpty(x, fy, z) && !chunk.isEmpty(x, fy - 1, z))
-            chunk.setBlock(x, fy, z, Material.QUARTZ_STAIRS, facing);
+        if (chunk.isEmpty(x, fy, z) && !chunk.isEmpty(x, fy - 1, z)) {
+            // the vault light pass: pooled chairs where a mod supplies them, quartz stairs kept
+            // as the retro-vault fallback. Stair facing = backrest; pooled chairs look opposite.
+            Material chair = me.daddychurchill.CityWorld.Support.FurnitureTags.pick(
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.CHAIR,
+                    new Odds(x * 341873128L + z * 132897987L));
+            if (chair != null)
+                chunk.setBlock(x, fy, z, chair, me.daddychurchill.CityWorld.Support.FurnitureTags
+                        .facingFor(chair, facing.getOppositeFace()));
+            else
+                chunk.setBlock(x, fy, z, Material.QUARTZ_STAIRS, facing);
+        }
     }
 
     /**
@@ -434,10 +444,23 @@ public class VaultLot extends BunkerLot {
     }
 
     private static void office(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
-        put(chunk, x1, fy, z1, Material.QUARTZ_BLOCK); // desk
-        put(chunk, x1, fy + 1, z1, Material.LECTERN); // a terminal on it
+        Material vDesk = me.daddychurchill.CityWorld.Support.FurnitureTags.pick(
+                me.daddychurchill.CityWorld.Support.FurnitureTags.DESK, odds);
+        if (vDesk != null && chunk.isEmpty(x1, fy, z1) && !chunk.isEmpty(x1, fy - 1, z1))
+            chunk.setBlock(x1, fy, z1, vDesk,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.facingFor(vDesk, BlockFace.EAST));
+        else
+            put(chunk, x1, fy, z1, Material.QUARTZ_BLOCK); // desk
+        // the terminal: a pooled computer IS a vault terminal; the lectern stays the fallback
+        Material term = me.daddychurchill.CityWorld.Support.FurnitureTags.pick(
+                me.daddychurchill.CityWorld.Support.FurnitureTags.COMPUTER, odds);
+        if (term != null && chunk.isEmpty(x1, fy + 1, z1))
+            chunk.setBlock(x1, fy + 1, z1, term,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.facingFor(term, BlockFace.EAST));
+        else
+            put(chunk, x1, fy + 1, z1, Material.LECTERN); // a terminal on it
         if (chunk.isEmpty(x1 + 1, fy, z1) && !chunk.isEmpty(x1 + 1, fy - 1, z1))
-            chunk.setBlock(x1 + 1, fy, z1, Material.QUARTZ_STAIRS, BlockFace.EAST); // chair facing the desk
+            chairAt(chunk, x1 + 1, fy, z1, BlockFace.EAST); // chair facing the desk
         putLoot(generator, odds, chunk, x2, fy, z2, Material.CHEST, LootProvider.LootLocation.VAULT_OFFICE); // filing
         putLoot(generator, odds, chunk, x2, fy, z1, Material.BARREL, LootProvider.LootLocation.VAULT_OFFICE);
     }

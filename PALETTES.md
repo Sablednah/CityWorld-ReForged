@@ -35,7 +35,141 @@ you add start appearing in that palette.
 | `cityworld:build/concrete` | house walls, factories, bunkers, oil platforms, water towers | `#c:concretes` |
 | `cityworld:build/concrete_powder` | factory and bunker tanks | `#minecraft:concrete_powder` |
 | `cityworld:build/stained_glass` | factory and bunker tanks | the sixteen dyed glasses |
-| `cityworld:build/modern_stones` | the decorative stone palette used by the MODERN and APOCALYPSE styles | 24 curated blocks |
+| `cityworld:build/chemicals` | what industrial tanks and silos hold when fluids are enabled | concrete powders, water, lava, slime — plus 18 Mekanism fluids (brine, acids, lithium, uranium hexafluoride…) verified against Mekanism-1.21.1-10.7.19.85 and marked optional; add your own mod's fluid blocks the same way |
+| `cityworld:build/modern_stones` | the decorative stone palette used by the MODERN and APOCALYPSE styles | 32 curated blocks (8 of them Minecraft 26.2+) |
+
+### Biome pools
+
+Three biome tags decide which biomes CityWorld places by a route other than climate. All ship with
+Biomes O' Plenty ids marked optional, so they cost nothing without it — and any biome mod can be added
+the same way.
+
+| Tag | What it does |
+|---|---|
+| `cityworld:cave_pool` | Biomes placed **underground**, as patches, with their own decoration. |
+| `cityworld:surface_pool` | Biomes given a share of surface cells **outright**, for biomes the climate lookup would never choose. |
+| `cityworld:shore_pool` | Beach variants that may **stand in for CityWorld's own beach** where the terrain says shore. |
+
+The surface and shore pools exist because some biomes cannot win a climate lookup at all: they overlap
+CityWorld's climate on every axis and still never sit nearest, so no amount of widening or
+`moddedBiomeShare` reaches them. Listing one hands it ground directly. Patches still respect the
+temperature and humidity that biome declared for itself, so a bog will not appear in a desert.
+
+### Furniture
+
+CityWorld furnishes rooms from **role tags** — "something to sit on", "something to eat at" — so a
+furniture mod appears in kitchens, dining rooms, lounges, bathrooms and studies without CityWorld
+knowing anything about it.
+
+| Tag | Used for |
+|---|---|
+| `cityworld:furniture/chair` | dining chairs, desk chairs, stools |
+| `cityworld:furniture/table` | dining tables, coffee tables |
+| `cityworld:furniture/sofa` | lounge seating runs |
+| `cityworld:furniture/desk` | studies |
+| `cityworld:furniture/counter` | kitchen counter runs |
+| `cityworld:furniture/cabinet` `…/drawer` `…/wardrobe` | storage |
+| `cityworld:furniture/sink` | kitchen sinks, bathroom basins |
+| `cityworld:furniture/bath` `…/toilet` | bathrooms |
+| `cityworld:furniture/bookshelf` `…/lamp` | studies and lounges |
+
+#### Mod authors: supporting CityWorld from your side
+
+**You do not need us to add your mod.** Ship these two files in your own jar and CityWorld picks your
+furniture up the moment both mods are installed. Neither file does anything without CityWorld, so
+there is no dependency and no harm in shipping them always.
+
+**1. Say what your blocks are.** `data/cityworld/tags/block/furniture/chair.json` in *your* jar:
+
+```json
+{
+  "replace": false,
+  "values": [
+    "yourmod:oak_dining_chair",
+    "yourmod:birch_dining_chair"
+  ]
+}
+```
+
+`"replace": false` matters — it merges with everyone else's rather than replacing them. Your own block
+ids always exist when your mod is loaded, so they need no `"required": false`.
+
+#### 2. Say which way they face
+
+⚠ **This is the part worth reading**, because getting it wrong seats everybody with their back to the
+table, and the two big furniture mods disagree about it — one of them disagrees with *itself* between
+its chairs and its sofas.
+
+CityWorld tells a seat **which way its occupant should look**. Your block's `facing` may mean something
+different, so declare the difference in `data/cityworld/data_maps/block/furniture.json`:
+
+```json
+{
+  "replace": false,
+  "values": {
+    "yourmod:oak_dining_chair": { "facingOffset": 0 }
+  }
+}
+```
+
+`facingOffset` is **how far clockwise to turn the front direction to get the value you want in
+`facing`**, in degrees — one of `0`, `90`, `180`, `270`.
+
+- `0` — your `facing` already *is* the direction the piece fronts (the way a sitter looks, the way a
+  cabinet's doors open).
+- `180` — your `facing` points at the back (very common: backrests, cistern side, the wall side of a
+  counter).
+- `90` / `270` — your model was authored on a different axis to its blockstate.
+
+To work it out without guessing: find the variant in your blockstate with **no `y` rotation**, look at
+where the identifying geometry sits in that model — backrest, door and handle, taps, cistern — and the
+front is the opposite side. The offset is the clockwise turn from that front direction to that
+variant's `facing` value.
+
+**Every oriented block wants an offset**, not just seats — counters, cabinets, sinks, toilets,
+drawers, wardrobes and bookshelves are all placed fronting into the room. Measure per *family*, not
+per mod: one of the big mods uses `0` for its classic chair and `180` for its modern chair. Tables
+that auto-connect (fence-style booleans) and blocks with no `facing` at all need nothing.
+
+**Two-block furniture** (bed-like — a bath): declare `"parts": 2` in the same entry. CityWorld then
+places `type=bottom` at the anchor and `type=head` one cell along `facing`, both halves sharing the
+facing value — the vanilla bed contract, with the `type` property found by name so your own
+bottom/head enum works.
+
+```json
+"yourmod:oak_bath": { "facingOffset": 180, "parts": 2 }
+```
+
+#### 3. Decoration pools (optional)
+
+Loose decoration is drawn from three placement pools, and you can add to them the same way:
+
+| Tag | Meaning |
+|---|---|
+| `cityworld:decor/floor` | stands on the ground (potted plants, big vases) |
+| `cityworld:decor/surface` | belongs ON a table — CityWorld puts one underneath (table lamps, candles, crockery) |
+| `cityworld:decor/wall` | wall-mounted at eye height (sconces, wall lights) |
+
+The floor/surface split is why a table lamp never ends up standing on the carpet: if your lamp is a
+table lamp, tag it `surface`, and if it is a freestanding floor lamp, tag it `floor`.
+
+### Farms
+
+Farm fields draw from these too, so a mod's crops and flowers grow on CityWorld's farmland.
+
+| Tag | Used for | Ships as |
+|---|---|---|
+| `cityworld:farm/crops` | tilled fields — one crop is drawn per field, so a field reads as *a field of something* | the four vanilla crops, plus Farmer's Delight and Biomes O' Plenty entries marked optional |
+| `cityworld:farm/flowers` | flower fields and mixed meadows | `#minecraft:small_flowers` + `#cityworld:farm/tall_flowers`, minus BoP's `waterlily` |
+| `cityworld:farm/tall_flowers` | the tall flower fields (sunflower, lilac and friends) | the five vanilla tall flowers, plus five BoP ones marked optional |
+
+**Two-block plants work.** A crop or flower that places as a `half=lower`/`half=upper` pair — BoP's
+barley, or any modded tall crop — is detected and both halves are placed. You do not need to declare
+anything for that.
+
+**A plant that cannot live there is skipped**, and the vanilla one grows instead. CityWorld asks the
+block itself (`canSurvive`) before planting, which is why an End or Nether bloom inherited from
+`#minecraft:small_flowers` does not leave a bald patch.
 
 Palettes that are a **deliberate look** rather than "all of a family" are not tags and are not meant
 to be extended: the muted greyscale of unfinished buildings, the pale civic palette of government
@@ -66,6 +200,29 @@ Three things to know:
 - **You can reference whole tags**, not just blocks — `{ "id": "#examplemod:planks", "required":
   false }` picks up everything that mod tags, including blocks it adds later.
 
+### Taking one block *out* of a palette
+
+Don't like something CityWorld builds with? NeoForge tags support a `remove` list, so you can subtract
+a single block without `"replace": true` and re-listing everything else. To keep the cinnabar but drop
+the sulfur from the MODERN stone palette:
+
+`data/cityworld/tags/block/build/modern_stones.json`
+
+```json
+{
+  "values": [],
+  "remove": [
+    "minecraft:sulfur",
+    "minecraft:sulfur_bricks",
+    "minecraft:polished_sulfur",
+    "minecraft:chiseled_sulfur"
+  ]
+}
+```
+
+`values` still has to be present, even when empty. This is a NeoForge extension — it does nothing on
+other loaders, where the only options are add or wholesale replace.
+
 Drop the pack in the world's `datapacks/` folder, or in `config/openloader/data/` if you use
 OpenLoader, and **create a new world** — palettes are resolved once, when a world is first
 generated.
@@ -85,7 +242,7 @@ deliberate — it stops a heavily modded world from turning every city into a ti
 mean that in a pack with lots of wood, any one specific plank becomes uncommon.
 
 If you want a mod's blocks to be genuinely prominent, add them to a palette with fewer competitors
-(`cityworld:build/modern_stones` has 24) rather than to the biggest one.
+(`cityworld:build/modern_stones` has 32) rather than to the biggest one.
 
 ## Determinism
 

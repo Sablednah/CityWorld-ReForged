@@ -223,6 +223,45 @@ public abstract class BuildingLot extends ConnectedLot {
 		}
 	}
 
+	// ---- the stairwell claim mask -------------------------------------------------------------
+	// You don't move furniture in until the stairs are built (owner's framing). Every furnisher
+	// used to INFER where the stairs were — geometric guesses, emptiness probes — each wrong
+	// differently, which is why fixing one clip caused the next. Instead the stairwell CLAIMS its
+	// cells (footprint plus a one-cell approach ring, which is air and thus invisible to any
+	// emptiness probe), computed from the same StairAt math drawStairs uses, and everything that
+	// places furniture asks first.
+
+	private final boolean[] stairClaim = new boolean[256];
+
+	protected void claimStairs(RealBlocks chunk, int stairLength, StairWell where) {
+		java.util.Arrays.fill(stairClaim, false);
+		if (where == StairWell.NONE)
+			return;
+		StairAt at = new StairAt(chunk, stairLength, where);
+		// The REAL footprint, measured from the drawing code: nothing ever places beyond
+		// at.X+3 / at.Z+4 — tall floors switchback within it. Claiming stairLength (= floor
+		// height) swallowed entire double-height lobbies: the empty School ground floor, while
+		// its 4-tall upper floors furnished fine (seed 2720459862006157221, block 90 69 -107).
+		for (int x = at.X - 1; x <= at.X + 4; x++)
+			for (int z = at.Z - 1; z <= at.Z + 5; z++)
+				if (x >= 0 && x < 16 && z >= 0 && z < 16)
+					stairClaim[x * 16 + z] = true;
+	}
+
+	/** Whether the stairwell claims this cell — footprint plus the approach ring. */
+	protected final boolean isStairClaimed(int x, int z) {
+		return x >= 0 && x < 16 && z >= 0 && z < 16 && stairClaim[x * 16 + z];
+	}
+
+	/** Claim a placed room's footprint too (owner's cascade: each pass claims what it uses plus
+	 *  access, and smaller passes fill what remains). Shares the stair mask — one claim grid. */
+	protected final void claimRect(int x1, int z1, int x2, int z2) {
+		for (int x = x1; x <= x2; x++)
+			for (int z = z1; z <= z2; z++)
+				if (x >= 0 && x < 16 && z >= 0 && z < 16)
+					stairClaim[x * 16 + z] = true;
+	}
+
 	StairWell getStairWellLocation(boolean allowRounded, Surroundings heights) {
 		if (heights.toNorth() && heights.toWest() && !heights.toSouth() && !heights.toEast())
 			return StairWell.NORTHWEST;

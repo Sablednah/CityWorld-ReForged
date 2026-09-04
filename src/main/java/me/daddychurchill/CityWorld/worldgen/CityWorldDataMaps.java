@@ -61,9 +61,61 @@ public final class CityWorldDataMaps {
             .builder(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "ground"), Registries.BIOME, Ground.CODEC)
             .build();
 
+    /**
+     * How a furniture block's {@code facing} relates to the way its front points, in degrees
+     * clockwise — plus how many blocks the piece occupies.
+     *
+     * <p>The offset is needed because furniture mods disagree, and measurably so: Macaw's chair uses
+     * {@code facing} for the direction the sitter looks, Macaw's <em>sofa</em> is 90° off that, and
+     * Refurbished uses it for the direction the backrest points. A boolean "front or back?" cannot
+     * express three conventions, and one mod contradicting itself (classic chair 0, modern chair 180)
+     * rules out declaring it per mod.
+     *
+     * <p>{@code parts} marks bed-like two-block furniture (the Refurbished baths): {@code type=bottom}
+     * at the anchor, {@code type=head} one cell along {@code facing}, both halves sharing the facing —
+     * measured from {@code BathBlock.setPlacedBy}, and exactly the vanilla bed contract.
+     */
+    public record Facing(int facingOffset, int parts) {
+
+        public static final Codec<Facing> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.INT.optionalFieldOf("facingOffset", 0).forGetter(Facing::facingOffset),
+                Codec.INT.optionalFieldOf("parts", 1).forGetter(Facing::parts)
+        ).apply(i, Facing::new));
+    }
+
+    public static final DataMapType<Block, Facing> FURNITURE = DataMapType
+            .builder(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "furniture"), Registries.BLOCK,
+                    Facing.CODEC)
+            .build();
+
     /** Registered from {@code CityWorldMod} on the mod event bus. */
     public static void register(RegisterDataMapTypesEvent event) {
         event.register(GROUND);
+        event.register(FURNITURE);
+    }
+
+    /** The declared facing offset for a furniture block, or {@code 0} if it declares none. */
+    public static int facingOffsetFor(me.daddychurchill.CityWorld.compat.Material piece) {
+        Facing facing = furnitureDataFor(piece);
+        return facing == null ? 0 : facing.facingOffset();
+    }
+
+    /** How many blocks this furniture piece occupies — {@code 1} unless declared bed-like. */
+    public static int partsFor(me.daddychurchill.CityWorld.compat.Material piece) {
+        Facing facing = furnitureDataFor(piece);
+        return facing == null ? 1 : facing.parts();
+    }
+
+    private static @Nullable Facing furnitureDataFor(me.daddychurchill.CityWorld.compat.Material piece) {
+        if (piece == null)
+            return null;
+        Block block = piece.getBlock();
+        if (block == null)
+            return null;
+        Holder<Block> holder = BuiltInRegistries.BLOCK.wrapAsHolder(block);
+        if (holder instanceof Holder.Reference<Block> reference)
+            return reference.getData(FURNITURE);
+        return null;
     }
 
     /**

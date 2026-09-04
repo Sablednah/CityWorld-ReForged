@@ -1,0 +1,309 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "mcwfurnitures:acacia_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:acacia_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:acacia_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:birch_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:birch_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:black_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:black_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:blue_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:blue_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:brown_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:brown_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cherry_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cherry_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:crimson_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:crimson_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cyan_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cyan_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:dark_oak_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:dark_oak_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:gray_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:gray_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:green_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:green_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:jungle_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:jungle_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_blue_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_blue_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_gray_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_gray_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:lime_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:lime_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:magenta_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:magenta_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:mangrove_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:mangrove_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:oak_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:oak_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:orange_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:orange_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pale_oak_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pale_oak_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pink_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pink_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:purple_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:purple_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:red_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:red_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:spruce_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:spruce_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:warped_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:warped_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:white_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:white_kitchen_sink",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:yellow_basin",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:yellow_kitchen_sink",
+      "required": false
+    }
+  ]
+}

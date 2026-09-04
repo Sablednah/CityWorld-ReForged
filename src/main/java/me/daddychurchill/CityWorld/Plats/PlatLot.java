@@ -106,6 +106,16 @@ public abstract class PlatLot {
 		return null;
 	}
 
+	/**
+	 * What this lot's interior is furnished AS — "Courthouse", "Apartments", "Museum exhibits" —
+	 * when that differs from what the lot class already says. Null for lots with nothing to add.
+	 * Surfaced through {@code LotInfo}, the F3 overlay and {@code /cityinfo}, because "am I looking
+	 * at the school or just an office?" is unanswerable from the outside otherwise (playtested).
+	 */
+	public String getInteriorDescription() {
+		return null;
+	}
+
 	public boolean isPlaceableAt(CityWorldGenerator generator, int chunkX, int chunkZ) {
 		return generator.getSettings().inCityRange(chunkX, chunkZ);
 	}

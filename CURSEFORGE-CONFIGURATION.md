@@ -182,6 +182,52 @@ A few common asks, as complete `default.json` files.
 | `oddsOfDecayFire` | `0.20` | Fraction of collapse rubble that catches fire. Only bites when `includeFires` **and** `includeDecayedFires` are both on. DESTROYED uses `0.07` — even 0.2+ reads as a carpet of flame. |
 | `oddsOfPristineRoad` | `0.0` | Chance a road chunk is spared and stays intact, so a ruined grid keeps walkable stretches. APOCALYPSE uses `0.3`. |
 
+### `caves` — the underground: cave biomes and structure caverns
+
+Two things here are **datapack tags, not settings**, because they are lists of ids rather than numbers:
+
+| Tag | What it decides |
+|---|---|
+| `#cityworld:allowed` (structure sets) | Which vanilla structures generate. Ships as strongholds, trial chambers and ancient cities. Add another mod's structure set here and it will generate; **an absent or empty tag means none**, so a stripped datapack falls back to CityWorld-only worldgen rather than letting villages loose. |
+| `#cityworld:cave_pool` (biomes) | Which cave biomes the underground draws from. Ships as deep dark, lush, dripstone, and sulfur caves (Minecraft 26.2+, marked optional so it is simply absent on older versions). Add a modded cave biome here and it will appear. |
+
+The `caves` settings group is the numbers those tags cannot express:
+
+| Setting | Default | What it does |
+|---|---|---|
+| `structureCarveHalo` | `10` | How far, horizontally, terrain is cleared past the pieces of a structure that expects a cavern around it — an ancient city, in practice. Too small and the city reads as a row of boxes instead of one hall; larger gives a roomier, emptier space. |
+| `structureCarveHaloUp` | `6` | The same, upward — headroom, not a chimney. Nothing is ever carved *below* a structure, because the game piles material there to hold it up. |
+| `surfaceMargin` | `8` | How far below the ground a cave patch begins, so a patch can't bleed into surface grass and foliage colour on a hillside. |
+| `patches` | `[]` | Per-biome patch shaping. **Empty means the shipped defaults**; listing any entry replaces the lot. |
+
+Each `patches` entry takes `biome` (required), plus `cell`, `percent`, `minY` and `maxY`. `cell` is the
+patch grid size in blocks (bigger = bigger, further-apart patches), `percent` roughly what share of
+cells are that type, and `minY`/`maxY` the depth band it applies in.
+
+**Order matters.** The first entry whose cell matches owns the whole column — one cave type per column,
+never stacked — so list the rarest and deepest first. A biome must still be in `#cityworld:cave_pool` to
+appear at all; `patches` only shapes it. That is also how you give a **modded** cave biome proper
+geometry instead of the generic fallback it gets from the tag alone.
+
+The shipped defaults, if you want to start from them:
+
+```json
+"caves": {
+  "patches": [
+    { "biome": "minecraft:deep_dark",       "cell": 176, "percent": 4, "minY": -64, "maxY": -24 },
+    { "biome": "minecraft:sulfur_caves",    "cell": 112, "percent": 5, "minY": -64, "maxY":  -8 },
+    { "biome": "minecraft:lush_caves",      "cell":  80, "percent": 5, "minY": -40, "maxY":  40 },
+    { "biome": "minecraft:dripstone_caves", "cell":  96, "percent": 6, "minY": -60, "maxY":  20 }
+  ]
+}
+```
+
+> **Careful with `deep_dark`'s `maxY`.** It stops at `-24` because that is where ancient cities
+> generate. Raise it and you advertise the biome above the depth anything can use it — and you start
+> eating the clearance that keeps ancient cities from opening into your sewers and cisterns.
+
+Cave biomes bring their own mobs. The deep dark carries none at all, plus wardens.
+
 ### `shops` — themed retail with villager job blocks (MODERN dressing)
 
 | Setting | Default | What it does |
@@ -221,6 +267,16 @@ A few common asks, as complete `default.json` files.
 | `maxBuildingFloors` | `20` | Tallest a building may rise, in floors (4 blocks each) above street level. 20 = the classic 1.8 look; MODERN ships taller. Sensible range 8–60. Also on the Customize screen. |
 | `broadcastSpecialPlaces` | `false` | Announce landmarks in chat as they generate ("Vault 42 generated near 1520, -340"), to the players in the world it happened in. Off by default — chunks generate wherever anyone explores. The same events always go to the debug log regardless. Schematics join in only if their `.yml` also sets `BroadcastLocation: true`. |
 | `announcedLandmarks` | the rares | Which landmark kinds may chat-announce (with the toggle above on). Default `["airship","saucer","vault","zoo","biodome","hospital","schematic"]`; a server can add `castle`, `oilplatform`, `radiotower`, `bunker`, `museum`, `mineentrance`, `campground`, `shack`, `balloon`, `fishpond` — or trim the list down. |
+
+#### Modded biomes
+
+| Setting | Default | What it does |
+|---|---|---|
+| `wildDecoration` | `BOTH` | Who decorates **wild (nature) land** in MODERN/APOCALYPSE. `BOTH` runs CityWorld's cover *and* vanilla's biome features — the default, and the densest. `CITYWORLD` skips vanilla's, leaving CityWorld's own cover alone. `VANILLA` skips CityWorld's entirely, so vanilla — **and any biome mod you have installed** — is the sole decorator; note that also drops CityWorld's cactus and its MODERN blue-ice peaks, which get vanilla's snow instead. City, road and structure land is always CityWorld's alone, whatever this is set to. |
+| `climateWarmth` | `0.25` | Leans the temperature field warm. `0.0` is the raw field; higher values shift the average up without narrowing the range (0 stays 0, 1 stays 1), so you keep frozen peaks and deserts but see more warm ground between them. The default lifts the mean by about 17%, which is there because worlds read persistently cold. |
+| `useModdedBiomes` | `true` | Let installed biome mods (Biomes O' Plenty and anything else built on **TerraBlender**) contribute biomes to the world. On by default, because installing a biome mod is itself the request — set it `false` to keep CityWorld's own biome selection. Does nothing at all if you have no such mod. Oceans, shores and peaks always stay CityWorld's, since those follow the terrain exactly. |
+| `moddedBiomeShare` | `0.35` | How much contested ground a biome mod may own outright. A modded biome is normally picked only where it beats every vanilla biome in the climate lookup, and many mod biomes overlap CityWorld's climate on every axis yet never quite win — measured with Biomes O' Plenty, 25 of them. On this share of the map the lookup runs with vanilla's biomes removed, so those compete only with each other. The share is regional, not scattered, so a mod gets areas you can walk across. `0.0` means "only where they outright win"; `1.0` hands every contested column to the mod. Needs `useModdedBiomes`. |
+| `biomeScale` | `1.5` | How large biome regions are, as a multiplier — it divides the frequency of the temperature, humidity, erosion and weirdness fields together, and widens the continentalness smoothing to match. `1.0` is the older, tighter default; `3.0` gives continent-sized regions. Scaling all the axes together changes how *big* regions are rather than which biome you get. |
 
 ### `radius` — where cities may appear (distances in chunks; 16 blocks each)
 

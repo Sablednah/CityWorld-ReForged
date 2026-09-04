@@ -976,11 +976,9 @@ public class StructureOnGroundProvider extends Provider {
 					doorEast = roomEast;
 				}
 
-				me.daddychurchill.CityWorld.Support.Furniture.kitchen(generator, chunk, odds, x1, x2, y1, z1, z2);
 				break;
 			case DINING:
 
-				me.daddychurchill.CityWorld.Support.Furniture.dining(generator, chunk, odds, x1, x2, y1, z1, z2);
 				break;
 			case ENTRY:
 
@@ -1126,21 +1124,7 @@ public class StructureOnGroundProvider extends Provider {
 					}
 				}
 
-				// the ground-floor entry is the room you walk into — furnish it as a living area (the
-				// couch fits around the stairwell; a single-floor foyer has the whole room)
-				if (floor == 0)
-					me.daddychurchill.CityWorld.Support.Furniture.living(generator, chunk, odds, x1, x2, y1, z1, z2);
 
-				break;
-			case LIVING:
-
-				me.daddychurchill.CityWorld.Support.Furniture.living(generator, chunk, odds, x1, x2, y1, z1, z2);
-				break;
-			case BED:
-				me.daddychurchill.CityWorld.Support.Furniture.bedroom(generator, chunk, odds, x1, x2, y1, z1, z2);
-				break;
-			case BATHROOM:
-				me.daddychurchill.CityWorld.Support.Furniture.bathroom(generator, chunk, odds, x1, x2, y1, z1, z2);
 				break;
 			}
 
@@ -1193,6 +1177,41 @@ public class StructureOnGroundProvider extends Provider {
 						chunk.setDoor(x2, y1, z2 - 2, Material.BIRCH_DOOR, BlockFace.EAST_SOUTH_EAST);
 				}
 			}
+
+			// Furnish AFTER the walls and doors exist — this ordering is load-bearing. Furniture can
+			// now refuse doorway approaches (a bed parked in front of a door twice in playtest),
+			// wall art has real interior walls to hang on (before this there were none yet, which is
+			// why no painting ever appeared), and the bed/bath "wall nearest the chunk edge" trick
+			// becomes a preference rather than the only defence.
+			switch (style) {
+			case KITCHEN:
+				me.daddychurchill.CityWorld.Support.Furniture.kitchen(generator, chunk, odds, x1, x2, y1, z1, z2);
+				break;
+			case DINING:
+				me.daddychurchill.CityWorld.Support.Furniture.dining(generator, chunk, odds, x1, x2, y1, z1, z2);
+				break;
+			case ENTRY:
+				// ground floor: the living area you walk into; upper floors: the LANDING (console,
+				// rug, wall decor), with clearFloor keeping everything off the stair opening
+				if (floor == 0)
+					me.daddychurchill.CityWorld.Support.Furniture.living(generator, chunk, odds, x1, x2, y1, z1, z2);
+				else
+					me.daddychurchill.CityWorld.Support.Furniture.hallway(generator, chunk, odds, x1, x2, y1, z1, z2);
+				break;
+			case LIVING:
+				// some become a study with a furniture mod installed; study() no-ops without a desk
+				if (odds.playOdds(me.daddychurchill.CityWorld.Support.Odds.oddsUnlikely))
+					me.daddychurchill.CityWorld.Support.Furniture.study(generator, chunk, odds, x1, x2, y1, z1, z2);
+				else
+					me.daddychurchill.CityWorld.Support.Furniture.living(generator, chunk, odds, x1, x2, y1, z1, z2);
+				break;
+			case BED:
+				me.daddychurchill.CityWorld.Support.Furniture.bedroom(generator, chunk, odds, x1, x2, y1, z1, z2);
+				break;
+			case BATHROOM:
+				me.daddychurchill.CityWorld.Support.Furniture.bathroom(generator, chunk, odds, x1, x2, y1, z1, z2);
+				break;
+			}
 		}
 	}
 
@@ -1227,7 +1246,9 @@ public class StructureOnGroundProvider extends Provider {
 		chunk.setCircle(x + 4, x + 4, 3, y3 + 6, topMat, true);
 
 		if (generator.getSettings().includeAbovegroundFluids) {
-			chunk.setCircle(x + 4, x + 4, 3, y3 + 1, y3 + 2 + odds.getRandomInt(3),
+			// fill most of the tank, not a puddle at the bottom — 1-3 layers in a 5-tall tank was
+			// invisible from the rim and read as an empty tower (playtested)
+			chunk.setCircle(x + 4, x + 4, 3, y3 + 1, y3 + 4 + odds.getRandomInt(2),
 					generator.oreProvider.fluidFluidMaterial, true);
 		}
 	}

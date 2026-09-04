@@ -21,19 +21,19 @@ public class LoungeChairsRoom extends LoungeRoom {
 		default:
 		case NORTH:
 		case SOUTH:
-			chunk.setBlock(x, y, z, Material.BIRCH_STAIRS, BlockFace.WEST);
-			chunk.setBlock(x + 2, y, z, Material.BIRCH_STAIRS, BlockFace.EAST);
+			drawSeat(chunk, odds, x, y, z, BlockFace.WEST);
+			drawSeat(chunk, odds, x + 2, y, z, BlockFace.EAST);
 
-			chunk.setBlock(x, y, z + 2, Material.BIRCH_STAIRS, BlockFace.WEST);
-			chunk.setBlock(x + 2, y, z + 2, Material.BIRCH_STAIRS, BlockFace.EAST);
+			drawSeat(chunk, odds, x, y, z + 2, BlockFace.WEST);
+			drawSeat(chunk, odds, x + 2, y, z + 2, BlockFace.EAST);
 			break;
 		case WEST:
 		case EAST:
-			chunk.setBlock(x, y, z, Material.BIRCH_STAIRS, BlockFace.NORTH);
-			chunk.setBlock(x, y, z + 2, Material.BIRCH_STAIRS, BlockFace.SOUTH);
+			drawSeat(chunk, odds, x, y, z, BlockFace.NORTH);
+			drawSeat(chunk, odds, x, y, z + 2, BlockFace.SOUTH);
 
-			chunk.setBlock(x + 2, y, z, Material.BIRCH_STAIRS, BlockFace.NORTH);
-			chunk.setBlock(x + 2, y, z + 2, Material.BIRCH_STAIRS, BlockFace.SOUTH);
+			drawSeat(chunk, odds, x + 2, y, z, BlockFace.NORTH);
+			drawSeat(chunk, odds, x + 2, y, z + 2, BlockFace.SOUTH);
 			break;
 		}
 	}

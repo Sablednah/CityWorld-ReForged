@@ -22,36 +22,36 @@ public class DeskInternsRoom extends DeskRoom {
 		switch (sideWithWall) {
 		default:
 		case NORTH:
-			chunk.setTable(x, y, z, tableLeg, tableTop);
+			drawDesk(generator, chunk, odds, x, y, z, BlockFace.SOUTH);
 			chunk.setBlock(x + 1, y, z, Material.BOOKSHELF);
 			chunk.setBlock(x + 1, y + 1, z, tableTop);
-			chunk.setTable(x + 2, y, z, tableLeg, tableTop);
-			chunk.setBlock(x, y, z + 1, Material.BIRCH_STAIRS, BlockFace.SOUTH);
-			chunk.setBlock(x + 2, y, z + 1, Material.BIRCH_STAIRS, BlockFace.SOUTH);
+			drawDesk(generator, chunk, odds, x + 2, y, z, BlockFace.SOUTH);
+			drawSeat(chunk, odds, x, y, z + 1, BlockFace.SOUTH);
+			drawSeat(chunk, odds, x + 2, y, z + 1, BlockFace.SOUTH);
 			break;
 		case SOUTH:
-			chunk.setTable(x, y, z + 2, tableLeg, tableTop);
+			drawDesk(generator, chunk, odds, x, y, z + 2, BlockFace.NORTH);
 			chunk.setBlock(x + 1, y, z + 2, Material.BOOKSHELF);
 			chunk.setBlock(x + 1, y + 1, z + 2, tableTop);
-			chunk.setTable(x + 2, y, z + 2, tableLeg, tableTop);
-			chunk.setBlock(x, y, z + 1, Material.BIRCH_STAIRS, BlockFace.NORTH);
-			chunk.setBlock(x + 2, y, z + 1, Material.BIRCH_STAIRS, BlockFace.NORTH);
+			drawDesk(generator, chunk, odds, x + 2, y, z + 2, BlockFace.NORTH);
+			drawSeat(chunk, odds, x, y, z + 1, BlockFace.NORTH);
+			drawSeat(chunk, odds, x + 2, y, z + 1, BlockFace.NORTH);
 			break;
 		case WEST:
-			chunk.setTable(x, y, z, tableLeg, tableTop);
+			drawDesk(generator, chunk, odds, x, y, z, BlockFace.EAST);
 			chunk.setBlock(x, y, z + 1, Material.BOOKSHELF);
 			chunk.setBlock(x, y + 1, z + 1, tableTop);
-			chunk.setTable(x, y, z + 2, tableLeg, tableTop);
-			chunk.setBlock(x + 1, y, z, Material.BIRCH_STAIRS, BlockFace.EAST);
-			chunk.setBlock(x + 1, y, z + 2, Material.BIRCH_STAIRS, BlockFace.EAST);
+			drawDesk(generator, chunk, odds, x, y, z + 2, BlockFace.EAST);
+			drawSeat(chunk, odds, x + 1, y, z, BlockFace.EAST);
+			drawSeat(chunk, odds, x + 1, y, z + 2, BlockFace.EAST);
 			break;
 		case EAST:
-			chunk.setTable(x + 2, y, z, tableLeg, tableTop);
+			drawDesk(generator, chunk, odds, x + 2, y, z, BlockFace.WEST);
 			chunk.setBlock(x + 2, y, z + 1, Material.BOOKSHELF);
 			chunk.setBlock(x + 2, y + 1, z + 1, tableTop);
-			chunk.setTable(x + 2, y, z + 2, tableLeg, tableTop);
-			chunk.setBlock(x + 1, y, z, Material.BIRCH_STAIRS, BlockFace.WEST);
-			chunk.setBlock(x + 1, y, z + 2, Material.BIRCH_STAIRS, BlockFace.WEST);
+			drawDesk(generator, chunk, odds, x + 2, y, z + 2, BlockFace.WEST);
+			drawSeat(chunk, odds, x + 1, y, z, BlockFace.WEST);
+			drawSeat(chunk, odds, x + 1, y, z + 2, BlockFace.WEST);
 			break;
 		}
 	}

@@ -873,6 +873,16 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			} else {
 				drawOtherPillars(chunk, floorAt, basementFloorHeight, StairWell.CENTER, wallMaterial);
 			}
+
+			// Occupied buildings keep STORAGE down here (owner request): the warehouse pool —
+			// crates, shelves, stacks — through the same claim cascade the floors above use.
+			// Vacant shells keep their bare basements; a for-sale building with a full cellar
+			// would be lying.
+			if (!"Vacant".equals(getInteriorDescription())) {
+				claimStairs(chunk, basementFloorHeight, needStairsDown ? stairLocation : StairWell.NONE);
+				sweepBareFloor(generator, chunk, basementStorage, -1 - floor, floorAt, basementFloorHeight, 0, 0,
+						wallMaterial, wallMaterial, neighborFloors);
+			}
 		}
 
 		// now the above ground floors
@@ -1005,6 +1015,9 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			Material materialStair, Material materialStairWall, Material materialPlatform, boolean drawStairWall,
 			boolean drawStairs, boolean topFloor, boolean singleFloor, Surroundings heights) {
 
+		// the stairwell claims its cells before ANY furnisher runs (see BuildingLot.claimStairs)
+		claimStairs(chunk, floorHeight, drawStairs ? stairLocation : StairWell.NONE);
+
 		// calculate initial door state
 		DoorStyle drawInteriorDoors = DoorStyle.NONE;
 
@@ -1068,12 +1081,89 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 					floorHeight, insetNS, insetWE, allowRounded, materialWall, materialGlass, stairLocation, heights);
 		}
 
+		// light the floor — interiors were pitch dark (playtested by night vision). Lights HANG in
+		// the air below the ceiling because the ceiling block is the next floor's floor. EMPTY
+		// style stays dark on purpose: those are the derelict shells.
+		if (style != InteriorStyle.EMPTY)
+			lightInterior(chunk, floorAt, aboveFloorHeight);
+
 		// more stairs and such
-		if (drawStairs)
+		if (drawStairs) {
 			drawStairs(generator, chunk, floorAt, aboveFloorHeight, stairLocation, materialStair, materialPlatform);
+		}
+
+		if (me.daddychurchill.CityWorld.Support.ChunkProbe.tracing())
+			me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+					"TRACE drawInteriorParts {} floor={} style={} floorAt={} drawStairs={} stairLoc={}",
+					getClass().getSimpleName(), floor, style, floorAt, drawStairs, stairLocation);
+		// the coverage sweep runs AFTER the stairs so bare-floor detection sees them
+		// _ONLY styles too: per-floor style resolution hands some floors of furnished buildings a
+		// roomless style, which playtested as broken-empty stair strips, not intentional bareness
+		if (style != InteriorStyle.EMPTY && style != InteriorStyle.RANDOM)
+			sweepBareFloor(generator, chunk, rooms, floor, floorAt, floorHeight, insetNS, insetWE, materialWall,
+					materialGlass, heights);
 
 		drawExteriorDoors(generator, chunk, context, floor, floorAt, floorHeight, insetNS, insetWE, allowRounded,
 				materialWall, materialGlass, stairLocation, heights);
+
+		// vacant buildings advertise (owner request): a FOR SALE sign beside the front door
+		if (floor == 0 && "Vacant".equals(getInteriorDescription()))
+			placeForSaleSign(chunk, floorAt, insetNS, insetWE);
+	}
+
+	/** Find the ground-floor door and hang a FOR SALE sign on the wall beside it, facing the
+	 *  street. Wall signs face away from their wall (measured long ago, still true). */
+	private void placeForSaleSign(RealBlocks chunk, int y, int insetNS, int insetWE) {
+		// some landlords in this town (owner request)
+		String label = chunkOdds.flipCoin() ? "FOR SALE" : "TO LET";
+		int n = insetNS, w = insetWE, so = 15 - insetNS, e = 15 - insetWE;
+		for (int x = w + 1; x <= e - 1; x++) {
+			if (n > 0 && chunk.isDoor(x, y, n) && chunk.isEmpty(x + 1, y + 2, n - 1)) {
+				chunk.setWallSign(x + 1, y + 2, n - 1, BlockFace.NORTH, "", label, "enquire within", "");
+				return;
+			}
+			if (so < 15 && chunk.isDoor(x, y, so) && chunk.isEmpty(x + 1, y + 2, so + 1)) {
+				chunk.setWallSign(x + 1, y + 2, so + 1, BlockFace.SOUTH, "", label, "enquire within", "");
+				return;
+			}
+		}
+		for (int z = n + 1; z <= so - 1; z++) {
+			if (w > 0 && chunk.isDoor(w, y, z) && chunk.isEmpty(w - 1, y + 2, z + 1)) {
+				chunk.setWallSign(w - 1, y + 2, z + 1, BlockFace.WEST, "", label, "enquire within", "");
+				return;
+			}
+			if (e < 15 && chunk.isDoor(e, y, z) && chunk.isEmpty(e + 1, y + 2, z + 1)) {
+				chunk.setWallSign(e + 1, y + 2, z + 1, BlockFace.EAST, "", label, "enquire within", "");
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Hang lights below the ceiling on a loose grid. One fixture type per floor (a floor of
+	 * mismatched lanterns reads as a jumble), drawn from {@code #cityworld:decor/hanging_light} so
+	 * mods can contribute their own hanging lights; vanilla seeds are lantern and soul lantern.
+	 * Each position scans up for its own ceiling and skips outdoors/inset positions that find none.
+	 */
+	protected void lightInterior(RealBlocks chunk, int floorAt, int floorHeight) {
+		me.daddychurchill.CityWorld.compat.Material light = me.daddychurchill.CityWorld.Support.FurnitureTags
+				.pick(me.daddychurchill.CityWorld.Support.FurnitureTags.HANGING_LIGHT, chunkOdds);
+		if (light == null)
+			return; // the pool ships vanilla seeds; empty means the tag was discarded whole
+		for (int[] p : new int[][] { { 3, 3 }, { 3, 12 }, { 12, 3 }, { 12, 12 }, { 7, 7 } }) {
+			if (!chunkOdds.playOdds(0.75))
+				continue;
+			int ceil = -1;
+			for (int cy = floorAt + 2; cy <= floorAt + floorHeight; cy++)
+				if (!chunk.isEmpty(p[0], cy, p[1])) {
+					ceil = cy;
+					break;
+				}
+			// need a ceiling with clear air under it — never light the inside of a wall or a shelf
+			if (ceil < 0 || !chunk.isEmpty(p[0], ceil - 1, p[1]) || !chunk.isEmpty(p[0], ceil - 2, p[1]))
+				continue;
+			chunk.setHangingLantern(p[0], ceil - 1, p[1], light);
+		}
 	}
 
 	// outside
@@ -1531,6 +1621,9 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		}
 	}
 
+	private static final RoomProvider basementStorage =
+			new me.daddychurchill.CityWorld.Rooms.Populators.WarehouseWithBoxes();
+
 	private static final int maxInsetForRooms = 2;
 
 	private void drawInteriorRooms(CityWorldGenerator generator, RealBlocks chunk, DataContext context,
@@ -1541,6 +1634,127 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		// skip the rooms?
 		if (!generator.getSettings().includeBuildingInteriors)
 			return;
+
+		drawInteriorRoomsGrid(generator, chunk, context, drawNarrowInteriors, rooms, floor, y1, height, insetNS,
+				insetWE, allowRounded, materialWall, materialGlass, stairsLocation, heights);
+	}
+
+	/**
+	 * Coverage sweep — the grid keys off NEIGHBOUR chunks and starves standalone buildings and
+	 * stair-adjacent quadrants. Runs AFTER the stairs are drawn, so {@code bareFloor} simply SEES
+	 * the staircase and no stair geometry needs guessing — the earlier geometric exclusion scaled
+	 * with floor height and emptied tall ground floors entirely (playtested: the city-hall lobby
+	 * with an "allergy to stairs").
+	 */
+	protected void sweepBareFloor(CityWorldGenerator generator, RealBlocks chunk, RoomProvider rooms, int floor,
+			int y1, int height, int insetNS, int insetWE, Material materialWall, Material materialGlass,
+			Surroundings heights) {
+		if (!generator.getSettings().includeBuildingInteriors)
+			return;
+		// Per-side insets: a side facing a NEIGHBOUR chunk has no wall there, so no inset — the
+		// symmetric version left bare bands along chunk seams and ate both halves of one-chunk
+		// municipal strips (owner's diagnosis: ".5 + .5 == no stuff")
+		int ix1 = heights.toWest() ? 1 : Math.max(1, insetWE + 1);
+		int ix2 = heights.toEast() ? 14 : Math.min(14, 14 - insetWE);
+		int iz1 = heights.toNorth() ? 1 : Math.max(1, insetNS + 1);
+		int iz2 = heights.toSouth() ? 14 : Math.min(14, 14 - insetNS);
+
+		// Self-calibrate the floor level. Overrides shift their interiors (Government raises them
+		// by `higher`), and an off-by-one here silently blanks a whole floor — the empty School
+		// lobby survived the claim fix because the sweep's y sat inside the raised slab, failing
+		// every standability check. Sample the interior and use the level where cells actually
+		// ARE standable, trying y1 upward.
+		int y1cal = y1;
+		calibrate: for (int dy = 0; dy <= 2; dy++) {
+			int standable = 0, sampled = 0;
+			for (int cx = ix1; cx <= ix2; cx += 3)
+				for (int cz = iz1; cz <= iz2; cz += 3) {
+					sampled++;
+					if (chunk.isEmpty(cx, y1 + dy, cz) && !chunk.isEmpty(cx, y1 + dy - 1, cz))
+						standable++;
+				}
+			if (sampled > 0 && standable * 2 > sampled) {
+				y1cal = y1 + dy;
+				break calibrate;
+			}
+		}
+		final int yf = y1cal;
+		if (me.daddychurchill.CityWorld.Support.ChunkProbe.tracing())
+			me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+					"TRACE sweep {} floor={} y1={} yf={} x[{}..{}] z[{}..{}] rooms={}",
+					getClass().getSimpleName(), floor, y1, yf, ix1, ix2, iz1, iz2,
+					rooms.getClass().getSimpleName());
+		// two passes, the second offset by 2: the CROSSED stair footprint can clip every cell of
+		// one alignment while a whole bare strip sits between them (playtested)
+		for (int pass = 0; pass < 2; pass++)
+		for (int cx = ix1 + pass * 2; cx + roomWidth - 1 <= ix2; cx += roomWidth + 1)
+			for (int cz = iz1 + pass * 2; cz + roomDepth - 1 <= iz2; cz += roomDepth + 1) {
+				if (!chunkOdds.playOdds(0.8) || !bareFloor(chunk, cx, yf, cz))
+					continue;
+				int dW = cx, dE = 15 - (cx + roomWidth - 1), dN = cz, dS = 15 - (cz + roomDepth - 1);
+				int best = Math.min(Math.min(dN, dS), Math.min(dW, dE));
+				BlockFace side = best == dN ? BlockFace.NORTH
+						: best == dS ? BlockFace.SOUTH : best == dW ? BlockFace.WEST : BlockFace.EAST;
+				drawInteriorRoom(generator, chunk, rooms, floor, cx, yf, cz, height, side, materialWall,
+						materialGlass);
+				claimRect(cx - 1, cz - 1, cx + roomWidth, cz + roomDepth); // footprint + access ring
+			}
+
+		// 2x2 pass — a seat and its side table — everywhere a 3x3 could not line up
+		for (int cx = ix1; cx + 1 <= ix2; cx += 3)
+			for (int cz = iz1; cz + 1 <= iz2; cz += 3) {
+				if (!chunkOdds.playOdds(0.5))
+					continue;
+				boolean bare = true;
+				for (int dx = 0; dx <= 1 && bare; dx++)
+					for (int dz = 0; dz <= 1 && bare; dz++)
+						bare = !isStairClaimed(cx + dx, cz + dz) && chunk.isEmpty(cx + dx, yf, cz + dz)
+								&& chunk.isEmpty(cx + dx, yf + 1, cz + dz)
+								&& !chunk.isEmpty(cx + dx, yf - 1, cz + dz);
+				if (!bare)
+					continue;
+				me.daddychurchill.CityWorld.Support.Furniture.sideTable(chunk, chunkOdds, cx, yf, cz);
+				Material chair = me.daddychurchill.CityWorld.Support.FurnitureTags
+						.pick(me.daddychurchill.CityWorld.Support.FurnitureTags.CHAIR, chunkOdds);
+				if (chair != null)
+					chunk.setBlock(cx + 1, yf, cz + 1, chair, me.daddychurchill.CityWorld.Support.FurnitureTags
+							.facingFor(chair, BlockFace.NORTH));
+				claimRect(cx - 1, cz - 1, cx + 2, cz + 2);
+			}
+
+		// Small-cell fallback: tight interiors (one-chunk civic strips, floors dominated by the
+		// stair claim) can have NO spot where a 3x3 lines up — "like bottling lightning"
+		// (playtested). Single bare cells get a small non-directional piece instead, so tight
+		// floors read furnished rather than abandoned.
+		for (int cx = ix1; cx <= ix2; cx++)
+			for (int cz = iz1; cz <= iz2; cz++) {
+				if (!chunkOdds.playOdds(0.08) || isStairClaimed(cx, cz))
+					continue;
+				if (!chunk.isEmpty(cx, yf, cz) || !chunk.isEmpty(cx, yf + 1, cz)
+						|| chunk.isEmpty(cx, yf - 1, cz))
+					continue;
+				switch (chunkOdds.getRandomInt(3)) {
+				case 0 -> me.daddychurchill.CityWorld.Support.Furniture.pottedPlant(chunk, chunkOdds, cx, yf, cz);
+				case 1 -> me.daddychurchill.CityWorld.Support.Furniture.sideTable(chunk, chunkOdds, cx, yf, cz);
+				default -> me.daddychurchill.CityWorld.Support.Furniture.floorLamp(chunk, chunkOdds, cx, yf, cz);
+				}
+			}
+	}
+
+	/** Whether a roomWidth x roomDepth footprint is entirely empty standing room on solid floor. */
+	private boolean bareFloor(RealBlocks chunk, int x, int y, int z) {
+		for (int cx = x; cx < x + roomWidth; cx++)
+			for (int cz = z; cz < z + roomDepth; cz++)
+				if (isStairClaimed(cx, cz) || !chunk.isEmpty(cx, y, cz) || !chunk.isEmpty(cx, y + 1, cz)
+						|| chunk.isEmpty(cx, y - 1, cz))
+					return false;
+		return true;
+	}
+
+	private void drawInteriorRoomsGrid(CityWorldGenerator generator, RealBlocks chunk, DataContext context,
+			boolean drawNarrowInteriors, RoomProvider rooms, int floor, int y1, int height, int insetNS, int insetWE,
+			boolean allowRounded, Material materialWall, Material materialGlass, StairWell stairsLocation,
+			Surroundings heights) {
 
 		// outer rooms?
 		boolean includeOuterRooms = insetNS <= maxInsetForRooms || insetWE <= maxInsetForRooms;
@@ -1743,6 +1957,10 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 	private void drawInteriorRoom(CityWorldGenerator generator, RealBlocks chunk, RoomProvider rooms, int floor, int x,
 			int y, int z, int height, BlockFace sideWithWall, Material materialWall, Material materialGlass) {
 
+		for (int cx = x; cx < x + roomWidth; cx++)
+			for (int cz = z; cz < z + roomDepth; cz++)
+				if (isStairClaimed(cx, cz))
+					return; // never build a room into the stairwell's claim
 		rooms.drawFixtures(generator, chunk, chunkOdds, floor, x, y, z, roomWidth, height, roomDepth, sideWithWall,
 				materialWall, materialGlass);
 

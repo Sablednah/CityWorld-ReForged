@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "refurbished_furniture:dark_microwave",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_microwave",
+      "required": false
+    }
+  ]
+}

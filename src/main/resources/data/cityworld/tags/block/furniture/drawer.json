@@ -1,0 +1,773 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "mcwfurnitures:acacia_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:acacia_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:birch_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:cherry_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:crimson_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:dark_oak_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:jungle_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:mangrove_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:oak_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:pale_oak_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:spruce_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_acacia_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_birch_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_cherry_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_crimson_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_dark_oak_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_jungle_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_mangrove_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_oak_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_pale_oak_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_spruce_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:stripped_warped_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwfurnitures:warped_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:acacia_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:acacia_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:birch_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:birch_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:black_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:blue_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:brown_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cherry_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cherry_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:crimson_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:crimson_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:cyan_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:dark_oak_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:dark_oak_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:gray_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:green_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:jungle_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:jungle_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_blue_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:light_gray_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:lime_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:magenta_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:mangrove_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:mangrove_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:oak_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:oak_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:orange_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pale_oak_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pale_oak_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:pink_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:purple_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:red_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:spruce_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:spruce_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:warped_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:warped_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:white_kitchen_drawer",
+      "required": false
+    },
+    {
+      "id": "refurbished_furniture:yellow_kitchen_drawer",
+      "required": false
+    }
+  ]
+}
