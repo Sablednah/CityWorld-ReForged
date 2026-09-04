@@ -115,6 +115,16 @@ own campus interiors).
 - **For-sale signs** — Vacant towers (OfficeBuildingLot EMPTY) and EmptyBuildingLot get a "For
   Sale" wall sign by the ground-floor door. Sign text helpers exist (setSignText).
 
+**▶ RESUME HERE (fresh slate, post-5.5.0, 2026-09-04).** The furniture + interiors arc is
+COMPLETE and released everywhere (see CHANGELOG 5.5.0; publish gotchas in the release memory).
+Next push, owner-ordered:
+1. **New furniture mods** — the owner has more to integrate; the pipeline is: drop in the 26.2
+   instance mods/, scan blockstates, classify into `gen_furniture_tags.py` roles, MEASURE facing
+   per family (method in PALETTES.md), regen, selftest, playtest.
+2. Watch-list: the line-of-blocks building (owner will drop coords when re-spotted — probe it);
+   CurseForge review + Modrinth approval pending; owner pastes CURSEFORGE.md; site lags a release.
+Everything below this line is historical record of the arc.
+
 **Queued (2026-09-03 evening):**
 - **▶ OVERNIGHT (2026-09-03→04): the four-times-escaped empty School lobby.** Jar-stamp-verified
   on 22:56 build (claim-footprint fix AND sweep self-calibration both live, upstairs furnishes,
