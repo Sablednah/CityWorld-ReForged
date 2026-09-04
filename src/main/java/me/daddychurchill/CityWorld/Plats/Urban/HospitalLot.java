@@ -262,13 +262,14 @@ public class HospitalLot extends IsolatedLot {
 
     /** A desk with a chair drawn up to it, both hugging the wall along the wing. */
     private void officeNook(RealBlocks chunk, int x, int y, int z, boolean runZ) {
-        chunk.setBlock(x, y, z, Material.QUARTZ_BLOCK); // the desk
-        chunk.setBlock(x, y + 1, z, Material.POTTED_FERN); // a little something on it
+        poolDesk(chunk, x, y, z, runZ ? BlockFace.SOUTH : BlockFace.EAST); // fronts its chair
+        if (chunk.isEmpty(x, y + 1, z))
+            chunk.setBlock(x, y + 1, z, Material.POTTED_FERN); // a little something on it
         if (runZ) {
             if (z + 1 < 16 && chunk.isEmpty(x, y, z + 1) && !chunk.isEmpty(x, y - 1, z + 1))
-                chunk.setBlock(x, y, z + 1, Material.QUARTZ_STAIRS, BlockFace.SOUTH); // chair faces the desk
+                poolChair(chunk, x, y, z + 1, BlockFace.SOUTH); // chair faces the desk
         } else if (x + 1 < 16 && chunk.isEmpty(x + 1, y, z) && !chunk.isEmpty(x + 1, y - 1, z)) {
-            chunk.setBlock(x + 1, y, z, Material.QUARTZ_STAIRS, BlockFace.EAST); // chair faces the desk
+            poolChair(chunk, x + 1, y, z, BlockFace.EAST); // chair faces the desk
         }
     }
 
@@ -324,17 +325,40 @@ public class HospitalLot extends IsolatedLot {
             int sz) {
         int deskX = x + 2 * sx, deskZ = z + 2 * sz, chairX = x + sx, cabZ = z + sz;
         if (inRange(deskX) && inRange(deskZ) && chunk.isEmpty(deskX, y, deskZ) && !chunk.isEmpty(deskX, y - 1, deskZ)) {
-            chunk.setBlock(deskX, y, deskZ, Material.QUARTZ_BLOCK); // desk
-            chunk.setBlock(deskX, y + 1, deskZ, Material.POTTED_FERN);
+            poolDesk(chunk, deskX, y, deskZ, sx > 0 ? BlockFace.WEST : BlockFace.EAST);
+            if (chunk.isEmpty(deskX, y + 1, deskZ))
+                chunk.setBlock(deskX, y + 1, deskZ, Material.POTTED_FERN);
         }
         BlockFace chairFace = sx > 0 ? BlockFace.WEST : BlockFace.EAST; // sit facing the desk
         if (inRange(chairX) && inRange(deskZ) && chunk.isEmpty(chairX, y, deskZ) && !chunk.isEmpty(chairX, y - 1, deskZ))
-            chunk.setBlock(chairX, y, deskZ, Material.QUARTZ_STAIRS, chairFace);
+            poolChair(chunk, chairX, y, deskZ, chairFace);
         if (inRange(deskX) && inRange(cabZ) && chunk.isEmpty(deskX, y, cabZ) && !chunk.isEmpty(deskX, y - 1, cabZ))
             medicineChest(generator, chunk, deskX, y, cabZ); // the cabinet = a supply chest (heal potions + bandages)
         if (Math.floorMod(x * 7 + z * 11, 3) == 0 && inRange(chairX) && inRange(cabZ) && chunk.isEmpty(chairX, y, cabZ)
                 && !chunk.isEmpty(chairX, y - 1, cabZ))
             generator.spawnProvider.spawnMedic(generator, chunk, chunkOdds, chairX, y, cabZ); // a doctor on shift
+    }
+
+    /** The furniture-pool light pass (owner: hospitals are structurally fine, just want
+     *  orientation-aware pool pieces). Fall back to the original quartz look without mods. */
+    private void poolDesk(RealBlocks chunk, int x, int y, int z, BlockFace front) {
+        Material desk = me.daddychurchill.CityWorld.Support.FurnitureTags.pick(
+                me.daddychurchill.CityWorld.Support.FurnitureTags.DESK, chunkOdds);
+        if (desk != null)
+            chunk.setBlock(x, y, z, desk,
+                    me.daddychurchill.CityWorld.Support.FurnitureTags.facingFor(desk, front));
+        else
+            chunk.setBlock(x, y, z, Material.QUARTZ_BLOCK);
+    }
+
+    private void poolChair(RealBlocks chunk, int x, int y, int z, BlockFace stairBackrest) {
+        Material chair = me.daddychurchill.CityWorld.Support.FurnitureTags.pick(
+                me.daddychurchill.CityWorld.Support.FurnitureTags.CHAIR, chunkOdds);
+        if (chair != null)
+            chunk.setBlock(x, y, z, chair, me.daddychurchill.CityWorld.Support.FurnitureTags
+                    .facingFor(chair, stairBackrest.getOppositeFace()));
+        else
+            chunk.setBlock(x, y, z, Material.QUARTZ_STAIRS, stairBackrest);
     }
 
     private static boolean inRange(int v) {
