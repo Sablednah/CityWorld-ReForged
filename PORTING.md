@@ -155,8 +155,15 @@ all 26.2.4 on apexcore 26.2.3) — is integrated in code and awaiting playtest. 
   multi-block layouts match the block's index property; every installed `fantasyfurniture_*` set
   has ≥6 pieces in the pools; hanging_light + rug pools non-empty.
 
-**NEXT:** cherry-pick to `mc26.2`, build (JDK25), selftest with the fantasy jars in the worktree's
-`run/mods`, deploy to the 26.2 instance, playtest: chairs 2-tall in dining/offices, wardrobes in
+**Shipped to the 26.2 instance (`DEPLOYED-a0bee92`), selftest PASS on 26.2 (96 checks; readback
+"71 multi-block pieces whole, 0 broken") and on 1.21.11 (94; bed=16 vanilla, shelf=12 vanilla);
+mc26.1 built. ⚠ The one trap found by measurement, not by reading: the first survey had HALF-CHAIRS
+— rooms that place seats through the plain `setBlock(material, facing)` overload wrote the origin
+cell only. That overload now hands any data-map-declared piece to `setFurniture`, so every call
+site, present and future, places whole or not at all; the self-test's `readback.multiBlockPieces`
+integrity check (recomputes each cell's origin from the layout) is what caught it.
+
+**NEXT:** playtest on the 26.2 instance: chairs 2-tall in dining/offices, wardrobes in
 bedrooms, double beds, sofa runs (arms at the ends), shelf+topper, decorations on tables. Watch for:
 a piece that never appears (footprint filter too strict) and mis-rotated 2-wide pieces (the
 right-hand rule). Ideas parked: an APOCALYPSE-only pool for the macabre decorations (bone piles,
