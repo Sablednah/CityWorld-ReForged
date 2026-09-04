@@ -5,6 +5,43 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 5.5.0
+
+### Added
+
+- **Furniture mods furnish the city.** Install Macaw's Furniture and/or MrCrayfish's Refurbished
+  Furniture and CityWorld builds with them: kitchens with counter runs, sinks, stoves and a fridge
+  with its freezer stacked on top; dining sets and lounge suites; two-block baths, toilets and
+  basins spread around real bathrooms; wardrobes and bedside lamps; desks with computers. Nearly
+  1,000 modded pieces across 16 role tags — and every piece is placed **facing the right way**, via
+  a per-block data map that absorbs each mod's own facing conventions. No furniture mods? Every room
+  keeps its classic vanilla look.
+- **Every building has an interior now.** Offices, cubicle floors and meeting rooms; **apartment
+  towers** (about one tower in seven — lobby at street level, flats above); **schools, courthouses
+  and city halls** inside government buildings; museum exhibit floors; factory workshops and
+  control rooms with console banks; warehouse racks of crates and barrels; shop floors with
+  browsing aisles between the counters. Basements of occupied buildings hold storage; **vacant
+  buildings hang FOR SALE / TO LET signs** by the door and stay dark and empty inside.
+- **Interiors are lit.** Hanging lights below every furnished ceiling (a datapack-extendable pool),
+  plus ceiling fans, wall art — paintings and item frames with clocks and keepsakes — and sconces.
+  Dark interiors now *mean* derelict.
+- **Industrial chemicals.** Tanks, vats and pits hold a `#cityworld:build/chemicals` palette —
+  concrete powders, water, lava, slime — and **18 Mekanism fluids are pre-wired** (verified against
+  the Mekanism jar) for whenever it reaches this Minecraft line. Water towers are actually full.
+- **F3 tells you more.** The interior type ("Courthouse", "Apartments", "Vacant"…) shows in F3 and
+  `/cityinfo`, plus a build stamp line so you always know which jar generated what.
+- **A rebalanced city.** More shops, fewer libraries, fewer empty shells; hospitals and the vault
+  get pool furniture at every desk.
+- For mod authors: `PALETTES.md` documents how to tag your own furniture, lights, decor and fluids
+  into CityWorld from your own jar — no dependency in either direction.
+
+### Fixed
+
+- Farm fields no longer come up empty or single-species; flower fields include every vanilla and
+  Biomes O' Plenty flower that can actually survive there.
+- Modded ocean and shore biomes place correctly (gravel beaches at the shoreline, not across open
+  sea), and modded biomes get their proper ground blocks.
+
 ## 5.4.0
 
 ### Added
