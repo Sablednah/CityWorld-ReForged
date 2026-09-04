@@ -22,6 +22,11 @@ public class EmptyBuildingLot extends LibraryBuildingLot {
 	}
 
 	@Override
+	public String getInteriorDescription() {
+		return "Vacant"; // shows in F3, keeps the basement dark, and earns a FOR SALE sign
+	}
+
+	@Override
 	protected InteriorStyle getFloorsInteriorStyle(int floor) {
 		int range = height / 4;
 		if (floor < range)
