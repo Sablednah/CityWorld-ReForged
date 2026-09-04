@@ -132,6 +132,12 @@ public abstract class SupportBlocks extends AbstractBlocks {
 
 	@Override
 	public final void setBlock(int x, int y, int z, Material material) {
+		// declared furniture takes the furniture path here too (the hospital's desk toppers came
+		// through this overload, and their stacks never varied — owner-spotted)
+		if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.isDeclared(material)) {
+			setFurniture(x, y, z, material, BlockFace.SELF);
+			return;
+		}
 		setActualBlock(getActualBlock(x, y, z), material, getDoPhysics(x, z));
 	}
 

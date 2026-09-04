@@ -1510,6 +1510,28 @@ public final class CityWorldSelfTest {
                                 }
                             }
                         }
+        // Do stackable decorations actually vary? A per-value tally of every `count` property in
+        // the core chunks: all zeros means `vary` is not reaching the placement (owner-spotted:
+        // "every cup and tankard and platter I've seen has been single").
+        Map<Integer, Integer> counts = new TreeMap<>();
+        for (int cx = -2; cx <= 2; cx++)
+            for (int cz = -2; cz <= 2; cz++)
+                for (int x = 0; x < 16; x++)
+                    for (int z = 0; z < 16; z++)
+                        for (int y = level.getMinY(); y < level.getMaxY(); y++) {
+                            BlockState state = level.getBlockState(new BlockPos(cx * 16 + x, y, cz * 16 + z));
+                            if (state.isAir())
+                                continue;
+                            for (var property : state.getProperties())
+                                if (property.getName().equals("count") && state.getValue(property) instanceof Integer n)
+                                    counts.merge(n, 1, Integer::sum);
+                        }
+        report.put("readback.stackCounts", counts.toString());
+        int stacked = counts.entrySet().stream().filter(e -> e.getKey() > 0).mapToInt(Map.Entry::getValue).sum();
+        int stackable = counts.values().stream().mapToInt(Integer::intValue).sum();
+        if (stackable >= 8 && stacked == 0)
+            fail(stackable + " stackable decorations placed and every one is count=0 — `vary` is not "
+                    + "being applied");
         report.put("readback.multiBlockPieces", pieces + " whole, " + broken + " broken");
         report.put("readback.multiBlockBroken", brokenSamples.toString());
         if (broken > 0)
