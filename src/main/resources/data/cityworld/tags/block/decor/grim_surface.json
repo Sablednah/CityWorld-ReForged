@@ -1,0 +1,61 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "minecraft:skeleton_skull",
+      "required": false
+    },
+    {
+      "id": "minecraft:wither_skeleton_skull",
+      "required": false
+    },
+    {
+      "id": "minecraft:cobweb",
+      "required": false
+    },
+    {
+      "id": "minecraft:candle",
+      "required": false
+    },
+    {
+      "id": "minecraft:black_candle",
+      "required": false
+    },
+    {
+      "id": "minecraft:soul_lantern",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:bone_pile_skeleton",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:bone_pile_wither",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:candelabra_0",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:candelabra_1",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:floating_tomes",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:potion_bottles",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:soul_gems_dark",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:soul_gems_light",
+      "required": false
+    }
+  ]
+}

@@ -406,11 +406,14 @@ public final class CityWorldSelfTest {
             // Every Fantasy's Furniture SET installed must have been classified: the sets share one
             // block vocabulary, so a new set the generator was never run against should still land
             // its chair/sofa/bed/wardrobe in the pools — if it does not, the vocabulary changed.
+            // The runtime scan (FurnitureSets) is the authority on what counts as a set, so a set
+            // no tag file knows about is checked the same way; its notes surface anything skipped.
             var sets = new TreeMap<String, Integer>();
             for (var id : net.minecraft.core.registries.BuiltInRegistries.BLOCK.keySet())
-                if (id.getNamespace().startsWith("fantasyfurniture_")
-                        && !id.getNamespace().equals("fantasyfurniture_decorations"))
+                if (me.daddychurchill.CityWorld.Support.FurnitureSets.detected().contains(id.getNamespace()))
                     sets.merge(id.getNamespace(), 1, Integer::sum);
+            report.put("furniture.setsDetected", me.daddychurchill.CityWorld.Support.FurnitureSets.detected().toString());
+            report.put("furniture.setNotes", me.daddychurchill.CityWorld.Support.FurnitureSets.notes().toString());
             for (var set : sets.keySet()) {
                 int inPools = 0;
                 for (var role : List.of(me.daddychurchill.CityWorld.Support.FurnitureTags.CHAIR,
@@ -424,9 +427,9 @@ public final class CityWorldSelfTest {
                             inPools++;
                 report.put("furniture.set." + set, inPools + " pooled of " + sets.get(set) + " blocks");
                 if (inPools < 6)
-                    fail("Fantasy's Furniture set " + set + " is installed but only " + inPools
-                            + " of its pieces reached the role pools — re-run scripts/gen_furniture_tags.py "
-                            + "against a mods folder containing it");
+                    fail("furniture set " + set + " is installed but only " + inPools
+                            + " of its pieces reached the role pools — see furniture.setNotes; the "
+                            + "vocabulary resource or the runtime scan is not matching its block names");
             }
         }
 
@@ -437,7 +440,10 @@ public final class CityWorldSelfTest {
                 me.daddychurchill.CityWorld.Support.FurnitureTags.SURFACE_DECOR,
                 me.daddychurchill.CityWorld.Support.FurnitureTags.WALL_DECOR,
                 me.daddychurchill.CityWorld.Support.FurnitureTags.HANGING_LIGHT,
-                me.daddychurchill.CityWorld.Support.FurnitureTags.RUG_DECOR)) {
+                me.daddychurchill.CityWorld.Support.FurnitureTags.RUG_DECOR,
+                me.daddychurchill.CityWorld.Support.FurnitureTags.GRIM_FLOOR,
+                me.daddychurchill.CityWorld.Support.FurnitureTags.GRIM_SURFACE,
+                me.daddychurchill.CityWorld.Support.FurnitureTags.GRIM_WALL)) {
             int n = me.daddychurchill.CityWorld.Support.MaterialTags.resolve(pool).size();
             report.put("decor." + pool.location().getPath(), String.valueOf(n));
             if (n == 0)

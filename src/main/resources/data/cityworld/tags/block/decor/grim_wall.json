@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "minecraft:cobweb",
+      "required": false
+    },
+    {
+      "id": "minecraft:skeleton_wall_skull",
+      "required": false
+    },
+    {
+      "id": "minecraft:wither_skeleton_wall_skull",
+      "required": false
+    },
+    {
+      "id": "minecraft:soul_wall_torch",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:spider_web_small",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:spider_web_wide",
+      "required": false
+    }
+  ]
+}

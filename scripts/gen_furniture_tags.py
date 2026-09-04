@@ -128,6 +128,22 @@ DECOR = {
     # rugs: the carpets a bedroom/hallway rug is cut from (the old hard-coded RUGS array)
     "rug": ["minecraft:white_carpet", "minecraft:light_gray_carpet", "minecraft:cyan_carpet",
             "minecraft:red_carpet", "minecraft:moss_carpet"],
+    # the grim pools (APOCALYPSE draws on these beside the ordinary ones — the owner's "long in the
+    # tooth goth"): skulls and webs read on a floor OR a table, gravestones are floor-only, webs
+    # hang on walls. Vanilla skulls seed them; the Decorations add-on's macabre pieces join.
+    "grim_floor": ["minecraft:skeleton_skull", "minecraft:wither_skeleton_skull", "minecraft:cobweb",
+                   "minecraft:candle"],
+    "grim_surface": ["minecraft:skeleton_skull", "minecraft:wither_skeleton_skull", "minecraft:cobweb",
+                     "minecraft:candle", "minecraft:black_candle", "minecraft:soul_lantern"],
+    "grim_wall": ["minecraft:cobweb", "minecraft:skeleton_wall_skull", "minecraft:wither_skeleton_wall_skull",
+                  "minecraft:soul_wall_torch"],
+}
+
+# Data map entries for vanilla seeds that want something beyond a plain placement: floor skulls
+# turn on a 16-step `rotation`, so a row of them does not all stare the same way.
+VANILLA_DATA = {
+    "minecraft:skeleton_skull": {"vary": ["rotation"]},
+    "minecraft:wither_skeleton_skull": {"vary": ["rotation"]},
 }
 
 # Vanilla beds seed the `bed` role, so a bedroom draws vanilla and modded beds from ONE pool. A
@@ -219,50 +235,23 @@ MB_1x2x1 = _sized(1, 2, 1)   # two tall (chair, floor_light)
 MB_1x2x2 = _sized(1, 2, 2)   # bookshelf
 MB_1x3x2 = _sized(1, 3, 2)   # wardrobe
 
-# block name -> (role or ("decor", pool), layout, props, vary, reconnect)
-SET = {
-    "chair":          dict(role="chair", layout=MB_1x2x1),
-    "stool":          dict(role="chair"),
-    "cushion":        dict(role="chair"),
-    "bench":          dict(role="chair", layout=MB_1x1x2),
-    # the sofa's DEFAULT state is connection=center (a backless middle piece) — placed alone it must
-    # be `single`; runs are re-derived by reconnect, which is safe here because the mod's own
-    # connection logic reads the same facing we write (offset 0)
-    "sofa":           dict(role="sofa", props={"connection": "single"}, reconnect=True),
-    "table":          dict(role="table", reconnect=True),
-    "desk_left":      dict(role="desk", layout=MB_1x1x2),
-    "desk_right":     dict(role="desk", layout=MB_1x1x2),
-    "counter":        dict(role="counter", reconnect=True),
-    "drawer":         dict(role="drawer"),
-    "dresser":        dict(role="drawer", layout=MB_1x1x2),
-    "wardrobe":       dict(role="wardrobe", layout=MB_1x3x2),
-    "bookshelf":      dict(role="bookshelf", layout=MB_1x2x2),
-    "chest":          dict(role="crate", layout=MB_1x1x2),
-    "oven":           dict(role="stove"),
-    "bed_single":     dict(role="bed", offset=180, layout=BED_LAYOUT),
-    "bed_double":     dict(role="bed", offset=180, layout=[
-        {"props": {"part": "foot"}},
-        {"back": -1, "props": {"part": "head"}},
-        {"back": -1, "right": -1, "props": {"part": "head"}},
-        {"right": -1, "props": {"part": "foot"}},
-    ]),
-    "floor_light":    dict(role="floor_lamp", layout=MB_1x2x1),
-    "lockbox":        dict(decor="surface"),
-    "chandelier":     dict(decor="hanging_light"),
-    "wall_light":     dict(decor="wall"),
-    "painting_small": dict(decor="wall"),
-    "painting_wide":  dict(decor="wall", layout=MB_1x1x2),
-    # a wall shelf: two pixels at the top of its cell, so a piece placed in the cell above stands
-    # ON it — its own role, for the wall pass to mount at waist height with something on top
-    "shelf":          dict(role="shelf", props={"connection": "single"}, reconnect=True),
-    "carpet":         dict(decor="rug"),
-}
+# block name -> role / decor pool(s), layout, props, vary, reconnect — loaded from the ONE
+# vocabulary resource shared with Support/FurnitureSets.java, which derives the same thing at
+# runtime for sets CityWorld was never built against. Edit the JSON, not a table here.
+VOCABULARY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "main", "resources",
+                          "cityworld", "furniture_vocabulary", "fantasyfurniture.json")
+with open(VOCABULARY, encoding="utf-8") as _fh:
+    _VOCAB = json.load(_fh)
+SET = {}
+for _name, _spec in _VOCAB["blocks"].items():
+    _e = dict(_spec)
+    if "facingOffset" in _e:
+        _e["offset"] = _e.pop("facingOffset")
+    SET[_name] = _e
 # Set blocks that are building material or fittings, not furniture. Planks and wool join the
 # building palettes by themselves through #minecraft:planks / #minecraft:wool (the sets tag them);
 # a set's stone (necrolord bricks, in #c:stones) is added to build/modern_stones by hand.
-SET_NOT_FURNITURE = {"planks", "wool", "bricks", "slab", "stairs", "fence", "fence_gate", "trapdoor",
-                     "pressure_plate", "door_single", "door_double", "sign", "wall_sign",
-                     "hanging_sign", "wall_hanging_sign", "furniture_station"}
+SET_NOT_FURNITURE = set(_VOCAB["notFurniture"])
 
 # Fantasy's Furniture - Decorations: block name -> pool + what to randomise per placement. Every block
 # is a SimpleHorizontalDirectionalBlock (facing = front, offset 0) with no support check. Left out on
@@ -278,8 +267,6 @@ DECORATIONS = {
     "boiled_creme_treats": dict(decor="surface", vary=["count"]),
     "book_stack_0": dict(decor="surface", vary=["count"]),
     "book_stack_1": dict(decor="surface", vary=["count"]),
-    "candelabra_0": dict(decor="surface", props={"lit": "true"}),
-    "candelabra_1": dict(decor="surface", props={"lit": "true"}),
     "candles_0": dict(decor="surface", props={"lit": "true"}),
     "candles_1": dict(decor="surface", props={"lit": "true"}),
     "chalices_0": dict(decor="surface", vary=["count"]),
@@ -290,7 +277,6 @@ DECORATIONS = {
     "copper_coin_stack": dict(decor="surface"), "iron_coin_stack": dict(decor="surface"),
     "golden_coin_stack": dict(decor="surface"),
     "crown": dict(decor="surface"), "cushioned_crown": dict(decor="surface"),
-    "floating_tomes": dict(decor="surface", vary=["count", "color"]),
     "food_0": dict(decor="surface"), "food_1": dict(decor="surface"),
     "food_2": dict(decor="surface"), "food_3": dict(decor="surface"),
     "mead_bottles": dict(decor="surface", vary=["count"]),
@@ -300,8 +286,6 @@ DECORATIONS = {
     "paper_stack": dict(decor="surface"),
     "platter_0": dict(decor="surface", vary=["count"]),
     "platter_1": dict(decor="surface", vary=["count"]),
-    "potion_bottles": dict(decor="surface", vary=["count", "color"]),
-    "soul_gems_dark": dict(decor="surface"), "soul_gems_light": dict(decor="surface"),
     "sweetrolls": dict(decor="surface", vary=["count"]),
     "tankards": dict(decor="surface", vary=["count"]),
     "tankards_honeymead": dict(decor="surface", vary=["count"]),
@@ -311,13 +295,25 @@ DECORATIONS = {
     "tea_set": dict(decor="surface", layout=MB_1x1x2),
     # on the floor
     "bolts_of_cloth": dict(decor="floor"),
-    "brewing_cauldron": dict(decor="floor", vary=["color"]),
     "presents": dict(decor="floor", vary=["count", "color"]),
     "stackable_pumpkins": dict(decor="floor", vary=["count"]),
     "pottery_0": dict(decor="floor"), "pottery_1": dict(decor="floor"),
     "mushrooms_brown": dict(decor="floor", vary=["count"]),
     "mushrooms_red": dict(decor="floor", vary=["count"]),
     "floor_cushion": dict(role="chair", vary=["color"]),
+    # the macabre: grim pools only, so they never turn up in a MODERN lounge
+    "bone_pile_skeleton": dict(decor=["grim_floor", "grim_surface"]),
+    "bone_pile_wither": dict(decor=["grim_floor", "grim_surface"]),
+    "gravestone": dict(decor="grim_floor"),
+    "spider_web_small": dict(decor="grim_wall"),
+    "spider_web_wide": dict(decor="grim_wall", layout=MB_1x1x2),
+    "soul_gems_dark": dict(decor=["surface", "grim_surface"]),
+    "soul_gems_light": dict(decor=["surface", "grim_surface"]),
+    "potion_bottles": dict(decor=["surface", "grim_surface"], vary=["count", "color"]),
+    "candelabra_0": dict(decor=["surface", "grim_surface"], props={"lit": "true"}),
+    "candelabra_1": dict(decor=["surface", "grim_surface"], props={"lit": "true"}),
+    "floating_tomes": dict(decor=["surface", "grim_surface"], vary=["count", "color"]),
+    "brewing_cauldron": dict(decor=["floor", "grim_floor"], vary=["color"]),
     # on the wall
     "banner": dict(decor="wall", layout=MB_1x2x1),
     "fairy_lights": dict(decor="wall", vary=["color"]),
@@ -421,8 +417,9 @@ def main():
                         block_id = f"{ns}:{path}"
                         if "role" in spec:
                             found[spec["role"]].append(block_id)
-                        else:
-                            decor_extra[spec["decor"]].append(block_id)
+                        pools = spec.get("decor", [])
+                        for pool in ([pools] if isinstance(pools, str) else pools):
+                            decor_extra[pool].append(block_id)
                         value = {}
                         if spec.get("offset"):
                             value["facingOffset"] = spec["offset"]
@@ -479,6 +476,7 @@ def main():
         found["bed"].append(bed)
         entries[bed] = {"facingOffset": 180, "layout": BED_LAYOUT}
     found["shelf"].extend(VANILLA_SHELVES)
+    entries.update(VANILLA_DATA)
 
     # The facing/parts/layout data map, covering EVERY oriented role. Offsets are measured per
     # family (see FACING_OFFSET); a block with no facing property gets no entry, and a family with
