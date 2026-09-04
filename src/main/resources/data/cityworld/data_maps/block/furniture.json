@@ -359,6 +359,22 @@
         ]
       }
     },
+    "fantasyfurniture_decorations:spider_web_wide": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "fantasyfurniture_decorations"
+        }
+      ],
+      "value": {
+        "layout": [
+          {},
+          {
+            "right": 1
+          }
+        ]
+      }
+    },
     "fantasyfurniture_decorations:stackable_pumpkins": {
       "neoforge:conditions": [
         {
@@ -6347,6 +6363,13 @@
         ]
       }
     },
+    "minecraft:skeleton_skull": {
+      "value": {
+        "vary": [
+          "rotation"
+        ]
+      }
+    },
     "minecraft:white_bed": {
       "value": {
         "facingOffset": 180,
@@ -6362,6 +6385,13 @@
               "part": "head"
             }
           }
+        ]
+      }
+    },
+    "minecraft:wither_skeleton_skull": {
+      "value": {
+        "vary": [
+          "rotation"
         ]
       }
     },

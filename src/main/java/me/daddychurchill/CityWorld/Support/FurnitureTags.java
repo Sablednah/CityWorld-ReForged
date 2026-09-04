@@ -80,6 +80,14 @@ public final class FurnitureTags {
     public static final TagKey<Block> WALL_DECOR = decorKey("wall");
     /** The carpets a rug is cut from — vanilla seeds plus every furniture set's own carpet. */
     public static final TagKey<Block> RUG_DECOR = decorKey("rug");
+    /**
+     * The grim pools — skulls, cobwebs, bone piles, gravestones — drawn on APOCALYPSE alongside the
+     * ordinary pools, by the same floor/surface/wall placement split. A gravestone is floor-only;
+     * skulls and bone piles read on a floor or a table; webs hang on walls.
+     */
+    public static final TagKey<Block> GRIM_FLOOR = decorKey("grim_floor");
+    public static final TagKey<Block> GRIM_SURFACE = decorKey("grim_surface");
+    public static final TagKey<Block> GRIM_WALL = decorKey("grim_wall");
 
     private static TagKey<Block> key(String role) {
         return TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath("cityworld", "furniture/" + role));

@@ -1,0 +1,244 @@
+{
+  "_comment": "Fantasy's Furniture set vocabulary \u2014 the ONE source of truth for both scripts/gen_furniture_tags.py (build time) and Support/FurnitureSets.java (runtime). Every set mod registers these block names; a namespace holding at least `minimum` of the `detect` names is a set. Layout cells are (right, up, back) relative to the piece's own facing.",
+  "detect": [
+    "bed_single",
+    "bed_double",
+    "desk_left",
+    "desk_right",
+    "floor_light",
+    "lockbox",
+    "painting_wide",
+    "wardrobe"
+  ],
+  "minimum": 4,
+  "ignore": [
+    "fantasyfurniture_decorations"
+  ],
+  "notFurniture": [
+    "bricks",
+    "door_double",
+    "door_single",
+    "fence",
+    "fence_gate",
+    "furniture_station",
+    "hanging_sign",
+    "planks",
+    "pressure_plate",
+    "sign",
+    "slab",
+    "stairs",
+    "trapdoor",
+    "wall_hanging_sign",
+    "wall_sign",
+    "wool"
+  ],
+  "blocks": {
+    "chair": {
+      "role": "chair",
+      "layout": [
+        {},
+        {
+          "up": 1
+        }
+      ]
+    },
+    "stool": {
+      "role": "chair"
+    },
+    "cushion": {
+      "role": "chair"
+    },
+    "bench": {
+      "role": "chair",
+      "layout": [
+        {},
+        {
+          "right": 1
+        }
+      ]
+    },
+    "sofa": {
+      "role": "sofa",
+      "props": {
+        "connection": "single"
+      },
+      "reconnect": true
+    },
+    "table": {
+      "role": "table",
+      "reconnect": true
+    },
+    "desk_left": {
+      "role": "desk",
+      "layout": [
+        {},
+        {
+          "right": 1
+        }
+      ]
+    },
+    "desk_right": {
+      "role": "desk",
+      "layout": [
+        {},
+        {
+          "right": 1
+        }
+      ]
+    },
+    "counter": {
+      "role": "counter",
+      "reconnect": true
+    },
+    "drawer": {
+      "role": "drawer"
+    },
+    "dresser": {
+      "role": "drawer",
+      "layout": [
+        {},
+        {
+          "right": 1
+        }
+      ]
+    },
+    "wardrobe": {
+      "role": "wardrobe",
+      "layout": [
+        {},
+        {
+          "right": 1
+        },
+        {
+          "up": 1
+        },
+        {
+          "right": 1,
+          "up": 1
+        },
+        {
+          "up": 2
+        },
+        {
+          "right": 1,
+          "up": 2
+        }
+      ]
+    },
+    "bookshelf": {
+      "role": "bookshelf",
+      "layout": [
+        {},
+        {
+          "right": 1
+        },
+        {
+          "up": 1
+        },
+        {
+          "right": 1,
+          "up": 1
+        }
+      ]
+    },
+    "chest": {
+      "role": "crate",
+      "layout": [
+        {},
+        {
+          "right": 1
+        }
+      ]
+    },
+    "oven": {
+      "role": "stove"
+    },
+    "bed_single": {
+      "role": "bed",
+      "facingOffset": 180,
+      "layout": [
+        {
+          "props": {
+            "part": "foot"
+          }
+        },
+        {
+          "back": -1,
+          "props": {
+            "part": "head"
+          }
+        }
+      ]
+    },
+    "bed_double": {
+      "role": "bed",
+      "facingOffset": 180,
+      "layout": [
+        {
+          "props": {
+            "part": "foot"
+          }
+        },
+        {
+          "back": -1,
+          "props": {
+            "part": "head"
+          }
+        },
+        {
+          "back": -1,
+          "right": -1,
+          "props": {
+            "part": "head"
+          }
+        },
+        {
+          "right": -1,
+          "props": {
+            "part": "foot"
+          }
+        }
+      ]
+    },
+    "floor_light": {
+      "role": "floor_lamp",
+      "layout": [
+        {},
+        {
+          "up": 1
+        }
+      ]
+    },
+    "lockbox": {
+      "decor": "surface"
+    },
+    "chandelier": {
+      "decor": "hanging_light"
+    },
+    "wall_light": {
+      "decor": "wall"
+    },
+    "painting_small": {
+      "decor": "wall"
+    },
+    "painting_wide": {
+      "decor": "wall",
+      "layout": [
+        {},
+        {
+          "right": 1
+        }
+      ]
+    },
+    "shelf": {
+      "role": "shelf",
+      "props": {
+        "connection": "single"
+      },
+      "reconnect": true
+    },
+    "carpet": {
+      "decor": "rug"
+    }
+  }
+}

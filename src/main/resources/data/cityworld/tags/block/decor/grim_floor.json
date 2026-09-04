@@ -1,0 +1,37 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "minecraft:skeleton_skull",
+      "required": false
+    },
+    {
+      "id": "minecraft:wither_skeleton_skull",
+      "required": false
+    },
+    {
+      "id": "minecraft:cobweb",
+      "required": false
+    },
+    {
+      "id": "minecraft:candle",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:bone_pile_skeleton",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:bone_pile_wither",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:brewing_cauldron",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_decorations:gravestone",
+      "required": false
+    }
+  ]
+}
