@@ -174,6 +174,19 @@ also read by the generator), unions into `MaterialTags.resolve` and backs `furni
 (skulls with `vary: rotation`, cobwebs), Decorations' macabre pieces; `Furniture.grim()` = APOCALYPSE
 && coin flip, threaded through placeAccent/wallDecor (which now takes the generator)/wallShelf.
 
+**Later the same evening (2507f4b, c04d5a3):** vanilla shelves are containers → `stockShelf` writes
+items into the BE (plain list write; self-test `readback.shelves`); wall pass now runs in
+`sweepBareFloor` (offices/shops/flats, 3 rolls per floor); wall mounts require sturdy NON-GLASS
+backing (`isGlass`); two-tall wall pieces mount at y+1; `decor/desk` pool on office desks;
+`FurnitureSets` asks apexcore's `MultiBlock.getMultiBlockLocationPositions()` by reflection when a
+block's index count disagrees with the vocabulary (Dunmer oven) and the generator infers two-part
+shapes from `_left/_right` vs `_bottom/_top` model names. **Both plain `setBlock` overloads now
+route declared furniture to `setFurniture`** — the hospital's desk toppers went through the
+no-facing one and never varied (owner: "every cup and tankard and platter is single"); the
+self-test tallies `count` values (`readback.stackCounts`). The Bone pack (two sets in one jar,
+NO blockstates or tags in the jar — generated at runtime) is the proof the registry scan was the
+right call: five sets detected, all pooled, 76 multi-block pieces whole.
+
 **NEXT:** playtest on the 26.2 instance (and an APOCALYPSE world for the grim pools): chairs 2-tall in dining/offices, wardrobes in
 bedrooms, double beds, sofa runs (arms at the ends), shelf+topper, decorations on tables. Watch for:
 a piece that never appears (footprint filter too strict) and mis-rotated 2-wide pieces (the

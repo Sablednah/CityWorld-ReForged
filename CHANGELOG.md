@@ -22,12 +22,18 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 - **Grim decoration on APOCALYPSE.** Skulls, cobwebs, bone piles, gravestones, spider webs, soul
   gems and potion bottles fill half of the ruined world's floor, table and wall decoration, from
   three new `decor/grim_*` pools; the other styles never see them.
+- **Offices, shops and flats get the wall pass** (art, sconces, shelves) that only house rooms had,
+  and nothing is hung on a window any more. Two-tall wall pieces (large mirrors, banners) now fit.
+- **Desk clutter.** Office desks without a computer get paper stacks, books or a mug from a new
+  `decor/desk` pool.
 - **Tabletop and wall scatter with variety** — the Decorations add-on's books, bottles, food, candles,
   coins, mirrors and fairy lights join the decoration pools; stack heights and colours vary per
   placement. Freestanding floor lamps, a rug pool, and Necrolord bricks in the modern stone palette.
 
 ### Changed
 
+- A set that reshapes a vocabulary piece (Dunmer's two-wide oven) gets its shape from the block
+  itself at runtime, via apexcore's own multi-block API.
 - The furniture data map grew `layout`, `props`, `vary`, `indexProperty` and `reconnect` (see
   `PALETTES.md`); `parts: 2` still works. Furniture picks are footprint-aware, so a wide piece is only
   chosen where a room has the space for it.

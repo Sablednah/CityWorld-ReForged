@@ -200,6 +200,7 @@ Loose decoration is drawn from three placement pools, and you can add to them th
 | `cityworld:decor/wall` | wall-mounted at eye height (sconces, wall lights, paintings, mirrors — two-wide pieces declare a `layout` and run along the wall) |
 | `cityworld:decor/hanging_light` | hung in the air cell below a ceiling (lanterns, chandeliers) |
 | `cityworld:decor/rug` | the carpets a bedroom or hallway rug is cut from |
+| `cityworld:decor/desk` | what sits on an office desk that got no computer — paper stacks, books, a mug |
 | `cityworld:decor/grim_floor` `…/grim_surface` `…/grim_wall` | **APOCALYPSE only** — half of that style's floor, table and wall decoration draws from these instead: vanilla skulls and cobwebs seed them, Fantasy's Decorations adds bone piles, gravestones (floor only), spider webs (walls), soul gems and potion bottles. A pack can add to them the same way, and other styles never see them. |
 
 The floor/surface split is why a table lamp never ends up standing on the carpet: if your lamp is a
