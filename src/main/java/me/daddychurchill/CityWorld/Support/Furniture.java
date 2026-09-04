@@ -377,7 +377,9 @@ public final class Furniture {
     /** A little standing lamp: a modded two-tall floor light when a set supplies one, else a fence
      *  post topped with a lantern that actually casts light. */
     public static void floorLamp(RealBlocks chunk, Odds odds, int x, int y, int z) {
-        Material lamp = FurnitureTags.pick(FurnitureTags.FLOOR_LAMP, odds);
+        // half the time, so a pool of two set lamps does not replace the vanilla lamp outright
+        // (the first self-test survey counted 110 of them in 25 chunks)
+        Material lamp = odds.flipCoin() ? FurnitureTags.pick(FurnitureTags.FLOOR_LAMP, odds) : null;
         if (lamp != null && chunk.setFurniture(x, y, z, lamp, FurnitureTags.facingFor(lamp, anyFacing(odds))))
             return;
         chunk.setBlock(x, y, z, Material.OAK_FENCE);

@@ -1419,6 +1419,82 @@ public final class CityWorldSelfTest {
         report.put("readback.signsWithBackText", Integer.toString(signsWithBack));
         report.put("readback.signSamples", signSamples.toString());
 
+        // Multi-block furniture integrity: every cell of a placed piece must still be there with
+        // the right index. A half-chair (a Fantasy's chair is two blocks tall) means a later pass
+        // wrote over one cell — the survey names the cell and what sits there now, so the culprit
+        // is measured rather than guessed at.
+        int pieces = 0, broken = 0;
+        List<String> brokenSamples = new ArrayList<>();
+        for (int cx = -2; cx <= 2; cx++)
+            for (int cz = -2; cz <= 2; cz++)
+                for (int x = 0; x < 16; x++)
+                    for (int z = 0; z < 16; z++)
+                        for (int y = level.getMinY(); y < level.getMaxY(); y++) {
+                            BlockPos pos = new BlockPos(cx * 16 + x, y, cz * 16 + z);
+                            BlockState state = level.getBlockState(pos);
+                            if (state.isAir())
+                                continue;
+                            var spec = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps
+                                    .furnitureFor(me.daddychurchill.CityWorld.compat.Material.of(state.getBlock()));
+                            if (!spec.multiBlock() || !state.hasProperty(
+                                    net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING))
+                                continue;
+                            Integer index = null;
+                            for (var property : state.getProperties())
+                                if (property.getName().equals(spec.indexProperty())
+                                        && state.getValue(property) instanceof Integer i)
+                                    index = i;
+                            if (index == null)
+                                continue;
+                            var facing = state.getValue(
+                                    net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING);
+                            var right = facing.getCounterClockWise();
+                            var back = facing.getOpposite();
+                            var cells = spec.cells();
+                            if (index != 0) {
+                                // a non-origin cell: its origin must still be there, else it is an orphan
+                                var me = cells.get(Math.min(index, cells.size() - 1));
+                                BlockPos origin = pos.offset(-(right.getStepX() * me.right() + back.getStepX() * me.back()),
+                                        -me.up(), -(right.getStepZ() * me.right() + back.getStepZ() * me.back()));
+                                BlockState o = level.getBlockState(origin);
+                                if (!o.is(state.getBlock())) {
+                                    broken++;
+                                    if (brokenSamples.size() < 12)
+                                        brokenSamples.add("orphan " + BuiltInRegistries.BLOCK.getKey(state.getBlock()) + "@"
+                                                + pos.toShortString() + " part " + index + " facing=" + facing
+                                                + ", origin " + origin.toShortString() + " is "
+                                                + BuiltInRegistries.BLOCK.getKey(o.getBlock()));
+                                }
+                                continue;
+                            }
+                            pieces++;
+                            for (int i = 1; i < cells.size(); i++) {
+                                var part = cells.get(i);
+                                BlockPos at = pos.offset(right.getStepX() * part.right() + back.getStepX() * part.back(),
+                                        part.up(), right.getStepZ() * part.right() + back.getStepZ() * part.back());
+                                BlockState other = level.getBlockState(at);
+                                boolean ok = other.is(state.getBlock());
+                                if (ok)
+                                    for (var property : other.getProperties())
+                                        if (property.getName().equals(spec.indexProperty())
+                                                && !Integer.valueOf(i).equals(other.getValue(property)))
+                                            ok = false;
+                                if (!ok) {
+                                    broken++;
+                                    if (brokenSamples.size() < 12)
+                                        brokenSamples.add(BuiltInRegistries.BLOCK.getKey(state.getBlock()) + "@" + pos.toShortString()
+                                                + " facing=" + facing + " part " + i + " at " + at.toShortString() + " is "
+                                                + BuiltInRegistries.BLOCK.getKey(other.getBlock()));
+                                    break;
+                                }
+                            }
+                        }
+        report.put("readback.multiBlockPieces", pieces + " whole, " + broken + " broken");
+        report.put("readback.multiBlockBroken", brokenSamples.toString());
+        if (broken > 0)
+            fail(broken + " of " + (pieces) + " multi-block furniture pieces are missing a cell — a later "
+                    + "pass wrote over them: " + brokenSamples);
+
         if (built < MIN_BUILT_BLOCKS)
             fail("only " + built + " non-air blocks in the core chunks — decoration looks broken");
         if (signsSeen == 0) {
