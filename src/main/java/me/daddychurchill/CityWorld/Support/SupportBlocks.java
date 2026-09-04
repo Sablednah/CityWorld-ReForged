@@ -434,6 +434,14 @@ public abstract class SupportBlocks extends AbstractBlocks {
 
 	@Override
 	public final void setBlock(int x, int y, int z, Material material, BlockFace facing) {
+		// A declared furniture piece takes the furniture path, whatever the caller: the first
+		// 26.2 survey found half-chairs wherever a room placed a two-tall set chair through this
+		// overload, which wrote the origin cell only. Whole-or-nothing beats a fixed list of
+		// call sites — the next room to place a chair would have joined the list.
+		if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.isDeclared(material)) {
+			setFurniture(x, y, z, material, facing);
+			return;
+		}
 		setActualBlock(x, y, z, material.withFacing(facing));
 	}
 
