@@ -44,6 +44,19 @@ Pick **CityWorld** as your world type and you land in a living city:
 - **Custom schematics** — a bundled catalog of classic buildings, plus drop your own
   (`.schematic`/`.schem`/`.litematic`/`.nbt`) into a config folder and turn them loose in the city.
 
+## Furnished — and furniture mods make it more so
+
+**New in 5.5.0:** every building has an interior. Offices and apartment towers, schools and
+courthouses inside the government buildings, museum exhibits, factory control rooms, stocked shops
+and warehouses — lit, labelled (check F3), and furnished down to the basements. Vacant buildings
+hang FOR SALE / TO LET signs and stay dark.
+
+Install **Macaw's Furniture** or **MrCrayfish's Refurbished Furniture** and the whole city upgrades:
+real kitchens with fridges and stoves, two-block baths, sofas, desks with computers, ceiling fans —
+nearly 1,000 modded pieces, every one facing the right way. Without them, rooms keep a classic
+vanilla look. Mod authors: adding your own furniture takes two data files in your jar — see
+`PALETTES.md` in the repo.
+
 ## World styles
 
 Thirteen selectable styles, each its own world type (`cityworld:<style>`) or a click away on the
