@@ -263,8 +263,7 @@ public class HospitalLot extends IsolatedLot {
     /** A desk with a chair drawn up to it, both hugging the wall along the wing. */
     private void officeNook(RealBlocks chunk, int x, int y, int z, boolean runZ) {
         poolDesk(chunk, x, y, z, runZ ? BlockFace.SOUTH : BlockFace.EAST); // fronts its chair
-        if (chunk.isEmpty(x, y + 1, z))
-            chunk.setBlock(x, y + 1, z, Material.POTTED_FERN); // a little something on it
+        deskTopper(chunk, x, y + 1, z);
         if (runZ) {
             if (z + 1 < 16 && chunk.isEmpty(x, y, z + 1) && !chunk.isEmpty(x, y - 1, z + 1))
                 poolChair(chunk, x, y, z + 1, BlockFace.SOUTH); // chair faces the desk
@@ -326,8 +325,7 @@ public class HospitalLot extends IsolatedLot {
         int deskX = x + 2 * sx, deskZ = z + 2 * sz, chairX = x + sx, cabZ = z + sz;
         if (inRange(deskX) && inRange(deskZ) && chunk.isEmpty(deskX, y, deskZ) && !chunk.isEmpty(deskX, y - 1, deskZ)) {
             poolDesk(chunk, deskX, y, deskZ, sx > 0 ? BlockFace.WEST : BlockFace.EAST);
-            if (chunk.isEmpty(deskX, y + 1, deskZ))
-                chunk.setBlock(deskX, y + 1, deskZ, Material.POTTED_FERN);
+            deskTopper(chunk, deskX, y + 1, deskZ);
         }
         BlockFace chairFace = sx > 0 ? BlockFace.WEST : BlockFace.EAST; // sit facing the desk
         if (inRange(chairX) && inRange(deskZ) && chunk.isEmpty(chairX, y, deskZ) && !chunk.isEmpty(chairX, y - 1, deskZ))
@@ -341,6 +339,16 @@ public class HospitalLot extends IsolatedLot {
 
     /** The furniture-pool light pass (owner: hospitals are structurally fine, just want
      *  orientation-aware pool pieces). Fall back to the original quartz look without mods. */
+    /** Something on the desk — or pointedly nothing. Every desk having a potted fern read as a
+     *  hospital with a fern budget (playtested); now it draws from the surface pool. */
+    private void deskTopper(RealBlocks chunk, int x, int y, int z) {
+        if (chunkOdds.playOdds(0.4) || !chunk.isEmpty(x, y, z))
+            return; // a clear desk is a valid desk
+        Material piece = me.daddychurchill.CityWorld.Support.FurnitureTags.pick(
+                me.daddychurchill.CityWorld.Support.FurnitureTags.SURFACE_DECOR, chunkOdds);
+        chunk.setBlock(x, y, z, piece != null ? piece : Material.POTTED_FERN);
+    }
+
     private void poolDesk(RealBlocks chunk, int x, int y, int z, BlockFace front) {
         Material desk = me.daddychurchill.CityWorld.Support.FurnitureTags.pick(
                 me.daddychurchill.CityWorld.Support.FurnitureTags.DESK, chunkOdds);
