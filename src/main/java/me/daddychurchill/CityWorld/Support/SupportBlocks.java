@@ -792,6 +792,24 @@ public abstract class SupportBlocks extends AbstractBlocks {
 				|| block instanceof net.minecraft.world.level.block.IronBarsBlock;
 	}
 
+	/**
+	 * Whether the block here is a wall a piece can hang on: a full, face-sturdy, non-glass block that
+	 * is not itself furniture or decoration. "Not empty" was the old test and it took a window; a
+	 * sturdy face was the next and it took a chandelier (its collision box has one) — the owner's
+	 * painting-on-a-chandelier screenshot. A wall is a wall.
+	 */
+	public final boolean isWallBacking(int x, int y, int z, BlockFace face) {
+		Block block = getActualBlock(x, y, z);
+		BlockState state = block.getBlockData();
+		Direction direction = face.toDirection();
+		if (state.isAir() || direction == null || isGlass(x, y, z))
+			return false;
+		if (!state.isFaceSturdy(block.getLevel(), block.getPos(), direction)
+				|| !state.isCollisionShapeFullBlock(block.getLevel(), block.getPos()))
+			return false;
+		return !FurnitureTags.isPooled(state);
+	}
+
 	/** Whether the block at this cell is a door. */
 	public final boolean isDoor(int x, int y, int z) {
 		return getActualBlock(x, y, z).getBlockData()

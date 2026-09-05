@@ -91,6 +91,29 @@ public final class FurnitureTags {
     public static final TagKey<Block> GRIM_SURFACE = decorKey("grim_surface");
     public static final TagKey<Block> GRIM_WALL = decorKey("grim_wall");
 
+    /** Every pool this class declares, gathered once by reflection (the diagnostics sweep does the same). */
+    private static final List<TagKey<Block>> ALL_POOLS = allPools();
+
+    @SuppressWarnings("unchecked")
+    private static List<TagKey<Block>> allPools() {
+        List<TagKey<Block>> pools = new java.util.ArrayList<>();
+        for (var field : FurnitureTags.class.getDeclaredFields())
+            if (java.lang.reflect.Modifier.isStatic(field.getModifiers()) && field.getType() == TagKey.class)
+                try {
+                    pools.add((TagKey<Block>) field.get(null));
+                } catch (IllegalAccessException ignored) {
+                }
+        return List.copyOf(pools);
+    }
+
+    /** Whether this block is anything CityWorld pools as furniture or decoration — not a wall. */
+    public static boolean isPooled(net.minecraft.world.level.block.state.BlockState state) {
+        for (TagKey<Block> pool : ALL_POOLS)
+            if (state.is(pool))
+                return true;
+        return me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.isDeclared(Material.of(state.getBlock()));
+    }
+
     private static TagKey<Block> key(String role) {
         return TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath("cityworld", "furniture/" + role));
     }
