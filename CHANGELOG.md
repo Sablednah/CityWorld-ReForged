@@ -30,6 +30,11 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   coins, mirrors and fairy lights join the decoration pools; stack heights and colours vary per
   placement. Freestanding floor lamps, a rug pool, and Necrolord bricks in the modern stone palette.
 
+### Fixed
+
+- No more "Tried to load a block entity … but failed" log spam for multi-block desks, wardrobes
+  and bookcases: the generation-time placeholder is dropped from the cells the piece does not back.
+
 ### Changed
 
 - A set that reshapes a vocabulary piece (Dunmer's two-wide oven) gets its shape from the block
