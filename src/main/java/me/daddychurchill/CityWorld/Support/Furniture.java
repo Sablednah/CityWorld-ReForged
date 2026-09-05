@@ -498,17 +498,24 @@ public final class Furniture {
             // cells — the old smoker was silently lost to exactly that. Stove at the end; fridge
             // beside it with the freezer stacked on top (Refurbished's "tall fridge" is two
             // separate blocks).
-            Material stove = FurnitureTags.pick(FurnitureTags.STOVE, odds);
+            // the cooker: a two-wide range (Dunmer's oven) when the run is long enough for it —
+            // fronting south its second cell is +x, so it anchors one cell further from the end
+            // wall; the fridge steps along beside it
+            boolean roomForWide = x1 + 5 <= x2 - 1;
+            Material stove = FurnitureTags.pick(FurnitureTags.STOVE, odds, roomForWide ? 2 : 1, 1, 2);
+            int cookerCells = stove != null ? FurnitureTags.footprint(stove).width() : 1;
+            int cookerAt = x2 - cookerCells;
             if (x1 + 3 <= x2 - 1) {
                 Material cooker = stove != null ? stove
                         : modern(generator) ? Material.SMOKER : Material.FURNACE;
-                placeFacing(chunk, x2 - 1, y, z, cooker, BlockFace.SOUTH);
+                placeFacing(chunk, cookerAt, y, z, cooker, BlockFace.SOUTH);
             }
+            int fridgeAt = cookerAt - 1;
             Material fridge = FurnitureTags.pick(FurnitureTags.FRIDGE, odds);
-            if (fridge != null && x1 + 4 <= x2 - 2 && placeFacing(chunk, x2 - 2, y, z, fridge, BlockFace.SOUTH)) {
+            if (fridge != null && x1 + 4 <= fridgeAt && placeFacing(chunk, fridgeAt, y, z, fridge, BlockFace.SOUTH)) {
                 Material freezer = FurnitureTags.pick(FurnitureTags.FREEZER, odds);
-                if (freezer != null && chunk.isEmpty(x2 - 2, y + 1, z))
-                    chunk.setBlock(x2 - 2, y + 1, z, freezer,
+                if (freezer != null && chunk.isEmpty(fridgeAt, y + 1, z))
+                    chunk.setBlock(fridgeAt, y + 1, z, freezer,
                             FurnitureTags.facingFor(freezer, BlockFace.SOUTH));
             }
             int mid = (x1 + x2) / 2;
@@ -534,8 +541,8 @@ public final class Furniture {
                         chunk.setBlock(tx, y + 1, z, topper, FurnitureTags.facingFor(topper, BlockFace.SOUTH));
                         break;
                     }
-            wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2); // after the accents: a chandelier's chain is a block, a painting is not
             return;
         }
         if (clearFloor(chunk, x1 + 1, y, z))
@@ -545,8 +552,8 @@ public final class Furniture {
             chunk.setCauldron(x1 + 2, y, z, odds);
         if (x1 + 3 <= x2 - 1)
             placeIfClear(chunk, x1 + 3, y, z, modern(generator) ? Material.SMOKER : Material.FURNACE, BlockFace.SOUTH);
-        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2); // after the accents: a chandelier's chain is a block, a painting is not
     }
 
     /** A dining table with a chair either side, in the middle of the room. */
@@ -577,8 +584,8 @@ public final class Furniture {
                 }
             }
             ceilingPiece(chunk, odds, cx, y, cz); // a fan or lantern over the dining table
-            wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2); // after the accents: a chandelier's chain is a block, a painting is not
             return;
         }
         if (clearFloor(chunk, cx, y, cz)) {
@@ -589,8 +596,8 @@ public final class Furniture {
         // backrests AWAY from the table so the diners face it
         placeIfClear(chunk, cx - 1, y, cz, Material.OAK_STAIRS, BlockFace.WEST);
         placeIfClear(chunk, cx + 1, y, cz, Material.OAK_STAIRS, BlockFace.EAST);
-        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2); // after the accents: a chandelier's chain is a block, a painting is not
     }
 
     /** A couch (with a coffee table in front) against whichever interior wall has room for it. */
@@ -630,8 +637,8 @@ public final class Furniture {
             }
             ceilingPiece(chunk, odds, cx, y, cz);
             if (placed) {
-                wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2); // after the accents: a chandelier's chain is a block, a painting is not
                 return;
             }
         }
@@ -644,8 +651,8 @@ public final class Furniture {
             sideTable(chunk, odds, cx, y, z1 + 2);
         else if (couchAlongZ(chunk, x1 + 1, y, z1, z2, BlockFace.WEST))
             sideTable(chunk, odds, x1 + 2, y, cz);
-        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2); // after the accents: a chandelier's chain is a block, a painting is not
     }
 
     /** A row of couch stairs along an interior x-run at fixed z; true if at least two seats landed. */
@@ -731,8 +738,8 @@ public final class Furniture {
                 floorLampIfClear(chunk, odds, x2 - 1, y, z2 - 1);
         }
         ceilingPiece(chunk, odds, midX, y, midZ);
-        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2); // after the accents: a chandelier's chain is a block, a painting is not
     }
 
     private static final Material[] RUGS = { Material.WHITE_CARPET, Material.LIGHT_GRAY_CARPET,
@@ -792,8 +799,8 @@ public final class Furniture {
         if (modern(generator))
             rug(chunk, odds, cx, y, cz);
         ceilingPiece(chunk, odds, cx, y, cz);
-        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2); // after the accents: a chandelier's chain is a block, a painting is not
     }
 
     /**
@@ -892,8 +899,8 @@ public final class Furniture {
             int bx = (x1 + x2) / 2, bz = (z1 + z2) / 2;
             if (clearFloor(chunk, bx, y, bz))
                 chunk.setBlock(bx, y, bz, odds.flipCoin() ? Material.WHITE_CARPET : Material.LIGHT_BLUE_CARPET);
-            wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2); // after the accents: a chandelier's chain is a block, a painting is not
             return;
         }
         if (clearFloor(chunk, x1 + 1, y, z1 + 1))
@@ -918,8 +925,8 @@ public final class Furniture {
         int mx = (x1 + x2) / 2, mz = (z1 + z2) / 2; // a tiled bathmat
         if (clearFloor(chunk, mx, y, mz))
             chunk.setBlock(mx, y, mz, odds.flipCoin() ? Material.WHITE_CARPET : Material.LIGHT_BLUE_CARPET);
-        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2); // after the accents: a chandelier's chain is a block, a painting is not
     }
 
     /**
@@ -957,8 +964,8 @@ public final class Furniture {
             if (shelf != null)
                 placeFacing(chunk, x1 + 1, y, z1 + 1, shelf, BlockFace.SOUTH);
         }
-        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
+        wallDecor(generator, chunk, odds, x1, x2, y, z1, z2); // after the accents: a chandelier's chain is a block, a painting is not
     }
 
     /**
