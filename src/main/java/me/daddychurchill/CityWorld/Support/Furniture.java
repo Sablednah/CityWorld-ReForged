@@ -538,8 +538,9 @@ public final class Furniture {
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
             return;
         }
-        chunk.setChest(generator, x1 + 1, y, z, BlockFace.SOUTH, odds, generator.lootProvider,
-                LootProvider.LootLocation.NIGHTSTAND, Material.BARREL);
+        if (clearFloor(chunk, x1 + 1, y, z))
+            chunk.setChest(generator, x1 + 1, y, z, BlockFace.SOUTH, odds, generator.lootProvider,
+                    LootProvider.LootLocation.NIGHTSTAND, Material.BARREL);
         if (clearFloor(chunk, x1 + 2, y, z))
             chunk.setCauldron(x1 + 2, y, z, odds);
         if (x1 + 3 <= x2 - 1)
@@ -688,8 +689,12 @@ public final class Furniture {
             if (placeBed(chunk, odds, w.footX(), y, w.footZ(), w.look()))
                 break;
 
-        chunk.setChest(generator, x1 + 1, y, z1 + 1, BlockFace.SOUTH, odds, generator.lootProvider,
-                LootProvider.LootLocation.NIGHTSTAND, Material.BARREL); // a nightstand where it fits
+        // a nightstand where it fits — and ONLY where it fits: the chest setter overwrites, and in a
+        // narrow room this corner is the bed's own head cell (or a double's second column), which
+        // is how the owner found beds missing a block with the building around them intact
+        if (clearFloor(chunk, x1 + 1, y, z1 + 1))
+            chunk.setChest(generator, x1 + 1, y, z1 + 1, BlockFace.SOUTH, odds, generator.lootProvider,
+                    LootProvider.LootLocation.NIGHTSTAND, Material.BARREL);
 
         // Playtest: bedrooms were "mostly bed + barrel". Wardrobe and drawers flank the bed on ITS
         // wall — the bed backs onto the wall nearest the chunk edge (exterior), and interior walls
