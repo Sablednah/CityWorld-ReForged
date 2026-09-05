@@ -80,13 +80,13 @@ public final class FurnitureTags {
     public static final TagKey<Block> WALL_DECOR = decorKey("wall");
     /** The carpets a rug is cut from — vanilla seeds plus every furniture set's own carpet. */
     public static final TagKey<Block> RUG_DECOR = decorKey("rug");
+    /** What sits on an office desk that has no computer — paper stacks, books, a mug. */
+    public static final TagKey<Block> DESK_DECOR = decorKey("desk");
     /**
      * The grim pools — skulls, cobwebs, bone piles, gravestones — drawn on APOCALYPSE alongside the
      * ordinary pools, by the same floor/surface/wall placement split. A gravestone is floor-only;
      * skulls and bone piles read on a floor or a table; webs hang on walls.
      */
-    /** What sits on an office desk that has no computer — paper stacks, books, a mug. */
-    public static final TagKey<Block> DESK_DECOR = decorKey("desk");
     public static final TagKey<Block> GRIM_FLOOR = decorKey("grim_floor");
     public static final TagKey<Block> GRIM_SURFACE = decorKey("grim_surface");
     public static final TagKey<Block> GRIM_WALL = decorKey("grim_wall");
@@ -125,6 +125,18 @@ public final class FurnitureTags {
         for (Material piece : pool)
             if (footprint(piece).fits(width, depth, height))
                 fitting.add(piece);
+        return fitting.isEmpty() ? null : fitting.get(odds.getRandomInt(fitting.size()));
+    }
+
+    /** A random piece of EXACTLY this footprint — for a placer that has chosen a shape (a two-wide
+     *  painting, a two-tall mirror) and does not want a one-cell piece falling through instead. */
+    public static Material pickExactly(TagKey<Block> role, Odds odds, int width, int depth, int height) {
+        List<Material> fitting = new java.util.ArrayList<>();
+        for (Material piece : MaterialTags.resolve(role)) {
+            var f = footprint(piece);
+            if (f.width() == width && f.depth() == depth && f.height() == height)
+                fitting.add(piece);
+        }
         return fitting.isEmpty() ? null : fitting.get(odds.getRandomInt(fitting.size()));
     }
 

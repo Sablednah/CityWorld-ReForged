@@ -214,11 +214,26 @@ public final class Furniture {
         if (cells.isEmpty())
             return;
         int[] c = cells.get(odds.getRandomInt(cells.size()));
-        // a third of the time a shelf with something on it, else art, else a sconce
-        if (odds.playOdds(0.33) && wallShelf(chunk, odds, c[0], y, c[1], grim))
-            return;
-        if (!wallArt(chunk, odds, c[0], y, c[1]))
+        // equal shares: a shelf with something on it, vanilla art (a painting or item frame), a
+        // pool piece (mirrors, banners, wall lights, webs). Art used to go first and a sturdy wall
+        // almost always takes it, which is why the pool's mirrors and banners were never seen.
+        switch (odds.getRandomInt(3)) {
+        case 0 -> {
+            if (wallShelf(chunk, odds, c[0], y, c[1], grim) || wallSconce(chunk, odds, c[0], y, c[1], grim))
+                return;
+            wallArt(chunk, odds, c[0], y, c[1]);
+        }
+        case 1 -> {
+            if (wallArt(chunk, odds, c[0], y, c[1]))
+                return;
             wallSconce(chunk, odds, c[0], y, c[1], grim);
+        }
+        default -> {
+            if (wallSconce(chunk, odds, c[0], y, c[1], grim))
+                return;
+            wallArt(chunk, odds, c[0], y, c[1]);
+        }
+        }
     }
 
     /** What ends up inside an item frame — the "nice things" of the owner's brief. */
@@ -301,14 +316,14 @@ public final class Furniture {
         // mirror, a banner), mounted a cell lower so it fits under a three-high ceiling and needs
         // wall behind both cells; else a one-cell piece at eye height
         int roll = odds.getRandomInt(3);
-        Material piece = roll == 0 ? FurnitureTags.pick(pool, odds, 2, 1, 1) : null;
+        Material piece = roll == 0 ? FurnitureTags.pickExactly(pool, odds, 2, 1, 1) : null;
         if (piece != null && mountOnWall(chunk, x, y + 2, z, piece, out))
             return true;
-        piece = roll == 1 ? FurnitureTags.pick(pool, odds, 1, 1, 2) : null;
-        if (piece != null && FurnitureTags.footprint(piece).height() == 2 && chunk.isEmpty(x, y + 1, z)
-                && sturdyWall(chunk, x, y + 1, z) == out && mountOnWall(chunk, x, y + 1, z, piece, out))
+        piece = roll == 1 ? FurnitureTags.pickExactly(pool, odds, 1, 1, 2) : null;
+        if (piece != null && chunk.isEmpty(x, y + 1, z) && sturdyWall(chunk, x, y + 1, z) == out
+                && mountOnWall(chunk, x, y + 1, z, piece, out))
             return true;
-        piece = FurnitureTags.pick(pool, odds, 1, 1, 1);
+        piece = FurnitureTags.pickExactly(pool, odds, 1, 1, 1);
         return piece != null && mountOnWall(chunk, x, y + 2, z, piece, out);
     }
 
