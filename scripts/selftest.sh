@@ -144,6 +144,18 @@ echo
 grep -E "SELFTEST:" "$LOG" | sed 's/.*SELFTEST:/  /' || true
 echo
 
+# Block-entity placeholders: a chunk under generation writes a DUMMY entity tag for every block
+# whose type can carry one; a multi-block piece backs only its origin, so every other cell logged
+# "Tried to load a block entity ... but failed" (195 lines in the owner's log). The placer drops
+# those placeholders now; count the warnings so a regression is measured, not spotted in play.
+ORPHANED_BE="$(grep -c "Tried to load a block entity" "$LOG" || true)"
+echo "   block-entity load warnings in the server log: $ORPHANED_BE"
+if [ "${ORPHANED_BE:-0}" -ge 10 ]; then
+    echo "!! FAIL — $ORPHANED_BE 'Tried to load a block entity' warnings: multi-block parts are leaving" >&2
+    echo "!! DUMMY block-entity tags behind (see SupportBlocks.dropPlaceholderBlockEntity)." >&2
+    exit 1
+fi
+
 if grep -q "SELFTEST: PASS" "$LOG"; then
     echo ">> PASS — Minecraft $VERSION. Report: $REPORTS/$VERSION.json"
     echo ">> Run './scripts/selftest.sh --compare' once other versions have been run."
