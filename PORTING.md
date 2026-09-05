@@ -187,7 +187,16 @@ self-test tallies `count` values (`readback.stackCounts`). The Bone pack (two se
 NO blockstates or tags in the jar — generated at runtime) is the proof the registry scan was the
 right call: five sets detected, all pooled, 76 multi-block pieces whole.
 
-**NEXT:** playtest on the 26.2 instance (and an APOCALYPSE world for the grim pools): chairs 2-tall in dining/offices, wardrobes in
+**Playtest sign-off (owner, 2026-09-05):** beds solid on 26.2 after the nightstand guard (da2f2a3);
+1.21.11 with NO furniture mods "look furnished, well furnished — not just ok, still good". Two
+in-play finds fixed same day: 195 "Tried to load a block entity" lines (DUMMY placeholder on
+non-origin multi-block cells → dropped in setFurniture, counted by selftest.sh) and beds missing a
+cell (the nightstand barrel overwrote the head cell in narrow rooms — NOT decay; the building was
+intact, which was the clue). All nine CurseForge instances redeployed (1.21.11 da2f2a3, 26.1
+7bf1c54, 26.2 18d03af).
+
+**NEXT (still open to look at):** an APOCALYPSE world for the grim pools; Dunmer/Bone sets in
+kitchens (2-wide oven); tall wall pieces (large mirror, banner) actually appearing: chairs 2-tall in dining/offices, wardrobes in
 bedrooms, double beds, sofa runs (arms at the ends), shelf+topper, decorations on tables. Watch for:
 a piece that never appears (footprint filter too strict) and mis-rotated 2-wide pieces (the
 right-hand rule). Ideas parked: an APOCALYPSE-only pool for the macabre decorations (bone piles,
