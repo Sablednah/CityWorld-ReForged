@@ -195,6 +195,16 @@ cell (the nightstand barrel overwrote the head cell in narrow rooms — NOT deca
 intact, which was the clue). All nine CurseForge instances redeployed (1.21.11 da2f2a3, 26.1
 7bf1c54, 26.2 18d03af).
 
+**Evening 2026-09-05 (f9b9e7b, 8fcd6c0, da5c825):** paintings on chandeliers had TWO causes —
+house rooms ran wallDecor before accentRoom (a painting is an entity; the chandelier chain saw an
+empty cell) → walls now come after accents in all 11 branches; and the Fantasy chandelier's collision
+box passes `isFaceSturdy`, so the wall pass took it for a wall → `SupportBlocks.isWallBacking` = full
+cube + sturdy + not glass + not in ANY pool (`FurnitureTags.isPooled`, all pools by reflection, plus
+the data map). Wall pieces were rare because vanilla art went first and always wins on a sturdy wall
+→ shelf/art/pool now a third each; wide/tall rolls use `pickExactly`. Kitchens take a 2-wide cooker
+(Dunmer oven) anchored one cell in. Both self-tests PASS (26.2: 89 pieces whole, 206 shelves
+stocked, stacks {0=36,1=19,2=17}); all nine instances redeployed.
+
 **NEXT (still open to look at):** an APOCALYPSE world for the grim pools; Dunmer/Bone sets in
 kitchens (2-wide oven); tall wall pieces (large mirror, banner) actually appearing: chairs 2-tall in dining/offices, wardrobes in
 bedrooms, double beds, sofa runs (arms at the ends), shelf+topper, decorations on tables. Watch for:
