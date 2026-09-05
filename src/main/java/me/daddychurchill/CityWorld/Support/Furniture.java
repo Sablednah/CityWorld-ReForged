@@ -254,12 +254,10 @@ public final class Furniture {
      * hang simply is not spawned.
      */
     private static boolean wallArt(RealBlocks chunk, Odds odds, int x, int y, int z) {
-        BlockFace out = wallwardOrNull(chunk, x, y + 2, z);
+        // a real wall behind: full, sturdy, not glass, not furniture — a chandelier's collision box
+        // passed the sturdy-face test alone and wore a painting (owner's screenshot)
+        BlockFace out = sturdyWall(chunk, x, y + 2, z);
         if (out == null || !chunk.isEmpty(x, y + 2, z))
-            return false;
-        // the backing must be a sturdy full face — art hung on window glass pops off on first tick
-        if (!chunk.isSturdyFace(x - out.getModX(), y + 2, z - out.getModZ(), out)
-                || chunk.isGlass(x - out.getModX(), y + 2, z - out.getModZ()))
             return false;
         me.daddychurchill.CityWorld.compat.Location at = chunk.getBlockLocation(x, y + 2, z);
         if (!(at.getLevel() instanceof net.minecraft.world.level.ServerLevelAccessor server))
@@ -335,7 +333,7 @@ public final class Furniture {
     private static BlockFace wallwardSturdy(RealBlocks chunk, int x, int y, int z) {
         for (BlockFace out : HORIZONTALS) {
             int bx = x - out.getModX(), bz = z - out.getModZ();
-            if (solid(chunk, bx, y, bz) && !chunk.isGlass(bx, y, bz) && chunk.isSturdyFace(bx, y, bz, out))
+            if (bx >= 0 && bx < 16 && bz >= 0 && bz < 16 && chunk.isWallBacking(bx, y, bz, out))
                 return out;
         }
         return null;
