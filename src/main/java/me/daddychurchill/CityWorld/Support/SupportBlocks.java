@@ -863,8 +863,28 @@ public abstract class SupportBlocks extends AbstractBlocks {
 			for (var prop : cells.get(i).props().entrySet())
 				state = withNamedValue(state, prop.getKey(), prop.getValue());
 			setActualBlock(at[i][0], at[i][1], at[i][2], state);
+			if (i > 0)
+				dropPlaceholderBlockEntity(at[i][0], at[i][1], at[i][2], state);
 		}
 		return true;
+	}
+
+	/**
+	 * A chunk under generation writes a placeholder ({@code "id":"DUMMY"}) block-entity tag for
+	 * every block whose <em>type</em> can carry one, and asks the block for the real entity when
+	 * the chunk is promoted. A multi-block piece with an inventory (Fantasy's desks, wardrobes,
+	 * bookcases) keeps its entity at the origin only, so every other cell answered {@code null} and
+	 * the server logged "Tried to load a block entity ... but failed" once per cell — 195 lines in
+	 * the owner's log, all {@code multi_block_index=1} desks. Harmless in play (the parts defer to
+	 * the origin), but spam; so drop the placeholder for a cell the block will not back.
+	 */
+	private void dropPlaceholderBlockEntity(int x, int y, int z, BlockState state) {
+		if (!state.hasBlockEntity())
+			return;
+		var pos = getActualBlock(x, y, z).getPos();
+		if (state.getBlock() instanceof net.minecraft.world.level.block.EntityBlock entityBlock
+				&& entityBlock.newBlockEntity(pos, state) == null)
+			world.getChunk(pos).removeBlockEntity(pos);
 	}
 
 	/**
