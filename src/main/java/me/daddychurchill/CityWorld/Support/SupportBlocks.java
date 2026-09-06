@@ -856,25 +856,14 @@ public abstract class SupportBlocks extends AbstractBlocks {
 			setActualBlock(x, y, z, base);
 			return true;
 		}
-		// the frame the layout is written in: stand where the piece's facing points, look at it
-		Direction front = facing.toDirection();
-		if (front == null || !front.getAxis().isHorizontal())
-			front = base.hasProperty(BlockStateProperties.HORIZONTAL_FACING)
-					? base.getValue(BlockStateProperties.HORIZONTAL_FACING)
-					: Direction.NORTH;
-		Direction right = front.getCounterClockWise(), back = front.getOpposite();
+		int[][] at = furnitureCells(x, y, z, piece, facing);
 		boolean grounded = !isEmpty(x, y - 1, z);
-		int[][] at = new int[cells.size()][];
 		for (int i = 0; i < cells.size(); i++) {
-			var part = cells.get(i);
-			int px = x + right.getStepX() * part.right() + back.getStepX() * part.back();
-			int py = y + part.up();
-			int pz = z + right.getStepZ() * part.right() + back.getStepZ() * part.back();
+			int px = at[i][0], py = at[i][1], pz = at[i][2];
 			if (!insideXYZ(px, py, pz) || !isEmpty(px, py, pz))
 				return false;
-			if (grounded && part.up() == 0 && isEmpty(px, py - 1, pz))
+			if (grounded && cells.get(i).up() == 0 && isEmpty(px, py - 1, pz))
 				return false;
-			at[i] = new int[] { px, py, pz };
 		}
 		for (int i = 0; i < cells.size(); i++) {
 			BlockState state = withNamedValue(base, spec.indexProperty(), Integer.toString(i));
@@ -903,6 +892,30 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		if (state.getBlock() instanceof net.minecraft.world.level.block.EntityBlock entityBlock
 				&& entityBlock.newBlockEntity(pos, state) == null)
 			world.getChunk(pos).removeBlockEntity(pos);
+	}
+
+	/**
+	 * The cells a piece would occupy anchored at (x,y,z) with this {@code facing} value — one per
+	 * layout part, the origin first — with no checks at all. Lets a placer test each cell for what
+	 * it needs (a wall behind every cell of a wide painting) before committing.
+	 */
+	public final int[][] furnitureCells(int x, int y, int z, Material piece, BlockFace facing) {
+		var cells = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.furnitureFor(piece).cells();
+		BlockState base = withDirection(stateOf(piece), facing);
+		// the frame the layout is written in: stand where the piece's facing points, look at it
+		Direction front = facing.toDirection();
+		if (front == null || !front.getAxis().isHorizontal())
+			front = base.hasProperty(BlockStateProperties.HORIZONTAL_FACING)
+					? base.getValue(BlockStateProperties.HORIZONTAL_FACING)
+					: Direction.NORTH;
+		Direction right = front.getCounterClockWise(), back = front.getOpposite();
+		int[][] at = new int[cells.size()][];
+		for (int i = 0; i < cells.size(); i++) {
+			var part = cells.get(i);
+			at[i] = new int[] { x + right.getStepX() * part.right() + back.getStepX() * part.back(),
+					y + part.up(), z + right.getStepZ() * part.right() + back.getStepZ() * part.back() };
+		}
+		return at;
 	}
 
 	/**

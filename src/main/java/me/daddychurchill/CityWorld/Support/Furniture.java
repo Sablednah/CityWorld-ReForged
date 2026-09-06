@@ -207,9 +207,12 @@ public final class Furniture {
             return;
         boolean grim = grim(generator, odds);
         List<int[]> cells = new ArrayList<>();
+        // a cell someone could stand in (floor under it, air at the foot) with a wall behind at eye
+        // height — the office pass otherwise hung art inside stairwells, over the treads
         for (int cx = x1 + 1; cx <= x2 - 1; cx++)
             for (int cz = z1 + 1; cz <= z2 - 1; cz++)
-                if (chunk.isEmpty(cx, y + 2, cz) && sturdyWall(chunk, cx, y + 2, cz) != null)
+                if (chunk.isEmpty(cx, y, cz) && !chunk.isEmpty(cx, y - 1, cz) && chunk.isEmpty(cx, y + 2, cz)
+                        && sturdyWall(chunk, cx, y + 2, cz) != null)
                     cells.add(new int[] { cx, cz });
         if (cells.isEmpty())
             return;
@@ -344,8 +347,15 @@ public final class Furniture {
     }
 
     private static boolean mountOnWall(RealBlocks chunk, int x, int y, int z, Material piece, BlockFace out) {
-        return chunk.setFurniture(x, y, z, piece, piece.hasFaces() ? out.getOppositeFace()
-                : FurnitureTags.facingFor(piece, out));
+        BlockFace facing = piece.hasFaces() ? out.getOppositeFace() : FurnitureTags.facingFor(piece, out);
+        // EVERY cell of a wide or tall piece needs wall behind it — the owner found a two-wide
+        // painting with its second half over a window, and another past the end of its wall
+        for (int[] cell : chunk.furnitureCells(x, y, z, piece, facing)) {
+            int bx = cell[0] - out.getModX(), bz = cell[2] - out.getModZ();
+            if (bx < 0 || bx > 15 || bz < 0 || bz > 15 || !chunk.isWallBacking(bx, cell[1], bz, out))
+                return false;
+        }
+        return chunk.setFurniture(x, y, z, piece, facing);
     }
 
     /**
