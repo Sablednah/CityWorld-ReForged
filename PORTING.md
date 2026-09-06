@@ -205,6 +205,11 @@ the data map). Wall pieces were rare because vanilla art went first and always w
 (Dunmer oven) anchored one cell in. Both self-tests PASS (26.2: 89 pieces whole, 206 shelves
 stocked, stacks {0=36,1=19,2=17}); all nine instances redeployed.
 
+**2026-09-06/07 (bf7c964):** wide paintings hung half over windows / past wall ends → `mountOnWall`
+checks `isWallBacking` behind EVERY cell (`SupportBlocks.furnitureCells` exposes the layout cells);
+office wall pass hung art inside stairwells → candidate cells must be standable floor (air at foot,
+solid below). Owner confirmed in play: Dunmer oven, banners, double beds. Fleet on bf7c964/d6243f1/dee2caf.
+
 **NEXT (still open to look at):** an APOCALYPSE world for the grim pools; Dunmer/Bone sets in
 kitchens (2-wide oven); tall wall pieces (large mirror, banner) actually appearing: chairs 2-tall in dining/offices, wardrobes in
 bedrooms, double beds, sofa runs (arms at the ends), shelf+topper, decorations on tables. Watch for:
