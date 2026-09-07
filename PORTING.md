@@ -115,7 +115,13 @@ own campus interiors).
 - **For-sale signs** — Vacant towers (OfficeBuildingLot EMPTY) and EmptyBuildingLot get a "For
   Sale" wall sign by the ground-floor door. Sign text helpers exist (setSignText).
 
-**▶ v5.6.0 RELEASED 2026-09-07** — tag on master `79def65` (docs `c2b76e3`), three jars on GitHub
+**▶ RESUME HERE (fresh slate, post-5.6.0, 2026-09-07).** Everything through the Fantasy's Furniture
+arc is released and on every instance. Nothing is in flight. Parked ideas, none started:
+block-entity-backed decorations (plushie, skull blossoms, widow bloom); hanging herbs on ceilings;
+more vanilla grim seeds; a `scripts/deploy-fleet.sh` for the nine instances (done by hand this cycle);
+CURSEFORGE.md paste + sablecraft.co.uk (owner, today). Next feature: owner's call.
+
+**v5.6.0 RELEASED 2026-09-07** — tag on master `79def65` (docs `c2b76e3`), three jars on GitHub
 (https://github.com/Sablednah/CityWorld-ReForged/releases/tag/v5.6.0), Modrinth workflow green,
 CurseForge workflow fired; all nine instances on the release jars (`DEPLOYED-v5.6.0`). Still manual:
 paste `CURSEFORGE.md` (furnished section updated for 5.6.0) as the CurseForge description; the site
