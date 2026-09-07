@@ -121,6 +121,11 @@ generated city, more ground than New York City covers.
   the seas, hostiles in the dark.
 - **Set-pieces** — oil platforms, castles, radio towers, flying saucers, hot-air balloons, campgrounds,
   zoos and biodomes.
+- **Furniture mods** — install Macaw's Furniture, MrCrayfish's Refurbished Furniture or any Fantasy's
+  Furniture set and the interiors are built from them: kitchens, baths, double beds, wardrobes,
+  stocked shelves, cluttered tables — every piece facing the right way, multi-block pieces placed
+  whole. A Fantasy's set released after this version is recognised at startup. Without them, rooms
+  keep a classic vanilla look; mod authors can join in with two data files (`PALETTES.md`).
 - **Schematics** — a bundled catalog of classic buildings, plus any you drop in yourself.
 - **Decay** — two ruined presets with independently tunable intensity, fire density and how much survives
   intact: **apocalypse** (buildings slowly decaying, nature reclaiming, no fires) and **destroyed**
