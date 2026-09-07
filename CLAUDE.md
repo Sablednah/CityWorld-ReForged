@@ -81,6 +81,9 @@ export PATH="$JAVA_HOME/bin:$PATH"
   `run/server.properties`, `rm -rf run/world`) force-generates a region, dumps per-layer block
   tallies + furnishing traces, and halts. The probe solved in two runs what four patch-and-playtest
   rounds could not. Verify fixes by re-probe BEFORE deploying.
+  **`-Dcityworld.watch=<x>,<y>,<z>`** (world coords, alongside the probe) logs every write to that cell
+  with the CityWorld stack behind it — "who draws this block?" answered in one run (the line-of-blocks
+  building was `drawInteriorColumns` through a CENTER stairwell; zero WATCH lines after the fix).
 - **Kill the previous `runServer` before starting another.** A backgrounded one keeps port 25565, and
   the second run fails with `bind(..) failed: Address already in use` → `Failed to initialize server`
   → a crash report and an NPE in `overworld()` on shutdown. That reads like a code fault and isn't

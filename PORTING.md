@@ -217,7 +217,14 @@ a piece that never appears (footprint filter too strict) and mis-rotated 2-wide 
 right-hand rule). Ideas parked: an APOCALYPSE-only pool for the macabre decorations (bone piles,
 spider webs, gravestones), plushies (block-entity backed), the base mod's furniture_station as a
 workshop workbench.
-- Watch-list: the line-of-blocks building (owner will drop coords when re-spotted — probe it);
+- **2026-09-07 — line-of-blocks building SOLVED (589a9b7):** seed -3729467216436926281, block
+  24 76 -169, StoreBuildingLot COLUMNS_OFFICES. New instrument `-Dcityworld.watch=x,y,z` (ChunkProbe)
+  named it in one run: `drawInteriorColumns` draws the narrow layout's 2×2 pillar at x7..8/z7..8 full
+  height, a CENTER stairwell sits there, the stairs carved most of it and left a row across the stair
+  head every floor. Columns now skip stair-claimed cells (claim is filled before the style switch).
+  Re-probe: 0 WATCH lines. Also today: wide wall pieces need wall behind EVERY cell; office wall pass
+  keeps to standable floor (was inside stairwells).
+- Watch-list: ~~the line-of-blocks building~~ (solved above);
   CurseForge review + Modrinth approval pending; owner pastes CURSEFORGE.md; site lags a release.
 Everything below this line is historical record of the arc.
 
