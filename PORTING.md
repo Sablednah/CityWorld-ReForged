@@ -115,7 +115,14 @@ own campus interiors).
 - **For-sale signs** — Vacant towers (OfficeBuildingLot EMPTY) and EmptyBuildingLot get a "For
   Sale" wall sign by the ground-floor door. Sign text helpers exist (setSignText).
 
-**▶ RESUME HERE (Fantasy's Furniture, 2026-09-04).** The furniture + interiors arc shipped in
+**▶ v5.6.0 RELEASED 2026-09-07** — tag on master `79def65` (docs `c2b76e3`), three jars on GitHub
+(https://github.com/Sablednah/CityWorld-ReForged/releases/tag/v5.6.0), Modrinth workflow green,
+CurseForge workflow fired; all nine instances on the release jars (`DEPLOYED-v5.6.0`). Still manual:
+paste `CURSEFORGE.md` (furnished section updated for 5.6.0) as the CurseForge description; the site
+lags. Branches `mc26.1`/`mc26.2` pushed with their own "Bump to 5.6.0" commits. Everything below is
+the record of the arc that became 5.6.0.
+
+**(was) RESUME HERE (Fantasy's Furniture, 2026-09-04).** The furniture + interiors arc shipped in
 5.5.0; the next mod family — **Fantasy's Furniture** (base + Nordic + Necrolord sets + Decorations,
 all 26.2.4 on apexcore 26.2.3) — is integrated in code and awaiting playtest. What was built:
 
