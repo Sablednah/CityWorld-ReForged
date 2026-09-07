@@ -1153,6 +1153,12 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		for (int[] p : new int[][] { { 3, 3 }, { 3, 12 }, { 12, 3 }, { 12, 12 }, { 7, 7 } }) {
 			if (!chunkOdds.playOdds(0.75))
 				continue;
+			// never over the stairwell: this runs BEFORE the stairs are drawn, so the ceiling it
+			// finds there is about to be cut away and the light left hanging over the treads
+			// (owner's chandelier-over-the-stairs, seed -3729467216436926281, block 23 68 -169);
+			// the centre position IS a CENTER stairwell, and the claim already knows
+			if (isStairClaimed(p[0], p[1]))
+				continue;
 			int ceil = -1;
 			for (int cy = floorAt + 2; cy <= floorAt + floorHeight; cy++)
 				if (!chunk.isEmpty(p[0], cy, p[1])) {
