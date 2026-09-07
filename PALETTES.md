@@ -119,8 +119,8 @@ ids always exist when your mod is loaded, so they need no `"required": false`.
 #### 2. Say which way they face
 
 ⚠ **This is the part worth reading**, because getting it wrong seats everybody with their back to the
-table, and the two big furniture mods disagree about it — one of them disagrees with *itself* between
-its chairs and its sofas.
+table, and the furniture mods disagree about it — Macaw's disagrees with *itself* between its chairs
+and its sofas, Refurbished's facing is the back, Fantasy's is the front.
 
 CityWorld tells a seat **which way its occupant should look**. Your block's `facing` may mean something
 different, so declare the difference in `data/cityworld/data_maps/block/furniture.json`:
