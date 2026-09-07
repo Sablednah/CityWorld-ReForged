@@ -1188,23 +1188,37 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		// precalculate
 		int y2 = y1 + floorHeight;
 
+		// Never through the stairwell: the narrow layout's 2x2 pillar sits dead centre, and a CENTER
+		// stairwell sits exactly there — the stairs then carved most of it away and left a row of
+		// wall material across the stair head on every floor (the "line-of-blocks building", seed
+		// -3729467216436926281, block 24 76 -169, named by the block watch). The stair claim is
+		// filled before the style switch, so a column cell can simply ask.
+
 		// first try the narrow logic (single column in the middle)
 		if (drawNarrowInteriors) {
-			chunk.setBlocks(7, 9, y1, y2, 7, 9, columnMaterial);
+			for (int x = 7; x < 9; x++)
+				for (int z = 7; z < 9; z++)
+					column(chunk, x, y1, y2, z);
 
 			// if the narrow logic doesn't handle it, try to use the wide logic (four
 			// columns in the middle)
 		} else {
 
 			if (heights.toNorthWest())
-				chunk.setBlocks(4, y1, y2, 4, columnMaterial);
+				column(chunk, 4, y1, y2, 4);
 			if (heights.toNorthEast())
-				chunk.setBlocks(11, y1, y2, 4, columnMaterial);
+				column(chunk, 11, y1, y2, 4);
 			if (heights.toSouthWest())
-				chunk.setBlocks(4, y1, y2, 11, columnMaterial);
+				column(chunk, 4, y1, y2, 11);
 			if (heights.toSouthEast())
-				chunk.setBlocks(11, y1, y2, 11, columnMaterial);
+				column(chunk, 11, y1, y2, 11);
 		}
+	}
+
+	/** One interior column, unless the stairwell has claimed that cell. */
+	private void column(RealBlocks chunk, int x, int y1, int y2, int z) {
+		if (!isStairClaimed(x, z))
+			chunk.setBlocks(x, y1, y2, z, columnMaterial);
 	}
 
 	private void drawInteriorWalls(CityWorldGenerator generator, RealBlocks chunk, DataContext context,
