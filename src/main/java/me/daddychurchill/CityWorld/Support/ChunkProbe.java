@@ -30,6 +30,39 @@ public final class ChunkProbe {
         return enabled();
     }
 
+    /**
+     * The block watch: {@code -Dcityworld.watch=<x>,<y>,<z>} (world coordinates) logs every write
+     * to that cell with the state written and the CityWorld frames that wrote it. Built for the
+     * line-of-blocks building (seed -3729467216436926281, block 24 76 -169): a row of wall material
+     * across the stair head on every floor, same x/z — "who draws this?" answered by the stack
+     * rather than by reading every stairwell routine.
+     */
+    private static final BlockPos WATCH = parseWatch();
+
+    private static BlockPos parseWatch() {
+        String value = System.getProperty("cityworld.watch");
+        if (value == null)
+            return null;
+        String[] p = value.split(",");
+        return new BlockPos(Integer.parseInt(p[0].trim()), Integer.parseInt(p[1].trim()), Integer.parseInt(p[2].trim()));
+    }
+
+    public static void watch(BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
+        if (WATCH == null || !WATCH.equals(pos))
+            return;
+        StringBuilder frames = new StringBuilder();
+        int shown = 0;
+        for (StackTraceElement frame : Thread.currentThread().getStackTrace()) {
+            if (!frame.getClassName().startsWith("me.daddychurchill") || frame.getClassName().endsWith("ChunkProbe"))
+                continue;
+            frames.append("\n      at ").append(frame.getClassName().substring(frame.getClassName().lastIndexOf('.') + 1))
+                    .append('.').append(frame.getMethodName()).append(':').append(frame.getLineNumber());
+            if (++shown >= 14)
+                break;
+        }
+        CityWorldMod.LOGGER.warn("WATCH {} <- {}{}", pos.toShortString(), state, frames);
+    }
+
     @SubscribeEvent
     public void onStarted(ServerStartedEvent event) {
         MinecraftServer server = event.getServer();
