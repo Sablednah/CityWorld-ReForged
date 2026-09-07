@@ -2,9 +2,10 @@
 """Generate the furniture role tags from installed furniture mods.
 
 CityWorld furnishes rooms from ROLE tags — "something to sit on", "something to eat at" — rather than
-from block names, so a furniture mod joins by being tagged and needs no code. The two big mods ship
-around 1,200 furniture blocks between them on a regular `<material>_<kind>` naming scheme, which is
-far too many to hand-write and exactly regular enough to derive.
+from block names, so a furniture mod joins by being tagged and needs no code. Macaw's and Refurbished
+ship around 1,200 furniture blocks between them on a regular `<material>_<kind>` naming scheme, which
+is far too many to hand-write and exactly regular enough to derive; Fantasy's Furniture sets share
+one fixed vocabulary, handled by name.
 
     python3 scripts/gen_furniture_tags.py [mods_dir]
 
@@ -106,10 +107,11 @@ MOD_DEFAULT_OFFSET = {"refurbished_furniture": 180}
 
 # Two-block bed-like furniture: type=bottom at the anchor, type=head one cell toward `facing`,
 # both halves sharing the facing value (measured from BathBlock.setPlacedBy — it is exactly the
-# vanilla bed contract). The refurbished baths are the ONLY multi-block furniture in either mod.
+# vanilla bed contract). The refurbished baths are the only multi-block furniture in Macaw's or
+# Refurbished; the Fantasy's Furniture sets declare full `layout`s instead (see below).
 PARTS = {("refurbished_furniture", "bath"): 2}
 
-# The three decoration pools — the owner's design call: things that stand on the floor, things
+# The decoration pools — the owner's design call: things that stand on the floor, things
 # that belong ON a surface (a table gets placed underneath them), and things mounted on a wall.
 # Vanilla seeds live here so the whole pool stays generated; furniture-mod lamps are appended to
 # `surface` automatically (Refurbished lamps are y 0-14 with no facing — table lamps, not floor

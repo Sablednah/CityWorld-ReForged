@@ -51,11 +51,15 @@ courthouses inside the government buildings, museum exhibits, factory control ro
 and warehouses — lit, labelled (check F3), and furnished down to the basements. Vacant buildings
 hang FOR SALE / TO LET signs and stay dark.
 
-Install **Macaw's Furniture** or **MrCrayfish's Refurbished Furniture** and the whole city upgrades:
-real kitchens with fridges and stoves, two-block baths, sofas, desks with computers, ceiling fans —
-nearly 1,000 modded pieces, every one facing the right way. Without them, rooms keep a classic
-vanilla look. Mod authors: adding your own furniture takes two data files in your jar — see
-`PALETTES.md` in the repo.
+Install **Macaw's Furniture**, **MrCrayfish's Refurbished Furniture** or **Fantasy's Furniture** (any
+of its sets — Nordic, Necrolord, Dunmer, Bone — plus the Decorations add-on) and the whole city
+upgrades: real kitchens with fridges and stoves, two-block baths, sofas, desks with computers,
+ceiling fans, two-tall chairs and double beds, stocked shelves, tables cluttered with books, bottles
+and tankards — over a thousand modded pieces, every one facing the right way. **New in 5.6.0:** a
+Fantasy's Furniture set released *after* this version is recognised at startup and furnished on the
+spot, and APOCALYPSE draws on a grim set of skulls, cobwebs and bone piles. Without furniture mods,
+rooms keep a classic vanilla look. Mod authors: adding your own furniture takes two data files in
+your jar — see `PALETTES.md` in the repo.
 
 ## World styles
 

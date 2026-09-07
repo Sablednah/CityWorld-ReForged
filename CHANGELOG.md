@@ -5,43 +5,45 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
-## Unreleased
+## 5.6.0
 
 ### Added
 
-- **Fantasy's Furniture furnishes the city too** — every set (Nordic, Necrolord, and any set its
-  author adds later, since they all share one block vocabulary) plus the Decorations add-on. Its
-  pieces are **multi-block**: two-tall chairs, two-wide desks, dressers and benches, 2×2 bookcases,
-  2×3 wardrobes and **2×2 double beds** now place whole or not at all, via per-cell layouts in the
-  furniture data map. Beds of every kind (vanilla, modded singles, doubles) come from one pool.
-- **Wall shelves with something on them** — a third of wall decoration is now a shelf at waist height
-  (Fantasy's, vanilla `*_shelf`, or a top-half slab) with a piece from the surface pool stood on it.
-- **Any Fantasy's Furniture set works without a CityWorld update.** The sets share one block
-  vocabulary, and CityWorld now recognises it in the block registry at startup — a set released
-  after this version is furnished on the spot, two sets in one jar included.
-- **Grim decoration on APOCALYPSE.** Skulls, cobwebs, bone piles, gravestones, spider webs, soul
-  gems and potion bottles fill half of the ruined world's floor, table and wall decoration, from
-  three new `decor/grim_*` pools; the other styles never see them.
-- **Offices, shops and flats get the wall pass** (art, sconces, shelves) that only house rooms had,
-  and nothing is hung on a window any more. Two-tall wall pieces (large mirrors, banners) now fit.
+- **Fantasy's Furniture furnishes the city** — every set (Nordic, Necrolord, Dunmer, both Bone sets,
+  and any set its author releases later) plus the Decorations add-on. The sets share one block
+  vocabulary and CityWorld recognises it in the block registry at startup, so **a set released after
+  this version is furnished on the spot**, two sets in one jar included, and a set that reshapes a
+  piece (Dunmer's two-wide oven) is placed by the shape the block itself reports. Its pieces are
+  **multi-block**: two-tall chairs, two-wide desks, dressers and benches, 2×2 bookcases, 2×3
+  wardrobes and **2×2 double beds** place whole or not at all. Beds of every kind — vanilla, modded
+  singles, doubles — come from one pool.
+- **Tabletop and wall scatter with variety** — the Decorations add-on's books, bottles, food, candles,
+  coins, tankards, platters, mirrors, banners and fairy lights join the decoration pools; stack
+  heights, colours and fill levels vary per placement. Freestanding floor lamps, a rug pool, and
+  Necrolord bricks in the modern stone palette.
+- **Shelves.** A third of wall decoration is now a shelf at waist height: a vanilla `*_shelf`
+  **stocked with keepsakes** (books, a clock, bottles — bones and skulls on APOCALYPSE), or a
+  Fantasy's shelf or top-half slab with something stood on it.
+- **Offices, shops and flats get the wall pass** (art, sconces, shelves) that only house rooms had.
+  Two-tall pieces (large mirrors, banners) and two-wide paintings hang properly, with wall behind
+  every cell.
 - **Desk clutter.** Office desks without a computer get paper stacks, books or a mug from a new
   `decor/desk` pool.
-- **Tabletop and wall scatter with variety** — the Decorations add-on's books, bottles, food, candles,
-  coins, mirrors and fairy lights join the decoration pools; stack heights and colours vary per
-  placement. Freestanding floor lamps, a rug pool, and Necrolord bricks in the modern stone palette.
+- **Grim decoration on APOCALYPSE.** Skulls, cobwebs, bone piles, gravestones, spider webs, soul gems
+  and potion bottles fill half of the ruined world's floor, table and wall decoration, from three
+  new `decor/grim_*` pools; the other styles never see them.
+- For mod authors: the furniture data map grew `layout`, `props`, `vary`, `indexProperty` and
+  `reconnect` (see `PALETTES.md`); `parts: 2` still works. Picks are footprint-aware, so a wide
+  piece is only chosen where a room has the space for it.
 
 ### Fixed
 
-- No more "Tried to load a block entity … but failed" log spam for multi-block desks, wardrobes
-  and bookcases: the generation-time placeholder is dropped from the cells the piece does not back.
-
-### Changed
-
-- A set that reshapes a vocabulary piece (Dunmer's two-wide oven) gets its shape from the block
-  itself at runtime, via apexcore's own multi-block API.
-- The furniture data map grew `layout`, `props`, `vary`, `indexProperty` and `reconnect` (see
-  `PALETTES.md`); `parts: 2` still works. Furniture picks are footprint-aware, so a wide piece is only
-  chosen where a room has the space for it.
+- Paintings and sconces no longer hang on windows, chandeliers or the inside of stairwells: a wall
+  mount now needs a real wall behind it, and blocks are placed before the art.
+- The bedroom nightstand could replace part of the bed in a narrow room; it now only goes where the
+  floor is clear.
+- Interior columns and hanging lights no longer cross a CENTER stairwell (the row of wall blocks
+  across the stair head on every floor, and the chandelier over the stairs).
 
 ## 5.5.0
 

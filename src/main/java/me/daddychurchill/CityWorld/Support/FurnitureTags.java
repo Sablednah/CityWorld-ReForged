@@ -14,10 +14,12 @@ import net.minecraft.world.level.block.Block;
  * Furniture by <b>role</b> — "something to sit on", "something to eat at" — rather than by block name.
  *
  * <p>CityWorld furnishes rooms out of these tags, so a furniture mod joins by being tagged and needs no
- * code at all. The two large furniture mods ship ~1,200 blocks between them on a regular
+ * code at all. Macaw's and Refurbished ship ~1,200 blocks between them on a regular
  * {@code <material>_<kind>} naming scheme; {@code scripts/gen_furniture_tags.py} derives the tags from
  * an installed mod rather than anyone hand-writing them, and every entry is {@code "required": false}
- * so the tags cost nothing when the mod is absent.
+ * so the tags cost nothing when the mod is absent. Fantasy's Furniture sets share one block vocabulary
+ * and are recognised at runtime instead ({@link FurnitureSets}), so a set this build never saw still
+ * lands in the pools.
  *
  * <p><b>Orientation cannot be inferred, and that is the whole reason the data map exists.</b> Measured
  * from model geometry: Macaw's chair uses {@code facing} as the direction its occupant looks, Macaw's
@@ -66,7 +68,7 @@ public final class FurnitureTags {
     public static final TagKey<Block> SHELF = key("shelf");
 
     /**
-     * The three decoration pools — placement classes, not furniture roles. {@code FLOOR_DECOR}
+     * The decoration pools — placement classes, not furniture roles. {@code FLOOR_DECOR}
      * stands on the ground, {@code SURFACE_DECOR} belongs on a tabletop (the placer puts a table
      * underneath), {@code WALL_DECOR} mounts on a wall. Modded table lamps are generated into
      * {@code surface}, which is the whole reason the split exists: Refurbished lamps are y 0–14
