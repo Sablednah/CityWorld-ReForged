@@ -224,6 +224,10 @@ workshop workbench.
   head every floor. Columns now skip stair-claimed cells (claim is filled before the style switch).
   Re-probe: 0 WATCH lines. Also today: wide wall pieces need wall behind EVERY cell; office wall pass
   keeps to standable floor (was inside stairwells).
+- **Same seed, chandelier over the stairs (8880e5a):** `lightInterior` runs after `claimStairs` but
+  BEFORE `drawStairs`, and its grid's centre position is a CENTER stairwell — it found the intact
+  ceiling, hung the light, then the stairs cut the ceiling. Claimed positions skipped. Rule of the
+  day: anything drawn between claimStairs and drawStairs must consult the claim.
 - Watch-list: ~~the line-of-blocks building~~ (solved above);
   CurseForge review + Modrinth approval pending; owner pastes CURSEFORGE.md; site lags a release.
 Everything below this line is historical record of the arc.
