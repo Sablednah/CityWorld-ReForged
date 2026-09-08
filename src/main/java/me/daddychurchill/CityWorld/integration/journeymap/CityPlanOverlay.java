@@ -1,7 +1,6 @@
 package me.daddychurchill.CityWorld.integration.journeymap;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -12,7 +11,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import journeymap.api.v2.client.display.Context;
 import journeymap.api.v2.client.util.UIState;
 import journeymap.api.v2.server.IServerAPI;
 import journeymap.api.v2.server.overlay.OverlayPoints;
@@ -293,9 +291,8 @@ final class CityPlanOverlay {
         String name = title(family.name());
         String tooltip = name + " district · " + platmap.getNumberOfRoads() + " roads · "
                 + Math.round(platmap.getNaturePercent() * 100) + "% open land";
-        OverlayShapeProps props = new OverlayShapeProps(color, 0.12f, color, 1.0f, 0.55f, 900,
-                UIState.FULLSCREEN_ZOOM_MIN, UIState.ZOOM_IN_MAX,
-                EnumSet.allOf(Context.UI.class), EnumSet.allOf(Context.MapType.class), name, tooltip);
+        OverlayShapeProps props = OverlayProps.everywhere(color, 0.12f, color, 1.0f, 0.55f, 900,
+                UIState.FULLSCREEN_ZOOM_MIN, UIState.ZOOM_IN_MAX, name, tooltip);
         return new ServerPolygon("plan_district_" + platX + "_" + platZ, dimension,
                 List.of(new OverlayPolygon(rect(x0, z0, x1, z1, y), null)), props);
     }
@@ -339,9 +336,8 @@ final class CityPlanOverlay {
             }
         }
 
-        OverlayShapeProps props = new OverlayShapeProps(0x3A3A3A, 0.45f, 0x202020, 0.5f, 0.5f, 1000,
-                UIState.FULLSCREEN_ZOOM_MIN, UIState.ZOOM_IN_MAX,
-                EnumSet.allOf(Context.UI.class), EnumSet.allOf(Context.MapType.class), null, "Streets");
+        OverlayShapeProps props = OverlayProps.everywhere(0x3A3A3A, 0.45f, 0x202020, 0.5f, 0.5f, 1000,
+                UIState.FULLSCREEN_ZOOM_MIN, UIState.ZOOM_IN_MAX, null, "Streets");
         return new ServerPolygon("plan_roads_" + platX + "_" + platZ, dimension, shapes, props);
     }
 
