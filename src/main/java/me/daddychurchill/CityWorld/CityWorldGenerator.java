@@ -25,6 +25,7 @@ import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.Support.WorldBlocks;
+import me.daddychurchill.CityWorld.api.MapMarkers;
 import me.daddychurchill.CityWorld.compat.Environment;
 import me.daddychurchill.CityWorld.compat.Material;
 
@@ -769,8 +770,25 @@ public class CityWorldGenerator {
 
     public void reportLocation(String kind, String title, ServerLevelAccessor level, int x, int z) {
         LOGGER.debug("{} placed near {}, {}", title, x, z);
-        if (getSettings().broadcastSpecialPlaces && getSettings().announcedLandmarks.contains(kind))
-            broadcastLocation(level, title, x, z);
+        if (getSettings().announcedLandmarks.contains(kind)) {
+            if (getSettings().broadcastSpecialPlaces)
+                broadcastLocation(level, title, x, z);
+            // Map mods get the same curated list, but independently of the chat switch: a marker on
+            // the map is not the interruption a chat line is, so it is worth having with announces off.
+            markLocation(kind, title, level, x, z);
+        }
+    }
+
+    /**
+     * Offers the landmark to any installed map mod (see {@link me.daddychurchill.CityWorld.api.MapMarkers}).
+     * Nothing here touches a map mod's classes, so this costs one boolean when none is installed.
+     * Y is street level — the datum the city is laid out around, and a sane place for a marker given
+     * the real surface height isn't known without generating the chunk.
+     */
+    private void markLocation(String kind, String title, ServerLevelAccessor level, int x, int z) {
+        if (level == null || !MapMarkers.hasListeners())
+            return;
+        MapMarkers.landmark(new MapMarkers.Landmark(level.getLevel().dimension(), kind, title, x, streetLevel, z));
     }
 
     /**

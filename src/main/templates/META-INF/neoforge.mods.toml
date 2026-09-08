@@ -40,3 +40,16 @@ iconBlur=false
     versionRange="${minecraft_version_range}"
     ordering="NONE"
     side="BOTH"
+
+# Optional: when JourneyMap is present, CityWorld marks landmarks and draws the city plan on its map
+# (see me.daddychurchill.CityWorld.integration.journeymap). The API is compileOnly and no journeymap
+# class is referenced outside that package, so this is a true soft dependency — the entry only pins
+# the API generation we build against and asks the loader to start JourneyMap first. The range is a
+# gradle property because JourneyMap's version strings lead with the Minecraft version, so each
+# version branch needs its own floor.
+[[dependencies.${mod_id}]]
+    modId="journeymap"
+    type="optional"
+    versionRange="${journeymap_version_range}"
+    ordering="AFTER"
+    side="BOTH"
