@@ -30,6 +30,62 @@ sites. 26.1 touched none of them. 26.2 broke **145**. Because the file is *gener
 repair was teaching `scripts/gen_material.py` new resolution rules; not one of the 3,096 call sites
 changed. That is the strongest argument in the whole arc for keeping generated code generated.
 
+## ▶ JourneyMap integration (2026-09-08)
+
+**What it does.** With JourneyMap installed: rare landmarks become waypoints as they generate,
+`/cityfind`/`/cwlocate` results become a marker on the searcher's map, and **the city plan is drawn
+on the map — districts tinted by family, streets as merged rectangles — for cities nobody has
+explored.** That last one is the part only CityWorld can do: JourneyMap maps what a player has seen,
+and CityWorld knows where every road goes before anyone arrives. `/citymap [on|off]`, on by default.
+
+**Verified facts about the JourneyMap API (2.0.0), measured not guessed:**
+
+- **There are release artifacts for all three of our Minecraft versions**, on `maven.blamejared.com`
+  (`info.journeymap:journeymap-api-neoforge`): `2.0.0-1.21.11`, `2.0.0-26.1`, `26.2-2.0.0`. The API
+  source branches for those three (`1.21.11_2.0.0`, `26.1_2.0.0`, `26.2_2.0`) have an **identical**
+  server-side surface, so the integration is the same code on every branch — only
+  `journeymap_api_version` and `journeymap_version_range` in `gradle.properties` differ.
+- **API 2.0 added a *server* plugin API** (`IServerPlugin` / `IServerAPI`), which is what makes this
+  tractable: the plan lives on the server, and the server can push waypoints
+  (`addGlobalWaypoint`, `addPlayerWaypoint`) and polygon overlays (`getOverlayApi().show(player,
+  modId, ServerPolygon...)`) straight to clients. **No networking of our own, no client-side code.**
+- **JourneyMap 6.0.0 for 1.21.11 declares no `side`**, so it loads on dedicated servers too, and it
+  JarJars both the API and `common-networking` — one jar in `run/mods/` is the whole dev dependency.
+  The shipped jar does contain `journeymap/api/v2/server/overlay/*`, so the overlay API is not just
+  in the source repo.
+- A `ServerPolygon` carries **many** `OverlayPolygon`s under one id and one set of props, so a
+  platmap's whole street grid is a single overlay. Re-`show()`ing the same `(modId, overlayId)`
+  replaces it; `remove` takes it away.
+- Server admins can switch waypoints off (`allowWaypoints`, `globalWaypointsOnly` in
+  `journeymap.server.global.config`), so every call is wrapped — a refused waypoint must not fail a
+  chunk.
+
+**How it is kept a soft dependency.** The API is `compileOnly` and never shipped. Everything that
+touches a `journeymap.*` type lives in `me.daddychurchill.CityWorld.integration.journeymap`, and
+**nothing else in the mod may reference that package** — JourneyMap finds the plugin itself by
+scanning for `@JourneyMapPlugin`, so with JourneyMap absent those classes are never loaded. The
+generator talks to the map only through `me.daddychurchill.CityWorld.api.MapMarkers`, which is in
+CityWorld's own types: another map mod (Xaero's, FTB Chunks) can hook the same seam without the
+generator learning about it.
+
+**Two verification tools, because none of this is visible from a headless server:**
+
+- `-Dcityworld.maptest=true` fires one synthetic landmark at the origin at server start and logs
+  whether a map mod is listening — "is the hook wired up?" answered in one run. It also makes the
+  plan overlay build its polygons for platmap 0,0 and log the counts and timings, so the geometry
+  (plan reading, road-strip merging) is checkable without a client. Measured on a cold cache at
+  spawn: 40 overlays / 59 shapes for the 7×7 sweep, rings landing at 2.5 s / 7.1 s / 11.9 s / 13.9 s
+  — which is why the sweep pushes ring by ring instead of all at the end, and why every player's
+  sweep shares one worker (planned platmaps are cached, so the second player pays almost nothing).
+  A single platmap's 100 road chunks merge to 1–7 rectangles.
+- The plain startup line `CityWorld: map integration active` appears whenever anything is listening.
+
+**Trap paid for here:** the dev server's `run/world/session.lock` outlives a `pkill` that does not
+actually kill (`pkill -f "gradlew runServer"` returned 144 and left the JVM up), and the second run
+dies with `DirectoryLock$LockException: already locked` → `Couldn't find Minecraft server thread`.
+Same shape as the `Address already in use` trap already recorded: check the process is gone by PID,
+not by the exit code of `pkill`.
+
 ## ▶ Furniture mods — built, playtested, and what is left (2026-09-02)
 
 **Status 2026-09-02 (later the same day): all five items below are FIXED in code, awaiting playtest.**

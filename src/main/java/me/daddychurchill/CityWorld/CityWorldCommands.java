@@ -18,6 +18,7 @@ import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.api.CityWorldAPI;
+import me.daddychurchill.CityWorld.api.MapMarkers;
 import me.daddychurchill.CityWorld.api.LotInfo;
 import me.daddychurchill.CityWorld.worldgen.CityWorldBiomes;
 import me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator;
@@ -100,6 +101,15 @@ public final class CityWorldCommands {
                 .then(Commands.argument("name", StringArgumentType.greedyString())
                         .suggests(SUGGEST_SCHEMATICS)
                         .executes(CityWorldCommands::pasteSchematic)));
+
+        // /citymap [on|off] — the city plan overlay (districts and streets) on an installed map mod's
+        // map. On by default; this is how a player turns it off, and how anyone checks whether a map
+        // mod picked CityWorld up at all.
+        dispatcher.register(Commands.literal("citymap")
+                .requires(CityWorldPermissions.check(CityWorldPermissions.INFO))
+                .executes(ctx -> cityMap(ctx, null))
+                .then(Commands.literal("on").executes(ctx -> cityMap(ctx, Boolean.TRUE)))
+                .then(Commands.literal("off").executes(ctx -> cityMap(ctx, Boolean.FALSE))));
 
         // /cityfind <name>  (report nearest) or  /cityfind tp <name>  (and teleport there). tp is a
         // literal before the name because the name is greedy (schematic names have spaces).
@@ -205,6 +215,52 @@ public final class CityWorldCommands {
         return 1;
     }
 
+    // ------------------------------------------------------------------ /citymap
+
+    /**
+     * Turns the city plan overlay on or off for the caller, or reports its state when {@code want} is
+     * null. With no map mod installed there is nothing to draw, and saying so plainly beats silently
+     * accepting a setting that does nothing.
+     */
+    private static int cityMap(CommandContext<CommandSourceStack> ctx, Boolean want) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        if (!MapMarkers.cityPlanAvailable()) {
+            ctx.getSource().sendFailure(Component.literal(
+                    "No map mod is installed that CityWorld can draw on (JourneyMap is supported)."));
+            return 0;
+        }
+        if (want != null)
+            MapMarkers.setCityPlan(player.getUUID(), want);
+        boolean on = MapMarkers.wantsCityPlan(player.getUUID());
+        ctx.getSource().sendSuccess(() -> Component.literal("City plan overlay is " + (on ? "on" : "off")
+                + " — districts and streets" + (on ? " are drawn on your map." : " are hidden.")), false);
+        return 1;
+    }
+
+    // ------------------------------------------------------------------ map markers
+
+    /**
+     * Drops what a find located onto the player's map, when a map mod is installed (JourneyMap and
+     * friends hook {@link MapMarkers}); returns the phrase to append to the chat line, or "" when
+     * nothing is listening.
+     *
+     * <p>Marking is automatic rather than a {@code wp} sub-command: a player who just searched for
+     * the nearest zoo wants it on the map, and removing a waypoint is one click. Y is the world
+     * surface at the spot — this runs on the server thread after the search, so asking the heightmap
+     * is cheap only for chunks already generated; an ungenerated one falls back to sea level rather
+     * than generating a chunk just to place a pin.
+     */
+    private static String mark(ServerPlayer player, String label, int x, int z) {
+        if (!MapMarkers.hasListeners())
+            return "";
+        ServerLevel level = player.level();
+        int y = level.hasChunk(x >> 4, z >> 4)
+                ? level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z)
+                : level.getSeaLevel();
+        MapMarkers.playerMark(new MapMarkers.PlayerMark(player.getUUID(), level.dimension(), label, x, y, z));
+        return "  — marked on your map";
+    }
+
     // ------------------------------------------------------------------ /cityfind <name>
 
     /** Where a matching building was found. */
@@ -255,7 +311,7 @@ public final class CityWorldCommands {
                 }
                 player.sendSystemMessage(Component.literal("Nearest '" + best.name() + "' [" + best.family()
                         + "] at x=" + best.x() + " z=" + best.z() + "  (" + Math.round(best.dist())
-                        + " blocks " + best.compass() + ")"));
+                        + " blocks " + best.compass() + ")" + mark(player, best.name(), best.x(), best.z())));
                 if (teleport) {
                     // force the target chunk to generate so the heightmap is real, then drop onto it
                     level.getChunk(best.x() >> 4, best.z() >> 4);
@@ -370,7 +426,7 @@ public final class CityWorldCommands {
                 }
                 player.sendSystemMessage(Component.literal("Nearest " + best.name() + " [" + best.family()
                         + "] at x=" + best.x() + " z=" + best.z() + "  (" + Math.round(best.dist())
-                        + " blocks " + best.compass() + ")"));
+                        + " blocks " + best.compass() + ")" + mark(player, best.name(), best.x(), best.z())));
                 if (teleport) {
                     level.getChunk(best.x() >> 4, best.z() >> 4);
                     int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, best.x(), best.z());
@@ -488,7 +544,8 @@ public final class CityWorldCommands {
                     return;
                 }
                 player.sendSystemMessage(Component.literal("Nearest '" + best.name() + "' at x=" + best.x() + " z="
-                        + best.z() + "  (" + Math.round(best.dist()) + " blocks " + best.compass() + ")"));
+                        + best.z() + "  (" + Math.round(best.dist()) + " blocks " + best.compass() + ")"
+                        + mark(player, best.name(), best.x(), best.z())));
                 if (teleport) {
                     // force the target chunk to generate so the heightmap is real, then drop onto it
                     level.getChunk(best.x() >> 4, best.z() >> 4);

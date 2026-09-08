@@ -5,6 +5,25 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **JourneyMap integration.** With JourneyMap installed, CityWorld now uses its map:
+  - **The city plan is drawn on the map, including cities nobody has explored.** Districts are
+    tinted by what they are — highrise, municipal, industrial, park, farm — and the street grid of
+    the nearest blocks is drawn over them. JourneyMap can only map what a player has seen; CityWorld
+    planned those streets before anyone arrived, so the map can show the shape of a city you are
+    still walking towards. On by default; `/citymap off` hides it.
+  - **Rare landmarks get a waypoint as they generate**, from the same curated `announcedLandmarks`
+    list the chat announces use — and independently of whether chat announces are switched on.
+  - **`/cityfind`, `/cityfind lot` and `/cwlocate` drop a marker** on whatever they find, so you can
+    walk to it without copying coordinates down.
+
+  It is a soft dependency: the JourneyMap API is compile-only and no JourneyMap class is touched
+  unless JourneyMap is installed. Other map mods can hook the same seam
+  (`me.daddychurchill.CityWorld.api.MapMarkers`) without the generator knowing about them.
+
 ## 5.6.0
 
 ### Added
