@@ -120,6 +120,30 @@ in chunk rings for the nearest matching biome, with an optional `tp`:
 Only works on worlds using CityWorld's own climate biome source (MODERN and related styles) — CLASSIC
 uses a fixed elevation palette instead and isn't searchable this way.
 
+## `/citymap [on|off]`
+
+With **JourneyMap** installed, CityWorld draws its own plan on the map: each district tinted by what
+it is (highrise, municipal, industrial, park, farm...), and the street grid of the nearest few
+blocks, *including cities nobody has explored yet*. JourneyMap can only map what you have seen;
+CityWorld decided where those roads go before anyone arrived, so it can hand the map the shape of a
+city you are still walking towards.
+
+It is on by default. `/citymap off` hides it, `/citymap` on its own reports the current state:
+
+```
+/citymap
+> City plan overlay is on — districts and streets are drawn on your map.
+
+/citymap off
+> City plan overlay is off — districts and streets are hidden.
+```
+
+The same integration puts a waypoint on rare landmarks as they generate (the ones on the world's
+announce list — see the **Configuration** page), and drops a marker on whatever `/cityfind`,
+`/cityfind lot` and `/cwlocate` find, so you can walk to it without writing the coordinates down.
+
+Without JourneyMap the command says so and nothing else changes; CityWorld does not require it.
+
 ---
 
 *Every search command (`/cityfind`, `/cwlocate`) plans chunks off-thread and caches results, so the
