@@ -1447,6 +1447,19 @@ Measured 2026-08-17, all three passing and agreeing:
 | 26.1.2  | `28fc3789` | 67 | 65 | 30 | 134 | 232s |
 | 26.2    | `28fc3789` | 67 | 65 | 30 | 136 | 261s |
 
+**Re-measured 2026-09-09, after the 5.6.0 arc: the plan moved, on every version alike, to
+`db687d0f` (MODERN), `66c0777c` (APOCALYPSE), `98569760` (CLASSIC).** All three still agree, which is
+the invariant; the arc's content (park zones, the vault, the hospital campus, the furniture passes)
+legitimately changed what gets planned where.
+
+**A trap this cost an hour:** `--compare` reads whatever JSON reports are sitting in
+`build/selftest/`, with no freshness check, so a fresh run on one version compared against months-old
+reports on the others reads exactly like "a change altered worldgen on one version only" — the alarm
+it is built to raise. Before believing a `--compare` failure, check the report timestamps and re-run
+the versions that look old. The proof it was a false alarm here: the self-test on the commit *before*
+the change gave hash-for-hash identical results, and re-running 26.1 and 26.2 turned the compare
+green without a line of code changing.
+
 The identical plan hashes are the point: same seed, same city, three Minecraft versions. The distinct
 block counts differing by two is the expected material variance, not a fault.
 
