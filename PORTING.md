@@ -80,6 +80,17 @@ generator learning about it.
   A single platmap's 100 road chunks merge to 1–7 rectangles.
 - The plain startup line `CityWorld: map integration active` appears whenever anything is listening.
 
+**Two cross-version deltas in this integration, both now isolated:**
+
+1. `ChunkPos` is a record from 26.1 on (`.x()` vs `.x`) — the same single API change the 26.1 port
+   cost. Avoided outright by taking the platmap from `player.blockPosition()`, which reads the same
+   on every version.
+2. **26.2 moved `Context`** from `journeymap.api.v2.client.display` to `journeymap.api.v2.common`,
+   and `OverlayShapeProps` names it. That import now lives alone in `OverlayProps.java`, so
+   `CityPlanOverlay` is identical on all three branches and cherry-picks never conflict on it. The
+   whole per-branch delta for this feature is therefore: two `gradle.properties` values and one
+   import line.
+
 **Trap paid for here:** the dev server's `run/world/session.lock` outlives a `pkill` that does not
 actually kill (`pkill -f "gradlew runServer"` returned 144 and left the JVM up), and the second run
 dies with `DirectoryLock$LockException: already locked` → `Couldn't find Minecraft server thread`.
