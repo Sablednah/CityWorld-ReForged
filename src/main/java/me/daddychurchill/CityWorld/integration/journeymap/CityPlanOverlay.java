@@ -186,8 +186,11 @@ final class CityPlanOverlay {
             states.remove(id); // not a CityWorld level — nothing to draw
             return;
         }
-        int platX = Math.floorDiv(player.chunkPosition().x, PlatMap.Width) * PlatMap.Width;
-        int platZ = Math.floorDiv(player.chunkPosition().z, PlatMap.Width) * PlatMap.Width;
+        // From the block position, not ChunkPos: ChunkPos became a record in 26.1, so its fields are
+        // x()/z() there and x/z on 1.21.11 — and this integration is meant to be the same source on
+        // every version branch.
+        int platX = Math.floorDiv(player.blockPosition().getX() >> 4, PlatMap.Width) * PlatMap.Width;
+        int platZ = Math.floorDiv(player.blockPosition().getZ() >> 4, PlatMap.Width) * PlatMap.Width;
 
         PlayerState state = states.computeIfAbsent(id, k -> new PlayerState());
         synchronized (state) {
