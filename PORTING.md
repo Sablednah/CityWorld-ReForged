@@ -1457,6 +1457,12 @@ with the release body as the changelog.
 Until both exist the workflow **skips rather than fails**, so it will not put a red cross on a
 release. `workflow_dispatch` re-uploads an existing tag by hand.
 
+Each uploaded file declares **JourneyMap as an optional dependency** — `relations.projects` in the
+upload metadata. Note the API keys those by **slug** (`journeymap`), not by project id (32274); the
+id is in the script only as a check that the slug points at the right project. `optionalDependency`
+matters: `requiredDependency` would tell every CityWorld user to install a map mod. Override for a
+one-off with `CURSEFORGE_RELATIONS='{"projects":[…]}'`, or set it empty to send none.
+
 `scripts/curseforge-upload.sh` does the actual upload and can be run locally. CurseForge wants
 numeric game-version IDs, and those change as versions are added, so it resolves them from
 `/api/game/versions` on every run rather than hardcoding them — and fails with the list of names

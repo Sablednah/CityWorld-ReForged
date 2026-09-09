@@ -10,6 +10,9 @@
 # CurseForge wants numeric game-version IDs rather than names, and those IDs change as new versions
 # are added, so they are looked up from the API every run instead of being hardcoded here.
 #
+# Each upload declares JourneyMap as an OPTIONAL dependency (see RELATIONS below), so the file page
+# shows it without implying anyone needs it.
+#
 # API reference: https://support.curseforge.com/en/support/solutions/articles/9000197321
 set -euo pipefail
 
@@ -84,13 +87,28 @@ else
     DISPLAY_NAME="$(basename "$JAR" .jar)"
 fi
 
+# Dependencies shown on the CurseForge file page. JourneyMap is optional in the true sense: without
+# it CityWorld behaves exactly as it did before the integration, so it must never be a
+# requiredDependency — that would make every CityWorld user install a map mod.
+#
+# The API keys these by **slug**, not project id: "journeymap" is
+# curseforge.com/minecraft/mc-mods/journeymap, project id 32274 (the id is recorded here only so a
+# future reader can confirm the slug points at the right project — do not send it). Valid types are
+# requiredDependency, optionalDependency, embeddedLibrary, incompatible and tool.
+#
+# Override for a one-off with CURSEFORGE_RELATIONS='{"projects":[...]}', or empty to send none.
+DEFAULT_RELATIONS='{"projects":[{"slug":"journeymap","type":"optionalDependency"}]}'
+RELATIONS="${CURSEFORGE_RELATIONS-$DEFAULT_RELATIONS}"
+
 METADATA="$(jq -n \
     --rawfile changelog "$CHANGELOG_FILE" \
     --arg displayName "$DISPLAY_NAME" \
     --arg releaseType "$RELEASE_TYPE" \
     --argjson gameVersions "$GAME_VERSIONS" \
+    --argjson relations "${RELATIONS:-null}" \
     '{changelog: $changelog, changelogType: "markdown", displayName: $displayName,
-      releaseType: $releaseType, gameVersions: $gameVersions}')"
+      releaseType: $releaseType, gameVersions: $gameVersions}
+     + (if $relations == null then {} else {relations: $relations} end)')"
 
 if [ -n "${CURSEFORGE_DEBUG:-}" ]; then
     # The metadata carries no credentials, so it is safe to print when diagnosing a rejection.
