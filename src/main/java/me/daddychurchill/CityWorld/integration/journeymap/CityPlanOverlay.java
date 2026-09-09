@@ -64,8 +64,9 @@ final class CityPlanOverlay {
     /** Platmaps each way for the district tint: 7×7 platmaps, about 1120 blocks across. */
     private static final int DISTRICT_RADIUS = 3;
 
-    /** Platmaps each way for the street grid: 3×3, about 480 blocks — detail only where it reads. */
-    private static final int ROAD_RADIUS = 1;
+    /** Platmaps each way for the street grid: 5×5, about 800 blocks. Streets are the part of this
+     *  that reads best in play, so they reach further than the first cut allowed. */
+    private static final int ROAD_RADIUS = 2;
 
     /** Ticks between position checks. The unit of change is a 160-block platmap; 2s is plenty. */
     private static final int CHECK_INTERVAL = 40;
@@ -308,10 +309,13 @@ final class CityPlanOverlay {
                 int platZ = centreZ + dz * PlatMap.Width;
                 PlatMap platmap = context.getPlatMap(platX, platZ);
                 SchematicFamily family = platmap.context.getSchematicFamily();
-                if (family == SchematicFamily.NATURE)
-                    continue; // don't paint the countryside; the map already shows it
 
-                out.add(district(dimension, platmap, family, platX, platZ, y));
+                // Wild land gets no tint — the map already shows what it looks like, and colouring
+                // it would just dirty the view. Its ROADS still get drawn, though: a highway running
+                // out through the countryside is the most useful line on the whole map, and skipping
+                // the platmap outright dropped every one of them.
+                if (family != SchematicFamily.NATURE)
+                    out.add(district(dimension, platmap, family, platX, platZ, y));
                 if (Math.abs(dx) <= ROAD_RADIUS && Math.abs(dz) <= ROAD_RADIUS) {
                     ServerPolygon roads = roads(dimension, platmap, platX, platZ, y);
                     if (roads != null)

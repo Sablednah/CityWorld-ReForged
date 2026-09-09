@@ -39,11 +39,20 @@ import net.minecraft.resources.Identifier;
 @JourneyMapPlugin(apiVersion = "2.0.0", dependencies = { CityWorldMod.MODID })
 public class CityWorldJourneyMapClientPlugin implements IClientPlugin {
 
-    /** JourneyMap's own flat-theme icons, so the button looks native rather than bolted on. */
-    private static Identifier icon(String name) {
-        return Identifier.fromNamespaceAndPath("journeymap",
-                "/resources/assets/journeymap/theme/flat/icon/" + name + ".png");
-    }
+    /**
+     * The toolbar button's icon — <b>CityWorld's own</b>, at
+     * {@code assets/cityworld/textures/gui/city_plan.png}.
+     *
+     * <p>JourneyMap's example mod points addons at its theme icons
+     * ({@code journeymap:/resources/assets/journeymap/theme/flat/icon/grid.png}), and that path does
+     * not resolve in the shipped mod — the real asset is {@code assets/journeymap/theme/flat/icon/
+     * grid.png}. The consequence is not a missing picture: the button renders a null texture, JourneyMap
+     * throws inside {@code jm.fullscreen.render()} <em>every frame</em>, and closes the fullscreen map
+     * to survive. Which looks exactly like "the map crashes when I press J". Shipping our own icon
+     * means no dependency on another mod's internal asset layout, this version's or the next one's.
+     */
+    private static final Identifier ICON =
+            Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "textures/gui/city_plan.png");
 
     private BooleanOption cityPlan;
 
@@ -173,7 +182,7 @@ public class CityWorldJourneyMapClientPlugin implements IClientPlugin {
 
     /** The toolbar toggle, next to JourneyMap's own layer buttons. */
     private void onAddonButtons(FullscreenDisplayEvent.AddonButtonDisplayEvent event) {
-        event.getThemeButtonDisplay().addThemeToggleButton("City plan on", "City plan off", icon("grid"),
+        event.getThemeButtonDisplay().addThemeToggleButton("City plan on", "City plan off", ICON,
                 planOn(), button -> setCityPlan(!planOn()));
     }
 
