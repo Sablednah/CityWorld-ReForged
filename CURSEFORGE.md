@@ -44,6 +44,28 @@ Pick **CityWorld** as your world type and you land in a living city:
 - **Custom schematics** — a bundled catalog of classic buildings, plus drop your own
   (`.schematic`/`.schem`/`.litematic`/`.nbt`) into a config folder and turn them loose in the city.
 
+## The map knows what the city is — with JourneyMap
+
+**New in 5.7.0.** Install **JourneyMap** and the map gains what only CityWorld can tell it. A map mod
+draws what you have *seen*; CityWorld decided where every road and district goes before anyone
+arrived — so the map shows **the plan**, over ground nobody has explored:
+
+- **Districts tinted by what they are** — highrise, municipal, industrial, park, farm — with the
+  street grid over them, and the roads running out through the countryside. It stays drawn behind you
+  as you travel.
+- **Point at any chunk and it tells you what is planned there** — the district, the kind of lot, the
+  schematic's name, the shop, and what is inside the building: *"Highrise · office building · Office
+  cubicles"*, *"Farm · Potato field"*. Places nobody has visited included.
+- **Rare landmarks become waypoints as they generate**, and `/cityfind`, `/cityfind lot` and
+  `/cwlocate` drop a marker on whatever they find — in two separate groups, so the world's own
+  discoveries and your searches can be shown or hidden apart.
+- **Controls where you would expect them**: a *City plan* switch in JourneyMap's options, a button on
+  its fullscreen map, and `/citymap` for servers. `/citymap keep <n>` sets how much of the plan your
+  client holds, because that cost is yours, not the server's.
+
+It is a soft dependency in the proper sense: no JourneyMap, no difference — CityWorld does not touch
+a single one of its classes unless it is installed.
+
 ## Furnished — and furniture mods make it more so
 
 **New in 5.5.0:** every building has an interior. Offices and apartment towers, schools and
