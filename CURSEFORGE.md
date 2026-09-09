@@ -12,6 +12,9 @@ screen.
 Battle-tested across **135 worlds and 3.2 million generated chunks** — over **830 km²** of procedurally
 generated city, more ground than New York City covers.
 
+**New in 5.7.0: JourneyMap support**, see below — the map draws the city plan over ground nobody has
+explored, and names what is planned in any chunk you point at.
+
 ---
 
 ## What you get
