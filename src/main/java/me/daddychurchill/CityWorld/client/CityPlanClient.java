@@ -11,7 +11,6 @@ import me.daddychurchill.CityWorld.network.LotInfoPayload;
 import me.daddychurchill.CityWorld.network.LotInfoRequestPayload;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.level.ChunkPos;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 /**
@@ -41,7 +40,7 @@ public final class CityPlanClient {
 
     /** Server's answer for a chunk, or null if it has not answered yet. Empty string = nothing there. */
     public static String infoFor(int chunkX, int chunkZ) {
-        return KNOWN.get(ChunkPos.asLong(chunkX, chunkZ));
+        return KNOWN.get(key(chunkX, chunkZ));
     }
 
     /**
@@ -49,7 +48,7 @@ public final class CityPlanClient {
      * chunk never changes, so a cached answer never goes stale.
      */
     public static void request(int chunkX, int chunkZ) {
-        long key = ChunkPos.asLong(chunkX, chunkZ);
+        long key = key(chunkX, chunkZ);
         if (KNOWN.containsKey(key) || !ASKED.add(key))
             return;
         // Hop to the client thread: a map mod may poll its info slots from a timer of its own, and
@@ -64,7 +63,7 @@ public final class CityPlanClient {
 
     /** An answer arrived. */
     public static void accept(LotInfoPayload payload) {
-        KNOWN.put(ChunkPos.asLong(payload.chunkX(), payload.chunkZ()), payload.summary());
+        KNOWN.put(key(payload.chunkX(), payload.chunkZ()), payload.summary());
     }
 
     /** Tells the server this client's plan settings, as set in its map mod's UI. */
@@ -84,6 +83,15 @@ public final class CityPlanClient {
                 CityWorldMod.LOGGER.debug("CityWorld map request failed", t);
             }
         });
+    }
+
+    /**
+     * Two chunk coordinates in one long. Packed here rather than with {@code ChunkPos.asLong}, which
+     * 26.1 removed when ChunkPos became a record — and this integration is meant to be one source on
+     * every version branch.
+     */
+    private static long key(int chunkX, int chunkZ) {
+        return (chunkX & 0xFFFFFFFFL) | ((long) chunkZ << 32);
     }
 
     /** Leaving a world drops what we learned; the next one is a different plan entirely. */
