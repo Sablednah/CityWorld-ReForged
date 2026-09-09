@@ -14,6 +14,7 @@ import me.daddychurchill.CityWorld.api.MapMarkers;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 /**
@@ -59,9 +60,14 @@ public class CityWorldJourneyMapPlugin implements IServerPlugin, MapMarkers.List
     }
 
     /**
-     * Called from a worldgen worker as a landmark is planned. Builds a global (server-owned,
-     * everyone-sees-it) waypoint for it, on the server thread — the waypoint store is server state
-     * and pushes packets to clients, neither of which belongs on a generator thread.
+     * Called from a worldgen worker as a landmark is planned. Gives a waypoint to each player in the
+     * level it generated in — the same audience the chat announce reaches — on the server thread,
+     * since the waypoint store is server state and pushes packets to clients.
+     *
+     * <p><b>Not a global waypoint, though that reads like the natural fit.</b> The API describes
+     * global waypoints as what a player receives "when they log in", and in play they did exactly
+     * that: sixteen landmarks announced in chat, not one pin on the map, with no error on either
+     * side. Per-player waypoints are the mechanism that demonstrably reaches a connected client.
      */
     @Override
     public void onLandmark(MapMarkers.Landmark landmark) {
@@ -75,13 +81,21 @@ public class CityWorldJourneyMapPlugin implements IServerPlugin, MapMarkers.List
             return; // a plan-only sweep with no running server
         server.execute(() -> {
             try {
-                Waypoint waypoint = WaypointFactory.createWaypoint(CityWorldMod.MODID,
-                        new BlockPos(landmark.x(), landmark.y(), landmark.z()),
-                        landmark.title(), landmark.dimension(), true);
-                waypoint.setColor(colorFor(landmark.kind()));
-                api.addGlobalWaypoint(waypoint);
-                CityWorldMod.LOGGER.debug("JourneyMap waypoint added: '{}' ({}) at {}, {}",
-                        landmark.title(), landmark.kind(), landmark.x(), landmark.z());
+                int given = 0;
+                for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                    if (!player.level().dimension().equals(landmark.dimension()))
+                        continue;
+                    // A waypoint per recipient: the factory stamps identity into the instance, so
+                    // handing the same one to several players is not safe to assume.
+                    Waypoint waypoint = WaypointFactory.createWaypoint(CityWorldMod.MODID,
+                            new BlockPos(landmark.x(), landmark.y(), landmark.z()),
+                            landmark.title(), landmark.dimension(), true);
+                    waypoint.setColor(colorFor(landmark.kind()));
+                    api.addPlayerWaypoint(player.getUUID(), waypoint);
+                    given++;
+                }
+                CityWorldMod.LOGGER.debug("JourneyMap waypoint '{}' ({}) at {}, {} -> {} player(s)",
+                        landmark.title(), landmark.kind(), landmark.x(), landmark.z(), given);
             } catch (Throwable t) {
                 CityWorldMod.LOGGER.error("JourneyMap waypoint for '{}' failed", landmark.title(), t);
             }
