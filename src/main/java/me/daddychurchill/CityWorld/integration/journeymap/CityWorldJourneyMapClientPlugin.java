@@ -60,23 +60,66 @@ public class CityWorldJourneyMapClientPlugin implements IClientPlugin {
 
     @Override
     public void initialize(final IClientAPI jmClientApi) {
-        ClientEventRegistry.OPTIONS_REGISTRY_EVENT.subscribe(CityWorldMod.MODID, this::onOptionsRegistry);
-        ClientEventRegistry.INFO_SLOT_REGISTRY_EVENT.subscribe(CityWorldMod.MODID, this::onInfoSlotRegistry);
-        ClientEventRegistry.MAPPING_EVENT.subscribe(CityWorldMod.MODID, this::onMapping);
-        FullscreenEventRegistry.FULLSCREEN_MAP_MOVE_EVENT.subscribe(CityWorldMod.MODID, this::onMouseMove);
-        FullscreenEventRegistry.ADDON_BUTTON_DISPLAY_EVENT.subscribe(CityWorldMod.MODID, this::onAddonButtons);
+        // Every handler is wrapped: these run inside JourneyMap's own event bus, during client setup
+        // and while the map screen is open, and an exception there takes the game down with it
+        // rather than logging a complaint. The same courtesy the generator extends to map mods.
+        ClientEventRegistry.OPTIONS_REGISTRY_EVENT.subscribe(CityWorldMod.MODID,
+                event -> safely(() -> onOptionsRegistry(event)));
+        ClientEventRegistry.INFO_SLOT_REGISTRY_EVENT.subscribe(CityWorldMod.MODID,
+                event -> safely(() -> onInfoSlotRegistry(event)));
+        ClientEventRegistry.MAPPING_EVENT.subscribe(CityWorldMod.MODID,
+                event -> safely(() -> onMapping(event)));
+        FullscreenEventRegistry.FULLSCREEN_MAP_MOVE_EVENT.subscribe(CityWorldMod.MODID,
+                event -> safely(() -> onMouseMove(event)));
+        FullscreenEventRegistry.ADDON_BUTTON_DISPLAY_EVENT.subscribe(CityWorldMod.MODID,
+                event -> safely(() -> onAddonButtons(event)));
         CityWorldMod.LOGGER.info("JourneyMap client API found — CityWorld options, map button and hover info added");
+    }
+
+    /** Runs one JourneyMap callback; a failure is logged, never thrown back into JourneyMap. */
+    private static void safely(Runnable work) {
+        try {
+            work.run();
+        } catch (Throwable t) {
+            CityWorldMod.LOGGER.error("CityWorld's JourneyMap client hook failed", t);
+        }
     }
 
     /**
      * Creates the option. Constructing it registers it, which is why it happens here and not in a
      * field initialiser — JourneyMap wants them made while it is asking.
+     *
+     * <p><b>Do not read the option here.</b> JourneyMap binds an option to its stored config
+     * <em>after</em> this event returns, so {@code get()} throws a {@link NullPointerException} until
+     * then — and thrown from inside client setup that is a crash on the loading screen, not a
+     * warning. It cost exactly that once. Everything reads through {@link #planOn()} instead.
      */
     private void onOptionsRegistry(RegistryEvent.OptionsRegistryEvent event) {
         OptionCategory category = new OptionCategory(CityWorldMod.MODID, "CityWorld",
                 "The city plan CityWorld draws on the map");
         cityPlan = new BooleanOption(category, "cityPlan", "City plan (districts and streets)", true);
-        lastSent = cityPlan.get();
+    }
+
+    /** The option's value, or the last value we know of while it is unbound. Never throws. */
+    private boolean planOn() {
+        if (cityPlan == null)
+            return lastSent;
+        try {
+            return cityPlan.get();
+        } catch (RuntimeException notBoundYet) {
+            return lastSent;
+        }
+    }
+
+    /** Writes the option back, if JourneyMap has bound it. Never throws. */
+    private void writeOption(boolean on) {
+        if (cityPlan == null)
+            return;
+        try {
+            cityPlan.set(on);
+        } catch (RuntimeException notBoundYet) {
+            // The toggle still reaches the server; the option catches up when it is next read.
+        }
     }
 
     /**
@@ -88,6 +131,15 @@ public class CityWorldJourneyMapClientPlugin implements IClientPlugin {
     }
 
     private String describeHovered() {
+        try {
+            return hoveredText();
+        } catch (Throwable t) {
+            CityWorldMod.LOGGER.debug("CityWorld info slot failed", t);
+            return "";
+        }
+    }
+
+    private String hoveredText() {
         long at = hovered;
         int chunkX;
         int chunkZ;
@@ -121,9 +173,8 @@ public class CityWorldJourneyMapClientPlugin implements IClientPlugin {
 
     /** The toolbar toggle, next to JourneyMap's own layer buttons. */
     private void onAddonButtons(FullscreenDisplayEvent.AddonButtonDisplayEvent event) {
-        boolean on = cityPlan == null || cityPlan.get();
-        event.getThemeButtonDisplay().addThemeToggleButton("City plan on", "City plan off", icon("grid"), on,
-                button -> setCityPlan(!(cityPlan != null && cityPlan.get())));
+        event.getThemeButtonDisplay().addThemeToggleButton("City plan on", "City plan off", icon("grid"),
+                planOn(), button -> setCityPlan(!planOn()));
     }
 
     /**
@@ -142,8 +193,7 @@ public class CityWorldJourneyMapClientPlugin implements IClientPlugin {
 
     /** Flips the option and tells the server, from the toolbar button. */
     private void setCityPlan(boolean on) {
-        if (cityPlan != null)
-            cityPlan.set(on);
+        writeOption(on);
         lastSent = on;
         CityPlanClient.setCityPlan(on);
     }
@@ -151,7 +201,7 @@ public class CityWorldJourneyMapClientPlugin implements IClientPlugin {
     private void syncIfChanged() {
         if (cityPlan == null)
             return;
-        boolean now = cityPlan.get();
+        boolean now = planOn();
         if (now != lastSent) {
             lastSent = now;
             CityPlanClient.setCityPlan(now);
