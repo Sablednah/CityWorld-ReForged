@@ -126,7 +126,10 @@ public class ClipboardLot extends IsolatedLot {
 		// alternative (first-chunk-wins) needs shared state across threaded workers and double-announces
 		// across restarts.
 		if (clip.broadcastLocation && lotX == 0 && lotZ == 0)
-			generator.reportLocation("schematic", clip.title, level, nwX, nwZ);
+			// From the middle of the footprint, not its NW corner: a marker on a map wants to sit on
+			// the building. The footprint is rotation-aware, so a turned build centres correctly too.
+			generator.reportLocation("schematic", clip.title, level,
+					nwX + clip.footprintChunkX(rotation) * 8, nwZ + clip.footprintChunkZ(rotation) * 8);
 
 		// An ocean build sits in open water: flood its below-waterline blocks so the sea flows through
 		// (waterlog fences/stairs/slabs/… rather than leaving dry pockets), and — if it asked to be

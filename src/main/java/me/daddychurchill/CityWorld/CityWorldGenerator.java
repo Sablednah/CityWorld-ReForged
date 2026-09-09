@@ -764,8 +764,23 @@ public class CityWorldGenerator {
      * the landmark generated in, not the whole server.
      */
     public void reportLocation(String kind, String title, AbstractBlocks chunk) {
+        reportLocation(kind, title, chunk, 1, 1);
+    }
+
+    /**
+     * Reports a landmark that occupies {@code spanX} × {@code spanZ} chunks starting at
+     * {@code chunk}'s own — and reports it from the <em>middle</em> of that footprint.
+     *
+     * <p>Landmarks announce from one designated chunk (the north-west one), so taking that chunk's
+     * origin put a map marker on the top-left corner of the building, which for a hospital campus or
+     * a large schematic is a pin in the car park. Centring costs one line and puts it on the
+     * building. A single-chunk landmark centres on its chunk rather than its corner, which is the
+     * same improvement eight blocks smaller.
+     */
+    public void reportLocation(String kind, String title, AbstractBlocks chunk, int spanX, int spanZ) {
         ServerLevelAccessor level = chunk instanceof RealBlocks real ? real.getServerLevel() : null;
-        reportLocation(kind, title, level, chunk.getOriginX(), chunk.getOriginZ());
+        reportLocation(kind, title, level, chunk.getOriginX() + Math.max(1, spanX) * 8,
+                chunk.getOriginZ() + Math.max(1, spanZ) * 8);
     }
 
     public void reportLocation(String kind, String title, ServerLevelAccessor level, int x, int z) {

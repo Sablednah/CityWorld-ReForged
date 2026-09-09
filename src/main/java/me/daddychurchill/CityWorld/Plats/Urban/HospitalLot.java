@@ -132,8 +132,10 @@ public class HospitalLot extends IsolatedLot {
         if (offX == 0 && offZ == 0)
             // only the main department is a chat-worthy landmark; the ancillary departments would turn one
             // campus into 4-7 chat lines, so they keep the debug-only "hospitaldept" key
+            // sizeX/sizeZ is the department's footprint in chunks, so this lands in the middle of the
+            // building rather than on its north-west corner
             generator.reportLocation(main ? "hospital" : "hospitaldept",
-                    main ? "Hospital: " + name() : "Hospital dept: " + name(), chunk);
+                    main ? "Hospital: " + name() : "Hospital dept: " + name(), chunk, sizeX, sizeZ);
 
         for (int lx = 0; lx < 16; lx++)
             for (int lz = 0; lz < 16; lz++) {

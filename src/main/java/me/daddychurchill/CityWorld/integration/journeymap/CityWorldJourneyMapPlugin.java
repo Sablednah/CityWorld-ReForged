@@ -1,11 +1,14 @@
 package me.daddychurchill.CityWorld.integration.journeymap;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import journeymap.api.v2.common.JourneyMapPlugin;
 import journeymap.api.v2.common.waypoint.Waypoint;
 import journeymap.api.v2.common.waypoint.WaypointFactory;
+import journeymap.api.v2.common.waypoint.WaypointGroup;
 import journeymap.api.v2.server.IServerAPI;
 import journeymap.api.v2.server.IServerPlugin;
 
@@ -43,6 +46,13 @@ public class CityWorldJourneyMapPlugin implements IServerPlugin, MapMarkers.List
      * reported more than once in a session; the JourneyMap store would happily hold both.
      */
     private final Set<String> marked = ConcurrentHashMap.newKeySet();
+
+    /** The name of each group, and the group itself once made, per player. */
+    private static final String LANDMARK_GROUP = "CityWorld Landmarks";
+    private static final String FIND_GROUP = "CityWorld Finds";
+
+    /** Keyed by player <em>and</em> group name — a player has both groups, not one at a time. */
+    private final Map<String, WaypointGroup> groups = new ConcurrentHashMap<>();
 
     @Override
     public String getModId() {
@@ -91,6 +101,7 @@ public class CityWorldJourneyMapPlugin implements IServerPlugin, MapMarkers.List
                             new BlockPos(landmark.x(), landmark.y(), landmark.z()),
                             landmark.title(), landmark.dimension(), true);
                     waypoint.setColor(colorFor(landmark.kind()));
+                    group(player.getUUID(), LANDMARK_GROUP, waypoint);
                     api.addPlayerWaypoint(player.getUUID(), waypoint);
                     given++;
                 }
@@ -116,6 +127,7 @@ public class CityWorldJourneyMapPlugin implements IServerPlugin, MapMarkers.List
                 Waypoint waypoint = WaypointFactory.createWaypoint(CityWorldMod.MODID,
                         new BlockPos(mark.x(), mark.y(), mark.z()), mark.label(), mark.dimension(), true);
                 waypoint.setColor(FIND_COLOR);
+                group(mark.player(), FIND_GROUP, waypoint);
                 api.addPlayerWaypoint(mark.player(), waypoint);
             } catch (Throwable t) {
                 CityWorldMod.LOGGER.error("JourneyMap waypoint for '{}' failed", mark.label(), t);
@@ -131,6 +143,32 @@ public class CityWorldJourneyMapPlugin implements IServerPlugin, MapMarkers.List
     @Override
     public void onCityPlanToggled(java.util.UUID player, boolean on) {
         planOverlay.toggled(player, on);
+    }
+
+    /**
+     * Files a waypoint under one of CityWorld's two groups, so a player can show or hide the
+     * landmarks the world announced separately from the places they went looking for.
+     *
+     * <p>An existing group of the same name is reused — including one saved from an earlier session —
+     * so a long-running world does not collect a new "CityWorld Landmarks" every time it loads. The
+     * whole thing is best-effort: if grouping fails, the waypoint is still added, ungrouped, because
+     * a pin in the wrong drawer beats no pin at all.
+     */
+    private void group(UUID player, String name, Waypoint waypoint) {
+        try {
+            WaypointGroup group = groups.computeIfAbsent(player + "|" + name, key -> {
+                for (WaypointGroup existing : api.getAllGroups(player))
+                    if (CityWorldMod.MODID.equals(existing.getModId()) && name.equals(existing.getName()))
+                        return existing;
+                WaypointGroup made = WaypointFactory.createWaypointGroup(CityWorldMod.MODID, name);
+                api.addPlayerGroup(player, made);
+                return made;
+            });
+            if (group != null)
+                group.addWaypoint(waypoint);
+        } catch (Throwable t) {
+            CityWorldMod.LOGGER.debug("JourneyMap waypoint group '{}' unavailable", name, t);
+        }
     }
 
     /** One colour for every search result, so they read as a set apart from the landmarks. */
