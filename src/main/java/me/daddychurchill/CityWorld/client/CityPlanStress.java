@@ -43,9 +43,10 @@ public final class CityPlanStress {
         if (++ticks < INTERVAL)
             return;
         ticks = 0;
+        // Frame rate and frame time only: 26.2 made Minecraft.screen non-public, and naming the open
+        // screen was never worth a per-branch difference in a diagnostic.
         Minecraft minecraft = Minecraft.getInstance();
-        CityWorldMod.LOGGER.info("CityWorld stress: {} fps, frame {} ms, screen {}",
-                minecraft.getFps(), minecraft.getFrameTimeNs() / 1_000_000.0,
-                minecraft.screen == null ? "none" : minecraft.screen.getClass().getSimpleName());
+        CityWorldMod.LOGGER.info("CityWorld stress: {} fps, frame {} ms", minecraft.getFps(),
+                minecraft.getFrameTimeNs() / 1_000_000.0);
     }
 }
