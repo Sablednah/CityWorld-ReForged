@@ -4,7 +4,6 @@ import me.daddychurchill.CityWorld.CityWorldMod;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.client.event.ScreenEvent;
@@ -69,7 +68,9 @@ public final class CityPlanHud {
 
             Minecraft minecraft = Minecraft.getInstance();
             Font font = minecraft.font;
-            GuiGraphics graphics = event.getGuiGraphics();
+            // var, not the type's name: it is GuiGraphics on 1.21.11 and GuiGraphicsExtractor from
+            // 26.1 on. See HudText for the half that cannot be avoided.
+            var graphics = event.getGuiGraphics();
             Component text = Component.literal(info);
             int width = font.width(text);
 
@@ -81,7 +82,7 @@ public final class CityPlanHud {
             // A wash rather than a panel: this sits on top of a map the player is trying to read, so
             // the ground beneath it should still show through.
             graphics.fill(x - 3, y - 3, x + width + 3, y + font.lineHeight + 2, 0x70000000);
-            graphics.drawString(font, text, x, y, 0xFFFFFFFF);
+            HudText.draw(graphics, font, text, x, y, 0xFFFFFFFF);
         } catch (Throwable t) {
             // Never take a screen down over a caption.
             CityWorldMod.LOGGER.debug("CityWorld hover text failed", t);
