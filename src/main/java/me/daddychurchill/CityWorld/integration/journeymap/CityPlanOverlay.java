@@ -148,13 +148,41 @@ final class CityPlanOverlay {
         for (ServerPolygon polygon : polygons)
             CityWorldMod.LOGGER.info("CityWorld:   {} — {} shape(s), label {}", polygon.overlayId(),
                     polygon.polygons().size(), polygon.props().label());
+
+        // Sweep the same ground a second time and compare. A player's map showed one platmap wearing
+        // two district labels at once ("Lowrise" over "Farm"), which is either the plan answering
+        // differently on a later sweep or JourneyMap keeping the overlay it was told to replace —
+        // and those want opposite fixes, so measure rather than guess.
+        Map<String, String> first = new java.util.LinkedHashMap<>();
+        for (ServerPolygon polygon : polygons)
+            first.put(polygon.overlayId(), String.valueOf(polygon.props().label()));
+        List<ServerPolygon> again = new ArrayList<>();
+        for (int ring = 0; ring <= DISTRICT_RADIUS; ring++)
+            build(context, level.dimension(), 0, 0, ring, again);
+        int changed = 0;
+        for (ServerPolygon polygon : again) {
+            String was = first.get(polygon.overlayId());
+            String now = String.valueOf(polygon.props().label());
+            if (was == null) {
+                CityWorldMod.LOGGER.warn("CityWorld:   RESWEEP added {} ({})", polygon.overlayId(), now);
+                changed++;
+            } else if (!was.equals(now)) {
+                CityWorldMod.LOGGER.warn("CityWorld:   RESWEEP {} changed {} -> {}", polygon.overlayId(),
+                        was, now);
+                changed++;
+            }
+        }
+        CityWorldMod.LOGGER.info("CityWorld: re-sweep of the same area -> {} overlays, {} differing",
+                again.size(), changed);
     }
 
-    /** {@code /citymap off} clears what is already on the map; {@code on} redraws at once. */
+    /**
+     * The player turned the plan on or off — from {@code /citymap} or from JourneyMap's own options
+     * and toolbar button. Either way the slate is wiped: off leaves a clean map, and on redraws from
+     * nothing a moment later rather than layering over whatever was left.
+     */
     void toggled(UUID player, boolean on) {
-        PlayerState state = states.remove(player);
-        if (on || state == null)
-            return;
+        states.remove(player);
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server == null)
             return;
@@ -206,12 +234,25 @@ final class CityPlanOverlay {
         PLANNER.execute(() -> {
             List<ServerPolygon> polygons = new ArrayList<>();
             try {
+                Set<String> already;
+                synchronized (state) {
+                    already = new HashSet<>(state.shown);
+                }
                 for (int ring = 0; ring <= DISTRICT_RADIUS; ring++) {
                     List<ServerPolygon> ofRing = new ArrayList<>();
                     build(context, level.dimension(), platX, platZ, ring, ofRing);
                     polygons.addAll(ofRing);
-                    if (!ofRing.isEmpty())
-                        server.execute(() -> show(player, ofRing));
+                    // Only send what this player does not already have. A platmap's plan never
+                    // changes (measured: a re-sweep of the same ground differs in nothing), so
+                    // re-showing it is pure waste — and it is how a client ends up wearing two
+                    // overlays for one square, which is what put two district labels on top of each
+                    // other in play.
+                    List<ServerPolygon> fresh = new ArrayList<>();
+                    for (ServerPolygon polygon : ofRing)
+                        if (!already.contains(polygon.overlayId()))
+                            fresh.add(polygon);
+                    if (!fresh.isEmpty())
+                        server.execute(() -> show(player, fresh));
                 }
             } catch (Throwable t) {
                 CityWorldMod.LOGGER.error("City plan overlay failed at platmap {}, {}", platX, platZ, t);
@@ -280,7 +321,14 @@ final class CityPlanOverlay {
         }
     }
 
-    /** The whole platmap as one tinted square, labelled with its district. */
+    /**
+     * The whole platmap as one tinted square. Deliberately <b>unnamed on the map</b>: JourneyMap
+     * pulls a partly-off-screen polygon's label into view, so two districts stacked north-south drew
+     * their names on the same screen row on top of each other ("Lowrise" over "Farm"), and since
+     * neighbouring platmaps are nearly always different districts, that was most of them. The name
+     * lives in the hover text instead — where the client plugin now shows the lot, schematic, shop
+     * and interior with it, which is more than a label could say anyway.
+     */
     private ServerPolygon district(ResourceKey<Level> dimension, PlatMap platmap, SchematicFamily family,
             int platX, int platZ, int y) {
         int x0 = platX * 16;
@@ -292,7 +340,7 @@ final class CityPlanOverlay {
         String tooltip = name + " district · " + platmap.getNumberOfRoads() + " roads · "
                 + Math.round(platmap.getNaturePercent() * 100) + "% open land";
         OverlayShapeProps props = OverlayProps.everywhere(color, 0.12f, color, 1.0f, 0.55f, 900,
-                UIState.FULLSCREEN_ZOOM_MIN, UIState.ZOOM_IN_MAX, name, tooltip);
+                UIState.FULLSCREEN_ZOOM_MIN, UIState.ZOOM_IN_MAX, null, tooltip);
         return new ServerPolygon("plan_district_" + platX + "_" + platZ, dimension,
                 List.of(new OverlayPolygon(rect(x0, z0, x1, z1, y), null)), props);
     }

@@ -42,6 +42,11 @@ public class CityWorldMod {
         // Per-world settings are datapack-driven (the cityworld:world_settings registry, registered
         // above), not a per-instance config — see CityWorldSettingsData / PORTING.md top risk #4.
 
+        // Networking: the two questions a map mod's client UI asks the server (the city-plan toggle,
+        // and "what is planned in this chunk?" for map hover text). Optional channel — a client
+        // without CityWorld connects fine and never asks.
+        modEventBus.addListener(me.daddychurchill.CityWorld.network.CityWorldNetwork::register);
+
         // Server-side registrations on the game event bus (commands: /cityinfo, /cityworld).
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(CityWorldServerEvents.class);
 
