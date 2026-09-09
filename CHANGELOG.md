@@ -5,24 +5,45 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
-## Unreleased
+## 5.7.0
 
 ### Added
 
-- **JourneyMap integration.** With JourneyMap installed, CityWorld now uses its map:
-  - **The city plan is drawn on the map, including cities nobody has explored.** Districts are
-    tinted by what they are — highrise, municipal, industrial, park, farm — and the street grid of
-    the nearest blocks is drawn over them. JourneyMap can only map what a player has seen; CityWorld
-    planned those streets before anyone arrived, so the map can show the shape of a city you are
-    still walking towards. On by default; `/citymap off` hides it.
-  - **Rare landmarks get a waypoint as they generate**, from the same curated `announcedLandmarks`
-    list the chat announces use — and independently of whether chat announces are switched on.
+- **JourneyMap integration — the map now knows what CityWorld is building.** Install JourneyMap and
+  the map gains five things:
+  - **The city plan, drawn over ground nobody has explored.** Districts are tinted by what they are
+    — highrise, municipal, industrial, park, farm — with the street grid over them, and the streets
+    of the countryside included. JourneyMap can only map what a player has *seen*; CityWorld decided
+    where those roads go before anyone arrived, so the map shows the shape of a city you are still
+    walking towards. It stays drawn behind you as you travel.
+  - **Hover any chunk and it tells you what is planned there** — district, lot kind, schematic name,
+    shop, and what the building holds inside ("Highrise · office building · Office cubicles",
+    "Farm · Potato field"). Again, including chunks nobody has visited.
+  - **Rare landmarks become waypoints as they generate**, from the same curated
+    `announcedLandmarks` list the chat announces use, and whether or not chat announces are on.
   - **`/cityfind`, `/cityfind lot` and `/cwlocate` drop a marker** on whatever they find, so you can
-    walk to it without copying coordinates down.
+    walk to it without copying coordinates down. Landmarks and search results go into two separate
+    waypoint groups so they can be shown or hidden apart.
+  - **Controls where you would look for them**: a **City plan** switch in JourneyMap's own options
+    screen, a toggle button on its fullscreen map, and `/citymap [on|off]` for servers.
+    `/citymap keep <n>` (or the same setting in the options screen) sets how much of the plan your
+    client holds — the cost of keeping it drawn is entirely client-side, so the number is yours to
+    pick.
 
-  It is a soft dependency: the JourneyMap API is compile-only and no JourneyMap class is touched
-  unless JourneyMap is installed. Other map mods can hook the same seam
+  It is a **soft dependency**: the JourneyMap API is compile-only, no JourneyMap class is touched
+  unless JourneyMap is installed, and every callback is wrapped so a fault of CityWorld's can never
+  take the map or the game down. Other map mods can hook the same seam
   (`me.daddychurchill.CityWorld.api.MapMarkers`) without the generator knowing about them.
+
+### Changed
+
+- **Landmark markers sit on the building, not its corner.** Landmarks announce from their
+  footprint's north-west chunk, which put a pin in the car park of anything large; schematics
+  (rotation-aware) and hospital departments now report from the middle of what they built.
+- **Farms say what they are growing** — "Potato field", "Pasture", "Vineyard", "Oak orchard",
+  "Paddock, livestock" — in `/cityinfo` and on the map. Three lot kinds that reported their code
+  names now read plainly: *schematic*, *open ground* and *paved lot*.
+- The **Cara Sutra** schematic is now **Cara Samara**, in its filename, title and announcement.
 
 ## 5.6.0
 

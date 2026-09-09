@@ -30,6 +30,12 @@ sites. 26.1 touched none of them. 26.2 broke **145**. Because the file is *gener
 repair was teaching `scripts/gen_material.py` new resolution rules; not one of the 3,096 call sites
 changed. That is the strongest argument in the whole arc for keeping generated code generated.
 
+## ▶ Resume here after v5.7.0 (2026-09-09)
+
+**`v5.7.0` is released: the JourneyMap arc.** Built, playtested across several rounds, and shipped on
+all three versions. The write-up below is the reference; nothing in it is outstanding except the
+optional follow-ups named at its end.
+
 ## ▶ JourneyMap integration (2026-09-08)
 
 **What it does.** With JourneyMap installed: rare landmarks become waypoints as they generate,
