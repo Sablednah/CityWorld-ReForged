@@ -103,6 +103,23 @@ this is the same rule pointing the other way.
 jar in `run/mods/` starts a real client — which is what catches a client-plugin crash before it
 reaches a player. The crash above was shipped because only the dedicated server had been exercised.
 
+**The second client crash, and why it looked like "the map crashes on J" (2026-09-09).** The toolbar
+button's icon was taken from JourneyMap's own example mod,
+`journeymap:/resources/assets/journeymap/theme/flat/icon/grid.png` — a path that does not resolve in
+the shipped mod, where the asset is `assets/journeymap/theme/flat/icon/grid.png`. A missing icon is
+not a cosmetic fault here: the button renders a null texture, JourneyMap throws inside
+`jm.fullscreen.render()` **every frame**, and closes the fullscreen map to keep the game alive. The
+minimap was unaffected, which is exactly how it presents — "J opens and instantly closes". Found in
+`journeymap/journeymap.log` inside the instance, **not** in `logs/latest.log`; that file is the first
+place to look for anything map-side. CityWorld now ships its own icon
+(`assets/cityworld/textures/gui/city_plan.png`, drawn by a few lines of zlib in the commit) so no
+part of this depends on another mod's internal asset layout.
+
+**Roads through wild land were invisible** because the sweep skipped NATURE platmaps whole, tint and
+streets together. Wild land still gets no tint — the map already shows what it looks like — but its
+roads are drawn, and the street radius went to 5×5 platmaps: the streets read better in play than
+anything else the overlay draws.
+
 **▶ Still to do: a real server/client test.** Everything so far has been single-player (integrated
 server) or a headless dedicated server with no client attached. The split case — CityWorld and
 JourneyMap on a dedicated server, a separate client connecting — exercises the parts that cannot
