@@ -1,7 +1,7 @@
 package me.daddychurchill.CityWorld.client;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -18,7 +18,7 @@ final class HudText {
 
     private HudText() {}
 
-    static void draw(GuiGraphics graphics, Font font, Component text, int x, int y, int colour) {
-        graphics.drawString(font, text, x, y, colour);
+    static void draw(GuiGraphicsExtractor graphics, Font font, Component text, int x, int y, int colour) {
+        graphics.text(font, text, x, y, colour);
     }
 }
