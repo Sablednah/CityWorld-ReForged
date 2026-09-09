@@ -54,5 +54,26 @@ public final class CityWorldServerEvents {
         MapMarkers.landmark(new MapMarkers.Landmark(server.overworld().dimension(), "schematic",
                 "CityWorld map test", 0, 64, 0));
         CityWorldMod.LOGGER.info("CityWorld: -D{} sent a test landmark at 0, 0", MAPTEST_PROPERTY);
+        sampleHoverText(server);
+    }
+
+    /**
+     * Logs the hover captions a sweep of chunks would produce — the exact strings a map mod shows
+     * when the mouse crosses them. Cheap way to see where the plan has nothing to say: an entry with
+     * no third part is a lot kind whose interior is unnamed, which is how farms were found answering
+     * with nothing at all.
+     */
+    private static void sampleHoverText(MinecraftServer server) {
+        java.util.LinkedHashSet<String> seen = new java.util.LinkedHashSet<>();
+        for (int cx = -96; cx <= 96 && seen.size() < 40; cx += 3)
+            for (int cz = -96; cz <= 96 && seen.size() < 40; cz += 3) {
+                String summary = me.daddychurchill.CityWorld.network.CityWorldNetwork
+                        .describe(server.overworld(), cx, cz);
+                if (!summary.isEmpty())
+                    seen.add(summary);
+            }
+        CityWorldMod.LOGGER.info("CityWorld: hover captions near spawn ({} distinct)", seen.size());
+        for (String summary : seen)
+            CityWorldMod.LOGGER.info("CityWorld:   {}", summary);
     }
 }

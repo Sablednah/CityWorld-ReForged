@@ -45,6 +45,56 @@ public class FarmLot extends ConnectedLot {
 	private boolean directionNorthSouth;
 	private double oddsOfCrop = Odds.oddsExtremelyLikely;
 
+	/**
+	 * What this field is growing, for {@code /cityinfo} and a map mod's hover text.
+	 *
+	 * <p>Farms are the commonest thing to point at outside a city and they were answering with
+	 * nothing at all, because the interior slot was built for buildings. The crop is chosen in the
+	 * constructor — at plan time — so it can be named for a chunk nobody has visited, same as
+	 * everything else on the plan.
+	 */
+	@Override
+	public String getInteriorDescription() {
+		return switch (cropType) {
+		case FALLOW -> "Fallow field";
+		case PADDOCK -> "Paddock, livestock";
+		case HAYSTACK -> "Haystacks";
+		case HOTAIR_BALLOON -> "Balloon field";
+		case VINES -> "Vineyard";
+		case TRELLIS -> "Trellised crop";
+		case REED -> "Reed beds";
+		case CACTUS -> "Cactus field";
+		case GRASS, TALL_GRASS, FERN, TALL_FERN, EMERALD_GREEN -> "Pasture";
+		case DEAD_BUSH -> "Dead scrub";
+		case DECAY_PLANTS -> "Ruined field";
+		case BROWN_MUSHROOM, RED_MUSHROOM -> "Mushroom beds";
+		case NETHERWART -> "Netherwart";
+		case NETHER_PLANTS -> "Nether growth";
+		case SHORT_FLOWERS, TALL_FLOWERS, ALL_FLOWERS -> "Flower field";
+		case SHORT_PLANTS, TALL_PLANTS, ALL_PLANTS, PRARIE_PLANTS, EDIBLE_PLANTS -> "Mixed planting";
+		case OAK_SAPLING, BIRCH_SAPLING, JUNGLE_SAPLING, ACACIA_SAPLING, DARK_OAK_SAPLING ->
+			orchard(cropType.name().replace("_SAPLING", ""), "sapling orchard");
+		case OAK_TREE, PINE_TREE, BIRCH_TREE, JUNGLE_TREE, SWAMP_TREE, ACACIA_TREE ->
+			orchard(cropType.name().replace("_TREE", ""), "orchard");
+		default -> field(cropType.name());
+		};
+	}
+
+	/** {@code OAK} + {@code "orchard"} -> {@code "Oak orchard"}. */
+	private static String orchard(String species, String kind) {
+		return readable(species) + " " + kind;
+	}
+
+	/** {@code WHEAT} -> {@code "Wheat field"} — the flowers and crops that need no special wording. */
+	private static String field(String crop) {
+		return readable(crop) + " field";
+	}
+
+	private static String readable(String name) {
+		String words = name.replace('_', ' ').toLowerCase(java.util.Locale.ROOT);
+		return Character.toUpperCase(words.charAt(0)) + words.substring(1);
+	}
+
 	public FarmLot(PlatMap platmap, int chunkX, int chunkZ) {
 		super(platmap, chunkX, chunkZ);
 
