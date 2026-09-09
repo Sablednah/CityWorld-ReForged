@@ -91,13 +91,18 @@ public final class CityWorldNetwork {
      * Words one chunk's plan for a map tooltip. Reads through the public {@link CityWorldAPI}, the
      * same door other mods use, so this and {@code /cityinfo} can never drift apart.
      */
-    private static String describe(ServerLevel level, int chunkX, int chunkZ) {
+    public static String describe(ServerLevel level, int chunkX, int chunkZ) {
         Optional<LotInfo> maybe = CityWorldAPI.lotAt(level, new BlockPos((chunkX << 4) + 8, 64, (chunkZ << 4) + 8));
         if (maybe.isEmpty())
             return "";
         LotInfo info = maybe.get();
-        StringBuilder text = new StringBuilder(title(info.contextFamily().name()));
-        text.append(" · ").append(readable(info.lotClass()));
+        String district = title(info.contextFamily().name());
+        StringBuilder text = new StringBuilder(district);
+        // "Farm · farm · Potato field" says farm twice; a lot named after its own district adds
+        // nothing, so it steps aside for what the lot actually holds.
+        String kind = readable(info.lotClass());
+        if (!kind.equalsIgnoreCase(district))
+            text.append(" · ").append(kind);
         if (info.schematicName() != null)
             text.append(" · ").append(info.schematicName());
         if (info.shop() != null)
@@ -112,11 +117,23 @@ public final class CityWorldNetwork {
         return name.charAt(0) + name.substring(1).toLowerCase(Locale.ROOT);
     }
 
-    /** {@code OfficeTowerLot} -> {@code office tower}: the class name is the lot's real identity. */
+    /**
+     * {@code OfficeTowerLot} -> {@code office tower}: the class name is the lot's real identity, and
+     * using it means a lot kind added later needs nothing here.
+     *
+     * <p>Three of them are named for what they are in the code rather than what a player sees, so
+     * they are translated: {@code ClipboardLot} is a placed schematic, {@code NatureLot} is
+     * unbuilt ground, and {@code ConcreteLot} is a paved lot.
+     */
     private static String readable(String lotClass) {
         String name = lotClass.endsWith("Lot") ? lotClass.substring(0, lotClass.length() - 3) : lotClass;
-        String spaced = name.replaceAll("(?<=[a-z0-9])(?=[A-Z])", " ");
-        return spaced.toLowerCase(Locale.ROOT);
+        String spaced = name.replaceAll("(?<=[a-z0-9])(?=[A-Z])", " ").toLowerCase(Locale.ROOT);
+        return switch (spaced) {
+            case "clipboard" -> "schematic";
+            case "nature" -> "open ground";
+            case "concrete" -> "paved lot";
+            default -> spaced;
+        };
     }
 
     /**

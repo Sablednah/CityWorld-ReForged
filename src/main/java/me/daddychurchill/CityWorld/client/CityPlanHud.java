@@ -27,12 +27,12 @@ public final class CityPlanHud {
     /** No chunk hovered. */
     private static final long NONE = Long.MIN_VALUE;
 
+    /**
+     * The chunk last reported under the cursor. Deliberately <b>not</b> expiring on a timer: a map
+     * mod only reports the position while the mouse is <em>moving</em>, so a timeout made the caption
+     * disappear a second after the player stopped to read it. It is cleared when the map closes.
+     */
     private static volatile long hovered = NONE;
-
-    /** Hover text goes stale if the map stops telling us where the mouse is. */
-    private static volatile long hoveredAt;
-
-    private static final long STALE_MS = 500;
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener(ScreenEvent.Render.Post.class, CityPlanHud::onRenderScreen);
@@ -41,7 +41,6 @@ public final class CityPlanHud {
     /** A map mod telling us the mouse is over this chunk. */
     public static void hover(int chunkX, int chunkZ) {
         hovered = (chunkX & 0xFFFFFFFFL) | ((long) chunkZ << 32);
-        hoveredAt = System.currentTimeMillis();
     }
 
     public static void clearHover() {
@@ -55,7 +54,7 @@ public final class CityPlanHud {
     private static void onRenderScreen(ScreenEvent.Render.Post event) {
         try {
             long at = hovered;
-            if (at == NONE || System.currentTimeMillis() - hoveredAt > STALE_MS)
+            if (at == NONE)
                 return;
             Screen screen = event.getScreen();
             if (screen == null || !isMapScreen(screen))
@@ -76,9 +75,13 @@ public final class CityPlanHud {
 
             // Below-right of the cursor, the way a tooltip sits — nudged back inside the screen when
             // the cursor is near an edge, so the text never runs off.
-            int x = Math.min(event.getMouseX() + 10, screen.width - width - 4);
-            int y = Math.min(event.getMouseY() + 20, screen.height - font.lineHeight - 4);
-            graphics.drawStringWithBackdrop(font, text, Math.max(4, x), Math.max(4, y), width, 0xFFFFFFFF);
+            int x = Math.max(4, Math.min(event.getMouseX() + 10, screen.width - width - 4));
+            int y = Math.max(4, Math.min(event.getMouseY() + 20, screen.height - font.lineHeight - 4));
+
+            // A wash rather than a panel: this sits on top of a map the player is trying to read, so
+            // the ground beneath it should still show through.
+            graphics.fill(x - 3, y - 3, x + width + 3, y + font.lineHeight + 2, 0x70000000);
+            graphics.drawString(font, text, x, y, 0xFFFFFFFF);
         } catch (Throwable t) {
             // Never take a screen down over a caption.
             CityWorldMod.LOGGER.debug("CityWorld hover text failed", t);
