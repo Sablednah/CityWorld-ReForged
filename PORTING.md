@@ -91,6 +91,24 @@ generator learning about it.
    whole per-branch delta for this feature is therefore: two `gradle.properties` values and one
    import line.
 
+**The client plugin, and the crash it cost (2026-09-09).** JourneyMap binds an `Option` to its
+stored config **after** the options-registry event returns, so calling `option.get()` inside that
+event throws an NPE — and thrown inside JourneyMap's event bus during client setup, that is a
+**crash on the loading screen**, not a logged complaint. Every option read now goes through a
+`planOn()` that catches, and every JourneyMap callback CityWorld registers is wrapped so a failure
+of ours can never take the host game down. The generator already extends map mods that courtesy;
+this is the same rule pointing the other way.
+
+**A dev client runs here.** WSLg provides `DISPLAY=:0`, so `./gradlew runClient` with the JourneyMap
+jar in `run/mods/` starts a real client — which is what catches a client-plugin crash before it
+reaches a player. The crash above was shipped because only the dedicated server had been exercised.
+
+**▶ Still to do: a real server/client test.** Everything so far has been single-player (integrated
+server) or a headless dedicated server with no client attached. The split case — CityWorld and
+JourneyMap on a dedicated server, a separate client connecting — exercises the parts that cannot
+break in single-player: the optional payload channel, per-player waypoints crossing the wire, and
+overlays pushed to a client that is not in the same JVM. Do that before this ships.
+
 **Trap paid for here:** the dev server's `run/world/session.lock` outlives a `pkill` that does not
 actually kill (`pkill -f "gradlew runServer"` returned 144 and left the JVM up), and the second run
 dies with `DirectoryLock$LockException: already locked` → `Couldn't find Minecraft server thread`.
