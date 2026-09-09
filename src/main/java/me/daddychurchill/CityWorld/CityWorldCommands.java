@@ -109,7 +109,14 @@ public final class CityWorldCommands {
                 .requires(CityWorldPermissions.check(CityWorldPermissions.INFO))
                 .executes(ctx -> cityMap(ctx, null))
                 .then(Commands.literal("on").executes(ctx -> cityMap(ctx, Boolean.TRUE)))
-                .then(Commands.literal("off").executes(ctx -> cityMap(ctx, Boolean.FALSE))));
+                .then(Commands.literal("off").executes(ctx -> cityMap(ctx, Boolean.FALSE)))
+                // How many plan overlays this player's client will hold before the furthest are
+                // dropped. Here as well as in the map mod's own options, because a player without
+                // CityWorld installed client-side has no options screen to set it in.
+                .then(Commands.literal("keep")
+                        .then(Commands.argument("overlays", com.mojang.brigadier.arguments.IntegerArgumentType
+                                .integer(MapMarkers.MIN_PLAN_BUDGET, MapMarkers.MAX_PLAN_BUDGET))
+                                .executes(CityWorldCommands::cityMapKeep))));
 
         // /cityfind <name>  (report nearest) or  /cityfind tp <name>  (and teleport there). tp is a
         // literal before the name because the name is greedy (schematic names have spaces).
@@ -234,6 +241,17 @@ public final class CityWorldCommands {
         boolean on = MapMarkers.wantsCityPlan(player.getUUID());
         ctx.getSource().sendSuccess(() -> Component.literal("City plan overlay is " + (on ? "on" : "off")
                 + " — districts and streets" + (on ? " are drawn on your map." : " are hidden.")), false);
+        return 1;
+    }
+
+    /** {@code /citymap keep <n>} — the caller's overlay ceiling. */
+    private static int cityMapKeep(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        int overlays = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "overlays");
+        MapMarkers.setCityPlanBudget(player.getUUID(), overlays);
+        ctx.getSource().sendSuccess(() -> Component.literal("City plan will keep up to " + overlays
+                + " overlays on your map (about " + (overlays / 2) + " platmaps of ground). Lower it if "
+                + "your map feels heavy."), false);
         return 1;
     }
 

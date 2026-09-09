@@ -105,6 +105,32 @@ public final class MapMarkers {
      */
     private static final Set<UUID> PLAN_OFF = ConcurrentHashMap.newKeySet();
 
+    /**
+     * How many plan overlays a player's map may hold before the furthest are dropped.
+     *
+     * <p>The ceiling exists for the client, not the server: retained overlays cost the server
+     * nothing (they are already planned, and never re-sent), while the client walks its list of them
+     * every frame. What a machine can carry therefore varies by machine, so the player sets it — from
+     * their map mod's own options, or with {@code /citymap keep}.
+     */
+    public static final int DEFAULT_PLAN_BUDGET = 2000;
+
+    /** The smallest and largest a player may set it to; below the floor the plan stops being a map. */
+    public static final int MIN_PLAN_BUDGET = 100;
+    public static final int MAX_PLAN_BUDGET = 20000;
+
+    private static final java.util.Map<UUID, Integer> PLAN_BUDGET = new ConcurrentHashMap<>();
+
+    /** This player's overlay ceiling. */
+    public static int cityPlanBudget(UUID player) {
+        return PLAN_BUDGET.getOrDefault(player, DEFAULT_PLAN_BUDGET);
+    }
+
+    /** Sets it, clamped to something sane whatever the caller asked for. */
+    public static void setCityPlanBudget(UUID player, int overlays) {
+        PLAN_BUDGET.put(player, Math.clamp(overlays, MIN_PLAN_BUDGET, MAX_PLAN_BUDGET));
+    }
+
     /** True when some installed map mod can draw the plan (so {@code /citymap} has something to say). */
     public static boolean cityPlanAvailable() {
         for (Listener listener : LISTENERS)

@@ -10,9 +10,11 @@ import journeymap.api.v2.common.JourneyMapPlugin;
 import journeymap.api.v2.common.event.ClientEventRegistry;
 import journeymap.api.v2.common.event.FullscreenEventRegistry;
 import journeymap.api.v2.common.option.BooleanOption;
+import journeymap.api.v2.common.option.IntegerOption;
 import journeymap.api.v2.common.option.OptionCategory;
 
 import me.daddychurchill.CityWorld.CityWorldMod;
+import me.daddychurchill.CityWorld.api.MapMarkers;
 import me.daddychurchill.CityWorld.client.CityPlanClient;
 import me.daddychurchill.CityWorld.client.CityPlanHud;
 
@@ -57,8 +59,17 @@ public class CityWorldJourneyMapClientPlugin implements IClientPlugin {
 
     private BooleanOption cityPlan;
 
+    /**
+     * How many plan overlays this client is willing to hold. It is an option because the cost is
+     * this machine's, not the server's: retained overlays are already planned and never re-sent,
+     * while the client walks its list of them every frame — so what is comfortable depends on the
+     * machine, and the person at it is the one who can tell.
+     */
+    private IntegerOption planKeep;
+
     /** What we last told the server, so a change made in the options screen is noticed and sent. */
     private boolean lastSent = true;
+    private int lastSentKeep = MapMarkers.DEFAULT_PLAN_BUDGET;
 
     /** The chunk the mouse is over on the fullscreen map, or {@code Long.MIN_VALUE} for none. */
     private volatile long hovered = Long.MIN_VALUE;
@@ -108,6 +119,19 @@ public class CityWorldJourneyMapClientPlugin implements IClientPlugin {
         OptionCategory category = new OptionCategory(CityWorldMod.MODID, "CityWorld",
                 "The city plan CityWorld draws on the map");
         cityPlan = new BooleanOption(category, "cityPlan", "City plan (districts and streets)", true);
+        planKeep = new IntegerOption(category, "planKeep", "Plan overlays kept (lower if the map slows)",
+                MapMarkers.DEFAULT_PLAN_BUDGET, MapMarkers.MIN_PLAN_BUDGET, MapMarkers.MAX_PLAN_BUDGET);
+    }
+
+    /** The overlay budget, or the last one we sent while the option is unbound. Never throws. */
+    private int planKeep() {
+        if (planKeep == null)
+            return lastSentKeep;
+        try {
+            return planKeep.get();
+        } catch (RuntimeException notBoundYet) {
+            return lastSentKeep;
+        }
     }
 
     /** The option's value, or the last value we know of while it is unbound. Never throws. */
@@ -208,16 +232,19 @@ public class CityWorldJourneyMapClientPlugin implements IClientPlugin {
     private void setCityPlan(boolean on) {
         writeOption(on);
         lastSent = on;
-        CityPlanClient.setCityPlan(on);
+        lastSentKeep = planKeep();
+        CityPlanClient.setCityPlan(on, lastSentKeep);
     }
 
     private void syncIfChanged() {
         if (cityPlan == null)
             return;
         boolean now = planOn();
-        if (now != lastSent) {
+        int keep = planKeep();
+        if (now != lastSent || keep != lastSentKeep) {
             lastSent = now;
-            CityPlanClient.setCityPlan(now);
+            lastSentKeep = keep;
+            CityPlanClient.setCityPlan(now, keep);
         }
     }
 }

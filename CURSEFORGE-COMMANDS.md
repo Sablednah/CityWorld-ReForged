@@ -128,7 +128,8 @@ blocks, *including cities nobody has explored yet*. JourneyMap can only map what
 CityWorld decided where those roads go before anyone arrived, so it can hand the map the shape of a
 city you are still walking towards.
 
-It is on by default. `/citymap off` hides it, `/citymap` on its own reports the current state:
+It is on by default. `/citymap off` hides it, `/citymap` on its own reports the current state, and
+`/citymap keep <n>` sets how much of it your client holds:
 
 ```
 /citymap
@@ -138,9 +139,25 @@ It is on by default. `/citymap off` hides it, `/citymap` on its own reports the 
 > City plan overlay is off — districts and streets are hidden.
 ```
 
+```
+/citymap keep 4000
+> City plan will keep up to 4000 overlays on your map (about 2000 platmaps of ground).
+```
+
+**What `keep` is for.** The plan stays drawn over ground you have already crossed, so it builds up as
+you travel; past the ceiling, the overlays furthest from you are dropped (walking back redraws them).
+The cost of holding them is entirely your client's — the server never re-plans or re-sends one — so
+the right number depends on your machine. Lower it if the map feels heavy; raise it if you want a
+whole region's plan at once. With CityWorld installed client-side the same setting is in JourneyMap's
+own options screen, under **CityWorld → Plan overlays kept**, along with the **City plan** switch and
+a toggle button on the fullscreen map's toolbar.
+
 The same integration puts a waypoint on rare landmarks as they generate (the ones on the world's
 announce list — see the **Configuration** page), and drops a marker on whatever `/cityfind`,
 `/cityfind lot` and `/cwlocate` find, so you can walk to it without writing the coordinates down.
+The two sorts land in separate waypoint groups — **CityWorld Landmarks** and **CityWorld Finds** — so
+they can be shown or hidden apart. Pointing at any chunk on the fullscreen map names what is planned
+there: district, lot kind, schematic, shop and interior, including places nobody has visited.
 
 Without JourneyMap the command says so and nothing else changes; CityWorld does not require it.
 
