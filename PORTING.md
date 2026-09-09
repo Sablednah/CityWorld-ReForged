@@ -188,7 +188,7 @@ under `## 5.0.2` in `CHANGELOG.md` — owner cuts releases when there's enough, 
 - **Curation applied**: 7 bundled landmarks announce with proper titles (liberty→Statue of Liberty,
   midwich, spiritwind, dragon, water tower, hedge maze, pagoda). **Instance-side** (not in git!): 8
   drop-ins in CityWork-ReForged's config announce (Big Ben, Lighthouse, Cathedral, Arch de Minecraft,
-  Freight Ship, Dredge, Cara Sutra, Sablednah); 5 titled-but-quiet; mini-castle odds fixed 0.1→0.02.
+  Freight Ship, Dredge, Cara Samara, Sablednah); 5 titled-but-quiet; mini-castle odds fixed 0.1→0.02.
 - **Liberty reskinned in weathered copper** (was 13,563 light-blue wool — predates copper). Legacy
   `.schematic` can't name post-1.12 blocks, so it's now a vanilla `.nbt` — which surfaced that the
   bundled index only accepted `.schematic`; `loadBundled` now takes any supported format.
