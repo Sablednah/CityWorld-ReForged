@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import me.daddychurchill.CityWorld.CityWorldMod;
 import me.daddychurchill.CityWorld.network.CityPlanTogglePayload;
 import me.daddychurchill.CityWorld.network.LotInfoPayload;
 import me.daddychurchill.CityWorld.network.LotInfoRequestPayload;
@@ -51,9 +52,14 @@ public final class CityPlanClient {
         long key = ChunkPos.asLong(chunkX, chunkZ);
         if (KNOWN.containsKey(key) || !ASKED.add(key))
             return;
-        if (Minecraft.getInstance().getConnection() == null)
-            return;
-        ClientPacketDistributor.sendToServer(new LotInfoRequestPayload(chunkX, chunkZ));
+        // Hop to the client thread: a map mod may poll its info slots from a timer of its own, and
+        // sending a packet from there is not safe.
+        send(() -> {
+            if (Minecraft.getInstance().getConnection() != null)
+                ClientPacketDistributor.sendToServer(new LotInfoRequestPayload(chunkX, chunkZ));
+            else
+                ASKED.remove(key); // not connected yet; let it be asked again later
+        });
     }
 
     /** An answer arrived. */
@@ -63,8 +69,21 @@ public final class CityPlanClient {
 
     /** Tells the server the player turned the plan overlay on or off in their map mod's UI. */
     public static void setCityPlan(boolean on) {
-        if (Minecraft.getInstance().getConnection() != null)
-            ClientPacketDistributor.sendToServer(new CityPlanTogglePayload(on));
+        send(() -> {
+            if (Minecraft.getInstance().getConnection() != null)
+                ClientPacketDistributor.sendToServer(new CityPlanTogglePayload(on));
+        });
+    }
+
+    /** Runs {@code work} on the client thread, swallowing anything it throws. */
+    private static void send(Runnable work) {
+        Minecraft.getInstance().execute(() -> {
+            try {
+                work.run();
+            } catch (Throwable t) {
+                CityWorldMod.LOGGER.debug("CityWorld map request failed", t);
+            }
+        });
     }
 
     /** Leaving a world drops what we learned; the next one is a different plan entirely. */
