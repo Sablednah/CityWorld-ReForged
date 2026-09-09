@@ -55,8 +55,10 @@ public final class CityWorldNetwork {
 
     private static void handleToggle(CityPlanTogglePayload payload, IPayloadContext context) {
         context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player)
+            if (context.player() instanceof ServerPlayer player) {
+                MapMarkers.setCityPlanBudget(player.getUUID(), payload.keep());
                 MapMarkers.setCityPlan(player.getUUID(), payload.on());
+            }
         });
     }
 

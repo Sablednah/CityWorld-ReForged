@@ -46,6 +46,8 @@ public final class CityWorldClient {
         // Hover text over a map mod's fullscreen map. Inert unless a map mod tells it where the
         // mouse is, so this costs nothing when none is installed.
         CityPlanHud.register();
+        // Frame-rate readout for measuring overlay cost (-Dcityworld.mapstress=true). Dormant otherwise.
+        CityPlanStress.register();
     }
 
     /** Adds CityWorld's plan/technical readout to the F3 debug screen (see {@link CityWorldDebugEntry}). */

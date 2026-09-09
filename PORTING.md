@@ -120,11 +120,37 @@ streets together. Wild land still gets no tint — the map already shows what it
 roads are drawn, and the street radius went to 5×5 platmaps: the streets read better in play than
 anything else the overlay draws.
 
-**▶ Still to do: a real server/client test.** Everything so far has been single-player (integrated
-server) or a headless dedicated server with no client attached. The split case — CityWorld and
-JourneyMap on a dedicated server, a separate client connecting — exercises the parts that cannot
-break in single-player: the optional payload channel, per-player waypoints crossing the wire, and
-overlays pushed to a client that is not in the same JVM. Do that before this ships.
+**Running a dev client here (WSLg).** `DISPLAY=:0` is available, so `./gradlew runClient` starts a
+real client — the only thing that catches a client-plugin crash before a player does. Three
+one-time fixes to `run/options.txt` (git-ignored, so each checkout needs its own):
+`onboardAccessibility:false` — otherwise the accessibility onboarding screen blocks quick-play and
+the client never connects — and every `soundCategory_*:0.0`, because the window plays through the
+owner's speakers while they are working. To join a server straight from the launcher:
+`./gradlew runClient -PcwJoin=127.0.0.1` (added to the client run config; `--args` does **not** work
+— ModDevGradle treats it as the main class).
+
+**The server/client test: DONE, and it passes (2026-09-09).** A dedicated `runServer` with
+JourneyMap installed, and a separate `runClient -PcwJoin=127.0.0.1:25599` joining it — note the dev
+server's port is **25599**, not 25565. The client connected, the optional payload channel negotiated
+(a mismatch would have refused the login), and both plugins reported themselves on their own sides.
+That covers what single-player cannot: the payload channel, and overlays and waypoints crossing a
+real wire to another JVM.
+
+**The overlay budget, and what could not be measured.** How many overlays a client can hold is the
+one real cost of keeping the plan drawn — the server neither re-plans nor re-sends a retained one —
+so the ceiling is a per-player setting (`MapMarkers.cityPlanBudget`, default 2000, from JourneyMap's
+options or `/citymap keep`), and over budget the *furthest* overlays are dropped rather than
+everything outside a box.
+
+**The stress test could not produce a trustworthy number here, and the tooling exists so it can be
+run where it counts.** WSLg renders in software: the client idles at ~28 fps on a menu and drops to
+single digits in-world with terrain loading, and JourneyMap's own `RegionTexture.bindRegionTexture`
+throws `IllegalArgumentException` every frame against that GL stack. Any overlay cost is far below
+that noise. `-Dcityworld.mapstress=true` logs fps and frame time every five seconds on the client, so
+the measurement is one run on real hardware: note the frame time at `/citymap keep 2000`, then at
+`/citymap keep 200`, and compare. Measured growth for context: **~2 overlays and ~5.5 shapes per
+platmap**, and straight-line travel sweeps a 7-platmap-wide band, so roughly **12 overlays per 160
+blocks** — about 75 per 1000 blocks travelled.
 
 **Trap paid for here:** the dev server's `run/world/session.lock` outlives a `pkill` that does not
 actually kill (`pkill -f "gradlew runServer"` returned 144 and left the JVM up), and the second run

@@ -67,11 +67,11 @@ public final class CityPlanClient {
         KNOWN.put(ChunkPos.asLong(payload.chunkX(), payload.chunkZ()), payload.summary());
     }
 
-    /** Tells the server the player turned the plan overlay on or off in their map mod's UI. */
-    public static void setCityPlan(boolean on) {
+    /** Tells the server this client's plan settings, as set in its map mod's UI. */
+    public static void setCityPlan(boolean on, int keep) {
         send(() -> {
             if (Minecraft.getInstance().getConnection() != null)
-                ClientPacketDistributor.sendToServer(new CityPlanTogglePayload(on));
+                ClientPacketDistributor.sendToServer(new CityPlanTogglePayload(on, keep));
         });
     }
 
