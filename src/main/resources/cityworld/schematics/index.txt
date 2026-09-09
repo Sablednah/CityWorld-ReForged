@@ -38,7 +38,7 @@ Neighborhood/IMC_eaglman13_home_entry.schematic
 Neighborhood/gas_stop.schematic
 Neighborhood/polar_gas.schematic
 Neighborhood/richards_house.schematic
-Park/carasutra.schematic
+Park/carasamara.schematic
 Park/dragon.schematic
 Park/graveyard_knife.schematic
 Park/joster.schematic
@@ -53,7 +53,7 @@ Park/portals.schematic
 Park/richard.schematic
 Park/sablednah.schematic
 Park/spiritwind.schematic
-Roundabout/carasutra.schematic
+Roundabout/carasamara.schematic
 Roundabout/joster.schematic
 Roundabout/judgement.schematic
 Roundabout/knife.schematic
