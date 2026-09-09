@@ -43,6 +43,9 @@ public final class CityWorldClient {
     public static void init(IEventBus modEventBus) {
         modEventBus.addListener(CityWorldClient::onRegisterPresetEditors);
         modEventBus.addListener(CityWorldClient::onRegisterDebugEntries);
+        // Hover text over a map mod's fullscreen map. Inert unless a map mod tells it where the
+        // mouse is, so this costs nothing when none is installed.
+        CityPlanHud.register();
     }
 
     /** Adds CityWorld's plan/technical readout to the F3 debug screen (see {@link CityWorldDebugEntry}). */

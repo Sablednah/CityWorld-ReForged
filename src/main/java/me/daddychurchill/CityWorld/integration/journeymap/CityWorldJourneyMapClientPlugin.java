@@ -14,6 +14,7 @@ import journeymap.api.v2.common.option.OptionCategory;
 
 import me.daddychurchill.CityWorld.CityWorldMod;
 import me.daddychurchill.CityWorld.client.CityPlanClient;
+import me.daddychurchill.CityWorld.client.CityPlanHud;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
@@ -172,11 +173,13 @@ public class CityWorldJourneyMapClientPlugin implements IClientPlugin {
         BlockPos at = event.getLocation();
         if (at == null) {
             hovered = Long.MIN_VALUE;
+            CityPlanHud.clearHover();
             return;
         }
         int chunkX = at.getX() >> 4;
         int chunkZ = at.getZ() >> 4;
         hovered = (chunkX & 0xFFFFFFFFL) | ((long) chunkZ << 32);
+        CityPlanHud.hover(chunkX, chunkZ);
         CityPlanClient.request(chunkX, chunkZ);
     }
 
@@ -194,6 +197,7 @@ public class CityWorldJourneyMapClientPlugin implements IClientPlugin {
     private void onMapping(MappingEvent event) {
         if (event.getStage() == MappingEvent.Stage.MAPPING_STOPPED) {
             hovered = Long.MIN_VALUE;
+            CityPlanHud.clearHover();
             CityPlanClient.forget();
             return;
         }
