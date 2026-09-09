@@ -68,6 +68,17 @@ final class CityPlanOverlay {
      *  that reads best in play, so they reach further than the first cut allowed. */
     private static final int ROAD_RADIUS = 2;
 
+    /**
+     * How far the drawn plan is kept once a player has seen it: 13×13 platmaps, a little over two
+     * kilometres across.
+     *
+     * <p>The first cut took an overlay away as soon as the player walked out of the sweep radius,
+     * which made the plan a torch rather than a map — you could never look back at a city you had
+     * just crossed. It persists now; the radius exists only so a long journey cannot pile overlays
+     * on the client without limit. Nothing is lost when it does drop: walking back re-draws it.
+     */
+    private static final int KEEP_RADIUS = 6;
+
     /** Ticks between position checks. The unit of change is a 160-block platmap; 2s is plenty. */
     private static final int CHECK_INTERVAL = 40;
 
@@ -93,7 +104,8 @@ final class CityPlanOverlay {
         ResourceKey<Level> dimension;
         int platX = Integer.MIN_VALUE;
         int platZ = Integer.MIN_VALUE;
-        Set<String> shown = new HashSet<>();
+        /** Overlay id -> the platmap it covers, so distant ones can be dropped and the rest kept. */
+        final Map<String, long[]> shown = new java.util.HashMap<>();
         boolean working;
     }
 
@@ -136,7 +148,7 @@ final class CityPlanOverlay {
         for (int ring = 0; ring <= DISTRICT_RADIUS; ring++) {
             long ringStarted = System.nanoTime();
             int before = polygons.size();
-            build(context, level.dimension(), 0, 0, ring, polygons);
+            build(context, level.dimension(), 0, 0, ring, polygons, new java.util.HashMap<>());
             CityWorldMod.LOGGER.info("CityWorld: city plan ring {} -> {} overlays in {} ms", ring,
                     polygons.size() - before, (System.nanoTime() - ringStarted) / 1_000_000L);
         }
@@ -159,7 +171,7 @@ final class CityPlanOverlay {
             first.put(polygon.overlayId(), String.valueOf(polygon.props().label()));
         List<ServerPolygon> again = new ArrayList<>();
         for (int ring = 0; ring <= DISTRICT_RADIUS; ring++)
-            build(context, level.dimension(), 0, 0, ring, again);
+            build(context, level.dimension(), 0, 0, ring, again, new java.util.HashMap<>());
         int changed = 0;
         for (ServerPolygon polygon : again) {
             String was = first.get(polygon.overlayId());
@@ -234,14 +246,17 @@ final class CityPlanOverlay {
         MinecraftServer server = player.level().getServer();
         PLANNER.execute(() -> {
             List<ServerPolygon> polygons = new ArrayList<>();
+            // What this sweep covers, kept outside the try so the bookkeeping below still runs after
+            // a partial failure — a half-drawn plan should still be a plan we remember drawing.
+            Map<String, long[]> covered = new java.util.HashMap<>();
             try {
                 Set<String> already;
                 synchronized (state) {
-                    already = new HashSet<>(state.shown);
+                    already = new HashSet<>(state.shown.keySet());
                 }
                 for (int ring = 0; ring <= DISTRICT_RADIUS; ring++) {
                     List<ServerPolygon> ofRing = new ArrayList<>();
-                    build(context, level.dimension(), platX, platZ, ring, ofRing);
+                    build(context, level.dimension(), platX, platZ, ring, ofRing, covered);
                     polygons.addAll(ofRing);
                     // Only send what this player does not already have. A platmap's plan never
                     // changes (measured: a re-sweep of the same ground differs in nothing), so
@@ -263,7 +278,7 @@ final class CityPlanOverlay {
                     state.platX = Integer.MIN_VALUE;
                 }
             }
-            server.execute(() -> finish(player, state, polygons));
+            server.execute(() -> finish(player, state, covered, platX, platZ));
         });
     }
 
@@ -276,16 +291,28 @@ final class CityPlanOverlay {
         }
     }
 
-    /** Takes away whatever scrolled out of range, and lets the player be swept again. */
-    private void finish(ServerPlayer player, PlayerState state, List<ServerPolygon> polygons) {
+    /**
+     * Remembers what this player now has, and takes away only what is genuinely far behind them —
+     * everything within {@link #KEEP_RADIUS} stays drawn, so the plan of a city you walked through an
+     * hour ago is still there when you open the map.
+     */
+    private void finish(ServerPlayer player, PlayerState state, Map<String, long[]> covered,
+            int centreX, int centreZ) {
         try {
-            Set<String> current = new HashSet<>();
-            for (ServerPolygon polygon : polygons)
-                current.add(polygon.overlayId());
-            for (String stale : state.shown)
-                if (!current.contains(stale))
-                    api.getOverlayApi().remove(player, CityWorldMod.MODID, stale);
-            state.shown = current;
+            synchronized (state) {
+                state.shown.putAll(covered);
+                var iterator = state.shown.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    var entry = iterator.next();
+                    long[] at = entry.getValue();
+                    int away = Math.max(Math.abs((int) ((at[0] - centreX) / PlatMap.Width)),
+                            Math.abs((int) ((at[1] - centreZ) / PlatMap.Width)));
+                    if (away > KEEP_RADIUS) {
+                        api.getOverlayApi().remove(player, CityWorldMod.MODID, entry.getKey());
+                        iterator.remove();
+                    }
+                }
+            }
         } catch (Throwable t) {
             CityWorldMod.LOGGER.error("City plan overlay cleanup failed", t);
         } finally {
@@ -299,7 +326,7 @@ final class CityPlanOverlay {
 
     /** Builds one square ring of platmaps at radius {@code ring} around the centre ({@code 0} = just it). */
     private void build(CityWorldGenerator context, ResourceKey<Level> dimension, int centreX, int centreZ,
-            int ring, List<ServerPolygon> out) {
+            int ring, List<ServerPolygon> out, Map<String, long[]> covered) {
         int y = context.streetLevel;
         for (int dx = -ring; dx <= ring; dx++) {
             for (int dz = -ring; dz <= ring; dz++) {
@@ -314,12 +341,19 @@ final class CityPlanOverlay {
                 // it would just dirty the view. Its ROADS still get drawn, though: a highway running
                 // out through the countryside is the most useful line on the whole map, and skipping
                 // the platmap outright dropped every one of them.
-                if (family != SchematicFamily.NATURE)
-                    out.add(district(dimension, platmap, family, platX, platZ, y));
+                String tooltip = tooltip(platmap, family);
+                long[] at = { platX, platZ };
+                if (family != SchematicFamily.NATURE) {
+                    ServerPolygon district = district(dimension, platmap, family, platX, platZ, y, tooltip);
+                    out.add(district);
+                    covered.put(district.overlayId(), at);
+                }
                 if (Math.abs(dx) <= ROAD_RADIUS && Math.abs(dz) <= ROAD_RADIUS) {
-                    ServerPolygon roads = roads(dimension, platmap, platX, platZ, y);
-                    if (roads != null)
+                    ServerPolygon roads = roads(dimension, platmap, platX, platZ, y, tooltip);
+                    if (roads != null) {
                         out.add(roads);
+                        covered.put(roads.overlayId(), at);
+                    }
                 }
             }
         }
@@ -334,15 +368,12 @@ final class CityPlanOverlay {
      * and interior with it, which is more than a label could say anyway.
      */
     private ServerPolygon district(ResourceKey<Level> dimension, PlatMap platmap, SchematicFamily family,
-            int platX, int platZ, int y) {
+            int platX, int platZ, int y, String tooltip) {
         int x0 = platX * 16;
         int z0 = platZ * 16;
         int x1 = x0 + PlatMap.Width * 16;
         int z1 = z0 + PlatMap.Width * 16;
         int color = colorFor(family);
-        String name = title(family.name());
-        String tooltip = name + " district · " + platmap.getNumberOfRoads() + " roads · "
-                + Math.round(platmap.getNaturePercent() * 100) + "% open land";
         OverlayShapeProps props = OverlayProps.everywhere(color, 0.12f, color, 1.0f, 0.55f, 900,
                 UIState.FULLSCREEN_ZOOM_MIN, UIState.ZOOM_IN_MAX, null, tooltip);
         return new ServerPolygon("plan_district_" + platX + "_" + platZ, dimension,
@@ -353,7 +384,8 @@ final class CityPlanOverlay {
      * The platmap's roads, merged into as few rectangles as possible — a city block's worth of road
      * chunks in a row is one long strip, not ten squares. All of them ride in a single overlay.
      */
-    private ServerPolygon roads(ResourceKey<Level> dimension, PlatMap platmap, int platX, int platZ, int y) {
+    private ServerPolygon roads(ResourceKey<Level> dimension, PlatMap platmap, int platX, int platZ, int y,
+            String districtTooltip) {
         boolean[][] road = new boolean[PlatMap.Width][PlatMap.Width];
         boolean any = false;
         for (int x = 0; x < PlatMap.Width; x++) {
@@ -388,8 +420,10 @@ final class CityPlanOverlay {
             }
         }
 
+        // Streets sit on top of their district, so their tooltip carries the district's line too —
+        // otherwise pointing at a road hides what you were reading.
         OverlayShapeProps props = OverlayProps.everywhere(0x3A3A3A, 0.45f, 0x202020, 0.5f, 0.5f, 1000,
-                UIState.FULLSCREEN_ZOOM_MIN, UIState.ZOOM_IN_MAX, null, "Streets");
+                UIState.FULLSCREEN_ZOOM_MIN, UIState.ZOOM_IN_MAX, null, "Streets · " + districtTooltip);
         return new ServerPolygon("plan_roads_" + platX + "_" + platZ, dimension, shapes, props);
     }
 
@@ -429,6 +463,12 @@ final class CityPlanOverlay {
             case OUTLAND -> 0x6FA8A0;
             case NATURE -> 0x74A45C;
         };
+    }
+
+    /** The one line that describes a platmap, shared by its district tint and its streets. */
+    private static String tooltip(PlatMap platmap, SchematicFamily family) {
+        return title(family.name()) + " district · " + platmap.getNumberOfRoads() + " roads · "
+                + Math.round(platmap.getNaturePercent() * 100) + "% open land";
     }
 
     /** {@code HIGHRISE} -> {@code Highrise}. */
