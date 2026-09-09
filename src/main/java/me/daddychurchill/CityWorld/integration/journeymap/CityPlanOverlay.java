@@ -61,23 +61,19 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
  */
 final class CityPlanOverlay {
 
-    /** Platmaps each way for the district tint: 7×7 platmaps, about 1120 blocks across. */
-    private static final int DISTRICT_RADIUS = 3;
+    /**
+     * Platmaps each way for the district tint: 7×7 platmaps, about 1120 blocks across.
+     *
+     * <p>Overridable with {@code -Dcityworld.mapradius=N} so a stationary player can be handed
+     * thousands of overlays at once — the only practical way to measure what they cost a client
+     * without walking for an hour. Not a player-facing setting; the budget
+     * ({@code MapMarkers.cityPlanBudget}) is the knob that matters in play.
+     */
+    private static final int DISTRICT_RADIUS = Integer.getInteger("cityworld.mapradius", 3);
 
     /** Platmaps each way for the street grid: 5×5, about 800 blocks. Streets are the part of this
      *  that reads best in play, so they reach further than the first cut allowed. */
     private static final int ROAD_RADIUS = 2;
-
-    /**
-     * How far the drawn plan is kept once a player has seen it: 13×13 platmaps, a little over two
-     * kilometres across.
-     *
-     * <p>The first cut took an overlay away as soon as the player walked out of the sweep radius,
-     * which made the plan a torch rather than a map — you could never look back at a city you had
-     * just crossed. It persists now; the radius exists only so a long journey cannot pile overlays
-     * on the client without limit. Nothing is lost when it does drop: walking back re-draws it.
-     */
-    private static final int KEEP_RADIUS = 6;
 
     /** Ticks between position checks. The unit of change is a 160-block platmap; 2s is plenty. */
     private static final int CHECK_INTERVAL = 40;
@@ -292,26 +288,38 @@ final class CityPlanOverlay {
     }
 
     /**
-     * Remembers what this player now has, and takes away only what is genuinely far behind them —
-     * everything within {@link #KEEP_RADIUS} stays drawn, so the plan of a city you walked through an
-     * hour ago is still there when you open the map.
+     * Remembers what this player now has, and drops the furthest overlays only once they are over
+     * <em>their own</em> budget ({@code MapMarkers.cityPlanBudget}, set from the map mod's options or
+     * {@code /citymap keep}).
+     *
+     * <p>A count, not a radius. The first cut dropped anything outside a box around the player, which
+     * threw away a city they had crossed twice while holding almost nothing — and the cost being
+     * bounded is a client concern, so counting the thing the client actually holds is the honest
+     * measure. Retained overlays cost the server nothing: they are already planned and are never
+     * re-sent. Nothing is lost when one does drop, either — walking back redraws it.
      */
     private void finish(ServerPlayer player, PlayerState state, Map<String, long[]> covered,
             int centreX, int centreZ) {
         try {
             synchronized (state) {
                 state.shown.putAll(covered);
-                var iterator = state.shown.entrySet().iterator();
-                while (iterator.hasNext()) {
-                    var entry = iterator.next();
-                    long[] at = entry.getValue();
-                    int away = Math.max(Math.abs((int) ((at[0] - centreX) / PlatMap.Width)),
-                            Math.abs((int) ((at[1] - centreZ) / PlatMap.Width)));
-                    if (away > KEEP_RADIUS) {
-                        api.getOverlayApi().remove(player, CityWorldMod.MODID, entry.getKey());
-                        iterator.remove();
-                    }
+                int budget = MapMarkers.cityPlanBudget(player.getUUID());
+                if (state.shown.size() <= budget)
+                    return;
+
+                // Over budget: drop the furthest first, so what goes is what the player is least
+                // likely to look at next.
+                List<Map.Entry<String, long[]>> byDistance = new ArrayList<>(state.shown.entrySet());
+                byDistance.sort((a, b) -> Long.compare(distance(b.getValue(), centreX, centreZ),
+                        distance(a.getValue(), centreX, centreZ)));
+                int over = state.shown.size() - budget;
+                for (int i = 0; i < over; i++) {
+                    Map.Entry<String, long[]> furthest = byDistance.get(i);
+                    api.getOverlayApi().remove(player, CityWorldMod.MODID, furthest.getKey());
+                    state.shown.remove(furthest.getKey());
                 }
+                CityWorldMod.LOGGER.debug("City plan overlay: dropped {} of {} for {} (budget {})",
+                        over, over + budget, player.getGameProfile().name(), budget);
             }
         } catch (Throwable t) {
             CityWorldMod.LOGGER.error("City plan overlay cleanup failed", t);
@@ -320,6 +328,11 @@ final class CityPlanOverlay {
                 state.working = false;
             }
         }
+    }
+
+    /** Chebyshev distance in platmaps, squared away from any need for floating point. */
+    private static long distance(long[] at, int centreX, int centreZ) {
+        return Math.max(Math.abs(at[0] - centreX), Math.abs(at[1] - centreZ));
     }
 
     // --- building the shapes --------------------------------------------------------------------

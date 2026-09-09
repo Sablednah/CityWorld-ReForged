@@ -68,6 +68,14 @@ neoForge {
         client {
             client()
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            // Join a server straight from the launcher:  ./gradlew runClient -PcwJoin=127.0.0.1
+            // The split case (a real client against a real dedicated server) is the only way to
+            // exercise the payload channel, waypoints crossing the wire, and overlays pushed to a
+            // client in another JVM — none of which single-player can break. Note that passing
+            // --args here does not work: ModDevGradle's run task treats it as the main class.
+            if (project.hasProperty('cwJoin')) {
+                programArguments.addAll '--quickPlayMultiplayer', project.property('cwJoin').toString()
+            }
         }
 
         server {
