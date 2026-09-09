@@ -38,6 +38,9 @@ import net.minecraft.resources.Identifier;
  *
  * <p>Same rule as the server plugin: nothing outside this package may reference this class, and
  * JourneyMap instantiates it itself after finding the annotation.
+ *
+ * <p><b>New here?</b> Read this package's {@code package-info} first — the whole approach in one
+ * place, including the two crashes this file cost before it settled.
  */
 @JourneyMapPlugin(apiVersion = "2.0.0", dependencies = { CityWorldMod.MODID })
 public class CityWorldJourneyMapClientPlugin implements IClientPlugin {

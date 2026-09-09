@@ -66,6 +66,11 @@ and CityWorld knows where every road goes before anyone arrives. `/citymap [on|o
   `journeymap.server.global.config`), so every call is wrapped — a refused waypoint must not fail a
   chunk.
 
+**The canonical write-up now lives in the code**, at
+`integration/journeymap/package-info.java` — the five decisions worth copying, the traps, the
+measured costs, and how to add a second map mod (that half is on `api/MapMarkers`). It is written to
+be cribbed for another mod's integration; keep it current rather than duplicating it here.
+
 **How it is kept a soft dependency.** The API is `compileOnly` and never shipped. Everything that
 touches a `journeymap.*` type lives in `me.daddychurchill.CityWorld.integration.journeymap`, and
 **nothing else in the mod may reference that package** — JourneyMap finds the plugin itself by

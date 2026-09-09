@@ -33,6 +33,9 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
  * lives on the server, and the server API can push waypoints and map overlays straight to connected
  * clients. That covers single-player (the integrated server) and dedicated servers with one
  * implementation, and needs no networking of CityWorld's own.
+ *
+ * <p><b>New here?</b> Read this package's {@code package-info} first — it is the whole approach in
+ * one place, written so the next map mod's integration can be cribbed from it, traps included.
  */
 @JourneyMapPlugin(apiVersion = "2.0.0", dependencies = { CityWorldMod.MODID })
 public class CityWorldJourneyMapPlugin implements IServerPlugin, MapMarkers.Listener {

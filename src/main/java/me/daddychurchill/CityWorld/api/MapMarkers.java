@@ -25,6 +25,30 @@ import net.minecraft.world.level.Level;
  * block or touch the server thread directly — hop via {@code server.execute(...)} for anything that
  * mutates game state. A listener that throws is logged and dropped, never propagated into the
  * generator.
+ *
+ * <h2>Adding another map mod</h2>
+ *
+ * Everything a map mod needs is here or one call away; nothing in the generator changes.
+ *
+ * <ol>
+ *   <li>Make a package beside {@code integration.journeymap} — that package is the <em>only</em>
+ *       place its types may appear, and nothing else in the mod may reference it. Read that
+ *       package's {@code package-info} first: it is written as the how-to, traps included.
+ *   <li>Add the mod's API as {@code compileOnly}, and an {@code optional} entry in the
+ *       {@code neoforge.mods.toml} template. Nothing may end up inside CityWorld's jar.
+ *   <li>Implement its plugin interface and, wherever it hands you an API object, call
+ *       {@link #addListener}. Turn {@link Landmark}s and {@link PlayerMark}s into whatever that mod
+ *       calls a waypoint.
+ *   <li>Optionally draw the plan: read it through {@link CityWorldAPI#lotAt} (per chunk) or
+ *       {@code CityWorldGenerator.getPlatMap} (per 10×10-chunk block) — both are deterministic,
+ *       thread-safe, cached, and answer for ground nobody has generated. Report
+ *       {@link Listener#drawsCityPlan} and honour {@link #wantsCityPlan} and
+ *       {@link #cityPlanBudget}, so {@code /citymap} keeps working whichever map mod is installed.
+ *   <li>For client-side UI, reuse {@code client.CityPlanClient} (the chunk-info cache and the
+ *       settings packet) and {@code client.CityPlanHud} (the hover caption) — neither holds a map
+ *       mod's types. {@code CityPlanHud.isMapScreen} decides whose screen to draw on; add yours
+ *       there.
+ * </ol>
  */
 public final class MapMarkers {
 
