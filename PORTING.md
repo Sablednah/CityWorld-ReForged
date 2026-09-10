@@ -1468,9 +1468,19 @@ CityWorld's one local touch, within the shared format: `version` carries the Min
 The stamp also replaces the jar-mtime hack on the F3 line — the commit says everything the timestamp
 did and more, though the mtime is kept beside it since that is what changes when a file is copied.
 
+`time` is the **commit's** timestamp (`git show -s --format=%ct`), not the wall clock. A wall-clock
+stamp changes on every Gradle invocation, so the generated resource changes and `processResources`
+and `jar` are never up to date — measured here as a no-op build going from executing three tasks to
+`5 actionable tasks: 5 up-to-date`. `%ct` rather than `%cI` because `%cI` carries the committer
+machine's UTC offset, so one commit would stamp differently on two machines.
+
 A missing or unreadable stamp degrades to `unknown` and never fails a build or a load: it is
 diagnostic information, not a dependency. The git calls tolerate git being absent (a source zip, a CI
-checkout without history).
+checkout without history). **That fallback has been executed, not assumed** — real stamp, absent
+resource, malformed resource (invalid unicode escape plus binary), from a jar, and against the real
+shipped jar: the good cases read their values, the bad ones return `unknown` and throw nothing.
+`BuildInfo` imports nothing but `java.io`/`java.util`, so it can be compiled and run standalone with
+`javac`, which is how that was checked.
 
 ## Releasing — GitHub, and CurseForge automatically
 
