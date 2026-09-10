@@ -20,79 +20,101 @@ import java.util.Properties;
  * ({@code unzip -p <jar> META-INF/MANIFEST.MF}), which is what answers "is this instance jar stale".
  *
  * <p>Shared format, agreed across Sable's mods — {@code commit} (8 chars, {@code -dirty} when built
- * from uncommitted changes), {@code branch}, {@code time} (UTC ISO-8601), {@code version}. CityWorld's
- * {@code version} additionally carries the Minecraft target, since it ships three jars per release.
+ * from uncommitted changes), {@code branch}, {@code time} (the <em>commit's</em> timestamp, UTC
+ * ISO-8601), {@code version}. CityWorld's {@code version} additionally carries the Minecraft target,
+ * since it ships three jars per release and "5.7.0" alone does not say which of them ran.
  */
 public final class BuildInfo {
 
     /** Namespaced: a bare {@code /build.properties} would collide with every other mod doing this. */
     private static final String RESOURCE = "/cityworld/build.properties";
 
-    private static final String COMMIT;
-    private static final String BRANCH;
-    private static final String TIME;
-    private static final String VERSION;
+    /** One stamp, read as a unit. A record so a caller cannot be handed a half-filled one. */
+    public record Stamp(String commit, String branch, String time, String version) {
+        static final Stamp UNKNOWN = new Stamp("unknown", "unknown", "unknown", "unknown");
+    }
 
-    static {
-        String commit = "unknown", branch = "unknown", time = "unknown", version = "unknown";
-        try (InputStream in = BuildInfo.class.getResourceAsStream(RESOURCE)) {
-            if (in != null) {
-                Properties p = new Properties();
-                // Every read happens AFTER load() returns, and that ordering is the whole degrade
-                // guarantee — do not "tidy" it into reading as you go. Measured: given a stamp whose
-                // first three lines are valid and whose fourth holds a bad escape, load() throws
-                // having already populated commit, branch and version. Read incrementally and a
-                // corrupt stamp reports a real-looking commit with the rest missing, which is worse
-                // than no stamp because it looks like an answer. This way it is all or nothing.
-                p.load(in);
-                commit = p.getProperty("commit", commit);
-                branch = p.getProperty("branch", branch);
-                time = p.getProperty("time", time);
-                version = p.getProperty("version", version);
-            }
-        } catch (Exception ignored) {
-            // catch (Exception), and the breadth is load-bearing rather than lazy: Properties.load
-            // throws IllegalArgumentException — NOT IOException — on a malformed unicode escape.
-            // A catch (IOException) compiles, reads correctly, passes review, and then takes the mod
-            // down at class-init the first time a stamp is corrupted: an ExceptionInInitializerError
-            // out of a static initialiser, i.e. failing to load over a diagnostic.
-            //
-            // A missing or unreadable stamp must never stop the mod loading: it is diagnostic
-            // information, not a dependency. Both bad paths are exercised, not assumed — see
-            // PORTING.md's build-stamp section for the cases.
+    private static final Stamp STAMP = read();
+
+    /**
+     * Parses a stamp from a stream, or {@link Stamp#UNKNOWN} if it cannot be.
+     *
+     * <p><b>Public, and taking a stream, deliberately</b>: the failure paths can then be driven
+     * directly by a test instead of through classpath games. Four of Sable's mods each built
+     * throwaway class directories to test this before Chronicler pointed out the shape was the
+     * problem, not the testing.
+     *
+     * <p><b>All-or-nothing, which is the entire reason the record is built after {@code load}
+     * returns.</b> {@code Properties.load} parses line by line and throws part-way on a bad escape
+     * <em>having already populated the earlier keys</em> — measured here by printing
+     * {@code stringPropertyNames()} from the catch and finding {@code [commit, branch, version]}
+     * sitting there fully formed. So the parser does not merely risk handing you a half-stamp: it
+     * builds one, and only the throw stops you using it. A stamp reporting a real-looking commit
+     * with the rest missing is worse than no stamp, because it looks like an answer.
+     *
+     * <p><b>The catch is {@code Exception}, not {@code IOException}, and that is load-bearing:</b>
+     * {@code Properties.load} throws {@code IllegalArgumentException} on a bad unicode escape.
+     * Narrowing it compiles, reads correctly, passes review, and takes the mod down at class-init as
+     * an {@code ExceptionInInitializerError} — failing to load over a diagnostic.
+     */
+    public static Stamp parse(InputStream in) {
+        if (in == null)
+            return Stamp.UNKNOWN;
+        try {
+            Properties properties = new Properties();
+            properties.load(in);
+            return new Stamp(
+                    properties.getProperty("commit", "unknown"),
+                    properties.getProperty("branch", "unknown"),
+                    properties.getProperty("time", "unknown"),
+                    properties.getProperty("version", "unknown"));
+        } catch (Exception malformed) {
+            return Stamp.UNKNOWN;
         }
-        COMMIT = commit;
-        BRANCH = branch;
-        TIME = time;
-        VERSION = version;
+    }
+
+    private static Stamp read() {
+        try (InputStream in = BuildInfo.class.getResourceAsStream(RESOURCE)) {
+            return parse(in);
+        } catch (Exception unreadable) {
+            // A missing or unreadable stamp must never stop the mod loading: it is diagnostic
+            // information, not a dependency.
+            return Stamp.UNKNOWN;
+        }
+    }
+
+    /** The stamp this build was loaded with; never null, never half-filled. */
+    public static Stamp stamp() {
+        return STAMP;
     }
 
     public static String commit() {
-        return COMMIT;
+        return STAMP.commit();
     }
 
     public static String branch() {
-        return BRANCH;
+        return STAMP.branch();
     }
 
     public static String time() {
-        return TIME;
+        return STAMP.time();
     }
 
     public static String version() {
-        return VERSION;
+        return STAMP.version();
     }
 
     /**
      * The one-line form for the startup log:
-     * {@code 5.7.0+mc1.21.11 (build a1b2c3d4 on master, 2026-09-10T07:24:24Z)}.
+     * {@code 5.7.0+mc1.21.11 (build a1b2c3d4 on master, 2026-09-10T07:47:11Z)}.
      *
      * <p>A {@code -dirty} suffix on the commit means it was built with uncommitted changes — worth
      * seeing in somebody's log before spending an hour reproducing against a tag that is not what
      * they ran.
      */
     public static String describe() {
-        return VERSION + " (build " + COMMIT + " on " + BRANCH + ", " + TIME + ")";
+        return STAMP.version() + " (build " + STAMP.commit() + " on " + STAMP.branch() + ", "
+                + STAMP.time() + ")";
     }
 
     private BuildInfo() {}
