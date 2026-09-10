@@ -1477,10 +1477,25 @@ machine's UTC offset, so one commit would stamp differently on two machines.
 A missing or unreadable stamp degrades to `unknown` and never fails a build or a load: it is
 diagnostic information, not a dependency. The git calls tolerate git being absent (a source zip, a CI
 checkout without history). **That fallback has been executed, not assumed** — real stamp, absent
-resource, malformed resource (invalid unicode escape plus binary), from a jar, and against the real
-shipped jar: the good cases read their values, the bad ones return `unknown` and throw nothing.
-`BuildInfo` imports nothing but `java.io`/`java.util`, so it can be compiled and run standalone with
-`javac`, which is how that was checked.
+resource, malformed resource (invalid unicode escape plus binary), a partial parse, from a jar, and
+against the real shipped jar: the good cases read their values, the bad ones return `unknown` and
+throw nothing. `BuildInfo` imports nothing but `java.io`/`java.util`, so it can be compiled and run
+standalone with `javac` — no Minecraft needed, which makes this a two-minute check.
+
+**Two things about that catch block that are not obvious, both measured here and agreed across
+Sable's mods:**
+
+1. **`catch (Exception)`, not `catch (IOException)`.** `Properties.load` throws
+   **`IllegalArgumentException`** on a malformed unicode escape. A narrower catch compiles, reads
+   correctly, passes review, and takes the mod down at class-init the first time a stamp is
+   corrupted — an `ExceptionInInitializerError` from a static initialiser, i.e. failing to load over
+   a diagnostic.
+2. **Every field is read after `load()` returns, and that ordering is the degrade guarantee.**
+   Measured: given a stamp with three valid lines and a bad escape on the fourth, `load()` throws
+   *having already populated `commit`, `branch` and `version`*. Read incrementally and a corrupt
+   stamp reports a real-looking commit with the rest missing — worse than no stamp, because it looks
+   like an answer. Absence is a null stream; corruption is a throw. **Testing only the absent case
+   exercises the wrong half.**
 
 ## Releasing — GitHub, and CurseForge automatically
 
