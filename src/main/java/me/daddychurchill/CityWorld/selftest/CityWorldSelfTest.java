@@ -10,6 +10,7 @@ import java.util.TreeMap;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.CityWorldGenerator.WorldStyle;
+import me.daddychurchill.CityWorld.BuildInfo;
 import me.daddychurchill.CityWorld.CityWorldMod;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Support.PlatMap;
@@ -183,6 +184,7 @@ public final class CityWorldSelfTest {
                 server.getServerVersion());
         try {
             checkGeneratorInstalled(server);
+            checkBuildStamp();
             checkPermissionNodes();
             checkBiomeGroundTags(server);
             checkPlanning();
@@ -1582,6 +1584,61 @@ public final class CityWorldSelfTest {
     }
 
     // ---- reporting ------------------------------------------------------------------------------
+
+    /**
+     * The build stamp, and — more importantly — the seven ways it can fail to parse.
+     *
+     * <p>This lives in CI rather than in a throwaway harness because the degrade is the part that
+     * matters and the part nobody exercises: a fallback that has never been run is a hope. Two of
+     * these cases are subtle enough that all five of Sable's mods got them right by luck.
+     *
+     * <p>{@code BuildInfo.parse} takes a stream precisely so this can be driven directly instead of
+     * through classpath games (thanks to Chronicler for that shape).
+     */
+    private void checkBuildStamp() {
+        BuildInfo.Stamp stamp = BuildInfo.stamp();
+        report.put("build.commit", stamp.commit());
+        report.put("build.branch", stamp.branch());
+        report.put("build.version", stamp.version());
+        // In a dev run the stamp is generated too, so "unknown" here means the generation broke.
+        if ("unknown".equals(stamp.commit()))
+            fail("build stamp missing: /cityworld/build.properties did not generate or did not load");
+
+        String good = "commit=abcd1234\nbranch=master\ntime=2026-01-01T00:00:00Z\nversion=1.2.3+mc1.21.11\n";
+        expectStamp("good", stream(good), "abcd1234");
+        expectStamp("null stream", null, "unknown");
+        expectStamp("empty", stream(""), "unknown");
+        expectStamp("binary junk", new java.io.ByteArrayInputStream(
+                new byte[] { 0, (byte) 0xFF, (byte) 0xFE, 13, 10, 0, 7 }), "unknown");
+        expectStamp("stream throws mid-read", new java.io.InputStream() {
+            private int n;
+
+            @Override
+            public int read() throws java.io.IOException {
+                if (n++ < 8)
+                    return 'c';
+                throw new java.io.IOException("stream failed part-way");
+            }
+        }, "unknown");
+        // BOTH orderings, and they are not equivalent: valid-lines-then-bad-escape is the one that
+        // catches an implementation reading fields after swallowing the throw, because load() has
+        // already populated the earlier keys by then. Bad-escape-first leaves nothing behind and so
+        // passes even against that mistake — measured, not assumed.
+        expectStamp("valid lines then bad escape",
+                stream("commit=deadbeef\nbranch=master\nversion=9.9.9\ntime=\\uZZZZ\n"), "unknown");
+        expectStamp("bad escape then valid lines",
+                stream("time=\\uZZZZ\ncommit=deadbeef\nbranch=master\nversion=9.9.9\n"), "unknown");
+    }
+
+    private static java.io.InputStream stream(String text) {
+        return new java.io.ByteArrayInputStream(text.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
+    }
+
+    private void expectStamp(String name, java.io.InputStream in, String wantCommit) {
+        String got = BuildInfo.parse(in).commit();
+        if (!wantCommit.equals(got))
+            fail("build stamp parse (" + name + "): expected commit " + wantCommit + ", got " + got);
+    }
 
     private void fail(String why) {
         failures.add(why);
