@@ -1227,6 +1227,38 @@ It is one entry in `PALETTE` and one branch in `classify` when 26.3 is ported. *
 biome source to avoid a two-line change** — that would be paying a large, world-changing cost to dodge a
 small, controlled one. The architecture question above is worth deciding on its own merits, not on this.
 
+## Build stamps — which bytes are running
+
+Every jar records the commit it was built from, and says so at startup:
+
+    CityWorld 5.7.0+mc1.21.11 (build 7b30b10d on master, 2026-09-10T07:27:41Z)
+
+A version number answers "which release"; during development that is a different question from
+"which bytes", and CityWorld deploys by copying jars into nine instances where a filename cannot tell
+you whether the jar is the one you just built. `-dirty` on the commit means it was built from
+uncommitted changes.
+
+**Shared format across Sable's mods** — agreed with the LegendQuest session so the five projects do
+not each invent one: `commit` (8 chars, `-dirty` when uncommitted), `branch`, `time` (UTC ISO-8601),
+`version`. Two carriers, for two readers:
+
+- `/<modid>/build.properties` — a generated resource read by the running mod (`BuildInfo`).
+  **Namespaced under the mod id**, since a bare `/build.properties` would collide with every other
+  mod doing this. Read at runtime instead of the manifest because a dev run loads from a classes
+  directory with no jar and no manifest.
+- Manifest `Build-Commit` / `Build-Branch` / `Build-Time` — for inspecting a jar from a shell without
+  loading it, which is what answers "is this instance jar stale":
+  `unzip -p build/libs/cityworld-*.jar META-INF/MANIFEST.MF | grep Build-`
+
+CityWorld's one local touch, within the shared format: `version` carries the Minecraft target too
+(`5.7.0+mc1.21.11`), because three jars ship per release and `5.7.0` alone does not say which ran.
+The stamp also replaces the jar-mtime hack on the F3 line — the commit says everything the timestamp
+did and more, though the mtime is kept beside it since that is what changes when a file is copied.
+
+A missing or unreadable stamp degrades to `unknown` and never fails a build or a load: it is
+diagnostic information, not a dependency. The git calls tolerate git being absent (a source zip, a CI
+checkout without history).
+
 ## Releasing — GitHub, and CurseForge automatically
 
 Publishing a GitHub release now publishes to CurseForge too, via

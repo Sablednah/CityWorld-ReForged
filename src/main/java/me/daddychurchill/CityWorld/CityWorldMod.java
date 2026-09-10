@@ -80,7 +80,8 @@ public class CityWorldMod {
         // a full default datapack + a plain-text reference explaining every knob (P7).
         me.daddychurchill.CityWorld.worldgen.SettingsExample.ensureExampleFolder();
 
-        LOGGER.info("CityWorld {} initialising (NeoForge port)",
-                modContainer.getModInfo().getVersion());
+        // The build stamp, not just the version: this is the line that says which bytes actually ran
+        // when somebody reports a bug. See BuildInfo.
+        LOGGER.info("CityWorld {} initialising (NeoForge port)", BuildInfo.describe());
     }
 }

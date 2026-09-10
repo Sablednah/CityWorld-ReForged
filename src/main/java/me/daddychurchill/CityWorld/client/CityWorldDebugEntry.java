@@ -75,23 +75,28 @@ public class CityWorldDebugEntry implements DebugScreenEntry {
         }
     }
 
-    /** Version plus the jar's own modification time — the one stamp that provably changes on every
-     *  deploy, so "is the game running the jar I just copied in?" is answerable from F3 alone. */
+    /** The build stamp — which bytes are running, answerable from F3 alone, which is what the ship
+     *  loop needs after copying a jar into an instance.
+     *
+     *  <p>This used to be the version plus the jar's <em>modification time</em>, because that was the
+     *  only thing that provably changed on every deploy. The commit says the same thing and more: two
+     *  builds of the same commit are the same mod, a {@code -dirty} suffix says the jar was built
+     *  from uncommitted work, and the jar's timestamp says nothing about either. The mtime is kept
+     *  alongside it, since it is still the thing that changes when a file is copied. */
     private static final String BUILD_STAMP = buildStamp();
 
     private static String buildStamp() {
+        String stamp = me.daddychurchill.CityWorld.BuildInfo.describe();
         try {
             var file = net.neoforged.fml.ModList.get().getModFileById("cityworld").getFile().getFilePath();
-            String version = net.neoforged.fml.ModList.get().getModContainerById("cityworld")
-                    .map(c -> c.getModInfo().getVersion().toString()).orElse("?");
             if (java.nio.file.Files.isRegularFile(file)) {
                 var time = java.nio.file.Files.getLastModifiedTime(file).toInstant()
                         .atZone(java.time.ZoneId.systemDefault());
-                return version + " jar " + time.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM HH:mm:ss"));
+                return stamp + " jar " + time.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM HH:mm:ss"));
             }
-            return version + " (dev)";
+            return stamp + " (dev)";
         } catch (Exception e) {
-            return "build stamp unavailable";
+            return stamp;
         }
     }
 }
