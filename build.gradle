@@ -154,7 +154,16 @@ var buildCommit = gitOut(projectDir, "git", "rev-parse", "--short=8", "HEAD") ?:
 var buildBranch = gitOut(projectDir, "git", "rev-parse", "--abbrev-ref", "HEAD") ?: "unknown"
 var buildDirty  = gitOut(projectDir, "git", "status", "--porcelain")
 if (buildDirty) buildCommit += "-dirty"   // built from uncommitted changes; say so
-var buildTime = new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone("UTC"))
+// The COMMIT's timestamp, not the wall clock. A wall-clock stamp changes on every Gradle invocation,
+// so the generated resource changes, so processResources and jar are never up to date — measured
+// below as a ~20-second tax on every no-op build. %ct (epoch) rather than %cI, because %cI carries
+// the committer machine's UTC offset and the same commit would then stamp differently on two
+// machines, which is a hole in the reproducibility this exists for. On a -dirty build the commit's
+// time loses nothing: -dirty has already said the bytes are not the commit's.
+var commitEpoch = gitOut(projectDir, "git", "show", "-s", "--format=%ct", "HEAD")
+var buildTime = commitEpoch
+        ? new Date(commitEpoch.toLong() * 1000L).format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone("UTC"))
+        : "unknown"
 logger.lifecycle("Build stamp: ${buildCommit} on ${buildBranch} at ${buildTime}")
 
 // Expand mod metadata properties into the generated neoforge.mods.toml.
