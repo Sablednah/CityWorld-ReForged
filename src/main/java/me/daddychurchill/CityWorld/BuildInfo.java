@@ -38,6 +38,12 @@ public final class BuildInfo {
         try (InputStream in = BuildInfo.class.getResourceAsStream(RESOURCE)) {
             if (in != null) {
                 Properties p = new Properties();
+                // Every read happens AFTER load() returns, and that ordering is the whole degrade
+                // guarantee — do not "tidy" it into reading as you go. Measured: given a stamp whose
+                // first three lines are valid and whose fourth holds a bad escape, load() throws
+                // having already populated commit, branch and version. Read incrementally and a
+                // corrupt stamp reports a real-looking commit with the rest missing, which is worse
+                // than no stamp because it looks like an answer. This way it is all or nothing.
                 p.load(in);
                 commit = p.getProperty("commit", commit);
                 branch = p.getProperty("branch", branch);
@@ -45,8 +51,15 @@ public final class BuildInfo {
                 version = p.getProperty("version", version);
             }
         } catch (Exception ignored) {
+            // catch (Exception), and the breadth is load-bearing rather than lazy: Properties.load
+            // throws IllegalArgumentException — NOT IOException — on a malformed unicode escape.
+            // A catch (IOException) compiles, reads correctly, passes review, and then takes the mod
+            // down at class-init the first time a stamp is corrupted: an ExceptionInInitializerError
+            // out of a static initialiser, i.e. failing to load over a diagnostic.
+            //
             // A missing or unreadable stamp must never stop the mod loading: it is diagnostic
-            // information, not a dependency.
+            // information, not a dependency. Both bad paths are exercised, not assumed — see
+            // PORTING.md's build-stamp section for the cases.
         }
         COMMIT = commit;
         BRANCH = branch;
