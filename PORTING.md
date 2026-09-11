@@ -1447,16 +1447,30 @@ StoryTeller reads CityWorld's schematic catalog through its `CityWorldSupport` a
 with undo. **That pairing has never been run**; both sides have only been compiled against each
 other, and each assumes the other end works. It cannot be tested from this repo alone.
 
-**Two questions, not one, and the second is the one with teeth.** CityWorld's schematics carry block
-entities — `LegacySchematic` attaches the saved NBT to any block that hosts one, which is how a
-bundled build arrives with its chests stocked. So the test has to ask both:
+**Two questions, not one, and they have different owners** — both sides have now read their own code
+rather than assuming:
 
-1. *Does it place?* — types line up, so this is the likely pass.
-2. **Does what arrives still have its contents?** If the other end places block *states* only, a
-   schematic that ships a stocked chest arrives as an empty chest of the right kind, and looks
-   entirely correct. StoryTeller has told us its **undo** has exactly that limit (states restored,
-   block-entity contents not), which makes it worth confirming whether its **placement** path shares
-   it — those are different code paths and only one of them has been described.
+1. **Does it place, with contents?** StoryTeller's placement calls `clip.paste(level, x, y, z,
+   random)` and nothing else: there is no placement code of theirs for a states-only filter to live
+   in. So this tests **our** paste through their call, and if it fails the fix is ours.
+2. **Does undo give back what was underneath?** Theirs. `ExternalSnap` is
+   `record(BlockPos, BlockState)` restored with `setBlock(..., 2)` — states only. Harmless in the
+   normal case (place on empty ground, undo restores air), but placing over *somebody's existing
+   stocked chest* and undoing returns an empty chest of the right kind. The contents lost are the
+   ones that were there **before**, not the ones the schematic brought.
+
+**Two things about our `paste` that a test will otherwise read as bugs, and both are deliberate:**
+
+- **`setIgnoreEntities(true)`** — entities in a schematic (item frames, armour stands, paintings) are
+  never placed, only blocks and their block entities. A build known to contain item frames arrives
+  without them and that is not a fault.
+- **`Block.UPDATE_CLIENTS` (flag 2)** — no neighbour or physics updates. Right for worldgen (physics
+  during generation deadlocks), and it means a live paste does not make water re-flow, redstone
+  re-evaluate or sand fall. A structure dropped on a live server therefore sits exactly as authored.
+
+So the sharp half is (1) and it is **not** a known gap: chest contents ride on
+`StructureTemplate.placeInWorld`, which loads block-entity NBT, so they should arrive — but "should"
+is the word this project keeps getting caught by.
 
 The LegendQuest session offered to exercise it on the shared dev machine ("Vivo", the VivoBook beside
 the desktop: Ubuntu, a driveable client on a private X display, `~/dev/README.md` there for the
