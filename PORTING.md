@@ -1447,6 +1447,17 @@ StoryTeller reads CityWorld's schematic catalog through its `CityWorldSupport` a
 with undo. **That pairing has never been run**; both sides have only been compiled against each
 other, and each assumes the other end works. It cannot be tested from this repo alone.
 
+**Two questions, not one, and the second is the one with teeth.** CityWorld's schematics carry block
+entities — `LegacySchematic` attaches the saved NBT to any block that hosts one, which is how a
+bundled build arrives with its chests stocked. So the test has to ask both:
+
+1. *Does it place?* — types line up, so this is the likely pass.
+2. **Does what arrives still have its contents?** If the other end places block *states* only, a
+   schematic that ships a stocked chest arrives as an empty chest of the right kind, and looks
+   entirely correct. StoryTeller has told us its **undo** has exactly that limit (states restored,
+   block-entity contents not), which makes it worth confirming whether its **placement** path shares
+   it — those are different code paths and only one of them has been described.
+
 The LegendQuest session offered to exercise it on the shared dev machine ("Vivo", the VivoBook beside
 the desktop: Ubuntu, a driveable client on a private X display, `~/dev/README.md` there for the
 full write-up) by pointing a StoryTeller server at a CityWorld build. **Sable's call** — it means
