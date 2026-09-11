@@ -1504,6 +1504,15 @@ drift per checkout (`run/` is gitignored). Add a row, do not derive one.
   `java-25-openjdk-amd64` for the 26.x branches. `tools/` is gitignored, so a fresh clone has none.
 - The NeoForm decompile cache is shared with the other projects, so a first build is minutes rather
   than the usual quarter of an hour.
+- **On a shared machine there is no safe kill pattern, only a safe identification step.** `java`,
+  `devlaunch`, `fml.startup.Client` and `gradlew` are all shared infrastructure once two projects use
+  one box: a pattern kill for your own orphans reaches the other project's live run. Both sessions
+  did this to each other within ten minutes — CityWorld pattern-killed on `fml.startup.Client`
+  (near miss, theirs survived), LegendQuest on `devlaunch` (landed on CityWorld's dev server, which
+  happened to be one this session had already stopped). Identify first, then kill PIDs you have
+  printed: read `/proc/<pid>/cmdline` and require the repo path `/home/sable/dev/CityWorld-ReForged`,
+  not a substring anyone else's process can contain. Then verify by PID afterwards, because `kill` on
+  an already-dead PID is not an error.
 - **Set `run/server.properties` yourself on arrival.** `run/` is gitignored, so a fresh clone has
   none and the first `runServer` generates a default one — which binds **25565**, the port two
   projects on the desktop already fight over, not the 25599 this project documents. CityWorld did
