@@ -1478,6 +1478,36 @@ full write-up) by pointing a StoryTeller server at a CityWorld build. **Sable's 
 putting CityWorld on a second machine, and the repos must share one parent there because every
 `build.gradle` resolves siblings by relative path. Worth doing before anyone relies on that path.
 
+## Vivo — the shared test machine, and CityWorld's spot on it
+
+`ssh -i ~/.ssh/vivo_ed25519 sable@192.168.7.102` — an Ubuntu VivoBook beside the desktop, set up by
+the LegendQuest/StoryTeller session. **Read `~/dev/README.md` there first**; it carries the traps and
+is the authority, not this section.
+
+**Why it exists, and it is a capability difference rather than spare capacity:** on Windows a
+Minecraft client cannot be driven by a background process at all (`SetForegroundWindow` is refused,
+`PostMessage` does not reach GLFW), so synthetic keys land in whatever window the owner is using. On
+Vivo a client runs on a private `Xvfb` display and `xdotool` drives it completely. WSLg here can
+*launch* a client (which is how the JourneyMap client crashes were caught) but cannot drive one, and
+its window lands on the owner's desktop.
+
+**CityWorld's claim, 2026-09-11:** display **`:2`**, game port 25599, no RCON. Displays on Vivo are
+**claimed in that README's table, never computed** — the arithmetic rule was withdrawn because ports
+drift per checkout (`run/` is gitignored). Add a row, do not derive one.
+
+- Checkout at **`~/dev/CityWorld-ReForged`**, a normal clone of `origin`. Repos must share one
+  parent there, because sibling `build.gradle` files resolve by relative path
+  (`../CityWorld-ReForged/build/libs`) — StoryTeller compiles against ours, so **that jar directory
+  must hold a current jar**. It already did when CityWorld arrived: the checkout was cloned *around*
+  the existing jar rather than over it.
+- Build with the system JDKs: `JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64` for 1.21.11,
+  `java-25-openjdk-amd64` for the 26.x branches. `tools/` is gitignored, so a fresh clone has none.
+- The NeoForm decompile cache is shared with the other projects, so a first build is minutes rather
+  than the usual quarter of an hour.
+
+**What it is for here:** the StoryTeller ↔ `SchematicLibrary` seam above — the one thing that cannot
+be tested from this repo alone.
+
 ## Build stamps — which bytes are running
 
 Every jar records the commit it was built from, and says so at startup:

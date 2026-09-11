@@ -103,10 +103,15 @@ export PATH="$JAVA_HOME/bin:$PATH"
   `MobHealth - Forge`, `Neoforge 1.21.11 - sci fi/wasteland`, `Standards`), `26.1.2`, and three on 26.2
   (`26.2`, `26.2.test`, `BoP+Cityworld`). Match the jar to the version, stamp `DEPLOYED-<sha|vX.Y.Z>`;
   a running game locks its jar ("Permission denied") — skip it and say so, don't retry blindly.
-- **Kill the previous `runServer` before starting another.** A backgrounded one keeps port 25565, and
-  the second run fails with `bind(..) failed: Address already in use` → `Failed to initialize server`
-  → a crash report and an NPE in `overworld()` on shutdown. That reads like a code fault and isn't
-  one. `pkill -f "gradlew runServer"`, then check the port is actually free before rerunning.
+- **Kill the previous `runServer` before starting another.** A backgrounded one keeps the dev port —
+  **25599**, not 25565 (`run/server.properties`; the self-test moved off 25565 because it collided
+  with another mod's dev server, override with `CITYWORLD_SELFTEST_PORT`). The second run then fails
+  with `bind(..) failed: Address already in use` → `Failed to initialize server` → a crash report and
+  an NPE in `overworld()` on shutdown. That reads like a code fault and isn't one. Kill it **by PID**
+  and confirm the process is gone — `pkill -f "gradlew runServer"` returns success without killing
+  the JVM, which then holds `run/world/session.lock` and the next run dies with
+  `DirectoryLock$LockException: already locked` instead. Never match a `pkill`/`pgrep` pattern that
+  appears in your own command line: it kills your own shell.
 - Versions/metadata live in `gradle.properties` and expand into
   `src/main/templates/META-INF/neoforge.mods.toml` at build time — **edit the template and
   gradle.properties, never a generated `mods.toml`**.
