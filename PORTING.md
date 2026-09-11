@@ -1440,43 +1440,45 @@ It is one entry in `PALETTE` and one branch in `classify` when 26.3 is ported. *
 biome source to avoid a two-line change** — that would be paying a large, world-changing cost to dodge a
 small, controlled one. The architecture question above is worth deciding on its own merits, not on this.
 
-## ▶ Untested seam: StoryTeller drives SchematicLibrary
+## ✅ StoryTeller drives SchematicLibrary — run, and it works (2026-09-11)
 
-`SchematicLibrary.names()` / `get(name)` / `family(...)` are public and another mod uses them —
-StoryTeller reads CityWorld's schematic catalog through its `CityWorldSupport` and places from it,
-with undo. **That pairing has never been run**; both sides have only been compiled against each
-other, and each assumes the other end works. It cannot be tested from this repo alone.
+`SchematicLibrary.names()` / `get(name)` / `family(...)` are public and StoryTeller reads them through
+its `CityWorldSupport`, then places with undo. That pairing had never been run — both sides had only
+ever compiled against each other. **It has now been run on Vivo against build `3c6bbde3`, driven from
+RCON, and both questions are answered:**
 
-**Two questions, not one, and they have different owners** — both sides have now read their own code
-rather than assuming:
+| | result |
+|---|---|
+| `st struct library list` | 40 schematics returned across the mod boundary |
+| `place chayats-bank` | **4/4 chests present, each holding its gold** — gold_nugget and gold_ingot as authored |
+| `st undo` | 0/4 chests, every sampled point back to air |
 
-1. **Does it place, with contents?** StoryTeller's placement calls `clip.paste(level, x, y, z,
-   random)` and nothing else: there is no placement code of theirs for a states-only filter to live
-   in. So this tests **our** paste through their call, and if it fails the fix is ours.
-2. **Does undo give back what was underneath?** Theirs. `ExternalSnap` is
-   `record(BlockPos, BlockState)` restored with `setBlock(..., 2)` — states only. Harmless in the
-   normal case (place on empty ground, undo restores air), but placing over *somebody's existing
-   stocked chest* and undoing returns an empty chest of the right kind. The contents lost are the
-   ones that were there **before**, not the ones the schematic brought.
+**Placement carries block-entity contents.** StoryTeller calls `clip.paste(...)` unmodified and there
+is no states-only filter in front of it, exactly as the code read. **Undo is states-only** and that
+stays a documented limit of theirs: what it cannot give back is whatever was *underneath* before,
+not what the schematic brought. Nothing in the seam needs fixing on either side.
 
-**Two things about our `paste` that a test will otherwise read as bugs, and both are deliberate:**
+**The test subject was the whole experiment, and this is a CityWorld fact worth knowing:** most
+bundled schematics ship *empty* chests. `winchester` has 17 chest markers and `items=0` in every one
+of them; only `chayats-bank` actually carries contents (108 items across 4 chests). CityWorld fills
+containers through its own `LootProvider` in lot code (`setChest(..., LootLocation.MINE)` and
+friends), **not** through schematics — a schematic's chests arrive exactly as its author saved them.
+So testing with `winchester` would have "passed" while proving nothing whatever, and the run was only
+meaningful because StoryTeller decoded the NBT first and picked a subject known to carry items.
 
-- **`setIgnoreEntities(true)`** — entities in a schematic (item frames, armour stands, paintings) are
-  never placed, only blocks and their block entities. A build known to contain item frames arrives
-  without them and that is not a fault.
-- **`Block.UPDATE_CLIENTS` (flag 2)** — no neighbour or physics updates. Right for worldgen (physics
-  during generation deadlocks), and it means a live paste does not make water re-flow, redstone
-  re-evaluate or sand fall. A structure dropped on a live server therefore sits exactly as authored.
+**Two probe lessons from that run, both worth stealing for this project's own harness:**
 
-So the sharp half is (1) and it is **not** a known gap: chest contents ride on
-`StructureTemplate.placeInWorld`, which loads block-entity NBT, so they should arrive — but "should"
-is the word this project keeps getting caught by.
+- **A probe can report success made entirely of your own text.** Their first undo check used
+  `execute if block ... run say CHEST-STILL-THERE` and grepped the RCON output — but `say` returns
+  nothing over RCON, so the grep matched mcrcon's *echo of the command it had just sent*. It read as
+  "undo is broken" and was one message from being reported as a bug in our seam. `execute if block X
+  Y Z chest` returns a real "Test passed"/"Test failed" instead.
+- **`/fill` over 32,768 blocks fails silently**, so a "cleared" test area was untouched jungle and
+  structure could not be told from terrain. Test in mid-air, where "before" is provably air.
 
-The LegendQuest session offered to exercise it on the shared dev machine ("Vivo", the VivoBook beside
-the desktop: Ubuntu, a driveable client on a private X display, `~/dev/README.md` there for the
-full write-up) by pointing a StoryTeller server at a CityWorld build. **Sable's call** — it means
-putting CityWorld on a second machine, and the repos must share one parent there because every
-`build.gradle` resolves siblings by relative path. Worth doing before anyone relies on that path.
+The rule underneath both: **before trusting a probe to report absence, show it a subject you know is
+present and confirm it says so.** That is the same shape as this project's own recurring failure —
+a check that cannot fail proves nothing, and looks exactly like a pass.
 
 ## Vivo — the shared test machine, and CityWorld's spot on it
 
