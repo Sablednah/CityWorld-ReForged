@@ -5,6 +5,26 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 5.7.1
+
+### Added
+
+- **Every jar says which build it is, and so does the log.** The startup line now reads
+  `CityWorld 5.7.1+mc1.21.11 (build a1b2c3d4 on master, 2026-09-11T…Z)`, and the same stamp is on the
+  jar's manifest (`unzip -p <jar> META-INF/MANIFEST.MF | grep Build-`) for checking a jar without
+  loading it. A version number answers "which release"; when a jar has been copied between instances
+  or rebuilt mid-session, "which bytes" is a different question — and the log line is the one that
+  says what actually *ran* when something is reported. A `-dirty` suffix means it was built from
+  uncommitted changes. The F3 line carries it too, replacing the jar-timestamp stamp it used to show.
+
+  Shared format with the other mods in this family, so a support question gets the same answer
+  whichever one is being asked about.
+
+### Fixed
+
+- Nothing user-facing. This release exists so the build that ships alongside StoryTeller's can be
+  identified exactly.
+
 ## 5.7.0
 
 ### Added
