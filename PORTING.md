@@ -1504,6 +1504,13 @@ drift per checkout (`run/` is gitignored). Add a row, do not derive one.
   `java-25-openjdk-amd64` for the 26.x branches. `tools/` is gitignored, so a fresh clone has none.
 - The NeoForm decompile cache is shared with the other projects, so a first build is minutes rather
   than the usual quarter of an hour.
+- **Set `run/server.properties` yourself on arrival.** `run/` is gitignored, so a fresh clone has
+  none and the first `runServer` generates a default one — which binds **25565**, the port two
+  projects on the desktop already fight over, not the 25599 this project documents. CityWorld did
+  exactly that on its first Vivo run: the claim table said 25599, the server bound 25565, and the
+  client connecting to 25599 got "Connection refused" while a perfectly healthy server sat on the
+  wrong port. This is precisely the drift the Vivo README warns about, demonstrated rather than
+  read: **a documented port is desktop-local state, and it does not travel with the repo.**
 
 **What it is for here:** the StoryTeller ↔ `SchematicLibrary` seam above — the one thing that cannot
 be tested from this repo alone.
