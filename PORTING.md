@@ -1440,6 +1440,19 @@ It is one entry in `PALETTE` and one branch in `classify` when 26.3 is ported. *
 biome source to avoid a two-line change** — that would be paying a large, world-changing cost to dodge a
 small, controlled one. The architecture question above is worth deciding on its own merits, not on this.
 
+## ▶ Untested seam: StoryTeller drives SchematicLibrary
+
+`SchematicLibrary.names()` / `get(name)` / `family(...)` are public and another mod uses them —
+StoryTeller reads CityWorld's schematic catalog through its `CityWorldSupport` and places from it,
+with undo. **That pairing has never been run**; both sides have only been compiled against each
+other, and each assumes the other end works. It cannot be tested from this repo alone.
+
+The LegendQuest session offered to exercise it on the shared dev machine ("Vivo", the VivoBook beside
+the desktop: Ubuntu, a driveable client on a private X display, `~/dev/README.md` there for the
+full write-up) by pointing a StoryTeller server at a CityWorld build. **Sable's call** — it means
+putting CityWorld on a second machine, and the repos must share one parent there because every
+`build.gradle` resolves siblings by relative path. Worth doing before anyone relies on that path.
+
 ## Build stamps — which bytes are running
 
 Every jar records the commit it was built from, and says so at startup:
