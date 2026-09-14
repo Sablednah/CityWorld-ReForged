@@ -15,6 +15,7 @@ import me.daddychurchill.CityWorld.Clipboard.Clipboard;
 import me.daddychurchill.CityWorld.Clipboard.ClipboardLot;
 import me.daddychurchill.CityWorld.Clipboard.SchematicLibrary;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
+import me.daddychurchill.CityWorld.Plats.RoadLot;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.api.CityWorldAPI;
@@ -83,6 +84,27 @@ public final class CityWorldCommands {
     private static final SuggestionProvider<CommandSourceStack> SUGGEST_LOTKINDS =
             (ctx, builder) -> SharedSuggestionProvider.suggest(LOT_KINDS, builder);
 
+    /** The streets of the platmap the player is standing in: almost always planned already, so offering
+     *  them costs next to nothing per keystroke. Streets further out are still found by typing the name. */
+    private static final SuggestionProvider<CommandSourceStack> SUGGEST_STREETS = (ctx, builder) -> {
+        ServerPlayer player = ctx.getSource().getPlayer();
+        if (player == null || !(player.level().getChunkSource().getGenerator() instanceof CityWorldChunkGenerator city))
+            return builder.buildFuture();
+        CityWorldGenerator context = city.getContext(player.level());
+        PlatMap pm = context.getPlatMap(player.blockPosition().getX() >> 4, player.blockPosition().getZ() >> 4);
+        java.util.Set<String> names = new java.util.TreeSet<>();
+        for (int x = 0; x < PlatMap.Width; x++)
+            for (int z = 0; z < PlatMap.Width; z++)
+                if (pm.getLot(x, z) instanceof RoadLot road) {
+                    boolean[] runs = road.getStreetDirections(pm, x, z);
+                    if (runs[0])
+                        names.add(road.getStreetName(context, true));
+                    if (runs[1])
+                        names.add(road.getStreetName(context, false));
+                }
+        return SharedSuggestionProvider.suggest(names, builder);
+    };
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("cityinfo")
                 .requires(CityWorldPermissions.check(CityWorldPermissions.INFO))
@@ -140,6 +162,15 @@ public final class CityWorldCommands {
                         .then(Commands.argument("kind", StringArgumentType.word())
                                 .suggests(SUGGEST_LOTKINDS)
                                 .executes(ctx -> findLot(ctx, false))))
+                // street names have spaces in, so the name takes the rest of the line
+                .then(Commands.literal("street")
+                        .then(Commands.literal("tp")
+                                .then(Commands.argument("street", StringArgumentType.greedyString())
+                                        .suggests(SUGGEST_STREETS)
+                                        .executes(ctx -> findStreet(ctx, true))))
+                        .then(Commands.argument("street", StringArgumentType.greedyString())
+                                .suggests(SUGGEST_STREETS)
+                                .executes(ctx -> findStreet(ctx, false))))
                 .then(Commands.argument("name", StringArgumentType.greedyString())
                         .suggests(SUGGEST_SCHEMATICS)
                         .executes(ctx -> findSchematic(ctx, false))));
@@ -461,6 +492,13 @@ public final class CityWorldCommands {
 
     private static Found searchLot(CityWorldGenerator context, String kind, int px, int pz,
             double playerX, double playerZ, int[] reachedRing) {
+        return searchPlatMaps(context, px, pz, reachedRing, pm -> scanPlatMapForLot(pm, kind, playerX, playerZ));
+    }
+
+    /** Ring-search platmaps out from chunk ({@code px}, {@code pz}) for the nearest hit {@code scan} reports,
+     *  one ring past the first hit and within {@link #FIND_BUDGET_MS}. Shared by the lot and street finds. */
+    private static Found searchPlatMaps(CityWorldGenerator context, int px, int pz, int[] reachedRing,
+            java.util.function.Function<PlatMap, Found> scan) {
         int pmX0 = Math.floorDiv(px, PlatMap.Width) * PlatMap.Width;
         int pmZ0 = Math.floorDiv(pz, PlatMap.Width) * PlatMap.Width;
         Found best = null;
@@ -472,7 +510,7 @@ public final class CityWorldCommands {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != r)
                         continue;
                     PlatMap pm = context.getPlatMap(pmX0 + dx * PlatMap.Width, pmZ0 + dz * PlatMap.Width);
-                    Found hit = scanPlatMapForLot(pm, kind, playerX, playerZ);
+                    Found hit = scan.apply(pm);
                     if (hit != null && (best == null || hit.dist() < best.dist()))
                         best = hit;
                 }
@@ -502,6 +540,89 @@ public final class CityWorldCommands {
                 if (best == null || dist < best.dist())
                     best = new Found(prettyLotName(lot.getClass().getSimpleName()), lot.style.name(), wx, wz,
                             dist, compass(wx - playerX, wz - playerZ));
+            }
+        return best;
+    }
+
+    // ------------------------------------------------------------------ /cityfind street <name>
+
+    /** Find the nearest road on a street whose name contains {@code street}, ignoring case: "5th",
+     *  "cara samara", "west old". The same off-thread ring search as {@link #findLot}. */
+    private static int findStreet(CommandContext<CommandSourceStack> ctx, boolean teleport)
+            throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        ServerLevel level = player.level();
+        MinecraftServer server = ctx.getSource().getServer();
+        String query = StringArgumentType.getString(ctx, "street").trim().toLowerCase(Locale.ROOT);
+
+        if (!(level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator cityGenerator)) {
+            ctx.getSource().sendFailure(Component.literal("This world is not generated by CityWorld."));
+            return 0;
+        }
+        CityWorldGenerator context = cityGenerator.getContext(level);
+        if (!context.getSettings().includeNamedRoads) {
+            ctx.getSource().sendFailure(Component.literal("This world has named roads turned off."));
+            return 0;
+        }
+        // From the block position, not ChunkPos: its fields are x/z on 1.21.11 and x()/z() from 26.1, and
+        // this way the method is the same source on every version branch.
+        int chunkX = player.blockPosition().getX() >> 4;
+        int chunkZ = player.blockPosition().getZ() >> 4;
+        double playerX = player.getX();
+        double playerZ = player.getZ();
+
+        ctx.getSource().sendSuccess(() -> Component.literal("Searching for a street matching '" + query + "'..."),
+                false);
+
+        Thread t = new Thread(() -> {
+            int[] reachedRing = { 0 };
+            Found best = searchPlatMaps(context, chunkX, chunkZ, reachedRing,
+                    pm -> scanPlatMapForStreet(context, pm, query, playerX, playerZ));
+            server.execute(() -> {
+                if (best == null) {
+                    player.sendSystemMessage(Component.literal("Found no street matching '" + query + "' within "
+                            + (reachedRing[0] * PlatMap.Width * 16) + " blocks."));
+                    return;
+                }
+                player.sendSystemMessage(Component.literal("Nearest " + best.name() + " at x=" + best.x() + " z="
+                        + best.z() + "  (" + Math.round(best.dist()) + " blocks " + best.compass() + ")"
+                        + mark(player, best.name(), best.x(), best.z())));
+                if (teleport) {
+                    level.getChunk(best.x() >> 4, best.z() >> 4);
+                    int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, best.x(), best.z());
+                    player.teleportTo(level, best.x() + 0.5, y, best.z() + 0.5, Set.<Relative>of(), player.getYRot(),
+                            player.getXRot(), false);
+                    player.sendSystemMessage(Component.literal("Teleported to " + best.name() + "."));
+                }
+            });
+        }, "cityworld-findstreet");
+        t.setDaemon(true);
+        t.start();
+        return 1;
+    }
+
+    /** The nearest road chunk in this platmap on a street matching {@code query}, counting a street only
+     *  where it actually runs — a junction answers for both of its streets, a straight road for one. */
+    private static Found scanPlatMapForStreet(CityWorldGenerator context, PlatMap pm, String query, double playerX,
+            double playerZ) {
+        Found best = null;
+        for (int x = 0; x < PlatMap.Width; x++)
+            for (int z = 0; z < PlatMap.Width; z++) {
+                if (!(pm.getLot(x, z) instanceof RoadLot road))
+                    continue;
+                boolean[] runs = road.getStreetDirections(pm, x, z);
+                for (int d = 0; d < 2; d++) {
+                    if (!runs[d])
+                        continue;
+                    String name = road.getStreetName(context, d == 0);
+                    if (!name.toLowerCase(Locale.ROOT).contains(query))
+                        continue;
+                    int wx = road.getChunkX() * 16 + 8;
+                    int wz = road.getChunkZ() * 16 + 8;
+                    double dist = Math.hypot(wx - playerX, wz - playerZ);
+                    if (best == null || dist < best.dist())
+                        best = new Found(name, "street", wx, wz, dist, compass(wx - playerX, wz - playerZ));
+                }
             }
         return best;
     }

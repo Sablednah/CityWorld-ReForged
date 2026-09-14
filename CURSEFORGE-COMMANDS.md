@@ -80,12 +80,26 @@ enclosure). Matches on the lot's type as a substring, so anything works (`office
 
 ```
 /cityfind lots
-> Findable lot kinds: zoo, biodome, saucer, balloon, blimp, fishpond, cornershop, castle,
+> Findable lot kinds: zoo, biodome, saucer, airship, balloon, blimp, fishpond, cornershop, castle,
   oilplatform, radiotower, watertower, monument, library, museum, campground, mineentrance,
   bunker, farm, park
 
 /cityfind lot tp castle
 > Teleported to the nearest Old Castle.
+```
+
+## `/cityfind street <name>` / `/cityfind street tp <name>`
+
+Every road in a CityWorld city has a name — the one on its street signs, and on `/cityinfo` when you
+stand on it. This finds the nearest road on a street whose name contains what you type (case
+insensitive, and spaces are fine without quoting). Tab completion offers the streets around you.
+
+```
+/cityfind street cara samara
+> Nearest East Lower Cara Samara Gardens at x=1224 z=88  (903 blocks E)
+
+/cityfind street tp 5th
+> Teleported to North 5th Street.
 ```
 
 ## `/cityexport [name]`
