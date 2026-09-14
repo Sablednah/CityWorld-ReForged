@@ -81,12 +81,12 @@ final class CityPlanOverlay {
     private static final int MIN_STREET_RUN = 3;
 
     /**
-     * Street names show only zoomed in past the minimap's widest zoom; further out they would be a smear
-     * of text over the grid. {@code -Dcityworld.streetlabelzoom=N} moves the threshold, so the right
-     * value can be found in a live client without a rebuild.
+     * Street names show only from JourneyMap zoom 1024 inward; further out they are a smear of text over
+     * the grid. Set from play (owner, 2026-09-14): the first cut used the minimap's widest zoom, 256, and
+     * the names came in two zoom clicks too early — each click doubles the value, and the HUD read "Map
+     * Zoom: 1024" at the right stage. {@code -Dcityworld.streetlabelzoom=N} still moves it without a rebuild.
      */
-    private static final int STREET_LABEL_MIN_ZOOM = Integer.getInteger("cityworld.streetlabelzoom",
-            UIState.MINIMAP_ZOOM_MIN);
+    private static final int STREET_LABEL_MIN_ZOOM = Integer.getInteger("cityworld.streetlabelzoom", 1024);
 
     /** Ticks between position checks. The unit of change is a 160-block platmap; 2s is plenty. */
     private static final int CHECK_INTERVAL = 40;

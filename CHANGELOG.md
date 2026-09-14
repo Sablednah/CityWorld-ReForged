@@ -27,6 +27,9 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   on the JourneyMap map names it. With JourneyMap the city plan also **labels the streets on the map**,
   once you zoom in: each street is named once per city block it crosses, including in cities you have
   not been to yet. Names match the signs exactly; they come from the same plan.
+- **`/cityfind street <name>` finds a street** by any part of its name, ignoring case
+  (`/cityfind street cara samara`, `/cityfind street 5th`), and reports the nearest road on it;
+  `/cityfind street tp <name>` takes you there. Tab completion offers the streets around you.
 
 ### Fixed
 

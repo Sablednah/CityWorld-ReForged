@@ -18,7 +18,7 @@ column is the whole answer.
 |---|---|---|
 | `cityworld.info` | `everyone` | `/cityinfo` — read the plan under your feet: world style, context, lot, nature percentage, and the name of the schematic you are standing in. Reads only. |
 | `cityworld.teleport` | `ops` | `/cityworld` and `/cityworld leave` — jump in and out of the `cityworld:city` dimension. |
-| `cityworld.find` | `ops` | `/cityfind`, `/cityfind lot`, `/cityfind lots` and `/cwlocate` — search for a landmark, a lot kind or a biome. **Includes the `tp` forms**, so this grants travelling to what was found. |
+| `cityworld.find` | `ops` | `/cityfind`, `/cityfind lot`, `/cityfind lots`, `/cityfind street` and `/cwlocate` — search for a landmark, a lot kind, a street or a biome. **Includes the `tp` forms**, so this grants travelling to what was found. |
 | `cityworld.schematic` | `ops` | `/cityschem list` and `/cityschem <name>` — list and paste schematics. **Writes blocks into the world.** |
 | `cityworld.export` | `ops` | `/cityexport [name]` — write this world's settings out as a datapack JSON. **Writes a file to the server.** |
 
