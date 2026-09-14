@@ -149,11 +149,42 @@ public final class Clipboard {
      * corner at {@code x, z}. One native placement call — handles a multi-chunk footprint itself.
      */
     public void paste(ServerLevelAccessor level, int x, int groundY, int z, RandomSource random) {
-        BlockPos origin = new BlockPos(x, groundY - groundLevelY, z);
+        paste(level, x, groundY, z, Rotation.NONE, Mirror.NONE, random);
+    }
+
+    /**
+     * Paste the whole building turned by {@code rotation} and {@code mirror}, with the <em>turned</em>
+     * footprint's NW corner at {@code (nwX, nwZ)} and its {@code groundLevelY} layer at {@code groundY}.
+     * The same origin arithmetic as {@link #pasteChunk}, without the chunk clip, so a caller outside
+     * worldgen (a command, a placement preview being committed) places the building in one call.
+     * {@link #footprintChunkX}/{@link #footprintChunkZ} give the turned footprint's size.
+     *
+     * <p>Public API for other mods (StoryTeller's structure placement). Added after 5.7.1: a caller that
+     * must also run against older CityWorld jars should look the method up and catch
+     * {@code LinkageError}.
+     */
+    public void paste(ServerLevelAccessor level, int nwX, int groundY, int nwZ, Rotation rotation, Mirror mirror,
+            RandomSource random) {
+        BlockPos origin = template.getZeroPositionWithTransform(new BlockPos(nwX, groundY - groundLevelY, nwZ),
+                mirror, rotation);
         StructurePlaceSettings settings = new StructurePlaceSettings()
-                .setRotation(Rotation.NONE)
+                .setRotation(rotation)
+                .setMirror(mirror)
                 .setIgnoreEntities(true);
         template.placeInWorld(level, origin, origin, settings, random, Block.UPDATE_CLIENTS);
+    }
+
+    /**
+     * The building's blocks as vanilla's structure NBT — {@code size}, {@code palette}, {@code blocks}
+     * (positions and block entities) — in its unturned orientation, the same form a structure file
+     * holds. A fresh copy on every call, so a caller can serialise or send it (a client-side placement
+     * preview) without being able to change the library's copy.
+     *
+     * <p>Public API for other mods; added after 5.7.1, see {@link #paste(ServerLevelAccessor, int, int, int,
+     * Rotation, Mirror, RandomSource)} for how to call it safely against older jars.
+     */
+    public CompoundTag saveTemplate() {
+        return template.save(new CompoundTag());
     }
 
     /**
