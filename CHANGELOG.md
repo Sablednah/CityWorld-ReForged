@@ -5,15 +5,9 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
-## Unreleased
+## 5.8.0
 
 ### Added
-
-- **For mod authors: schematic buildings can be pasted turned, and read.** `Clipboard` gains a whole-building
-  `paste(level, nwX, groundY, nwZ, rotation, mirror, random)` (the turned footprint's north-west corner
-  lands on `nwX, nwZ`) and `saveTemplate()`, which returns the building as vanilla structure NBT — a copy,
-  for things like a placement preview. Both are new since 5.7.1, so look them up and catch `LinkageError`
-  if you also support older jars. (StoryTeller's structure placement uses them.)
 
 - **The airship is a real airship now, two chunks long.** It used to be drawn with the hot-air balloon's
   upright envelope, so the landmark announced as "Airship" looked exactly like a balloon. It is now a
@@ -38,6 +32,11 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 - **`/cityfind street <name>` finds a street** by any part of its name, ignoring case
   (`/cityfind street cara samara`, `/cityfind street 5th`), and reports the nearest road on it;
   `/cityfind street tp <name>` takes you there. Tab completion offers the streets around you.
+- **For mod authors: schematic buildings can be pasted turned, and read.** `Clipboard` gains a whole-building
+  `paste(level, nwX, groundY, nwZ, rotation, mirror, random)` (the turned footprint's north-west corner
+  lands on `nwX, nwZ`) and `saveTemplate()`, which returns the building as vanilla structure NBT — a copy,
+  for things like a placement preview. Both are new since 5.7.1, so look them up and catch `LinkageError`
+  if you also support older jars. (StoryTeller's structure placement uses them.)
 
 ### Fixed
 

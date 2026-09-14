@@ -12,6 +12,10 @@ screen.
 Battle-tested across **135 worlds and 3.2 million generated chunks** — over **830 km²** of procedurally
 generated city, more ground than New York City covers.
 
+**New in 5.8.0: every street has a name you can use** — `/cityinfo` and the map name the road you are
+on, JourneyMap labels the streets of cities you have not reached yet, and `/cityfind street` finds one.
+Plus a proper **two-chunk airship** drifting over the wild.
+
 **New in 5.7.0: JourneyMap support**, see below — the map draws the city plan over ground nobody has
 explored, and names what is planned in any chunk you point at.
 
@@ -21,7 +25,8 @@ explored, and names what is planned in any chunk you point at.
 
 Pick **CityWorld** as your world type and you land in a living city:
 
-- **Roads and infrastructure** — named streets with real street signs, sidewalks, roundabouts (with
+- **Roads and infrastructure** — named streets with real street signs (and the name on `/cityinfo`,
+  F3 and the map), sidewalks, roundabouts (with
   statues), bridges, tunnels through mountains, and the odd hidden lift shaft in a 4-way crossing below.
 - **Buildings, furnished** — houses through highrises, all fully furnished inside: kitchens, living
   rooms, bedrooms, libraries with chiseled bookshelves, offices, shops with the right job-site block for
@@ -42,7 +47,8 @@ Pick **CityWorld** as your world type and you land in a living city:
   structures.
 - **Inhabitants** — named villagers employed at their shop's actual trade, animals in the fields, fish in
   the sea, hostiles lurking in mines, sewers and the dark.
-- **Set-pieces** — castles, radio towers, oil platforms, flying saucers, hot-air balloons, campgrounds —
+- **Set-pieces** — castles, radio towers, oil platforms, flying saucers, hot-air balloons, two-chunk
+  airships with a crewed control car, campgrounds —
   scattered rare landmarks, findable with `/cityfind`.
 - **Custom schematics** — a bundled catalog of classic buildings, plus drop your own
   (`.schematic`/`.schem`/`.litematic`/`.nbt`) into a config folder and turn them loose in the city.
@@ -59,6 +65,8 @@ arrived — so the map shows **the plan**, over ground nobody has explored:
 - **Point at any chunk and it tells you what is planned there** — the district, the kind of lot, the
   schematic's name, the shop, and what is inside the building: *"Highrise · office building · Office
   cubicles"*, *"Farm · Potato field"*. Places nobody has visited included.
+- **Streets are labelled on the map** once you zoom in (new in 5.8.0), cities you have never visited
+  included, and pointing at a road names it.
 - **Rare landmarks become waypoints as they generate**, and `/cityfind`, `/cityfind lot` and
   `/cwlocate` drop a marker on whatever they find — in two separate groups, so the world's own
   discoveries and your searches can be shown or hidden apart.
@@ -147,8 +155,8 @@ left bare.
 
 ## Commands
 
-`/cityinfo` tells you what's under your feet; `/cityfind`/`/cityfind lot`/`/cwlocate` track down a
-specific building, landmark or biome; `/cityschem` pastes catalog buildings by hand; `/cityexport`
+`/cityinfo` tells you what's under your feet, street name included; `/cityfind`/`/cityfind lot`/
+`/cityfind street`/`/cwlocate` track down a specific building, landmark, street or biome; `/cityschem` pastes catalog buildings by hand; `/cityexport`
 bottles a world's settings to hand to a server.
 
 Every command is a **permission node** (`cityworld.info`, `.teleport`, `.find`, `.schematic`,

@@ -2,8 +2,12 @@
 
 ## ▶ Resume here (re-evaluated 2026-09-14)
 
-**Nothing is in flight. `v5.7.1` is released on all three versions** (the build-stamp release that
-ships alongside StoryTeller's). CurseForge descriptions and sablecraft.co.uk are current. The
+**Nothing is in flight. `v5.8.0` is released on all three versions (2026-09-14):** the two-chunk
+airship with the owner's reworked car (`src/main/resources/cityworld/airship/car.txt`, captured from
+the save with `scripts/region_dump.py`), street names in `/cityinfo`/F3/the map plus
+`/cityfind street`, the owner's names in the default pools, the furniture-tag log fix, and the
+`Clipboard` rotated paste + `saveTemplate()` StoryTeller probes for. `CURSEFORGE.md` has the new
+lines; the owner pastes it, and sablecraft.co.uk lags. The
 queues further down this file were re-read against `CHANGELOG.md` and the code on 2026-09-14 and
 **most of what they listed as "not yet built" shipped in 5.4.0–5.6.0** — each is struck through
 where it sits, so this block is the only live to-do. Do not trust an unstruck "queued" list below
