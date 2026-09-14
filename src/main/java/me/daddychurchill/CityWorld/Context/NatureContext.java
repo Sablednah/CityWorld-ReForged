@@ -231,6 +231,11 @@ public class NatureContext extends UncivilizedContext {
 	protected void populateSpecial(CityWorldGenerator generator, PlatMap platmap, int x, int y, int z,
 			HeightState state) {
 
+		// An airship from the earlier call may have taken this lot as its second half; building over it
+		// would leave the first half with nothing to join, so it draws nothing at all.
+		if (platmap.getLot(x, z) instanceof AirshipLot)
+			return;
+
 		// what type of height are we talking about?
 		if (state != HeightState.BUILDING && generator.shapeProvider.isIsolatedConstructAt(platmap.originX + x,
 				platmap.originZ + z, oddsOfIsolatedConstructs)) {
@@ -255,12 +260,13 @@ public class NatureContext extends UncivilizedContext {
 				break;
 			case SEA:
 				if (generator.getSettings().includeAirborneStructures) {
-					// rarity gradient: saucers ultra-rare, blimps almost as rare, balloons quite rare
+					// rarity gradient: saucers ultra-rare, airships almost as rare, balloons quite rare
 					if (platmapOdds.playOdds(Odds.oddsEffinUnlikely))
 						current = new FlyingSaucerLot(platmap, platmap.originX + x, platmap.originZ + z);
-					else if (generator.isModernStyle() && platmapOdds.playOdds(Odds.oddsTremendouslyUnlikely))
-						current = new AirshipLot(platmap, platmap.originX + x, platmap.originZ + z);
-					else if (platmapOdds.playOdds(Odds.oddsPrettyUnlikely))
+					else if (generator.isModernStyle() && platmapOdds.playOdds(Odds.oddsTremendouslyUnlikely)
+							&& AirshipLot.place(platmap, x, z, platmapOdds)) {
+						// the airship spans this lot and a wild neighbour, and sets both halves itself
+					} else if (platmapOdds.playOdds(Odds.oddsPrettyUnlikely))
 						current = new HotairBalloonLot(platmap, platmap.originX + x, platmap.originZ + z);
 
 					// TODO boat!
@@ -270,12 +276,13 @@ public class NatureContext extends UncivilizedContext {
 //				break;
 			case LOWLAND:
 				if (generator.getSettings().includeAirborneStructures) {
-					// rarity gradient: saucers ultra-rare, blimps almost as rare, balloons quite rare
+					// rarity gradient: saucers ultra-rare, airships almost as rare, balloons quite rare
 					if (platmapOdds.playOdds(Odds.oddsEffinUnlikely))
 						current = new FlyingSaucerLot(platmap, platmap.originX + x, platmap.originZ + z);
-					else if (generator.isModernStyle() && platmapOdds.playOdds(Odds.oddsTremendouslyUnlikely))
-						current = new AirshipLot(platmap, platmap.originX + x, platmap.originZ + z);
-					else if (platmapOdds.playOdds(Odds.oddsPrettyUnlikely))
+					else if (generator.isModernStyle() && platmapOdds.playOdds(Odds.oddsTremendouslyUnlikely)
+							&& AirshipLot.place(platmap, x, z, platmapOdds)) {
+						// the airship spans this lot and a wild neighbour, and sets both halves itself
+					} else if (platmapOdds.playOdds(Odds.oddsPrettyUnlikely))
 						current = new HotairBalloonLot(platmap, platmap.originX + x, platmap.originZ + z);
 
 					// TODO statue overlooking the city?
