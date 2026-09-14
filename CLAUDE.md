@@ -99,10 +99,15 @@ export PATH="$JAVA_HOME/bin:$PATH"
   (2) a "wall" for art/sconces/shelves is `isWallBacking` (full cube, sturdy, not glass, not pooled),
   checked behind EVERY cell of a wide piece, and blocks go before entities (a painting is invisible to
   `isEmpty`, so a chandelier chain went through one).
-- **Fleet deploy:** nine CurseForge instances carry a CityWorld jar — five on 1.21.11 (`CityWork-ReForged`,
-  `MobHealth - Forge`, `Neoforge 1.21.11 - sci fi/wasteland`, `Standards`), `26.1.2`, and three on 26.2
-  (`26.2`, `26.2.test`, `BoP+Cityworld`). Match the jar to the version, stamp `DEPLOYED-<sha|vX.Y.Z>`;
-  a running game locks its jar ("Permission denied") — skip it and say so, don't retry blindly.
+- **Fleet deploy: `scripts/deploy-fleet.sh`** (`--dry-run` first). Nine CurseForge instances carry a
+  CityWorld jar — five on 1.21.11 (`CityWork-ReForged`, `MobHealth - Forge`, `Neoforge 1.21.11 - sci
+  fi/wasteland`, `Standards`), `26.1.2`, and three on 26.2 (`26.2`, `26.2.test`, `BoP+Cityworld`). The
+  fleet is whatever `Instances/*/mods` already holds a `cityworld-*.jar` or `DEPLOYED-*` stamp; the
+  script reads each instance's Minecraft version from `minecraftinstance.json`, picks the newest
+  built jar for it across master + the two worktrees (`--version X.Y.Z` for a release, `--build` to
+  build all three first), and stamps `DEPLOYED-<sha|vX.Y.Z>` (vX.Y.Z when the jar's Build-Commit is
+  the tag or a "Bump to X.Y.Z" commit). A running game locks its jar ("Permission denied") — the
+  script reports SKIPPED and carries on; rerun for that one after the game is closed.
 - **Kill the previous `runServer` before starting another.** A backgrounded one keeps the dev port —
   **25599**, not 25565 (`run/server.properties`; the self-test moved off 25565 because it collided
   with another mod's dev server, override with `CITYWORLD_SELFTEST_PORT`). The second run then fails

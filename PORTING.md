@@ -17,7 +17,9 @@ without checking the changelog first; they read exactly like open work.
    measured (see "Stage 3: what the two deltas say" and "26.3 reconnaissance"). 26.3 brings poplar
    and the wool/concrete slab+stair tags, both already checked: no palette hazard, and the slabs are
    a *shape* vocabulary to wire in deliberately, not a wall-palette widening.
-2. **`scripts/deploy-fleet.sh`** — nine instances are still stamped by hand each release.
+2. ~~**`scripts/deploy-fleet.sh`**~~ **DONE (2026-09-14)** — self-defining fleet, version-matched jars,
+   release-vs-sha stamps, locked-jar skip; see `CLAUDE.md`. Exercised against a fake instance tree and
+   dry-run against the real nine (all "up to date" on v5.7.1).
 3. **JourneyMap overlay budget on real hardware** — WSLg could not measure it; one run of
    `-Dcityworld.mapstress=true` at `/citymap keep 2000` vs `200` on the owner's machine settles the
    default. Not blocking anything; 2000 has playtested fine.
