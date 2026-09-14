@@ -1384,6 +1384,13 @@ public final class CityWorldSelfTest {
         int signsSeen = 0, signsWithFront = 0, signsWithBack = 0, chunks = 0;
         int shelvesSeen = 0, shelvesStocked = 0;
         List<String> signSamples = new ArrayList<>();
+        // Street names: what the signs say against what the plan says (the name /cityinfo and the map show).
+        CityWorldGenerator plan = level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator g
+                ? g.getContext(level) : null;
+        boolean compareStreets = plan != null && plan.getSettings().includeNamedRoads
+                && !plan.getSettings().includeDecayedRoads; // a decayed sign has letters knocked out
+        int streetSigns = 0, streetSignsAgree = 0, roadChunks = 0, roadChunksNamed = 0;
+        List<String> streetSignMisses = new ArrayList<>();
 
         for (int cx = -radius; cx <= radius; cx++)
             for (int cz = -radius; cz <= radius; cz++) {
@@ -1391,6 +1398,14 @@ public final class CityWorldSelfTest {
                 // Chunk loading must be driven from the server thread; generation runs to FULL.
                 LevelChunk chunk = server.submit(() -> level.getChunk(fx, fz)).join();
                 chunks++;
+                PlatLot planned = compareStreets ? lotAt(plan, cx, cz) : null;
+                if (planned instanceof me.daddychurchill.CityWorld.Plats.RoadLot) {
+                    roadChunks++;
+                    var described = me.daddychurchill.CityWorld.api.CityWorldAPI
+                            .lotAt(level, new BlockPos(cx * 16 + 8, 64, cz * 16 + 8));
+                    if (described.isPresent() && described.get().interior() != null)
+                        roadChunksNamed++;
+                }
                 for (BlockEntity entity : chunk.getBlockEntities().values()) {
                     // The registry id, not BlockEntityType's identity-based toString — the report is
                     // meant to be read by a human and diffed between versions.
@@ -1413,6 +1428,18 @@ public final class CityWorldSelfTest {
                         signsWithBack++;
                     if (signSamples.size() < 5 && front)
                         signSamples.add(readSign(sign));
+                    // A street sign faces along its street: north/south faces name the east-west street.
+                    if (front && planned instanceof me.daddychurchill.CityWorld.Plats.RoadLot road
+                            && sign.getBlockState().getBlock() instanceof net.minecraft.world.level.block.WallSignBlock) {
+                        var facing = sign.getBlockState().getValue(net.minecraft.world.level.block.WallSignBlock.FACING);
+                        String onSign = signText(sign);
+                        String named = road.getStreetName(plan, facing.getAxis() == net.minecraft.core.Direction.Axis.Z);
+                        streetSigns++;
+                        if (onSign.equals(named))
+                            streetSignsAgree++;
+                        else if (streetSignMisses.size() < 3)
+                            streetSignMisses.add("'" + onSign + "' but the plan says '" + named + "'");
+                    }
                 }
             }
 
@@ -1439,6 +1466,13 @@ public final class CityWorldSelfTest {
         report.put("readback.signsWithFrontText", Integer.toString(signsWithFront));
         report.put("readback.signsWithBackText", Integer.toString(signsWithBack));
         report.put("readback.signSamples", signSamples.toString());
+        report.put("readback.streetSigns", streetSignsAgree + " of " + streetSigns + " agree with the plan");
+        report.put("readback.roadChunksNamed", roadChunksNamed + " of " + roadChunks);
+        if (!streetSignMisses.isEmpty())
+            fail((streetSigns - streetSignsAgree) + " street signs disagree with the street name /cityinfo and the "
+                    + "map report: " + streetSignMisses);
+        if (roadChunks > 0 && roadChunksNamed < roadChunks)
+            fail((roadChunks - roadChunksNamed) + " of " + roadChunks + " road chunks have no street name in the API");
         // Vanilla shelves are containers that display their items; CityWorld stocks them (a block
         // stood on top of one reads wrong — they are shallow). Seen but never stocked means the
         // block-entity write is not landing.
@@ -1651,6 +1685,17 @@ public final class CityWorldSelfTest {
 
     private static boolean isConcrete(BlockState state) {
         return BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath().endsWith("_concrete");
+    }
+
+    /** Every non-blank line of a sign's front, joined with spaces — how a street name reads. */
+    private static String signText(SignBlockEntity sign) {
+        StringBuilder text = new StringBuilder();
+        for (int i = 0; i < 4; i++) {
+            var message = sign.getFrontText().getMessage(i, false);
+            if (message != null && !message.getString().isBlank())
+                text.append(text.length() == 0 ? "" : " ").append(message.getString().trim());
+        }
+        return text.toString();
     }
 
     /** The first non-blank line of a sign's front, for the report. */

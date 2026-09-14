@@ -179,7 +179,7 @@ public final class CityWorldCommands {
         line(ctx, "context", info.contextClass() + " (" + info.contextFamily() + ")");
         line(ctx, "lot", info.lotClass() + " (" + info.lotStyle() + ")");
         if (info.interior() != null)
-            line(ctx, "interior", info.interior());
+            line(ctx, info.isRoad() ? "street" : "interior", info.interior());
         if (info.shop() != null)
             line(ctx, "shop", info.shop().describe());
         if (info.schematicName() != null)

@@ -22,6 +22,7 @@ import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.CityWorldMod;
 import me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
+import me.daddychurchill.CityWorld.Plats.RoadLot;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.api.MapMarkers;
 import me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator;
@@ -45,11 +46,12 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
  * without generating it ({@code PlatMap} planning is deterministic, thread-safe and cached). So the
  * map can show the shape of a city from the edge of it.
  *
- * <p>Two overlays per platmap, pushed with {@code IServerOverlayAPI}:
+ * <p>Overlays per platmap, pushed with {@code IServerOverlayAPI}:
  * <ul>
  *   <li>a district square (the whole 160×160 platmap) tinted by its {@link SchematicFamily}, over a
  *       wide radius — this is the zoomed-out "where is the city" picture;
- *   <li>the streets of the nearer platmaps, as merged rectangles in road grey.
+ *   <li>the streets of the nearer platmaps, as merged rectangles in road grey;
+ *   <li>and on those, each street's name, shown once zoomed in.
  * </ul>
  *
  * <p>Planning is off the server thread (measured: a cold 7×7 sweep is ~9 seconds, ~180 ms per
@@ -74,6 +76,17 @@ final class CityPlanOverlay {
     /** Platmaps each way for the street grid: 5×5, about 800 blocks. Streets are the part of this
      *  that reads best in play, so they reach further than the first cut allowed. */
     private static final int ROAD_RADIUS = 2;
+
+    /** A street needs at least this many road chunks in a row through a platmap to earn a label. */
+    private static final int MIN_STREET_RUN = 3;
+
+    /**
+     * Street names show only zoomed in past the minimap's widest zoom; further out they would be a smear
+     * of text over the grid. {@code -Dcityworld.streetlabelzoom=N} moves the threshold, so the right
+     * value can be found in a live client without a rebuild.
+     */
+    private static final int STREET_LABEL_MIN_ZOOM = Integer.getInteger("cityworld.streetlabelzoom",
+            UIState.MINIMAP_ZOOM_MIN);
 
     /** Ticks between position checks. The unit of change is a 160-block platmap; 2s is plenty. */
     private static final int CHECK_INTERVAL = 40;
@@ -367,6 +380,10 @@ final class CityPlanOverlay {
                         out.add(roads);
                         covered.put(roads.overlayId(), at);
                     }
+                    for (ServerPolygon label : streetLabels(context, dimension, platmap, platX, platZ, y)) {
+                        out.add(label);
+                        covered.put(label.overlayId(), at);
+                    }
                 }
             }
         }
@@ -438,6 +455,64 @@ final class CityPlanOverlay {
         OverlayShapeProps props = OverlayProps.everywhere(0x3A3A3A, 0.45f, 0x202020, 0.5f, 0.5f, 1000,
                 UIState.FULLSCREEN_ZOOM_MIN, UIState.ZOOM_IN_MAX, null, "Streets · " + districtTooltip);
         return new ServerPolygon("plan_roads_" + platX + "_" + platZ, dimension, shapes, props);
+    }
+
+    /**
+     * The platmap's street names, one label per street at the middle of its longest run through here.
+     *
+     * <p><b>Each label rides on its own one-chunk square, invisible, never on the road strips.</b>
+     * JourneyMap pulls a partly-off-screen polygon's label into view, which is what piled the old district
+     * names on top of each other; a long street strip is nearly always partly off-screen, and a
+     * one-chunk square almost never is. The square is transparent, so all it adds is the name.
+     */
+    private List<ServerPolygon> streetLabels(CityWorldGenerator context, ResourceKey<Level> dimension,
+            PlatMap platmap, int platX, int platZ, int y) {
+        if (!context.getSettings().includeNamedRoads)
+            return List.of();
+        int w = PlatMap.Width;
+        boolean[][] eastWest = new boolean[w][w];
+        boolean[][] northSouth = new boolean[w][w];
+        for (int x = 0; x < w; x++)
+            for (int z = 0; z < w; z++)
+                if (platmap.getLot(x, z) instanceof RoadLot road) {
+                    boolean[] runs = road.getStreetDirections(platmap, x, z);
+                    eastWest[x][z] = runs[0];
+                    northSouth[x][z] = runs[1];
+                }
+
+        // street name -> {x, z, run length} of its longest run, so a street split by a gap is named once
+        Map<String, int[]> longest = new java.util.LinkedHashMap<>();
+        for (boolean alongX : new boolean[] { true, false })
+            for (int line = 0; line < w; line++) {
+                int start = -1;
+                for (int i = 0; i <= w; i++) {
+                    boolean on = i < w && (alongX ? eastWest[i][line] : northSouth[line][i]);
+                    if (on && start < 0)
+                        start = i;
+                    if (on || start < 0)
+                        continue;
+                    int length = i - start;
+                    if (length >= MIN_STREET_RUN) {
+                        int mid = start + length / 2;
+                        int x = alongX ? mid : line, z = alongX ? line : mid;
+                        String name = ((RoadLot) platmap.getLot(x, z)).getStreetName(context, alongX);
+                        int[] was = longest.get(name);
+                        if (!name.isEmpty() && (was == null || was[2] < length))
+                            longest.put(name, new int[] { x, z, length });
+                    }
+                    start = -1;
+                }
+            }
+
+        List<ServerPolygon> labels = new ArrayList<>(longest.size());
+        for (Map.Entry<String, int[]> street : longest.entrySet()) {
+            int cx = platX + street.getValue()[0], cz = platZ + street.getValue()[1];
+            OverlayShapeProps props = OverlayProps.everywhere(0x000000, 0.0f, 0x000000, 0.0f, 0.0f, 1100,
+                    STREET_LABEL_MIN_ZOOM, UIState.ZOOM_IN_MAX, street.getKey(), street.getKey());
+            labels.add(new ServerPolygon("plan_street_" + cx + "_" + cz, dimension,
+                    List.of(new OverlayPolygon(rect(cx * 16, cz * 16, cx * 16 + 16, cz * 16 + 16, y), null)), props));
+        }
+        return labels;
     }
 
     private static boolean rowFree(boolean[][] road, boolean[][] used, int x, int z, int width) {
