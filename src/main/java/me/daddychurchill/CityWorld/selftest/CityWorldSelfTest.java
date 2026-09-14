@@ -92,6 +92,8 @@ public final class CityWorldSelfTest {
     private static final int AIRSHIP_SEARCH_PLATMAPS = 20;
     /** A half holding fewer concrete blocks than this did not draw its part of the envelope. */
     private static final int AIRSHIP_MIN_CONCRETE = 200;
+    /** The control car stencil is ~450 cells; fewer than this and it did not place. */
+    private static final int AIRSHIP_MIN_CAR = 300;
     private static final int FARM_CHUNKS = 24;
 
     /** A built chunk should contain at least this many non-air blocks, else decoration did nothing. */
@@ -198,6 +200,7 @@ public final class CityWorldSelfTest {
             checkDecorationAndSigns(server);
             checkFarmPlanting(server);
             checkAirships(server);
+            checkAirshipHeadings();
         } catch (Throwable t) {
             fail("harness threw: " + t);
             CityWorldMod.LOGGER.error("SELFTEST: harness threw", t);
@@ -1649,14 +1652,20 @@ public final class CityWorldSelfTest {
         LevelChunk first = server.submit(() -> level.getChunk(ax, az)).join();
         LevelChunk second = server.submit(() -> level.getChunk(bx, bz)).join();
 
-        int concreteFirst = 0, concreteSecond = 0, seam = 0;
+        int concreteFirst = 0, concreteSecond = 0, seam = 0, car = 0;
         for (int y = lowY; y <= highY; y++)
             for (int i = 0; i < 16; i++) {
                 for (int j = 0; j < 16; j++) {
-                    if (isConcrete(first.getBlockState(new BlockPos(ax * 16 + i, y, az * 16 + j))))
+                    BlockState a = first.getBlockState(new BlockPos(ax * 16 + i, y, az * 16 + j));
+                    BlockState b = second.getBlockState(new BlockPos(bx * 16 + i, y, bz * 16 + j));
+                    if (isConcrete(a))
                         concreteFirst++;
-                    if (isConcrete(second.getBlockState(new BlockPos(bx * 16 + i, y, bz * 16 + j))))
+                    else if (!a.isAir())
+                        car++;
+                    if (isConcrete(b))
                         concreteSecond++;
+                    else if (!b.isAir())
+                        car++;
                 }
                 BlockPos lastOfFirst = alongX ? new BlockPos(ax * 16 + 15, y, az * 16 + i)
                         : new BlockPos(ax * 16 + i, y, az * 16 + 15);
@@ -1669,12 +1678,72 @@ public final class CityWorldSelfTest {
                 + (alongX ? " (west-east)" : " (north-south)"));
         report.put("airship.readback.concrete", concreteFirst + " + " + concreteSecond);
         report.put("airship.readback.seamCells", Integer.toString(seam));
+        // The control car is a stencil resource; if it failed to load, the envelope still draws and every
+        // other number here looks fine. ~450 cells of cabin, deck and engines, so a few hundred at least.
+        report.put("airship.readback.carBlocks", Integer.toString(car));
+        if (car < AIRSHIP_MIN_CAR)
+            fail("airship at chunks " + ax + "," + az + " has only " + car
+                    + " non-envelope blocks: the control car stencil did not place");
         if (concreteFirst < AIRSHIP_MIN_CONCRETE || concreteSecond < AIRSHIP_MIN_CONCRETE)
             fail("airship at chunks " + ax + "," + az + " drew " + concreteFirst + " + " + concreteSecond
                     + " concrete blocks: a half is missing");
         else if (seam < 20)
             fail("airship at chunks " + ax + "," + az + ": the halves meet in only " + seam
                     + " cells, so they drew different ships");
+    }
+
+    /**
+     * The airship's control car in all four headings, laid out in memory by the placement code's own mapping.
+     *
+     * <p>The car is a stencil captured from one ship lying west-east with its bow to the west, turned to the
+     * other headings with vanilla rotate/mirror. {@link #checkAirships} reads back a single generated ship,
+     * so three of those four transforms would go unchecked. A wrong turn shows up as a connection pointing
+     * at nothing — a rail, pane or propeller bar joined to empty air — so that is what this counts.
+     *
+     * <p>In memory rather than drawn into the world on purpose: a block written into a live level makes its
+     * neighbours recompute their connections, which would quietly repair the very mistake being looked for.
+     * Worldgen does no such recomputing, so a mistake there would stay.
+     */
+    private void checkAirshipHeadings() {
+        net.minecraft.core.Direction[] sides = { net.minecraft.core.Direction.NORTH, net.minecraft.core.Direction.SOUTH,
+                net.minecraft.core.Direction.EAST, net.minecraft.core.Direction.WEST };
+        List<String> summary = new ArrayList<>();
+        for (boolean alongX : new boolean[] { true, false })
+            for (boolean bowPositive : new boolean[] { true, false }) {
+                String heading = (alongX ? (bowPositive ? "bow east" : "bow west")
+                        : (bowPositive ? "bow south" : "bow north"));
+                Map<BlockPos, BlockState> car = me.daddychurchill.CityWorld.Plugins.StructureInAirProvider
+                        .airshipCarLayout(alongX, bowPositive);
+                int connections = 0, dangling = 0;
+                List<String> samples = new ArrayList<>();
+                for (Map.Entry<BlockPos, BlockState> cell : car.entrySet())
+                    for (net.minecraft.core.Direction side : sides) {
+                        var joined = switch (side) {
+                            case NORTH -> net.minecraft.world.level.block.state.properties.BlockStateProperties.NORTH;
+                            case SOUTH -> net.minecraft.world.level.block.state.properties.BlockStateProperties.SOUTH;
+                            case EAST -> net.minecraft.world.level.block.state.properties.BlockStateProperties.EAST;
+                            default -> net.minecraft.world.level.block.state.properties.BlockStateProperties.WEST;
+                        };
+                        BlockState state = cell.getValue();
+                        if (!state.hasProperty(joined) || !state.getValue(joined))
+                            continue;
+                        connections++;
+                        if (!car.containsKey(cell.getKey().relative(side))) {
+                            dangling++;
+                            if (samples.size() < 3)
+                                samples.add(BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath() + " at "
+                                        + cell.getKey().toShortString() + " joins " + side + " to nothing");
+                        }
+                    }
+                summary.add(heading + ": " + car.size() + " cells, " + connections + " connections, " + dangling
+                        + " into air");
+                if (car.size() < AIRSHIP_MIN_CAR)
+                    fail("airship car, " + heading + ": only " + car.size() + " cells — the stencil did not load");
+                if (dangling > 0)
+                    fail("airship car, " + heading + ": " + dangling + " connections point into air, so the stencil "
+                            + "is turned wrong for this heading: " + samples);
+            }
+        report.put("airship.headings", summary.toString());
     }
 
     private static boolean isConcrete(BlockState state) {

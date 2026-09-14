@@ -130,6 +130,15 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		getActualBlock(x, y, z).setBlockData(state, getDoPhysics(x, z));
 	}
 
+	/**
+	 * Write an exact block state — every property already set, as a stencil captured from a real build
+	 * holds them. Not for pool furniture: that goes through {@link #setFurniture}, which places the
+	 * whole of a multi-block piece.
+	 */
+	public final void setBlockState(int x, int y, int z, BlockState state) {
+		setActualBlock(x, y, z, state);
+	}
+
 	@Override
 	public final void setBlock(int x, int y, int z, Material material) {
 		// declared furniture takes the furniture path here too (the hospital's desk toppers came
