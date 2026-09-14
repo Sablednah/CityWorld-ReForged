@@ -15,6 +15,13 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   glazed control car slung underneath with seats, a helm and a railed observation deck, and an engine with
   a propeller either side. Each one has a name, which the announcement carries ("Airship Endeavour"). Still
   MODERN and APOCALYPSE only, and just as rare. `/cityfind lot airship` finds one.
+- **A few new names in the default pools.** Villagers can be called Sable, SableDnah, Cara, Cara Samara
+  or Bil, and carry the surnames Douglas or Houiellebecq. Streets can be named Sable, SableDnah, Cara,
+  Cara Samara, Ruth or Bil ("East Lower Cara Samara Gardens"). **Existing worlds keep their street
+  names:** a street's name is worked out again in every chunk it crosses, so simply growing the list would
+  have renamed nearly every street at the edge of explored ground. The new names are drawn from a
+  separate roll instead, so only about one street in forty changes. A datapack that replaces the street
+  names replaces these too.
 
 ### Fixed
 
