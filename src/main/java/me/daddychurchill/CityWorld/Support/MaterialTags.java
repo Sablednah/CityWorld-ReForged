@@ -87,6 +87,26 @@ public final class MaterialTags {
      * block that does not exist yet simply isn't in the tag.
      */
     public static List<Material> resolve(TagKey<Block> tag) {
+        return CACHE.computeIfAbsent(tag, MaterialTags::load);
+    }
+
+    /**
+     * Resolved pools, one per tag. Tags bind once per datapack load and the block registry is fixed,
+     * so a pool cannot change between {@link #invalidate()} calls — and it is asked for constantly:
+     * every furniture {@code pick} on every chunk used to re-walk the registry, re-merge the runtime
+     * sets and re-sort, then (on a world with no furniture mod, which is most of them) log a WARN
+     * for the empty result. One client session produced 94,000 of those lines. Now each pool is
+     * built once and an empty one is mentioned once.
+     */
+    private static final java.util.concurrent.ConcurrentHashMap<TagKey<Block>, List<Material>> CACHE =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Forget every resolved pool — called when tags are (re)bound, so a datapack change is honoured. */
+    public static void invalidate() {
+        CACHE.clear();
+    }
+
+    private static List<Material> load(TagKey<Block> tag) {
         List<Block> blocks = new ArrayList<>();
         for (Holder<Block> holder : BuiltInRegistries.BLOCK.getTagOrEmpty(tag))
             blocks.add(holder.value());
@@ -96,8 +116,18 @@ public final class MaterialTags {
                 blocks.add(block);
 
         if (blocks.isEmpty()) {
-            CityWorldMod.LOGGER.warn("CityWorld: block tag #{} is empty or unbound; "
-                    + "palettes using it will fall back to their defaults", tag.location());
+            String path = tag.location().getPath();
+            if (path.startsWith("furniture/")) {
+                // Expected on any world without a furniture mod: every furniture role is optional and
+                // every caller falls back to the vanilla-block furniture it always built. Not a warning.
+                CityWorldMod.LOGGER.info("CityWorld: no mod supplies #{} — vanilla furniture will be used for it",
+                        tag.location());
+            } else {
+                // A build or farm palette with nothing in it IS a fault worth a WARN: the tag file is
+                // missing, or a required reference emptied the whole tag (see PORTING.md).
+                CityWorldMod.LOGGER.warn("CityWorld: block tag #{} is empty or unbound; "
+                        + "palettes using it will fall back to their defaults", tag.location());
+            }
             return List.of();
         }
 
