@@ -9,6 +9,12 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Added
 
+- **For mod authors: schematic buildings can be pasted turned, and read.** `Clipboard` gains a whole-building
+  `paste(level, nwX, groundY, nwZ, rotation, mirror, random)` (the turned footprint's north-west corner
+  lands on `nwX, nwZ`) and `saveTemplate()`, which returns the building as vanilla structure NBT — a copy,
+  for things like a placement preview. Both are new since 5.7.1, so look them up and catch `LinkageError`
+  if you also support older jars. (StoryTeller's structure placement uses them.)
+
 - **The airship is a real airship now, two chunks long.** It used to be drawn with the hot-air balloon's
   upright envelope, so the landmark announced as "Airship" looked exactly like a balloon. It is now a
   32-block rigid airship: a cigar-shaped envelope in one of eight two-colour liveries, four tail fins, a
