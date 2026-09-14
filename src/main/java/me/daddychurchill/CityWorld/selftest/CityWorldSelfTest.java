@@ -88,6 +88,10 @@ public final class CityWorldSelfTest {
     private static final int CHUNK_SURVEY_RADIUS = 6;
     /** How far to hunt for farm chunks, and how many to read back; spawn is city, so farms are not near. */
     private static final int FARM_SEARCH_RADIUS = 80;
+    /** How many platmaps out from spawn to look for an airship to generate and read back. */
+    private static final int AIRSHIP_SEARCH_PLATMAPS = 20;
+    /** A half holding fewer concrete blocks than this did not draw its part of the envelope. */
+    private static final int AIRSHIP_MIN_CONCRETE = 200;
     private static final int FARM_CHUNKS = 24;
 
     /** A built chunk should contain at least this many non-air blocks, else decoration did nothing. */
@@ -193,6 +197,7 @@ public final class CityWorldSelfTest {
             checkStructures(server);
             checkDecorationAndSigns(server);
             checkFarmPlanting(server);
+            checkAirships(server);
         } catch (Throwable t) {
             fail("harness threw: " + t);
             CityWorldMod.LOGGER.error("SELFTEST: harness threw", t);
@@ -1552,6 +1557,100 @@ public final class CityWorldSelfTest {
                 fail(signsSeen + " signs found but none had back text — check the backText"
                         + " access transformer");
         }
+    }
+
+    /**
+     * The airship is drawn in two halves, one per chunk, and they only join if both agree.
+     *
+     * <p>That makes it the one landmark that can be half-built with nothing in the log to say so: a half whose
+     * partner was built over draws nothing, and a half that disagreed on its dice would draw its sixteen
+     * columns of a <em>different</em> ship. So this finds the nearest airship to spawn in the real plan,
+     * generates both chunks, and checks each holds an envelope's worth of concrete and that the envelope
+     * actually crosses the seam between them.
+     */
+    private void checkAirships(MinecraftServer server) {
+        ServerLevel level = server.overworld();
+        if (!(level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator generator))
+            return;
+        CityWorldGenerator context = generator.getContext(level);
+        if (!context.isModernStyle() || !context.getSettings().includeAirborneStructures) {
+            report.put("airship.readback", "skipped: airships are off in this world");
+            return;
+        }
+
+        int halves = 0, orphans = 0;
+        me.daddychurchill.CityWorld.Plats.Nature.AirshipLot anchor = null;
+        PlatMap anchorMap = null;
+        int anchorX = 0, anchorZ = 0;
+        search: for (int ring = 0; ring <= AIRSHIP_SEARCH_PLATMAPS; ring++)
+            for (int px = -ring; px <= ring; px++)
+                for (int pz = -ring; pz <= ring; pz++) {
+                    if (Math.max(Math.abs(px), Math.abs(pz)) != ring)
+                        continue;
+                    PlatMap platmap = context.getPlatMap(px * PlatMap.Width, pz * PlatMap.Width);
+                    for (int x = 0; x < PlatMap.Width; x++)
+                        for (int z = 0; z < PlatMap.Width; z++) {
+                            if (!(platmap.getLot(x, z) instanceof me.daddychurchill.CityWorld.Plats.Nature.AirshipLot ship))
+                                continue;
+                            halves++;
+                            if (ship.partner(platmap, x, z) == null)
+                                orphans++;
+                            else if (anchor == null && ship.isAnchor()) {
+                                anchor = ship;
+                                anchorMap = platmap;
+                                anchorX = x;
+                                anchorZ = z;
+                            }
+                        }
+                    if (anchor != null)
+                        break search;
+                }
+        report.put("airship.halvesSeen", Integer.toString(halves));
+        report.put("airship.orphanHalves", Integer.toString(orphans));
+        if (anchor == null) {
+            report.put("airship.readback", "none within " + AIRSHIP_SEARCH_PLATMAPS + " platmaps of spawn");
+            return;
+        }
+
+        final int ax = anchorMap.originX + anchorX, az = anchorMap.originZ + anchorZ;
+        final boolean alongX = anchor.isAlongX();
+        final int bx = alongX ? ax + 1 : ax, bz = alongX ? az : az + 1;
+        var other = anchor.partner(anchorMap, anchorX, anchorZ);
+        int lowY = Math.max(anchor.getBottomY(context), other.getBottomY(context));
+        int highY = Math.min(level.getMaxY(), Math.max(lowY, context.height) + 30);
+        LevelChunk first = server.submit(() -> level.getChunk(ax, az)).join();
+        LevelChunk second = server.submit(() -> level.getChunk(bx, bz)).join();
+
+        int concreteFirst = 0, concreteSecond = 0, seam = 0;
+        for (int y = lowY; y <= highY; y++)
+            for (int i = 0; i < 16; i++) {
+                for (int j = 0; j < 16; j++) {
+                    if (isConcrete(first.getBlockState(new BlockPos(ax * 16 + i, y, az * 16 + j))))
+                        concreteFirst++;
+                    if (isConcrete(second.getBlockState(new BlockPos(bx * 16 + i, y, bz * 16 + j))))
+                        concreteSecond++;
+                }
+                BlockPos lastOfFirst = alongX ? new BlockPos(ax * 16 + 15, y, az * 16 + i)
+                        : new BlockPos(ax * 16 + i, y, az * 16 + 15);
+                BlockPos firstOfSecond = alongX ? new BlockPos(bx * 16, y, bz * 16 + i)
+                        : new BlockPos(bx * 16 + i, y, bz * 16);
+                if (isConcrete(first.getBlockState(lastOfFirst)) && isConcrete(second.getBlockState(firstOfSecond)))
+                    seam++;
+            }
+        report.put("airship.readback.at", (ax * 16 + (alongX ? 16 : 8)) + ", " + (az * 16 + (alongX ? 8 : 16))
+                + (alongX ? " (west-east)" : " (north-south)"));
+        report.put("airship.readback.concrete", concreteFirst + " + " + concreteSecond);
+        report.put("airship.readback.seamCells", Integer.toString(seam));
+        if (concreteFirst < AIRSHIP_MIN_CONCRETE || concreteSecond < AIRSHIP_MIN_CONCRETE)
+            fail("airship at chunks " + ax + "," + az + " drew " + concreteFirst + " + " + concreteSecond
+                    + " concrete blocks: a half is missing");
+        else if (seam < 20)
+            fail("airship at chunks " + ax + "," + az + ": the halves meet in only " + seam
+                    + " cells, so they drew different ships");
+    }
+
+    private static boolean isConcrete(BlockState state) {
+        return BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath().endsWith("_concrete");
     }
 
     /** The first non-blank line of a sign's front, for the report. */

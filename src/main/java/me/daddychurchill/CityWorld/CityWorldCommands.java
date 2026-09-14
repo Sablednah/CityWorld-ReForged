@@ -76,7 +76,7 @@ public final class CityWorldCommands {
      *  itself is a free substring against every lot's class name (so any lot type is findable — e.g.
      *  "office", "warehouse"), but these are the fun, rare ones worth pointing people at. */
     private static final java.util.List<String> LOT_KINDS = java.util.List.of(
-            "zoo", "biodome", "saucer", "balloon", "blimp", "fishpond", "cornershop", "castle",
+            "zoo", "biodome", "saucer", "airship", "balloon", "blimp", "fishpond", "cornershop", "castle",
             "oilplatform", "radiotower", "watertower", "monument", "library", "museum", "campground",
             "mineentrance", "bunker", "farm", "park");
 

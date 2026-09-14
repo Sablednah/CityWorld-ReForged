@@ -7,6 +7,15 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ## Unreleased
 
+### Added
+
+- **The airship is a real airship now, two chunks long.** It used to be drawn with the hot-air balloon's
+  upright envelope, so the landmark announced as "Airship" looked exactly like a balloon. It is now a
+  32-block rigid airship: a cigar-shaped envelope in one of eight two-colour liveries, four tail fins, a
+  glazed control car slung underneath with seats, a helm and a railed observation deck, and an engine with
+  a propeller either side. Each one has a name, which the announcement carries ("Airship Endeavour"). Still
+  MODERN and APOCALYPSE only, and just as rare. `/cityfind lot airship` finds one.
+
 ### Fixed
 
 - **The log no longer fills with "block tag #cityworld:furniture/… is empty or unbound".** On a world
