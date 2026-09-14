@@ -1,34 +1,52 @@
 # CityWorld — Bukkit → NeoForge port plan
 
-## ▶ Resume here (next task)
+## ▶ Resume here (re-evaluated 2026-09-14)
 
-**Publishing is DONE — `v5.0.2` shipped everywhere** (GitHub release with jar, the owner's CurseForge
-upload, and `sablecraft.co.uk/cityworld-reforged/` live). The port branch is merged: **work happens on
-`master`**. All content arcs are done, verified and deployed.
+**Nothing is in flight. `v5.7.1` is released on all three versions** (the build-stamp release that
+ships alongside StoryTeller's). CurseForge descriptions and sablecraft.co.uk are current. The
+queues further down this file were re-read against `CHANGELOG.md` and the code on 2026-09-14 and
+**most of what they listed as "not yet built" shipped in 5.4.0–5.6.0** — each is struck through
+where it sits, so this block is the only live to-do. Do not trust an unstruck "queued" list below
+without checking the changelog first; they read exactly like open work.
 
-**The cross-version arc: 1.21.11, 26.1 and 26.2 all build, run and generate cities.** Minecraft moved
-to calendar versioning with quarterly drops, so this is a treadmill, not a one-off port. Stages 1 and
-2 are done; **stage 3 — choosing the steady state — is what remains.**
+**Genuinely open — small, all optional, in rough priority:**
 
-1. **Harden on 1.21.11 first — data-driven palettes.** ✅ **DONE (2026-08, `5.0.3`)** — see the dated
-   block below. This turned out to matter more than expected: because palettes resolve from block
-   tags, 26.2 deleting 144 dyed block fields did not touch them at all.
-2. **Port to 26.1 and 26.2 on branches, and measure.** ✅ **DONE (2026-08-16/17)** — branches
-   **`mc26.1`** and **`mc26.2`**. See "The measured 26.1 delta" and "The measured 26.2 delta" below.
-3. **▶▶ NEXT: pick the steady state.** Two deltas are now in hand and they point in opposite
-   directions — 26.1 cost 12 lines, 26.2 cost a block-model rewrite. The recommendation and the
-   evidence for it are in "Stage 3: what the two deltas say" below. **Nothing is committed to yet.**
+1. **Stage 3 of the cross-version arc: pick the steady state.** Branch-per-version (`master` =
+   1.21.11, `mc26.1`, `mc26.2`, cherry-pick shipping) has now carried five releases without trouble.
+   The recorded recommendation stands: hold the decision until **26.3** lands and its delta is
+   measured (see "Stage 3: what the two deltas say" and "26.3 reconnaissance"). 26.3 brings poplar
+   and the wool/concrete slab+stair tags, both already checked: no palette hazard, and the slabs are
+   a *shape* vocabulary to wire in deliberately, not a wall-palette widening.
+2. **`scripts/deploy-fleet.sh`** — nine instances are still stamped by hand each release.
+3. **JourneyMap overlay budget on real hardware** — WSLg could not measure it; one run of
+   `-Dcityworld.mapstress=true` at `/citymap keep 2000` vs `200` on the owner's machine settles the
+   default. Not blocking anything; 2000 has playtested fine.
+4. **Parked decoration ideas, none started, none asked for:** block-entity-backed decorations
+   (plushie, skull blossoms, widow bloom), hanging herbs on ceilings, richer shop-furniture
+   vocabulary (themed counters). The lectern-stood-on-a-chest oddity in Newsagent corner shops was
+   never investigated (shop fitter, predates the furniture pass — probably).
+5. **Per-mod compat, the remaining unpromised half:** Twilight Forest / Apotheosis palettes are
+   "trivial datapack" items nobody has asked for. **BoP is DONE** (biome source folds registered
+   biomes in, cave pool, flowers, ground data map — 5.4.0). **Farmer's Delight crops are DONE**
+   (farm mix pools, 5.4.0). Alex's Caves does not exist for any version we ship, so it is not a
+   compatibility question yet.
 
-**Where the versions live.** One branch per version for now: `master` = 1.21.11, `mc26.1` = 26.1.2,
-`mc26.2` = 26.2. Jars carry their target (`cityworld-5.0.3+mc26.2.jar`); the version inside
-`neoforge.mods.toml` stays a plain `5.0.3`. Documentation (this file) is maintained on `master` and
-the version branches carry code only, so the write-up does not have to be merged three ways.
+**Struck as stale on 2026-09-14 (all shipped; see `CHANGELOG.md`):** cinnabar/sulfur palettes
+(5.4.0, both stone families in MODERN/APOCALYPSE on 26.2 — the owner dislikes the sulfur colour and
+said taste should not dictate it; a datapack `remove` drops one block); industrial fluids incl. 18
+Mekanism ids pre-wired, water towers full (5.5.0); basements of occupied buildings hold storage
+(5.5.0); FOR SALE / TO LET signs on vacant buildings (5.5.0); factory control rooms with console
+banks (5.5.0); paintings + item frames + sconces wall pass (5.5.0/5.6.0); hallways and upstairs
+landings furnished (5.6.0); wardrobes, bedside lamps, 2×2 beds (5.5.0/5.6.0); grim seeds (5.6.0).
 
-**`compat/Material.java` was the predicted fragility, and the prediction was right — but the defence
-held.** 691 constants bound at compile time to vanilla `Blocks`/`Items` fields, feeding 3,096 call
-sites. 26.1 touched none of them. 26.2 broke **145**. Because the file is *generated*, the entire
-repair was teaching `scripts/gen_material.py` new resolution rules; not one of the 3,096 call sites
-changed. That is the strongest argument in the whole arc for keeping generated code generated.
+**Where the versions live.** One branch per version: `master` = 1.21.11, `mc26.1` = 26.1.2,
+`mc26.2` = 26.2, checked out permanently as worktrees (see `CLAUDE.md`). Jars carry their target
+(`cityworld-5.7.1+mc26.2.jar`); the version inside `neoforge.mods.toml` stays plain. Documentation
+lives on `master` only.
+
+**`compat/Material.java` was the predicted fragility, and the defence held.** 691 constants feeding
+3,096 call sites; 26.1 touched none, 26.2 broke 145, and because the file is *generated* the entire
+repair was teaching `scripts/gen_material.py` new rules. Keep generated code generated.
 
 ## ▶ Resume here after v5.7.0 (2026-09-09)
 
@@ -238,7 +256,9 @@ LoungeTVRoom honours upstream's 12-year-old `// TODO add picture to wall` with a
 Not touched: UnfinishedBuildingLot (construction props idea remains open) and HospitalLot (has its
 own campus interiors).
 
-**Queued from the interiors playtest (2026-09-03), not yet built:**
+~~**Queued from the interiors playtest (2026-09-03), not yet built:**~~ **ALL FOUR SHIPPED** — fluids/silos and
+basement storage and FOR SALE signs and factory control rooms are all in 5.5.0 (re-checked against
+`CHANGELOG.md` and the code 2026-09-14; this list went stale the week it was written). Kept for the head-starts:
 - **Fluids setting (BIG)** — owner wants an optional "fluids" toggle, default ON for MODERN, OFF
   for APOCALYPSE: fills the industrial silos with a random fluid and the water towers with water.
   Head start: `includeAbovegroundFluids` ALREADY EXISTS and `drawWaterTower` already checks it —
@@ -425,7 +445,10 @@ Everything below this line is historical record of the arc.
   fallbacks: "tag X resolved empty", "material Y not found", "offset undeclared for Z". Would have
   caught the chemicals-namespace bug and every empty-pool trap this project keeps hitting.
 
-**Queued from round 2, not yet built:**
+~~**Queued from round 2, not yet built:**~~ **Re-checked 2026-09-14: bedroom variance, the paintings/item-frame
+wall pass and hallway/landing furnishing all shipped (5.5.0/5.6.0), and furnishing now runs AFTER the
+doors are cut (`Furniture.bedroom` comments record it). Still open: only the lectern-on-a-chest
+oddity (never investigated).**
 - **Furnish after doors** — the wall-nearest-edge trick dodges most door clashes, but the real fix
   is ordering: find where the colonial house cuts doors vs. styles rooms and furnish afterwards.
 - **Bedroom variance** — mostly bed+barrel today. Add a wardrobe/drawer against a wall, a rug, and
@@ -543,7 +566,9 @@ is 270 — so offsets must be measured per (mod, role), never assumed per mod.
 ## ▶ Next up (queued 2026-08-17)
 
 In rough priority order. **#1, #2 and #3 are DONE (2026-08-27) — see "Caves, structures and 3D
-biomes" and "Wave C" below.** #4 (26.2's stone families) and #5 (per-mod compat packs) remain.
+biomes" and "Wave C" below. #4 is DONE (5.4.0). #5 is done for everything anyone asked for** (BoP,
+Farmer's Delight, Fantasy's Furniture — 5.4.0/5.6.0); only unrequested Twilight Forest/Apotheosis
+palettes remain, see the top of this file.
 
 ### 1. ~~⚠ Vanilla structures never generate — including strongholds~~ **DONE (2026-08-27)**
 
@@ -635,7 +660,11 @@ what already works) versus *real cave biomes* (needs the biome source to become 
 genuine piece of architecture and would unlock ancient cities and modded caves at the same time).
 Worth deciding which one is actually wanted before starting.
 
-### 4. 26.2's new stone families are not in any palette
+### 4. ~~26.2's new stone families are not in any palette~~ **DONE (5.4.0)**
+
+**Shipped:** cinnabar and sulfur join the MODERN/APOCALYPSE build palette on 26.2 (`build/modern_stones`,
+`"required": false` entries), sulfur caves are in the cave pool, and a datapack `remove` list can drop
+any single block. The text below is the analysis that led there.
 
 26.2 ships full **cinnabar** and **sulfur** families (`CINNABAR`, `CINNABAR_BRICKS`,
 `CHISELED_CINNABAR`, `SULFUR`, `SULFUR_BRICKS`, `POLISHED_SULFUR`, `CHISELED_SULFUR`,
@@ -665,7 +694,14 @@ The upside is real too: slab and stair variants of wool and concrete are exactly
 lack for edges, steps and roof trim, so they are worth wiring in deliberately — as their own shape
 vocabulary, not by widening the wall palettes.
 
-### 5. Per-mod compatibility datapacks
+### 5. Per-mod compatibility datapacks — **mostly DONE**
+
+**Status 2026-09-14:** Biomes O' Plenty (biome source folds registered biomes in, cave pool, flowers,
+ground data map — 5.4.0), Farmer's Delight crops (tag-driven farm mix — 5.4.0) and Fantasy's Furniture
+(runtime set detection — 5.6.0) are all shipped and playtested. The "worldgen mods may not appear"
+worry below was answered by measurement: BoP offered 113 biomes and CityWorld placed them. Alex's
+Caves has no build for any version we ship. Remaining below is unrequested: Twilight Forest and
+Apotheosis palettes.
 
 The owner is choosing mods. The useful split is by **what the mod needs from us**, because tags only
 decide what a block is *made of* — anything needing placement semantics needs a new seam first:
