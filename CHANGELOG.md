@@ -5,6 +5,18 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Fixed
+
+- **The log no longer fills with "block tag #cityworld:furniture/… is empty or unbound".** On a world
+  with no furniture mod installed, every piece of furniture in every chunk re-resolved its (legitimately
+  empty) pool and warned about it — one client session logged 94,000 of those lines. Pools are now
+  resolved once per tag and rebuilt only when tags reload (a datapack change is still honoured), and
+  an empty furniture pool is mentioned once, at INFO, as "no mod supplies #…". Empty *build* and
+  *farm* palettes still warn, once, because those are real faults. Also a small worldgen saving: the
+  registry walk and sort behind each furniture pick happen once instead of per piece.
+
 ## 5.7.1
 
 ### Added
