@@ -116,6 +116,15 @@ public abstract class PlatLot {
 		return null;
 	}
 
+	/**
+	 * The same slot as {@link #getInteriorDescription()}, for lots whose answer depends on where they sit
+	 * in the plan — a road names the street it is part of, which needs its neighbours to know which way
+	 * it runs. {@code CityWorldAPI} reads this one, so {@code /cityinfo}, F3 and the map all see it.
+	 */
+	public String getInteriorDescription(CityWorldGenerator generator, PlatMap platmap, int platX, int platZ) {
+		return getInteriorDescription();
+	}
+
 	public boolean isPlaceableAt(CityWorldGenerator generator, int chunkX, int chunkZ) {
 		return generator.getSettings().inCityRange(chunkX, chunkZ);
 	}

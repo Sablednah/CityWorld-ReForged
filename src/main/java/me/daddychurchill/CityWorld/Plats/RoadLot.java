@@ -1685,6 +1685,44 @@ public class RoadLot extends ConnectedLot {
 		}
 	}
 
+	/**
+	 * The name of a street through this chunk, worded exactly as its signs are ("North 5th Street").
+	 *
+	 * <p>An east-west road takes the North/South odonym and a north-south road the West/East one. Each
+	 * odonym is named for its prefix, and the prefix comes from the coordinate that stays constant along
+	 * the road; {@link #generateStreetSign} pairs them with the sign faces the same way.
+	 *
+	 * @param eastWest true for the street running east-west, false for the one running north-south
+	 */
+	public String getStreetName(CityWorldGenerator generator, boolean eastWest) {
+		String[] odonym = eastWest ? generator.odonymProvider.generateNorthSouthStreetOdonym(generator, chunkX, chunkZ)
+				: generator.odonymProvider.generateWestEastStreetOdonym(generator, chunkX, chunkZ);
+		StringBuilder name = new StringBuilder();
+		for (String part : odonym)
+			if (part != null && !part.isBlank())
+				name.append(name.length() == 0 ? "" : " ").append(part.trim());
+		return name.toString();
+	}
+
+	/** Which ways this road runs, as {eastWest, northSouth}. A chunk with no road beside it counts as both. */
+	public boolean[] getStreetDirections(PlatMap platmap, int platX, int platZ) {
+		SurroundingRoads roads = new SurroundingRoads(platmap, platX, platZ);
+		boolean eastWest = roads.toWest() || roads.toEast();
+		boolean northSouth = roads.toNorth() || roads.toSouth();
+		return eastWest || northSouth ? new boolean[] { eastWest, northSouth } : new boolean[] { true, true };
+	}
+
+	/** The street this chunk is on, or both at a junction ("Main Street & West Oak Avenue"). */
+	@Override
+	public String getInteriorDescription(CityWorldGenerator generator, PlatMap platmap, int platX, int platZ) {
+		if (!generator.getSettings().includeNamedRoads)
+			return null; // no signs in this world, so no names either
+		boolean[] runs = getStreetDirections(platmap, platX, platZ);
+		if (runs[0] && runs[1])
+			return getStreetName(generator, true) + " & " + getStreetName(generator, false);
+		return getStreetName(generator, runs[0]);
+	}
+
 	private final static double oddsOfDecayedSign = Odds.oddsExtremelyLikely;
 
 	protected void generateStreetSign(CityWorldGenerator generator, RealBlocks chunk, int sidewalkLevel, int x, int z) {

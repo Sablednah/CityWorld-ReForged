@@ -76,7 +76,7 @@ public final class CityWorldAPI {
                     platmap.getNumberOfRoads(),
                     schematic,
                     lot.getShopType(),
-                    lot.getInteriorDescription()));
+                    lot.getInteriorDescription(context, platmap, cx - platmap.originX, cz - platmap.originZ)));
         } catch (RuntimeException e) {
             return Optional.empty(); // never let a lookup throw into a caller
         }

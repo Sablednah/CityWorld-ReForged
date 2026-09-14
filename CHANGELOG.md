@@ -22,6 +22,11 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   have renamed nearly every street at the edge of explored ground. The new names are drawn from a
   separate roll instead, so only about one street in forty changes. A datapack that replaces the street
   names replaces these too.
+- **Streets are named everywhere, not just on the signs.** Stand on a road and `/cityinfo` says which
+  street it is ("street: North 5th Street", or both at a junction), F3 shows it too, and hovering a road
+  on the JourneyMap map names it. With JourneyMap the city plan also **labels the streets on the map**,
+  once you zoom in: each street is named once per city block it crosses, including in cities you have
+  not been to yet. Names match the signs exactly; they come from the same plan.
 
 ### Fixed
 
