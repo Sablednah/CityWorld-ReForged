@@ -5,6 +5,7 @@ import me.daddychurchill.CityWorld.api.MapMarkers;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.TagsUpdatedEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.server.permission.events.PermissionGatherEvent;
 
@@ -41,6 +42,13 @@ public final class CityWorldServerEvents {
      * shape that has cost this project playtest rounds before. This makes "is the hook wired up?" a
      * question a headless server answers in one run.
      */
+    /** Tags were (re)bound — a server start, a datapack reload, or a client sync — so every resolved
+     *  palette pool may have changed. Forget them all; they rebuild on first use. */
+    @SubscribeEvent
+    public static void onTagsUpdated(TagsUpdatedEvent event) {
+        me.daddychurchill.CityWorld.Support.MaterialTags.invalidate();
+    }
+
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         if (!MapMarkers.hasListeners())
