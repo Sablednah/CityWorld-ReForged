@@ -20,9 +20,16 @@ without checking the changelog first; they read exactly like open work.
 2. ~~**`scripts/deploy-fleet.sh`**~~ **DONE (2026-09-14)** — self-defining fleet, version-matched jars,
    release-vs-sha stamps, locked-jar skip; see `CLAUDE.md`. Exercised against a fake instance tree and
    dry-run against the real nine (all "up to date" on v5.7.1).
-3. **JourneyMap overlay budget on real hardware** — WSLg could not measure it; one run of
-   `-Dcityworld.mapstress=true` at `/citymap keep 2000` vs `200` on the owner's machine settles the
-   default. Not blocking anything; 2000 has playtested fine.
+3. ~~**JourneyMap overlay budget on real hardware**~~ **MEASURED 2026-09-14 (owner, CityWork-ReForged,
+   1.21.11, JourneyMap 6.0.0):** `-Dcityworld.mapstress=true`, five-second samples after a few minutes'
+   travel. Default budget 2000: 104–111 fps, 2.6–4.2 ms frame. `/citymap keep 200`: 104–109 fps,
+   2.6–4.6 ms. `/citymap off`: 105–111 fps, 3.0–5.2 ms. **No difference — the three are one noise
+   band** (the ~105–111 fps plateau is a frame cap; the 2.6–5.2 ms jitter is the client's own).
+   Overlay cost is below measurement at the accumulation a normal session reaches, so **2000 stays the
+   default.** Caveat, so this is not over-read: the run held however many overlays a few minutes of
+   travel accrues (~12 per 160 blocks, so tens, not thousands), which is the realistic load, not the
+   budget ceiling. If someone ever reports a heavy map, the same flag and `/citymap keep` are the
+   two-minute answer.
 4. **Parked decoration ideas, none started, none asked for:** block-entity-backed decorations
    (plushie, skull blossoms, widow bloom), hanging herbs on ceilings, richer shop-furniture
    vocabulary (themed counters). The lectern-stood-on-a-chest oddity in Newsagent corner shops was
