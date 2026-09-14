@@ -32,6 +32,8 @@ public class OdonymProvider_Normal extends OdonymProvider {
 		streetTerms = override(append, settings.streetTerms, streetTerms);
 		streetPrefixes = override(append, settings.streetPrefixes, streetPrefixes);
 		streetStarts = override(append, settings.streetStarts, streetStarts);
+		if (!append && !settings.streetStarts.isEmpty())
+			streetNamesAdded = List.of(); // a datapack that replaces the street names replaces these too
 		streetEnds = override(append, settings.streetEnds, streetEnds);
 		streetSuffixes = override(append, settings.streetSuffixes, streetSuffixes);
 		fossilPrefixes = override(append, settings.fossilPrefixes, fossilPrefixes);
@@ -177,6 +179,16 @@ public class OdonymProvider_Normal extends OdonymProvider {
 		result[1] = generateStreetNamedName(random, streetN, getCentral());
 		result[2] = getSuffixPart(random, streetN);
 		result[3] = generateStreetBlockNumbers(z);
+
+		// The added names get their turn from one more roll, drawn after all the others, rather than by
+		// joining streetStarts. A street's name is worked out afresh in every chunk it crosses, so growing
+		// the list would re-pick nearly every street and new chunks would disagree with signs already
+		// standing in explored ones. This way only the streets that land on an added name change.
+		if (streetN != 0 && !streetNamesAdded.isEmpty()) {
+			int roll = random.nextInt(streetStarts.size() + streetNamesAdded.size());
+			if (roll >= streetStarts.size())
+				result[1] = streetNamesAdded.get(roll - streetStarts.size()); // whole, with no "-ville" ending
+		}
 		return result;
 	}
 
@@ -347,7 +359,10 @@ public class OdonymProvider_Normal extends OdonymProvider {
 			"Derek", "Warren", "Darrell", "Jerome", "Floyd", "Leo", "Alvin", "Tim", "Wesley", "Gordon", "Dean", "Greg",
 			"Jorge", "Dustin", "Pedro", "Derrick", "Dan", "Lewis", "Zachary", "Corey", "Herman", "Maurice", "Vernon",
 			"Roberto", "Clyde", "Glen", "Hector", "Shane", "Ricardo", "Sam", "Rick", "Lester", "Brent", "Ramon",
-			"Charlie", "Tyler", "Gilbert", "Gene");
+			"Charlie", "Tyler", "Gilbert", "Gene",
+
+			// the owner's own
+			"Sable", "SableDnah", "Cara", "Cara Samara", "Bil");
 
 	private List<String> villagerSuffixes = createList(
 			// these should be more global but it is hard to find the world wide list of the
@@ -374,6 +389,9 @@ public class OdonymProvider_Normal extends OdonymProvider {
 			"Snyder", "Hart", "Cunningham", "Bradley", "Lane", "Andrews", "Ruiz", "Harper", "Fox", "Riley", "Armstrong",
 			"Carpenter", "Weaver", "Greene", "Lawrence", "Elliott", "Chavez", "Sims", "Austin", "Peters", "Kelley",
 			"Franklin", "Lawson",
+
+			// the owner's own
+			"Douglas", "Houiellebecq",
 
 			// "borrowed" by http://www.finedictionary.com/Testificate.html
 			"Testificate", "Restificate", "Festificate", "Gestificate", "Yestificate", "Twstificate", "Tsstificate",
@@ -402,6 +420,12 @@ public class OdonymProvider_Normal extends OdonymProvider {
 			"Lan", "Perry", "Mont", "Hearth", "Land", "Cherry", "Lime", "Orange", "Spartan", "Pine", "Child", "Granite",
 			"Amber", "Ruby", "Mon", "Transyl", "Adams", "Hove", "Sussex", "Hoddle", "Peach", "Apple", "Phil", "Madi",
 			"Wall", "Fleet", "Jane", "Finch", "Brook", "Ham", "Liver", "Worc", "Fil", "Man");
+
+	/**
+	 * Street names added after worlds already existed: used whole ("Cara Samara Avenue"), and picked by a
+	 * separate roll in {@link #generateWestEastStreetOdonym} so the rest of a world's streets keep their names.
+	 */
+	private List<String> streetNamesAdded = createList("Sable", "SableDnah", "Cara", "Cara Samara", "Ruth", "Bil");
 
 	private List<String> streetEnds = createList("grove", "ville", "town", "ship", "view", "bank", "bridge", "dell",
 			"mount", "stead", "beach", "opolis", "way", "caster", "park", "brook", "vale", "wich", "ton", "dam", "line",
