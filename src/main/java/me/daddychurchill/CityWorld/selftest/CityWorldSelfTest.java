@@ -196,6 +196,8 @@ public final class CityWorldSelfTest {
             checkPlanning();
             checkPristineTwin();
             checkTwinDimension(server);
+            checkNetherTwin();
+            checkRuinedNetherStem(server);
             checkFarmCrops();
             checkBiomeDepth(server);
             checkStructures(server);
@@ -720,6 +722,80 @@ public final class CityWorldSelfTest {
             fail("cityworld:city plans as " + twin.worldStyle + " but the overworld is " + source.worldStyle);
         if (!twin.getSettings().pristine || twin.getSettings().includeDecayedBuildings || twin.getSettings().includeOvergrowth)
             fail("cityworld:city is not pristine (decay or overgrowth still on)");
+    }
+
+    /**
+     * The ruined-city Nether plans the overworld's city (lot for lot) but draws it as the Nether: Nether ore
+     * and cover providers, and ruined harder than the world it mirrors. The mirrored world is checked to be
+     * ruined at all first, so "harder" cannot pass by comparing zero with zero.
+     */
+    private void checkNetherTwin() {
+        var data = me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.DEFAULT;
+        CityWorldGenerator overworld = new CityWorldGenerator(PLAN_SEED, 256, 63, WorldStyle.APOCALYPSE, -64, 320,
+                java.util.Optional.empty(), data);
+        CityWorldGenerator nether = new CityWorldGenerator(PLAN_SEED, 256, 63, WorldStyle.APOCALYPSE, -64, 320,
+                java.util.Optional.of(true), data, me.daddychurchill.CityWorld.compat.Environment.NETHER);
+        if (overworld.getSettings().buildingDecayIntensity <= 0)
+            fail("APOCALYPSE has no building decay, so the Nether's 'harder' comparison would prove nothing");
+        if (!(nether.oreProvider instanceof me.daddychurchill.CityWorld.Plugins.OreProvider_Nether)
+                || !(nether.coverProvider instanceof me.daddychurchill.CityWorld.Plugins.CoverProvider_Nether))
+            fail("the Nether environment did not load the Nether ore/cover providers");
+        if (nether.getSettings().buildingDecayIntensity <= overworld.getSettings().buildingDecayIntensity
+                || nether.getSettings().includeOvergrowth || !nether.getSettings().includeDecayedRoads)
+            fail("the ruined-city Nether is not ruined harder than its overworld");
+        int lots = 0, differ = 0;
+        for (int cx = -PLAN_RADIUS; cx <= PLAN_RADIUS; cx += PlatMap.Width)
+            for (int cz = -PLAN_RADIUS; cz <= PLAN_RADIUS; cz += PlatMap.Width) {
+                PlatMap a = overworld.getPlatMap(cx, cz), b = nether.getPlatMap(cx, cz);
+                for (int x = 0; x < PlatMap.Width; x++)
+                    for (int z = 0; z < PlatMap.Width; z++) {
+                        PlatLot la = a.getLot(x, z), lb = b.getLot(x, z);
+                        lots++;
+                        String na = la == null ? "-" : la.getClass().getSimpleName();
+                        String nb = lb == null ? "-" : lb.getClass().getSimpleName();
+                        if (!na.equals(nb))
+                            differ++;
+                    }
+            }
+        report.put("nether.lots", Integer.toString(lots));
+        report.put("nether.differ", Integer.toString(differ));
+        if (differ > 0)
+            fail("the ruined-city Nether plans a different city: " + differ + " of " + lots + " lots differ");
+    }
+
+    /**
+     * The Nether the Customize toggle and the pack lock build in code must survive level.dat: encode the
+     * dimensions through {@code WorldDimensions.CODEC} and decode them back, and it must still be a CityWorld
+     * generator in the nether environment, twinned to the overworld, on the 1:1 dimension type.
+     */
+    private void checkRuinedNetherStem(MinecraftServer server) {
+        var registries = server.registryAccess();
+        var stem = me.daddychurchill.CityWorld.worldgen.CityWorldRealms.ruinedNether(registries);
+        // WorldDimensions.CODEC refuses a set with no overworld ("Overworld settings missing"), so encode the
+        // server's own overworld alongside the Nether, as level.dat does.
+        var overworldStem = registries.lookupOrThrow(net.minecraft.core.registries.Registries.LEVEL_STEM)
+                .getOrThrow(net.minecraft.world.level.dimension.LevelStem.OVERWORLD).value();
+        var dims = new net.minecraft.world.level.levelgen.WorldDimensions(java.util.Map.of(
+                net.minecraft.world.level.dimension.LevelStem.OVERWORLD, overworldStem,
+                net.minecraft.world.level.dimension.LevelStem.NETHER, stem));
+        var ops = net.minecraft.resources.RegistryOps.create(com.mojang.serialization.JsonOps.INSTANCE, registries);
+        var encoded = net.minecraft.world.level.levelgen.WorldDimensions.CODEC.codec().encodeStart(ops, dims);
+        if (encoded.error().isPresent()) {
+            fail("the ruined-city Nether stem does not encode: " + encoded.error().get().message());
+            return;
+        }
+        String json = encoded.getOrThrow().toString();
+        report.put("nether.stem.json", json.length() > 400 ? json.substring(0, 400) : json);
+        var decoded = net.minecraft.world.level.levelgen.WorldDimensions.CODEC.codec().parse(ops, encoded.getOrThrow());
+        if (decoded.error().isPresent()) {
+            fail("the ruined-city Nether stem does not decode: " + decoded.error().get().message());
+            return;
+        }
+        var back = decoded.getOrThrow().get(net.minecraft.world.level.dimension.LevelStem.NETHER).orElse(null);
+        if (back == null || !(back.generator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator)
+                || !back.type().is(me.daddychurchill.CityWorld.worldgen.CityWorldRealms.RUINED_NETHER_TYPE)
+                || !json.contains("\"environment\":\"nether\"") || !json.contains("\"twin_of\":\"minecraft:overworld\""))
+            fail("the ruined-city Nether stem did not round-trip as a nether-environment CityWorld twin on ruined_nether");
     }
 
     /**

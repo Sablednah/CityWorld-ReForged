@@ -27,6 +27,7 @@ public final class CityWorldPackConfig {
 
     public static final ModConfigSpec SPEC;
     private static final ModConfigSpec.ConfigValue<String> LOCKED_WORLD_PRESET;
+    private static final ModConfigSpec.ConfigValue<String> RUINED_NETHER;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -37,8 +38,27 @@ public final class CityWorldPackConfig {
                 "The World Type button is greyed out and Customize keeps the preset's style, but its other",
                 "settings stay editable. Empty = no lock (vanilla behaviour).")
                 .define("lockedWorldPreset", "");
+        RUINED_NETHER = b.comment(
+                "Lock the Nether of every new world: \"cityworld\" = the ruined-city Nether (the overworld's city at",
+                "1:1, burnt), \"vanilla\" = vanilla's Nether. Customize shows the choice greyed out.",
+                "Empty = the player chooses in Customize (default vanilla).")
+                .define("ruinedNether", "");
         b.pop();
         SPEC = b.build();
+    }
+
+    /** The Nether lock: true = ruined city, false = vanilla, empty = the player's choice (or an unrecognised value). */
+    public static Optional<Boolean> lockedRuinedNether() {
+        return switch (RUINED_NETHER.get().trim().toLowerCase(java.util.Locale.ROOT)) {
+            case "cityworld", "ruined" -> Optional.of(true);
+            case "vanilla" -> Optional.of(false);
+            case "" -> Optional.empty();
+            default -> {
+                me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                        "CityWorld: ruinedNether \"{}\" is not cityworld/vanilla — no Nether lock applied", RUINED_NETHER.get());
+                yield Optional.empty();
+            }
+        };
     }
 
     /** The preset new worlds are locked to, or empty when no lock is configured (or the id is malformed). */

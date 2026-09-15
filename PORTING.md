@@ -91,6 +91,50 @@ twin, same style as the overworld, pristine). The Nether reuses the same seam wi
   `#has_structure/nether_fortress` / `bastion_remnant`. The allow-list tag seam (`cityworld:allowed`) and
   vanilla's own biome filtering carry over — the biome source must emit tagged Nether biomes.
 
+### 2b. Nether spike — built and probed (2026-09-15)
+
+**Pieces:** `dimension_type/ruined_nether.json` (vanilla Nether attributes, `coordinate_scale` 1, `-64..319`,
+`has_ceiling` false); generator field **`environment`** (`"nether"` → `CityWorldGenerator.worldEnvironment`);
+`OreProvider_Nether` (netherrack over blackstone, lava seas on magma, Nether ores), `CoverProvider_Nether`
+(roots/fungus on nylium, soul fire, netherwart for crops); `CityWorldNetherBiomeSource` (`cityworld:nether`,
+`#cityworld:nether_pool` = `#minecraft:is_nether` + `#c:is_nether`); `CityWorldSettings.applyNetherRuin()`
+(decay ×2 floor 1.2, decay fires on ≥0.15, no pristine roads/buildings, no overgrowth — drawing only, plan
+untouched); ground-map entries for the five vanilla Nether biomes; `minecraft:nether_complexes` in the
+allowed structure tag; `CaveRegions.none()`/`SurfaceRegions.none()`; `CityWorldRealms` builds the stem in
+code for the Customize toggle and the pack lock.
+
+**How to probe it:** a world datapack overriding `data/minecraft/dimension/the_nether.json` — datapack stems
+beat the preset's (`WorldDimensions.bake` checks the datapack registry first) — plus the probe's new
+`-Dcityworld.probe.dim=minecraft:the_nether`, which also dumps a 3x3-chunk full-height block tally, surface
+biomes, and a no-generation climate sample (percentiles + the biome split `classify` gives over ~12 km).
+
+**First probe (seed 8675309, chunk 0,0, apocalypse overworld):** generator installed; a ruined building
+interior (bookshelves, shelves, candles) in netherrack/blackstone with magma, lava, ancient debris (16),
+quartz and gold ore, 171 fire. Climate: temperature p5/25/50/75/95 = .136/.442/.615/.776/.981 (warm-leaning,
+`climateWarmth`), humidity .047/.316/.506/.697/.944. Raw-anchor split over 147k samples: basalt 26%,
+crimson 28%, wastes 22%, soul sand 12%, warped 11% — so the anchors moved to rank space. ⚠ I first read the
+3x3 region's "2,287 wastes / 17 basalt" as an imbalance; it was one climate region. Sample at scale.
+
+**Rank-space split, measured (147k samples):** basalt 19.5%, crimson 21.3%, wastes 17.9%, soul sand 21.8%,
+warped 19.5%.
+
+**Seen on a real client (Vivo `:2`, 2026-09-15, config `lockedWorldPreset = cityworld:apocalypse`,
+`ruinedNether = cityworld`, seed 8675309):** World Type greyed at "CityWorld: Apocalypse"; Customize shows
+"Style: Apocalypse" and the new **Realms → "Nether: Ruined city (1:1)"** both greyed. Creating the world
+raised vanilla's **"experimental settings" warning** — `WorldDimensions.checkStability` only calls a Nether
+stable on the built-in Nether type with a `NoiseBasedChunkGenerator`, so any CityWorld Nether is experimental
+(the CityWorld overworld is not: `isStableOverworld` only checks the type). NeoForge confirms it so it is
+shown once, at creation. Suppressing it means intercepting that `ConfirmScreen` — an owner decision, not done.
+`execute in minecraft:the_nether run tp @s ~ 130 ~` landed at the same x/z inside **the same weathered-copper
+tower, ruined**: netherrack through the floors, red fog, and far too much fire — the data default
+`oddsOfDecayFire` 0.20 set most rubble alight, so the Nether now uses 0.08. Wide views on llvmpipe showed
+stale frames after a teleport (chat confirmed the move; the picture did not change) — judge scale from the
+probe's tallies, not a skyline screenshot.
+
+**Open:** bastions start at absolute y 33 (buried under a full-height city); fortresses at y 48-70 cut
+through streets; parks/yards still pick overworld trees via `TreeProvider`; building water stays water;
+BoP Nether biomes unmeasured; a dedicated server can only get it by datapack today.
+
 ### 3. End — verified facts (1.21.11 sources)
 
 - **The dragon fight needs the vanilla End type.** `ServerLevel` creates `EndDragonFight` only when
@@ -109,6 +153,20 @@ twin, same style as the overworld, pristine). The Nether reuses the same seam wi
   else spawn an `end_island` feature at y 75 — so outer-island ground should stay end stone.
 - Upstream's `OreProvider_TheEnd` / `CoverProvider_TheEnd` exist at `251078e` too. The FLOATING style is the
   natural shape base for outer islands.
+- **The arena, measured from `EndDragonFight`:** it holds a ticket of radius 9 on chunk 0,0; `hasActiveExitPortal`
+  / `findExitPortal` scan chunks -8..8 for an end-portal block entity, and failing that `spawnExitPortal` puts
+  `EndPodiumFeature` on the `MOTION_BLOCKING_NO_LEAVES` heightmap over 0,0 (sinking past bedrock to y 63). The
+  ten obsidian pillars are `SpikeFeature` (`end_spike`, a SURFACE_STRUCTURES feature of the `the_end` biome),
+  radius 42 around the origin, heights from `SpikeFeature.getSpikesForLevel(seed)`. The island itself is
+  `DensityFunctions.EndIslandDensityFunction` (`100 - dist*8` around the origin, outer islands only where the
+  cell is outside `k²+l² > 4096`).
+
+**End plan (not started):** keep `minecraft:the_end` as the type (dragon fight). A generator that **delegates the
+central zone to a real vanilla End `NoiseBasedChunkGenerator`** — public ctor `(BiomeSource, Holder<NoiseGeneratorSettings>)`
+plus `RandomState.create(registries, NoiseGeneratorSettings.END, seed)` — for chunks inside the void ring, so
+the island, pillars and podium are vanilla's own; CityWorld (FLOATING-shaped, end stone, `the_end` environment,
+own End biome source that answers `the_end` inside 64 sections) outside it. End cities need ground at y ≥ 60 and
+the highlands/midlands biomes; gateways need `END_STONE` with headroom. Probe with `-Dcityworld.probe.dim=minecraft:the_end`.
 
 ## ▶ Resume here (re-evaluated 2026-09-14)
 

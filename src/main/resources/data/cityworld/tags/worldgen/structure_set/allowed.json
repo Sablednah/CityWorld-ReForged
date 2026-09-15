@@ -3,6 +3,7 @@
   "values": [
     "minecraft:strongholds",
     "minecraft:trial_chambers",
-    "minecraft:ancient_cities"
+    "minecraft:ancient_cities",
+    "minecraft:nether_complexes"
   ]
 }

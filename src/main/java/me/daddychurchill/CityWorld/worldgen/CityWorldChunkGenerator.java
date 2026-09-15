@@ -80,7 +80,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     Codec.STRING.optionalFieldOf("style").forGetter(g -> g.style),
                     RegistryFileCodec.create(CityWorldRegistries.WORLD_SETTINGS, CityWorldSettingsData.CODEC)
                             .optionalFieldOf("settings").forGetter(g -> g.settings),
-                    net.minecraft.world.level.Level.RESOURCE_KEY_CODEC.optionalFieldOf("twin_of").forGetter(g -> g.twinOf)
+                    net.minecraft.world.level.Level.RESOURCE_KEY_CODEC.optionalFieldOf("twin_of").forGetter(g -> g.twinOf),
+                    Codec.STRING.optionalFieldOf("environment").forGetter(g -> g.environment)
             ).apply(instance, CityWorldChunkGenerator::new));
 
     /**
@@ -174,6 +175,19 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private final Optional<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> twinOf;
 
+    /**
+     * The realm, straight from the JSON: {@code "nether"} for the ruined-city Nether; absent means the
+     * overworld. Kept raw so the codec round-trips; resolved in {@link #context}.
+     */
+    private final Optional<String> environment;
+
+    private static me.daddychurchill.CityWorld.compat.Environment parseEnvironment(Optional<String> name) {
+        return switch (name.map(n -> n.trim().toLowerCase(java.util.Locale.ROOT)).orElse("")) {
+            case "nether", "the_nether" -> me.daddychurchill.CityWorld.compat.Environment.NETHER;
+            default -> me.daddychurchill.CityWorld.compat.Environment.NORMAL;
+        };
+    }
+
     /** Whether the context was actually built from {@link #twinOf}'s generator — the self-test's handle. */
     private volatile boolean twinResolved;
 
@@ -210,7 +224,15 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     public CityWorldChunkGenerator(BiomeSource biomeSource, Optional<Boolean> decayed, Optional<String> style,
             Optional<Holder<CityWorldSettingsData>> settings,
             Optional<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> twinOf) {
+        this(biomeSource, decayed, style, settings, twinOf, Optional.empty());
+    }
+
+    public CityWorldChunkGenerator(BiomeSource biomeSource, Optional<Boolean> decayed, Optional<String> style,
+            Optional<Holder<CityWorldSettingsData>> settings,
+            Optional<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> twinOf,
+            Optional<String> environment) {
         super(biomeSource);
+        this.environment = environment;
         this.decayed = decayed;
         this.style = style;
         this.settings = settings;
@@ -263,7 +285,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         twinResolved = true;
                     }
                     local = new CityWorldGenerator(levelSeed, TERRAIN_CEILING, UPSTREAM_SEA_LEVEL,
-                            worldStyle, level.getMinY(), level.getMaxY(), decayed, settingsData);
+                            worldStyle, level.getMinY(), level.getMaxY(), decayed, settingsData,
+                            parseEnvironment(environment));
                     // The biome source answers getNoiseBiome from this context (terrain height + climate),
                     // so hand it over the moment it exists — this is the earliest point it can be had.
                     if (this.biomeSource instanceof CityWorldBiomes cityBiomes)

@@ -13,6 +13,15 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   in `config/cityworld-startup.toml` and every new single-player world is made with it: the create-world
   screen opens on it, the World Type button is greyed out, and Customize still works with the style held.
   Empty (the default) changes nothing. A dedicated server keeps using `level-type` in `server.properties`.
+- **A ruined-city Nether.** Customize has a new **Realms → Nether** choice (default Vanilla). *Ruined city*
+  replaces the Nether with the overworld's own city — same seed, same streets, same buildings — burnt and
+  collapsed, in Nether biomes (crimson, warped, soul sand, basalt, wastes, and any mod's Nether biomes such as
+  Biomes O' Plenty's, spread evenly by climate), on netherrack and blackstone with lava seas and Nether ores.
+  **Portals link 1:1**, so the ruin you arrive in stands exactly where its overworld building does. It is full
+  height with no bedrock roof, and Nether fortresses and bastions still generate, so blaze rods and the road to
+  the End are intact. Modpacks can lock it with `ruinedNether = "cityworld"` in `config/cityworld-startup.toml`.
+  Creating such a world shows vanilla's "experimental settings" warning once: vanilla calls any non-vanilla
+  Nether experimental.
 
 ### Changed
 

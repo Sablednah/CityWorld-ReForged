@@ -75,7 +75,16 @@ public final class ChunkProbe {
         try {
             String[] parts = System.getProperty(PROPERTY).split(",");
             int cx = Integer.parseInt(parts[0].trim()), cz = Integer.parseInt(parts[1].trim());
-            ServerLevel level = server.overworld();
+            // -Dcityworld.probe.dim=minecraft:the_nether probes another dimension (default: the overworld).
+            String dim = System.getProperty("cityworld.probe.dim");
+            ServerLevel level = dim == null ? server.overworld()
+                    : server.getLevel(net.minecraft.resources.ResourceKey.create(
+                            net.minecraft.core.registries.Registries.DIMENSION,
+                            net.minecraft.resources.Identifier.parse(dim)));
+            if (level == null)
+                throw new IllegalArgumentException("cityworld.probe.dim " + dim + " is not a loaded dimension");
+            CityWorldMod.LOGGER.warn("PROBE: dimension {} generator {}", level.dimension().identifier(),
+                    level.getChunkSource().getGenerator().getClass().getSimpleName());
             CityWorldMod.LOGGER.warn("PROBE: forcing chunks around ({}, {})", cx, cz);
             // the ring first so the target's decoration has proper neighbours
             for (int dx = -1; dx <= 1; dx++)
@@ -113,6 +122,52 @@ public final class ChunkProbe {
                             tally.merge(state.getBlock().getName().getString(), 1, Integer::sum);
                     }
                 CityWorldMod.LOGGER.warn("PROBE y={}: {}", y, tally);
+            }
+            // Whole-height picture of the 3x3 region: which blocks, and which biomes at the surface.
+            java.util.Map<String, Integer> blocks = new java.util.TreeMap<>();
+            java.util.Map<String, Integer> biomes = new java.util.TreeMap<>();
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dz = -1; dz <= 1; dz++) {
+                    ChunkAccess c = level.getChunk(cx + dx, cz + dz);
+                    for (int x = 0; x < 16; x++)
+                        for (int z = 0; z < 16; z++) {
+                            int wx = c.getPos().getMinBlockX() + x, wz = c.getPos().getMinBlockZ() + z;
+                            for (int y = level.getMinY(); y < level.getMaxY(); y++) {
+                                var state = c.getBlockState(new BlockPos(wx, y, wz));
+                                if (!state.isAir())
+                                    blocks.merge(state.getBlock().getName().getString(), 1, Integer::sum);
+                            }
+                            int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, wx, wz);
+                            biomes.merge(level.getBiome(new BlockPos(wx, top, wz)).unwrapKey()
+                                    .map(k -> k.identifier().toString()).orElse("?"), 1, Integer::sum);
+                        }
+                }
+            CityWorldMod.LOGGER.warn("PROBE region blocks: {}", blocks);
+            CityWorldMod.LOGGER.warn("PROBE region surface biomes: {}", biomes);
+            // Climate at scale, no chunk generation: percentiles of the two axes a CityWorld biome source
+            // classifies on, and the biome split its classify() would give over ~12 km.
+            if (level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw
+                    && cw.getBiomeSource() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldBiomes source) {
+                var context = cw.getContext(level);
+                int n = 0, side = 384;
+                double[] temps = new double[side * side], humids = new double[side * side];
+                java.util.Map<String, Integer> split = new java.util.TreeMap<>();
+                for (int i = 0; i < side; i++)
+                    for (int j = 0; j < side; j++) {
+                        int wx = (i - side / 2) * 32, wz = (j - side / 2) * 32;
+                        double t = context.getTemperature(wx, wz), h = context.getHumidity(wx, wz);
+                        temps[n] = t;
+                        humids[n++] = h;
+                        split.merge(source.classify(context, 70, t, h, false).unwrapKey()
+                                .map(k -> k.identifier().toString()).orElse("?"), 1, Integer::sum);
+                    }
+                java.util.Arrays.sort(temps);
+                java.util.Arrays.sort(humids);
+                java.util.function.Function<double[], String> pct = a -> String.format("p5=%.3f p25=%.3f p50=%.3f p75=%.3f p95=%.3f",
+                        a[a.length * 5 / 100], a[a.length / 4], a[a.length / 2], a[a.length * 3 / 4], a[a.length * 95 / 100]);
+                CityWorldMod.LOGGER.warn("PROBE climate temperature: {}", pct.apply(temps));
+                CityWorldMod.LOGGER.warn("PROBE climate humidity: {}", pct.apply(humids));
+                CityWorldMod.LOGGER.warn("PROBE climate biome split ({} samples): {}", n, split);
             }
         } catch (Throwable t) {
             CityWorldMod.LOGGER.error("PROBE failed", t);

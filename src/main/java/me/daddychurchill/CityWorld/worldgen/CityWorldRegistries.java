@@ -50,6 +50,7 @@ public final class CityWorldRegistries {
         CHUNK_GENERATORS.register("city", () -> CityWorldChunkGenerator.CODEC);
         BIOME_SOURCES.register("terrain", () -> CityWorldBiomeSource.CODEC);   // CLASSIC — elevation only
         BIOME_SOURCES.register("climate", () -> CityWorldClimateBiomeSource.CODEC); // MODERN — elevation × climate
+        BIOME_SOURCES.register("nether", () -> CityWorldNetherBiomeSource.CODEC); // ruined-city Nether — climate × #nether_pool
     }
 
     /** Wire the deferred registers and datapack-registry listener onto the mod event bus. */
