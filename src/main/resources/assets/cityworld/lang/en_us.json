@@ -11,6 +11,7 @@
   "generator.cityworld.sparse": "CityWorld: Sparse",
   "generator.cityworld.destroyed": "CityWorld: Destroyed",
   "generator.cityworld.classic": "CityWorld: Classic",
+  "generator.cityworld.apocalypse": "CityWorld: Apocalypse",
 
   "cityworld.customize.title": "CityWorld Settings",
   "cityworld.customize.style": "World Style",
@@ -27,5 +28,7 @@
   "cityworld.style.metro": "Metro",
   "cityworld.style.sparse": "Sparse",
   "cityworld.style.destroyed": "Destroyed",
-  "cityworld.style.apocalypse": "Apocalypse"
+  "cityworld.style.apocalypse": "Apocalypse",
+  "cityworld.lock.world_type": "Locked by this modpack (config/cityworld-startup.toml)",
+  "cityworld.lock.style": "The world type is locked by this modpack, so its style is too"
 }

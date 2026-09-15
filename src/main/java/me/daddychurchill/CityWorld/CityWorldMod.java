@@ -70,7 +70,7 @@ public class CityWorldMod {
         // Client-only: the create-world "Customize" button for the CityWorld world type. Guarded so
         // the dedicated server never loads the @OnlyIn(CLIENT) preset-editor classes.
         if (net.neoforged.fml.loading.FMLEnvironment.getDist() == net.neoforged.api.distmarker.Dist.CLIENT)
-            me.daddychurchill.CityWorld.client.CityWorldClient.init(modEventBus);
+            me.daddychurchill.CityWorld.client.CityWorldClient.init(modEventBus, modContainer);
 
         // Create the drop-in folder (config/cityworld/schematics/) so players can add their own
         // schematics without a rebuild; the library scans it alongside the bundled set.
