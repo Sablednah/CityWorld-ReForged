@@ -79,7 +79,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     Codec.BOOL.optionalFieldOf("decayed").forGetter(g -> g.decayed),
                     Codec.STRING.optionalFieldOf("style").forGetter(g -> g.style),
                     RegistryFileCodec.create(CityWorldRegistries.WORLD_SETTINGS, CityWorldSettingsData.CODEC)
-                            .optionalFieldOf("settings").forGetter(g -> g.settings)
+                            .optionalFieldOf("settings").forGetter(g -> g.settings),
+                    net.minecraft.world.level.Level.RESOURCE_KEY_CODEC.optionalFieldOf("twin_of").forGetter(g -> g.twinOf)
             ).apply(instance, CityWorldChunkGenerator::new));
 
     /**
@@ -160,6 +161,26 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private final Optional<Holder<CityWorldSettingsData>> settings;
 
+    /**
+     * Another dimension this one is the same city as ({@code "twin_of": "minecraft:overworld"}). When that
+     * dimension runs a CityWorld generator, its style and settings are used <em>instead of</em> this
+     * generator's own {@link #style}/{@link #settings} — read at runtime, because a Customize-made world
+     * carries inline settings no static dimension file could name. Same seed + same style + same settings
+     * = the same plan; {@link #decayed} then picks the era ({@code /cityworld} is {@code false}: the city
+     * before the fall). The own fields remain the fallback when the source is not CityWorld.
+     *
+     * <p>Biomes still come from this generator's own biome source (a biome source binds to one context, so
+     * the overworld's cannot be shared).
+     */
+    private final Optional<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> twinOf;
+
+    /** Whether the context was actually built from {@link #twinOf}'s generator — the self-test's handle. */
+    private volatile boolean twinResolved;
+
+    public boolean isTwinResolved() {
+        return twinResolved;
+    }
+
     public CityWorldChunkGenerator(BiomeSource biomeSource) {
         this(biomeSource, Optional.empty(), Optional.empty(), Optional.empty());
     }
@@ -183,10 +204,31 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
     public CityWorldChunkGenerator(BiomeSource biomeSource, Optional<Boolean> decayed, Optional<String> style,
             Optional<Holder<CityWorldSettingsData>> settings) {
+        this(biomeSource, decayed, style, settings, Optional.empty());
+    }
+
+    public CityWorldChunkGenerator(BiomeSource biomeSource, Optional<Boolean> decayed, Optional<String> style,
+            Optional<Holder<CityWorldSettingsData>> settings,
+            Optional<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> twinOf) {
         super(biomeSource);
         this.decayed = decayed;
         this.style = style;
         this.settings = settings;
+        this.twinOf = twinOf;
+    }
+
+    /** The CityWorld generator {@link #twinOf} names, or null (none named, not loaded, or not CityWorld). */
+    private CityWorldChunkGenerator twinSource() {
+        if (twinOf.isEmpty())
+            return null;
+        net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        net.minecraft.server.level.ServerLevel source = server == null ? null : server.getLevel(twinOf.get());
+        if (source != null && source.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator cw && cw != this)
+            return cw;
+        me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                "CityWorld: twin_of {} is not a loaded CityWorld dimension — using this dimension's own style/settings",
+                twinOf.get().identifier());
+        return null;
     }
 
     /**
@@ -212,9 +254,16 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                         + "this world. Find another way to obtain the seed.");
                     CityWorldSettingsData settingsData =
                             settings.map(Holder::value).orElse(CityWorldSettingsData.DEFAULT);
+                    CityWorldGenerator.WorldStyle worldStyle = CityWorldGenerator.parseStyle(style);
+                    // A twin plans with its source's style and settings, so both are the same city.
+                    CityWorldChunkGenerator twin = twinSource();
+                    if (twin != null) {
+                        worldStyle = twin.resolvedStyle();
+                        settingsData = twin.resolvedSettings();
+                        twinResolved = true;
+                    }
                     local = new CityWorldGenerator(levelSeed, TERRAIN_CEILING, UPSTREAM_SEA_LEVEL,
-                            CityWorldGenerator.parseStyle(style), level.getMinY(), level.getMaxY(), decayed,
-                            settingsData);
+                            worldStyle, level.getMinY(), level.getMaxY(), decayed, settingsData);
                     // The biome source answers getNoiseBiome from this context (terrain height + climate),
                     // so hand it over the moment it exists — this is the earliest point it can be had.
                     if (this.biomeSource instanceof CityWorldBiomes cityBiomes)

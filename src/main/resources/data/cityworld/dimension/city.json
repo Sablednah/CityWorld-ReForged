@@ -2,9 +2,10 @@
   "type": "minecraft:overworld",
   "generator": {
     "type": "cityworld:city",
+    "twin_of": "minecraft:overworld",
     "settings": "cityworld:modern",
     "style": "modern",
-    "decayed": true,
+    "decayed": false,
     "biome_source": {
       "type": "cityworld:climate"
     }
