@@ -754,7 +754,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             bestZ = cz;
                         }
                     }
-                if (roof == Integer.MIN_VALUE || (bestX >> 4) != pos.x || (bestZ >> 4) != pos.z)
+                if (roof == Integer.MIN_VALUE || (bestX >> 4) != (pos.getMinBlockX() >> 4) || (bestZ >> 4) != (pos.getMinBlockZ() >> 4))
                     continue;
                 drawShaft(level, net.minecraft.util.RandomSource.create(level.getSeed()
                         ^ (((long) pos.getMinBlockX() << 32) ^ (pos.getMinBlockZ() & 0xffffffffL)) * 31L), bestX, bestZ,
