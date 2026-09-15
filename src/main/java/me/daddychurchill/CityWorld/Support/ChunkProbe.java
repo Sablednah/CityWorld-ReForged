@@ -71,10 +71,30 @@ public final class ChunkProbe {
         thread.start();
     }
 
+    private static int[] findLot(ServerLevel level, String lotClass) {
+        if (!(level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw))
+            return null;
+        var context = cw.getContext(level);
+        int width = PlatMap.Width;
+        for (int ring = 0; ring <= 20; ring++)
+            for (int px = -ring; px <= ring; px++)
+                for (int pz = -ring; pz <= ring; pz++) {
+                    if (Math.max(Math.abs(px), Math.abs(pz)) != ring)
+                        continue;
+                    PlatMap platmap = context.getPlatMap(px * width, pz * width);
+                    for (int x = 0; x < width; x++)
+                        for (int z = 0; z < width; z++) {
+                            var lot = platmap.getLot(x, z);
+                            if (lot != null && lot.getClass().getSimpleName().equals(lotClass))
+                                return new int[] { platmap.originX + x, platmap.originZ + z };
+                        }
+                }
+        return null;
+    }
+
     private void run(MinecraftServer server) {
         try {
-            String[] parts = System.getProperty(PROPERTY).split(",");
-            int cx = Integer.parseInt(parts[0].trim()), cz = Integer.parseInt(parts[1].trim());
+            String spec = System.getProperty(PROPERTY).trim();
             // -Dcityworld.probe.dim=minecraft:the_nether probes another dimension (default: the overworld).
             String dim = System.getProperty("cityworld.probe.dim");
             ServerLevel level = dim == null ? server.overworld()
@@ -85,6 +105,20 @@ public final class ChunkProbe {
                 throw new IllegalArgumentException("cityworld.probe.dim " + dim + " is not a loaded dimension");
             CityWorldMod.LOGGER.warn("PROBE: dimension {} generator {}", level.dimension().identifier(),
                     level.getChunkSource().getGenerator().getClass().getSimpleName());
+            int cx, cz;
+            if (spec.startsWith("find:")) {
+                // -Dcityworld.probe=find:ParkLot — the nearest chunk (by platmap ring) planned as that lot class.
+                int[] found = findLot(level, spec.substring(5));
+                if (found == null)
+                    throw new IllegalStateException("no " + spec.substring(5) + " planned within 20 platmaps of the origin");
+                cx = found[0];
+                cz = found[1];
+                CityWorldMod.LOGGER.warn("PROBE: nearest {} is chunk {}, {}", spec.substring(5), cx, cz);
+            } else {
+                String[] parts = spec.split(",");
+                cx = Integer.parseInt(parts[0].trim());
+                cz = Integer.parseInt(parts[1].trim());
+            }
             CityWorldMod.LOGGER.warn("PROBE: forcing chunks around ({}, {})", cx, cz);
             // the ring first so the target's decoration has proper neighbours
             for (int dx = -1; dx <= 1; dx++)

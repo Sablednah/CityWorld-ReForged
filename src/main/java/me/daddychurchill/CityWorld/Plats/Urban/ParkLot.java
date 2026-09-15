@@ -620,6 +620,13 @@ public class ParkLot extends ConnectedLot {
 		// if things are bad
 		if (generator.getSettings().includeDecayedBuildings) {
 			destroyLot(generator, surfaceY - 2, surfaceY + 2);
+			// The ruined-city Nether: the wrecked park is overgrown by the Nether's own trees (huge fungi, giant
+			// mushrooms, a mod's Nether trees — CoverProvider_Nether). Only where the ground survived the wreck.
+			if (generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.NETHER)
+				for (int x = 4; x < 12; x += 7)
+					for (int z = 4; z < 12; z += 7)
+						if (chunkOdds.flipCoin() && chunk.isEmpty(x, surfaceY, z) && !chunk.isEmpty(x, surfaceY - 1, z))
+							generator.coverProvider.generateRandomCoverage(generator, chunk, x, surfaceY, z, getSmallTrees());
 		} else {
 
 			// draw center bits

@@ -12,8 +12,14 @@ import net.minecraft.world.level.block.Blocks;
  * The ruined-city Nether's plant cover (upstream's {@code CoverProvider_Nether}, modernised). Sparse, like the
  * decayed cover it extends. Whatever the overworld would have grown becomes what the ground under it can hold:
  * roots, sprouts and fungus on crimson/warped nylium (the biome ground map lays the nylium), the odd soul fire
- * on soul soil, nothing on bare netherrack; crops become netherwart. Trees are left to vanilla's own Nether
- * decoration on wild land (huge fungi, basalt columns), which runs on the modern styles.
+ * on soul soil, nothing on bare netherrack; crops become netherwart.
+ *
+ * <p><b>Trees become Nether trees.</b> Every tree a park, yard or avenue asks for is drawn from the
+ * {@code #cityworld:nether_trees} configured-feature tag — vanilla's huge crimson and warped fungi and huge
+ * red and brown mushrooms, plus Biomes O' Plenty's hellbark trees when it is installed — placed as the real
+ * vanilla/mod feature on the live level. Huge fungi only grow on their own nylium, so that is laid under the
+ * spot first (a mushroom accepts either). A tree that will not place falls back to a sprout, so a crowded
+ * spot still gets something.
  */
 public class CoverProvider_Nether extends CoverProvider_Decayed {
 
@@ -55,8 +61,35 @@ public class CoverProvider_Nether extends CoverProvider_Decayed {
 			super.setCoverage(generator, chunk, x, y, z, CoverageType.NETHERWART);
 			return;
 		}
-		boolean big = name.contains("TREE") || name.contains("TRUNK") || name.contains("SAPLING");
-		flora(chunk, x, y, z, big);
+		boolean tree = name.contains("TREE") || name.contains("TRUNK");
+		if (tree && hugeTree(chunk, x, y, z))
+			return;
+		flora(chunk, x, y, z, tree || name.contains("SAPLING"));
+	}
+
+	private static final net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>> NETHER_TREES =
+			net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE,
+					net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", "nether_trees"));
+
+	/** Grows a tree from {@link #NETHER_TREES} at (x, y, z) on the live level; false if it could not. */
+	private boolean hugeTree(SupportBlocks chunk, int x, int y, int z) {
+		if (!(chunk instanceof me.daddychurchill.CityWorld.Support.RealBlocks real)
+				|| !(real.getServerLevel() instanceof net.minecraft.world.level.WorldGenLevel level))
+			return false;
+		var pool = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE)
+				.get(NETHER_TREES);
+		if (pool.isEmpty() || pool.get().size() == 0)
+			return false;
+		var pick = pool.get().get(odds.getRandomInt(pool.get().size()));
+		net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(
+				me.daddychurchill.CityWorld.Support.AbstractBlocks.getBlockX(chunk.sectionX, x), y,
+				me.daddychurchill.CityWorld.Support.AbstractBlocks.getBlockZ(chunk.sectionZ, z));
+		// Huge fungi insist on their own nylium; mushrooms (and hellbark) take either.
+		boolean warped = pick.unwrapKey().map(k -> k.identifier().getPath().contains("warped")).orElse(false);
+		level.setBlock(pos.below(), (warped ? net.minecraft.world.level.block.Blocks.WARPED_NYLIUM
+				: net.minecraft.world.level.block.Blocks.CRIMSON_NYLIUM).defaultBlockState(), 2);
+		return pick.value().place(level, level.getLevel().getChunkSource().getGenerator(),
+				net.minecraft.util.RandomSource.create(odds.getRandomLong()), pos);
 	}
 
 	private void flora(SupportBlocks chunk, int x, int y, int z, boolean big) {
