@@ -45,6 +45,9 @@ public final class CityWorldClient {
         // editors below are registered (see CityWorldPackConfig).
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.STARTUP, CityWorldPackConfig.SPEC);
         WorldTypeLock.register();
+        // Vanilla calls every CityWorld world "experimental" (it has more than the three vanilla dimensions);
+        // skip that confirm when CityWorld is the only reason. See ExperimentalWarningSkip.
+        ExperimentalWarningSkip.register();
         modEventBus.addListener(CityWorldClient::onRegisterPresetEditors);
         modEventBus.addListener(CityWorldClient::onRegisterDebugEntries);
         // Hover text over a map mod's fullscreen map. Inert unless a map mod tells it where the
