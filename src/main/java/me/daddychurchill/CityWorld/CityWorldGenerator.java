@@ -97,9 +97,14 @@ public class CityWorldGenerator {
         return worldStyle == WorldStyle.MODERN || worldStyle == WorldStyle.APOCALYPSE;
     }
 
-    /** The ruined world — the one style whose interiors draw on the grim decoration pools. */
+    /**
+     * The ruined world — the one style whose interiors draw on the grim decoration pools and whose cellars
+     * hide zombie spawners. False for an APOCALYPSE world's <em>pristine twin</em> ({@code /cityworld}, the
+     * city before the fall), which keeps {@link #worldStyle} APOCALYPSE so it plans the identical city but
+     * draws none of the ruin. Planning code that must match the ruined world tests {@link #worldStyle}.
+     */
     public boolean isApocalypseStyle() {
-        return worldStyle == WorldStyle.APOCALYPSE;
+        return worldStyle == WorldStyle.APOCALYPSE && !settings.pristine;
     }
 
     /**

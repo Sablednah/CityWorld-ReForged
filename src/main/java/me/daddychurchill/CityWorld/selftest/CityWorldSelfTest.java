@@ -194,6 +194,8 @@ public final class CityWorldSelfTest {
             checkPermissionNodes();
             checkBiomeGroundTags(server);
             checkPlanning();
+            checkPristineTwin();
+            checkTwinDimension(server);
             checkFarmCrops();
             checkBiomeDepth(server);
             checkStructures(server);
@@ -688,6 +690,73 @@ public final class CityWorldSelfTest {
             if (contexts.isEmpty() || lots.isEmpty())
                 fail(style + " planned nothing at all");
         }
+    }
+
+    /**
+     * The {@code cityworld:city} dimension ({@code /cityworld}) must really be the overworld's twin at runtime:
+     * its context built from the overworld's generator ({@code twin_of}), with the overworld's style, and
+     * pristine. The plan-only check below cannot see this wiring.
+     */
+    private void checkTwinDimension(MinecraftServer server) {
+        ServerLevel city = server.getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION,
+                net.minecraft.resources.Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "city")));
+        if (city == null) {
+            fail("the cityworld:city dimension (/cityworld) is not loaded");
+            return;
+        }
+        if (!(city.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cityGen)
+                || !(server.overworld().getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator overGen)) {
+            fail("cityworld:city or the overworld is not a CityWorld generator");
+            return;
+        }
+        CityWorldGenerator twin = cityGen.getContext(city);
+        CityWorldGenerator source = overGen.getContext(server.overworld());
+        report.put("twin.dimension.resolved", Boolean.toString(cityGen.isTwinResolved()));
+        report.put("twin.dimension.style", twin.worldStyle + " (overworld " + source.worldStyle + ")");
+        report.put("twin.dimension.pristine", Boolean.toString(twin.getSettings().pristine));
+        if (!cityGen.isTwinResolved())
+            fail("cityworld:city did not take its style/settings from the overworld (twin_of unresolved)");
+        if (twin.worldStyle != source.worldStyle)
+            fail("cityworld:city plans as " + twin.worldStyle + " but the overworld is " + source.worldStyle);
+        if (!twin.getSettings().pristine || twin.getSettings().includeDecayedBuildings || twin.getSettings().includeOvergrowth)
+            fail("cityworld:city is not pristine (decay or overgrowth still on)");
+    }
+
+    /**
+     * The pre-apocalypse twin ({@code /cityworld}): APOCALYPSE planned again with {@code decayed=false} must be
+     * the same city lot for lot, and must really be pristine. The ruined original is checked to really be
+     * ruined first — otherwise "no difference" would prove nothing.
+     */
+    private void checkPristineTwin() {
+        var data = me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.DEFAULT;
+        CityWorldGenerator ruined = new CityWorldGenerator(PLAN_SEED, 256, 63, WorldStyle.APOCALYPSE, -64, 320,
+                java.util.Optional.empty(), data);
+        CityWorldGenerator pristine = new CityWorldGenerator(PLAN_SEED, 256, 63, WorldStyle.APOCALYPSE, -64, 320,
+                java.util.Optional.of(false), data);
+        if (!ruined.isApocalypseStyle() || !ruined.getSettings().includeDecayedBuildings
+                || !ruined.getSettings().includeOvergrowth)
+            fail("APOCALYPSE is not ruined, so the pristine-twin comparison would prove nothing");
+        if (pristine.isApocalypseStyle() || pristine.getSettings().includeDecayedBuildings
+                || pristine.getSettings().includeDecayedRoads || pristine.getSettings().includeOvergrowth)
+            fail("the pristine twin (decayed=false) of APOCALYPSE still decays, overgrows or reads as apocalypse");
+        int lots = 0, differ = 0;
+        for (int cx = -PLAN_RADIUS; cx <= PLAN_RADIUS; cx += PlatMap.Width)
+            for (int cz = -PLAN_RADIUS; cz <= PLAN_RADIUS; cz += PlatMap.Width) {
+                PlatMap a = ruined.getPlatMap(cx, cz), b = pristine.getPlatMap(cx, cz);
+                for (int x = 0; x < PlatMap.Width; x++)
+                    for (int z = 0; z < PlatMap.Width; z++) {
+                        PlatLot la = a.getLot(x, z), lb = b.getLot(x, z);
+                        lots++;
+                        String na = la == null ? "-" : la.getClass().getSimpleName();
+                        String nb = lb == null ? "-" : lb.getClass().getSimpleName();
+                        if (!na.equals(nb))
+                            differ++;
+                    }
+            }
+        report.put("twin.lots", Integer.toString(lots));
+        report.put("twin.differ", Integer.toString(differ));
+        if (differ > 0)
+            fail("the pristine twin plans a different city: " + differ + " of " + lots + " lots differ");
     }
 
     /**

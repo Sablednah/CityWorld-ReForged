@@ -191,6 +191,22 @@ public class CityWorldSettings {
     public double spawnTrees = Odds.oddsLikely;
     /** Set by the alien/nether styles; makes ground cover sparser. */
     public boolean darkEnvironment = false;
+
+    /**
+     * Runtime-only: this dimension is the <em>pristine twin</em> of a ruined world ({@code "decayed": false} on
+     * the generator) — the same city before the fall. Set by the decay override, never by a datapack. It is
+     * what turns off the APOCALYPSE extras that are not settings (hidden spawners, grim interiors); see
+     * {@code CityWorldGenerator.isApocalypseStyle}.
+     */
+    public boolean pristine = false;
+
+    /**
+     * Runtime-only: whether this world's <em>plan</em> is a ruined one — {@link #includeDecayedBuildings} as the
+     * settings and style decided it, before any per-dimension {@code decayed} override. Planning code reads this,
+     * drawing code reads {@code includeDecayedBuildings}, so a pristine or ruined twin plans the same city as
+     * the world it mirrors (upstream's outland yards are only planned in unruined worlds).
+     */
+    public boolean planDecayedBuildings = false;
     public boolean includeBasements = true;
     public boolean includeCisterns = true;
     public boolean treasuresInBuildings = true;
@@ -308,12 +324,8 @@ public class CityWorldSettings {
         // CityWorldSettingsData.DEFAULT mirrors, and cover the handful of runtime-only fields (e.g.
         // darkEnvironment) that no datapack entry carries.
         applyData(data);
-
-        // A per-dimension override wins over the datapack for the building/road ruin.
-        decayOverride.ifPresent(decayed -> {
-            includeDecayedBuildings = decayed;
-            includeDecayedRoads = decayed;
-        });
+        // What the data asked for before a ruined style bends it — a pristine twin puts it back.
+        var dataSpawnBaddies = spawnBaddies;
 
         // Bend the defaults to the chosen world style, then derive the range gates from whatever
         // radii the style left behind. Upstream ran validate before computing the range flags (its
@@ -321,6 +333,22 @@ public class CityWorldSettings {
         // flags below are set — the flags must be computed *after* the style, not before.
         validateSettingsAgainstWorldStyle(worldStyle);
         deriveRangeFlags();
+        planDecayedBuildings = includeDecayedBuildings;
+
+        // A per-dimension override wins over the datapack AND the style for the building/road ruin. It
+        // has to run after the style: it used to run before, and APOCALYPSE/DESTROYED switch decay back
+        // on, so a "decayed": false twin of a ruined world came out ruined anyway. Only ruin that does
+        // not feed the planner is touched here, so both eras plan the same city (self-test: twin.*).
+        decayOverride.ifPresent(decayed -> {
+            includeDecayedBuildings = decayed;
+            includeDecayedRoads = decayed;
+            if (!decayed) {
+                // Before the fall: no reclaiming greenery, and no apocalypse-strength hostiles either.
+                pristine = true;
+                includeOvergrowth = false;
+                spawnBaddies = dataSpawnBaddies;
+            }
+        });
     }
 
     /**
