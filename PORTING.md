@@ -1,6 +1,21 @@
 # CityWorld — Bukkit → NeoForge port plan
 
-## ▶ Resume here — the ZARP realms arc (opened 2026-09-15)
+## ▶ Resume here — the ZARP realms arc (2026-09-16: everything below is shipped and pushed)
+
+**Shipped on all three branches, each self-tested (1.21.11 122 checks, 26.1 122, 26.2 127) and pushed:**
+the modpack world-type lock, `/cityworld` as the pre-apocalypse twin, the ruined-city 1:1 Nether (biomes,
+ground, ores, lava seas, fortresses+bastions, heavier ruin), the Customize **Realms → Nether** toggle and its
+`ruinedNether` pack lock, Nether trees (`#cityworld:nether_trees`), the experimental-settings warning skip,
+the **world-freeze fix** (`RoadLot.decaySidewalk`) and **bastion caverns + ruined shafts**. Master jar
+redeployed to `CityWork-ReForged`. Two follow-ups worth knowing: the Vivo look at a bastion shaft was
+**inconclusive** (unlit Nether on llvmpipe — the measured campfire/halo counts are the evidence), and the
+End is **not started**.
+
+**Next:** the End (section 3 below) — vanilla generates the central island/pillars/podium, CityWorld the
+outer islands. Then optional Nether polish: bastion shaft look in-game on real hardware, BoP Nether biome
+coverage (the dev instance has no BoP), a server-side way to choose the ruined Nether (datapack today).
+
+## ▶ The ZARP realms arc (opened 2026-09-15)
 
 **Goal (owner):** CityWorld in the ZARP modpack. (1) New single-player worlds locked to
 `cityworld:apocalypse`; (2) a **ruined-city Nether** at 1:1 — same seed, same city plan, more ruined,
