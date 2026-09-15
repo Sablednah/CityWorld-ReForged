@@ -49,7 +49,9 @@ import net.minecraft.world.level.levelgen.Heightmap;
  *       planner graded the terrain. Read-only. (Originally contributed to upstream by Sablednah,
  *       PR #4; that attribution is preserved here.)</li>
  *   <li>{@code /cityworld} / {@code /cityworld leave} — op. Teleports into the {@code cityworld:city}
- *       dimension (and back to the overworld), landing on the surface at the player's X/Z.</li>
+ *       dimension (and back to the overworld), landing on the surface at the player's X/Z. That dimension
+ *       is the overworld's <em>pristine twin</em> ({@code twin_of} + {@code decayed: false}): the same city
+ *       before the fall — no decay, no overgrowth.</li>
  * </ul>
  *
  * <p>{@code /citychunk} is intentionally not ported: its {@code regen} relied on Bukkit's runtime

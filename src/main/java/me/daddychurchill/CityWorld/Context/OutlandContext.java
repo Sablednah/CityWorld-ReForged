@@ -77,7 +77,8 @@ public class OutlandContext extends RuralContext {
 		populateSchematics(generator, platmap);
 
 		// fill with more stuff
-		if (!generator.getSettings().includeDecayedBuildings) {
+		// the plan's decay, not this dimension's: a pristine/ruined twin must plan the same yards
+		if (!generator.getSettings().planDecayedBuildings) {
 			boolean stoneworks = platmapOdds.flipCoin() && generator.getSettings().includeMines;
 			for (int x = 0; x < PlatMap.Width; x++) {
 				for (int z = 0; z < PlatMap.Width; z++) {

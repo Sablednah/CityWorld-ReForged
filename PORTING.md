@@ -39,6 +39,33 @@ its `minecraft.gui.setScreen` spelling in `onStyleChanged`. The probe also caugh
 fixed. Future client checks for this arc belong on **Vivo** (see "Vivo — the shared test machine"): the
 WSLg window lands on the owner's desktop.
 
+### 1b. `/cityworld` = the city before the fall (owner, 2026-09-15)
+
+For the quest's flashback/time travel. `cityworld:city` (`data/cityworld/dimension/city.json`) is now
+`"twin_of": "minecraft:overworld"` + `"decayed": false`. **`twin_of`** (new optional generator field) makes
+the context take the named dimension's CityWorld style and settings at runtime (`twinSource()` via
+`ServerLifecycleHooks`) — static JSON can't name a Customize world's inline settings. Same seed + style +
+settings = same plan; `decayed` picks the era. The dimension's own `style`/`settings` stay as the fallback
+for a non-CityWorld overworld. Biomes come from the twin's own biome source (a source binds to one context).
+
+**`decayed: false` is now "pristine"**, and it had a bug: the override ran *before*
+`validateSettingsAgainstWorldStyle`, which switches decay back on for APOCALYPSE/DESTROYED, so a pristine
+twin of a ruined world came out ruined. It now runs after, and additionally sets the runtime-only
+`CityWorldSettings.pristine` (overgrowth off, `spawnBaddies` back to the data's value).
+`isApocalypseStyle()` is false when pristine (grim pools, `ApocalypseSpawners` — the latter switched from
+`worldStyle ==` to the method), while `worldStyle` stays APOCALYPSE so the **vault** (a planning decision
+in `NatureContext`) still plans. Rule: planning code tests `worldStyle`, drawing code tests the methods.
+
+**Measured, not assumed:** the first self-test run of this failed — 395 of 96,100 lots differed.
+`OutlandContext` only plans upstream's woodworks/stoneworks yards when `includeDecayedBuildings` is off, a
+planning decision reading a drawing setting. Fixed with the runtime-only `planDecayedBuildings` (the value
+before the per-dimension override), which planning code reads instead. Any future planning-side read of a
+decay/overgrowth setting must use the plan's value, or twins drift apart — `twin.differ` will say so.
+
+Self-test: `twin.lots`/`twin.differ` (APOCALYPSE vs its pristine twin, lot class by lot class, after first
+asserting the ruined one really is ruined) and `twin.dimension.*` (runtime: `cityworld:city` resolved its
+twin, same style as the overworld, pristine). The Nether reuses the same seam with `decayed: true`.
+
 ### 2. Nether — verified facts (1.21.11 sources)
 
 - **1:1 is a dimension-type field.** `NetherPortalBlock.getPortalDestination` picks the target by *key*

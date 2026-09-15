@@ -5,6 +5,31 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **Modpacks can lock the world type.** Set `lockedWorldPreset = "cityworld:apocalypse"` (any preset id)
+  in `config/cityworld-startup.toml` and every new single-player world is made with it: the create-world
+  screen opens on it, the World Type button is greyed out, and Customize still works with the style held.
+  Empty (the default) changes nothing. A dedicated server keeps using `level-type` in `server.properties`.
+
+### Changed
+
+- **`/cityworld` now visits the city before the fall.** The `cityworld:city` dimension is the overworld's
+  twin: it takes the overworld's own style and settings (including anything set in Customize), so it is the
+  same city street for street — but with no decay, no overgrowth, no hidden zombie spawners and no grim
+  interiors. On an Apocalypse world that is the city as it was. It used to be a ruined Modern city with its
+  own settings, which did not match the overworld's plan. **Worlds that already have the dimension keep
+  what they had.**
+
+### Fixed
+
+- The CityWorld: Apocalypse world type showed its raw name (`generator.cityworld.apocalypse`) on the
+  create-world screen.
+- A dimension marked `"decayed": false` was still ruined when its style was Apocalypse or Destroyed — the
+  style switched decay back on after the override.
+
 ## 5.8.0
 
 ### Added

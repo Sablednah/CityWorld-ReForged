@@ -290,7 +290,7 @@ public abstract class PlatLot {
 		// Apocalypse: hide zombie spawners in the ruins' cellars — some buried in a sealed pocket UNDER
 		// the basement floor so they can't be seen. Building lots only (they have the cellars); sewers and
 		// caves get their own zombie spawners through the enabled spawner bags.
-		if (generator.worldStyle == CityWorldGenerator.WorldStyle.APOCALYPSE && style == LotStyle.STRUCTURE)
+		if (generator.isApocalypseStyle() && style == LotStyle.STRUCTURE)
 			me.daddychurchill.CityWorld.Support.ApocalypseSpawners.apply(generator, this, chunk, chunkOdds);
 
 		// Shops: a classified shop gets its trade's villager job block dropped on the ground floor, so a
