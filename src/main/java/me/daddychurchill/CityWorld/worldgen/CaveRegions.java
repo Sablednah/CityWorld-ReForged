@@ -180,6 +180,12 @@ public final class CaveRegions {
         private final List<Holder<Biome>> members;
         private volatile List<Patch> patches;
 
+        /** No members: a dimension without cave biomes (the Nether). See {@link CaveRegions#none()}. */
+        private Pool() {
+            this.members = List.of();
+            this.patches = List.of();
+        }
+
         private Pool(HolderGetter<Biome> biomes) {
             this.members = biomes.get(CAVE_POOL)
                     .<HolderSet<Biome>>map(named -> named)
@@ -313,6 +319,11 @@ public final class CaveRegions {
     /** Builds the pool for a biome source. Call lazily — not from a constructor; tags aren't bound yet. */
     public static Pool of(HolderGetter<Biome> biomes) {
         return new Pool(biomes);
+    }
+
+    /** An empty pool, for a biome source whose dimension has no cave biomes (the Nether). */
+    public static Pool none() {
+        return new Pool();
     }
 
     /**

@@ -93,6 +93,11 @@ public final class SurfaceRegions {
 
         private final List<Patch> patches;
 
+        /** No patches: see {@link SurfaceRegions#none()}. */
+        private Pool() {
+            this.patches = List.of();
+        }
+
         private Pool(HolderGetter<Biome> biomes, TagKey<Biome> tag) {
             List<Patch> built = new ArrayList<>();
             biomes.get(tag)
@@ -136,6 +141,11 @@ public final class SurfaceRegions {
     public static Pools of(HolderGetter<Biome> biomes) {
         return new Pools(new Pool(biomes, SURFACE_POOL), new Pool(biomes, SHORE_POOL),
                 new Pool(biomes, OCEAN_POOL));
+    }
+
+    /** Empty pools, for a biome source whose dimension has no surface/shore/ocean pool biomes (the Nether). */
+    public static Pools none() {
+        return new Pools(new Pool(), new Pool(), new Pool());
     }
 
     /**

@@ -774,6 +774,8 @@ public abstract class CoverProvider extends Provider {
 			// (_Decayed). The style variants land at P8, one style at a time; the port has no
 			// `worldEnvironment` (overworld only), so the Nether/End branches are unreachable, and
 			// the _Decayed branch falls through to Normal until CoverProvider_Decayed is ported.
+			if (generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.NETHER)
+				return new CoverProvider_Nether(odds);
 			switch (generator.worldStyle) {
 			case FLOODED:
 				provider = new CoverProvider_Flooded(odds);

@@ -44,7 +44,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private static final int HEIGHT = 20;
 
     /** The result of a Done: the chosen style and the edited settings. */
-    public record Result(WorldStyle style, CityWorldSettingsData settings) {}
+    public record Result(WorldStyle style, CityWorldSettingsData settings, boolean ruinedNether) {}
 
     private final Consumer<Result> onDone;
 
@@ -99,11 +99,16 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     /** True when a modpack lock fixes the world type: the style picker is shown but greyed out. */
     private final boolean styleLocked;
 
+    /** Whether this world gets the ruined-city Nether instead of vanilla's (see {@code CityWorldRealms}). */
+    private boolean ruinedNether;
+
     public CityWorldCustomizeScreen(Screen parent, WorldStyle initialStyle, CityWorldSettingsData initial,
-            boolean styleLocked, Consumer<Result> onDone) {
+            boolean ruinedNether, boolean styleLocked, Consumer<Result> onDone) {
         super(parent, Minecraft.getInstance().options, TITLE);
         this.onDone = onDone;
         this.styleLocked = styleLocked;
+        // A pack lock wins over whatever the world carried.
+        this.ruinedNether = CityWorldPackConfig.lockedRuinedNether().orElse(ruinedNether);
         this.style = initialStyle;
         this.lockedKeys = me.daddychurchill.CityWorld.CityWorldSettings.styleLocks(initialStyle);
 
@@ -215,6 +220,19 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                     .create(Component.translatable("cityworld.lock.style")));
         }
         addRow(stylePicker, null);
+
+        this.list.addHeader(Component.literal("Realms"));
+        CycleButton<Boolean> nether = cycle("Nether", new Boolean[] { false, true }, ruinedNether,
+                v -> Component.literal(v ? "Ruined city (1:1)" : "Vanilla"), v -> ruinedNether = v);
+        if (CityWorldPackConfig.lockedRuinedNether().isPresent()) {
+            nether.active = false;
+            nether.setTooltip(net.minecraft.client.gui.components.Tooltip
+                    .create(Component.translatable("cityworld.lock.world_type")));
+        } else {
+            nether.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                    "Ruined city: the overworld's city in ruins, Nether biomes, fortresses and bastions, portals at 1:1")));
+        }
+        addRow(nether, null);
 
         this.list.addHeader(Component.literal("Features"));
         pair(row, onOff("Roads", includeRoads, v -> includeRoads = v));
@@ -345,7 +363,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData data = new CityWorldSettingsData(
                 features, terrain, spawns, treasures, world, radius, naming, mobs, overgrowth, shops, decay,
                 caves);
-        return new Result(style, data);
+        return new Result(style, data, ruinedNether);
     }
 
     /**
@@ -373,7 +391,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                         moddedBiomeShare),
                 radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves);
         // 26.2 moved screen switching from Minecraft onto its Gui (Minecraft.setScreen is gone).
-        this.minecraft.gui.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.styleLocked, this.onDone));
+        this.minecraft.gui.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.ruinedNether, this.styleLocked, this.onDone));
     }
 
     // ---- widget helpers ----------------------------------------------------------------------

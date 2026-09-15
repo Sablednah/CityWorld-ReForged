@@ -139,11 +139,11 @@ public class CityWorldGenerator {
     public final WorldStyle worldStyle;
 
     /**
-     * Always {@code NORMAL}: the port registers one overworld dimension. Kept because ported code
-     * legitimately branches on it (a farm grows netherwart instead of wheat in the Nether). See
-     * {@code compat/Environment}.
+     * Which realm this dimension is: {@code NORMAL}, or {@code NETHER} for the ruined-city Nether (from the
+     * generator's {@code "environment"} field). Ported code branches on it — the Nether's ore/cover
+     * providers, netherwart farms. See {@code compat/Environment}.
      */
-    public final Environment worldEnvironment = Environment.NORMAL;
+    public final Environment worldEnvironment;
 
     /**
      * The world's real block bounds — {@code -64} and {@code 319} for a modern overworld.
@@ -257,6 +257,15 @@ public class CityWorldGenerator {
     public CityWorldGenerator(long worldSeed, int terrainCeiling, int worldSeaLevel, WorldStyle worldStyle,
             int worldMinY, int worldMaxY, java.util.Optional<Boolean> decayOverride,
             me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData settingsData) {
+        this(worldSeed, terrainCeiling, worldSeaLevel, worldStyle, worldMinY, worldMaxY, decayOverride, settingsData,
+                Environment.NORMAL);
+    }
+
+    /** @param environment the realm; {@code NETHER} burns the city harder (see {@code CityWorldSettings.applyNetherRuin}). */
+    public CityWorldGenerator(long worldSeed, int terrainCeiling, int worldSeaLevel, WorldStyle worldStyle,
+            int worldMinY, int worldMaxY, java.util.Optional<Boolean> decayOverride,
+            me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData settingsData, Environment environment) {
+        this.worldEnvironment = environment;
         this.worldSeed = worldSeed;
         this.terrainCeiling = terrainCeiling;
         this.worldSeaLevel = worldSeaLevel;
@@ -264,6 +273,8 @@ public class CityWorldGenerator {
         this.worldMinY = worldMinY;
         this.worldMaxY = worldMaxY;
         this.settings = new CityWorldSettings(worldStyle, decayOverride, settingsData);
+        if (environment == Environment.NETHER)
+            settings.applyNetherRuin();
 
         // The original's initializeWorldInfo, minus the lazy-init dance. Order matters: the
         // providers read the world facts above, and the datums below read the providers.
