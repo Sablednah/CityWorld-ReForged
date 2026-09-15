@@ -131,6 +131,16 @@ tower, ruined**: netherrack through the floors, red fog, and far too much fire �
 stale frames after a teleport (chat confirmed the move; the picture did not change) — judge scale from the
 probe's tallies, not a skyline screenshot.
 
+**⚠ The dimension type is per-branch data.** `ruined_nether.json` copied from 1.21.11 **broke 26.1 and 26.2
+completely** — registry loading failed (`No key has_ender_dragon_fight`), so no server or world could start —
+while both branches compiled and built green. Only the per-version self-test caught it. 26.x's
+`DimensionType` gained a required `has_ender_dragon_fight` (and `default_clock`, optional) and vanilla added the
+`minecraft:visual/ambient_light_color` attribute. Each branch's file is built from **that version's own**
+`data/minecraft/dimension_type/the_nether.json` (in `~/.gradle/caches/neoformruntime/artifacts/minecraft_<v>_client.jar`)
+with scale 1, `-64..319`, no roof — so on a cherry-pick, keep the branch's copy. Any future dimension-type or
+other registry JSON (the End) needs the same per-version treatment, and **a green build is not evidence**:
+run the self-test on every branch before deploying.
+
 **Open:** bastions start at absolute y 33 (buried under a full-height city); fortresses at y 48-70 cut
 through streets; parks/yards still pick overworld trees via `TreeProvider`; building water stays water;
 BoP Nether biomes unmeasured; a dedicated server can only get it by datapack today.
@@ -140,6 +150,9 @@ BoP Nether biomes unmeasured; a dedicated server can only get it by datapack tod
 - **The dragon fight needs the vanilla End type.** `ServerLevel` creates `EndDragonFight` only when
   `dimension() == Level.END && dimensionTypeRegistration().is(BuiltinDimensionTypes.END)`. Keep
   `minecraft:the_end` as the type.
+  **26.x differs:** there it is `if (this.dimensionType().hasEnderDragonFight())` (`ServerLevel` line 304 on
+  26.1.2) — a `has_ender_dragon_fight` field on the type, no key or builtin-type check. So on 26.x a custom End
+  type could keep the fight; on 1.21.11 it cannot. Keeping `minecraft:the_end` works on all three.
 - **Vanilla's End biome source cannot run under our generator.** `TheEndBiomeSource` reads
   `sampler.erosion()`, and `ChunkMap` only builds a real `RandomState` for a `NoiseBasedChunkGenerator`
   (dummy settings otherwise). We need our own End biome source (`the_end` within 64 sections of 0,0 —
