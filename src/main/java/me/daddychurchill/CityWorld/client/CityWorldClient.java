@@ -40,7 +40,11 @@ public final class CityWorldClient {
     private static final ResourceKey<WorldPreset> CITY = ResourceKey.create(Registries.WORLD_PRESET,
             Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "city"));
 
-    public static void init(IEventBus modEventBus) {
+    public static void init(IEventBus modEventBus, net.neoforged.fml.ModContainer container) {
+        // Modpack lock: config/cityworld-startup.toml. STARTUP so it is already loaded when the preset
+        // editors below are registered (see CityWorldPackConfig).
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.STARTUP, CityWorldPackConfig.SPEC);
+        WorldTypeLock.register();
         modEventBus.addListener(CityWorldClient::onRegisterPresetEditors);
         modEventBus.addListener(CityWorldClient::onRegisterDebugEntries);
         // Hover text over a map mod's fullscreen map. Inert unless a map mod tells it where the
@@ -64,7 +68,19 @@ public final class CityWorldClient {
                 parent,
                 currentStyle(context),
                 currentSettings(context),
+                false,
                 result -> parent.getUiState().updateDimensions(configurator(result))));
+        // A modpack lock onto another CityWorld preset (apocalypse, say) still gets a Customize button — only
+        // cityworld:city has one otherwise — but with the style picker held on the preset's own style, so
+        // "settings open, type locked" cannot be undone from inside the editor.
+        CityWorldPackConfig.lockedWorldPreset()
+                .filter(key -> key.identifier().getNamespace().equals(CityWorldMod.MODID) && !key.equals(CITY))
+                .ifPresent(key -> event.register(key, (parent, context) -> new CityWorldCustomizeScreen(
+                        parent,
+                        currentStyle(context),
+                        currentSettings(context),
+                        true,
+                        result -> parent.getUiState().updateDimensions(configurator(result)))));
     }
 
     /** Reads the style off whatever generator is currently selected, so the picker opens on it. */
