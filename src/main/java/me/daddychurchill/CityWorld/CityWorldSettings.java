@@ -207,6 +207,27 @@ public class CityWorldSettings {
      * the world it mirrors (upstream's outland yards are only planned in unruined worlds).
      */
     public boolean planDecayedBuildings = false;
+
+    /**
+     * The ruined-city Nether: the same plan as the world it mirrors, burnt harder — heavier collapse, burning
+     * rubble, no road or building left intact, and no reclaiming greenery. Drawing settings only; the plan
+     * (and {@link #planDecayedBuildings}) is untouched, so it stays the overworld's city.
+     */
+    public void applyNetherRuin() {
+        pristine = false;
+        includeDecayedBuildings = true;
+        includeDecayedRoads = true;
+        includeOvergrowth = false;
+        includeFires = true;
+        includeDecayedFires = true;
+        buildingDecayIntensity = Math.max(1.2, buildingDecayIntensity * 2.0);
+        roadDecayIntensity = Math.max(1.2, roadDecayIntensity * 2.0);
+        // Burning wreckage, not a carpet of flame: in-game the data default (0.20) set most rubble alight on
+        // every roof (Vivo, 2026-09-15). DESTROYED's 0.07 reads as "the odd burning wreck"; the Nether sits just above.
+        oddsOfDecayFire = 0.08;
+        oddsOfPristineBuilding = 0.0;
+        oddsOfPristineRoad = 0.0;
+    }
     public boolean includeBasements = true;
     public boolean includeCisterns = true;
     public boolean treasuresInBuildings = true;

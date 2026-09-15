@@ -152,6 +152,9 @@ public class OreProvider extends Provider {
     // Based on work contributed by drew-bahrue
     // (https://github.com/echurchill/CityWorld/pull/2)
     public static OreProvider loadProvider(CityWorldGenerator generator) {
+        // The realm outranks the style: a ruined-city Nether is netherrack and lava whatever it mirrors.
+        if (generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.NETHER)
+            return new OreProvider_Nether(generator);
 
         // The original switches on worldStyle over several variants (_Astral, _Nether, _TheEnd,
         // _SandDunes, _SnowDunes, _Decayed, _Normal). The style variants land with their matching

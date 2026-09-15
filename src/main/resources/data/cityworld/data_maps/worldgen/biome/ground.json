@@ -1,6 +1,11 @@
 {
   "replace": false,
   "values": {
+    "minecraft:nether_wastes": { "surface": "minecraft:netherrack", "subsurface": "minecraft:netherrack" },
+    "minecraft:crimson_forest": { "surface": "minecraft:crimson_nylium", "subsurface": "minecraft:netherrack" },
+    "minecraft:warped_forest": { "surface": "minecraft:warped_nylium", "subsurface": "minecraft:netherrack" },
+    "minecraft:soul_sand_valley": { "surface": "minecraft:soul_soil", "subsurface": "minecraft:soul_sand" },
+    "minecraft:basalt_deltas": { "surface": "minecraft:basalt", "subsurface": "minecraft:blackstone" },
     "biomesoplenty:lush_desert": {
       "neoforge:conditions": [
         {
