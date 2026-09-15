@@ -1615,7 +1615,12 @@ public class RoadLot extends ConnectedLot {
 
 	protected void decayRoad(RealBlocks chunk, int x1, int x2, int y, int z1, int z2) {
 		int amount = (x2 - x1) * (z2 - z1) / 10;
-		while (amount > 0) {
+		// Bounded: a cell only counts when the block above it is empty, so a sidewalk wholly covered (sunk under
+		// the ruined Nether's lava sea, buried in rubble) never reached zero and hung its chunk forever — the
+		// whole world stopped generating and saving hung behind it (thread dump, 2026-09-15). Ordinary sidewalks
+		// finish well inside the cap, so their result is unchanged.
+		int attempts = (x2 - x1) * (z2 - z1) * 4;
+		while (amount > 0 && attempts-- > 0) {
 			int x = x1 + chunkOdds.getRandomInt(x2 - x1);
 			int z = z1 + chunkOdds.getRandomInt(z2 - z1);
 			if (chunk.isEmpty(x, y + 1, z)) {
@@ -1626,12 +1631,20 @@ public class RoadLot extends ConnectedLot {
 				amount--;
 			}
 		}
+		if (amount > 0 && me.daddychurchill.CityWorld.Support.ChunkProbe.tracing())
+			me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn("PROBE decaySidewalk gave up with {} left at chunk {}, {} (this sidewalk used to hang)",
+					amount, chunk.sectionX, chunk.sectionZ);
 	}
 
 	protected void decaySidewalk(CityWorldGenerator generator, RealBlocks chunk, int x1, int x2, int y, int z1,
 			int z2) {
 		int amount = (x2 - x1) * (z2 - z1) / 10;
-		while (amount > 0) {
+		// Bounded: a cell only counts when the block above it is empty, so a sidewalk wholly covered (sunk under
+		// the ruined Nether's lava sea, buried in rubble) never reached zero and hung its chunk forever — the
+		// whole world stopped generating and saving hung behind it (thread dump, 2026-09-15). Ordinary sidewalks
+		// finish well inside the cap, so their result is unchanged.
+		int attempts = (x2 - x1) * (z2 - z1) * 4;
+		while (amount > 0 && attempts-- > 0) {
 			int x = x1 + chunkOdds.getRandomInt(x2 - x1);
 			int z = z1 + chunkOdds.getRandomInt(z2 - z1);
 			if (chunk.isEmpty(x, y + 1, z)) {
@@ -1642,6 +1655,9 @@ public class RoadLot extends ConnectedLot {
 				amount--;
 			}
 		}
+		if (amount > 0 && me.daddychurchill.CityWorld.Support.ChunkProbe.tracing())
+			me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn("PROBE decaySidewalk gave up with {} left at chunk {}, {} (this sidewalk used to hang)",
+					amount, chunk.sectionX, chunk.sectionZ);
 	}
 
 	private void generateEntryVines(RealBlocks chunk, int y, BlockFace direction, int x1, int z1, int x2, int z2,

@@ -71,6 +71,128 @@ public final class ChunkProbe {
         thread.start();
     }
 
+    private static int[] findStructure(MinecraftServer server, ServerLevel level, String id) {
+        var registry = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
+        var holder = registry.get(net.minecraft.resources.ResourceKey.create(
+                net.minecraft.core.registries.Registries.STRUCTURE, net.minecraft.resources.Identifier.parse(id)));
+        if (holder.isEmpty())
+            throw new IllegalArgumentException("unknown structure " + id);
+        // -Dcityworld.probe.samples=N: also report the nearest start around N origins on a 1,600-block ring, so a
+        // structure's placement against the city is measured over many starts rather than one.
+        int samples = Integer.getInteger("cityworld.probe.samples", 0);
+        for (int i = 0; i < samples; i++) {
+            double angle = 2 * Math.PI * i / samples;
+            net.minecraft.core.BlockPos origin = new net.minecraft.core.BlockPos((int) (1600 * Math.cos(angle)), 0,
+                    (int) (1600 * Math.sin(angle)));
+            var found = server.submit(() -> level.getChunkSource().getGenerator().findNearestMapStructure(level,
+                    net.minecraft.core.HolderSet.direct(holder.get()), origin, 60, false)).join();
+            if (found == null) {
+                CityWorldMod.LOGGER.warn("PROBE sample {}: none near {}", i, origin.toShortString());
+                continue;
+            }
+            int sx = found.getFirst().getX() >> 4, sz = found.getFirst().getZ() >> 4;
+            ChunkAccess sc = server.submit(() -> level.getChunk(sx, sz, ChunkStatus.FULL, true)).join();
+            var st = level.structureManager().getStartForStructure(net.minecraft.core.SectionPos.bottomOf(sc),
+                    holder.get().value(), sc);
+            int ladders = 0, air = 0, volume = 0, haloAir = 0, halo = 0;
+            java.util.List<net.minecraft.world.level.levelgen.structure.BoundingBox> pieceBoxes = new java.util.ArrayList<>();
+            if (st != null)
+                for (var piece : st.getPieces())
+                    pieceBoxes.add(piece.getBoundingBox());
+            for (int x = 0; x < 16; x++)
+                for (int z = 0; z < 16; z++)
+                    for (int y = level.getMinY(); y < level.getMaxY(); y++) {
+                        var cell = new net.minecraft.core.BlockPos(sc.getPos().getMinBlockX() + x, y, sc.getPos().getMinBlockZ() + z);
+                        var state = sc.getBlockState(cell);
+                        if (state.is(net.minecraft.world.level.block.Blocks.LADDER))
+                            ladders++;
+                        // the cavern: air inside the start's box, below the street
+                        if (st != null && st.getBoundingBox().isInside(cell) && y < 64) {
+                            volume++;
+                            if (state.isAir())
+                                air++;
+                            // the control: just outside every piece (within 3 blocks of one) — solid netherrack
+                            // unless the cavern carve hollowed it
+                            boolean inPiece = false, nearPiece = false;
+                            for (var b : pieceBoxes) {
+                                if (b.isInside(cell)) {
+                                    inPiece = true;
+                                    break;
+                                }
+                                if (cell.getX() >= b.minX() - 3 && cell.getX() <= b.maxX() + 3 && cell.getZ() >= b.minZ() - 3
+                                        && cell.getZ() <= b.maxZ() + 3 && y >= b.minY() && y <= b.maxY())
+                                    nearPiece = true;
+                            }
+                            if (!inPiece && nearPiece) {
+                                halo++;
+                                if (state.isAir())
+                                    haloAir++;
+                            }
+                        }
+                    }
+            // The shaft may land in any chunk under the bastion, so count ladders and soul campfires across the
+            // whole footprint (generating each chunk it covers).
+            int footLadders = 0, footFires = 0, footChunks = 0;
+            if (st != null) {
+                var fb = st.getBoundingBox();
+                for (int fx = fb.minX() >> 4; fx <= fb.maxX() >> 4; fx++)
+                    for (int fz = fb.minZ() >> 4; fz <= fb.maxZ() >> 4; fz++) {
+                        int gx = fx, gz = fz;
+                        ChunkAccess fc = server.submit(() -> level.getChunk(gx, gz, ChunkStatus.FULL, true)).join();
+                        footChunks++;
+                        for (int x = 0; x < 16; x++)
+                            for (int z = 0; z < 16; z++)
+                                for (int y = 30; y < 90; y++) {
+                                    var s2 = fc.getBlockState(new net.minecraft.core.BlockPos((gx << 4) + x, y, (gz << 4) + z));
+                                    if (s2.is(net.minecraft.world.level.block.Blocks.LADDER))
+                                        footLadders++;
+                                    else if (s2.is(net.minecraft.world.level.block.Blocks.SOUL_CAMPFIRE))
+                                        footFires++;
+                                }
+                    }
+            }
+            String lot = "-";
+            int street = -1;
+            if (level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw) {
+                var context = cw.getContext(level);
+                street = context.streetLevel;
+                lot = java.util.Optional.ofNullable(context.getPlatMap(sx, sz).getMapLot(sx, sz)).map(l -> l.getClass().getSimpleName()).orElse("-");
+            }
+            CityWorldMod.LOGGER.warn("PROBE sample {}: chunk {}, {} box y {}..{} street {} lot {} ladders-in-start-chunk {} cavern air {}/{} below street, halo air {}/{}, footprint {} chunks: ladders {} soul campfires {}",
+                    i, sx, sz, st == null ? "?" : st.getBoundingBox().minY(), st == null ? "?" : st.getBoundingBox().maxY(),
+                    street, lot, ladders, air, volume, haloAir, halo, footChunks, footLadders, footFires);
+        }
+        var located = server.submit(() -> level.getChunkSource().getGenerator().findNearestMapStructure(level,
+                net.minecraft.core.HolderSet.direct(holder.get()), net.minecraft.core.BlockPos.ZERO, 100, false)).join();
+        if (located == null)
+            return null;
+        net.minecraft.core.BlockPos at = located.getFirst();
+        int cx = at.getX() >> 4, cz = at.getZ() >> 4;
+        ChunkAccess chunk = server.submit(() -> level.getChunk(cx, cz, ChunkStatus.FULL, true)).join();
+        var start = level.structureManager().getStartForStructure(
+                net.minecraft.core.SectionPos.bottomOf(chunk), holder.get().value(), chunk);
+        CityWorldMod.LOGGER.warn("PROBE: nearest {} at {} (chunk {}, {})", id, at.toShortString(), cx, cz);
+        if (start != null && start.isValid()) {
+            var box = start.getBoundingBox();
+            CityWorldMod.LOGGER.warn("PROBE: {} start box y {}..{}, x {}..{}, z {}..{}, {} pieces", id, box.minY(), box.maxY(),
+                    box.minX(), box.maxX(), box.minZ(), box.maxZ(), start.getPieces().size());
+            java.util.Map<Integer, Integer> tops = new java.util.TreeMap<>();
+            for (var piece : start.getPieces())
+                tops.merge(piece.getBoundingBox().maxY(), 1, Integer::sum);
+            CityWorldMod.LOGGER.warn("PROBE: {} piece top-Y histogram {}", id, tops);
+        } else {
+            CityWorldMod.LOGGER.warn("PROBE: no valid start stored in chunk {}, {} (start={})", cx, cz, start);
+        }
+        if (level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw) {
+            var context = cw.getContext(level);
+            int ground = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, at.getX(), at.getZ());
+            CityWorldMod.LOGGER.warn("PROBE: city here — streetLevel {}, seaLevel {}, surface {} at the start's column, lot {}",
+                    context.streetLevel, context.seaLevel, ground,
+                    java.util.Optional.ofNullable(context.getPlatMap(cx, cz).getMapLot(cx, cz)).map(l -> l.getClass().getSimpleName()).orElse("-"));
+        }
+        return new int[] { cx, cz };
+    }
+
     private static int[] findLot(ServerLevel level, String lotClass) {
         if (!(level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw))
             return null;
@@ -106,7 +228,15 @@ public final class ChunkProbe {
             CityWorldMod.LOGGER.warn("PROBE: dimension {} generator {}", level.dimension().identifier(),
                     level.getChunkSource().getGenerator().getClass().getSimpleName());
             int cx, cz;
-            if (spec.startsWith("find:")) {
+            if (spec.startsWith("find:structure:")) {
+                // -Dcityworld.probe=find:structure:minecraft:bastion_remnant — the nearest start of that structure
+                // in the probed dimension, with where its pieces sit against the city's street level.
+                int[] found = findStructure(server, level, spec.substring("find:structure:".length()));
+                if (found == null)
+                    throw new IllegalStateException("no " + spec + " found within 100 chunks of the origin");
+                cx = found[0];
+                cz = found[1];
+            } else if (spec.startsWith("find:")) {
                 // -Dcityworld.probe=find:ParkLot — the nearest chunk (by platmap ring) planned as that lot class.
                 int[] found = findLot(level, spec.substring(5));
                 if (found == null)
@@ -119,6 +249,20 @@ public final class ChunkProbe {
                 cx = Integer.parseInt(parts[0].trim());
                 cz = Integer.parseInt(parts[1].trim());
             }
+            // -Dcityworld.probe.radius=N: generate every chunk within N of the target, one at a time, logging each
+            // before it starts — a chunk whose generation never returns is then named by the last line logged.
+            int sweep = Integer.getInteger("cityworld.probe.radius", 0);
+            for (int ring = 1; ring <= sweep; ring++)
+                for (int dx = -ring; dx <= ring; dx++)
+                    for (int dz = -ring; dz <= ring; dz++) {
+                        if (Math.max(Math.abs(dx), Math.abs(dz)) != ring)
+                            continue;
+                        int sx = cx + dx, sz = cz + dz;
+                        CityWorldMod.LOGGER.warn("PROBE sweep: generating chunk {}, {}", sx, sz);
+                        server.submit(() -> level.getChunk(sx, sz, ChunkStatus.FULL, true)).join();
+                    }
+            if (sweep > 0)
+                CityWorldMod.LOGGER.warn("PROBE sweep: all chunks within {} of ({}, {}) generated", sweep, cx, cz);
             CityWorldMod.LOGGER.warn("PROBE: forcing chunks around ({}, {})", cx, cz);
             // the ring first so the target's decoration has proper neighbours
             for (int dx = -1; dx <= 1; dx++)

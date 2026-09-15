@@ -375,8 +375,12 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             int halo = Math.max(0, context.getSettings().caves.structureCarveHalo());
             int haloUp = Math.max(0, context.getSettings().caves.structureCarveHaloUp());
             ChunkPos pos = chunk.getPos();
+            // Bearded structures, plus anything a datapack asks a cavern for (#cityworld:carve_cavern — bastions,
+            // whose fixed start at y 33 buries them under a full-height city).
+            var cavern = structureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE).get(CARVE_CAVERN);
             List<net.minecraft.world.level.levelgen.structure.StructureStart> starts =
-                    structureManager.startsForStructure(pos, CityWorldChunkGenerator::carvesTerrain);
+                    structureManager.startsForStructure(pos, structure -> carvesTerrain(structure)
+                            || cavern.map(set -> set.stream().anyMatch(h -> h.value() == structure)).orElse(false));
             if (starts.isEmpty())
                 return;
 
@@ -475,6 +479,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     }
 
     /** Whether this structure expects terrain to be carved away from it (a beard), rather than piled on. */
+    /** Structures that get a carved cavern whatever their {@code terrain_adaptation}; see {@link #carveForStructures}. */
+    public static final TagKey<net.minecraft.world.level.levelgen.structure.Structure> CARVE_CAVERN = TagKey.create(
+            Registries.STRUCTURE, Identifier.fromNamespaceAndPath("cityworld", "carve_cavern"));
+
     private static boolean carvesTerrain(net.minecraft.world.level.levelgen.structure.Structure structure) {
         net.minecraft.world.level.levelgen.structure.TerrainAdjustment adjustment = structure.terrainAdaptation();
         return adjustment == net.minecraft.world.level.levelgen.structure.TerrainAdjustment.BEARD_BOX
@@ -685,6 +693,114 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             // sculk in the deep dark, sulfur on 26.2. See placeCaveDecoration.
             placeCaveDecoration(level, chunk);
         }
+
+        // A buried structure that got a cavern (#cityworld:carve_cavern — bastions) gets a way down to it.
+        drawCavernShafts(context, level, chunk, structureManager);
+    }
+
+    /**
+     * The surface tell for a structure buried in a carved cavern: a ruined blackstone shaft from the street down onto
+     * its highest roof, drawn in the structure's start chunk after the city and the structure are both in place.
+     *
+     * <p>Why it exists: a bastion starts at absolute y 33 whatever the terrain, which in a full-height ruined-city
+     * Nether is well under the streets. {@link #carveForStructures} gives it a cavern; this gives a player a reason
+     * to find it — a broken 5x5 blackstone collar with a soul campfire at street level, and a ladder down.
+     *
+     * <p>Self-sizing: the bottom is the highest piece box under the shaft column, so nothing here assumes where a
+     * structure sits. No shaft when that roof is within four blocks of the street (nothing to dig down to), or when
+     * no piece lies under the column.
+     */
+    private void drawCavernShafts(CityWorldGenerator context, WorldGenLevel level, ChunkAccess chunk,
+            StructureManager structureManager) {
+        try {
+            var cavern = structureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE).get(CARVE_CAVERN);
+            if (cavern.isEmpty())
+                return;
+            ChunkPos pos = chunk.getPos();
+            List<net.minecraft.world.level.levelgen.structure.StructureStart> starts = structureManager.startsForStructure(pos,
+                    structure -> cavern.get().stream().anyMatch(h -> h.value() == structure));
+            for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
+                if (!start.isValid())
+                    continue;
+                int street = context.streetLevel + 1;
+                // Measured over 12 bastions: every one breaks the surface — start boxes y 29..32 up to y 75..102
+                // against a y 64 street — because a tower or two punches up while the bulk (treasure, bridges,
+                // stables) lies at y 33..55. So the shaft is not about finding the bastion; it is the way down to
+                // that bulk. Of a 3x3 grid of columns over the start chunk, it takes the highest roof still four
+                // under the street (the shortest climb, and never onto a tower).
+                //
+                // Searched over the whole footprint, not just the start chunk: in the start chunk alone only 2 of 12
+                // sampled bastions found a low roof. The choice depends only on the start's pieces, so every chunk the
+                // bastion touches picks the same column, and only the chunk that owns it draws — one shaft per
+                // bastion. Candidate columns keep two blocks inside their chunk so the 5x5 never crosses a chunk edge.
+                var footprint = start.getBoundingBox();
+                int bestX = 0, bestZ = 0, roof = Integer.MIN_VALUE;
+                for (int cx = footprint.minX() + 2; cx <= footprint.maxX() - 2; cx += 4)
+                    for (int cz = footprint.minZ() + 2; cz <= footprint.maxZ() - 2; cz += 4) {
+                        int inX = Math.floorMod(cx, 16), inZ = Math.floorMod(cz, 16);
+                        if (inX < 2 || inX > 13 || inZ < 2 || inZ > 13)
+                            continue;
+                        int top = Integer.MIN_VALUE;
+                        for (net.minecraft.world.level.levelgen.structure.StructurePiece piece : start.getPieces()) {
+                            var box = piece.getBoundingBox();
+                            // The ladder's 3x3 core must land on the piece; bastion pieces are often too narrow to
+                            // hold the whole 5x5 collar, and demanding that left 5 of 12 sampled bastions shaftless.
+                            if (box.minX() <= cx - 1 && box.maxX() >= cx + 1 && box.minZ() <= cz - 1 && box.maxZ() >= cz + 1)
+                                top = Math.max(top, box.maxY());
+                        }
+                        if (top > roof && top < street - 4) {
+                            roof = top;
+                            bestX = cx;
+                            bestZ = cz;
+                        }
+                    }
+                if (roof == Integer.MIN_VALUE || (bestX >> 4) != pos.x || (bestZ >> 4) != pos.z)
+                    continue;
+                drawShaft(level, net.minecraft.util.RandomSource.create(level.getSeed()
+                        ^ (((long) pos.getMinBlockX() << 32) ^ (pos.getMinBlockZ() & 0xffffffffL)) * 31L), bestX, bestZ,
+                        roof + 1, street);
+            }
+        } catch (Throwable t) {
+            // decoration must never break chunk generation
+            LOGGER_STRUCTURES.error("CityWorld: cavern shaft failed for chunk {}", chunk.getPos(), t);
+        }
+    }
+
+    private static void drawShaft(WorldGenLevel level, net.minecraft.util.RandomSource random, int cx, int cz, int bottom,
+            int street) {
+        var bricks = net.minecraft.world.level.block.Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState();
+        var cracked = net.minecraft.world.level.block.Blocks.CRACKED_POLISHED_BLACKSTONE_BRICKS.defaultBlockState();
+        var gilded = net.minecraft.world.level.block.Blocks.GILDED_BLACKSTONE.defaultBlockState();
+        var light = net.minecraft.world.level.block.Blocks.SHROOMLIGHT.defaultBlockState();
+        var air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        var ladder = net.minecraft.world.level.block.Blocks.LADDER.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.LadderBlock.FACING, net.minecraft.core.Direction.SOUTH);
+        net.minecraft.core.BlockPos.MutableBlockPos at = new net.minecraft.core.BlockPos.MutableBlockPos();
+        int flags = net.minecraft.world.level.block.Block.UPDATE_CLIENTS;
+        for (int y = bottom; y <= street + 1; y++)
+            for (int dx = -2; dx <= 2; dx++)
+                for (int dz = -2; dz <= 2; dz++) {
+                    at.set(cx + dx, y, cz + dz);
+                    boolean wall = Math.abs(dx) == 2 || Math.abs(dz) == 2;
+                    if (!wall) {
+                        // the ladder hangs on the north wall's inner face, down the middle
+                        level.setBlock(at, dx == 0 && dz == -1 && y <= street ? ladder : air, flags);
+                    } else if (y > street) {
+                        // a broken collar above the street: about half the ring stands
+                        if (random.nextBoolean())
+                            level.setBlock(at, random.nextInt(6) == 0 ? cracked : bricks, flags);
+                    } else if (dx == 0 && dz == -2) {
+                        level.setBlock(at, bricks, flags); // the ladder's backing, never missing
+                    } else {
+                        int roll = random.nextInt(40);
+                        level.setBlock(at, (y - bottom) % 8 == 4 && roll < 10 ? light
+                                : roll < 12 ? cracked : roll == 12 ? gilded : bricks, flags);
+                    }
+                }
+        // the tell: a soul campfire burning on the collar's north corner
+        at.set(cx - 2, street + 2, cz - 2);
+        level.setBlock(at.below(), bricks, flags);
+        level.setBlock(at, net.minecraft.world.level.block.Blocks.SOUL_CAMPFIRE.defaultBlockState(), flags);
     }
 
     /**

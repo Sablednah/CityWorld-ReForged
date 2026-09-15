@@ -160,6 +160,52 @@ the "parks grow overworld trees" worry was wrong the other way — a decayed `Pa
 *nothing* (upstream), in the Apocalypse overworld and the Nether alike; the first park probe (chunk -20,-20)
 found no stems, caps or even sprouts. The Nether branch now plants trees on whatever ground survived the wreck.
 
+**⚠ The first in-game Nether hung the whole world (owner, 2026-09-15).** Chunks stopped arriving (black void),
+and leaving hung on "Saving world". No exception, no crash report. Diagnosed from the running game, not guessed:
+Windows `jstack.exe` from Gradle's Windows JDK (`C:\Users\darre\.gradle\jdks\eclipse_adoptium-21-amd64-windows.2`
+— the CurseForge runtime is a JRE with no `jcmd`) against the `javaw` PID, **two dumps ten seconds apart**: one
+worker RUNNABLE with CPU 639.6 s → 650.1 s inside `RoadLot.decaySidewalk` (line 1637), every other worker idle,
+the server thread parked in `ServerChunkCache.getChunk` waiting on that chunk. Cause: upstream's
+`while (amount > 0)` only decrements when the block above a random sidewalk cell is empty, so a sidewalk wholly
+covered — under the Nether's lava sea, under burning rubble — never exits. Fixed with an attempt cap
+(4× the area; ordinary sidewalks finish long before it). The chunk never completed, so it was never saved, and
+regenerates with the fix. **Proven on the owner's own world** (copied save, seed 4007804917611692315): a
+radius-10 sweep on the *old* code around the saved position did not hang — the stuck chunk was further out, and
+covered-ness depends on neighbours decorating first, so a one-at-a-time sweep need not hit it — but a radius-32
+sweep on the fixed code (4,224 chunks, all generated) logged `decaySidewalk gave up with 3 left at chunk -166, -88`:
+the sidewalk that hung the world, inside the owner's view distance. Probe gained `-Dcityworld.probe.radius=N` (generate every chunk within N, logging each
+first, so a hang names its chunk) and `find:structure:<id>`.
+
+**Bastions: cavern + ruined shaft (owner's pick, 2026-09-15).** `#cityworld:carve_cavern`
+(`data/cityworld/tags/worldgen/structure/`, ships `minecraft:bastion_remnant`) widens `carveForStructures` beyond the
+beard adaptations, so a bastion gets the same carved cavern an ancient city does. `drawCavernShafts` (end of
+`applyBiomeDecoration`, the structure's start chunk only) draws a 5x5 cracked-polished-blackstone shaft with a
+ladder and shroomlight, a broken collar and a soul campfire at street level, down onto the highest roof under
+one of three candidate columns. **Measured first:** the nearest bastion in the owner's world (-400, 208, a
+NatureLot on y 54 ground) has a start box of **y 31..86** over 93 pieces — most tops y 33..55, but towers to
+y 74..86, above the y 64 street. So bastions are *not* always buried; they already broke the surface before
+any of this. **Twelve more starts on a 1,600-block ring all did the same:** boxes from y 29..32 up to y 75..102
+over a y 64 street, in NatureLot, FarmLot, BunkerLot, FactoryBuildingLot, OfficeBuildingLot, ClipboardLot
+alike — a tower or two breaks the surface while the bulk sits at y 33..55. A "only if wholly buried" shaft
+therefore never fired (0 ladders in every start chunk). The shaft is the way *down to the bulk*: of a 3x3 grid
+of columns over the start chunk it lands on the highest roof still four under the street, never on a tower.
+In the start chunk alone that found a low roof for only 2 of 12, so the column is chosen over the **whole
+footprint** (4-block grid, two blocks inside a chunk) and drawn only by the chunk that owns it — deterministic
+from the pieces, so one shaft per bastion.
+
+**How often a shaft lands, measured over the same 12:** 7 of 12 get one (soul campfires counted across every
+chunk of the footprint; ladders alone are no proxy — city buildings have their own). The five misses are the
+**tall bastions** (boxes to y 95..102, bridge-type): no column has a roof four blocks under the street, because
+their pieces sit at or above it — those are walked into rather than climbed down to. Relaxing the landing
+requirement from a 5x5 to a 3x3 core changed nothing (same 7), so the limit is the bastion's shape, not the rule.
+
+**The cavern is real, measured with a control:** cells just outside every piece (within 3 blocks) and below
+the street — solid netherrack unless carved — were 78–100% air in 10 of the 12 sampled start chunks
+(e.g. 1102/1200, 1125/1200, 877/960); the two exceptions had tiny samples where the pieces barely reach the
+start chunk (0/48, 87/198).
+Probe: `find:structure:<id>` plus `-Dcityworld.probe.samples=N` (N starts on a 1,600-block ring, each logged
+with its Y range, street, lot, buried-or-not and ladders in the start chunk).
+
 **Open:** bastions start at absolute y 33 (buried under a full-height city); fortresses at y 48-70 cut
 through streets; parks/yards still pick overworld trees via `TreeProvider`; building water stays water;
 BoP Nether biomes unmeasured; a dedicated server can only get it by datapack today.

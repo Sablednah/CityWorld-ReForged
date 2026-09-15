@@ -23,6 +23,10 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   Trees in its parks, yards and avenues grow as huge crimson and warped fungi and giant red and brown
   mushrooms — and Biomes O' Plenty's hellbark trees when it is installed (a datapack can add any mod's trees
   to `#cityworld:nether_trees`).
+- **Bastions in the ruined-city Nether get a cavern and a way down.** A bastion always generates at y 33, which
+  in a full-height ruined Nether is deep under the streets. It now sits in its own carved cavern, and a ruined
+  blackstone shaft — a broken collar with a soul campfire at street level, a ladder down — leads onto its roof.
+  A datapack can give any other buried structure the same treatment with `#cityworld:carve_cavern`.
 - **No more "experimental settings" warning for CityWorld worlds.** Vanilla asked about every CityWorld world
   it created, because CityWorld adds a fourth dimension and vanilla only trusts the three it ships. CityWorld
   now answers it for you when its own dimensions are the only reason — anything else experimental (another
@@ -39,6 +43,10 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Fixed
 
+- **The ruined-city Nether could freeze the whole world.** Chunks stopped generating (a black void) and quitting
+  hung on "Saving world". A decaying sidewalk kept looking for an uncovered spot to crumble and never gave up
+  when the whole sidewalk was covered — sunk under the Nether's lava sea, or buried in rubble. It now gives up
+  after a fair number of tries. A world that froze this way is fine to reopen: the stuck chunk was never saved.
 - The CityWorld: Apocalypse world type showed its raw name (`generator.cityworld.apocalypse`) on the
   create-world screen.
 - A dimension marked `"decayed": false` was still ruined when its style was Apocalypse or Destroyed — the
