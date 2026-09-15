@@ -1,5 +1,88 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Resume here — the ZARP realms arc (opened 2026-09-15)
+
+**Goal (owner):** CityWorld in the ZARP modpack. (1) New single-player worlds locked to
+`cityworld:apocalypse`; (2) a **ruined-city Nether** at 1:1 — same seed, same city plan, more ruined,
+"nature" = Nether biomes incl. BoP; (3) a **CityWorld End** — vanilla central island + dragon fight,
+CityWorld buildings on the outer islands, chorus/End biomes, end cities still spawning.
+
+**Owner's decisions (2026-09-15, all the recommended options):**
+
+- Nether is **full height, no roof**: `-64..319` like the overworld so the city stands at identical heights.
+- Nether keeps **fortresses + bastions** (blaze rods → eyes of ender → the End is still reachable).
+- Nether/End variants ship as **Customize toggles** (default vanilla), not a change to the Apocalypse
+  preset — other CityWorld users are unaffected; the pack config turns them on and locks them.
+- The lock is **type locked, settings open**: World Type greyed, Customize works, its style picker locked.
+
+**Order, cheapest proof first:** (1) the lock — **built, see below**; (2) a Nether spike; (3) the End.
+
+### 1. The world-type lock
+
+`config/cityworld-startup.toml` → `[worldCreation] lockedWorldPreset = "cityworld:apocalypse"`
+(`client/CityWorldPackConfig`, `client/WorldTypeLock`). **STARTUP, not CLIENT**: FML opens a STARTUP config
+on registration (checked in `ConfigTracker` bytecode, loader 10.0.36); CLIENT loads at a later stage and
+`PresetEditorManager.init` (from `ClientHooks.initClientHooks`) is not guaranteed to follow it. Vanilla
+hardcodes `WorldPresets.NORMAL` in `CreateWorldScreen.openFresh`, so there is no data-only lock: the hook
+selects the preset (only if not already — init re-runs on return from Customize), trims the ui state's
+mutable preset lists to it (re-trimmed by a ui-state listener, since `setSettings` refills them), and greys
+the World Type button each frame (it lives in a private tab class and its own listener re-enables it).
+Only `cityworld:city` had a Customize editor; the locked preset now gets one too, style picker greyed.
+A dedicated server already takes `level-type=cityworld:apocalypse`.
+
+**Verified 2026-09-15 on a real 1.21.11 client** (WSLg, a throwaway self-driving probe, not committed):
+opens on `cityworld:apocalypse` with both preset lists cut to 1; a `setSettings` refresh and a forced
+`setWorldType(minecraft:normal)` both left it on apocalypse; World Type button `active=false`; Customize
+present with "Style: Apocalypse" greyed (screenshots checked). Compiles on 26.1 and 26.2 — 26.2 only needs
+its `minecraft.gui.setScreen` spelling in `onStyleChanged`. The probe also caught a **pre-existing** gap:
+`generator.cityworld.apocalypse` was never in `en_us.json`, so the World Type button showed the raw key —
+fixed. Future client checks for this arc belong on **Vivo** (see "Vivo — the shared test machine"): the
+WSLg window lands on the owner's desktop.
+
+### 2. Nether — verified facts (1.21.11 sources)
+
+- **1:1 is a dimension-type field.** `NetherPortalBlock.getPortalDestination` picks the target by *key*
+  (`Level.NETHER` ↔ `Level.OVERWORLD`) and scales by `DimensionType.getTeleportationScale` =
+  `coordinateScale` ratio. A custom `cityworld:nether` dimension type with `coordinate_scale: 1.0` on the
+  `minecraft:the_nether` level stem gives 1:1. Nothing else keys off `BuiltinDimensionTypes.NETHER` except
+  `WorldDimensions` (lifecycle/experimental check) — Nether behaviour (beds explode, piglins, fog) is the
+  type's `EnvironmentAttributeMap`, so copy vanilla's attributes into ours.
+- **The generator hardcodes overworld heights**: `getMinY() = -64`, `getGenDepth() = 384`. Fine for the
+  chosen full-height Nether (type `min_y -64, height 384`), but the End keeps vanilla's `0..256` type, so
+  these must come from the dimension there.
+- **Same plan, more ruin — the precedent exists.** The `cityworld:city` dimension is already "same seed,
+  `decayed: true`". Plan-affecting settings must match the overworld's or the plan diverges; the
+  self-test's plan hash (`--compare`) is the check. Decay intensity (`Decay.buildingIntensity`,
+  `roadIntensity`, `oddsOfDecayFire`) is a settings knob, not code.
+- **Upstream had a Nether environment** that the port dropped: `worldEnvironment` is hardwired `NORMAL`
+  (`CityWorldGenerator`). `OreProvider_Nether` (netherrack strata, lava fluids, quartz/glowstone/soul
+  sand ores) and `CoverProvider_Nether` (extends Decayed; crops/flowers/trees → nether flora, fire) are
+  small files at `251078e`. `FarmLot` already branches on `Environment.NETHER` (netherwart).
+- **Biomes need a Nether source.** CityWorld pulls biomes from its own sources; `TerraBlenderBridge` only
+  harvests `RegionType.OVERWORLD` (BoP's Nether biomes arrive as TerraBlender NETHER regions).
+- **Structures:** `minecraft:nether_complexes` (fortress 2 : bastion 3, random_spread 27/4) gated by
+  `#has_structure/nether_fortress` / `bastion_remnant`. The allow-list tag seam (`cityworld:allowed`) and
+  vanilla's own biome filtering carry over — the biome source must emit tagged Nether biomes.
+
+### 3. End — verified facts (1.21.11 sources)
+
+- **The dragon fight needs the vanilla End type.** `ServerLevel` creates `EndDragonFight` only when
+  `dimension() == Level.END && dimensionTypeRegistration().is(BuiltinDimensionTypes.END)`. Keep
+  `minecraft:the_end` as the type.
+- **Vanilla's End biome source cannot run under our generator.** `TheEndBiomeSource` reads
+  `sampler.erosion()`, and `ChunkMap` only builds a real `RandomState` for a `NoiseBasedChunkGenerator`
+  (dummy settings otherwise). We need our own End biome source (`the_end` within 64 sections of 0,0 —
+  vanilla's own radius — then highlands/midlands/barrens/small islands from CityWorld noise).
+- **Central island:** the pillars (`end_spike`) and platform are *biome features* of `minecraft:the_end`,
+  and the exit podium is placed by `EndDragonFight` at the heightmap over 0,0. Plan: delegate the central
+  zone to vanilla End noise generation, CityWorld outside it.
+- **End cities** (`end_cities`, random_spread 20/11, biomes highlands+midlands) refuse a start whose
+  lowest corner of a 5×5 box is below **y 60** (`EndCityStructure.findGenerationPoint`).
+- **Gateways** land you on the nearest **`END_STONE`** with two non-full blocks above it in the target chunk,
+  else spawn an `end_island` feature at y 75 — so outer-island ground should stay end stone.
+- Upstream's `OreProvider_TheEnd` / `CoverProvider_TheEnd` exist at `251078e` too. The FLOATING style is the
+  natural shape base for outer islands.
+
 ## ▶ Resume here (re-evaluated 2026-09-14)
 
 **Nothing is in flight. `v5.8.0` is released on all three versions (2026-09-14):** the two-chunk

@@ -96,10 +96,14 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private double biomeScale;
     private double moddedBiomeShare;
 
+    /** True when a modpack lock fixes the world type: the style picker is shown but greyed out. */
+    private final boolean styleLocked;
+
     public CityWorldCustomizeScreen(Screen parent, WorldStyle initialStyle, CityWorldSettingsData initial,
-            Consumer<Result> onDone) {
+            boolean styleLocked, Consumer<Result> onDone) {
         super(parent, Minecraft.getInstance().options, TITLE);
         this.onDone = onDone;
+        this.styleLocked = styleLocked;
         this.style = initialStyle;
         this.lockedKeys = me.daddychurchill.CityWorld.CityWorldSettings.styleLocks(initialStyle);
 
@@ -203,8 +207,14 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         List<AbstractWidget> row = new ArrayList<>();
 
         this.list.addHeader(Component.literal("World style"));
-        addRow(cycle("Style", WorldStyle.values(), style, CityWorldCustomizeScreen::styleLabel,
-                this::onStyleChanged), null);
+        CycleButton<WorldStyle> stylePicker = cycle("Style", WorldStyle.values(), style,
+                CityWorldCustomizeScreen::styleLabel, this::onStyleChanged);
+        if (styleLocked) {
+            stylePicker.active = false;
+            stylePicker.setTooltip(net.minecraft.client.gui.components.Tooltip
+                    .create(Component.translatable("cityworld.lock.style")));
+        }
+        addRow(stylePicker, null);
 
         this.list.addHeader(Component.literal("Features"));
         pair(row, onOff("Roads", includeRoads, v -> includeRoads = v));
@@ -362,7 +372,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                         announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
                         moddedBiomeShare),
                 radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves);
-        this.minecraft.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.onDone));
+        this.minecraft.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.styleLocked, this.onDone));
     }
 
     // ---- widget helpers ----------------------------------------------------------------------
