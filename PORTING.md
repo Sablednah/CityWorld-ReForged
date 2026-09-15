@@ -141,6 +141,25 @@ with scale 1, `-64..319`, no roof — so on a cherry-pick, keep the branch's cop
 other registry JSON (the End) needs the same per-version treatment, and **a green build is not evidence**:
 run the self-test on every branch before deploying.
 
+**The "experimental settings" warning — solved (2026-09-15).** The owner reported it had *always* shown for
+CityWorld worlds, and the cause is not the Nether: `WorldDimensions.bake` makes a world stable only with
+exactly the three vanilla dimensions (`list.size() == VANILLA_DIMENSION_COUNT`), and `cityworld:city` is a
+fourth. `client/ExperimentalWarningSkip` cancels the `ConfirmScreen` as it opens (`ScreenEvent.Opening`, current
+screen `CreateWorldScreen`, title key `selectWorld.warning.experimental.title`) and answers its `callback`
+(access-transformed public) on the next tick via `Minecraft.schedule` — but only if no experimental feature
+flags are on, no non-`cityworld` registry in the STATIC/WORLDGEN layers is unstable, and every dimension is a
+CityWorld generator or passes a replica of vanilla's private `isVanillaLike`. Seen on Vivo: one click on Create
+New World went straight into the world, log line "skipped the experimental-settings warning".
+
+**Nether trees.** `CoverProvider_Nether` turns every tree request into a feature from
+`#cityworld:nether_trees` (configured-feature tag: vanilla `crimson_fungus_planted`, `warped_fungus_planted`,
+`huge_red_mushroom`, `huge_brown_mushroom`; optional `biomesoplenty:hellbark_tree`/`big_hellbark_tree` — ids read
+from BoP 26.x's jar), placed with `ConfiguredFeature.place` on `RealBlocks.getServerLevel()` after laying the
+matching nylium (huge fungi require their own; mushrooms take any `MUSHROOM_GROW_BLOCK`). **Measured first:**
+the "parks grow overworld trees" worry was wrong the other way — a decayed `ParkLot` calls `destroyLot` and plants
+*nothing* (upstream), in the Apocalypse overworld and the Nether alike; the first park probe (chunk -20,-20)
+found no stems, caps or even sprouts. The Nether branch now plants trees on whatever ground survived the wreck.
+
 **Open:** bastions start at absolute y 33 (buried under a full-height city); fortresses at y 48-70 cut
 through streets; parks/yards still pick overworld trees via `TreeProvider`; building water stays water;
 BoP Nether biomes unmeasured; a dedicated server can only get it by datapack today.

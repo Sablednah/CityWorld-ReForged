@@ -20,8 +20,13 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   **Portals link 1:1**, so the ruin you arrive in stands exactly where its overworld building does. It is full
   height with no bedrock roof, and Nether fortresses and bastions still generate, so blaze rods and the road to
   the End are intact. Modpacks can lock it with `ruinedNether = "cityworld"` in `config/cityworld-startup.toml`.
-  Creating such a world shows vanilla's "experimental settings" warning once: vanilla calls any non-vanilla
-  Nether experimental.
+  Trees in its parks, yards and avenues grow as huge crimson and warped fungi and giant red and brown
+  mushrooms — and Biomes O' Plenty's hellbark trees when it is installed (a datapack can add any mod's trees
+  to `#cityworld:nether_trees`).
+- **No more "experimental settings" warning for CityWorld worlds.** Vanilla asked about every CityWorld world
+  it created, because CityWorld adds a fourth dimension and vanilla only trusts the three it ships. CityWorld
+  now answers it for you when its own dimensions are the only reason — anything else experimental (another
+  mod's dimension, an experimental datapack) still asks.
 
 ### Changed
 

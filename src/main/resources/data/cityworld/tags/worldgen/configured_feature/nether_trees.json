@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:crimson_fungus_planted",
+    "minecraft:warped_fungus_planted",
+    "minecraft:huge_red_mushroom",
+    "minecraft:huge_brown_mushroom",
+
+    { "id": "biomesoplenty:hellbark_tree", "required": false },
+    { "id": "biomesoplenty:big_hellbark_tree", "required": false }
+  ]
+}
