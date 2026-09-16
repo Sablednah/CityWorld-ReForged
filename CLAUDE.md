@@ -84,6 +84,28 @@ export PATH="$JAVA_HOME/bin:$PATH"
   **`-Dcityworld.watch=<x>,<y>,<z>`** (world coords, alongside the probe) logs every write to that cell
   with the CityWorld stack behind it — "who draws this block?" answered in one run (the line-of-blocks
   building was `drawInteriorColumns` through a CENTER stairwell; zero WATCH lines after the fix).
+- **⚠ Read `PROBE: dimension <id> generator <class>` BEFORE believing any number from it.**
+  `runServer` generates a **vanilla** Nether and End: the world presets define vanilla realms, and
+  CityWorld's are swapped in by `CityWorldRealms` at world creation through the Customize toggles, which a
+  dedicated server never goes through. With BoP installed the wrong world still shows crimson forest and
+  withered abyss, so it looks convincingly right. Four probe runs measured the wrong dimension on
+  2026-09-16 and "proved" a fix using blocks vanilla's own surface rules had placed; it was committed,
+  pushed and deployed before the generator line was read. `CityWorldChunkGenerator` = ours,
+  `NoiseBasedChunkGenerator` = vanilla. PORTING.md has the `run/world/datapacks/` recipe that forces the
+  real one, and `-Dcityworld.probe=find:biome:<id>` checks a biome is present before you call its feature
+  broken. Three more probe traps, each of which cost a run: the **server watchdog kills any sweep over 60s**
+  (it runs as one long tick — set `max-tick-time=-1` in the gitignored `run/server.properties`); a roofed
+  dimension's `WORLD_SURFACE` is the *ceiling*; and a small sweep sits in ONE biome, so zero there means
+  "wrong place", not "broken".
+- **Overriding another mod's datapack file takes two things, and each fails differently.**
+  (1) `ordering="AFTER"` on an optional dependency in the `neoforge.mods.toml` template — a mod's pack only
+  wins a file conflict if it sorts after the mod it overrides; without it the override is a **silent
+  no-op** (measured identical block counts either way). (2) A
+  `"neoforge:conditions": [{"type": "neoforge:mod_loaded", …}]` guard — the file references that mod's
+  objects, and when the mod is absent the reference is unbound, which fails the **whole registry load** and
+  **stops the server starting at all** (`Unbound values in registry …`). A dangling *feature* reference is
+  fatal; a dangling *tag* entry is merely dropped. The self-test caught this on the two branches that have
+  no BoP in `run/mods` — which is exactly why all three branches get tested, not one.
 - **Never compile in a checkout whose dev server or self-test is running.** `runSelfTest`/`runServer`
   run off that checkout's `build/classes`; a `compileJava` mid-run replaces class files under the JVM
   and the harness dies with `NoClassDefFoundError: …CityWorldSelfTest$1`. That is a race, not a code

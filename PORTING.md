@@ -1,6 +1,33 @@
 # CityWorld — Bukkit → NeoForge port plan
 
-## ▶ Resume here — the ZARP realms arc (2026-09-16: everything below is shipped and pushed)
+## ▶ Resume here — next is THE END, and the owner wants it rethought
+
+**Status 2026-09-16 (end of day).** All three branches are pushed and deployed to all 10 instances —
+master `cc917b9f`, `mc26.1 61c37b99`, `mc26.2 e0163a0e`, self-tested 122 / 122 / 145 with identical plan
+hashes. Nothing is in flight and the tree is clean.
+
+**The next piece of work: the End.** The owner's verdict is that it *works* but "needs a total rethink",
+and he is taking the planning to Fable. **Treat the built End as a spike to learn from, not a base to
+extend** — its shape is described under "The End — built 2026-09-16" below, along with every measurement
+taken of it. The honest open questions: the dragon fight has never been fought end to end, gateways after
+the dragon dies are unverified, and the vanilla-centre / CityWorld-outer-islands split is the design
+decision most worth revisiting.
+
+**Also open, and owner-requested (2026-09-16):** make CityWorld's Nether **and** End the default when a
+CityWorld generator is selected. Today all 13 `worldgen/world_preset/*.json` define **vanilla** realms and
+`CityWorldRealms.withNether`/`withEnd` swap them in from the Customize toggles at world creation — which
+is also why a dedicated server never gets them (see the `runServer` warning below). The Nether half is a
+small preset edit plus flipping the toggle defaults; **the End half should wait for the rethink** rather
+than be built twice.
+
+**Shipped on the evening of 2026-09-16**, all measured on the *real* ruined Nether: Nether cave floors get
+their biome's ground (`Support/NetherCaveGround`), the caves are amplified ("same noodles and holes, just
+chunkier" — headroom columns 33% → 52%), and rose quartz pillars generate (6 → 75). Three traps found the
+hard way are written up below and in `CLAUDE.md`: `runServer` gives a **vanilla** Nether, the probe's
+`where` matcher was returning false zeros, and overriding another mod's datapack needs both
+`ordering="AFTER"` and a `mod_loaded` condition.
+
+## The ZARP realms arc (2026-09-16: everything below is shipped and pushed)
 
 **Shipped on all three branches, each self-tested (1.21.11 122 checks, 26.1 122, 26.2 127) and pushed:**
 the modpack world-type lock, `/cityworld` as the pre-apocalypse twin, the ruined-city 1:1 Nether (biomes,
