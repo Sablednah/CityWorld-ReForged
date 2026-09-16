@@ -116,9 +116,20 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	// This also clears a bar BoP sets: large_rose_quartz needs a cave roughly 9-21 blocks tall
 	// (max_column_radius_to_cave_height_ratio 0.33 against column_radius 3-7), which our thin tunnels rarely
 	// offered — hence rose quartz clusters everywhere and no pillars.
-	private final static double netherWormEps = 0.125; // vs 0.095 — fatter tunnels on the same curve
-	private final static double netherCheeseThreshold = 0.845; // vs 0.865 — bigger caverns, same places
-	private final static double netherCaveThreshold = 0.70; // vs 0.75 — bigger blobs (classic path)
+	// <b>The Y scales are the amplifier.</b> Changing a HORIZONTAL scale resamples the field and moves the
+	// caves; changing only the Y scale rescales one axis, so the pattern at any given (x, z) is the same one
+	// stretched vertically — same tunnels and caverns, same footprints, taller. That distinction is what lets
+	// the Nether be "very cavernous" (owner, 2026-09-16) while staying the same world.
+	//
+	// It is also the whole reason rose quartz pillars never appear: cheeseScaleY samples Y at DOUBLE the
+	// horizontal frequency, squashing every cavern to about half height, and wormScaleY does the same to
+	// tunnels ("keeps height in check", above). Wide and flat is exactly the shape large_rose_quartz cannot
+	// use — it needs 9-21 blocks of headroom (max_column_radius_to_cave_height_ratio 0.33, column_radius 3-7).
+	private final static double netherWormEps = 0.150; // vs 0.095 — fatter tunnels on the same curve
+	private final static double netherWormScaleY = 1.0 / 140.0; // vs 1/88 — stretched taller, same plan
+	private final static double netherCheeseThreshold = 0.830; // vs 0.865 — bigger caverns, same places
+	private final static double netherCheeseScaleY = cheeseScale * 0.9; // vs x2 — over twice the headroom
+	private final static double netherCaveThreshold = 0.68; // vs 0.75 — bigger blobs (classic path)
 
 	// MODERN lava: scattered but FLAT-topped lava lakes instead of a flat sea (or 3D blobs). A 2D region
 	// field (no Y term, so a column is all-lava or all-not below the level) fills every void up to the lava
@@ -535,11 +546,13 @@ public class ShapeProvider_Normal extends ShapeProvider {
 
 		if (generator.getSettings().windingCaves) {
 			double eps = nether ? netherWormEps : wormEps;
-			double a = wormShapeA.noise(blockX * wormScale, blockY * wormScaleY, blockZ * wormScale);
-			double b = wormShapeB.noise(blockX * wormScale, blockY * wormScaleY, blockZ * wormScale);
+			double wormY = nether ? netherWormScaleY : wormScaleY;
+			double a = wormShapeA.noise(blockX * wormScale, blockY * wormY, blockZ * wormScale);
+			double b = wormShapeB.noise(blockX * wormScale, blockY * wormY, blockZ * wormScale);
 			if (Math.abs(a) < eps && Math.abs(b) < eps)
 				return false; // on the intersection curve — a tunnel
-			double cheese = cheeseShape.noise(blockX * cheeseScale, blockY * cheeseScaleY, blockZ * cheeseScale);
+			double cheeseY = nether ? netherCheeseScaleY : cheeseScaleY;
+			double cheese = cheeseShape.noise(blockX * cheeseScale, blockY * cheeseY, blockZ * cheeseScale);
 			return !(cheese > (nether ? netherCheeseThreshold : cheeseThreshold)); // else solid, unless a rare cavern
 		}
 
