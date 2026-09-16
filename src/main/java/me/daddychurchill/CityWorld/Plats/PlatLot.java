@@ -285,6 +285,15 @@ public abstract class PlatLot {
 				&& generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.NORMAL)
 			me.daddychurchill.CityWorld.Support.LushCaves.apply(generator, this, chunk, chunkOdds);
 
+		// Nether caves get their biome's floor (nylium, soul soil, basalt, blackstone, flesh) instead of the
+		// bare netherrack the ore provider laid. The surface pass above only ever touched the top of a column,
+		// so underground every biome read as nether wastes — "crimson and warped look great on the surface but
+		// don't do anything with the caves below" (owner, 2026-09-16). Vanilla gets this from surface rules,
+		// which we never run. Floors only, as vanilla does; see NetherCaveGround.
+		if (generator.getSettings().includeCaves
+				&& generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.NETHER)
+			me.daddychurchill.CityWorld.Support.NetherCaveGround.apply(generator, chunk);
+
 		// Lava lakes: line the cave walls/floor bordering a lava pool with basalt, so the pool's noise-region
 		// edge (a flat wall where it cuts across a cave tunnel) reads as a natural basalt-lined pocket instead.
 		// Lava belongs in the overworld and the Nether; the End has none, so its basalt lining has no business

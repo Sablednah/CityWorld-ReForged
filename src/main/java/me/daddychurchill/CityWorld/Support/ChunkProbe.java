@@ -222,6 +222,42 @@ public final class ChunkProbe {
         return null;
     }
 
+    /**
+     * {@code -Dcityworld.probe=find:biome:biomesoplenty:withered_abyss} — the nearest column the biome source
+     * answers with that biome, <b>without generating a single chunk</b>, plus a census of everything it did
+     * answer.
+     *
+     * <p>Why this exists: a radius sweep generates terrain, which in a roofed dimension costs about half a
+     * second a chunk, and the server watchdog counts the whole probe as one tick — a blind sweep for a rare
+     * biome dies at 60 seconds long before it reaches one (measured 2026-09-16: killed at 144 chunks). Asking
+     * the biome source directly is free, and it answers the question that has to come first: <i>is the biome
+     * anywhere near?</i> "Feature missing" and "biome never generated" read identically in a block tally, and
+     * this project has already mistaken the second for the first twice.
+     */
+    private static int[] findBiome(ServerLevel level, String id) {
+        var source = level.getChunkSource().getGenerator().getBiomeSource();
+        var sampler = level.getChunkSource().randomState().sampler();
+        java.util.Map<String, Integer> census = new java.util.TreeMap<>();
+        int limit = Integer.getInteger("cityworld.probe.scan", 3000);
+        int[] found = null;
+        for (int ring = 0; ring * 16 <= limit; ring++)
+            for (int dx = -ring; dx <= ring; dx++)
+                for (int dz = -ring; dz <= ring; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != ring)
+                        continue;
+                    int wx = dx * 16, wz = dz * 16;
+                    String here = source.getNoiseBiome(net.minecraft.core.QuartPos.fromBlock(wx),
+                            net.minecraft.core.QuartPos.fromBlock(64),
+                            net.minecraft.core.QuartPos.fromBlock(wz), sampler).getRegisteredName();
+                    census.merge(here, 1, Integer::sum);
+                    if (found == null && here.equals(id))
+                        found = new int[] { wx >> 4, wz >> 4 };
+                }
+        CityWorldMod.LOGGER.warn("PROBE biome census within {} blocks ({} columns sampled): {}", limit,
+                census.values().stream().mapToInt(Integer::intValue).sum(), census);
+        return found;
+    }
+
     private void run(MinecraftServer server) {
         try {
             String spec = System.getProperty(PROPERTY).trim();
@@ -236,7 +272,16 @@ public final class ChunkProbe {
             CityWorldMod.LOGGER.warn("PROBE: dimension {} generator {}", level.dimension().identifier(),
                     level.getChunkSource().getGenerator().getClass().getSimpleName());
             int cx, cz;
-            if (spec.startsWith("find:structure:")) {
+            if (spec.startsWith("find:biome:")) {
+                String id = spec.substring("find:biome:".length());
+                int[] found = findBiome(level, id);
+                if (found == null)
+                    throw new IllegalStateException("no " + id + " in the scanned area — see the census above; "
+                            + "a feature of a biome that never generates is not a missing feature");
+                cx = found[0];
+                cz = found[1];
+                CityWorldMod.LOGGER.warn("PROBE: nearest {} is chunk {}, {}", id, cx, cz);
+            } else if (spec.startsWith("find:structure:")) {
                 // -Dcityworld.probe=find:structure:minecraft:bastion_remnant — the nearest start of that structure
                 // in the probed dimension, with where its pieces sit against the city's street level.
                 int[] found = findStructure(server, level, spec.substring("find:structure:".length()));
@@ -310,6 +355,76 @@ public final class ChunkProbe {
                             }
                     }
                 byBiome.forEach((biome, blocks) -> CityWorldMod.LOGGER.warn("PROBE ground: {} -> {}", biome, blocks));
+                // Blocks across the WHOLE swept area. A 3x3 region sits in ONE biome, so it can never witness
+                // another biome's features — "zero" then means "wrong place", not "broken" (that mistake was
+                // made three times in one session, 2026-09-16).
+                java.util.Map<String, Integer> swept = new java.util.TreeMap<>();
+                for (int dx = -sweep; dx <= sweep; dx += 2)
+                    for (int dz = -sweep; dz <= sweep; dz += 2) {
+                        ChunkAccess c = level.getChunk(cx + dx, cz + dz);
+                        for (int x = 0; x < 16; x++)
+                            for (int z = 0; z < 16; z++)
+                                for (int y = level.getMinY() + 1; y < level.getMaxY(); y++) {
+                                    var st2 = c.getBlockState(new BlockPos(c.getPos().getMinBlockX() + x, y,
+                                            c.getPos().getMinBlockZ() + z));
+                                    if (!st2.isAir())
+                                        swept.merge(st2.getBlock().getName().getString(), 1, Integer::sum);
+                                }
+                    }
+                CityWorldMod.LOGGER.warn("PROBE swept blocks: {}", swept);
+
+                // -Dcityworld.probe.where=<block_id,...>: WHERE a block is, not just how many. A feature can
+                // generate in bulk and still be invisible if every one is enclosed (634 willow vines, none with
+                // sky above). Block IDS, not display names: JAVA_TOOL_OPTIONS splits its value on whitespace,
+                // so "Willow Vine" kills the JVM with "Unrecognized option: Vine".
+                for (String want : System.getProperty("cityworld.probe.where", "").split(",")) {
+                    if (want.isBlank())
+                        continue;
+                    String id = want.trim();
+                    java.util.Map<Integer, Integer> bands = new java.util.TreeMap<>();
+                    java.util.Map<String, Integer> above = new java.util.TreeMap<>(), below = new java.util.TreeMap<>();
+                    int open = 0, covered = 0;
+                    for (int dx = -sweep; dx <= sweep; dx += 2)
+                        for (int dz = -sweep; dz <= sweep; dz += 2) {
+                            ChunkAccess c = level.getChunk(cx + dx, cz + dz);
+                            for (int x = 0; x < 16; x++)
+                                for (int z = 0; z < 16; z++)
+                                    for (int y = level.getMinY() + 1; y < level.getMaxY() - 1; y++) {
+                                        int wx = c.getPos().getMinBlockX() + x, wz = c.getPos().getMinBlockZ() + z;
+                                        // Either form matches: "crimson_nylium" or "minecraft:crimson_nylium".
+                                        // This compared the PATH ALONE against whatever was passed, so a
+                                        // namespaced id — the obvious reading of "block ids" above, and the
+                                        // only form that can name a modded block unambiguously — matched
+                                        // nothing and reported a confident zero. That cost three runs and one
+                                        // wrong claim to the owner about a feature that was generating fine
+                                        // (2026-09-16); a diagnostic that answers "none" when it means "I did
+                                        // not understand the question" is worse than no diagnostic at all.
+                                        var blockKey = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                                                .getKey(c.getBlockState(new BlockPos(wx, y, wz)).getBlock());
+                                        if (!blockKey.getPath().equalsIgnoreCase(id)
+                                                && !blockKey.toString().equalsIgnoreCase(id))
+                                            continue;
+                                        bands.merge((y / 8) * 8, 1, Integer::sum);
+                                        above.merge(c.getBlockState(new BlockPos(wx, y + 1, wz)).getBlock()
+                                                .getName().getString(), 1, Integer::sum);
+                                        below.merge(c.getBlockState(new BlockPos(wx, y - 1, wz)).getBlock()
+                                                .getName().getString(), 1, Integer::sum);
+                                        boolean clear = true;
+                                        for (int up = y + 1; up < Math.min(y + 25, level.getMaxY()); up++)
+                                            if (!c.getBlockState(new BlockPos(wx, up, wz)).isAir()) {
+                                                clear = false;
+                                                break;
+                                            }
+                                        if (clear)
+                                            open++;
+                                        else
+                                            covered++;
+                                    }
+                        }
+                    CityWorldMod.LOGGER.warn("PROBE where {}: y-bands {} | open sky above: {}, covered: {}", id, bands, open, covered);
+                    CityWorldMod.LOGGER.warn("PROBE where {}: directly above {}", id, above);
+                    CityWorldMod.LOGGER.warn("PROBE where {}: directly below {}", id, below);
+                }
             }
             CityWorldMod.LOGGER.warn("PROBE: forcing chunks around ({}, {})", cx, cz);
             // the ring first so the target's decoration has proper neighbours
