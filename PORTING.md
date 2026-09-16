@@ -80,8 +80,11 @@ gateways landing on end stone, and the dragon fight end to end on a real client.
 - **⚠ My "one cause, five symptoms" reading was wrong**, and the A/B caught it: willow vine 622 → 633 with the
   fix off → on, i.e. BoP features were already generating in bulk via wild lots. The fix is worth having; it was
   not the explanation.
-- **⚠ Blackstone spines/bulbs are UNMEASURED, not broken:** `withered_abyss` never generated in the swept area,
-  so zero is the expected reading. Check the biome is present before calling a feature missing.
+- **⚠ Blackstone spines/bulbs: fine all along — confirmed in game by the owner** ("Withered has spines and
+  obsidian patches"). I reported zero three times; twice the biome was absent from the swept area, and the
+  third time the probe's own matcher was broken (below). `withered_abyss` is real but uncommon: 6,080 of
+  251,001 sampled columns. Check the biome is present before calling a feature missing — and when the probe
+  disagrees with the owner's eyes, suspect the probe.
 
 **Probe traps this cost (all mine):** a roofed dimension's `WORLD_SURFACE` is the *ceiling* (every Nether biome
 read as bedrock); scanning down from it finds the netherrack *under* the roof (crimson forest "23,702 netherrack,
@@ -90,9 +93,54 @@ no nylium"); a 3x3 region sits in ONE biome so it can never witness another's fe
 and a shell without `JAVA_HOME` fails instantly and looks like a code fault. Probe gained
 `-Dcityworld.probe.where=<block_id,...>` (y-bands, open-vs-covered, and the blocks directly above/below).
 
-**Next:** the End (section 3 below) — vanilla generates the central island/pillars/podium, CityWorld the
-outer islands. Then optional Nether polish: bastion shaft look in-game on real hardware, BoP Nether biome
-coverage (the dev instance has no BoP), a server-side way to choose the ruined Nether (datapack today).
+**⚠ The probe's `where` matcher was itself broken (found 2026-09-16, fixed).** It compared the block's
+registry **path alone** against whatever was passed, so a *namespaced* id — `minecraft:obsidian`, the obvious
+reading of "match block ids" and the only unambiguous way to name a modded block — matched nothing and
+printed a confident `0`. Bare paths (`willow_vine`) had always worked, which is exactly why it went unnoticed.
+It now accepts either form. This produced three wasted runs and one wrong report to the owner. **A diagnostic
+that answers "none" when it means "I did not understand the question" is worse than no diagnostic at all.**
+Two more: the **server watchdog kills any sweep over 60s** (`java.lang.Error: ServerWatchdog detected that a
+single server tick took 60.00 seconds`, thrown inside the probe's own `getChunk` — it runs as one long tick),
+so probe runs set `max-tick-time=-1` in the gitignored `run/server.properties`; and on 26.2 a Nether sweep
+logs ~196,000 `Detected unsafe terrain read during worldgen` errors into a 46MB log, which is what pushed that
+run over the limit. New mode **`-Dcityworld.probe=find:biome:<id>`** answers "is this biome anywhere near?"
+from the biome source with **no chunk generation at all**, plus a census of what it did find.
+
+### BoP second report — the caves had no biome at all (2026-09-16)
+
+The owner, on the deployed build: "crimson and warped look great on the surface, but unlike some others they
+don't seem to want to do anything with the caves below"; and "same for all the biomes with a surface really".
+He was right, and it was never crimson/warped specific.
+
+- **Cause: `applyBiomeGround` only ever swapped the TOP of a column.** CityWorld never runs a biome's surface
+  rules; vanilla's nether gets nylium/soul soil/basalt from rules that apply to *every* air-facing face,
+  including the ones inside caves. Ours touched the surface and nothing else, so underground every biome was
+  raw netherrack — right fog, right canopy, a cave system belonging to no biome.
+- **Fix: `Support/NetherCaveGround`** coats air-facing cave **floors** with the biome's ground. Floors only,
+  which is both what vanilla does (nylium floor, netherrack walls and ceiling) and what the features want —
+  BoP's flesh tendons grow *upward*, so a coated floor is what puts them in a cave. It reads raw block states
+  through one `MutableBlockPos` rather than `SupportBlocks`'s per-read wrapper: unlike `LushCaves` (~5% of
+  columns) this runs on every nether column, and the wrapper would allocate ~30,000 objects per chunk.
+- **Measured (1.21.11, seed 8675309, crimson forest, r=4):** crimson nylium **5,234** — **4,603 covered vs 631
+  open-sky**, y-bands 24→96, with Netherrack directly below (4,919) and Crimson Roots 708 / Fungus 97 /
+  Stems 206 / Weeping Vines 67 growing on it. Over a thousand sit below y56. No A/B was run; the code path
+  makes it unambiguous (the only other nylium writer is `CoverProvider_Nether`, which plants surface trees).
+- **Rose quartz pillars — a cave-SIZE problem, not a tag one.** BoP's feature is `large_rose_quartz` (step 2,
+  `LOCAL_MODIFICATIONS`, which we now run). Vanilla's `#minecraft:dripstone_replaceable_blocks` is
+  `#base_stone_overworld` only and **BoP ships no override**, but that tag only gates growing *into* solid —
+  the pillar builds in cave air. The binding constraint is its own
+  `max_column_radius_to_cave_height_ratio: 0.33` with `column_radius` 3–7, i.e. it needs a cave roughly
+  **9–21 blocks tall**; our nether caves are noise blobs mostly shorter than that. That is exactly "just
+  clusters": `small_crystal` needs no headroom. `#cityworld:carve_cavern` cannot help — it keys off structure
+  starts (`bastion_remnant`), and a biome is not a structure. **Open.**
+- **Decided, not a bug:** flesh tendons grow upward forever because they are meant to reach a nether ceiling
+  and ours has none. Owner: "I like it — tag it as noticed and decided not a bug." Do not "fix" this.
+- **Confirmed in game by the owner:** flesh tendons ("suitably creepy"), withered abyss spines + obsidian
+  patches, willow vines in caves.
+
+**Next:** rose quartz pillars need taller caverns in `crystalline_chasm` (a biome-driven carve, since the
+structure-tag route cannot apply). Then optional Nether polish: bastion shaft look in-game on real hardware,
+a server-side way to choose the ruined Nether (datapack today).
 
 ## ▶ The ZARP realms arc (opened 2026-09-15)
 
