@@ -379,6 +379,40 @@ public final class ChunkProbe {
                     }
                 CityWorldMod.LOGGER.warn("PROBE swept blocks: {}", swept);
 
+                // HEADROOM: the tallest unbroken run of air in each column, bucketed. This is the direct
+                // measure of "can a feature that needs N blocks of open height actually stand here" —
+                // BoP's large_rose_quartz wants 9-21. A block tally cannot answer that: fewer solid blocks
+                // can mean wider caves OR taller ones, and today a -2.4% netherrack reading came with no
+                // change in pillars at all. Measure the quantity the feature actually tests.
+                java.util.Map<Integer, Integer> headroom = new java.util.TreeMap<>();
+                int tall = 0, columns = 0;
+                for (int dx = -sweep; dx <= sweep; dx += 2)
+                    for (int dz = -sweep; dz <= sweep; dz += 2) {
+                        ChunkAccess c = level.getChunk(cx + dx, cz + dz);
+                        for (int x = 0; x < 16; x += 2)
+                            for (int z = 0; z < 16; z += 2) {
+                                int wx = c.getPos().getMinBlockX() + x, wz = c.getPos().getMinBlockZ() + z;
+                                int run = 0, best = 0;
+                                // Stop at the surface: open sky is not headroom, it is outdoors.
+                                int ceiling = level.getHeight(
+                                        net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, wx, wz);
+                                for (int y = level.getMinY() + 1; y < ceiling; y++) {
+                                    if (c.getBlockState(new BlockPos(wx, y, wz)).isAir())
+                                        best = Math.max(best, ++run);
+                                    else
+                                        run = 0;
+                                }
+                                columns++;
+                                headroom.merge((best / 4) * 4, 1, Integer::sum);
+                                if (best >= 9)
+                                    tall++;
+                            }
+                    }
+                CityWorldMod.LOGGER.warn("PROBE cave headroom (tallest air run per column, {} columns): {}",
+                        columns, headroom);
+                CityWorldMod.LOGGER.warn("PROBE cave headroom: {} columns ({}%) have 9+ blocks — the bar "
+                        + "large_rose_quartz has to clear", tall, columns == 0 ? 0 : (tall * 100 / columns));
+
                 // -Dcityworld.probe.where=<block_id,...>: WHERE a block is, not just how many. A feature can
                 // generate in bulk and still be invisible if every one is enclosed (634 willow vines, none with
                 // sky above). Block IDS, not display names: JAVA_TOOL_OPTIONS splits its value on whitespace,
