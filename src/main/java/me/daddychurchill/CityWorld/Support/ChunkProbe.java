@@ -280,8 +280,29 @@ public final class ChunkProbe {
                         for (int x = 0; x < 16; x += 2)
                             for (int z = 0; z < 16; z += 2) {
                                 int wx = c.getPos().getMinBlockX() + x, wz = c.getPos().getMinBlockZ() + z;
+                                // A roofed dimension (the Nether) hides its floor: WORLD_SURFACE is the
+                                // bedrock ceiling, and scanning down from it finds the netherrack UNDER the
+                                // roof (measured: crimson forest reading 23,702 netherrack and no nylium).
+                                // Scan UP from the world floor for the first solid block with air above it.
                                 int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, wx, wz) - 1;
                                 var state = level.getBlockState(new BlockPos(wx, top, wz));
+                                if (state.is(net.minecraft.world.level.block.Blocks.BEDROCK)) {
+                                    int roof = top;
+                                    top = -1;
+                                    for (int y = level.getMinY() + 1; y < roof - 1; y++) {
+                                        var here = level.getBlockState(new BlockPos(wx, y, wz));
+                                        if (here.isAir() || here.is(net.minecraft.world.level.block.Blocks.BEDROCK))
+                                            continue;
+                                        if (level.getBlockState(new BlockPos(wx, y + 1, wz)).isAir()
+                                                && level.getBlockState(new BlockPos(wx, y + 2, wz)).isAir()) {
+                                            top = y;
+                                            state = here;
+                                            break;
+                                        }
+                                    }
+                                    if (top < 0)
+                                        continue;
+                                }
                                 String biome = level.getBiome(new BlockPos(wx, top, wz)).unwrapKey()
                                         .map(k -> k.identifier().getPath()).orElse("?");
                                 byBiome.computeIfAbsent(biome, k -> new java.util.TreeMap<>())

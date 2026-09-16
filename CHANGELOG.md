@@ -50,6 +50,15 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Fixed
 
+- **The Nether's caves and city ground were missing their biome's character.** Underneath a crimson or warped
+  forest — and anywhere that wasn't wild, open countryside — CityWorld skipped the decoration step that carries
+  a Nether biome's own touches: glowstone and magma, and with Biomes O' Plenty installed its orpiment buds and
+  fumaroles, blackstone spines, rose quartz, flesh tendons and eyebulbs. Those now appear throughout, roughly
+  twice as much of them as before (measured over a 49x49-chunk sweep: rose quartz buds 333 -> 759, orpiment
+  7,436 -> 9,271, pus bubbles 2 -> 80, eyebulbs 2 -> 24).
+- **Biomes O' Plenty's Withered Abyss and Visceral Heap generated on plain netherrack**, instead of blackstone
+  and flesh. Its other Nether biomes were already right: their character comes from what grows on the ground
+  rather than the ground itself.
 - **The Nether's crimson forests, warped forests and soul sand valleys had no ground of their own.** They
   generated as bare netherrack — the right biome in every other way (fog, mobs, name), which is why they read
   as plain Nether Wastes. They now get their nylium and soul soil, basalt deltas get basalt, and the grass that
