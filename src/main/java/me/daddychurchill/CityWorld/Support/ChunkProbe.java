@@ -234,7 +234,13 @@ public final class ChunkProbe {
      * anywhere near?</i> "Feature missing" and "biome never generated" read identically in a block tally, and
      * this project has already mistaken the second for the first twice.
      */
-    private static int[] findBiome(ServerLevel level, String id) {
+    private static int[] findBiome(MinecraftServer server, ServerLevel level, String id) {
+        // Generate one chunk FIRST. CityWorld's Nether/End biome sources classify by delegating to the twin
+        // overworld's terrain through a context that is only bound during generation; asked before any chunk
+        // exists, they fall back and answer the SAME biome for every column. That is not a hypothetical: this
+        // returned "all 63,001 columns are minecraft:nether_wastes" on a world whose caves and surface plainly
+        // held six biomes, and the resulting "biome not found" aborted the run (2026-09-16).
+        server.submit(() -> level.getChunk(0, 0, ChunkStatus.FULL, true)).join();
         var source = level.getChunkSource().getGenerator().getBiomeSource();
         var sampler = level.getChunkSource().randomState().sampler();
         java.util.Map<String, Integer> census = new java.util.TreeMap<>();
@@ -274,7 +280,7 @@ public final class ChunkProbe {
             int cx, cz;
             if (spec.startsWith("find:biome:")) {
                 String id = spec.substring("find:biome:".length());
-                int[] found = findBiome(level, id);
+                int[] found = findBiome(server, level, id);
                 if (found == null)
                     throw new IllegalStateException("no " + id + " in the scanned area — see the census above; "
                             + "a feature of a biome that never generates is not a missing feature");
