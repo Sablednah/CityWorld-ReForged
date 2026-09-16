@@ -756,6 +756,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     }
                 if (roof == Integer.MIN_VALUE || (bestX >> 4) != (pos.getMinBlockX() >> 4) || (bestZ >> 4) != (pos.getMinBlockZ() >> 4))
                     continue;
+                // Nothing to climb to if the surface sits at or under the roof we would land on.
+                if (surfaceAt(level, bestX, bestZ, street) <= roof + 4)
+                    continue;
                 drawShaft(level, net.minecraft.util.RandomSource.create(level.getSeed()
                         ^ (((long) pos.getMinBlockX() << 32) ^ (pos.getMinBlockZ() & 0xffffffffL)) * 31L), bestX, bestZ,
                         roof + 1, street);
@@ -764,6 +767,21 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             // decoration must never break chunk generation
             LOGGER_STRUCTURES.error("CityWorld: cavern shaft failed for chunk {}", chunk.getPos(), t);
         }
+    }
+
+    /**
+     * The real surface at a column: scan UP from below the planned street for the first two-tall air gap and take
+     * the solid block under it. {@code streetLevel} is a planned datum, not this column's ground — building to it
+     * left the bastion shaft short of the surface (owner, 2026-09-16). Same technique as the vault's entrance hut
+     * ({@code VaultLot.groundedHutFloor}), and scanning up rather than down means an overhang cannot fool it.
+     */
+    private static int surfaceAt(WorldGenLevel level, int x, int z, int street) {
+        // The heightmap, not a scan: scanning up from under the street (the vault hut's trick, which works
+        // because its column is solid rock) stopped inside this bastion's own cavern — campfires landed at y 50
+        // under a y 76 surface (measured 2026-09-16). WORLD_SURFACE is the first free Y above the column, so the
+        // top solid block is one below it.
+        int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, x, z) - 1;
+        return top > level.getMinY() ? top : street;
     }
 
     private static void drawShaft(WorldGenLevel level, net.minecraft.util.RandomSource random, int cx, int cz, int bottom,
@@ -777,6 +795,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 .setValue(net.minecraft.world.level.block.LadderBlock.FACING, net.minecraft.core.Direction.SOUTH);
         net.minecraft.core.BlockPos.MutableBlockPos at = new net.minecraft.core.BlockPos.MutableBlockPos();
         int flags = net.minecraft.world.level.block.Block.UPDATE_CLIENTS;
+        // Build to this column's real ground, not the planned street.
+        street = surfaceAt(level, cx, cz, street);
         for (int y = bottom; y <= street + 1; y++)
             for (int dx = -2; dx <= 2; dx++)
                 for (int dz = -2; dz <= 2; dz++) {

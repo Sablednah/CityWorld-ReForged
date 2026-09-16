@@ -146,8 +146,16 @@ public final class ChunkProbe {
                                     var s2 = fc.getBlockState(new net.minecraft.core.BlockPos((gx << 4) + x, y, (gz << 4) + z));
                                     if (s2.is(net.minecraft.world.level.block.Blocks.LADDER))
                                         footLadders++;
-                                    else if (s2.is(net.minecraft.world.level.block.Blocks.SOUL_CAMPFIRE))
+                                    else if (s2.is(net.minecraft.world.level.block.Blocks.SOUL_CAMPFIRE)) {
                                         footFires++;
+                                        // does the shaft actually reach daylight? the campfire sits on the collar,
+                                        // so its Y should be at this column's real surface, not metres under it
+                                        int wx = (gx << 4) + x, wz = (gz << 4) + z;
+                                        int surface = level.getHeight(
+                                                net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, wx, wz);
+                                        CityWorldMod.LOGGER.warn("PROBE shaft: soul campfire at {} {} {} — column surface {} (delta {})",
+                                                wx, y, wz, surface, y - surface);
+                                    }
                                 }
                     }
             }
@@ -261,8 +269,27 @@ public final class ChunkProbe {
                         CityWorldMod.LOGGER.warn("PROBE sweep: generating chunk {}, {}", sx, sz);
                         server.submit(() -> level.getChunk(sx, sz, ChunkStatus.FULL, true)).join();
                     }
-            if (sweep > 0)
+            if (sweep > 0) {
                 CityWorldMod.LOGGER.warn("PROBE sweep: all chunks within {} of ({}, {}) generated", sweep, cx, cz);
+                // What each biome's ground actually IS: the top solid block of every column, keyed by the biome
+                // there. A biome whose signature block never appears is generating with someone else's ground.
+                java.util.Map<String, java.util.Map<String, Integer>> byBiome = new java.util.TreeMap<>();
+                for (int dx = -sweep; dx <= sweep; dx += 2)
+                    for (int dz = -sweep; dz <= sweep; dz += 2) {
+                        ChunkAccess c = level.getChunk(cx + dx, cz + dz);
+                        for (int x = 0; x < 16; x += 2)
+                            for (int z = 0; z < 16; z += 2) {
+                                int wx = c.getPos().getMinBlockX() + x, wz = c.getPos().getMinBlockZ() + z;
+                                int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, wx, wz) - 1;
+                                var state = level.getBlockState(new BlockPos(wx, top, wz));
+                                String biome = level.getBiome(new BlockPos(wx, top, wz)).unwrapKey()
+                                        .map(k -> k.identifier().getPath()).orElse("?");
+                                byBiome.computeIfAbsent(biome, k -> new java.util.TreeMap<>())
+                                        .merge(state.getBlock().getName().getString(), 1, Integer::sum);
+                            }
+                    }
+                byBiome.forEach((biome, blocks) -> CityWorldMod.LOGGER.warn("PROBE ground: {} -> {}", biome, blocks));
+            }
             CityWorldMod.LOGGER.warn("PROBE: forcing chunks around ({}, {})", cx, cz);
             // the ring first so the target's decoration has proper neighbours
             for (int dx = -1; dx <= 1; dx++)
