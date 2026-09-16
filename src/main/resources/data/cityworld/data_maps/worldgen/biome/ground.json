@@ -1,6 +1,8 @@
 {
   "replace": false,
   "values": {
+    "biomesoplenty:withered_abyss": { "neoforge:conditions": [ { "type": "neoforge:mod_loaded", "modid": "biomesoplenty" } ], "value": { "surface": "minecraft:blackstone", "subsurface": "minecraft:blackstone" } },
+    "biomesoplenty:visceral_heap": { "neoforge:conditions": [ { "type": "neoforge:mod_loaded", "modid": "biomesoplenty" } ], "value": { "surface": "biomesoplenty:flesh", "subsurface": "biomesoplenty:porous_flesh" } },
     "minecraft:nether_wastes": { "surface": "minecraft:netherrack", "subsurface": "minecraft:netherrack" },
     "minecraft:crimson_forest": { "surface": "minecraft:crimson_nylium", "subsurface": "minecraft:netherrack" },
     "minecraft:warped_forest": { "surface": "minecraft:warped_nylium", "subsurface": "minecraft:netherrack" },
