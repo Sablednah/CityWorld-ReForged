@@ -11,6 +11,24 @@ redeployed to `CityWork-ReForged`. Two follow-ups worth knowing: the Vivo look a
 **inconclusive** (unlit Nether on llvmpipe — the measured campfire/halo counts are the evidence), and the
 End is **not started**.
 
+**Owner's in-game report on the first shipped build (2026-09-16), both fixed and pushed:**
+
+- **Crimson/warped/soul-sand-valley had no ground** — `applyBiomeGround` only swapped grass/dirt/coarse
+  dirt/podzol, so in the Nether (ground = the ore provider's netherrack) it never fired; its height gates are
+  overworld datums (sea level, icecap) and are skipped there; grass counts as swappable there too, because
+  parks and farms were laying lawns. Measured over a radius-6 sweep: soul sand valley 99 soul soil / 25
+  netherrack, warped forest 30 nylium / 23, basalt deltas 13 basalt, nether wastes 804 netherrack, stray
+  grass 60 → 8 and 12 → 2. ⚠ Basalt deltas had *looked* right all along because `LavaLakes` lines pools with
+  basalt — a biome can pass a glance on someone else's blocks.
+- **The bastion shaft stopped short** — it built to `streetLevel`, a planned datum. The vault hut's upward
+  scan (`VaultLot.groundedHutFloor`) does not transfer: that column is solid rock, while a bastion sits in its
+  own carved cavern, so the scan found air at once and campfires landed at y 50 under a y 76 surface.
+  `Heightmap.Types.WORLD_SURFACE` answers it directly — deltas now −1/−1/−1/−8 (the −8 has a build overhead),
+  and no shaft at all when the surface is not meaningfully above the roof.
+
+**Confirmed working in game by the owner:** 1:1 portals, Nether trees in parks, no experimental warning,
+nether wastes and basalt deltas.
+
 **Next:** the End (section 3 below) — vanilla generates the central island/pillars/podium, CityWorld the
 outer islands. Then optional Nether polish: bastion shaft look in-game on real hardware, BoP Nether biome
 coverage (the dev instance has no BoP), a server-side way to choose the ruined Nether (datapack today).
