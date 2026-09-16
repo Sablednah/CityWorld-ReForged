@@ -121,10 +121,15 @@ He was right, and it was never crimson/warped specific.
   BoP's flesh tendons grow *upward*, so a coated floor is what puts them in a cave. It reads raw block states
   through one `MutableBlockPos` rather than `SupportBlocks`'s per-read wrapper: unlike `LushCaves` (~5% of
   columns) this runs on every nether column, and the wrapper would allocate ~30,000 objects per chunk.
-- **Measured (1.21.11, seed 8675309, crimson forest, r=4):** crimson nylium **5,234** — **4,603 covered vs 631
-  open-sky**, y-bands 24→96, with Netherrack directly below (4,919) and Crimson Roots 708 / Fungus 97 /
-  Stems 206 / Weeping Vines 67 growing on it. Over a thousand sit below y56. No A/B was run; the code path
-  makes it unambiguous (the only other nylium writer is `CoverProvider_Nether`, which plants surface trees).
+- **Measured (26.2, seed 8675309, ruined Nether, centre 0,0 r=6):** soul soil **1,258** — **1,082 covered vs
+  176 open-sky**, y-bands 0→64 with **591 below y48**, and **Netherrack directly below (832)**. The surface
+  pass can only write at a column's terrain top, and nothing else in the codebase *writes* soul soil
+  (`CoverProvider_Nether` and `PlatLot` only read it via `isOfTypes`; `OreProvider_Nether` lays soul *sand*),
+  so soul soil on netherrack at y0–48 with air above is cave-floor coating and nothing else.
+- **⚠ The first "proof" of this was worthless and shipped anyway.** It measured crimson nylium on a
+  `runServer` world — whose Nether is **vanilla** (below) — where nylium on cave floors is exactly what
+  vanilla's own surface rules produce. Four consecutive probe runs measured the wrong world before the
+  `PROBE: dimension ... generator` line was read. **Read that line first, every time.**
 - **Rose quartz pillars — a cave-SIZE problem, not a tag one.** BoP's feature is `large_rose_quartz` (step 2,
   `LOCAL_MODIFICATIONS`, which we now run). Vanilla's `#minecraft:dripstone_replaceable_blocks` is
   `#base_stone_overworld` only and **BoP ships no override**, but that tag only gates growing *into* solid —
@@ -138,9 +143,49 @@ He was right, and it was never crimson/warped specific.
 - **Confirmed in game by the owner:** flesh tendons ("suitably creepy"), withered abyss spines + obsidian
   patches, willow vines in caves.
 
-**Next:** rose quartz pillars need taller caverns in `crystalline_chasm` (a biome-driven carve, since the
-structure-tag route cannot apply). Then optional Nether polish: bastion shaft look in-game on real hardware,
-a server-side way to choose the ruined Nether (datapack today).
+### ⚠ `runServer` does NOT give you the ruined Nether (2026-09-16)
+
+`world_preset/city.json` defines a **stock vanilla Nether** (`minecraft:noise` + `minecraft:nether`). The
+ruined one is swapped in by `CityWorldRealms.withNether` at **world creation**, driven by the Customize
+toggle — a path a dedicated server started from `level-type=cityworld:city` never takes. So every headless
+Nether probe silently measures vanilla, and BoP's biomes still appear (BoP injects into vanilla's Nether),
+which makes the wrong world look convincingly right.
+
+**To probe the real thing,** drop a datapack in `run/world/datapacks/<name>/` (create it *after* wiping
+`run/world`, before starting) with `pack.mcmeta` (`pack_format` 46 on 26.2) and an override of
+`data/cityworld/worldgen/world_preset/city.json` whose Nether is
+`{"type": "cityworld:ruined_nether", "generator": {"type": "cityworld:city", "twin_of": "minecraft:overworld",
+"style": "apocalypse", "decayed": true, "environment": "nether", "biome_source": {"type": "cityworld:nether"}}}`.
+Confirm with the probe's own `PROBE: dimension ... generator CityWorldChunkGenerator` line before believing a
+single number.
+
+**⚠ And generate before asking for biomes.** `find:biome` sampled the biome source at server start, before any
+chunk existed; the Nether/End sources classify through a context bound only during generation, so unbound they
+answered `nether_wastes` for all 63,001 columns of a world that plainly held six biomes. It now forces one
+chunk first.
+
+### Chunkier Nether caves (2026-09-16)
+
+Owner: "the width and height of the cave carvers are variables — can we adjust them for Nether so it averages
+a little bigger. Same noodles and holes, just chunkier?" Done, in `ShapeProvider_Normal`: the Nether uses
+`netherWormEps` 0.125 (vs 0.095), `netherCheeseThreshold` 0.845 (vs 0.865) and `netherCaveThreshold` 0.70 (vs
+0.75). **Only iso-levels move** — widening a threshold grows the caves already there, in place. The scales
+(`wormScale`, `wormScaleY`, `cheeseScale`) are deliberately untouched: a frequency change resamples the noise
+and *moves* the tunnels, which would be different caves rather than bigger ones.
+
+**Measured (26.2, ruined Nether, centre 0,0 r=6, same seed):** Netherrack **655,149 → 639,517** (−15,632,
+−2.4% of standing rock), soul soil **1,258 → 1,490** (+18% — more cave floor for `NetherCaveGround` to coat),
+basalt 39,828 → 41,152.
+
+**Rose quartz pillars: still effectively absent, and cave size was not the answer.** `Block of Rose Quartz`
+measured **10 → 9** across the sweep (noise), while buds rose 101 → 141 with the extra cave surface. An
+earlier "0 pillars" reading was from the vanilla-Nether world and was wrong. ~10 blocks over 169 chunks is a
+fragment, not a pillar: `large_rose_quartz` needs 9–21 blocks of headroom and our cheese caverns rarely offer
+it. **Open** — it needs the caverns themselves made taller, not the tunnels made fatter.
+
+**Next:** taller cheese caverns for `crystalline_chasm` if the owner wants real pillars. Then optional Nether
+polish: bastion shaft look in-game on real hardware, a server-side way to choose the ruined Nether (the probe
+datapack above is the pattern).
 
 ## ▶ The ZARP realms arc (opened 2026-09-15)
 

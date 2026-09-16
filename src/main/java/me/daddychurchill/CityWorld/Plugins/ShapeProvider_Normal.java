@@ -108,6 +108,18 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	private final static double cheeseScaleY = cheeseScale * 2;
 	private final static double cheeseThreshold = 0.865; // lower -> bigger caverns (spacing kept via the scale)
 
+	// The Nether carves the SAME noise fields a size up — "same noodles and holes, just chunkier" (owner,
+	// 2026-09-16). Only the iso-levels move: widening the threshold grows the caves that are ALREADY there,
+	// in place. Deliberately NOT touching wormScale/wormScaleY/cheeseScale — a frequency change resamples the
+	// noise and MOVES the tunnels rather than fattening them, which would be different caves, not bigger ones.
+	// Height still grows with the epsilon, just less than width, because the Y frequency stays doubled.
+	// This also clears a bar BoP sets: large_rose_quartz needs a cave roughly 9-21 blocks tall
+	// (max_column_radius_to_cave_height_ratio 0.33 against column_radius 3-7), which our thin tunnels rarely
+	// offered — hence rose quartz clusters everywhere and no pillars.
+	private final static double netherWormEps = 0.125; // vs 0.095 — fatter tunnels on the same curve
+	private final static double netherCheeseThreshold = 0.845; // vs 0.865 — bigger caverns, same places
+	private final static double netherCaveThreshold = 0.70; // vs 0.75 — bigger blobs (classic path)
+
 	// MODERN lava: scattered but FLAT-topped lava lakes instead of a flat sea (or 3D blobs). A 2D region
 	// field (no Y term, so a column is all-lava or all-not below the level) fills every void up to the lava
 	// level inside a lake — a flat lava surface, not blobs floating in the caves.
@@ -518,18 +530,23 @@ public class ShapeProvider_Normal extends ShapeProvider {
 
 		// Winding "noodle" caves: carve where two noise iso-surfaces cross — thin wandering tunnels that
 		// branch, plus the odd big "cheese" cavern. Default on for MODERN/APOCALYPSE, a toggle for the rest.
+		// Same fields, a size up in the Nether — see the nether* constants above.
+		boolean nether = generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.NETHER;
+
 		if (generator.getSettings().windingCaves) {
+			double eps = nether ? netherWormEps : wormEps;
 			double a = wormShapeA.noise(blockX * wormScale, blockY * wormScaleY, blockZ * wormScale);
 			double b = wormShapeB.noise(blockX * wormScale, blockY * wormScaleY, blockZ * wormScale);
-			if (Math.abs(a) < wormEps && Math.abs(b) < wormEps)
+			if (Math.abs(a) < eps && Math.abs(b) < eps)
 				return false; // on the intersection curve — a tunnel
 			double cheese = cheeseShape.noise(blockX * cheeseScale, blockY * cheeseScaleY, blockZ * cheeseScale);
-			return !(cheese > cheeseThreshold); // else solid, unless a rare cavern
+			return !(cheese > (nether ? netherCheeseThreshold : cheeseThreshold)); // else solid, unless a rare cavern
 		}
 
 		// Classic blob caves: a single noise field, carve its extremes.
 		double cave = caveShape.noise(blockX * caveScale, blockY * caveScaleY, blockZ * caveScale);
-		return !(cave > caveThreshold || cave < -caveThreshold);
+		double threshold = nether ? netherCaveThreshold : caveThreshold;
+		return !(cave > threshold || cave < -threshold);
 	}
 
 	@Override
