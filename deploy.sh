@@ -25,6 +25,19 @@ export PATH="$JAVA_HOME/bin:$PATH"
 INSTANCE="${CITYWORLD_INSTANCE:-/mnt/c/Users/darre/curseforge/minecraft/Instances/CityWork-ReForged}"
 MODS="$INSTANCE/mods"
 
+# Family convention (Chronicler, Cast, CityWorld): an instance whose ROOT holds .sablecraft-no-deploy is
+# never deployed to — not even when it is named explicitly through CITYWORLD_INSTANCE. Naming it is exactly
+# what someone does by habit, so "explicit wins" would defeat the marker's only purpose. A modpack instance
+# that must contain none but released CurseForge jars is the case this exists for: a dev jar there looks
+# identical to a released one and silently becomes what the pack ships.
+if [ -e "$INSTANCE/.sablecraft-no-deploy" ]; then
+    echo "!! Refusing to deploy: $INSTANCE/.sablecraft-no-deploy" >&2
+    echo "!! Nothing was built and nothing was copied." >&2
+    [ -s "$INSTANCE/.sablecraft-no-deploy" ] && sed 's/^/!!   /' "$INSTANCE/.sablecraft-no-deploy" >&2
+    echo "!! Remove that file if this instance really should take dev jars." >&2
+    exit 3
+fi
+
 echo ">> Building CityWorld..."
 "$ROOT/gradlew" build --console=plain
 
