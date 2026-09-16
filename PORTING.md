@@ -55,6 +55,41 @@ and lava passes are now overworld/Nether-gated.
 **Still to verify:** end city placement (needs ground ≥ y 60 in highlands/midlands — `find:structure:minecraft:end_city`),
 gateways landing on end stone, and the dragon fight end to end on a real client.
 
+### BoP in the Nether — swept 2026-09-16 (owner's in-game report)
+
+**What was actually wrong, and what wasn't:**
+
+- **Flesh tendons were a real bug with a ground cause.** Visceral Heap generated on netherrack, so
+  `flesh_tendon`/`hanging_flesh_tendons` had nothing to attach to: 0–2 across a 49x49-chunk sweep. With a
+  `cityworld:ground` entry (flesh over porous flesh) they measure **61 tendons + 49 strands**. The owner
+  guessed "might be taste"; it was not.
+- **Caves under crimson/warped were bare because of CityWorld.** `placeCaveDecoration` returns early unless
+  the chunk holds a *cave-pool* biome, and the Nether/End sources have no pool — so `UNDERGROUND_DECORATION`
+  and `LOCAL_MODIFICATIONS` ran only on wild NATURE lots (which take vanilla's whole pass via `super`). A
+  pool-less dimension now runs the features of the biomes present in the chunk, those two steps only
+  (`VEGETAL_DECORATION` anchors to the heightmap and would decorate rooftops). Measured off → on: rose quartz
+  buds 333 → 759, orpiment 7,436 → 9,271, pus bubbles 2 → 80, eyebulbs 2 → 24.
+- **Ground: only two of the five BoP Nether biomes need an entry** — `withered_abyss` (blackstone),
+  `visceral_heap` (flesh). Measured against a *vanilla* BoP Nether: erupting inferno (329 orpiment + 292 buds),
+  crystalline chasm (202 large rose quartz buds) and undergrowth (930 brambles, 138 burning blossom) are
+  netherrack whose character is entirely features.
+- **⚠ Willow is not a Nether plant.** BoP grows willow trees only in `subtropics`/`wetland`; undergrowth plants
+  **hellbark**. The willow-vine *block* reaches the Nether only through `nether_vines`, which hangs strands from
+  ceilings — 634 in the sweep, **every one enclosed** (0 with open air above, vs orpiment buds 229 open / 556
+  covered). "No willow vines in the wild" is therefore not a bug to fix.
+- **⚠ My "one cause, five symptoms" reading was wrong**, and the A/B caught it: willow vine 622 → 633 with the
+  fix off → on, i.e. BoP features were already generating in bulk via wild lots. The fix is worth having; it was
+  not the explanation.
+- **⚠ Blackstone spines/bulbs are UNMEASURED, not broken:** `withered_abyss` never generated in the swept area,
+  so zero is the expected reading. Check the biome is present before calling a feature missing.
+
+**Probe traps this cost (all mine):** a roofed dimension's `WORLD_SURFACE` is the *ceiling* (every Nether biome
+read as bedrock); scanning down from it finds the netherrack *under* the roof (crimson forest "23,702 netherrack,
+no nylium"); a 3x3 region sits in ONE biome so it can never witness another's features (sweep-wide tallies now);
+`JAVA_TOOL_OPTIONS` splits on spaces, so `-Dcityworld.probe.where=Willow Vine` kills the JVM — match block ids;
+and a shell without `JAVA_HOME` fails instantly and looks like a code fault. Probe gained
+`-Dcityworld.probe.where=<block_id,...>` (y-bands, open-vs-covered, and the blocks directly above/below).
+
 **Next:** the End (section 3 below) — vanilla generates the central island/pillars/podium, CityWorld the
 outer islands. Then optional Nether polish: bastion shaft look in-game on real hardware, BoP Nether biome
 coverage (the dev instance has no BoP), a server-side way to choose the ruined Nether (datapack today).
