@@ -5,6 +5,19 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 5.8.1
+
+### Fixed
+
+- **Removed the two calls that could shut a server down.** CurseForge rejected 5.7.0 and 5.8.0 with
+  "Please remove any function that shuts the Minecraft server down", and they were right to: the headless
+  self-test harness and the chunk probe each called `server.halt(...)` when they finished. Both only ever
+  ran behind a developer flag (`-Dcityworld.selftest=true`, `-Dcityworld.probe=`) that no player sets, and
+  neither could fire in normal play — but the code shipped inside the jar, and a mod that *can* stop your
+  server has no business being installed on it. There is now no `halt` or `System.exit` anywhere in the
+  published jar. Both tools still work; the scripts that start them now stop them.
+- No worldgen, content or behaviour changes: 5.8.1 is 5.8.0 with that code removed.
+
 ## 5.8.0
 
 ### Added

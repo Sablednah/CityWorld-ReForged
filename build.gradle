@@ -89,7 +89,8 @@ neoForge {
         }
 
         // Headless worldgen verification: generates a CityWorld world, checks the generator is
-        // installed, sweeps the planner, reads a built chunk back, and halts. Used by
+        // installed, sweeps the planner, reads a built chunk back, and stops. It does NOT halt the
+        // server — scripts/selftest.sh ends the run. Used by
         // scripts/selftest.sh to compare every supported Minecraft version. See CityWorldSelfTest.
         selfTest {
             server()
