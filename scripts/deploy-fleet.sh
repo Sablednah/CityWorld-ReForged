@@ -120,20 +120,40 @@ PY
 # ---- the fleet --------------------------------------------------------------------------------------
 if [ ! -d "$INSTANCES" ]; then warn "instances dir not found: $INSTANCES"; exit 2; fi
 FLEET=()
+NODEPLOY=()
 for d in "$INSTANCES"/*/; do
     d="${d%/}"; m="$d/mods"; [ -d "$m" ] || continue
     if compgen -G "$m/cityworld-*.jar" >/dev/null || compgen -G "$m/DEPLOYED-*" >/dev/null; then
         if [ -n "$ONLY" ]; then
             case ",$ONLY," in *",$(basename "$d"),"*) ;; *) continue ;; esac
         fi
+        # Family convention (Chronicler, Cast, CityWorld): an instance whose ROOT holds
+        # .sablecraft-no-deploy is never deployed to, even when --only names it. It is still LISTED, as a
+        # skip: an opted-out instance that vanishes from the table is indistinguishable from one the fleet
+        # scan missed, and this fleet is self-defining, so a silent omission is the one failure mode that
+        # would go unnoticed. The case it exists for is a modpack instance that must hold only released
+        # CurseForge jars — a dev jar there looks exactly like a released one and becomes what ships.
+        if [ -e "$d/.sablecraft-no-deploy" ]; then NODEPLOY+=("$d"); continue; fi
         FLEET+=("$d")
     fi
 done
-[ ${#FLEET[@]} -gt 0 ] || { warn "no instances carry CityWorld under $INSTANCES"; exit 2; }
+if [ ${#FLEET[@]} -eq 0 ]; then
+    if [ ${#NODEPLOY[@]} -gt 0 ]; then
+        warn "every CityWorld instance under $INSTANCES is opted out with .sablecraft-no-deploy"
+        for d in "${NODEPLOY[@]}"; do warn "  opted out: $(basename "$d")"; done
+        exit 0
+    fi
+    warn "no instances carry CityWorld under $INSTANCES"; exit 2
+fi
 
-say "Fleet: ${#FLEET[@]} instance(s)$( [ "$DRY" = 1 ] && echo ' (DRY RUN)')"
+say "Fleet: ${#FLEET[@]} instance(s)$( [ ${#NODEPLOY[@]} -gt 0 ] && echo ", ${#NODEPLOY[@]} opted out")$( [ "$DRY" = 1 ] && echo ' (DRY RUN)')"
 printf '%-28s %-8s %-36s %-12s %s\n' INSTANCE MC JAR STAMP RESULT
 rc=0
+# Listed, not hidden — and deliberately NOT an rc=1 skip: opting out is the instance's owner saying no,
+# which is a success, unlike a jar locked by a running game.
+for d in ${NODEPLOY[@]+"${NODEPLOY[@]}"}; do
+    printf '%-28s %-8s %-36s %-12s %s\n' "$(basename "$d")" "-" "-" "-" "SKIPPED: .sablecraft-no-deploy"
+done
 for inst in "${FLEET[@]}"; do
     name="$(basename "$inst")"; mods="$inst/mods"
     mc="$(instance_mc "$inst")"
