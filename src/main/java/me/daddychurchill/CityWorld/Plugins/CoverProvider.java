@@ -776,6 +776,8 @@ public abstract class CoverProvider extends Provider {
 			// the _Decayed branch falls through to Normal until CoverProvider_Decayed is ported.
 			if (generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.NETHER)
 				return new CoverProvider_Nether(odds);
+			if (generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.THE_END)
+				return new CoverProvider_TheEnd(odds);
 			switch (generator.worldStyle) {
 			case FLOODED:
 				provider = new CoverProvider_Flooded(odds);

@@ -279,12 +279,18 @@ public abstract class PlatLot {
 		// clay floors, glow-berry vines and spore blossoms overhead, dripleaf, little pools with axolotls/
 		// frogs/tropical fish, and a surface azalea tell on nature lots. Runs under every lot (caves are below
 		// everything), on the already-carved caves.
-		if (generator.isModernStyle() && generator.getSettings().includeCaves)
+		// Overworld only: moss, cave vines, dripleaf and spore blossoms were growing in the End (measured
+		// 2026-09-16), and nothing lush belongs in the Nether either.
+		if (generator.isModernStyle() && generator.getSettings().includeCaves
+				&& generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.NORMAL)
 			me.daddychurchill.CityWorld.Support.LushCaves.apply(generator, this, chunk, chunkOdds);
 
 		// Lava lakes: line the cave walls/floor bordering a lava pool with basalt, so the pool's noise-region
 		// edge (a flat wall where it cuts across a cave tunnel) reads as a natural basalt-lined pocket instead.
-		if (generator.getSettings().includeLavaFields)
+		// Lava belongs in the overworld and the Nether; the End has none, so its basalt lining has no business
+		// there (measured: 708 basalt blocks in a 9-chunk End sample, 2026-09-16).
+		if (generator.getSettings().includeLavaFields
+				&& generator.worldEnvironment != me.daddychurchill.CityWorld.compat.Environment.THE_END)
 			me.daddychurchill.CityWorld.Support.LavaLakes.apply(generator, this, chunk, chunkOdds);
 
 		// Apocalypse: hide zombie spawners in the ruins' cellars — some buried in a sealed pocket UNDER
