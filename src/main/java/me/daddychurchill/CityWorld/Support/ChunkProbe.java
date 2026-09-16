@@ -12,7 +12,8 @@ import net.neoforged.neoforge.event.server.ServerStartedEvent;
 
 /**
  * The headless chunk probe: {@code -Dcityworld.probe=<chunkX>,<chunkZ>} forces that chunk (plus a
- * ring so decoration runs), dumps every non-air block column summary in it, then halts the server.
+ * ring so decoration runs), dumps every non-air block column summary in it, then stops. It does
+ * NOT shut the server down — whoever started the run ends it (see the finally block below).
  * Built for the four-times-escaped empty School lobby (seed 2720459862006157221, chunk 5,-7):
  * combined with {@link #tracing()}-gated logging inside the furnishing passes, it answers "what
  * ACTUALLY happened on this floor" instead of feeding another hypothesis.
@@ -553,7 +554,14 @@ public final class ChunkProbe {
         } catch (Throwable t) {
             CityWorldMod.LOGGER.error("PROBE failed", t);
         } finally {
-            server.halt(false);
+            // This used to call server.halt(false). It does not any more, and must not again:
+            // CurseForge rejected 5.7.0 and 5.8.0 with "Please remove any function that shuts the
+            // Minecraft server down" (2026-09-16). The call only ever ran behind -Dcityworld.probe,
+            // but a reviewer greps the shipped bytecode, not the flag that guards it — and they are
+            // right to: a worldgen mod has no business being able to stop someone's server.
+            // The probe now just stops; whoever started it ends the run (scripts kill the process
+            // group — never a pkill pattern, see CLAUDE.md).
+            CityWorldMod.LOGGER.warn("PROBE complete — the server is still running; stop it yourself.");
         }
     }
 }

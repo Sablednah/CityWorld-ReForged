@@ -129,11 +129,76 @@ set_prop "online-mode" "false"
 # CITYWORLD_SELFTEST_PORT if 25599 is taken too.
 set_prop "server-port" "${CITYWORLD_SELFTEST_PORT:-25599}"
 
-echo ">> Running (generates a world, verifies, then halts)..."
+echo ">> Running (generates a world, verifies, then this script stops it)..."
 LOG="$ROOT/build/selftest/$VERSION.log"
+: > "$LOG"
+# Ending the run is THIS SCRIPT'S job now. The harness used to call server.halt() when it finished;
+# it must not any more, because CurseForge rejected 5.7.0 and 5.8.0 with "Please remove any function
+# that shuts the Minecraft server down" (see CityWorldSelfTest). Nothing in the shipped jar may stop a
+# server, so the decision moved out here, to the thing that started it.
+#
+# setsid puts gradle and every JVM it spawns into their own process group, so one kill on the negative
+# PGID takes the whole tree down. That detail is load-bearing: gradle runs the server as a CHILD, so
+# killing the gradle PID alone orphans a server that goes on holding run/world/session.lock and port
+# 25599 — and the NEXT run then dies with "already locked" or "Address already in use", which reads
+# exactly like a CityWorld fault and is not one (CLAUDE.md). Equally: never match a pkill PATTERN here.
+# A pattern broad enough to catch the server also matches this script's own command line, and kills it.
+SELFTEST_TIMEOUT="${CITYWORLD_SELFTEST_TIMEOUT:-1800}"
 set +e
-"$ROOT/gradlew" runSelfTest --console=plain > "$LOG" 2>&1
-GRADLE_STATUS=$?
+# `set -m` (job control) puts each background job in its OWN process group whose PGID equals the job's
+# PID — so the group to kill is simply $!, with nothing to look up and so nothing to get wrong.
+#
+# The first attempt used `setsid ... &` and then read the PGID back with `ps -o pgid=`. That is a trap:
+# $! is SETSID's pid, setsid exits the moment it forks, and the lookup then resolved to THIS SCRIPT'S
+# group — so the kill terminated the script itself ("Terminated", exit 143, measured 2026-09-16). It is
+# the pkill-matches-your-own-command-line mistake (CLAUDE.md) wearing a different hat, so the guard
+# below is belt and braces: never signal our own group, whatever the arithmetic says.
+set -m
+"$ROOT/gradlew" runSelfTest --console=plain > "$LOG" 2>&1 &
+GRADLE_PID=$!
+set +m
+OWN_PGID="$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')"
+end_run() {
+    [ -n "$GRADLE_PID" ] || return 0
+    if [ -n "$OWN_PGID" ] && [ "$GRADLE_PID" = "$OWN_PGID" ]; then
+        echo "!! Refusing to kill process group $GRADLE_PID — it is this script's own." >&2
+        return 0
+    fi
+    kill -TERM "-$GRADLE_PID" 2>/dev/null
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+        kill -0 "-$GRADLE_PID" 2>/dev/null || return 0
+        sleep 1
+    done
+    kill -KILL "-$GRADLE_PID" 2>/dev/null
+}
+waited=0
+while :; do
+    # The harness logs this whether it passed, failed, or threw — writeReport and the final line run
+    # outside the try. So this is the one marker that means "the checks are over", and PASS/FAIL is
+    # read from the log afterwards exactly as before.
+    if grep -q "SELFTEST: complete" "$LOG" 2>/dev/null; then
+        end_run
+        wait "$GRADLE_PID" 2>/dev/null
+        GRADLE_STATUS=0
+        break
+    fi
+    # Gradle exited by itself: the server crashed, or never started. Keep its status for the
+    # "harness never ran" branch below, which reports it.
+    if ! kill -0 "$GRADLE_PID" 2>/dev/null; then
+        wait "$GRADLE_PID" 2>/dev/null
+        GRADLE_STATUS=$?
+        break
+    fi
+    if [ "$waited" -ge "$SELFTEST_TIMEOUT" ]; then
+        echo "!! Timed out after ${SELFTEST_TIMEOUT}s waiting for 'SELFTEST: complete'." >&2
+        echo "!! Killing the run; raise CITYWORLD_SELFTEST_TIMEOUT if the machine is just slow." >&2
+        end_run
+        GRADLE_STATUS=124
+        break
+    fi
+    sleep 2
+    waited=$((waited + 2))
+done
 set -e
 
 if [ -f "$ROOT/run/cityworld-selftest.json" ]; then

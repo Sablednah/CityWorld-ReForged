@@ -55,11 +55,13 @@ import net.neoforged.neoforge.event.server.ServerStartedEvent;
  * 5.1.0 onward, so a reviewer diffing a later version sees it as pre-existing rather than something
  * newly slipped in.
  *
- * <p>Worth being aware of how it reads to someone auditing the jar: a dormant code path, switched on
- * by a flag, that ends in {@link net.minecraft.server.MinecraftServer#halt}. That shape is what
- * plugin backdoors used to look like. It is benign — setting a system property requires launch-time
- * access to the server, so anyone who can trigger it can already stop the server directly, and there
- * is no network trigger and no privilege change — but expect it to draw a careful read.
+ * <p><b>It cannot stop the server, and must never be able to again.</b> This harness used to finish by
+ * calling {@code MinecraftServer#halt}, and CurseForge rejected 5.7.0 and 5.8.0 over it: "Please
+ * remove any function that shuts the Minecraft server down" (2026-09-16). The call was dormant behind
+ * a launch flag and could not fire in normal play — but a dormant code path, switched on by a flag,
+ * that ends in a server shutdown is exactly the shape a backdoor has, and a reviewer greps the shipped
+ * bytecode rather than the flag guarding it. Ending the run now belongs to scripts/selftest.sh, which
+ * waits for the "SELFTEST: complete" line and then kills the run's process group.
  *
  * <p><b>What makes it cross-version useful.</b> Planning never touches the block registry, so for a
  * fixed seed the plan is a pure function of the seed and must be <em>identical</em> on every
@@ -220,9 +222,16 @@ public final class CityWorldSelfTest {
             for (String f : failures)
                 CityWorldMod.LOGGER.error("SELFTEST:   - {}", f);
         }
-        // Always stop, so a CI run terminates instead of idling at the console.
-        CityWorldMod.LOGGER.info("SELFTEST: done, halting server");
-        server.halt(false);
+        // This used to call server.halt(false) so a CI run terminated instead of idling. It does not
+        // any more, and must not again: CurseForge rejected 5.7.0 and 5.8.0 with "Please remove any
+        // function that shuts the Minecraft server down" (2026-09-16). The call only ever ran behind
+        // -Dcityworld.selftest=true, but a reviewer greps the shipped bytecode, not the flag that
+        // guards it. Nothing in this jar may stop a server, dormant or not.
+        //
+        // scripts/selftest.sh waits for the line below and then kills the run's process group, so the
+        // harness still terminates on its own — the difference is that the decision now lives in the
+        // script that started the server rather than in code a player could ship.
+        CityWorldMod.LOGGER.info("SELFTEST: complete — harness finished, server left running");
     }
 
     // ---- checks ---------------------------------------------------------------------------------
