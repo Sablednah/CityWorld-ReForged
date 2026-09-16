@@ -155,6 +155,8 @@ public class OreProvider extends Provider {
         // The realm outranks the style: a ruined-city Nether is netherrack and lava whatever it mirrors.
         if (generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.NETHER)
             return new OreProvider_Nether(generator);
+        if (generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.THE_END)
+            return new OreProvider_TheEnd(generator);
 
         // The original switches on worldStyle over several variants (_Astral, _Nether, _TheEnd,
         // _SandDunes, _SnowDunes, _Decayed, _Normal). The style variants land with their matching
