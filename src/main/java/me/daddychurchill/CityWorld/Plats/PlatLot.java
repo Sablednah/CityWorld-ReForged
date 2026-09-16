@@ -308,6 +308,9 @@ public abstract class PlatLot {
 		return true;
 	}
 
+	/** Soul soil has no {@code Material} constant (the generator names it by block). */
+	private static final Material NETHER_SOIL = Material.of(net.minecraft.world.level.block.Blocks.SOUL_SOIL);
+
 	/** MODERN: whether the biome-ground pass also lays snow on cold-biome grass. True by default; roads
 	 *  return false so they still get biome soil (sand/badlands/etc.) but keep their own graded
 	 *  tunnel-roof snow (the traceable line) instead of a full blanket. */
@@ -319,15 +322,25 @@ public abstract class PlatLot {
 	 *  assigned biome's signature block (and snow the cold ones), clearing any surface vegetation first
 	 *  so nothing floats. Only touches grass/dirt near the planned surface, below the icecap line. */
 	protected void applyBiomeGround(CityWorldGenerator generator, RealBlocks chunk) {
+		// The Nether has no grass to swap and no icecap: its ground is the ore provider's netherrack, and the
+		// biome blocks it becomes (nylium, soul soil, basalt). Without this, crimson/warped/soul-sand-valley
+		// generated as bare netherrack — right biome, right fog, wrong ground (owner, 2026-09-16). The height
+		// gates are overworld datums too (sea level, icecap), so they are skipped there.
+		boolean nether = generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.NETHER;
 		int iceLine = generator.snowLevel - 5; // the icecap pass owns columns at/above this
 		for (int x = 0; x < 16; x++)
 			for (int z = 0; z < 16; z++) {
 				int top = getBlockY(x, z);
-				if (top < generator.seaLevel || top >= iceLine)
+				if (!nether && (top < generator.seaLevel || top >= iceLine))
 					continue;
-				if (!chunk.isOfTypes(x, top, z, Material.GRASS_BLOCK, Material.DIRT, Material.COARSE_DIRT,
-						Material.PODZOL))
-					continue; // only natural grassy ground — never a build, farmland, road or swamp pool
+				// Grass and dirt count in the Nether too: parks, yards and farms lay them, and green lawns in a
+				// ruined Nether read as a bug (measured: 60 grass-topped columns in nether_wastes, 2026-09-16).
+				if (nether ? !chunk.isOfTypes(x, top, z, Material.NETHERRACK, Material.CRIMSON_NYLIUM,
+						Material.WARPED_NYLIUM, Material.SOUL_SAND, NETHER_SOIL, Material.BASALT,
+						Material.GRASS_BLOCK, Material.DIRT, Material.COARSE_DIRT, Material.PODZOL)
+						: !chunk.isOfTypes(x, top, z, Material.GRASS_BLOCK, Material.DIRT, Material.COARSE_DIRT,
+								Material.PODZOL))
+					continue; // only natural ground — never a build, farmland, road or swamp pool
 				var biomeHolder = chunk.getBiomeHolder(x, top, z);
 				var biome = chunk.getBiomeKey(x, top, z);
 				if (biome == null)

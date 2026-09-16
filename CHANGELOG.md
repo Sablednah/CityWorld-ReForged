@@ -43,6 +43,12 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Fixed
 
+- **The Nether's crimson forests, warped forests and soul sand valleys had no ground of their own.** They
+  generated as bare netherrack — the right biome in every other way (fog, mobs, name), which is why they read
+  as plain Nether Wastes. They now get their nylium and soul soil, basalt deltas get basalt, and the grass that
+  parks and farms laid in the Nether becomes the biome's own ground.
+- **The bastion shaft stopped short of the surface.** It climbed to the city's planned street height rather
+  than the real ground above that spot, so it could end underground. It now follows the actual surface.
 - **The ruined-city Nether could freeze the whole world.** Chunks stopped generating (a black void) and quitting
   hung on "Saving world". A decaying sidewalk kept looking for an uncovered spot to crumble and never gave up
   when the whole sidewalk was covered — sunk under the Nether's lava sea, or buried in rubble. It now gives up
