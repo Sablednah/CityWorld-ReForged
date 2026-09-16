@@ -53,3 +53,16 @@ iconBlur=false
     versionRange="${journeymap_version_range}"
     ordering="AFTER"
     side="BOTH"
+
+# Optional, and load-ORDER is the entire point: CityWorld ships an override of BoP's own
+# data/biomesoplenty/worldgen/placed_feature/large_rose_quartz.json, and a mod's datapack only wins a
+# file conflict if it is sorted after the mod it overrides. Without this entry the override is a silent
+# no-op — measured 2026-09-16: 6 rose quartz blocks across a 13x13-chunk sweep either way, identical to
+# stock BoP, because BoP's pack loaded last. (The override aims BoP's placement at the ruined Nether's
+# cave band; BoP tunes it for vanilla's 128-block Nether and ours is ~3x taller. See PORTING.md.)
+[[dependencies.${mod_id}]]
+    modId="biomesoplenty"
+    type="optional"
+    versionRange="[0,)"
+    ordering="AFTER"
+    side="BOTH"

@@ -130,14 +130,12 @@ He was right, and it was never crimson/warped specific.
   `runServer` world — whose Nether is **vanilla** (below) — where nylium on cave floors is exactly what
   vanilla's own surface rules produce. Four consecutive probe runs measured the wrong world before the
   `PROBE: dimension ... generator` line was read. **Read that line first, every time.**
-- **Rose quartz pillars — a cave-SIZE problem, not a tag one.** BoP's feature is `large_rose_quartz` (step 2,
-  `LOCAL_MODIFICATIONS`, which we now run). Vanilla's `#minecraft:dripstone_replaceable_blocks` is
-  `#base_stone_overworld` only and **BoP ships no override**, but that tag only gates growing *into* solid —
-  the pillar builds in cave air. The binding constraint is its own
-  `max_column_radius_to_cave_height_ratio: 0.33` with `column_radius` 3–7, i.e. it needs a cave roughly
-  **9–21 blocks tall**; our nether caves are noise blobs mostly shorter than that. That is exactly "just
-  clusters": `small_crystal` needs no headroom. `#cityworld:carve_cavern` cannot help — it keys off structure
-  starts (`bastion_remnant`), and a biome is not a structure. **Open.**
+- **Rose quartz pillars — placement dilution, not cave size and not a tag.** See the dedicated section below.
+  Two wrong diagnoses were published before the right one: the `#minecraft:dripstone_replaceable_blocks` tag
+  (it only gates growing *into* solid — the pillar builds in cave air), then cave size, from **inverting**
+  `max_column_radius_to_cave_height_ratio`. That ratio **caps the radius from the height**; it does not demand
+  height. Vanilla's `LargeDripstoneFeature`, which BoP's copies, rejects a column only at
+  `column$range.height() < 4`.
 - **Decided, not a bug:** flesh tendons grow upward forever because they are meant to reach a nether ceiling
   and ours has none. Owner: "I like it — tag it as noticed and decided not a bug." Do not "fix" this.
 - **Confirmed in game by the owner:** flesh tendons ("suitably creepy"), withered abyss spines + obsidian
@@ -177,15 +175,46 @@ and *moves* the tunnels, which would be different caves rather than bigger ones.
 −2.4% of standing rock), soul soil **1,258 → 1,490** (+18% — more cave floor for `NetherCaveGround` to coat),
 basalt 39,828 → 41,152.
 
-**Rose quartz pillars: still effectively absent, and cave size was not the answer.** `Block of Rose Quartz`
-measured **10 → 9** across the sweep (noise), while buds rose 101 → 141 with the extra cave surface. An
-earlier "0 pillars" reading was from the vanilla-Nether world and was wrong. ~10 blocks over 169 chunks is a
-fragment, not a pillar: `large_rose_quartz` needs 9–21 blocks of headroom and our cheese caverns rarely offer
-it. **Open** — it needs the caverns themselves made taller, not the tunnels made fatter.
+**Amplified further (owner: "I'm happy for tunnels to be bigger — it's supposed to be very cavernous").** The
+**Y scales are the amplifier and they are safe to move**: a *horizontal* scale change resamples the field and
+relocates the caves, but changing only the Y scale rescales one axis, so the pattern at any (x, z) is the same
+one stretched vertically — same caves, same footprints, taller. `cheeseScaleY` sampling Y at **double** the
+horizontal frequency is why every cavern was squashed to half height. Nether now: `wormEps` 0.150,
+`wormScaleY` 1/140, `cheeseThreshold` 0.830, `cheeseScaleY` `cheeseScale*0.9`, `caveThreshold` 0.68.
+Measured: columns clearing 9 blocks of headroom **33% → 52%** (12-block bucket 176 → 452, 16-block 106 → 285),
+netherrack 638,621 → 626,172.
 
-**Next:** taller cheese caverns for `crystalline_chasm` if the owner wants real pillars. Then optional Nether
-polish: bastion shaft look in-game on real hardware, a server-side way to choose the ruined Nether (the probe
-datapack above is the pattern).
+The probe gained **cave headroom** — the tallest unbroken air run per column, bucketed, plus the share
+clearing 9 blocks. A block tally cannot answer "can a feature needing N blocks of height stand here": fewer
+solid blocks can mean wider caves *or* taller ones, and a −2.4% netherrack reading came with zero change in
+pillars.
+
+### Rose quartz pillars: BoP's placement, diluted by our taller Nether (solved 2026-09-16)
+
+**Cause.** BoP places `large_rose_quartz` with `count: 6` over a `height_range` spanning the dimension —
+tuned for vanilla's 128-block Nether. The ruined Nether is full height (−64..319), ~3x taller, so the same six
+attempts scatter over three times the column and nearly all land in solid rock or open sky. Cave size was
+never the constraint: amplifying the caves moved `Block of Rose Quartz` 9 → 6 (noise) even as headroom went
+33% → 52%.
+
+**Measured** (26.2, ruined Nether, centre 0,0 r=6, same seed), by datapack override in the probe world:
+
+| placement | Block of Rose Quartz |
+|---|---|
+| BoP's shipped `count 6`, dimension-wide | **6** |
+| `count 24`, y −50..100 | **314** |
+| `count 6` (BoP's own density), y −50..100 | **75** — 44 with quartz directly above *and* below |
+
+**Shipped:** `data/biomesoplenty/worldgen/placed_feature/large_rose_quartz.json` in our jar, keeping BoP's
+own `count: 6` and only aiming the band at where our caves are. The owner chose the in-jar override over an
+instance-only pack or an opt-in built-in pack, accepting that it also applies to a CityWorld+BoP player on a
+stock vanilla Nether (band 0..100 rather than 0..128). ⚠ It is an override of another mod's file, so **mod
+resource load order decides who wins** — verified by measurement from the jar, not assumed.
+
+**Next:** optional Nether polish — bastion shaft look in-game on real hardware, a server-side way to choose
+the ruined Nether (the probe datapack above is the pattern). Note the same dilution applies in principle to
+*every* BoP Nether feature whose `height_range` spans the dimension; only rose quartz was reported, and its
+buds/clusters look right, so nothing else has been changed.
 
 ## ▶ The ZARP realms arc (opened 2026-09-15)
 
