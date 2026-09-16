@@ -904,7 +904,15 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private void placeCaveDecoration(WorldGenLevel level, ChunkAccess chunk) {
         try {
             List<Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature>> features = caveOnlyFeatures();
-            if (features.isEmpty() || !containsCaveBiome(chunk))
+            // A realm with no cave pool (the Nether, the End) still has underground to fill: run what the
+            // chunk's OWN biomes put underground. Without this the Nether's caves were bare and — because the
+            // same two steps carry them — BoP's orpiment buds, blackstone spines, flesh tendons, willow trees
+            // and rose quartz never appeared anywhere but a wild nature lot (owner, in game, 2026-09-16).
+            if (features.isEmpty())
+                features = ownBiomeUndergroundFeatures(chunk);
+            else if (!containsCaveBiome(chunk))
+                return;
+            if (features.isEmpty())
                 return;
 
             net.minecraft.core.SectionPos sectionPos = net.minecraft.core.SectionPos.of(chunk.getPos(),
@@ -1020,6 +1028,38 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         }
         return false;
     }
+
+    /**
+     * The underground features of the biomes actually present in this chunk — for a dimension with no cave
+     * pool of its own.
+     *
+     * <p><b>Two steps only.</b> {@code UNDERGROUND_DECORATION} and {@code LOCAL_MODIFICATIONS} are where the
+     * Nether keeps its character (vanilla's glowstone and magma; BoP's orpiment fumaroles, obsidian splatter,
+     * blackstone spines, flesh tendons, willow undergrowth, large rose quartz). {@code VEGETAL_DECORATION} is
+     * deliberately left out here: those features anchor to the heightmap, so running them on a city chunk
+     * would decorate its rooftops.
+     */
+    private List<Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature>> ownBiomeUndergroundFeatures(
+            ChunkAccess chunk) {
+        java.util.LinkedHashSet<Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature>> found =
+                new java.util.LinkedHashSet<>();
+        java.util.Set<Holder<Biome>> seen = new java.util.HashSet<>();
+        for (net.minecraft.world.level.chunk.LevelChunkSection section : chunk.getSections())
+            section.getBiomes().getAll(seen::add);
+        for (Holder<Biome> biome : seen) {
+            List<net.minecraft.core.HolderSet<net.minecraft.world.level.levelgen.placement.PlacedFeature>> byStep =
+                    biome.value().getGenerationSettings().features();
+            for (int step : UNDERGROUND_STEPS)
+                if (step < byStep.size())
+                    byStep.get(step).forEach(found::add);
+        }
+        return List.copyOf(found);
+    }
+
+    /** See {@link #ownBiomeUndergroundFeatures}: the two steps that are safe to run on any chunk. */
+    private static final int[] UNDERGROUND_STEPS = {
+            net.minecraft.world.level.levelgen.GenerationStep.Decoration.LOCAL_MODIFICATIONS.ordinal(),
+            net.minecraft.world.level.levelgen.GenerationStep.Decoration.UNDERGROUND_DECORATION.ordinal() };
 
     /** Memoized; see {@link #caveOnlyFeatures}. */
     private volatile List<Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature>> caveOnlyFeatures;
