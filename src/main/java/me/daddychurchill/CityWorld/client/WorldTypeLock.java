@@ -51,7 +51,8 @@ public final class WorldTypeLock {
     private static final Component LOCKED = Component.translatable("cityworld.lock.world_type");
 
     public static void register() {
-        if (CityWorldPackConfig.lockedWorldPreset().isEmpty() && CityWorldPackConfig.lockedRuinedNether().isEmpty())
+        if (CityWorldPackConfig.lockedWorldPreset().isEmpty() && CityWorldPackConfig.lockedRuinedNether().isEmpty()
+                && CityWorldPackConfig.lockedCityWorldEnd().isEmpty())
             return;
         NeoForge.EVENT_BUS.addListener(WorldTypeLock::onInit);
         NeoForge.EVENT_BUS.addListener(WorldTypeLock::onRender);
@@ -80,7 +81,8 @@ public final class WorldTypeLock {
     private static boolean enforce(WorldCreationUiState state) {
         boolean type = enforceType(state);
         boolean nether = enforceNether(state);
-        return type || nether;
+        boolean end = enforceEnd(state);
+        return type || nether || end;
     }
 
     /** A pack's {@code ruinedNether} lock: swap the Nether whenever the selected dimensions disagree with it. */
@@ -99,6 +101,17 @@ public final class WorldTypeLock {
      * preset does not exist in this screen's registries — a typo in the config, or the pack's datapack missing —
      * so a bad lock leaves vanilla's screen usable rather than stuck on nothing.
      */
+    /** A pack's {@code cityworldEnd} lock: swap the End whenever the selected dimensions disagree with it. */
+    private static boolean enforceEnd(WorldCreationUiState state) {
+        Optional<Boolean> cityWorld = CityWorldPackConfig.lockedCityWorldEnd();
+        if (cityWorld.isEmpty())
+            return false;
+        if (me.daddychurchill.CityWorld.worldgen.CityWorldRealms.hasCityWorldEnd(state.getSettings().selectedDimensions()) != cityWorld.get())
+            state.updateDimensions((registries, dimensions) ->
+                    me.daddychurchill.CityWorld.worldgen.CityWorldRealms.withEnd(registries, dimensions, cityWorld.get()));
+        return true;
+    }
+
     private static boolean enforceType(WorldCreationUiState state) {
         Optional<ResourceKey<WorldPreset>> key = CityWorldPackConfig.lockedWorldPreset();
         if (key.isEmpty())

@@ -72,6 +72,7 @@ public final class CityWorldClient {
                 currentStyle(context),
                 currentSettings(context),
                 me.daddychurchill.CityWorld.worldgen.CityWorldRealms.hasRuinedNether(context.selectedDimensions()),
+                me.daddychurchill.CityWorld.worldgen.CityWorldRealms.hasCityWorldEnd(context.selectedDimensions()),
                 false,
                 result -> parent.getUiState().updateDimensions(configurator(result))));
         // A modpack lock onto another CityWorld preset (apocalypse, say) still gets a Customize button — only
@@ -84,6 +85,7 @@ public final class CityWorldClient {
                         currentStyle(context),
                         currentSettings(context),
                         me.daddychurchill.CityWorld.worldgen.CityWorldRealms.hasRuinedNether(context.selectedDimensions()),
+                        me.daddychurchill.CityWorld.worldgen.CityWorldRealms.hasCityWorldEnd(context.selectedDimensions()),
                         true,
                         result -> parent.getUiState().updateDimensions(configurator(result)))));
     }
@@ -104,9 +106,11 @@ public final class CityWorldClient {
 
     /** Rewrites the overworld to a CityWorld generator carrying the chosen style + edited settings. */
     private static WorldCreationContext.DimensionsUpdater configurator(CityWorldCustomizeScreen.Result result) {
-        return (registries, dimensions) -> me.daddychurchill.CityWorld.worldgen.CityWorldRealms.withNether(registries,
-                dimensions.replaceOverworldGenerator(registries, buildGenerator(registries, result)),
-                result.ruinedNether());
+        return (registries, dimensions) -> me.daddychurchill.CityWorld.worldgen.CityWorldRealms.withEnd(registries,
+                me.daddychurchill.CityWorld.worldgen.CityWorldRealms.withNether(registries,
+                        dimensions.replaceOverworldGenerator(registries, buildGenerator(registries, result)),
+                        result.ruinedNether()),
+                result.cityWorldEnd());
     }
 
     private static ChunkGenerator buildGenerator(RegistryAccess.Frozen registries,

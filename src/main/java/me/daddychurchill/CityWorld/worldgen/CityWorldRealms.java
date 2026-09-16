@@ -55,6 +55,54 @@ public final class CityWorldRealms {
         return new LevelStem(type, generator);
     }
 
+    /** Whether a world's dimensions already carry the CityWorld End. */
+    public static boolean hasCityWorldEnd(WorldDimensions dimensions) {
+        return dimensions.get(LevelStem.END)
+                .map(stem -> stem.generator() instanceof CityWorldChunkGenerator)
+                .orElse(false);
+    }
+
+    /**
+     * The CityWorld End's level stem. <b>The dimension type stays vanilla's {@code minecraft:the_end}</b>: on
+     * 1.21.11 {@code ServerLevel} only creates the dragon fight for that type (26.x asks the type's
+     * {@code has_ender_dragon_fight} instead, which vanilla's has), so borrowing it is what keeps the fight,
+     * the exit portal and the gateways working.
+     */
+    public static LevelStem cityWorldEnd(HolderLookup.Provider registries) {
+        var biomes = registries.lookupOrThrow(Registries.BIOME);
+        var type = registries.lookupOrThrow(Registries.DIMENSION_TYPE)
+                .getOrThrow(net.minecraft.world.level.dimension.BuiltinDimensionTypes.END);
+        CityWorldChunkGenerator generator = new CityWorldChunkGenerator(
+                new CityWorldEndBiomeSource(biomes),
+                Optional.empty(),
+                // Fallbacks only: twin_of takes the overworld's own style and settings at runtime.
+                Optional.of("floating"),
+                Optional.empty(),
+                Optional.of(Level.OVERWORLD),
+                Optional.of("the_end"));
+        return new LevelStem(type, generator);
+    }
+
+    /** Vanilla's End, as the {@code minecraft:normal} preset builds it — what switching back restores. */
+    public static Optional<LevelStem> vanillaEnd(HolderLookup.Provider registries) {
+        return registries.lookupOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.NORMAL).value()
+                .createWorldDimensions().get(LevelStem.END);
+    }
+
+    /** {@code dimensions} with the End swapped for CityWorld's, or back to vanilla's. */
+    public static WorldDimensions withEnd(HolderLookup.Provider registries, WorldDimensions dimensions,
+            boolean cityWorld) {
+        if (cityWorld == hasCityWorldEnd(dimensions))
+            return dimensions;
+        Map<ResourceKey<LevelStem>, LevelStem> map = new LinkedHashMap<>(dimensions.dimensions());
+        if (cityWorld)
+            map.put(LevelStem.END, cityWorldEnd(registries));
+        else
+            vanillaEnd(registries).ifPresentOrElse(stem -> map.put(LevelStem.END, stem),
+                    () -> map.remove(LevelStem.END));
+        return new WorldDimensions(map);
+    }
+
     /** Vanilla's Nether, as the {@code minecraft:normal} preset builds it — what switching back restores. */
     public static Optional<LevelStem> vanillaNether(HolderLookup.Provider registries) {
         return registries.lookupOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.NORMAL).value()

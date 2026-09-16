@@ -28,6 +28,7 @@ public final class CityWorldPackConfig {
     public static final ModConfigSpec SPEC;
     private static final ModConfigSpec.ConfigValue<String> LOCKED_WORLD_PRESET;
     private static final ModConfigSpec.ConfigValue<String> RUINED_NETHER;
+    private static final ModConfigSpec.ConfigValue<String> CITYWORLD_END;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -43,6 +44,11 @@ public final class CityWorldPackConfig {
                 "1:1, burnt), \"vanilla\" = vanilla's Nether. Customize shows the choice greyed out.",
                 "Empty = the player chooses in Customize (default vanilla).")
                 .define("ruinedNether", "");
+        CITYWORLD_END = b.comment(
+                "Lock the End of every new world: \"cityworld\" = CityWorld's End (vanilla's central island and",
+                "dragon fight, CityWorld cities on the outer islands), \"vanilla\" = vanilla's End.",
+                "Empty = the player chooses in Customize (default vanilla).")
+                .define("cityworldEnd", "");
         b.pop();
         SPEC = b.build();
     }
@@ -56,6 +62,20 @@ public final class CityWorldPackConfig {
             default -> {
                 me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
                         "CityWorld: ruinedNether \"{}\" is not cityworld/vanilla — no Nether lock applied", RUINED_NETHER.get());
+                yield Optional.empty();
+            }
+        };
+    }
+
+    /** The End lock: true = CityWorld's End, false = vanilla, empty = the player's choice. */
+    public static Optional<Boolean> lockedCityWorldEnd() {
+        return switch (CITYWORLD_END.get().trim().toLowerCase(java.util.Locale.ROOT)) {
+            case "cityworld" -> Optional.of(true);
+            case "vanilla" -> Optional.of(false);
+            case "" -> Optional.empty();
+            default -> {
+                me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                        "CityWorld: cityworldEnd \"{}\" is not cityworld/vanilla — no End lock applied", CITYWORLD_END.get());
                 yield Optional.empty();
             }
         };
