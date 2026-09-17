@@ -140,6 +140,15 @@ central island is flat at exactly the wrong height).
     chunks, and `validateRoads` reclaims a platmap's roads unless one leaves it): 88 road lots to 630 buildings. A
     platmap with no roads now keeps no buildings (`validateLots`). `-Dcityworld.end.settled=<n>` with `survey:end`
     re-tunes it in one run per value.
+- **Owner's third look (2026-09-17/18): BoP all there, city thinned — but whole regions were planed flat and
+  empty**, F3 reading a Midrise/Neighborhood context over `EndNatureLot nature 100%`. Two causes. (1) Upstream's
+  `PlatMap.validateRoads` reclaims every road in a platmap unless one reaches its edge; on an island, none can, so
+  the roads went — and the no-streets-no-city rule then cleared the buildings. `ShapeProvider.keepsIsolatedRoads()`
+  (End only) skips the reclaim. (2) The terrace moved blocks everywhere in city country. The planner is still *told*
+  the terrace everywhere (buildable cannot depend on built), but `preGenerateChunk` now levels only under a built
+  lot and across a 12-block `APRON` beside one. Coverage with roads kept: unthinned 28%, −0.25 16%, 0.0 9% →
+  threshold **−0.2**. Diagnosed from the owner's F3 line in one screenshot; `PLANvWORLD` in the probe (per chunk:
+  planned lot + blocks standing above the street) is the tool for the next "the map says city, the world says empty".
 - **Biomes are vanilla's.** `CityWorldEndBiomeSource` reads the same end-islands field through `EndTerrain`
   (`TheEndBiomeSource`'s own sample point and thresholds). ⚠ It is bound in **`createState`**, not at first chunk:
   structure placement asks for biomes before any chunk exists, and unbound it answered "barrens" — the probe's
