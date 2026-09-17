@@ -5,7 +5,8 @@
 **Status 2026-09-17.** The End was redone from scratch and CityWorld's Nether + End are now the **default realms**
 in all 13 world presets. Self-tested on all three branches (1.21.11 128 checks, 26.1 128, 26.2 151; the new
 `checkEnd` reads 0 terrain mismatches, 472 built chunks, 0 central lots on each; plan hashes identical) and
-deployed to the 9-instance fleet for playtest: master `42eb98e9`, `mc26.1 b084b2d1`, `mc26.2 e0adba7d`.
+deployed to the 9-instance fleet for playtest. The basements + pylons follow-up was re-tested the same way and
+deployed: master `5bb3ebf2` (code; stamp `dc0533a4`), `mc26.1 21d9804d`, `mc26.2 46664b60`.
 **Committed, not pushed.** **Not yet seen in game by the owner**; the section below ("The End, second build") has the design, every
 measurement, and the dials to turn once they have.
 
