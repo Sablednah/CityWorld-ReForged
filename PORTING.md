@@ -107,8 +107,17 @@ central island is flat at exactly the wrong height).
   (`EndTerrain.chunkUndersides`, 4 blocks of cover, none where any column is void); measured over 169 chunks:
   basements to y 48, and the lowest block of every column is still end stone. And **bridge pylons** "either need
   to vanish or rest on obsidian": `RoadLot.placeBridgeColumn` — in the End each pylon column looks for real ground
-  beneath it and stands on an obsidian footing, or is not drawn at all over void. Next, per the owner: the
-  **palette**.
+  beneath it and stands on an obsidian footing, or is not drawn at all over void.
+- **Palette, lights, and a pristine End (owner's three answers, 2026-09-17).** *"Blend it in"*: the new
+  `#cityworld:build/end_stones` tag (purpur block + pillar, end stone bricks, obsidian, amethyst) is folded into the
+  building/house/government/factory/water-tower pools **in the End only**, weighted at half of what each pool already
+  holds → about one pick in three (`MaterialProvider`, after the MODERN fold). ⚠ A tag pool picks evenly, so an
+  "accent" is as common as the staple: crying obsidian came out at 824 blocks against purpur's 711 in the first
+  probe and was dropped. *End rods for street lights*: `RoadLot.generateLightPost` stacks two where the lamp goes;
+  the fence post stays because the street signs hang from its top block. *Pristine*: the End never decays, whatever
+  it mirrors — lore: the dragon kept people away until it was killed, which is why ZARP's voidlings only appear
+  afterwards. `decayed: false` in the presets and `CityWorldRealms`, **and** defaulted in `context()` so an End
+  created before today is pristine too; self-test `end.pristine`.
 - **Biomes are vanilla's.** `CityWorldEndBiomeSource` reads the same end-islands field through `EndTerrain`
   (`TheEndBiomeSource`'s own sample point and thresholds). ⚠ It is bound in **`createState`**, not at first chunk:
   structure placement asks for biomes before any chunk exists, and unbound it answered "barrens" — the probe's

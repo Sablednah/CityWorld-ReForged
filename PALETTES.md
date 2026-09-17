@@ -37,6 +37,7 @@ you add start appearing in that palette.
 | `cityworld:build/stained_glass` | factory and bunker tanks | the sixteen dyed glasses |
 | `cityworld:build/chemicals` | what industrial tanks and silos hold when fluids are enabled | concrete powders, water, lava, slime — plus 18 Mekanism fluids (brine, acids, lithium, uranium hexafluoride…) verified against Mekanism-1.21.1-10.7.19.85 and marked optional; add your own mod's fluid blocks the same way |
 | `cityworld:build/modern_stones` | the decorative stone palette used by the MODERN and APOCALYPSE styles | 32 curated blocks (8 of them Minecraft 26.2+) |
+| `cityworld:build/end_stones` | blended into every building, house, government and factory pool **in the CityWorld End only** — about one pick in three | purpur block and pillar, end stone bricks, obsidian, amethyst |
 
 ### Biome pools
 

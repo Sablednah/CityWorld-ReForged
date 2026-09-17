@@ -21,7 +21,11 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   of street level (y 59) are planed flat to take the streets. Nothing digs through — no mines, sewers, cisterns
   or caves, because an island is only a few dozen blocks thick — but buildings keep their basements wherever the
   island under them is thick enough, shallower or absent towards the rim, and never showing from below. Bridge
-  pylons stand on obsidian footings where an island passes beneath and are left off over open void. Districts follow the overworld's
+  pylons stand on obsidian footings where an island passes beneath and are left off over open void. **The End's
+  city is never ruined**, even under an APOCALYPSE or DESTROYED overworld — the dragon kept everyone out — and it
+  is built from the overworld's palette with the End's own blocks blended in (about one wall, roof or floor in
+  three: purpur, end stone bricks, obsidian, amethyst — the new `#cityworld:build/end_stones` tag, yours to widen
+  or empty with a datapack). Its streets are lit by end rods. Districts follow the overworld's
   style and settings, graded by how much of each island is buildable (no farms or outland: there is no water
   out there). CityWorld steps aside wherever an end city stands. Customize has **Realms → End**
   (*Cities on the islands* / *Vanilla*), and modpacks can lock it with `cityworldEnd` in
