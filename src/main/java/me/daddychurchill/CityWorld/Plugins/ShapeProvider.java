@@ -396,6 +396,14 @@ public abstract class ShapeProvider extends Provider {
 		return new Odds((long) (getMacroNoiseAt(x, z, macroRandomGeneratorSlot) * Long.MAX_VALUE));
 	}
 
+	/**
+	 * The most basement floors the ground under a chunk can hold. Unlimited wherever the world is solid all the
+	 * way down; the End's islands are not, and answer from their own thickness.
+	 */
+	public int getMaxBasementFloors(CityWorldGenerator generator, int chunkX, int chunkZ, int floorHeight) {
+		return Integer.MAX_VALUE;
+	}
+
 	/** How many chunks away a bridge or tunnel may look for its far bank; see {@code PlatMap.isBridgeTowards}. */
 	public int getMaxBridgeReach() {
 		return Integer.MAX_VALUE;

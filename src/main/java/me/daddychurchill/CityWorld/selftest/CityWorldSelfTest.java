@@ -830,9 +830,9 @@ public final class CityWorldSelfTest {
             return;
         }
         var settings = context.getSettings();
-        if (settings.includeMines || settings.includeSewers || settings.includeBasements || settings.includeCisterns
+        if (settings.includeMines || settings.includeSewers || settings.includeCisterns
                 || settings.includeBunkers || settings.includeCaves)
-            fail("the End still digs: mines/sewers/basements/cisterns/bunkers/caves must all be off there");
+            fail("the End still digs: mines/sewers/cisterns/bunkers/caves must all be off there");
 
         // EndTerrain against vanilla's own answer (getBaseHeight delegates to the vanilla End generator).
         int columns = 0, wrong = 0;

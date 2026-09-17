@@ -387,6 +387,7 @@ public final class ChunkProbe {
      */
     private static void surveyEndPlan(me.daddychurchill.CityWorld.CityWorldGenerator context, int span, int x0, int z0) {
         java.util.Map<String, Integer> lots = new java.util.TreeMap<>();
+        java.util.List<String> bridges = new java.util.ArrayList<>(); // somewhere to point a probe at
         int island = 0, built = 0, overhang = 0;
         long started = System.nanoTime();
         for (int j = 0; j < span; j++) {
@@ -404,6 +405,8 @@ public final class ChunkProbe {
                 if (!nature) {
                     built++;
                     overhang += 256 - solid;
+                    if (solid < 64 && bridges.size() < 12)
+                        bridges.add(cx + "," + cz + (solid == 0 ? " (void)" : " (" + solid + " columns of land)"));
                     lots.merge(lot.getClass().getSimpleName(), 1, Integer::sum);
                 }
                 row.append(!nature ? (style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.ROAD ? '#'
@@ -416,6 +419,7 @@ public final class ChunkProbe {
                 + "({}%); built chunks hang {} columns over the void in total", span, span, x0, z0,
                 (System.nanoTime() - started) / 1_000_000, island, built, built * 100 / Math.max(1, island), overhang);
         CityWorldMod.LOGGER.warn("SURVEY end plan lots: {}", lots);
+        CityWorldMod.LOGGER.warn("SURVEY end plan: built chunks with little or no land under them: {}", bridges);
     }
 
     /** {@link HeightInfo}'s five sample columns: the centre, then the four corners. */
