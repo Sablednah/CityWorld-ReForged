@@ -616,9 +616,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             return false;
         if (endStructureHere(structureManager, chunk))
             return true;
-        ChunkPos pos = chunk.getPos();
+        // Block coordinates, not pos.x: ChunkPos became a record on 26.1, and this line is the same on every branch.
+        int chunkX = chunk.getPos().getMinBlockX() >> 4, chunkZ = chunk.getPos().getMinBlockZ() >> 4;
         CityWorldGenerator context = context(chunk);
-        me.daddychurchill.CityWorld.Plats.PlatLot lot = context.getPlatMap(pos.x, pos.z).getMapLot(pos.x, pos.z);
+        me.daddychurchill.CityWorld.Plats.PlatLot lot = context.getPlatMap(chunkX, chunkZ).getMapLot(chunkX, chunkZ);
         return lot == null || lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE;
     }
 
