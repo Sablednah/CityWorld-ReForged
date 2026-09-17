@@ -20,22 +20,21 @@ import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.biome.Climate;
 
 /**
- * The CityWorld End's biome source ({@code cityworld:end}).
+ * The CityWorld End's biome source ({@code cityworld:end}): vanilla's End biomes, exactly where vanilla puts them.
  *
- * <p><b>The middle stays vanilla.</b> Within 64 sections of the origin — vanilla's own radius, the test
- * {@code TheEndBiomeSource} uses — every column is {@code minecraft:the_end}, so the central island, the
- * obsidian pillars (an {@code end_spike} feature of that biome) and the dragon's arena are exactly what a
- * vanilla End would grow there. Outside it, CityWorld's islands take over and the biome follows the island's
- * own height: the tall ones are highlands, the middling ones midlands, low shelves barrens, and the scraps
- * small islands.
+ * <p>The CityWorld End keeps vanilla's terrain throughout (see {@code ShapeProvider_TheEnd}), so its biomes are
+ * vanilla's too: {@code the_end} within 64 sections of the origin, and beyond it highlands, midlands, barrens or
+ * small islands from the end-islands field, with {@code TheEndBiomeSource}'s own sample point and thresholds. That
+ * is what makes chorus grow where vanilla would grow it, and lets end cities find their highlands.
  *
- * <p><b>Why not vanilla's End source.</b> {@code TheEndBiomeSource} reads {@code sampler.erosion()}, a density
- * function only a {@code NoiseBasedChunkGenerator} is given; under CityWorld's generator that sampler is a
- * dummy and every column would answer the same. The heights here come from CityWorld's own terrain instead.
+ * <p><b>Why not simply use vanilla's source.</b> {@code TheEndBiomeSource} reads {@code sampler.erosion()}, and
+ * the sampler a non-noise generator is handed is a dummy that answers zero everywhere. {@link EndTerrain} wraps
+ * the real End noise for this world; the chunk generator binds it here as soon as it exists. (The first CityWorld
+ * End classified by the height of CityWorld's own islands instead; with vanilla's islands that would put the
+ * biomes in different places from the terrain they describe.)
  *
  * <p>All five biomes are in {@link #collectPossibleBiomes}, which is what lets end cities place at all —
- * vanilla drops any structure set whose biomes the source cannot produce, and end cities want
- * highlands/midlands.
+ * vanilla drops any structure set whose biomes the source cannot produce.
  */
 public class CityWorldEndBiomeSource extends BiomeSource implements CityWorldBiomes {
 
@@ -74,8 +73,25 @@ public class CityWorldEndBiomeSource extends BiomeSource implements CityWorldBio
         long sectionZ = SectionPos.blockToSectionCoord(net.minecraft.core.QuartPos.toBlock(z));
         if (sectionX * sectionX + sectionZ * sectionZ <= CENTRE_SECTIONS_SQUARED)
             return b(Biomes.THE_END);
-        Holder<Biome> biome = CityWorldBiomeLookup.biomeAt(this, x, y, z);
-        return biome != null ? biome : b(Biomes.END_BARRENS);
+        // Beyond it the islands are vanilla's, so the biomes are too: the same field, the same section-centre
+        // sample and the same thresholds as TheEndBiomeSource — chorus grows where vanilla would grow it, and end
+        // cities find their highlands and midlands where the land really is high.
+        EndTerrain field = terrain;
+        if (field == null)
+            return b(Biomes.END_BARRENS);
+        double erosion = field.erosionAt(((int) sectionX * 2 + 1) * 8, ((int) sectionZ * 2 + 1) * 8);
+        if (erosion > 0.25)
+            return b(Biomes.END_HIGHLANDS);
+        if (erosion >= -0.0625)
+            return b(Biomes.END_MIDLANDS);
+        return erosion < -0.21875 ? b(Biomes.SMALL_END_ISLANDS) : b(Biomes.END_BARRENS);
+    }
+
+    private volatile EndTerrain terrain;
+
+    /** Vanilla's End noise for this world, handed over by the chunk generator as soon as it exists. */
+    public void bindTerrain(EndTerrain terrain) {
+        this.terrain = terrain;
     }
 
     @Override

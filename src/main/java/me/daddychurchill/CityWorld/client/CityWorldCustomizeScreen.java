@@ -239,14 +239,14 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         addRow(nether, null);
 
         CycleButton<Boolean> end = cycle("End", new Boolean[] { false, true }, cityWorldEnd,
-                v -> Component.literal(v ? "CityWorld islands" : "Vanilla"), v -> cityWorldEnd = v);
+                v -> Component.literal(v ? "Cities on the islands" : "Vanilla"), v -> cityWorldEnd = v);
         if (CityWorldPackConfig.lockedCityWorldEnd().isPresent()) {
             end.active = false;
             end.setTooltip(net.minecraft.client.gui.components.Tooltip
                     .create(Component.translatable("cityworld.lock.world_type")));
         } else {
             end.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
-                    "CityWorld islands: vanilla's central island and dragon fight, CityWorld cities on the outer islands")));
+                    "Cities on the islands: vanilla's End throughout — dragon fight, outer islands, chorus, end cities — with CityWorld cities on the flat of the outer islands")));
         }
         addRow(end, null);
 

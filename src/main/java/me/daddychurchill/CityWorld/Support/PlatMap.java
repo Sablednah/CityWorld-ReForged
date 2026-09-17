@@ -478,12 +478,12 @@ public class PlatMap {
 		} else {
 
 			// are there roads from here?
-			if (isBridgeTowardsNorth(x, z) && isBridgeTowardsSouth(x, z)) {
+			if (spansBridge(bridgeDistance(x, z, 0, -5), bridgeDistance(x, z, 0, 5))) {
 				roadToNorth = true;
 				roadToSouth = true;
 				roadHere = true;
 
-			} else if (isBridgeTowardsEast(x, z) && isBridgeTowardsWest(x, z)) {
+			} else if (spansBridge(bridgeDistance(x, z, 5, 0), bridgeDistance(x, z, -5, 0))) {
 				roadToEast = true;
 				roadToWest = true;
 				roadHere = true;
@@ -543,6 +543,21 @@ public class PlatMap {
 	}
 
 	private boolean isBridgeTowards(int x, int z, int deltaX, int deltaZ) {
+		return bridgeDistance(x, z, deltaX, deltaZ) >= 0;
+	}
+
+	/**
+	 * Whether a spot in mid-crossing is part of a bridge: a bank each way, and the whole crossing within the
+	 * shape's reach. The total, not each side: with a per-side limit the middle of a too-long gap still saw
+	 * both banks and paved itself, while the ends (rightly) did not — an orphan stretch of bridge in the void.
+	 */
+	private boolean spansBridge(int oneWay, int otherWay) {
+		return oneWay >= 0 && otherWay >= 0
+				&& (long) oneWay + otherWay <= generator.shapeProvider.getMaxBridgeReach();
+	}
+
+	/** Chunks from here to the far bank of a bridge/tunnel in that direction, or -1 when there is none in reach. */
+	private int bridgeDistance(int x, int z, int deltaX, int deltaZ) {
 
 		// how far do we go?
 		int offsetX = deltaX * SupportBlocks.sectionBlockWidth;
@@ -560,31 +575,38 @@ public class PlatMap {
 		// match the delta values)
 		if (originPolarity) {
 			if (deltaX != 0)
-				return false;
+				return -1;
 		} else {
 			if (deltaZ != 0)
-				return false;
+				return -1;
 		}
 
 		// keep searching in the delta direction until polarity shifts
+		int reach = generator.shapeProvider.getMaxBridgeReach();
+		int travelled = 0;
 		while (originPolarity == currentPolarity) {
 
 			// move it along a bit
 			chunkX += offsetX;
 			chunkZ += offsetZ;
 
-			// TODO should test for a maximum length of bridge/tunnel
+			// Upstream's TODO ("should test for a maximum length of bridge/tunnel"), answered only where it
+			// bites: over an overworld sea a long bridge is a feature, over the End's void it is a road to
+			// nowhere forty chunks long (measured 2026-09-17). Unlimited everywhere else, so no plan changes.
+			travelled += Math.abs(deltaX) + Math.abs(deltaZ);
+			if (travelled > reach)
+				return -1;
 
 			// keep going as long it is the same polarity
 			currentPolarity = generator.shapeProvider.getBridgePolarityAt(chunkX, chunkZ);
 
 			// did we found a "real" spot and the polarity is still the same
 			if (currentPolarity == originPolarity && HeightInfo.isBuildableAt(generator, chunkX, chunkZ))
-				return true;
+				return travelled;
 		}
 
 		// we have failed to find a real bridge/tunnel
-		return false;
+		return -1;
 	}
 
 	private final static int maxPlaceTries = 16;

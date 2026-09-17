@@ -265,6 +265,168 @@ public final class ChunkProbe {
         return found;
     }
 
+    /**
+     * {@code -Dcityworld.probe=survey:end} (with {@code -Dcityworld.probe.dim=minecraft:the_end}): how high, how
+     * flat and how contiguous vanilla's outer End islands are, sampled the way {@link HeightInfo} samples a chunk
+     * (centre + four corners). Answers "where could a fixed street level put a city on vanilla's islands" with
+     * numbers before any design leans on a guess. Nothing is generated — this only asks the noise.
+     */
+    private static void surveyEnd(ServerLevel level) {
+        var generator = level.getChunkSource().getGenerator();
+        var random = level.getChunkSource().randomState();
+        int span = Integer.getInteger("cityworld.probe.span", 100), x0 = 70, z0 = -span / 2;
+        if (generator instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw) {
+            surveyEndPlan(cw.getContext(level), span, x0, z0);
+            // Could an end city start here at all? Its two gates, asked the way EndCityStructure asks them:
+            // the lowest of four columns at y >= 60, in highlands or midlands.
+            java.util.Map<String, Integer> biomes = new java.util.TreeMap<>();
+            int tall = 0, both = 0, side = Math.min(span, 40);
+            for (int i = 0; i < side; i++)
+                for (int j = 0; j < side; j++) {
+                    int bx = (x0 + i) * 16 + 7, bz = (z0 + j) * 16 + 7, lowest = Integer.MAX_VALUE;
+                    for (int[] d : new int[][] { { 0, 0 }, { 5, 0 }, { 0, 5 }, { 5, 5 } })
+                        lowest = Math.min(lowest, generator.getFirstOccupiedHeight(bx + d[0], bz + d[1],
+                                net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, level, random));
+                    String biome = generator.getBiomeSource().getNoiseBiome(bx >> 2, lowest >> 2, bz >> 2,
+                            random.sampler()).unwrapKey().map(k -> k.identifier().getPath()).orElse("?");
+                    biomes.merge(biome, 1, Integer::sum);
+                    if (lowest >= 60) {
+                        tall++;
+                        if (biome.equals("end_highlands") || biome.equals("end_midlands"))
+                            both++;
+                    }
+                }
+            CityWorldMod.LOGGER.warn("SURVEY end cities: of {} chunks, {} stand at y >= 60 and {} of those are highlands/"
+                    + "midlands; biomes {}", side * side, tall, both, biomes);
+            return;
+        }
+        int[][] lo = new int[span][span], hi = new int[span][span], solid = new int[span][span];
+        // EndTerrain must agree with vanilla exactly — the planner trusts it for chunks that do not exist yet.
+        if (generator instanceof net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator noise) {
+            var terrain = new me.daddychurchill.CityWorld.worldgen.EndTerrain(random,
+                    noise.generatorSettings().value().noiseSettings());
+            int checked = 0, wrong = 0, worst = 0;
+            long mine = 0, theirs = 0;
+            for (int i = 0; i < 24; i++)
+                for (int j = 0; j < 24; j++) {
+                    long t0 = System.nanoTime();
+                    short[] tops = terrain.chunkTops(x0 + i * 3, z0 + j * 3);
+                    mine += System.nanoTime() - t0;
+                    for (int k = 0; k < 5; k++) {
+                        int bx = (x0 + i * 3) * 16 + ox(k), bz = (z0 + j * 3) * 16 + oz(k);
+                        t0 = System.nanoTime();
+                        int h = generator.getBaseHeight(bx, bz,
+                                net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, level, random);
+                        theirs += System.nanoTime() - t0;
+                        int top = h <= level.getMinY() ? 0 : h - 1, got = tops[(bx & 15) << 4 | (bz & 15)];
+                        checked++;
+                        if (top != got) {
+                            wrong++;
+                            worst = Math.max(worst, Math.abs(top - got));
+                            if (wrong <= 8)
+                                CityWorldMod.LOGGER.warn("SURVEY end: MISMATCH at {},{}: vanilla top {} EndTerrain {}",
+                                        bx, bz, top, got);
+                        }
+                    }
+                }
+            CityWorldMod.LOGGER.warn("SURVEY end: EndTerrain vs getBaseHeight over {} columns: {} wrong (worst {} blocks); "
+                    + "{} us per CHUNK of 256 columns vs {} us per single vanilla column", checked, wrong, worst,
+                    mine / 1000 / (24 * 24), theirs / 1000 / Math.max(1, checked));
+        }
+        long started = System.nanoTime();
+        for (int i = 0; i < span; i++)
+            for (int j = 0; j < span; j++) {
+                lo[i][j] = Integer.MAX_VALUE;
+                hi[i][j] = Integer.MIN_VALUE;
+                for (int k = 0; k < 5; k++) {
+                    int h = generator.getBaseHeight((x0 + i) * 16 + ox(k), (z0 + j) * 16 + oz(k),
+                            net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, level, random);
+                    if (h <= level.getMinY())
+                        continue;
+                    solid[i][j]++;
+                    lo[i][j] = Math.min(lo[i][j], h);
+                    hi[i][j] = Math.max(hi[i][j], h);
+                }
+            }
+        double perCall = (System.nanoTime() - started) / 1e3 / (span * span * 5.0);
+        int chunks = span * span, any = 0, full = 0;
+        java.util.TreeMap<Integer, Integer> tops = new java.util.TreeMap<>(), ranges = new java.util.TreeMap<>();
+        for (int i = 0; i < span; i++)
+            for (int j = 0; j < span; j++) {
+                if (solid[i][j] > 0)
+                    any++;
+                if (solid[i][j] < 5)
+                    continue;
+                full++;
+                tops.merge((lo[i][j] + hi[i][j]) / 2 / 2 * 2, 1, Integer::sum);
+                ranges.merge(Math.min(hi[i][j] - lo[i][j], 20) / 2 * 2, 1, Integer::sum);
+            }
+        CityWorldMod.LOGGER.warn("SURVEY end: {} chunks from chunk {},{}; {} touch an island, {} are solid at all 5 "
+                + "samples; {} us per getBaseHeight", chunks, x0, z0, any, full, String.format("%.1f", perCall));
+        CityWorldMod.LOGGER.warn("SURVEY end: mid-height of fully solid chunks (2-block buckets): {}", tops);
+        CityWorldMod.LOGGER.warn("SURVEY end: height range within a fully solid chunk (2-block buckets, 20+ capped): {}", ranges);
+        for (int tolerance : new int[] { 2, 4, 6, 8, 12 }) {
+            StringBuilder line = new StringBuilder();
+            for (int street = 50; street <= 76; street += 2) {
+                int fit = 0;
+                for (int i = 0; i < span; i++)
+                    for (int j = 0; j < span; j++)
+                        if (solid[i][j] == 5 && lo[i][j] >= street - tolerance && hi[i][j] <= street + tolerance)
+                            fit++;
+                line.append(street).append('=').append(fit * 100 / Math.max(1, full)).append("% ");
+            }
+            CityWorldMod.LOGGER.warn("SURVEY end: street level -> share of solid chunks within +/-{}: {}", tolerance, line);
+        }
+    }
+
+    /**
+     * The CityWorld End's plan as a chunk map, one character a chunk, without generating anything: how the city
+     * sits on vanilla's islands is a question about shapes, and block tallies cannot answer it. {@code ' '} void,
+     * {@code '.'} island edge (some columns void), {@code ':'} wild island, {@code '#'} road, {@code 'B'} structure,
+     * {@code 'o'} anything else planned (parks, roundabouts).
+     */
+    private static void surveyEndPlan(me.daddychurchill.CityWorld.CityWorldGenerator context, int span, int x0, int z0) {
+        java.util.Map<String, Integer> lots = new java.util.TreeMap<>();
+        int island = 0, built = 0, overhang = 0;
+        long started = System.nanoTime();
+        for (int j = 0; j < span; j++) {
+            StringBuilder row = new StringBuilder();
+            for (int i = 0; i < span; i++) {
+                int cx = x0 + i, cz = z0 + j, solid = 0;
+                for (short top : context.endTerrain.chunkTops(cx, cz))
+                    if (top > 0)
+                        solid++;
+                var lot = context.getPlatMap(cx, cz).getMapLot(cx, cz);
+                var style = lot == null ? null : lot.style;
+                boolean nature = style == null || style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE;
+                if (solid > 0)
+                    island++;
+                if (!nature) {
+                    built++;
+                    overhang += 256 - solid;
+                    lots.merge(lot.getClass().getSimpleName(), 1, Integer::sum);
+                }
+                row.append(!nature ? (style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.ROAD ? '#'
+                        : style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.STRUCTURE ? 'B' : 'o')
+                        : solid == 0 ? ' ' : solid < 256 ? '.' : ':');
+            }
+            CityWorldMod.LOGGER.warn("PLAN {}", row);
+        }
+        CityWorldMod.LOGGER.warn("SURVEY end plan: {}x{} chunks from {},{} in {} ms: {} touch an island, {} are built on "
+                + "({}%); built chunks hang {} columns over the void in total", span, span, x0, z0,
+                (System.nanoTime() - started) / 1_000_000, island, built, built * 100 / Math.max(1, island), overhang);
+        CityWorldMod.LOGGER.warn("SURVEY end plan lots: {}", lots);
+    }
+
+    /** {@link HeightInfo}'s five sample columns: the centre, then the four corners. */
+    private static int ox(int k) {
+        return new int[] { 8, 0, 15, 0, 15 }[k];
+    }
+
+    private static int oz(int k) {
+        return new int[] { 8, 0, 0, 15, 15 }[k];
+    }
+
     private void run(MinecraftServer server) {
         try {
             String spec = System.getProperty(PROPERTY).trim();
@@ -279,6 +441,10 @@ public final class ChunkProbe {
             CityWorldMod.LOGGER.warn("PROBE: dimension {} generator {}", level.dimension().identifier(),
                     level.getChunkSource().getGenerator().getClass().getSimpleName());
             int cx, cz;
+            if (spec.startsWith("survey:end")) {
+                surveyEnd(level);
+                return;
+            }
             if (spec.startsWith("find:biome:")) {
                 String id = spec.substring("find:biome:".length());
                 int[] found = findBiome(server, level, id);
@@ -321,6 +487,26 @@ public final class ChunkProbe {
                         CityWorldMod.LOGGER.warn("PROBE sweep: generating chunk {}, {}", sx, sz);
                         server.submit(() -> level.getChunk(sx, sz, ChunkStatus.FULL, true)).join();
                     }
+            // -Dcityworld.probe.layers=<y1>..<y2>: what is on each layer of the swept region, top down. "What hangs
+            // under the End's islands" and "what did a lot draw below the street" are both questions about height.
+            String layers = System.getProperty("cityworld.probe.layers");
+            if (sweep > 0 && layers != null) {
+                int lo = Integer.parseInt(layers.split("\\.\\.")[0].trim()), hi = Integer.parseInt(layers.split("\\.\\.")[1].trim());
+                for (int y = hi; y >= lo; y--) {
+                    java.util.Map<String, Integer> tally = new java.util.TreeMap<>();
+                    for (int dx = -sweep; dx <= sweep; dx++)
+                        for (int dz = -sweep; dz <= sweep; dz++) {
+                            ChunkAccess c = level.getChunk(cx + dx, cz + dz);
+                            for (int x = 0; x < 16; x++)
+                                for (int z = 0; z < 16; z++) {
+                                    var state = c.getBlockState(new BlockPos(x, y, z));
+                                    if (!state.isAir())
+                                        tally.merge(state.getBlock().getName().getString(), 1, Integer::sum);
+                                }
+                        }
+                    CityWorldMod.LOGGER.warn("PROBE layer y={}: {}", y, tally);
+                }
+            }
             if (sweep > 0) {
                 CityWorldMod.LOGGER.warn("PROBE sweep: all chunks within {} of ({}, {}) generated", sweep, cx, cz);
                 // What each biome's ground actually IS: the top solid block of every column, keyed by the biome
