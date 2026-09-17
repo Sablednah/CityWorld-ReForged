@@ -11,6 +11,7 @@ import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.compat.BiomeGrid;
 import me.daddychurchill.CityWorld.compat.Material;
+import me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator;
 import me.daddychurchill.CityWorld.worldgen.EndTerrain;
 
 /**
@@ -44,8 +45,37 @@ public class ShapeProvider_TheEnd extends ShapeProvider_Normal {
 	/** ...and the next this-many blocks ease from the terrace back to the natural height. */
 	private final static int BLEND = 4;
 
+	/**
+	 * Where the End is settled at all. A slow noise field splits the outer islands into city country and wild
+	 * country (owner, 2026-09-17: "a bit TOO much... it can be as much as half what's covered now" — and a biome
+	 * mod's End biomes had nowhere to show). By region rather than by thinning every city, so a district is still a district and the wild stretches
+	 * are whole islands' worth, untouched down to the terrace: outside city country the ground is vanilla's exactly.
+	 */
+	private final SimplexNoiseGenerator settledShape;
+	/**
+	 * Regions a few platmaps across. At 1/384 the patches were smaller than the road grid could use: roads need
+	 * buildable intersections five chunks apart with a way out of the platmap, so they died off and left
+	 * buildings with no streets (measured: 88 road lots to 630 buildings, 12% coverage instead of ~21%).
+	 */
+	private final static double SETTLED_SCALE = 1.0 / 1100.0;
+	/**
+	 * City country is where the field is above this. Measured over 200x200 chunks (seed 8675309), share of island
+	 * chunks built on: everything settled 26%, -0.35 17%, -0.2 12%, 0.0 9% — so -0.25 is about half of what an
+	 * unthinned End builds. {@code -Dcityworld.end.settled=<n>} overrides it for a tuning run with survey:end.
+	 */
+	private final static double SETTLED_THRESHOLD = Double.parseDouble(System.getProperty("cityworld.end.settled", "-0.25"));
+	/** ...and the terrace fades in over this much of the field, so its edge is a slope and not a line. */
+	private final static double SETTLED_FADE = 0.12;
+
 	public ShapeProvider_TheEnd(CityWorldGenerator generator, Odds odds) {
 		super(generator, odds);
+		settledShape = new SimplexNoiseGenerator(generator.getWorldSeed() + 5959);
+	}
+
+	/** 0 in wild country, 1 in city country, between across the fade. */
+	private double settled(int blockX, int blockZ) {
+		double field = settledShape.noise(blockX * SETTLED_SCALE, blockZ * SETTLED_SCALE);
+		return Math.max(0.0, Math.min(1.0, (field - SETTLED_THRESHOLD) / SETTLED_FADE));
 	}
 
 	@Override
@@ -59,6 +89,19 @@ public class ShapeProvider_TheEnd extends ShapeProvider_Normal {
 	@Override
 	public String getCollectionName() {
 		return "TheEnd";
+	}
+
+	/** No streets, no city: a platmap whose roads were all reclaimed keeps no buildings either. */
+	@Override
+	protected void validateLots(CityWorldGenerator generator, PlatMap platmap) {
+		for (int x = 0; x < PlatMap.Width; x++)
+			for (int z = 0; z < PlatMap.Width; z++)
+				if (platmap.isExistingRoad(x, z))
+					return;
+		for (int x = 0; x < PlatMap.Width; x++)
+			for (int z = 0; z < PlatMap.Width; z++)
+				if (!platmap.isEmptyLot(x, z) && !platmap.isNaturalLot(x, z))
+					platmap.recycleLot(x, z);
 	}
 
 	@Override
@@ -185,17 +228,32 @@ public class ShapeProvider_TheEnd extends ShapeProvider_Normal {
 			return natureContext;
 	}
 
-	/** The planned top block at a column: the terrace outside the dragon's zone, vanilla's own height inside. */
-	private static int plannedTop(int blockX, int blockZ, int top) {
-		if (!inDragonZone(blockX, blockZ))
-			return terrace(top);
-		// Untouched — and nudged off street level, the one height the planner reads as "build here".
-		return top == STREET_LEVEL ? top + 1 : top;
+	/**
+	 * The top block the ground at a column is actually brought to: the terrace in city country, vanilla's own
+	 * height in wild country and the dragon's zone, and a blend of the two across the fade between them.
+	 */
+	private int groundTop(int blockX, int blockZ, int top) {
+		if (top <= 0 || inDragonZone(blockX, blockZ))
+			return top;
+		double settled = settled(blockX, blockZ);
+		if (settled <= 0.0)
+			return top;
+		return top + (int) Math.round((terrace(top) - top) * settled);
 	}
 
+	/**
+	 * What the planner is told. The ground as it will be — except that outside city country a column that
+	 * happens to stand at street level (vanilla's islands often do) is reported one higher, because that height
+	 * is the one thing the planner reads as "build here".
+	 */
 	@Override
 	public double findPerciseY(CityWorldGenerator generator, int blockX, int blockZ) {
-		return plannedTop(blockX, blockZ, terrain(generator).topAt(blockX, blockZ));
+		int top = terrain(generator).topAt(blockX, blockZ);
+		if (top <= 0)
+			return VOID_FLOOR;
+		int ground = groundTop(blockX, blockZ, top);
+		boolean cityCountry = !inDragonZone(blockX, blockZ) && settled(blockX, blockZ) >= 1.0;
+		return ground == STREET_LEVEL && !cityCountry ? ground + 1 : ground;
 	}
 
 	@Override
@@ -209,7 +267,7 @@ public class ShapeProvider_TheEnd extends ShapeProvider_Normal {
 				int top = tops[x << 4 | z];
 				if (top <= 0)
 					continue; // void stays void; its "height" is only a story for the planner
-				int planned = inDragonZone(chunk.getBlockX(x), chunk.getBlockZ(z)) ? top : terrace(top);
+				int planned = groundTop(chunk.getBlockX(x), chunk.getBlockZ(z), top);
 				if (planned > top)
 					chunk.setBlocks(x, top + 1, planned + 1, z, ground);
 				else if (planned < top)
