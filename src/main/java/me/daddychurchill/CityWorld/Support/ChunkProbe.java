@@ -511,6 +511,29 @@ public final class ChunkProbe {
                     CityWorldMod.LOGGER.warn("PROBE layer y={}: {}", y, tally);
                 }
             }
+            // Plan against world, chunk by chunk: what each swept chunk was PLANNED as, and how much actually stands
+            // above its street. "The map and F3 say city, the world says empty" is a disagreement between exactly
+            // these two, and a tally of the whole sweep cannot show which chunks disagree.
+            if (sweep > 0 && level.getChunkSource().getGenerator()
+                    instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator planner) {
+                var planContext = planner.getContext(level);
+                for (int dz = -sweep; dz <= sweep; dz++) {
+                    StringBuilder row = new StringBuilder();
+                    for (int dx = -sweep; dx <= sweep; dx++) {
+                        var lot = planContext.getPlatMap(cx + dx, cz + dz).getMapLot(cx + dx, cz + dz);
+                        ChunkAccess c = level.getChunk(cx + dx, cz + dz);
+                        int above = 0;
+                        for (int x = 0; x < 16; x++)
+                            for (int z = 0; z < 16; z++)
+                                for (int y = planContext.streetLevel + 2; y < planContext.streetLevel + 12; y++)
+                                    if (!c.getBlockState(new BlockPos(x, y, z)).isAir())
+                                        above++;
+                        String name = lot == null ? "null" : lot.getClass().getSimpleName().replace("Lot", "");
+                        row.append(String.format("%-14s", (name.length() > 9 ? name.substring(0, 9) : name) + ":" + above));
+                    }
+                    CityWorldMod.LOGGER.warn("PLANvWORLD z{} {}", cz + dz, row);
+                }
+            }
             if (sweep > 0) {
                 CityWorldMod.LOGGER.warn("PROBE sweep: all chunks within {} of ({}, {}) generated", sweep, cx, cz);
                 // What each biome's ground actually IS: the top solid block of every column, keyed by the biome

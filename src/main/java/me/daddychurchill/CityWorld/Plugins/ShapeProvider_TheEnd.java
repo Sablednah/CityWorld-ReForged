@@ -60,10 +60,10 @@ public class ShapeProvider_TheEnd extends ShapeProvider_Normal {
 	private final static double SETTLED_SCALE = 1.0 / 1100.0;
 	/**
 	 * City country is where the field is above this. Measured over 200x200 chunks (seed 8675309), share of island
-	 * chunks built on: everything settled 26%, -0.35 17%, -0.2 12%, 0.0 9% — so -0.25 is about half of what an
-	 * unthinned End builds. {@code -Dcityworld.end.settled=<n>} overrides it for a tuning run with survey:end.
+	 * chunks built on, with island roads kept: everything settled 28%, -0.25 16%, 0.0 9% — so -0.2 is about half
+	 * of what an unthinned End builds. {@code -Dcityworld.end.settled=<n>} overrides it for a tuning run with survey:end.
 	 */
-	private final static double SETTLED_THRESHOLD = Double.parseDouble(System.getProperty("cityworld.end.settled", "-0.25"));
+	private final static double SETTLED_THRESHOLD = Double.parseDouble(System.getProperty("cityworld.end.settled", "-0.2"));
 	/** ...and the terrace fades in over this much of the field, so its edge is a slope and not a line. */
 	private final static double SETTLED_FADE = 0.12;
 
@@ -175,6 +175,11 @@ public class ShapeProvider_TheEnd extends ShapeProvider_Normal {
 		return Math.max(0, (STREET_LEVEL - 1 - BASEMENT_COVER - highestUnderside) / floorHeight);
 	}
 
+	@Override
+	public boolean keepsIsolatedRoads() {
+		return true;
+	}
+
 	/** Two road-grid steps. Bridges hop between neighbouring islands; they do not set out across the void. */
 	@Override
 	public int getMaxBridgeReach() {
@@ -256,10 +261,33 @@ public class ShapeProvider_TheEnd extends ShapeProvider_Normal {
 		return ground == STREET_LEVEL && !cityCountry ? ground + 1 : ground;
 	}
 
+	/** How far, in blocks, the levelled ground of a built lot eases back into the natural island beside it. */
+	private final static int APRON = 12;
+
+	/**
+	 * The ground is only ever levelled FOR something. The planner is told the terrace everywhere in city country
+	 * (it has to be: what is buildable cannot depend on what gets built), but the blocks are moved only under a
+	 * built lot and across a short apron around it. Levelling all of city country left plains of planed end stone
+	 * wherever the plan then built nothing (owner, 2026-09-17: "whatever levels the island levels these empty
+	 * regions too") — an island nobody built on must be vanilla's, untouched.
+	 */
 	@Override
 	public void preGenerateChunk(CityWorldGenerator generator, PlatLot lot, InitialBlocks chunk, BiomeGrid biomes,
 			AbstractCachedYs blockYs) {
-		// The island is already here. All that is left is the terrace: bring each column to its planned height.
+		boolean built = lot.style != PlatLot.LotStyle.NATURE;
+		boolean[][] builtBeside = new boolean[3][3];
+		boolean any = built;
+		if (!built)
+			for (int dx = -1; dx <= 1; dx++)
+				for (int dz = -1; dz <= 1; dz++) {
+					int cx = chunk.sectionX + dx, cz = chunk.sectionZ + dz;
+					PlatLot beside = generator.getPlatMap(cx, cz).getMapLot(cx, cz);
+					builtBeside[dx + 1][dz + 1] = beside != null && beside.style != PlatLot.LotStyle.NATURE;
+					any |= builtBeside[dx + 1][dz + 1];
+				}
+		if (!any)
+			return; // wild, and nothing built beside it: the island stays exactly as vanilla made it
+
 		short[] tops = terrain(generator).chunkTops(chunk.sectionX, chunk.sectionZ);
 		Material ground = generator.oreProvider.surfaceMaterial;
 		for (int x = 0; x < chunk.width; x++)
@@ -268,6 +296,18 @@ public class ShapeProvider_TheEnd extends ShapeProvider_Normal {
 				if (top <= 0)
 					continue; // void stays void; its "height" is only a story for the planner
 				int planned = groundTop(chunk.getBlockX(x), chunk.getBlockZ(z), top);
+				if (!built) {
+					// ease off with distance from the nearest built chunk's edge
+					int nearest = Integer.MAX_VALUE;
+					for (int dx = -1; dx <= 1; dx++)
+						for (int dz = -1; dz <= 1; dz++)
+							if (builtBeside[dx + 1][dz + 1]) {
+								int gapX = dx < 0 ? x + 1 : dx > 0 ? 16 - x : 0, gapZ = dz < 0 ? z + 1 : dz > 0 ? 16 - z : 0;
+								nearest = Math.min(nearest, Math.max(gapX, gapZ));
+							}
+					double apron = Math.max(0.0, 1.0 - (nearest - 1) / (double) APRON);
+					planned = top + (int) Math.round((planned - top) * apron);
+				}
 				if (planned > top)
 					chunk.setBlocks(x, top + 1, planned + 1, z, ground);
 				else if (planned < top)

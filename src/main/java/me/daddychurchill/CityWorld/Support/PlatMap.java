@@ -403,6 +403,10 @@ public class PlatMap {
 
 	public void validateRoads() {
 
+		// An island's streets need not lead anywhere else — see ShapeProvider.keepsIsolatedRoads.
+		if (generator.shapeProvider.keepsIsolatedRoads())
+			return;
+
 		// any roads leading out?
 		if (!(isRoad(0, RoadLot.PlatMapRoadInset - 1) || isRoad(0, Width - RoadLot.PlatMapRoadInset)
 				|| isRoad(Width - 1, RoadLot.PlatMapRoadInset - 1)
