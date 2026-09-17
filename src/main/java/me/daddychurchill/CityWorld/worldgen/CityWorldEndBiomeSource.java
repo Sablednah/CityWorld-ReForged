@@ -50,10 +50,15 @@ public class CityWorldEndBiomeSource extends BiomeSource implements CityWorldBio
 
     public CityWorldEndBiomeSource(HolderGetter<Biome> biomes) {
         this.biomes = biomes;
-        this.possible = Stream
+        // Vanilla's five, plus whatever mods registered for the End through TerraBlender. They must be declared
+        // here or they never decorate: the generator builds its feature list from the possible biomes.
+        List<Holder<Biome>> all = new java.util.ArrayList<>(Stream
                 .of(Biomes.THE_END, Biomes.END_HIGHLANDS, Biomes.END_MIDLANDS, Biomes.END_BARRENS,
                         Biomes.SMALL_END_ISLANDS)
-                .map(key -> (Holder<Biome>) biomes.getOrThrow(key)).toList();
+                .map(key -> (Holder<Biome>) biomes.getOrThrow(key)).toList());
+        for (ResourceKey<Biome> key : TerraBlenderBridge.endBiomes())
+            biomes.get(key).ifPresent(all::add);
+        this.possible = List.copyOf(all);
     }
 
     @Override
@@ -79,6 +84,11 @@ public class CityWorldEndBiomeSource extends BiomeSource implements CityWorldBio
         EndTerrain field = terrain;
         if (field == null)
             return b(Biomes.END_BARRENS);
+        // A real TheEndBiomeSource, when there is one to ask: the same answer as below in a vanilla game, and the
+        // only way a mod's End biomes arrive — TerraBlender (BoP) mixes them into that class, not into this one.
+        BiomeSource real = vanilla;
+        if (real != null)
+            return real.getNoiseBiome(x, y, z, field.sampler());
         double erosion = field.erosionAt(((int) sectionX * 2 + 1) * 8, ((int) sectionZ * 2 + 1) * 8);
         if (erosion > 0.25)
             return b(Biomes.END_HIGHLANDS);
@@ -88,10 +98,15 @@ public class CityWorldEndBiomeSource extends BiomeSource implements CityWorldBio
     }
 
     private volatile EndTerrain terrain;
+    private volatile BiomeSource vanilla;
 
-    /** Vanilla's End noise for this world, handed over by the chunk generator as soon as it exists. */
-    public void bindTerrain(EndTerrain terrain) {
+    /**
+     * Vanilla's End noise for this world and the vanilla End biome source that reads it (already initialised for
+     * TerraBlender), handed over by the chunk generator as soon as they exist.
+     */
+    public void bindTerrain(EndTerrain terrain, BiomeSource vanilla) {
         this.terrain = terrain;
+        this.vanilla = vanilla;
     }
 
     @Override
