@@ -85,18 +85,26 @@ export PATH="$JAVA_HOME/bin:$PATH"
   with the CityWorld stack behind it — "who draws this block?" answered in one run (the line-of-blocks
   building was `drawInteriorColumns` through a CENTER stairwell; zero WATCH lines after the fix).
 - **⚠ Read `PROBE: dimension <id> generator <class>` BEFORE believing any number from it.**
-  `runServer` generates a **vanilla** Nether and End: the world presets define vanilla realms, and
-  CityWorld's are swapped in by `CityWorldRealms` at world creation through the Customize toggles, which a
-  dedicated server never goes through. With BoP installed the wrong world still shows crimson forest and
-  withered abyss, so it looks convincingly right. Four probe runs measured the wrong dimension on
-  2026-09-16 and "proved" a fix using blocks vanilla's own surface rules had placed; it was committed,
-  pushed and deployed before the generator line was read. `CityWorldChunkGenerator` = ours,
-  `NoiseBasedChunkGenerator` = vanilla. PORTING.md has the `run/world/datapacks/` recipe that forces the
-  real one, and `-Dcityworld.probe=find:biome:<id>` checks a biome is present before you call its feature
+  Until 2026-09-17 the world presets defined **vanilla** realms (CityWorld's were swapped in by `CityWorldRealms`
+  from the Customize toggles, which a dedicated server never goes through), so `runServer` gave a vanilla Nether
+  and End — and with BoP installed the wrong world still shows crimson forest and withered abyss, so it looks
+  convincingly right. Four probe runs measured the wrong dimension on 2026-09-16 and "proved" a fix using blocks
+  vanilla's own surface rules had placed; it was committed, pushed and deployed before the generator line was
+  read. The presets now ship CityWorld's Nether and End, so a **fresh** `run/world` has them — one made before
+  that, or with its realms switched back, does not, and the line is still the first thing to read.
+  `CityWorldChunkGenerator` = ours, `NoiseBasedChunkGenerator` = vanilla (PORTING.md has a
+  `run/world/datapacks/` recipe for forcing either), and `-Dcityworld.probe=find:biome:<id>` checks a biome is present before you call its feature
   broken. Three more probe traps, each of which cost a run: the **server watchdog kills any sweep over 60s**
   (it runs as one long tick — set `max-tick-time=-1` in the gitignored `run/server.properties`); a roofed
   dimension's `WORLD_SURFACE` is the *ceiling*; and a small sweep sits in ONE biome, so zero there means
   "wrong place", not "broken".
+- **Shape questions need a picture, and there are two that need no client.** `-Dcityworld.probe=survey:end`
+  (with `-Dcityworld.probe.dim=minecraft:the_end`) prints the End's *plan* as a chunk map — void, island, road,
+  structure — for 10,000 chunks in 5 s without generating one; it found 40-chunk roads across the void and 685
+  farms on end stone in its first two runs. `scripts/region_render.py <region dir> x0 x1 y0 y1 z0 z1 out.png`
+  renders a generated box as a plan plus a side elevation (kill the server first so the region is flushed;
+  1.21.11's End is `run/world/DIM1/region`, 26.x's `dimensions/minecraft/the_end/region`). Block tallies said the
+  first End was fine; one screenshot said it was chunk-square slabs.
 - **Overriding another mod's datapack file takes two things, and each fails differently.**
   (1) `ordering="AFTER"` on an optional dependency in the `neoforge.mods.toml` template — a mod's pack only
   wins a file conflict if it sorts after the mod it overrides; without it the override is a **silent
