@@ -228,6 +228,27 @@ public class CityWorldSettings {
         oddsOfPristineBuilding = 0.0;
         oddsOfPristineRoad = 0.0;
     }
+    /**
+     * The End: a city on vanilla's islands, which are a few dozen blocks thick with the void beneath. Everything
+     * CityWorld digs is therefore off — the first End was the overworld's plain twin, and its mines, sewers and
+     * basements hung out of the underside of the islands (owner, 2026-09-16: "I forgot that we'd need mines off
+     * in the end"). Seas and mountains are the overworld's terrain, not the End's; the rest stays the twin's.
+     */
+    public void applyEndRealm() {
+        includeMines = false;
+        includeSewers = false;
+        includeCisterns = false;
+        includeBasements = false;
+        includeBunkers = false;
+        includeCaves = false;
+        windingCaves = false;
+        includeLavaFields = false;
+        includeOres = false;
+        includeBones = false;
+        includeUndergroundFluids = false;
+        includeAbovegroundFluids = false;
+        includeAirborneStructures = false;
+    }
     public boolean includeBasements = true;
     public boolean includeCisterns = true;
     public boolean treasuresInBuildings = true;
