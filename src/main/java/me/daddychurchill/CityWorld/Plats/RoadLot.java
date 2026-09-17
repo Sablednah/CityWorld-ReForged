@@ -297,14 +297,41 @@ public class RoadLot extends ConnectedLot {
 		chunk.setBlocks(x, x + 2, baseY, baseY + 1, 3, 13, bridgePavement2Material, SlabType.DOUBLE);
 	}
 
-	private void placeWBridgeColumns(AbstractBlocks chunk, int baseY) {
-		chunk.setBlocks(0, 1, blockYs.getMinHeight(), baseY, 2, 4, bridgeEdgeMaterial);
-		chunk.setBlocks(0, 1, blockYs.getMinHeight(), baseY, 12, 14, bridgeEdgeMaterial);
+	private static final Material bridgeFootingMaterial = Material.OBSIDIAN;
+
+	/**
+	 * One bridge pylon. Everywhere but the End it runs from the sea bed (the lot's lowest planned height) up to
+	 * the deck, as upstream drew it. The End has no sea bed — the "strait" a bridge crosses there is the void,
+	 * and a pylon to a planned height simply stopped in mid-air (owner, 2026-09-17: "they either need to vanish
+	 * or have each rest on obsidian as foundations"). So there each column of the pylon looks for real ground
+	 * under itself: where an island passes below, it stands on an obsidian footing set into that ground; over
+	 * open void there is no pylon at all, and the deck spans the gap unsupported, as an end city's bridges do.
+	 */
+	private void placeBridgeColumn(CityWorldGenerator generator, AbstractBlocks chunk, int x1, int x2, int baseY,
+			int z1, int z2) {
+		if (generator.worldEnvironment != me.daddychurchill.CityWorld.compat.Environment.THE_END) {
+			chunk.setBlocks(x1, x2, blockYs.getMinHeight(), baseY, z1, z2, bridgeEdgeMaterial);
+			return;
+		}
+		for (int x = x1; x < x2; x++)
+			for (int z = z1; z < z2; z++)
+				// from under the deck's own cross beam, down to the bottom of the world
+				for (int y = baseY - 2; y >= generator.worldMinY; y--)
+					if (!chunk.isEmpty(x, y, z)) {
+						chunk.setBlock(x, y, z, bridgeFootingMaterial);
+						chunk.setBlocks(x, y + 1, baseY, z, bridgeEdgeMaterial);
+						break;
+					}
 	}
 
-	private void placeEBridgeColumns(AbstractBlocks chunk, int baseY) {
-		chunk.setBlocks(15, 16, blockYs.getMinHeight(), baseY, 2, 4, bridgeEdgeMaterial);
-		chunk.setBlocks(15, 16, blockYs.getMinHeight(), baseY, 12, 14, bridgeEdgeMaterial);
+	private void placeWBridgeColumns(CityWorldGenerator generator, AbstractBlocks chunk, int baseY) {
+		placeBridgeColumn(generator, chunk, 0, 1, baseY, 2, 4);
+		placeBridgeColumn(generator, chunk, 0, 1, baseY, 12, 14);
+	}
+
+	private void placeEBridgeColumns(CityWorldGenerator generator, AbstractBlocks chunk, int baseY) {
+		placeBridgeColumn(generator, chunk, 15, 16, baseY, 2, 4);
+		placeBridgeColumn(generator, chunk, 15, 16, baseY, 12, 14);
 	}
 
 	private void placeNSBridgeCap(AbstractBlocks chunk, int z, int baseY, int topY) {
@@ -435,14 +462,14 @@ public class RoadLot extends ConnectedLot {
 		chunk.setBlocks(3, 13, baseY, baseY + 1, z, z + 2, bridgePavement2Material, SlabType.DOUBLE);
 	}
 
-	private void placeNBridgeColumns(AbstractBlocks chunk, int baseY) {
-		chunk.setBlocks(2, 4, blockYs.getMinHeight(), baseY, 0, 1, bridgeEdgeMaterial);
-		chunk.setBlocks(12, 14, blockYs.getMinHeight(), baseY, 0, 1, bridgeEdgeMaterial);
+	private void placeNBridgeColumns(CityWorldGenerator generator, AbstractBlocks chunk, int baseY) {
+		placeBridgeColumn(generator, chunk, 2, 4, baseY, 0, 1);
+		placeBridgeColumn(generator, chunk, 12, 14, baseY, 0, 1);
 	}
 
-	private void placeSBridgeColumns(AbstractBlocks chunk, int baseY) {
-		chunk.setBlocks(2, 4, blockYs.getMinHeight(), baseY, 15, 16, bridgeEdgeMaterial);
-		chunk.setBlocks(12, 14, blockYs.getMinHeight(), baseY, 15, 16, bridgeEdgeMaterial);
+	private void placeSBridgeColumns(CityWorldGenerator generator, AbstractBlocks chunk, int baseY) {
+		placeBridgeColumn(generator, chunk, 2, 4, baseY, 15, 16);
+		placeBridgeColumn(generator, chunk, 12, 14, baseY, 15, 16);
 	}
 
 	private void placeEWTunnelArch(CityWorldGenerator generator, AbstractBlocks chunk, int x, int baseY,
@@ -638,7 +665,7 @@ public class RoadLot extends ConnectedLot {
 
 					// tall span
 					if (toEast) {
-						placeWBridgeColumns(chunk, pavementLevel + 5);
+						placeWBridgeColumns(generator, chunk, pavementLevel + 5);
 						placeEWBridgePartA(chunk, 0, pavementLevel + 5);
 						placeEWBridgePartA(chunk, 2, pavementLevel + 5);
 						placeEWBridgePartA(chunk, 4, pavementLevel + 5);
@@ -647,7 +674,7 @@ public class RoadLot extends ConnectedLot {
 						placeEWBridgePartA(chunk, 10, pavementLevel + 5);
 						placeEWBridgePartA(chunk, 12, pavementLevel + 5);
 						placeEWBridgePartA(chunk, 14, pavementLevel + 5);
-						placeEBridgeColumns(chunk, pavementLevel + 5);
+						placeEBridgeColumns(generator, chunk, pavementLevel + 5);
 
 						// ramp down
 					} else {
@@ -660,7 +687,7 @@ public class RoadLot extends ConnectedLot {
 						placeEWBridgePartBE(chunk, 4, pavementLevel + 3);
 						placeEWBridgePartA(chunk, 2, pavementLevel + 4);
 						placeEWBridgePartBE(chunk, 0, pavementLevel + 4);
-						placeWBridgeColumns(chunk, pavementLevel + 4);
+						placeWBridgeColumns(generator, chunk, pavementLevel + 4);
 					}
 
 				} else {
@@ -676,7 +703,7 @@ public class RoadLot extends ConnectedLot {
 						placeEWBridgePartBW(chunk, 10, pavementLevel + 3);
 						placeEWBridgePartA(chunk, 12, pavementLevel + 4);
 						placeEWBridgePartBW(chunk, 14, pavementLevel + 4);
-						placeEBridgeColumns(chunk, pavementLevel + 4);
+						placeEBridgeColumns(generator, chunk, pavementLevel + 4);
 
 						// short span
 					} else {
@@ -703,7 +730,7 @@ public class RoadLot extends ConnectedLot {
 
 					// tall span
 					if (toSouth) {
-						placeNBridgeColumns(chunk, pavementLevel + 5);
+						placeNBridgeColumns(generator, chunk, pavementLevel + 5);
 						placeNSBridgePartA(chunk, 0, pavementLevel + 5);
 						placeNSBridgePartA(chunk, 2, pavementLevel + 5);
 						placeNSBridgePartA(chunk, 4, pavementLevel + 5);
@@ -712,7 +739,7 @@ public class RoadLot extends ConnectedLot {
 						placeNSBridgePartA(chunk, 10, pavementLevel + 5);
 						placeNSBridgePartA(chunk, 12, pavementLevel + 5);
 						placeNSBridgePartA(chunk, 14, pavementLevel + 5);
-						placeSBridgeColumns(chunk, pavementLevel + 5);
+						placeSBridgeColumns(generator, chunk, pavementLevel + 5);
 
 						// ramp down
 					} else {
@@ -725,7 +752,7 @@ public class RoadLot extends ConnectedLot {
 						placeNSBridgePartBS(chunk, 4, pavementLevel + 3);
 						placeNSBridgePartA(chunk, 2, pavementLevel + 4);
 						placeNSBridgePartBS(chunk, 0, pavementLevel + 4);
-						placeNBridgeColumns(chunk, pavementLevel + 4);
+						placeNBridgeColumns(generator, chunk, pavementLevel + 4);
 					}
 
 				} else {
@@ -741,7 +768,7 @@ public class RoadLot extends ConnectedLot {
 						placeNSBridgePartBN(chunk, 10, pavementLevel + 3);
 						placeNSBridgePartA(chunk, 12, pavementLevel + 4);
 						placeNSBridgePartBN(chunk, 14, pavementLevel + 4);
-						placeSBridgeColumns(chunk, pavementLevel + 4);
+						placeSBridgeColumns(generator, chunk, pavementLevel + 4);
 
 						// short span
 					} else {

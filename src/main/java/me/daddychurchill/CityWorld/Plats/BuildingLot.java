@@ -84,7 +84,13 @@ public abstract class BuildingLot extends ConnectedLot {
 
 		if (platmap.generator.getSettings().includeBasements)
 			depth = 1 + chunkOdds.getRandomInt(context.maximumFloorsBelow);
+		maxDepth = platmap.generator.shapeProvider.getMaxBasementFloors(platmap.generator, chunkX, chunkZ,
+				basementFloorHeight);
+		depth = Math.min(depth, maxDepth);
 	}
+
+	/** The basement floors the ground here can hold — unlimited, except on an End island (see {@code ShapeProvider_TheEnd}). */
+	private final int maxDepth;
 
 	@Override
 	public boolean makeConnected(PlatLot relative) {
@@ -97,7 +103,7 @@ public abstract class BuildingLot extends ConnectedLot {
 			neighborsHaveIdenticalHeights = relativebuilding.neighborsHaveIdenticalHeights;
 			if (neighborsHaveIdenticalHeights || chunkOdds.playOdds(neighborsHaveSimilarHeightsOdds)) {
 				height = relativebuilding.height;
-				depth = relativebuilding.depth;
+				depth = Math.min(relativebuilding.depth, maxDepth);
 			}
 
 			// do we need stairs?

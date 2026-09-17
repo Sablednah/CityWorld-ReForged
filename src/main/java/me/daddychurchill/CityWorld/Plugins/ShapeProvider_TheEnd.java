@@ -104,9 +104,33 @@ public class ShapeProvider_TheEnd extends ShapeProvider_Normal {
 	/**
 	 * What the planner is told a void column's height is. Just under "sea level", so the gap between two islands
 	 * reads as a strait: a road that has land within reach on both sides crosses it as one of CityWorld's bridges
-	 * — deck, rails and stub pylons, since the pylons stop at this height — and nothing else is ever drawn there.
+	 * — deck and rails; {@code RoadLot.placeBridgeColumn} gives it pylons only where real ground lies below — and
+	 * nothing else is ever drawn there.
 	 */
 	private final static int VOID_FLOOR = STREET_LEVEL - 4;
+
+	/** Rock left under the lowest basement floor, so a cellar never shows through the island's underside. */
+	private final static int BASEMENT_COVER = 4;
+
+	/**
+	 * Basements go wherever the island is thick enough to hold them (owner, 2026-09-17: "I think there's space
+	 * for basements in buildings, so let those in"). Judged on the thinnest column of the chunk, so a building at
+	 * the rim — where the island tapers to nothing — gets a shallower cellar or none, never a box hanging out of
+	 * the bottom.
+	 */
+	@Override
+	public int getMaxBasementFloors(CityWorldGenerator generator, int chunkX, int chunkZ, int floorHeight) {
+		int highestUnderside = 0;
+		short[] tops = terrain(generator).chunkTops(chunkX, chunkZ);
+		short[] undersides = terrain(generator).chunkUndersides(chunkX, chunkZ);
+		for (int i = 0; i < 256; i++) {
+			if (tops[i] <= 0)
+				return 0; // part of this chunk is void
+			highestUnderside = Math.max(highestUnderside, undersides[i]);
+		}
+		// the basement's bottom plate sits one below its lowest floor
+		return Math.max(0, (STREET_LEVEL - 1 - BASEMENT_COVER - highestUnderside) / floorHeight);
+	}
 
 	/** Two road-grid steps. Bridges hop between neighbouring islands; they do not set out across the void. */
 	@Override
