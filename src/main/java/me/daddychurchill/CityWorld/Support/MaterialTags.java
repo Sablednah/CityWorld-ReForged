@@ -56,6 +56,8 @@ public final class MaterialTags {
     public static final TagKey<Block> BUILD_CHEMICALS = key("cityworld:build/chemicals");
     public static final TagKey<Block> BUILD_STAINED_GLASS = key("cityworld:build/stained_glass");
     public static final TagKey<Block> BUILD_MODERN_STONES = key("cityworld:build/modern_stones");
+    /** The End's own building blocks, blended into the build pools of a CityWorld End; see {@code MaterialProvider}. */
+    public static final TagKey<Block> BUILD_END_STONES = key("cityworld:build/end_stones");
 
     /**
      * What a farm field can be planted with, and what a flower bed can draw from.

@@ -1723,7 +1723,13 @@ public class RoadLot extends ConnectedLot {
 			return false;
 		} else {
 			chunk.setBlocks(x, sidewalkLevel + 1, sidewalkLevel + lightpostHeight + 1, z, lightpostMaterial);
-			chunk.setBlock(x, sidewalkLevel + lightpostHeight + 1, z, context.lightMat);
+			if (generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.THE_END)
+				// The End lights its streets with end rods (owner, 2026-09-17): two stacked on the post, where the
+				// lamp block goes. The post itself stays — the street signs hang from its top block.
+				chunk.setBlocks(x, sidewalkLevel + lightpostHeight + 1, sidewalkLevel + lightpostHeight + 3, z,
+						Material.END_ROD);
+			else
+				chunk.setBlock(x, sidewalkLevel + lightpostHeight + 1, z, context.lightMat);
 			return true;
 		}
 	}

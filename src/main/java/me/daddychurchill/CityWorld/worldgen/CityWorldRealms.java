@@ -74,7 +74,8 @@ public final class CityWorldRealms {
                 .getOrThrow(net.minecraft.world.level.dimension.BuiltinDimensionTypes.END);
         CityWorldChunkGenerator generator = new CityWorldChunkGenerator(
                 new CityWorldEndBiomeSource(biomes),
-                Optional.empty(),
+                // Pristine: the dragon kept the End's city untouched while the overworld's fell.
+                Optional.of(false),
                 // Fallbacks only: twin_of takes the overworld's own style and settings at runtime.
                 Optional.of("floating"),
                 Optional.empty(),
