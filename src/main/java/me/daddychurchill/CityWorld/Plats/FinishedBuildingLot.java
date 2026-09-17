@@ -393,7 +393,10 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		int lowestY = getBottomY(generator);
 
 		// bottom most floor
-		chunk.setLayer(lowestY - 1, Material.STONE);
+		// In the End this plate is the underside of whatever part of the building overhangs the island's edge, so
+		// it is the island's own rock there rather than a square of overworld stone showing from below.
+		chunk.setLayer(lowestY - 1, generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.THE_END
+				? generator.oreProvider.stratumMaterial : Material.STONE);
 		drawFoundation(generator, chunk, context, lowestY, 1, false, false, foundationMaterial, neighborBasements);
 		// chunk.setBlocks(0, chunk.width, lowestY, lowestY + 1, 0, chunk.width, (byte)
 		// ceilingMaterial.getId());

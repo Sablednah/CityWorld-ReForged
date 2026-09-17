@@ -146,6 +146,12 @@ public class CityWorldGenerator {
     public final Environment worldEnvironment;
 
     /**
+     * Vanilla's End terrain, as the noise answers it — bound by the chunk generator the moment this context
+     * exists, and only in the End. {@code ShapeProvider_TheEnd} plans against it; null everywhere else.
+     */
+    public volatile me.daddychurchill.CityWorld.worldgen.EndTerrain endTerrain;
+
+    /**
      * The world's real block bounds — {@code -64} and {@code 319} for a modern overworld.
      *
      * <p><b>These are deliberately not the same as {@link #height}.</b> In 1.14 the world was
@@ -275,6 +281,8 @@ public class CityWorldGenerator {
         this.settings = new CityWorldSettings(worldStyle, decayOverride, settingsData);
         if (environment == Environment.NETHER)
             settings.applyNetherRuin();
+        if (environment == Environment.THE_END)
+            settings.applyEndRealm();
 
         // The original's initializeWorldInfo, minus the lazy-init dance. Order matters: the
         // providers read the world facts above, and the datums below read the providers.

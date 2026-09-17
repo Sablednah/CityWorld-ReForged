@@ -200,6 +200,7 @@ public final class CityWorldSelfTest {
             checkTwinDimension(server);
             checkNetherTwin();
             checkRuinedNetherStem(server);
+            checkEnd(server);
             checkFarmCrops();
             checkBiomeDepth(server);
             checkStructures(server);
@@ -805,6 +806,90 @@ public final class CityWorldSelfTest {
                 || !back.type().is(me.daddychurchill.CityWorld.worldgen.CityWorldRealms.RUINED_NETHER_TYPE)
                 || !json.contains("\"environment\":\"nether\"") || !json.contains("\"twin_of\":\"minecraft:overworld\""))
             fail("the ruined-city Nether stem did not round-trip as a nether-environment CityWorld twin on ruined_nether");
+    }
+
+    /**
+     * The End: vanilla's islands with the city on the flat of them. Every claim the design rests on, checked
+     * against the live dimension — that the presets ship it at all, that {@code EndTerrain} still reproduces
+     * vanilla's terrain to the block (a Minecraft version that reshapes the End's noise router breaks that
+     * silently, and the planner would then build on air), that structures land on land, that the dragon's zone
+     * stays unplanned, and that nothing digs into an island a few dozen blocks thick.
+     */
+    private void checkEnd(MinecraftServer server) {
+        ServerLevel end = server.getLevel(net.minecraft.world.level.Level.END);
+        if (end == null || !(end.getChunkSource().getGenerator()
+                instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator generator)) {
+            fail("the End is not a CityWorld generator — the world presets should ship CityWorld's End by default");
+            return;
+        }
+        CityWorldGenerator context = generator.getContext(end);
+        report.put("end.shape", context.shapeProvider.getCollectionName());
+        if (context.endTerrain == null
+                || !(context.shapeProvider instanceof me.daddychurchill.CityWorld.Plugins.ShapeProvider_TheEnd)) {
+            fail("the End's context has no EndTerrain / is not shaped by ShapeProvider_TheEnd");
+            return;
+        }
+        var settings = context.getSettings();
+        if (settings.includeMines || settings.includeSewers || settings.includeBasements || settings.includeCisterns
+                || settings.includeBunkers || settings.includeCaves)
+            fail("the End still digs: mines/sewers/basements/cisterns/bunkers/caves must all be off there");
+
+        // EndTerrain against vanilla's own answer (getBaseHeight delegates to the vanilla End generator).
+        int columns = 0, wrong = 0;
+        var random = end.getChunkSource().randomState();
+        for (int i = 0; i < 12; i++)
+            for (int j = 0; j < 12; j++) {
+                int x = (70 + i * 3) * 16 + (i * 7 + 3) % 16, z = (-18 + j * 3) * 16 + (j * 5 + 1) % 16;
+                int height = generator.getBaseHeight(x, z, net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG,
+                        end, random);
+                int top = height <= end.getMinY() ? 0 : height - 1;
+                columns++;
+                if (top != context.endTerrain.topAt(x, z))
+                    wrong++;
+            }
+        report.put("end.terrain.columns", Integer.toString(columns));
+        report.put("end.terrain.wrong", Integer.toString(wrong));
+        if (wrong > 0)
+            fail("EndTerrain disagrees with vanilla's End terrain in " + wrong + " of " + columns
+                    + " columns — the End's noise router changed shape; see EndTerrain");
+
+        // The plan, outside the dragon's zone: cities exist, and only roads (bridges) stand wholly over the void.
+        int island = 0, built = 0, adrift = 0;
+        for (int cx = 70; cx < 110; cx++)
+            for (int cz = -20; cz < 20; cz++) {
+                int solid = 0;
+                for (short top : context.endTerrain.chunkTops(cx, cz))
+                    if (top > 0)
+                        solid++;
+                if (solid > 0)
+                    island++;
+                var lot = context.getPlatMap(cx, cz).getMapLot(cx, cz);
+                if (lot == null || lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE)
+                    continue;
+                built++;
+                if (solid == 0 && lot.style != me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.ROAD)
+                    adrift++;
+            }
+        report.put("end.plan.islandChunks", Integer.toString(island));
+        report.put("end.plan.builtChunks", Integer.toString(built));
+        if (built == 0)
+            fail("the End plans no city at all over 1,600 chunks of outer islands");
+        if (adrift > 0)
+            fail(adrift + " End lots that are not roads are planned over pure void");
+
+        // The dragon's zone is vanilla's alone: nothing may be planned inside it.
+        int central = 0;
+        for (int cx = -64; cx <= 64; cx += 2)
+            for (int cz = -64; cz <= 64; cz += 2) {
+                if (cx * cx + cz * cz > 64 * 64)
+                    continue;
+                var lot = context.getPlatMap(cx, cz).getMapLot(cx, cz);
+                if (lot != null && lot.style != me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE)
+                    central++;
+            }
+        report.put("end.plan.centralLots", Integer.toString(central));
+        if (central > 0)
+            fail(central + " lots are planned inside the dragon's zone, which must stay vanilla's");
     }
 
     /**

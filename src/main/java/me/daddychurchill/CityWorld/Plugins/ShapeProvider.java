@@ -194,6 +194,11 @@ public abstract class ShapeProvider extends Provider {
 
 		ShapeProvider provider = null;
 
+		// The realm outranks the style, as it does for ores and cover: the End's terrain is vanilla's islands
+		// whatever city the overworld it mirrors is building.
+		if (generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.THE_END)
+			return new ShapeProvider_TheEnd(generator, odds);
+
 		switch (generator.worldStyle) {
 
 		// NATURE and METRO reshape Normal without dragging in a style-specific Context/Lot tree, so
@@ -389,6 +394,11 @@ public abstract class ShapeProvider extends Provider {
 
 	public Odds getMacroOddsGeneratorAt(int x, int z) {
 		return new Odds((long) (getMacroNoiseAt(x, z, macroRandomGeneratorSlot) * Long.MAX_VALUE));
+	}
+
+	/** How many chunks away a bridge or tunnel may look for its far bank; see {@code PlatMap.isBridgeTowards}. */
+	public int getMaxBridgeReach() {
+		return Integer.MAX_VALUE;
 	}
 
 	public boolean getBridgePolarityAt(double chunkX, double chunkZ) {

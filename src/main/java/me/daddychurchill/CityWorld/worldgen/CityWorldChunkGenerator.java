@@ -292,6 +292,14 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     // so hand it over the moment it exists — this is the earliest point it can be had.
                     if (this.biomeSource instanceof CityWorldBiomes cityBiomes)
                         cityBiomes.bindContext(local);
+                    // The End plans against vanilla's islands, so its planner needs vanilla's noise before the
+                    // first platmap is asked for — and the biome source reads the same field for its biomes.
+                    if (isEnd()) {
+                        vanillaEnd();
+                        local.endTerrain = endTerrain;
+                        if (this.biomeSource instanceof CityWorldEndBiomeSource endBiomes)
+                            endBiomes.bindTerrain(endTerrain);
+                    }
                     context = local;
                 }
             }
@@ -332,8 +340,12 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * ({@link #vanillaEnd()}), so the central island, the obsidian pillars, the exit podium and the void ring
      * are exactly what the dragon fight expects; CityWorld's islands start beyond it.
      */
+    private boolean isEnd() {
+        return parseEnvironment(environment) == me.daddychurchill.CityWorld.compat.Environment.THE_END;
+    }
+
     private boolean inEndCentre(ChunkAccess chunk) {
-        if (parseEnvironment(environment) != me.daddychurchill.CityWorld.compat.Environment.THE_END)
+        if (!isEnd())
             return false;
         long x = chunk.getPos().getMinBlockX() + 8, z = chunk.getPos().getMinBlockZ() + 8;
         return x * x + z * z <= 1024L * 1024L;
@@ -352,6 +364,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             .getOrThrow(net.minecraft.world.level.levelgen.NoiseGeneratorSettings.END);
                     vanillaEndRandom = RandomState.create(registries,
                             net.minecraft.world.level.levelgen.NoiseGeneratorSettings.END, levelSeed);
+                    endTerrain = new EndTerrain(vanillaEndRandom, settings.value().noiseSettings());
                     vanillaEnd = local = new net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator(
                             net.minecraft.world.level.biome.TheEndBiomeSource.create(biomes), settings);
                 }
@@ -362,13 +375,58 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private volatile net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator vanillaEnd;
     /** The End noise's own random state — the one MC hands us is a dummy for a non-noise generator. */
     private volatile RandomState vanillaEndRandom;
+    /** The same noise, asked for heights without generating — what the End's planner and biomes read. */
+    private volatile EndTerrain endTerrain;
 
     @Override
     public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState,
             StructureManager structureManager, ChunkAccess chunk) {
-        // The dragon's island is vanilla's, not CityWorld's.
-        if (inEndCentre(chunk))
-            return vanillaEnd().fillFromNoise(blender, vanillaEndRandom, structureManager, chunk);
+        // The End's terrain is vanilla's everywhere: the dragon's island in the centre, and beyond the void ring
+        // the outer islands exactly as vanilla grows them. CityWorld then builds on top of what is there
+        // (ShapeProvider_TheEnd shapes nothing) — except in the centre, which stays the dragon's alone.
+        if (isEnd()) {
+            context(chunk);
+            CompletableFuture<ChunkAccess> islands =
+                    vanillaEnd().fillFromNoise(blender, vanillaEndRandom, structureManager, chunk);
+            return inEndCentre(chunk) ? islands : islands.thenApply(filled -> {
+                if (!endStructureHere(structureManager, filled))
+                    buildCity(structureManager, filled);
+                return filled;
+            });
+        }
+        buildCity(structureManager, chunk);
+        return CompletableFuture.completedFuture(chunk);
+    }
+
+    /**
+     * Whether a vanilla structure (in practice an end city) has a piece over this End chunk. CityWorld then draws
+     * nothing here and vanilla decorates it, so the two are never built through each other.
+     *
+     * <p>The planner cannot know: end cities are placed from the structure manager, which exists per chunk at
+     * generation and not when a platmap is planned. Measured 2026-09-17, 2 of 7 located end cities started inside
+     * a CityWorld lot (a store, a road). The plan still says "road" for such a chunk; the street simply stops at
+     * the end city's foot, which is how a city that grew around one would look anyway.
+     */
+    private boolean endStructureHere(StructureManager structureManager, ChunkAccess chunk) {
+        if (!isEnd())
+            return false;
+        try {
+            ChunkPos pos = chunk.getPos();
+            for (var start : structureManager.startsForStructure(pos, structure -> true))
+                for (var piece : start.getPieces()) {
+                    var box = piece.getBoundingBox();
+                    if (box.maxX() >= pos.getMinBlockX() && box.minX() <= pos.getMaxBlockX()
+                            && box.maxZ() >= pos.getMinBlockZ() && box.minZ() <= pos.getMaxBlockZ())
+                        return true;
+                }
+        } catch (Throwable t) {
+            // never let a structure lookup break chunk generation
+        }
+        return false;
+    }
+
+    /** CityWorld's half of {@link #fillFromNoise}: plan the chunk's lot and let it draw. */
+    private void buildCity(StructureManager structureManager, ChunkAccess chunk) {
         CityWorldGenerator context = context(chunk);
         int chunkX = chunk.getPos().x();
         int chunkZ = chunk.getPos().z();
@@ -384,8 +442,6 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // Make room for any structure that expects the terrain to get out of its way. Vanilla does this
         // in the same pass, via the Beardifier density function — see carveForStructures.
         carveForStructures(context, structureManager, chunk);
-
-        return CompletableFuture.completedFuture(chunk);
     }
 
     /**
@@ -619,8 +675,18 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     public ChunkGeneratorStructureState createState(HolderLookup<StructureSet> lookup,
             RandomState randomState, long seed) {
         // Doubles as the one place vanilla tells a ChunkGenerator its world seed — see context().
+        if (this.levelSeedKnown && this.levelSeed != seed)
+            this.vanillaEnd = null; // a different world: its End noise is not this one's
         this.levelSeed = seed;
         this.levelSeedKnown = true;
+        // The End's biomes come from its noise, and structure placement asks for biomes before any chunk exists:
+        // a /locate (or the probe's) on a dimension nobody has visited found no end city in 87,000 candidate
+        // cells, because an unbound source answers "barrens" and barrens hold none. Bind now, not at first chunk.
+        if (isEnd() && net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer() != null) {
+            vanillaEnd();
+            if (this.biomeSource instanceof CityWorldEndBiomeSource endBiomes)
+                endBiomes.bindTerrain(endTerrain);
+        }
         return ChunkGeneratorStructureState.createForNormal(
                 randomState, seed, this.biomeSource, onlyAllowed(lookup));
     }
@@ -686,7 +752,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             StructureManager structureManager) {
         // The central zone decorates as vanilla's End: the obsidian pillars (an end_spike feature of the
         // the_end biome) and the spawn platform, which the dragon fight looks for.
-        if (inEndCentre(chunk)) {
+        if (inEndCentre(chunk) || endStructureHere(structureManager, chunk)) {
             super.applyBiomeDecoration(level, chunk, structureManager);
             return;
         }
@@ -717,8 +783,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         paintCaveWalls(context, level, chunk);
 
         me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x(), pos.z());
-        boolean wild = context.isModernStyle() && context.getSettings().vanillaDecoratesWild() && lot != null
-                && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE
+        // In the End the wild is vanilla's outright — its islands, so its chorus plants too — whatever the style.
+        boolean wild = (isEnd() || context.isModernStyle() && context.getSettings().vanillaDecoratesWild())
+                && lot != null && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE
                 && lot.allowsWildDecoration();
 
         if (wild) {
@@ -1305,6 +1372,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     @Override
     public int getBaseHeight(int x, int z, Heightmap.Types type, LevelHeightAccessor level,
             RandomState randomState) {
+        // The End's terrain is vanilla's, so vanilla answers for it (end cities ask this for their y >= 60 rule).
+        if (isEnd())
+            return vanillaEnd().getBaseHeight(x, z, type, level, vanillaEndRandom);
         NoiseColumn column = getBaseColumn(x, z, level, randomState);
         Predicate<BlockState> isOpaque = type.isOpaque();
         for (int y = level.getMaxY(); y >= level.getMinY(); y--)
@@ -1324,6 +1394,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     @Override
     public NoiseColumn getBaseColumn(int x, int z, LevelHeightAccessor level, RandomState randomState) {
+        if (isEnd())
+            return vanillaEnd().getBaseColumn(x, z, level, vanillaEndRandom);
         CityWorldGenerator context = context(level);
         OreProvider ores = context.oreProvider;
         int terrainY = context.shapeProvider.findBlockY(context, x, z);
