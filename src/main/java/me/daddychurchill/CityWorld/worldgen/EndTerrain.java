@@ -38,9 +38,10 @@ public final class EndTerrain {
     private final RandomState random;
     private final int cellWidth, cellHeight, minY, levels;
     private final ThreadLocal<Functions> functions = ThreadLocal.withInitial(this::wire);
-    private final Map<Long, short[]> tops = new LinkedHashMap<>(256, 0.75f, true) {
+    /** Per chunk: [0] the top block of each column, [1] the lowest block of the solid run that top belongs to. */
+    private final Map<Long, short[][]> tops = new LinkedHashMap<>(256, 0.75f, true) {
         @Override
-        protected boolean removeEldestEntry(Map.Entry<Long, short[]> eldest) {
+        protected boolean removeEldestEntry(Map.Entry<Long, short[][]> eldest) {
             return size() > CACHED_CHUNKS;
         }
     };
@@ -90,20 +91,33 @@ public final class EndTerrain {
 
     /** {@link #topAt} for a whole chunk, indexed {@code x << 4 | z}. Cached; do not modify. */
     public short[] chunkTops(int chunkX, int chunkZ) {
+        return chunk(chunkX, chunkZ)[0];
+    }
+
+    /**
+     * How deep the island runs under each column of a chunk: the lowest block of the unbroken run of rock that
+     * ends at {@link #chunkTops} (0 where the column is void). What a basement may be dug into — an island is a
+     * few dozen blocks thick in the middle and nothing at all at its rim.
+     */
+    public short[] chunkUndersides(int chunkX, int chunkZ) {
+        return chunk(chunkX, chunkZ)[1];
+    }
+
+    private short[][] chunk(int chunkX, int chunkZ) {
         long key = (long) chunkX << 32 | (chunkZ & 0xFFFFFFFFL);
         synchronized (tops) {
-            short[] cached = tops.get(key);
+            short[][] cached = tops.get(key);
             if (cached != null)
                 return cached;
         }
-        short[] computed = compute(chunkX, chunkZ);
+        short[][] computed = compute(chunkX, chunkZ);
         synchronized (tops) {
             tops.put(key, computed);
         }
         return computed;
     }
 
-    private short[] compute(int chunkX, int chunkZ) {
+    private short[][] compute(int chunkX, int chunkZ) {
         DensityFunction density = functions.get().density();
         int cells = 16 / cellWidth, corners = cells + 1;
         // Corner densities, [cornerX][cornerZ][level] — a column at a time, which is what the 2D memo wants.
@@ -114,15 +128,21 @@ public final class EndTerrain {
                     corner[i][j][level] = density.compute(new DensityFunction.SinglePointContext(
                             chunkX * 16 + i * cellWidth, minY + level * cellHeight, chunkZ * 16 + j * cellWidth));
 
-        short[] result = new short[256];
+        short[] result = new short[256], underside = new short[256];
+        boolean[] closed = new boolean[256]; // the run under the top has ended
         for (int i = 0; i < cells; i++)
             for (int j = 0; j < cells; j++) {
                 double[] c00 = corner[i][j], c10 = corner[i + 1][j], c01 = corner[i][j + 1], c11 = corner[i + 1][j + 1];
                 for (int level = levels - 2; level >= 0; level--) {
                     // A cell whose eight corners are all empty interpolates to empty everywhere.
                     if (c00[level] <= 0 && c10[level] <= 0 && c01[level] <= 0 && c11[level] <= 0 && c00[level + 1] <= 0
-                            && c10[level + 1] <= 0 && c01[level + 1] <= 0 && c11[level + 1] <= 0)
+                            && c10[level + 1] <= 0 && c01[level + 1] <= 0 && c11[level + 1] <= 0) {
+                        for (int dx = 0; dx < cellWidth; dx++)
+                            for (int dz = 0; dz < cellWidth; dz++)
+                                if (result[(i * cellWidth + dx) << 4 | (j * cellWidth + dz)] != 0)
+                                    closed[(i * cellWidth + dx) << 4 | (j * cellWidth + dz)] = true;
                         continue;
+                    }
                     for (int dy = cellHeight - 1; dy >= 0; dy--) {
                         double fy = dy / (double) cellHeight;
                         double y00 = lerp(fy, c00[level], c00[level + 1]), y10 = lerp(fy, c10[level], c10[level + 1]);
@@ -132,14 +152,21 @@ public final class EndTerrain {
                             double x0 = lerp(fx, y00, y10), x1 = lerp(fx, y01, y11);
                             for (int dz = 0; dz < cellWidth; dz++) {
                                 int index = (i * cellWidth + dx) << 4 | (j * cellWidth + dz);
-                                if (result[index] == 0 && lerp(dz / (double) cellWidth, x0, x1) > 0)
-                                    result[index] = (short) (minY + level * cellHeight + dy);
+                                if (closed[index])
+                                    continue;
+                                short y = (short) (minY + level * cellHeight + dy);
+                                if (lerp(dz / (double) cellWidth, x0, x1) > 0) {
+                                    if (result[index] == 0)
+                                        result[index] = y;
+                                    underside[index] = y;
+                                } else if (result[index] != 0)
+                                    closed[index] = true;
                             }
                         }
                     }
                 }
             }
-        return result;
+        return new short[][] { result, underside };
     }
 
     private static double lerp(double t, double a, double b) {
