@@ -214,6 +214,24 @@ public class MaterialProvider {
                 pool.addTag(MaterialTags.BUILD_MODERN_STONES, MODERN_BUILD_STONES.length);
             }
         }
+
+        // The End: the overworld's palette with the End's own blocks blended in (owner, 2026-09-17: "blend it
+        // in") — purpur, end stone bricks, obsidian and amethyst from #cityworld:build/end_stones (no crying
+        // obsidian: a tag pool picks evenly, and whole roofs of it dripped particles as often as purpur appeared). Weighted at
+        // half of whatever the pool already holds, so about one wall, roof or floor in three is an End block and
+        // the city still reads as the overworld's echo. Runs after the MODERN fold so that share is of the final
+        // pool; a datapack widens or empties the tag to taste (an empty tag costs nothing: see TagPool).
+        if (generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.THE_END) {
+            MaterialList[] endPools = { itemsSelectMaterial_HouseWalls, itemsSelectMaterial_HouseRoofs,
+                    itemsSelectMaterial_HouseFloors, itemsSelectMaterial_HouseCeilings,
+                    itemsSelectMaterial_BuildingWalls, itemsSelectMaterial_BuildingRoofs,
+                    itemsSelectMaterial_BuildingCeilings, itemsSelectMaterial_BuildingFoundation,
+                    itemsSelectMaterial_GovernmentWalls, itemsSelectMaterial_GovernmentFoundations,
+                    itemsSelectMaterial_GovernmentCeilings, itemsSelectMaterial_UnfinishedBuildings,
+                    itemsSelectMaterial_FactoryInsides, itemsSelectMaterial_WaterTowers };
+            for (MaterialList pool : endPools)
+                pool.addTag(MaterialTags.BUILD_END_STONES, Math.max(2, pool.count() / 2));
+        }
     }
 
     /**

@@ -38,6 +38,7 @@
         "type": "cityworld:city",
         "twin_of": "minecraft:overworld",
         "style": "floating",
+        "decayed": false,
         "environment": "the_end",
         "biome_source": {
           "type": "cityworld:end"
