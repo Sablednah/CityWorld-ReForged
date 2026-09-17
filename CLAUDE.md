@@ -106,6 +106,21 @@ export PATH="$JAVA_HOME/bin:$PATH"
   **stops the server starting at all** (`Unbound values in registry …`). A dangling *feature* reference is
   fatal; a dangling *tag* entry is merely dropped. The self-test caught this on the two branches that have
   no BoP in `run/mods` — which is exactly why all three branches get tested, not one.
+- **⚠ Nothing in the shipped jar may be able to stop a server — not even behind a developer flag.**
+  CurseForge **rejected 5.7.0 and 5.8.0**: "Please remove any function that shuts the Minecraft server
+  down." The self-test harness and the chunk probe each ended in `server.halt(false)`, dormant unless
+  `-Dcityworld.selftest=true` / `-Dcityworld.probe=` was set — but a reviewer greps the shipped bytecode,
+  not the flag guarding it, and they are right to. `v5.8.1` removed both: ending a headless run now
+  belongs to the script that starts it (the harness logs `SELFTEST: complete`, `scripts/selftest.sh`
+  waits for it and kills the run's **process group** — job control, never a `pkill` pattern, and never
+  the gradle pid alone or you orphan a server that holds port 25599 into the *next* run).
+  Every tag from 5.5.0 carried the same two calls and passed review: that is **volunteer moderators with
+  differing thoroughness, not a rule that changed**, so *a past approval is never evidence that something
+  is allowed*. And verify a claim like this **against bytecode with a detector proved on a
+  known-positive first** (`javap -p -c`, grep `\.halt:|System\.exit:`; the 5.8.0 jar must show 3 hits,
+  5.8.1 none). A `strings`-based check reported 0 for everything — including methods that were certainly
+  there — because constant-pool entries sit adjacent. **Never trust a zero from a detector that has never
+  produced a positive.**
 - **Never compile in a checkout whose dev server or self-test is running.** `runSelfTest`/`runServer`
   run off that checkout's `build/classes`; a `compileJava` mid-run replaces class files under the JVM
   and the harness dies with `NoClassDefFoundError: …CityWorldSelfTest$1`. That is a race, not a code
