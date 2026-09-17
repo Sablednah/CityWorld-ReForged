@@ -1636,6 +1636,40 @@ own. Three consequences, all wanted:
 The open piece remains orientation — a chair has to face the table — which tags cannot carry and
 NeoForge **data maps** can. See the furniture entry in the parking lot.
 
+## Macaw's Doors + Windows — surveyed from the 26.2 jars (2026-09-17)
+
+Read out of `mcw-doors-1.1.5-mc26.2neoforge.jar` (CF file 8286561) and
+`mcw-windows-2.4.2-mc26.2neoforge.jar` (CF 8286566) by the ZARP session, not from documentation. Owner
+wants CityWorld to place these when installed; **nothing is built yet.**
+
+**Doors are nearly free.** 262 of 268 door blocks are real `DoorBlock` subclasses (210 plain, 26
+`JapaneseDoors`, 24 `StableDoor`), so they take the normal `facing`/`half`/`hinge`/`open`/`powered`
+properties — swapping ids in a palette entry should be enough. 252 are in `minecraft:wooden_doors` (so
+also `minecraft:doors`, so zombie door-breaking and villager use apply); the metal family plus
+`store_door` and `sliding_glass_door` are in `minecraft:doors` only and behave like iron doors.
+**⚠ The 4 garage doors (`mcwdoors:garage_*_door`) are `GarageDoor extends Block`** — a custom multi-part
+block with none of the door properties, so anything building a door state generically breaks on them.
+Their own tags (`metal_doors`, `glass_doors`, `modern_doors`, `barn_doors`, `western_doors`,
+`classic_doors`, `garage_doors`) are thematic and are the right lever: hospital/jail doors for those
+lots, store and sliding-glass for shops, garage doors for garages and the OilPlatform.
+
+**Windows are real work.** 346 blockstates, and *nothing* is a vanilla pane or door subclass, so every
+family needs its own state handling: `Window` (connected-texture `part` grid recomputed from neighbours —
+check our chunk writes trigger `updateShape` or tall windows show seams), two/four-pane
+(`windowstate` = closed/locked/open_left/open_right — `locked` suits APOCALYPSE), `pane_window` (stacks
+vertically), shutters (vanilla `DOOR_HINGE`/`OPEN` but *not* a DoorBlock, so zombies ignore them), blinds,
+curtains + rods, arrow slits and gothic windows (ruins, Nether/End), parapets, mosaic glass (the only
+real connecting pane; tagged under the legacy `forge:` namespace, not `c:`), and one-way glass
+(Bunker, Police interrogation).
+
+**⚠ 175 mcwwindows blocks are in `minecraft:walls`** — every window/window2/four_window/pane_window/
+gothic/arrow-slit family. Vanilla walls, fences and panes will try to connect to them, and mobs path
+around them as walls (jump height 1.5). That matters anywhere CityWorld leans on walls for lot
+boundaries or pathing, and it is the first thing to check before placing windows in quantity.
+
+Window tags are family-level, not thematic, so **material is the lever**: stone/brick windows for civic
+lots, plank windows for residential.
+
 ## Mod compatibility: what is actually portable (researched 2026-08-29)
 
 Read from the **Modrinth API and the mod jars themselves**, not from blog round-ups — every "best
