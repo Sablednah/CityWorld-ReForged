@@ -833,6 +833,17 @@ public final class CityWorldSelfTest {
         if (settings.includeMines || settings.includeSewers || settings.includeCisterns
                 || settings.includeBunkers || settings.includeCaves)
             fail("the End still digs: mines/sewers/cisterns/bunkers/caves must all be off there");
+        // Pristine whatever it mirrors — the flag is only ever set by the decay override, so this proves the
+        // override reached the End's settings, even on a test world whose overworld is not ruined to begin with.
+        report.put("end.pristine", Boolean.toString(settings.pristine));
+        if (!settings.pristine || settings.includeDecayedBuildings || settings.includeDecayedRoads
+                || settings.includeOvergrowth)
+            fail("the End is not pristine: it must never decay or overgrow, whatever the overworld does");
+        int endBlocks = me.daddychurchill.CityWorld.Support.MaterialTags
+                .resolve(me.daddychurchill.CityWorld.Support.MaterialTags.BUILD_END_STONES).size();
+        report.put("end.palette.blocks", Integer.toString(endBlocks));
+        if (endBlocks == 0)
+            fail("#cityworld:build/end_stones resolved empty — the End's palette would silently be the overworld's");
 
         // EndTerrain against vanilla's own answer (getBaseHeight delegates to the vanilla End generator).
         int columns = 0, wrong = 0;

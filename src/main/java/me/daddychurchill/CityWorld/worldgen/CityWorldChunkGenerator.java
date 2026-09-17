@@ -285,8 +285,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         settingsData = twin.resolvedSettings();
                         twinResolved = true;
                     }
+                    // The End is never ruined, whatever it mirrors: the dragon kept everyone away until it was
+                    // killed, so its city stands as built while the overworld's fell (owner, 2026-09-17 — and why
+                    // ZARP's voidlings only turn up afterwards). Applied here as well as in the presets, so an End
+                    // created before the presets said so is pristine too. An explicit "decayed" still wins.
+                    Optional<Boolean> decay = decayed.isEmpty() && isEnd() ? Optional.of(false) : decayed;
                     local = new CityWorldGenerator(levelSeed, TERRAIN_CEILING, UPSTREAM_SEA_LEVEL,
-                            worldStyle, level.getMinY(), level.getMaxY(), decayed, settingsData,
+                            worldStyle, level.getMinY(), level.getMaxY(), decay, settingsData,
                             parseEnvironment(environment));
                     // The biome source answers getNoiseBiome from this context (terrain height + climate),
                     // so hand it over the moment it exists — this is the earliest point it can be had.
