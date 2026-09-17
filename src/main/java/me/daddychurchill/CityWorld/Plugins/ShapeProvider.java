@@ -404,6 +404,16 @@ public abstract class ShapeProvider extends Provider {
 		return Integer.MAX_VALUE;
 	}
 
+	/**
+	 * Whether a platmap keeps roads that never leave it. Upstream reclaims them ("the silly roads"): on a
+	 * continent a road network that touches no edge is a planning accident. On an End island it is the normal
+	 * case — void on every side — and reclaiming them left whole islands levelled for a city that then had no
+	 * streets, and so (no streets, no city) no buildings either.
+	 */
+	public boolean keepsIsolatedRoads() {
+		return false;
+	}
+
 	/** How many chunks away a bridge or tunnel may look for its far bank; see {@code PlatMap.isBridgeTowards}. */
 	public int getMaxBridgeReach() {
 		return Integer.MAX_VALUE;
