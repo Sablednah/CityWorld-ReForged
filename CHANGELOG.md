@@ -18,8 +18,10 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   them, with their chorus forests, biomes and **end cities**. CityWorld adds the city: streets and buildings
   stand on the flat tops of the outer islands and nowhere else, short bridges hop between neighbouring
   islands, and the island's edge, underside and everything wild is left alone. Island tops within four blocks
-  of street level (y 59) are planed flat to take the streets; nothing digs — no mines, sewers, basements,
-  cisterns or caves — because an island is only a few dozen blocks thick. Districts follow the overworld's
+  of street level (y 59) are planed flat to take the streets. Nothing digs through — no mines, sewers, cisterns
+  or caves, because an island is only a few dozen blocks thick — but buildings keep their basements wherever the
+  island under them is thick enough, shallower or absent towards the rim, and never showing from below. Bridge
+  pylons stand on obsidian footings where an island passes beneath and are left off over open void. Districts follow the overworld's
   style and settings, graded by how much of each island is buildable (no farms or outland: there is no water
   out there). CityWorld steps aside wherever an end city stands. Customize has **Realms → End**
   (*Cities on the islands* / *Vanilla*), and modpacks can lock it with `cityworldEnd` in

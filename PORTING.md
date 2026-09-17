@@ -19,7 +19,7 @@ getting something that works is priority".
 **Open, in the order I would take them:**
 
 1. **Owner playtest of the new End** — the look of the terrace edge (4-block planing + 4-block blend), bridges
-   between islands (deck with stub pylons; max total span 10 chunks), how dense the city feels, what an end city
+   between islands (pylons only over real ground, on obsidian; max total span 10 chunks), how dense the city feels, what an end city
    inside a district looks like, and gateways landing in a city. All dials are constants at the top of
    `ShapeProvider_TheEnd`.
 2. **The dragon fight has now been fought end to end by the owner on the first build** (2026-09-16) and the centre
@@ -96,9 +96,18 @@ central island is flat at exactly the wrong height).
   survey). `getContext` now counts only chunks that touch an island, and keeps to the city — no farm or outland
   contexts. ⚠ `PlatMap.isNaturalLot` is true for a lot *nobody has claimed yet*; use `!isEmptyLot && isNaturalLot`
   at that point in planning or everything reads as wilderness.
-- **Nothing digs.** `CityWorldSettings.applyEndRealm()` turns off mines, sewers, cisterns, basements, bunkers,
+- **Nothing digs.** `CityWorldSettings.applyEndRealm()` turns off mines, sewers, cisterns, bunkers,
   caves, lava, ores, bones and fluids whatever the overworld twin has on; the provider answers "no" to every
   shaft/cave question. Measured over 169 chunks: below y 55 the only blocks are end stone and chorus.
+- **Owner's first look (2026-09-17): "looking much better."** The odd glitch where an end city meets its
+  neighbouring chunks, "but nothing that wouldn't be explained by the builders sculpting to build the buildings".
+  Two asks, both done the same day: **basements back in** — `ShapeProvider.getMaxBasementFloors` (unlimited
+  everywhere but the End) caps each `BuildingLot.depth` by the island's thickness under *that chunk*
+  (`EndTerrain.chunkUndersides`, 4 blocks of cover, none where any column is void); measured over 169 chunks:
+  basements to y 48, and the lowest block of every column is still end stone. And **bridge pylons** "either need
+  to vanish or rest on obsidian": `RoadLot.placeBridgeColumn` — in the End each pylon column looks for real ground
+  beneath it and stands on an obsidian footing, or is not drawn at all over void. Next, per the owner: the
+  **palette**.
 - **Biomes are vanilla's.** `CityWorldEndBiomeSource` reads the same end-islands field through `EndTerrain`
   (`TheEndBiomeSource`'s own sample point and thresholds). ⚠ It is bound in **`createState`**, not at first chunk:
   structure placement asks for biomes before any chunk exists, and unbound it answered "barrens" — the probe's

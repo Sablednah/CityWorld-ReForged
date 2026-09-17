@@ -64,8 +64,10 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
   **Why, and it is not just tidiness:** the owner often has a second Claude session working in this
   repo (the sablecraft.co.uk website one). Switching branches in the shared checkout rewrites its
-  files underneath it — `WEBSITE.md` does not exist on the version branches at all, so a switch tries
-  to delete it and aborts (or worse, lands mid-edit). Worktrees keep `master`'s tree still. They share
+  files underneath it (when `WEBSITE.md` was tracked on master only, a switch tried to delete it and
+  aborted — or worse, landed mid-edit). `WEBSITE.md` is now **git-ignored and local-only**: it is the
+  note-passing file between this session and the website one, so read and write it freely, never
+  commit it. Worktrees keep `master`'s tree still. They share
   the Gradle cache, so a build there is no slower after the first.
 - **The ship loop** (used ~30 times in the furniture arc, every trap below hit at least once):
   commit on master → `git cherry-pick <EXPLICIT SHA>` in the worktree (**never `$(git rev-parse
