@@ -118,6 +118,28 @@ central island is flat at exactly the wrong height).
   it mirrors — lore: the dragon kept people away until it was killed, which is why ZARP's voidlings only appear
   afterwards. `decayed: false` in the presets and `CityWorldRealms`, **and** defaulted in `context()` so an End
   created before today is pristine too; self-test `end.pristine`.
+- **Owner's second look (2026-09-17): "looking good — bridges are fine now. But there's a bit TOO much, and not
+  much nature, so BoP isn't triggering... it can be as much as half what's covered now."** Two separate faults:
+  - **BoP could never have triggered.** TerraBlender adds End biomes by *mixing into `TheEndBiomeSource`*
+    (`MixinTheEndBiomeSource`: four weighted `Area`s from `EndBiomeRegistry`, initialised by
+    `LevelUtils.initializeBiomes` for each **dimension stem** at server start). Our stem holds CityWorld's generator
+    and source, so TerraBlender never saw an End at all. Fix: `CityWorldEndBiomeSource` now asks the *real*
+    `TheEndBiomeSource` inside `vanillaEnd()`, with `EndTerrain.sampler()` — a `Climate.Sampler` whose erosion is the
+    memoised end-islands field (vanilla's own costs ~600 simplex evaluations a call) — and
+    `TerraBlenderBridge.initializeEnd` calls TerraBlender's own `initializeBiomes` on that generator (reflection, soft
+    dependency), which also sets the END surface-rule category on the End noise settings. The modded biomes are added
+    to `possibleBiomes` (or their features never run), and wild chunks — nature lots and end-city chunks — now get
+    `vanillaEnd().buildSurface`, which is where BoP's algal/null end stone comes from. Measured on 26.2 with BoP:
+    census over 4,000 blocks end_wilds 15,887 / end_reef 10,882 / end_flats 5,994 / end_corruption 1,484 columns;
+    a generated end_wilds area held 285 algal end stone, empyreal logs and leaves, endbloom, enderphyte.
+  - **Thinning is by region** (`ShapeProvider_TheEnd.settled`): a slow simplex field (1/1100) splits the outer
+    islands into city country and wild country; the terrace fades out with it, so wild ground is vanilla's exactly,
+    and outside city country a column that happens to stand at street level is *reported* one higher so the planner
+    never builds there. Share of island chunks built, 200×200 chunks: unthinned **26%**, −0.35 17%, −0.2 12%, 0.0 9%
+    → threshold **−0.25**. ⚠ At 1/384 the patches were smaller than the road grid can use (intersections every five
+    chunks, and `validateRoads` reclaims a platmap's roads unless one leaves it): 88 road lots to 630 buildings. A
+    platmap with no roads now keeps no buildings (`validateLots`). `-Dcityworld.end.settled=<n>` with `survey:end`
+    re-tunes it in one run per value.
 - **Biomes are vanilla's.** `CityWorldEndBiomeSource` reads the same end-islands field through `EndTerrain`
   (`TheEndBiomeSource`'s own sample point and thresholds). ⚠ It is bound in **`createState`**, not at first chunk:
   structure placement asks for biomes before any chunk exists, and unbound it answered "barrens" — the probe's

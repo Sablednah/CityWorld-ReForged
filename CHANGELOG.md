@@ -25,7 +25,10 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   city is never ruined**, even under an APOCALYPSE or DESTROYED overworld — the dragon kept everyone out — and it
   is built from the overworld's palette with the End's own blocks blended in (about one wall, roof or floor in
   three: purpur, end stone bricks, obsidian, amethyst — the new `#cityworld:build/end_stones` tag, yours to widen
-  or empty with a datapack). Its streets are lit by end rods. Districts follow the overworld's
+  or empty with a datapack). Its streets are lit by end rods. The End is settled by region — a slow noise field
+  leaves about half of what would otherwise be city as wild country, whole islands' worth of it untouched — and
+  **biome mods' End biomes now generate there**: Biomes O' Plenty's end wilds, end flats, end reef and end
+  corruption (anything registered with TerraBlender for the End), with their own ground and plants. Districts follow the overworld's
   style and settings, graded by how much of each island is buildable (no farms or outland: there is no water
   out there). CityWorld steps aside wherever an end city stands. Customize has **Realms → End**
   (*Cities on the islands* / *Vanilla*), and modpacks can lock it with `cityworldEnd` in
