@@ -62,6 +62,54 @@ public final class TerraBlenderBridge {
         return PRESENT;
     }
 
+    /**
+     * Hands a vanilla End generator to TerraBlender exactly as TerraBlender would have found it in a vanilla
+     * world: {@code LevelUtils.initializeBiomes} builds the weighted areas its {@code TheEndBiomeSource} mixin
+     * picks modded End biomes from, and marks the End noise settings so its surface rules apply.
+     *
+     * <p>Needed because TerraBlender only walks the world's own dimension stems at server start, and a CityWorld
+     * End's stem holds CityWorld's generator — the vanilla End generator CityWorld fills terrain with lives inside
+     * it, where TerraBlender never looks. Without this call BoP's End biomes can never appear, however much
+     * wilderness the End has (owner, 2026-09-17: "BoP isn't triggering").
+     */
+    public static void initializeEnd(net.minecraft.core.RegistryAccess registries,
+            Holder<net.minecraft.world.level.dimension.DimensionType> endType,
+            net.minecraft.world.level.chunk.ChunkGenerator vanillaEnd, long seed) {
+        if (!PRESENT)
+            return;
+        try {
+            Class.forName("terrablender.util.LevelUtils").getMethod("initializeBiomes",
+                    net.minecraft.core.RegistryAccess.class, Holder.class, net.minecraft.resources.ResourceKey.class,
+                    net.minecraft.world.level.chunk.ChunkGenerator.class, long.class)
+                    .invoke(null, registries, endType, net.minecraft.world.level.dimension.LevelStem.END, vanillaEnd, seed);
+        } catch (Throwable t) {
+            me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                    "CityWorld: could not initialise TerraBlender for the End — modded End biomes will not appear", t);
+        }
+    }
+
+    /** Every biome a mod has registered with TerraBlender for the End (highlands, midlands, edge, islands). */
+    public static List<net.minecraft.resources.ResourceKey<Biome>> endBiomes() {
+        List<net.minecraft.resources.ResourceKey<Biome>> keys = new java.util.ArrayList<>();
+        if (!PRESENT)
+            return keys;
+        try {
+            Class<?> registry = Class.forName("terrablender.api.EndBiomeRegistry");
+            for (String list : new String[] { "getHighlandsBiomes", "getMidlandsBiomes", "getEdgeBiomes", "getIslandBiomes" })
+                for (Object entry : (List<?>) registry.getMethod(list).invoke(null)) {
+                    Object key = entry.getClass().getMethod("data").invoke(entry);
+                    if (key instanceof net.minecraft.resources.ResourceKey<?> biome && !keys.contains(biome)) {
+                        @SuppressWarnings("unchecked")
+                        net.minecraft.resources.ResourceKey<Biome> typed = (net.minecraft.resources.ResourceKey<Biome>) biome;
+                        keys.add(typed);
+                    }
+                }
+        } catch (Throwable t) {
+            me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn("CityWorld: could not read TerraBlender's End biomes", t);
+        }
+        return keys;
+    }
+
     private final Climate.ParameterList<Holder<Biome>> parameters;
     private final Climate.@Nullable ParameterList<Holder<Biome>> moddedOnly;
     private final List<Holder<Biome>> biomes;

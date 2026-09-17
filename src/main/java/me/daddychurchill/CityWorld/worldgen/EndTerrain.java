@@ -58,7 +58,8 @@ public final class EndTerrain {
     }
 
     /** The density inside the router's {@code interpolated} marker, and the 2D field the End's biomes read. */
-    private record Functions(DensityFunction density, DensityFunction erosion) {}
+    private record Functions(DensityFunction density, DensityFunction erosion,
+            net.minecraft.world.level.biome.Climate.Sampler sampler) {}
 
     private Functions wire() {
         DensityFunction[] interpolated = new DensityFunction[1];
@@ -75,8 +76,19 @@ public final class EndTerrain {
             return function;
         };
         DensityFunction whole = random.router().finalDensity().mapAll(visitor);
-        return new Functions(interpolated[0] != null ? interpolated[0] : whole,
-                random.router().erosion().mapAll(visitor));
+        DensityFunction erosion = random.router().erosion().mapAll(visitor), zero = DensityFunctions.zero();
+        return new Functions(interpolated[0] != null ? interpolated[0] : whole, erosion,
+                new net.minecraft.world.level.biome.Climate.Sampler(zero, zero, zero, erosion, zero, zero,
+                        java.util.List.of()));
+    }
+
+    /**
+     * A climate sampler whose erosion is this world's end-islands field, memoised per column — what a real
+     * {@code TheEndBiomeSource} needs to answer under a generator that is not noise-based. The other five axes are
+     * zero, as they are in vanilla's End. Per thread, like the memo it carries.
+     */
+    public net.minecraft.world.level.biome.Climate.Sampler sampler() {
+        return functions.get().sampler();
     }
 
     /** Vanilla's End biome field at a block column — what {@code TheEndBiomeSource} reads as erosion. */

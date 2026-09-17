@@ -303,7 +303,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         vanillaEnd();
                         local.endTerrain = endTerrain;
                         if (this.biomeSource instanceof CityWorldEndBiomeSource endBiomes)
-                            endBiomes.bindTerrain(endTerrain);
+                            endBiomes.bindTerrain(endTerrain, vanillaEnd.getBiomeSource());
                     }
                     context = local;
                 }
@@ -370,8 +370,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     vanillaEndRandom = RandomState.create(registries,
                             net.minecraft.world.level.levelgen.NoiseGeneratorSettings.END, levelSeed);
                     endTerrain = new EndTerrain(vanillaEndRandom, settings.value().noiseSettings());
-                    vanillaEnd = local = new net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator(
+                    local = new net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator(
                             net.minecraft.world.level.biome.TheEndBiomeSource.create(biomes), settings);
+                    // As TerraBlender would have done for a vanilla End stem — see TerraBlenderBridge.initializeEnd.
+                    // Before the field is published, so no thread meets a half-initialised biome source.
+                    TerraBlenderBridge.initializeEnd(registries, registries.lookupOrThrow(Registries.DIMENSION_TYPE)
+                            .getOrThrow(net.minecraft.world.level.dimension.BuiltinDimensionTypes.END), local, levelSeed);
+                    vanillaEnd = local;
                 }
             }
         return local;
@@ -597,8 +602,24 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // Nothing: the shaper lays its own surface down in fillFromNoise (that is what the
         // surfaceMaterial/subsurfaceMaterial strata are), so vanilla's surface pass has no job here —
         // except in the End's central zone, which vanilla generated and must surface itself.
-        if (inEndCentre(chunk))
+        if (inEndCentre(chunk) || isEndWild(structureManager, chunk))
             vanillaEnd().buildSurface(region, structureManager, vanillaEndRandom, chunk);
+    }
+
+    /**
+     * An End chunk CityWorld leaves to nature (or to an end city). It gets the End's own surface rules, which in a
+     * vanilla game do nothing — end stone onto end stone — and with a biome mod lay that mod's ground (BoP's algal
+     * and null end stone). City chunks are skipped: the rules repaint any exposed end stone, yards and all.
+     */
+    private boolean isEndWild(StructureManager structureManager, ChunkAccess chunk) {
+        if (!isEnd())
+            return false;
+        if (endStructureHere(structureManager, chunk))
+            return true;
+        ChunkPos pos = chunk.getPos();
+        CityWorldGenerator context = context(chunk);
+        me.daddychurchill.CityWorld.Plats.PlatLot lot = context.getPlatMap(pos.x, pos.z).getMapLot(pos.x, pos.z);
+        return lot == null || lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE;
     }
 
     @Override
@@ -688,9 +709,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // a /locate (or the probe's) on a dimension nobody has visited found no end city in 87,000 candidate
         // cells, because an unbound source answers "barrens" and barrens hold none. Bind now, not at first chunk.
         if (isEnd() && net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer() != null) {
-            vanillaEnd();
+            var vanilla = vanillaEnd();
             if (this.biomeSource instanceof CityWorldEndBiomeSource endBiomes)
-                endBiomes.bindTerrain(endTerrain);
+                endBiomes.bindTerrain(endTerrain, vanilla.getBiomeSource());
         }
         return ChunkGeneratorStructureState.createForNormal(
                 randomState, seed, this.biomeSource, onlyAllowed(lookup));
