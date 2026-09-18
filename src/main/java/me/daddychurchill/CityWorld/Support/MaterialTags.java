@@ -100,6 +100,10 @@ public final class MaterialTags {
     public static final TagKey<Block> FITTINGS_WINDOW = key("cityworld:fittings/window");
     /** Fences for railings, paddocks, park edges and yard fences — anything that connects like a fence. */
     public static final TagKey<Block> FITTINGS_FENCE = key("cityworld:fittings/fence");
+    /** The tall fence round a construction site or a factory yard: iron bars, barbed wire — never a
+     *  garden fence (the owner found barbed wire round a house balcony, which is why wired fences left
+     *  the fence pool for this one). */
+    public static final TagKey<Block> FITTINGS_SITE_FENCE = key("cityworld:fittings/site_fence");
     /** Stair-shaped sloped roof blocks (Macaw's {@code *_roof}); the house roof pass matches one to the
      *  roof material by name, else picks at random, else uses the vanilla stairs of that material. */
     public static final TagKey<Block> FITTINGS_ROOF = key("cityworld:fittings/roof");

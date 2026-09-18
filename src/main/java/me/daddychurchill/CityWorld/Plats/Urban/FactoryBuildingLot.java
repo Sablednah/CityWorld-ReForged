@@ -125,7 +125,8 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 					inMiddleSection, cornerStyle, allowRounded, outsetEffect, wallMaterial, glassMaterial, heights);
 			break;
 		case METAL_FENCE:
-			drawFence(generator, byteChunk, context, 0, y1, 0, heights, Material.IRON_BARS, 3);
+			drawFence(generator, byteChunk, context, 0, y1, 0, heights, me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+					me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_SITE_FENCE, chunkOdds, Material.IRON_BARS), 3);
 			break;
 		case WOOD_FENCE:
 			drawFence(generator, byteChunk, context, 0, y1, 0, heights, me.daddychurchill.CityWorld.Support.MaterialTags.pick(
