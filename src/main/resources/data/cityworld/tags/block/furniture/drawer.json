@@ -26,6 +26,742 @@
       "required": false
     },
     {
+      "id": "fantasyfurniture_royal:drawer",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_royal:dresser",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_double_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_large_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_lower_bookshelf_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_lower_triple_drawer",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_triple_drawer",
+      "required": false
+    },
+    {
       "id": "mcwfurnitures:acacia_bookshelf_drawer",
       "required": false
     },

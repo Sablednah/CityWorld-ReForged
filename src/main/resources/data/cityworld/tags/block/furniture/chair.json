@@ -54,6 +54,438 @@
       "required": false
     },
     {
+      "id": "fantasyfurniture_royal:bench",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_royal:chair",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_royal:cushion",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_royal:stool",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_striped_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_modern_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_stool_chair",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_striped_chair",
+      "required": false
+    },
+    {
       "id": "mcwfurnitures:acacia_chair",
       "required": false
     },

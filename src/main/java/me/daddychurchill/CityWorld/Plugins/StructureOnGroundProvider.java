@@ -11,6 +11,8 @@ import me.daddychurchill.CityWorld.Context.DataContext;
 import me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation;
 import me.daddychurchill.CityWorld.Support.Colors;
 import me.daddychurchill.CityWorld.Support.Colors.ColorSet;
+import me.daddychurchill.CityWorld.Support.Mapper;
+import me.daddychurchill.CityWorld.Support.MaterialTags;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.Support.Trees;
@@ -58,10 +60,11 @@ public class StructureOnGroundProvider extends Provider {
 
 		chunk.setWalls(x1, x2, y1, y2, z1, z2, wallMat);
 		chunk.setBlocks(x1 + 1, x2 - 1, y2, z1 + 1, z2 - 1, roofMat);
+		Material door = MaterialTags.pick(MaterialTags.FITTINGS_DOOR, odds, Material.BIRCH_DOOR);
 
 		switch (odds.getRandomInt(4)) {
 		case 0: // north
-			chunk.setDoor(x1 + odds.getRandomInt(xR) + 1, y1, z1, Material.BIRCH_DOOR, BlockFace.NORTH_NORTH_EAST);
+			chunk.setDoor(x1 + odds.getRandomInt(xR) + 1, y1, z1, door, BlockFace.NORTH_NORTH_EAST);
 			chunk.setBlock(x1 + odds.getRandomInt(xR) + 1, y1 + 1, z2 - 1, materialGlass);
 			placeShedTable(generator, chunk, odds, x1 + odds.getRandomInt(xR) + 1, y1, z2 - 2, BlockFace.SOUTH);
 			placeShedChest(generator, chunk, odds, x1 - 1, y1, z1 + odds.getRandomInt(zR) + 1, BlockFace.WEST,
@@ -69,7 +72,7 @@ public class StructureOnGroundProvider extends Provider {
 			placeShedChest(generator, chunk, odds, x2, y1, z1 + odds.getRandomInt(zR) + 1, BlockFace.EAST, other);
 			break;
 		case 1: // south
-			chunk.setDoor(x1 + odds.getRandomInt(xR) + 1, y1, z2 - 1, Material.BIRCH_DOOR, BlockFace.SOUTH_SOUTH_WEST);
+			chunk.setDoor(x1 + odds.getRandomInt(xR) + 1, y1, z2 - 1, door, BlockFace.SOUTH_SOUTH_WEST);
 			chunk.setBlock(x1 + odds.getRandomInt(xR) + 1, y1 + 1, z1, materialGlass);
 			placeShedTable(generator, chunk, odds, x1 + odds.getRandomInt(xR) + 1, y1, z1 + 1, BlockFace.NORTH);
 			placeShedChest(generator, chunk, odds, x1 - 1, y1, z1 + odds.getRandomInt(zR) + 1, BlockFace.WEST,
@@ -77,7 +80,7 @@ public class StructureOnGroundProvider extends Provider {
 			placeShedChest(generator, chunk, odds, x2, y1, z1 + odds.getRandomInt(zR) + 1, BlockFace.EAST, other);
 			break;
 		case 2: // west
-			chunk.setDoor(x1, y1, z1 + odds.getRandomInt(zR) + 1, Material.BIRCH_DOOR, BlockFace.WEST_NORTH_WEST);
+			chunk.setDoor(x1, y1, z1 + odds.getRandomInt(zR) + 1, door, BlockFace.WEST_NORTH_WEST);
 			chunk.setBlock(x2 - 1, y1 + 1, z1 + odds.getRandomInt(zR) + 1, materialGlass);
 			placeShedTable(generator, chunk, odds, x2 - 2, y1, z1 + odds.getRandomInt(zR) + 1, BlockFace.EAST);
 			placeShedChest(generator, chunk, odds, x1 + odds.getRandomInt(xR) + 1, y1, z1 - 1, BlockFace.NORTH,
@@ -85,7 +88,7 @@ public class StructureOnGroundProvider extends Provider {
 			placeShedChest(generator, chunk, odds, x1 + odds.getRandomInt(xR) + 1, y1, z2, BlockFace.SOUTH, other);
 			break;
 		default: // east
-			chunk.setDoor(x1, y1, z1 + odds.getRandomInt(zR) + 1, Material.BIRCH_DOOR, BlockFace.EAST_SOUTH_EAST);
+			chunk.setDoor(x1, y1, z1 + odds.getRandomInt(zR) + 1, door, BlockFace.EAST_SOUTH_EAST);
 			chunk.setBlock(x2 - 1, y1 + 1, z1 + odds.getRandomInt(zR) + 1, materialGlass);
 			placeShedTable(generator, chunk, odds, x1 + 1, y1, z1 + odds.getRandomInt(zR) + 1, BlockFace.WEST);
 			placeShedChest(generator, chunk, odds, x1 + odds.getRandomInt(xR) + 1, y1, z1 - 1, BlockFace.NORTH,
@@ -345,7 +348,14 @@ public class StructureOnGroundProvider extends Provider {
 			int minRoomWidth, int maxRoomWidth, HouseRoofStyle styleRoof, boolean allowMissingRooms) {
 
 		Trees trees = new Trees(odds);
-		Material matTrapDoor = trees.getRandomWoodTrapDoor();
+		// The fittings, one pick per house so the rooms match: a trapdoor for the attic hatch, a front
+		// door, an interior door, a window for the bands the walls leave, and a fence for the railings
+		// round a missing upper room. Each pool falls back to what the house was always built with.
+		Material matTrapDoor = MaterialTags.pick(MaterialTags.FITTINGS_TRAPDOOR, odds, trees.getRandomWoodTrapDoor());
+		Material matDoor = MaterialTags.pick(MaterialTags.FITTINGS_DOOR, odds, Material.BIRCH_DOOR);
+		Material matInteriorDoor = MaterialTags.pick(MaterialTags.FITTINGS_INTERIOR_DOOR, odds, Material.BIRCH_DOOR);
+		Material matWindow = MaterialTags.pick(MaterialTags.FITTINGS_WINDOW, odds, materialGlass);
+		Material matFence = MaterialTags.pick(MaterialTags.FITTINGS_FENCE, odds, materialFence);
 
 		// what are the rooms like?
 		Room[][][] rooms = new Room[floors][2][2];
@@ -370,7 +380,7 @@ public class StructureOnGroundProvider extends Provider {
 
 					// create the room
 					rooms[f][x][z] = new Room(thisRoomMissing, thisRoomWidthZ, thisRoomWidthX, thisRoomHasWalls,
-							thisRoomStyle, matTrapDoor);
+							thisRoomStyle, matTrapDoor, matDoor, matInteriorDoor, matWindow, matFence);
 
 					// single floor is a little different
 					if (floors == 1) {
@@ -628,6 +638,14 @@ public class StructureOnGroundProvider extends Provider {
 			break;
 		}
 
+		// MODERN houses get a pitched roof: the stepped layers above become slopes (see slopeRoof).
+		// CLASSIC keeps the stepped full-block roof it has had since 1.8. This runs while the layers
+		// are still solid — the attic pass below hollows them, and a ring block with air on its
+		// inside as well as its outside would read as a ridge, not a slope (measured: 6 stairs a
+		// layer instead of a ring of them).
+		if (makeAttic && generator.isModernStyle())
+			slopeRoof(generator, chunk, odds, matRoof, roofBottom + 1, roofBottom + roofHeight + 1);
+
 		if (makeAttic) {
 
 			// fill the potential attic space with something silly
@@ -667,6 +685,81 @@ public class StructureOnGroundProvider extends Provider {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Turn the stepped roof layers between {@code yFrom} (inclusive) and {@code yTo} (exclusive) into a
+	 * pitched one. Each layer above the ceiling is a rectangle inset one block from the layer below, so its
+	 * edge blocks are exactly where a 45° slope wants a stair: a full block with open air on one side
+	 * becomes a roof stair facing inward (its high side toward the ridge); air on two adjacent sides is a
+	 * corner and air on two opposite sides, or three, or four, is the ridge itself. The stair shapes at
+	 * corners — inner where two rooms meet, outer at the eaves — are then derived by
+	 * {@link SupportBlocks#reconnect}, i.e. by the roof block's own neighbour logic, exactly as if a player
+	 * had placed them.
+	 *
+	 * <p>The roof block comes from {@code #cityworld:fittings/roof}: the entry named after the roof
+	 * material when there is one ({@code oak_planks} → {@code oak_planks_roof}), else any entry (a
+	 * cobblestone house under a terracotta roof), else the vanilla stairs of that material — so a world
+	 * without a roof mod still gets pitched roofs, in stairs. The ridge takes the matching
+	 * {@code *_top_roof} cap when the mod has one, else it stays a full block.
+	 *
+	 * <p>Only blocks of {@code matRoof} are touched, and only where they have air beside them at their
+	 * own height, which is what keeps the attic walls (no air beside them) and the ceiling (below
+	 * {@code yFrom}) as they were.
+	 */
+	private void slopeRoof(CityWorldGenerator generator, RealBlocks chunk, Odds odds, Material matRoof, int yFrom,
+			int yTo) {
+		Material slope = pickRoofBlock(odds, matRoof);
+		Material ridge = ridgeFor(slope);
+		if (slope == null)
+			return;
+		for (int y = yFrom; y < yTo; y++) {
+			for (int x = 1; x < chunk.width - 1; x++) {
+				for (int z = 1; z < chunk.width - 1; z++) {
+					if (!chunk.isType(x, y, z, matRoof))
+						continue;
+					boolean north = chunk.isEmpty(x, y, z - 1), south = chunk.isEmpty(x, y, z + 1);
+					boolean west = chunk.isEmpty(x - 1, y, z), east = chunk.isEmpty(x + 1, y, z);
+					int open = (north ? 1 : 0) + (south ? 1 : 0) + (west ? 1 : 0) + (east ? 1 : 0);
+					if (open == 0)
+						continue;
+					if (open == 1 || (open == 2 && north != south)) {
+						// one open side, or two adjacent ones: a stair whose high side faces away from the
+						// (first) open side. The corner's shape comes from reconnect below.
+						BlockFace facing = north ? BlockFace.SOUTH : south ? BlockFace.NORTH : west ? BlockFace.EAST
+								: BlockFace.WEST;
+						chunk.setStair(x, y, z, slope, facing);
+					} else if (ridge != null) {
+						chunk.setBlock(x, y, z, ridge); // a ridge run, its end, or a pyramid's tip
+					}
+				}
+			}
+		}
+		// every cell placed; now let each roof block read its neighbours for corner and ridge shapes
+		chunk.reconnect(1, chunk.width - 1, yFrom, yTo, 1, chunk.width - 1);
+	}
+
+	/** The sloped block for a roof of {@code matRoof}: the pool's namesake, else any pool entry, else that
+	 *  material's vanilla stairs. */
+	private Material pickRoofBlock(Odds odds, Material matRoof) {
+		String path = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(matRoof.getBlock()).getPath();
+		Material named = MaterialTags.named(MaterialTags.FITTINGS_ROOF, path + "_roof");
+		if (named != null)
+			return named;
+		return MaterialTags.pick(MaterialTags.FITTINGS_ROOF, odds, Mapper.getStairsFor(matRoof));
+	}
+
+	/** The ridge cap that goes with a sloped roof block ({@code x_roof} → {@code x_top_roof}), or null. */
+	private Material ridgeFor(Material slope) {
+		if (slope == null)
+			return null;
+		net.minecraft.resources.Identifier id = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+				.getKey(slope.getBlock());
+		if (!id.getPath().endsWith("_roof"))
+			return null;
+		String top = id.getPath().substring(0, id.getPath().length() - "_roof".length()) + "_top_roof";
+		Material ridge = Material.of(id.getNamespace() + ":" + top);
+		return ridge == Material.AIR ? null : ridge;
 	}
 
 	private int flip(int i) {
@@ -713,8 +806,6 @@ public class StructureOnGroundProvider extends Provider {
 		return odds.getRandomInt(maxRoomWidth - minRoomWidth + 1) + minRoomWidth;
 	}
 
-	private static final Material[] DOOR_MATS = { Material.BIRCH_DOOR, Material.OAK_DOOR, Material.SPRUCE_DOOR,
-			Material.DARK_OAK_DOOR, Material.JUNGLE_DOOR, Material.ACACIA_DOOR };
 	private static final BlockFace[] HORIZ = { BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST };
 	private static final Material[] BED_MATS = { Material.WHITE_BED, Material.ORANGE_BED, Material.MAGENTA_BED,
 			Material.LIGHT_BLUE_BED, Material.YELLOW_BED, Material.LIME_BED, Material.PINK_BED, Material.GRAY_BED,
@@ -747,10 +838,7 @@ public class StructureOnGroundProvider extends Provider {
 	}
 
 	private boolean isDoor(RealBlocks chunk, int x, int y, int z) {
-		for (Material d : DOOR_MATS)
-			if (chunk.isType(x, y, z, d))
-				return true;
-		return false;
+		return chunk.isDoor(x, y, z); // any DoorBlock: the pools bring doors DOOR_MATS never listed
 	}
 
 	private boolean isBed(RealBlocks chunk, int x, int y, int z) {
@@ -810,8 +898,13 @@ public class StructureOnGroundProvider extends Provider {
 		final boolean walls;
 		Style style;
 		final Material trapDoor;
+		final Material door; // the front door (an exterior wall)
+		final Material interiorDoor; // between rooms
+		final Material window; // the band a wall leaves open — glass, or a framed window from the pool
+		final Material fence; // the railing round a missing room's floor
 
-		Room(boolean aMissing, int aWidthX, int aWidthZ, boolean aWalls, Style aStyle, Material aTrapDoor) {
+		Room(boolean aMissing, int aWidthX, int aWidthZ, boolean aWalls, Style aStyle, Material aTrapDoor,
+				Material aDoor, Material aInteriorDoor, Material aWindow, Material aFence) {
 			super();
 
 			missing = aMissing;
@@ -820,6 +913,10 @@ public class StructureOnGroundProvider extends Provider {
 			walls = aWalls;
 			style = aStyle;
 			trapDoor = aTrapDoor;
+			door = aDoor;
+			interiorDoor = aInteriorDoor;
+			window = aWindow;
+			fence = aFence;
 		}
 
 		// where are we?
@@ -854,21 +951,22 @@ public class StructureOnGroundProvider extends Provider {
 			// find ourselves
 			Locate(context, floor, floors, x, z, roomOffsetX, roomOffsetZ, baseY);
 
-			// draw the walls
+			// draw the walls (a pooled window band is reconnected afterwards: its blocks read each
+			// other to become one framed window, which worldgen placement alone never triggers)
 			if (roomEast) {
 				chunk.setBlocks(x2, x2 + 1, y1, y2, z1, z2 + 1, matWall); // east wall
-				chunk.setBlocks(x2, x2 + 1, y1 + 1, y2 - 1, z1 + 1, z2, materialGlass); // eastern window
+				chunk.setBlocks(x2, x2 + 1, y1 + 1, y2 - 1, z1 + 1, z2, window); // eastern window
 
 				if (roomSouth) {
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z2, z2 + 1, matWall); // south wall
-					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z2, z2 + 1, materialGlass); // southern window
+					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z2, z2 + 1, window); // southern window
 
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z1, z1 + 1, matWall); // north wall
 					chunk.setBlocks(x1, x1 + 1, y1, y2, z1, z2 + 1, matWall); // west wall
 
 				} else {
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z1, z1 + 1, matWall); // north wall
-					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z1, z1 + 1, materialGlass); // northern window
+					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z1, z1 + 1, window); // northern window
 
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z2, z2 + 1, matWall); // south wall
 					chunk.setBlocks(x1, x1 + 1, y1, y2, z1, z2 + 1, matWall); // west wall
@@ -876,23 +974,26 @@ public class StructureOnGroundProvider extends Provider {
 				}
 			} else {
 				chunk.setBlocks(x1, x1 + 1, y1, y2, z1, z2 + 1, matWall); // west wall
-				chunk.setBlocks(x1, x1 + 1, y1 + 1, y2 - 1, z1 + 1, z2, materialGlass); // western window
+				chunk.setBlocks(x1, x1 + 1, y1 + 1, y2 - 1, z1 + 1, z2, window); // western window
 
 				if (roomSouth) {
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z2, z2 + 1, matWall); // south wall
-					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z2, z2 + 1, materialGlass); // southern window
+					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z2, z2 + 1, window); // southern window
 
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z1, z1 + 1, matWall); // north wall
 					chunk.setBlocks(x2, x2 + 1, y1, y2, z1, z2 + 1, matWall); // east wall
 
 				} else {
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z1, z1 + 1, matWall); // north wall
-					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z1, z1 + 1, materialGlass); // northern window
+					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z1, z1 + 1, window); // northern window
 
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z2, z2 + 1, matWall); // south wall
 					chunk.setBlocks(x2, x2 + 1, y1, y2, z1, z2 + 1, matWall); // east wall
 				}
 			}
+
+			if (window != materialGlass)
+				chunk.reconnect(x1, x2 + 1, y1 + 1, y2 - 1, z1, z2 + 1);
 		}
 
 		void DrawFloor(RealBlocks chunk, DataContext context, int floor, int floors, int x, int z,
@@ -932,18 +1033,18 @@ public class StructureOnGroundProvider extends Provider {
 			if (located) {
 
 				// north and south ones
-				chunk.setEmptyBlocks(x1 + 1, x2, y2 + 1, z1, z1 + 1, materialFence, BlockFace.EAST, BlockFace.WEST);
-				chunk.setEmptyBlocks(x1 + 1, x2, y2 + 1, z2, z2 + 1, materialFence, BlockFace.EAST, BlockFace.WEST);
+				chunk.setEmptyBlocks(x1 + 1, x2, y2 + 1, z1, z1 + 1, fence, BlockFace.EAST, BlockFace.WEST);
+				chunk.setEmptyBlocks(x1 + 1, x2, y2 + 1, z2, z2 + 1, fence, BlockFace.EAST, BlockFace.WEST);
 
 				// west and east ones
-				chunk.setEmptyBlocks(x1, x1 + 1, y2 + 1, z1 + 1, z2, materialFence, BlockFace.NORTH, BlockFace.SOUTH);
-				chunk.setEmptyBlocks(x2, x2 + 1, y2 + 1, z1 + 1, z2, materialFence, BlockFace.NORTH, BlockFace.SOUTH);
+				chunk.setEmptyBlocks(x1, x1 + 1, y2 + 1, z1 + 1, z2, fence, BlockFace.NORTH, BlockFace.SOUTH);
+				chunk.setEmptyBlocks(x2, x2 + 1, y2 + 1, z1 + 1, z2, fence, BlockFace.NORTH, BlockFace.SOUTH);
 
 				// corners
-				chunk.setEmptyBlock(x1, y2 + 1, z1, materialFence, BlockFace.SOUTH, BlockFace.EAST);
-				chunk.setEmptyBlock(x1, y2 + 1, z2, materialFence, BlockFace.NORTH, BlockFace.EAST);
-				chunk.setEmptyBlock(x2, y2 + 1, z1, materialFence, BlockFace.SOUTH, BlockFace.WEST);
-				chunk.setEmptyBlock(x2, y2 + 1, z2, materialFence, BlockFace.NORTH, BlockFace.WEST);
+				chunk.setEmptyBlock(x1, y2 + 1, z1, fence, BlockFace.SOUTH, BlockFace.EAST);
+				chunk.setEmptyBlock(x1, y2 + 1, z2, fence, BlockFace.NORTH, BlockFace.EAST);
+				chunk.setEmptyBlock(x2, y2 + 1, z1, fence, BlockFace.SOUTH, BlockFace.WEST);
+				chunk.setEmptyBlock(x2, y2 + 1, z2, fence, BlockFace.NORTH, BlockFace.WEST);
 			}
 		}
 
@@ -1132,49 +1233,49 @@ public class StructureOnGroundProvider extends Provider {
 			if (roomEast) {
 				if (roomSouth) {
 					if (doorSouth)
-						chunk.setDoor(x1 + 3, y1, z2, Material.BIRCH_DOOR, BlockFace.SOUTH_SOUTH_EAST);
+						chunk.setDoor(x1 + 3, y1, z2, door, BlockFace.SOUTH_SOUTH_EAST);
 					if (doorEast)
-						chunk.setDoor(x2, y1, z1 + 3, Material.BIRCH_DOOR, BlockFace.EAST_SOUTH_EAST);
+						chunk.setDoor(x2, y1, z1 + 3, door, BlockFace.EAST_SOUTH_EAST);
 
 					if (hallNorth)
-						chunk.setDoor(x1 + 2, y1, z1, Material.BIRCH_DOOR, BlockFace.NORTH_NORTH_WEST);
+						chunk.setDoor(x1 + 2, y1, z1, interiorDoor, BlockFace.NORTH_NORTH_WEST);
 					if (hallWest)
-						chunk.setDoor(x1, y1, z1 + 2, Material.BIRCH_DOOR, BlockFace.WEST_NORTH_WEST);
+						chunk.setDoor(x1, y1, z1 + 2, interiorDoor, BlockFace.WEST_NORTH_WEST);
 
 				} else {
 					if (doorNorth)
-						chunk.setDoor(x1 + 3, y1, z1, Material.BIRCH_DOOR, BlockFace.NORTH_NORTH_EAST);
+						chunk.setDoor(x1 + 3, y1, z1, door, BlockFace.NORTH_NORTH_EAST);
 					if (doorEast)
-						chunk.setDoor(x2, y1, z2 - 3, Material.BIRCH_DOOR, BlockFace.EAST_NORTH_EAST);
+						chunk.setDoor(x2, y1, z2 - 3, door, BlockFace.EAST_NORTH_EAST);
 
 					if (hallSouth)
-						chunk.setDoor(x1 + 2, y1, z2, Material.BIRCH_DOOR, BlockFace.SOUTH_SOUTH_WEST);
+						chunk.setDoor(x1 + 2, y1, z2, interiorDoor, BlockFace.SOUTH_SOUTH_WEST);
 					if (hallWest)
-						chunk.setDoor(x1, y1, z2 - 2, Material.BIRCH_DOOR, BlockFace.WEST_SOUTH_WEST);
+						chunk.setDoor(x1, y1, z2 - 2, interiorDoor, BlockFace.WEST_SOUTH_WEST);
 
 				}
 			} else {
 				if (roomSouth) {
 					if (doorSouth)
-						chunk.setDoor(x2 - 3, y1, z2, Material.BIRCH_DOOR, BlockFace.SOUTH_SOUTH_WEST);
+						chunk.setDoor(x2 - 3, y1, z2, door, BlockFace.SOUTH_SOUTH_WEST);
 					if (doorWest)
-						chunk.setDoor(x1, y1, z1 + 3, Material.BIRCH_DOOR, BlockFace.WEST_SOUTH_WEST);
+						chunk.setDoor(x1, y1, z1 + 3, door, BlockFace.WEST_SOUTH_WEST);
 
 					if (hallNorth)
-						chunk.setDoor(x2 - 2, y1, z1, Material.BIRCH_DOOR, BlockFace.NORTH_NORTH_EAST);
+						chunk.setDoor(x2 - 2, y1, z1, interiorDoor, BlockFace.NORTH_NORTH_EAST);
 					if (hallEast)
-						chunk.setDoor(x2, y1, z1 + 2, Material.BIRCH_DOOR, BlockFace.EAST_NORTH_EAST);
+						chunk.setDoor(x2, y1, z1 + 2, interiorDoor, BlockFace.EAST_NORTH_EAST);
 
 				} else {
 					if (doorNorth)
-						chunk.setDoor(x2 - 3, y1, z1, Material.BIRCH_DOOR, BlockFace.NORTH_NORTH_WEST);
+						chunk.setDoor(x2 - 3, y1, z1, door, BlockFace.NORTH_NORTH_WEST);
 					if (doorWest)
-						chunk.setDoor(x1, y1, z2 - 3, Material.BIRCH_DOOR, BlockFace.WEST_NORTH_WEST);
+						chunk.setDoor(x1, y1, z2 - 3, door, BlockFace.WEST_NORTH_WEST);
 
 					if (hallSouth)
-						chunk.setDoor(x2 - 2, y1, z2, Material.BIRCH_DOOR, BlockFace.SOUTH_SOUTH_EAST);
+						chunk.setDoor(x2 - 2, y1, z2, interiorDoor, BlockFace.SOUTH_SOUTH_EAST);
 					if (hallEast)
-						chunk.setDoor(x2, y1, z2 - 2, Material.BIRCH_DOOR, BlockFace.EAST_SOUTH_EAST);
+						chunk.setDoor(x2, y1, z2 - 2, interiorDoor, BlockFace.EAST_SOUTH_EAST);
 				}
 			}
 

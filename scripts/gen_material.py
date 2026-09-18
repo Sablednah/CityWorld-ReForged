@@ -710,22 +710,79 @@ public final class Material {
         if (state.hasProperty(BlockStateProperties.AXIS)) {
             return state.setValue(BlockStateProperties.AXIS, axisFor(facing));
         }
+        // A mod's own `facing` property (Macaw's hinged windows declare one rather than reusing
+        // vanilla's): set it by name when it takes this direction, so the piece still turns.
+        if (dir != null) {
+            BlockState named = withNamedValue(state, "facing", dir.getSerializedName());
+            if (named != state) {
+                return named;
+            }
+        }
         return state;
     }
 
-    /** Set several connection faces true (fences, panes, glass, bars, vines). */
+    /** Set a property by its serialized name and value; the state unchanged if either is unknown. */
+    private static BlockState withNamedValue(BlockState state, String name, String value) {
+        for (Property<?> property : state.getProperties()) {
+            if (property.getName().equals(name)) {
+                return withParsedValue(state, property, value);
+            }
+        }
+        return state;
+    }
+
+    private static <T extends Comparable<T>> BlockState withParsedValue(BlockState state, Property<T> property,
+            String value) {
+        return property.getValue(value).map(v -> state.setValue(property, v)).orElse(state);
+    }
+
+    /**
+     * Set several connection faces true (fences, panes, glass, bars, vines).
+     *
+     * <p>A block with no connection faces but a horizontal {@code facing} — a framed window from
+     * the {@code fittings/window} pool, drawn where a wall pattern would put a pane — is turned
+     * <em>across</em> the run instead: panes asked to connect north–south sit in a wall that runs
+     * north–south, and a thin window in that wall faces east or west. So the one call that draws
+     * every glass column places a window the right way round on all four walls, with the callers
+     * none the wiser (a window's two faces are alike, so east and west are the same answer).
+     */
     public BlockState withFaces(BlockFace... faces) {
         BlockState state = defaultState;
         if (state == null) {
             return null;
         }
+        boolean connected = false;
         for (BlockFace face : faces) {
             Property<Boolean> faceProp = faceProperty(face);
             if (faceProp != null && state.hasProperty(faceProp)) {
                 state = state.setValue(faceProp, true);
+                connected = true;
+            }
+        }
+        if (!connected && !hasFaces() && faces.length > 0) {
+            BlockFace across = acrossRun(faces);
+            if (across != null) {
+                return withFacing(across);
             }
         }
         return state;
+    }
+
+    /** The horizontal direction perpendicular to the axis the given connection faces lie on, or
+     *  {@code null} when they do not name one horizontal axis. */
+    private static BlockFace acrossRun(BlockFace[] faces) {
+        boolean ns = false, ew = false;
+        for (BlockFace face : faces) {
+            if (face == BlockFace.NORTH || face == BlockFace.SOUTH) {
+                ns = true;
+            } else if (face == BlockFace.EAST || face == BlockFace.WEST) {
+                ew = true;
+            }
+        }
+        if (ns == ew) {
+            return null;
+        }
+        return ns ? BlockFace.EAST : BlockFace.NORTH;
     }
 
     /**

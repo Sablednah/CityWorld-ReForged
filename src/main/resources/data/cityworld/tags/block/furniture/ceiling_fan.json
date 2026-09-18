@@ -2,6 +2,50 @@
   "replace": false,
   "values": [
     {
+      "id": "mcwlights:acacia_ceiling_fan_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:birch_ceiling_fan_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:cherry_ceiling_fan_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:crimson_ceiling_fan_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:dark_oak_ceiling_fan_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:jungle_ceiling_fan_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:mangrove_ceiling_fan_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:oak_ceiling_fan_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:pale_oak_ceiling_fan_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:spruce_ceiling_fan_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:warped_ceiling_fan_light",
+      "required": false
+    },
+    {
       "id": "refurbished_furniture:acacia_dark_ceiling_fan",
       "required": false
     },

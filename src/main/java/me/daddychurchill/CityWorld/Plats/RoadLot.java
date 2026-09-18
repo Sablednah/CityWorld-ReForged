@@ -1722,6 +1722,17 @@ public class RoadLot extends ConnectedLot {
 			}
 			return false;
 		} else {
+			// A street lamp from the pool is one block id stacked post-high plus the lamp: the mod reads
+			// the stack and draws a base, a shaft and a lamp head (reconnect is what makes it look).
+			// The street signs still hang from the block below the head, as they do off the fence.
+			Material lamp = generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.THE_END ? null
+					: me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+							me.daddychurchill.CityWorld.Support.MaterialTags.LIGHT_STREET_LAMP, chunkOdds, null);
+			if (lamp != null) {
+				chunk.setBlocks(x, sidewalkLevel + 1, sidewalkLevel + lightpostHeight + 2, z, lamp);
+				chunk.reconnect(x, x + 1, sidewalkLevel + 1, sidewalkLevel + lightpostHeight + 2, z, z + 1);
+				return true;
+			}
 			chunk.setBlocks(x, sidewalkLevel + 1, sidewalkLevel + lightpostHeight + 1, z, lightpostMaterial);
 			if (generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.THE_END)
 				// The End lights its streets with end rods (owner, 2026-09-17): two stacked on the post, where the

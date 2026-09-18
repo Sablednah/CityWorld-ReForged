@@ -20,6 +20,126 @@
     {
       "id": "fantasyfurniture_nordic:chandelier",
       "required": false
+    },
+    {
+      "id": "fantasyfurniture_royal:chandelier",
+      "required": false
+    },
+    {
+      "id": "mcwlights:bell_lantern",
+      "required": false
+    },
+    {
+      "id": "mcwlights:black_ceiling_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:blue_ceiling_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:brown_ceiling_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:chain_lantern",
+      "required": false
+    },
+    {
+      "id": "mcwlights:copper_chandelier",
+      "required": false
+    },
+    {
+      "id": "mcwlights:copper_small_chandelier",
+      "required": false
+    },
+    {
+      "id": "mcwlights:covered_lantern",
+      "required": false
+    },
+    {
+      "id": "mcwlights:cross_lantern",
+      "required": false
+    },
+    {
+      "id": "mcwlights:cyan_ceiling_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:festive_lantern",
+      "required": false
+    },
+    {
+      "id": "mcwlights:golden_chandelier",
+      "required": false
+    },
+    {
+      "id": "mcwlights:golden_small_chandelier",
+      "required": false
+    },
+    {
+      "id": "mcwlights:gray_ceiling_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:green_ceiling_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:iron_chandelier",
+      "required": false
+    },
+    {
+      "id": "mcwlights:iron_small_chandelier",
+      "required": false
+    },
+    {
+      "id": "mcwlights:light_blue_ceiling_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:light_gray_ceiling_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:lime_ceiling_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:magenta_ceiling_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:orange_ceiling_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:pink_ceiling_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:purple_ceiling_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:red_ceiling_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:striped_lantern",
+      "required": false
+    },
+    {
+      "id": "mcwlights:tavern_lantern",
+      "required": false
+    },
+    {
+      "id": "mcwlights:white_ceiling_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:yellow_ceiling_light",
+      "required": false
     }
   ]
 }

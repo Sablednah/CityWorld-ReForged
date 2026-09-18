@@ -1,0 +1,38 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:wooden_doors",
+    {
+      "id": "#mcwdoors:four_panel_doors",
+      "required": false
+    },
+    {
+      "id": "#mcwdoors:classic_doors",
+      "required": false
+    },
+    {
+      "id": "#mcwdoors:paper_doors",
+      "required": false
+    },
+    {
+      "id": "#mcwdoors:shoji_doors",
+      "required": false
+    },
+    {
+      "id": "#mcwdoors:shoji_whole_doors",
+      "required": false
+    },
+    {
+      "id": "#mcwdoors:glass_doors",
+      "required": false
+    },
+    {
+      "id": "#mcwdoors:modern_doors",
+      "required": false
+    },
+    {
+      "id": "#mcwdoors:waffle_doors",
+      "required": false
+    }
+  ]
+}

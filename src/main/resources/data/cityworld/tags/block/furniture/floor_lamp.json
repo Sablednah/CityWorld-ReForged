@@ -12,6 +12,74 @@
     {
       "id": "fantasyfurniture_nordic:floor_light",
       "required": false
+    },
+    {
+      "id": "fantasyfurniture_royal:floor_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:black_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:blue_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:brown_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:cyan_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:gray_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:green_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:light_blue_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:light_gray_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:lime_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:magenta_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:orange_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:pink_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:purple_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:red_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:white_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:yellow_lamp",
+      "required": false
     }
   ]
 }

@@ -32,6 +32,10 @@
     {
       "id": "fantasyfurniture_nordic:carpet",
       "required": false
+    },
+    {
+      "id": "fantasyfurniture_royal:carpet",
+      "required": false
     }
   ]
 }

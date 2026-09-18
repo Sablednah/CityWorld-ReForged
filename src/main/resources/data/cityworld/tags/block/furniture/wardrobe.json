@@ -14,6 +14,322 @@
       "required": false
     },
     {
+      "id": "fantasyfurniture_royal:wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_double_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_modern_wardrobe",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_wardrobe",
+      "required": false
+    },
+    {
       "id": "mcwfurnitures:acacia_double_wardrobe",
       "required": false
     },

@@ -300,6 +300,126 @@
     {
       "id": "fantasyfurniture_nordic:lockbox",
       "required": false
+    },
+    {
+      "id": "fantasyfurniture_royal:lockbox",
+      "required": false
+    },
+    {
+      "id": "mcwlights:black_paper_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:blue_paper_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:brown_paper_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:copper_candle_holder",
+      "required": false
+    },
+    {
+      "id": "mcwlights:copper_double_candle_holder",
+      "required": false
+    },
+    {
+      "id": "mcwlights:copper_low_candle_holder",
+      "required": false
+    },
+    {
+      "id": "mcwlights:copper_triple_candle_holder",
+      "required": false
+    },
+    {
+      "id": "mcwlights:cyan_paper_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:golden_candle_holder",
+      "required": false
+    },
+    {
+      "id": "mcwlights:golden_double_candle_holder",
+      "required": false
+    },
+    {
+      "id": "mcwlights:golden_low_candle_holder",
+      "required": false
+    },
+    {
+      "id": "mcwlights:golden_triple_candle_holder",
+      "required": false
+    },
+    {
+      "id": "mcwlights:gray_paper_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:green_paper_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:iron_candle_holder",
+      "required": false
+    },
+    {
+      "id": "mcwlights:iron_double_candle_holder",
+      "required": false
+    },
+    {
+      "id": "mcwlights:iron_low_candle_holder",
+      "required": false
+    },
+    {
+      "id": "mcwlights:iron_triple_candle_holder",
+      "required": false
+    },
+    {
+      "id": "mcwlights:lava_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:light_blue_paper_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:light_gray_paper_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:lime_paper_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:magenta_paper_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:orange_paper_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:pink_paper_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:purple_paper_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:red_paper_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:white_paper_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:yellow_paper_lamp",
+      "required": false
     }
   ]
 }
