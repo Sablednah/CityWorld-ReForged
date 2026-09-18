@@ -231,6 +231,16 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		stairMaterial = Mapper.getStairsFor(wallMaterial);
 		doorMaterial = Mapper.getDoorsFor(wallMaterial);
 		stairPlatformMaterial = Mapper.getStairPlatformFor(stairMaterial);
+		// a pooled tread (Macaw's) takes the stairwell, with its own platform for the landings and turns —
+		// the owner's hand edit of an office stairwell: "a swap of step for stair blocks, and platforms
+		// instead of wood blocks for landings" (2026-09-18)
+		Material tread = MaterialTags.pick(MaterialTags.FITTINGS_STAIRS, chunkOdds, null);
+		if (tread != null) {
+			stairMaterial = tread;
+			Material platform = MaterialTags.stairPart(tread, "platform");
+			if (platform != null)
+				stairPlatformMaterial = platform;
+		}
 		glassMaterial = pickGlassMaterial();
 
 		// what are the walls of the stairs made of?

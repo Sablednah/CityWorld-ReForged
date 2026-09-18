@@ -1000,6 +1000,19 @@ public abstract class SupportBlocks extends AbstractBlocks {
 			block.setBlockData(updated);
 	}
 
+	/** The horizontal facing of the block here, or null when it has none — which way a stair's high side is. */
+	public final BlockFace getFacing(int x, int y, int z) {
+		BlockState state = getActualBlock(x, y, z).getBlockData();
+		if (!state.hasProperty(BlockStateProperties.HORIZONTAL_FACING))
+			return null;
+		return BlockFace.fromDirection(state.getValue(BlockStateProperties.HORIZONTAL_FACING));
+	}
+
+	/** Whether the block here carries a stair shape — vanilla stairs, or a mod's stair-shaped roof block. */
+	public final boolean isStairLike(int x, int y, int z) {
+		return getActualBlock(x, y, z).getBlockData().hasProperty(BlockStateProperties.STAIRS_SHAPE);
+	}
+
 	/** {@link #reconnect} over a box — a window band, a stacked lamp post, a ring of roof blocks —
 	 *  once every cell of it is placed, so each cell sees all of its neighbours. */
 	public final void reconnect(int x1, int x2, int y1, int y2, int z1, int z2) {

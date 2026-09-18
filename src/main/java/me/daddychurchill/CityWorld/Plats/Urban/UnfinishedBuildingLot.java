@@ -107,7 +107,7 @@ public class UnfinishedBuildingLot extends BuildingLot {
 			// at the first floor add a fence to prevent folks from falling in
 			if (floor == 0)
 				drawFence(generator, chunk, context, 0, generator.streetLevel + 1, floor, neighborBasements,
-						me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+						chunkOdds.flipCoin() ? Material.IRON_BARS : me.daddychurchill.CityWorld.Support.MaterialTags.pick(
 								me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_SITE_FENCE, chunkOdds, Material.IRON_BARS), 3);
 
 			// one floor please
