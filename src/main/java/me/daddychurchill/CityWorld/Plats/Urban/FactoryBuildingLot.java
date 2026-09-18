@@ -189,7 +189,7 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 
 		// factories bypass the standard interior path, so they missed the lighting pass entirely
 		// (playtested: pitch dark halls)
-		lightInterior(chunk, floorAt, floorHeight);
+		lightInterior(chunk, floorAt, floorHeight, insetNS, insetWE);
 
 		if (singleFloor) {
 			int groundY = generator.structureLevel + 2;
