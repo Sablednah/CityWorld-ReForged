@@ -649,8 +649,9 @@ public class StructureOnGroundProvider extends Provider {
 		// layer instead of a ring of them).
 		// The slope starts at the ceiling layer's own edge, on the wall tops — the owner's hand-fix on
 		// every house: an eave, not a ledge.
+		Material gableWall = matRoof;
 		if (makeAttic && generator.isModernStyle())
-			slopeRoof(generator, chunk, odds, matRoof, roofBottom, roofBottom + roofHeight + 1,
+			gableWall = slopeRoof(generator, chunk, odds, matRoof, roofBottom, roofBottom + roofHeight + 1,
 					styleRoof == HouseRoofStyle.NORTHSOUTH, styleRoof == HouseRoofStyle.WESTEAST);
 
 		if (makeAttic) {
@@ -674,9 +675,10 @@ public class StructureOnGroundProvider extends Provider {
 						int yAt = y + roofBottom;
 						if (chunk.isType(x, yAt, z, Material.BEDROCK)) { // where we think the attic might be
 							if (chunk.isEmpty(x - 1, yAt, z) || chunk.isEmpty(x + 1, yAt, z)
-									|| chunk.isEmpty(x, yAt, z - 1) || chunk.isEmpty(x, yAt, z + 1)
-									|| besideSlope(chunk, x, yAt, z))
+									|| chunk.isEmpty(x, yAt, z - 1) || chunk.isEmpty(x, yAt, z + 1))
 								chunk.setBlock(x, yAt, z, matRoof);
+							else if (besideSlope(chunk, x, yAt, z))
+								chunk.setBlock(x, yAt, z, gableWall); // a wall a slope runs against: its wood
 						}
 					}
 				}
@@ -692,6 +694,15 @@ public class StructureOnGroundProvider extends Provider {
 					}
 				}
 			}
+
+			// and any roof block still standing beside a slope — the seam where one section's gable meets
+			// the eave of the next, at the ceiling layer too — is a wall, in the roof's wood
+			if (gableWall != matRoof)
+				for (int y = 0; y < roofHeight; y++)
+					for (int x = 1; x < chunk.width - 1; x++)
+						for (int z = 1; z < chunk.width - 1; z++)
+							if (chunk.isType(x, y + roofBottom, z, matRoof) && besideSlope(chunk, x, y + roofBottom, z))
+								chunk.setBlock(x, y + roofBottom, z, gableWall);
 		}
 	}
 
@@ -720,13 +731,13 @@ public class StructureOnGroundProvider extends Provider {
 	 * own height. It runs while the layers are still solid — after the attic pass hollows them, a ring
 	 * block has air on its inside too and reads as a ridge (measured: 6 stairs a layer instead of 35).
 	 */
-	private void slopeRoof(CityWorldGenerator generator, RealBlocks chunk, Odds odds, Material matRoof, int yFrom,
+	private Material slopeRoof(CityWorldGenerator generator, RealBlocks chunk, Odds odds, Material matRoof, int yFrom,
 			int yTo, boolean gableX, boolean gableZ) {
 		Material slope = pickRoofBlock(odds, matRoof);
 		Material ridge = ridgeFor(slope);
 		Material gable = gableWallFor(slope, matRoof);
 		if (slope == null)
-			return;
+			return matRoof;
 		for (int y = yFrom; y < yTo; y++) {
 			// the layer as it was before this pass touched it: a valley test asks whether its neighbours
 			// are edge blocks, and the scan has already turned the earlier ones into stairs
@@ -791,6 +802,7 @@ public class StructureOnGroundProvider extends Provider {
 		}
 		// every cell placed; now let each roof block read its neighbours for corner and ridge shapes
 		chunk.reconnect(1, chunk.width - 1, yFrom, yTo, 1, chunk.width - 1);
+		return gable;
 	}
 
 	/** Whether the roof block at (x, z) of this layer is an edge block whose slope runs across the axis of the
@@ -859,8 +871,9 @@ public class StructureOnGroundProvider extends Provider {
 	 */
 	private static boolean besideSlope(RealBlocks chunk, int x, int y, int z) {
 		for (BlockFace d : HORIZ) {
-			BlockFace f = chunk.getFacing(x + d.getModX(), y, z + d.getModZ());
-			if (f != null && f != d.getOppositeFace() && chunk.isStairLike(x + d.getModX(), y, z + d.getModZ()))
+			java.util.EnumSet<BlockFace> high = chunk.stairHighSides(x + d.getModX(), y, z + d.getModZ());
+			// the neighbour is a stair, and the cell is NOT on one of its high sides (which face the inside)
+			if (high != null && !high.contains(d.getOppositeFace()))
 				return true;
 		}
 		return false;
