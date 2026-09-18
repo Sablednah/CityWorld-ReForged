@@ -574,6 +574,9 @@ public class StructureOnGroundProvider extends Provider {
 //							chunk.setBlock(x, yAt + 1, z, matRoof);
 					}
 				}
+				// MODERN: tidy the layer just built before the next is derived from it (see trimHipLayer)
+				if (generator.isModernStyle())
+					trimHipLayer(chunk, matRoof, y + roofBottom + 1);
 			}
 			break;
 		case NORTHSOUTH:
@@ -860,6 +863,60 @@ public class StructureOnGroundProvider extends Provider {
 		String top = id.getPath().substring(0, id.getPath().length() - "_roof".length()) + "_top_roof";
 		Material ridge = Material.of(id.getNamespace() + ":" + top);
 		return ridge == Material.AIR ? null : ridge;
+	}
+
+	/**
+	 * Tidy one layer of a hip roof over a notched footprint (rooms of different widths). The layers follow the
+	 * L up and the last few come out ragged: a cell hanging off the body of the layer by one side (a spur —
+	 * its one neighbour has three or more), and a top layer that is a tiny L rather than a ridge line. Both
+	 * go — the owner squared exactly these off by hand (2026-09-18). A straight ridge line keeps its ends
+	 * (their one neighbour has two), and a single cell is a pyramid tip, and stays. Runs as each layer is
+	 * built, so the next layer is derived from the tidied one.
+	 */
+	private void trimHipLayer(RealBlocks chunk, Material matRoof, int y) {
+		int w = chunk.width;
+		boolean changed = true;
+		while (changed) {
+			changed = false;
+			for (int x = 1; x < w - 1; x++)
+				for (int z = 1; z < w - 1; z++) {
+					if (!chunk.isType(x, y, z, matRoof))
+						continue;
+					int n = 0, nx = 0, nz = 0;
+					for (BlockFace d : HORIZ)
+						if (chunk.isType(x + d.getModX(), y, z + d.getModZ(), matRoof)) {
+							n++;
+							nx = x + d.getModX();
+							nz = z + d.getModZ();
+						}
+					if (n == 1) {
+						int m = 0;
+						for (BlockFace d : HORIZ)
+							if (chunk.isType(nx + d.getModX(), y, nz + d.getModZ(), matRoof))
+								m++;
+						if (m >= 3) {
+							chunk.clearBlock(x, y, z);
+							changed = true;
+						}
+					}
+				}
+		}
+		// a tiny bent top (three cells in an L, say) is not a ridge: drop the layer
+		int count = 0, straight = 0;
+		for (int x = 1; x < w - 1; x++)
+			for (int z = 1; z < w - 1; z++)
+				if (chunk.isType(x, y, z, matRoof)) {
+					count++;
+					boolean ew = chunk.isType(x - 1, y, z, matRoof) || chunk.isType(x + 1, y, z, matRoof);
+					boolean ns = chunk.isType(x, y, z - 1, matRoof) || chunk.isType(x, y, z + 1, matRoof);
+					if (ew != ns)
+						straight++;
+				}
+		if (count >= 2 && count <= 3 && straight != count)
+			for (int x = 1; x < w - 1; x++)
+				for (int z = 1; z < w - 1; z++)
+					if (chunk.isType(x, y, z, matRoof))
+						chunk.clearBlock(x, y, z);
 	}
 
 	/**
