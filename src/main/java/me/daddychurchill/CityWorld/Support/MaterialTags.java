@@ -164,6 +164,22 @@ public final class MaterialTags {
     }
 
     /**
+     * The sibling of a pooled stair tread — {@code oak_compact_stairs} → {@code oak_railing} for
+     * {@code "railing"}, or {@code oak_platform}, {@code oak_balcony} — found by name in the tread's namespace, or
+     * null when the mod has none. How one pick from {@code fittings/stairs} brings its whole kit.
+     */
+    public static Material stairPart(Material tread, String kind) {
+        Identifier id = BuiltInRegistries.BLOCK.getKey(tread.getBlock());
+        String path = id.getPath();
+        int cut = path.indexOf("_compact_stairs") >= 0 ? path.indexOf("_compact_stairs")
+                : path.indexOf("_terrace_stairs") >= 0 ? path.indexOf("_terrace_stairs") : path.lastIndexOf("_stairs");
+        if (cut < 0)
+            return null;
+        Material part = Material.of(id.getNamespace() + ":" + path.substring(0, cut) + "_" + kind);
+        return part == Material.AIR ? null : part;
+    }
+
+    /**
      * Resolved pools, one per tag. Tags bind once per datapack load and the block registry is fixed,
      * so a pool cannot change between {@link #invalidate()} calls — and it is asked for constantly:
      * every furniture {@code pick} on every chunk used to re-walk the registry, re-merge the runtime
