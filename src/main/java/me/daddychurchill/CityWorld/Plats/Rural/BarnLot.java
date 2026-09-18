@@ -84,7 +84,7 @@ public class BarnLot extends IsolatedLot {
 
 		// figure out the doors
 		Material fence = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
-				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FENCE, chunkOdds, Material.SPRUCE_FENCE);
+				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FARM_FENCE, platmap.getOddsGenerator(), Material.SPRUCE_FENCE);
 		boolean firstDoor = chunkOdds.flipCoin();
 		boolean secondDoor = chunkOdds.flipCoin();
 		if (!firstDoor && !secondDoor)
