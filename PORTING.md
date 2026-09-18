@@ -55,6 +55,13 @@ ends, pyramid tips and 2×2 tops stay). On the owner's hip house the ragged `OvO
 `DEPLOYED-b1b9e0bb`; **the owner looked: "much better."** The stone-stairs question (Macaw's stone treads in the
 stairs pool) was not raised again — left in.
 
+**Fourth look (late evening):** shop hanging signs were placed facing outward — a wall hanging sign's bar runs
+ALONG its facing axis, so the bar floated and the board sat flat against nothing; facing across the wall puts the
+bar into the lintel and the board out over the door like a pub sign. House stairs: the banister beside the top
+tread sat at floor level and replaced a floor block of the room above (skip a railing whose cell is not empty),
+and the balcony rail stopped a cell short of the wall (rail k=0..3, the corner landing's cell is open too).
+Office stairwells "worked perfectly". Deployed `DEPLOYED-57c79c36`; **owner: "all fixed good."**
+
 **Open, in the order I would take them:**
 
 0. **Release.** Everything from the fittings arc is on all three branches, self-tested, and playtested three
