@@ -27,12 +27,12 @@ owner hand-built Macaw's staircases in two houses — read from the save (the ho
 does not flush chunks, so read after it closes) and reproduced piece for piece as `fittings/stairs`
 (`drawStairRun`: one method for the four corner cases, vanilla branch measured block-identical to the old
 code; ⚠ the rail-style draw happens only when a pooled stair exists, or the whole house shifts on a vanilla
-world). All on master, mc26.2 and mc26.1; **not yet re-self-tested on any branch after the evening's commits.**
+world). All on master, mc26.2 and mc26.1, **self-tested on all three after the evening's commits** (1.21.11 141
+checks, 26.1 141, 26.2 164 with the mods; plan hashes unchanged and identical across versions).
 
 **Open, in the order I would take them:**
 
-0. **Self-test all three branches** (the evening's six commits are built but not self-tested), then the
-   owner's second look at 26.2.test: roofs (gables, valleys, hips), the three fence pools, the staircases
+0. **The owner's second look at 26.2.test** (`DEPLOYED-8f3a6ecb`): roofs (gables, valleys, hips), the three fence pools, the staircases
    (the pool includes Macaw's *stone* stairs — a stone-brick staircase with harp railings appeared; wood-only
    is one line in `fittings/stairs.json` if the owner prefers), shop signs, no lights outside.
 1. **Owner playtest on 26.2.test.** The look of: a MODERN house's pitched roof (does the ridge cap read? do
