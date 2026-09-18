@@ -485,7 +485,8 @@ public final class CityWorldSelfTest {
                 me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_STORE_DOOR,
                 me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_INDUSTRIAL_DOOR,
                 me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_TRAPDOOR,
-                me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FENCE)) {
+                me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FENCE,
+                me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_SITE_FENCE)) {
             int n = me.daddychurchill.CityWorld.Support.MaterialTags.resolve(pool).size();
             report.put("fittings." + pool.location().getPath(), String.valueOf(n));
             if (n == 0)
