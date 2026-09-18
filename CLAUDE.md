@@ -100,13 +100,21 @@ export PATH="$JAVA_HOME/bin:$PATH"
   (it runs as one long tick — set `max-tick-time=-1` in the gitignored `run/server.properties`); a roofed
   dimension's `WORLD_SURFACE` is the *ceiling*; and a small sweep sits in ONE biome, so zero there means
   "wrong place", not "broken".
+- **A slice-and-join edit of a long doc can silently drop the rest of it.** `s = s[:start] + new + tail`
+  with the wrong `tail` truncated PORTING.md from 4,297 lines to 203 for a day (2026-09-17; `git diff --stat`
+  showed only the intended hunk because the drop was one big deletion). After any such edit, `wc -l` before and
+  after, and `grep` for a heading you know sits near the end.
 - **Shape questions need a picture, and there are two that need no client.** `-Dcityworld.probe=survey:end`
   (with `-Dcityworld.probe.dim=minecraft:the_end`) prints the End's *plan* as a chunk map — void, island, road,
   structure — for 10,000 chunks in 5 s without generating one; it found 40-chunk roads across the void and 685
   farms on end stone in its first two runs. `scripts/region_render.py <region dir> x0 x1 y0 y1 z0 z1 out.png`
   renders a generated box as a plan plus a side elevation (kill the server first so the region is flushed;
   1.21.11's End is `run/world/DIM1/region`, 26.x's `dimensions/minecraft/the_end/region`). Block tallies said the
-  first End was fine; one screenshot said it was chunk-square slabs.
+  first End was fine; one screenshot said it was chunk-square slabs. And when "the map says city, the world says
+  empty", `-Dcityworld.probe.radius=N` now prints `PLANvWORLD` — per swept chunk, the planned lot class and how
+  many blocks stand above the street — which is the disagreement itself, chunk by chunk. The owner's F3 line
+  (`context NeighborhoodContext` over `EndNatureLot nature 100%`) diagnosed the levelled-empties bug in one
+  screenshot; ask for F3 before hypothesising.
 - **Overriding another mod's datapack file takes two things, and each fails differently.**
   (1) `ordering="AFTER"` on an optional dependency in the `neoforge.mods.toml` template — a mod's pack only
   wins a file conflict if it sorts after the mod it overrides; without it the override is a **silent
@@ -230,6 +238,19 @@ decoration across 13 world styles, on three Minecraft versions. It suppresses *m
 structures/decoration/carvers so CityWorld owns the chunk, with deliberate exceptions: strongholds,
 trial chambers and ancient cities are placed (see PORTING.md), and vanilla biome features may decorate
 wild land depending on `world.wildDecoration`.
+
+**The other realms (5.9.0) invert that.** The ruined Nether is the overworld's twin (`twin_of`, same plan,
+`environment: nether`, decayed harder) on CityWorld terrain. **The End is vanilla's terrain everywhere** —
+`vanillaEnd()` (a real `NoiseBasedChunkGenerator` inside ours) fills every chunk, and CityWorld only *reports*
+those heights to the planner (`worldgen/EndTerrain`, an exact re-implementation of `NoiseChunk`'s
+interpolation, proved column-for-column against `getBaseHeight` by the self-test) so upstream's "buildable =
+flat at street level" rule puts cities on island tops. `ShapeProvider_TheEnd` shapes nothing: it terraces the
+ground only under built lots plus a 12-block apron, keeps island roads (`keepsIsolatedRoads`), thins by a
+regional noise (`settled`; retune with `-Dcityworld.end.settled=<n>` + `survey:end`), and answers no to every
+shaft/cave. Its biomes come from the real `TheEndBiomeSource` through `EndTerrain.sampler()` — that is the
+only way TerraBlender/BoP End biomes exist, because TerraBlender mixes into that class. **BoP + TerraBlender
+are installed only in the `mc26.2` worktree's `run/mods`** — verify any mod interaction there. All 13 world
+presets ship both realms by default; the Customize toggles switch either back to vanilla.
 
 **Verify changes with `scripts/selftest.sh`** — a headless dedicated server on a fixed seed that
 checks ~88 things and writes a JSON report per Minecraft version. It exists because "looks right in

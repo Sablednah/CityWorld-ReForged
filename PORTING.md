@@ -11,7 +11,19 @@ The section below ("The End, second build") has the design, every measurement, a
 
 **Open after 5.9.0:** the plan does not know about end cities (a lot under one still reads as its planned lot
 in F3/JourneyMap — cosmetic); the owner's `CURSEFORGE.md` paste for the new "Beyond the overworld" section;
-and nothing else queued — ask the owner.
+and nothing else queued — ask the owner. **Released 2026-09-18:** master `764b80b0` (tag `v5.9.0`), `mc26.1
+cd5fbaf9`, `mc26.2 13afda28`; CurseForge files 8910914/5/6, Modrinth green, fleet on `DEPLOYED-v5.9.0`.
+
+**⚠ This file lost 4,200 lines for a day** (commit `c2d3f5be`, 2026-09-17): an edit that rebuilt the End section
+joined the wrong tail. Restored in `764b80b0` from `42eb98e9`. If a section you remember is missing, check
+`git log -p --follow PORTING.md` before assuming it never existed.
+
+**The End in five lines** (full write-up under "The End, second build"): vanilla fills every End chunk;
+`EndTerrain` reports its heights exactly (self-test `end.terrain.wrong` = 0); cities plan only on flat island tops
+(street 59, ±4 terrace, ground moved only under built lots + 12-block apron); island roads are kept; a regional
+noise (`settled`, threshold −0.2 ≈ half of unthinned) leaves clumps of wild End where TerraBlender/BoP biomes
+generate through the real `TheEndBiomeSource`; palette = overworld's + `#cityworld:build/end_stones`, end rods,
+never ruined, basements capped by island thickness, pylons on obsidian or none.
 
 **What the owner asked for (2026-09-17), after playing the first End:** it "just didn't look right at all" —
 square-edged slabs with solid chunk boundaries, and the overworld's mines hanging out of the bottom. The middle was
