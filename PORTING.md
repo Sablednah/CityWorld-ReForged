@@ -28,10 +28,29 @@ does not flush chunks, so read after it closes) and reproduced piece for piece a
 (`drawStairRun`: one method for the four corner cases, vanilla branch measured block-identical to the old
 code; ⚠ the rail-style draw happens only when a pooled stair exists, or the whole house shifts on a vanilla
 world). All on master, mc26.2 and mc26.1, **self-tested on all three after the evening's commits** (1.21.11 141
-checks, 26.1 141, 26.2 164 with the mods; plan hashes unchanged and identical across versions).
+checks, 26.1 141, 26.2 164 with the mods; plan hashes unchanged and identical across versions); the second
+round below (roofs from the hand-fix, stairwells) is on all three and self-tested too — see its own line.
+
+**Second playtest (evening): the owner rebuilt two roofs and an office stairwell by hand** — read from the save
+(overworld this time, world "New World (4)", seed `5849594295338630083`, plain MODERN) and **diffed against the same
+chunks regenerated here on that seed** (materials differ — the instance's extra mods widen the palettes — but the
+seed fixes the geometry, so a shape-only comparison works; the plan/owner side-by-side printer is in this
+session's scratch, worth keeping if the trick is needed again). Four things: the slope starts at the ceiling
+layer's own edge (an eave on the wall tops — `yFrom = roofBottom`); gable ends in the wood the roof block is made
+of (`gableWallFor`: `<base>` / `<base>_log` / `<base>_planks` by path in any namespace); the holes where a lower
+roof met a taller wing's gable (the attic pass cleared cells whose only neighbours were the other roof's blocks —
+`besideSlope`, corner-aware via `SupportBlocks.stairHighSides`, keeps them and a final sweep makes them the gable
+wood); and the office stairwell as compact treads + platforms (`FinishedBuildingLot` takes a `fittings/stairs`
+tread and `MaterialTags.stairPart(tread, "platform")`). After this the gable house regenerates as the owner
+rebuilt it bar the hollow inside the top layer; **the hip house still differs at its L-shaped notch near the top,
+which the owner squared off by hand** — a "tidy the top" rule for notched footprints is the open item. Iron bars:
+the owner had not seen any (1 of ~14 in `site_fence`) → construction sites and factory yards flip a coin between
+iron bars and the pool. Deployed `DEPLOYED-39bda246`.
 
 **Open, in the order I would take them:**
 
+0. **The owner's third look at 26.2.test** (`DEPLOYED-39bda246`): eaves, gable wood, joins, office stairwells,
+   iron bars; and whether the hip-roof notch wants the squaring-off rule.
 0. **The owner's second look at 26.2.test** (`DEPLOYED-8f3a6ecb`): roofs (gables, valleys, hips), the three fence pools, the staircases
    (the pool includes Macaw's *stone* stairs — a stone-brick staircase with harp railings appeared; wood-only
    is one line in `fittings/stairs.json` if the owner prefers), shop signs, no lights outside.

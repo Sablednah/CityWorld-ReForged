@@ -18,14 +18,15 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   and streets are lit by Macaw's lamp posts. All of it comes from the mods' own family tags, so
   **Macaw's Biomes O' Plenty add-on** joins by itself with every BoP wood. Nothing changes in a world
   without the mods: each pool falls back to what CityWorld always built.
-- **MODERN houses have Macaw's staircases** where Macaw's Stairs is installed: compact or terrace
+- **Macaw's staircases** where Macaw's Stairs is installed: MODERN houses get compact or terrace
   treads with a railing beside each, platforms at the landings and balcony rails along the opening
-  above — the layout the mod's own players build. Without the mod the stair run is as it was.
+  above — the layout the mod's own players build — and every building's stairwell takes the treads
+  and platforms. Without the mod the stairs are as they were.
 - **MODERN houses have pitched roofs.** The stepped roof layers are now slopes — Macaw's roof blocks
   matched to the roof material by name (a willow-plank house under a willow-plank roof, with the ridge
   cap), any roof block from the pool otherwise, and the roof material's vanilla stairs when no roof mod
-  is installed. Corners and ridges are shaped by the roof block's own logic. CLASSIC keeps its stepped
-  roof.
+  is installed. The slope starts with an eave on the wall tops; corners and ridges are shaped by the
+  roof block's own logic; gable ends are built in the roof's own wood. CLASSIC keeps its stepped roof.
 - **Macaw's Lights** in interiors: wall lanterns, wall lamps and candle sconces on the walls,
   chandeliers, lanterns and ceiling lights under the ceilings, candle holders and paper lamps on tables,
   its standing lamps as two-tall floor lamps, and its ceiling fan lights.
