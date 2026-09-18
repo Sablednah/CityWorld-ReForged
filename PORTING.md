@@ -2,8 +2,11 @@
 
 ## ▶ Resume here — the fittings arc (2026-09-18, afternoon): Macaw's doors, windows, fences, roofs, lights
 
-**Status.** Built while the owner was out; **committed on master and cherry-picked to `mc26.2`, measured by
-probe on both, not yet playtested, not deployed, not on 26.1.** The owner asked for two things: a once-over of
+**Status.** Built while the owner was out; **committed on master (`f781711e`…`0379bc6d`), cherry-picked to
+`mc26.2` and `mc26.1`, self-tested on all three (1.21.11 139 checks, 26.1 139, 26.2 153 — with the Macaw's jars
+installed — plan hashes identical on all three and to the pre-arc baseline), all three jars built, NOT yet
+playtested, and deployed to nothing:** `deploy-fleet.sh --only 26.2.test` found the game running (jar locked)
+and skipped, as it should. Rerun that once the game is closed; the other instances wait for the playtest.** The owner asked for two things: a once-over of
 the `26.2.test` instance (the future modpack, "a lot of performance plugins") and integration of the nine Macaw's
 jars there (doors, fences, furniture, lights, roofs, stairs, trapdoors, windows, plus the Biomes O' Plenty
 add-on). Both done; the details and the measurements are in "The fittings arc" below, the pools in PALETTES.md
@@ -15,9 +18,9 @@ add-on). Both done; the details and the measurements are in "The fittings arc" b
    the eaves want an overhang?), the framed window bands, Macaw's street lamps along every street (the
    double-armed lamp is placed with `facing=north` whatever the road's direction — cosmetic, worth a look),
    shop-front glass doors, metal factory doors. F3 on any of them names the block.
-2. **Ship it**: cherry-pick `f781711e`, `f4bda81d`, `c5a1c587` (+ the docs commit) to `mc26.1`, build all
-   three, self-test all three (26.2's is the one that exercises the mods — its `run/mods` now carries the
-   Macaw's jars and `addonslib` permanently), deploy with `scripts/deploy-fleet.sh`.
+2. **Ship it**: everything is cherry-picked, built and self-tested (26.2's is the one that exercises the mods —
+   its `run/mods` now carries the Macaw's jars and `addonslib` permanently); `scripts/deploy-fleet.sh --only
+   26.2.test` when that game is closed, the whole fleet after the playtest, then a version bump and release.
 3. **Not done, by choice (each is its own small arc):** Macaw's *Stairs* (single-block loft/compact/terrace
    stairs, balconies and railings — not a drop-in for the stairwells CityWorld draws); metal fences and the
    two-tall gates (own connection logic; a lone gate-top was measured in the first sweep); tiki torches on
