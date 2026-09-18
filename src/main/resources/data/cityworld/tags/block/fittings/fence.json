@@ -62,10 +62,6 @@
       "required": false
     },
     {
-      "id": "#mcwfences:wired_fences",
-      "required": false
-    },
-    {
       "id": "#mcwfences:hedges",
       "required": false
     }

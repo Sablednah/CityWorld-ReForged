@@ -644,7 +644,8 @@ public class StructureOnGroundProvider extends Provider {
 		// inside as well as its outside would read as a ridge, not a slope (measured: 6 stairs a
 		// layer instead of a ring of them).
 		if (makeAttic && generator.isModernStyle())
-			slopeRoof(generator, chunk, odds, matRoof, roofBottom + 1, roofBottom + roofHeight + 1);
+			slopeRoof(generator, chunk, odds, matRoof, roofBottom + 1, roofBottom + roofHeight + 1,
+					styleRoof == HouseRoofStyle.NORTHSOUTH, styleRoof == HouseRoofStyle.WESTEAST);
 
 		if (makeAttic) {
 
@@ -691,11 +692,16 @@ public class StructureOnGroundProvider extends Provider {
 	 * Turn the stepped roof layers between {@code yFrom} (inclusive) and {@code yTo} (exclusive) into a
 	 * pitched one. Each layer above the ceiling is a rectangle inset one block from the layer below, so its
 	 * edge blocks are exactly where a 45° slope wants a stair: a full block with open air on one side
-	 * becomes a roof stair facing inward (its high side toward the ridge); air on two adjacent sides is a
-	 * corner and air on two opposite sides, or three, or four, is the ridge itself. The stair shapes at
-	 * corners — inner where two rooms meet, outer at the eaves — are then derived by
-	 * {@link SupportBlocks#reconnect}, i.e. by the roof block's own neighbour logic, exactly as if a player
-	 * had placed them.
+	 * becomes a roof stair facing inward (its high side toward the ridge); air on two adjacent sides is an
+	 * outer corner; air on two opposite sides, or three, or four, is the ridge itself; and a block with no
+	 * open side but an open <em>diagonal</em> between two edge blocks is the valley where two wings meet,
+	 * an inner corner. The stair shapes — inner, outer — are then derived by {@link SupportBlocks#reconnect},
+	 * i.e. by the roof block's own neighbour logic, exactly as if a player had placed them.
+	 *
+	 * <p>A gable roof ({@code gableX}: the layers narrow along x, the ridge runs north–south; {@code gableZ}
+	 * the other way) slopes on one axis only. Its end faces are vertical, so air on the gable axis does not
+	 * count and those blocks stay solid — the owner's first look had every gable end as a stack of stairs,
+	 * each with its notch, "flat end bits that are steps".
 	 *
 	 * <p>The roof block comes from {@code #cityworld:fittings/roof}: the entry named after the roof
 	 * material when there is one ({@code oak_planks} → {@code oak_planks_roof}), else any entry (a
@@ -704,28 +710,48 @@ public class StructureOnGroundProvider extends Provider {
 	 * {@code *_top_roof} cap when the mod has one, else it stays a full block.
 	 *
 	 * <p>Only blocks of {@code matRoof} are touched, and only where they have air beside them at their
-	 * own height, which is what keeps the attic walls (no air beside them) and the ceiling (below
-	 * {@code yFrom}) as they were.
+	 * own height. It runs while the layers are still solid — after the attic pass hollows them, a ring
+	 * block has air on its inside too and reads as a ridge (measured: 6 stairs a layer instead of 35).
 	 */
 	private void slopeRoof(CityWorldGenerator generator, RealBlocks chunk, Odds odds, Material matRoof, int yFrom,
-			int yTo) {
+			int yTo, boolean gableX, boolean gableZ) {
 		Material slope = pickRoofBlock(odds, matRoof);
 		Material ridge = ridgeFor(slope);
 		if (slope == null)
 			return;
 		for (int y = yFrom; y < yTo; y++) {
+			// the layer as it was before this pass touched it: a valley test asks whether its neighbours
+			// are edge blocks, and the scan has already turned the earlier ones into stairs
+			boolean[][] roof = new boolean[chunk.width][chunk.width];
+			for (int x = 0; x < chunk.width; x++)
+				for (int z = 0; z < chunk.width; z++)
+					roof[x][z] = chunk.isType(x, y, z, matRoof);
 			for (int x = 1; x < chunk.width - 1; x++) {
 				for (int z = 1; z < chunk.width - 1; z++) {
-					if (!chunk.isType(x, y, z, matRoof))
+					if (!roof[x][z])
 						continue;
-					boolean north = chunk.isEmpty(x, y, z - 1), south = chunk.isEmpty(x, y, z + 1);
-					boolean west = chunk.isEmpty(x - 1, y, z), east = chunk.isEmpty(x + 1, y, z);
+					// a gable's end faces are walls, not slopes: air there does not count
+					boolean north = !gableX && chunk.isEmpty(x, y, z - 1), south = !gableX && chunk.isEmpty(x, y, z + 1);
+					boolean west = !gableZ && chunk.isEmpty(x - 1, y, z), east = !gableZ && chunk.isEmpty(x + 1, y, z);
 					int open = (north ? 1 : 0) + (south ? 1 : 0) + (west ? 1 : 0) + (east ? 1 : 0);
-					if (open == 0)
+					if (open == 0) {
+						if (gableX || gableZ)
+							continue;
+						// a valley: an open diagonal between two edge blocks of this layer is the inner
+						// corner where two wings of the house meet. Face it away from the diagonal on one
+						// axis; reconnect turns it into the inner shape from its neighbours.
+						BlockFace valley = null;
+						for (int dx = -1; dx <= 1 && valley == null; dx += 2)
+							for (int dz = -1; dz <= 1 && valley == null; dz += 2)
+								if (chunk.isEmpty(x + dx, y, z + dz) && roof[x + dx][z] && roof[x][z + dz])
+									valley = dz < 0 ? BlockFace.SOUTH : BlockFace.NORTH;
+						if (valley != null)
+							chunk.setStair(x, y, z, slope, valley);
 						continue;
+					}
 					if (open == 1 || (open == 2 && north != south)) {
 						// one open side, or two adjacent ones: a stair whose high side faces away from the
-						// (first) open side. The corner's shape comes from reconnect below.
+						// (first) open side. An outer corner's shape comes from reconnect below.
 						BlockFace facing = north ? BlockFace.SOUTH : south ? BlockFace.NORTH : west ? BlockFace.EAST
 								: BlockFace.WEST;
 						chunk.setStair(x, y, z, slope, facing);
