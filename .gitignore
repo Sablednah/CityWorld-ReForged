@@ -56,3 +56,8 @@ repo/
 # Self-test reports and logs (build/ is already ignored, but be explicit).
 /build/selftest/
 /run/cityworld-selftest.json
+
+# The note-passing file between this repo's Claude session and the sablecraft.co.uk website one.
+# Local only: it changes constantly, belongs to neither project's history, and kept every build "-dirty".
+/WEBSITE.md
+__pycache__/

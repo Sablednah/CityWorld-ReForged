@@ -14,6 +14,10 @@
       "required": false
     },
     {
+      "id": "fantasyfurniture_royal:oven",
+      "required": false
+    },
+    {
       "id": "refurbished_furniture:dark_stove",
       "required": false
     },

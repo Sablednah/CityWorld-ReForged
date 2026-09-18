@@ -1,0 +1,429 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "mcwbiomesoplenty:dead_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:acacia_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:acacia_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:andesite_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:bamboo_mosaic_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:bamboo_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:bamboo_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:base_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:birch_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:birch_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:black_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:black_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:black_terracotta_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:blackstone_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:blue_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:blue_terracotta_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:bricks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:brown_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:brown_terracotta_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:cherry_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:cherry_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:cobblestone_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:crimson_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:crimson_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:cyan_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:cyan_terracotta_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:dark_oak_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:dark_oak_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:dark_prismarine_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:deepslate_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:diorite_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:granite_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:grass_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:gray_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:gray_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:gray_terracotta_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:green_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:green_terracotta_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:jungle_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:jungle_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:light_blue_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:light_blue_terracotta_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:light_gray_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:light_gray_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:light_gray_terracotta_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:lime_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:lime_terracotta_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:magenta_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:magenta_terracotta_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:mangrove_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:mangrove_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:mud_brick_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:nether_bricks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:oak_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:oak_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:orange_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:orange_terracotta_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:pale_oak_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:pale_oak_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:pink_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:pink_terracotta_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:prismarine_brick_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:purple_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:purple_terracotta_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:red_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:red_nether_bricks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:red_sandstone_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:red_terracotta_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:sandstone_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:spruce_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:spruce_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:stone_bricks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:stone_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:thatch_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:warped_planks_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:warped_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:white_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:white_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:white_terracotta_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:yellow_concrete_roof",
+      "required": false
+    },
+    {
+      "id": "mcwroofs:yellow_terracotta_roof",
+      "required": false
+    }
+  ]
+}

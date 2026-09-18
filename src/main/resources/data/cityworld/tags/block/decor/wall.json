@@ -72,6 +72,90 @@
     {
       "id": "fantasyfurniture_nordic:wall_light",
       "required": false
+    },
+    {
+      "id": "fantasyfurniture_royal:painting_small",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_royal:painting_wide",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_royal:wall_light",
+      "required": false
+    },
+    {
+      "id": "mcwlights:bell_wall_lantern",
+      "required": false
+    },
+    {
+      "id": "mcwlights:chain_wall_lantern",
+      "required": false
+    },
+    {
+      "id": "mcwlights:copper_wall_candle_holder",
+      "required": false
+    },
+    {
+      "id": "mcwlights:covered_wall_lantern",
+      "required": false
+    },
+    {
+      "id": "mcwlights:cross_wall_lantern",
+      "required": false
+    },
+    {
+      "id": "mcwlights:festive_wall_lantern",
+      "required": false
+    },
+    {
+      "id": "mcwlights:framed_torch",
+      "required": false
+    },
+    {
+      "id": "mcwlights:golden_wall_candle_holder",
+      "required": false
+    },
+    {
+      "id": "mcwlights:iron_framed_torch",
+      "required": false
+    },
+    {
+      "id": "mcwlights:iron_wall_candle_holder",
+      "required": false
+    },
+    {
+      "id": "mcwlights:reinforced_torch",
+      "required": false
+    },
+    {
+      "id": "mcwlights:rustic_torch",
+      "required": false
+    },
+    {
+      "id": "mcwlights:square_wall_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:striped_wall_lantern",
+      "required": false
+    },
+    {
+      "id": "mcwlights:tavern_wall_lantern",
+      "required": false
+    },
+    {
+      "id": "mcwlights:upgraded_torch",
+      "required": false
+    },
+    {
+      "id": "mcwlights:wall_lamp",
+      "required": false
+    },
+    {
+      "id": "mcwlights:wall_lantern",
+      "required": false
     }
   ]
 }

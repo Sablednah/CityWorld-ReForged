@@ -26,6 +26,14 @@ Three families of mod are understood:
     set the author adds later; a set that grows a new block name is reported, not guessed at.
   * Fantasy's Furniture DECORATIONS — tabletop and wall scatter (books, bottles, food, candles,
     mirrors), classified per block into the decoration pools with the properties worth randomising.
+  * Macaw's LIGHTS — wall lanterns and lamps into decor/wall, chandeliers, lanterns and ceiling lights
+    into decor/hanging_light, candle holders and paper lamps onto tables, the standing lamps as
+    two-tall floor lamps (LIGHTS, by family suffix). Street lamps, tiki torches and garden lights
+    are not furniture and have their own pools (the hand-written tags under fittings/ and light/).
+  * Macaw's ROOFS — every `<material>_roof` (the 45° family; lower/steep/attic/top are its cousins)
+    into fittings/roof.json, the one fittings pool that is generated because the mod ships no
+    family tag for it. The door, window, fence and trapdoor pools reference Macaw's own family
+    tags and are hand-written, so they are NOT rewritten here.
 """
 import json
 import os
@@ -104,6 +112,15 @@ FACING_OFFSET = {
 # Refurbished is uniform: every oriented block uses facing for its back. Applied to any
 # refurbished block whose blockstate carries a facing, instead of listing every family.
 MOD_DEFAULT_OFFSET = {"refurbished_furniture": 180}
+
+# The mods whose `<material>_<kind>` names are classified by suffix. ⚠ This used to be "every jar
+# that is not a Fantasy's set", which swept a storage mod's filing cabinet, framing table and
+# decoration table into the furniture roles the moment those mods shared a folder with the
+# furniture ones. Macaw's Biomes O' Plenty add-on registers the same families under its own
+# namespace (dead_chair, empyreal_wardrobe…) with the same block classes, so it reads Macaw's
+# measured offsets through the alias.
+GENERIC_NAMESPACES = {"mcwfurnitures", "refurbished_furniture", "mcwbiomesoplenty"}
+OFFSET_ALIAS = {"mcwbiomesoplenty": "mcwfurnitures"}
 
 # Two-block bed-like furniture: type=bottom at the anchor, type=head one cell toward `facing`,
 # both halves sharing the facing value (measured from BathBlock.setPlacedBy — it is exactly the
@@ -329,6 +346,41 @@ DECORATIONS = {
 }
 
 
+# Macaw's Lights, by family suffix (longest wins). Every wall piece measured: at the unrotated
+# facing=north variant the bracket sits at z 7..16, i.e. against the SOUTH face of the cell, so
+# `facing` is the way the light looks — away from its wall — the vanilla wall-torch convention and
+# CityWorld's "front", offset 0. The framed torches are FaceAttachedHorizontalDirectionalBlocks
+# (face=wall + facing, like a button). A standing lamp is a LightBaseTall: one block is `base`, a
+# stack of two is `bottom`+`top` (post and shade), which is exactly the two-tall floor lamp the
+# floor_lamp role wants, so its parts are declared as a layout rather than derived. Ceiling lights
+# are the same class; a single one is `base` and hangs from the cell above, so it goes in
+# hanging_light as it is.
+LIGHTS = {
+    "wall_lantern": dict(decor="wall"),
+    "wall_lamp": dict(decor="wall", vary=["dye_color"]),
+    "wall_candle_holder": dict(decor="wall"),
+    "double_candle_holder": dict(decor="surface"),
+    "triple_candle_holder": dict(decor="surface"),
+    "low_candle_holder": dict(decor="surface"),
+    "candle_holder": dict(decor="surface"),
+    "chandelier": dict(decor="hanging_light"),
+    "lantern": dict(decor="hanging_light"),
+    "ceiling_light": dict(decor="hanging_light"),
+    "ceiling_fan_light": dict(role="ceiling_fan"),
+    "paper_lamp": dict(decor="surface"),
+    "lava_lamp": dict(decor="surface"),
+    "street_lamp": None,   # light/street_lamp, hand-written (a pool of the mod's own family tag)
+    "tiki_torch": None,    # no placer yet (campgrounds and beaches would want them)
+    "garden_light": None,  # no placer yet (park paths)
+    "torch": dict(decor="wall", props={"face": "wall"}),
+    "lamp": dict(role="floor_lamp", layout=[{"props": {"part": "bottom"}}, {"up": 1, "props": {"part": "top"}}]),
+    "chain": None, "slab": None,
+}
+
+# Macaw's Roofs: the 45° `<material>_roof` family only; its cousins are other pitches or caps.
+ROOF_NOT_SLOPE = re.compile(r"(lower_roof|steep_roof|attic_roof|top_roof|roof_block|roof_slab|gutter|awning)$")
+
+
 def role_of(name: str):
     """The role for a block path, longest suffix first."""
     for suffix in sorted(ROLES, key=len, reverse=True):
@@ -398,6 +450,7 @@ def main():
     decor_extra = defaultdict(list)  # pool -> [block ids]
     entries = {}                   # block id -> data map value
     conditions = {}                # block id -> modid (for the loaded condition)
+    roofs = []                     # mcwroofs sloped roof block ids
     jars = [f for f in sorted(os.listdir(MODS)) if f.endswith(".jar")]
     for jar in jars:
         try:
@@ -428,6 +481,29 @@ def main():
                         state = json.loads(z.read(entry))
                     except Exception:
                         state = {}
+                    if ns in ("mcwroofs", "mcwbiomesoplenty") and name.endswith("_roof"):
+                        if not ROOF_NOT_SLOPE.search(name):
+                            roofs.append(f"{ns}:{path}")
+                            hits += 1
+                        continue
+                    if ns == "mcwlights":
+                        spec = suffix_lookup({("mcwlights", k): v for k, v in LIGHTS.items()}, ns, name)
+                        if spec is None:
+                            if not any(name == k or name.endswith("_" + k) for k in LIGHTS):
+                                unknown.append(name)
+                            continue
+                        block_id = f"{ns}:{path}"
+                        if "role" in spec:
+                            found[spec["role"]].append(block_id)
+                        pools = spec.get("decor", [])
+                        for pool in ([pools] if isinstance(pools, str) else pools):
+                            decor_extra[pool].append(block_id)
+                        value = {k: spec[k] for k in ("layout", "props", "vary") if spec.get(k)}
+                        if value:
+                            entries[block_id] = value
+                            conditions[block_id] = ns
+                        hits += 1
+                        continue
                     if table is not None:
                         spec = table.get(name)
                         if spec is None:
@@ -471,7 +547,7 @@ def main():
                             conditions[block_id] = ns
                         hits += 1
                         continue
-                    if EXCLUDE.search(name):
+                    if ns not in GENERIC_NAMESPACES or EXCLUDE.search(name):
                         continue
                     role = role_of(name)
                     if not role:
@@ -484,12 +560,12 @@ def main():
                     found[role].append(block_id)
                     value = {}
                     if has_facing:
-                        off = suffix_lookup(FACING_OFFSET, ns, name)
+                        off = suffix_lookup(FACING_OFFSET, OFFSET_ALIAS.get(ns, ns), name)
                         if off is None:
-                            off = MOD_DEFAULT_OFFSET.get(ns)
+                            off = MOD_DEFAULT_OFFSET.get(OFFSET_ALIAS.get(ns, ns))
                         if off:
                             value["facingOffset"] = off
-                    parts = suffix_lookup(PARTS, ns, name)
+                    parts = suffix_lookup(PARTS, OFFSET_ALIAS.get(ns, ns), name)
                     if parts:
                         value["parts"] = parts
                     if value:
@@ -499,7 +575,9 @@ def main():
                 if hits:
                     kind = "set" if table is SET else "decorations" if table is DECORATIONS else ""
                     print(f"  {jar}: {ns} -> {hits} furniture blocks {kind}".rstrip())
-                if unknown:
+                if unknown and ns == "mcwlights":
+                    print(f"  !! mcwlights has block names LIGHTS does not know: {sorted(unknown)} — classify them")
+                elif unknown:
                     print(f"  !! {ns} has block names the set table does not know: {sorted(unknown)} — "
                           f"a new piece in this set; classify it in SET (or SET_NOT_FURNITURE)")
 
@@ -561,6 +639,15 @@ def main():
     for pool in decor_extra:
         if pool not in DECOR:
             print(f"  !! decor pool '{pool}' has no vanilla seeds in DECOR — add it there")
+
+    # The sloped roof pool — generated because Macaw's ships no family tag for its roofs.
+    fittings_dir = os.path.join(ROOT, "tags", "block", "fittings")
+    os.makedirs(fittings_dir, exist_ok=True)
+    with open(os.path.join(fittings_dir, "roof.json"), "w", encoding="utf-8") as fh:
+        json.dump({"replace": False, "values": [{"id": i, "required": False} for i in sorted(set(roofs))]}, fh,
+                  indent=2)
+        fh.write("\n")
+    print(f"  wrote fittings/roof.json ({len(set(roofs))})")
 
     if not found:
         print("  no furniture mods found — nothing written")

@@ -19,6 +19,9 @@ import me.daddychurchill.CityWorld.Plugins.StructureInAirProvider;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
 import me.daddychurchill.CityWorld.Support.Mapper;
+import me.daddychurchill.CityWorld.Support.MaterialTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Block;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
@@ -248,9 +251,18 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		differentInteriorModes = context.oddsOfDifferentInteriorModes;
 
 		Trees trees = new Trees(chunkOdds);
-		interiorDoorMaterial = trees.getRandomWoodDoor();
-		exteriorDoorMaterial = trees.getRandomWoodDoor();
+		interiorDoorMaterial = MaterialTags.pick(MaterialTags.FITTINGS_INTERIOR_DOOR, chunkOdds, trees.getRandomWoodDoor());
+		exteriorDoorMaterial = MaterialTags.pick(exteriorDoorPool(), chunkOdds, trees.getRandomWoodDoor());
 
+	}
+
+	/**
+	 * The pool this building's street doors come from — by what the building is for, not what it is
+	 * made of: shops get shop fronts, industry gets metal, everyone else the general door pool. A
+	 * subclass says which; the pool's fallback is a random wood door, as it always was.
+	 */
+	protected TagKey<Block> exteriorDoorPool() {
+		return MaterialTags.FITTINGS_DOOR;
 	}
 
 	private void validateOptions() {
@@ -258,7 +270,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		// thin glass should not be used with ceiling inset, it looks goofy
 		// thin glass should not be used with double-step walls, the glass does not
 		// align correctly
-		if (glassMaterial == Material.GLASS_PANE) {
+		if (thinGlass()) {
 			insetCeilingWE = Math.min(insetCeilingWE, insetWallWE);
 			insetCeilingNS = Math.min(insetCeilingNS, insetWallNS);
 //			if (wallMaterial == Material.DOUBLE_STEP)
@@ -554,7 +566,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		if (allowRounded) {// && rounded) {
 
 			// hack the glass material if needed
-			if (glassMaterial == Material.GLASS_PANE)
+			if (thinGlass())
 				glassMaterial = Material.GLASS;
 
 			// do the sides
@@ -2554,8 +2566,17 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			if (chunkOdds.playOdds(Odds.oddsExceedinglyUnlikely))
 				return Material.IRON_BARS;
 			else
-				return Material.GLASS_PANE;
+				// the pane half of the split is where a framed window from the pool fits: thin,
+				// centred, turned along the wall by withFaces exactly as a pane is connected
+				return MaterialTags.pick(MaterialTags.FITTINGS_WINDOW, chunkOdds, Material.GLASS_PANE);
 		}
+	}
+
+	/** Whether the glass is a thin centred pane (vanilla's, or a pooled window) rather than a full block —
+	 *  the cases the inset and corner rules were written for. */
+	private boolean thinGlass() {
+		return glassMaterial == Material.GLASS_PANE
+				|| (glassMaterial != Material.GLASS && MaterialTags.resolve(MaterialTags.FITTINGS_WINDOW).contains(glassMaterial));
 	}
 
 	protected InteriorStyle pickInteriorStyle() {

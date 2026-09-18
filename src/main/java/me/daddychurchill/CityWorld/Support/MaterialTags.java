@@ -74,6 +74,41 @@ public final class MaterialTags {
     public static final TagKey<Block> FARM_FLOWERS = key("cityworld:farm/flowers");
     public static final TagKey<Block> FARM_TALL_FLOWERS = key("cityworld:farm/tall_flowers");
 
+    /**
+     * Fittings — the joinery a build is finished with: doors, trapdoors, windows, fences, roofs.
+     *
+     * <p>These exist for Macaw's (doors, trapdoors, windows, fences, roofs — and its Biomes O' Plenty
+     * add-on, which pours BoP woods into the same family tags), but each is a plain block tag, so any
+     * mod or datapack joins the same way. Every pool ships seeded with vanilla where vanilla has the
+     * thing (wooden doors, wooden trapdoors, wooden fences); the ones vanilla cannot fill — sloped
+     * roof blocks, framed windows — ship EMPTY, and every caller falls back to what it always built
+     * (full-block or stair roofs, plain glass). An empty fittings pool is therefore not a fault and
+     * is logged at INFO like the furniture roles, not WARN like a build palette.
+     *
+     * <p>The four door pools are by <em>use</em>, not by look: a house or office front door, an
+     * interior door between rooms, a shop front (glass, sliding), and the metal doors of factories,
+     * warehouses and bunkers. Macaw's ships a family tag per style (cottage, barn, modern, metal…) and
+     * the pools reference those tags, so a Macaw's update that adds a wood joins by itself.
+     */
+    public static final TagKey<Block> FITTINGS_DOOR = key("cityworld:fittings/door");
+    public static final TagKey<Block> FITTINGS_INTERIOR_DOOR = key("cityworld:fittings/interior_door");
+    public static final TagKey<Block> FITTINGS_STORE_DOOR = key("cityworld:fittings/store_door");
+    public static final TagKey<Block> FITTINGS_INDUSTRIAL_DOOR = key("cityworld:fittings/industrial_door");
+    public static final TagKey<Block> FITTINGS_TRAPDOOR = key("cityworld:fittings/trapdoor");
+    /** Framed window blocks that stand in for the glass of a house or an office wall (thin, centred,
+     *  oriented along the wall by {@code Material.withFaces}). Ships empty: vanilla glass is the fallback. */
+    public static final TagKey<Block> FITTINGS_WINDOW = key("cityworld:fittings/window");
+    /** Fences for railings, paddocks, park edges and yard fences — anything that connects like a fence. */
+    public static final TagKey<Block> FITTINGS_FENCE = key("cityworld:fittings/fence");
+    /** Stair-shaped sloped roof blocks (Macaw's {@code *_roof}); the house roof pass matches one to the
+     *  roof material by name, else picks at random, else uses the vanilla stairs of that material. */
+    public static final TagKey<Block> FITTINGS_ROOF = key("cityworld:fittings/roof");
+
+    /** Stackable street-lamp posts: one block id placed four high, the mod deriving base/middle/top
+     *  from the stack ({@code RoadLot.generateLightPost}). Ships empty: the fence-and-glowstone post is
+     *  the fallback. */
+    public static final TagKey<Block> LIGHT_STREET_LAMP = key("cityworld:light/street_lamp");
+
     /** A block tag key from a namespaced id, e.g. {@code "minecraft:planks"} or {@code "c:stones"}. */
     public static TagKey<Block> key(String id) {
         return TagKey.create(Registries.BLOCK, Identifier.parse(id));
@@ -90,6 +125,28 @@ public final class MaterialTags {
      */
     public static List<Material> resolve(TagKey<Block> tag) {
         return CACHE.computeIfAbsent(tag, MaterialTags::load);
+    }
+
+    /**
+     * One block from {@code tag}, chosen by {@code odds}, or {@code fallback} when nothing supplies
+     * the tag. The way every fittings pool is consumed: a caller that always built a birch door keeps
+     * building one until a datapack or a mod says otherwise, and the choice is as deterministic as
+     * the pool order (sorted by id) and the caller's {@link Odds}.
+     */
+    public static Material pick(TagKey<Block> tag, Odds odds, Material fallback) {
+        List<Material> pool = resolve(tag);
+        return pool.isEmpty() ? fallback : pool.get(odds.getRandomInt(pool.size()));
+    }
+
+    /**
+     * The pool entry whose registry path is {@code path} (any namespace), or {@code null} — how a
+     * roof block is matched to the wall it caps ({@code oak_planks} → {@code mcwroofs:oak_planks_roof}).
+     */
+    public static Material named(TagKey<Block> tag, String path) {
+        for (Material material : resolve(tag))
+            if (BuiltInRegistries.BLOCK.getKey(material.getBlock()).getPath().equals(path))
+                return material;
+        return null;
     }
 
     /**
@@ -119,10 +176,10 @@ public final class MaterialTags {
 
         if (blocks.isEmpty()) {
             String path = tag.location().getPath();
-            if (path.startsWith("furniture/")) {
+            if (path.startsWith("furniture/") || path.startsWith("fittings/") || path.startsWith("light/")) {
                 // Expected on any world without a furniture mod: every furniture role is optional and
                 // every caller falls back to the vanilla-block furniture it always built. Not a warning.
-                CityWorldMod.LOGGER.info("CityWorld: no mod supplies #{} — vanilla furniture will be used for it",
+                CityWorldMod.LOGGER.info("CityWorld: no mod supplies #{} — the vanilla fallback will be used for it",
                         tag.location());
             } else {
                 // A build or farm palette with nothing in it IS a fault worth a WARN: the tag file is

@@ -30,7 +30,9 @@ public class ParkLot extends ConnectedLot {
 	private final static int groundDepth = 2;
 
 	private final static Material cisternMaterial = Material.CLAY;
-	private final static Material fenceMaterial = Material.SPRUCE_FENCE;
+	/** The park's boundary fence — one pick per park from the fence pool, spruce by default. */
+	private final Material fenceMaterial = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+			me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FENCE, chunkOdds, Material.SPRUCE_FENCE);
 	private final static Material columnMaterial = Material.SMOOTH_STONE;
 	private final static Material grassMaterial = Material.GRASS_BLOCK;
 	private final static Material pathMaterial = Material.GRASS_PATH;

@@ -1,0 +1,26 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:wooden_doors",
+    {
+      "id": "#mcwdoors:special_doors",
+      "required": false
+    },
+    {
+      "id": "#mcwdoors:glass_doors",
+      "required": false
+    },
+    {
+      "id": "#mcwdoors:modern_doors",
+      "required": false
+    },
+    {
+      "id": "#mcwdoors:bark_glass_doors",
+      "required": false
+    },
+    {
+      "id": "#mcwdoors:barn_glass_doors",
+      "required": false
+    }
+  ]
+}
