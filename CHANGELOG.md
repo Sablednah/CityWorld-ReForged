@@ -5,6 +5,34 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **Macaw's doors, trapdoors, windows, fences, roofs and lights furnish the city.** Nine new block-tag
+  pools under `cityworld:fittings/` and `cityworld:light/` (see PALETTES.md): every house, shed, office,
+  shop and factory now draws its street door and its interior doors from a pool by what the building is
+  for (shop fronts for shops, metal doors for industry, cottage-to-modern styles for homes), houses get
+  framed windows (joined into runs) and a trapdoor hatch from the pools, office walls take framed windows
+  where they took panes, railings, paddocks, park edges, barn pens and factory yards draw their fences,
+  and streets are lit by Macaw's lamp posts. All of it comes from the mods' own family tags, so
+  **Macaw's Biomes O' Plenty add-on** joins by itself with every BoP wood. Nothing changes in a world
+  without the mods: each pool falls back to what CityWorld always built.
+- **MODERN houses have pitched roofs.** The stepped roof layers are now slopes — Macaw's roof blocks
+  matched to the roof material by name (a willow-plank house under a willow-plank roof, with the ridge
+  cap), any roof block from the pool otherwise, and the roof material's vanilla stairs when no roof mod
+  is installed. Corners and ridges are shaped by the roof block's own logic. CLASSIC keeps its stepped
+  roof.
+- **Macaw's Lights** in interiors: wall lanterns, wall lamps and candle sconces on the walls,
+  chandeliers, lanterns and ceiling lights under the ceilings, candle holders and paper lamps on tables,
+  its standing lamps as two-tall floor lamps, and its ceiling fan lights.
+
+### Fixed
+
+- A storage mod's filing cabinet, framing table and decoration table were being classified as
+  furniture whenever those mods shared a folder with the furniture ones at tag-generation time; the
+  furniture roles are now derived from the furniture mods only.
+
 ## 5.9.0
 
 ### Added

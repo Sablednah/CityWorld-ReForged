@@ -1,5 +1,126 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Resume here — the fittings arc (2026-09-18, afternoon): Macaw's doors, windows, fences, roofs, lights
+
+**Status.** Built while the owner was out; **committed on master and cherry-picked to `mc26.2`, measured by
+probe on both, not yet playtested, not deployed, not on 26.1.** The owner asked for two things: a once-over of
+the `26.2.test` instance (the future modpack, "a lot of performance plugins") and integration of the nine Macaw's
+jars there (doors, fences, furniture, lights, roofs, stairs, trapdoors, windows, plus the Biomes O' Plenty
+add-on). Both done; the details and the measurements are in "The fittings arc" below, the pools in PALETTES.md
+("Fittings"), the change in CHANGELOG.md (Unreleased).
+
+**Open, in the order I would take them:**
+
+1. **Owner playtest on 26.2.test.** The look of: a MODERN house's pitched roof (does the ridge cap read? do
+   the eaves want an overhang?), the framed window bands, Macaw's street lamps along every street (the
+   double-armed lamp is placed with `facing=north` whatever the road's direction — cosmetic, worth a look),
+   shop-front glass doors, metal factory doors. F3 on any of them names the block.
+2. **Ship it**: cherry-pick `f781711e`, `f4bda81d`, `c5a1c587` (+ the docs commit) to `mc26.1`, build all
+   three, self-test all three (26.2's is the one that exercises the mods — its `run/mods` now carries the
+   Macaw's jars and `addonslib` permanently), deploy with `scripts/deploy-fleet.sh`.
+3. **Not done, by choice (each is its own small arc):** Macaw's *Stairs* (single-block loft/compact/terrace
+   stairs, balconies and railings — not a drop-in for the stairwells CityWorld draws); metal fences and the
+   two-tall gates (own connection logic; a lone gate-top was measured in the first sweep); tiki torches on
+   campgrounds/beaches and garden lights on park paths (pools would be `light/tiki`, `light/garden`; no
+   placer yet); an eave overhang on the pitched roofs; Macaw's roof *gutters/awnings*; the Refurbished-vs-
+   Macaw's lamp split (both are floor lamps now).
+
+### The fittings arc (2026-09-18) — what was built and what was measured
+
+**The 26.2.test once-over.** The instance's own `latest.log` (a client session of 2026-09-18 12:36–12:42, 74
+mods) shows CityWorld loading, a world generated (spawn area in 6 s), the furniture sets recognised, the
+JourneyMap/ZombieMod/Chronicler hooks firing, and no CityWorld exception. The only ERROR lines are CreativeCore's
+"Could not load default style", addonslib's malformed global loot modifier, and spark's shutdown
+`CancellationException`; the blockstate WARNs are `mcwbiomesoplenty`'s own (client models). Then the real
+check: **the 26.2 self-test with the server side of that mod list installed** (51 jars — ModernFix, FerriteCore,
+Clumps, spark, Lootr, Sophisticated*, Tom's Storage, Storage Drawers, Balm, PuzzlesLib, the owner's five mods,
+all nine Macaw's jars; JEI dropped because it wants NeoForge ≥ 26.2.0.67 and the dev environment is .59) **passed
+151 checks with plan hashes identical to the clean baseline** (MODERN `db687d0f`, APOCALYPSE `66c0777c`, CLASSIC
+`98569760`), 0 broken multi-block pieces, every seat oriented. The 28 differing report keys all trace to the
+different mod set (Royal instead of Bone/Necrolord, a newer BoP) — none to the performance mods. So: no clash.
+
+**What Macaw's blocks are, measured from the jars (26.2 builds):**
+
+- **Doors** (267): 261 are vanilla `DoorBlock`s or a subclass using vanilla's property instances
+  (`facing/half/hinge/open`), so `setDoor` places them unchanged; the 6 garage doors and portcullises are a
+  different shape (`part`) and are left out. Every style has a family tag (`#mcwdoors:cottage_doors` …), and
+  **the BoP add-on ships entries into those same tags**, so the pools reference tags, not ids.
+- **Trapdoors** (195): all `TrapDoorBlock`; they tag themselves into `#minecraft:wooden_trapdoors`.
+- **Windows** (346): `Window`/`WindowBarred` (`facing` + a `part` the mod derives from neighbours: base,
+  single_l/m/r, top/middle/bottom …), `ConnectedWindow` (`window2`, `four_window`, `pane_window`: its own
+  `facing` property, not vanilla's, plus a `windowstate`), shutters, blinds, curtains, parapets, gothic and
+  arrow slits. The frame is a thin centred pane (`z 7..9`), symmetric, so east and west are the same answer.
+- **Fences** (188): picket/horse/stockade/wired fences and hedges extend `FenceBlock` (vanilla `north/…`
+  booleans — `withFaces` works); metal fences are their own class with their own property instances and a
+  `fencepart`; walls; and 17 **gates**, which Macaw's ALSO lists in `#minecraft:wooden_fences`.
+- **Roofs** (619): `<material>_roof` is stair-shaped (`HorizontalDirectionalBlock.FACING`, `HALF`,
+  `STAIRS_SHAPE` — vanilla's instances, so `setStair` works and `reconnect` derives the corner shapes);
+  `_lower/_steep/_upper_*` are other pitches, `_attic_roof` a dormer, `_top_roof` the ridge cap (`part`:
+  top_end/three_way/four_way/pyramid/switched, derived by the mod). 80 materials, +26 from the BoP add-on. No
+  family tag, so `fittings/roof.json` is generated.
+- **Lights** (142): `LightBaseTall` (`lit`, `part` base/bottom/middle/top — a stack of one id, derived by
+  `updateShape`): lamps, ceiling lights, street lamps, tiki torches; wall lanterns/lamps/candle holders
+  (`facing` = the way the light looks, away from its wall: at the unrotated facing=north variant the bracket
+  is at z 7..16, on the south face — offset 0); torches are face-attached like buttons; chandeliers, garden
+  lights and paper lamps have no properties; lanterns are vanilla `LanternBlock`s.
+- **Stairs** (232): loft/compact/skyline/terrace/bulk stairs are single blocks with a `facing`; balconies
+  connect; railings have `facing/style/toggle`. Not a drop-in for anything CityWorld draws today.
+
+**The mechanism, and the three generic changes that made most of it free:**
+
+- `MaterialTags.pick(tag, odds, fallback)` — every pool is consumed this way, so a caller that always built a
+  birch door keeps building one until a mod says otherwise; `MaterialTags.named(tag, path)` matches a roof
+  block to its wall.
+- `Material.withFaces` — a block with **no connection faces but a horizontal facing** is turned *across* the
+  run the faces name (panes asked to connect N–S sit in a wall that runs N–S; a thin window in that wall
+  faces E/W). The wall factories (`MaterialFactory.placeMaterial`) place every glass column with the pane
+  faces, so they place a window the right way round on all four walls without knowing about windows.
+  ⚠ The house bands did NOT pass faces, and the first 26.2 probe showed every east/west-wall window
+  `facing=north, part=base` — sideways and unconnected. They pass them now (`f4bda81d`).
+- `Material.withFacing` — sets a mod's own `facing` property **by name** when vanilla's instance is absent
+  (Macaw's hinged windows).
+- `SupportBlocks.reconnect(box)` — `Block.updateFromNeighbourShapes` over every cell after a group is placed:
+  the mod's own neighbour logic then does what survival placement would (a window band becomes one run of
+  frames, a roof ring gets its inner/outer corners and the ridge its cap, a lamp stack its base/shaft/head).
+  Only possible at the decoration stage (`RealBlocks`); the generation stage (`InitialBlocks`, no level)
+  cannot, which is why an office wall gets single frames (`part=base`) and a house band gets runs.
+
+**The pitched roof** (`StructureOnGroundProvider.slopeRoof`): each stepped layer above the ceiling is a
+rectangle inset one from the layer below, so its edge blocks are exactly where a 45° slope wants a stair. A
+`matRoof` block with air on ONE side (or two adjacent) becomes a stair facing away from the open side; air on
+two opposite sides, three or four is the ridge (`*_top_roof`, or the full block when there is no cap). ⚠ It
+must run **before the attic pass hollows the layers** — measured with it after: 6 stairs a layer instead of
+35, because a ring block then has air on its inside too and reads as ridge. Verified by probe on master
+(vanilla fallback: `Oak Stairs=35/30/23/12` a layer over a pale-oak house — Mapper has no PALE_OAK entry,
+so it takes OAK) and on 26.2 (`Willow Planks Roof` 37/33/27/23 with straight + outer_left/right shapes and
+a `Willow Planks Top Roof[part=switched_0]`), and by `region_render.py`: a triangle roof on a two-storey
+house. MODERN/APOCALYPSE only; CLASSIC keeps the 1.8 stepped roof.
+
+**Measured in the 26.2 sweeps** (seed 8675309; `scripts/probe.sh find:HouseLot …`, `find:StoreBuildingLot
+-Dcityworld.probe.radius=2`, `find:FactoryBuildingLot`): a house with `crimson_tropical_door` front,
+`umbran_barn_door` inside, `magic_mystic_trapdoor` hatch, `stripped_jungle_log_window` bands (after the fix:
+17 `single_m` + 8 `single_l` + 8 `single_r` per axis, zero `base`), a copper wall candle holder and a chain
+wall lantern on its walls; offices with 1,258 `sandstone_window[part=base]` facing east/north by wall and
+`spruce_plank_four_window[windowstate=closed]`; `classic_street_lamp` and `double_street_lamp` posts as
+bottom/middle/middle/top with a lit head; jungle picket and dark-oak horse fences connected along their
+runs; `willow_mystic_door`, `empyreal_paper_door`, `acacia_waffle_door`, `magic_classic_door` on offices
+and shops; `metal_door` on the factory and warehouse; umbran picket fences round a yard. And one defect:
+`oak_curved_gate[fencepart=top]` ×8 — a two-tall gate's top half, from `#minecraft:wooden_fences` — fixed by
+seeding the fence pool with the vanilla fences by id (`c5a1c587`).
+
+**`scripts/gen_furniture_tags.py`** now classifies `mcwlights` by family suffix (`LIGHTS`), writes
+`fittings/roof.json` from `mcwroofs` + `mcwbiomesoplenty`, limits the generic suffix classification to the
+furniture namespaces (**a storage mod's filing cabinet, framing table and decoration table had been swept
+into the roles** — `GENERIC_NAMESPACES`), and reads Macaw's measured offsets for the BoP add-on through
+`OFFSET_ALIAS`. Run it against a folder holding BOTH the `26.2` and `26.2.test` instances' jars (symlinks are
+fine) or the baked sets shrink to whichever instance you point it at.
+
+**`scripts/probe.sh <spec> [-D…]`** runs one probe headlessly and stops the server (the probe must not —
+CurseForge). `find:HouseLot -Dcityworld.probe.radius=1` is the whole fittings check; then tally block
+*states* from the region with a small reader over `region_dump.block_at_fn` (26.x overworld region:
+`run/world/dimensions/minecraft/overworld/region`) — the layer tallies name blocks, and half of the bugs
+here were in the states.
+
 ## ▶ Resume here — v5.9.0 released (2026-09-18): the End on vanilla's islands, realms by default
 
 **Status 2026-09-18.** The End was rebuilt from scratch on 2026-09-17, playtested by the owner through four
