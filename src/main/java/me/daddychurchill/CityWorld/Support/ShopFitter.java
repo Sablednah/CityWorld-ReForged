@@ -107,7 +107,12 @@ public final class ShopFitter {
                 int ox = x + out.getModX(), oz = z + out.getModZ();
                 if (inChunk(ox, oz) && solid(chunk, x, y + 2, z)
                         && chunk.isEmpty(ox, y + 1, oz) && chunk.isEmpty(ox, y + 2, oz)) {
-                    chunk.setWallSign(ox, y + 2, oz, Material.OAK_WALL_HANGING_SIGN, out, name);
+                    // a wall hanging sign's bar runs ALONG its facing axis and pins into the wall at its end,
+                    // so the facing must be across the wall's outward direction: the board then hangs out
+                    // over the door like a pub sign. Facing outward left the bar floating in the air and the
+                    // board flat against nothing (owner, 2026-09-18: "need rotating 90 deg").
+                    chunk.setWallSign(ox, y + 2, oz, Material.OAK_WALL_HANGING_SIGN,
+                            BlockFace.fromDirection(out.toDirection().getClockWise()), name);
                     return;
                 }
             }
