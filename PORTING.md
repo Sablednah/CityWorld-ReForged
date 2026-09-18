@@ -45,7 +45,8 @@ tread and `MaterialTags.stairPart(tread, "platform")`). After this the gable hou
 rebuilt it bar the hollow inside the top layer; **the hip house still differs at its L-shaped notch near the top,
 which the owner squared off by hand** — a "tidy the top" rule for notched footprints is the open item. Iron bars:
 the owner had not seen any (1 of ~14 in `site_fence`) → construction sites and factory yards flip a coin between
-iron bars and the pool. Deployed `DEPLOYED-39bda246`.
+iron bars and the pool. Deployed `DEPLOYED-39bda246`; self-tested on all three (1.21.11 141, 26.1 141, 26.2 164;
+plans unchanged and identical).
 
 **Open, in the order I would take them:**
 
