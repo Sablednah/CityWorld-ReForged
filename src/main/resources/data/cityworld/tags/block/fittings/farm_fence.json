@@ -50,11 +50,11 @@
       "required": false
     },
     {
-      "id": "#mcwfences:picket_fences",
+      "id": "#mcwfences:horse_fences",
       "required": false
     },
     {
-      "id": "#mcwfences:hedges",
+      "id": "#mcwfences:stockade_fences",
       "required": false
     }
   ]
