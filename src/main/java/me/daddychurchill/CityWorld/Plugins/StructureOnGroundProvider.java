@@ -1259,13 +1259,18 @@ public class StructureOnGroundProvider extends Provider {
 						"style", railStyle);
 			for (int k = 1; k <= 3; k++) {
 				chunk.setBlock(cx + k * rx, y1 + k, cz + k * rz, tread, run);
-				if (railing != null)
+				// the banister beside the top tread would sit at floor level, in a floor block of the
+				// room above — it left a hole there (owner, 2026-09-18); the balcony rail above covers it
+				if (railing != null && chunk.isEmpty(cx + k * rx + sx, y1 + k, cz + k * rz + sz))
 					chunk.setBlock(cx + k * rx + sx, y1 + k, cz + k * rz + sz, railing, run, "toggle",
 							String.valueOf(rightOf(run) == side), "style", railStyle);
+			}
+			// the balcony rail along the opening above, the whole way to the wall — the corner landing's
+			// cell is open too, and a rail that stopped a block short of the wall was the first thing seen
+			for (int k = 0; k <= 3; k++)
 				if (balcony != null && chunk.isEmpty(cx + k * rx + sx, y1 + 4, cz + k * rz + sz))
 					chunk.setBlock(cx + k * rx + sx, y1 + 4, cz + k * rz + sz, balcony, null,
 							back.name().toLowerCase(java.util.Locale.ROOT), "true", "style", railStyle);
-			}
 			chunk.setBlock(cx + 4 * rx, y1 + 3, cz + 4 * rz, platform != null ? platform : materialUnderStairs);
 		}
 
