@@ -750,10 +750,23 @@ public class StructureOnGroundProvider extends Provider {
 						continue;
 					}
 					if (open == 1 || (open == 2 && north != south)) {
-						// one open side, or two adjacent ones: a stair whose high side faces away from the
-						// (first) open side. An outer corner's shape comes from reconnect below.
-						BlockFace facing = north ? BlockFace.SOUTH : south ? BlockFace.NORTH : west ? BlockFace.EAST
-								: BlockFace.WEST;
+						// one open side: a stair whose high side faces away from it. Two adjacent open sides:
+						// an outer corner, which the roof block's own logic (reconnect, below) only recognises
+						// when the block IN FRONT of it runs across it — so of the two possible facings take
+						// the one whose front neighbour is an edge block on the other axis. Along a diagonal
+						// hip every block has two open sides, and the wrong choice there is a sawtooth of
+						// straight stairs instead of a run of corners.
+						BlockFace alongZ = north ? BlockFace.SOUTH : BlockFace.NORTH;
+						BlockFace alongX = west ? BlockFace.EAST : BlockFace.WEST;
+						BlockFace facing;
+						if (open == 1)
+							facing = (north || south) ? alongZ : alongX;
+						else if (edgeAcross(chunk, roof, x + alongZ.getModX(), y, z + alongZ.getModZ(), true))
+							facing = alongZ;
+						else if (edgeAcross(chunk, roof, x + alongX.getModX(), y, z + alongX.getModZ(), false))
+							facing = alongX;
+						else
+							facing = alongZ;
 						chunk.setStair(x, y, z, slope, facing);
 					} else if (ridge != null) {
 						chunk.setBlock(x, y, z, ridge); // a ridge run, its end, or a pyramid's tip
@@ -763,6 +776,16 @@ public class StructureOnGroundProvider extends Provider {
 		}
 		// every cell placed; now let each roof block read its neighbours for corner and ridge shapes
 		chunk.reconnect(1, chunk.width - 1, yFrom, yTo, 1, chunk.width - 1);
+	}
+
+	/** Whether the roof block at (x, z) of this layer is an edge block whose slope runs across the axis of the
+	 *  block asking — i.e. it is open on the OTHER axis ({@code zAxis}: the asker faces along z, so this one
+	 *  must be open east or west). */
+	private static boolean edgeAcross(RealBlocks chunk, boolean[][] roof, int x, int y, int z, boolean zAxis) {
+		if (x < 0 || x >= chunk.width || z < 0 || z >= chunk.width || !roof[x][z])
+			return false;
+		return zAxis ? (chunk.isEmpty(x - 1, y, z) || chunk.isEmpty(x + 1, y, z))
+				: (chunk.isEmpty(x, y, z - 1) || chunk.isEmpty(x, y, z + 1));
 	}
 
 	/** The sloped block for a roof of {@code matRoof}: the pool's namesake, else any pool entry, else that
