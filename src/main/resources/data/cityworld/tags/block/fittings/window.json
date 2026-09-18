@@ -1,0 +1,17 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "#mcwwindows:windows",
+      "required": false
+    },
+    {
+      "id": "#mcwwindows:windows_two",
+      "required": false
+    },
+    {
+      "id": "#mcwwindows:windows_four",
+      "required": false
+    }
+  ]
+}

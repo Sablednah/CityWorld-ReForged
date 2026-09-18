@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:iron_door",
+    {
+      "id": "#mcwdoors:metal_doors",
+      "required": false
+    }
+  ]
+}

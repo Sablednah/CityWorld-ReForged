@@ -237,7 +237,8 @@ public class FarmLot extends ConnectedLot {
 		if (!fallowField)
 			switch (cropType) {
 			case PADDOCK:
-				chunk.setWalls(1, 15, cropY, cropY + 1, 1, 15, Material.SPRUCE_FENCE);
+				chunk.setWalls(1, 15, cropY, cropY + 1, 1, 15, me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+						me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FENCE, chunkOdds, Material.SPRUCE_FENCE));
 
 				if (chunkOdds.flipCoin())
 					chunk.setGate(7, cropY, 1, Material.SPRUCE_FENCE_GATE, BlockFace.NORTH, chunkOdds.playOdds(Odds.oddsUnlikely));

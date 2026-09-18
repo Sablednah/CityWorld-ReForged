@@ -26,6 +26,14 @@
       "required": false
     },
     {
+      "id": "fantasyfurniture_royal:bed_double",
+      "required": false
+    },
+    {
+      "id": "fantasyfurniture_royal:bed_single",
+      "required": false
+    },
+    {
       "id": "minecraft:black_bed",
       "required": false
     },

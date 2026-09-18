@@ -39,6 +39,11 @@ public class StoreBuildingLot extends FinishedBuildingLot {
 		shopType = pickShopType(platmap);
 	}
 
+	@Override
+	protected net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> exteriorDoorPool() {
+		return me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_STORE_DOOR;
+	}
+
 	private ShopType pickShopType(PlatMap platmap) {
 		ShopScale scale = platmap.context != null ? platmap.context.shopScale() : ShopScale.HIGH_STREET;
 		List<ShopTrade> trades = ShopTrade.tradesFor(scale);

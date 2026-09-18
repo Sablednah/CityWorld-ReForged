@@ -17,6 +17,12 @@ public abstract class IndustrialBuildingLot extends FinishedBuildingLot {
 		rounded = false;
 	}
 
+	/** Factories and warehouses open onto the street through metal doors, where a mod supplies them. */
+	@Override
+	protected net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> exteriorDoorPool() {
+		return me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_INDUSTRIAL_DOOR;
+	}
+
 	@Override
 	protected void calculateOptions(DataContext context) {
 		super.calculateOptions(context);

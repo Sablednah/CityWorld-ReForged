@@ -14,6 +14,114 @@
       "required": false
     },
     {
+      "id": "fantasyfurniture_royal:bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_bookshelf",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_bookshelf",
+      "required": false
+    },
+    {
       "id": "mcwfurnitures:acacia_bookshelf",
       "required": false
     },

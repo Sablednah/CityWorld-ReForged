@@ -987,6 +987,16 @@ public abstract class SupportBlocks extends AbstractBlocks {
 			block.setBlockData(updated);
 	}
 
+	/** {@link #reconnect} over a box — a window band, a stacked lamp post, a ring of roof blocks —
+	 *  once every cell of it is placed, so each cell sees all of its neighbours. */
+	public final void reconnect(int x1, int x2, int y1, int y2, int z1, int z2) {
+		for (int x = x1; x < x2; x++)
+			for (int y = y1; y < y2; y++)
+				for (int z = z1; z < z2; z++)
+					if (!isEmpty(x, y, z))
+						reconnect(x, y, z);
+	}
+
 	private void connectDoubleChest(int x, int y, int z, BlockFace facing) {
 		connectDoubleChest(x, y, z, facing, Material.CHEST);
 	}

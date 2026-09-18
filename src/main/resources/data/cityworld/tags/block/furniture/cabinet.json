@@ -2,6 +2,422 @@
   "replace": false,
   "values": [
     {
+      "id": "mcwbiomesoplenty:dead_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:dead_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:empyreal_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:fir_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:hellbark_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:jacaranda_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:magic_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:mahogany_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:maple_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:palm_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:pine_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:redwood_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_dead_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_empyreal_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_fir_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_hellbark_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_jacaranda_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_magic_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_mahogany_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_maple_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_palm_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_pine_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_redwood_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_umbran_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:stripped_willow_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:umbran_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_bookshelf_cupboard",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_double_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_glass_kitchen_cabinet",
+      "required": false
+    },
+    {
+      "id": "mcwbiomesoplenty:willow_kitchen_cabinet",
+      "required": false
+    },
+    {
       "id": "mcwfurnitures:acacia_bookshelf_cupboard",
       "required": false
     },
