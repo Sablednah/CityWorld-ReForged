@@ -476,6 +476,28 @@ public final class CityWorldSelfTest {
                         + "empty means the whole tag file was discarded");
         }
 
+        // The fittings pools. The vanilla-seeded ones (doors, trapdoor, fence) can never legitimately be
+        // empty — same trap as the decor pools; the mod-only ones (window, roof, street_lamp) are empty
+        // on a bare server and full where Macaw's is installed (the mc26.2 dev mods folder), so their
+        // sizes are reported, not asserted.
+        for (var pool : List.of(me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_DOOR,
+                me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_INTERIOR_DOOR,
+                me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_STORE_DOOR,
+                me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_INDUSTRIAL_DOOR,
+                me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_TRAPDOOR,
+                me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FENCE)) {
+            int n = me.daddychurchill.CityWorld.Support.MaterialTags.resolve(pool).size();
+            report.put("fittings." + pool.location().getPath(), String.valueOf(n));
+            if (n == 0)
+                fail("fittings pool " + pool.location() + " resolved empty — it ships vanilla seeds, so "
+                        + "empty means the whole tag file was discarded");
+        }
+        for (var pool : List.of(me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_WINDOW,
+                me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_ROOF,
+                me.daddychurchill.CityWorld.Support.MaterialTags.LIGHT_STREET_LAMP))
+            report.put("fittings." + pool.location().getPath(),
+                    String.valueOf(me.daddychurchill.CityWorld.Support.MaterialTags.resolve(pool).size()));
+
         // The checklist: modded biomes CityWorld gives its default ground to. A biome whose look comes
         // from grass colour or features (bog, snowblossom_grove) is right to be here; one whose look is
         // its surface block (a volcano, a desert) is not, and will read as ordinary grass until tagged.
