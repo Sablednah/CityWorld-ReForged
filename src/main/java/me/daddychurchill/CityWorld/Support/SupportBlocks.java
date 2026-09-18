@@ -1013,6 +1013,26 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		return getActualBlock(x, y, z).getBlockData().hasProperty(BlockStateProperties.STAIRS_SHAPE);
 	}
 
+	/**
+	 * The directions a stair-shaped block's HIGH side covers — where the roof's inside is, seen from a roof
+	 * stair: the way it faces, plus the side a corner piece turns to (an {@code inner_left}/{@code outer_left}
+	 * corner is high toward its facing AND to the left of it, looking that way). Null for anything that is not
+	 * a stair.
+	 */
+	public final java.util.EnumSet<BlockFace> stairHighSides(int x, int y, int z) {
+		BlockState state = getActualBlock(x, y, z).getBlockData();
+		if (!state.hasProperty(BlockStateProperties.STAIRS_SHAPE) || !state.hasProperty(BlockStateProperties.HORIZONTAL_FACING))
+			return null;
+		BlockFace facing = BlockFace.fromDirection(state.getValue(BlockStateProperties.HORIZONTAL_FACING));
+		java.util.EnumSet<BlockFace> high = java.util.EnumSet.of(facing);
+		switch (state.getValue(BlockStateProperties.STAIRS_SHAPE)) {
+		case INNER_LEFT, OUTER_LEFT -> high.add(BlockFace.fromDirection(facing.toDirection().getCounterClockWise()));
+		case INNER_RIGHT, OUTER_RIGHT -> high.add(BlockFace.fromDirection(facing.toDirection().getClockWise()));
+		default -> { }
+		}
+		return high;
+	}
+
 	/** {@link #reconnect} over a box — a window band, a stacked lamp post, a ring of roof blocks —
 	 *  once every cell of it is placed, so each cell sees all of its neighbours. */
 	public final void reconnect(int x1, int x2, int y1, int y2, int z1, int z2) {
