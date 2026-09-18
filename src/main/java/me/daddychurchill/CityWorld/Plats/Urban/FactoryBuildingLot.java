@@ -130,7 +130,7 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 			break;
 		case WOOD_FENCE:
 			drawFence(generator, byteChunk, context, 0, y1, 0, heights, me.daddychurchill.CityWorld.Support.MaterialTags.pick(
-					me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FENCE, chunkOdds, Material.SPRUCE_FENCE), 2);
+					me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FARM_FENCE, chunkOdds, Material.SPRUCE_FENCE), 2);
 			break;
 		}
 	}

@@ -98,11 +98,16 @@ public final class MaterialTags {
     /** Framed window blocks that stand in for the glass of a house or an office wall (thin, centred,
      *  oriented along the wall by {@code Material.withFaces}). Ships empty: vanilla glass is the fallback. */
     public static final TagKey<Block> FITTINGS_WINDOW = key("cityworld:fittings/window");
-    /** Fences for railings, paddocks, park edges and yard fences — anything that connects like a fence. */
+    /**
+     * Fences, split three ways by where they stand — the owner's call after one look at barbed wire round
+     * a park and a stockade round a paddock: {@code fence} is the garden fence of a house railing or a park
+     * edge (picket, hedge), {@code farm_fence} the paddock and barn-pen fence (horse, stockade),
+     * {@code site_fence} the tall one round a construction site or a factory yard (iron bars, barbed wire).
+     * A park or a farm picks ONE fence for the whole platmap (the macro odds), not one per chunk — a
+     * four-chunk park had a different fence on each side.
+     */
     public static final TagKey<Block> FITTINGS_FENCE = key("cityworld:fittings/fence");
-    /** The tall fence round a construction site or a factory yard: iron bars, barbed wire — never a
-     *  garden fence (the owner found barbed wire round a house balcony, which is why wired fences left
-     *  the fence pool for this one). */
+    public static final TagKey<Block> FITTINGS_FARM_FENCE = key("cityworld:fittings/farm_fence");
     public static final TagKey<Block> FITTINGS_SITE_FENCE = key("cityworld:fittings/site_fence");
     /** Stair-shaped sloped roof blocks (Macaw's {@code *_roof}); the house roof pass matches one to the
      *  roof material by name, else picks at random, else uses the vanilla stairs of that material. */

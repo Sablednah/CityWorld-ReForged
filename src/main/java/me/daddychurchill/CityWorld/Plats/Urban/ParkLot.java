@@ -30,9 +30,9 @@ public class ParkLot extends ConnectedLot {
 	private final static int groundDepth = 2;
 
 	private final static Material cisternMaterial = Material.CLAY;
-	/** The park's boundary fence — one pick per park from the fence pool, spruce by default. */
-	private final Material fenceMaterial = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
-			me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FENCE, chunkOdds, Material.SPRUCE_FENCE);
+	/** The park's boundary fence: one pick per platmap from the fence pool (so every side of a park agrees),
+	 *  spruce by default. Set at the top of generateActualBlocks, where the platmap is in hand. */
+	private Material fenceMaterial = Material.SPRUCE_FENCE;
 	private final static Material columnMaterial = Material.SMOOTH_STONE;
 	private final static Material grassMaterial = Material.GRASS_BLOCK;
 	private final static Material pathMaterial = Material.GRASS_PATH;
@@ -279,6 +279,8 @@ public class ParkLot extends ConnectedLot {
 	@Override
 	protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
 			DataContext context, int platX, int platZ) {
+		fenceMaterial = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FENCE, platmap.getOddsGenerator(), Material.SPRUCE_FENCE);
 		// look around
 		SurroundingLots neighbors = new SurroundingLots(platmap, platX, platZ);
 
