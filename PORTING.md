@@ -48,10 +48,17 @@ the owner had not seen any (1 of ~14 in `site_fence`) → construction sites and
 iron bars and the pool. Deployed `DEPLOYED-39bda246`; self-tested on all three (1.21.11 141, 26.1 141, 26.2 164;
 plans unchanged and identical).
 
+**Then the spur trim** (`trimHipLayer`, MODERN hip roofs only: a cell hanging off a layer by one side whose one
+neighbour has three or more goes, and a two-or-three-cell top that is not a straight line goes; straight ridge
+ends, pyramid tips and 2×2 tops stay). On the owner's hip house the ragged `OvO/>#</OIO=/><` + `=/^=` top became
+`OvO/>#</OI</OO` + a two-cell ridge — not what the owner built by hand (one layer lower) but no stubs. Deployed
+`DEPLOYED-b1b9e0bb`; **the owner looked: "much better."** The stone-stairs question (Macaw's stone treads in the
+stairs pool) was not raised again — left in.
+
 **Open, in the order I would take them:**
 
-0. **The owner's third look at 26.2.test** (`DEPLOYED-39bda246`): eaves, gable wood, joins, office stairwells,
-   iron bars; and whether the hip-roof notch wants the squaring-off rule.
+0. **Release.** Everything from the fittings arc is on all three branches, self-tested, and playtested three
+   times on 26.2.test. Bump, changelog is written (Unreleased), fleet deploy, tag — the recipe in the release memory.
 0. **The owner's second look at 26.2.test** (`DEPLOYED-8f3a6ecb`): roofs (gables, valleys, hips), the three fence pools, the staircases
    (the pool includes Macaw's *stone* stairs — a stone-brick staircase with harp railings appeared; wood-only
    is one line in `fittings/stairs.json` if the owner prefers), shop signs, no lights outside.
