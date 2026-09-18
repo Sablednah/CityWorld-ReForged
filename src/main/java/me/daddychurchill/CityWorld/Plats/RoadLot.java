@@ -26,6 +26,9 @@ public class RoadLot extends ConnectedLot {
 
 	private final static Material lightpostbaseMaterial = Material.SMOOTH_STONE;
 	private final static Material lightpostMaterial = Material.SPRUCE_FENCE;
+	/** The street lamp from {@code #cityworld:light/street_lamp} for this chunk, picked on the first post; null = the fence post. */
+	private Material streetLamp;
+	private boolean streetLampPicked;
 
 	public final static Material sewerMaterial = Material.SMOOTH_STONE;
 	private final static Material sewerFloor = Material.STONE_BRICKS;
@@ -1725,9 +1728,15 @@ public class RoadLot extends ConnectedLot {
 			// A street lamp from the pool is one block id stacked post-high plus the lamp: the mod reads
 			// the stack and draws a base, a shaft and a lamp head (reconnect is what makes it look).
 			// The street signs still hang from the block below the head, as they do off the fence.
-			Material lamp = generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.THE_END ? null
-					: me.daddychurchill.CityWorld.Support.MaterialTags.pick(
-							me.daddychurchill.CityWorld.Support.MaterialTags.LIGHT_STREET_LAMP, chunkOdds, null);
+			// One lamp style per road chunk: a corner with a classic post beside a double-armed one read
+			// as a jumble, and the pool is drawn once, on the first post, so the odds stream is the same.
+			if (!streetLampPicked) {
+				streetLampPicked = true;
+				streetLamp = generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.THE_END ? null
+						: me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+								me.daddychurchill.CityWorld.Support.MaterialTags.LIGHT_STREET_LAMP, chunkOdds, null);
+			}
+			Material lamp = streetLamp;
 			if (lamp != null) {
 				chunk.setBlocks(x, sidewalkLevel + 1, sidewalkLevel + lightpostHeight + 2, z, lamp);
 				chunk.reconnect(x, x + 1, sidewalkLevel + 1, sidewalkLevel + lightpostHeight + 2, z, z + 1);
