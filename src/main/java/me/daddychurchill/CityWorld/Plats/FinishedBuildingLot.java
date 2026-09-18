@@ -1100,7 +1100,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		// the air below the ceiling because the ceiling block is the next floor's floor. EMPTY
 		// style stays dark on purpose: those are the derelict shells.
 		if (style != InteriorStyle.EMPTY)
-			lightInterior(chunk, floorAt, aboveFloorHeight);
+			lightInterior(chunk, floorAt, aboveFloorHeight, insetNS, insetWE);
 
 		// more stairs and such
 		if (drawStairs) {
@@ -1160,13 +1160,19 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 	 * mods can contribute their own hanging lights; vanilla seeds are lantern and soul lantern.
 	 * Each position scans up for its own ceiling and skips outdoors/inset positions that find none.
 	 */
-	protected void lightInterior(RealBlocks chunk, int floorAt, int floorHeight) {
+	protected void lightInterior(RealBlocks chunk, int floorAt, int floorHeight, int insetNS, int insetWE) {
 		me.daddychurchill.CityWorld.compat.Material light = me.daddychurchill.CityWorld.Support.FurnitureTags
 				.pick(me.daddychurchill.CityWorld.Support.FurnitureTags.HANGING_LIGHT, chunkOdds);
 		if (light == null)
 			return; // the pool ships vanilla seeds; empty means the tag was discarded whole
 		for (int[] p : new int[][] { { 3, 3 }, { 3, 12 }, { 12, 3 }, { 12, 12 }, { 7, 7 } }) {
 			if (!chunkOdds.playOdds(0.75))
+				continue;
+			// inside THIS floor's walls: a floor set back further than the fixed positions found the
+			// underside of the wider floor above as its "ceiling" and hung its lights on the outside of
+			// the building (owner's screenshots, 2026-09-18 — a chandelier under an overhang)
+			if (p[0] <= insetWE || p[0] >= chunk.width - 1 - insetWE || p[1] <= insetNS
+					|| p[1] >= chunk.width - 1 - insetNS)
 				continue;
 			// never over the stairwell: this runs BEFORE the stairs are drawn, so the ceiling it
 			// finds there is about to be cut away and the light left hanging over the treads
