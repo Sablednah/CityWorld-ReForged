@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "#mcwstairs:compact_stairs",
+      "required": false
+    },
+    {
+      "id": "#mcwstairs:terrace_stairs",
+      "required": false
+    }
+  ]
+}
