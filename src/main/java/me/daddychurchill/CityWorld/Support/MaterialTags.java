@@ -109,6 +109,11 @@ public final class MaterialTags {
     public static final TagKey<Block> FITTINGS_FENCE = key("cityworld:fittings/fence");
     public static final TagKey<Block> FITTINGS_FARM_FENCE = key("cityworld:fittings/farm_fence");
     public static final TagKey<Block> FITTINGS_SITE_FENCE = key("cityworld:fittings/site_fence");
+    /** One-block stair treads for a house's staircase (Macaw's compact and terrace stairs: a full riser per
+     *  block, nothing needed underneath). The matching railing, platform and balcony are found by name from
+     *  the tread ({@code oak_compact_stairs} → {@code oak_railing}, {@code oak_platform}, {@code oak_balcony}).
+     *  Ships empty: the vanilla stair run with its under-steps is the fallback. */
+    public static final TagKey<Block> FITTINGS_STAIRS = key("cityworld:fittings/stairs");
     /** Stair-shaped sloped roof blocks (Macaw's {@code *_roof}); the house roof pass matches one to the
      *  roof material by name, else picks at random, else uses the vanilla stairs of that material. */
     public static final TagKey<Block> FITTINGS_ROOF = key("cityworld:fittings/roof");

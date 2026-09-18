@@ -356,6 +356,10 @@ public class StructureOnGroundProvider extends Provider {
 		Material matInteriorDoor = MaterialTags.pick(MaterialTags.FITTINGS_INTERIOR_DOOR, odds, Material.BIRCH_DOOR);
 		Material matWindow = MaterialTags.pick(MaterialTags.FITTINGS_WINDOW, odds, materialGlass);
 		Material matFence = MaterialTags.pick(MaterialTags.FITTINGS_FENCE, odds, materialFence);
+		Material matStairs = MaterialTags.pick(MaterialTags.FITTINGS_STAIRS, odds, null);
+		// drawn only when there is a pooled stair to style: a draw here on a vanilla world would shift
+		// every later choice the house makes (measured: the rooms moved)
+		String railStyle = matStairs == null ? RAIL_STYLES[0] : RAIL_STYLES[odds.getRandomInt(RAIL_STYLES.length)];
 
 		// what are the rooms like?
 		Room[][][] rooms = new Room[floors][2][2];
@@ -380,7 +384,7 @@ public class StructureOnGroundProvider extends Provider {
 
 					// create the room
 					rooms[f][x][z] = new Room(thisRoomMissing, thisRoomWidthZ, thisRoomWidthX, thisRoomHasWalls,
-							thisRoomStyle, matTrapDoor, matDoor, matInteriorDoor, matWindow, matFence);
+							thisRoomStyle, matTrapDoor, matDoor, matInteriorDoor, matWindow, matFence, matStairs, railStyle);
 
 					// single floor is a little different
 					if (floors == 1) {
@@ -925,6 +929,33 @@ public class StructureOnGroundProvider extends Provider {
 		}
 	}
 
+	private final static String[] RAIL_STYLES = { "classic", "harp", "smooth" };
+
+	/** The direction on the right hand of someone facing {@code f}. */
+	private static BlockFace rightOf(BlockFace f) {
+		switch (f) {
+		case NORTH: return BlockFace.EAST;
+		case EAST: return BlockFace.SOUTH;
+		case SOUTH: return BlockFace.WEST;
+		default: return BlockFace.NORTH;
+		}
+	}
+
+	/**
+	 * The sibling of a pooled stair tread — {@code oak_compact_stairs} → {@code oak_railing} for
+	 * {@code "railing"} — found by name in the tread's namespace, or null when the mod has none.
+	 */
+	private static Material partOf(Material tread, String kind) {
+		net.minecraft.resources.Identifier id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(tread.getBlock());
+		String path = id.getPath();
+		int cut = path.indexOf("_compact_stairs") >= 0 ? path.indexOf("_compact_stairs")
+				: path.indexOf("_terrace_stairs") >= 0 ? path.indexOf("_terrace_stairs") : path.lastIndexOf("_stairs");
+		if (cut < 0)
+			return null;
+		Material part = Material.of(id.getNamespace() + ":" + path.substring(0, cut) + "_" + kind);
+		return part == Material.AIR ? null : part;
+	}
+
 	private final static Material materialAir = Material.AIR;
 	private final static Material materialGlass = Material.GLASS;
 	private final static Material materialFence = Material.SPRUCE_FENCE;
@@ -951,9 +982,12 @@ public class StructureOnGroundProvider extends Provider {
 		final Material interiorDoor; // between rooms
 		final Material window; // the band a wall leaves open — glass, or a framed window from the pool
 		final Material fence; // the railing round a missing room's floor
+		final Material stairs; // a pooled one-block stair tread, or null for the vanilla run
+		final String railStyle; // classic / harp / smooth, for the pooled railings and balconies
 
 		Room(boolean aMissing, int aWidthX, int aWidthZ, boolean aWalls, Style aStyle, Material aTrapDoor,
-				Material aDoor, Material aInteriorDoor, Material aWindow, Material aFence) {
+				Material aDoor, Material aInteriorDoor, Material aWindow, Material aFence, Material aStairs,
+				String aRailStyle) {
 			super();
 
 			missing = aMissing;
@@ -966,6 +1000,8 @@ public class StructureOnGroundProvider extends Provider {
 			interiorDoor = aInteriorDoor;
 			window = aWindow;
 			fence = aFence;
+			stairs = aStairs;
+			railStyle = aRailStyle;
 		}
 
 		// where are we?
@@ -1078,6 +1114,55 @@ public class StructureOnGroundProvider extends Provider {
 			chunk.setBlocks(x1, x2 + 1, y2, y2 + 1, z1, z2 + 1, matRoof);
 		}
 
+		/**
+		 * The staircase: a corner landing at {@code (cx, y1, cz)}, a first step beside it on the {@code side}
+		 * facing back onto it, then three treads rising one block per cell along {@code run}, and the top
+		 * landing after them a floor up — upstream's shape, the same in all four corners of the entry room.
+		 *
+		 * <p>Vanilla: plank landings, stairs with upside-down stairs underneath. With a tread from
+		 * {@code #cityworld:fittings/stairs} (Macaw's compact or terrace stairs, a full riser per block) the
+		 * underside is not needed, the landings are the matching {@code platform}, a {@code railing} stands
+		 * in the cell beside each tread on the open side — its {@code toggle} chosen so the banister sits on
+		 * the edge it shares with the tread: {@code toggle=true} puts the rail on the LEFT edge of its own
+		 * cell looking the way it faces — and the matching {@code balcony} rails the upper floor along the
+		 * opening. All of it measured from what the owner built by hand in two houses (2026-09-18: treads
+		 * {@code compact_stairs[facing=west]}, railings beside them {@code toggle=false}, platforms at both
+		 * landings, {@code balcony[north=true]} along the hole).
+		 */
+		void drawStairRun(RealBlocks chunk, int cx, int y1, int cz, BlockFace run, BlockFace side) {
+			BlockFace back = side.getOppositeFace(); // the first step faces this way, onto the corner landing
+			int sx = side.getModX(), sz = side.getModZ(), rx = run.getModX(), rz = run.getModZ();
+			Material tread = stairs;
+			Material railing = tread == null ? null : partOf(tread, "railing");
+			Material platform = tread == null ? null : partOf(tread, "platform");
+			Material balcony = tread == null ? null : partOf(tread, "balcony");
+			if (tread == null) {
+				chunk.setBlock(cx, y1, cz, materialUnderStairs);
+				chunk.setBlock(cx + sx, y1, cz + sz, materialStair, back);
+				for (int k = 1; k <= 3; k++) {
+					chunk.setBlock(cx + k * rx, y1 + k, cz + k * rz, materialStair, run);
+					chunk.setBlock(cx + k * rx, y1 + k - 1, cz + k * rz, materialStair, run.getOppositeFace(), Half.TOP);
+				}
+				chunk.setBlock(cx + 4 * rx, y1 + 3, cz + 4 * rz, materialUnderStairs);
+				return;
+			}
+			chunk.setBlock(cx, y1, cz, platform != null ? platform : materialUnderStairs);
+			chunk.setBlock(cx + sx, y1, cz + sz, tread, back);
+			if (railing != null) // beside the first step, on its open side (the run's side of it)
+				chunk.setBlock(cx + sx + rx, y1, cz + sz + rz, railing, back, "toggle", String.valueOf(rightOf(back) == run),
+						"style", railStyle);
+			for (int k = 1; k <= 3; k++) {
+				chunk.setBlock(cx + k * rx, y1 + k, cz + k * rz, tread, run);
+				if (railing != null)
+					chunk.setBlock(cx + k * rx + sx, y1 + k, cz + k * rz + sz, railing, run, "toggle",
+							String.valueOf(rightOf(run) == side), "style", railStyle);
+				if (balcony != null && chunk.isEmpty(cx + k * rx + sx, y1 + 4, cz + k * rz + sz))
+					chunk.setBlock(cx + k * rx + sx, y1 + 4, cz + k * rz + sz, balcony, null,
+							back.name().toLowerCase(java.util.Locale.ROOT), "true", "style", railStyle);
+			}
+			chunk.setBlock(cx + 4 * rx, y1 + 3, cz + 4 * rz, platform != null ? platform : materialUnderStairs);
+		}
+
 		void DrawRailing(RealBlocks chunk) {
 
 			// only if we have found ourselves
@@ -1145,87 +1230,24 @@ public class StructureOnGroundProvider extends Provider {
 					}
 				}
 
-				// below the top floor
+				// below the top floor: the staircase up, in the corner of the entry that is furthest from
+				// the room's open sides, with the hole in the ceiling above it
 				if (floor < floors - 1) {
 					if (roomEast) {
 						if (roomSouth) {
 							chunk.setBlocks(x1 + 1, x2, y2, z1 + 1, z1 + 2, materialAir);
-
-							chunk.setBlock(x1 + 1, y1 + 3, z1 + 1, materialUnderStairs);
-
-							chunk.setBlock(x1 + 2, y1 + 3, z1 + 1, materialStair, BlockFace.WEST);
-							chunk.setBlock(x1 + 2, y1 + 2, z1 + 1, materialStair, BlockFace.EAST, Half.TOP);
-
-							chunk.setBlock(x1 + 3, y1 + 2, z1 + 1, materialStair, BlockFace.WEST);
-							chunk.setBlock(x1 + 3, y1 + 1, z1 + 1, materialStair, BlockFace.EAST, Half.TOP);
-
-							chunk.setBlock(x1 + 4, y1 + 1, z1 + 1, materialStair, BlockFace.WEST);
-							chunk.setBlock(x1 + 4, y1, z1 + 1, materialStair, BlockFace.EAST, Half.TOP);
-
-							chunk.setBlock(x1 + 5, y1, z1 + 1, materialUnderStairs);
-							chunk.setBlock(x1 + 5, y1, z1 + 2, materialStair, BlockFace.NORTH);
-
-//							chunk.setBlocks(x1 + 3, y1, y2 + 50, z1 + 3, Material.SPRUCE_FENCE);
-//							chunk.setBlock(x1 + 3, y2 + 50, z1 + 3, Material.GOLD_BLOCK);
+							drawStairRun(chunk, x1 + 5, y1, z1 + 1, BlockFace.WEST, BlockFace.SOUTH);
 						} else {
 							chunk.setBlocks(x1 + 1, x1 + 2, y2, z1 + 1, z2, materialAir);
-
-							chunk.setBlock(x1 + 1, y1 + 3, z2 - 1, materialUnderStairs);
-
-							chunk.setBlock(x1 + 1, y1 + 3, z2 - 2, materialStair, BlockFace.SOUTH);
-							chunk.setBlock(x1 + 1, y1 + 2, z2 - 2, materialStair, BlockFace.NORTH, Half.TOP);
-
-							chunk.setBlock(x1 + 1, y1 + 2, z2 - 3, materialStair, BlockFace.SOUTH);
-							chunk.setBlock(x1 + 1, y1 + 1, z2 - 3, materialStair, BlockFace.NORTH, Half.TOP);
-
-							chunk.setBlock(x1 + 1, y1 + 1, z2 - 4, materialStair, BlockFace.SOUTH);
-							chunk.setBlock(x1 + 1, y1, z2 - 4, materialStair, BlockFace.NORTH, Half.TOP);
-
-							chunk.setBlock(x1 + 1, y1, z2 - 5, materialUnderStairs);
-							chunk.setBlock(x1 + 2, y1, z2 - 5, materialStair, BlockFace.WEST);
-
-//							chunk.setBlocks(x1 + 3, y1, y2 + 50, z1 + 3, Material.SPRUCE_FENCE);
-//							chunk.setBlock(x1 + 3, y2 + 50, z1 + 3, Material.LAPIS_BLOCK);
+							drawStairRun(chunk, x1 + 1, y1, z2 - 5, BlockFace.SOUTH, BlockFace.EAST);
 						}
 					} else {
 						if (roomSouth) {
 							chunk.setBlocks(x2 - 1, x2, y2, z1 + 1, z2, materialAir);
-
-							chunk.setBlock(x2 - 1, y1 + 3, z1 + 1, materialUnderStairs);
-
-							chunk.setBlock(x2 - 1, y1 + 3, z1 + 2, materialStair, BlockFace.NORTH);
-							chunk.setBlock(x2 - 1, y1 + 2, z1 + 2, materialStair, BlockFace.SOUTH, Half.TOP);
-
-							chunk.setBlock(x2 - 1, y1 + 2, z1 + 3, materialStair, BlockFace.NORTH);
-							chunk.setBlock(x2 - 1, y1 + 1, z1 + 3, materialStair, BlockFace.SOUTH, Half.TOP);
-
-							chunk.setBlock(x2 - 1, y1 + 1, z1 + 4, materialStair, BlockFace.NORTH);
-							chunk.setBlock(x2 - 1, y1, z1 + 4, materialStair, BlockFace.SOUTH, Half.TOP);
-
-							chunk.setBlock(x2 - 1, y1, z1 + 5, materialUnderStairs);
-							chunk.setBlock(x2 - 2, y1, z1 + 5, materialStair, BlockFace.EAST);
-
-//							chunk.setBlocks(x1 + 3, y1, y2 + 50, z1 + 3, Material.SPRUCE_FENCE);
-//							chunk.setBlock(x1 + 3, y2 + 50, z1 + 3, Material.DIAMOND_BLOCK);
+							drawStairRun(chunk, x2 - 1, y1, z1 + 5, BlockFace.NORTH, BlockFace.WEST);
 						} else {
 							chunk.setBlocks(x1 + 1, x2, y2, z2 - 1, z2, materialAir);
-
-							chunk.setBlock(x2 - 1, y1 + 3, z2 - 1, materialUnderStairs);
-
-							chunk.setBlock(x2 - 2, y1 + 3, z2 - 1, materialStair, BlockFace.EAST);
-							chunk.setBlock(x2 - 2, y1 + 2, z2 - 1, materialStair, BlockFace.WEST, Half.TOP);
-
-							chunk.setBlock(x2 - 3, y1 + 2, z2 - 1, materialStair, BlockFace.EAST);
-							chunk.setBlock(x2 - 3, y1 + 1, z2 - 1, materialStair, BlockFace.WEST, Half.TOP);
-
-							chunk.setBlock(x2 - 4, y1 + 1, z2 - 1, materialStair, BlockFace.EAST);
-							chunk.setBlock(x2 - 4, y1, z2 - 1, materialStair, BlockFace.WEST, Half.TOP);
-
-							chunk.setBlock(x2 - 5, y1, z2 - 1, materialUnderStairs);
-							chunk.setBlock(x2 - 5, y1, z2 - 2, materialStair, BlockFace.SOUTH);
-
-//							chunk.setBlocks(x1 + 3, y1, y2 + 50, z1 + 3, Material.SPRUCE_FENCE);
-//							chunk.setBlock(x1 + 3, y2 + 50, z1 + 3, Material.GLOWSTONE);
+							drawStairRun(chunk, x2 - 5, y1, z2 - 1, BlockFace.EAST, BlockFace.NORTH);
 						}
 					}
 				}

@@ -951,6 +951,19 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		return state.setValue(property, property.getPossibleValues().get(n));
 	}
 
+	/**
+	 * A block turned to {@code facing} with properties set by NAME — for a mod's blocks whose properties are its
+	 * own instances (Macaw's stair railings' {@code toggle} and {@code style}, its balconies' {@code north}…),
+	 * which the typed setters cannot reach. Pairs are name, value, name, value…; an unknown name or value is
+	 * left alone.
+	 */
+	public final void setBlock(int x, int y, int z, Material material, BlockFace facing, String... props) {
+		BlockState state = facing == null ? stateOf(material) : withDirection(stateOf(material), facing);
+		for (int i = 0; i + 1 < props.length; i += 2)
+			state = withNamedValue(state, props[i], props[i + 1]);
+		setActualBlock(x, y, z, state);
+	}
+
 	/** Set a property by its serialized name and value, leaving the state alone if either is unknown. */
 	private static BlockState withNamedValue(BlockState state, String name, String value) {
 		for (Property<?> property : state.getProperties())
