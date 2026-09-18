@@ -951,22 +951,24 @@ public class StructureOnGroundProvider extends Provider {
 			// find ourselves
 			Locate(context, floor, floors, x, z, roomOffsetX, roomOffsetZ, baseY);
 
-			// draw the walls (a pooled window band is reconnected afterwards: its blocks read each
-			// other to become one framed window, which worldgen placement alone never triggers)
+			// draw the walls. A window band is placed the way a pane would be connected — along the
+			// wall — which is what turns a framed window from the pool across the wall (Material.withFaces;
+			// plain glass ignores it), and is then reconnected so its blocks read each other into one run
+			// of frames, which worldgen placement alone never triggers
 			if (roomEast) {
 				chunk.setBlocks(x2, x2 + 1, y1, y2, z1, z2 + 1, matWall); // east wall
-				chunk.setBlocks(x2, x2 + 1, y1 + 1, y2 - 1, z1 + 1, z2, window); // eastern window
+				chunk.setBlocks(x2, x2 + 1, y1 + 1, y2 - 1, z1 + 1, z2, window, BlockFace.NORTH, BlockFace.SOUTH); // eastern window
 
 				if (roomSouth) {
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z2, z2 + 1, matWall); // south wall
-					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z2, z2 + 1, window); // southern window
+					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z2, z2 + 1, window, BlockFace.EAST, BlockFace.WEST); // southern window
 
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z1, z1 + 1, matWall); // north wall
 					chunk.setBlocks(x1, x1 + 1, y1, y2, z1, z2 + 1, matWall); // west wall
 
 				} else {
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z1, z1 + 1, matWall); // north wall
-					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z1, z1 + 1, window); // northern window
+					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z1, z1 + 1, window, BlockFace.EAST, BlockFace.WEST); // northern window
 
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z2, z2 + 1, matWall); // south wall
 					chunk.setBlocks(x1, x1 + 1, y1, y2, z1, z2 + 1, matWall); // west wall
@@ -974,18 +976,18 @@ public class StructureOnGroundProvider extends Provider {
 				}
 			} else {
 				chunk.setBlocks(x1, x1 + 1, y1, y2, z1, z2 + 1, matWall); // west wall
-				chunk.setBlocks(x1, x1 + 1, y1 + 1, y2 - 1, z1 + 1, z2, window); // western window
+				chunk.setBlocks(x1, x1 + 1, y1 + 1, y2 - 1, z1 + 1, z2, window, BlockFace.NORTH, BlockFace.SOUTH); // western window
 
 				if (roomSouth) {
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z2, z2 + 1, matWall); // south wall
-					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z2, z2 + 1, window); // southern window
+					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z2, z2 + 1, window, BlockFace.EAST, BlockFace.WEST); // southern window
 
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z1, z1 + 1, matWall); // north wall
 					chunk.setBlocks(x2, x2 + 1, y1, y2, z1, z2 + 1, matWall); // east wall
 
 				} else {
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z1, z1 + 1, matWall); // north wall
-					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z1, z1 + 1, window); // northern window
+					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z1, z1 + 1, window, BlockFace.EAST, BlockFace.WEST); // northern window
 
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z2, z2 + 1, matWall); // south wall
 					chunk.setBlocks(x2, x2 + 1, y1, y2, z1, z2 + 1, matWall); // east wall
