@@ -12,8 +12,29 @@ jars there (doors, fences, furniture, lights, roofs, stairs, trapdoors, windows,
 add-on). Both done; the details and the measurements are in "The fittings arc" below, the pools in PALETTES.md
 ("Fittings"), the change in CHANGELOG.md (Unreleased).
 
+**Owner's first playtest (2026-09-18, 16:00–17:00), all fixed the same evening and redeployed to 26.2.test
+(`DEPLOYED-8f3a6ecb`):** gable roof ends were stacks of stairs (the pass counted air on the gable axis →
+gables slope on one axis, end walls solid); the joins between wings had no inner corner (a valley cell is now a
+stair and reconnect derives `inner_*`; and an outer corner faces the neighbour that runs across it, else the
+mod leaves a sawtooth of straight stairs on a diagonal hip — measured 21 outer + 11 inner on a hip house);
+barbed wire round a house balcony and a park, a stockade round a paddock, and a four-chunk park with a different
+fence per side (three pools — `fence`/`farm_fence`/`site_fence` — and parks/farms pick once per platmap from
+`platmap.getOddsGenerator()`, which also leaves the per-chunk odds stream untouched); every shop lost its sign
+(`ShopFitter.isDoor` knew six vanilla doors by id → any `DoorBlock`); ceiling lights hung outside set-back floors
+under the overhang above (`lightInterior` now gets the floor's insets and skips positions outside them). And the
+owner hand-built Macaw's staircases in two houses — read from the save (the houses were in the
+**`cityworld:city` dimension**, `dimensions/cityworld/city/region`, not the overworld; and a running game
+does not flush chunks, so read after it closes) and reproduced piece for piece as `fittings/stairs`
+(`drawStairRun`: one method for the four corner cases, vanilla branch measured block-identical to the old
+code; ⚠ the rail-style draw happens only when a pooled stair exists, or the whole house shifts on a vanilla
+world). All on master, mc26.2 and mc26.1; **not yet re-self-tested on any branch after the evening's commits.**
+
 **Open, in the order I would take them:**
 
+0. **Self-test all three branches** (the evening's six commits are built but not self-tested), then the
+   owner's second look at 26.2.test: roofs (gables, valleys, hips), the three fence pools, the staircases
+   (the pool includes Macaw's *stone* stairs — a stone-brick staircase with harp railings appeared; wood-only
+   is one line in `fittings/stairs.json` if the owner prefers), shop signs, no lights outside.
 1. **Owner playtest on 26.2.test.** The look of: a MODERN house's pitched roof (does the ridge cap read? do
    the eaves want an overhang?), the framed window bands, Macaw's street lamps along every street (the
    double-armed lamp is placed with `facing=north` whatever the road's direction — cosmetic, worth a look),
