@@ -1,14 +1,17 @@
 # CityWorld — Bukkit → NeoForge port plan
 
-## ▶ Resume here — the End was rebuilt on vanilla's islands (2026-09-17); it wants the owner's eyes
+## ▶ Resume here — v5.9.0 released (2026-09-18): the End on vanilla's islands, realms by default
 
-**Status 2026-09-17.** The End was redone from scratch and CityWorld's Nether + End are now the **default realms**
-in all 13 world presets. Self-tested on all three branches (1.21.11 128 checks, 26.1 128, 26.2 151; the new
-`checkEnd` reads 0 terrain mismatches, 472 built chunks, 0 central lots on each; plan hashes identical) and
-deployed to the 9-instance fleet for playtest. The basements + pylons follow-up was re-tested the same way and
-deployed: master `5bb3ebf2` (code; stamp `dc0533a4`), `mc26.1 21d9804d`, `mc26.2 46664b60`.
-**Committed, not pushed.** **Not yet seen in game by the owner**; the section below ("The End, second build") has the design, every
-measurement, and the dials to turn once they have.
+**Status 2026-09-18.** The End was rebuilt from scratch on 2026-09-17, playtested by the owner through four
+rounds the same day ("looking much better" → basements + pylons → palette/lights/pristine → thin it, BoP →
+levelled empties fixed → **"tested and it looks great: density is good, clumps of city, clumps of nature, not
+levelled outside the build area, and the smoothing to blend is working great"**), and shipped as **v5.9.0**
+together with the whole ZARP realms arc (ruined Nether, `/cityworld` twin, pack locks, realms on by default).
+The section below ("The End, second build") has the design, every measurement, and the dials.
+
+**Open after 5.9.0:** the plan does not know about end cities (a lot under one still reads as its planned lot
+in F3/JourneyMap — cosmetic); the owner's `CURSEFORGE.md` paste for the new "Beyond the overworld" section;
+and nothing else queued — ask the owner.
 
 **What the owner asked for (2026-09-17), after playing the first End:** it "just didn't look right at all" —
 square-edged slabs with solid chunk boundaries, and the overworld's mines hanging out of the bottom. The middle was
@@ -198,3 +201,4217 @@ and lava passes are now overworld/Nether-gated.
 **Still to verify:** end city placement (needs ground ≥ y 60 in highlands/midlands — `find:structure:minecraft:end_city`),
 gateways landing on end stone, and the dragon fight end to end on a real client.
 
+
+### BoP in the Nether — swept 2026-09-16 (owner's in-game report)
+
+**What was actually wrong, and what wasn't:**
+
+- **Flesh tendons were a real bug with a ground cause.** Visceral Heap generated on netherrack, so
+  `flesh_tendon`/`hanging_flesh_tendons` had nothing to attach to: 0–2 across a 49x49-chunk sweep. With a
+  `cityworld:ground` entry (flesh over porous flesh) they measure **61 tendons + 49 strands**. The owner
+  guessed "might be taste"; it was not.
+- **Caves under crimson/warped were bare because of CityWorld.** `placeCaveDecoration` returns early unless
+  the chunk holds a *cave-pool* biome, and the Nether/End sources have no pool — so `UNDERGROUND_DECORATION`
+  and `LOCAL_MODIFICATIONS` ran only on wild NATURE lots (which take vanilla's whole pass via `super`). A
+  pool-less dimension now runs the features of the biomes present in the chunk, those two steps only
+  (`VEGETAL_DECORATION` anchors to the heightmap and would decorate rooftops). Measured off → on: rose quartz
+  buds 333 → 759, orpiment 7,436 → 9,271, pus bubbles 2 → 80, eyebulbs 2 → 24.
+- **Ground: only two of the five BoP Nether biomes need an entry** — `withered_abyss` (blackstone),
+  `visceral_heap` (flesh). Measured against a *vanilla* BoP Nether: erupting inferno (329 orpiment + 292 buds),
+  crystalline chasm (202 large rose quartz buds) and undergrowth (930 brambles, 138 burning blossom) are
+  netherrack whose character is entirely features.
+- **⚠ Willow is not a Nether plant.** BoP grows willow trees only in `subtropics`/`wetland`; undergrowth plants
+  **hellbark**. The willow-vine *block* reaches the Nether only through `nether_vines`, which hangs strands from
+  ceilings — 634 in the sweep, **every one enclosed** (0 with open air above, vs orpiment buds 229 open / 556
+  covered). "No willow vines in the wild" is therefore not a bug to fix.
+- **⚠ My "one cause, five symptoms" reading was wrong**, and the A/B caught it: willow vine 622 → 633 with the
+  fix off → on, i.e. BoP features were already generating in bulk via wild lots. The fix is worth having; it was
+  not the explanation.
+- **⚠ Blackstone spines/bulbs: fine all along — confirmed in game by the owner** ("Withered has spines and
+  obsidian patches"). I reported zero three times; twice the biome was absent from the swept area, and the
+  third time the probe's own matcher was broken (below). `withered_abyss` is real but uncommon: 6,080 of
+  251,001 sampled columns. Check the biome is present before calling a feature missing — and when the probe
+  disagrees with the owner's eyes, suspect the probe.
+
+**Probe traps this cost (all mine):** a roofed dimension's `WORLD_SURFACE` is the *ceiling* (every Nether biome
+read as bedrock); scanning down from it finds the netherrack *under* the roof (crimson forest "23,702 netherrack,
+no nylium"); a 3x3 region sits in ONE biome so it can never witness another's features (sweep-wide tallies now);
+`JAVA_TOOL_OPTIONS` splits on spaces, so `-Dcityworld.probe.where=Willow Vine` kills the JVM — match block ids;
+and a shell without `JAVA_HOME` fails instantly and looks like a code fault. Probe gained
+`-Dcityworld.probe.where=<block_id,...>` (y-bands, open-vs-covered, and the blocks directly above/below).
+
+**⚠ The probe's `where` matcher was itself broken (found 2026-09-16, fixed).** It compared the block's
+registry **path alone** against whatever was passed, so a *namespaced* id — `minecraft:obsidian`, the obvious
+reading of "match block ids" and the only unambiguous way to name a modded block — matched nothing and
+printed a confident `0`. Bare paths (`willow_vine`) had always worked, which is exactly why it went unnoticed.
+It now accepts either form. This produced three wasted runs and one wrong report to the owner. **A diagnostic
+that answers "none" when it means "I did not understand the question" is worse than no diagnostic at all.**
+Two more: the **server watchdog kills any sweep over 60s** (`java.lang.Error: ServerWatchdog detected that a
+single server tick took 60.00 seconds`, thrown inside the probe's own `getChunk` — it runs as one long tick),
+so probe runs set `max-tick-time=-1` in the gitignored `run/server.properties`; and on 26.2 a Nether sweep
+logs ~196,000 `Detected unsafe terrain read during worldgen` errors into a 46MB log, which is what pushed that
+run over the limit. New mode **`-Dcityworld.probe=find:biome:<id>`** answers "is this biome anywhere near?"
+from the biome source with **no chunk generation at all**, plus a census of what it did find.
+
+### BoP second report — the caves had no biome at all (2026-09-16)
+
+The owner, on the deployed build: "crimson and warped look great on the surface, but unlike some others they
+don't seem to want to do anything with the caves below"; and "same for all the biomes with a surface really".
+He was right, and it was never crimson/warped specific.
+
+- **Cause: `applyBiomeGround` only ever swapped the TOP of a column.** CityWorld never runs a biome's surface
+  rules; vanilla's nether gets nylium/soul soil/basalt from rules that apply to *every* air-facing face,
+  including the ones inside caves. Ours touched the surface and nothing else, so underground every biome was
+  raw netherrack — right fog, right canopy, a cave system belonging to no biome.
+- **Fix: `Support/NetherCaveGround`** coats air-facing cave **floors** with the biome's ground. Floors only,
+  which is both what vanilla does (nylium floor, netherrack walls and ceiling) and what the features want —
+  BoP's flesh tendons grow *upward*, so a coated floor is what puts them in a cave. It reads raw block states
+  through one `MutableBlockPos` rather than `SupportBlocks`'s per-read wrapper: unlike `LushCaves` (~5% of
+  columns) this runs on every nether column, and the wrapper would allocate ~30,000 objects per chunk.
+- **Measured (26.2, seed 8675309, ruined Nether, centre 0,0 r=6):** soul soil **1,258** — **1,082 covered vs
+  176 open-sky**, y-bands 0→64 with **591 below y48**, and **Netherrack directly below (832)**. The surface
+  pass can only write at a column's terrain top, and nothing else in the codebase *writes* soul soil
+  (`CoverProvider_Nether` and `PlatLot` only read it via `isOfTypes`; `OreProvider_Nether` lays soul *sand*),
+  so soul soil on netherrack at y0–48 with air above is cave-floor coating and nothing else.
+- **⚠ The first "proof" of this was worthless and shipped anyway.** It measured crimson nylium on a
+  `runServer` world — whose Nether is **vanilla** (below) — where nylium on cave floors is exactly what
+  vanilla's own surface rules produce. Four consecutive probe runs measured the wrong world before the
+  `PROBE: dimension ... generator` line was read. **Read that line first, every time.**
+- **Rose quartz pillars — placement dilution, not cave size and not a tag.** See the dedicated section below.
+  Two wrong diagnoses were published before the right one: the `#minecraft:dripstone_replaceable_blocks` tag
+  (it only gates growing *into* solid — the pillar builds in cave air), then cave size, from **inverting**
+  `max_column_radius_to_cave_height_ratio`. That ratio **caps the radius from the height**; it does not demand
+  height. Vanilla's `LargeDripstoneFeature`, which BoP's copies, rejects a column only at
+  `column$range.height() < 4`.
+- **Decided, not a bug:** flesh tendons grow upward forever because they are meant to reach a nether ceiling
+  and ours has none. Owner: "I like it — tag it as noticed and decided not a bug." Do not "fix" this.
+- **Confirmed in game by the owner:** flesh tendons ("suitably creepy"), withered abyss spines + obsidian
+  patches, willow vines in caves.
+
+### ⚠ `runServer` does NOT give you the ruined Nether (2026-09-16)
+
+`world_preset/city.json` defines a **stock vanilla Nether** (`minecraft:noise` + `minecraft:nether`). The
+ruined one is swapped in by `CityWorldRealms.withNether` at **world creation**, driven by the Customize
+toggle — a path a dedicated server started from `level-type=cityworld:city` never takes. So every headless
+Nether probe silently measures vanilla, and BoP's biomes still appear (BoP injects into vanilla's Nether),
+which makes the wrong world look convincingly right.
+
+**To probe the real thing,** drop a datapack in `run/world/datapacks/<name>/` (create it *after* wiping
+`run/world`, before starting) with `pack.mcmeta` (`pack_format` 46 on 26.2) and an override of
+`data/cityworld/worldgen/world_preset/city.json` whose Nether is
+`{"type": "cityworld:ruined_nether", "generator": {"type": "cityworld:city", "twin_of": "minecraft:overworld",
+"style": "apocalypse", "decayed": true, "environment": "nether", "biome_source": {"type": "cityworld:nether"}}}`.
+Confirm with the probe's own `PROBE: dimension ... generator CityWorldChunkGenerator` line before believing a
+single number.
+
+**⚠ And generate before asking for biomes.** `find:biome` sampled the biome source at server start, before any
+chunk existed; the Nether/End sources classify through a context bound only during generation, so unbound they
+answered `nether_wastes` for all 63,001 columns of a world that plainly held six biomes. It now forces one
+chunk first.
+
+### Chunkier Nether caves (2026-09-16)
+
+Owner: "the width and height of the cave carvers are variables — can we adjust them for Nether so it averages
+a little bigger. Same noodles and holes, just chunkier?" Done, in `ShapeProvider_Normal`: the Nether uses
+`netherWormEps` 0.125 (vs 0.095), `netherCheeseThreshold` 0.845 (vs 0.865) and `netherCaveThreshold` 0.70 (vs
+0.75). **Only iso-levels move** — widening a threshold grows the caves already there, in place. The scales
+(`wormScale`, `wormScaleY`, `cheeseScale`) are deliberately untouched: a frequency change resamples the noise
+and *moves* the tunnels, which would be different caves rather than bigger ones.
+
+**Measured (26.2, ruined Nether, centre 0,0 r=6, same seed):** Netherrack **655,149 → 639,517** (−15,632,
+−2.4% of standing rock), soul soil **1,258 → 1,490** (+18% — more cave floor for `NetherCaveGround` to coat),
+basalt 39,828 → 41,152.
+
+**Amplified further (owner: "I'm happy for tunnels to be bigger — it's supposed to be very cavernous").** The
+**Y scales are the amplifier and they are safe to move**: a *horizontal* scale change resamples the field and
+relocates the caves, but changing only the Y scale rescales one axis, so the pattern at any (x, z) is the same
+one stretched vertically — same caves, same footprints, taller. `cheeseScaleY` sampling Y at **double** the
+horizontal frequency is why every cavern was squashed to half height. Nether now: `wormEps` 0.150,
+`wormScaleY` 1/140, `cheeseThreshold` 0.830, `cheeseScaleY` `cheeseScale*0.9`, `caveThreshold` 0.68.
+Measured: columns clearing 9 blocks of headroom **33% → 52%** (12-block bucket 176 → 452, 16-block 106 → 285),
+netherrack 638,621 → 626,172.
+
+The probe gained **cave headroom** — the tallest unbroken air run per column, bucketed, plus the share
+clearing 9 blocks. A block tally cannot answer "can a feature needing N blocks of height stand here": fewer
+solid blocks can mean wider caves *or* taller ones, and a −2.4% netherrack reading came with zero change in
+pillars.
+
+### Rose quartz pillars: BoP's placement, diluted by our taller Nether (solved 2026-09-16)
+
+**Cause.** BoP places `large_rose_quartz` with `count: 6` over a `height_range` spanning the dimension —
+tuned for vanilla's 128-block Nether. The ruined Nether is full height (−64..319), ~3x taller, so the same six
+attempts scatter over three times the column and nearly all land in solid rock or open sky. Cave size was
+never the constraint: amplifying the caves moved `Block of Rose Quartz` 9 → 6 (noise) even as headroom went
+33% → 52%.
+
+**Measured** (26.2, ruined Nether, centre 0,0 r=6, same seed), by datapack override in the probe world:
+
+| placement | Block of Rose Quartz |
+|---|---|
+| BoP's shipped `count 6`, dimension-wide | **6** |
+| `count 24`, y −50..100 | **314** |
+| `count 6` (BoP's own density), y −50..100 | **75** — 44 with quartz directly above *and* below |
+
+**Shipped:** `data/biomesoplenty/worldgen/placed_feature/large_rose_quartz.json` in our jar, keeping BoP's
+own `count: 6` and only aiming the band at where our caves are. The owner chose the in-jar override over an
+instance-only pack or an opt-in built-in pack, accepting that it also applies to a CityWorld+BoP player on a
+stock vanilla Nether (band 0..100 rather than 0..128). ⚠ It is an override of another mod's file, so **mod
+resource load order decides who wins** — verified by measurement from the jar, not assumed.
+
+**Next:** optional Nether polish — bastion shaft look in-game on real hardware, a server-side way to choose
+the ruined Nether (the probe datapack above is the pattern). Note the same dilution applies in principle to
+*every* BoP Nether feature whose `height_range` spans the dimension; only rose quartz was reported, and its
+buds/clusters look right, so nothing else has been changed.
+
+## ▶ The ZARP realms arc (opened 2026-09-15)
+
+**Goal (owner):** CityWorld in the ZARP modpack. (1) New single-player worlds locked to
+`cityworld:apocalypse`; (2) a **ruined-city Nether** at 1:1 — same seed, same city plan, more ruined,
+"nature" = Nether biomes incl. BoP; (3) a **CityWorld End** — vanilla central island + dragon fight,
+CityWorld buildings on the outer islands, chorus/End biomes, end cities still spawning.
+
+**Owner's decisions (2026-09-15, all the recommended options):**
+
+- Nether is **full height, no roof**: `-64..319` like the overworld so the city stands at identical heights.
+- Nether keeps **fortresses + bastions** (blaze rods → eyes of ender → the End is still reachable).
+- Nether/End variants ship as **Customize toggles** (default vanilla), not a change to the Apocalypse
+  preset — other CityWorld users are unaffected; the pack config turns them on and locks them.
+- The lock is **type locked, settings open**: World Type greyed, Customize works, its style picker locked.
+
+**Order, cheapest proof first:** (1) the lock — **built, see below**; (2) a Nether spike; (3) the End.
+
+### 1. The world-type lock
+
+`config/cityworld-startup.toml` → `[worldCreation] lockedWorldPreset = "cityworld:apocalypse"`
+(`client/CityWorldPackConfig`, `client/WorldTypeLock`). **STARTUP, not CLIENT**: FML opens a STARTUP config
+on registration (checked in `ConfigTracker` bytecode, loader 10.0.36); CLIENT loads at a later stage and
+`PresetEditorManager.init` (from `ClientHooks.initClientHooks`) is not guaranteed to follow it. Vanilla
+hardcodes `WorldPresets.NORMAL` in `CreateWorldScreen.openFresh`, so there is no data-only lock: the hook
+selects the preset (only if not already — init re-runs on return from Customize), trims the ui state's
+mutable preset lists to it (re-trimmed by a ui-state listener, since `setSettings` refills them), and greys
+the World Type button each frame (it lives in a private tab class and its own listener re-enables it).
+Only `cityworld:city` had a Customize editor; the locked preset now gets one too, style picker greyed.
+A dedicated server already takes `level-type=cityworld:apocalypse`.
+
+**Verified 2026-09-15 on a real 1.21.11 client** (WSLg, a throwaway self-driving probe, not committed):
+opens on `cityworld:apocalypse` with both preset lists cut to 1; a `setSettings` refresh and a forced
+`setWorldType(minecraft:normal)` both left it on apocalypse; World Type button `active=false`; Customize
+present with "Style: Apocalypse" greyed (screenshots checked). Compiles on 26.1 and 26.2 — 26.2 only needs
+its `minecraft.gui.setScreen` spelling in `onStyleChanged`. The probe also caught a **pre-existing** gap:
+`generator.cityworld.apocalypse` was never in `en_us.json`, so the World Type button showed the raw key —
+fixed. Future client checks for this arc belong on **Vivo** (see "Vivo — the shared test machine"): the
+WSLg window lands on the owner's desktop.
+
+### 1b. `/cityworld` = the city before the fall (owner, 2026-09-15)
+
+For the quest's flashback/time travel. `cityworld:city` (`data/cityworld/dimension/city.json`) is now
+`"twin_of": "minecraft:overworld"` + `"decayed": false`. **`twin_of`** (new optional generator field) makes
+the context take the named dimension's CityWorld style and settings at runtime (`twinSource()` via
+`ServerLifecycleHooks`) — static JSON can't name a Customize world's inline settings. Same seed + style +
+settings = same plan; `decayed` picks the era. The dimension's own `style`/`settings` stay as the fallback
+for a non-CityWorld overworld. Biomes come from the twin's own biome source (a source binds to one context).
+
+**`decayed: false` is now "pristine"**, and it had a bug: the override ran *before*
+`validateSettingsAgainstWorldStyle`, which switches decay back on for APOCALYPSE/DESTROYED, so a pristine
+twin of a ruined world came out ruined. It now runs after, and additionally sets the runtime-only
+`CityWorldSettings.pristine` (overgrowth off, `spawnBaddies` back to the data's value).
+`isApocalypseStyle()` is false when pristine (grim pools, `ApocalypseSpawners` — the latter switched from
+`worldStyle ==` to the method), while `worldStyle` stays APOCALYPSE so the **vault** (a planning decision
+in `NatureContext`) still plans. Rule: planning code tests `worldStyle`, drawing code tests the methods.
+
+**Measured, not assumed:** the first self-test run of this failed — 395 of 96,100 lots differed.
+`OutlandContext` only plans upstream's woodworks/stoneworks yards when `includeDecayedBuildings` is off, a
+planning decision reading a drawing setting. Fixed with the runtime-only `planDecayedBuildings` (the value
+before the per-dimension override), which planning code reads instead. Any future planning-side read of a
+decay/overgrowth setting must use the plan's value, or twins drift apart — `twin.differ` will say so.
+
+Self-test: `twin.lots`/`twin.differ` (APOCALYPSE vs its pristine twin, lot class by lot class, after first
+asserting the ruined one really is ruined) and `twin.dimension.*` (runtime: `cityworld:city` resolved its
+twin, same style as the overworld, pristine). The Nether reuses the same seam with `decayed: true`.
+
+### 2. Nether — verified facts (1.21.11 sources)
+
+- **1:1 is a dimension-type field.** `NetherPortalBlock.getPortalDestination` picks the target by *key*
+  (`Level.NETHER` ↔ `Level.OVERWORLD`) and scales by `DimensionType.getTeleportationScale` =
+  `coordinateScale` ratio. A custom `cityworld:nether` dimension type with `coordinate_scale: 1.0` on the
+  `minecraft:the_nether` level stem gives 1:1. Nothing else keys off `BuiltinDimensionTypes.NETHER` except
+  `WorldDimensions` (lifecycle/experimental check) — Nether behaviour (beds explode, piglins, fog) is the
+  type's `EnvironmentAttributeMap`, so copy vanilla's attributes into ours.
+- **The generator hardcodes overworld heights**: `getMinY() = -64`, `getGenDepth() = 384`. Fine for the
+  chosen full-height Nether (type `min_y -64, height 384`), but the End keeps vanilla's `0..256` type, so
+  these must come from the dimension there.
+- **Same plan, more ruin — the precedent exists.** The `cityworld:city` dimension is already "same seed,
+  `decayed: true`". Plan-affecting settings must match the overworld's or the plan diverges; the
+  self-test's plan hash (`--compare`) is the check. Decay intensity (`Decay.buildingIntensity`,
+  `roadIntensity`, `oddsOfDecayFire`) is a settings knob, not code.
+- **Upstream had a Nether environment** that the port dropped: `worldEnvironment` is hardwired `NORMAL`
+  (`CityWorldGenerator`). `OreProvider_Nether` (netherrack strata, lava fluids, quartz/glowstone/soul
+  sand ores) and `CoverProvider_Nether` (extends Decayed; crops/flowers/trees → nether flora, fire) are
+  small files at `251078e`. `FarmLot` already branches on `Environment.NETHER` (netherwart).
+- **Biomes need a Nether source.** CityWorld pulls biomes from its own sources; `TerraBlenderBridge` only
+  harvests `RegionType.OVERWORLD` (BoP's Nether biomes arrive as TerraBlender NETHER regions).
+- **Structures:** `minecraft:nether_complexes` (fortress 2 : bastion 3, random_spread 27/4) gated by
+  `#has_structure/nether_fortress` / `bastion_remnant`. The allow-list tag seam (`cityworld:allowed`) and
+  vanilla's own biome filtering carry over — the biome source must emit tagged Nether biomes.
+
+### 2b. Nether spike — built and probed (2026-09-15)
+
+**Pieces:** `dimension_type/ruined_nether.json` (vanilla Nether attributes, `coordinate_scale` 1, `-64..319`,
+`has_ceiling` false); generator field **`environment`** (`"nether"` → `CityWorldGenerator.worldEnvironment`);
+`OreProvider_Nether` (netherrack over blackstone, lava seas on magma, Nether ores), `CoverProvider_Nether`
+(roots/fungus on nylium, soul fire, netherwart for crops); `CityWorldNetherBiomeSource` (`cityworld:nether`,
+`#cityworld:nether_pool` = `#minecraft:is_nether` + `#c:is_nether`); `CityWorldSettings.applyNetherRuin()`
+(decay ×2 floor 1.2, decay fires on ≥0.15, no pristine roads/buildings, no overgrowth — drawing only, plan
+untouched); ground-map entries for the five vanilla Nether biomes; `minecraft:nether_complexes` in the
+allowed structure tag; `CaveRegions.none()`/`SurfaceRegions.none()`; `CityWorldRealms` builds the stem in
+code for the Customize toggle and the pack lock.
+
+**How to probe it:** a world datapack overriding `data/minecraft/dimension/the_nether.json` — datapack stems
+beat the preset's (`WorldDimensions.bake` checks the datapack registry first) — plus the probe's new
+`-Dcityworld.probe.dim=minecraft:the_nether`, which also dumps a 3x3-chunk full-height block tally, surface
+biomes, and a no-generation climate sample (percentiles + the biome split `classify` gives over ~12 km).
+
+**First probe (seed 8675309, chunk 0,0, apocalypse overworld):** generator installed; a ruined building
+interior (bookshelves, shelves, candles) in netherrack/blackstone with magma, lava, ancient debris (16),
+quartz and gold ore, 171 fire. Climate: temperature p5/25/50/75/95 = .136/.442/.615/.776/.981 (warm-leaning,
+`climateWarmth`), humidity .047/.316/.506/.697/.944. Raw-anchor split over 147k samples: basalt 26%,
+crimson 28%, wastes 22%, soul sand 12%, warped 11% — so the anchors moved to rank space. ⚠ I first read the
+3x3 region's "2,287 wastes / 17 basalt" as an imbalance; it was one climate region. Sample at scale.
+
+**Rank-space split, measured (147k samples):** basalt 19.5%, crimson 21.3%, wastes 17.9%, soul sand 21.8%,
+warped 19.5%.
+
+**Seen on a real client (Vivo `:2`, 2026-09-15, config `lockedWorldPreset = cityworld:apocalypse`,
+`ruinedNether = cityworld`, seed 8675309):** World Type greyed at "CityWorld: Apocalypse"; Customize shows
+"Style: Apocalypse" and the new **Realms → "Nether: Ruined city (1:1)"** both greyed. Creating the world
+raised vanilla's **"experimental settings" warning** — `WorldDimensions.checkStability` only calls a Nether
+stable on the built-in Nether type with a `NoiseBasedChunkGenerator`, so any CityWorld Nether is experimental
+(the CityWorld overworld is not: `isStableOverworld` only checks the type). NeoForge confirms it so it is
+shown once, at creation. Suppressing it means intercepting that `ConfirmScreen` — an owner decision, not done.
+`execute in minecraft:the_nether run tp @s ~ 130 ~` landed at the same x/z inside **the same weathered-copper
+tower, ruined**: netherrack through the floors, red fog, and far too much fire — the data default
+`oddsOfDecayFire` 0.20 set most rubble alight, so the Nether now uses 0.08. Wide views on llvmpipe showed
+stale frames after a teleport (chat confirmed the move; the picture did not change) — judge scale from the
+probe's tallies, not a skyline screenshot.
+
+**⚠ The dimension type is per-branch data.** `ruined_nether.json` copied from 1.21.11 **broke 26.1 and 26.2
+completely** — registry loading failed (`No key has_ender_dragon_fight`), so no server or world could start —
+while both branches compiled and built green. Only the per-version self-test caught it. 26.x's
+`DimensionType` gained a required `has_ender_dragon_fight` (and `default_clock`, optional) and vanilla added the
+`minecraft:visual/ambient_light_color` attribute. Each branch's file is built from **that version's own**
+`data/minecraft/dimension_type/the_nether.json` (in `~/.gradle/caches/neoformruntime/artifacts/minecraft_<v>_client.jar`)
+with scale 1, `-64..319`, no roof — so on a cherry-pick, keep the branch's copy. Any future dimension-type or
+other registry JSON (the End) needs the same per-version treatment, and **a green build is not evidence**:
+run the self-test on every branch before deploying.
+
+**The "experimental settings" warning — solved (2026-09-15).** The owner reported it had *always* shown for
+CityWorld worlds, and the cause is not the Nether: `WorldDimensions.bake` makes a world stable only with
+exactly the three vanilla dimensions (`list.size() == VANILLA_DIMENSION_COUNT`), and `cityworld:city` is a
+fourth. `client/ExperimentalWarningSkip` cancels the `ConfirmScreen` as it opens (`ScreenEvent.Opening`, current
+screen `CreateWorldScreen`, title key `selectWorld.warning.experimental.title`) and answers its `callback`
+(access-transformed public) on the next tick via `Minecraft.schedule` — but only if no experimental feature
+flags are on, no non-`cityworld` registry in the STATIC/WORLDGEN layers is unstable, and every dimension is a
+CityWorld generator or passes a replica of vanilla's private `isVanillaLike`. Seen on Vivo: one click on Create
+New World went straight into the world, log line "skipped the experimental-settings warning".
+
+**Nether trees.** `CoverProvider_Nether` turns every tree request into a feature from
+`#cityworld:nether_trees` (configured-feature tag: vanilla `crimson_fungus_planted`, `warped_fungus_planted`,
+`huge_red_mushroom`, `huge_brown_mushroom`; optional `biomesoplenty:hellbark_tree`/`big_hellbark_tree` — ids read
+from BoP 26.x's jar), placed with `ConfiguredFeature.place` on `RealBlocks.getServerLevel()` after laying the
+matching nylium (huge fungi require their own; mushrooms take any `MUSHROOM_GROW_BLOCK`). **Measured first:**
+the "parks grow overworld trees" worry was wrong the other way — a decayed `ParkLot` calls `destroyLot` and plants
+*nothing* (upstream), in the Apocalypse overworld and the Nether alike; the first park probe (chunk -20,-20)
+found no stems, caps or even sprouts. The Nether branch now plants trees on whatever ground survived the wreck.
+
+**⚠ The first in-game Nether hung the whole world (owner, 2026-09-15).** Chunks stopped arriving (black void),
+and leaving hung on "Saving world". No exception, no crash report. Diagnosed from the running game, not guessed:
+Windows `jstack.exe` from Gradle's Windows JDK (`C:\Users\darre\.gradle\jdks\eclipse_adoptium-21-amd64-windows.2`
+— the CurseForge runtime is a JRE with no `jcmd`) against the `javaw` PID, **two dumps ten seconds apart**: one
+worker RUNNABLE with CPU 639.6 s → 650.1 s inside `RoadLot.decaySidewalk` (line 1637), every other worker idle,
+the server thread parked in `ServerChunkCache.getChunk` waiting on that chunk. Cause: upstream's
+`while (amount > 0)` only decrements when the block above a random sidewalk cell is empty, so a sidewalk wholly
+covered — under the Nether's lava sea, under burning rubble — never exits. Fixed with an attempt cap
+(4× the area; ordinary sidewalks finish long before it). The chunk never completed, so it was never saved, and
+regenerates with the fix. **Proven on the owner's own world** (copied save, seed 4007804917611692315): a
+radius-10 sweep on the *old* code around the saved position did not hang — the stuck chunk was further out, and
+covered-ness depends on neighbours decorating first, so a one-at-a-time sweep need not hit it — but a radius-32
+sweep on the fixed code (4,224 chunks, all generated) logged `decaySidewalk gave up with 3 left at chunk -166, -88`:
+the sidewalk that hung the world, inside the owner's view distance. Probe gained `-Dcityworld.probe.radius=N` (generate every chunk within N, logging each
+first, so a hang names its chunk) and `find:structure:<id>`.
+
+**Bastions: cavern + ruined shaft (owner's pick, 2026-09-15).** `#cityworld:carve_cavern`
+(`data/cityworld/tags/worldgen/structure/`, ships `minecraft:bastion_remnant`) widens `carveForStructures` beyond the
+beard adaptations, so a bastion gets the same carved cavern an ancient city does. `drawCavernShafts` (end of
+`applyBiomeDecoration`, the structure's start chunk only) draws a 5x5 cracked-polished-blackstone shaft with a
+ladder and shroomlight, a broken collar and a soul campfire at street level, down onto the highest roof under
+one of three candidate columns. **Measured first:** the nearest bastion in the owner's world (-400, 208, a
+NatureLot on y 54 ground) has a start box of **y 31..86** over 93 pieces — most tops y 33..55, but towers to
+y 74..86, above the y 64 street. So bastions are *not* always buried; they already broke the surface before
+any of this. **Twelve more starts on a 1,600-block ring all did the same:** boxes from y 29..32 up to y 75..102
+over a y 64 street, in NatureLot, FarmLot, BunkerLot, FactoryBuildingLot, OfficeBuildingLot, ClipboardLot
+alike — a tower or two breaks the surface while the bulk sits at y 33..55. A "only if wholly buried" shaft
+therefore never fired (0 ladders in every start chunk). The shaft is the way *down to the bulk*: of a 3x3 grid
+of columns over the start chunk it lands on the highest roof still four under the street, never on a tower.
+In the start chunk alone that found a low roof for only 2 of 12, so the column is chosen over the **whole
+footprint** (4-block grid, two blocks inside a chunk) and drawn only by the chunk that owns it — deterministic
+from the pieces, so one shaft per bastion.
+
+**How often a shaft lands, measured over the same 12:** 7 of 12 get one (soul campfires counted across every
+chunk of the footprint; ladders alone are no proxy — city buildings have their own). The five misses are the
+**tall bastions** (boxes to y 95..102, bridge-type): no column has a roof four blocks under the street, because
+their pieces sit at or above it — those are walked into rather than climbed down to. Relaxing the landing
+requirement from a 5x5 to a 3x3 core changed nothing (same 7), so the limit is the bastion's shape, not the rule.
+
+**The cavern is real, measured with a control:** cells just outside every piece (within 3 blocks) and below
+the street — solid netherrack unless carved — were 78–100% air in 10 of the 12 sampled start chunks
+(e.g. 1102/1200, 1125/1200, 877/960); the two exceptions had tiny samples where the pieces barely reach the
+start chunk (0/48, 87/198).
+Probe: `find:structure:<id>` plus `-Dcityworld.probe.samples=N` (N starts on a 1,600-block ring, each logged
+with its Y range, street, lot, buried-or-not and ladders in the start chunk).
+
+**Open:** bastions start at absolute y 33 (buried under a full-height city); fortresses at y 48-70 cut
+through streets; parks/yards still pick overworld trees via `TreeProvider`; building water stays water;
+BoP Nether biomes unmeasured; a dedicated server can only get it by datapack today.
+
+### 3. End — verified facts (1.21.11 sources)
+
+- **The dragon fight needs the vanilla End type.** `ServerLevel` creates `EndDragonFight` only when
+  `dimension() == Level.END && dimensionTypeRegistration().is(BuiltinDimensionTypes.END)`. Keep
+  `minecraft:the_end` as the type.
+  **26.x differs:** there it is `if (this.dimensionType().hasEnderDragonFight())` (`ServerLevel` line 304 on
+  26.1.2) — a `has_ender_dragon_fight` field on the type, no key or builtin-type check. So on 26.x a custom End
+  type could keep the fight; on 1.21.11 it cannot. Keeping `minecraft:the_end` works on all three.
+- **Vanilla's End biome source cannot run under our generator.** `TheEndBiomeSource` reads
+  `sampler.erosion()`, and `ChunkMap` only builds a real `RandomState` for a `NoiseBasedChunkGenerator`
+  (dummy settings otherwise). We need our own End biome source (`the_end` within 64 sections of 0,0 —
+  vanilla's own radius — then highlands/midlands/barrens/small islands from CityWorld noise).
+- **Central island:** the pillars (`end_spike`) and platform are *biome features* of `minecraft:the_end`,
+  and the exit podium is placed by `EndDragonFight` at the heightmap over 0,0. Plan: delegate the central
+  zone to vanilla End noise generation, CityWorld outside it.
+- **End cities** (`end_cities`, random_spread 20/11, biomes highlands+midlands) refuse a start whose
+  lowest corner of a 5×5 box is below **y 60** (`EndCityStructure.findGenerationPoint`).
+- **Gateways** land you on the nearest **`END_STONE`** with two non-full blocks above it in the target chunk,
+  else spawn an `end_island` feature at y 75 — so outer-island ground should stay end stone.
+- Upstream's `OreProvider_TheEnd` / `CoverProvider_TheEnd` exist at `251078e` too. The FLOATING style is the
+  natural shape base for outer islands.
+- **The arena, measured from `EndDragonFight`:** it holds a ticket of radius 9 on chunk 0,0; `hasActiveExitPortal`
+  / `findExitPortal` scan chunks -8..8 for an end-portal block entity, and failing that `spawnExitPortal` puts
+  `EndPodiumFeature` on the `MOTION_BLOCKING_NO_LEAVES` heightmap over 0,0 (sinking past bedrock to y 63). The
+  ten obsidian pillars are `SpikeFeature` (`end_spike`, a SURFACE_STRUCTURES feature of the `the_end` biome),
+  radius 42 around the origin, heights from `SpikeFeature.getSpikesForLevel(seed)`. The island itself is
+  `DensityFunctions.EndIslandDensityFunction` (`100 - dist*8` around the origin, outer islands only where the
+  cell is outside `k²+l² > 4096`).
+
+**End plan (not started):** keep `minecraft:the_end` as the type (dragon fight). A generator that **delegates the
+central zone to a real vanilla End `NoiseBasedChunkGenerator`** — public ctor `(BiomeSource, Holder<NoiseGeneratorSettings>)`
+plus `RandomState.create(registries, NoiseGeneratorSettings.END, seed)` — for chunks inside the void ring, so
+the island, pillars and podium are vanilla's own; CityWorld (FLOATING-shaped, end stone, `the_end` environment,
+own End biome source that answers `the_end` inside 64 sections) outside it. End cities need ground at y ≥ 60 and
+the highlands/midlands biomes; gateways need `END_STONE` with headroom. Probe with `-Dcityworld.probe.dim=minecraft:the_end`.
+
+## ▶ Resume here (re-evaluated 2026-09-14)
+
+**Nothing is in flight. `v5.8.0` is released on all three versions (2026-09-14):** the two-chunk
+airship with the owner's reworked car (`src/main/resources/cityworld/airship/car.txt`, captured from
+the save with `scripts/region_dump.py`), street names in `/cityinfo`/F3/the map plus
+`/cityfind street`, the owner's names in the default pools, the furniture-tag log fix, and the
+`Clipboard` rotated paste + `saveTemplate()` StoryTeller probes for. `CURSEFORGE.md` has the new
+lines; the owner pastes it, and sablecraft.co.uk lags. The
+queues further down this file were re-read against `CHANGELOG.md` and the code on 2026-09-14 and
+**most of what they listed as "not yet built" shipped in 5.4.0–5.6.0** — each is struck through
+where it sits, so this block is the only live to-do. Do not trust an unstruck "queued" list below
+without checking the changelog first; they read exactly like open work.
+
+**Genuinely open — small, all optional, in rough priority:**
+
+1. **Stage 3 of the cross-version arc: pick the steady state.** Branch-per-version (`master` =
+   1.21.11, `mc26.1`, `mc26.2`, cherry-pick shipping) has now carried five releases without trouble.
+   The recorded recommendation stands: hold the decision until **26.3** lands and its delta is
+   measured (see "Stage 3: what the two deltas say" and "26.3 reconnaissance"). 26.3 brings poplar
+   and the wool/concrete slab+stair tags, both already checked: no palette hazard, and the slabs are
+   a *shape* vocabulary to wire in deliberately, not a wall-palette widening.
+2. ~~**`scripts/deploy-fleet.sh`**~~ **DONE (2026-09-14)** — self-defining fleet, version-matched jars,
+   release-vs-sha stamps, locked-jar skip; see `CLAUDE.md`. Exercised against a fake instance tree and
+   dry-run against the real nine (all "up to date" on v5.7.1).
+3. ~~**JourneyMap overlay budget on real hardware**~~ **MEASURED 2026-09-14 (owner, CityWork-ReForged,
+   1.21.11, JourneyMap 6.0.0):** `-Dcityworld.mapstress=true`, five-second samples after a few minutes'
+   travel. Default budget 2000: 104–111 fps, 2.6–4.2 ms frame. `/citymap keep 200`: 104–109 fps,
+   2.6–4.6 ms. `/citymap off`: 105–111 fps, 3.0–5.2 ms. **No difference — the three are one noise
+   band** (the ~105–111 fps plateau is a frame cap; the 2.6–5.2 ms jitter is the client's own).
+   Overlay cost is below measurement at the accumulation a normal session reaches, so **2000 stays the
+   default.** Caveat, so this is not over-read: the run held however many overlays a few minutes of
+   travel accrues (~12 per 160 blocks, so tens, not thousands), which is the realistic load, not the
+   budget ceiling. If someone ever reports a heavy map, the same flag and `/citymap keep` are the
+   two-minute answer.
+4. **Parked decoration ideas, none started, none asked for:** block-entity-backed decorations
+   (plushie, skull blossoms, widow bloom), hanging herbs on ceilings, richer shop-furniture
+   vocabulary (themed counters). The lectern-stood-on-a-chest oddity in Newsagent corner shops was
+   never investigated (shop fitter, predates the furniture pass — probably).
+5. **Per-mod compat, the remaining unpromised half:** Twilight Forest / Apotheosis palettes are
+   "trivial datapack" items nobody has asked for. **BoP is DONE** (biome source folds registered
+   biomes in, cave pool, flowers, ground data map — 5.4.0). **Farmer's Delight crops are DONE**
+   (farm mix pools, 5.4.0). Alex's Caves does not exist for any version we ship, so it is not a
+   compatibility question yet.
+
+**Struck as stale on 2026-09-14 (all shipped; see `CHANGELOG.md`):** cinnabar/sulfur palettes
+(5.4.0, both stone families in MODERN/APOCALYPSE on 26.2 — the owner dislikes the sulfur colour and
+said taste should not dictate it; a datapack `remove` drops one block); industrial fluids incl. 18
+Mekanism ids pre-wired, water towers full (5.5.0); basements of occupied buildings hold storage
+(5.5.0); FOR SALE / TO LET signs on vacant buildings (5.5.0); factory control rooms with console
+banks (5.5.0); paintings + item frames + sconces wall pass (5.5.0/5.6.0); hallways and upstairs
+landings furnished (5.6.0); wardrobes, bedside lamps, 2×2 beds (5.5.0/5.6.0); grim seeds (5.6.0).
+
+**Where the versions live.** One branch per version: `master` = 1.21.11, `mc26.1` = 26.1.2,
+`mc26.2` = 26.2, checked out permanently as worktrees (see `CLAUDE.md`). Jars carry their target
+(`cityworld-5.7.1+mc26.2.jar`); the version inside `neoforge.mods.toml` stays plain. Documentation
+lives on `master` only.
+
+**`compat/Material.java` was the predicted fragility, and the defence held.** 691 constants feeding
+3,096 call sites; 26.1 touched none, 26.2 broke 145, and because the file is *generated* the entire
+repair was teaching `scripts/gen_material.py` new rules. Keep generated code generated.
+
+## ▶ Resume here after v5.7.0 (2026-09-09)
+
+**`v5.7.0` is released: the JourneyMap arc.** Built, playtested across several rounds, and shipped on
+all three versions. The write-up below is the reference; nothing in it is outstanding except the
+optional follow-ups named at its end.
+
+## ▶ JourneyMap integration (2026-09-08)
+
+**What it does.** With JourneyMap installed: rare landmarks become waypoints as they generate,
+`/cityfind`/`/cwlocate` results become a marker on the searcher's map, and **the city plan is drawn
+on the map — districts tinted by family, streets as merged rectangles — for cities nobody has
+explored.** That last one is the part only CityWorld can do: JourneyMap maps what a player has seen,
+and CityWorld knows where every road goes before anyone arrives. `/citymap [on|off]`, on by default.
+
+**Verified facts about the JourneyMap API (2.0.0), measured not guessed:**
+
+- **There are release artifacts for all three of our Minecraft versions**, on `maven.blamejared.com`
+  (`info.journeymap:journeymap-api-neoforge`): `2.0.0-1.21.11`, `2.0.0-26.1`, `26.2-2.0.0`. The API
+  source branches for those three (`1.21.11_2.0.0`, `26.1_2.0.0`, `26.2_2.0`) have an **identical**
+  server-side surface, so the integration is the same code on every branch — only
+  `journeymap_api_version` and `journeymap_version_range` in `gradle.properties` differ.
+- **API 2.0 added a *server* plugin API** (`IServerPlugin` / `IServerAPI`), which is what makes this
+  tractable: the plan lives on the server, and the server can push waypoints
+  (`addGlobalWaypoint`, `addPlayerWaypoint`) and polygon overlays (`getOverlayApi().show(player,
+  modId, ServerPolygon...)`) straight to clients. **No networking of our own, no client-side code.**
+- **JourneyMap 6.0.0 for 1.21.11 declares no `side`**, so it loads on dedicated servers too, and it
+  JarJars both the API and `common-networking` — one jar in `run/mods/` is the whole dev dependency.
+  The shipped jar does contain `journeymap/api/v2/server/overlay/*`, so the overlay API is not just
+  in the source repo.
+- A `ServerPolygon` carries **many** `OverlayPolygon`s under one id and one set of props, so a
+  platmap's whole street grid is a single overlay. Re-`show()`ing the same `(modId, overlayId)`
+  replaces it; `remove` takes it away.
+- Server admins can switch waypoints off (`allowWaypoints`, `globalWaypointsOnly` in
+  `journeymap.server.global.config`), so every call is wrapped — a refused waypoint must not fail a
+  chunk.
+
+**The canonical write-up now lives in the code**, at
+`integration/journeymap/package-info.java` — the five decisions worth copying, the traps, the
+measured costs, and how to add a second map mod (that half is on `api/MapMarkers`). It is written to
+be cribbed for another mod's integration; keep it current rather than duplicating it here.
+
+**How it is kept a soft dependency.** The API is `compileOnly` and never shipped. Everything that
+touches a `journeymap.*` type lives in `me.daddychurchill.CityWorld.integration.journeymap`, and
+**nothing else in the mod may reference that package** — JourneyMap finds the plugin itself by
+scanning for `@JourneyMapPlugin`, so with JourneyMap absent those classes are never loaded. The
+generator talks to the map only through `me.daddychurchill.CityWorld.api.MapMarkers`, which is in
+CityWorld's own types: another map mod (Xaero's, FTB Chunks) can hook the same seam without the
+generator learning about it.
+
+**Two verification tools, because none of this is visible from a headless server:**
+
+- `-Dcityworld.maptest=true` fires one synthetic landmark at the origin at server start and logs
+  whether a map mod is listening — "is the hook wired up?" answered in one run. It also makes the
+  plan overlay build its polygons for platmap 0,0 and log the counts and timings, so the geometry
+  (plan reading, road-strip merging) is checkable without a client. Measured on a cold cache at
+  spawn: 40 overlays / 59 shapes for the 7×7 sweep, rings landing at 2.5 s / 7.1 s / 11.9 s / 13.9 s
+  — which is why the sweep pushes ring by ring instead of all at the end, and why every player's
+  sweep shares one worker (planned platmaps are cached, so the second player pays almost nothing).
+  A single platmap's 100 road chunks merge to 1–7 rectangles.
+- The plain startup line `CityWorld: map integration active` appears whenever anything is listening.
+
+**Two cross-version deltas in this integration, both now isolated:**
+
+1. `ChunkPos` is a record from 26.1 on (`.x()` vs `.x`) — the same single API change the 26.1 port
+   cost. Avoided outright by taking the platmap from `player.blockPosition()`, which reads the same
+   on every version.
+2. **26.2 moved `Context`** from `journeymap.api.v2.client.display` to `journeymap.api.v2.common`,
+   and `OverlayShapeProps` names it. That import now lives alone in `OverlayProps.java`, so
+   `CityPlanOverlay` is identical on all three branches and cherry-picks never conflict on it. The
+   whole per-branch delta for this feature is therefore: two `gradle.properties` values and one
+   import line.
+
+**The client plugin, and the crash it cost (2026-09-09).** JourneyMap binds an `Option` to its
+stored config **after** the options-registry event returns, so calling `option.get()` inside that
+event throws an NPE — and thrown inside JourneyMap's event bus during client setup, that is a
+**crash on the loading screen**, not a logged complaint. Every option read now goes through a
+`planOn()` that catches, and every JourneyMap callback CityWorld registers is wrapped so a failure
+of ours can never take the host game down. The generator already extends map mods that courtesy;
+this is the same rule pointing the other way.
+
+**A dev client runs here.** WSLg provides `DISPLAY=:0`, so `./gradlew runClient` with the JourneyMap
+jar in `run/mods/` starts a real client — which is what catches a client-plugin crash before it
+reaches a player. The crash above was shipped because only the dedicated server had been exercised.
+
+**The second client crash, and why it looked like "the map crashes on J" (2026-09-09).** The toolbar
+button's icon was taken from JourneyMap's own example mod,
+`journeymap:/resources/assets/journeymap/theme/flat/icon/grid.png` — a path that does not resolve in
+the shipped mod, where the asset is `assets/journeymap/theme/flat/icon/grid.png`. A missing icon is
+not a cosmetic fault here: the button renders a null texture, JourneyMap throws inside
+`jm.fullscreen.render()` **every frame**, and closes the fullscreen map to keep the game alive. The
+minimap was unaffected, which is exactly how it presents — "J opens and instantly closes". Found in
+`journeymap/journeymap.log` inside the instance, **not** in `logs/latest.log`; that file is the first
+place to look for anything map-side. CityWorld now ships its own icon
+(`assets/cityworld/textures/gui/city_plan.png`, drawn by a few lines of zlib in the commit) so no
+part of this depends on another mod's internal asset layout.
+
+**Roads through wild land were invisible** because the sweep skipped NATURE platmaps whole, tint and
+streets together. Wild land still gets no tint — the map already shows what it looks like — but its
+roads are drawn, and the street radius went to 5×5 platmaps: the streets read better in play than
+anything else the overlay draws.
+
+**Running a dev client here (WSLg).** `DISPLAY=:0` is available, so `./gradlew runClient` starts a
+real client — the only thing that catches a client-plugin crash before a player does. Three
+one-time fixes to `run/options.txt` (git-ignored, so each checkout needs its own):
+`onboardAccessibility:false` — otherwise the accessibility onboarding screen blocks quick-play and
+the client never connects — and every `soundCategory_*:0.0`, because the window plays through the
+owner's speakers while they are working. To join a server straight from the launcher:
+`./gradlew runClient -PcwJoin=127.0.0.1` (added to the client run config; `--args` does **not** work
+— ModDevGradle treats it as the main class).
+
+**The server/client test: DONE, and it passes (2026-09-09).** A dedicated `runServer` with
+JourneyMap installed, and a separate `runClient -PcwJoin=127.0.0.1:25599` joining it — note the dev
+server's port is **25599**, not 25565. The client connected, the optional payload channel negotiated
+(a mismatch would have refused the login), and both plugins reported themselves on their own sides.
+That covers what single-player cannot: the payload channel, and overlays and waypoints crossing a
+real wire to another JVM.
+
+**The overlay budget, and what could not be measured.** How many overlays a client can hold is the
+one real cost of keeping the plan drawn — the server neither re-plans nor re-sends a retained one —
+so the ceiling is a per-player setting (`MapMarkers.cityPlanBudget`, default 2000, from JourneyMap's
+options or `/citymap keep`), and over budget the *furthest* overlays are dropped rather than
+everything outside a box.
+
+**The stress test could not produce a trustworthy number here, and the tooling exists so it can be
+run where it counts.** WSLg renders in software: the client idles at ~28 fps on a menu and drops to
+single digits in-world with terrain loading, and JourneyMap's own `RegionTexture.bindRegionTexture`
+throws `IllegalArgumentException` every frame against that GL stack. Any overlay cost is far below
+that noise. `-Dcityworld.mapstress=true` logs fps and frame time every five seconds on the client, so
+the measurement is one run on real hardware: note the frame time at `/citymap keep 2000`, then at
+`/citymap keep 200`, and compare. Measured growth for context: **~2 overlays and ~5.5 shapes per
+platmap**, and straight-line travel sweeps a 7-platmap-wide band, so roughly **12 overlays per 160
+blocks** — about 75 per 1000 blocks travelled.
+
+**Trap paid for here:** the dev server's `run/world/session.lock` outlives a `pkill` that does not
+actually kill (`pkill -f "gradlew runServer"` returned 144 and left the JVM up), and the second run
+dies with `DirectoryLock$LockException: already locked` → `Couldn't find Minecraft server thread`.
+Same shape as the `Address already in use` trap already recorded: check the process is gone by PID,
+not by the exit code of `pkill`.
+
+## ▶ Furniture mods — built, playtested, and what is left (2026-09-02)
+
+**Status 2026-09-02 (later the same day): all five items below are FIXED in code, awaiting playtest.**
+What changed, and what the diagnoses turned out to be:
+
+1. **Half baths** — fixed. `parts: 2` on the data map entry; `SupportBlocks.setTwoPartFurniture`
+   places `type=bottom` at the anchor and `type=head` one cell along `facing` (measured from
+   `BathBlock.setPlacedBy` — it is exactly the vanilla bed contract). The `type` property is found by
+   *name*, so any mod following that contract works.
+2. **"Half tables" — identified without Jade.** Not a two-block model at all: it is **one-sided
+   auto-connect**. Placing piece B beside piece A fires `updateShape` on A only (the world updates
+   neighbours; the placed block's own connection state comes from `getStateForPlacement`, which only
+   players trigger). So A dropped its legs toward B while B kept its complete standalone default —
+   one legless "half table" beside a whole one, on every multi-piece run. Fixed with
+   `SupportBlocks.reconnect` (`Block.updateFromNeighbourShapes`) after each furniture placement.
+   The mcw coffee table's `connection=center` model (a floating legless top) is what makes this so
+   visible.
+3. **Kitchen fronts / 4. toilet** — fixed. `FACING_OFFSET` now covers every oriented family and
+   every placement routes through `facingFor`. ⚠ The measured conventions are wilder than "per mod,
+   per role": **Macaw's classic chair is 0 but its modern_chair is 180**; its counters/kitchen
+   cabinets/sinks are 180 while its drawers/wardrobes/bookshelves are 270 (fronts at −X like its
+   sofa). Refurbished is uniformly 180 (one shared base class, six families verified). Offsets are
+   keyed per (namespace, family suffix), longest suffix wins. Macaw desks are deliberately absent:
+   their facing is a custom two-value axis property (north|east) that `withFacing` cannot set, and
+   the models read the same front-and-back.
+5. **Three decoration pools** — built: `#cityworld:decor/{floor,surface,wall}`, generated with
+   vanilla seeds; modded lamps land in `surface` and get an end table stood under them (in the
+   lounge corner and in the accent pass). Wall pieces mount at eye height on the wall the cell backs
+   onto; glow-lichen-style face-attached blocks attach toward the wall while torch-style blocks face
+   away (`hasFaces()` distinguishes).
+
+Self-test now also fails if oriented furniture resolves with no offsets, if baths resolve with no
+two-part declaration, or if a decor pool resolves empty. The original brief follows for the record.
+
+**Playtest round 2 (2026-09-02 evening) — fixed same day (`37f59c6`):** modern_chair offset was a
+false measurement (truncated element dump; all Macaw chairs are 0); **reconnect corrupted Macaw
+couch runs into corner shapes** (their `updateShape` reads neighbours via THEIR facing convention,
+which our offset-rotated facing disagrees with — reconnect is now explicit-only, for
+counters/tables/desks which playtested good); the bath moved to the **window wall** (nearest chunk
+edge, like beds) because a door cut after furnishing beheaded it; toilet centres on an adjacent wall
+instead of staring at the basin; amethyst is table decor (surface pool) now.
+
+**Owner's accepted order (2026-09-02): 1) bedroom + hallway variance, 2) wall decor pass
+(paintings + item frames with clocks etc.), 3) ceiling pass — Refurbished ships
+`<wood>_dark/light_ceiling_fan` blocks (28 of them; Macaw has none) plus microwaves for kitchen
+surfaces. Add a `furniture/ceiling_fan` role (or `decor/ceiling`) to the generator, measure
+whether fans carry facing, and hang them from room ceilings the way the chandelier does.**
+
+**Owner's in-game scouting (2026-09-02, Refurbished):** TVs; **fridge — a vertical two-block**
+(like the bath but stacked, so `parts` needs an UP direction or a second marker); stove that can
+take a frying pan; cutting board (counter surface piece); bin; light switches (wall piece —
+harmless without wiring); **a whole power system we deliberately avoid**. Ceiling: fans AND
+hanging lanterns (chandelier already hangs lanterns — reuse that). Macaw wardrobes/bookshelves
+connect **vertically** (`connection=bottom/top`, measured earlier) as well as horizontally —
+a 2-tall wardrobe stack is possible where ceilings allow.
+
+**The interiors round (overnight 2026-09-02→03, `6e1b62e`).** The Rooms system (42 room types +
+per-building populators, inherited from upstream) predates the pools; 17 room types were converted
+to pooled primitives on `PlatRoom` (`drawDesk`/`drawTable`/`drawSeat`/`drawCouchSeat` — stair
+fallback keeps the classic look, and `drawCouchSeat` takes the room's single sofa pick because
+PlatRooms are SHARED instances, no state allowed). New roles: computer/crate/workbench. New rooms:
+ClassRoom, CourtRoom, ExhibitRoom, WorkshopRoom, BedNookRoom. **Government buildings (previously
+EMPTY — the BuildingLot default provider is EmptyWithNothing) are now city halls / courthouses /
+schools, one flavour per building; museums get exhibit floors; factories get workshops; warehouse
+stacks blend crates; ~half of formerly-empty office towers are residential (lobby + flats).**
+LoungeTVRoom honours upstream's 12-year-old `// TODO add picture to wall` with a television.
+Not touched: UnfinishedBuildingLot (construction props idea remains open) and HospitalLot (has its
+own campus interiors).
+
+~~**Queued from the interiors playtest (2026-09-03), not yet built:**~~ **ALL FOUR SHIPPED** — fluids/silos and
+basement storage and FOR SALE signs and factory control rooms are all in 5.5.0 (re-checked against
+`CHANGELOG.md` and the code 2026-09-14; this list went stale the week it was written). Kept for the head-starts:
+- **Fluids setting (BIG)** — owner wants an optional "fluids" toggle, default ON for MODERN, OFF
+  for APOCALYPSE: fills the industrial silos with a random fluid and the water towers with water.
+  Head start: `includeAbovegroundFluids` ALREADY EXISTS and `drawWaterTower` already checks it —
+  the job is per-style defaults + finding the silo drawing (IndustrialContext, the big round tanks)
+  and filling those too. Check what currently sets includeAbovegroundFluids.
+- **Basements (BIG)** — buildings have `depth` (basement floors exist). If the building is
+  occupied (not Vacant/Empty), furnish basement floors with a storage populator (WarehouseWith*
+  pool or similar). Find where basement floors call roomProviderForFloor (floor < 0? the
+  basementFloorHeight path around FinishedBuildingLot:854).
+- **Factory control panels** — the factory's room-within-a-room (machinery boxes / offices in the
+  tall halls, drawn in FactoryBuildingLot.drawInteriorParts singleFloor branch) wants control-panel
+  strips: levers/observers/redstone-ish blocks on the box walls.
+- **For-sale signs** — Vacant towers (OfficeBuildingLot EMPTY) and EmptyBuildingLot get a "For
+  Sale" wall sign by the ground-floor door. Sign text helpers exist (setSignText).
+
+**▶ RESUME HERE (fresh slate, post-5.6.0, 2026-09-07).** Everything through the Fantasy's Furniture
+arc is released and on every instance. Nothing is in flight. Parked ideas, none started:
+block-entity-backed decorations (plushie, skull blossoms, widow bloom); hanging herbs on ceilings;
+more vanilla grim seeds; a `scripts/deploy-fleet.sh` for the nine instances (done by hand this cycle);
+CURSEFORGE.md paste + sablecraft.co.uk (owner, today). Next feature: owner's call.
+
+**v5.6.0 RELEASED 2026-09-07** — tag on master `79def65` (docs `c2b76e3`), three jars on GitHub
+(https://github.com/Sablednah/CityWorld-ReForged/releases/tag/v5.6.0), Modrinth workflow green,
+CurseForge workflow fired; all nine instances on the release jars (`DEPLOYED-v5.6.0`). Still manual:
+paste `CURSEFORGE.md` (furnished section updated for 5.6.0) as the CurseForge description; the site
+lags. Branches `mc26.1`/`mc26.2` pushed with their own "Bump to 5.6.0" commits. Everything below is
+the record of the arc that became 5.6.0.
+
+**(was) RESUME HERE (Fantasy's Furniture, 2026-09-04).** The furniture + interiors arc shipped in
+5.5.0; the next mod family — **Fantasy's Furniture** (base + Nordic + Necrolord sets + Decorations,
+all 26.2.4 on apexcore 26.2.3) — is integrated in code and awaiting playtest. What was built:
+
+- **The sets are one vocabulary.** Every `fantasyfurniture_<set>` mod registers the same 39 block
+  names through the base mod's `FurnitureUtil`, so `gen_furniture_tags.py` has a `SET` table keyed by
+  block name (chair/stool/cushion/bench → chair, sofa, table, desk_left/right → desk, counter,
+  drawer/dresser → drawer, wardrobe, bookshelf, chest → crate, oven → stove, bed_single/double → bed,
+  floor_light → floor_lamp, shelf → shelf, lockbox → surface decor, chandelier → hanging_light,
+  wall_light/paintings → wall decor, carpet → rug). A set is recognised by its `neoforge.mods.toml`
+  dependency on `fantasyfurniture` (or the namespace prefix); unknown block names are REPORTED, and
+  a layout whose part count disagrees with the blockstate's `multi_block_index` values is skipped
+  with a shout. Planks/wool join palettes via vanilla tags; Necrolord bricks were hand-added to
+  `build/modern_stones`.
+- **Multi-block placement is generic now.** Data map `Facing` gained `layout` (cells as right/up/back
+  relative to the piece's OWN facing, + per-cell `props`), `props`, `vary`, `indexProperty`,
+  `reconnect`. `SupportBlocks.setFurniture` is the one placer: rotates the layout exactly as
+  apexcore's `MultiBlock.rotate` does (+z local = facing.getCounterClockWise = viewer's right, +x =
+  facing.getOpposite = back), writes whole-or-nothing (all cells in-chunk + empty; grounded cells
+  need support), sets the index and named props per cell, randomises `vary` props by
+  `Mth.getSeed(pos)`. `setTwoPartFurniture` is gone — `parts: 2` synthesises the bed-contract layout.
+  `FurnitureTags.pick(role, odds)` now filters to 1×1×2 footprints; `pick(role, odds, w, d, h)` for
+  callers with room (bedroom bed/wardrobe/dresser, study desk/bookcase, hallway console, bathroom
+  bath, PlatRoom.drawDesk tiles a region by walking cells and skipping filled ones).
+- **Measured conventions (fantasyfurniture):** facing = FRONT for everything (one apexcore base
+  class, `getHorizontalDirection().getOpposite()`; geometry at facing=north: chair/sofa backrests,
+  painting canvas, wall light all at +Z). Beds are vanilla-contract (offset 180, head at back −1);
+  the double is origin + (−1,0,0) + (−1,0,−1) + (0,0,−1), head = indices 1,2. Sofa/shelf DEFAULT
+  state is `connection=center` (armless middle) → `props: connection=single` + `reconnect` (safe:
+  their connection logic reads the same facing we write). Sets do not cross-link (same-block check)
+  — irrelevant, rooms pick one piece per role.
+- **New in rooms:** bed pool (16 vanilla + modded, foot-cell anchors, double falls back to single);
+  wall shelf at waist height + surface topper (Fantasy's shelf / vanilla `*_shelf` / top-half slab
+  fallback, owner's idea) as a third of `wallDecor`; freestanding floor-lamp role; rug pool; decor
+  placers apply `vary` + a random facing; wall pass tries a 2-wide piece (painting_wide, large
+  mirror) half the time.
+- **Self-test:** offsets check now "is declared" (a fantasy-only world has offsets of 0); new checks:
+  multi-block layouts match the block's index property; every installed `fantasyfurniture_*` set
+  has ≥6 pieces in the pools; hanging_light + rug pools non-empty.
+
+**Shipped to the 26.2 instance (`DEPLOYED-a0bee92`), selftest PASS on 26.2 (96 checks; readback
+"71 multi-block pieces whole, 0 broken") and on 1.21.11 (94; bed=16 vanilla, shelf=12 vanilla);
+mc26.1 built. ⚠ The one trap found by measurement, not by reading: the first survey had HALF-CHAIRS
+— rooms that place seats through the plain `setBlock(material, facing)` overload wrote the origin
+cell only. That overload now hands any data-map-declared piece to `setFurniture`, so every call
+site, present and future, places whole or not at all; the self-test's `readback.multiBlockPieces`
+integrity check (recomputes each cell's origin from the layout) is what caught it.
+
+**Follow-up (same day):** (1) **runtime set detection** — `Support/FurnitureSets` scans the block
+registry at first use for any namespace holding ≥4 of the vocabulary's `detect` names (bed_single,
+desk_left, floor_light, lockbox… — names no other mod uses), derives roles/layouts from
+`src/main/resources/cityworld/furniture_vocabulary/fantasyfurniture.json` (the ONE source of truth,
+also read by the generator), unions into `MaterialTags.resolve` and backs `furnitureDataFor`
+(datapack entry wins). PROVEN 2026-09-04: a 26.2 jar generated against a mods folder WITHOUT the fantasy jars
+(0 baked entries) still self-tested PASS with `setsDetected=[necrolord, nordic]`, 50 pieces pooled,
+72 multi-block pieces whole. Final full jar deployed as `DEPLOYED-19b0550`; 1.21.11 PASS; mc26.1 built. (2) **Grim pools** `decor/grim_{floor,surface,wall}`, vanilla-seeded
+(skulls with `vary: rotation`, cobwebs), Decorations' macabre pieces; `Furniture.grim()` = APOCALYPSE
+&& coin flip, threaded through placeAccent/wallDecor (which now takes the generator)/wallShelf.
+
+**Later the same evening (2507f4b, c04d5a3):** vanilla shelves are containers → `stockShelf` writes
+items into the BE (plain list write; self-test `readback.shelves`); wall pass now runs in
+`sweepBareFloor` (offices/shops/flats, 3 rolls per floor); wall mounts require sturdy NON-GLASS
+backing (`isGlass`); two-tall wall pieces mount at y+1; `decor/desk` pool on office desks;
+`FurnitureSets` asks apexcore's `MultiBlock.getMultiBlockLocationPositions()` by reflection when a
+block's index count disagrees with the vocabulary (Dunmer oven) and the generator infers two-part
+shapes from `_left/_right` vs `_bottom/_top` model names. **Both plain `setBlock` overloads now
+route declared furniture to `setFurniture`** — the hospital's desk toppers went through the
+no-facing one and never varied (owner: "every cup and tankard and platter is single"); the
+self-test tallies `count` values (`readback.stackCounts`). The Bone pack (two sets in one jar,
+NO blockstates or tags in the jar — generated at runtime) is the proof the registry scan was the
+right call: five sets detected, all pooled, 76 multi-block pieces whole.
+
+**Playtest sign-off (owner, 2026-09-05):** beds solid on 26.2 after the nightstand guard (da2f2a3);
+1.21.11 with NO furniture mods "look furnished, well furnished — not just ok, still good". Two
+in-play finds fixed same day: 195 "Tried to load a block entity" lines (DUMMY placeholder on
+non-origin multi-block cells → dropped in setFurniture, counted by selftest.sh) and beds missing a
+cell (the nightstand barrel overwrote the head cell in narrow rooms — NOT decay; the building was
+intact, which was the clue). All nine CurseForge instances redeployed (1.21.11 da2f2a3, 26.1
+7bf1c54, 26.2 18d03af).
+
+**Evening 2026-09-05 (f9b9e7b, 8fcd6c0, da5c825):** paintings on chandeliers had TWO causes —
+house rooms ran wallDecor before accentRoom (a painting is an entity; the chandelier chain saw an
+empty cell) → walls now come after accents in all 11 branches; and the Fantasy chandelier's collision
+box passes `isFaceSturdy`, so the wall pass took it for a wall → `SupportBlocks.isWallBacking` = full
+cube + sturdy + not glass + not in ANY pool (`FurnitureTags.isPooled`, all pools by reflection, plus
+the data map). Wall pieces were rare because vanilla art went first and always wins on a sturdy wall
+→ shelf/art/pool now a third each; wide/tall rolls use `pickExactly`. Kitchens take a 2-wide cooker
+(Dunmer oven) anchored one cell in. Both self-tests PASS (26.2: 89 pieces whole, 206 shelves
+stocked, stacks {0=36,1=19,2=17}); all nine instances redeployed.
+
+**2026-09-06/07 (bf7c964):** wide paintings hung half over windows / past wall ends → `mountOnWall`
+checks `isWallBacking` behind EVERY cell (`SupportBlocks.furnitureCells` exposes the layout cells);
+office wall pass hung art inside stairwells → candidate cells must be standable floor (air at foot,
+solid below). Owner confirmed in play: Dunmer oven, banners, double beds. Fleet on bf7c964/d6243f1/dee2caf.
+
+**NEXT (still open to look at):** an APOCALYPSE world for the grim pools; Dunmer/Bone sets in
+kitchens (2-wide oven); tall wall pieces (large mirror, banner) actually appearing: chairs 2-tall in dining/offices, wardrobes in
+bedrooms, double beds, sofa runs (arms at the ends), shelf+topper, decorations on tables. Watch for:
+a piece that never appears (footprint filter too strict) and mis-rotated 2-wide pieces (the
+right-hand rule). Ideas parked: an APOCALYPSE-only pool for the macabre decorations (bone piles,
+spider webs, gravestones), plushies (block-entity backed), the base mod's furniture_station as a
+workshop workbench.
+- **2026-09-07 — line-of-blocks building SOLVED (589a9b7):** seed -3729467216436926281, block
+  24 76 -169, StoreBuildingLot COLUMNS_OFFICES. New instrument `-Dcityworld.watch=x,y,z` (ChunkProbe)
+  named it in one run: `drawInteriorColumns` draws the narrow layout's 2×2 pillar at x7..8/z7..8 full
+  height, a CENTER stairwell sits there, the stairs carved most of it and left a row across the stair
+  head every floor. Columns now skip stair-claimed cells (claim is filled before the style switch).
+  Re-probe: 0 WATCH lines. Also today: wide wall pieces need wall behind EVERY cell; office wall pass
+  keeps to standable floor (was inside stairwells).
+- **Same seed, chandelier over the stairs (8880e5a):** `lightInterior` runs after `claimStairs` but
+  BEFORE `drawStairs`, and its grid's centre position is a CENTER stairwell — it found the intact
+  ceiling, hung the light, then the stairs cut the ceiling. Claimed positions skipped. Rule of the
+  day: anything drawn between claimStairs and drawStairs must consult the claim.
+- Watch-list: ~~the line-of-blocks building~~ (solved above);
+  CurseForge review + Modrinth approval pending; owner pastes CURSEFORGE.md; site lags a release.
+Everything below this line is historical record of the arc.
+
+**Queued (2026-09-03 evening):**
+- **▶ OVERNIGHT (2026-09-03→04): the four-times-escaped empty School lobby.** Jar-stamp-verified
+  on 22:56 build (claim-footprint fix AND sweep self-calibration both live, upstairs furnishes,
+  lobby still bare). Seed 2720459862006157221, block 90 69 -107, chunk (5,-7). STOP PATCHING —
+  instrument: probe-gated tracing inside sweepBareFloor + GovernmentBuildingLot.drawInteriorParts
+  (log per-floor: called-or-not, style, y1, calibrated yf, bounds, claim count, per-cell failure
+  tallies), a `-Dcityworld.probe=<chunkX>,<chunkZ>` ServerStarted listener that forces the region,
+  logs, halts. Run on the mc26.2 worktree dev server (mods present) with that seed in
+  run/server.properties (level-type cityworld:city, do NOT run selftest.sh — it overwrites seed).
+  Candidate causes the tracing must separate: sweep never called for floor 0 (style/skip path),
+  doBuilding(heights) false for this chunk, singleFloor special-casing, calibration finding no
+  standable level, bounds inverted by per-side insets, claim covering all (shouldn't now).
+- **⚠ REPRO IN HAND — empty School/City-hall GROUND floors (upper floors fine).** Seed
+  2720459862006157221, block 90 69 -107 (chunk 5,-7), GovernmentBuildingLot interior=School,
+  MunicipalContext; confirmed on jar-stamped fresh world (F3 stamp works). Diagnosis so far:
+  GovernmentBuildingLot.drawInteriorParts passes `floorAt + higher` (higher=2) to super and draws
+  foundation columns AFTER furnishing; hypothesis: off-by-one between the raised y and the real
+  floor slab makes bareFloor's solid-underfoot test fail on every ground-floor cell → sweep places
+  nothing. Verify with the plan-probe workflow (memory: cityworld-worldgen-verify-probe) on the dev
+  server at that seed — CityWorld is seed-deterministic, so the dev server reproduces the exact
+  building.
+- **Stairwell/room interplay — the remaining interior defects (F3'd, three symptoms, one root):**
+  (1) sweep rooms now sit flush to stairs and furniture crowds the stair exit (needs a 1-cell
+  buffer around stair blocks); (2) the 90° corner-landing and 2-wide stair styles still leave bare
+  voids the 4-step sweep grid misses; (3) a GRID room's wall panel generated THROUGH a staircase —
+  grid rooms draw BEFORE stairs and never check the floor. Likely right fix: draw stairs FIRST,
+  then grid rooms with a bareFloor check, then the sweep with a stair-adjacency margin — one
+  ordering, all three symptoms.
+  **Deeper design note (owner: "we yo-yo — fix it and then furniture clips"):** every yo-yo came
+  from a furnishing stage INFERRING stair positions — geometric guesses, emptiness probes, each at
+  a different pipeline moment, each wrong differently. The reliable shape: `drawStairs` (and the
+  stairwell walls) RECORDS the cells it claims — footprint plus the approach/exit cells — into a
+  per-floor claim mask on the lot, and every furnisher (grid rooms, sweep, decorateLanding,
+  accents) consults that mask instead of guessing. One source of truth, ordering-insensitive, and
+  exit cells are claimable without being solid — which no emptiness probe can ever see.
+- **Hospitals + vaults: light furnishing pass** — structurally fine, just want orientation-aware
+  pool furniture (the placeFacing/pool machinery, not new layouts).
+- **Debug diagnostics mode** — normally-off logging (config/system property) that reports silent
+  fallbacks: "tag X resolved empty", "material Y not found", "offset undeclared for Z". Would have
+  caught the chemicals-namespace bug and every empty-pool trap this project keeps hitting.
+
+~~**Queued from round 2, not yet built:**~~ **Re-checked 2026-09-14: bedroom variance, the paintings/item-frame
+wall pass and hallway/landing furnishing all shipped (5.5.0/5.6.0), and furnishing now runs AFTER the
+doors are cut (`Furniture.bedroom` comments record it). Still open: only the lectern-on-a-chest
+oddity (never investigated).**
+- **Furnish after doors** — the wall-nearest-edge trick dodges most door clashes, but the real fix
+  is ordering: find where the colonial house cuts doors vs. styles rooms and furnish afterwards.
+- **Bedroom variance** — mostly bed+barrel today. Add a wardrobe/drawer against a wall, a rug, and
+  make the bedside-table-with-lamp appear more often.
+- **Wall decor pass with paintings + item frames** — owner wants paintings and item frames (holding
+  clocks and such). These are ENTITIES, not blocks: the decoration `LevelAccessor` is a
+  `WorldGenRegion` (a `ServerLevelAccessor`), so `addFreshEntity` works — structures spawn entities
+  this way. New capability, worth its own careful pass.
+- **Hallways/landings are empty** — a console table, cupboards, and the wall pass belong there.
+  Find where the house room-splitter labels hallway cells.
+- **Lectern stood on a chest** in a Newsagent corner shop looks odd — that's the shop fitter, not
+  the furniture pass; check whether it predates this work before touching it.
+
+**Read this before touching furniture.** The concept is proven in-world; four specific things are
+wrong and all of them are diagnosed with measurements below, so none of it needs re-deriving.
+
+### What exists
+
+- `scripts/gen_furniture_tags.py` — **generates** the role tags and the facing data map from installed
+  furniture mods. 982 blocks across 13 roles from Macaw's Furniture + Refurbished Furniture. Re-run it
+  when a mod updates; nothing here is hand-maintained.
+- `#cityworld:furniture/<role>` — chair, table, sofa, desk, counter, cabinet, drawer, wardrobe,
+  bookshelf, sink, toilet, bath, lamp. All entries `"required": false`.
+- `cityworld:furniture` data map — `{"facingOffset": degrees}` per block.
+- `Support/FurnitureTags.java` — `pick(role, odds)`, `has(role)`, `facingFor(piece, look)`.
+- `Support/Furniture.java` — kitchen / dining / living / bathroom / **study** (new) draw from the pools
+  and fall back to the old vanilla-block furniture when a role is empty.
+- Self-test reports `furniture.roles` and `furniture.seatsWithOffset`, and fails if seats resolve with
+  no offsets declared.
+
+### Playtest verdict (owner, 2026-09-02)
+
+> "the concepts seem sound — houses have rooms and the rooms have been kitted out. lounges have
+> couches — cabinets in kitchens — all good… chairs seem to be correct everywhere so that bit worked."
+
+So: role tags, room wiring, the fallback, and the **chair** facing offsets are all confirmed working
+in-world. What follows are the four defects.
+
+### ⚠ 1. Half baths — multi-block furniture is placed as one block
+
+**Cause, measured:** Refurbished baths carry `type=bottom|head` — they are two-block furniture like a
+bed. 27 blocks, and they are the *only* multi-block furniture in either mod. A scan of every
+blockstate property across both jars:
+
+| property | mod | count | on |
+|---|---|---|---|
+| `type=bottom\|head` | refurbished | 27 | **baths — the two-blockers** |
+| `shape` | mcw | 16 | couches |
+| `shape` | refurbished | 59 | kitchen cabinetry |
+| `left`/`right` | refurbished | 22 | desks, drawers |
+| `tucked` | refurbished | 11 | chairs |
+
+**Fix:** place both halves, the way `placeBed` already does in `Furniture.java`. Needs a
+"two-block" marker — cleanest as a field on the data map entry (`{"parts": 2}`), since the data map
+already carries these blocks and a tag would be a second place to look.
+
+### ⚠ 2. "Half tables" — not yet identified
+
+Tables in **both** mods are connection-based (`north/east/west/south` booleans, like fences), not
+multi-block, so a lone table block is legitimate. The owner saw something table-shaped that is clearly
+meant to be two blocks. Candidates, by property: Refurbished **desks** (`left`/`right`), Refurbished
+**kitchen cabinetry** (`shape`), Macaw **couches** (`shape=single/left/middle/right`).
+
+**Do not guess.** Jade is installed in the 26.2 instance — get the block id from in-world and work from
+that.
+
+### ⚠ 3. Kitchen fronts face the wall — non-seat roles have no facing offset
+
+**This is one bug, not several.** Offsets were only declared for `chair` and `sofa`; every other
+oriented role got the default 0, so counters, cabinets and sinks were placed with their backs to the
+room. Measured from model geometry against each blockstate's rotation table:
+
+| block | unrotated variant | geometry | `facing` means | offset needed |
+|---|---|---|---|---|
+| mcw `oak_kitchen_cabinet` | `facing=east` | door + handle at **x 4.9–6 (west)**, body east | the **back** | **180** |
+| mcw `oak_kitchen_sink` | `facing=south` | raised tap rim at **z 1–3 (north)** | the **back** | **180** |
+| refurbished `oak_toilet` | `facing=north` | cistern **z 0–5 (north)**, bowl z 5–15 | the **back** | **180** |
+
+(#4 below is the same defect — the toilet is just the most obvious instance.)
+
+**Fix:** extend `FACING_OFFSET` in the generator to cover counter, cabinet, sink, toilet, bath, desk,
+drawer, wardrobe, bookshelf, and have the room code route *every* oriented placement through
+`FurnitureTags.facingFor` rather than passing a raw `BlockFace`.
+
+### ⚠ 4. Toilet backwards — same cause as #3
+
+### ⚠ 5. Decoration needs three placement pools
+
+Owner's design call, and it is the right shape:
+
+> "I think 3 pools of decorations are needed — 'on the floor', 'on a surface', 'on a wall'."
+
+Refurbished lamps are single-block, **y 0–14, and carry no `facing`** — they are *table* lamps, which
+is why they read wrong standing on the floor. The fix is not to move them but to classify:
+
+- **floor** — sofas, tables, cabinets, counters, beds: placed on the ground.
+- **surface** — lamps, plates, toasters, potted plants, candles: **require a surface beneath**, so the
+  placer puts a table/end table/counter under them, or only places them on one already there.
+- **wall** — anything wall-mounted (paintings, wall lamps, shelves).
+
+Whether a *freestanding* floor lamp exists in either mod is unchecked — if it does it belongs in the
+floor pool and the tabletop ones in surface.
+
+### How to derive a facing offset (the method, so it need not be rediscovered)
+
+1. Open the block's blockstate JSON, find the variant with **no `y` rotation**.
+2. Open that variant's model (follow `parent` until you reach `elements`).
+3. Find the identifying geometry — a chair's backrest, a cabinet's door and handle, a toilet's cistern.
+4. The piece's **front** is the opposite side to the back. The offset is the clockwise turn from that
+   front direction to the variant's own `facing` value.
+
+⚠ **The mods disagree, and one disagrees with itself** — Macaw's chair is offset 0 while Macaw's sofa
+is 270 — so offsets must be measured per (mod, role), never assumed per mod.
+
+## ▶ Next up (queued 2026-08-17)
+
+In rough priority order. **#1, #2 and #3 are DONE (2026-08-27) — see "Caves, structures and 3D
+biomes" and "Wave C" below. #4 is DONE (5.4.0). #5 is done for everything anyone asked for** (BoP,
+Farmer's Delight, Fantasy's Furniture — 5.4.0/5.6.0); only unrequested Twilight Forest/Apotheosis
+palettes remain, see the top of this file.
+
+### 1. ~~⚠ Vanilla structures never generate — including strongholds~~ **DONE (2026-08-27)**
+
+`CityWorldChunkGenerator.createState` returns `ChunkGeneratorStructureState.createForFlat(…,
+Stream.empty())`, so **no vanilla structure is ever placed**. That is deliberate for villages and
+mineshafts — CityWorld builds its own — but it takes strongholds with it, and **no stronghold means
+no End portal**. Eyes of ender have nothing to find, so as far as I can tell a CityWorld world cannot
+reach the End by normal play. *Read from the code, not yet confirmed in-game — verify before acting
+on it.*
+
+Worth deciding as a gameplay question, not just a feature: does a CityWorld world want to be
+completable? If yes, the minimum is placing strongholds somewhere sensible and making
+`findNearestMapStructure` agree with where they went, or eyes will point at nothing.
+
+### 2. ~~"Put a structure here" — ancient cities, trial chambers, strongholds~~ **DONE (2026-08-27)**
+
+**Researched 2026-08-17 against the 26.2 data — the answers are more encouraging than expected.**
+
+**Suppression can be selective, easily.** `createState` passes `Stream.empty()` to
+`ChunkGeneratorStructureState.createForFlat`, and that argument is a stream of `StructureSet`
+holders — pass a *filtered* stream and exactly those come back. Vanilla even does the hard part:
+both factory methods drop any set whose biomes the biome source cannot produce
+(`hasBiomesForStructureSet`), so unavailable structures exclude themselves with no special-casing.
+
+**The placement conditions, from `data/minecraft/worldgen/structure_set/` in 26.2:**
+
+| | Placement | Biome requirement (`tags/worldgen/biome/has_structure/`) |
+|---|---|---|
+| Stronghold | `concentric_rings` — count 128, distance 32, spread 3 | `#minecraft:is_overworld` — *any* overworld biome |
+| Trial chambers | `random_spread` — spacing 34, separation 12 | a long list of ordinary **surface** biomes |
+| Ancient city | `random_spread` — spacing 24, separation 8 | **`minecraft:deep_dark` only** |
+
+So **strongholds and trial chambers need no cave biome and would work today** — the surface biomes
+CityWorld emits already satisfy both. **Ancient cities cannot**, and will be silently filtered out
+until the biome source can emit `deep_dark` (see #3).
+
+**Geodes are not structures.** `amethyst_geode` is a *placed feature* (underground decoration), which
+is why they already appear in CityWorld worlds while strongholds do not: we run vanilla decoration on
+nature chunks but zero the structure state. Features and structures are separate pipelines — ores
+arrive the same way geodes do. Worth keeping straight, since "I can see geodes" naturally reads as
+"structures work".
+
+**⚠ The wrinkle, so this doesn't look like a five-minute change.** `createForFlat` passes `0L` as the
+concentric-rings seed where `createForNormal` passes the level seed — and that seed is precisely what
+positions strongholds. Re-enabling them through the current call would put every CityWorld world's
+strongholds in *identical* places. The constructor taking both seeds is **private**, so the options
+are `createForNormal` (enables everything the biome source supports, not a chosen subset) or an
+access transformer. The selective part is trivial; the correctly-seeded part is the actual work.
+
+The owner's idea, and it stacks on top of #1: let the planner deliberately place vanilla underground
+structures, the way it already places its own vaults and mines. Ancient City and Trial Chambers are
+jigsaw structures, so this means driving the jigsaw generator at a chosen position rather than
+copying a template.
+
+The eye-of-ender caveat the owner raised is real and bigger than it looks: vanilla places strongholds
+on a fixed ring pattern and the eye asks the *structure placement system* where they are. A
+hand-placed stronghold that the placement system does not know about is a stronghold the eye cannot
+find.
+
+### 3. ~~Decorative caves as a pool, not just lush~~ **DONE (2026-08-27)**
+
+Biomes in wave A, decoration in wave C — see both dated blocks below. The pool is the datapack tag
+`#cityworld:cave_pool`, so a new cave type (vanilla's or a mod's) needs no code. **The analysis below
+is kept for its research value but its conclusion is superseded** — in particular, the decoration
+half turned out *not* to be "run `UNDERGROUND_DECORATION`"; see wave C for why that would have put
+trees on the roads.
+
+Generalise the existing lush-cave patch mechanic into **one decorative cave type drawn from a pool**:
+lush, **sulfur** (26.2's sulfur caves, with sulfur dripstone), **deep-dark / sculk** (ancient-city
+flavour without necessarily the city), and room for modded and future types. The owner explicitly
+wants this data-driven enough that a new cave type — vanilla or modded — can slot in without a code
+change. Alex's Caves is the obvious modded case.
+
+**⚠ The blocker under this, #1 and #2 alike: the biome source emits no cave biomes and cannot.**
+Verified: the biomes it can produce are all *surface* biomes — no `DEEP_DARK`, no `LUSH_CAVES`, no
+`DRIPSTONE_CAVES`. And `createBiomes` classifies **per column (2D)** — "classify once per (quartX,
+quartZ) and reuse down the column" — so biome cannot vary with depth at all. Today's lush-cave
+patches are decorative *block placement*, not the lush caves biome.
+
+Consequences, and they are the crux of this whole group of ideas:
+
+- **Ancient City cannot place**, because it is gated on `deep_dark` (the owner spotted this).
+- Anything biome-driven underground is unavailable: sculk spread, warden spawning, cave ambience.
+- **Modded cave mods that define their own biomes (Alex's Caves) will not appear either**, for the
+  same reason — so this is the same problem as the worldgen half of #5.
+
+So "decorative cave pool" splits into two very different jobs: *decorative blocks* (cheap, extends
+what already works) versus *real cave biomes* (needs the biome source to become 3D, which is a
+genuine piece of architecture and would unlock ancient cities and modded caves at the same time).
+Worth deciding which one is actually wanted before starting.
+
+### 4. ~~26.2's new stone families are not in any palette~~ **DONE (5.4.0)**
+
+**Shipped:** cinnabar and sulfur join the MODERN/APOCALYPSE build palette on 26.2 (`build/modern_stones`,
+`"required": false` entries), sulfur caves are in the cave pool, and a datapack `remove` list can drop
+any single block. The text below is the analysis that led there.
+
+26.2 ships full **cinnabar** and **sulfur** families (`CINNABAR`, `CINNABAR_BRICKS`,
+`CHISELED_CINNABAR`, `SULFUR`, `SULFUR_BRICKS`, `POLISHED_SULFUR`, `CHISELED_SULFUR`,
+`POTENT_SULFUR`, plus slabs/stairs/walls) and CityWorld uses none of them. Two reasons, both worth
+remembering:
+
+- They are absent from `Material.java`, which is generated from names the 1.14 Bukkit source used
+  plus a curated `EXTRAS` list. Post-1.14 blocks only exist there because someone added them.
+- `cityworld:build/modern_stones` is 24 explicitly-listed blocks, **not** a reference to `#c:stones`.
+  Deliberate — it is a curated look — but it means the tag layer widens *within* chosen families and
+  cannot discover a new one.
+
+**This is the honest limit of the 5.0.3 tag work**: six woods became twelve automatically, but a
+brand-new stone family still needs a human. Both would suit MODERN (the palette is light on warm
+colours) and sulfur is an obvious mine-wall accent. 26.2 branch only; `"required": false` keeps the
+same tag file safe on older versions.
+
+~~**⚠ 26.3 is reported to add wool and concrete slabs and stairs — check the tags when it lands.**~~
+**CHECKED 2026-08-28 against 26.3-snapshot-10: the hazard does not happen.** The worry was that our
+palettes assume every block in a tag is a **full cube** (they are used as walls, floors and ceilings),
+so wool slabs landing in `#minecraft:wool` would have had CityWorld building *walls out of slabs*.
+Mojang put them in **separate tags** — `#minecraft:wool_slabs`, `wool_stairs`, `concrete_slabs`,
+`concrete_stairs` — and `#minecraft:wool` still holds exactly the sixteen full cubes. Terracotta and
+concrete powder are untouched. **No action needed.** See the 26.3 reconnaissance below.
+
+The upside is real too: slab and stair variants of wool and concrete are exactly what the builders
+lack for edges, steps and roof trim, so they are worth wiring in deliberately — as their own shape
+vocabulary, not by widening the wall palettes.
+
+### 5. Per-mod compatibility datapacks — **mostly DONE**
+
+**Status 2026-09-14:** Biomes O' Plenty (biome source folds registered biomes in, cave pool, flowers,
+ground data map — 5.4.0), Farmer's Delight crops (tag-driven farm mix — 5.4.0) and Fantasy's Furniture
+(runtime set detection — 5.6.0) are all shipped and playtested. The "worldgen mods may not appear"
+worry below was answered by measurement: BoP offered 113 biomes and CityWorld placed them. Alex's
+Caves has no build for any version we ship. Remaining below is unrequested: Twilight Forest and
+Apotheosis palettes.
+
+The owner is choosing mods. The useful split is by **what the mod needs from us**, because tags only
+decide what a block is *made of* — anything needing placement semantics needs a new seam first:
+
+- **Free or a trivial datapack** (blocks joining existing palettes): Twilight Forest, Biomes O' Plenty
+  blocks, Apotheosis bookshelves.
+- **Needs a new tag seam, then datapack-able**: Farmer's Delight crops (farm fields are not
+  tag-driven yet), Apotheosis spawners, cave decoration (#3).
+- **Needs real feature work**: Fantasy's Furniture. The owner's instinct is right — furniture carries
+  orientation and semantics (a chair faces a table), which no block tag can express. It would extend
+  the `Support/Furniture` vocabulary, not a palette.
+
+Also worth checking before promising anything: mods that add **worldgen** (Alex's Caves, Biomes O'
+Plenty biomes) may not appear at all, because CityWorld suppresses carvers and structures and drives
+its own biome source. That is a compatibility question of a different kind from palettes, and
+probably the first thing to test with a big content mod installed.
+
+## Caves, structures and 3D biomes (2026-08-27) — waves A and B
+
+Queued items #1 and #2 are done, and the blocker under #3 with them. **On all three versions —
+`master`, `mc26.1` and `mc26.2` — self-test green and plan hashes agreeing.**
+
+### The three were one bug, and it was not the one that was queued
+
+`Structure.isValidBiome` asks **`chunkGenerator.getBiomeSource().getNoiseBiome(qx, qy, qz, sampler)`**
+— the *biome source*, at the `STRUCTURE_STARTS` chunk stage. CityWorld's `getNoiseBiome` was a stub
+returning `PLAINS`, because the real classification lived in `createBiomes`, which runs later and is
+invisible to the structure pipeline. So every structure was biome-gated against plains at every
+height: ancient cities (gated on `deep_dark`) could never place, and trial chambers would have placed
+uniformly everywhere.
+
+**Fixing `getNoiseBiome` for real, in 3D, unlocked all three items from one change.** Vanilla's own
+`createBiomes` is nothing but `fillBiomesFromNoise(biomeSource, sampler)`, so our override collapsed
+to a `super` call — the hand-rolled resolver it replaced was producing correct chunks while leaving
+the method vanilla actually consults a constant. **That is the shape of this bug worth remembering: a
+seam that is right for the caller you were thinking about and stubbed for the one you weren't.**
+
+### Two corrections to the queued research
+
+- **No access transformer is needed.** The queued note called the correctly-seeded path "the actual
+  work", because `createForFlat` hardcodes the concentric-rings seed to `0L` (which would put every
+  world's strongholds in identical places) and the two-seed constructor is private. But
+  `createForNormal` reads its `HolderLookup` through **`listElements()` and nothing else** — so a
+  ~20-line filtering delegate gives selective sets *and* the level seed. Vanilla even ships
+  `HolderLookup.RegistryLookup.filterElements(Predicate)`. What was billed as the hard half was the
+  easy one.
+- **There was a blocker nobody had spotted.** Structure **pieces** are placed inside
+  `ChunkGenerator.applyBiomeDecoration` (interleaved with features, in the same step loop) — the
+  method CityWorld overrides and only calls `super` on for MODERN nature lots. Re-enabling starts
+  without addressing this would have produced strongholds *sliced to whichever chunks happened to be
+  wild*: a bug that looks like corrupt worldgen and reads like a vanilla fault. `placeStructures` is
+  now the structure-only slice of that method, exactly as `placeUndergroundOres` is the ore-only
+  slice, and it mirrors vanilla's `setDecorationSeed`/`setFeatureSeed` sequence so a structure lands
+  identically whether this placed it or `super` did on the wild chunk next door.
+
+### What landed
+
+| | |
+|---|---|
+| `worldgen/CaveRegions.java` | the cave pool — seed-stable 2D cells, each a biome + a Y band |
+| `worldgen/CityWorldBiomeLookup.java` | the shared 3D `getNoiseBiome` body + per-thread column cache |
+| both biome sources | real `getNoiseBiome`; cave pool in `possibleBiomes()`; context binding |
+| `CityWorldChunkGenerator` | `createForNormal` + `onlyAllowed`; `placeStructures`; `createBiomes` → `super` |
+| `data/cityworld/tags/worldgen/structure_set/allowed.json` | which vanilla structures a CityWorld world keeps |
+| `data/cityworld/tags/worldgen/biome/cave_pool.json` | which cave biomes the pool draws from (sulfur optional) |
+
+**Cave biomes are patches, not vanilla's 3D banding** (owner's call). Vanilla fills its whole
+underground with cave biomes by noise, which would change mob spawning *everywhere* and make wardens
+routine. Cells are picked from `(x, z)` and apply only within their own Y band, which gives vertical
+variation without a 3D noise field and stacks the pool by depth for free. `deep_dark` sits below
+`y = -24` because that is where ancient cities generate — a shallower band would advertise the biome
+without ever being able to host the structure gated on it.
+
+### The cave pool is a biome tag, and it had to be
+
+`#cityworld:cave_pool` — `deep_dark`, `lush_caves`, `dripstone_caves`, and **`sulfur_caves` marked
+`"required": false`**. 26.2 added sulfur caves and it is the *only* new biome in that drop (measured
+by diffing the two jars' biome lists), so it must be in the pool on 26.2 and absent elsewhere, from
+one shared source file. A `Biomes.SULFUR_CAVES` constant would exist on 26.2 alone and break the
+cherry-pick.
+
+**⚠ The obvious alternative does not work, and fails in a way that looks unrelated.** The first
+attempt resolved pool biomes by `ResourceKey` and used `HolderGetter.get(key).isPresent()` to skip
+ones this version lacks. That crashes world load with:
+
+```
+java.lang.IllegalStateException: Unbound values in registry
+    ResourceKey[minecraft:root / minecraft:worldgen/biome]: [minecraft:sulfur_caves]
+```
+
+The `HolderGetter` handed out by `RegistryOps.retrieveGetter` during datapack decode **creates an
+unbound promise for a key it does not have** — that is how forward references between datapack files
+work — so *asking whether a biome exists is what makes it not exist*. There is no "does this key
+exist" question you can safely ask that getter. **Tags are the mechanism built for this**, and
+`"required": false` is exactly the feature. Same discipline as the block-palette tags.
+
+It also buys the data-driven half of queued item #3 early: anything added to the tag becomes a cave
+type, and an entry with no geometry in `CaveRegions.GEOMETRY` gets a sensible default — so a modded
+cave biome (Alex's Caves) needs a datapack line and no code. Patch salts are derived from the biome
+id, so a new type gets an independent cell grid without anyone inventing a constant.
+
+**Tag resolution must be lazy.** Tags are not bound when the codec builds the biome source, so
+resolving in a constructor caches an empty pool forever. `cavePool()` is double-checked-lazy, and
+`collectPossibleBiomes()` is late enough because vanilla memoizes it on first call.
+
+### Ancient cities cannot reach CityWorld's sewers or cisterns (measured)
+
+The owner's worry was a deep-dark city opening into a sewer. It cannot happen:
+
+| | y |
+|---|---|
+| ancient city, **measured** from two generated starts | **−64 … −10** |
+| CityWorld cistern floor (`streetLevel - FloorHeight*4 + 1`) | 49 |
+| CityWorld sewers | 57 … 62 |
+
+59 blocks of clearance. Note `start_height` in the structure JSON is an *absolute* `y = -27` and is
+only where the jigsaw starts — the real extent had to be read off a generated `StructureStart`'s
+bounding box, which is what `checkAncientCityDepth` now does on every version. Mines *do* reach that
+deep, and the owner explicitly wants that collision: it reads as the miners having downed tools when
+they broke through.
+
+**The allow-list is a tag, not a config field** — `#cityworld:allowed` on the structure-set registry,
+so a datapack (or a mod's) can widen it with no code change, the same seam the block palettes use.
+**An absent tag means no vanilla structures**, so a stripped datapack fails to the old behaviour
+rather than letting villages and mineshafts loose in a world that builds its own.
+
+### Verified, not assumed
+
+`checkBiomeDepth` and `checkStructures` were added to the self-test, so CI checks these on every
+version. Measured on 1.21.11, seed 8675309:
+
+| | |
+|---|---|
+| columns whose biome varies with depth | 603 / 4225 |
+| cave-pool samples hit | 1669 |
+| `deep_dark`/`lush_caves`/`dripstone_caves` | in the deep set, **absent from the surface set** |
+| cave pool resolved from the tag | `deep_dark, dripstone_caves, lush_caves` (sulfur absent, as it should be) |
+| structure sets surviving selection | exactly `ancient_cities`, `strongholds`, `trial_chambers` |
+| stronghold ring positions | 128, first at chunk `3,-145` |
+| trial chamber read back | chunk `12,11`, **with its own block entities** |
+| ancient city extent | `y -64 … -10` |
+| MODERN plan hash | `28fc3789` — unchanged |
+
+Each row is load-bearing. `ancient_cities` surviving selection is the only cheap proof that
+`deep_dark` is genuinely reachable (a set is dropped if the biome source cannot produce its biomes).
+The trial-chamber *block entities* are the only proof that pieces are placed rather than merely
+started — the failure mode `placeStructures` exists to prevent would still pass a starts-only check.
+And the unchanged plan hash confirms biomes do not touch city planning, so the cross-version compare
+stays valid.
+
+**⚠ The rough edges to playtest, both by design rather than defect:**
+
+- **Vanilla structures now generate under cities.** `placeStructures` runs *after* CityWorld's build,
+  mirroring where `super` sits in the wild branch — so both branches order the world identically and
+  a structure wins where the two overlap. A trial chamber landing under a city core (one did, at
+  chunk `12,11`) may be exactly what is wanted or may need a city-core exclusion.
+- **Ancient cities will meet the mines** — wanted, per the owner. They cannot reach sewers or
+  cisterns; see the measurement above.
+- **Underground mob spawning has changed** wherever a patch landed: cave biomes carry thin spawn
+  lists and `deep_dark` carries none at all (plus wardens). Owner has signed off on this.
+
+### Multi-version: done, and all three agree
+
+All four load-bearing classes — `ChunkGeneratorStructureState`, `BiomeSource`, `Structure`,
+`ChunkGenerator` — were diffed across 1.21.11 / 26.1.2 / 26.2 first. **The differences are decompiler
+parameter renames and brace reshuffling; zero API-shape change.** `StructureStart.placeInChunk` is
+identical too.
+
+**Cherry-picked to `mc26.1` and `mc26.2`; all three pass and `--compare` agrees on every style.** The
+whole cost was the *already-known* 26.1 delta — `ChunkPos` is a record, so `pos.x` → `pos.x()`, in
+two places (`applyBiomeDecoration` and the harness's ring-position report). Nothing else conflicted.
+
+| version | possible biomes | cave pool | columns varying with depth |
+|---|---|---|---|
+| 1.21.11 | 52 | deep_dark, dripstone_caves, lush_caves | 586 |
+| 26.1.2 | 52 | deep_dark, dripstone_caves, lush_caves | 586 |
+| 26.2 | **53** | + **sulfur_caves** | 780 |
+
+Everything else is byte-identical across the three: same structure sets, same first stronghold ring
+(`3,-145`), same ancient city extent (`-64..-10`), same trial chamber (`12,11`). **The only
+divergence is the one that was designed in** — which is exactly what the tag mechanism was for.
+
+**⚠ `PORTING.md` conflicts on every cherry-pick** and always will, because it is maintained on
+`master` while the version branches carry a truncated copy. Resolve with
+`git checkout HEAD -- PORTING.md` before committing the pick; do not try to merge it.
+
+## Wave C: cave decoration (2026-08-27)
+
+Queued item #3 is now **fully done**. Cave biomes grow their own character under a city.
+
+**It is keyed on features, not on a generation step — and the obvious version is a trap.** Running
+`UNDERGROUND_DECORATION` the way `placeUndergroundOres` runs `UNDERGROUND_ORES` looks right and is
+wrong twice:
+
+- **Lush caves put nothing in `UNDERGROUND_DECORATION`.** Their entire vocabulary —
+  `lush_caves_vegetation`, `cave_vines`, `spore_blossom`, `rooted_azalea_tree`, `lush_caves_clay` —
+  is in `VEGETAL_DECORATION`.
+- **`VEGETAL_DECORATION` is the step that plants trees**, and `dripstone_caves` and `deep_dark` both
+  list `trees_plains`, `flower_plains` and `patch_pumpkin` in it. Vanilla gets away with that because
+  those biomes are never at the surface; running the step on a city chunk would **sprout trees on the
+  roads**.
+
+So `caveOnlyFeatures()` keeps only features that **no non-cave biome in this world also has**,
+computed against `possibleBiomes()` rather than a hardcoded list so it stays correct as the palette or
+the pool changes. `PlacedFeature.placeWithBiomeCheck` then confines what survives to the patches —
+that method asks whether the biome *at the position* has the feature, which is precisely the gate we
+want and is why this pass needs to know nothing about what it is placing.
+
+Measured — the filter is the whole safety argument, so the self-test asserts both halves (cave
+vocabulary present, nothing tree-shaped surviving):
+
+| | |
+|---|---|
+| kept (1.21.11, 12) | `cave_vines`, `classic_vines_cave_feature`, `dripstone_cluster`, `large_dripstone`, `lush_caves_ceiling_vegetation`, `lush_caves_clay`, `lush_caves_vegetation`, `pointed_dripstone`, `rooted_azalea_tree`, `sculk_patch_deep_dark`, `sculk_vein`, `spore_blossom` |
+| kept (26.2, +2) | `sulfur_spike`, `sulfur_spike_cluster` |
+| dropped | `trees_plains`, `flower_plains`, `patch_pumpkin`, `patch_grass_plain`, `glow_lichen`, `amethyst_geode` |
+
+**26.2 picking up the two sulfur features with no code change is the pool mechanism proving itself
+end to end** — a new cave biome on a new Minecraft version brought its own decoration through the tag
+alone. Shared features (`glow_lichen`, `amethyst_geode`) are the deliberate cost of the exclusion
+rule; the wild pass still places them normally.
+
+**`Support/LushCaves` now shares the pool's cell grid** (`CaveRegions.inCellOf`). That hand-built pass
+predates real cave biomes and had its own region function, which would have scattered hand-decorated
+caves across cells that are *not* the lush biome — two disjoint sets of lush-looking places, only one
+labelled lush and only that one getting vanilla's vegetation. Now a lush patch gets both: vanilla's
+moss and glow berries plus CityWorld's axolotl pools, spore blossoms and surface azalea. **Worth a
+look in-game — that is deliberately the densest cave type now, and may be too dense.**
+
+All three versions pass and `--compare` agrees. Jars deployed to the `CityWork-ReForged`, `26.1.2` and
+`26.2` CurseForge instances for playtest.
+
+## What the playtest found (2026-08-27/28) — all fixed, owner signed off
+
+The self-test proved every one of these *present and correctly formed*. It could not tell that two of
+them were **unusable**, which is the lesson worth keeping: presence checks do not catch aesthetics or
+enclosure.
+
+**Verified good on sight:** strongholds (eyes of ender point at them and they form), trial chambers,
+lush and dripstone caves, the deep dark reading as deep dark.
+
+### 1. Ancient cities generated entombed — no cavern
+
+`terrain_adaptation` is the field that decides this, and only the *beards* need terrain moved:
+stronghold is `bury` and trial chambers `encapsulate`, which is exactly why those two were right from
+the start. `ancient_city` is `beard_box`, and vanilla carves for it with the **`Beardifier` density
+function** fed into terrain generation. CityWorld's terrain is not density-based, so there was nothing
+to feed and the city was stamped into solid rock: locatable, perfectly built, sealed.
+
+**`carveForStructures` in `fillFromNoise` is the stand-in — and carving the piece boxes was not
+enough.** The first version cleared each bounding box exactly. That un-buried the city but produced
+flat rectangular walls and ceilings, and left the gaps *between* piece boxes solid, so it read as a
+row of boxes. Vanilla's beard kernel has a radius of 12 and falls off smoothly across it. So the carve
+now has a **halo** (`CARVE_HALO` 10 horizontal, `CARVE_HALO_UP` 6) in which it carves
+probabilistically against smooth simplex — ragged rock rather than static — and the halo is what
+closes the inter-piece gaps into one cavern. Owner: *"messy edges that looked natural, not carved or
+artificial — spot on."*
+
+**⚠ Never carve below a piece.** Vanilla's beard *adds* material underneath to support the structure;
+digging there hangs the city over a void.
+
+Measured air inside an ancient city's bounding box: **35%** box-only → **43%** with the halo. The
+self-test now asserts it, so entombment cannot come back unnoticed.
+
+### 2. Large dripstone hanging down into the deep dark
+
+The cave pool matched a type *per Y band*, so a column in both a `deep_dark` cell and a
+`dripstone_caves` cell became deep dark below `y -24` and dripstone above, with a hard seam. Dripstone
+placed just above the seam hung through it. **Vanilla's per-position biome check cannot catch this** —
+the feature's origin is legitimately in the dripstone quart, only its body crosses. Now the first
+matching *cell* owns the whole column: one cave type per column. Same root cause as lush caves sitting
+directly on top of a deep dark.
+
+### 3. Sulfur caves had fog and green water and nothing else
+
+**Sulfur is the one cave type whose look is a surface rule, not features.** Lush, dripstone and deep
+dark all decorate themselves through `PlacedFeature`s, which CityWorld now runs. Sulfur's rock comes
+from `sulfur_cave_gradient` in the overworld noise settings — and `buildSurface` is deliberately a
+no-op here because the ported shaper lays its own strata. So the biome arrived with only its
+client-side effects.
+
+That also silently disabled its features: `sulfur_spike` declares `replaceable_blocks` of
+`#minecraft:sulfur_spike_replaceable_blocks`, which is **only `sulfur` and `cinnabar`** — not
+`#base_stone_overworld` the way dripstone is. No sulfur rock, no spikes.
+
+`paintCaveWalls` lines the exposed cave surfaces, and it must be **veined, using both blocks**. Vanilla's
+rule is a 3D noise with cinnabar in the outer bands (`-0.4..-0.1`, `>0.4`), sulfur in the middle
+(`0.0..0.4`) and bare stone in the gaps. A uniform sulfur skin — the first attempt — loses the cinnabar
+entirely and looks painted on. Thresholds are vanilla's exactly; the noise is ours at `1/32` to match
+its `firstOctave: -5`, so the veins come out the same size.
+
+### 4. Two self-test faults found while chasing the above
+
+- **It bound port 25565** and collided with another mod's dev server in the same workspace. That
+  surfaces as `Failed to initialize server` plus an NPE in `overworld()` on shutdown — it reads exactly
+  like a CityWorld fault and is not one. Now 25599, override with `CITYWORLD_SELFTEST_PORT`.
+- **A failed run republished the previous run's report.** The script copies
+  `run/cityworld-selftest.json` out under the current version's name; a run that died before writing
+  one left the last run's file in place, so a failed 1.21.11 run published 26.2's numbers and the
+  cross-version compare agreed with itself. Observed, not hypothetical — it briefly had me believing
+  1.21.11 had sulfur caves. The file is now deleted before each run.
+
+One genuine 26.2 behaviour change worth knowing: `ChunkGenerator.findNearestMapStructure` now
+early-returns when the world's "Generate Structures" option is off, so that world-creation checkbox
+now actually gates `/locate` — it did not on 1.21.11.
+
+## The underground is datapack-tunable (2026-08-28)
+
+Everything in this arc is now configurable without touching code, and it splits three ways by
+mechanism — worth keeping straight, because the split is deliberate:
+
+| what | where | why there |
+|---|---|---|
+| which vanilla structures generate | tag `#cityworld:allowed` | a list of ids |
+| which cave biomes exist | tag `#cityworld:cave_pool` | a list of ids, and `"required": false` is how sulfur caves ship cross-version |
+| the numbers | `caves` settings group | tags cannot express geometry |
+
+`caves` carries `structureCarveHalo`/`structureCarveHaloUp` (the beard carve), `surfaceMargin`, and
+`patches` — per-biome `cell`/`percent`/`minY`/`maxY`. **Empty `patches` means the built-in defaults;
+listing any entry replaces the lot, in the order given.** That is also how a modded cave biome gets
+real geometry rather than the fallback it gets from the tag alone.
+
+**Two implementation notes.** Geometry is applied on `bindContext`, not at pool construction: the pool
+is built when `possibleBiomes()` is first asked, which is before any chunk exists and therefore before
+settings are reachable — membership is all that early caller needs. And patch **salts derive from the
+biome id** rather than being stored, so retuning a patch's size or rarity does not move its cells.
+
+Defaults verified unchanged when this landed — same 43% ancient-city air, same pool, same plan hash.
+**That is the bar for any future "make it configurable" change**: it must not move the default world.
+
+## 26.3 reconnaissance (2026-08-28, snapshot 10)
+
+Read straight out of the server jar (`26.3-snapshot-10`, world version **5015**) before NeoForge has a
+release for it. NeoForge's `port/26.3` branch is live and moving — most recent commit the same day,
+*"Update NeoForm to fix worldgen deadlock"*, which is worth watching given how much of CityWorld is
+worldgen.
+
+### ✅ The palette hazard does not happen
+
+`#minecraft:wool` still holds exactly the sixteen full cubes. The new shapes are in **their own tags**
+(`wool_slabs`, `wool_stairs`, `concrete_slabs`, `concrete_stairs`), and 26.3 also adds a vanilla
+`#minecraft:concrete` of sixteen full cubes alongside the `#c:concretes` we use. Nothing to do.
+
+**The upside still stands and is now unblocked:** slab and stair variants of wool and concrete are
+exactly what the builders lack for edges, steps and roof trim — worth wiring in deliberately as their
+own shape vocabulary, off those new tags, never by widening the wall palettes.
+
+### 🎁 A whole wood family arrives for free
+
+26.3 adds **poplar** — 21 blocks, the full family (log, planks, stairs, slab, door, fence, gate, sign,
+hanging sign, shelf, button, pressure plate, trapdoor, sapling, stripped variants) plus **orange, red
+and yellow poplar leaves**. `poplar_planks` is already in `#minecraft:planks` and all three leaf
+colours in `#minecraft:leaves`, so **thirteen woods with no code at all**. This is the 5.0.3 tag work
+paying out exactly as designed, and the strongest argument yet for tag-first palettes.
+
+The autumn leaf colours are new in kind, not just in count — worth a look at whether the tree
+providers should use them deliberately rather than only as palette filler.
+
+### 🔧 Two catches for the furniture-roles idea
+
+Both of the owner's motivating examples turn out to have a wrinkle, and both push the same way:
+
+- **Cushions are entities, not blocks.** `world/entity/decoration/Cushion` extends
+  `BlockAttachedEntity` — the item-frame/painting family — and carries `removePassenger`, so they are
+  genuinely **sittable**: Minecraft has added sitting, which is why a cushion is not a block. The only
+  block-side tag is `cushion_uses_collision_shape` (what a cushion may rest *on*: cauldrons, hopper,
+  composter); `#minecraft:cushions` is an **item** tag. **A block tag or data map cannot place one** —
+  it needs the entity path, and it needs a supporting block underneath.
+- **`straw_bed` is not in `#minecraft:beds`.** It is `mineable/hoe` and `washed_away_by_fluids` —
+  tagged as straw, whatever `StrawBedBlock` does behaviourally. A `bed` role keyed off vanilla's tag
+  would silently miss it.
+
+**So the roles want to be our own `cityworld:furniture/*` tags, not aliases of vanilla ones** — which
+is what the owner proposed. Vanilla's tags describe what a block *is made of* or *how it is mined*,
+not what it is *for*, and those diverge exactly where furniture lives. Cushions then sit outside the
+block scheme entirely and want an `entity` role of their own if they are wanted at all.
+
+### 🏕 Vanilla has added abandoned camps
+
+`minecraft:abandoned_camp` is a real structure set in 26.3 — `random_spread`, spacing 37, separation 8,
+with **19 per-biome variants** (forest, taiga, cherry grove, savanna, swamp, pale garden, …) each a
+jigsaw whose start pool is `abandoned_camp/tent/<biome>`, at `surface_structures`. The owner's reaction,
+CityWorld having shipped campgrounds for a while: *"they stole our abandoned campsite idea (jk!)"*.
+
+Three practical notes:
+
+- **`terrain_adaptation` is `beard_thin`, which `carveForStructures` already handles** — it carves for
+  both beard kinds. So if the set were added to `#cityworld:allowed` it would adapt correctly with no
+  new code.
+- **But it is a *surface* structure**, so unlike strongholds/trials/ancient cities it competes with what
+  CityWorld builds. If it is ever allowed, it wants gating to nature lots rather than the whole world.
+- **The tents are built from wool stairs** — which is the owner's idea below, arriving from the same drop.
+
+Also new: **one genuine new biome, `dappled_forest`** (the other "new biome" entries are
+`tags/worldgen/biome/has_structure/` files, not biomes). It is a surface biome, so it belongs in the
+MODERN climate palette when 26.3 is ported — a small, concrete task rather than a decision.
+
+### 🎪 Wool stairs as tents (owner, 2026-08-28)
+
+Once 26.3 ships, CityWorld's own campgrounds can build **tents out of wool stairs** — two stair blocks
+back to back read as a pitched tent, in any of sixteen colours. 26.3-and-later only, so it wants the
+same `"required": false` treatment everything else version-specific gets, with the current campground
+as the fallback.
+
+## The direction: build "sets", fill them from tags (owner, 2026-08-28)
+
+**This is the architectural line to hold**, and it came out of the furniture discussion but generalises
+to everything CityWorld places:
+
+> Build **sets** for everything we can — then either auto-pull members from tags (wood, stone,
+> concrete: things vanilla already tags well), or top them up by hand each release for the unusual
+> things nobody tags.
+
+A "set" is a role — `chair`, `table`, `bookshelf`, `lighting`, `wall_decor`, `tabletop`, `bed`, and
+their equivalents for zoo pens, biodome contents, cave pools and build palettes. Each set is a tag we
+own. Three consequences, all wanted:
+
+- **Most growth is free.** Poplar joined thirteen woods with no code because planks are tagged. Any set
+  that maps onto a well-tagged vanilla family maintains itself.
+- **The unusual is a known, bounded cost.** A cushion, a straw bed, a sulfur family — things vanilla
+  does not tag by *purpose* — get added by hand once per release. That is the honest limit, and it is
+  small and predictable rather than open-ended.
+- **⭐ Third-party packs extend the same seam.** Because the sets are *our* tags, Apotheosis bookshelves
+  or a furniture mod's chairs join by adding to `cityworld:furniture/bookshelf` — no CityWorld release
+  required, and no per-mod code. This is what turns "per-mod compatibility datapacks" (queued item #5)
+  from a stack of bespoke work into one mechanism, and it is why the sets must be ours rather than
+  aliases of vanilla's tags: **vanilla tags describe what a block is made of, ours describe what it is
+  for**, and only the second is extensible by someone else.
+
+The open piece remains orientation — a chair has to face the table — which tags cannot carry and
+NeoForge **data maps** can. See the furniture entry in the parking lot.
+
+## Macaw's Doors + Windows — surveyed from the 26.2 jars (2026-09-17)
+
+Read out of `mcw-doors-1.1.5-mc26.2neoforge.jar` (CF file 8286561) and
+`mcw-windows-2.4.2-mc26.2neoforge.jar` (CF 8286566) by the ZARP session, not from documentation. Owner
+wants CityWorld to place these when installed; **nothing is built yet.**
+
+**Doors are nearly free.** 262 of 268 door blocks are real `DoorBlock` subclasses (210 plain, 26
+`JapaneseDoors`, 24 `StableDoor`), so they take the normal `facing`/`half`/`hinge`/`open`/`powered`
+properties — swapping ids in a palette entry should be enough. 252 are in `minecraft:wooden_doors` (so
+also `minecraft:doors`, so zombie door-breaking and villager use apply); the metal family plus
+`store_door` and `sliding_glass_door` are in `minecraft:doors` only and behave like iron doors.
+**⚠ The 4 garage doors (`mcwdoors:garage_*_door`) are `GarageDoor extends Block`** — a custom multi-part
+block with none of the door properties, so anything building a door state generically breaks on them.
+Their own tags (`metal_doors`, `glass_doors`, `modern_doors`, `barn_doors`, `western_doors`,
+`classic_doors`, `garage_doors`) are thematic and are the right lever: hospital/jail doors for those
+lots, store and sliding-glass for shops, garage doors for garages and the OilPlatform.
+
+**Windows are real work.** 346 blockstates, and *nothing* is a vanilla pane or door subclass, so every
+family needs its own state handling: `Window` (connected-texture `part` grid recomputed from neighbours —
+check our chunk writes trigger `updateShape` or tall windows show seams), two/four-pane
+(`windowstate` = closed/locked/open_left/open_right — `locked` suits APOCALYPSE), `pane_window` (stacks
+vertically), shutters (vanilla `DOOR_HINGE`/`OPEN` but *not* a DoorBlock, so zombies ignore them), blinds,
+curtains + rods, arrow slits and gothic windows (ruins, Nether/End), parapets, mosaic glass (the only
+real connecting pane; tagged under the legacy `forge:` namespace, not `c:`), and one-way glass
+(Bunker, Police interrogation).
+
+**⚠ 175 mcwwindows blocks are in `minecraft:walls`** — every window/window2/four_window/pane_window/
+gothic/arrow-slit family. Vanilla walls, fences and panes will try to connect to them, and mobs path
+around them as walls (jump height 1.5). That matters anywhere CityWorld leans on walls for lot
+boundaries or pathing, and it is the first thing to check before placing windows in quantity.
+
+Window tags are family-level, not thematic, so **material is the lever**: stone/brick windows for civic
+lots, plank windows for residential.
+
+## Mod compatibility: what is actually portable (researched 2026-08-29)
+
+Read from the **Modrinth API and the mod jars themselves**, not from blog round-ups — every "best
+furniture mods 2026" article returns 1.21.1 mods, which is the trap this section exists to avoid.
+
+### ⚠ Almost nothing has ported to 1.21.11+/26.x yet
+
+That is the single most important fact for planning compat work, and it kills two of the three mods
+that were on the shortlist.
+
+| Mod | Downloads | Status on our versions |
+|---|---|---|
+| **Macaw's — the whole family** (furniture, doors, windows, roofs, fences, trapdoors, lights, paths, paintings, stairs, bridges) | ~70M combined | ✅ **1.21.9/10/11, 26.1, 26.1.1, 26.1.2, 26.2** |
+| **Biomes O' Plenty** | 33.8M | ✅ 1.21.9/10/11, 26.1.2, 26.2 |
+| Rechiseled | 7.7M | ✅ current |
+| **Fantasy's Furniture** | 1.2M | ✅ 1.21.10/11, 26.1.x, 26.2 |
+| FramedBlocks | 2.0M | ⚠ 26.1.x only |
+| Apotheosis | — | ⚠ 26.1.2 only |
+| **Twilight Forest** | — | ❌ 1.21.1 |
+| **Alex's Caves** | 10.4M | ❌ 1.20.1 |
+| Create / Farmer's Delight / Supplementaries / Another Furniture / Immersive Furniture / MrCrayfish's | huge | ❌ 1.21.1 or older |
+
+**Do not write the Twilight Forest or Alex's Caves packs yet.** Both were the owner's first picks and
+both are stranded. A pack for an absent mod is inert (all entries `"required": false`), so writing one
+costs nothing at runtime — but its block ids cannot be verified, and Alex's Caves is four versions
+back, where ids churn. Wait.
+
+### ✅ The best-behaved mods need no pack at all — verified
+
+**Biomes O' Plenty already contributes to 57 vanilla block tags**, including putting all of its planks
+into `#minecraft:planks`. Since 5.0.3 the CityWorld palettes resolve from those very tags, so **BoP
+woods already build CityWorld cities with zero configuration** — no datapack, no code, nothing to
+ship. That is `PALETTES.md`'s "no pack required" claim, now actually demonstrated against a 33M-download
+mod rather than asserted.
+
+**The lesson for planning:** compat work is only needed where a mod does *not* tag by vanilla vocabulary
+— which is exactly furniture, because vanilla has no furniture vocabulary to tag into.
+
+### 🪑 Macaw's Furniture is the right first target, and it is cheaper than expected
+
+Macaw's ships **its own per-kind block tags** — `#mcwfurnitures:chair`, `couch`, `desk`, `coffee_table`,
+`end_table`, `bookshelf`, `counter`, `kitchen_sink`, `wardrobe`, `drawer`, … 31 of them. So set
+*membership* is a one-line tag reference each, not an enumeration:
+
+```json
+{ "values": [ { "id": "#mcwfurnitures:chair", "required": false } ] }
+```
+
+…and it stays correct as Macaw's adds wood types. That is the same "reference whole tags" trick
+`PALETTES.md` already recommends to pack authors, paying off for us.
+
+Their block shapes, read from the blockstates:
+
+| Kind | Properties | What it means for us |
+|---|---|---|
+| `chair`, `stool_chair`, `striped_chair`, `modern_chair` | `facing` (4) | needs orientation — the hard case |
+| `table`, `glass_table` | `north/east/south/west` booleans | **self-connecting, like a fence** — no orientation at all, just place them adjacent |
+| `bookshelf_drawer`, counters | `facing` + `connection` (single/left/middle/right) | orientation, and self-connects along a run |
+| `kitchen_sink` | `facing` + `water` | orientation |
+
+**So a good half of the vocabulary needs no orientation data at all** — tables and counters arrange
+themselves. That makes a first pass much smaller than "solve furniture": ship the sets, place the
+self-connecting kinds, and only chairs and fronted cabinets need the data map.
+
+### ⚠ The orientation question is genuinely undecidable from data — it must be declared
+
+Vanilla's furnace maps `facing=north` to `y=0`; Macaw's chair maps `facing=west` to `y=0`. **That
+difference alone is only model authoring, not semantics** — the rotations could compensate. What
+cannot be read out of any JSON is the thing that actually matters: whether `facing=north` on a chair
+means *the sitter looks north* or *the chair's back is to the north*. Nothing in the blockstate, model
+or tag says which.
+
+**Therefore the data map cannot be generated — each entry needs a human to place one block and look.**
+That is a small, bounded, once-per-mod cost, and it is the honest reason this cannot be fully
+automated. It also settles the design: the data map must carry `facing_property` **and** a
+`front_is` semantic, because assuming a convention will be wrong for somebody.
+
+### Suggested order of work
+
+1. **Nothing** for Biomes O' Plenty — verify in-game and write it up as a supported mod. Free win.
+2. **`cityworld:furniture/*` sets**, designed against Macaw's since it is the only richly-tagged
+   furniture mod that is current. Start with the self-connecting kinds (tables, counters) which need
+   no orientation, and one chair to prove the data map.
+3. **Macaw's compat pack** — 31 tag references, plus a data map for the fronted kinds.
+4. Revisit Twilight Forest and Alex's Caves when they port; Alex's Caves is then one `#cityworld:cave_pool`
+   line, which is the whole point of having built that seam.
+
+**Fantasy's Furniture is not the place to start** despite being current: it ships only 23 blockstates
+and builds its furniture through a "furniture station" with dynamic variants, so there is no simple
+block-per-item vocabulary to tag. That is what the earlier "needs real feature work" note was sensing.
+
+## ⭐ TerraBlender: one integration, most biome mods (researched 2026-08-29)
+
+**The highest-leverage compat idea found so far, and the API supports it.** The owner spotted that BoP
+does not register biomes itself — it hooks **TerraBlender**, the library nearly every modern biome mod
+uses. Supporting TerraBlender once would make all of them contribute to CityWorld worlds.
+
+**TerraBlender is fully current** — 37.8M downloads, NeoForge, on 1.21.9/10/11, 26.1.x and 26.2.
+
+### The read path exists and is public — verified from the jar
+
+This was the thing in doubt: TerraBlender's API is built for *registering* regions, and CityWorld needs
+to *read* them. It can.
+
+```java
+List<Region> regions = Regions.get(RegionType.OVERWORLD);        // public static
+region.addBiomes(biomeRegistry, pair -> collect(pair));          // public
+//   pair = Pair<Climate.ParameterPoint, ResourceKey<Biome>>
+Climate.ParameterList<ResourceKey<Biome>> list = new Climate.ParameterList<>(collected);
+ResourceKey<Biome> biome = list.findValue(Climate.target(temp, humid, cont, erosion, depth, weird));
+```
+
+So CityWorld can harvest every `(climate parameter point → biome)` pair that **every installed
+TerraBlender mod** registered, build a parameter list from them, and ask it a question. That is the
+whole integration in five lines of API surface.
+
+### Soft dependency, per the owner: "use it if it's there"
+
+`ModList.get().isLoaded("terrablender")`, with every TerraBlender-touching line in **one class that is
+only ever loaded behind that check** — otherwise the JVM class-loads it eagerly and a world without
+TerraBlender dies on a `NoClassDefFoundError`. No compile-time hard dependency; the mod must run
+identically with it absent, which is also how it stays buildable on all three branches.
+
+### The real design problem: we only have three of the seven axes
+
+`Climate.ParameterPoint` has **seven** axes (temperature, humidity, continentalness, erosion, depth,
+weirdness, offset). CityWorld natively models **temperature and humidity** (`getTemperature`/
+`getHumidity`) and has elevation, which maps to depth. The other three would have to be synthesised —
+continentalness from distance-to-sea or elevation, erosion and weirdness from new noise fields or
+pinned to mid-range.
+
+**⚠ That is where this can quietly fail.** Pin the unmodelled axes to constants and the parameter list
+will keep returning the same handful of biomes, because most of the variety in a modded biome set lives
+in exactly those axes. The result would look like "TerraBlender support that does nothing" rather than
+an error.
+
+**So the acceptance test has to be a spread, not a smoke test.** The self-test already sweeps 4,225
+columns and reports distinct biomes (`biome.sweep.*`); the same harness should assert that a
+TerraBlender world reaches a *meaningfully larger* biome set than a vanilla-palette one. Measure before
+believing it works.
+
+### ⚠ And `possibleBiomes()` must include them — the lesson from the cave pool, again
+
+Whatever TerraBlender can produce has to be in the biome source's `possibleBiomes()`, or vanilla
+filters those biomes' features out and drops any structure set gated on them — the exact failure that
+made ancient cities impossible before wave A. Harvest the biome list once at bind time and fold it in.
+
+### ✅ Measured with TerraBlender + Biomes O' Plenty actually installed (2026-08-29)
+
+Not a thought experiment — the two mods (plus **GlitchCore**, which BoP requires and which is easy to
+forget) were dropped into `run/mods/` and the self-test run against them:
+
+| | |
+|---|---|
+| `terraBlender.modPresent` | `true` |
+| **biomes harvested** from TerraBlender regions | **113** |
+| **reachable through CityWorld's axes** | **86** (76%) |
+| `possibleBiomes()` | 52 → **113** |
+| MODERN plan hash | `28fc3789` — unchanged |
+
+Reached biomes are real and varied — `bayou`, `lavender_field`, `ominous_woods`, `redwood_forest`,
+`pumpkin_patch`, `jade_cliffs`, `hot_springs`, `mediterranean_forest`, `auroral_garden`…
+
+**86 of 113 is the number that matters**, because the predicted failure was the mapping collapsing to a
+handful. It did not. Three modelled axes plus a terrain-derived continentalness reach three quarters of
+a large modded biome set.
+
+**The ~27 unreachable are explained, not mysterious.** The bridge is queried at `depth = 0` (a surface
+point), so anything wanting depth — BoP's `glowing_grotto`, `crystalline_chasm`, `spider_nest` —
+cannot be selected, and nor can biomes needing continentalness extremes our terrain never produces.
+**That is an opportunity rather than a defect:** BoP's cave biomes belong in `#cityworld:cave_pool`,
+where they would work today via a datapack, not in the surface lookup.
+
+> **⚠ That paragraph was reasoning, not measurement, and it is partly wrong — see the axis analysis
+> below.** Depth explains only some of it; `fungal_jungle` in that list is a *surface* biome and was
+> put in the cave pool on the strength of this guess, where it generated nothing. Two thirds of the
+> unreachable set has no axis gap at all.
+
+**⚠ Repeating this measurement:** put TerraBlender, BoP **and GlitchCore** in `run/mods/` and run
+`scripts/selftest.sh`. Without GlitchCore, BoP refuses to load with *"requires glitchcore 21.11.0.3 or
+above"* and the run fails before any of this is reached. The jars are deliberately **not** left there —
+they change `biome.possible` from 52 to 113 and would make the baseline report confusing for anyone who
+did not expect it.
+
+### ✅ Why the unreachable ones are unreachable — measured per axis (2026-08-31)
+
+"31 of 113 unreachable" says a problem exists but not what to do about it, and the two candidate fixes
+the owner named — *widen our axes* vs *help the biomes individually* — need different work. So the
+self-test now measures **what CityWorld produces** on each axis against **what each biome demands**,
+and names the axes with no overlap (`axes.cityworld.*`, `axes.blamedAxis`, `axes.examples` in the
+report).
+
+**What CityWorld actually produces**, sweeping the plan grid:
+
+| Axis | Range emitted |
+|---|---|
+| temperature | −1.00 … 1.00 |
+| humidity | −1.00 … 1.00 |
+| erosion | −1.00 … 1.00 |
+| weirdness | −1.00 … 1.00 |
+| **continentalness** | **−0.78 … 0.54** ← the only narrow one |
+
+**The 31 split cleanly, and not the way the guess above assumed:**
+
+- **6 have a real gap, all on continentalness.** Widening that axis fixes them, and nothing else does.
+- **25 have no gap on any axis.** They overlap our ranges everywhere and *still* lose, because
+  `Climate.ParameterList.findValue` takes the **nearest** point in 7-D space — a closer neighbour
+  always wins. Widening cannot help these at all. Examples: `bog`, `coniferous_forest`, `dryland`,
+  `field`, `fir_clearing`, `forested_field`, `fungal_jungle`, `lush_savanna`, `moor`, `mystic_grove`.
+
+**Continentalness is narrow for a reason, and it is a fixable one.** It is derived from terrain height,
+and CityWorld's terrain never reaches vanilla's extremes — no abyssal ocean floor, no deep continental
+interior. So this is a **remapping of an existing signal**, not new noise that has to be invented.
+
+**The two fixes are genuinely different work**, which is the useful part of the finding:
+
+| | Fixes | Work |
+|---|---|---|
+| Widen continentalness | 6 | Remap height → continentalness over a wider output range |
+| Beat nearest-match | 25 | Needs a *different mechanism* — a reserved share of the map, or per-biome overrides. No amount of range widening touches it |
+
+**`fungal_jungle` is in the 25**, so it was never a range problem — which is why putting it in the cave
+pool was wrong twice over: wrong that it is a cave biome, and wrong that reach was the issue.
+
+### ✅ Both fixes built and measured (2026-08-31)
+
+The analysis said the two halves needed different work, so both were done — and measured on the same
+seed with TerraBlender + BoP + GlitchCore actually installed.
+
+**Continentalness now uses its whole range.** The ends are measured instead of assumed: sample the
+regional height over a fixed grid, take the 2nd/98th percentiles, scale to those, with sea level pinned
+at 0 and each side scaled independently (biomes gate ocean against land on the sign, so one straight
+stretch would move the shoreline off zero).
+
+| | before | after |
+|---|---|---|
+| continentalness emitted | −0.78 … 0.54 | **−1.00 … 1.00** |
+| biomes blamed on continentalness | 6 | **4** |
+| distinct biomes on the ground | 94 | **104** |
+| slivers (under 0.1% of ground) | 22 of 94 | **13 of 104** |
+
+**The reserved share reaches the ones widening could not.** `world.moddedBiomeShare` (default `0.35`)
+marks a share of the map — by its own coarse noise field, so a mod gets regions you can walk across
+rather than static — and there the climate lookup runs with vanilla's points removed, so the 25
+also-rans compete only with each other.
+
+| modded biomes | direct wins only | with the share |
+|---|---|---|
+| distinct reachable | 34 | **52** |
+| ground covered | 12.4% | **36.1%** |
+
+CityWorld still names about two thirds of the ground. `0.0` restores the old behaviour exactly.
+
+**⚠ `terraBlender.reachable` is not a count of modded biomes, and reading it as one is a trap I fell
+into.** It counts *every* hit, and TerraBlender's regions carry vanilla biomes that win most points —
+81 hits, of which only 34 were modded. The historical "86 of 113 reachable" therefore never measured
+what a mod contributes, and comparing a modded-only figure against it makes a feature look like a
+regression. `reachableModdedDirect` vs `reachableWithShare` are the comparable pair, recorded in one
+run so the baseline is the same seed and the same mods.
+
+### ✅ The last few: biomes no dial can reach (2026-09-01)
+
+With BoP installed, **54 of 59** modded biomes generate through the ordinary climate route. Of the
+five that never did, `spider_nest` was already fine — it is a cave-pool biome, and the surface sweep
+simply could not see that route. The other four split by cause, and needed different fixes:
+
+- **`bog`, `fungal_jungle`, `snowblossom_grove`** lose the nearest-match *everywhere* — against
+  vanilla, and against other modded biomes at `moddedBiomeShare = 1.0`. No gap to widen, no share that
+  reaches them. **`#cityworld:surface_pool`** hands them a share of cells outright.
+- **`gravel_beach`** was never *asked* about: shores come from terrain and the modded lookup is limited
+  to land above the waterline. **`#cityworld:shore_pool`** substitutes on shore ground instead.
+- **`#cityworld:ocean_pool`** closes the same gap below the waterline. Ships empty; BoP adds no
+  overworld oceans.
+
+**Confirmed in-world**: fungal jungle generates with its own giant mushrooms, which also proves pool
+biomes reach `possibleBiomes()` — vanilla filters biome *features* against that set.
+
+**⚠ Two mistakes worth keeping.** Gating patches on all five climate axes produced *nothing*: the
+"overlaps on every axis" finding is marginal overlap measured one axis at a time, and no column sits
+inside the joint box. Gating on temperature and humidity works. And the shore band was written
+`terrainY <= seaLevel`, which is the *ocean* condition — `classify` puts the beach at exactly
+`terrainY == seaLevel` — so a beach biome was painted across open water, and the sweep passed it
+because it only asked whether a biome appeared, never where.
+
+### Related gap this exposes
+
+`CityWorldClimateBiomeSource` has **49 biomes hardcoded in Java** and a hand-written climate matrix (21
+`return` sites). That is why BoP's 69 biomes are invisible today, and it is the one big palette that is
+*not* data-driven. TerraBlender support would route around it rather than fix it. Worth deciding which
+is wanted: a TerraBlender bridge (wide reach, no control over placement) or a data-driven surface
+matrix (full control, only what a pack author lists) — or both, TerraBlender feeding the pool the owner
+described.
+
+**Scale, for prioritisation:** BoP alone is 69 biomes and 33.8M downloads, and TerraBlender lists
+thousands of dependent files. This is the single widest-reach item in the parking lot.
+
+## Do we still need to hand-map vanilla biomes? (2026-08-29)
+
+Owner's question once the TerraBlender bridge existed: the MODERN source hand-maps 49 vanilla biomes
+through a 21-branch `classify` matrix — is that still necessary, and would 26.3's `dappled_forest` slot
+in on its own?
+
+**Short answer: no we don't strictly need it, yes it would slot in — but keep the hand map anyway.**
+
+### Vanilla's own climate map is harvestable, exactly like TerraBlender's
+
+`OverworldBiomeBuilder.addBiomes(Consumer<Pair<Climate.ParameterPoint, ResourceKey<Biome>>>)` is the
+authoritative vanilla biome-to-climate map. It is `protected`, but the class is public and non-final, so
+a subclass can expose it — and the result feeds the *same* `Climate.ParameterList` path the TerraBlender
+bridge already uses. The two are one mechanism with two sources.
+
+**And `dappled_forest` is already in it** (verified in 26.3-snapshot-10 bytecode: `OverworldBiomeBuilder`
+references `Biomes.DAPPLED_FOREST`). So on that path, every future vanilla biome arrives free.
+
+**⚠ Do not read `multi_noise_biome_source_parameter_list/overworld.json` and conclude anything** — it is
+literally `{"preset": "minecraft:overworld"}`, a reference to the code-built preset. It lists no biomes,
+which looks exactly like "the new biome is missing" if you grep it. It cost a wrong conclusion here.
+
+### Why the hand map stays the default anyway
+
+Vanilla's map is tuned for terrain generated *from* those climate axes. Ours is tuned for CityWorld's
+terrain, and does things vanilla's cannot:
+
+- **Decayed-nature worlds** desert everything — a whole-world mood no climate point expresses.
+- **The waterline** is exact. We know where the sea is, so beach/shore/deep-ocean follow terrain rather
+  than a continentalness guess.
+- **Elevation bands key to `treeLevel`/`evergreenLevel`/`snowLevel`** — the shaper's own numbers, so
+  biome and vegetation agree by construction.
+- **Deliberate rarities** — mushroom fields only in the warm, very-humid corner, swamp widened for
+  marshy shores.
+
+Switching wholesale would drop all of that and change every existing seed's biomes.
+
+**So: keep `classify` as the default, and offer vanilla's list as another opt-in source alongside
+TerraBlender's** — the plumbing is already there, it is one more harvest into the same parameter list.
+
+### And for `dappled_forest` specifically: just add it
+
+It is one entry in `PALETTE` and one branch in `classify` when 26.3 is ported. **Do not re-architect the
+biome source to avoid a two-line change** — that would be paying a large, world-changing cost to dodge a
+small, controlled one. The architecture question above is worth deciding on its own merits, not on this.
+
+## ✅ StoryTeller drives SchematicLibrary — run, and it works (2026-09-11)
+
+`SchematicLibrary.names()` / `get(name)` / `family(...)` are public and StoryTeller reads them through
+its `CityWorldSupport`, then places with undo. That pairing had never been run — both sides had only
+ever compiled against each other. **It has now been run on Vivo against build `3c6bbde3`, driven from
+RCON, and both questions are answered:**
+
+| | result |
+|---|---|
+| `st struct library list` | 40 schematics returned across the mod boundary |
+| `place chayats-bank` | **4/4 chests present, each holding its gold** — gold_nugget and gold_ingot as authored |
+| `st undo` | 0/4 chests, every sampled point back to air |
+
+**Placement carries block-entity contents.** StoryTeller calls `clip.paste(...)` unmodified and there
+is no states-only filter in front of it, exactly as the code read. **Undo is states-only** and that
+stays a documented limit of theirs: what it cannot give back is whatever was *underneath* before,
+not what the schematic brought. Nothing in the seam needs fixing on either side.
+
+**The test subject was the whole experiment, and this is a CityWorld fact worth knowing:** most
+bundled schematics ship *empty* chests. `winchester` has 17 chest markers and `items=0` in every one
+of them; only `chayats-bank` actually carries contents (108 items across 4 chests). CityWorld fills
+containers through its own `LootProvider` in lot code (`setChest(..., LootLocation.MINE)` and
+friends), **not** through schematics — a schematic's chests arrive exactly as its author saved them.
+So testing with `winchester` would have "passed" while proving nothing whatever, and the run was only
+meaningful because StoryTeller decoded the NBT first and picked a subject known to carry items.
+
+**Two probe lessons from that run, both worth stealing for this project's own harness:**
+
+- **A probe can report success made entirely of your own text.** Their first undo check used
+  `execute if block ... run say CHEST-STILL-THERE` and grepped the RCON output — but `say` returns
+  nothing over RCON, so the grep matched mcrcon's *echo of the command it had just sent*. It read as
+  "undo is broken" and was one message from being reported as a bug in our seam. `execute if block X
+  Y Z chest` returns a real "Test passed"/"Test failed" instead.
+- **`/fill` over 32,768 blocks fails silently**, so a "cleared" test area was untouched jungle and
+  structure could not be told from terrain. Test in mid-air, where "before" is provably air.
+
+The rule underneath both: **before trusting a probe to report absence, show it a subject you know is
+present and confirm it says so.** That is the same shape as this project's own recurring failure —
+a check that cannot fail proves nothing, and looks exactly like a pass.
+
+## Vivo — the shared test machine, and CityWorld's spot on it
+
+`ssh -i ~/.ssh/vivo_ed25519 sable@192.168.7.102` — an Ubuntu VivoBook beside the desktop, set up by
+the LegendQuest/StoryTeller session. **Read `~/dev/README.md` there first**; it carries the traps and
+is the authority, not this section.
+
+**Why it exists, and it is a capability difference rather than spare capacity:** on Windows a
+Minecraft client cannot be driven by a background process at all (`SetForegroundWindow` is refused,
+`PostMessage` does not reach GLFW), so synthetic keys land in whatever window the owner is using. On
+Vivo a client runs on a private `Xvfb` display and `xdotool` drives it completely. WSLg here can
+*launch* a client (which is how the JourneyMap client crashes were caught) but cannot drive one, and
+its window lands on the owner's desktop.
+
+**CityWorld's claim, 2026-09-11:** display **`:2`**, game port 25599, no RCON. Displays on Vivo are
+**claimed in that README's table, never computed** — the arithmetic rule was withdrawn because ports
+drift per checkout (`run/` is gitignored). Add a row, do not derive one.
+
+- Checkout at **`~/dev/CityWorld-ReForged`**, a normal clone of `origin`. Repos must share one
+  parent there, because sibling `build.gradle` files resolve by relative path
+  (`../CityWorld-ReForged/build/libs`) — StoryTeller compiles against ours, so **that jar directory
+  must hold a current jar**. It already did when CityWorld arrived: the checkout was cloned *around*
+  the existing jar rather than over it.
+- Build with the system JDKs: `JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64` for 1.21.11,
+  `java-25-openjdk-amd64` for the 26.x branches. `tools/` is gitignored, so a fresh clone has none.
+- The NeoForm decompile cache is shared with the other projects, so a first build is minutes rather
+  than the usual quarter of an hour.
+- **On a shared machine there is no safe kill pattern, only a safe identification step.** `java`,
+  `devlaunch`, `fml.startup.Client` and `gradlew` are all shared infrastructure once two projects use
+  one box: a pattern kill for your own orphans reaches the other project's live run. Both sessions
+  did this to each other within ten minutes — CityWorld pattern-killed on `fml.startup.Client`
+  (near miss, theirs survived), LegendQuest on `devlaunch` (landed on CityWorld's dev server, which
+  happened to be one this session had already stopped). Identify first, then kill PIDs you have
+  printed: read `/proc/<pid>/cmdline` and require the repo path `/home/sable/dev/CityWorld-ReForged`,
+  not a substring anyone else's process can contain. Then verify by PID afterwards, because `kill` on
+  an already-dead PID is not an error.
+- **Set `run/server.properties` yourself on arrival.** `run/` is gitignored, so a fresh clone has
+  none and the first `runServer` generates a default one — which binds **25565**, the port two
+  projects on the desktop already fight over, not the 25599 this project documents. CityWorld did
+  exactly that on its first Vivo run: the claim table said 25599, the server bound 25565, and the
+  client connecting to 25599 got "Connection refused" while a perfectly healthy server sat on the
+  wrong port. This is precisely the drift the Vivo README warns about, demonstrated rather than
+  read: **a documented port is desktop-local state, and it does not travel with the repo.**
+
+**What it is for here:** the StoryTeller ↔ `SchematicLibrary` seam above — the one thing that cannot
+be tested from this repo alone.
+
+## Build stamps — which bytes are running
+
+Every jar records the commit it was built from, and says so at startup:
+
+    CityWorld 5.7.0+mc1.21.11 (build 7b30b10d on master, 2026-09-10T07:27:41Z)
+
+A version number answers "which release"; during development that is a different question from
+"which bytes", and CityWorld deploys by copying jars into nine instances where a filename cannot tell
+you whether the jar is the one you just built. `-dirty` on the commit means it was built from
+uncommitted changes.
+
+**Shared format across Sable's mods** — agreed with the LegendQuest session so the five projects do
+not each invent one: `commit` (8 chars, `-dirty` when uncommitted), `branch`, `time` (UTC ISO-8601),
+`version`. Two carriers, for two readers:
+
+- `/<modid>/build.properties` — a generated resource read by the running mod (`BuildInfo`).
+  **Namespaced under the mod id**, since a bare `/build.properties` would collide with every other
+  mod doing this. Read at runtime instead of the manifest because a dev run loads from a classes
+  directory with no jar and no manifest.
+- Manifest `Build-Commit` / `Build-Branch` / `Build-Time` — for inspecting a jar from a shell without
+  loading it, which is what answers "is this instance jar stale":
+  `unzip -p build/libs/cityworld-*.jar META-INF/MANIFEST.MF | grep Build-`
+
+CityWorld's one local touch, within the shared format: `version` carries the Minecraft target too
+(`5.7.0+mc1.21.11`), because three jars ship per release and `5.7.0` alone does not say which ran.
+The stamp also replaces the jar-mtime hack on the F3 line — the commit says everything the timestamp
+did and more, though the mtime is kept beside it since that is what changes when a file is copied.
+
+`time` is the **commit's** timestamp (`git show -s --format=%ct`), not the wall clock. A wall-clock
+stamp changes on every Gradle invocation, so the generated resource changes and `processResources`
+and `jar` are never up to date — measured here as a no-op build going from executing three tasks to
+`5 actionable tasks: 5 up-to-date`. `%ct` rather than `%cI` because `%cI` carries the committer
+machine's UTC offset, so one commit would stamp differently on two machines.
+
+A missing or unreadable stamp degrades to `unknown` and never fails a build or a load: it is
+diagnostic information, not a dependency. The git calls tolerate git being absent (a source zip, a CI
+checkout without history). **That fallback has been executed, not assumed** — real stamp, absent
+resource, malformed resource (invalid unicode escape plus binary), a partial parse, from a jar, and
+against the real shipped jar: the good cases read their values, the bad ones return `unknown` and
+throw nothing. `BuildInfo` imports nothing but `java.io`/`java.util`, so it can be compiled and run
+standalone with `javac` — no Minecraft needed, which makes this a two-minute check.
+
+**Two things about that catch block that are not obvious, both measured here and agreed across
+Sable's mods:**
+
+1. **`catch (Exception)`, not `catch (IOException)`.** `Properties.load` throws
+   **`IllegalArgumentException`** on a malformed unicode escape. A narrower catch compiles, reads
+   correctly, passes review, and takes the mod down at class-init the first time a stamp is
+   corrupted — an `ExceptionInInitializerError` from a static initialiser, i.e. failing to load over
+   a diagnostic.
+2. **Every field is read after `load()` returns, and that ordering is the degrade guarantee.**
+   Measured: given a stamp with three valid lines and a bad escape on the fourth, `load()` throws
+   *having already populated `commit`, `branch` and `version`*. Read incrementally and a corrupt
+   stamp reports a real-looking commit with the rest missing — worse than no stamp, because it looks
+   like an answer. Absence is a null stream; corruption is a throw. **Testing only the absent case
+   exercises the wrong half.**
+
+## Releasing — GitHub, and CurseForge automatically
+
+Publishing a GitHub release now publishes to CurseForge too, via
+`.github/workflows/curseforge.yml`. It downloads every jar attached to the release, reads the
+Minecraft version out of each filename (`cityworld-5.1.0+mc26.2.jar` → `26.2`), and uploads them
+with the release body as the changelog.
+
+**One-time setup (owner only — the token must never be pasted into a chat or committed):**
+
+1. Create a token at <https://legacy.curseforge.com/account/api-tokens>.
+2. Repo **Settings → Secrets and variables → Actions → Secrets**: add `CURSEFORGE_TOKEN`.
+3. Same screen, **Variables** tab: add `CURSEFORGE_PROJECT_ID` — the numeric project ID shown on the
+   CurseForge project page.
+
+Until both exist the workflow **skips rather than fails**, so it will not put a red cross on a
+release. `workflow_dispatch` re-uploads an existing tag by hand.
+
+Each uploaded file declares **JourneyMap as an optional dependency** — `relations.projects` in the
+upload metadata. Note the API keys those by **slug** (`journeymap`), not by project id (32274); the
+id is in the script only as a check that the slug points at the right project. `optionalDependency`
+matters: `requiredDependency` would tell every CityWorld user to install a map mod. Override for a
+one-off with `CURSEFORGE_RELATIONS='{"projects":[…]}'`, or set it empty to send none.
+
+`scripts/curseforge-upload.sh` does the actual upload and can be run locally. CurseForge wants
+numeric game-version IDs, and those change as versions are added, so it resolves them from
+`/api/game/versions` on every run rather than hardcoding them — and fails with the list of names
+CurseForge *does* know if a Minecraft version is not listed yet. **That is the expected failure
+right after a Minecraft release**: CurseForge has to add the version before anything can be uploaded
+against it.
+
+**⚠ HTTP 200 means accepted, not published.** Moderation runs afterwards, and this is where the
+confusing failures live:
+
+- **CurseForge dedupes by file content.** The same jar cannot exist twice on a project, so
+  re-uploading a release that is already up gets each file *rejected as a duplicate* — even though
+  the API returned a file ID. Delete the old files first, or don't re-run.
+- **Rejected files are hidden from the authors file list by default**, so they do not look rejected;
+  they look like they never arrived. Everything appears to have silently done nothing.
+- **Some files land in "Under Manual Review"** and stay off the public page for a while. Nothing is
+  wrong; it clears on its own.
+
+All three bit during the 5.1.0 upload. The authoritative view, always, is
+`https://authors.curseforge.com/#/projects/<id>/files` — the public Files tab lags behind it.
+
+## Verifying a version — `scripts/selftest.sh`
+
+Hand-playtesting every supported version does not scale at four drops a year, so verification is
+automated. `selftest/CityWorldSelfTest` generates a real world on a fixed seed and checks:
+
+- the overworld is genuinely on `CityWorldChunkGenerator`/`CityWorldClimateBiomeSource` — **a silent
+  fall back to vanilla worldgen is the scariest failure and looks like nothing at all**;
+- the planner produces a full spread of contexts and lots across MODERN/APOCALYPSE/CLASSIC;
+- decoration actually writes blocks;
+- signs carry text **on both faces** — the canary for the `SignBlockEntity` access transformers.
+
+It is dormant unless `-Dcityworld.selftest=true`. Run it with `./scripts/selftest.sh` (it picks the
+right JDK from `minecraft_version`), then `./scripts/selftest.sh --compare` once several versions
+have been run.
+
+**It also runs in CI** — `.github/workflows/selftest.yml`, on every push to the three version
+branches and on demand. A three-branch matrix runs the harness on each version, then a compare job
+fails if any two disagree on the plan hash. Warm, that is **4–5 minutes per version in parallel**;
+cold it has to let NeoForm decompile Minecraft, which is 10–15 minutes and is why the cache is keyed
+on the NeoForge version. Docs-only pushes are ignored.
+
+**It earned its keep immediately.** The first green-building CI run caught that on a *fresh
+checkout* the server silently fell back to vanilla `NoiseBasedChunkGenerator`: `set_prop` had two
+paths that disagreed about backslashes, and a developer's `run/` directory always took the working
+one. The world generated, looked entirely normal, and was not CityWorld. That is exactly the failure
+the generator-identity check exists for, and nothing but a clean environment would have surfaced it.
+
+**The comparison is the clever half.** Planning never touches the block registry, so for a fixed seed
+the plan is a pure function of the seed and must be *identical* on every Minecraft version. The
+harness hashes it and `--compare` fails if two versions disagree — that catches a change that
+silently alters worldgen on one version only. Materials are deliberately **excluded** from the hash,
+because those legitimately widen as newer versions add blocks to the palette tags.
+
+Measured 2026-08-17, all three passing and agreeing:
+
+| version | plan hash | signs | front | back | distinct blocks | run |
+|---|---|---|---|---|---|---|
+| 1.21.11 | `28fc3789` | 67 | 65 | 30 | 136 | 233s |
+| 26.1.2  | `28fc3789` | 67 | 65 | 30 | 134 | 232s |
+| 26.2    | `28fc3789` | 67 | 65 | 30 | 136 | 261s |
+
+**Re-measured 2026-09-09, after the 5.6.0 arc: the plan moved, on every version alike, to
+`db687d0f` (MODERN), `66c0777c` (APOCALYPSE), `98569760` (CLASSIC).** All three still agree, which is
+the invariant; the arc's content (park zones, the vault, the hospital campus, the furniture passes)
+legitimately changed what gets planned where.
+
+**A trap this cost an hour:** `--compare` reads whatever JSON reports are sitting in
+`build/selftest/`, with no freshness check, so a fresh run on one version compared against months-old
+reports on the others reads exactly like "a change altered worldgen on one version only" — the alarm
+it is built to raise. Before believing a `--compare` failure, check the report timestamps and re-run
+the versions that look old. The proof it was a false alarm here: the self-test on the commit *before*
+the change gave hash-for-hash identical results, and re-running 26.1 and 26.2 turned the compare
+green without a line of code changing.
+
+The identical plan hashes are the point: same seed, same city, three Minecraft versions. The distinct
+block counts differing by two is the expected material variance, not a fault.
+
+**Only the plan hash is an invariant — the rest of the table is indicative.** Re-running an unchanged
+1.21.11 build gave 66 signs and 64 fronts where it had given 67 and 65: decoration of chunks at the
+edge of the surveyed block depends on which neighbours happen to be loaded, so counts wobble by one
+or two between runs. The harness therefore asserts *presence* (signs exist, fronts exist, backs
+exist, blocks were written), never exact counts. **Do not tighten those into equality assertions** —
+it would produce a test that fails at random and teaches everyone to ignore it.
+
+**⚠ A trap this harness fell into itself, worth not repeating.** Its first version located test
+chunks by rebuilding a `CityWorldGenerator` and asking it for `RoadLot`s — and reported "no signs
+found", which read exactly like a 26.2 regression. It was not: `PlatMap.getMapLot()` subtracts the
+platmap's own origin, which is *not* aligned to a multiple of `PlatMap.Width`, so indexing `getLot()`
+with a `floorMod` silently reads a different lot. **Survey the world that was generated; do not
+predict it.** Reading `LevelChunk.getBlockEntities()` is both exact and far cheaper than scanning.
+
+## The measured 26.1 delta (2026-08-16, branch `mc26.1`)
+
+Stage 2's actual deliverable. Target: **Minecraft 26.1.2 / NeoForge 26.1.2.95** (the last patch of
+the 26.1 line). Builds clean, runs, and generates cities. **The port cost was far lower than
+predicted.**
+
+**The entire source delta is one API change:**
+
+- **`ChunkPos` became a record**, so the public `x`/`z` fields are now accessors — `pos.x` →
+  `pos.x()`. That is **20 compiler errors across 12 lines in 6 files**, and it is *all* of them.
+  `new ChunkPos(x, z)` still works (it is the canonical constructor); the predicted
+  `new ChunkPos(BlockPos)` → `containing()` and `.asLong()` → `.pack()` renames exist in 26.1 but
+  this codebase never used those forms.
+
+**Predictions that did not bite:**
+
+- **`compat/Material.java` — the "biggest single fragility" — cost nothing.** Re-running
+  `gen_material.py` against 26.1 produced a file **byte-identical** to the 1.21.11 one. All 691
+  `Blocks.X`/`Items.X` bindings survived. The generator already fails loudly on unmapped names,
+  `EXTRAS`, and `EXTRAS_EXPR`, so this was a real check, not a silent pass.
+- **The loot-registry `MapCodec` change misses us** — every `getType()` hit in the tree is our own
+  method, not a vanilla loot type.
+- **The rendering refactors miss us**, as predicted (0 `GuiGraphics` usages).
+- **`new ItemStack(...)` still works** in `HospitalLot`; `ItemStackTemplate` was not forced on us.
+- **The access transformer needed no change.** `SignBlockEntity.frontText`/`backText` still exist
+  and the AT still widens them (verified in the transformed 26.1 sources, not just inferred from a
+  green build).
+
+**Toolchain changes** (`gradle.properties`, `build.gradle`, `deploy.sh`):
+
+- **Java 21 → 25** (26.1 ships `java-runtime-epsilon`; JDK at `./tools/jdk25`, git-ignored like
+  `jdk21`). `deploy.sh` now prefers `jdk25` and falls back to `jdk21`, honouring a preset `JAVA_HOME`.
+- **ModDevGradle 2.0.141 → 2.0.144.** The Gradle wrapper was **already** 9.2.1, so the "Gradle 9.1+"
+  requirement cost nothing.
+- **Parchment stays disabled** — 26.1 dropped obfuscation entirely, so it would only add parameter
+  names. The properties are already blank; nothing to do.
+- **The jar now carries its Minecraft version** — `cityworld-5.0.3+mc26.1.2.jar`. Both lines share a
+  mod version, and two files both called `cityworld-5.0.3.jar` are indistinguishable in a mods folder
+  or on a releases page. The version *inside* `neoforge.mods.toml` stays a plain `5.0.3`.
+
+**Three cross-version traps found in `scripts/gen_material.py`** — all silent-wrong-answer bugs that
+only appear once a second version exists on the machine, now fixed:
+
+1. It globbed `sourcesAndCompiledWithNeoForge_*` and took **`jars[0]` of an unsorted glob**. With one
+   MC version cached that is always right; with two it regenerates `Material.java` against whichever
+   happens to sort first.
+2. **The NeoForm artifact was renamed** — 26.1 produces `mergeWithSources_*_output.jar`, so the old
+   glob does not match it at all and would silently fall back to a stale 1.21.11 jar.
+3. **The decompiled-source cache was shared across versions** (`/tmp/cityworld-portgen/mcsrc`), so
+   after retargeting the build it would serve the *previous* version's `Blocks.java`.
+
+   The fix picks the jar by fingerprint: read `minecraft_version` from `gradle.properties`, get that
+   release's `world_version` from NeoForm's cached `minecraft_<ver>_client.jar` (`version.json`), and
+   match it against `SharedConstants.WORLD_VERSION` in each candidate jar. No hand-maintained table,
+   no network call, and it dies loudly rather than guessing. The cache is now per-version.
+
+**Verified in-world**, not just compiled (temporary `Port261Probe`, since deleted):
+
+- The overworld really is on our generator — asked the live server:
+  `minecraft:overworld -> CityWorldChunkGenerator / CityWorldClimateBiomeSource`. **`level-type` still
+  works on 26.1.**
+- Planning sweep over 961 platmaps × MODERN/APOCALYPSE/CLASSIC: **11 contexts and 35–41 lot classes
+  each**, no throws — the whole `ShapeProvider ↔ PlatMap ↔ PlatLot ↔ Context ↔ Plugins` cycle runs.
+  Hospitals, zoos, biodomes, airships, saucers and castles all appear.
+- Decoration read-back: forced a `RoadLot` chunk to FULL and read it back — 25 distinct blocks
+  including cyan terracotta, stone bricks, a birch door, a chest, glowstone and iron bars. **Block
+  writing and block entities work.** Zero exceptions across the whole server run.
+
+**Verified in a real client** (owner, 2026-08-16, a CurseForge `26.1.2` instance on
+neoforge-26.1.2.95, CityWorld the only mod). This covers what `runServer` structurally cannot:
+
+- **The Customize screen works** — the client-only world-creation UI was the single largest untested
+  surface on 26.1 (the dedicated server never loads those `@OnlyIn(CLIENT)` classes), and it needed
+  no changes.
+- **Street-name signs render their text**, and a mine-entrance headframe read *"Gallows Adit / Est.
+  1888" on both faces*. That is the strongest result of the whole port: it proves the `frontText`
+  **and** `backText` access transformers still apply and that the direct field writes still survive
+  decoration. Had either failed, the symptom would not have been a blank sign — the chunk would have
+  failed outright and world teardown would have hung on "Saving world".
+- **The 5.0.3 tag-backed palettes behave identically** — the owner's read was "like 5.0.3 with an
+  expanded but weighted palette", i.e. wider materials with the original odds intact, exactly as on
+  1.21.11. The tag layer needed no version-specific work.
+- **Named villagers, overgrowth, biomes and schematics all work.** Each of these is a separate risky
+  surface and all four came through unchanged: entity spawning during chunk generation
+  (`EntitySpawnReason.CHUNK_GENERATION`), the post-decay overgrowth pass, the custom
+  `CityWorldClimateBiomeSource`, and the whole schematic pipeline — multi-format load, data-fixing
+  from 1.12-era files, block entities, rotation and mirroring.
+
+**Net: the 26.1 port is complete and verified end to end.** Every major subsystem has now been seen
+working on 26.1 — worldgen, decoration, signs, spawning, biomes, overgrowth, schematics, palettes and
+the client UI. Nothing on the 26.1 line is outstanding.
+
+**⚠ Two traps for the next port, both of which cost time here:**
+
+- **`level.dat` no longer stores worldgen settings in 26.1.** There is no `WorldGenSettings` key. A
+  world generated by our generator therefore looks identical to a vanilla one if you inspect
+  `level.dat` — which briefly, and wrongly, looked like the port had regressed to vanilla worldgen.
+  **Ask the running server** (`level.getChunkSource().getGenerator()`) instead.
+- **`WorldData.worldGenOptions()` is gone.** The documented probe recipe uses it to fetch the seed;
+  use `server.overworld().getSeed()` on 26.1. This does not affect the mod, only probes.
+
+**What this says about stage 3.** The `compat/` seam did its job: 26.1's breakage was one record
+conversion, not a port. But note the shape of it — `pos.x` vs `pos.x()` has **no syntax that compiles
+on both versions**, so a genuinely single tree needs either a shim (`Compat.chunkX(pos)`) or a source
+preprocessor. That was left out deliberately here so this branch measures the raw delta rather than
+an abstraction built from a single data point. Do 26.2 next, then decide with two deltas in hand.
+
+## The measured 26.2 delta (2026-08-17, branch `mc26.2`)
+
+Target: **Minecraft 26.2 / NeoForge 26.2.0.59**. Java 25 and ModDevGradle 2.0.144 again, so the
+toolchain cost nothing this time. **This is the drop where the treadmill stopped being free.**
+
+**26.2 rewrote how Minecraft declares whole families of blocks.**
+
+- **Dyed blocks are gone as fields.** `Blocks.BLACK_WOOL` and its siblings no longer exist — wool,
+  carpet, concrete, concrete powder, terracotta, glazed terracotta, stained glass, stained glass
+  panes and beds are each one `ColorCollection<Block>` indexed by `DyeColor`:
+  `Blocks.WOOL.pick(DyeColor.BLACK)`. **145 of our constants** were affected. Note the naming
+  exceptions — the dyed family takes a `DYED_` prefix where the undyed block keeps the plain name
+  (`Blocks.TERRACOTTA` is undyed, so dyed terracotta is `Blocks.DYED_TERRACOTTA`), likewise
+  `DYED_SHULKER_BOX`, `DYED_CANDLE`, `DYED_CANDLE_CAKE`.
+- **Copper went the same way.** The `WeatheringCopperBlocks` record became
+  `WeatheringCopperCollection`, whose stages hang off `weathering()` —
+  `Blocks.CUT_COPPER.weathering().exposed()`. It also swallowed blocks that used to be plain fields:
+  `CUT_COPPER`, `COPPER_GRATE`, `COPPER_CHEST`, `COPPER_BULB`, `CHISELED_COPPER`, `COPPER_BLOCK`
+  and `LIGHTNING_ROD`.
+- **`EntityType`'s constants moved to `EntityTypes`** (mirroring `BlockEntityType`/`BlockEntityTypes`).
+  59 references, one mechanical rename.
+- **`DripstoneThickness` is `SpeleothemThickness`**, and `BlockStateProperties.DRIPSTONE_THICKNESS`
+  is `SPELEOTHEM_THICKNESS`. Same enum constants.
+- **`Minecraft.setScreen` moved onto `Minecraft.gui`** — `this.minecraft.gui.setScreen(...)`.
+
+**Almost all of it landed in generated code, which is the whole point of having generated it.**
+`gen_material.py` now *derives* these expressions instead of naming fields, from rules rather than
+tables: split a name at its longest dye-colour prefix and look for a matching `ColorCollection`
+(trying `DYED_` too), or split a weathering-stage prefix and look for a `WeatheringCopperCollection`.
+The same generator therefore emits flat fields on 1.21.11 and 26.1 and collection picks on 26.2, and
+**regenerating on the two older versions produces byte-identical files — verified.** `EXTRAS_EXPR`'s
+twelve hand-written copper expressions are now derived the same way and can no longer rot.
+
+Only **three hand-written sites** needed touching: `LegacyBlocks` (its dye-ordered tables are now
+derived via `DyeColor.byId`, which is *better* code — a legacy block's data value simply is the dye
+id), `Overgrowth` (the speleothem rename) and `CityWorldCustomizeScreen` (the `gui.setScreen` move).
+
+**What did not break:** the palettes. Because `5.0.3` moved them onto block tags, 144 vanished block
+fields did not cost the palette layer a single line — the tags still resolve. Stage 1 paid for itself
+here. The access transformer, the codec registration, the schematic pipeline and the biome source all
+came through untouched as well.
+
+**⚠ Two infrastructure traps, neither of them code faults:**
+
+- **A zero-byte jar in the Gradle cache** (`error_prone_annotations-2.48.0.jar`, whose SHA-1 was
+  `da39a3ee…` — the hash of an empty file) failed the build with hundreds of bogus
+  "cannot access net.minecraft" errors. Maven Central served it fine; Gradle wrote it empty, twice.
+  Fixed by dropping the real jar into the cache under its correct SHA-1 directory.
+- **An OOM kill (exit 137)** mid-build while a dev client for another mod was running. It reads like
+  a build failure and is not one.
+
+## Stage 3: what the two deltas say
+
+The two data points disagree, which is itself the finding:
+
+| | 26.1 | 26.2 |
+|---|---|---|
+| hand-written source changes | 12 lines, 6 files | 3 files |
+| generated source changes | none (byte-identical) | 145 constants, all derived |
+| toolchain | Java 21 → 25, MDG bump | none |
+| nature of the change | one record conversion | block-declaration model rewrite |
+
+**A quarterly drop is not reliably cheap.** Planning for "12 lines every three months" would have
+been the wrong lesson to take from 26.1.
+
+**What actually carried the weight was not a clever build setup — it was two design decisions already
+in place:** the `compat/` seam (only 59 of 386 files touch `net.minecraft`), and generating
+`Material.java` instead of hand-writing it. 26.2's 145 broken constants cost *rules in one Python
+file*, not 145 edits, and none of the 3,096 call sites moved.
+
+**The open question for a single tree** is that the divergences have no syntax valid on both versions
+— `pos.x` vs `pos.x()`, `Blocks.BLACK_WOOL` vs `Blocks.WOOL.pick(DyeColor.BLACK)`. So a single tree
+needs either per-version source sets for a small compat shim, or a source preprocessor. The generated
+file is *already* effectively per-version, which suggests the shim approach: keep one shared tree,
+add `src/compat/<version>/java` holding only the handful of diverging methods, select it with a
+Gradle property. The hand-written divergence across three versions is currently **four call sites**,
+which is small enough to be worth doing and small enough that getting it wrong costs little.
+
+**Recommended before committing to it:** keep branch-per-version for one more drop (26.3, due ~Sept
+2026) to see whether the divergence set keeps shrinking or grows. Merging three branches into one
+tree is cheap now and cheap later; guessing wrong about the mechanism is not.
+
+
+Deploying: `./deploy.sh` targets the `CityWork-ReForged` instance;
+`CITYWORLD_INSTANCE="/mnt/c/Users/darre/curseforge/minecraft/Instances/MobHealth - Forge" ./deploy.sh`
+targets the second test instance (where LegendQuest/ZombieMod test reacting to city locations). Both
+fail with "Permission denied" if that instance's Minecraft is open — close it and rerun.
+
+- ~~Finer decay knobs~~ **DONE (2026-08)** — graduated per-category demolition control (intensity,
+  fire density, pristine-road sparing), with APOCALYPSE/DESTROYED presets encoding the owner's two-tier
+  vision (gentle reclaim vs heavy war damage). See [[cityworld-demolition-more-options-later]] and the
+  dated block below.
+- ~~A few interior deco blocks not yet woven in~~ **DONE (2026-07)** — chains (chandeliers), copper
+  chests, richer candles + candle-cake, decorated pots all in the `Furniture` accent vocabulary; lightning
+  rods on highrise roofs + radio-tower aerials; hanging lanterns in the mines. See the deco log below.
+- ~~Building copper weathering~~ **CLOSED (owner: a-ok, leave as-is 2026-07)** — not doing it.
+
+**Tag-backed building palettes (2026-08-16, most recent).** Stage 1 of the cross-version arc, and a
+feature in its own right. Stacks under `## 5.0.3`; `mod_version` bumped. Not yet released.
+
+- **Eight palettes moved from compiled constants to block tags** — `cityworld:build/{planks, wool,
+  terracotta, glazed_terracotta, concrete, concrete_powder, stained_glass, modern_stones}`, defined in
+  `src/main/resources/data/cityworld/tags/block/build/` and resolved by `Support/MaterialTags`.
+  Verified in-world by a temporary `ServerStartedEvent` probe (since removed): planks **6 → 12**,
+  wool **10 → 16**, terracotta 17, glazed 16, concrete 16, powder 16, stained glass 16, modern stones
+  24; no unbound-tag warnings.
+- **Weighting is preserved, and that is the whole trick.** `MaterialList` gained tag *pools*: a pool
+  occupies exactly the number of slots the constants it replaced did, so the odds of "some plank" are
+  unchanged and only *which* plank widens. Flattening the tag in instead would have doubled wood's
+  share of every wall, and a modpack with thirty wood types would have drowned every palette. Two
+  rolls per pick: one for the slot, one within the pool (reusing the slot offset would make a
+  weight-1 pool always yield its first block).
+- **Determinism trap, worth remembering:** tag iteration order is *not* stable across loads, versions
+  or packs, and every material choice indexes a list with a seeded `Odds` — so an unsorted pool would
+  mean the same seed grew a different city each load. `MaterialTags.resolve` **sorts by registry id**
+  before anything indexes it. Probe-verified: two runs of the same seed produced identical sequences.
+- **`c:` tags are the win for the families vanilla doesn't tag.** Vanilla ships 204 block tags but has
+  no `concrete` tag (only `concrete_powder`) and no generic "stones"; NeoForge's 123 common tags
+  supply `c:concretes`, `c:glazed_terracottas`, `c:stones`, `c:cobblestones`, `c:glass_blocks`,
+  `c:villager_job_sites` (a direct fit for the shop layer, still unused) and more.
+- **Modpack compatibility falls out for free** — a mod that tags conventionally appears in cities with
+  no patch at all; anything else is a datapack adding to `cityworld:build/*`. Documented for players
+  in the new **`PALETTES.md`** (also website source material), including the `"replace": false` /
+  `"required": false` traps and why a modded plank feels rare (slot weighting).
+- **Left as fixed lists on purpose:** unfinished buildings (muted greyscale), government offices (pale
+  civic), roads and maze walls (order carries meaning). Widening those loses the intent.
+
+**Announce feature + vault glow-up (2026-08-15).** Built on owner request after the release
+wave below; all committed through `ae04ebe`, deployed to both instances, **not yet released** (stacks
+under `## 5.0.2` in `CHANGELOG.md` — owner cuts releases when there's enough, and this batch is enough):
+
+- **Landmark announcements** (`world.broadcastSpecialPlaces`, default off): chat lines as landmarks
+  generate, sent to the players **in the generating world** (not server-wide). Every `reportLocation`
+  call site now carries a stable kind key, gated through **`world.announcedLandmarks`** (a datapack
+  list) — the owner's curated default: `airship, saucer, vault, zoo, biodome, hospital, schematic`.
+  Everything else (fishpond, campground, shack, mineentrance, castle, oilplatform, radiotower, bunker,
+  museum, balloon, vaultroad, hospitaldept) stays debug-log-only unless a server adds its key.
+- **Schematic `.yml` grew `Title:`** ("The Statue of Liberty" instead of "liberty") — announcements and
+  `/cityfind` both use it (find matches name OR title, displays title). Sidecar parsing now honours
+  quoting and inline `#` comments on **every** key (was Title-only; `Decayable: "true"` parsed false).
+- **Curation applied**: 7 bundled landmarks announce with proper titles (liberty→Statue of Liberty,
+  midwich, spiritwind, dragon, water tower, hedge maze, pagoda). **Instance-side** (not in git!): 8
+  drop-ins in CityWork-ReForged's config announce (Big Ben, Lighthouse, Cathedral, Arch de Minecraft,
+  Freight Ship, Dredge, Cara Samara, Sablednah); 5 titled-but-quiet; mini-castle odds fixed 0.1→0.02.
+- **Liberty reskinned in weathered copper** (was 13,563 light-blue wool — predates copper). Legacy
+  `.schematic` can't name post-1.12 blocks, so it's now a vanilla `.nbt` — which surfaced that the
+  bundled index only accepted `.schematic`; `loadBundled` now takes any supported format.
+- **A high-effort code review of this diff found 10 verified issues, all fixed** (commit `90b4191`):
+  per-world+curated broadcast (above), vault road chunks each announcing a different hashed number,
+  `.nbt` drop-ins stamping recorded air (now stripped unless `KeepAir`, matching other formats —
+  `Templates.build` takes a `keepAir` param; `.schem`/`.litematic` readers pass `true` since they
+  filter during tag construction), Customize style-cycle silently resetting radius/naming/mobs (now
+  carried), floors picker display-vs-save divergence, and a duplicate extension matcher.
+- **Vault glow-up** (owner screenshots): the lobby blast door is now a proper Fallout cog — 10-block
+  toothed gear (gray plate, copper spokes/hub, iron rim, 8 teeth), hazard-striped doorway/threshold,
+  winch machinery + chains, VAULT-number wall signs. **Root cause of the old "not lined up" look: an
+  odd-width design centred on column 8 against the 2-wide 7/8 corridor — half a block off. Even-width
+  designs centred on the 7.5 seam are the rule for anything framing a corridor.** Lobby furnished
+  (console, lockers, vents) via the `setAt/mapX/mapZ` door-side mapper so props rotate with the door
+  wall. The surface hut stood metres above slopes (`blockYs`+3 fudge) — now scans the live chunk at
+  the door column for real grade (scanning UP so canopies can't fool it). **Gotcha: wall signs face
+  AWAY from the block they hang on; `outwardFace(side)` points out through the wall, so signs need
+  `getOppositeFace()`.** The cog was ASCII-rendered off-line before shipping — cheap geometry check.
+- **Max building floors picker** in Customize (8–60, snaps at load so display == saved).
+
+**Release wave + post-release polish (2026-08-12→15).** Documentation, first public release,
+and the playtest fixes that followed it:
+
+- **Docs corrected and expanded.** The world-style table said "10 styles" and listed a single "Normal";
+  the enum actually has **13**, with MODERN and CLASSIC as separate styles (CLASSIC was formerly named
+  NORMAL) and FLOATING missing entirely. Fixed in `README.md` and `CURSEFORGE.md`. Added `CURSEFORGE.md`
+  (project description), `CURSEFORGE-CONFIGURATION.md` and `CURSEFORGE-COMMANDS.md` (deep dives, built by
+  reading `SettingsExample.java` and `CityWorldCommands.java` rather than from memory — the latter
+  documents `/cwlocate`, which had never appeared in any doc). 21 captioned screenshots added to the
+  README under `screengrabs/`, JPEG-compressed 23.4MB → 2.9MB.
+- **Promo stat, ground-truthed.** 135 saved worlds / 3,249,933 generated chunks / ~832 km², counted by
+  parsing the 1024 3-byte offset entries in each `.mca` region header across the test instance's `saves/`
+  — not estimated from file sizes.
+- **`v5.0.1` released** on GitHub (tag + jar + notes), `CHANGELOG.md` started.
+- **Overgrowth debris was all one tile.** `LEAF_LITTER` and `PINK_PETALS` are `SegmentableBlock`s whose
+  default state is always 1 segment facing north, so every scrap looked identical even though the material
+  pool was already mixed. `Overgrowth.scatter()` now rolls `SEGMENT_AMOUNT`, `HORIZONTAL_FACING` and
+  `AGE_3` (berry bushes) per placement; blocks without those properties pass through.
+- **Azaleas grew in thickets — two independent causes.** (1) `LushCaves.surfaceAzalea` ran per *chunk*
+  with 6–10 tries, but a lush *region* spans ~25 chunks, so a patch could stack up hundreds; now 80% of
+  lush chunks get none and the rest get 1–2. (2) Separately, `AZALEA`+`FLOWERING_AZALEA` were **10% of the
+  `Overgrowth` ground-cover pool** — the loud silhouette read as a thicket on APOCALYPSE. That slot now
+  takes a **`PERSISTENT` leaf block of the local biome's tree species** (spruce/birch/jungle/acacia/dark
+  oak/pale oak/mangrove/cherry, oak fallback; azalea foliage kept only for flower forest and meadow).
+  **Gotcha: fixing the visible pass first was wrong** — the two paths look identical in-world, and the
+  owner was on APOCALYPSE with overgrowth on, i.e. the *other* one.
+- **Richer nature clutter**: wildflowers, plain bushes, feral sweet-berry bushes, dry grass, dead bushes on
+  roads, and a ~1% `FIREFLY_BUSH`. New constants added via `scripts/gen_material.py` (**never hand-edit
+  `Material.java`**) and regenerated.
+- **Lightning rods stood on moss carpet.** The rooftop-rod pass ran *after* overgrowth and stopped its
+  downward scan at the first non-empty block — which on a reclaimed roof was the moss carpet, so the rod
+  perched a notch high. Fixed at both ends: the pass now runs **before** overgrowth (overgrowth already
+  skips non-sturdy tops, so it won't moss the rod), and the scan requires a solid top face via a new
+  **`SupportBlocks.isSturdyTop()`**. **Gotcha worth remembering: `isEmpty()` counts carpets/plants/snow as
+  filled**, so any "scan down to the surface" loop needs the sturdy test, not just `!isEmpty`.
+
+**Playtest-polish wave landed (2026-08, earlier).** A long
+run of the owner playing a MODERN/APOCALYPSE world and reporting back, each fix redeployed and re-tested
+in-world (not just probed):
+
+- **Vault lift shafts reworked.** The original `hasLift` distribution (`cx*7+cz*13 mod 70`) was
+  mathematically stuck — only fires when `cz≡0 mod 7`, so most chunk-rows never got one — replaced with a
+  bit-mixed hash giving a uniform ~1/24. Geometry reworked from owner feedback across several rounds: the
+  per-level landing gantry (which fouled the moving car) is gone, the shaft is a clear vertical column with
+  a central wall guide-rail + `IRON_CHAIN` cables, a ladder run flush against each level's door (no
+  freestanding landing), a hanging `LIFT` sign over each door, `COPPER_GRATE` winch/anchor machinery above
+  and below each chain segment, and a 4-tall open-interior car (bars/chains removed so it's walkable) whose
+  floor and roof are `BIRCH_TRAPDOOR` hatches where the ladder passes through (floor hatch flush with the
+  floor, not the block below). **Confirmed perfect by the owner** after this round. See
+  [[cityworld-vault-feature]].
+- **Finer decay knobs + APOCALYPSE/DESTROYED split** (see the DONE bullet above) — plus a fire-gating bug:
+  `destroyArea`'s crater rubble only checked `includeFires`, not `includeDecayedFires` like `destroyWithin`
+  did, so APOCALYPSE (fires off, decayed-fires off) still caught its crater debris alight. Both paths now
+  gate identically. See [[cityworld-apocalypse-aesthetic]].
+- **CLASSIC now replicates 1.8 CityWorld's biomes**: dropped the plains band 1.8 never had, added birch
+  forest, and rebanded `CityWorldBiomeSource.classify` on the shaper's actual `treeLevel`/`evergreenLevel`/
+  `snowLevel` (the exact Y-levels the original Bukkit `setBiome` push used) instead of approximate percent
+  bands — forest-dominant cities, birch/taiga on hills, zero plains. Also filled in biome coverage that was
+  stuck on placeholder `plains` for `nature`/`metro`/`sparse` (→ `cityworld:climate`) and `sanddunes`/
+  `snowdunes`/`flooded` (→ desert/snowy_plains/ocean). See [[cityworld-biomes-and-outland]].
+- **Customize screen overhaul.** Switching the Style dropdown used to leave every other toggle as-is, so
+  settings from the previous style (e.g. Schematics, on by default) silently rode into styles that don't
+  use them. Fixed: changing style now reloads that style's own defaults and rebuilds the screen. Locked
+  settings (the ones `validateSettingsAgainstWorldStyle` forces) now grey out with a tooltip, detected
+  generically (`CityWorldSettings.styleLocks` — validates all-on vs all-off and keeps the keys that agree,
+  so it can't drift from the actual lock logic as styles evolve). A "soft default" pattern was introduced
+  for style-appropriate-but-overridable settings (set in `styleDefaults`/the datapack, never in `validate`,
+  so it stays toggleable and ungreyed) — used for `windingCaves` below. See
+  [[cityworld-style-testing-fixes]].
+- **Schematic covering fixed for FLOODED/SANDDUNES/SNOWDUNES**: pasted buildings left dry air pockets
+  because the fill only used the flat `findHighestFloodY`. `ClipboardLot.finishStyleFill` now fills each
+  column to its own `findFloodY` (following the dune surface, not a flat plateau) with the right material
+  (water/sand/snow), plus a partial snow-layer cap at the true edge instead of a solid-block step. Astral
+  mushroom stems were rendering with the cap-block texture (all-one-texture bug) — now use `MUSHROOM_STEM`.
+  See [[cityworld-style-testing-fixes]].
+- **Winding ("noodle") caves for MODERN** — a new `windingCaves` setting (default on for MODERN/
+  APOCALYPSE, off elsewhere but freely toggleable by any style) replaces single-noise-blob caves with
+  tunnels that wander and branch like vanilla, faked via the intersection of two simplex iso-surfaces
+  (`|wormA|<eps AND |wormB|<eps`, plus a rare low-frequency "cheese" cavern field) — vanilla `WorldCarver`s
+  aren't reachable from this generator (it extends the base `ChunkGenerator`, no `NoiseChunk`/
+  `CarvingContext`), so the shape is faked in `ShapeProvider_Normal.notACave` rather than carved for real.
+  Tuned over several owner-driven passes to a final set of knobs (`wormScale 1/112`, `wormScaleY 1/88`,
+  `wormEps 0.095`, `cheeseScale 1/88`, `cheeseThreshold 0.865`).
+- **Lush cave decoration pass** (`Support.LushCaves`, MODERN, gated on a seed-coherent ~5%-of-80-block
+  region so patches are rare and well-spaced): moss- and clay-lined floors, moss carpet, small/big
+  dripleaf, glow-berry cave vines and spore blossoms on the ceiling, rare 2×2 water pools stocked with
+  axolotls/frogs/tropical fish, and — on nature lots above a lush patch — a surface azalea on rooted dirt.
+  Two owner-reported bugs fixed after the first cut: (1) the surface azalea **never actually generated** —
+  the scan used `findBlockY` (the base noise terrain height, not the real placed surface) and a broken
+  empty-space search; fixed by scanning the real placed blocks top-down for the first solid-with-air-above
+  cell; (2) azaleas were floating / landing on tree canopies and building roofs — fixed by requiring the
+  surface block be an actual `GRASS_BLOCK`, not just "any solid block". Ceiling moss also read as floating
+  green cubes detached in mid-air (the noodle-cave noise can leave small-but-thick isolated rock lumps in a
+  cavern); fixed by requiring the ceiling to be both two-thick *and* backed on ≥3 of its 4 horizontal
+  neighbours before decorating it, so only a genuinely broad slab qualifies. Cave vines were also all
+  lit with glow berries (`BERRIES=true` on every segment); now only ~20% of segments carry a berry so a
+  hanging vine reads as mostly bare with the odd lit spot, not a string of lanterns. See
+  [[cityworld-winding-caves]] (also holds the lush + lava notes).
+- **Lava reworked from a flat sea (and then floating 3D blobs) to flat-topped pools.**
+  `ShapeProvider.lavaFillAt` is a per-block hook (base: flat field below `lavaFieldLevel`;
+  `ShapeProvider_Normal` overrides it for MODERN) — the first MODERN attempt used 3D noise, which reads as
+  floating blobs rather than pools. Fixed with a 2D lava-lake region field (noise sampled at `y=0`, i.e.
+  flat) so a lake fills every void up to its level with a genuinely flat top. Then, because the pool's
+  region boundary can cut straight across a winding-cave tunnel and leave an unnaturally flat vertical
+  wall of raw stone, a new decoration pass (`Support.LavaLakes`) lines the pool's sides and floor (never
+  the open top) with `BASALT` — but only where a lava cell has ≥2 lava neighbours, so a lone flowing drip
+  stays untouched. See [[cityworld-winding-caves]].
+
+**Two things this doc *used* to list as remaining are actually DONE** (verified 2026-07): schematic
+**rotation is applied** (random 1-of-4 in `PlatMap.placeSpecificClip`; mirroring too, but opt-in per
+schematic via `FlipableX/Z`, default off to protect signs/fronts), and the **outland context arm is wired
+and live** (`ShapeProvider_Normal` returns it for the nature 0.70–0.75 band, so gravelworks / woodworks /
+campgrounds generate in normal worlds). The stale claims below are corrected.
+
+**MODERN-gate any new deco** (CLASSIC stays 1.8-era). Placement runs through the decoration seam
+(`RealBlocks` / room fitting), not terrain gen; model new passes on `Support/Overgrowth` or
+`Support/ApocalypseSpawners` (post-decoration, per-lot, block-state aware).
+
+**Park zones + APOCALYPSE + landmark finder landed (2026-07, most recent).**
+- **Park zones**: `ZooLot` (themed fenced enclosures + matching animal + name sign; 10 themes) and
+  `BiodomeLot` (glass domes over a biome slice — jungle/swamp/flower-forest/pale-garden/cave, rarely
+  End/Nether), placed in park districts via a `ParkContext.getPark` override (~⅓ of park lots),
+  MODERN-family only. Both extend `IsolatedLot` (like the barn/fish-pond).
+- **APOCALYPSE world style**: a MODERN city gone to ruin. A new `CityWorldGenerator.isModernStyle()`
+  (MODERN ‖ APOCALYPSE) replaces the ~dozen `== MODERN` gameplay checks (behaviour-preserving for MODERN)
+  so it inherits the modern look; `validateSettingsAgainstWorldStyle` forces road+building decay on /
+  nature decay off / overgrowth @3.0 / `spawnBaddies` up / spawner toggles on; `Support.ApocalypseSpawners`
+  buries zombie spawners in a sealed 2-tall pocket UNDER basement floors (hidden, floor caps it), plus
+  zombie-heavy sewer/mine bags. **MODERN overgrowth now defaults OFF** (it's the apocalypse's signature).
+  **Gotcha: a new `WorldStyle` needs a matching case in EVERY exhaustive `switch (generator.worldStyle)`
+  provider loader (`ShapeProvider` + `SurfaceProvider`) or you get a null-provider NPE at gen time —
+  `OreProvider`/`CoverProvider` have `default:` so they're safe. Proxy check: `grep "case DESTROYED"`.**
+- **`/cityfind lot <kind> [tp]`**: locate rare landmark lots by type (zoo, biodome, saucer, balloon,
+  castle, oilplatform, radiotower, …) — free substring match on the lot's class name, reusing the
+  schematic finder's off-thread ring-search + budget. `/cityfind lots` lists the well-known kinds.
+
+**Decoration blocks pass (2026-07).** The remaining "weave in the new deco blocks" list is cleared:
+- **Interiors** (`Support.Furniture` accent vocabulary, MODERN): chandeliers (an `IRON_CHAIN` dropping
+  from the ceiling with a hung lantern — new `SupportBlocks.setHangingLantern` sets the HANGING state),
+  wall-backed **copper chests**, **candle clusters** (colour variety + the odd lit `CANDLE_CAKE`), on top
+  of the existing plant/lamp/pot/amethyst. Note: the mines already place `COPPER_CHEST` loot, so verify
+  interior copper chests **above street level** to avoid counting mine loot.
+- **Lightning rods**: on **highrise roofs** (`Furniture.rooftopLightningRod`, from the decoration seam —
+  self-limits to roofs >16 above street, so only the skyline gets them) and on **radio-tower aerials**
+  (`RadioTowerLot` caps every antenna apex, the tallest crowned with an END_ROD beacon + a rod above it
+  at y≈193 — the tallest thing for miles, so it genuinely draws the strike).
+- **Hanging lanterns in the mines**: `PlatLot.scatterMineLanterns` hangs lanterns (plain/soul/copper)
+  from the corridor ceiling so drifts read as worked and lit.
+- New materials via `gen_material.py`: `LIGHTNING_ROD`, `ORANGE/LIGHT_GRAY/RED_CANDLE`, `CANDLE_CAKE`
+  (`IRON_CHAIN`, `COPPER_CHEST`, `CANDLE`/`WHITE_CANDLE`, lanterns already existed). Verified by probe:
+  office carried rooftop rod (y=118) + chains + candles + copper chest; radio tower 3 aerial rods (y=193);
+  62–122 hanging mine lanterns. **Building copper weathering: closed — owner is a-ok leaving it as-is.**
+
+**The shop *classification layer* is now built (the foundation interiors keys off).** A store no longer
+just "is a `StoreBuildingLot`" — it carries a seed-deterministic `ShopType(ShopScale, ShopTrade)`, a
+two-axis taxonomy under family→lot: **scale** (`CORNER_SHOP` for rural/residential families vs
+`HIGH_STREET` for the commercial cores — decided by `DataContext.shopScale()`, overridden on
+`RuralContext`) × **trade** (~14 values: `CARTOGRAPHER`, `FLETCHER`, `BUILDERS_MERCHANT`, `ARMOURER`,
+`APOTHECARY`, `BUTCHER`, `NEWSAGENT`, … each carrying its vanilla profession + job-block `Identifier`).
+Set in `StoreBuildingLot`'s ctor (rolled from `chunkOdds`, shared across a connected building via
+`makeConnected`), exposed as `PlatLot.getShopType()` (null = not a shop). Because it's decided at plan
+time it's readable with no block generation: `/cityinfo` and the F3 overlay print a `shop:` line, and a
+new **public `me.daddychurchill.CityWorld.api` package** — `CityWorldShops.shopAt(level,pos)` /
+`shopsNear(...)`, query-only, no persistence — lets other mods react to shops. Verified by a plan-only
+probe: 148 high-street shops in 121×121 chunks around origin, well-spread across trades, `shopAt` in
+lockstep with the sweep.
+
+**The old Bukkit `CityWorldAPI` is resurrected too** (Sablednah wrote the original for upstream,
+PR #4/#5). Modern `me.daddychurchill.CityWorld.api.CityWorldAPI.lotAt(level, pos) → Optional<LotInfo>`
+is the typed successor to its `getFullInfo` — a read-only snapshot of the plan for a chunk (context
+family + class, lot style + class, chunk pos, nature %, road count, schematic name, `ShopType`),
+derived from the seed-deterministic plan so it needs no generated chunk. `getFullInfo(level, pos)` keeps
+the original stringly-typed `Map<String,String>` shape (same keys) for continuity. `/cityinfo` and the
+F3 overlay now **read through this API** rather than hand-rolling `getPlatMap→getMapLot`, so command and
+API can't drift. `CityWorldShops` stays the focused shop lookup over the same plan.
+
+**Shops now manifest in-world — job blocks landed (v1).** A new `shops` settings group (`enabled`; on
+in MODERN, off in CLASSIC) drives `Support.ShopFitter`, a post-decoration pass (modelled on Overgrowth)
+that drops the trade's villager job-site block on a classified shop's ground floor — cartography table =
+map seller, fletching table = fletcher, smoker = butcher, loom = draper, stonecutter = builder's
+merchant, lectern = bookshop, etc. It scans the ground storey for an open cell standing on solid floor,
+prefers one backing a wall/shelf, faces it inward, and lays a trade-coloured mat in front; the store's
+own registers/shelves are untouched (ShopFitter runs alongside the room populator, doesn't replace it).
+Four job blocks (fletching_table, loom, composter, lectern) were added to `gen_material.py`. Verified by
+force-load probe: **35/35 sampled shops carried the right job block, 0 misses, 0 exceptions.** The
+`Customize` screen, `SettingsExample`, `SettingsDatapack` and `/cityexport` all learned the `shops` knob.
+
+**Rural job-block dressing landed too (corner shops, farm composters, fish ponds).** With `shops` on:
+a residential house is occasionally a **corner shop** (`CornerShopLot extends HouseLot`, carries a
+`CORNER_SHOP` `ShopType`, so ShopFitter drops its trade's block for free — newsagent/greengrocer/
+butcher/fishmonger/apothecary; ~1 in 13 Neighborhood houses); farms get a **composter** at a field edge
+(~1 in 5 `FarmLot` chunks, the farmer's workstation, scanning for dry ground so it skips crop water
+furrows); and a rare one-off **fish pond** farm variant (`FishPondLot`, like the barn/water tower) — a
+dug water pool with lily pads, reeds, a bankside **barrel** (fisherman's workstation) and spawned fish.
+Verified over a 341×341 plan-sweep + force-load: 165 corner shops across all five corner trades, 12/12
+with a job block; composters present across farms; 40 ponds, all water+fish, most with the barrel (a
+couple in odd wet terrain miss it — cosmetic, rare).
+
+**Villagers are employed now (the big one landed).** `SpawnProvider.spawnWorker(...)` spawns a villager
+already set to the workstation's trade — cartographer at the cartography table, fisherman at the pond
+barrel, farmer at the composter, etc. — via `VillagerData.withProfession(registryAccess, key)` +
+`refreshBrain` (verified safe at worldgen). Called from `ShopFitter`, `FarmLot` and `FishPondLot` right
+where each job block is placed; rolls `spawnBeings` so keeper density tracks the world's populated-ness.
+Each employed villager gets a **role-themed name** — a given name plus an occupational surname keyed to
+the trade ("Frank Compass" cartographer, "Roberta Lamb" shepherd, "Bill Butcher"). The surname pools are
+built-in and **datapack-overridable** via a new `naming.professionNames` list (`"profession:Surname"`
+entries; replace or, with `append`, add — same as the other name lists). Verified: 21 villagers employed
+across sampled shops, all `employed=true`, names themed correctly.
+
+**Interior decoration pass — first slice landed.** New `Support.Furniture` is the MODERN furniture
+vocabulary (clever-block-trick pieces + the post-1.8 deco palette). Its centrepiece `accentRoom(...)` is
+hooked into `FinishedBuildingLot.drawInteriorRoom`, so every furnished room cell in a MODERN building has
+a chance at a tasteful floor accent — a potted plant, a fence-and-lantern floor lamp, a decorated pot, an
+amethyst sparkle — placed in a clear corner so it never blocks a walkway (CLASSIC untouched). Plus
+targeted upgrades: library rooms blend in **chiseled bookshelves**, and lounge couches get a little
+**coffee table** (slab-on-fence with a candle/plant). ~13 modern deco blocks added to `gen_material`.
+Verified: 2082 accent blocks across 50 sampled MODERN building chunks, clearFound==placed (no silent
+misses), 0 exceptions. **NOTE: worldgen entities/floor aren't final mid-construction — decoration that
+needs the finished floor belongs in a post-pass (like `ShopFitter`), not mid-room; `accentRoom` works
+because the room's own floor row is already solid when `drawInteriorRoom` runs.**
+
+**Decoration wave 2 landed — houses, shop signage, hay (2026-07).** (1) **Houses are furnished**: the
+colonial house's empty KITCHEN/DINING/LIVING/BED room styles now call `Furniture.kitchen/dining/living/
+bedroom(...)` — a cauldron-sink + stove (smoker on MODERN) + barrel counter, a table with chairs, a couch
++ coffee table, a bed + bedside barrel + lamp, all clear-floor-guarded and MODERN-accented. (2) **Shop
+signage**: `ShopFitter` hangs an `OAK_HANGING_SIGN` over the counter with a **random shop name** (new
+`OdonymProvider.generateShopName(...)` → "Gibson & Sons — Armourer", "Ye Olde Map seller", "Anderson's Map
+seller", drawn from the villager surname pool), plus a storage barrel beside the counter. No sign-NPE.
+(3) **Hay**: paddock fields get a bale or two in the *centre* (clear of the fence so animals can't hop
+out), and a new `FarmLot.CropType.HAYSTACK` renders a field of stacked bales in rows (in the normal +
+MODERN crop pools). Verified: 40 houses richly furnished, 8 shop signs with names, 123 hay blocks / 60
+farms, 0 exceptions.
+
+**Decoration remainder — mostly cleared since:** themed shop counters/dressing and **bathrooms** both
+landed (bathroom rooms in houses; per-trade counters + hanging signs). Still open/optional: more house
+variety, starter trades on employed villagers, richer shop-name patterns. (The rare barrel-less fish pond
+the owner explicitly said is fine.)
+
+**Overgrowth landed + a big schematics/decay polish pass (2026-07, this session).** Nature now reclaims
+the built world behind the new `[overgrowth]` settings group (`enabled` / `intensity` / `capVines`; on
++ intensity 2.0 in MODERN by default). `Support.Overgrowth` runs post-decoration per built lot: moss /
+leaf-litter / pale-moss carpets and grass/ferns/azalea/petals/dripleaf/mushrooms creep over
+sturdy-topped surfaces (canSurvive-checked, none on slabs/fences); stone-brick/cobble/stone weather to
+mossy — full blocks *and* their slab/stair/wall shapes; **vine strings hang down outer walls** (an
+up-scan finds the roofline, reads the wall across the chunk seam so seam-flush faces aren't skipped,
+length a random ¼..full of each wall, optionally capped with a glow-lichen tip); small reclaim trees
+break through roads; and **dripstone** reclaims mines *and* basements (anchored only to real
+floors/ceilings — never the cistern water — waterlogged if a tip dips in). Intensity multiplies density;
+verified 3654→8730 vines/city-platmap 1.0→3.0. Also this session: the whole **schematics playtest
+polish** — ocean builds keep the natural sea floor + `Anchor:` legs to the seabed + auto-waterlog;
+`KeepAir:` yml (winchester's cellar stays hollow) + dead-air trims; big builds full-scan and a 9×5
+cathedral may claim road lots (so it's rare-but-possible); the leftover footprint margin gets biome
+surface not a dirt apron; `LegacyBlocks`/`LegacySchematic` gained ~17 block + a full item map (the
+cathedral renders in its real materials, chests keep loot); water-edge/shallows builds pulled;
+`/cityfind` range widened. And **decay-as-probability completed**: `PlatLot.buildingsDecay()` gives
+ordinary buildings the rare-pristine roll schematics already had. All verified by read-back probes; see
+the memory notes [[cityworld-overgrowth-done]], [[cityworld-p6-schematics-done]].
+
+**CityWorld generates cities, and they're inhabited.** Terrain, roads with named street signs,
+buildings with furnished interiors, parks, roundabouts, farms, civic districts, trees and ground
+cover — all verified by reading blocks back out of a real world, deterministically, no exceptions.
+
+**Three jars are stashed in `builds/`** (git-ignored) for comparing progress by hand:
+`cityworld-p5-trees-and-streets.jar`, `cityworld-p5-plus-farms-and-civic.jar`, then
+`cityworld-p5-mobs-and-loot.jar`. Remember: **new world each time** — existing chunks never
+regenerate.
+
+**The cities are inhabited, the chests have things in them, and the sewers run wet** (2026-07).
+Villagers with names, animals in the fields, fish in the sea, spawners in the mines and sewers, and
+13 loot tables that vanilla rolls on first open. **All confirmed in play, not just by probe** — named
+villagers, sewer and barn chests with contents, flowing sewer water. See "Closed: mobs and loot"
+below: both were *smaller* than this document predicted, because two of the risks recorded here
+rested on unchecked assumptions.
+
+**Two bugs that shipped in the same session are the more valuable record**, both found by the owner
+playing rather than by any probe, and both written up above: the **dry sewers** (a verbatim port of a
+line whose meaning depended on running in a live world) and the **worldgen deadlock** (a previous
+fix's `setLevel` turning a load-bearing null into a hang). Read those two before the next wave.
+
+**Industrial landed too** (2026-07) — factories, warehouses and storage yards, with bunkers under the
+factories. Nine of the ladder's ten arms are now live. See "Closed: industrial" below; it was **less
+than half** the predicted work, because this document's own estimate had gone stale.
+
+**Outland landed** (2026-07) — `OutlandContext` and its six lots (`GravelMineLot`, `CampgroundLot`,
+`WoodframeLot`, `MineEntranceLot`, `GravelworksLot`, `WoodworksLot`) ported and wired into the
+ladder's tenth and last arm. A deterministic plan-sweep of 6,561 platmaps confirmed it: the outland
+band selects `OutlandContext` (212 platmaps) and all six lot types generate without throwing —
+`GravelworksLot` and `WoodworksLot` in bulk, the four singletons (`Campground`, `GravelMine`,
+`MineEntrance`, `Woodframe`) at their intended rarity. **Every ladder arm is now live.** It was a
+straight mechanical port: all its support (`StructureOnGroundProvider`, `GravelLot`'s hole/pile/
+tailings helpers, the `WOODWORKS`/`STONEWORKS` loot) was already in place from earlier waves.
+
+**Nature set-pieces landed** (2026-07) — `NatureContext.populateMap`'s full survey is restored, so
+the wild parts of the world now get their landmarks. Eight lot families ported to feed it:
+`MountainFlatLot` (parent) with `MountainShackLot`/`MountainTentLot`, the airborne `FlyingSaucerLot`/
+`HotairBalloonLot` (over `StructureInAirProvider`, which was already ported), and the three medium
+builds `OilPlatformLot`/`OldCastleLot`/`RadioTowerLot`. `BunkerLot` is now planned **as a lot** (not
+just via its statics), and `HeightInfo`'s `HeightState` classification finally has consumers: bunkers
+buried under midlands/highlands, and one "special" lot at the platmap's highest and lowest inner
+points chosen by terrain — oil platforms in deep sea, saucers/balloons overhead, mine entrances in
+midlands, radio towers on highlands, a castle on a peak. Added `includeBunkers` to settings, three
+`materialProvider` selectors (oil-platform floor/column, castles), and a stubbed 7-arg `destroyWithin`
+(since wired — see "Demolition landed" below; castles/decayed radio towers now spawn as ruins). A 25,921-platmap
+plan-sweep confirmed all nine set-piece types generate without throwing (rarest: `OldCastleLot`=112,
+`FlyingSaucerLot`=134).
+
+**Demolition landed** (2026-07) — `destroyWithin`/`destroyArea` are no longer stubs. The full
+`WorldBlocks` demolition machinery (sphere dispersal, debris sprinkle, fire) was already ported;
+the gap was purely wiring the generator's three entry points to a `WorldBlocks` bound to the live
+decoration level. Done with a **thread-local** `WorldBlocks` on the per-world generator, re-seeded
+per chunk from the chunk position — *not* upstream's single shared `decayBlocks`/`Odds`, which would
+race and go non-deterministic under the concurrent decoration workers (the same trap `RealBlocks` and
+`getConnectionKey` already dodge). `CityWorldChunkGenerator.applyBiomeDecoration` binds it via
+`beginDecoration`/`endDecoration` (in a `finally`, so a worker never carries a stale level forward).
+Now the ruined styles actually chew holes: castles/radio towers/oil platforms/unfinished buildings
+crumble even at default settings (they demolish unconditionally), and `includeDecayedBuildings`/
+`includeDecayedRoads` finally bite. **Verified end-to-end**: with `includeDecayedBuildings` forced on,
+a 41×41 (1,681-chunk) force-load generated with **0 chunk failures, 90 demolitions on live levels,
+zero far-chunk write warnings, zero stacktraces, zero watchdog trips** — the debris radius (≤~10
+blocks) stays inside the decorating chunk's writable region, so PORTING.md's top-risk #2 (neighbour
+access) doesn't bite here. `includeDecayedBuildings=true` is the owner's "apocalypse server" preset,
+so this path matters in play, not just in theory. **Confirmed in play** (2026-07): with the decay
+config on (buildings + roads + nature, fires off) the owner walked a fresh world — ruined buildings,
+rubbled roads, remote structures and oil rigs all reading right. City 17.
+
+**⚠ Correction (2026-07): top-risk #2 DID bite once schematics decay too, and "≤~10 blocks stays
+in-chunk" was the load-bearing assumption that failed.** With `includeSchematics` *and*
+`includeDecayedBuildings` both on (a combo the new Customize screen makes one click away), a placed
+schematic building being demolished — `ClipboardLot.generateActualBlocks` → `PlatLot.destroyLot` →
+`WorldBlocks.destroyWithin` — threw `IllegalStateException: Requested chunk unavailable during world
+generation` from `WorldBlocks.disperseLine` → `Block.isEmpty` → `level.getBlockState`, crashing chunk
+generation (and then the world's teardown deadlocked, which is what "stuck on Saving world" was).
+Schematic footprints are larger and can sit at a chunk edge, so the blast's *read* reached a chunk
+outside the `WorldGenRegion`. Fix: `WorldBlocks` now guards every demolition read/drop with
+`world.hasChunk(x>>4, z>>4)` and skips what it can't reach — the neighbour decays its own slice, the
+same "don't cross the edge" rule `RealBlocks` already relies on. Verified: a 961-chunk force-load with
+schematics + decayed buildings + decayed roads all on → **0 failures, 0 unavailable-chunk throws, 0
+far-chunk write warnings**. **Found by the owner playing it, not a probe** — the earlier 1,681-chunk
+decay test had no schematics on, so it never demolished a `ClipboardLot`. The generalisation holds:
+an "it stays in-chunk" assumption is only as good as the widest thing that can be demolished.
+
+**Mines got a full MODERN pass** (2026-07) — a long cosmetic + gameplay arc on the underground, all in
+`PlatLot`'s mine methods (the `SupportBlocks`/decoration side) plus `MineEntranceLot`. Landed in order:
+
+- **Density → "rare but big + rambling"**: mine shafts cluster into rare *fields* (a low-frequency
+  `mineRegionShape` in `ShapeProvider_Normal.inMineField`, with a mountain bonus), instead of being
+  dense everywhere. Mine *entrances* gate on `hasMineShaftBelow` (so they always connect to a real
+  shaft) and appear at any land band over a field, common under mountains.
+- **Copper-age theme, weathered by depth**: corridors get copper wall torches, cut-copper support
+  frames (posts + a full-width copper-grate ceiling vent + a hung chain), and the vanilla oak-fence
+  supports recolour to copper bars so nothing wooden clashes. Everything patinas with depth — fresh
+  near the surface → exposed → weathered → oxidised in the deepest shafts (`copperWeatherStage`).
+- **Deep + worthwhile + risky + abandoned**: `lowestMineSegment` dropped to −48; depth-graded ore
+  veins in the walls (`oreForDepth`: coal/iron/copper up top → deepslate gold/redstone/lapis/diamond
+  deep → a rare scrap of **ancient debris** at the bottom); gravel fall-in + cave-in rubble that scale
+  with depth; glow lichen and mossy-cobble decay thickening downward; cobwebs scaling with depth.
+- **Cave-spider nests**: dedicated cave-spider spawners on the corridor centreline in a dense web
+  tangle, rare up top and common deep. The spawner is *forced* — `SpawnProvider.setSpawner` got a
+  `force` overload that bypasses the `spawnBaddies` roll (~0.048), which was silently skipping the
+  spawner ~95% of the time and leaving webs with nothing at their heart.
+- **Miners' camp props**: a weighted pool (furnace/blast furnace/smoker/stonecutter/smithing table/
+  grindstone/anvil/barrel/crafting table/cauldron/cartography table, three lantern types incl. the new
+  copper lantern, chest/decorated pot/campfire/soul campfire/bell, and weighted-up scaffolding +
+  ladders) scattered on the ledge *opposite the rail* so it never fouls the track.
+- **Vertical lift shafts** at 4-way crossings: a 5×5 cut-copper frame around a hollow 3×3 you can drop
+  straight down, a chain cable down the centre, a ladder up one corner, and a copper-grate landing at
+  the bottom — carved through the crossing rails so nothing floats. **Reworked 2026-08** — see the
+  playtest-polish wave in "Resume here" above; the landing gantry and freestanding car interior described
+  here are gone, replaced by hanging signs, in-frame door thresholds, and trapdoor-hatch floors/roofs.
+- **Named entrances**: each mine mouth gets a dark-oak gallows headframe with an `OAK_HANGING_SIGN`
+  swinging beneath, procedurally named from a 20×20 prefix/noun table ("Sable's Gorge", "Widow's Lode",
+  … "Est. 18xx"). Signs write **both faces** so they read front and back.
+
+**⚠ Two `WeatheringCopperBlocks` gotchas worth remembering.** (1) The 1.21.9 "copper age" *is* in
+1.21.11, but `COPPER_CHAIN`/`COPPER_BARS`/`COPPER_LANTERN` are declared as `WeatheringCopperBlocks`
+*records* (a 4-stage bundle), **not** `public static final Block` fields — so `gen_material.py`'s
+field-name scan can't see them and an early grep wrongly concluded they didn't exist. Reach the stages
+via accessors (`Blocks.COPPER_CHAIN.exposed()`); the generator now emits those through a new
+`EXTRAS_EXPR` table (plain copper Block fields still go in `EXTRAS`). Proof they exist: read them out
+of a save's region NBT (`palette` strings). (2) **The two-sided sign crash** — writing the *back* text
+via `SignBlockEntity.setText(text, false)` routes through `markUpdated()`, which dereferences the block
+entity's `level`; that level is **null during decoration** (the load-bearing rule this port already
+follows for `frontText`), so it NPEs and fails the chunk — and the world's teardown then hangs on
+"Saving world". Fix: an access-transformer entry widening `backText` (mirroring the existing
+`frontText` one), then a direct field write. **Same NPE-on-null-level / deadlock-on-real-level trap as
+`frontText`** — any BE mutation during decoration must be a plain field write, never a setter that
+notifies the level.
+
+**What's left is breadth, not architecture.** The most valuable next steps:
+
+1. ~~**P6 schematics polish** (rotation/mirroring, foundation dig)~~ **DONE (2026-07)** — rotation,
+   mirroring, foundation dig/carve, centring, water-edge + ocean builds, biome surround, NATURE
+   placement, and a big bundled-family cleanup all landed in a playtest pass; see "Schematics — the big
+   playtest pass" below. **P7 config is done** (2026-07): per-world settings now come from a datapack
+   registry (`cityworld:world_settings`), naming/mob lists included, verified end-to-end — see "P7 —
+   Config + commands" below and top risk #4.
+
+### ▶▶ Next up (planned 2026-07, after the P7 session) — read this first
+
+A triage of "what's left" found that **most of it is design-gated on one big decision**, plus one
+real gap. In priority order:
+
+1. **⭐ The Modern vs Classic world-style split (owner's call, needs a greenlight).** This is the
+   organizing decision. Today's `NORMAL` becomes `CLASSIC` (faithful 1.8 look); a new `MODERN` style
+   (full modern MC — tall builds, modern blocks/ores/mobs/trees/ice, some vanilla structures) becomes
+   the default. **Most of the loose polish below is really a facet of Modern**, so decide this first.
+   Full write-up + the open sub-decisions in "Future ideas → Modern vs Classic". Suggested execution
+   order once greenlit: (a) rename `NORMAL`→`CLASSIC` (+ its preset/lang), keeping behaviour identical;
+   (b) add a `MODERN` `WorldStyle` cloning Classic, wire the `loadProvider` switches + a `world_preset`;
+   (c) move per-style knobs onto it — building height (raise the `buildingMaximumY` cap for Modern
+   only), tree style, cover/ice, ore distribution; (d) flip the codec default to Modern (or just make
+   it the top preset — that's a sub-decision).
+
+2. ~~**⚠ Ores are not placed (real gap, not polish).**~~ **MODERN done, then CLASSIC done (2026-07).**
+   MODERN reuses vanilla's own ore distribution: `CityWorldChunkGenerator.placeUndergroundOres` runs
+   just the `UNDERGROUND_ORES` decoration step of each chunk's biome on the non-wild chunks (the wild
+   chunks already get it via the full `super.applyBiomeDecoration`). So the stone under
+   cities/roads/structures mineralises with the exact vanilla veins (incl. deepslate variants), no
+   lakes/springs/trees. Verified: city chunks ~342 ore blocks/chunk vs nature ~336.
+   **CLASSIC now ported too:** `OreProvider.sprinkleOres` (+ `sprinkleOre`/`growVein`/`placeOre`/
+   `placeBlock`) is a faithful port of upstream's vein algorithm, with two port-specific changes. (a)
+   The 1.14 ore tables are Y-values in a 0-based world; the floor is now -64, so **primary placement
+   shifts down by `worldMinY`** — a 1:1 remap of the old 0..128 column onto the new -64..64 underground
+   that lands the deep ores near the new bedrock. The `mirror` (upper-terrain) half is *not* shifted:
+   mountain cores sit in surface coordinates, unchanged by the floor drop. (b) 1.14 had no deepslate,
+   so `placeBlock` now replaces **either** stone or deepslate, swapping in the ore's deepslate variant
+   (`deepVariant`) below the deepslate line — without which the shifted-down veins wouldn't place at all
+   (the stratum there isn't stone). `PlatLot.generateOres` gates MODERN off so the two paths never
+   stack. **Verified by a place-and-read-back probe** on a fresh CLASSIC world (44 spawn chunks, 0 gen
+   errors): coal ~107/chunk spanning y-7..55 in both variants, iron ~82/chunk, the deep ores all
+   deepslate variants near bedrock (diamond -62..-50, redstone avg -53, gold/lapis/emerald deep). The
+   probe caught nothing wrong with the maths — but a rebase like this is exactly where an off-by-64
+   hides, so it was worth reading the blocks back rather than trusting the shift.
+
+3. ~~**Schematic rotation/mirroring** (P6)~~ **DONE (2026-07).** Buildings now take a random quarter-turn
+   (and an optional mirror on axes the `.yml` marks flippable). The "fiddly multi-chunk origin maths"
+   turned out to be a solved problem in vanilla: `StructureTemplate.getZeroPositionWithTransform(target,
+   mirror, rotation)` returns the placement offset that lands the transformed structure's **minimum
+   corner** exactly on `target` (pivot left at `ZERO`) — the same pairing `FossilFeature` uses. So
+   `Clipboard.pasteChunk` takes a `Rotation`/`Mirror`, and the reservation swaps the footprint's X/Z
+   extents for the 90°/270° turns (`footprintChunkX/Z`, `swapsFootprint`) so a non-square building fits
+   its reserved grid — the piece upstream skipped (it reserved `chunkX×chunkZ` regardless and would have
+   spilled rotated non-square builds into neighbouring lots). Rotation is chosen **once** in
+   `PlatMap.placeSpecificClip` (from the platmap's deterministic `Odds`) so every footprint chunk shares
+   it; the roundabout-statue single path picks one too. **Verified with a place-and-read-back probe** (as
+   this very line advised): a 2×1-chunk building placed in all four rotations — block count identical
+   across all four (1558 — nothing clipped), block-box dims swap for 90°/270° and match for 180°, NW
+   corner exactly on target every time → PASS.
+
+### ▶▶ Schematics — the big playtest pass (2026-07), everything below landed
+
+A long owner-driven playtest loop turned the schematic system from "places, mostly" into something
+that reads right in the world. All committed + deployed; the drop-in folder `README.txt`
+(`SchematicLibrary.README`) documents every `.yml` key. In rough order:
+
+- **Foundation dig / air-carve** (`ClipboardLot.shapeFoundation`, was the last open scope item). A
+  converted template omits air and carries no ground, so on any non-flat terrain it floated or got
+  speared by a hillside. Now, in the decoration pass before the paste, it clears the build's whole
+  vertical span (kills terrain poking in) and backfills a stone foundation down to solid ground.
+  Verified: 256-chunk force-load, 0 gen failures, 0 floating columns under 28 building-chunks.
+- **Centre in footprint.** The footprint is whole chunks (ceil of the size), so a smaller build hugged
+  the NW corner. `buildNwX/buildNwZ` shift it by half the slack — deterministic, so every footprint
+  chunk agrees and the slices still tile.
+- **Placement terrain rules — three tiers** (all in `PlatMap.placeSpecificClip`, checked after
+  `isEmptyLots`): normal → `footprintBuildable` (flat, buildable, at street level — keeps builds off
+  mountains *and* water, the fix for the 40-block dirt scars and the buildings-in-the-ocean);
+  **water-edge** → `footprintAtWaterline` (flat ground at the shore/shallows); **ocean** →
+  `footprintDeepWater` (deep open sea). A 2601-platmap sweep confirmed 0 placements on non-buildable
+  ground with NATURE still at ~1595.
+- **Water-edge builds** (`Clipboard.waterEdge`, auto-detected: most of the footprint's outer ring is
+  water — catches watertemple and moated castles). They may sit at the shore and get water pooled
+  around them **at sea level** (63, a block under the land) so it reads flush with the ocean, not a
+  raised puddle.
+- **Ocean builds** (`Ocean: true` in the `.yml`) — rigs/ships/lighthouses. Place only in deep water,
+  ride the surface (`surfaceLevel = seaLevel`), and get **no foundation** — `shapeFoundation` fills the
+  below-waterline volume with water so the schematic's own legs/hull hold it up. Schematic-driven
+  `OilPlatformLot`. Put them in `Nature/`; they self-segregate from land builds by terrain.
+- **Biome-correct surround.** `isValidStrataY` was excluding the build's Y-span strata for the *whole*
+  footprint chunk, so the strata pass skipped the leftover corners' grass and left a bare dirt apron.
+  Made it footprint-aware (`buildNwX/Z`): clear strata only *under* the building, so the surround keeps
+  its natural biome surface (grass/sand).
+- **NATURE schematics enabled** (`NatureContext.populateMap` had `populateSchematics` commented out).
+  Two traps: (1) `populateMap` runs **twice** for a nature platmap (pre-road survey, then the committed
+  post-road pass) — placing in the survey let the road grid stamp over half each build and drop a
+  duplicate behind it, so it's gated on `PlatMap.roadsPopulated` to place only after roads; (2)
+  uncapped, 100 empty wild lots carpet the wilderness, so it's capped at 2 per platmap.
+- **Bundled family cleanup** (`index.txt`). One demo build, `midwich` (a school), was listed in all 8
+  families at `OddsOfAppearance: 1.0` and carpeted every platmap; several others sat in daft families.
+  Re-homed midwich/winchester(pub)/IMCHospital/G45station/chayats-bank/eaglman to sensible families and
+  odds, and deleted 17 orphan `.schematic` files left behind (present in resources but not in
+  `index.txt`, so dead weight). Resources now balance: 70 entries = 70 files = 70 ymls, all ≤ their
+  family footprint cap.
+- **⚠ A real crash surfaced here, unrelated to schematics** — see "the RoadLot/BuildingLot cast" below.
+
+The one open cosmetic follow-up: plant-decorate the (now grass) leftover corners of a non-square
+footprint. `GroundLevelY` tuning is per-build and owner-driven (sea 63 vs land 64 means water builds
+usually want their waterline layer at 63).
+
+### ⚠ A latent upstream crash: RoadLot cast to BuildingLot (the "Saving world" hang)
+
+**Found by the owner playing it** — a mid-game `ClassCastException` crashing chunk generation, which
+then wedged teardown on "Saving world". `BuildingLot.getNeighboringBasementCounts`/`...FloorCounts`
+cast every "connected" neighbour to `BuildingLot`. The connected-neighbour filter is *key*-based
+(`isConnected` compares `connectedkey`), and the port derives a building's key from `worldSeed +
+(chunkX<<32 ^ chunkZ)` while roads use a fixed `worldSeed + 101` — which **collide at chunk (0,101)**
+(and parks' `+102` at `(0,102)`). So a road next to a building there slips through the filter and the
+cast throws. Rare coordinate collision → intermittent. Upstream has the identical unchecked cast (it
+relied on the filter); the port's determinism refactor of the key is what created the specific
+collision. Fixed defensively with an `instanceof BuildingLot` guard at the cast (a non-building
+neighbour contributes 0 floors/basement) — more robust than upstream.
+
+4. **Smaller, orthogonal, lower-value:** loot tables → native 1.21 datapack format (they already work);
+   GameTest/unit coverage (the `gameTestServer` run is already wired in `build.gradle`); furnished-Rooms
+   polish; the huge-mushroom all-cap cosmetic gap.
+
+Done in the P7 session and safe to build on: the datapack settings + Customize + export + example,
+the two playtest bugfixes (schematic-decay crash, schematic filename spaces), command tab-complete,
+and a rewritten README.
+
+### ⚠ The single most important thing to know: CityWorld builds in the DECORATION pass
+
+Not in the chunk generator. Upstream's `ChunkGenerator.generateChunkData` only ever shaped *terrain*;
+a separate `BlockPopulator` drew the cities afterwards. `RoadLot.generateActualChunk` is **literally
+empty**, commented "moved to other chunk generator" — all 1,600-odd lines of road live in
+`generateActualBlocks`, which needs a **live level** rather than a raw chunk.
+
+This was discovered the hard way: the planner reported 1,142 road lots while the world showed zero
+road blocks. Planning and drawing are different passes.
+
+So the two passes map onto modern worldgen as:
+
+| upstream | port | writes to |
+|---|---|---|
+| `generateChunkData` → `platmap.generateChunk` | `CityWorldChunkGenerator.fillFromNoise` | `InitialBlocks` (raw `ChunkAccess`) — terrain only |
+| `BlockPopulator` → `platmap.generateBlocks` | `CityWorldChunkGenerator.applyBiomeDecoration` | `RealBlocks` (live `WorldGenLevel`) — **the whole city** |
+
+`applyBiomeDecoration` is the modern `BlockPopulator`: it runs at the decoration stage and hands over
+a `WorldGenLevel`, which is exactly what `RealBlocks` was built to take. Not calling `super` there is
+also what suppresses vanilla's own decoration. **Neighbour access is the live constraint** (top risk
+#2): a `WorldGenRegion` only permits writes near the chunk being decorated, which is why
+`RealBlocks` refusing to look past its chunk edge matters more now than it did under Bukkit.
+
+### ⚠ Lesson: a Customize picker whose steps miss the default silently edits it
+
+`world.climateWarmth` (default `0.25`) was first wired to the screen's `Chance` widget. Two faults, and
+the invisible one is the one to remember.
+
+**Visible:** `Chance`'s labels are *probabilities* — "Never / Rare / Unlikely / Likely / Always" — so a
+temperature bias displayed as **"Unlikely"**, which means nothing.
+
+**Invisible, and worse:** `Chance.nearest(0.25)` snaps to the closest step, `UNLIKELY = 0.2`. The screen
+does not just *show* the wrong thing, it **hands 0.2 back to `buildResult()`**. Opening the Customize
+screen and pressing Done — touching nothing — would have silently changed the setting. The player sees
+a plausible label and gets a different world.
+
+**The rule: a picker's step list must contain the setting's own default, exactly.** If it does not, the
+widget is a value-editing round-trip masquerading as a display. When adding a knob, either reuse a
+scale whose steps already include the default, or give it its own — `WARMTH_CHOICES` and
+`FLOOR_CHOICES` are both purpose-built for this reason. `Chance` is for genuine odds only (treasure
+chances, spawn rates), never for a value that merely happens to be a `0..1` double.
+
+### ⚠ Lesson: a "simplified" stub silently rewired the whole world
+
+`NatureContext.populateMap` was stubbed to a no-op in wave 2 on the reasoning that its job was to
+place nature *set-pieces*, which aren't ported. That reasoning missed its real job, and the result
+shipped: **it surveys every chunk and hands the unbuildable ones to nature before anything else is
+planned.** Without it,
+
+- nothing is ever marked natural, so `PlatMap.getNaturePercent()` reads **0.00 for every platmap**
+  and `getContext`'s ladder grades the entire world as downtown highrise — the other nine bands
+  become unreachable (a `HouseLot` could not exist);
+- mountains and seas are never excluded, so buildings get planned on them and flatten them;
+- the only lots left natural are roads that `validateRoads` reclaims — each one a 16×16 column of
+  untouched terrain standing in a flattened downtown. That is what "mountains mid-city" and "random
+  columns of stone" actually were.
+
+**How it was found:** not by a probe — by the owner playing it. And the first two diagnoses were
+wrong. A data race in `allocateContexts` (real, latent, since fixed) looked like an excellent
+suspect, and a probe built to reproduce it *appeared* to, until the probe turned out to be varying
+the seed per attempt. Rebuilt to hold the seed fixed and compare concurrent planning against a
+sequential reference, it reported **0 differences over 6 runs** — clearing the race and forcing the
+search back to the actual cause. Correlating each lot's planned style against real terrain heights is
+what exposed it: 625 chunks, `NATURE=0`.
+
+Worth generalising: **stubs are behaviour, not absence.** Before stubbing something out, check what
+the callers *read back* from having called it — here, `naturalPlats`, three lines away.
+
+### ⚠ Never let a block entity have a real level during decoration (the deadlock)
+
+**Symptom:** world creation wedged at "Preparing spawn area: 27%" forever. **Found by the owner
+playing it**, again — and the fix for it was itself the cause of the previous fix.
+
+An earlier pass found that placing a sign during generation NPE'd, because a block entity reached
+through a `WorldGenRegion` over a `ProtoChunk` **has no level** — it is built on demand by
+`newBlockEntity` and never told where it lives, and `SignBlockEntity.markUpdated` does
+`this.level.sendBlockUpdated(…)`. That pass silenced the NPE with `sign.setLevel(server.getLevel())`.
+That looked reasonable, shipped, and armed a deadlock:
+
+```
+applyBiomeDecoration                       ← on a chunk-generation worker
+ └ setSignText → updateText → markUpdated
+    └ setChanged()                          ← no longer a no-op: the BE has a level now
+       └ Level.blockEntityChanged → getChunkAt
+          └ ServerChunkCache.getChunk → CompletableFuture.join()   ← waits forever
+```
+
+A generation worker asking the chunk system for a chunk **synchronously, from inside chunk
+generation**. The future needs a worker; the worker is blocked on the future. Every worker parked at
+0% CPU, the server thread in `managedBlock`, nothing computing. `BlockEntity.setChanged()` is guarded
+by `if (this.level != null)` — *the levelless block entity was already correct*, and giving it a level
+is what broke it.
+
+**The fix: don't give it one.** No notification is wanted during worldgen — there are no clients to
+update, and the block entity is already held by the chunk (`WorldGenRegion.getBlockEntity` calls
+`setBlockEntity` on the one it builds), so it saves without being marked. But every public way into a
+sign (`updateText`/`setText` → `setFrontText`) ends at `markUpdated`, so the port writes
+`SignBlockEntity.frontText` directly via an **access transformer**
+(`src/main/resources/META-INF/accesstransformer.cfg`, wired in `build.gradle` — note adding it forces
+a one-off re-run of the NeoForm decompile, which takes minutes). Verified: 124 signs, 124 with text,
+0 blank; and the owner's exact hung seed (`-8325793622667797117`, pulled from `level.dat`) now
+generates in 2.6s.
+
+**The rules this leaves:**
+- **A block entity touched during decoration must never hold a real `Level`.** Anything that
+  notifies — `setChanged`, `sendBlockUpdated`, neighbour updates — can re-enter the chunk system from
+  a worker and deadlock. Loot and spawners are safe precisely because `setLootTable` and
+  `setEntityId` only write fields (see "Closed: mobs and loot").
+- **An NPE is a symptom, not a diagnosis.** The null level was load-bearing. Silencing a null without
+  asking *why it is null* replaced a loud crash with a silent hang — a far worse bug, and one that
+  only showed up under someone else's seed.
+- **A hang is not slowness.** `jstack` on the running process named the culprit in one shot after two
+  wrong theories. For a client: `tasklist.exe` for the `javaw` pid, then the CurseForge runtime's
+  `jstack.exe`. Workers at 0% CPU ⇒ deadlock, not work.
+
+### ⚠ A faithful port of a physics-dependent line is still wrong: the dry sewers
+
+**Found by the owner playing it** — sewer water had gaps. Not a transcription error; `RoadLot` is
+verbatim upstream. The platform moved underneath it.
+
+CityWorld fills a sewer channel in two halves: **static** water stubs at the four chunk edges
+(physics off, commented *"prevent cross-chunk domino effect"*), and four **single source blocks**
+inland placed with `setDoPhysics(true)`, expecting the water to *flow* and fill the ~12 blocks
+between. Under Bukkit that worked, because a `BlockPopulator` ran on a live, ticking world: physics
+fired immediately and the flow was baked into the chunk.
+
+Decoration writes through a `WorldGenRegion` onto a `ProtoChunk`, and **`ProtoChunk.setBlockState`
+never calls `onPlace` and never notifies neighbours** — it writes the section, heightmaps and light,
+and stops. `WorldGenRegion.setBlock` only consults the update flags for one post-processing check.
+So `UPDATE_ALL` is very nearly inert during generation, and `LiquidBlock.onPlace` — *the thing that
+schedules a fluid's first tick* — never runs. Placed water is just a block that sits there.
+
+Measured before the fix: **0 pending fluid ticks**, every water block a source, **zero** flowing, and
+the channel between the stubs open air. That is exactly what "gaps" looked like.
+
+**Vanilla hits the same wall and works around it explicitly**: `SpringFeature` and `LakeFeature`
+follow their `setBlock` with a hand-written `scheduleTick(pos, fluid, …)` *for this very reason*.
+So does `compat/Block.setBlockData` now — one seam, so any future fluid works too, and `RoadLot` is
+untouched. After: **0 → 292** pending ticks (4 per sewer chunk = the four `setDoPhysics(true)`
+calls), and they fire once chunks tick.
+
+The one remaining difference from upstream: water flows **when the chunk ticks**, not during
+generation. **Confirmed in play by the owner — the sewers have flowing water**, so the deferral is
+invisible as predicted, and the fallback (fill the channel statically in `RoadLot` and stop depending
+on flow) is *not* needed. Worth noting the probe could only ever prove the ticks were scheduled
+(0 → 292); that flow actually fills the channel was settled by walking into one.
+
+**Two generalisations worth more than the bug:**
+- **`setDoPhysics(true)` had exactly one caller in the whole tree** — this water. A seam with one
+  user, silently doing nothing. Grep for lone callers of a compat flag; they are where the
+  assumptions hide.
+- **The dangerous ports are the faithful ones.** A line that reads identically to upstream and
+  compiles clean can still be wrong, because upstream's line depended on *when* and *where* it ran.
+  Anything relying on ticks, physics, neighbours or a live world is suspect at decoration time.
+
+**Same bug, second site: dry roundabout channels** (2026-07). **Found by the owner playing it.** A
+roundabout's underground WATER pit has four half-pipe channels that should run water down into the
+pit. Upstream never wets them from *this* chunk — it wets only the pool and leans on the neighbouring
+sewer's flowing water spilling through the edge notches. But the neighbour caps its water at its own
+edge (the same "prevent cross-chunk domino" static stubs) and cross-chunk flow never fires during
+generation — so the channels read dry. **This is the dry-sewers bug at a different lot.** Fix
+(`RoundaboutCenterLot.generateActualBlocks`, WATER pit): the roundabout seeds its own water, exactly
+like `RoadLot` — static stubs at the four channel mouths (edge columns → physics auto-suppressed) plus
+a flowing source one block inland at (8,1)/(8,14)/(1,8)/(14,8), inside a `setDoPhysics(true)` block so
+the `compat/Block.setBlockData` seam schedules each fluid's tick. **Placement at 1/14 not 0/15 is
+load-bearing**: `SupportBlocks.getDoPhysics` suppresses physics on edge columns (`onEdgeXZ`), so a
+source at 0/15 would silently sit static — the same lone-caller trap.
+
+**Follow-up (same playtest): the mouth step, then channel width.** Took three deploys, each fixing what
+the previous one's screenshot exposed — a good example of "confirm fluids by walking them, not by
+reasoning about coordinates":
+- **Deploy 1** flowed the channels but left a 1-block dry gap at each mouth. That step down
+  (`yPitPipes+1`→`yPitPipes`) is upstream-intentional: the sewer feeds in at the higher level and the
+  channel floor is one lower. Neither source bridged the lip — the mouth stub sits at the top of the
+  step but is static (edge column), and the channel source sits at the bottom and only flows *toward
+  centre*, never climbing the step.
+- **Deploy 2** added a flowing source at the *top* of the step (`yPitPipes+1`, inland) so it cascades
+  down the lip. Fixed the gap, but seeded only a single column while the channel is **2 wide** (x7-8 /
+  z7-8), so half the width filled by spill-flow and read misaligned.
+- **Deploy 3** widened every seeded block to the full 2-wide channel with `setBlocks` (matching the
+  mouth stubs, already 2-wide). **Confirmed perfect in play.**
+
+Final shape: each WATER-pit channel seeds three tiers, all 2-wide — static mouth stub, a top-of-step
+flowing source, and a channel-floor flowing source feeding the centre pour. Generalises the first
+generalisation: **any lot that expected a fluid to arrive from a neighbour is suspect**, not just the
+one that placed it — the neighbour's water stops at the shared edge by design.
+
+### ⚠ Lesson: probe the whole world before shipping, not one feature at a time
+
+A null sign line crashed **chunk generation** — `Component.literal(null)` throws where Bukkit's
+`setLine` blanked the line, and `OdonymProvider`'s fossil names fill only line 1 of a `String[4]`.
+The chunk failed outright, leaving holes wherever a museum tried to label a fossil.
+
+It was latent in the block seam from the start and only became reachable when `MuseumBuildingLot` —
+the only fossil sign in the game — landed. **Every probe in that session targeted one feature at a
+time, and none of them placed a museum.** It was caught by one last end-to-end pass over the exact
+jar about to be handed over, and that is the only reason it didn't ship.
+
+So: a per-feature probe proves a feature. It does not prove a world. Do a whole-world pass over the
+artefact you are actually shipping — the interesting bugs live where two features meet.
+
+### ✔ Closed: all context families (outland landed 2026-07)
+
+The context ladder in `ShapeProvider_Normal.getContext(PlatMap)` is **fully live — all ten arms**: park,
+highrise, construction, midrise, lowrise, neighborhood, municipal, farm, industrial, and **outland**.
+The outland arm returns `outlandContext` for the `nature 0.70–0.75` band (`getContext`, ~5% of built
+bands), so `OutlandContext` and its lots — `GravelMineLot`, `GravelworksLot`, `WoodworksLot`,
+`CampgroundLot`, `MineEntranceLot` — generate in normal worlds. (An earlier draft of this section listed
+outland as unwired; that was stale — see "Outland landed" in the Resume log above.)
+
+### ✔ Closed: industrial (2026-07)
+
+`IndustrialContext` (55), `IndustrialBuildingLot` (38), `FactoryBuildingLot` (703),
+`WarehouseBuildingLot` (99), `StorageLot` (121), `BunkerLot` (1037) and `RoadThroughBunkerLot` (73) —
+**2,126 lines, copied verbatim**, `includeIndustrialSectors` back on at upstream's default.
+
+**The "90 compiler fixes" estimate was stale and this section told you not to re-derive it — derive it
+anyway.** The real number was 200 before the import transform and **40 after**, and they collapsed
+into three small buckets, because the things Factory was said to be blocked on had all quietly
+arrived with later waves: `InteriorStyle`, `insetWallNS/WE`, `firstFloorHeight`, `RoofStyle`,
+`RoofFeature`, `InsetStyle` were *already there*. What was actually missing:
+
+- **Six `MaterialProvider` lists**, not the two named here: `itemsSelectMaterial_FactoryInsides`,
+  `_FactoryTanks`, `_BunkerBuildings`, `_BunkerPlatforms`, `_BunkerBilge`, `_BunkerTanks`.
+- **Three settings**: `treasuresInBunkers`, `spawnersInBunkers`, `oddsOfTreasureInBunkers`.
+- **Two stub methods**: `StructureOnGroundProvider.generateShed` and
+  `StructureInAirProvider.generateSaucer`. Both call sites are `void` and read nothing back — checked,
+  because of the `NatureContext.populateMap` lesson — so no-op stubs were safe. (`generateShed` has
+  since been ported for real; see "Closed: StructureOnGroundProvider".)
+
+**`IndustrialBuildingLot` was missing from the list above** — the abstract parent of Factory and
+Warehouse. `BunkerLot`'s role was also mis-stated: Factory needs only its **static** generators
+(`generateRecallBunker`, `generateTankBunker`, `generateBallsyBunker`, `generateQuadBunker`,
+`generateGrowingBunker`), not `BunkerLot` as a lot. `BunkerLot` as a *lot* is still unplanned —
+that's `NatureContext`'s set-pieces, still outstanding.
+
+**The transform is mechanical and worth reusing** (measured on already-ported lots, which differ from
+upstream by 0–22 lines): `org.bukkit.Material` → `compat.Material`, `org.bukkit.block.BlockFace` →
+`compat.BlockFace`, `org.bukkit.TreeSpecies` → `compat.WoodSpecies` (+ the type refs),
+`ChunkGenerator.BiomeGrid` → `compat.BiomeGrid`, `Bisected.Half` →
+`properties.Half`, `Stairs.Shape.X` → `StairsShape.X`. That is the whole port for a lot file.
+
+**Verified by probing planning *and* drawing** (they are different passes — that is the 1,142-road-lots
+lesson): 2 of 25 platmaps chose `IndustrialContext`; 77 `FactoryBuildingLot`, 26
+`WarehouseBuildingLot`, 6 `StorageLot` planned; and in the world, **41 `chests/warehouse` and 13
+`chests/bunker`** — both previously unreachable — plus a **blaze spawner**, i.e.
+`itemsEntities_Bunker` reached for the first time. 625 chunks, 8s, no exceptions. Those bunker chests
+and spawners are factories building bunkers beneath themselves via `generateTreat`/`generateTrick`,
+which is exactly what the three new settings gate.
+
+### P5: what's deliberately not done
+
+Trees, ground cover, street names, statues, fossils, **mobs and loot** are ported.
+
+Also stubbed, documented at its site: `StructureInAirProvider` (207 — balloons, blimps, saucers).
+
+### ✔ Closed: StructureOnGroundProvider (2026-07) — and the houses were empty
+
+Ported whole (1158 lines, copied verbatim), plus **nine** `MaterialProvider` lists
+(`_HouseWalls/_HouseFloors/_HouseCeilings/_HouseRoofs`, `_ShackWalls/_ShackRoofs`,
+`_ShedWalls/_ShedRoofs`, `_WaterTowers`) and one setting (`includeFires`). 26 compiler errors, all of
+them those ten symbols. `org.bukkit.DyeColor` → `net.minecraft.world.item.DyeColor` joins the import
+transform; no shim was needed because `Support/Colors` already used the vanilla enum.
+
+**This was reordered ahead of outland, and the reason matters more than the port.** The plan had
+outland next. Surveying it first showed two things that changed the order:
+
+- **`HouseLot:56` keyed off `generateHouse`, which the stub returned `0` from** — so *every*
+  `HouseLot` was a vacant plot. `NeighborhoodContext` is the most common civilized context (7 of 25
+  platmaps in a sample) and the planner made 146 `HouseLot`s per 2,500. A large, populated-looking
+  fraction of the world was bare ground, and the stub's own doc-comment described this as correct
+  behaviour ("lays out its plots and leaves them vacant") rather than as a hole.
+- **`CampgroundLot`'s entire body is `generateCampground(…)`**. Porting outland first would have
+  shipped campgrounds that compile, plan, draw — and are bare terrain.
+
+**Verified by asking the planner which chunks it made houses on, then measuring those exact chunks**:
+27 of 27 sampled `HouseLot`s now carry ~552 blocks above street level; **0 vacant**. The first attempt
+at this probe was worthless and worth recording as a method note — it counted "house tells" (doors,
+stairs, bookshelves, glass panes) across the whole world, which offices and libraries also place, and
+it flagged the *absence* of beds as suspicious when `generateHouse` carries upstream's own
+`// TODO add bed`. **A probe that cannot distinguish the feature from its neighbours proves nothing.**
+
+Still stubbed here on purpose, both `void` with nothing read back:
+`StructureInAirProvider.generateSaucer` (bunkers have no saucer parked in them).
+
+### ✔ Closed: mobs and loot (2026-07)
+
+Both landed, and both were **smaller than this document estimated** — in each case because a risk
+recorded here turned out to rest on an assumption nobody had checked. Worth reading before trusting
+the other estimates.
+
+- **Top risk #1 (`generator.getWorld()` does not exist) was never a real problem.** `SpawnProvider`
+  was the one caller that supposedly needed a whole `World`, and it doesn't: Bukkit's `Location`
+  carried its world, and so does `compat/Location`. Upstream had the level in its hand — `at` — at
+  the moment it called `getWorld()`. The port reads `blocks.getBlockLocation(…).getLevel()` and the
+  risk evaporates. It is struck from the list below.
+- **The `BiomeGrid` problem is real, unfixable here, and doesn't matter.** There is no `setBiome` on
+  `LevelAccessor`, `ChunkAccess` or `LevelChunk`; section biome containers are `PalettedContainerRO`
+  (read-only) and `BIOMES` settles five chunk-statuses before `FEATURES`. Upstream used it for
+  exactly two entries — wolf→`FOREST`, ocelot→`JUNGLE` — as cosmetic tidying before a spawn. Dropped
+  and documented in `SpawnProvider`. Directly-placed mobs ignore natural spawn rules, so nothing
+  depends on it. If it is ever wanted, it belongs to the `BiomeSource`.
+- **The loot tables needed almost no migration.** The estimate here was "number-provider objects,
+  `enchant_randomly` options, `pack_format` bump". Checked against the codecs instead of assumed:
+  `NumberProviders.CODEC` is `Codec.withAlternative(TYPED_CODEC, UniformGenerator.CODEC)`, so bare
+  `{"min":…,"max":…}` still reads as uniform; `enchant_randomly`'s `options` is an
+  `optionalFieldOf`; and the top-level `type` is a `lenientOptionalFieldOf`. The 13 files needed
+  **no content edits at all** — only the `loot_tables` → `loot_table` directory rename (the
+  registry key is `loot_table`), and a `"type": "minecraft:chest"` added for explicitness. All 205
+  item ids they name still exist in 1.21.11.
+- **A mod jar is a datapack**, so upstream's extract-into-`<world>/datapacks/`-then-`reloadData()`
+  machinery is gone; the tables just sit in `data/cityworld/loot_table/chests/`. That retired
+  `saveLoots()` (already empty in both upstream implementations) and the `worldPrefix` argument
+  (passed everywhere, read by neither — it keyed per-world tables, and the port has no per-world
+  anything).
+- **Only the loot-table implementation is ported**, not `LootProvider_Normal`. It was upstream's
+  default (`useMinecraftLootTables = true`) and the imperative path would need a dozen
+  `itemsRandomMaterials_*Chests` lists rebuilt to say what vanilla says better.
+
+Two modern gotchas the code comments carry, worth knowing before touching this again:
+
+- **`EntityType.spawn(...)` is unusable at decoration** — every overload demands a concrete
+  `ServerLevel` and would add the mob to the live level, bypassing the region. Vanilla's own worldgen
+  never calls it. The idiom (`OceanMonumentPieces`, `SwampHutPiece`, `MineshaftPieces`) is
+  `create(level.getLevel(), reason)` → `snapTo` → `finalizeSpawn(region, …)` →
+  `region.addFreshEntityWithPassengers(…)`: `getLevel()` only to *construct*, the accessor to place.
+- **`WorldGenRegion.addFreshEntity` does not bounds-check like `setBlock` does.** It never consults
+  `ensureCanWrite`; it resolves the chunk directly, and one outside the region's cache throws
+  `ReportedException` — a server crash, not a declined write. Upstream's `insideXYZ`/`clampXZ` guards
+  are load-bearing now, not politeness.
+- **Use `EventHooks.finalizeMobSpawn`, not `Mob.finalizeSpawn`** — NeoForge marks the latter
+  `@ApiStatus.OverrideOnly`. The hook fires `FinalizeSpawnEvent` so other mods get a say; a cancelled
+  spawn needs no handling on our side, as `WorldGenRegion.addFreshEntity` drops marked mobs.
+- **Chests need no `setLevel` guard**, unlike signs: `setLootTable` is a plain field write that never
+  notifies its level. Spawners likewise — `SpawnerBlockEntity.setEntityId` passes its `@Nullable`
+  level straight through and the trailing `setChanged()` guards on it.
+
+**Verified by generating 625 chunks and reading them back** (`PopulationProbe`, since deleted), over
+three seeds: 60–88 mobs across 15–20 kinds, 27–42 spawners across 7–8 kinds, 443–485 chests of which
+**every single one carried a loot table**, villagers with names ("Hazel Simmons", "Christine
+Johnson", "Curtis Nichols"), zero exceptions.
+
+**And separately: all 13 tables resolved and rolled 20× each, every one yielding items** — including
+the seven whose lots aren't ported, so they're known-good ahead of time. This was worth doing on its
+own: a chest tagged with a table that doesn't parse is exactly as empty as one with no table at all,
+and `setLootTable` only stores a key, so counting tagged chests proves nothing about the data. The
+first attempt at this probe *itself* crashed on `Missing registry: minecraft:loot_table` — loot
+tables are **not** in `level.registryAccess()`, they are a reloadable datapack registry reached via
+`server.reloadableRegistries().getLootTable(key)`.
+
+**Confirmed in play by the owner (2026-07): sewer and barn chests have contents, and villagers have
+names.** That closes the gap the probe could not: it read chests *in memory during generation*, which
+proves the table was attached but says nothing about the save/load round trip a player actually
+meets. Barn chests are the nicer confirmation — `FARMWORKS` is a coin-flip inside a coin-flip
+(`BarnLot.placeChest`) and never once turned up in a probe sample.
+
+`BUNKER`, `WAREHOUSE` and `itemsEntities_Bunker` came alive with the industrial family — measured in
+a world: 13 bunker chests, 41 warehouse chests, and a blaze spawner. `STORAGE_SHED` became reachable
+with `StructureOnGroundProvider`. **`WOODWORKS(_OUTPUT)` / `STONEWORKS(_OUTPUT)` are reachable too**
+(corrected 2026-08 — the outland lots ARE ported: `WoodworksLot` + `GravelworksLot`, wired into
+`OutlandContext`). Probe-verified in a city world: 506 woodworks / 407 gravelworks lots, and across 20
+sampled lots each, woodworks yielded 10 chests + crafting tables + furnaces and gravelworks 4 shed
+chests. `RANDOM` has no caller outside the Astral styles.
+
+Both former items here are now **DONE** (corrected 2026-08 — they were stale):
+- ~~`NatureContext.populateMap` lacks its set-pieces~~ **DONE** — `populateMap` is implemented and, via
+  the ported `HeightInfo` height survey, seeds bunkers (+ entrances), the APOCALYPSE vault, and the
+  height-special lots (oil platforms, radio towers, flying saucers, hot-air balloons, mine entrances,
+  castle). Confirmed by `/cityfind lot <kind>` locating each.
+- ~~schematic-backed roundabout centre~~ **DONE** — `RoadContext.createRoundaboutStatueLot` pulls a
+  single-chunk `ROUNDABOUT` schematic (a statue) and places it as a `ClipboardLot` (with a random
+  rotation), falling back to the generated `RoundaboutCenterLot` only when none is available.
+  `PlatMap.placeSpecificClip` is fully implemented (rotation + opt-in per-schematic mirror).
+
+### ✔ Closed: the "sea level might be 64" scare was a stale comment (2026-07)
+
+An earlier pass flagged that upstream's commented-out reference line in `initializeWorldInfo` —
+
+> `seabed = 35 deepsea = 50 sea = 64 sidewalk = 65 tree = 110 evergreen = 156 snow = 202 top = 249`
+
+— only reproduces at `seaLevel = 64`, while we pass 63, and worried this undercut terrain parity.
+**It doesn't. That comment cannot be evidence about 1.14, because it references `sidewalkLevel`,
+which is not a field on `CityWorldGenerator` and has not been one for years** — in the 1.14 source
+it is a *local* in `PlatLot.getSidewalkLevel()` (`streetLevel + 1` inside a city). The commented line
+would not even compile against the code it sits in. It is a fossil from an older CityWorld with
+different formulas, which is also why its `deepsea = 50` matches no version of the maths. Two of its
+numbers agreeing with a `seaLevel = 64` reading is a property of that dead version, not of 1.14.
+
+**So 63 is right**, and it is what both 1.14 Bukkit and modern Minecraft use. The lesson is narrower
+and worth keeping: *don't infer behaviour from upstream's commented-out code* — check whether it
+still type-checks against the tree it lives in first. Terrain parity was independently confirmed by
+eye anyway (above).
+
+### Sea level: what the number means to vanilla vs to CityWorld
+
+Related, and a real difference that has to be translated rather than "fixed":
+
+- **CityWorld** fills water *through* its sea level, inclusive (`for (y = subsurfaceY + 1; y <= coverY; y++)`,
+  `coverY = seaLevel`). With `seaLevel = 63` the topmost water block is **63** and the surface plane
+  is **64.0**. Its beaches sit flush with that waterline (sand at 63, dry) — which is exactly what
+  makes them read as beaches, so this is intentional and must not be "corrected".
+- **Vanilla** means the opposite by the same word: `Aquifer.FluidStatus.at(y)` gives fluid only where
+  `y < fluidLevel`, so sea level is *the first Y that is not water* — the top water block is
+  `seaLevel - 1`.
+
+The two conventions differ by one, so `CityWorldChunkGenerator.getSeaLevel()` returns
+`UPSTREAM_SEA_LEVEL + 1` (64). Reporting 63 told vanilla our oceans were a block deeper than they
+are. Found by standing on a beach and reading F3: player at Y=64, water at 63.
+
+### Verified by reading blocks back out of a generated world (2026-07)
+
+A `ServerStartedEvent` probe (since deleted) generated a real world and read it back:
+
+- **Layout**: `minY=-64 maxY=319`, generator is ours. Bedrock at **-64**, and y=0 is *stone, not
+  bedrock* — i.e. the old 1.14 floor is gone.
+- **Deepslate blend**: 100% deepslate at y=-8 ramping smoothly to 100% stone at y=0, mixed on all 7
+  rows between. Ragged like vanilla, not a flat seam.
+- **Real terrain**: surface varies **64..211** across a ±512 grid; sample columns show continuous
+  strata from bedrock through deepslate to stone to a grass surface at y=129/65/123, with scattered
+  air pockets that are caves (5–29 per column, no long runs — so no void gaps).
+- **Seas and beaches run**: ~52 of 289 sampled columns are water-topped, and 8 are sand — so the
+  sea/beach/fluid branches of `preGenerateChunk` genuinely execute, not just the mountain branch.
+- **`getBaseHeight` agrees with generated terrain on 288/289.** The one outlier is a surface cave,
+  which `getBaseColumn` deliberately does not model.
+
+**And confirmed by eye**: the project owner played a generated world and recognised it — "mountains,
+flat areas with beaches and lots of caves — looks just like the old CityWorld terrain I remember".
+That is the payoff of vendoring Bukkit's noise rather than approximating it with vanilla's, and it is
+evidence no probe can produce. It does **not** settle the sea-level question below: a uniform
+one-block shift is invisible to the eye.
+
+**Confirmed again once the cities landed** (after the `NatureContext` fix): "bridges, tunnels,
+mountains, buildings, roundabouts — it all feels right, like old CityWorld". Worth noting what that
+covers that nothing here tested: **bridges and tunnels**. Several hundred lines of `RoadLot` — the
+polarity search in `PlatMap.isBridgeTowards` that decides a crossing is worth building, then the
+bridge caps, railings and tunnel linings — and no probe ever looked for them. They work.
+
+**A bug this caught:** `getBaseHeight` first returned the *terrain* height, which disagreed with the
+world on **63 of 289** columns — every sea column, because `WORLD_SURFACE` counts water as the
+surface while `OCEAN_FLOOR` doesn't. Vanilla uses it to place spawn, so it would have dropped players
+under the sea. Both it and `getBaseColumn` now model the fluid fill, and `getBaseHeight` is derived
+*from* `getBaseColumn` via the heightmap's own predicate, exactly as vanilla does, so the two cannot
+drift apart again.
+
+### And earlier, driving the provider directly (seed 12345, `256`/`63`)
+
+- **The datums derive correctly**: `height=256 seaLevel=63 streetLevel=64 landRange=186 seaRange=28`,
+  `deepsea=54 tree=109 evergreen=155 snow=201`. `streetLevel = seaLevel + 1` as predicted.
+- **Terrain varies and stays in range**: over a 2000×2000 sample, `minY=47 maxY=218` (bounds are
+  `3..253`).
+- **Deterministic** — required, since the modern pipeline generates chunks on many threads: repeated
+  calls agree, and a *fresh generator on the same seed* agrees. A different seed moves **1222 of
+  1521** sampled columns, so the seed really is plumbed through (the rest are flat areas clamped to
+  sea/street level).
+- **The cached-Ys path agrees with the provider** column-for-column, and `TraditionalCachedYs`
+  classifies chunk (0,0) as `BUILDING` (it is flat at exactly `streetLevel`).
+- **Caves carve**: `notACave` is false for ~4.6% of sampled blocks — so the strata loop's cave branch
+  is live, not a no-op.
+
+(The write path — `preGenerateChunk` → `generateStratas` → `chunk.setBlock` — was unexercised at that
+point; wiring `fillFromNoise` is what proved it, above.)
+
+### How wave 1 was cut (so wave 2 can be cut the same way)
+
+The measured closure from `ShapeProvider` is **250 files / ~29k lines** — the earlier "~843 lines"
+estimate counted only `ShapeProvider` + `_Normal` themselves and missed that their dependencies pull
+the whole cycle (it also missed `AbstractYs`, `Point`, and the ~20 contexts). **There is no
+terrain-only slice**; what makes it tractable is that the cycle's edges are thin, so wave 1 ported
+the terrain spine for real and stubbed the city-planning side:
+
+| ported for real | stubbed (wave 2) |
+|---|---|
+| `compat/noise/*` (5 classes, vendored verbatim) | `Plats/PlatLot` — only `style`/`blockYs`/`isValidStrataY`/`getChunkBiome`/`generate*` |
+| `Plugins/ShapeProvider` + `_Normal` (terrain maths, strata, caves/mines noise) | `Support/PlatMap` — no lot grid |
+| `Support/AbstractYs`, `AbstractCachedYs`, `TraditionalCachedYs`, `Point` | `Context/DataContext`, `NatureContext`, `RoadContext` |
+| `CityWorldGenerator` (now the real per-world context) | `CityWorldSettings` — only the flags the shaper branches on, at upstream defaults |
+| `OreProvider`'s strata palette | `OreProvider`'s ore *placement*; the other 8 `ShapeProvider` variants |
+
+Two deferrals worth knowing about, both documented at their sites:
+- **`ShapeProvider_Normal.getContext(PlatMap)`** — the ten-way nature-percent ladder that decides
+  whether a platmap becomes downtown or farmland. Thresholds are recorded verbatim in its javadoc;
+  it returns `natureContext` until the contexts land. This is *why* wave-1 worlds have terrain but
+  no cities.
+- **`loadProvider`** — all 10 style arms currently construct `_Normal` rather than failing.
+
+**Verify behaviour, don't just compile.** Every wave so far was proven with a temporary
+`ServerStartedEvent` probe (Gradle can't pipe stdin to the server console). It has caught real bugs
+the compiler couldn't. Delete the probe before committing.
+
+---
+
+Living checklist for porting CityWorld from a Spigot 1.14 plugin to a modern **NeoForge** mod.
+
+This repo is a fork of the original CityWorld; the NeoForge port is being built **in place at the
+repo root**. The original Bukkit 1.14 project was removed from the working tree but remains the
+**reference implementation**, recoverable from git history (e.g. `git show HEAD~1:src/me/...`) and
+the upstream fork. Loot tables and schematics will be pulled back from history and converted at
+Phases 5–6.
+
+## Target
+
+| | |
+|---|---|
+| Minecraft | 1.21.11 |
+| Loader | NeoForge 21.11.42 |
+| Java | 21 |
+| Build | Gradle + ModDevGradle (`net.neoforged.moddev`) |
+
+## Decisions locked in
+
+- **Delivery: both** a custom **dimension** (`cityworld:city`, entered via `/cityworld`) *and* a
+  **world preset** (whole-world generation at creation). Both sit on one shared `ChunkGenerator`.
+- **World layout: modernize now** — full `-64..319` height, deepslate strata, modern cave carvers
+  (not a 1:1 copy of the 1.14 `0..255` layout). **Settled 2026-07 — "extend down, keep the shape":**
+  the world runs `-64..319`, but **terrain still scales against a 256 ceiling**. These are two
+  different numbers, and upstream conflated them in `world.getMaxHeight()`. `landRange` (which sets
+  mountain amplitude) is derived from that ceiling, so feeding the shaper 384 would not make the
+  world taller — it would make *mountains* half again as tall (peaks ~345, clipping the 319 ceiling)
+  and discard the shape the noise vendoring exists to preserve. So modernization goes **downward**:
+  64 blocks of new underground, deepslate below y=0, sky/building headroom to 319. Sea level is 63
+  in both 1.14 and modern Minecraft, so the surface band already lines up.
+- **Package tree preserved**: keep `me.daddychurchill.CityWorld.*` across all ported files to
+  minimize churn and keep attribution. Gradle `mod_group_id = me.daddychurchill.cityworld`.
+
+## Why this is a big port (vs. MobHealth)
+
+MobHealth was event-driven (hook damage → draw a bar). CityWorld is a **world generator**, and
+Bukkit's imperative `ChunkGenerator.generateChunkData()` + `BlockPopulator` model does not exist in
+modern Minecraft. Modern worldgen is a **codec-registered `ChunkGenerator`** running in a **staged,
+multithreaded** pipeline with **restricted neighbor access**, using `BlockState` (not Bukkit
+`Material`) and a `-64..319` world.
+
+## ⚠ There is no "terrain-only" slice (measured, 2026-07)
+
+The original plan assumed we could port the terrain shaper first and add cities later. **We can't.**
+Following *only* explicit imports, the transitive closure is **identical (316 files / ~39,780 lines)**
+from every one of these seeds:
+
+- `Plugins/ShapeProvider_Normal` (the terrain shaper)
+- `Plugins/ShapeProvider` (the abstract base)
+- `Support/PlatMap`
+
+The brain is one mutually-recursive cycle — `ShapeProvider ↔ PlatMap ↔ PlatLot ↔ Context ↔ Plugins
+↔ Rooms ↔ Clipboard` — so touching any of it pulls in essentially the whole codebase. `ShapeProvider`
+also references `RealBlocks` in its method signatures, so the **decoration-side block seam is a hard
+prerequisite**, not a P5 concern.
+
+**Revised strategy:** port the brain as a scripted **mass transform in waves** (as was done for
+`AbstractBlocks`: rewrite imports/types mechanically, then fix residuals against the compiler),
+backed by a **shim layer** for the remaining Bukkit surface. Not incremental feature-by-feature.
+
+### Remaining Bukkit coupling (whole tree, by import count)
+
+| Surface | Uses | Plan |
+|---|---:|---|
+| `Material` | 150 | ✅ done (`compat/Material`, all 557 constants) |
+| `block.BlockFace` | 82 | ✅ done (`compat/BlockFace`) |
+| `ChunkGenerator.BiomeGrid` + `block.Biome` | 56 uses, but only **12 files** | ✅ **shimmed** (`compat/Biome`, `compat/BiomeGrid`). The whole tree names only **12 biome constants**, and `BiomeGrid`'s entire used surface is `setBiome(x, z, biome)`. **4 of the 12 no longer exist** — the 1.18 rework deleted every `*_HILLS` variant plus `SNOWY_MOUNTAINS` — so they remap to the nearest survivor (`BIRCH_FOREST`, `TAIGA`, `DESERT`, `SNOWY_SLOPES`); costs colour/mob flavour, not terrain. The real change (CityWorld pushes biomes per column, modern gen pulls via `BiomeSource`) is **DONE** (2026-07/08): custom `cityworld:climate`/`cityworld:terrain` biome sources pull the same seed-deterministic terrain height and classify it, replacing the discarded push — see the biome entries near the end. |
+| `util.noise.*` (`NoiseGenerator`, `SimplexNoiseGenerator`, `SimplexOctaveGenerator`) | 25 | ✅ **done** — vendored verbatim into `compat/noise` (GPL-3 permits it; see licence section), preserving CityWorld's exact terrain shape. 5 classes: the 3 above plus `PerlinNoiseGenerator` and `OctaveGenerator` (their base classes). Only change: the `org.bukkit.World` convenience ctors are dropped. `NoiseGenerator.floor` is just `Mth.floor`, but it comes along with the vendored base anyway. |
+| `block.data.*` (`Bisected.Half`, `Slab.Type`, `Stairs`, `Rail.Shape`, `Bed`, `Door`, `Leaves`, `Snow`, `Chest`, …) | ~45 | ✅ done — **no shims needed**: each maps onto a vanilla property enum (`Half`, `SlabType`, `StairsShape`, `RailShape`, `BedPart`, `DoorHingeSide`, `ChestType`, …), and the `instanceof` chains became `hasProperty` guards in `SupportBlocks`. |
+| `World`, `Chunk`, `Location`, `Bukkit`, `Environment` | ~30 | Decoration-side → `WorldGenLevel`/`ServerLevel`. |
+| `entity.*` (`EntityType`, `Entity`, `Player`, `Item`) | ~15 | → modern `EntityType` (P5). |
+| `configuration.*` | ~10 | → `ModConfigSpec` (P7). |
+| `command.*`, `plugin.*`, `event.*` | ~15 | → Brigadier / drop plugin lifecycle (P7). |
+| misc (`DyeColor`, `Axis`, `NamespacedKey`, `TreeType`, `ItemStack`, `Inventory`, `Sign`, `CreatureSpawner`, `MushroomBlockTexture`) | ~12 | Small shims, as encountered. `DyeColor` and `Axis` need none (vanilla has both); `Sign` and `Location` are done. |
+
+## The key seam (why it's tractable)
+
+The original author already funneled all block writing through one family:
+`AbstractBlocks → InitialBlocks/RealBlocks/SupportBlocks`. Reimplementing that single layer against
+modern `ChunkAccess`/`BlockState` isolates most Bukkit coupling from the ~300 algorithm files.
+
+Coupling inventory (from the 1.14 source):
+- `org.bukkit.Material` used in **150 files**, **557** `Material.X` references → needs a
+  name → `BlockState` mapping table.
+- `org.bukkit` touched in **199 files** (blocks, `BlockFace`, biomes, entities).
+- WorldEdit coupling in only **3 files** (`PasteProvider`/`Clipboard`).
+
+## Phases
+
+- [x] **P0 — Scaffold.** ModDevGradle project at repo root, `@Mod` entrypoint (`CityWorldMod`),
+      builds empty (`cityworld-<version>.jar`), `runClient`/`runServer` available. **Done.**
+- [x] **P1 — Block seam. Done** (bar the mass import rewrite, which happens per-file as the brain is
+      ported). `AbstractBlocks`/`InitialBlocks` (generation side, on `ChunkAccess`) and
+      `SupportBlocks`/`RealBlocks`/`RelativeBlocks`/`WorldBlocks` (decoration side, on
+      `LevelAccessor`) all reimplemented on `BlockState`; `BlockFace` → `Direction`; oriented
+      placement (stairs, doors, facing, waterlogging) verified in a live world. **This unblocks
+      `ShapeProvider`, and with it the whole generation brain.**
+    - [x] Compat foundation compiling: `compat/BlockFace` (enum mirroring Bukkit values +
+          `toDirection`/`getOppositeFace`) and `compat/Material` (interned `BlockState` wrapper +
+          orientation helpers `withFacing`/`withFaces`/`asSlab`/`asDoorHalf` + id resolver +
+          representative constant set). Strategy: `Material` is a value-vocabulary (never
+          switched-on across the source), so it becomes interned wrappers, not an enum.
+    - [x] Port `Support/Odds` (Material/BlockFace → shims; Vector → `Vec3`; TreeSpecies →
+          `compat/WoodSpecies`).
+    - [x] **Generation-side seam** compiling: `AbstractBlocks` (768 lines, surgically transformed —
+          all `final` convenience methods intact), `InitialBlocks` (on `ChunkAccess`/`ProtoChunk`,
+          world-coord mapping + heightmap-auto-update), `Factories/MaterialFactory`, and a minimal
+          `CityWorldGenerator` skeleton exposing only what the block layer needs (grows in P3).
+    - [x] **Decoration-side seam — done.** Was a **hard prerequisite for `ShapeProvider`** (its
+          signatures take `RealBlocks`), not a P5 concern as first assumed. Binds to `LevelAccessor`
+          (live world) rather than `ChunkAccess`.
+        - [x] `compat/Block` — shim for Bukkit's live positioned block reference, pairing a
+              `LevelAccessor` + `BlockPos`. This is the single primitive the whole decoration layer
+              rests on (`SupportBlocks.getActualBlock(x,y,z)` is its *only* abstract method).
+              Key mappings: Bukkit `BlockData` ≡ modern `BlockState`; "apply physics" ≡ update
+              flags (`UPDATE_ALL` vs `UPDATE_CLIENTS`).
+        - [x] **`SupportBlocks` (971) — done, and verified in a live world.** All 77 original
+              methods ported. The Bukkit `instanceof` chains (`Directional`, `Bisected`, `Levelled`,
+              `Ageable`, `Snow`, `Rail`, `Chest`, …) became `hasProperty` guards — that is what those
+              interfaces were really testing — via one helper, `with(state, property, value)`, which
+              leaves the state alone when the property is absent, exactly as the old `instanceof`
+              fell through. The read-modify-write idiom (`setType` → `getBlockData` → mutate →
+              `setBlockData`) collapsed into deriving the state first and writing **once**.
+              Notes worth keeping:
+            - `withScaledLevel` looks its property up **by name** (`age`/`level`/`layers`), because
+              there is no single `AGE` property to reference — vanilla declares `AGE_1 … AGE_25`, and
+              `LEVEL` alongside `LEVEL_CAULDRON`, each with its own range.
+            - Signs: a block entity reached through a `WorldGenRegion` over a `ProtoChunk` **has no
+              level**, and `SignBlockEntity.updateText` → `markUpdated` dereferences it. `setSignText`
+              hands it one first; without that, placing a sign during generation NPEs.
+            - `setCauldron` no longer fills the cauldron — the 1.13 flattening split levelled
+              `CAULDRON` into `cauldron` + `water_cauldron`, and only the latter has a level. Left
+              for P5, when the callers land.
+            - Upstream's `setDoorBlock`/`setBedBlock` took a `doPhysics` flag **they never read**
+              (both ended `setBlockData(data, getDoPhysics(x, z))`), so the `true` at those call
+              sites never did anything. Parameter dropped; behaviour unchanged.
+            - `Material.hasFaces()` (Bukkit's `MultipleFacing`) **excludes walls**: 1.16 moved them
+              off boolean faces onto a `WallSide` enum, so they take the bulk-placement branch of
+              `setWalls`/`fillBlocks`. Revisit at P5 if wall connections look wrong.
+        - [x] Supporting work that fell out of it: `compat/Location`; `Material.isOccluding()`
+              (→ `BlockState.canOcclude()`), `Material.hasFaces()`; ported `Support/Colors` (491,
+              a pure leaf — vanilla has its own `DyeColor`, so it was a two-import swap); stubbed
+              `Context/DataContext` (`torchMat`), `Plugins/LootProvider`/`LootLocation` + `Provider`;
+              added `CityWorldGenerator.reportFormatted`. `NoiseGenerator.floor` → `Mth.floor`.
+        - [x] **`RealBlocks` (41), `RelativeBlocks` (34), `WorldBlocks` (202) — done.** Each exists
+              to define `getActualBlock`; all three verified in a live world (origin arithmetic incl.
+              negative chunk coords, edge-crossing, writes landing at the right position).
+              The original took `world` from `generator.getWorld()`; the port passes a
+              `LevelAccessor` in at construction instead, because a modern `ChunkGenerator` is shared
+              and immutable and cannot hold a per-world reference (top risk #1). So `RealBlocks` now
+              takes `(generator, LevelAccessor, ChunkPos)` in place of a Bukkit `Chunk`, and
+              `WorldBlocks` takes the level too; `RelativeBlocks` borrows both origin and level from
+              the section it is relative to, so its signature is unchanged.
+              The `RealBlocks`/`RelativeBlocks` split matters more now than it did under Bukkit:
+              `RealBlocks` refuses to look past the chunk edge (returns false), `RelativeBlocks`
+              crosses freely — and the modern pipeline restricts neighbour access during generation.
+        - [x] **`CornerBlocks` (1222) — done**, two import swaps. Worth correcting the record: it is
+              **not** a `SupportBlocks` subclass, it is a standalone corner-style table that takes an
+              `AbstractBlocks` as a parameter and only calls `setBlock`/`setBlocks`/`setDoor` on it.
+              A pure leaf.
+    - [ ] Mass import rewrite across ported files: `org.bukkit.Material` →
+          `me.daddychurchill.CityWorld.compat.Material`, `org.bukkit.block.BlockFace` → `compat.BlockFace`
+          (done per-file as each is ported).
+- [x] **P2 — Material mapping. Done.** All **557** referenced `Material.X` constants are mapped and
+      compiling, generated by `scripts/gen_material.py` (self-bootstrapping: pulls the Bukkit source
+      from git history and the `Blocks`/`Items` field lists from the NeoForm sources jar, so it
+      re-runs from a clean machine). Breakdown:
+    - **427** map 1:1 onto a modern `Blocks.X`.
+    - **14** legacy/renamed hand-mapped in the generator's `LEGACY` table (e.g. `GRASS` →
+      `SHORT_GRASS`, `GRASS_PATH` → `DIRT_PATH`, `QUARTZ_ORE` → `NETHER_QUARTZ_ORE`,
+      `ENCHANTMENT_TABLE` → `ENCHANTING_TABLE`; most survive only in commented-out code).
+    - **116** are **item-only** (loot/chest contents) — Bukkit's `Material` spanned blocks *and*
+      items, so `Material` now carries an optional `Item` and `isBlock()`/`getBlockState()` return
+      null for these. Proper item handling lands with loot in P5.
+    - The constant block is **generated — do not hand-edit**; change the generator and re-run.
+    - Note: modern blocks the 1.14 vocabulary never knew (deepslate, tuff, deepslate ores) are
+      deliberately absent; P4 adds them as it needs them (or use `Material.of("deepslate")`).
+- [x] **P1.5 — The brain, wave 1: the terrain spine. Done, runtime-verified.**
+      `Plugins/ShapeProvider` + `ShapeProvider_Normal` ported and producing real, deterministic
+      CityWorld heights; Bukkit's noise stack vendored verbatim into `compat/noise`; `compat/Biome`
+      + `BiomeGrid` shimmed; the `Ys` family (`AbstractYs`, `AbstractCachedYs`,
+      `TraditionalCachedYs`, `Point`) ported; `CityWorldGenerator` grown from a skeleton into the
+      real per-world context. The city-planning side (`PlatMap`, `PlatLot`, the contexts) is stubbed
+      at thin edges — see "How wave 1 was cut" above. **Terrain heights are real; nothing writes
+      them into a chunk yet.**
+- [ ] **P3 — Custom `ChunkGenerator` + registration (vertical slice).** Codec-registered
+      `CityWorldChunkGenerator` driving `PlatMap` via `fillFromNoise`; `buildSurface`,
+      `getBaseHeight`/`getBaseColumn`; custom `BiomeSource`. Register the dimension (datapack JSON)
+      and world preset. **Gate: teleport into `cityworld:city` and see terrain.**
+    - [x] **Infrastructure spike PROVEN.** `CityWorldChunkGenerator` (codec-registered under
+          `cityworld:city` via `DeferredRegister` on `Registries.CHUNK_GENERATOR`) implements the
+          full 11-method `ChunkGenerator` contract and writes a placeholder bedrock/stone/grass
+          profile through the real `InitialBlocks`→`Material` seam. Datapacks: `dimension/city.json`,
+          `worldgen/world_preset/city.json`, and a `#minecraft:normal` world-preset tag (dropdown).
+          A headless `runServer` (level-type `cityworld:city`) confirmed the overworld generator is
+          ours and blocks are exactly the placeholder profile (stone at y=0 where vanilla is
+          deepslate) — no exceptions. Verified via a temporary `ServerStartedEvent` diagnostic
+          (since removed). **This validates the whole Phase 1 seam plugs into modern worldgen.**
+    - [ ] **Replace the placeholder fill with the real terrain shaper — this is the next task; see
+          "Resume here".** No longer blocked: P2 and wave 1 (`ShapeProvider_Normal`, and enough of
+          `PlatLot`/`PlatMap`) are done, and `CityWorldChunkGenerator` already builds the per-world
+          context lazily and thread-safely. Needs a `BiomeGrid` implementation and a decision on the
+          Y offset. Contexts/cities are *not* needed for the terrain gate — they are wave 2.
+    - [x] Add the `/cityworld` teleport into the `cityworld:city` dimension. (Done — see P7 below.)
+- [ ] **P4 — Height modernization.** Mostly done (2026-07); see "extend down, keep the shape" above.
+    - [x] **`ShapeProvider` Y math for `-64..319`.** The key insight is that upstream's single
+          `height` meant two things — the world's ceiling *and* the ceiling terrain scales against —
+          and they now differ. `CityWorldGenerator` splits them: `getTerrainCeiling()` (256, feeds
+          `landRange`) vs `worldMinY`/`worldMaxY` (-64/319, the real bounds).
+          `ShapeProvider.bottomOfWorld` was a hardcoded `0` and now reads `generator.worldMinY`, so
+          the strata reach the real floor instead of opening onto a void.
+    - [x] **Deepslate strata.** `OreProvider.stratumMaterialAt` blends stone→deepslate across
+          `y = 0..-8` like vanilla, ragged rather than a flat seam, off seed-derived noise (so it
+          stays deterministic under the multithreaded pipeline). It only substitutes for *this*
+          provider's stone, so the Nether/End/Astral strata are untouched when those land.
+    - [x] **Y constants that were secretly floor-relative.** `OreProvider.lavaFieldLevel` was an
+          absolute `12` that only meant "12 above bedrock" because bedrock was at 0; at -64 it would
+          have flooded 76 blocks. Now `lavaFieldDepth` + `worldMinY`. `AbstractBlocks.insideY`/
+          `clampY` were `0..height` and would have rejected/mis-clamped the new underground — fixed
+          preventively (nothing calls them until wave 2's lots do).
+    - [ ] **⚠ Ore veins are not placed at all yet — `OreProvider.sprinkleOres` is an empty stub**
+          (found 2026-07). So generated worlds have the stone/deepslate strata but **no coal/iron/gold/
+          diamond/… to mine** (vanilla ore features are suppressed, and CityWorld's own placement is a
+          no-op). This is a real playability gap, not just polish. The port: upstream's `sprinkleOre`
+          vein algorithm + the `ore_types`/`ore_minY`/`ore_maxY`/`ore_iterations`/… tables (~80 lines).
+          **The catch is a parity decision, so surface it before doing it:** upstream's ore depths are
+          **1.14-calibrated** (`minY`/`maxY` like 2/16/128 against a 0..255 world with bedrock at 0).
+          In the modern `-64..319` world those must be re-based (the same floor-relative trap
+          `lavaFieldLevel` hit in P4). And *what* distribution to use is itself a **Modern/Classic**
+          choice — Classic wants the literal 1.14 depths/rarities, Modern wants the modern spread
+          (diamonds deep in deepslate, etc.). So do this as a per-style facet, and add the deepslate
+          **ore** variants (`deepslate_coal_ore`, … via `EXTRAS` in `gen_material.py`) as part of it,
+          picking the variant by Y in `sprinkleOre`. Verify with a block-read probe (count veins by
+          type and Y-band). See the Modern/Classic parking-lot entry.
+    - [ ] `SurfaceProvider`; modern carvers; revisit `DataContext.buildingMaximumY` (still capped at
+          the 256 terrain ceiling, though the world now allows 319).
+- [ ] **P5 — Decoration (old `BlockPopulator`).** Loot chests, spawners, furnished `Rooms`,
+      neighbor-aware roads/parks → feature placement / post-gen, respecting neighbor limits (the
+      seed-deterministic `PlatMap` makes per-chunk regeneration viable). Migrate datapack loot
+      tables to 1.21 format and bundle them in mod resources (drop the runtime extraction).
+      `SpawnProvider` → modern `EntityType`.
+- [x] **P6 — Schematics.** *Done: conversion, library, paste command, worldgen placement, multi-format
+      loading, drop-in folder, data-fixing, block entities, and **rotation/mirroring** all landed and
+      verified. Rotation IS applied — `PlatMap.placeSpecificClip` picks a random 1-of-4 orientation
+      (`Clipboard.ROTATIONS`) for every placed building (and roundabout statues via `RoadContext`).
+      Mirroring is applied too, but **opt-in per schematic**: it only fires when the `.yml` meta sets
+      `FlipableX`/`FlipableZ` (both default false, deliberately — a mirrored building with signs or a
+      deliberate front reads backwards). So "flip not used" is a per-schematic default, not a missing
+      feature.* Formats read:
+      legacy `.schematic`, WorldEdit `.schem` (Sponge v2/v3), Litematica `.litematic`, and vanilla
+      `.nbt` — each converted to a `StructureTemplate` and run through the vanilla structure data-fixer
+      (`Templates.build`) so older files are upgraded rather than losing renamed blocks to air (a 2017
+      DataVersion-1343 `.nbt` recovered 585→1273 non-air). Block entities (chests/signs/pots) are
+      carried for every format. Players drop their own into `config/cityworld/schematics/<Family>/`
+      (external scan alongside the bundled set; created with a README on first run). `/cityfind <name>`
+      locates the nearest; `/cityinfo` names the one underfoot.
+      The seam: `LegacySchematic` reads a legacy MCEdit `.schematic` (numeric ids +
+      `Data`, `Width/Height/Length`) and converts it to a native `StructureTemplate` (the vanilla
+      `.nbt` representation) via `LegacyBlocks` (legacy id+data → modern `BlockState`). `LegacyBlocks`
+      now covers **every one of the 91 legacy ids** the classic catalog uses — verified: **all 86
+      bundled schematics convert with zero unmapped ids and zero failures** (5.69M blocks). `Clipboard`
+      wraps the template + parsed `.yml` metadata and pastes in one native call; `SchematicLibrary`
+      indexes/loads/caches all 86 across 11 families (via a shipped `index.txt`, since jars can't list
+      resource dirs). `/cityschem <name>` (op) pastes any classic at the player; `/cityschem list`
+      enumerates them. **Decisions:** modern target = vanilla `.nbt` (native, no deps); WorldEdit
+      `.schem` deferred; legacy→`.nbt` is one reusable conversion.
+      **Bugfix (2026-07): bundled schematics with a space in the filename never loaded from the jar.**
+      `Class.getResourceAsStream` builds an internal `jar:` URI, and a space is an illegal URI char
+      (`URISyntaxException`), so the 3 copies of `IMC eaglman13 home entry.schematic` failed (caught →
+      WARN → skipped). Only *bundled* resources hit it — external drop-ins load via a filesystem `Path`
+      and were always fine. Fixed by renaming the 6 offending bundled files to underscores and updating
+      `index.txt`; the surviving-with-spaces catalog is otherwise unaffected. Surfaced once
+      `includeSchematics` became a one-click Customize toggle.
+
+      **Worldgen auto-placement — WIRED (behind `includeSchematics`, default off; awaiting in-world
+      visual check).** The full path is live: `DataContext.populateSchematics` (gated on the setting)
+      → `getSchematics` builds a `ClipboardList` from `SchematicLibrary.family(...)`, footprint-filtered
+      to the context's `schematicMax` → `ClipboardList.populate` rolls each clip's `oddsOfAppearance`
+      on the platmap's own `Odds` → `PlatMap.placeSpecificClip` finds a run of empty `platLots` big
+      enough (`isEmptyLots`, ≤16 tries) and fills it with one `ClipboardLot` per footprint chunk, each
+      carrying its `(lotX, lotZ)` offset. `ClipboardLot.generateActualBlocks` reconstructs the whole
+      building's NW origin (`chunk.getOriginX() − lotX*16`) and calls `Clipboard.pasteChunk`, which is
+      `StructureTemplate.placeInWorld` with `StructurePlaceSettings.setBoundingBox(thisChunk)` — the box
+      clips the write to the chunk being decorated (verified in the 1.21.11 source: `placeInWorld` skips
+      any block whose pos is outside the box), so a multi-chunk building is placed legally within the
+      `WorldGenRegion` radius as each overlapping chunk decorates its own slice. The seams line up
+      because every chunk computes the same origin. Height = `streetLevel − groundLevelY`; decay reuses
+      `destroyLot` when `includeDecayedBuildings`. `RealBlocks.getServerLevel()` hands `placeInWorld` the
+      live `ServerLevelAccessor`.
+
+      *Verified headlessly (plan-sweep probe, 1089 platmaps):* the gate works (0 `ClipboardLot`s with
+      the setting off), and with it on **2,035 building cells** were planned across every urban/farm
+      family (Highrise/Midrise/Lowrise/Industrial/Municipal/Neighborhood/Construction/Park/Farm) with
+      no exceptions — the whole planning path is sound and deterministic. Block-writing itself
+      (`placeInWorld`) was already proven by `/cityschem` (gas_stop matched block counts exactly), and
+      `pasteChunk` only adds the source-verified bounding-box clip.
+
+      **What still needs the owner's eyes in-world** (turn on `[schematics] includeSchematics` in the
+      config, fresh world): buildings flush with streets (not floating/buried/half-clobbering roads),
+      and the deliberate first-cut simplifications below.
+
+      *First-cut simplifications (parity-first; refine after the visual check):*
+      • No rotation yet — all buildings face the same way (`Rotation.NONE`); random facing swaps the
+        footprint for 90/270° and complicates the origin maths, so deferred.
+      • No foundation dig / air-carve — the converted template omits air, so a building sits cleanly on
+        flat city ground but won't hollow a hillside or basement pocket (`groundLevelY > 0` schematics
+        will want the upstream backfill in `generateActualChunk`, currently a no-op).
+
+      *Confirmed in play (2026-07, owner):* schematics drop in, frequency reads right. Fixes that
+      followed the feedback (verified via a live place-and-read-back probe on the Winchester pub):
+      **sign text now carried** (legacy `Sign` `Text1..4` → modern `front_text.messages`; "The /
+      Winchester / Tavern" reads back exactly), **double doors fixed** (both halves decoded together so
+      the hinge — which lives on the upper block — is set; place-back shows both LEFT and RIGHT hinges),
+      and **roundabout player-statues wired** (the `ROUNDABOUT` family — `sablednah`, `richard`, … — via
+      `RoadContext.createRoundaboutStatueLot` → `getSingleSchematic`; sweep found 118 placed). New op
+      commands: `/cityfind <name>` (async nearest-match search) and `/cityinfo` now names the schematic
+      you're standing on.
+
+      *Container contents now carried too* (2026-07): legacy `Chest`/`Furnace`/`Trap`(=old dispenser)
+      tile-entity `Items` → a modern `Items` list via a tiny legacy item-id map (only six ids appear in
+      the catalog: gold ingot/nugget, emerald, potion, golden helmet, slimeball). Only three buildings
+      ship stock — **chayats-bank** (a vault, 108 gold stacks), **IMCHospital**, **winchester** (one
+      emerald) — verified by place-and-read-back. Unknown item ids are logged once and skipped, never
+      guessed. Decay currently leaves a stocked vault intact except where `destroyLot` happens to blow
+      through it; thinning contents under `includeDecayedBuildings` is a possible later refinement.
+
+      Also still to do: build-time (or cached-on-disk) `.schematic`→`.nbt` so the legacy parser isn't a
+      runtime cost; refine orientation (door facing mapping and stairs facing may need a rotation tweak
+      once eyeballed); building rotation and the foundation dig above.
+      Assets recovered: `../Schematics for zarp.zip` (Era-3 backup, ~297 KB, 186 files) holds the
+      building schematics grouped by style (`Lowrise/`, `Industrial/`, `Municipal/`, …). Each
+      `.schematic` has a `.schematic.yml` sidecar with CityWorld placement metadata — port both.
+      Format is the **old flat-array MCEdit `.schematic`** (2013, MC ~1.5): numeric block IDs in
+      `Blocks`/`Data` byte arrays — not WorldEdit `.schem`, not vanilla `.nbt`. Conversion needs a
+      numeric-ID → modern `BlockState` mapping pass on top of the NBT reshaping.
+- [x] **P7 — Config + commands. Config done (2026-07): per-world settings via a datapack registry.**
+      Commands: `/cityinfo` (anyone; reports context/lot/nature under the player — the modern
+      Brigadier port of Sablednah's upstream PR #4) and `/cityworld` + `/cityworld leave` (op;
+      teleport into/out of the `cityworld:city` dimension, landing on the surface at the player's
+      X/Z) are **done** — `CityWorldCommands`, registered via `CityWorldServerEvents` on
+      `RegisterCommandsEvent`. Command gating uses Brigadier permission levels (op for teleport),
+      matching the reference port's command pattern. `/cityexport [name]` (op) bottles a world's
+      effective settings into a ready datapack (see "Trial → export → ship" below). `/citychunk`
+      deliberately **not** ported: its `regen` relied on Bukkit's `World.regenerateChunk`, which
+      modern MC has no safe runtime equivalent for. Still open: a proper `NeoForge` permission-node
+      layer if per-node control is wanted beyond op levels.
+
+  - **The config problem and how it was solved.** CityWorld's ~100 settings were *per-world* (parsed
+    from each world's YAML); a NeoForge `ModConfigSpec` is *per-instance* (top risk #4), so it cannot
+    say "this world crazy, that world plain". **A datapack registry can, and that's what the port now
+    uses.** `CityWorldSettingsData` (a codec'd record, `worldgen/`) is registered as the datapack
+    registry `cityworld:world_settings` (via `DataPackRegistryEvent.NewRegistry`), so entries live at
+    `data/<ns>/cityworld/world_settings/<name>.json`. The generator codec carries an optional
+    `RegistryFixedCodec` holder field `settings` — **resolved at codec-decode time, which is the one
+    place registry access is clean** (`fillFromNoise` never gets a `registryAccess()`). The bundled
+    `cityworld:default` (spelled-out defaults, a copy-and-edit template) is referenced by
+    `cityworld:city` and every world preset; a server op ships a datapack overriding `default.json`
+    per save, or points a dimension at its own profile. `CityWorldSettings.applyData` copies the
+    resolved data onto its fields *before* the world-style validation and the `decayed` override, so
+    those still win (a style's "THIS MUST BE SET" invariants and the ruined-twin are unchanged).
+    **This retired `CityWorldConfig` (the old per-instance `[decay]`/`[schematics]` `ModConfigSpec`) —
+    the datapack is now the single source of truth.** Every field is `optionalFieldOf(default)`, so a
+    JSON lists only what it overrides and a bare `{}` is a full-default world; the knobs are grouped
+    (features / terrain / spawns / treasures / world / radius) to stay under RecordCodecBuilder's
+    16-field ceiling.
+
+  - **Villager / street names and mob lists fold in here too** (the parking-lot "let players write
+    their own names" item). `CityWorldSettingsData` carries a `naming` group (nine word lists) and a
+    `mobs` group (ten weighted entity-id bags). **Each list defaults to empty, meaning "keep the
+    compiled hundreds"** — exactly upstream's "take the configured list, else the hardcoded one"
+    fallback, so they stay out of `default.json` to keep it readable. `OdonymProvider_Normal` reads
+    the nine (via its `CityWorldSettings`); `SpawnProvider` reads the ten through a new
+    `AbstractEntityList.applyOverride` (the override list *is* the weighted bag — repetition is
+    weight). Mob ids resolve via a new `EntityType.of(String)`; an unknown id is **logged once and
+    skipped, never guessed** — the `tag*`/`getListName` seams the earlier waves kept are what made
+    this a plug-in, not a redesign.
+
+  - **Verified end-to-end** (temporary `ServerStartedEvent` probes, since deleted — the usual method;
+    Gradle can't pipe stdin). Two runs: default, then the same world with a world datapack overriding
+    `cityworld:default`. The value knobs flipped as written (`includeRoundabouts` true→false,
+    `includeDecayedBuildings` false→true, `spawnBaddies` 0.0476→0.99, `oddsOfTreasureInMines`
+    0.5→0.123) while *unspecified* fields kept their defaults — field- and group-level merge both
+    work. Names came back `"Zorp Xyzzy"` / `"East New Quuxglorp Boulevard"` (a `streetPrefixes: []`
+    correctly fell through to the compiled default), the sewer bag became `minecraft:allay` only
+    (which isn't one of the 48 hardcoded constants — so `EntityType.of(String)` reaches the whole
+    registry), and a bogus `minecraft:not_a_real_mob` was logged-and-skipped. Zero exceptions; the
+    override is picked up on world *load* (the holder re-resolves each load), so no regen is needed to
+    retune spawn odds / names / decay — only terrain-shaping knobs want a fresh world.
+
+  - **Per-dimension decay override** (the "ruined twin"). The generator codec also carries an optional
+    `decayed` boolean; when present it forces `includeDecayedBuildings`/`includeDecayedRoads` on/off
+    for that dimension, winning over the datapack settings (absent = follow settings). The
+    `cityworld:city` dimension ships with `decayed: true`, so — because both dimensions seed off the
+    same world seed — `/cityworld` visits the *same city in ruins* while the overworld follows the
+    settings. Scoped to buildings/roads, not `includeDecayedNature` (that drains the seas / deserts
+    the world — a whole-world mood, not "this city is wrecked"), so the twin stays wet and green.
+    Backward compatible: existing worlds lack the field → `Optional.empty()` → settings.
+
+  - **Trial → export → ship, and a documented example** (2026-07, follow-up). Three additions turn the
+    datapack layer into a usable workflow for server ops ("trial in single-player, then set the
+    worlds"):
+    - **The single-player Customize screen now edits every value knob**, not just the style —
+      `CityWorldCustomizeScreen` became an `OptionsSubScreen` with scrollable, headed sections
+      (Features / Terrain / Spawns / Treasures / World), booleans as on/off cycles, odds as a named
+      `Chance` ladder, enums as cycles. On Done it bakes the edited settings **inline** into the
+      generator. That needed the codec to move from `RegistryFixedCodec` (reference-only) to
+      `RegistryFileCodec` (reference *or* inline) — so `"settings"` in a dimension JSON is now either
+      `"cityworld:default"` or a full `{…}` object; both verified to decode, existing reference worlds
+      unaffected. The screen carries the radius/naming/mob groups through untouched (those stay
+      datapack-only — impractical as GUI widgets). **Compiled and wired, but not visually verified —
+      no display in the port harness; it wants an in-world look on the owner's client** (like the
+      schematics visual check).
+    - **`/cityexport [name]`** snapshots the current world's *effective* settings
+      (`CityWorldSettings.toData()` — post style-validation and decay override) into a ready datapack at
+      `config/cityworld/exports/<name>/`. Drop it into another world's `datapacks/` and it applies.
+    - **A first-run example** at `config/cityworld/settings-example/` (next to the schematics drop-in):
+      a full datapack whose `default.json` spells out *every* knob at its default, plus
+      `settings-reference.txt` documenting each setting, its type and sensible range — the "download
+      the defaults and see everything that can change, with commentary" ask.
+    - **One codec gotcha worth keeping:** `optionalFieldOf(name, default)` **omits** any field equal to
+      its default on *encode* (a default world round-trips to `{}`). Correct for reading, useless as a
+      human template — so the written datapacks use a hand-rolled full serializer (`SettingsDatapack.
+      toFullJson`), not the codec. Also: 1.21.9+ changed `pack.mcmeta` to require `min_format`/
+      `max_format` (each `[major, minor]`); the writer emits them from the running version, verified to
+      load with no "incompatible" warning.
+    - Verified headlessly: an edited *full* export pack dropped into a world loaded clean (no format
+      warning), decoded every field, and applied (`includeRoundabouts`/`spawnBaddies` flipped).
+
+  - **Still open on the settings layer** (small): the `darkEnvironment` flag is runtime-only (set by
+    the alien/nether styles), deliberately not a datapack knob; the Customize screen omits the
+    radius/naming/mob groups by design (datapack-authored). Nothing blocking.
+- [x] **P8 — World styles (done 2026-07).** All 10 styles are live behind an optional `style` field
+      on the generator codec (mirrors `decayed`): NORMAL, NATURE, METRO, SPARSE, DESTROYED (terrain =
+      Normal, differ via `validateSettingsAgainstWorldStyle` — ported, with the city-radius maths and
+      `SubSurfaceStyle`), plus the six that needed their own terrain closures — FLOODED, SANDDUNES,
+      SNOWDUNES, MAZE, FLOATING, ASTRAL — each a full `ShapeProvider`/`SurfaceProvider`(/Ore/Cover)
+      + `Context/<style>/*` + `Plats/<style>/*` port wired into the provider `loadProvider` switches.
+      Exposure: a `world_preset/<style>.json` per style (`level-type=cityworld:<style>` on servers) +
+      a single-player **Customize button** (`RegisterPresetEditorsEvent` → `CityWorldCustomizeScreen`
+      style picker), and prettified `generator.cityworld.*` lang. Each style headless-verified (spawn
+      100%, 0 exceptions). One known cosmetic gap: huge mushrooms render all-cap (the 1.12
+      `MushroomBlockTexture` model is gone). See the `cityworld-next-p8-world-styles` memory.
+- [ ] **P8 remainder — Parity & polish.** GameTest coverage; README/docs; furnished-Rooms polish;
+      loot tables to native 1.21 datapack.
+
+**Critical path to first playable slice:** P0 → P1 → P2 → P3 (terrain in `cityworld:city`, no
+cities yet). Cities/decoration/loot layer on after.
+
+## Licence: GPL-3 (settled)
+
+Upstream CityWorld is **GPL-3** (confirmed by the project owner; the upstream tree carries no
+`LICENSE` file and no `<licenses>` in `pom.xml`, which is why this was ambiguous at first). This
+port is a **derivative work**, so it **must remain GPL-3** — GPL-3 → MIT is not permitted
+(compatibility runs the other way only: MIT code may be absorbed into a GPL-3 work).
+
+An earlier `mod_license=MIT` was an unverified assumption copied from the MobHealth template; it has
+been corrected to `GPL-3.0-only`, and a verbatim GPL-3 `LICENSE` now lives at the repo root.
+
+**The original author knows about this port and has approved it** (2026-07). GPL-3 already permitted
+the fork, so his blessing was not required — it was asked for anyway, which seems the right way to
+treat someone whose project this was. Worth recording because it is otherwise undocumented, and
+because it means open questions about upstream's *intent* — as opposed to its behaviour, which the
+code answers — now have somewhere to go. (Fittingly, his own plea is still in the tree: the log line
+in `ShapeProvider_Normal.getContext(int, int)` asking whoever sees it to email him. It is preserved
+verbatim.)
+
+**Consequence — the noise question resolves the good way:** since we are GPL-3 and Bukkit's API is
+GPL-3, we **may vendor** Bukkit's `SimplexNoiseGenerator`/`SimplexOctaveGenerator` (with notices and
+attribution intact) and so **preserve CityWorld's exact terrain shape**, rather than approximating
+it with vanilla noise and getting different terrain.
+
+**Done** (2026-07): the five classes now live in `me.daddychurchill.CityWorld.compat.noise`
+(`NoiseGenerator`, `PerlinNoiseGenerator`, `SimplexNoiseGenerator`, `OctaveGenerator`,
+`SimplexOctaveGenerator`), each carrying an attribution header naming Bukkit as the source, the
+GPL-3 basis for vendoring, and the only change made (dropping the `org.bukkit.World` ctors). Bukkit
+ships no per-file licence headers — its licence is repo-level — which is precisely why the header we
+add matters. Upstream Bukkit in turn derived them from Stefan Gustavson's public-domain simplex
+paper; that credit is preserved too.
+
+Known wrinkle (not blocking, owner's call): GPL + linking against proprietary Minecraft is a
+long-standing grey area in the modding ecosystem; many GPL mods ship regardless.
+
+## Top risks
+
+1. **Threading/determinism** in the multithreaded chunk pipeline (mutable caches → concurrent or
+   per-chunk-recomputed). Biggest one. **Hit in full at wave 2 (2026-07) and dealt with** — two
+   separate bugs, both invisible to the compiler:
+    - `getPlatMap` cached in a `Hashtable` with a **non-atomic get-then-put**, so concurrent chunks
+      would each build their own PlatMap for the same origin. Now a `ConcurrentHashMap` with
+      `computeIfAbsent`, which builds exactly once per key however many threads ask.
+    - Far worse: `ConnectedLot` drew its identity from `connectionKeyGen.getRandomLong()` — **one
+      shared, mutable RNG**, so a lot's key depended on how many lots had been built before it.
+      Single-threaded Bukkit made that reproducible; concurrent, arbitrarily-ordered planning would
+      have made **the same seed produce a different world every run**, and raced the RNG besides.
+      Now derived from the lot's position (`CityWorldGenerator.getConnectionKey(chunkX, chunkZ)`) —
+      only key *equality* is ever tested, so the meaning is identical and it is order-independent.
+      Verified: same seed + fresh generator ⇒ identical plan across a 25-platmap sample.
+
+   The pattern to watch for in the rest of the port: **anything whose value depends on call order**.
+   `CityWorldGenerator.getRelatedSeed()` is the remaining one — it advances a counter per call, so
+   the provider stack must keep being built in upstream's order, on one thread.
+2. **Neighbor access** during decoration for connected roads/parks. **Now live** — the city is drawn
+   in `applyBiomeDecoration` against a `WorldGenRegion`, which restricts how far a write may reach.
+   `RealBlocks` refusing to cross its chunk edge is what keeps this legal. **Sharper than it looks
+   for entities**: `WorldGenRegion.addFreshEntity` skips the `ensureCanWrite` check that `setBlock`
+   gets, and resolving a chunk outside the region's cache *throws* rather than declining — so an
+   out-of-chunk spawn crashes the server instead of being quietly dropped. See `SpawnProvider`.
+3. **Performance** — the original disabled several styles for perf even on Bukkit.
+4. ~~**Per-world config** doesn't match NeoForge's per-instance config model.~~ **Resolved (2026-07,
+   P7):** settings are a *datapack registry* (`cityworld:world_settings`), not a `ModConfigSpec`, so
+   they are genuinely per-world/per-dimension — a server op ships a pack per save. The generator
+   references a settings holder resolved at codec-decode. The name and mob lists landed in the same
+   pass. See "P7 — Config + commands". `ModConfigSpec` was retired. What a datapack registry does
+   *not* give is per-node runtime editing — settings are authored, frozen at world load; that suits
+   the use case (retuning wants a datapack edit + reload/restart, not a live command).
+
+**Struck: the old risk #1, "`generator.getWorld()` does not exist".** It was only ever needed by
+`SpawnProvider`, which doesn't need it either — `compat/Location` carries its level exactly as
+Bukkit's `Location` carried its world. See "Closed: mobs and loot". The numbering above is kept as-is
+so older notes referring to "top risk #2" still point at neighbour access.
+
+## ⚠ Tag gotchas (learned the hard way, 2026-08-31)
+
+- **A missing *required* tag reference discards the WHOLE tag, not just that entry.**
+  `#cityworld:farm/flowers` referenced `#minecraft:tall_flowers`, which does not exist as a block tag —
+  and that one bad line silently took out `#minecraft:small_flowers` and every BoP flower with it. The
+  pool resolved to zero, every flower field fell back to its hardcoded vanilla flower, and the only
+  in-world symptom was "the feature does nothing", which is indistinguishable from looking at chunks
+  generated by an older jar. The log says it plainly if you look:
+  `Couldn't load tag cityworld:X as it is missing following references:`.
+  The `"required": false` habit protects *mod* ids and gave no protection here, because the broken
+  entry was the one written as required. **Verify a vanilla tag exists before referencing it** — the
+  block tags are in `data/minecraft/tags/block/` of the extracted server jar.
+- **There is no `minecraft:tall_flowers` block tag.** Vanilla lists sunflower/lilac/peony/rose_bush/
+  pitcher_plant individually inside `#minecraft:flowers` — which also carries cherry leaves, flowering
+  azalea, mangrove propagules, pink petals and chorus flowers, so it is the wrong tag to inherit for
+  anything plantable.
+- **Inheriting a mod's tag inherits its judgement.** BoP registers `waterlily` into
+  `#minecraft:small_flowers`, so a farm field planted lily pads on tilled earth. NeoForge's `remove`
+  list subtracts one entry while keeping the inheritance, which is better than hand-listing.
+- **An empty pool must fail loudly.** A pool that resolves to nothing degrades to a hardcoded default
+  and looks like working software. The self-test now reports what each farm pool resolves to and fails
+  the run if one is empty.
+- **⚠ `git rev-parse HEAD` inside a worktree resolves to that branch's HEAD.** Using it as a
+  cherry-pick argument from a worktree is a silent no-op that prints "nothing to commit" and exits
+  zero — so the verification run afterwards measures unchanged code and reports a confident wrong
+  answer. Resolve the hash in the master checkout and pass it explicitly.
+
+## 1.21.11 API notes (verified against the decompiled NeoForge sources)
+
+These bit us / would bite anyone porting; confirmed by grepping the neoform sources jar
+(`~/.gradle/caches/neoformruntime/.../sourcesAndCompiledWithNeoForge_*.jar`):
+
+- **`ResourceLocation` is renamed `net.minecraft.resources.Identifier`** in 1.21.11. Factories:
+  `Identifier.withDefaultNamespace(path)`, `Identifier.fromNamespaceAndPath(ns, path)`,
+  `Identifier.parse(str)`.
+- **`ChunkAccess.setBlockState(BlockPos, BlockState, int flags)`** — the third arg is an
+  `@Block.UpdateFlags int`, **not** the old `boolean isMoving`. A 2-arg convenience
+  `setBlockState(pos, state)` defaults to flags `3`. `ProtoChunk` updates heightmaps automatically.
+- **Bukkit's "apply physics = false" is `UPDATE_SKIP_ALL_SIDEEFFECTS | UPDATE_CLIENTS`, not
+  `UPDATE_CLIENTS`.** This bit us and was only caught by placing blocks in a live world. Writing
+  with `UPDATE_CLIENTS` alone still lets the block run `onPlace` — so a powered rail re-reads the
+  redstone around it and **un-powers itself**, and a plant checks what it is standing on and
+  **deletes itself** — quietly corrupting whatever the generator placed. `LevelChunk.setBlockState`
+  gates the side effects on flags: `onPlace` unless `UPDATE_SKIP_ON_PLACE` (512), container drops
+  unless `UPDATE_SKIP_BLOCK_ENTITY_SIDEEFFECTS` (256). `UPDATE_SKIP_ALL_SIDEEFFECTS` (816) is
+  vanilla's name for the whole inert combination. Fixed in `compat/Block`.
+- **`ResourceKey.location()` is now `identifier()`** — same rename family as `ResourceLocation` →
+  `Identifier`. So a dimension's path is `level.dimension().identifier().getPath()`.
+- **`SignBlockEntity`**: text goes in via `updateText(UnaryOperator<SignText>, true /* front */)`,
+  and `SignText.setMessage(i, Component)` returns a **new** `SignText`. It notifies its level on
+  change, and a block entity built on demand through a `WorldGenRegion`/`ProtoChunk` has none — see
+  the `SupportBlocks` note above.
+- **Registry lookups**: `BuiltInRegistries.BLOCK.getValue(Identifier)` returns a `@Nullable Block`;
+  `.get(Identifier)` returns `Optional<Holder.Reference<Block>>`; `.getKey(block)` returns the
+  `Identifier`.
+- **State properties** live in `net.minecraft.world.level.block.state.properties.BlockStateProperties`:
+  `FACING`/`HORIZONTAL_FACING` (`Direction`), `AXIS` (`Direction.Axis`), `SLAB_TYPE` (`SlabType`),
+  `HALF` (`Half`), `DOUBLE_BLOCK_HALF` (`DoubleBlockHalf`), `WATERLOGGED`, and boolean connection
+  faces `NORTH/EAST/SOUTH/WEST/UP/DOWN`. Apply with `state.setValue(prop, val)` /
+  guard with `state.hasProperty(prop)`.
+
+## Build notes
+
+- No system Java; build with `JAVA_HOME=../MobHealth-Forge/tools/jdk21` (also copied to
+  `./tools/jdk21`, git-ignored). `./gradlew compileJava` is the fast inner loop while porting.
+- Decompiled MC/NeoForge sources (for checking signatures) extract from the neoform jar above.
+
+## Future ideas (parking lot)
+
+- ~~**Vary grass / soil / foliage / trees by BIOME (owner, 2026-07).**~~ **Done (2026-07) for the
+  colour/terrain half.** `CityWorldBiomeSource` (registered `cityworld:terrain`) carries a configurable
+  8-biome palette keyed to CityWorld's height bands, and `CityWorldChunkGenerator.createBiomes` fills
+  each column by classifying its deterministic terrain height (the same bands the shaper used) — deep
+  ocean / ocean / beach / low / mid / high / peak, plus a dry biome for nature-decayed worlds. So
+  grass, water and foliage colour and biome mobs now follow the land (verified: ocean below sea, beach
+  at the waterline, plains→forest→taiga→snowy up the height bands). The palette lives in the
+  biome-source JSON, so CLASSIC and MODERN (and each style) can use different biomes for the same band.
+  Wired into the classic preset. **Extended 2026-08:** the `nature`, `metro` and `sparse` presets now
+  point at `cityworld:climate` too (varied biomes verified: 12 distinct in a nature world), and the
+  themed styles got their correct fixed biome (sanddunes→desert, snowdunes→snowy_plains, flooded→ocean)
+  instead of the placeholder plains. Still on a fixed/placeholder biome by choice: `destroyed` (owner's
+  active style — left untouched pending their call), `astral` (needs End biomes), `floating`, `maze`.
+
+  **MODERN climate biomes done (2026-07):** `CityWorldClimateBiomeSource` (`cityworld:climate`) crosses
+  CityWorld's elevation with a slow temperature+humidity field (`CityWorldGenerator.getTemperature/
+  getHumidity`, seeded off the world) and a matrix maps the pair to the **full overworld biome spread**
+  — deserts/savannas warm-dry, jungle/swamp/mangrove warm-wet, snowy/ice-spikes cold, cherry-grove/
+  dark-forest temperate hills, badlands/windswept/old-growth up high, warm→frozen oceans by latitude.
+  Both sources share the elevation bands via the `CityWorldBiomes` interface, driven uniformly by
+  `createBiomes` (CLASSIC ignores the climate). The `cityworld:city` preset + dimension + the Customize
+  MODERN path use it; verified: **36 distinct biomes** in one 65×65 area, temp/humid span 0..1.
+  **Cover — hybrid, trial (2026-07):** owner's call — CityWorld's own cover in the built areas, vanilla
+  wild decoration on the nature lots. Since each chunk is one lot, `applyBiomeDecoration` calls
+  {@code super.applyBiomeDecoration} (vanilla biome features) after CityWorld's pass, gated on
+  {@code lot.style == NATURE} and {@code MODERN}. Verified: 841 chunks force-loaded, 0 failures, and
+  the nature lots grow biome-appropriate vanilla vegetation — acacia/cherry/dark-oak/jungle/mangrove/
+  spruce/birch trees, bamboo, a full coral reef + seagrass in warm oceans, mushrooms. ~~**Open (owner to
+  eyeball):**~~ **CLOSED 2026-08-28 — owner: "nothing in nature is looking too much, whatever it's at
+  now looks good."** CityWorld's nature lots keep placing their own cover alongside vanilla's; the
+  doubled density that was feared did not materialise, so leave both in. City-area cover unchanged.
+
+- ~~**"Zoo" / "Bio Dome" lot to cover biome-block gaps (owner, 2026-07).**~~ **DONE** — both landed as
+  park-district attractions (themed zoo pens with animals, glass biome domes).
+
+  **Revisit only when Minecraft adds a weird animal or a rare biome worth showcasing** (owner,
+  2026-08-28). At that point the right move is not to hand-edit the lot: make the *contents*
+  data-driven — a datapack describing what is in each zoo pen and each biodome, so a new animal or
+  biome is a datapack line rather than a code change. Same treatment `#cityworld:cave_pool` got. Not
+  worth doing speculatively; do it the first time the hand-edit is actually needed.
+
+- **MODERN "overgrown" look + full 1.21 palette (owner, 2026-07).** Use the whole modern block range in
+  MODERN's providers — and for a decayed/overgrown MODERN, drape **moss carpet, vines, leaf litter,
+  azalea, glow lichen** over ruins and nature (the CoverProvider + the decay path). Rides the
+  per-style settings-profile pattern (`cityworld:modern`) and, ideally, the biome work above.
+
+- ~~**Decay as a probability, not on/off — rare pristine buildings/schematics (owner, 2026-07).**~~
+  **DONE (2026-07).** A building/schematic can survive intact even in an apocalypse world (a small
+  global pristine chance, `[terrain] oddsOfPristineBuilding`, default tiny 0.0001), overridable
+  per-schematic via a `PristineChance:` yml key. Schematics shipped first (rolled from the build's NW
+  origin so a multi-chunk build agrees). **Regular buildings now too:** new `PlatLot.buildingsDecay()`
+  helper — `includeDecayedBuildings && !pristine`, rolled once per lot and cached, seeded from the
+  building's `getConnectedKey()` (position fallback for isolated lots) so every chunk of a multi-chunk
+  building agrees. The scattered `includeDecayedBuildings` checks in the ordinary building lots
+  (`FinishedBuildingLot`, `HouseLot`, `BarnLot`, `FactoryBuildingLot`, `StorageLot`, `MuseumBuildingLot`,
+  `WaterTowerLot`) now test `buildingsDecay()` instead; the always-ruined nature set-pieces (castle,
+  radio tower, oil platform), floating-style lots, the unfinished-building lot, and the spawner logic
+  were left on the raw flag by design. Verified: at a 0.3 test setting, 29.6% of 29,605
+  `FinishedBuildingLot`s came back pristine — the roll fires at the configured rate.
+
+- **⭐ "Modern" vs "Classic" — a modernization world style, made default (owner's idea, 2026-07).**
+  The big one. Rename today's `NORMAL` style to **`CLASSIC`** (it faithfully reproduces the 1.8-era
+  look — old blocks, old height feel, no vanilla structures) and add a new **`MODERN`** style that
+  becomes the *default*, using everything current Minecraft offers:
+    - **Taller builds** — actually use the -64..319 headroom. This subsumes the existing
+      `DataContext.buildingMaximumY` cap (still pinned at the 256 terrain ceiling) — but it should be
+      **per-style**, not a blanket raise: Classic stays short, Modern goes tall. So the height cap
+      wants to move onto the settings/style, not be globally bumped.
+    - **Modern blocks** — deepslate + its ore variants (already half-wired, see P4), tuff, calcite,
+      copper/oxidation, modern wood sets, glazed terracotta, etc. in the material providers.
+    - **Modern mobs** — the newer entities in the spawn bags (allays, foxes/goats where apt, wardens
+      only where deliberate). The mob lists are already datapack-overridable (P7), so Modern can ship a
+      richer default `mobs` group while Classic keeps the 1.8 roster.
+    - ~~**Modern ice/snow** — packed ice / blue ice / powder snow to *ice the mountaintops* properly
+      (the cover/surface providers currently use plain snow); Snowdunes-style worlds especially.~~
+      **Done (2026-07).** `SurfaceProvider_Normal.generateModernIcecap` grades MODERN peaks by height
+      above the snow line: snow blocks on the slopes, packed ice higher, glacier-blue ice at the tips,
+      powder-snow pockets throughout — all full cubes. Fixes the loose-snow-on-ice bug (a snow *layer*
+      on ice is illegal and cascades on touch); layers now only ever sit on snow blocks. Added
+      `BLUE_ICE`/`POWDER_SNOW` to the `gen_material.py` EXTRAS. Snowdunes still uses its own provider.
+    - **New tree types** — cherry, mangrove, azalea, spruce/large variants via the tree provider
+      (`TreeStyle` already exists but only `NORMAL` is wired; this is where `SPOOKY`/`CRYSTAL` and new
+      ones land per style).
+    - **Allow *some* vanilla structures** — instead of suppressing every structure set (see the
+      "harvest vanilla structure points" idea below), let Modern permit a curated few (ancient cities
+      deep down, trial chambers, the odd shipwreck/ruined portal) to blend with CityWorld's own.
+  **Why this shape:** most of the piecemeal "what's left" polish (building-height cap, deepslate ores,
+  new trees, modern cover) is really *facets of the Modern style*, so doing them under one style banner
+  is cleaner than one-off global changes — and it keeps a pixel-faithful `CLASSIC` for people who want
+  the original. Mechanically it rides the P8 style machinery already in place (a `WorldStyle` value +
+  `validateSettingsAgainstWorldStyle` + provider `loadProvider` switches + a `world_preset`), plus the
+  P7 datapack settings for the knobs. **Decisions to make with the owner:** does `MODERN` become the
+  literal codec default (changes new-world behaviour) or just the top preset; how far to push vanilla
+  structures; and whether "Modern" is one style or a family (Modern + Modern-Sparse, …).
+
+- ~~**Let players write their own villager names, street names and mob lists.**~~ **Done (2026-07,
+  P7).** It was re-attaching a reader, not new design — exactly as predicted: the nine `OdonymProvider`
+  name lists and the ten `AbstractEntityList` mob bags now come from the `naming`/`mobs` groups of the
+  `cityworld:world_settings` datapack, each defaulting to empty = "keep the compiled list" (upstream's
+  `getNames` fallback). Mob-name validation (unknown → log-and-skip) came along via
+  `EntityType.of(String)`. The datapack mechanism the note guessed at is exactly what shipped.
+
+- **Harvest vanilla structure placement points as city anchors.** Right now the generator
+  *suppresses* all vanilla structure sets (villages, mineshafts, trial chambers, …) so CityWorld
+  owns the chunk. Distant-future idea: instead of only discarding them, read where vanilla *would*
+  have placed structures and use those points as anchors to seed CityWorld content — e.g. drop a
+  landmark building, a plaza, an underground vault, or a themed district at a would-be village /
+  trial-chamber location. The placement machinery already computes good spots; we'd be repurposing
+  them as hints rather than throwing them away.
+
+  **Considerably more approachable since 2026-08-27:** `createState` now builds a real, correctly
+  seeded `ChunkGeneratorStructureState` instead of an empty one, so the placement maths being read is
+  live rather than zeroed.
+
+  **Owner's steer (2026-08-28): fill those anchors from *schematics*, not new lot classes.** A
+  `village/` folder, an `outpost/` folder and so on; a spot rolls against the matching folder, and
+  **falls back to generating normally if the folder is empty or the roll comes up short**. That gives
+  server owners a drop-in way to theme the anchors — the schematics pipeline already supports a
+  drop-in folder — without a code change per structure type. *"One to think on."*
+
+  **⚠ The open question is footprint.** CityWorld plans in whole chunks and a lot has to know its own
+  shape before it builds; a schematic's dimensions are only known once it is read. So this needs a
+  decision about who adapts to whom: index the folder up front and pick a schematic that fits the lot,
+  reserve a lot group big enough for the biggest schematic in the folder, or let a schematic claim
+  neighbouring chunks the way the hospital campus does. Worth settling *before* writing any of it —
+  it is the difference between a small feature and a replanning change.
+
+- **Teach interiors what furniture *is*, via datapack (owner, 2026-08-28).** Today `Support/Furniture`
+  knows a fixed vocabulary of blocks. The idea: name the *roles* instead — `chair`, `table`,
+  `bookshelf`, `lighting`, `wall_decor`, `tabletop`, `bed`, `furniture` — so blocks can be added to a
+  role and pulled out of it from a pack, exactly as the build palettes work now.
+
+  **This is timely.** 26.3 reportedly adds **cushions** (a seat), **straw beds** (a bed) and **concrete
+  and wool steps** (more chairs) — three new blocks that would slot into three existing roles with no
+  code at all. Note the same 26.3 change is *also* the palette hazard already logged in queued item #4:
+  wool and concrete stairs are a gift to the furniture vocabulary and a menace to the wall palettes,
+  which assume full cubes. One drop, two opposite consequences — check both on day one.
+
+  **⚠ Checked against 26.3-snapshot-10 (2026-08-28) — both motivating examples have a catch.**
+  Cushions are **entities** (sittable, `BlockAttachedEntity`), so no block tag or data map can place
+  one; `straw_bed` is **not** in `#minecraft:beds`. Conclusion: the roles must be our own
+  `cityworld:furniture/*` tags rather than aliases of vanilla's, because vanilla tags describe what a
+  block is made of, not what it is for. Details in "26.3 reconnaissance" above.
+
+  **⚠ Tags alone are not enough, and this is the crux.** A tag says *what a block is*, not *which way it
+  faces*, and furniture is meaningless without orientation — a chair faces a table, a wall decoration
+  faces into the room. That is what the earlier "needs real feature work" note in queued item #5 was
+  getting at. **The mechanism that does solve it is NeoForge *data maps*** — `DataMapType`, attachable
+  to registry entries from a datapack (already visible in `HolderLookup.RegistryLookup.getData`). A
+  data map can carry per-block facts a tag cannot: which property holds the facing, whether the block
+  seats an entity, how tall it sits, whether it wants a wall behind it. **So the owner's instinct that
+  this should be datapack-driven is achievable — it is just data maps rather than tags.** Worth a spike
+  on one role (`chair`) before committing to the whole vocabulary.

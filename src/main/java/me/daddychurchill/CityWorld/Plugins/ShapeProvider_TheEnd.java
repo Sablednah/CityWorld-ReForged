@@ -28,9 +28,10 @@ import me.daddychurchill.CityWorld.worldgen.EndTerrain;
  * 57% of fully solid chunks top out within y 57..60 and 76% vary by under 6 blocks inside the chunk — but "flat" is
  * not "exactly street level", which is what the planner needs. So island tops within {@link #TERRACE} blocks of
  * street level are planed to it, and the next {@link #BLEND} blocks ease back to the natural height so the step is
- * a slope rather than a cliff. It is a rule of the terrain, not of a lot: it applies to every column of every
- * chunk alike, which is why no chunk-square edge can appear — the first End built the city on its own slab, and
- * chunk-square slabs are exactly what that looked like. Street level 59 with +/-4 fits 66% of solid chunks.
+ * a slope rather than a cliff. The planner is told it for every column of city country alike (what is buildable
+ * cannot depend on what gets built), and the blocks are moved only under a built lot and across an apron beside
+ * it (see {@link #preGenerateChunk}) — never a chunk-square edge, and never a levelled plain with nothing on it.
+ * Street level 59 with +/-4 fits 66% of solid chunks.
  *
  * <p>The first End was the overworld's twin and inherited its underground: mines, sewers and caves hanging out of
  * the bottom of islands a few dozen blocks thick. {@code CityWorldSettings.applyEndRealm} turns those off; this

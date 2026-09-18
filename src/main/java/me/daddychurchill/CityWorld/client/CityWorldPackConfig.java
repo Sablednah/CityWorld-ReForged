@@ -42,12 +42,12 @@ public final class CityWorldPackConfig {
         RUINED_NETHER = b.comment(
                 "Lock the Nether of every new world: \"cityworld\" = the ruined-city Nether (the overworld's city at",
                 "1:1, burnt), \"vanilla\" = vanilla's Nether. Customize shows the choice greyed out.",
-                "Empty = the player chooses in Customize (default vanilla).")
+                "Empty = the player chooses in Customize (the CityWorld world types default to the ruined city).")
                 .define("ruinedNether", "");
         CITYWORLD_END = b.comment(
-                "Lock the End of every new world: \"cityworld\" = CityWorld's End (vanilla's central island and",
-                "dragon fight, CityWorld cities on the outer islands), \"vanilla\" = vanilla's End.",
-                "Empty = the player chooses in Customize (default vanilla).")
+                "Lock the End of every new world: \"cityworld\" = CityWorld's End (vanilla's End throughout, with",
+                "CityWorld cities on the flat of the outer islands), \"vanilla\" = vanilla's End.",
+                "Empty = the player chooses in Customize (the CityWorld world types default to the cities).")
                 .define("cityworldEnd", "");
         b.pop();
         SPEC = b.build();

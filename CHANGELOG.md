@@ -5,7 +5,7 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
-## Unreleased
+## 5.9.0
 
 ### Added
 
@@ -15,24 +15,28 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   Empty (the default) changes nothing. A dedicated server keeps using `level-type` in `server.properties`.
 - **A CityWorld End: cities on vanilla's islands.** The End is vanilla's throughout — the central island, the
   obsidian pillars, the dragon fight, the void ring, and beyond it the outer islands exactly as vanilla grows
-  them, with their chorus forests, biomes and **end cities**. CityWorld adds the city: streets and buildings
-  stand on the flat tops of the outer islands and nowhere else, short bridges hop between neighbouring
-  islands, and the island's edge, underside and everything wild is left alone. Island tops within four blocks
-  of street level (y 59) are planed flat to take the streets. Nothing digs through — no mines, sewers, cisterns
-  or caves, because an island is only a few dozen blocks thick — but buildings keep their basements wherever the
-  island under them is thick enough, shallower or absent towards the rim, and never showing from below. Bridge
-  pylons stand on obsidian footings where an island passes beneath and are left off over open void. **The End's
-  city is never ruined**, even under an APOCALYPSE or DESTROYED overworld — the dragon kept everyone out — and it
-  is built from the overworld's palette with the End's own blocks blended in (about one wall, roof or floor in
-  three: purpur, end stone bricks, obsidian, amethyst — the new `#cityworld:build/end_stones` tag, yours to widen
-  or empty with a datapack). Its streets are lit by end rods. The End is settled by region — a slow noise field
-  leaves about half of what would otherwise be city as wild country, whole islands' worth of it untouched — and
-  **biome mods' End biomes now generate there**: Biomes O' Plenty's end wilds, end flats, end reef and end
-  corruption (anything registered with TerraBlender for the End), with their own ground and plants. Districts follow the overworld's
-  style and settings, graded by how much of each island is buildable (no farms or outland: there is no water
-  out there). CityWorld steps aside wherever an end city stands. Customize has **Realms → End**
-  (*Cities on the islands* / *Vanilla*), and modpacks can lock it with `cityworldEnd` in
-  `config/cityworld-startup.toml`.
+  them, with their chorus forests, biomes and **end cities**. CityWorld adds the city on top:
+  - **Cities stand on the flat tops of the outer islands and nowhere else.** Island tops within four blocks of
+    street level (y 59) are levelled to take the streets — but only under a building or road and across a short
+    apron beside one, easing back into the island; an island nobody built on is exactly as vanilla made it.
+    Short bridges hop between neighbouring islands, standing on obsidian footings where an island passes
+    beneath and spanning open void without pylons.
+  - **Settled by region.** A slow field splits the outer islands into city country and wild country — clumps of
+    city, clumps of nature, about half of what an unthinned End would build — so there is room for the wild
+    End, and for **biome mods' End biomes**: Biomes O' Plenty's end wilds, end flats, end reef and end
+    corruption (anything a mod registers with TerraBlender for the End) generate with their own ground and
+    plants. Districts follow the overworld's style and settings, graded by how much of each island is
+    buildable — no farms or outland, there is no water out there — and CityWorld steps aside wherever an end
+    city stands.
+  - **Nothing digs through** — no mines, sewers, cisterns or caves, because an island is only a few dozen
+    blocks thick — but buildings keep their basements wherever the island under them is thick enough,
+    shallower or absent towards the rim and never showing from below.
+  - **Never ruined**, even under an APOCALYPSE or DESTROYED overworld: the dragon kept everyone out. Built
+    from the overworld's palette with the End's own blocks blended in (about one wall, roof or floor in three:
+    purpur, end stone bricks, obsidian, amethyst — the new `#cityworld:build/end_stones` tag, yours to widen or
+    empty with a datapack), and lit by end rods.
+  - Customize has **Realms → End** (*Cities on the islands* / *Vanilla*), and modpacks can lock it with
+    `cityworldEnd` in `config/cityworld-startup.toml`.
 - **CityWorld's Nether and End are now the default.** Every CityWorld world type creates the ruined-city
   Nether and the CityWorld End unless you switch them back to Vanilla under Customize → Realms — and a
   dedicated server started with `level-type=cityworld:…` now gets them too, which it never could before.
@@ -90,6 +94,19 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   create-world screen.
 - A dimension marked `"decayed": false` was still ruined when its style was Apocalypse or Destroyed — the
   style switched decay back on after the override.
+
+## 5.8.1
+
+### Fixed
+
+- **Removed the two calls that could shut a server down.** CurseForge rejected 5.7.0 and 5.8.0 with
+  "Please remove any function that shuts the Minecraft server down", and they were right to: the headless
+  self-test harness and the chunk probe each called `server.halt(...)` when they finished. Both only ever
+  ran behind a developer flag (`-Dcityworld.selftest=true`, `-Dcityworld.probe=`) that no player sets, and
+  neither could fire in normal play — but the code shipped inside the jar, and a mod that *can* stop your
+  server has no business being installed on it. There is now no `halt` or `System.exit` anywhere in the
+  published jar. Both tools still work; the scripts that start them now stop them.
+- No worldgen, content or behaviour changes: 5.8.1 is 5.8.0 with that code removed.
 
 ## 5.8.0
 

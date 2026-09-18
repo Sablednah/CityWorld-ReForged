@@ -77,6 +77,25 @@ arrived — so the map shows **the plan**, over ground nobody has explored:
 It is a soft dependency in the proper sense: no JourneyMap, no difference — CityWorld does not touch
 a single one of its classes unless it is installed.
 
+## Beyond the overworld — the ruined Nether and the End
+
+**New in 5.9.0.** A CityWorld world type now comes with its own Nether and End (switch either back to
+Vanilla under Customize → Realms):
+
+- **The ruined-city Nether** is the overworld's own city — same seed, same streets, same buildings — burnt
+  and collapsed, in Nether biomes (and Biomes O' Plenty's, when installed), on netherrack and blackstone with
+  lava seas. **Portals link 1:1**, so the ruin you arrive in stands where its overworld building does. Full
+  height, no bedrock roof; fortresses and bastions still generate, each bastion in its own cavern with a
+  ruined shaft down to it from the street.
+- **The End is vanilla's throughout** — the central island, the dragon fight, the void ring, the outer
+  islands with their chorus forests and end cities — with CityWorld's cities on the flat tops of the outer
+  islands: clumps of city and clumps of wild End, streets lit by end rods, buildings blended with purpur and
+  end stone brick, never ruined (the dragon kept everyone out). Biome mods' End biomes generate in the wild
+  stretches. Nothing digs through the islands; basements go only as deep as the rock allows.
+- **`/cityworld`** visits the city before the fall — the overworld's own plan, pristine.
+- Modpacks can lock any of it: `lockedWorldPreset`, `ruinedNether` and `cityworldEnd` in
+  `config/cityworld-startup.toml`.
+
 ## Furnished — and furniture mods make it more so
 
 **New in 5.5.0:** every building has an interior. Offices and apartment towers, schools and

@@ -25,7 +25,8 @@ Drop the jar in your `mods/` folder and pick **CityWorld** as the world type (or
 and you get endless procedurally-generated cities: named streets, furnished buildings, roundabouts
 with statues, civic districts, factories and warehouses, farms with animals, parks, and mountainous
 wild between them — with mines and sewers below, loot in the chests, and villagers (with names) in
-the streets.
+the streets. **And, from 5.9.0, a Nether and an End of its own:** a ruined 1:1 twin of your city in the
+Nether, and cities on the flat tops of vanilla's End islands.
 
 Battle-tested across 135 worlds and 3.2 million generated chunks — over 830 km² of procedurally
 generated city, more ground than New York City covers.
@@ -127,6 +128,11 @@ generated city, more ground than New York City covers.
   whole. A Fantasy's set released after this version is recognised at startup. Without them, rooms
   keep a classic vanilla look; mod authors can join in with two data files (`PALETTES.md`).
 - **Schematics** — a bundled catalog of classic buildings, plus any you drop in yourself.
+- **Other realms** — a ruined-city Nether (the overworld's city at 1:1, burnt, in Nether biomes, with
+  fortresses and bastions) and a CityWorld End (vanilla's islands and dragon, CityWorld's cities on the flat
+  of the outer islands, pristine, with End blocks blended into the palette; biome mods' End biomes in the
+  wild). Both default on; Customize → Realms switches either back to vanilla, and
+  `config/cityworld-startup.toml` can lock them for a modpack.
 - **Decay** — two ruined presets with independently tunable intensity, fire density and how much survives
   intact: **apocalypse** (buildings slowly decaying, nature reclaiming, no fires) and **destroyed**
   (heavier war-zone damage, fires on).
