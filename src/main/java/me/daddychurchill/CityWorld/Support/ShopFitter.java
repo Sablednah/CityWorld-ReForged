@@ -93,9 +93,6 @@ public final class ShopFitter {
         exteriorSign(chunk, y, name);
     }
 
-    private static final Material[] DOORS = { Material.OAK_DOOR, Material.BIRCH_DOOR, Material.SPRUCE_DOOR,
-            Material.JUNGLE_DOOR, Material.ACACIA_DOOR, Material.DARK_OAK_DOOR };
-
     /**
      * Hang a shopfront sign on the outside wall just above a ground-floor door. The door is taken to face
      * the street (perimeter doors point away from the building centre), and the sign attaches to the wall
@@ -116,11 +113,10 @@ public final class ShopFitter {
             }
     }
 
+    /** Any DoorBlock — the shop fronts come from a pool now, and a fixed list of six wood doors lost every
+     *  shop its sign the day Macaw's doors arrived (owner, 2026-09-18). */
     private static boolean isDoor(RealBlocks chunk, int x, int y, int z) {
-        for (Material d : DOORS)
-            if (chunk.isType(x, y, z, d))
-                return true;
-        return false;
+        return chunk.isDoor(x, y, z);
     }
 
     /** The dominant horizontal direction from (x,z) away from the chunk centre — a perimeter door's street side. */
