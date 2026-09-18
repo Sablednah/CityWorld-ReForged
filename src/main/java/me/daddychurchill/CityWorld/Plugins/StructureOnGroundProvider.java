@@ -647,8 +647,10 @@ public class StructureOnGroundProvider extends Provider {
 		// are still solid — the attic pass below hollows them, and a ring block with air on its
 		// inside as well as its outside would read as a ridge, not a slope (measured: 6 stairs a
 		// layer instead of a ring of them).
+		// The slope starts at the ceiling layer's own edge, on the wall tops — the owner's hand-fix on
+		// every house: an eave, not a ledge.
 		if (makeAttic && generator.isModernStyle())
-			slopeRoof(generator, chunk, odds, matRoof, roofBottom + 1, roofBottom + roofHeight + 1,
+			slopeRoof(generator, chunk, odds, matRoof, roofBottom, roofBottom + roofHeight + 1,
 					styleRoof == HouseRoofStyle.NORTHSOUTH, styleRoof == HouseRoofStyle.WESTEAST);
 
 		if (makeAttic) {
@@ -672,7 +674,8 @@ public class StructureOnGroundProvider extends Provider {
 						int yAt = y + roofBottom;
 						if (chunk.isType(x, yAt, z, Material.BEDROCK)) { // where we think the attic might be
 							if (chunk.isEmpty(x - 1, yAt, z) || chunk.isEmpty(x + 1, yAt, z)
-									|| chunk.isEmpty(x, yAt, z - 1) || chunk.isEmpty(x, yAt, z + 1))
+									|| chunk.isEmpty(x, yAt, z - 1) || chunk.isEmpty(x, yAt, z + 1)
+									|| besideSlope(chunk, x, yAt, z))
 								chunk.setBlock(x, yAt, z, matRoof);
 						}
 					}
@@ -721,6 +724,7 @@ public class StructureOnGroundProvider extends Provider {
 			int yTo, boolean gableX, boolean gableZ) {
 		Material slope = pickRoofBlock(odds, matRoof);
 		Material ridge = ridgeFor(slope);
+		Material gable = gableWallFor(slope, matRoof);
 		if (slope == null)
 			return;
 		for (int y = yFrom; y < yTo; y++) {
@@ -739,8 +743,15 @@ public class StructureOnGroundProvider extends Provider {
 					boolean west = !gableZ && chunk.isEmpty(x - 1, y, z), east = !gableZ && chunk.isEmpty(x + 1, y, z);
 					int open = (north ? 1 : 0) + (south ? 1 : 0) + (west ? 1 : 0) + (east ? 1 : 0);
 					if (open == 0) {
-						if (gableX || gableZ)
+						if (gableX || gableZ) {
+							// an end wall of a gable: the roof's own wood (the owner rebuilt every gable end
+							// in redwood logs under a redwood roof; the house's roof stone looked wrong)
+							boolean endWall = gableX ? (chunk.isEmpty(x, y, z - 1) || chunk.isEmpty(x, y, z + 1))
+									: (chunk.isEmpty(x - 1, y, z) || chunk.isEmpty(x + 1, y, z));
+							if (endWall && gable != matRoof)
+								chunk.setBlock(x, y, z, gable);
 							continue;
+						}
 						// a valley: an open diagonal between two edge blocks of this layer is the inner
 						// corner where two wings of the house meet. Face it away from the diagonal on one
 						// axis; reconnect turns it into the inner shape from its neighbours.
@@ -802,6 +813,30 @@ public class StructureOnGroundProvider extends Provider {
 		return MaterialTags.pick(MaterialTags.FITTINGS_ROOF, odds, Mapper.getStairsFor(matRoof));
 	}
 
+	/**
+	 * The wall block for a gable end under a pooled roof block: the block the roof is "made of" —
+	 * {@code nether_bricks_roof} → {@code nether_bricks}, {@code redwood_planks_roof} → {@code redwood_planks},
+	 * {@code redwood_roof} (a log-textured roof) → {@code redwood_log} — found by path in any namespace, else the
+	 * house's own roof material (which is also what a vanilla-stairs roof keeps).
+	 */
+	private Material gableWallFor(Material slope, Material matRoof) {
+		if (slope == null)
+			return matRoof;
+		String path = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(slope.getBlock()).getPath();
+		if (!path.endsWith("_roof"))
+			return matRoof;
+		String base = path.substring(0, path.length() - "_roof".length());
+		for (String candidate : new String[] { base, base + "_log", base + "_planks" }) {
+			for (net.minecraft.resources.Identifier id : net.minecraft.core.registries.BuiltInRegistries.BLOCK.keySet())
+				if (id.getPath().equals(candidate)) {
+					Material found = Material.of(id.toString());
+					if (found != Material.AIR && found.isOccluding())
+						return found;
+				}
+		}
+		return matRoof;
+	}
+
 	/** The ridge cap that goes with a sloped roof block ({@code x_roof} → {@code x_top_roof}), or null. */
 	private Material ridgeFor(Material slope) {
 		if (slope == null)
@@ -813,6 +848,22 @@ public class StructureOnGroundProvider extends Provider {
 		String top = id.getPath().substring(0, id.getPath().length() - "_roof".length()) + "_top_roof";
 		Material ridge = Material.of(id.getNamespace() + ":" + top);
 		return ridge == Material.AIR ? null : ridge;
+	}
+
+	/**
+	 * Whether a cell has a sloped roof block beside it that is not facing it — i.e. the cell is the wall the
+	 * slope runs against, not the attic behind it. Where a lower roof meets a taller wing's gable, the gable
+	 * cells' only neighbours are the lower roof's blocks (never air), so the attic pass cleared them and left
+	 * holes into the attic (the owner filled every one by hand, 2026-09-18). A stair's high side faces the
+	 * interior, so the one neighbour that IS attic is the cell a stair faces.
+	 */
+	private static boolean besideSlope(RealBlocks chunk, int x, int y, int z) {
+		for (BlockFace d : HORIZ) {
+			BlockFace f = chunk.getFacing(x + d.getModX(), y, z + d.getModZ());
+			if (f != null && f != d.getOppositeFace() && chunk.isStairLike(x + d.getModX(), y, z + d.getModZ()))
+				return true;
+		}
+		return false;
 	}
 
 	private int flip(int i) {
@@ -939,21 +990,6 @@ public class StructureOnGroundProvider extends Provider {
 		case SOUTH: return BlockFace.WEST;
 		default: return BlockFace.NORTH;
 		}
-	}
-
-	/**
-	 * The sibling of a pooled stair tread — {@code oak_compact_stairs} → {@code oak_railing} for
-	 * {@code "railing"} — found by name in the tread's namespace, or null when the mod has none.
-	 */
-	private static Material partOf(Material tread, String kind) {
-		net.minecraft.resources.Identifier id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(tread.getBlock());
-		String path = id.getPath();
-		int cut = path.indexOf("_compact_stairs") >= 0 ? path.indexOf("_compact_stairs")
-				: path.indexOf("_terrace_stairs") >= 0 ? path.indexOf("_terrace_stairs") : path.lastIndexOf("_stairs");
-		if (cut < 0)
-			return null;
-		Material part = Material.of(id.getNamespace() + ":" + path.substring(0, cut) + "_" + kind);
-		return part == Material.AIR ? null : part;
 	}
 
 	private final static Material materialAir = Material.AIR;
@@ -1133,9 +1169,9 @@ public class StructureOnGroundProvider extends Provider {
 			BlockFace back = side.getOppositeFace(); // the first step faces this way, onto the corner landing
 			int sx = side.getModX(), sz = side.getModZ(), rx = run.getModX(), rz = run.getModZ();
 			Material tread = stairs;
-			Material railing = tread == null ? null : partOf(tread, "railing");
-			Material platform = tread == null ? null : partOf(tread, "platform");
-			Material balcony = tread == null ? null : partOf(tread, "balcony");
+			Material railing = tread == null ? null : MaterialTags.stairPart(tread, "railing");
+			Material platform = tread == null ? null : MaterialTags.stairPart(tread, "platform");
+			Material balcony = tread == null ? null : MaterialTags.stairPart(tread, "balcony");
 			if (tread == null) {
 				chunk.setBlock(cx, y1, cz, materialUnderStairs);
 				chunk.setBlock(cx + sx, y1, cz + sz, materialStair, back);
