@@ -34,9 +34,16 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 	}// , STONE_FENCE};
 
 	private WallStyle wallStyle;
+	/** The yard's fences, one pick per platmap (a factory spans chunks; each chunk drawing its own gave one
+	 *  yard two fences, owner 2026-09-19) — and copied across connected chunks like the wall style. */
+	private Material yardFence;
+	private Material yardWoodFence;
 
 	public FactoryBuildingLot(PlatMap platmap, int chunkX, int chunkZ) {
 		super(platmap, chunkX, chunkZ);
+		yardFence = me.daddychurchill.CityWorld.Support.MaterialTags.pickSiteFence(platmap.getOddsGenerator());
+		yardWoodFence = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FARM_FENCE, platmap.getOddsGenerator(), Material.SPRUCE_FENCE);
 
 		firstFloorHeight = DataContext.FloorHeight * (chunkOdds.getRandomInt(3) + 3);
 
@@ -95,6 +102,8 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 			// any other bits
 			firstFloorHeight = relativebuilding.firstFloorHeight;
 			wallStyle = relativebuilding.wallStyle;
+			yardFence = relativebuilding.yardFence;
+			yardWoodFence = relativebuilding.yardWoodFence;
 
 			if (chunkOdds.playOdds(oddsOfSimilarContent))
 				contentStyle = relativebuilding.contentStyle;
@@ -125,11 +134,10 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 					inMiddleSection, cornerStyle, allowRounded, outsetEffect, wallMaterial, glassMaterial, heights);
 			break;
 		case METAL_FENCE:
-			drawFence(generator, byteChunk, context, 0, y1, 0, heights, me.daddychurchill.CityWorld.Support.MaterialTags.pickSiteFence(chunkOdds), 3);
+			drawFence(generator, byteChunk, context, 0, y1, 0, heights, yardFence, 3);
 			break;
 		case WOOD_FENCE:
-			drawFence(generator, byteChunk, context, 0, y1, 0, heights, me.daddychurchill.CityWorld.Support.MaterialTags.pick(
-					me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FARM_FENCE, chunkOdds, Material.SPRUCE_FENCE), 2);
+			drawFence(generator, byteChunk, context, 0, y1, 0, heights, yardWoodFence, 2);
 			break;
 		}
 	}
@@ -292,6 +300,13 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 				break;
 			}
 		}
+	
+		// The factory's own interior pass bypassed the standard one, and with it the street doors — a
+		// factory never had a way in (owner, 2026-09-19: "industrial factories without any door at
+		// all"). A walled factory gets them now; a fenced yard's shed is a bunker piece with its own way in.
+		if (wallStyle == WallStyle.BUILDING)
+			drawExteriorDoors(generator, chunk, context, floor, floorAt, floorHeight, insetNS, insetWE, allowRounded,
+					materialWall, materialGlass, stairLocation, heights);
 	}
 
 	private void generateOfficeArea(CityWorldGenerator generator, RealBlocks chunk, int groundY, int skywalkAt,
