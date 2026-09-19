@@ -107,8 +107,8 @@ public class UnfinishedBuildingLot extends BuildingLot {
 			// at the first floor add a fence to prevent folks from falling in
 			if (floor == 0)
 				drawFence(generator, chunk, context, 0, generator.streetLevel + 1, floor, neighborBasements,
-						chunkOdds.flipCoin() ? Material.IRON_BARS : me.daddychurchill.CityWorld.Support.MaterialTags.pick(
-								me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_SITE_FENCE, chunkOdds, Material.IRON_BARS), 3);
+						platmap.getOddsGenerator().flipCoin() ? Material.IRON_BARS : me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+								me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_SITE_FENCE, platmap.getOddsGenerator(), Material.IRON_BARS), 3);
 
 			// one floor please
 			drawWallParts(generator, chunk, context, floorAt, FloorHeight, 0, 0, floor, false, false, false,
@@ -161,6 +161,8 @@ public class UnfinishedBuildingLot extends BuildingLot {
 				neighborFloors.decrement();
 			}
 		}
+	
+		chunk.stackFenceParts(generator.streetLevel, generator.streetLevel + 6); // the site fence's parts
 	}
 
 	@Override
