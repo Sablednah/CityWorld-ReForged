@@ -27,7 +27,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   cap), any roof block from the pool otherwise, and the roof material's vanilla stairs when no roof mod
   is installed. The slope starts with an eave on the wall tops; corners and ridges are shaped by the
   roof block's own logic; gable ends are built in the roof's own wood. CLASSIC keeps its stepped roof.
-- **The rest of Macaw's**: ornamental metal fences round gardens and parks, Macaw's gates on paddocks
+- **The rest of Macaw's**: ornamental metal fences round gardens and parks (the panelled metal fence leads the
+  construction-site mix), Macaw's gates on paddocks
   and barn pens, garage doors on half the factories and warehouses, tiki torches round campfires, and
   garden lights on park gates.
 - **Macaw's Lights** in interiors: wall lanterns, wall lamps and candle sconces on the walls,

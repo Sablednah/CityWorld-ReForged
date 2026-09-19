@@ -170,15 +170,20 @@ public final class MaterialTags {
     }
 
     /**
-     * The tall fence round a construction site or a factory yard: iron bars two picks in five, the site
-     * fence pool (iron bars + industrial metal) seven in twenty, barbed wire one in four — the owner's
-     * "wired fences are too common" (2026-09-19). One draw, so the odds stream moves as one pick would.
+     * The tall fence round a construction site or a factory yard: the panelled metal fence six picks in
+     * twenty where a mod has one (the owner's favourite on a construction site, 2026-09-19 evening), iron
+     * bars five, the rest of the site fence pool (mesh, bastion, fortress…) five, barbed wire four — after
+     * "wired fences are too common". One draw plus one pool draw, so the odds stream moves the same way.
      */
     public static Material pickSiteFence(Odds odds) {
         int roll = odds.getRandomInt(20);
-        if (roll < 8)
+        if (roll < 6) {
+            Material panelled = named(FITTINGS_SITE_FENCE, "panelled_metal_fence");
+            return panelled != null ? panelled : pick(FITTINGS_SITE_FENCE, odds, Material.IRON_BARS);
+        }
+        if (roll < 11)
             return Material.IRON_BARS;
-        if (roll < 15)
+        if (roll < 16)
             return pick(FITTINGS_SITE_FENCE, odds, Material.IRON_BARS);
         return pick(FITTINGS_SITE_WIRE, odds, Material.IRON_BARS);
     }
