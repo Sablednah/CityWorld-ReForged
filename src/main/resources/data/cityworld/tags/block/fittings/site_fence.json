@@ -3,10 +3,6 @@
   "values": [
     "minecraft:iron_bars",
     {
-      "id": "#mcwfences:wired_fences",
-      "required": false
-    },
-    {
       "id": "mcwfences:panelled_metal_fence",
       "required": false
     },

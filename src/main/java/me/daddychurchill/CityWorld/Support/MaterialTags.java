@@ -109,6 +109,9 @@ public final class MaterialTags {
     public static final TagKey<Block> FITTINGS_FENCE = key("cityworld:fittings/fence");
     public static final TagKey<Block> FITTINGS_FARM_FENCE = key("cityworld:fittings/farm_fence");
     public static final TagKey<Block> FITTINGS_SITE_FENCE = key("cityworld:fittings/site_fence");
+    /** Barbed wire, kept apart from the site fence so it can be made rare: a tag pool picks evenly, and
+     *  the wired family (26 blocks with the BoP add-on) drowned six of everything else. */
+    public static final TagKey<Block> FITTINGS_SITE_WIRE = key("cityworld:fittings/site_wire");
     /** The balcony rail of the rare building whose "glass" is bars: iron bars + Macaw's metal fences. */
     public static final TagKey<Block> FITTINGS_RAILING = key("cityworld:fittings/railing");
     /** One-block stair treads for a house's staircase (Macaw's compact and terrace stairs: a full riser per
@@ -162,6 +165,20 @@ public final class MaterialTags {
     public static Material pick(TagKey<Block> tag, Odds odds, Material fallback) {
         List<Material> pool = resolve(tag);
         return pool.isEmpty() ? fallback : pool.get(odds.getRandomInt(pool.size()));
+    }
+
+    /**
+     * The tall fence round a construction site or a factory yard: iron bars two picks in five, the site
+     * fence pool (iron bars + industrial metal) seven in twenty, barbed wire one in four — the owner's
+     * "wired fences are too common" (2026-09-19). One draw, so the odds stream moves as one pick would.
+     */
+    public static Material pickSiteFence(Odds odds) {
+        int roll = odds.getRandomInt(20);
+        if (roll < 8)
+            return Material.IRON_BARS;
+        if (roll < 15)
+            return pick(FITTINGS_SITE_FENCE, odds, Material.IRON_BARS);
+        return pick(FITTINGS_SITE_WIRE, odds, Material.IRON_BARS);
     }
 
     /**
