@@ -164,6 +164,11 @@ EXTRAS = {
     "DEEPSLATE_EMERALD_ORE": "P9: deepslate ore variant for deep mines",
     "ANCIENT_DEBRIS": "P9: rare prize in the deepest mines (the reason they dug so far)",
     "IRON_CHAIN": "P9: chains in mine lift shafts (1.21 renamed CHAIN -> IRON_CHAIN)",
+    # Industry 2026-09-19: the metal silo and the gasometer (Plats/Urban/SiloLot, GasometerLot)
+    "IRON_TRAPDOOR": "silo: hatches on the tank roof and the stair tower landings",
+    "POLISHED_ANDESITE_STAIRS": "silo: galvanised-steel spiral stair in the lattice tower",
+    "POLISHED_ANDESITE_SLAB": "silo/gasometer: catwalks and ring girders",
+    "SMOOTH_STONE_SLAB": "silo: the conical roof's stepped rings",
     "LANTERN": "P9: mine lighting",
     # P9 copper-theme mine (the 1.21.9 "copper age" set). Weathers by depth: fresh near the
     # surface -> exposed -> weathered -> oxidized in the deepest shafts. These are plain Block

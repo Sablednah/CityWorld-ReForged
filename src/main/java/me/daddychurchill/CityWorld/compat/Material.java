@@ -804,7 +804,7 @@ public final class Material {
     public static final Material YELLOW_TERRACOTTA = of(Blocks.DYED_TERRACOTTA.pick(DyeColor.YELLOW));
     public static final Material YELLOW_WOOL = of(Blocks.WOOL.pick(DyeColor.YELLOW));
 
-    // ---- Modern extras (140) — blocks the 1.14 vocabulary never had -------------
+    // ---- Modern extras (144) — blocks the 1.14 vocabulary never had -------------
     public static final Material AMETHYST_CLUSTER = of(Blocks.AMETHYST_CLUSTER); // P12 interior: sparkle accent
     public static final Material ANCIENT_DEBRIS = of(Blocks.ANCIENT_DEBRIS); // P9: rare prize in the deepest mines (the reason they dug so far)
     public static final Material ANVIL = of(Blocks.ANVIL); // P9 mine prop: miners' camp
@@ -872,6 +872,7 @@ public final class Material {
     public static final Material GRINDSTONE = of(Blocks.GRINDSTONE); // P9 mine prop: miners' camp
     public static final Material HANGING_ROOTS = of(Blocks.HANGING_ROOTS); // P10 overgrowth: roots dangling from ceilings/overhangs
     public static final Material IRON_CHAIN = of(Blocks.IRON_CHAIN); // P9: chains in mine lift shafts (1.21 renamed CHAIN -> IRON_CHAIN)
+    public static final Material IRON_TRAPDOOR = of(Blocks.IRON_TRAPDOOR); // silo: hatches on the tank roof and the stair tower landings
     public static final Material LANTERN = of(Blocks.LANTERN); // P9: mine lighting
     public static final Material LEAF_LITTER = of(Blocks.LEAF_LITTER); // P10 overgrowth: fallen leaves littering floors (1.21.4 multiface)
     public static final Material LECTERN = of(Blocks.LECTERN); // P11 shop: newsagent/bookshop job block
@@ -906,6 +907,8 @@ public final class Material {
     public static final Material PINK_PETALS = of(Blocks.PINK_PETALS); // P10 overgrowth: petals scattered on the ground
     public static final Material POINTED_DRIPSTONE = of(Blocks.POINTED_DRIPSTONE); // P10 overgrowth: stalactites/stalagmites in mines and caves
     public static final Material POLISHED_ANDESITE = of(Blocks.POLISHED_ANDESITE); // P12 MODERN build stone
+    public static final Material POLISHED_ANDESITE_SLAB = of(Blocks.POLISHED_ANDESITE_SLAB); // silo/gasometer: catwalks and ring girders
+    public static final Material POLISHED_ANDESITE_STAIRS = of(Blocks.POLISHED_ANDESITE_STAIRS); // silo: galvanised-steel spiral stair in the lattice tower
     public static final Material POLISHED_BASALT = of(Blocks.POLISHED_BASALT); // P12 MODERN build stone
     public static final Material POLISHED_BLACKSTONE = of(Blocks.POLISHED_BLACKSTONE); // P12 MODERN build stone
     public static final Material POLISHED_BLACKSTONE_BRICKS = of(Blocks.POLISHED_BLACKSTONE_BRICKS); // P12 MODERN build stone
@@ -928,6 +931,7 @@ public final class Material {
     public static final Material SMOOTH_BASALT = of(Blocks.SMOOTH_BASALT); // P12 MODERN build stone
     public static final Material SMOOTH_QUARTZ = of(Blocks.SMOOTH_QUARTZ); // P12 interior: clean modern counter/surface
     public static final Material SMOOTH_QUARTZ_SLAB = of(Blocks.SMOOTH_QUARTZ_SLAB); // P12 interior: modern counter/coffee-table top
+    public static final Material SMOOTH_STONE_SLAB = of(Blocks.SMOOTH_STONE_SLAB); // silo: the conical roof's stepped rings
     public static final Material SOUL_CAMPFIRE = of(Blocks.SOUL_CAMPFIRE); // P9 mine prop: miners' camp fire (soul)
     public static final Material SOUL_LANTERN = of(Blocks.SOUL_LANTERN); // P9 mine prop/light: soul lantern
     public static final Material SPORE_BLOSSOM = of(Blocks.SPORE_BLOSSOM); // P10 overgrowth: spore blossom on ceilings
