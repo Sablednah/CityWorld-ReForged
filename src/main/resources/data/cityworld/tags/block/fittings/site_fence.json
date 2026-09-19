@@ -5,26 +5,6 @@
     {
       "id": "#mcwfences:wired_fences",
       "required": false
-    },
-    {
-      "id": "mcwfences:panelled_metal_fence",
-      "required": false
-    },
-    {
-      "id": "mcwfences:mesh_metal_fence",
-      "required": false
-    },
-    {
-      "id": "mcwfences:expanded_mesh_metal_fence",
-      "required": false
-    },
-    {
-      "id": "mcwfences:bastion_metal_fence",
-      "required": false
-    },
-    {
-      "id": "mcwfences:fortress_metal_fence",
-      "required": false
     }
   ]
 }
