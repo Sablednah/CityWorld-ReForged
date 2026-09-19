@@ -81,17 +81,21 @@ Office stairwells "worked perfectly". Deployed `DEPLOYED-57c79c36`; **owner: "al
   as the nearest older block (34 on 1.21.1: pale oak → oak, copper chest → chest, leaf litter → moss carpet…),
   and the copper weathering families likewise. `ruined_nether`'s dimension type is rewritten in the classic
   field set (the 1.21.9+ attributes form fails registry load — the registry-JSON-is-per-version trap again).
-  The F3 lines go through `CustomizeGuiOverlayEvent.DebugText` there. **One open discrepancy:** the
-  self-test read back 33 of 55 signs with front text against 53 on every other version (back text 18, as
-  elsewhere); which signs and why is unresolved — see the next session's first job. Not deployed anywhere
-  (no 1.21.1 instance exists); the version bump and the fleet script would need to learn the fourth line.
+  The F3 lines go through `CustomizeGuiOverlayEvent.DebugText` there. The one discrepancy the first run
+  showed — 33 of 55 signs with front text against 53 elsewhere — was the **schematic** signs: on the 1.21.1
+  line a text component in NBT is a JSON string, and `LegacySchematic.signText` wrote bare strings (fine from
+  1.21.5); JSON-quoted there, the second run read back 52. Jar built (`cityworld-5.9.0+mc1.21.1.jar`); the
+  fleet script and the self-test CI matrix know the line (`mc1.21.1` checkout, JDK 21; the jar matcher keeps
+  1.21.11 instances off the 1.21.1 jar — dry-run checked). Not deployed anywhere: no 1.21.1 instance exists.
+  The leftovers commits are on all four branches; 26.2.test carries `DEPLOYED-5fad44d4` (leftovers included).
 
 **Open, in the order I would take them:**
 
-0. **1.21.1 sign text** (above), then a real client look at 1.21.1 (the customize screen's `StringWidget`
-   headers, the F3 readout, JourneyMap's 1.21.1 API) — a 1.21.1 CurseForge instance with Macaw's 1.21.1
-   builds would be the test bed.
-0. **Release.** Everything from the fittings arc is on all three branches, self-tested, and playtested three
+0. **A real client look at 1.21.1** (the customize screen's `StringWidget` headers, the F3 readout through
+   the DebugText event, JourneyMap's 1.21.1 API) — a 1.21.1 CurseForge instance with Macaw's 1.21.1 builds
+   would be the test bed. And the owner's look at the leftovers on 26.2.test.
+0. **Release** — now four jars; the release workflow's CurseForge/Modrinth game-version mapping reads the
+   jar name, so `+mc1.21.1` should just work, but check the first upload. Everything from the fittings arc is on all three branches, self-tested, and playtested three
    times on 26.2.test. Bump, changelog is written (Unreleased), fleet deploy, tag — the recipe in the release memory.
 0. **The owner's second look at 26.2.test** (`DEPLOYED-8f3a6ecb`): roofs (gables, valleys, hips), the three fence pools, the staircases
    (the pool includes Macaw's *stone* stairs — a stone-brick staircase with harp railings appeared; wood-only
