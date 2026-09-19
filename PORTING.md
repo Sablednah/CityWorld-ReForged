@@ -52,7 +52,16 @@ the 26.3 instance; (b) the End's surface pass now runs under city chunks before 
 and surface in one step now) — harmless in a vanilla End, with BoP it lays BoP ground under the city's apron; look
 once BoP has a 26.3 build; (c) `data/biomesoplenty/worldgen/placed_feature/large_rose_quartz.json` references
 BoP's feature by the same id in the new `worldgen/feature` registry — unverifiable until BoP ships for 26.3;
-(d) wool/concrete stairs as a shape vocabulary and wool-stair tents (queued since August, still 26.3-only).
+(d) wool/concrete stairs as a shape vocabulary (queued since August, still 26.3-only). **Wool-stair tents are
+DONE** (`5c30b3a4` master / `6b88dbeb` mc26.3, 2026-09-20): `Colors.getWoolStairs()` finds a colour's stairs by name
+and answers null on a line without them, so the campground draws vanilla's abandoned-camp shape (8-wide roof of
+inward-facing stairs, two back to back at the ridge, open sides, posts under the eaves, straw beds) on 26.3 and
+the stepped wool tent elsewhere, rolling the same odds either way; probe `find:CampgroundLot` on 26.3 tallied
+48 stairs = 4 courses × 12 and `region_render.py` showed the pitch. The owner's 26.3 playtest (2026-09-19 late)
+passed everything: poplar seen and used as a build material, Nether and End, Customize screen, no experimental
+warning. ⚠ 26.3 changed the **chunk palette format** (`{Name, Properties}` → a bare id string, or
+`{id, properties}`; one entry came back as `{'': id}` through our reader) — `scripts/region_dump.py` now reads
+all three, and vanilla's structure templates (`.nbt`) use `id`/`properties` too.
 
 ## ▶ Resume here — v5.10.0 released (2026-09-19 evening): the fittings arc, industry, and a 1.21.1 line
 

@@ -5,6 +5,19 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **Minecraft 26.3.** A fifth jar, `cityworld-<version>+mc26.3.jar`, for NeoForge 26.3 (beta). Same
+  cities, same seeds — the plan of a world is identical to the other four versions. 26.3's new **dappled
+  forest** joins the MODERN climate as the damper edge of plains country, and **poplar** wood turns up in
+  buildings by itself through the plank and leaf tags.
+- **Tents pitched from wool stairs on 26.3.** Campgrounds now pitch their tents the way 26.3's own
+  abandoned camps do — a roof of wool stairs meeting at the ridge, open sides, fence posts under the eaves,
+  straw beds inside — in the campground's own colour. On earlier Minecraft versions the tent is the stepped
+  wool one it always was.
+
 ## 5.10.0
 
 ### Added

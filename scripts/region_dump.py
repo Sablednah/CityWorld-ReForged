@@ -80,8 +80,12 @@ def block_at_fn(region_dir):
                     pal = bs['palette']
                     names = []
                     for p in pal:
-                        n = p['Name'].replace('minecraft:', '')
-                        props = p.get('Properties')
+                        # 26.3 writes a default state as a bare id string and a non-default one as
+                        # {id, properties}; 1.21-26.2 wrote {Name, Properties} for every entry.
+                        if isinstance(p, str):
+                            p = {'Name': p}
+                        n = (p.get('Name') or p.get('id') or p.get('')).replace('minecraft:', '')
+                        props = p.get('Properties') or p.get('properties')
                         if props:
                             n += '[' + ','.join('%s=%s' % kv for kv in sorted(props.items())) + ']'
                         names.append(n)
