@@ -5,7 +5,7 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
-## Unreleased
+## 5.10.0
 
 ### Added
 
@@ -38,6 +38,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   a hatch, and a caged spiral stair tower beside it with a catwalk onto the roof — takes a building lot in
   industrial districts, often several side by side sharing a height and a paint. The old nether-brick and
   brick silo schematics are retired, and the slab silos with them (they were swamping industry); the G45 station stays.
+- **A Minecraft 1.21.1 build** (`cityworld-5.10.0+mc1.21.1.jar`, NeoForge 21.1) joins 1.21.11, 26.1 and 26.2 —
+  the same city on every version; blocks that version lacks stand in as their nearest older cousin.
 - **Gasometers.** A rare large industrial lot, two or three chunks square: a telescoping gas holder in a
   lattice guide frame standing in a water trough, with a ladder up one column to the walkway on the top
   ring. The bell stands at a different height on every one — nearly empty to full, its lifts rising out of
@@ -49,13 +51,6 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   to a coin flip per side. Walled factories now open onto the street like every other building (metal doors
   where a mod supplies them), every fenced yard has at least one opening per street chunk, and wooden yards
   get a gate from the gate pool. A factory's yard also uses one fence, not one per chunk.
-- A building placed where a cluster of silos had first been planned could come out without a wall on the
-  silo side; a building never counts a lot of another kind as part of itself now.
-- A yard gate stood in its gap without the fence either side joining onto it.
-- Industrial districts were mostly failing to populate at all since the garage doors went in (a coin flip
-  asked twice handed the pool picker nothing, and the error dropped the whole district), which is why
-  industry looked so scarce.
-
 - A storage mod's filing cabinet, framing table and decoration table were being classified as
   furniture whenever those mods shared a folder with the furniture ones at tag-generation time; the
   furniture roles are now derived from the furniture mods only.
