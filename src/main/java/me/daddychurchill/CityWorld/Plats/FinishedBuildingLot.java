@@ -2551,8 +2551,8 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 				// outward direction.
 				BlockFace along = BlockFace.fromDirection(chunk.fixFacing(direction).toDirection().getClockWise());
 				for (int[] c : new int[][] { { x1, z1 }, { x2, z2 }, { x3, z3 } }) {
-					chunk.setBlock(c[0], y1, c[1], garageDoorMaterial, along, "part", "middle");
-					chunk.setBlock(c[0], y1 + 1, c[1], garageDoorMaterial, along, "part", "top");
+					chunk.setBlock(c[0], y1, c[1], garageDoorMaterial, along, "part", "middle", "open", "false");
+					chunk.setBlock(c[0], y1 + 1, c[1], garageDoorMaterial, along, "part", "top", "open", "false");
 				}
 				break;
 			}
