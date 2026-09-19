@@ -103,6 +103,47 @@ works, customise world all working."** Site fences re-weighted the same morning 
 pool by numbers): `MaterialTags.pickSiteFence` — iron bars 40%, industrial metal 35%, wire 25% (`site_wire`).
 Deployed `DEPLOYED-d6891893`.
 
+**Afternoon 2026-09-19 — industry.** The owner: the nether/brick silo schematics were "swamping industrial"
+(gone: `nethersilo16/32/64`, `bricksilo16` out of the Industrial index; `slabsilo16/32` and the station stay —
+the plan changes, so every branch must carry the same commit before `--compare`); "industrial factories without
+any door at all"; a factory yard with two fence styles; and two new lots, a metal silo and a gasometer.
+- **Doors.** Two causes. `FactoryBuildingLot` overrides `drawInteriorParts` and never reached the street-door
+  pass → walled factories call `drawExteriorDoors` at the end of theirs (probe: metal doors on two walls of a
+  2×1 factory, seed `5185204886772182104`, the owner's world 10). Fenced yards had a coin-flip gap per street
+  side and nothing else → `BuildingLot.drawFence` guarantees one opening per street chunk and takes a gate
+  material — wood yards get a `fittings/gate` gate picked per platmap (probe: four bamboo gates on the 2×2 yard
+  at chunk (0,55), seed 8675309). Yard fences are picked in the constructor from `platmap.getOddsGenerator()`
+  and copied in `makeConnected`, one fence per factory. The owner's own chunks can be read straight from the
+  save (`saves/<world>/dimensions/minecraft/overworld/region`, 26.x) — world 10's factory at (-10,-64) was an
+  11-high resin-brick + glass wall with no door, i.e. the walled kind, world 9's at (6251,614) the same.
+- **⚠ The bug behind "industrial is scarce", found by the silo probe:** `garageDoorPool()` on an industrial
+  lot is a coin flip, and `FinishedBuildingLot.calculateOptions` called it twice (`pool == null ? … :
+  pick(pool…)`) → yes-then-no handed `pick` a null tag → `ConcurrentHashMap.computeIfAbsent` NPE →
+  **`ShapeProvider.populateLots FAILED` and the whole industrial platmap was dropped**, silently, since this
+  morning's garage-door commit (every probe log from 12:54 on carries the line; the 09:00 "29 of 961, plan
+  hash unchanged" answer measured the plan, not the population). Asked once now, and `MaterialTags.resolve(null)`
+  is an empty pool. After the fix the nearest silo on seed 8675309 moved from 55 chunks out to 10. **Read the
+  probe log for `FAILED` before believing a "nothing here".**
+- **`SiloLot`** (single chunk, `IndustrialContext.getBuilding` one in five, so the backfill's flood-fill makes
+  batteries that share height and paint via `makeConnected`): a radius-5.5 cylinder centred at (6.5, 7.5) on
+  four red legs with two ring beams, a hopper cone to an iron-trapdoor chute two blocks up, the tank part-filled
+  with hay/sand/gravel/dirt, a stepped cone roof edged in andesite slabs with a hatch, and a 5×5 iron-bar cage
+  in the north-east corner round a 3×3 spiral of `polished_andesite_stairs` on a red mast (one step per ring
+  cell, eight per turn, `tankTop - base ≡ 7 mod 8` so the last step lands level with a slab catwalk onto the
+  roof ring; a girder ring per turn). Two or three turns. New `Material` EXTRAS for it: `IRON_TRAPDOOR`,
+  `POLISHED_ANDESITE_STAIRS/_SLAB`, `SMOOTH_STONE_SLAB` (regenerate per branch as usual).
+- **`GasometerLot`** (2×2, or 3×3 one time in three; one industrial platmap in four; `IsolatedLot` slices on
+  the BigBiodome pattern, claimed in `IndustrialContext.populateMap` before the backfill): a water trough
+  inside a low wall, `size*8` guide columns round it with a slab girder + iron-bar rail every six levels (the
+  top ring a walkway, a ladder up the west column with a step off either side), and the bell as three nested
+  lifts — the crown (radius −2, with a shallow domed top) always shows, the middle and outer lifts rise out of
+  the trough as `fill` (0..frameHeight−1, rolled once per structure) climbs past a lift height each, so the
+  holder stands anywhere from nearly empty to full, as the owner asked. Frame 24–36 / 30–48 high. Probe: seed
+  8675309 has one at chunk (−7,−5), 2×2, bell about two-thirds up. `reportLocation("silo"|"gasometer")`.
+- All on the four branches (`d6ad374a`, `be6fa99a`, `ae8de51b`, `6f225c31` on master), built, 26.2.test
+  `DEPLOYED-806c4ee8`; self-tests re-run after (see the line below when written). Region renders of both lots
+  are the quickest check: `region_render.py … 8 west`.
+
 **Open, in the order I would take them:**
 
 0. JourneyMap on 1.21.1 is the one integration still unseen on a client there.

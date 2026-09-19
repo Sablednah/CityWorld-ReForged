@@ -33,8 +33,24 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 - **Macaw's Lights** in interiors: wall lanterns, wall lamps and candle sconces on the walls,
   chandeliers, lanterns and ceiling lights under the ceilings, candle holders and paper lamps on tables,
   its standing lamps as two-tall floor lamps, and its ceiling fan lights.
+- **Silos.** A metal storage silo on a red steel frame — a hopper chute underneath, a stepped cone roof with
+  a hatch, and a caged spiral stair tower beside it with a catwalk onto the roof — takes a building lot in
+  industrial districts, often several side by side sharing a height and a paint. The old nether-brick and
+  brick silo schematics are retired (they were swamping industry); the slab silos and the station stay.
+- **Gasometers.** A rare large industrial lot, two or three chunks square: a telescoping gas holder in a
+  lattice guide frame standing in a water trough, with a ladder up one column to the walkway on the top
+  ring. The bell stands at a different height on every one — nearly empty to full, its lifts rising out of
+  the trough as it fills.
 
 ### Fixed
+
+- Factories had no way in: a walled factory drew no street door at all, and a fenced yard's gaps were left
+  to a coin flip per side. Walled factories now open onto the street like every other building (metal doors
+  where a mod supplies them), every fenced yard has at least one opening per street chunk, and wooden yards
+  get a gate from the gate pool. A factory's yard also uses one fence, not one per chunk.
+- Industrial districts were mostly failing to populate at all since the garage doors went in (a coin flip
+  asked twice handed the pool picker nothing, and the error dropped the whole district), which is why
+  industry looked so scarce.
 
 - A storage mod's filing cabinet, framing table and decoration table were being classified as
   furniture whenever those mods shared a folder with the furniture ones at tag-generation time; the
