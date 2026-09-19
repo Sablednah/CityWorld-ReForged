@@ -6,8 +6,6 @@ Highrise/liberty.nbt
 Highrise/tower.schematic
 Highrise/water_tower_richard.schematic
 Industrial/G45station.schematic
-Industrial/slabsilo16.schematic
-Industrial/slabsilo32.schematic
 Lowrise/G45station.schematic
 Lowrise/IMC_eaglman13_home_entry.schematic
 Lowrise/chayats-bank.schematic
