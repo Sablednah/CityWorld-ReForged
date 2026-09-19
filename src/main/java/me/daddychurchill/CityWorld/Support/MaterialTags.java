@@ -153,6 +153,8 @@ public final class MaterialTags {
      * block that does not exist yet simply isn't in the tag.
      */
     public static List<Material> resolve(TagKey<Block> tag) {
+        if (tag == null)
+            return List.of();
         return CACHE.computeIfAbsent(tag, MaterialTags::load);
     }
 
