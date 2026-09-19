@@ -266,7 +266,10 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		Trees trees = new Trees(chunkOdds);
 		interiorDoorMaterial = MaterialTags.pick(MaterialTags.FITTINGS_INTERIOR_DOOR, chunkOdds, trees.getRandomWoodDoor());
 		exteriorDoorMaterial = MaterialTags.pick(exteriorDoorPool(), chunkOdds, trees.getRandomWoodDoor());
-		garageDoorMaterial = garageDoorPool() == null ? null : MaterialTags.pick(garageDoorPool(), chunkOdds, null);
+		// asked once: an industrial lot's pool is a coin flip, and asking twice (yes, then no) handed
+		// pick() a null tag — an NPE that failed the whole platmap's population (found by probe 2026-09-19)
+		net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> garagePool = garageDoorPool();
+		garageDoorMaterial = garagePool == null ? null : MaterialTags.pick(garagePool, chunkOdds, null);
 		if (garageDoorMaterial != null)
 			garageDoorHeight = 3 + chunkOdds.getRandomInt(5); // 3..7, the floor permitting
 
