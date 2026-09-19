@@ -104,7 +104,7 @@ pool by numbers): `MaterialTags.pickSiteFence` — iron bars 40%, industrial met
 Deployed `DEPLOYED-d6891893`.
 
 **Afternoon 2026-09-19 — industry.** The owner: the nether/brick silo schematics were "swamping industrial"
-(gone: `nethersilo16/32/64`, `bricksilo16` out of the Industrial index; `slabsilo16/32` and the station stay —
+(gone: `nethersilo16/32/64`, `bricksilo16`, then `slabsilo16/32` too, out of the Industrial index; only the G45 station stays —
 the plan changes, so every branch must carry the same commit before `--compare`); "industrial factories without
 any door at all"; a factory yard with two fence styles; and two new lots, a metal silo and a gasometer.
 - **Doors.** Two causes. `FactoryBuildingLot` overrides `drawInteriorParts` and never reached the street-door

@@ -36,7 +36,7 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 - **Silos.** A metal storage silo on a red steel frame — a hopper chute underneath, a stepped cone roof with
   a hatch, and a caged spiral stair tower beside it with a catwalk onto the roof — takes a building lot in
   industrial districts, often several side by side sharing a height and a paint. The old nether-brick and
-  brick silo schematics are retired (they were swamping industry); the slab silos and the station stay.
+  brick silo schematics are retired, and the slab silos with them (they were swamping industry); the G45 station stays.
 - **Gasometers.** A rare large industrial lot, two or three chunks square: a telescoping gas holder in a
   lattice guide frame standing in a water trough, with a ladder up one column to the walkway on the top
   ring. The bell stands at a different height on every one — nearly empty to full, its lifts rising out of
