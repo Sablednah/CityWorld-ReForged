@@ -75,6 +75,12 @@ neoForge {
             if (project.hasProperty('cwJoin')) {
                 programArguments.addAll '--quickPlayMultiplayer', project.property('cwJoin').toString()
             }
+            // Or straight into a save:  ./gradlew runClient -PcwWorld=selftest   (run/saves/<name>).
+            // A dedicated-server run/world copied under run/saves loads as a single-player world, so the
+            // self-test's world doubles as a client check with nothing to click through.
+            if (project.hasProperty('cwWorld')) {
+                programArguments.addAll '--quickPlaySingleplayer', project.property('cwWorld').toString()
+            }
         }
 
         server {

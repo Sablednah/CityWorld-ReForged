@@ -14,6 +14,7 @@
 #     git checkout master  && ./scripts/selftest.sh     # 1.21.11
 #     git checkout mc26.1  && ./scripts/selftest.sh
 #     git checkout mc26.2  && ./scripts/selftest.sh
+#     git checkout mc26.3  && ./scripts/selftest.sh
 #     ./scripts/selftest.sh --compare
 set -euo pipefail
 

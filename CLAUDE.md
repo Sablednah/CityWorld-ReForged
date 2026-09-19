@@ -52,10 +52,13 @@ export PATH="$JAVA_HOME/bin:$PATH"
 - Gradle can't forward piped stdin to the server console — to verify in-world behaviour, register a
   temporary `ServerStartedEvent` listener that logs what you need, rather than piping commands.
 - **Build the version branches in their worktrees, don't switch branches here.** `master` is 1.21.11;
-  `mc26.1`, `mc26.2` and `mc1.21.1` are checked out permanently at
-  `../CityWorld-ReForged-worktrees/{mc26.1,mc26.2,mc1.21.1}`, each with a `tools` symlink back to this
+  `mc26.1`, `mc26.2`, `mc26.3` and `mc1.21.1` are checked out permanently at
+  `../CityWorld-ReForged-worktrees/{mc26.1,mc26.2,mc26.3,mc1.21.1}`, each with a `tools` symlink back to this
   checkout's JDKs (`tools/` is git-ignored, so a worktree has none of its own). Build with an explicit
-  `JAVA_HOME` — **the 1.21 lines need JDK 21, 26.1+ needs JDK 25**. `compat/Material.java` is generated per
+  `JAVA_HOME` — **the 1.21 lines need JDK 21, 26.1+ needs JDK 25**. A new Minecraft line is a worktree
+  branched from the previous one plus `gradle.properties`/MDG bumps, then compile-fix against the
+  decompiled sources; **26.3 was not a one-liner** (PORTING.md "26.3 port — what actually moved": the
+  density engine, `ConfiguredFeature`, `buildTerrain`, concurrent registry loading, loot-table schema). `compat/Material.java` is generated per
   branch: a cherry-pick that conflicts on it is resolved by taking the branch's copy and re-running
   `scripts/gen_material.py` there (the template edits live in the script):
 
@@ -169,12 +172,12 @@ export PATH="$JAVA_HOME/bin:$PATH"
   (2) a "wall" for art/sconces/shelves is `isWallBacking` (full cube, sturdy, not glass, not pooled),
   checked behind EVERY cell of a wide piece, and blocks go before entities (a painting is invisible to
   `isEmpty`, so a chandelier chain went through one).
-- **Fleet deploy: `scripts/deploy-fleet.sh`** (`--dry-run` first). Ten CurseForge instances carry a
+- **Fleet deploy: `scripts/deploy-fleet.sh`** (`--dry-run` first). Eleven CurseForge instances carry a
   CityWorld jar — five on 1.21.11 (`CityWork-ReForged`, `MobHealth - Forge`, `Neoforge 1.21.11 - sci
-  fi/wasteland`, `Standards`), `26.1.2`, three on 26.2 (`26.2`, `26.2.test`, `BoP+Cityworld`) and `1.21.1`. The
+  fi/wasteland`, `Standards`), `26.1.2`, three on 26.2 (`26.2`, `26.2.test`, `BoP+Cityworld`), `26.3` and `1.21.1`. The
   fleet is whatever `Instances/*/mods` already holds a `cityworld-*.jar` or `DEPLOYED-*` stamp; the
   script reads each instance's Minecraft version from `minecraftinstance.json`, picks the newest
-  built jar for it across master + the three worktrees (`--version X.Y.Z` for a release, `--build` to
+  built jar for it across master + the four worktrees (`--version X.Y.Z` for a release, `--build` to
   build them all first), and stamps `DEPLOYED-<sha|vX.Y.Z>` (vX.Y.Z when the jar's Build-Commit is
   the tag or a "Bump to X.Y.Z" commit). A running game locks its jar ("Permission denied") — the
   script reports SKIPPED and carries on; rerun for that one after the game is closed.
@@ -249,7 +252,7 @@ edges are often thin (single method signatures), so they can be stubbed to break
 Modern worldgen wraps this in a codec-registered `ChunkGenerator` (`worldgen/CityWorldChunkGenerator`,
 registered `cityworld:city`), exposed as both a dimension and a world preset. **The port is complete
 and the brain is wired in** — it generates real CityWorld terrain, cities, interiors, mines, caves and
-decoration across 13 world styles, on four Minecraft versions (1.21.1, 1.21.11, 26.1, 26.2). It suppresses *most* vanilla
+decoration across 13 world styles, on five Minecraft versions (1.21.1, 1.21.11, 26.1, 26.2, 26.3). It suppresses *most* vanilla
 structures/decoration/carvers so CityWorld owns the chunk, with deliberate exceptions: strongholds,
 trial chambers and ancient cities are placed (see PORTING.md), and vanilla biome features may decorate
 wild land depending on `world.wildDecoration`.

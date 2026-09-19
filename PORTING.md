@@ -1,5 +1,59 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Resume here — the 26.3 line exists (2026-09-19, late): branch `mc26.3`, self-test green, NOT client-verified
+
+**Where it is.** Branch `mc26.3` (from `mc26.2`), checked out at `../CityWorld-ReForged-worktrees/mc26.3` with the
+`tools` symlink and a Java-25 build like the other 26.x lines, one commit (`2fe0c3d0`, "Target Minecraft 26.3").
+NeoForge `26.3.0.7-beta` (the owner's `26.3` instance runs `.3`; the range `[26.3,26.4)` covers both), MDG
+`2.0.147`, JourneyMap API `26.3-2.0.0` / range `[26.3-6.0.0,)` — the same three bumps Standards and Factions made
+(read their `CROSS-VERSION.md`: the SDL mouse-button renumbering that broke every modded click there does not
+touch us, measured — no literal button compares in our client code). **Self-test PASS, 141 checks**, plan hashes
+`886d202b / f5916d4e / db5a2698` identical to the other four lines' reports of the same day; `end.terrain.wrong = 0`
+over 144 columns, which is the check that matters most after this port (see the delta). Jar built and dropped in
+the owner's **`26.3` instance** (`DEPLOYED-2fe0c3d0`), halt/exit scan 0 with the detector proved on a synthetic
+positive (the local 5.8.0 jars are all rebuilt now — none is a control any more; `javac` a two-line class that
+calls `System.exit`/`Runtime.halt` and scan that). Master has `mc26.3` in the CI matrix, `deploy-fleet.sh` and
+the self-test header. **Not yet: pushed, playtested.** The dev client was booted here with JourneyMap 26.3 in `run/mods` and
+put in-world with the new `./gradlew runClient -PcwWorld=selftest` (the self-test's `run/world` copied to
+`run/saves/selftest`): title screen clean, JourneyMap client plugin found, integrated server up, JourneyMap
+server API found, plan overlay indexing, fresh chunks generating — no CityWorld errors in `latest.log`. Two
+things the dev client cannot show: the **Customize screen + experimental-warning skip on world creation** (the
+flow and NeoForge's `ScreenEvent.Opening` hook are unchanged in 26.3's sources, but it is unexercised), and the
+Nether/End on a real renderer. The owner offered the 26.3 instance for real eyes; that is the next step.
+⚠ Opening a **server-made** world in single-player shows NeoForge's `BackupConfirmScreen` ("this world uses
+experimental settings… back up?") — the big one — because only the create flow sets `hasConfirmedExperimentalWarning`;
+the WSLg dev-client window appears on the owner's desktop, and that is the "much scarier" screen they saw
+on 2026-09-19 (they clicked through it for me). Not a 26.3 change; a skip for that path would need the level's
+dimensions from inside `WorldOpenFlows`, which the screen event does not carry.
+
+**What 26.3 moved, for us** (full section "26.3 port — what actually moved" further down; **this drop was NOT the
+"one API change" kind** — six API reshapes and two datapack schema changes, and none of them was in the sibling
+mods' notes because none of them has worldgen or loot):
+1. the density-function engine rewritten (compiled samplers; `EndTerrain` rewritten to ask the engine, 220 →
+   130 lines, exact by construction);
+2. `ConfiguredFeature` gone — `Feature` carries its config, registry `worldgen/feature`, tags move too;
+3. `fillFromNoise`+`buildSurface`+`applyCarvers` → one `buildTerrain`;
+4. `BiomeSource.getNoiseBiome` → `createResolver(sampler)`;
+5. datapack registries load **concurrently** — a preset codec never sees the biome registry, only a
+   `ConcurrentHolderGetter`, so `retrieveRegistryLookup` stops the server (fixed: optional, server fallback);
+6. small ones: sign text via `SignText.Mutable`/`SignTextSlot`, `StructureManager` by section coords,
+   `createForNormal` wants an origin, `RegistryFileCodec.create` wants `allowInline`, `FeaturePlacer`,
+   `RegistryLayer.WORLD`, `blocksMotion` → `isSolid`;
+7. **loot tables**: `functions` list → single `modifier` (a list is an inline sequence), and `{min,max}` ranges need
+   `"type": "minecraft:uniform"` — 27 tables converted by script (kept in the commit message's spirit: regenerate,
+   don't hand-edit);
+8. **dimension types**: `bed_rule.explodes` → `destroy_on_use` plus a `straw_bed_rule` — `ruined_nether.json`
+   regenerated from 26.3's `the_nether.json` with our five overrides, as the per-version rule says.
+Plus the two things the August reconnaissance queued: `dappled_forest` in the MODERN palette (damper quarter of
+the temperate dry lowland band) and poplar, which arrives through `#planks`/`#leaves` with no code.
+
+**Open from this port:** (a) client verification — Customize screen, F3 line, JourneyMap layer, Nether and End on
+the 26.3 instance; (b) the End's surface pass now runs under city chunks before the city draws (vanilla does fill
+and surface in one step now) — harmless in a vanilla End, with BoP it lays BoP ground under the city's apron; look
+once BoP has a 26.3 build; (c) `data/biomesoplenty/worldgen/placed_feature/large_rose_quartz.json` references
+BoP's feature by the same id in the new `worldgen/feature` registry — unverifiable until BoP ships for 26.3;
+(d) wool/concrete stairs as a shape vocabulary and wool-stair tents (queued since August, still 26.3-only).
+
 ## ▶ Resume here — v5.10.0 released (2026-09-19 evening): the fittings arc, industry, and a 1.21.1 line
 
 **Shipped.** Tag `v5.10.0` on master (`cd06e192`), bump commits on `mc26.1` (`bd7115a8`), `mc26.2` (`1fb2e14c`),
@@ -1959,6 +2013,103 @@ biome id** rather than being stored, so retuning a patch's size or rarity does n
 
 Defaults verified unchanged when this landed — same 43% ancient-city air, same pool, same plan hash.
 **That is the bar for any future "make it configurable" change**: it must not move the default world.
+
+## 26.3 port — what actually moved (2026-09-19)
+
+Measured against the decompiled `26.3` sources (NeoForm `mergeWithSources_33339083…`, world version 5015+)
+while porting `mc26.2` → `mc26.3`. Standards and Factions ported the day before and recorded three API changes
+(screen accessor renames, `Player.drop` gaining a `Prediction`, JourneyMap per line) plus the SDL mouse
+renumbering; **none of those touch CityWorld** (no container screens, no `drop`, no literal button compares —
+grepped). What touched us is below, and it was all worldgen and data — the half those mods do not have.
+
+### The density-function engine was rewritten
+
+`DensityFunction` moved to `…levelgen.densityfunction` and lost `compute(FunctionContext)`; a function now
+**compiles** (`compileSampler(CompileContext)` → `DensitySampler`), samplers fill a `DensityBuffer` over a
+`DensityVolume` (`sampleVolume`) or answer a point (`sampleValue(SamplerContext, x, y, z)`), caching lives in the
+`SamplerContext` (`builder().enableCaches().useBufferArena(pool)`), and `RandomState` no longer exposes `router()`
+— it hands out `getSampler(function)`, `samplersWithContext(context)`, `createClimateSampler(context)` and a
+`DensityBufferPool` to acquire/release. `NoiseChunk` shrank to 66 lines: the **`interpolated` marker is a real
+function (`InterpolatedFunction(input, cell_size_xz, cell_size_y)`) that interpolates inside `sampleVolume`**, on
+a cell grid anchored to absolute coordinates, so any volume gives the same numbers as a chunk fill.
+
+That made `EndTerrain` simpler, not harder: the by-hand re-implementation of `NoiseChunk`'s corner interpolation
+(the 2026-09-17 work) became "build the chunk's 16×H×16 volume, sample `final_density` through a caching context
+exactly as `doFill` does, read the sign". `end.terrain.wrong = 0` over 144 columns against `getBaseHeight`. The
+constructor now takes the `NoiseGeneratorSettings` (for the router) rather than `NoiseSettings`; the climate
+sampler the End biome source reads is a per-thread `createClimateSampler(enableCaches)`, because a caching context
+is stateful. `RandomState.create` is `(HolderGetter<NormalNoise>, long seed, NoiseGeneratorSettings)` —
+`registries.lookupOrThrow(Registries.NOISE)`.
+
+### `ConfiguredFeature` is gone
+
+`Feature` is an interface that **carries its own configuration** (`place(level, generator, random, origin)`),
+registered in `worldgen/feature` (`Registries.FEATURE`; the type registry is `FEATURE_TYPE`); `PlacedFeature` is
+`(Holder<Feature>, placement)`. Vanilla's data moved from `worldgen/configured_feature/` to `worldgen/feature/`
+and **tags with it** — ours: `tags/worldgen/feature/nether_trees.json`. `PlacedFeature.placeWithBiomeCheck` moved to
+`new FeaturePlacer(level, generator).placeWithBiomeCheck(feature, random, origin)`. A datapack that still says
+`configured_feature` is silently an empty tag — the blast-radius memory applies.
+
+### One `buildTerrain` instead of three steps
+
+`ChunkGenerator.fillFromNoise` + `buildSurface` + `applyCarvers` are now one abstract
+`buildTerrain(chunk, blender, randomState, structureManager, biomeManager, @Nullable carverBiomeRegion,
+possibleBiomes)`; vanilla's does fill, surface and carve inside it. Ours: End → vanilla's `buildTerrain` then the
+city on top (so **vanilla's End surface rules now run under a city chunk before it is drawn**; before, city chunks
+skipped the surface pass because it ran after and repainted yards — harmless in a vanilla End, watch it with BoP);
+everything else → `buildCity`, no surface, no carvers, as before. `addDebugScreenInfo` gained a `SamplerContext`.
+
+### Biome sources answer with a resolver
+
+`BiomeSource.getNoiseBiome(x, y, z, sampler)` is gone; the abstract method is `createResolver(Climate.Sampler)`
+returning a `BiomeResolver` (`getNoiseBiome(quartX, quartY, quartZ)`). All four of ours keep `getNoiseBiome` and
+add a one-line `createResolver` that delegates. Callers (self-test, probe, the End source asking the real
+`TheEndBiomeSource`) go `source.createResolver(sampler).getNoiseBiome(...)`; `randomState.sampler()` is
+`randomState.createClimateSampler(SamplerContext.builder().enableCaches().build())`. `Climate.Sampler` is now a
+record of six `DensitySampler.Bound`s.
+
+### ⚠ Datapack registries load concurrently — a codec never sees the biome registry
+
+`RegistryDataLoader.createContext` now hands every registry in the same load batch to the codecs as its
+`concurrentRegistrationGetter` — a `HolderGetter` whose `get(key)` **always** returns a (possibly unbound)
+reference — not the registry. So `RegistryOps.retrieveRegistryLookup(Registries.BIOME)` inside a world-preset
+codec fails with *"Found holder getter but was not a registry lookup"*, which fails **the whole registry load and
+the server does not start** (`Unbound values in registry … world_preset: [cityworld:city]` is the symptom line;
+the cause is 400 lines up). `CityWorldClimateBiomeSource` now takes the lookup optionally
+(`ExtraCodecs.retrieveContext` filtering `registryOps.getter(BIOME)` for a `RegistryLookup`) and
+`terraBlender()` falls back to `ServerLifecycleHooks.getCurrentServer().registryAccess()` at harvest time, leaving
+`bridgeHarvested` false until a registry exists. Two corollaries: **probing that getter for absence is meaningless
+during decode** (it never says no — the 26.1 memory again), and anything else that wanted a real registry at
+decode time will hit this on 26.3.
+
+### The small ones
+
+| Was | Is |
+|---|---|
+| `sign.getFrontText()` / `getText(boolean)`; `SignText.setMessage(i, c)` | `sign.getText(SignTextSlot.FRONT/BACK)`; `text.asMutable().setLine(i, c)…asImmutable()`; `getMessages(false).get(i)` (AT on `frontText`/`backText` unchanged) |
+| `structureManager.startsForStructure(ChunkPos, …)` | `startsForStructure(sectionX, sectionZ, …)` |
+| `getStartForStructure(SectionPos, Structure, chunk)` | `getStartForStructure(Structure, chunk)` |
+| `ChunkGeneratorStructureState.createForNormal(random, seed, biomes, sets)` | `…(random, seed, getOrigin(random), biomes, sets)` |
+| `RegistryFileCodec.create(key, codec)` (`net.minecraft.resources`) | `create(key, codec, allowInline)` in `net.minecraft.core.registries.codec` |
+| `KeyDispatchDataCodec<? extends DensityFunction> codec()` | `MapCodec<? extends DensityFunction> codec()` |
+| `RegistryLayer.WORLDGEN` | `RegistryLayer.WORLD` (same slot) |
+| `BlockState.blocksMotion()` | `isSolid()` |
+| `Registries.CONFIGURED_FEATURE` | `Registries.FEATURE` |
+
+### Two datapack schemas changed, and both fail the server, not the feature
+
+- **Loot tables.** An entry's `functions: [ … ]` is `modifier: { … }` (one function; a list is an inline
+  `sequence`), each function's `function:` key is `type:`, and every number range needs
+  `{"type": "minecraft:uniform", "min", "max"}` — the bare `{min,max}` shorthand is gone (*"Failed to parse
+  either. First: Not a number: {"min":1,"max":5}"*, once per table, in `> Errors in registry
+  minecraft:loot_table`). Converted by a ten-line script over `data/cityworld/loot_table/**`; `enchant_randomly`
+  with no `options` still means "any".
+- **Dimension types.** `bed_rule.explodes` → `destroy_on_use`, and a `straw_bed_rule` attribute exists.
+  `ruined_nether.json` regenerated from 26.3's `the_nether.json` with the five overrides (`coordinate_scale 1`,
+  `has_ceiling false`, `height 384`, `logical_height 384`, `min_y -64`) — the per-version-registry-JSON rule.
+
+`Material.java` regenerated **byte-identical** to 26.2's (282 blocks, 145 dyed, 116 items) — no block-field churn
+this drop. The whole delta: 17 source files (one rewritten), 27 loot tables, 2 JSON files, 3 build lines.
 
 ## 26.3 reconnaissance (2026-08-28, snapshot 10)
 

@@ -48,6 +48,7 @@ CHECKOUTS=(
     "mc1.21.1|$WORKTREES/mc1.21.1|$ROOT/tools/jdk21"
     "mc26.1|$WORKTREES/mc26.1|$ROOT/tools/jdk25"
     "mc26.2|$WORKTREES/mc26.2|$ROOT/tools/jdk25"
+    "mc26.3|$WORKTREES/mc26.3|$ROOT/tools/jdk25"
 )
 
 if [ "$DO_BUILD" = 1 ]; then
