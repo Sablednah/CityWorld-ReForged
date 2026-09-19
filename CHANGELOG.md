@@ -5,7 +5,340 @@ All notable changes to the NeoForge port of CityWorld.
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
-## Unreleased
+## 5.10.0
+
+### Added
+
+- **Macaw's doors, trapdoors, windows, fences, roofs and lights furnish the city.** Nine new block-tag
+  pools under `cityworld:fittings/` and `cityworld:light/` (see PALETTES.md): every house, shed, office,
+  shop and factory now draws its street door and its interior doors from a pool by what the building is
+  for (shop fronts for shops, metal doors for industry, cottage-to-modern styles for homes), houses get
+  framed windows (joined into runs) and a trapdoor hatch from the pools, office walls take framed windows
+  where they took panes, railings, paddocks, park edges, barn pens and factory yards draw their fences,
+  and streets are lit by Macaw's lamp posts. All of it comes from the mods' own family tags, so
+  **Macaw's Biomes O' Plenty add-on** joins by itself with every BoP wood. Nothing changes in a world
+  without the mods: each pool falls back to what CityWorld always built.
+- **Macaw's staircases** where Macaw's Stairs is installed: MODERN houses get compact or terrace
+  treads with a railing beside each, platforms at the landings and balcony rails along the opening
+  above — the layout the mod's own players build — and every building's stairwell takes the treads
+  and platforms. Without the mod the stairs are as they were.
+- **MODERN houses have pitched roofs.** The stepped roof layers are now slopes — Macaw's roof blocks
+  matched to the roof material by name (a willow-plank house under a willow-plank roof, with the ridge
+  cap), any roof block from the pool otherwise, and the roof material's vanilla stairs when no roof mod
+  is installed. The slope starts with an eave on the wall tops; corners and ridges are shaped by the
+  roof block's own logic; gable ends are built in the roof's own wood. CLASSIC keeps its stepped roof.
+- **The rest of Macaw's**: ornamental metal fences round gardens and parks (the panelled metal fence leads the
+  construction-site mix), Macaw's gates on paddocks
+  and barn pens, garage doors on half the factories and warehouses, tiki torches round campfires, and
+  garden lights on park gates.
+- **Macaw's Lights** in interiors: wall lanterns, wall lamps and candle sconces on the walls,
+  chandeliers, lanterns and ceiling lights under the ceilings, candle holders and paper lamps on tables,
+  its standing lamps as two-tall floor lamps, and its ceiling fan lights.
+- **Silos.** A metal storage silo on a red steel frame — a hopper chute underneath, a stepped cone roof with
+  a hatch, and a caged spiral stair tower beside it with a catwalk onto the roof — takes a building lot in
+  industrial districts, often several side by side sharing a height and a paint. The old nether-brick and
+  brick silo schematics are retired, and the slab silos with them (they were swamping industry); the G45 station stays.
+- **A Minecraft 1.21.1 build** (`cityworld-5.10.0+mc1.21.1.jar`, NeoForge 21.1) joins 1.21.11, 26.1 and 26.2 —
+  the same city on every version; blocks that version lacks stand in as their nearest older cousin.
+- **Gasometers.** A rare large industrial lot, two or three chunks square: a telescoping gas holder in a
+  lattice guide frame standing in a water trough, with a ladder up one column to the walkway on the top
+  ring. The bell stands at a different height on every one — nearly empty to full, its lifts rising out of
+  the trough as it fills.
+
+### Fixed
+
+- Factories had no way in: a walled factory drew no street door at all, and a fenced yard's gaps were left
+  to a coin flip per side. Walled factories now open onto the street like every other building (metal doors
+  where a mod supplies them), every fenced yard has at least one opening per street chunk, and wooden yards
+  get a gate from the gate pool. A factory's yard also uses one fence, not one per chunk.
+- A storage mod's filing cabinet, framing table and decoration table were being classified as
+  furniture whenever those mods shared a folder with the furniture ones at tag-generation time; the
+  furniture roles are now derived from the furniture mods only.
+
+## 5.9.0
+
+### Added
+
+- **Modpacks can lock the world type.** Set `lockedWorldPreset = "cityworld:apocalypse"` (any preset id)
+  in `config/cityworld-startup.toml` and every new single-player world is made with it: the create-world
+  screen opens on it, the World Type button is greyed out, and Customize still works with the style held.
+  Empty (the default) changes nothing. A dedicated server keeps using `level-type` in `server.properties`.
+- **A CityWorld End: cities on vanilla's islands.** The End is vanilla's throughout — the central island, the
+  obsidian pillars, the dragon fight, the void ring, and beyond it the outer islands exactly as vanilla grows
+  them, with their chorus forests, biomes and **end cities**. CityWorld adds the city on top:
+  - **Cities stand on the flat tops of the outer islands and nowhere else.** Island tops within four blocks of
+    street level (y 59) are levelled to take the streets — but only under a building or road and across a short
+    apron beside one, easing back into the island; an island nobody built on is exactly as vanilla made it.
+    Short bridges hop between neighbouring islands, standing on obsidian footings where an island passes
+    beneath and spanning open void without pylons.
+  - **Settled by region.** A slow field splits the outer islands into city country and wild country — clumps of
+    city, clumps of nature, about half of what an unthinned End would build — so there is room for the wild
+    End, and for **biome mods' End biomes**: Biomes O' Plenty's end wilds, end flats, end reef and end
+    corruption (anything a mod registers with TerraBlender for the End) generate with their own ground and
+    plants. Districts follow the overworld's style and settings, graded by how much of each island is
+    buildable — no farms or outland, there is no water out there — and CityWorld steps aside wherever an end
+    city stands.
+  - **Nothing digs through** — no mines, sewers, cisterns or caves, because an island is only a few dozen
+    blocks thick — but buildings keep their basements wherever the island under them is thick enough,
+    shallower or absent towards the rim and never showing from below.
+  - **Never ruined**, even under an APOCALYPSE or DESTROYED overworld: the dragon kept everyone out. Built
+    from the overworld's palette with the End's own blocks blended in (about one wall, roof or floor in three:
+    purpur, end stone bricks, obsidian, amethyst — the new `#cityworld:build/end_stones` tag, yours to widen or
+    empty with a datapack), and lit by end rods.
+  - Customize has **Realms → End** (*Cities on the islands* / *Vanilla*), and modpacks can lock it with
+    `cityworldEnd` in `config/cityworld-startup.toml`.
+- **CityWorld's Nether and End are now the default.** Every CityWorld world type creates the ruined-city
+  Nether and the CityWorld End unless you switch them back to Vanilla under Customize → Realms — and a
+  dedicated server started with `level-type=cityworld:…` now gets them too, which it never could before.
+  Existing worlds keep the realms they were created with.
+- **A ruined-city Nether.** Customize has a new **Realms → Nether** choice. *Ruined city*
+  replaces the Nether with the overworld's own city — same seed, same streets, same buildings — burnt and
+  collapsed, in Nether biomes (crimson, warped, soul sand, basalt, wastes, and any mod's Nether biomes such as
+  Biomes O' Plenty's, spread evenly by climate), on netherrack and blackstone with lava seas and Nether ores.
+  **Portals link 1:1**, so the ruin you arrive in stands exactly where its overworld building does. It is full
+  height with no bedrock roof, and Nether fortresses and bastions still generate, so blaze rods and the road to
+  the End are intact. Modpacks can lock it with `ruinedNether = "cityworld"` in `config/cityworld-startup.toml`.
+  Trees in its parks, yards and avenues grow as huge crimson and warped fungi and giant red and brown
+  mushrooms — and Biomes O' Plenty's hellbark trees when it is installed (a datapack can add any mod's trees
+  to `#cityworld:nether_trees`).
+- **Bastions in the ruined-city Nether get a cavern and a way down.** A bastion always generates at y 33, which
+  in a full-height ruined Nether is deep under the streets. It now sits in its own carved cavern, and a ruined
+  blackstone shaft — a broken collar with a soul campfire at street level, a ladder down — leads onto its roof.
+  A datapack can give any other buried structure the same treatment with `#cityworld:carve_cavern`.
+- **No more "experimental settings" warning for CityWorld worlds.** Vanilla asked about every CityWorld world
+  it created, because CityWorld adds a fourth dimension and vanilla only trusts the three it ships. CityWorld
+  now answers it for you when its own dimensions are the only reason — anything else experimental (another
+  mod's dimension, an experimental datapack) still asks.
+
+### Changed
+
+- **`/cityworld` now visits the city before the fall.** The `cityworld:city` dimension is the overworld's
+  twin: it takes the overworld's own style and settings (including anything set in Customize), so it is the
+  same city street for street — but with no decay, no overgrowth, no hidden zombie spawners and no grim
+  interiors. On an Apocalypse world that is the city as it was. It used to be a ruined Modern city with its
+  own settings, which did not match the overworld's plan. **Worlds that already have the dimension keep
+  what they had.**
+
+### Fixed
+
+- **The Nether's caves and city ground were missing their biome's character.** Underneath a crimson or warped
+  forest — and anywhere that wasn't wild, open countryside — CityWorld skipped the decoration step that carries
+  a Nether biome's own touches: glowstone and magma, and with Biomes O' Plenty installed its orpiment buds and
+  fumaroles, blackstone spines, rose quartz, flesh tendons and eyebulbs. Those now appear throughout, roughly
+  twice as much of them as before (measured over a 49x49-chunk sweep: rose quartz buds 333 -> 759, orpiment
+  7,436 -> 9,271, pus bubbles 2 -> 80, eyebulbs 2 -> 24).
+- **Biomes O' Plenty's Withered Abyss and Visceral Heap generated on plain netherrack**, instead of blackstone
+  and flesh. Its other Nether biomes were already right: their character comes from what grows on the ground
+  rather than the ground itself.
+- **The Nether's crimson forests, warped forests and soul sand valleys had no ground of their own.** They
+  generated as bare netherrack — the right biome in every other way (fog, mobs, name), which is why they read
+  as plain Nether Wastes. They now get their nylium and soul soil, basalt deltas get basalt, and the grass that
+  parks and farms laid in the Nether becomes the biome's own ground.
+- **The bastion shaft stopped short of the surface.** It climbed to the city's planned street height rather
+  than the real ground above that spot, so it could end underground. It now follows the actual surface.
+- **The ruined-city Nether could freeze the whole world.** Chunks stopped generating (a black void) and quitting
+  hung on "Saving world". A decaying sidewalk kept looking for an uncovered spot to crumble and never gave up
+  when the whole sidewalk was covered — sunk under the Nether's lava sea, or buried in rubble. It now gives up
+  after a fair number of tries. A world that froze this way is fine to reopen: the stuck chunk was never saved.
+- The CityWorld: Apocalypse world type showed its raw name (`generator.cityworld.apocalypse`) on the
+  create-world screen.
+- A dimension marked `"decayed": false` was still ruined when its style was Apocalypse or Destroyed — the
+  style switched decay back on after the override.
+
+## 5.8.1
+
+### Fixed
+
+- **Removed the two calls that could shut a server down.** CurseForge rejected 5.7.0 and 5.8.0 with
+  "Please remove any function that shuts the Minecraft server down", and they were right to: the headless
+  self-test harness and the chunk probe each called `server.halt(...)` when they finished. Both only ever
+  ran behind a developer flag (`-Dcityworld.selftest=true`, `-Dcityworld.probe=`) that no player sets, and
+  neither could fire in normal play — but the code shipped inside the jar, and a mod that *can* stop your
+  server has no business being installed on it. There is now no `halt` or `System.exit` anywhere in the
+  published jar. Both tools still work; the scripts that start them now stop them.
+- No worldgen, content or behaviour changes: 5.8.1 is 5.8.0 with that code removed.
+
+## 5.8.0
+
+### Added
+
+- **The airship is a real airship now, two chunks long.** It used to be drawn with the hot-air balloon's
+  upright envelope, so the landmark announced as "Airship" looked exactly like a balloon. It is now a
+  32-block rigid airship: a cigar-shaped envelope in one of eight two-colour liveries, four tail fins, a
+  glazed control car slung underneath with a rounded bow and stern, seats, a helm and a railed observation
+  deck, and an engine with a propeller either side. The car is built in a random wood, modded woods
+  included, and with a furniture mod installed its seats are real chairs — one style for the passengers,
+  another for the crew at the helm. Each one has a name, which the announcement carries ("Airship Endeavour"). Still
+  MODERN and APOCALYPSE only, and just as rare. `/cityfind lot airship` finds one.
+- **A few new names in the default pools.** Villagers can be called Sable, SableDnah, Cara, Cara Samara
+  or Bil, and carry the surnames Douglas or Houiellebecq. Streets can be named Sable, SableDnah, Cara,
+  Cara Samara, Ruth or Bil ("East Lower Cara Samara Gardens"). **Existing worlds keep their street
+  names:** a street's name is worked out again in every chunk it crosses, so simply growing the list would
+  have renamed nearly every street at the edge of explored ground. The new names are drawn from a
+  separate roll instead, so only about one street in forty changes. A datapack that replaces the street
+  names replaces these too.
+- **Streets are named everywhere, not just on the signs.** Stand on a road and `/cityinfo` says which
+  street it is ("street: North 5th Street", or both at a junction), F3 shows it too, and hovering a road
+  on the JourneyMap map names it. With JourneyMap the city plan also **labels the streets on the map**,
+  once you zoom in: each street is named once per city block it crosses, including in cities you have
+  not been to yet. Names match the signs exactly; they come from the same plan.
+- **`/cityfind street <name>` finds a street** by any part of its name, ignoring case
+  (`/cityfind street cara samara`, `/cityfind street 5th`), and reports the nearest road on it;
+  `/cityfind street tp <name>` takes you there. Tab completion offers the streets around you.
+- **For mod authors: schematic buildings can be pasted turned, and read.** `Clipboard` gains a whole-building
+  `paste(level, nwX, groundY, nwZ, rotation, mirror, random)` (the turned footprint's north-west corner
+  lands on `nwX, nwZ`) and `saveTemplate()`, which returns the building as vanilla structure NBT — a copy,
+  for things like a placement preview. Both are new since 5.7.1, so look them up and catch `LinkageError`
+  if you also support older jars. (StoryTeller's structure placement uses them.)
+
+### Fixed
+
+- **The log no longer fills with "block tag #cityworld:furniture/… is empty or unbound".** On a world
+  with no furniture mod installed, every piece of furniture in every chunk re-resolved its (legitimately
+  empty) pool and warned about it — one client session logged 94,000 of those lines. Pools are now
+  resolved once per tag and rebuilt only when tags reload (a datapack change is still honoured), and
+  an empty furniture pool is mentioned once, at INFO, as "no mod supplies #…". Empty *build* and
+  *farm* palettes still warn, once, because those are real faults. Also a small worldgen saving: the
+  registry walk and sort behind each furniture pick happen once instead of per piece.
+
+## 5.7.1
+
+### Added
+
+- **Every jar says which build it is, and so does the log.** The startup line now reads
+  `CityWorld 5.7.1+mc1.21.11 (build a1b2c3d4 on master, 2026-09-11T…Z)`, and the same stamp is on the
+  jar's manifest (`unzip -p <jar> META-INF/MANIFEST.MF | grep Build-`) for checking a jar without
+  loading it. A version number answers "which release"; when a jar has been copied between instances
+  or rebuilt mid-session, "which bytes" is a different question — and the log line is the one that
+  says what actually *ran* when something is reported. A `-dirty` suffix means it was built from
+  uncommitted changes. The F3 line carries it too, replacing the jar-timestamp stamp it used to show.
+
+  Shared format with the other mods in this family, so a support question gets the same answer
+  whichever one is being asked about.
+
+### Fixed
+
+- Nothing user-facing. This release exists so the build that ships alongside StoryTeller's can be
+  identified exactly.
+
+## 5.7.0
+
+### Added
+
+- **JourneyMap integration — the map now knows what CityWorld is building.** Install JourneyMap and
+  the map gains five things:
+  - **The city plan, drawn over ground nobody has explored.** Districts are tinted by what they are
+    — highrise, municipal, industrial, park, farm — with the street grid over them, and the streets
+    of the countryside included. JourneyMap can only map what a player has *seen*; CityWorld decided
+    where those roads go before anyone arrived, so the map shows the shape of a city you are still
+    walking towards. It stays drawn behind you as you travel.
+  - **Hover any chunk and it tells you what is planned there** — district, lot kind, schematic name,
+    shop, and what the building holds inside ("Highrise · office building · Office cubicles",
+    "Farm · Potato field"). Again, including chunks nobody has visited.
+  - **Rare landmarks become waypoints as they generate**, from the same curated
+    `announcedLandmarks` list the chat announces use, and whether or not chat announces are on.
+  - **`/cityfind`, `/cityfind lot` and `/cwlocate` drop a marker** on whatever they find, so you can
+    walk to it without copying coordinates down. Landmarks and search results go into two separate
+    waypoint groups so they can be shown or hidden apart.
+  - **Controls where you would look for them**: a **City plan** switch in JourneyMap's own options
+    screen, a toggle button on its fullscreen map, and `/citymap [on|off]` for servers.
+    `/citymap keep <n>` (or the same setting in the options screen) sets how much of the plan your
+    client holds — the cost of keeping it drawn is entirely client-side, so the number is yours to
+    pick.
+
+  It is a **soft dependency**: the JourneyMap API is compile-only, no JourneyMap class is touched
+  unless JourneyMap is installed, and every callback is wrapped so a fault of CityWorld's can never
+  take the map or the game down. Other map mods can hook the same seam
+  (`me.daddychurchill.CityWorld.api.MapMarkers`) without the generator knowing about them.
+
+### Changed
+
+- **Landmark markers sit on the building, not its corner.** Landmarks announce from their
+  footprint's north-west chunk, which put a pin in the car park of anything large; schematics
+  (rotation-aware) and hospital departments now report from the middle of what they built.
+- **Farms say what they are growing** — "Potato field", "Pasture", "Vineyard", "Oak orchard",
+  "Paddock, livestock" — in `/cityinfo` and on the map. Three lot kinds that reported their code
+  names now read plainly: *schematic*, *open ground* and *paved lot*.
+- The **Cara Sutra** schematic is now **Cara Samara**, in its filename, title and announcement.
+
+## 5.6.0
+
+### Added
+
+- **Fantasy's Furniture furnishes the city** — every set (Nordic, Necrolord, Dunmer, both Bone sets,
+  and any set its author releases later) plus the Decorations add-on. The sets share one block
+  vocabulary and CityWorld recognises it in the block registry at startup, so **a set released after
+  this version is furnished on the spot**, two sets in one jar included, and a set that reshapes a
+  piece (Dunmer's two-wide oven) is placed by the shape the block itself reports. Its pieces are
+  **multi-block**: two-tall chairs, two-wide desks, dressers and benches, 2×2 bookcases, 2×3
+  wardrobes and **2×2 double beds** place whole or not at all. Beds of every kind — vanilla, modded
+  singles, doubles — come from one pool.
+- **Tabletop and wall scatter with variety** — the Decorations add-on's books, bottles, food, candles,
+  coins, tankards, platters, mirrors, banners and fairy lights join the decoration pools; stack
+  heights, colours and fill levels vary per placement. Freestanding floor lamps, a rug pool, and
+  Necrolord bricks in the modern stone palette.
+- **Shelves.** A third of wall decoration is now a shelf at waist height: a vanilla `*_shelf`
+  **stocked with keepsakes** (books, a clock, bottles — bones and skulls on APOCALYPSE), or a
+  Fantasy's shelf or top-half slab with something stood on it.
+- **Offices, shops and flats get the wall pass** (art, sconces, shelves) that only house rooms had.
+  Two-tall pieces (large mirrors, banners) and two-wide paintings hang properly, with wall behind
+  every cell.
+- **Desk clutter.** Office desks without a computer get paper stacks, books or a mug from a new
+  `decor/desk` pool.
+- **Grim decoration on APOCALYPSE.** Skulls, cobwebs, bone piles, gravestones, spider webs, soul gems
+  and potion bottles fill half of the ruined world's floor, table and wall decoration, from three
+  new `decor/grim_*` pools; the other styles never see them.
+- For mod authors: the furniture data map grew `layout`, `props`, `vary`, `indexProperty` and
+  `reconnect` (see `PALETTES.md`); `parts: 2` still works. Picks are footprint-aware, so a wide
+  piece is only chosen where a room has the space for it.
+
+### Fixed
+
+- Paintings and sconces no longer hang on windows, chandeliers or the inside of stairwells: a wall
+  mount now needs a real wall behind it, and blocks are placed before the art.
+- The bedroom nightstand could replace part of the bed in a narrow room; it now only goes where the
+  floor is clear.
+- Interior columns and hanging lights no longer cross a CENTER stairwell (the row of wall blocks
+  across the stair head on every floor, and the chandelier over the stairs).
+
+## 5.5.0
+
+### Added
+
+- **Furniture mods furnish the city.** Install Macaw's Furniture and/or MrCrayfish's Refurbished
+  Furniture and CityWorld builds with them: kitchens with counter runs, sinks, stoves and a fridge
+  with its freezer stacked on top; dining sets and lounge suites; two-block baths, toilets and
+  basins spread around real bathrooms; wardrobes and bedside lamps; desks with computers. Nearly
+  1,000 modded pieces across 16 role tags — and every piece is placed **facing the right way**, via
+  a per-block data map that absorbs each mod's own facing conventions. No furniture mods? Every room
+  keeps its classic vanilla look.
+- **Every building has an interior now.** Offices, cubicle floors and meeting rooms; **apartment
+  towers** (about one tower in seven — lobby at street level, flats above); **schools, courthouses
+  and city halls** inside government buildings; museum exhibit floors; factory workshops and
+  control rooms with console banks; warehouse racks of crates and barrels; shop floors with
+  browsing aisles between the counters. Basements of occupied buildings hold storage; **vacant
+  buildings hang FOR SALE / TO LET signs** by the door and stay dark and empty inside.
+- **Interiors are lit.** Hanging lights below every furnished ceiling (a datapack-extendable pool),
+  plus ceiling fans, wall art — paintings and item frames with clocks and keepsakes — and sconces.
+  Dark interiors now *mean* derelict.
+- **Industrial chemicals.** Tanks, vats and pits hold a `#cityworld:build/chemicals` palette —
+  concrete powders, water, lava, slime — and **18 Mekanism fluids are pre-wired** (verified against
+  the Mekanism jar) for whenever it reaches this Minecraft line. Water towers are actually full.
+- **F3 tells you more.** The interior type ("Courthouse", "Apartments", "Vacant"…) shows in F3 and
+  `/cityinfo`, plus a build stamp line so you always know which jar generated what.
+- **A rebalanced city.** More shops, fewer libraries, fewer empty shells; hospitals and the vault
+  get pool furniture at every desk.
+- For mod authors: `PALETTES.md` documents how to tag your own furniture, lights, decor and fluids
+  into CityWorld from your own jar — no dependency in either direction.
+
+### Fixed
+
+- Farm fields no longer come up empty or single-species; flower fields include every vanilla and
+  Biomes O' Plenty flower that can actually survive there.
+- Modded ocean and shore biomes place correctly (gravel beaches at the shoreline, not across open
+  sea), and modded biomes get their proper ground blocks.
+
+## 5.4.0
 
 ### Added
 
@@ -16,31 +349,117 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   actually appearing. **On by default** — installing a biome mod is the intent; turning them off is the
   deliberate act (`world.useModdedBiomes`, or the Customize screen when such a mod is present). Costs
   nothing when you have no biome mods.
+
+- **Modded biomes get ground they can win.** Two separate problems were measured, and both are fixed.
+  Continentalness was scaled against extremes CityWorld's terrain never reaches, so it only ever
+  emitted `-0.78..0.54` where every other axis spans `-1..1`; it now measures its own ends and uses the
+  full range. That alone was not enough — most unreachable biomes overlapped our ranges on *every* axis
+  and still lost, because the climate lookup picks the nearest point and TerraBlender's regions field
+  vanilla's biomes as competitors. So `world.moddedBiomeShare` (default `0.35`, on the Customize
+  screen) reserves a share of the map where the lookup runs with vanilla's points removed. Measured
+  with BoP: **34 → 52 distinct modded biomes, 12.4% → 36.1% of ground**, with CityWorld still naming
+  about two thirds. `0.0` restores the previous behaviour exactly.
+
+- **The last few biome-mod biomes get a route to the ground.** With Biomes O' Plenty installed, 54 of
+  its 59 biomes already generated. Of the rest, `spider_nest` was fine (it is a cave-pool biome), and
+  four never appeared for two different reasons. `bog`, `fungal_jungle` and `snowblossom_grove` lose
+  the climate lookup everywhere — against vanilla, and against other modded biomes even at
+  `moddedBiomeShare = 1.0` — so there is no gap to widen and no share that reaches them;
+  **`#cityworld:surface_pool`** now hands a listed biome a share of cells outright. `gravel_beach` was
+  never *asked* about: shores are decided from terrain, and the modded lookup is deliberately limited
+  to land above the waterline, so **`#cityworld:shore_pool`** stands a variant in on ground already
+  ruled a shore. Patches respect the temperature and humidity the biome declared for itself, so a bog
+  will not turn up in a desert. Both tags are datapack-driven, so the next biome mod needs no code.
+
+- **Biomes look like themselves.** CityWorld lays its own surface and never runs a biome's surface
+  rules, so a biome whose identity *is* its ground generated as ordinary grass or sand — BoP's gravel
+  beaches were sand, its volcanoes grass. Ground is now data-driven two ways: biome tags
+  (`#cityworld:ground/gravel`, `/sand`, `/podzol`, `/coarse_dirt`, `/terracotta`, `/basalt`, `/mud`,
+  `/stone`) for vanilla materials, and a **`cityworld:ground` data map** for anything else — which is
+  what lets BoP's `lush_desert` get its own orange sand, `wasteland` its dried salt and
+  `origin_valley` its own grass, rather than a vanilla stand-in. Mappings came from BoP's own surface
+  rules, not guesswork. A pack can add or override any of it.
+
+- **Three vanilla biomes were wrong too**, in every world, mods or not: `old_growth_pine_taiga` and
+  `old_growth_spruce_taiga` now get their **podzol** floor, `mangrove_swamp` its **mud**, and `grove`
+  its snow dusting — a grove is a snowy forest at ordinary height, so it fell between the biome list
+  and the elevation-based snow cap and got neither.
+
+- **Biomes O' Plenty's cave biomes join the cave pool** — glowing grotto, crystalline chasm and
+  spider nest turn up underground alongside the vanilla four. Shipped inert, so it does nothing unless
+  BoP is installed. (Fungal jungle was in this list and has been taken out: it is a *surface* biome —
+  its features are placed on the heightmap — so underground it generated bare stone.)
+
+- **Bigger biome regions by default.** `world.biomeScale` now defaults to `1.5` rather than `1.0` —
+  regions you can walk across rather than change three times on the way to the shops. The Customize
+  labels moved with it, so "Default" names the step the setting actually starts on.
+
 - **Worlds are warmer, and ice caps mean something.** Across a dozen worlds the world read cold — snowy
   biomes *and* iced peaks everywhere, and little desert. Two causes: the temperature field sat neutral,
   and **the MODERN ice cap was purely a matter of height**, so every mountain iced over even standing in
   a desert. The ice line now rises with temperature, so caps belong to cold places rather than to all
   high places; and `world.climateWarmth` (default `0.25`, on the Customize screen too) leans the whole
   field warm — about 17% — without narrowing its range, so frozen peaks and deserts both still happen.
-- **The F3 readout fits on screen.** The level line was running past the edge; it is two lines now.
+
+- **Farm fields are a tag, so mods can grow in them.** Crops come from `#cityworld:farm/crops` and
+  flowers from `#cityworld:farm/flowers` (with `#cityworld:farm/tall_flowers` for the tall fields),
+  each drawn per field so a field still reads as *a field of something*. Ships Farmer's Delight and
+  Biomes O' Plenty entries marked optional, so they cost nothing until those mods are installed.
+  **Two-block crops work**: BoP's barley is a `half=lower`/`half=upper` plant rather than an aged crop,
+  so the planter checks for that and places both halves — which means any modded tall crop works, not
+  just barley. Every vanilla flower is in the pool now, tall ones included.
+
+- **Farms look like farms.** The crop mix was an even split, which put tilled fields — the thing a farm
+  is *for* — at 11.5% of farm lots, behind trees, flowers, ground crops, pasture and grass, while
+  fallow and ferns held ground that reads as empty from the air. The MODERN pools are now weighted:
+  **tilled 27.3%, pasture 22.7%, ground crops 14.1%, trees 12.7%, flowers 10.2%, grass 8.4%, fallow
+  4.7%** — measured over 3,074 farm lots, not eyeballed. Each climate keeps its character: potatoes
+  and beets in the cold, cane and melons in the jungle, cactus in the desert.
+
+- **Every bare container has themed loot**, with a modder seam. Hospital, nightstand, shop, pond and
+  the three vault rooms each get their own table, and each has an empty `_extra` companion table that
+  a datapack can fill without touching CityWorld's own — so a gun mod can drop ammo into nightstands
+  and rifles into the vault armoury.
+
+- **Permission nodes for every command.** CityWorld gated purely on operator level, so a permissions
+  manager could not grant or deny any of it — and op is all-or-nothing: handing a moderator
+  `/cityfind` also handed them `/cityschem`, which writes blocks, and `/cityexport`, which writes
+  files. Five nodes now split them up: `cityworld.info` (default everyone), `cityworld.teleport`,
+  `cityworld.find`, `cityworld.schematic` and `cityworld.export` (default operators). Works with
+  LuckPerms, SableCraft Standards' `/rank`, or nothing at all — **with no permissions manager
+  installed the behaviour is exactly as before**, since each node's default is the old op check. The
+  console keeps working regardless. See [`NODES.md`](NODES.md).
+
 - **You choose who decorates the wild.** On MODERN/APOCALYPSE, wild land was getting vanilla's biome
   features *and* CityWorld's cover, with no way to change it — which is why wild forests read lush.
   `world.wildDecoration` (and a "Wild plants" picker on the Customize screen) now takes `BOTH` (the
   default, unchanged), `CITYWORLD` for CityWorld's cover alone, or `VANILLA` to hand the wild over
   entirely — which is the interesting one if you have a biome mod installed, since it lets that mod's
   own plants and trees stand on their own.
-- **Biomes O' Plenty's cave biomes join the cave pool** — glowing grotto, crystalline chasm, spider
-  nest and fungal jungle turn up underground alongside the vanilla four. Shipped inert, so it does
-  nothing unless BoP is installed.
 
 - **26.2's cinnabar and sulfur build with the rest.** Both new stone families join the MODERN and
   APOCALYPSE decorative palette, so cities on Minecraft 26.2 grow deep-red cinnabar and yellow sulfur
   buildings alongside the blackstone and copper ones. They are warm colours in a palette that was
   short of them. Stone buildings do not become any *more* common — the palette just has more stones in
   it. On earlier Minecraft versions the entries are simply absent.
+
 - **Palettes document how to take a block out**, not just how to add one. NeoForge tags support a
   `remove` list, so a datapack can drop a single block — the sulfur, say — without replacing the whole
   palette. See PALETTES.md.
+
+### Fixed
+
+- **`/cwlocate` finds every biome the world has.** It searched CityWorld's own biome matrix rather
+  than the biome source, so biome-mod biomes, the surface/shore pools and cave biomes were invisible
+  to it — vanilla's `/locate biome` could find them and CityWorld's could not. It now asks the same
+  lookup the world generates from (and unlike vanilla's, it teleports).
+
+- **Wild plants are vanilla's on MODERN and APOCALYPSE.** Running CityWorld's cover *and* vanilla's
+  biome features doubled the planting and read as unnaturally lush. Vanilla's pass is also the half a
+  biome mod extends, so on the modern styles it is the one worth keeping. Still switchable to `BOTH`
+  or `CITYWORLD` per world.
+
+- **The F3 readout fits on screen.** The level line was running past the edge; it is two lines now.
 
 ## 5.2.0
 
