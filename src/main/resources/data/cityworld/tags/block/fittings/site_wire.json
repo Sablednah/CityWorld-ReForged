@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "#mcwfences:wired_fences",
+      "required": false
+    }
+  ]
+}
