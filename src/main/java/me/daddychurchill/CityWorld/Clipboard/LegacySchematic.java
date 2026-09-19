@@ -233,10 +233,11 @@ public final class LegacySchematic {
 
     private static CompoundTag signText(String[] lines) {
         ListTag messages = new ListTag();
-        // Each message is a text component; a bare string decodes as a literal, which is exactly what
-        // the plain legacy lines are (pre-1.8 signs stored raw text, not JSON).
+        // Each message is a text component. On the 1.21.1 line a component in NBT is a JSON string
+        // (a bare string is a parse failure and the sign comes up blank — measured: 20 schematic signs
+        // with no front text); from 1.21.5 a bare string decodes as a literal. So: JSON-quote.
         for (int i = 0; i < 4; i++)
-            messages.add(StringTag.valueOf(i < lines.length ? lines[i] : ""));
+            messages.add(StringTag.valueOf(new com.google.gson.JsonPrimitive(i < lines.length ? lines[i] : "").toString()));
         CompoundTag text = new CompoundTag();
         text.put("messages", messages);
         return text;
