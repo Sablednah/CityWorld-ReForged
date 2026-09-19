@@ -38,12 +38,15 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 	 *  yard two fences, owner 2026-09-19) — and copied across connected chunks like the wall style. */
 	private Material yardFence;
 	private Material yardWoodFence;
+	private Material yardGate;
 
 	public FactoryBuildingLot(PlatMap platmap, int chunkX, int chunkZ) {
 		super(platmap, chunkX, chunkZ);
 		yardFence = me.daddychurchill.CityWorld.Support.MaterialTags.pickSiteFence(platmap.getOddsGenerator());
 		yardWoodFence = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
 				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FARM_FENCE, platmap.getOddsGenerator(), Material.SPRUCE_FENCE);
+		yardGate = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_GATE, platmap.getOddsGenerator(), Material.SPRUCE_FENCE_GATE);
 
 		firstFloorHeight = DataContext.FloorHeight * (chunkOdds.getRandomInt(3) + 3);
 
@@ -104,6 +107,7 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 			wallStyle = relativebuilding.wallStyle;
 			yardFence = relativebuilding.yardFence;
 			yardWoodFence = relativebuilding.yardWoodFence;
+			yardGate = relativebuilding.yardGate;
 
 			if (chunkOdds.playOdds(oddsOfSimilarContent))
 				contentStyle = relativebuilding.contentStyle;
@@ -137,7 +141,7 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 			drawFence(generator, byteChunk, context, 0, y1, 0, heights, yardFence, 3);
 			break;
 		case WOOD_FENCE:
-			drawFence(generator, byteChunk, context, 0, y1, 0, heights, yardWoodFence, 2);
+			drawFence(generator, byteChunk, context, 0, y1, 0, heights, yardWoodFence, 2, yardGate);
 			break;
 		}
 	}
