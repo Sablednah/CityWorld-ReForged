@@ -1,6 +1,20 @@
 # CityWorld — Bukkit → NeoForge port plan
 
-## ▶ Resume here — the fittings arc (2026-09-18, afternoon): Macaw's doors, windows, fences, roofs, lights
+## ▶ Resume here — v5.10.0 released (2026-09-19 evening): the fittings arc, industry, and a 1.21.1 line
+
+**Shipped.** Tag `v5.10.0` on master (`cd06e192`), bump commits on `mc26.1` (`bd7115a8`), `mc26.2` (`1fb2e14c`),
+`mc1.21.1` (`b7851927`); four jars on the GitHub release; CurseForge files 8923521–8923524 (moderation
+pending as always), Modrinth green; fleet of ten on it; `CURSEFORGE.md` has the 5.10.0 sections (the owner
+pastes it). Everything below this heading from "the fittings arc" through "the owner's industry look" is in it.
+The release memory has the recipe as it ran, including the one change: **the local `5.8.0+mc1.21.11.jar` is no
+longer a halt-detector control** (rebuilt after the fix) — prove the detector on `5.8.0+mc26.1.2.jar` (4 hits).
+
+**Open, in the order I would take them:** the eave overhang on pitched roofs (owner said "I'll think about
+eaves"); a "tidy the top" rule for notched hip roofs; wood-only stairs if the stone treads grate; the
+double-armed street lamp always faces north; Macaw's gutters/awnings; the Refurbished-vs-Macaw's lamp split.
+Nothing is broken or waiting on a fix.
+
+## The fittings arc (2026-09-18, afternoon): Macaw's doors, windows, fences, roofs, lights — as it was built
 
 **Status.** Built while the owner was out; **committed on master (`f781711e`…`0379bc6d`), cherry-picked to
 `mc26.2` and `mc26.1`, self-tested on all three (1.21.11 139 checks, 26.1 139, 26.2 153 — with the Macaw's jars

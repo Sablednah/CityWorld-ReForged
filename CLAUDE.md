@@ -52,10 +52,12 @@ export PATH="$JAVA_HOME/bin:$PATH"
 - Gradle can't forward piped stdin to the server console — to verify in-world behaviour, register a
   temporary `ServerStartedEvent` listener that logs what you need, rather than piping commands.
 - **Build the version branches in their worktrees, don't switch branches here.** `master` is 1.21.11;
-  `mc26.1` and `mc26.2` are checked out permanently at
-  `../CityWorld-ReForged-worktrees/mc26.{1,2}`, each with a `tools` symlink back to this checkout's
-  JDKs (`tools/` is git-ignored, so a worktree has none of its own). Build with an explicit
-  `JAVA_HOME` — **1.21.11 needs JDK 21, 26.1+ needs JDK 25**:
+  `mc26.1`, `mc26.2` and `mc1.21.1` are checked out permanently at
+  `../CityWorld-ReForged-worktrees/{mc26.1,mc26.2,mc1.21.1}`, each with a `tools` symlink back to this
+  checkout's JDKs (`tools/` is git-ignored, so a worktree has none of its own). Build with an explicit
+  `JAVA_HOME` — **the 1.21 lines need JDK 21, 26.1+ needs JDK 25**. `compat/Material.java` is generated per
+  branch: a cherry-pick that conflicts on it is resolved by taking the branch's copy and re-running
+  `scripts/gen_material.py` there (the template edits live in the script):
 
   ```bash
   cd ../CityWorld-ReForged-worktrees/mc26.2
@@ -123,7 +125,18 @@ export PATH="$JAVA_HOME/bin:$PATH"
   objects, and when the mod is absent the reference is unbound, which fails the **whole registry load** and
   **stops the server starting at all** (`Unbound values in registry …`). A dangling *feature* reference is
   fatal; a dangling *tag* entry is merely dropped. The self-test caught this on the two branches that have
-  no BoP in `run/mods` — which is exactly why all three branches get tested, not one.
+  no BoP in `run/mods` — which is exactly why every branch gets tested, not one.
+- **A quiet worldgen failure looks like scarcity, and the plan hash does not see it.** `ShapeProvider.populateLots`
+  catches every exception and logs `populateLots FAILED`; the platmap then generates as nature. A coin-flip pool
+  hook called twice (`garageDoorPool()`) handed `MaterialTags.pick` a null tag, and for half a day every
+  industrial district was silently dropped while the plan — measured before population — hashed identical. Grep
+  any probe or self-test log for `FAILED` before believing "there is little of X"; `MaterialTags.resolve(null)`
+  is now an empty pool, and a hook that rolls odds must be called once.
+- **Lot connection keys are positional, and a replaced lot's neighbours keep matching it.** `ConnectedLot`'s key
+  comes from the chunk position; flood-filled copies take the source's key; `CivilizedContext.validateMap`
+  swaps a `trulyIsolated` STRUCTURE with an isolated neighbour for a fresh backfill lot — which is born with
+  the same positional key the copies carry, so a warehouse counted a silo battery as its own wing and drew no
+  wall. `isConnected` now also requires the same kind of lot; a lot meant to cluster is not `trulyIsolated`.
 - **⚠ Nothing in the shipped jar may be able to stop a server — not even behind a developer flag.**
   CurseForge **rejected 5.7.0 and 5.8.0**: "Please remove any function that shuts the Minecraft server
   down." The self-test harness and the chunk probe each ended in `server.halt(false)`, dormant unless
@@ -135,8 +148,10 @@ export PATH="$JAVA_HOME/bin:$PATH"
   Every tag from 5.5.0 carried the same two calls and passed review: that is **volunteer moderators with
   differing thoroughness, not a rule that changed**, so *a past approval is never evidence that something
   is allowed*. And verify a claim like this **against bytecode with a detector proved on a
-  known-positive first** (`javap -p -c`, grep `\.halt:|System\.exit:`; the 5.8.0 jar must show 3 hits,
-  5.8.1 none). A `strings`-based check reported 0 for everything — including methods that were certainly
+  known-positive first** (`javap -p -c`, grep `\.halt:|System\.exit:`; a real 5.8.0 jar shows 4 hits —
+  **`build/libs/cityworld-5.8.0+mc26.1.2.jar` from Sep 14; the 1.21.11 "5.8.0" jar there was rebuilt after
+  the fix and reads 0, so it is NOT a control** — 5.8.1+ none; scan a whole jar with one `javap -cp . <all
+  classes>`, not one javap per class, which takes over ten minutes). A `strings`-based check reported 0 for everything — including methods that were certainly
   there — because constant-pool entries sit adjacent. **Never trust a zero from a detector that has never
   produced a positive.**
 - **Never compile in a checkout whose dev server or self-test is running.** `runSelfTest`/`runServer`
@@ -154,13 +169,13 @@ export PATH="$JAVA_HOME/bin:$PATH"
   (2) a "wall" for art/sconces/shelves is `isWallBacking` (full cube, sturdy, not glass, not pooled),
   checked behind EVERY cell of a wide piece, and blocks go before entities (a painting is invisible to
   `isEmpty`, so a chandelier chain went through one).
-- **Fleet deploy: `scripts/deploy-fleet.sh`** (`--dry-run` first). Nine CurseForge instances carry a
+- **Fleet deploy: `scripts/deploy-fleet.sh`** (`--dry-run` first). Ten CurseForge instances carry a
   CityWorld jar — five on 1.21.11 (`CityWork-ReForged`, `MobHealth - Forge`, `Neoforge 1.21.11 - sci
-  fi/wasteland`, `Standards`), `26.1.2`, and three on 26.2 (`26.2`, `26.2.test`, `BoP+Cityworld`). The
+  fi/wasteland`, `Standards`), `26.1.2`, three on 26.2 (`26.2`, `26.2.test`, `BoP+Cityworld`) and `1.21.1`. The
   fleet is whatever `Instances/*/mods` already holds a `cityworld-*.jar` or `DEPLOYED-*` stamp; the
   script reads each instance's Minecraft version from `minecraftinstance.json`, picks the newest
-  built jar for it across master + the two worktrees (`--version X.Y.Z` for a release, `--build` to
-  build all three first), and stamps `DEPLOYED-<sha|vX.Y.Z>` (vX.Y.Z when the jar's Build-Commit is
+  built jar for it across master + the three worktrees (`--version X.Y.Z` for a release, `--build` to
+  build them all first), and stamps `DEPLOYED-<sha|vX.Y.Z>` (vX.Y.Z when the jar's Build-Commit is
   the tag or a "Bump to X.Y.Z" commit). A running game locks its jar ("Permission denied") — the
   script reports SKIPPED and carries on; rerun for that one after the game is closed.
 - **Kill the previous `runServer` before starting another.** A backgrounded one keeps the dev port —
@@ -234,7 +249,7 @@ edges are often thin (single method signatures), so they can be stubbed to break
 Modern worldgen wraps this in a codec-registered `ChunkGenerator` (`worldgen/CityWorldChunkGenerator`,
 registered `cityworld:city`), exposed as both a dimension and a world preset. **The port is complete
 and the brain is wired in** — it generates real CityWorld terrain, cities, interiors, mines, caves and
-decoration across 13 world styles, on three Minecraft versions. It suppresses *most* vanilla
+decoration across 13 world styles, on four Minecraft versions (1.21.1, 1.21.11, 26.1, 26.2). It suppresses *most* vanilla
 structures/decoration/carvers so CityWorld owns the chunk, with deliberate exceptions: strongholds,
 trial chambers and ancient cities are placed (see PORTING.md), and vanilla biome features may decorate
 wild land depending on `world.wildDecoration`.
