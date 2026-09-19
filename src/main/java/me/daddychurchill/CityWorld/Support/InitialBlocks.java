@@ -119,6 +119,26 @@ public final class InitialBlocks extends AbstractBlocks {
             put(x, y, z, state.setValue(face, false));
     }
 
+    /** Join the connectable neighbours (fences, panes, walls) of {@code x,y,z} back onto it — the
+     *  inverse of what {@link #setAtmosphereBlock} does, for a gate set into a hole aired out a moment
+     *  before: the fence either side had just been told to let go (owner's unjoined yard gates, 2026-09-19). */
+    public void reconnectNeighbours(int x, int y, int z) {
+        if (x > 0)
+            setFaceToward(x - 1, y, z, BlockStateProperties.EAST);
+        if (x < 15)
+            setFaceToward(x + 1, y, z, BlockStateProperties.WEST);
+        if (z > 0)
+            setFaceToward(x, y, z - 1, BlockStateProperties.SOUTH);
+        if (z < 15)
+            setFaceToward(x, y, z + 1, BlockStateProperties.NORTH);
+    }
+
+    private void setFaceToward(int x, int y, int z, BooleanProperty face) {
+        BlockState state = getState(x, y, z);
+        if (state.hasProperty(face) && !state.isAir())
+            put(x, y, z, state.setValue(face, true));
+    }
+
     public Material getBlock(int x, int y, int z) {
         return Material.of(getState(x, y, z).getBlock());
     }
