@@ -528,6 +528,9 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			neighborFloors.decrement();
 			aboveFloorHeight = otherFloorHeight;
 		}
+	
+		// stacked metal fences (a bay railing, a yard fence) get their bottom/top parts; see InitialBlocks
+		chunk.stackFenceParts(Math.max(0, generator.streetLevel - 8), Math.min(chunk.height, generator.streetLevel + 8 + height * aboveFloorHeight + 16));
 	}
 
 	protected void drawExteriorParts(CityWorldGenerator generator, InitialBlocks byteChunk, DataContext context, int y1,
@@ -2607,7 +2610,8 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			return Material.GLASS;
 		case 1:
 			if (chunkOdds.playOdds(Odds.oddsExceedinglyUnlikely))
-				return Material.IRON_BARS;
+				// the bars-for-windows building: its rails come from the railing pool (metal fences)
+				return MaterialTags.pick(MaterialTags.FITTINGS_RAILING, chunkOdds, Material.IRON_BARS);
 			else
 				// the pane half of the split is where a framed window from the pool fits: thin,
 				// centred, turned along the wall by withFaces exactly as a pane is connected
@@ -2619,7 +2623,8 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 	 *  the cases the inset and corner rules were written for. */
 	private boolean thinGlass() {
 		return glassMaterial == Material.GLASS_PANE
-				|| (glassMaterial != Material.GLASS && MaterialTags.resolve(MaterialTags.FITTINGS_WINDOW).contains(glassMaterial));
+				|| (glassMaterial != Material.GLASS && (MaterialTags.resolve(MaterialTags.FITTINGS_WINDOW).contains(glassMaterial)
+						|| MaterialTags.resolve(MaterialTags.FITTINGS_RAILING).contains(glassMaterial)));
 	}
 
 	protected InteriorStyle pickInteriorStyle() {
