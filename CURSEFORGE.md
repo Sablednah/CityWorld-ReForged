@@ -12,6 +12,10 @@ screen.
 Battle-tested across **135 worlds and 3.2 million generated chunks** — over **830 km²** of procedurally
 generated city, more ground than New York City covers.
 
+**New in 5.10.0: Macaw's fits the city out** — doors, windows, fences, roofs, staircases and lights from
+the Macaw's mods (see below), pitched roofs on modern houses, silos and gasometers in industry, and a
+**Minecraft 1.21.1** build alongside 1.21.11, 26.1 and 26.2.
+
 **New in 5.8.0: every street has a name you can use** — `/cityinfo` and the map name the road you are
 on, JourneyMap labels the streets of cities you have not reached yet, and `/cityfind street` finds one.
 Plus a proper **two-chunk airship** drifting over the wild.
@@ -113,6 +117,27 @@ spot, and APOCALYPSE draws on a grim set of skulls, cobwebs and bone piles. With
 rooms keep a classic vanilla look. Mod authors: adding your own furniture takes two data files in
 your jar — see `PALETTES.md` in the repo.
 
+### Macaw's fits it out
+
+**New in 5.10.0.** Install any of **Macaw's Doors, Windows, Fences and Walls, Roofs, Stairs, Trapdoors or
+Lights** (Macaw's Furniture already furnishes the rooms, see above) (and the Biomes O' Plenty add-on, which joins by itself with every BoP wood) and the
+city is built with them. Every house, shop, office and factory picks its street door by what it is for —
+cottage and modern doors on homes, glass shop fronts, metal doors and **garage doors** three to seven high
+on industry — and its interior doors to match. Houses get framed windows joined into runs, a trapdoor
+hatch, and **pitched roofs** in Macaw's roof blocks, matched to the wall wood, with eaves, ridges, valleys
+and gable ends; their stairs become Macaw's compact and terrace treads with railings, landings and balcony
+rails, and office stairwells take the same treads and platforms. Gardens and parks are fenced in picket,
+hedge, ornamental metal and stone walls, paddocks and barn pens in farm fences with a gate, construction
+sites and factory yards in industrial mesh and panelled metal (barbed wire now and then), and every park
+or yard sticks to one fence. Streets are lit by Macaw's lamp posts, park gates by garden lights,
+campgrounds by tiki torches, and interiors by its wall lanterns, sconces, chandeliers, ceiling lights and
+lamps. Without the mods nothing changes — each pool falls back to what CityWorld always built.
+
+Industry itself grew: **silos** — a metal tank on a red steel frame with a hopper chute, a stepped cone
+roof and a caged spiral stair up to a catwalk on the roof, often in batteries — and rare **gasometers**,
+two or three chunks square, a telescoping gas holder in a lattice frame standing in a water trough, its
+bell at a different height on every one. The old nether-brick silo schematics are gone.
+
 ## World styles
 
 Thirteen selectable styles, each its own world type (`cityworld:<style>`) or a click away on the
@@ -187,16 +212,17 @@ changes: the defaults are the operator levels the commands always used.
 
 ## Requirements
 
-CityWorld runs on **three Minecraft versions**. Download the file for yours — the Minecraft version is
+CityWorld runs on **four Minecraft versions**. Download the file for yours — the Minecraft version is
 in the filename, so there is no guessing which is which.
 
 | Minecraft | NeoForge | Java | File |
 |---|---|---|---|
-| 1.21.11 | 21.11.42+ | 21 | `cityworld-5.4.0+mc1.21.11.jar` |
-| 26.1.2 | 26.1.2.95+ | 25 | `cityworld-5.4.0+mc26.1.2.jar` |
-| 26.2 | 26.2.0.59+ | 25 | `cityworld-5.4.0+mc26.2.jar` |
+| 1.21.1 | 21.1.251+ | 21 | `cityworld-5.10.0+mc1.21.1.jar` |
+| 1.21.11 | 21.11.42+ | 21 | `cityworld-5.10.0+mc1.21.11.jar` |
+| 26.1.2 | 26.1.2.95+ | 25 | `cityworld-5.10.0+mc26.1.2.jar` |
+| 26.2 | 26.2.0.59+ | 25 | `cityworld-5.10.0+mc26.2.jar` |
 
-**A given seed builds the same city on all three.** The layout — terrain, roads, districts, which
+**A given seed builds the same city on all four.** The layout — terrain, roads, districts, which
 building stands where — is identical across versions; only the materials shift slightly, because newer
 Minecraft versions bring new blocks into the building palettes. Every version is verified automatically
 before release, generating a real world and checking the cities, signs and biomes come out right.
