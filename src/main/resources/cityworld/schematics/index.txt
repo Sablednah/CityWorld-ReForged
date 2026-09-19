@@ -6,10 +6,6 @@ Highrise/liberty.nbt
 Highrise/tower.schematic
 Highrise/water_tower_richard.schematic
 Industrial/G45station.schematic
-Industrial/bricksilo16.schematic
-Industrial/nethersilo16.schematic
-Industrial/nethersilo32.schematic
-Industrial/nethersilo64.schematic
 Industrial/slabsilo16.schematic
 Industrial/slabsilo32.schematic
 Lowrise/G45station.schematic
