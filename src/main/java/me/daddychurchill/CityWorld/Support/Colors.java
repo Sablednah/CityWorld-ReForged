@@ -241,6 +241,18 @@ public final class Colors {
 		return getWool(getRandomColor());
 	}
 
+	/**
+	 * The wool stairs of a random colour from the set, or {@code null} on a Minecraft that has none.
+	 * Wool stairs arrived in 26.3 (the abandoned camps' tents are made of them); found by name from the
+	 * wool block, so the same colour logic serves both, and a line without them simply answers null.
+	 */
+	public Material getWoolStairs() {
+		Material wool = getWool();
+		net.minecraft.resources.Identifier id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(wool.getBlock());
+		Material stairs = Material.of(id.getNamespace() + ":" + id.getPath() + "_stairs");
+		return stairs == Material.AIR ? null : stairs;
+	}
+
 	private static Material getWool(DyeColor color) {
 		switch (color) {
 		default:
