@@ -89,6 +89,15 @@ Office stairwells "worked perfectly". Deployed `DEPLOYED-57c79c36`; **owner: "al
   1.21.11 instances off the 1.21.1 jar — dry-run checked). Not deployed anywhere: no 1.21.1 instance exists.
   The leftovers commits are on all four branches; 26.2.test carries `DEPLOYED-5fad44d4` (leftovers included).
 
+**Morning 2026-09-19, owner's look at the leftovers:** garage doors "too short" at two → 3..7 high, one height per
+building, capped by the floor (measured 5 on a warehouse); the iron-bar and spruce-fence "railings" the owner
+asked about were the bars-for-windows building style and the wood-column corner style, not pools → the bars
+style draws from `fittings/railing` (iron bars + metal fences); parks may fence with Macaw's stone walls;
+construction sites pick one fence per platmap and the industrial metal fences are in `site_fence` after all —
+`InitialBlocks.stackFenceParts` sets `fencepart` bottom/top over the chunk once drawn. Deployed
+`DEPLOYED-b68eb571`; the 1.21.1 instance got `DEPLOYED-d64a7fd6` (the fittings + port, before this round).
+Industrial scarcity the owner asked about is upstream's mix, unchanged: 29 of 961 platmaps, identical plan hash.
+
 **Open, in the order I would take them:**
 
 0. **A real client look at 1.21.1** (the customize screen's `StringWidget` headers, the F3 readout through
