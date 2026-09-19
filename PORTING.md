@@ -98,11 +98,14 @@ construction sites pick one fence per platmap and the industrial metal fences ar
 `DEPLOYED-b68eb571`; the 1.21.1 instance got `DEPLOYED-d64a7fd6` (the fittings + port, before this round).
 Industrial scarcity the owner asked about is upstream's mix, unchanged: 29 of 961 platmaps, identical plan hash.
 
+**1.21.1 client-verified by the owner (2026-09-19 morning): "working great — End/Nether/palettes look fine, F3
+works, customise world all working."** Site fences re-weighted the same morning (barbed wire was the whole
+pool by numbers): `MaterialTags.pickSiteFence` — iron bars 40%, industrial metal 35%, wire 25% (`site_wire`).
+Deployed `DEPLOYED-d6891893`.
+
 **Open, in the order I would take them:**
 
-0. **A real client look at 1.21.1** (the customize screen's `StringWidget` headers, the F3 readout through
-   the DebugText event, JourneyMap's 1.21.1 API) — a 1.21.1 CurseForge instance with Macaw's 1.21.1 builds
-   would be the test bed. And the owner's look at the leftovers on 26.2.test.
+0. JourneyMap on 1.21.1 is the one integration still unseen on a client there.
 0. **Release** — now four jars; the release workflow's CurseForge/Modrinth game-version mapping reads the
    jar name, so `+mc1.21.1` should just work, but check the first upload. Everything from the fittings arc is on all three branches, self-tested, and playtested three
    times on 26.2.test. Bump, changelog is written (Unreleased), fleet deploy, tag — the recipe in the release memory.
