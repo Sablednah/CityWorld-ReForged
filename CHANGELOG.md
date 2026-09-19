@@ -48,6 +48,9 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   to a coin flip per side. Walled factories now open onto the street like every other building (metal doors
   where a mod supplies them), every fenced yard has at least one opening per street chunk, and wooden yards
   get a gate from the gate pool. A factory's yard also uses one fence, not one per chunk.
+- A building placed where a cluster of silos had first been planned could come out without a wall on the
+  silo side; a building never counts a lot of another kind as part of itself now.
+- A yard gate stood in its gap without the fence either side joining onto it.
 - Industrial districts were mostly failing to populate at all since the garage doors went in (a coin flip
   asked twice handed the pool picker nothing, and the error dropped the whole district), which is why
   industry looked so scarce.

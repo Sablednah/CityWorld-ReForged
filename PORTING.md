@@ -145,6 +145,22 @@ any door at all"; a factory yard with two fence styles; and two new lots, a meta
   `--compare`: plans identical on every version — a new baseline, since the schematic removal moved the plan).**
   Region renders of both lots are the quickest check: `region_render.py … 8 west`.
 
+**Owner's look at the industry round (2026-09-19, 17:00), all four reproduced on the world's seed
+(`5928053031699630699`, "New World (11)") and fixed the same hour:** yard gates did not join their fence —
+`InitialBlocks.setAtmosphereBlock` clears the neighbours' faces (the old MultipleFacing cleanup) and the gate went
+into the hole afterwards → `reconnectNeighbours` after a gate; **half a warehouse** — a silo battery was planned
+at that chunk, `CivilizedContext.validateMap` swaps a `trulyIsolated` STRUCTURE with an isolated neighbour for a
+fresh backfill lot (I had copied the flag from StorageLot), and the replacement warehouse inherited the position's
+key that the flood-filled silos had copied → `isConnected` true across classes → no wall (the DBG log of lot
+creation showed `new SiloLot at -22,-12 … connect SiloLot <- SiloLot … new WarehouseBuildingLot at -22,-12`; ⚠
+keys are positional, so a replaced lot's neighbours keep matching it). Silos are not trulyIsolated now and
+`ConnectedLot.isConnected` also requires `isInstance` either way. Silo stairs, per the owner's hand test: the
+bottom step in the doorway, the first ring cell a solid landing, and every step faces the way you ARRIVE on it
+(a corner step keeps the previous run's direction, back to the cage). Silos one in thirteen (was one in five,
+"waaay too common" — 16 in view). Gasometer paving rolled once per structure (`paveSeed`); silo paving shared
+across a battery. Deployed `DEPLOYED-60fbf57a`; the owner found the gasometer "good", silos "great",
+JourneyMap on 1.21.1 "perfect".
+
 **Open, in the order I would take them:**
 
 0. ~~JourneyMap on 1.21.1~~ — owner: "works perfect" (2026-09-19 afternoon). Nothing on the 1.21.1 line is unseen now.
