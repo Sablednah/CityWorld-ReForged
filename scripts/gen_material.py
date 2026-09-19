@@ -142,6 +142,25 @@ LEGACY = {
     "WOOD_STEP":          ("OAK_SLAB",          "legacy generic wooden slab -> oak"),
 }
 
+# What stands in for an EXTRA on a Minecraft version that predates it. The 1.21.1 line has none of the
+# 1.21.4 pale garden, the 1.21.5 spring drop or the 1.21.9 copper set; the nearest older block keeps
+# the same code compiling and reads about right (a copper chest is a chest, pale oak is oak, leaf
+# litter is a moss carpet). Only consulted when the block is absent; on 1.21.11+ these never apply.
+FALLBACKS = {
+    "IRON_CHAIN": "CHAIN", "COPPER_CHAIN": "CHAIN",
+    "COPPER_TORCH": "TORCH", "COPPER_WALL_TORCH": "WALL_TORCH",
+    "COPPER_LANTERN": "LANTERN", "COPPER_BARS": "IRON_BARS",
+    "COPPER_CHEST": "CHEST", "EXPOSED_COPPER_CHEST": "CHEST", "WEATHERED_COPPER_CHEST": "CHEST",
+    "OXIDIZED_COPPER_CHEST": "CHEST",
+    "PALE_MOSS_BLOCK": "MOSS_BLOCK", "PALE_MOSS_CARPET": "MOSS_CARPET", "PALE_HANGING_MOSS": "VINE",
+    "LEAF_LITTER": "MOSS_CARPET", "BUSH": "FERN", "FIREFLY_BUSH": "FERN", "WILDFLOWERS": "DANDELION",
+    "SHORT_DRY_GRASS": "SHORT_GRASS", "TALL_DRY_GRASS": "TALL_GRASS",
+    "RESIN_BRICKS": "BRICKS", "CREAKING_HEART": "OAK_LOG", "OPEN_EYEBLOSSOM": "POPPY",
+    "PALE_OAK_LOG": "OAK_LOG", "PALE_OAK_WOOD": "OAK_WOOD", "PALE_OAK_LEAVES": "OAK_LEAVES",
+    "PALE_OAK_PLANKS": "OAK_PLANKS", "PALE_OAK_STAIRS": "OAK_STAIRS", "PALE_OAK_SLAB": "OAK_SLAB",
+    "PALE_OAK_FENCE": "OAK_FENCE", "PALE_OAK_DOOR": "OAK_DOOR", "PALE_OAK_TRAPDOOR": "OAK_TRAPDOOR",
+}
+
 # Modern blocks the 1.14 vocabulary never had, so they appear nowhere in the Bukkit source and
 # referenced_names() cannot find them — but the port needs them anyway. Added here rather than by
 # hand-editing Material.java (which is generated). Each must exist as a modern Blocks field.
@@ -463,9 +482,15 @@ def main():
     bad = [f"{k}->{v[0]}" for k, v in LEGACY.items() if not block_expr(v[0])]
     if bad:
         sys.exit("LEGACY targets missing from Blocks: %s" % ", ".join(bad))
-    missing_extras = [n for n in EXTRAS if not block_expr(n)]
+    # An EXTRA this Minecraft version does not have takes its FALLBACK (1.21.1 has no pale oak, no
+    # copper chests, no leaf litter…); one without a fallback is a hard stop, as before.
+    fallback_used = {n: FALLBACKS[n] for n in EXTRAS if not block_expr(n) and n in FALLBACKS}
+    missing_extras = [n for n in EXTRAS if not block_expr(n) and n not in FALLBACKS]
     if missing_extras:
-        sys.exit("EXTRAS missing from Blocks: %s" % ", ".join(missing_extras))
+        sys.exit("EXTRAS missing from Blocks (add a FALLBACK): %s" % ", ".join(missing_extras))
+    bad_fallbacks = [f"{k}->{v}" for k, v in fallback_used.items() if not block_expr(v)]
+    if bad_fallbacks:
+        sys.exit("FALLBACK targets missing from Blocks: %s" % ", ".join(bad_fallbacks))
     # An EXTRA that the Bukkit source turns out to reference is just a normal block constant, and
     # emitting both would not compile.
     dupe_extras = [n for n in EXTRAS if n in block_names]
@@ -475,6 +500,16 @@ def main():
     # and that no name collides with another emitted constant.
     missing_expr = [n for n in EXTRAS_EXPR
                     if not as_weathering_pick(n, weathering, weathering_colls, "Blocks")]
+    # a version before the copper set (1.21.9) has none of these families: each stage stands in as
+    # its FALLBACK (chain, iron bars, lantern) — the stage prefix is stripped to find it
+    expr_fallback = {}
+    for n in missing_expr:
+        base = n
+        for stage in ("EXPOSED_", "WEATHERED_", "OXIDIZED_"):
+            base = base.replace(stage, "")
+        if base in FALLBACKS and block_expr(FALLBACKS[base]):
+            expr_fallback[n] = FALLBACKS[base]
+    missing_expr = [n for n in missing_expr if n not in expr_fallback]
     if missing_expr:
         sys.exit("EXTRAS_EXPR names are not a copper weathering family: %s" % ", ".join(missing_expr))
     dupe_expr = [n for n in EXTRAS_EXPR if n in block_names or n in item_names
@@ -504,11 +539,19 @@ def main():
     lines.append("    // ---- Modern extras (%d) — blocks the 1.14 vocabulary never had -------------"
                  % len(EXTRAS))
     for n in sorted(EXTRAS):
-        lines.append(f"    public static final Material {n} = of({block_expr(n)}); // {EXTRAS[n]}")
+        if n in fallback_used:
+            lines.append(f"    public static final Material {n} = of({block_expr(fallback_used[n])}); "
+                         f"// not in Minecraft {MC_VERSION}: {fallback_used[n]} stands in — {EXTRAS[n]}")
+        else:
+            lines.append(f"    public static final Material {n} = of({block_expr(n)}); // {EXTRAS[n]}")
     lines.append("")
     lines.append("    // ---- Copper weathering stages (%d) — reached via WeatheringCopperBlocks accessors -"
                  % len(EXTRAS_EXPR))
     for n in sorted(EXTRAS_EXPR):
+        if n in expr_fallback:
+            lines.append(f"    public static final Material {n} = of({block_expr(expr_fallback[n])}); "
+                         f"// not in Minecraft {MC_VERSION}: {expr_fallback[n]} stands in — {EXTRAS_EXPR[n]}")
+            continue
         expr = as_weathering_pick(n, weathering, weathering_colls, "Blocks")
         lines.append(f"    public static final Material {n} = of({expr}); // {EXTRAS_EXPR[n]}")
     lines.append("")
@@ -548,7 +591,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -623,8 +666,8 @@ public final class Material {
      * world generation); prefer the typed constants for anything referenced at class-load time.
      */
     public static Material of(String id) {
-        Identifier key = id.indexOf(':') >= 0 ? Identifier.parse(id) : Identifier.withDefaultNamespace(id);
-        Block resolved = BuiltInRegistries.BLOCK.getValue(key);
+        ResourceLocation key = id.indexOf(':') >= 0 ? ResourceLocation.parse(id) : ResourceLocation.withDefaultNamespace(id);
+        Block resolved = BuiltInRegistries.BLOCK.get(key);
         return of(resolved == null ? Blocks.AIR : resolved);
     }
 
@@ -650,7 +693,7 @@ public final class Material {
 
     /** Approximates Bukkit {@code Material.name()} — the registry path, upper-cased. */
     public String name() {
-        Identifier key = block != null
+        ResourceLocation key = block != null
                 ? BuiltInRegistries.BLOCK.getKey(block)
                 : BuiltInRegistries.ITEM.getKey(item);
         return key.getPath().toUpperCase(Locale.ROOT);

@@ -19,7 +19,7 @@ import me.daddychurchill.CityWorld.client.CityPlanClient;
 import me.daddychurchill.CityWorld.client.CityPlanHud;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * The client half of the JourneyMap integration: CityWorld's own controls inside JourneyMap's UI,
@@ -57,8 +57,8 @@ public class CityWorldJourneyMapClientPlugin implements IClientPlugin {
      * to survive. Which looks exactly like "the map crashes when I press J". Shipping our own icon
      * means no dependency on another mod's internal asset layout, this version's or the next one's.
      */
-    private static final Identifier ICON =
-            Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "textures/gui/city_plan.png");
+    private static final ResourceLocation ICON =
+            ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "textures/gui/city_plan.png");
 
     private BooleanOption cityPlan;
 

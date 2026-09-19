@@ -92,13 +92,13 @@ public final class Templates {
      *  multi-{@code palettes} shape is left alone (all palettes share one blocks list, so a safe filter
      *  would need every palette's index to agree on airness — not worth it for hand-dropped files). */
     private static void stripAir(CompoundTag tag) {
-        ListTag palette = tag.getList("palette").orElse(null);
-        ListTag blocks = tag.getList("blocks").orElse(null);
+        ListTag palette = tag.getList("palette", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        ListTag blocks = tag.getList("blocks", net.minecraft.nbt.Tag.TAG_COMPOUND);
         if (palette == null || blocks == null)
             return;
         Set<Integer> air = new java.util.HashSet<>();
         for (int i = 0; i < palette.size(); i++) {
-            String name = palette.getCompoundOrEmpty(i).getString("Name").orElse(null);
+            String name = palette.getCompound(i).getString("Name");
             if (isAir(name))
                 air.add(i);
         }
@@ -106,8 +106,8 @@ public final class Templates {
             return;
         ListTag kept = new ListTag();
         for (int i = 0; i < blocks.size(); i++) {
-            CompoundTag entry = blocks.getCompoundOrEmpty(i);
-            if (!air.contains(entry.getInt("state").orElse(-1)))
+            CompoundTag entry = blocks.getCompound(i);
+            if (!air.contains(entry.getInt("state")))
                 kept.add(entry);
         }
         tag.put("blocks", kept);

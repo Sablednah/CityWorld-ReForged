@@ -12,13 +12,13 @@ import me.daddychurchill.CityWorld.CityWorldMod;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.registries.datamaps.DataMapType;
 import net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent;
 
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The biome → ground-block map: what a biome's surface is made of.
@@ -60,7 +60,7 @@ public final class CityWorldDataMaps {
     }
 
     public static final DataMapType<Biome, Ground> GROUND = DataMapType
-            .builder(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "ground"), Registries.BIOME, Ground.CODEC)
+            .builder(ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "ground"), Registries.BIOME, Ground.CODEC)
             .build();
 
     /**
@@ -152,7 +152,7 @@ public final class CityWorldDataMaps {
     }
 
     public static final DataMapType<Block, Facing> FURNITURE = DataMapType
-            .builder(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "furniture"), Registries.BLOCK,
+            .builder(ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "furniture"), Registries.BLOCK,
                     Facing.CODEC)
             .build();
 

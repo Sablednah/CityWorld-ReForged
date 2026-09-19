@@ -16,7 +16,6 @@ import me.daddychurchill.CityWorld.CityWorldMod;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.metadata.pack.PackFormat;
 
 /**
  * Writes a {@link CityWorldSettingsData} out as a ready-to-use world datapack — the bridge from
@@ -214,14 +213,11 @@ public final class SettingsDatapack {
      * older loaders.
      */
     private static String packMeta(String description) {
-        PackFormat f = SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA);
-        String range = "[" + f.major() + ", " + f.minor() + "]";
+        int format = SharedConstants.getCurrentVersion().getPackVersion(PackType.SERVER_DATA);
         return "{\n"
                 + "  \"pack\": {\n"
                 + "    \"description\": " + GSON.toJson(description) + ",\n"
-                + "    \"pack_format\": " + f.major() + ",\n"
-                + "    \"min_format\": " + range + ",\n"
-                + "    \"max_format\": " + range + "\n"
+                + "    \"pack_format\": " + format + "\n"
                 + "  }\n"
                 + "}\n";
     }

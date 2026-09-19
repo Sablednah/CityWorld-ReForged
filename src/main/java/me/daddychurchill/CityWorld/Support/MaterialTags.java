@@ -10,7 +10,7 @@ import me.daddychurchill.CityWorld.compat.Material;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 
@@ -125,7 +125,7 @@ public final class MaterialTags {
 
     /** A block tag key from a namespaced id, e.g. {@code "minecraft:planks"} or {@code "c:stones"}. */
     public static TagKey<Block> key(String id) {
-        return TagKey.create(Registries.BLOCK, Identifier.parse(id));
+        return TagKey.create(Registries.BLOCK, ResourceLocation.parse(id));
     }
 
     /**
@@ -169,7 +169,7 @@ public final class MaterialTags {
      * null when the mod has none. How one pick from {@code fittings/stairs} brings its whole kit.
      */
     public static Material stairPart(Material tread, String kind) {
-        Identifier id = BuiltInRegistries.BLOCK.getKey(tread.getBlock());
+        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(tread.getBlock());
         String path = id.getPath();
         int cut = path.indexOf("_compact_stairs") >= 0 ? path.indexOf("_compact_stairs")
                 : path.indexOf("_terrace_stairs") >= 0 ? path.indexOf("_terrace_stairs") : path.lastIndexOf("_stairs");

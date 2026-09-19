@@ -5,7 +5,7 @@ import me.daddychurchill.CityWorld.CityWorldMod;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Client -> server: "what is planned in this chunk?", asked as the mouse moves over the map.
@@ -16,7 +16,7 @@ import net.minecraft.resources.Identifier;
 public record LotInfoRequestPayload(int chunkX, int chunkZ) implements CustomPacketPayload {
 
     public static final Type<LotInfoRequestPayload> TYPE =
-            new Type<>(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "lot_info_request"));
+            new Type<>(ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "lot_info_request"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, LotInfoRequestPayload> CODEC = StreamCodec.of(
             (buf, p) -> {

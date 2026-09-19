@@ -65,7 +65,7 @@ public final class ExperimentalWarningSkip {
             return;
         event.setCanceled(true);
         CityWorldMod.LOGGER.info("CityWorld: skipped the experimental-settings warning — its only cause is CityWorld's own dimensions");
-        Minecraft.getInstance().schedule(() -> confirm.callback.accept(true));
+        Minecraft.getInstance().execute(() -> confirm.callback.accept(true));
     }
 
     /** Whether CityWorld's dimensions (and nothing else) are what makes this new world experimental. */
@@ -74,7 +74,7 @@ public final class ExperimentalWarningSkip {
             return false;
         for (RegistryLayer layer : new RegistryLayer[] { RegistryLayer.STATIC, RegistryLayer.WORLDGEN }) {
             boolean foreignUnstable = context.worldgenRegistries().getLayer(layer).registries()
-                    .filter(entry -> !entry.key().identifier().getNamespace().equals(CityWorldMod.MODID))
+                    .filter(entry -> !entry.key().location().getNamespace().equals(CityWorldMod.MODID))
                     .anyMatch(entry -> entry.value().registryLifecycle() != Lifecycle.stable());
             if (foreignUnstable)
                 return false;

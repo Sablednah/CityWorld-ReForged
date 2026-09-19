@@ -6,7 +6,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.world.level.biome.Biome;
 
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The seam {@code CityWorldChunkGenerator.createBiomes} drives: a CityWorld biome source that picks a

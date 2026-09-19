@@ -41,7 +41,7 @@ public final class BiomeSurface {
 
 	private static net.minecraft.tags.TagKey<Biome> groundTag(String name) {
 		return net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BIOME,
-				net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", "ground/" + name));
+				net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("cityworld", "ground/" + name));
 	}
 
 	/**

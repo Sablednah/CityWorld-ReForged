@@ -581,7 +581,7 @@ public class FarmLot extends ConnectedLot {
 				chunk.setBlock(x, cropY, hz, Material.HAY_BLOCK);
 			// a farmhand to work it
 			generator.spawnProvider.spawnWorker(generator, chunk, chunkOdds, x, cropY, z,
-					net.minecraft.resources.Identifier.withDefaultNamespace("farmer"));
+					net.minecraft.resources.ResourceLocation.withDefaultNamespace("farmer"));
 			return;
 		}
 	}

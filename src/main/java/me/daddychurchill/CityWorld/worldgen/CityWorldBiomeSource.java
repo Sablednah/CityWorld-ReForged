@@ -98,7 +98,7 @@ public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes
         return biomes;
     }
 
-    private volatile SurfaceRegions.@org.jspecify.annotations.Nullable Pools surfacePools;
+    private volatile SurfaceRegions.@org.jetbrains.annotations.Nullable Pools surfacePools;
 
     /** Lazily resolved — see {@link CityWorldBiomes#surfacePools()}. */
     @Override

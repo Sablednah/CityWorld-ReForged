@@ -59,11 +59,11 @@ public final class LegacySchematic {
 
     public static LegacySchematic read(InputStream in) throws IOException {
         CompoundTag tag = NbtIo.readCompressed(in, NbtAccounter.unlimitedHeap());
-        int w = tag.getShort("Width").orElse((short) 0);
-        int h = tag.getShort("Height").orElse((short) 0);
-        int l = tag.getShort("Length").orElse((short) 0);
-        byte[] b = tag.getByteArray("Blocks").orElse(new byte[0]);
-        byte[] d = tag.getByteArray("Data").orElse(new byte[0]);
+        int w = tag.getShort("Width");
+        int h = tag.getShort("Height");
+        int l = tag.getShort("Length");
+        byte[] b = tag.getByteArray("Blocks");
+        byte[] d = tag.getByteArray("Data");
         if (b.length != w * h * l)
             throw new IOException("Schematic Blocks length " + b.length + " != " + w + "x" + h + "x" + l);
         LegacySchematic schem = new LegacySchematic(w, h, l, b, d, new HashMap<>());
@@ -78,20 +78,20 @@ public final class LegacySchematic {
      * (e.g. jukebox records) are skipped.
      */
     private void readBlockEntities(CompoundTag root) {
-        ListTag list = root.getList("TileEntities").orElse(null);
+        ListTag list = root.getList("TileEntities", net.minecraft.nbt.Tag.TAG_COMPOUND);
         if (list == null)
             return;
         for (int i = 0; i < list.size(); i++) {
-            CompoundTag te = list.getCompoundOrEmpty(i);
-            int x = te.getIntOr("x", 0);
-            int y = te.getIntOr("y", 0);
-            int z = te.getIntOr("z", 0);
+            CompoundTag te = list.getCompound(i);
+            int x = te.getInt("x");
+            int y = te.getInt("y");
+            int z = te.getInt("z");
             if (x < 0 || x >= width || y < 0 || y >= height || z < 0 || z >= length)
                 continue;
-            CompoundTag nbt = switch (te.getStringOr("id", "")) {
+            CompoundTag nbt = switch (te.getString("id")) {
                 case "Sign" -> signNbt(new String[] {
-                        te.getStringOr("Text1", ""), te.getStringOr("Text2", ""),
-                        te.getStringOr("Text3", ""), te.getStringOr("Text4", "") });
+                        te.getString("Text1"), te.getString("Text2"),
+                        te.getString("Text3"), te.getString("Text4") });
                 case "Chest", "Trap", "Furnace", "Dispenser", "Dropper", "Hopper", "Brewingstand" ->
                         containerNbt(te);
                 default -> null;
@@ -103,16 +103,16 @@ public final class LegacySchematic {
 
     /** Modern container block-entity nbt: {@code Items} rebuilt from the legacy stacks we can map. */
     private static CompoundTag containerNbt(CompoundTag te) {
-        ListTag legacy = te.getList("Items").orElse(null);
+        ListTag legacy = te.getList("Items", net.minecraft.nbt.Tag.TAG_COMPOUND);
         if (legacy == null || legacy.isEmpty())
             return null;
         ListTag items = new ListTag();
         for (int i = 0; i < legacy.size(); i++) {
-            CompoundTag it = legacy.getCompoundOrEmpty(i);
-            int legacyId = it.getIntOr("id", -1);
-            int count = it.getIntOr("Count", 0);
-            int slot = it.getIntOr("Slot", 0);
-            int damage = it.getIntOr("Damage", 0);
+            CompoundTag it = legacy.getCompound(i);
+            int legacyId = it.getInt("id");
+            int count = it.getInt("Count");
+            int slot = it.getInt("Slot");
+            int damage = it.getInt("Damage");
             if (legacyId < 0 || count < 1)
                 continue;
             String modern = modernItemId(legacyId, damage);

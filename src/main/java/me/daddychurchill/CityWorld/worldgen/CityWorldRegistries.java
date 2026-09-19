@@ -6,7 +6,7 @@ import me.daddychurchill.CityWorld.CityWorldMod;
 
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -40,11 +40,11 @@ public final class CityWorldRegistries {
 
     /** Root key of the per-world settings datapack registry. */
     public static final ResourceKey<Registry<CityWorldSettingsData>> WORLD_SETTINGS =
-            ResourceKey.createRegistryKey(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "world_settings"));
+            ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "world_settings"));
 
     /** The bundled default profile — what {@code cityworld:city} and the presets reference. */
     public static final ResourceKey<CityWorldSettingsData> DEFAULT_SETTINGS =
-            ResourceKey.create(WORLD_SETTINGS, Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "default"));
+            ResourceKey.create(WORLD_SETTINGS, ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "default"));
 
     static {
         CHUNK_GENERATORS.register("city", () -> CityWorldChunkGenerator.CODEC);

@@ -228,7 +228,7 @@ final class CityPlanOverlay {
             states.remove(id);
             return;
         }
-        ServerLevel level = player.level();
+        ServerLevel level = player.serverLevel();
         CityWorldGenerator context = contextFor(level);
         if (context == null) {
             states.remove(id); // not a CityWorld level — nothing to draw
@@ -252,7 +252,7 @@ final class CityPlanOverlay {
             state.dimension = level.dimension();
         }
 
-        MinecraftServer server = player.level().getServer();
+        MinecraftServer server = player.serverLevel().getServer();
         PLANNER.execute(() -> {
             List<ServerPolygon> polygons = new ArrayList<>();
             // What this sweep covers, kept outside the try so the bookkeeping below still runs after
@@ -332,7 +332,7 @@ final class CityPlanOverlay {
                     state.shown.remove(furthest.getKey());
                 }
                 CityWorldMod.LOGGER.debug("City plan overlay: dropped {} of {} for {} (budget {})",
-                        over, over + budget, player.getGameProfile().name(), budget);
+                        over, over + budget, player.getGameProfile().getName(), budget);
             }
         } catch (Throwable t) {
             CityWorldMod.LOGGER.error("City plan overlay cleanup failed", t);

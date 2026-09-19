@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * The <b>trade</b> a shop plies — the fine half of CityWorld's shop taxonomy (the coarse half is
@@ -14,7 +14,7 @@ import net.minecraft.resources.Identifier;
  * to, so the (later) interiors/villager passes and any downstream mod can turn a classification into
  * the right lectern, fletching table or blast furnace, and the right resident.
  *
- * <p>Part of CityWorld's small <b>public API</b>. The vanilla ids are exposed as {@link Identifier}s
+ * <p>Part of CityWorld's small <b>public API</b>. The vanilla ids are exposed as {@link ResourceLocation}s
  * ({@link #profession()} / {@link #jobBlock()}) rather than live registry objects so this enum stays a
  * pure, early-loadable data table. The set of trades is a stable contract: additive-only, no renames.
  *
@@ -43,14 +43,14 @@ public enum ShopTrade {
     DRAPER("Draper", "shepherd", "loom", EnumSet.of(ShopScale.HIGH_STREET));
 
     private final String displayName;
-    private final Identifier profession;
-    private final Identifier jobBlock;
+    private final ResourceLocation profession;
+    private final ResourceLocation jobBlock;
     private final Set<ShopScale> scales;
 
     ShopTrade(String displayName, String professionPath, String jobBlockPath, EnumSet<ShopScale> scales) {
         this.displayName = displayName;
-        this.profession = Identifier.withDefaultNamespace(professionPath);
-        this.jobBlock = Identifier.withDefaultNamespace(jobBlockPath);
+        this.profession = ResourceLocation.withDefaultNamespace(professionPath);
+        this.jobBlock = ResourceLocation.withDefaultNamespace(jobBlockPath);
         this.scales = scales;
     }
 
@@ -60,12 +60,12 @@ public enum ShopTrade {
     }
 
     /** The vanilla {@code minecraft:villager_profession} this trade maps to (e.g. {@code minecraft:cartographer}). */
-    public Identifier profession() {
+    public ResourceLocation profession() {
         return profession;
     }
 
     /** The vanilla job-site block this trade maps to (e.g. {@code minecraft:cartography_table}). */
-    public Identifier jobBlock() {
+    public ResourceLocation jobBlock() {
         return jobBlock;
     }
 

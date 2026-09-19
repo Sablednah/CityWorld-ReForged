@@ -84,7 +84,7 @@ public class CityWorldJourneyMapPlugin implements IServerPlugin, MapMarkers.List
      */
     @Override
     public void onLandmark(MapMarkers.Landmark landmark) {
-        String key = landmark.dimension().identifier() + "|" + landmark.x() + "|" + landmark.z()
+        String key = landmark.dimension().location() + "|" + landmark.x() + "|" + landmark.z()
                 + "|" + landmark.title();
         if (!marked.add(key))
             return;

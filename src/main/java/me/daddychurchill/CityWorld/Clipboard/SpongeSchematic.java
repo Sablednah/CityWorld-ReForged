@@ -45,30 +45,30 @@ public final class SpongeSchematic {
 
     public static SpongeSchematic read(InputStream in) throws IOException {
         CompoundTag tag = NbtIo.readCompressed(in, NbtAccounter.unlimitedHeap());
-        CompoundTag root = tag.getCompound("Schematic").orElse(tag); // v3 nests under "Schematic"
+        CompoundTag root = tag.getCompound("Schematic"); // v3 nests under "Schematic"
 
-        int w = root.getShort("Width").orElse((short) 0);
-        int h = root.getShort("Height").orElse((short) 0);
-        int l = root.getShort("Length").orElse((short) 0);
-        int dv = root.getInt("DataVersion").orElse(0);
+        int w = root.getShort("Width");
+        int h = root.getShort("Height");
+        int l = root.getShort("Length");
+        int dv = root.getInt("DataVersion");
 
-        CompoundTag blocksTag = root.getCompound("Blocks").orElse(null); // v3
+        CompoundTag blocksTag = root.getCompound("Blocks"); // v3
         CompoundTag paletteTag;
         byte[] blockData;
         ListTag blockEntities;
         if (blocksTag != null) {
-            paletteTag = blocksTag.getCompound("Palette").orElse(new CompoundTag());
-            blockData = blocksTag.getByteArray("Data").orElse(new byte[0]);
-            blockEntities = blocksTag.getList("BlockEntities").orElse(new ListTag());
+            paletteTag = blocksTag.getCompound("Palette");
+            blockData = blocksTag.getByteArray("Data");
+            blockEntities = blocksTag.getList("BlockEntities", net.minecraft.nbt.Tag.TAG_COMPOUND);
         } else {
-            paletteTag = root.getCompound("Palette").orElse(new CompoundTag());
-            blockData = root.getByteArray("BlockData").orElse(new byte[0]);
-            blockEntities = root.getList("BlockEntities").orElse(new ListTag());
+            paletteTag = root.getCompound("Palette");
+            blockData = root.getByteArray("BlockData");
+            blockEntities = root.getList("BlockEntities", net.minecraft.nbt.Tag.TAG_COMPOUND);
         }
 
         Map<Integer, String> palette = new HashMap<>();
-        for (String key : paletteTag.keySet())
-            palette.put(paletteTag.getInt(key).orElse(0), key);
+        for (String key : paletteTag.getAllKeys())
+            palette.put(paletteTag.getInt(key), key);
 
         return new SpongeSchematic(w, h, l, dv, palette, decodeVarints(blockData, w * h * l), blockEntities);
     }
@@ -135,13 +135,13 @@ public final class SpongeSchematic {
     private Map<Integer, CompoundTag> blockEntities() {
         Map<Integer, CompoundTag> out = new HashMap<>();
         for (int i = 0; i < blockEntities.size(); i++) {
-            CompoundTag be = blockEntities.getCompoundOrEmpty(i).copy();
-            int[] pos = be.getIntArray("Pos").orElse(null);
+            CompoundTag be = blockEntities.getCompound(i).copy();
+            int[] pos = be.getIntArray("Pos");
             if (pos == null || pos.length != 3)
                 continue;
             be.remove("Pos");
             // Sponge names the type "Id"; the structure loader/data-fixer want lowercase "id".
-            be.getString("Id").ifPresent(id -> be.putString("id", id));
+            if (be.contains("Id")) be.putString("id", be.getString("Id"));
             be.remove("Id");
             if (pos[0] < 0 || pos[0] >= width || pos[1] < 0 || pos[1] >= height || pos[2] < 0 || pos[2] >= length)
                 continue;

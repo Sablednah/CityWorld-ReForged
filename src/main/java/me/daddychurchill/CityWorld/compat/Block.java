@@ -43,7 +43,7 @@ public final class Block {
      * that suppresses all of it — skip {@code onPlace}, skip shape updates, suppress drops, and
      * skip block-entity removal side effects (so overwriting a chest doesn't spew its contents).
      */
-    private static final int NO_PHYSICS = net.minecraft.world.level.block.Block.UPDATE_SKIP_ALL_SIDEEFFECTS
+    private static final int NO_PHYSICS = net.minecraft.world.level.block.Block.UPDATE_SUPPRESS_DROPS
             | net.minecraft.world.level.block.Block.UPDATE_CLIENTS;
     /** Write the block and let neighbours react. */
     private static final int WITH_PHYSICS = net.minecraft.world.level.block.Block.UPDATE_ALL;

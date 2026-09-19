@@ -3,7 +3,7 @@ package me.daddychurchill.CityWorld.client;
 import java.util.Optional;
 
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.levelgen.presets.WorldPreset;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -86,7 +86,7 @@ public final class CityWorldPackConfig {
         String raw = LOCKED_WORLD_PRESET.get().trim();
         if (raw.isEmpty())
             return Optional.empty();
-        Identifier id = Identifier.tryParse(raw);
+        ResourceLocation id = ResourceLocation.tryParse(raw);
         if (id == null) {
             me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
                     "CityWorld: lockedWorldPreset \"{}\" is not a valid id — no world type lock applied", raw);

@@ -62,7 +62,7 @@ public final class RealBlocks extends SupportBlocks {
 				return false;
 			net.minecraft.server.level.ServerLevel lvl = sla.getLevel();
 			net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(getOriginX() + x, y, getOriginZ() + z);
-			return lvl.getBiome(pos).value().coldEnoughToSnow(pos, lvl.getSeaLevel());
+			return lvl.getBiome(pos).value().coldEnoughToSnow(pos);
 		} catch (Throwable t) {
 			return false;
 		}

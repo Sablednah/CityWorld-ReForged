@@ -12,7 +12,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
@@ -395,7 +395,7 @@ public class StructureInAirProvider extends Provider {
         }
 
         private static boolean exists(String id) {
-            return BuiltInRegistries.BLOCK.containsKey(Identifier.parse(id));
+            return BuiltInRegistries.BLOCK.containsKey(ResourceLocation.parse(id));
         }
 
         /** One stencil cell: frame position, block (vanilla id or {@code WOOD_} slot), properties, seat role. */

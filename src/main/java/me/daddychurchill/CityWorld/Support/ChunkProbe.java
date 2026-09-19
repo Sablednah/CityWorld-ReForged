@@ -75,7 +75,7 @@ public final class ChunkProbe {
     private static int[] findStructure(MinecraftServer server, ServerLevel level, String id) {
         var registry = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
         var holder = registry.get(net.minecraft.resources.ResourceKey.create(
-                net.minecraft.core.registries.Registries.STRUCTURE, net.minecraft.resources.Identifier.parse(id)));
+                net.minecraft.core.registries.Registries.STRUCTURE, net.minecraft.resources.ResourceLocation.parse(id)));
         if (holder.isEmpty())
             throw new IllegalArgumentException("unknown structure " + id);
         // -Dcityworld.probe.samples=N: also report the nearest start around N origins on a 1,600-block ring, so a
@@ -102,7 +102,7 @@ public final class ChunkProbe {
                     pieceBoxes.add(piece.getBoundingBox());
             for (int x = 0; x < 16; x++)
                 for (int z = 0; z < 16; z++)
-                    for (int y = level.getMinY(); y < level.getMaxY(); y++) {
+                    for (int y = level.getMinBuildHeight(); y < (level.getMaxBuildHeight() - 1); y++) {
                         var cell = new net.minecraft.core.BlockPos(sc.getPos().getMinBlockX() + x, y, sc.getPos().getMinBlockZ() + z);
                         var state = sc.getBlockState(cell);
                         if (state.is(net.minecraft.world.level.block.Blocks.LADDER))
@@ -288,7 +288,7 @@ public final class ChunkProbe {
                         lowest = Math.min(lowest, generator.getFirstOccupiedHeight(bx + d[0], bz + d[1],
                                 net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, level, random));
                     String biome = generator.getBiomeSource().getNoiseBiome(bx >> 2, lowest >> 2, bz >> 2,
-                            random.sampler()).unwrapKey().map(k -> k.identifier().getPath()).orElse("?");
+                            random.sampler()).unwrapKey().map(k -> k.location().getPath()).orElse("?");
                     biomes.merge(biome, 1, Integer::sum);
                     if (lowest >= 60) {
                         tall++;
@@ -318,7 +318,7 @@ public final class ChunkProbe {
                         int h = generator.getBaseHeight(bx, bz,
                                 net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, level, random);
                         theirs += System.nanoTime() - t0;
-                        int top = h <= level.getMinY() ? 0 : h - 1, got = tops[(bx & 15) << 4 | (bz & 15)];
+                        int top = h <= level.getMinBuildHeight() ? 0 : h - 1, got = tops[(bx & 15) << 4 | (bz & 15)];
                         checked++;
                         if (top != got) {
                             wrong++;
@@ -341,7 +341,7 @@ public final class ChunkProbe {
                 for (int k = 0; k < 5; k++) {
                     int h = generator.getBaseHeight((x0 + i) * 16 + ox(k), (z0 + j) * 16 + oz(k),
                             net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, level, random);
-                    if (h <= level.getMinY())
+                    if (h <= level.getMinBuildHeight())
                         continue;
                     solid[i][j]++;
                     lo[i][j] = Math.min(lo[i][j], h);
@@ -439,10 +439,10 @@ public final class ChunkProbe {
             ServerLevel level = dim == null ? server.overworld()
                     : server.getLevel(net.minecraft.resources.ResourceKey.create(
                             net.minecraft.core.registries.Registries.DIMENSION,
-                            net.minecraft.resources.Identifier.parse(dim)));
+                            net.minecraft.resources.ResourceLocation.parse(dim)));
             if (level == null)
                 throw new IllegalArgumentException("cityworld.probe.dim " + dim + " is not a loaded dimension");
-            CityWorldMod.LOGGER.warn("PROBE: dimension {} generator {}", level.dimension().identifier(),
+            CityWorldMod.LOGGER.warn("PROBE: dimension {} generator {}", level.dimension().location(),
                     level.getChunkSource().getGenerator().getClass().getSimpleName());
             int cx, cz;
             if (spec.startsWith("survey:end")) {
@@ -554,7 +554,7 @@ public final class ChunkProbe {
                                 if (state.is(net.minecraft.world.level.block.Blocks.BEDROCK)) {
                                     int roof = top;
                                     top = -1;
-                                    for (int y = level.getMinY() + 1; y < roof - 1; y++) {
+                                    for (int y = level.getMinBuildHeight() + 1; y < roof - 1; y++) {
                                         var here = level.getBlockState(new BlockPos(wx, y, wz));
                                         if (here.isAir() || here.is(net.minecraft.world.level.block.Blocks.BEDROCK))
                                             continue;
@@ -569,7 +569,7 @@ public final class ChunkProbe {
                                         continue;
                                 }
                                 String biome = level.getBiome(new BlockPos(wx, top, wz)).unwrapKey()
-                                        .map(k -> k.identifier().getPath()).orElse("?");
+                                        .map(k -> k.location().getPath()).orElse("?");
                                 byBiome.computeIfAbsent(biome, k -> new java.util.TreeMap<>())
                                         .merge(state.getBlock().getName().getString(), 1, Integer::sum);
                             }
@@ -584,7 +584,7 @@ public final class ChunkProbe {
                         ChunkAccess c = level.getChunk(cx + dx, cz + dz);
                         for (int x = 0; x < 16; x++)
                             for (int z = 0; z < 16; z++)
-                                for (int y = level.getMinY() + 1; y < level.getMaxY(); y++) {
+                                for (int y = level.getMinBuildHeight() + 1; y < (level.getMaxBuildHeight() - 1); y++) {
                                     var st2 = c.getBlockState(new BlockPos(c.getPos().getMinBlockX() + x, y,
                                             c.getPos().getMinBlockZ() + z));
                                     if (!st2.isAir())
@@ -610,7 +610,7 @@ public final class ChunkProbe {
                                 // Stop at the surface: open sky is not headroom, it is outdoors.
                                 int ceiling = level.getHeight(
                                         net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, wx, wz);
-                                for (int y = level.getMinY() + 1; y < ceiling; y++) {
+                                for (int y = level.getMinBuildHeight() + 1; y < ceiling; y++) {
                                     if (c.getBlockState(new BlockPos(wx, y, wz)).isAir())
                                         best = Math.max(best, ++run);
                                     else
@@ -643,7 +643,7 @@ public final class ChunkProbe {
                             ChunkAccess c = level.getChunk(cx + dx, cz + dz);
                             for (int x = 0; x < 16; x++)
                                 for (int z = 0; z < 16; z++)
-                                    for (int y = level.getMinY() + 1; y < level.getMaxY() - 1; y++) {
+                                    for (int y = level.getMinBuildHeight() + 1; y < (level.getMaxBuildHeight() - 1) - 1; y++) {
                                         int wx = c.getPos().getMinBlockX() + x, wz = c.getPos().getMinBlockZ() + z;
                                         // Either form matches: "crimson_nylium" or "minecraft:crimson_nylium".
                                         // This compared the PATH ALONE against whatever was passed, so a
@@ -664,7 +664,7 @@ public final class ChunkProbe {
                                         below.merge(c.getBlockState(new BlockPos(wx, y - 1, wz)).getBlock()
                                                 .getName().getString(), 1, Integer::sum);
                                         boolean clear = true;
-                                        for (int up = y + 1; up < Math.min(y + 25, level.getMaxY()); up++)
+                                        for (int up = y + 1; up < Math.min(y + 25, (level.getMaxBuildHeight() - 1)); up++)
                                             if (!c.getBlockState(new BlockPos(wx, up, wz)).isAir()) {
                                                 clear = false;
                                                 break;
@@ -727,14 +727,14 @@ public final class ChunkProbe {
                     for (int x = 0; x < 16; x++)
                         for (int z = 0; z < 16; z++) {
                             int wx = c.getPos().getMinBlockX() + x, wz = c.getPos().getMinBlockZ() + z;
-                            for (int y = level.getMinY(); y < level.getMaxY(); y++) {
+                            for (int y = level.getMinBuildHeight(); y < (level.getMaxBuildHeight() - 1); y++) {
                                 var state = c.getBlockState(new BlockPos(wx, y, wz));
                                 if (!state.isAir())
                                     blocks.merge(state.getBlock().getName().getString(), 1, Integer::sum);
                             }
                             int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, wx, wz);
                             biomes.merge(level.getBiome(new BlockPos(wx, top, wz)).unwrapKey()
-                                    .map(k -> k.identifier().toString()).orElse("?"), 1, Integer::sum);
+                                    .map(k -> k.location().toString()).orElse("?"), 1, Integer::sum);
                         }
                 }
             CityWorldMod.LOGGER.warn("PROBE region blocks: {}", blocks);
@@ -754,7 +754,7 @@ public final class ChunkProbe {
                         temps[n] = t;
                         humids[n++] = h;
                         split.merge(source.classify(context, 70, t, h, false).unwrapKey()
-                                .map(k -> k.identifier().toString()).orElse("?"), 1, Integer::sum);
+                                .map(k -> k.location().toString()).orElse("?"), 1, Integer::sum);
                     }
                 java.util.Arrays.sort(temps);
                 java.util.Arrays.sort(humids);

@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.Biomes;
 
@@ -40,7 +40,7 @@ public final class Biome {
 
     /** Interns a wrapper for a biome by id, e.g. {@code "minecraft:plains"} — for biomes the 1.14 vocabulary never knew. */
     public static Biome of(String id) {
-        return of(ResourceKey.create(Registries.BIOME, Identifier.parse(id)));
+        return of(ResourceKey.create(Registries.BIOME, ResourceLocation.parse(id)));
     }
 
     /** The vanilla registry key this biome stands for. */
@@ -50,7 +50,7 @@ public final class Biome {
 
     @Override
     public String toString() {
-        return key.identifier().toString();
+        return key.location().toString();
     }
 
     // --- the constants CityWorld actually names ------------------------------------------------

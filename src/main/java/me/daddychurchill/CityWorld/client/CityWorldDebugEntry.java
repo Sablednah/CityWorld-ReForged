@@ -6,19 +6,15 @@ import me.daddychurchill.CityWorld.api.LotInfo;
 import me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.debug.DebugScreenDisplayer;
-import net.minecraft.client.gui.components.debug.DebugScreenEntry;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.chunk.LevelChunk;
-import org.jspecify.annotations.Nullable;
 
 /**
  * A CityWorld F3 debug-screen entry — the {@code /cityinfo} readout, live under the crosshair, plus a
- * few technical datums. Registered via {@code RegisterDebugEntriesEvent} (see {@link CityWorldClient}).
+ * few technical datums. On 1.21.1 there is no debug-entry registry yet: the lines are appended to the
+ * left column through NeoForge's {@code CustomizeGuiOverlayEvent.DebugText} (see {@link CityWorldClient}).
  *
  * <p>The plan (context / lot / nature) is computed server-side, so this only fills in when the client
  * is the host of a single-player world (via {@link Minecraft#getSingleplayerServer()}); on a remote
@@ -26,11 +22,11 @@ import org.jspecify.annotations.Nullable;
  * down — and reads only thread-safe, already-planned state (the platmap the player stands in is
  * planned by the time its chunk exists).
  */
-public class CityWorldDebugEntry implements DebugScreenEntry {
+public class CityWorldDebugEntry {
 
-    @Override
-    public void display(DebugScreenDisplayer displayer, @Nullable Level serverLevel, @Nullable LevelChunk clientChunk,
-            @Nullable LevelChunk serverChunkArg) {
+    /** Append CityWorld's F3 lines to {@code lines} (the overlay's left column). */
+    public void display(java.util.List<String> lines) {
+        java.util.function.Consumer<String> displayer = lines::add;
         try {
             Minecraft mc = Minecraft.getInstance();
             Entity camera = mc.getCameraEntity();
@@ -52,26 +48,26 @@ public class CityWorldDebugEntry implements DebugScreenEntry {
             // /cityinfo never disagree; the level datums below still come straight off the generator.
             LotInfo info = CityWorldAPI.lotAt(level, pos).orElse(null);
             if (info != null) {
-                displayer.addLine("[CityWorld] " + BUILD_STAMP);
-                displayer.addLine(String.format("[CityWorld] %s  %s (%s)  nature %.0f%%",
+                displayer.accept("[CityWorld] " + BUILD_STAMP);
+                displayer.accept(String.format("[CityWorld] %s  %s (%s)  nature %.0f%%",
                         cw.resolvedStyle(), info.lotClass(), info.lotStyle(), info.naturePercent() * 100.0));
-                displayer.addLine(String.format("[CityWorld] context %s (%s)",
+                displayer.accept(String.format("[CityWorld] context %s (%s)",
                         info.contextClass(), info.contextFamily()));
                 if (info.interior() != null) // "road", not "street": the street-level datum has that word
-                    displayer.addLine((info.isRoad() ? "[CityWorld] road " : "[CityWorld] interior ") + info.interior());
+                    displayer.accept((info.isRoad() ? "[CityWorld] road " : "[CityWorld] interior ") + info.interior());
                 if (info.shop() != null)
-                    displayer.addLine("[CityWorld] shop " + info.shop().describe());
+                    displayer.accept("[CityWorld] shop " + info.shop().describe());
                 if (info.schematicName() != null)
-                    displayer.addLine("[CityWorld] schematic " + info.schematicName());
+                    displayer.accept("[CityWorld] schematic " + info.schematicName());
             }
             // Two lines, not one: the single combined line ran past the width of the F3 overlay.
-            displayer.addLine(String.format("[CityWorld] street %d  sea %d  maxFloors %d",
+            displayer.accept(String.format("[CityWorld] street %d  sea %d  maxFloors %d",
                     context.streetLevel, context.seaLevel, context.getSettings().maxBuildingFloors));
-            displayer.addLine(String.format("[CityWorld] tree %d  evergreen %d  snow %d",
+            displayer.accept(String.format("[CityWorld] tree %d  evergreen %d  snow %d",
                     context.treeLevel, context.evergreenLevel, context.snowLevel));
         } catch (Throwable t) {
             // Never let the debug overlay crash the client; show that something went wrong instead.
-            displayer.addLine("[CityWorld] (info unavailable)");
+            displayer.accept("[CityWorld] (info unavailable)");
         }
     }
 

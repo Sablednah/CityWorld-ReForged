@@ -8,7 +8,7 @@ import me.daddychurchill.CityWorld.CityWorldMod;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
@@ -31,7 +31,7 @@ public final class CityWorldRealms {
     private CityWorldRealms() {}
 
     public static final ResourceKey<DimensionType> RUINED_NETHER_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE,
-            Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "ruined_nether"));
+            ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "ruined_nether"));
 
     /** Whether a world's dimensions already carry the ruined-city Nether. */
     public static boolean hasRuinedNether(WorldDimensions dimensions) {

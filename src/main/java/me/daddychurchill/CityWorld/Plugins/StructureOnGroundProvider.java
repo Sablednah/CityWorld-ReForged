@@ -842,7 +842,7 @@ public class StructureOnGroundProvider extends Provider {
 			return matRoof;
 		String base = path.substring(0, path.length() - "_roof".length());
 		for (String candidate : new String[] { base, base + "_log", base + "_planks" }) {
-			for (net.minecraft.resources.Identifier id : net.minecraft.core.registries.BuiltInRegistries.BLOCK.keySet())
+			for (net.minecraft.resources.ResourceLocation id : net.minecraft.core.registries.BuiltInRegistries.BLOCK.keySet())
 				if (id.getPath().equals(candidate)) {
 					Material found = Material.of(id.toString());
 					if (found != Material.AIR && found.isOccluding())
@@ -856,7 +856,7 @@ public class StructureOnGroundProvider extends Provider {
 	private Material ridgeFor(Material slope) {
 		if (slope == null)
 			return null;
-		net.minecraft.resources.Identifier id = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+		net.minecraft.resources.ResourceLocation id = net.minecraft.core.registries.BuiltInRegistries.BLOCK
 				.getKey(slope.getBlock());
 		if (!id.getPath().endsWith("_roof"))
 			return null;

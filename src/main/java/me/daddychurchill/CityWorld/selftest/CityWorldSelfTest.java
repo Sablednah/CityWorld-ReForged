@@ -298,7 +298,7 @@ public final class CityWorldSelfTest {
                     return;
                 var key = holder.unwrapKey().orElse(null);
                 var got = me.daddychurchill.CityWorld.Support.BiomeSurface.surface(holder, key);
-                String id = key == null ? "?" : key.identifier().toString();
+                String id = key == null ? "?" : key.location().toString();
                 mapped.put(id, got == null ? "null" : got.name());
                 if (got != check.expected())
                     fail("biome " + id + " is tagged " + check.tag().location() + " but its ground resolves to "
@@ -314,7 +314,7 @@ public final class CityWorldSelfTest {
             var ground = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.groundFor(holder);
             if (ground == null)
                 continue;
-            String id = holder.unwrapKey().map(k -> k.identifier().toString()).orElse("?");
+            String id = holder.unwrapKey().map(k -> k.location().toString()).orElse("?");
             var got = me.daddychurchill.CityWorld.Support.BiomeSurface.surface(holder,
                     holder.unwrapKey().orElse(null));
             String want = net.minecraft.core.registries.BuiltInRegistries.BLOCK
@@ -334,7 +334,7 @@ public final class CityWorldSelfTest {
         for (var role : List.of("chair", "table", "sofa", "desk", "counter", "cabinet", "bookshelf",
                 "sink", "toilet", "bath", "lamp", "bed", "floor_lamp", "shelf")) {
             var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK,
-                    net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", "furniture/" + role));
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("cityworld", "furniture/" + role));
             int n = me.daddychurchill.CityWorld.Support.MaterialTags.resolve(tag).size();
             if (n > 0)
                 roles.put(role, n);
@@ -514,7 +514,7 @@ public final class CityWorldSelfTest {
                         continue;
                     var key = holder.unwrapKey().orElse(null);
                     if (me.daddychurchill.CityWorld.Support.BiomeSurface.surface(holder, key) == null)
-                        untagged.add(key == null ? "?" : key.identifier().getPath());
+                        untagged.add(key == null ? "?" : key.location().getPath());
                 }
         }
         java.util.Collections.sort(untagged);
@@ -735,7 +735,7 @@ public final class CityWorldSelfTest {
      */
     private void checkTwinDimension(MinecraftServer server) {
         ServerLevel city = server.getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION,
-                net.minecraft.resources.Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "city")));
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "city")));
         if (city == null) {
             fail("the cityworld:city dimension (/cityworld) is not loaded");
             return;
@@ -877,7 +877,7 @@ public final class CityWorldSelfTest {
                 int x = (70 + i * 3) * 16 + (i * 7 + 3) % 16, z = (-18 + j * 3) * 16 + (j * 5 + 1) % 16;
                 int height = generator.getBaseHeight(x, z, net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG,
                         end, random);
-                int top = height <= end.getMinY() ? 0 : height - 1;
+                int top = height <= end.getMinBuildHeight() ? 0 : height - 1;
                 columns++;
                 if (top != context.endTerrain.topAt(x, z))
                     wrong++;
@@ -995,7 +995,7 @@ public final class CityWorldSelfTest {
         java.util.Set<String> poolNames = new java.util.TreeSet<>();
         if (source instanceof CityWorldBiomes cityBiomes)
             cityBiomes.cavePool().biomes().forEach(
-                    h -> h.unwrapKey().ifPresent(k -> poolNames.add(k.identifier().getPath())));
+                    h -> h.unwrapKey().ifPresent(k -> poolNames.add(k.location().getPath())));
         report.put("biome.cavePool", poolNames.toString());
         if (poolNames.isEmpty())
             fail("the cityworld:cave_pool tag resolved to nothing — no cave biomes at all, so ancient "
@@ -1112,7 +1112,7 @@ public final class CityWorldSelfTest {
                 var hit = bridge.find(target);
                 total++;
                 if (hit != null)
-                    hit.unwrapKey().ifPresent(k -> reached.add(k.identifier().toString()));
+                    hit.unwrapKey().ifPresent(k -> reached.add(k.location().toString()));
 
                 // What a player would actually meet: the direct win where there is one, and on the
                 // reserved share the modded-only answer. This is the number the share dial exists to
@@ -1124,18 +1124,18 @@ public final class CityWorldSelfTest {
                         && me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.isModded(hit);
                 if (directWin) {
                     directGround++;
-                    hit.unwrapKey().ifPresent(k -> directOnly.add(k.identifier().toString()));
+                    hit.unwrapKey().ifPresent(k -> directOnly.add(k.location().toString()));
                 }
                 // Ask the modded-only list at EVERY point, not just reserved ones: this measures what
                 // the share could ever reach, so the answer does not move when the dial does.
                 var moddedBest = bridge.findModded(target);
                 if (moddedBest != null)
-                    moddedBest.unwrapKey().ifPresent(k -> moddedReachable.add(k.identifier().toString()));
+                    moddedBest.unwrapKey().ifPresent(k -> moddedReachable.add(k.location().toString()));
 
                 var effective = directWin ? hit : reserved ? bridge.findModded(target) : null;
                 if (effective != null) {
                     shareGround++;
-                    effective.unwrapKey().ifPresent(k -> withShare.add(k.identifier().toString()));
+                    effective.unwrapKey().ifPresent(k -> withShare.add(k.location().toString()));
                 }
             }
         // ⚠ `reachable` counts EVERY hit, vanilla included — TerraBlender's regions carry vanilla biomes
@@ -1155,7 +1155,7 @@ public final class CityWorldSelfTest {
         java.util.Set<String> moddedAll = new java.util.TreeSet<>();
         for (var holder : bridge.biomes())
             if (me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.isModded(holder))
-                holder.unwrapKey().ifPresent(k -> moddedAll.add(k.identifier().toString()));
+                holder.unwrapKey().ifPresent(k -> moddedAll.add(k.location().toString()));
         // ⚠ Subtract EVERY route a biome could have been seen by, not just the modded-only lookup.
         // Taking the modded-only set alone named 13 biomes as unreachable, two of which (lavender_field,
         // pumpkin_patch) had been observed generating — the two Climate.ParameterList instances break
@@ -1168,7 +1168,7 @@ public final class CityWorldSelfTest {
         // see — spider_nest generates perfectly well and was being reported as needing rescue.
         if (level.getChunkSource().getGenerator().getBiomeSource() instanceof CityWorldBiomes cb)
             cb.cavePool().biomes().forEach(h -> h.unwrapKey()
-                    .ifPresent(k -> everSeen.add(k.identifier().toString())));
+                    .ifPresent(k -> everSeen.add(k.location().toString())));
 
         java.util.Set<String> needsHelp = new java.util.TreeSet<>(moddedAll);
         needsHelp.removeAll(everSeen);
@@ -1203,16 +1203,16 @@ public final class CityWorldSelfTest {
             return;
         java.util.Set<String> names = new java.util.TreeSet<>();
         generator.caveOnlyFeatures()
-                .forEach(h -> h.unwrapKey().ifPresent(k -> names.add(k.identifier().getPath())));
+                .forEach(h -> h.unwrapKey().ifPresent(k -> names.add(k.location().getPath())));
         report.put("biome.caveFeatures", names.toString());
         // Pool membership, stated outright — an empty pool silently produces nothing, which is
         // indistinguishable from a pool that is working but rare.
         if (level.getChunkSource().getGenerator().getBiomeSource() instanceof CityWorldBiomes cb) {
             var pools = cb.surfacePools();
             report.put("biome.surfacePool", pools.surface().biomes()
-                    .map(h -> h.unwrapKey().map(k -> k.identifier().toString()).orElse("?")).toList().toString());
+                    .map(h -> h.unwrapKey().map(k -> k.location().toString()).orElse("?")).toList().toString());
             report.put("biome.shorePool", pools.shore().biomes()
-                    .map(h -> h.unwrapKey().map(k -> k.identifier().toString()).orElse("?")).toList().toString());
+                    .map(h -> h.unwrapKey().map(k -> k.location().toString()).orElse("?")).toList().toString());
         }
 
         if (names.isEmpty()) {
@@ -1226,7 +1226,7 @@ public final class CityWorldSelfTest {
         java.util.Set<String> caveOwned = new java.util.TreeSet<>();
         if (level.getChunkSource().getGenerator().getBiomeSource() instanceof CityWorldBiomes cb)
             cb.cavePool().biomes().forEach(
-                    h -> h.unwrapKey().ifPresent(k -> caveOwned.add(k.identifier().getPath())));
+                    h -> h.unwrapKey().ifPresent(k -> caveOwned.add(k.location().getPath())));
         for (String surfaceish : List.of("trees_", "patch_pumpkin", "flower_plains", "patch_grass_plain"))
             for (String name : names) {
                 if (!(name.startsWith(surfaceish) || name.equals(surfaceish)))
@@ -1267,7 +1267,7 @@ public final class CityWorldSelfTest {
 
         Map<String, Holder<StructureSet>> sets = new TreeMap<>();
         for (Holder<StructureSet> set : state.possibleStructureSets())
-            set.unwrapKey().ifPresent(k -> sets.put(k.identifier().toString(), set));
+            set.unwrapKey().ifPresent(k -> sets.put(k.location().toString(), set));
         report.put("structures.sets", sets.keySet().toString());
 
         if (sets.isEmpty()) {
@@ -1440,7 +1440,7 @@ public final class CityWorldSelfTest {
         ChunkPos pos = chunk.getPos();
         int x0 = Math.max(box.minX(), pos.getMinBlockX()), x1 = Math.min(box.maxX(), pos.getMinBlockX() + 15);
         int z0 = Math.max(box.minZ(), pos.getMinBlockZ()), z1 = Math.min(box.maxZ(), pos.getMinBlockZ() + 15);
-        int y0 = Math.max(box.minY(), chunk.getMinY()), y1 = Math.min(box.maxY(), chunk.getMaxY());
+        int y0 = Math.max(box.minY(), chunk.getMinBuildHeight()), y1 = Math.min(box.maxY(), (chunk.getMaxBuildHeight() - 1));
         long air = 0;
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int x = x0; x <= x1; x++)
@@ -1457,7 +1457,7 @@ public final class CityWorldSelfTest {
         ChunkPos pos = chunk.getPos();
         long w = Math.max(0, Math.min(box.maxX(), pos.getMinBlockX() + 15) - Math.max(box.minX(), pos.getMinBlockX()) + 1);
         long d = Math.max(0, Math.min(box.maxZ(), pos.getMinBlockZ() + 15) - Math.max(box.minZ(), pos.getMinBlockZ()) + 1);
-        long h = Math.max(0, Math.min(box.maxY(), chunk.getMaxY()) - Math.max(box.minY(), chunk.getMinY()) + 1);
+        long h = Math.max(0, Math.min(box.maxY(), (chunk.getMaxBuildHeight() - 1)) - Math.max(box.minY(), chunk.getMinBuildHeight()) + 1);
         return w * d * h;
     }
 
@@ -1531,7 +1531,7 @@ public final class CityWorldSelfTest {
             java.util.List<String> missing = new ArrayList<>();
             java.util.List<String> present = new ArrayList<>();
             pools.biomes().forEach(h -> h.unwrapKey().ifPresent(k -> {
-                String id = k.identifier().toString();
+                String id = k.location().toString();
                 (counts.containsKey(id) ? present : missing).add(id);
             }));
             report.put("biome.pool.present", present.toString());
@@ -1582,7 +1582,7 @@ public final class CityWorldSelfTest {
         // Per biome, the union of what its points demand on each axis.
         Map<String, double[][]> demand = new TreeMap<>();
         for (var pair : bridge.points()) {
-            String id = pair.getSecond().unwrapKey().map(k -> k.identifier().toString()).orElse("?");
+            String id = pair.getSecond().unwrapKey().map(k -> k.location().toString()).orElse("?");
             Climate.ParameterPoint pt = pair.getFirst();
             Climate.Parameter[] axes = { pt.temperature(), pt.humidity(), pt.continentalness(), pt.erosion(),
                     pt.weirdness() };
@@ -1631,14 +1631,14 @@ public final class CityWorldSelfTest {
     private static String biomeId(BiomeSource source, int quartX, int quartY, int quartZ,
             Climate.Sampler sampler) {
         return source.getNoiseBiome(quartX, quartY, quartZ, sampler).unwrapKey()
-                .map(k -> k.identifier().toString()).orElse("?");
+                .map(k -> k.location().toString()).orElse("?");
     }
 
     /** The biome's registry path at a quart position, or {@code "?"} if it carries no key. */
     private static String biomeName(BiomeSource source, int quartX, int quartY, int quartZ,
             Climate.Sampler sampler) {
         return source.getNoiseBiome(quartX, quartY, quartZ, sampler).unwrapKey()
-                .map(k -> k.identifier().getPath()).orElse("?");
+                .map(k -> k.location().getPath()).orElse("?");
     }
 
     /**
@@ -1689,12 +1689,7 @@ public final class CityWorldSelfTest {
                     blockEntities.merge(
                             String.valueOf(BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(entity.getType())),
                             1, Integer::sum);
-                    if (entity instanceof net.minecraft.world.level.block.entity.ShelfBlockEntity shelf) {
-                        shelvesSeen++;
-                        if (shelf.getItems().stream().anyMatch(stack -> !stack.isEmpty()))
-                            shelvesStocked++;
-                        continue;
-                    }
+                    // (no ShelfBlockEntity before 1.21.9)
                     if (!(entity instanceof SignBlockEntity sign))
                         continue;
                     signsSeen++;
@@ -1726,7 +1721,7 @@ public final class CityWorldSelfTest {
             for (int cz = -2; cz <= 2; cz++)
                 for (int x = 0; x < 16; x++)
                     for (int z = 0; z < 16; z++)
-                        for (int y = level.getMinY(); y < level.getMaxY(); y++) {
+                        for (int y = level.getMinBuildHeight(); y < (level.getMaxBuildHeight() - 1); y++) {
                             BlockState state = level.getBlockState(new BlockPos(cx * 16 + x, y, cz * 16 + z));
                             if (!state.isAir())
                                 blocks.merge(BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString(),
@@ -1768,7 +1763,7 @@ public final class CityWorldSelfTest {
             for (int cz = -2; cz <= 2; cz++)
                 for (int x = 0; x < 16; x++)
                     for (int z = 0; z < 16; z++)
-                        for (int y = level.getMinY(); y < level.getMaxY(); y++) {
+                        for (int y = level.getMinBuildHeight(); y < (level.getMaxBuildHeight() - 1); y++) {
                             BlockPos pos = new BlockPos(cx * 16 + x, y, cz * 16 + z);
                             BlockState state = level.getBlockState(pos);
                             if (state.isAir())
@@ -1836,7 +1831,7 @@ public final class CityWorldSelfTest {
             for (int cz = -2; cz <= 2; cz++)
                 for (int x = 0; x < 16; x++)
                     for (int z = 0; z < 16; z++)
-                        for (int y = level.getMinY(); y < level.getMaxY(); y++) {
+                        for (int y = level.getMinBuildHeight(); y < (level.getMaxBuildHeight() - 1); y++) {
                             BlockState state = level.getBlockState(new BlockPos(cx * 16 + x, y, cz * 16 + z));
                             if (state.isAir())
                                 continue;
@@ -1928,7 +1923,7 @@ public final class CityWorldSelfTest {
         final int bx = alongX ? ax + 1 : ax, bz = alongX ? az : az + 1;
         var other = anchor.partner(anchorMap, anchorX, anchorZ);
         int lowY = Math.max(anchor.getBottomY(context), other.getBottomY(context));
-        int highY = Math.min(level.getMaxY(), Math.max(lowY, context.height) + 30);
+        int highY = Math.min((level.getMaxBuildHeight() - 1), Math.max(lowY, context.height) + 30);
         LevelChunk first = server.submit(() -> level.getChunk(ax, az)).join();
         LevelChunk second = server.submit(() -> level.getChunk(bx, bz)).join();
 

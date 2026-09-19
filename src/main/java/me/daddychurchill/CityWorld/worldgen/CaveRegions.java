@@ -9,11 +9,11 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
 
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Which <em>cave biome</em> — if any — a point underground belongs to.
@@ -69,7 +69,7 @@ public final class CaveRegions {
 
     /** The pool. Ship it with a datapack; add to it with another. */
     public static final TagKey<Biome> CAVE_POOL = TagKey.create(Registries.BIOME,
-            Identifier.fromNamespaceAndPath("cityworld", "cave_pool"));
+            ResourceLocation.fromNamespaceAndPath("cityworld", "cave_pool"));
 
     /**
      * Order of preference, rarest and deepest first — an entry earlier in this list wins a cell it
@@ -348,7 +348,7 @@ public final class CaveRegions {
     }
 
     private static String idOf(Holder<Biome> holder) {
-        return holder.unwrapKey().map(k -> k.identifier().toString()).orElse("");
+        return holder.unwrapKey().map(k -> k.location().toString()).orElse("");
     }
 
     private static Patch patch(Holder<Biome> biome) {

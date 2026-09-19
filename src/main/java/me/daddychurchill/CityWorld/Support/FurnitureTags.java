@@ -6,7 +6,7 @@ import me.daddychurchill.CityWorld.compat.BlockFace;
 import me.daddychurchill.CityWorld.compat.Material;
 
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 
@@ -117,11 +117,11 @@ public final class FurnitureTags {
     }
 
     private static TagKey<Block> key(String role) {
-        return TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath("cityworld", "furniture/" + role));
+        return TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath("cityworld", "furniture/" + role));
     }
 
     private static TagKey<Block> decorKey(String pool) {
-        return TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath("cityworld", "decor/" + pool));
+        return TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath("cityworld", "decor/" + pool));
     }
 
     /**

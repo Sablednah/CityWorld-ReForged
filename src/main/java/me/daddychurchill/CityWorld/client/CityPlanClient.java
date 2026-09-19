@@ -11,7 +11,7 @@ import me.daddychurchill.CityWorld.network.LotInfoPayload;
 import me.daddychurchill.CityWorld.network.LotInfoRequestPayload;
 
 import net.minecraft.client.Minecraft;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * The client's side of the map integration: what the server has told us about chunks, and the
@@ -55,7 +55,7 @@ public final class CityPlanClient {
         // sending a packet from there is not safe.
         send(() -> {
             if (Minecraft.getInstance().getConnection() != null)
-                ClientPacketDistributor.sendToServer(new LotInfoRequestPayload(chunkX, chunkZ));
+                PacketDistributor.sendToServer(new LotInfoRequestPayload(chunkX, chunkZ));
             else
                 ASKED.remove(key); // not connected yet; let it be asked again later
         });
@@ -70,7 +70,7 @@ public final class CityPlanClient {
     public static void setCityPlan(boolean on, int keep) {
         send(() -> {
             if (Minecraft.getInstance().getConnection() != null)
-                ClientPacketDistributor.sendToServer(new CityPlanTogglePayload(on, keep));
+                PacketDistributor.sendToServer(new CityPlanTogglePayload(on, keep));
         });
     }
 

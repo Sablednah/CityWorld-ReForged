@@ -57,10 +57,10 @@ public final class EntityType {
      * overrides handle a typo without guessing (see {@code CityWorldSettings}).
      */
     public static EntityType of(String id) {
-        net.minecraft.resources.Identifier key = net.minecraft.resources.Identifier.tryParse(id);
+        net.minecraft.resources.ResourceLocation key = net.minecraft.resources.ResourceLocation.tryParse(id);
         if (key == null)
             return null;
-        net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(key);
+        net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(key);
         // getValue falls back to the default entry (pig) for a missing key, so confirm the id maps
         // to a registered entry rather than trusting a non-null return.
         if (type == null || !BuiltInRegistries.ENTITY_TYPE.containsKey(key))

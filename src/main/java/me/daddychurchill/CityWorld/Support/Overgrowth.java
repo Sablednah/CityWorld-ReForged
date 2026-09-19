@@ -342,8 +342,6 @@ public final class Overgrowth {
             return Material.ACACIA_LEAVES;
         if (key == Biomes.DARK_FOREST)
             return Material.DARK_OAK_LEAVES;
-        if (key == Biomes.PALE_GARDEN)
-            return Material.PALE_OAK_LEAVES;
         if (key == Biomes.MANGROVE_SWAMP)
             return Material.MANGROVE_LEAVES;
         if (key == Biomes.CHERRY_GROVE)
@@ -359,10 +357,7 @@ public final class Overgrowth {
      *  facing north, so placing it raw made every scrap of debris look the same. Roll the segment count and
      *  facing instead; blocks without those properties pass straight through untouched. */
     private static BlockState scatter(BlockState state, Odds odds) {
-        if (state.hasProperty(BlockStateProperties.SEGMENT_AMOUNT))
-            // lean sparse — a floor of 4-segment blocks reads as full cover, not scattered debris
-            state = state.setValue(BlockStateProperties.SEGMENT_AMOUNT,
-                    odds.playOdds(0.55) ? 1 : odds.playOdds(0.6) ? 2 : odds.playOdds(0.6) ? 3 : 4);
+        // (no SegmentableBlocks before 1.21.5 — leaf litter stands in as a moss carpet here)
         if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING))
             state = state.setValue(BlockStateProperties.HORIZONTAL_FACING,
                     Direction.from2DDataValue(odds.getRandomInt(4)));

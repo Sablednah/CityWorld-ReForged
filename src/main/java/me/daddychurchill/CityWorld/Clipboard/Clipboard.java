@@ -119,7 +119,7 @@ public final class Clipboard {
      */
     public static Clipboard load(String name, SchematicFamily family, String fileName, InputStream data,
             InputStream yml) throws IOException {
-        HolderGetter<Block> blocks = BuiltInRegistries.BLOCK;
+        HolderGetter<Block> blocks = BuiltInRegistries.BLOCK.asLookup();
         // Parse the .yml first: keepAir decides whether the reader drops the schematic's air blocks.
         Meta meta = yml != null ? Meta.parse(yml) : new Meta();
         StructureTemplate template = readTemplate(fileName, data, blocks, meta.keepAir);
@@ -135,7 +135,7 @@ public final class Clipboard {
             // matches the other formats: recorded air is stripped unless KeepAir — a structure-block
             // export records explicit air for its whole box, which would stamp an air cuboid on terrain.
             CompoundTag tag = NbtIo.readCompressed(data, NbtAccounter.unlimitedHeap());
-            return Templates.build(tag, tag.getInt("DataVersion").orElse(0), blocks, keepAir);
+            return Templates.build(tag, tag.getInt("DataVersion"), blocks, keepAir);
         }
         if (lower.endsWith(".schem"))
             return SpongeSchematic.read(data).toTemplate(blocks, keepAir);

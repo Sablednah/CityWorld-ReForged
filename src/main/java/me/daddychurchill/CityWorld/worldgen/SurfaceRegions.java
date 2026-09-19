@@ -9,11 +9,11 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
 
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Surface biomes that get a patch of ground <b>regardless of whether they win the climate lookup</b>.
@@ -43,7 +43,7 @@ public final class SurfaceRegions {
 
     /** Biomes that get a patch whether or not the climate lookup would ever pick them. */
     public static final TagKey<Biome> SURFACE_POOL = TagKey.create(Registries.BIOME,
-            Identifier.fromNamespaceAndPath("cityworld", "surface_pool"));
+            ResourceLocation.fromNamespaceAndPath("cityworld", "surface_pool"));
 
     /**
      * Beach and shore variants that may stand in for CityWorld's own beach.
@@ -57,7 +57,7 @@ public final class SurfaceRegions {
      * terrain's answer and changes only the label.
      */
     public static final TagKey<Biome> SHORE_POOL = TagKey.create(Registries.BIOME,
-            Identifier.fromNamespaceAndPath("cityworld", "shore_pool"));
+            ResourceLocation.fromNamespaceAndPath("cityworld", "shore_pool"));
 
     /**
      * Ocean variants that may stand in for CityWorld's own ocean and deep ocean.
@@ -69,7 +69,7 @@ public final class SurfaceRegions {
      * is a gap worth closing for the mods that do add them, not a BoP-shaped one.
      */
     public static final TagKey<Biome> OCEAN_POOL = TagKey.create(Registries.BIOME,
-            Identifier.fromNamespaceAndPath("cityworld", "ocean_pool"));
+            ResourceLocation.fromNamespaceAndPath("cityworld", "ocean_pool"));
 
     /**
      * Patch grid, in blocks, and the share of cells a pool biome claims.
@@ -178,7 +178,7 @@ public final class SurfaceRegions {
     }
 
     private static String idOf(Holder<Biome> holder) {
-        return holder.unwrapKey().map(k -> k.identifier().toString()).orElse("");
+        return holder.unwrapKey().map(k -> k.location().toString()).orElse("");
     }
 
     /** Salt from the biome's own id, so each gets an independent grid without a hand-picked constant. */

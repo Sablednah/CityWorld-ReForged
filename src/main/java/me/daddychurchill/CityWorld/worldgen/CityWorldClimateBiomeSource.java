@@ -53,7 +53,7 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
             Biomes.DESERT, Biomes.SAVANNA, Biomes.PLAINS, Biomes.SUNFLOWER_PLAINS, Biomes.MEADOW, Biomes.SWAMP,
             Biomes.JUNGLE, Biomes.FLOWER_FOREST, Biomes.SNOWY_PLAINS, Biomes.ICE_SPIKES, Biomes.MUSHROOM_FIELDS,
             Biomes.FOREST, Biomes.BIRCH_FOREST, Biomes.DARK_FOREST, Biomes.CHERRY_GROVE, Biomes.TAIGA,
-            Biomes.SNOWY_TAIGA, Biomes.SAVANNA_PLATEAU, Biomes.BADLANDS, Biomes.WOODED_BADLANDS, Biomes.PALE_GARDEN,
+            Biomes.SNOWY_TAIGA, Biomes.SAVANNA_PLATEAU, Biomes.BADLANDS, Biomes.WOODED_BADLANDS, /* PALE_GARDEN: 1.21.4+ */
             Biomes.SPARSE_JUNGLE, Biomes.BAMBOO_JUNGLE, Biomes.OLD_GROWTH_BIRCH_FOREST,
             Biomes.OLD_GROWTH_PINE_TAIGA, Biomes.OLD_GROWTH_SPRUCE_TAIGA, Biomes.WINDSWEPT_FOREST,
             Biomes.WINDSWEPT_HILLS, Biomes.WINDSWEPT_GRAVELLY_HILLS, Biomes.WINDSWEPT_SAVANNA, Biomes.ERODED_BADLANDS,
@@ -100,8 +100,8 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
         if (!bridgeHarvested)
             synchronized (this) {
                 if (!bridgeHarvested) {
-                    bridge = (biomeLookup instanceof net.minecraft.core.Registry<Biome> registry)
-                            ? TerraBlenderBridge.harvest(registry, biomes)
+                    bridge = (biomeLookup instanceof net.minecraft.core.Registry<?> registry)
+                            ? TerraBlenderBridge.harvest((net.minecraft.core.Registry<Biome>) registry, biomes)
                             : null;
                     bridgeHarvested = true;
                 }
@@ -109,7 +109,7 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
         return bridge;
     }
 
-    private volatile SurfaceRegions.@org.jspecify.annotations.Nullable Pools surfacePools;
+    private volatile SurfaceRegions.@org.jetbrains.annotations.Nullable Pools surfacePools;
 
     /** Lazily resolved — see {@link CityWorldBiomes#surfacePools()}. */
     @Override
@@ -294,7 +294,7 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
         if (decayed) return b(Biomes.BADLANDS);
         if (cold(t)) return dry(h) ? b(Biomes.SNOWY_TAIGA) : b(Biomes.TAIGA);
         if (temperate(t)) return dry(h) ? b(Biomes.FOREST)
-                : h > 0.8 ? b(Biomes.PALE_GARDEN) : wet(h) ? b(Biomes.DARK_FOREST) : b(Biomes.CHERRY_GROVE);
+                : wet(h) ? b(Biomes.DARK_FOREST) /* no pale garden before 1.21.4 */ : b(Biomes.CHERRY_GROVE);
         if (warm(t)) return dry(h) ? b(Biomes.SAVANNA_PLATEAU) : wet(h) ? b(Biomes.SPARSE_JUNGLE) : b(Biomes.BIRCH_FOREST);
         return dry(h) ? b(Biomes.BADLANDS) : wet(h) ? b(Biomes.BAMBOO_JUNGLE) : b(Biomes.WOODED_BADLANDS); // hot
     }

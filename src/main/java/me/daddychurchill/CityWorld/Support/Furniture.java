@@ -276,9 +276,9 @@ public final class Furniture {
         // the wall and the air cell ourselves; construct directly and only ever hang 1x1 pieces,
         // which is exactly the space we checked.
         if (odds.flipCoin()) {
-            var variants = new java.util.ArrayList<net.minecraft.core.Holder<net.minecraft.world.entity.decoration.painting.PaintingVariant>>();
+            var variants = new java.util.ArrayList<net.minecraft.core.Holder<net.minecraft.world.entity.decoration.PaintingVariant>>();
             server.getLevel().registryAccess()
-                    .lookupOrThrow(net.minecraft.core.registries.Registries.PAINTING_VARIANT)
+                    .registryOrThrow(net.minecraft.core.registries.Registries.PAINTING_VARIANT)
                     .getTagOrEmpty(net.minecraft.tags.PaintingVariantTags.PLACEABLE)
                     .forEach(holder -> {
                         if (holder.value().width() == 1 && holder.value().height() == 1)
@@ -286,7 +286,7 @@ public final class Furniture {
                     });
             if (variants.isEmpty())
                 return false;
-            var painting = new net.minecraft.world.entity.decoration.painting.Painting(server.getLevel(), pos, dir,
+            var painting = new net.minecraft.world.entity.decoration.Painting(server.getLevel(), pos, dir,
                     variants.get(odds.getRandomInt(variants.size())));
             server.addFreshEntityWithPassengers(painting);
             return true;

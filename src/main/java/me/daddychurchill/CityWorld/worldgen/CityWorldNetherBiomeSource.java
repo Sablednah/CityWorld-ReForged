@@ -14,7 +14,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
@@ -49,7 +49,7 @@ public class CityWorldNetherBiomeSource extends BiomeSource implements CityWorld
             RegistryOps.retrieveGetter(Registries.BIOME)).apply(i, CityWorldNetherBiomeSource::new));
 
     public static final TagKey<Biome> NETHER_POOL = TagKey.create(Registries.BIOME,
-            Identifier.fromNamespaceAndPath("cityworld", "nether_pool"));
+            ResourceLocation.fromNamespaceAndPath("cityworld", "nether_pool"));
 
     private static final Map<ResourceKey<Biome>, double[]> ANCHORS = Map.of(
             Biomes.NETHER_WASTES, new double[] { 0.5, 0.5 },
@@ -134,7 +134,7 @@ public class CityWorldNetherBiomeSource extends BiomeSource implements CityWorld
     }
 
     private static String idOf(Holder<Biome> biome) {
-        return biome.unwrapKey().map(k -> k.identifier().toString()).orElse("");
+        return biome.unwrapKey().map(k -> k.location().toString()).orElse("");
     }
 
     @Override

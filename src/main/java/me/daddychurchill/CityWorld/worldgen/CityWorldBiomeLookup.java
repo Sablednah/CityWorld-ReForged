@@ -9,7 +9,7 @@ import net.minecraft.core.QuartPos;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Climate;
 
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The shared body of {@code getNoiseBiome} for both CityWorld biome sources — the piece that makes

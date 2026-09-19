@@ -120,7 +120,7 @@ public final class WorldTypeLock {
                 .lookupOrThrow(Registries.WORLD_PRESET).get(key.get());
         if (preset.isEmpty()) {
             CityWorldMod.LOGGER.warn("CityWorld: lockedWorldPreset {} is not a registered world preset — lock not applied",
-                    key.get().identifier());
+                    key.get().location());
             return false;
         }
         WorldTypeEntry entry = new WorldTypeEntry(preset.get());

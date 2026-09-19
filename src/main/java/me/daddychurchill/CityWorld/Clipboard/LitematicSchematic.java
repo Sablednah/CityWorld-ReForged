@@ -41,21 +41,21 @@ public final class LitematicSchematic {
 
     public static LitematicSchematic read(InputStream in) throws IOException {
         CompoundTag root = NbtIo.readCompressed(in, NbtAccounter.unlimitedHeap());
-        int dv = root.getInt("MinecraftDataVersion").orElse(0);
-        CompoundTag regionsTag = root.getCompound("Regions").orElse(new CompoundTag());
+        int dv = root.getInt("MinecraftDataVersion");
+        CompoundTag regionsTag = root.getCompound("Regions");
         List<Region> regions = new ArrayList<>();
-        for (String key : regionsTag.keySet()) {
-            CompoundTag rg = regionsTag.getCompound(key).orElse(null);
+        for (String key : regionsTag.getAllKeys()) {
+            CompoundTag rg = regionsTag.getCompound(key);
             if (rg == null)
                 continue;
-            CompoundTag size = rg.getCompound("Size").orElse(new CompoundTag());
-            CompoundTag pos = rg.getCompound("Position").orElse(new CompoundTag());
+            CompoundTag size = rg.getCompound("Size");
+            CompoundTag pos = rg.getCompound("Position");
             regions.add(new Region(
-                    size.getInt("x").orElse(0), size.getInt("y").orElse(0), size.getInt("z").orElse(0),
-                    pos.getInt("x").orElse(0), pos.getInt("y").orElse(0), pos.getInt("z").orElse(0),
-                    rg.getList("BlockStatePalette").orElse(new ListTag()),
-                    rg.getLongArray("BlockStates").orElse(new long[0]),
-                    rg.getList("TileEntities").orElse(new ListTag())));
+                    size.getInt("x"), size.getInt("y"), size.getInt("z"),
+                    pos.getInt("x"), pos.getInt("y"), pos.getInt("z"),
+                    rg.getList("BlockStatePalette", net.minecraft.nbt.Tag.TAG_COMPOUND),
+                    rg.getLongArray("BlockStates"),
+                    rg.getList("TileEntities", net.minecraft.nbt.Tag.TAG_COMPOUND)));
         }
         return new LitematicSchematic(dv, regions);
     }
@@ -86,8 +86,8 @@ public final class LitematicSchematic {
             CompoundTag[] states = new CompoundTag[n];
             boolean[] air = new boolean[n];
             for (int i = 0; i < n; i++) {
-                states[i] = r.palette.getCompoundOrEmpty(i);
-                air[i] = Templates.isAir(states[i].getString("Name").orElse(""));
+                states[i] = r.palette.getCompound(i);
+                air[i] = Templates.isAir(states[i].getString("Name"));
             }
             int asx = Math.abs(r.sx), asy = Math.abs(r.sy), asz = Math.abs(r.sz);
             int bits = Math.max(2, 32 - Integer.numberOfLeadingZeros(Math.max(1, n - 1)));
@@ -134,10 +134,10 @@ public final class LitematicSchematic {
     private static Map<Long, CompoundTag> tileEntities(Region r, int asx, int asz) {
         Map<Long, CompoundTag> out = new HashMap<>();
         for (int i = 0; i < r.tileEntities.size(); i++) {
-            CompoundTag te = r.tileEntities.getCompoundOrEmpty(i).copy();
-            int x = te.getInt("x").orElse(0);
-            int y = te.getInt("y").orElse(0);
-            int z = te.getInt("z").orElse(0);
+            CompoundTag te = r.tileEntities.getCompound(i).copy();
+            int x = te.getInt("x");
+            int y = te.getInt("y");
+            int z = te.getInt("z");
             te.remove("x");
             te.remove("y");
             te.remove("z");

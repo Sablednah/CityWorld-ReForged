@@ -1,5 +1,7 @@
 package me.daddychurchill.CityWorld.client;
 
+import net.minecraft.client.Minecraft;
+
 import java.util.Locale;
 import java.util.Optional;
 
@@ -15,7 +17,7 @@ import net.minecraft.client.gui.screens.worldselection.WorldCreationContext;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -38,7 +40,7 @@ public final class CityWorldClient {
 
     /** The world preset key whose Customize button opens {@link CityWorldCustomizeScreen}. */
     private static final ResourceKey<WorldPreset> CITY = ResourceKey.create(Registries.WORLD_PRESET,
-            Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "city"));
+            ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "city"));
 
     public static void init(IEventBus modEventBus, net.neoforged.fml.ModContainer container) {
         // Modpack lock: config/cityworld-startup.toml. STARTUP so it is already loaded when the preset
@@ -49,7 +51,7 @@ public final class CityWorldClient {
         // skip that confirm when CityWorld is the only reason. See ExperimentalWarningSkip.
         ExperimentalWarningSkip.register();
         modEventBus.addListener(CityWorldClient::onRegisterPresetEditors);
-        modEventBus.addListener(CityWorldClient::onRegisterDebugEntries);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(CityWorldClient::onDebugText);
         // Hover text over a map mod's fullscreen map. Inert unless a map mod tells it where the
         // mouse is, so this costs nothing when none is installed.
         CityPlanHud.register();
@@ -58,12 +60,11 @@ public final class CityWorldClient {
     }
 
     /** Adds CityWorld's plan/technical readout to the F3 debug screen (see {@link CityWorldDebugEntry}). */
-    private static void onRegisterDebugEntries(net.neoforged.neoforge.client.event.RegisterDebugEntriesEvent event) {
-        Identifier id = Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "cityinfo");
-        event.register(id, new CityWorldDebugEntry());
-        // IN_OVERLAY = shown while the F3 overlay is up (how PLAYER_POSITION and friends are set).
-        event.includeInProfile(id, net.minecraft.client.gui.components.debug.DebugScreenProfile.DEFAULT,
-                net.minecraft.client.gui.components.debug.DebugScreenEntryStatus.IN_OVERLAY);
+    private static final CityWorldDebugEntry DEBUG_ENTRY = new CityWorldDebugEntry();
+
+    private static void onDebugText(net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent.DebugText event) {
+        if (Minecraft.getInstance().getDebugOverlay().showDebugScreen())
+            DEBUG_ENTRY.display(event.getLeft());
     }
 
     private static void onRegisterPresetEditors(RegisterPresetEditorsEvent event) {
@@ -79,7 +80,7 @@ public final class CityWorldClient {
         // cityworld:city has one otherwise — but with the style picker held on the preset's own style, so
         // "settings open, type locked" cannot be undone from inside the editor.
         CityWorldPackConfig.lockedWorldPreset()
-                .filter(key -> key.identifier().getNamespace().equals(CityWorldMod.MODID) && !key.equals(CITY))
+                .filter(key -> key.location().getNamespace().equals(CityWorldMod.MODID) && !key.equals(CITY))
                 .ifPresent(key -> event.register(key, (parent, context) -> new CityWorldCustomizeScreen(
                         parent,
                         currentStyle(context),

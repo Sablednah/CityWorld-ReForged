@@ -18,14 +18,14 @@ import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.compat.BiomeGrid;
 import me.daddychurchill.CityWorld.compat.Material;
 
-import net.minecraft.util.Util;
+import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.RegistryFileCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
@@ -250,7 +250,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             return cw;
         me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
                 "CityWorld: twin_of {} is not a loaded CityWorld dimension — using this dimension's own style/settings",
-                twinOf.get().identifier());
+                twinOf.get().location());
         return null;
     }
 
@@ -291,7 +291,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     // created before the presets said so is pristine too. An explicit "decayed" still wins.
                     Optional<Boolean> decay = decayed.isEmpty() && isEnd() ? Optional.of(false) : decayed;
                     local = new CityWorldGenerator(levelSeed, TERRAIN_CEILING, UPSTREAM_SEA_LEVEL,
-                            worldStyle, level.getMinY(), level.getMaxY(), decay, settingsData,
+                            worldStyle, level.getMinBuildHeight(), (level.getMaxBuildHeight() - 1), decay, settingsData,
                             parseEnvironment(environment));
                     // The biome source answers getNoiseBiome from this context (terrain height + climate),
                     // so hand it over the moment it exists — this is the earliest point it can be had.
@@ -367,8 +367,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     var biomes = registries.lookupOrThrow(Registries.BIOME);
                     var settings = registries.lookupOrThrow(Registries.NOISE_SETTINGS)
                             .getOrThrow(net.minecraft.world.level.levelgen.NoiseGeneratorSettings.END);
-                    vanillaEndRandom = RandomState.create(registries,
-                            net.minecraft.world.level.levelgen.NoiseGeneratorSettings.END, levelSeed);
+                    vanillaEndRandom = RandomState.create(settings.value(),
+                            registries.lookupOrThrow(Registries.NOISE), levelSeed); // 1.21.1: the Provider overload wants a HolderGetter.Provider
                     endTerrain = new EndTerrain(vanillaEndRandom, settings.value().noiseSettings());
                     local = new net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator(
                             net.minecraft.world.level.biome.TheEndBiomeSource.create(biomes), settings);
@@ -516,8 +516,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator noise = carveNoise();
 
             // minY + 1 keeps the bedrock floor intact, exactly as vanilla's writable area does.
-            int y0 = Math.max(regionMinY, chunk.getMinY() + 1);
-            int y1 = Math.min(regionMaxY, chunk.getMaxY());
+            int y0 = Math.max(regionMinY, chunk.getMinBuildHeight() + 1);
+            int y1 = Math.min(regionMaxY, (chunk.getMaxBuildHeight() - 1));
 
             for (int x = minX; x <= minX + 15; x++)
                 for (int z = minZ; z <= minZ + 15; z++)
@@ -534,7 +534,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             continue;
                         cursor.set(x, y, z);
                         if (!chunk.getBlockState(cursor).isAir())
-                            chunk.setBlockState(cursor, air);
+                            chunk.setBlockState(cursor, air, false);
                     }
         } catch (Throwable t) {
             // never let terrain adaptation break chunk generation
@@ -588,7 +588,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     /** Whether this structure expects terrain to be carved away from it (a beard), rather than piled on. */
     /** Structures that get a carved cavern whatever their {@code terrain_adaptation}; see {@link #carveForStructures}. */
     public static final TagKey<net.minecraft.world.level.levelgen.structure.Structure> CARVE_CAVERN = TagKey.create(
-            Registries.STRUCTURE, Identifier.fromNamespaceAndPath("cityworld", "carve_cavern"));
+            Registries.STRUCTURE, ResourceLocation.fromNamespaceAndPath("cityworld", "carve_cavern"));
 
     private static boolean carvesTerrain(net.minecraft.world.level.levelgen.structure.Structure structure) {
         net.minecraft.world.level.levelgen.structure.TerrainAdjustment adjustment = structure.terrainAdaptation();
@@ -625,7 +625,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
     @Override
     public void applyCarvers(WorldGenRegion region, long seed, RandomState randomState,
-            BiomeManager biomeManager, StructureManager structureManager, ChunkAccess chunk) {
+            BiomeManager biomeManager, StructureManager structureManager, ChunkAccess chunk,
+            net.minecraft.world.level.levelgen.GenerationStep.Carving step) {
         // No vanilla carvers (caves/ravines) — CityWorld carves its own mines/sewers.
     }
 
@@ -661,10 +662,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     @Override
     public void createStructures(RegistryAccess registryAccess, ChunkGeneratorStructureState structureState,
-            StructureManager structureManager, ChunkAccess chunk, StructureTemplateManager templateManager,
-            ResourceKey<net.minecraft.world.level.Level> dimension) {
+            StructureManager structureManager, ChunkAccess chunk, StructureTemplateManager templateManager) {
         context(chunk);
-        super.createStructures(registryAccess, structureState, structureManager, chunk, templateManager, dimension);
+        super.createStructures(registryAccess, structureState, structureManager, chunk, templateManager);
     }
 
     /**
@@ -679,7 +679,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * that builds its own.
      */
     private static final TagKey<StructureSet> ALLOWED_STRUCTURE_SETS = TagKey.create(Registries.STRUCTURE_SET,
-            Identifier.fromNamespaceAndPath("cityworld", "allowed"));
+            ResourceLocation.fromNamespaceAndPath("cityworld", "allowed"));
 
     /**
      * Selectively re-enables vanilla structures — CityWorld builds its own cities, but it has no
@@ -925,7 +925,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // under a y 76 surface (measured 2026-09-16). WORLD_SURFACE is the first free Y above the column, so the
         // top solid block is one below it.
         int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-        return top > level.getMinY() ? top : street;
+        return top > level.getMinBuildHeight() ? top : street;
     }
 
     private static void drawShaft(WorldGenLevel level, net.minecraft.util.RandomSource random, int cx, int cz, int bottom,
@@ -1010,7 +1010,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 return;
 
             net.minecraft.core.SectionPos sectionPos = net.minecraft.core.SectionPos.of(chunk.getPos(),
-                    level.getMinSectionY());
+                    level.getMinSection());
             BlockPos origin = sectionPos.origin();
             net.minecraft.world.level.levelgen.WorldgenRandom random =
                     new net.minecraft.world.level.levelgen.WorldgenRandom(
@@ -1051,8 +1051,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             ChunkPos pos = chunk.getPos();
             int originX = pos.getMinBlockX(), originZ = pos.getMinBlockZ();
             long seed = context.getWorldSeed();
-            int bottom = chunk.getMinY() + 1;
-            int top = Math.min(chunk.getMaxY(), context.seaLevel);
+            int bottom = chunk.getMinBuildHeight() + 1;
+            int top = Math.min((chunk.getMaxBuildHeight() - 1), context.seaLevel);
             net.minecraft.core.BlockPos.MutableBlockPos cursor = new net.minecraft.core.BlockPos.MutableBlockPos();
             java.util.Map<String, net.minecraft.world.level.block.state.BlockState> rocks = new java.util.HashMap<>();
 
@@ -1074,7 +1074,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             continue;
                         net.minecraft.world.level.block.state.BlockState rock = rocks.computeIfAbsent(rockId,
                                 id -> net.minecraft.core.registries.BuiltInRegistries.BLOCK
-                                        .getOptional(Identifier.parse(id))
+                                        .getOptional(ResourceLocation.parse(id))
                                         .map(net.minecraft.world.level.block.Block::defaultBlockState)
                                         .orElse(null));
                         if (rock == null)
@@ -1250,10 +1250,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             return;
         try {
             ChunkPos pos = chunk.getPos();
-            net.minecraft.core.SectionPos sectionPos = net.minecraft.core.SectionPos.of(pos, level.getMinSectionY());
+            net.minecraft.core.SectionPos sectionPos = net.minecraft.core.SectionPos.of(pos, level.getMinSection());
             BlockPos origin = sectionPos.origin();
             net.minecraft.core.Registry<net.minecraft.world.level.levelgen.structure.Structure> structures =
-                    level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
+                    level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
 
             net.minecraft.world.level.levelgen.WorldgenRandom random =
                     new net.minecraft.world.level.levelgen.WorldgenRandom(
@@ -1294,7 +1294,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         LevelHeightAccessor height = chunk.getHeightAccessorForGeneration();
         int x = pos.getMinBlockX(), z = pos.getMinBlockZ();
         return new net.minecraft.world.level.levelgen.structure.BoundingBox(
-                x, height.getMinY() + 1, z, x + 15, height.getMaxY(), z + 15);
+                x, height.getMinBuildHeight() + 1, z, x + 15, (height.getMaxBuildHeight() - 1), z + 15);
     }
 
     private static final org.slf4j.Logger LOGGER_STRUCTURES =
@@ -1309,7 +1309,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private void placeUndergroundOres(WorldGenLevel level, ChunkAccess chunk) {
         try {
-            net.minecraft.core.SectionPos sp = net.minecraft.core.SectionPos.of(chunk.getPos(), level.getMinSectionY());
+            net.minecraft.core.SectionPos sp = net.minecraft.core.SectionPos.of(chunk.getPos(), level.getMinSection());
             net.minecraft.core.BlockPos origin = sp.origin();
             net.minecraft.world.level.biome.BiomeGenerationSettings settings = level.getBiome(origin).value()
                     .getGenerationSettings();
@@ -1345,7 +1345,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 if (below.is(net.minecraft.world.level.block.Blocks.ICE)
                         || below.is(net.minecraft.world.level.block.Blocks.PACKED_ICE)
                         || below.is(net.minecraft.world.level.block.Blocks.BLUE_ICE))
-                    chunk.setBlockState(p, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+                    chunk.setBlockState(p, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), false);
             }
     }
 
@@ -1404,10 +1404,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             return vanillaEnd().getBaseHeight(x, z, type, level, vanillaEndRandom);
         NoiseColumn column = getBaseColumn(x, z, level, randomState);
         Predicate<BlockState> isOpaque = type.isOpaque();
-        for (int y = level.getMaxY(); y >= level.getMinY(); y--)
+        for (int y = (level.getMaxBuildHeight() - 1); y >= level.getMinBuildHeight(); y--)
             if (isOpaque.test(column.getBlock(y)))
                 return y + 1;
-        return level.getMinY();
+        return level.getMinBuildHeight();
     }
 
     /**
@@ -1435,7 +1435,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 ? ores.fluidSurfaceMaterial
                 : ores.surfaceMaterial;
 
-        int minY = level.getMinY();
+        int minY = level.getMinBuildHeight();
         int height = level.getHeight();
         BlockState[] column = new BlockState[height];
         for (int i = 0; i < height; i++) {

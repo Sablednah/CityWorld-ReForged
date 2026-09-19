@@ -232,3 +232,6 @@ idea {
         downloadJavadoc = true
     }
 }
+
+// A port across several API generations produces more than javac's default hundred errors; show them all.
+tasks.withType(JavaCompile).configureEach { options.compilerArgs += ['-Xmaxerrs', '5000'] }

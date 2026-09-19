@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Climate;
 
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Lets <b>every installed TerraBlender biome mod</b> contribute biomes to a CityWorld world.
@@ -262,6 +262,6 @@ public final class TerraBlenderBridge {
 
     /** Whether a biome came from a mod rather than {@code minecraft:}. */
     public static boolean isModded(Holder<Biome> biome) {
-        return biome.unwrapKey().map(k -> !k.identifier().toString().startsWith("minecraft:")).orElse(false);
+        return biome.unwrapKey().map(k -> !k.location().toString().startsWith("minecraft:")).orElse(false);
     }
 }

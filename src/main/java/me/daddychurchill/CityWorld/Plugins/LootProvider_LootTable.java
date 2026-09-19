@@ -3,7 +3,7 @@ package me.daddychurchill.CityWorld.Plugins;
 import java.util.Locale;
 
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.RandomizableContainer;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -56,7 +56,7 @@ public final class LootProvider_LootTable extends LootProvider {
     }
 
     private static ResourceKey<LootTable> keyFor(LootLocation lootLocation) {
-        return ResourceKey.create(Registries.LOOT_TABLE, Identifier.fromNamespaceAndPath("cityworld",
+        return ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.fromNamespaceAndPath("cityworld",
                 "chests/" + lootLocation.name().toLowerCase(Locale.ROOT)));
     }
 }

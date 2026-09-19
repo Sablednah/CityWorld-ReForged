@@ -69,7 +69,7 @@ public class CoverProvider_Nether extends CoverProvider_Decayed {
 
 	private static final net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>> NETHER_TREES =
 			net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE,
-					net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", "nether_trees"));
+					net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("cityworld", "nether_trees"));
 
 	/** Grows a tree from {@link #NETHER_TREES} at (x, y, z) on the live level; false if it could not. */
 	private boolean hugeTree(SupportBlocks chunk, int x, int y, int z) {
@@ -85,7 +85,7 @@ public class CoverProvider_Nether extends CoverProvider_Decayed {
 				me.daddychurchill.CityWorld.Support.AbstractBlocks.getBlockX(chunk.sectionX, x), y,
 				me.daddychurchill.CityWorld.Support.AbstractBlocks.getBlockZ(chunk.sectionZ, z));
 		// Huge fungi insist on their own nylium; mushrooms (and hellbark) take either.
-		boolean warped = pick.unwrapKey().map(k -> k.identifier().getPath().contains("warped")).orElse(false);
+		boolean warped = pick.unwrapKey().map(k -> k.location().getPath().contains("warped")).orElse(false);
 		level.setBlock(pos.below(), (warped ? net.minecraft.world.level.block.Blocks.WARPED_NYLIUM
 				: net.minecraft.world.level.block.Blocks.CRIMSON_NYLIUM).defaultBlockState(), 2);
 		return pick.value().place(level, level.getLevel().getChunkSource().getGenerator(),

@@ -22,12 +22,12 @@ import me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.Facing;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.Property;
 
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Furniture sets recognised at <em>runtime</em> from the block registry, so a set CityWorld has never
@@ -117,9 +117,9 @@ public final class FurnitureSets {
 
         // the registry, grouped by namespace: path -> block
         Map<String, Map<String, Block>> byNamespace = new TreeMap<>();
-        for (Identifier id : BuiltInRegistries.BLOCK.keySet())
+        for (ResourceLocation id : BuiltInRegistries.BLOCK.keySet())
             byNamespace.computeIfAbsent(id.getNamespace(), k -> new HashMap<>())
-                    .put(id.getPath(), BuiltInRegistries.BLOCK.getValue(id));
+                    .put(id.getPath(), BuiltInRegistries.BLOCK.get(id));
 
         List<String> namespaces = new ArrayList<>();
         Map<TagKey<Block>, List<Block>> pools = new HashMap<>();
@@ -174,7 +174,7 @@ public final class FurnitureSets {
         List<TagKey<Block>> keys = new ArrayList<>();
         if (spec.has("role"))
             keys.add(TagKey.create(Registries.BLOCK,
-                    Identifier.fromNamespaceAndPath("cityworld", "furniture/" + spec.get("role").getAsString())));
+                    ResourceLocation.fromNamespaceAndPath("cityworld", "furniture/" + spec.get("role").getAsString())));
         if (spec.has("decor")) {
             JsonElement decor = spec.get("decor");
             List<String> names = new ArrayList<>();
@@ -183,7 +183,7 @@ public final class FurnitureSets {
             else
                 names.add(decor.getAsString());
             for (String pool : names)
-                keys.add(TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath("cityworld", "decor/" + pool)));
+                keys.add(TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath("cityworld", "decor/" + pool)));
         }
         return keys;
     }

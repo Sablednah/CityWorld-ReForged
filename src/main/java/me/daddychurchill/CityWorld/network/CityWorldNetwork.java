@@ -70,7 +70,7 @@ public final class CityWorldNetwork {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player))
                 return;
-            ServerLevel level = player.level();
+            ServerLevel level = player.serverLevel();
             LOOKUP.execute(() -> {
                 String summary;
                 try {

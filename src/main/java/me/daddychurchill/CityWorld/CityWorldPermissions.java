@@ -91,7 +91,7 @@ public final class CityWorldPermissions {
      * comparing op numbers.
      */
     private static Boolean opByDefault(ServerPlayer player, java.util.UUID playerUUID, Object... context) {
-        return player != null && Commands.LEVEL_GAMEMASTERS.check(player.permissions());
+        return player != null && player.hasPermissions(Commands.LEVEL_GAMEMASTERS);
     }
 
     /** Registered from {@link CityWorldServerEvents} on {@link PermissionGatherEvent.Nodes}. */
@@ -112,7 +112,7 @@ public final class CityWorldPermissions {
         return source -> {
             ServerPlayer player = source.getPlayer();
             if (player == null)
-                return Commands.LEVEL_GAMEMASTERS.check(source.permissions());
+                return source.hasPermission(Commands.LEVEL_GAMEMASTERS);
             return PermissionAPI.getPermission(player, node);
         };
     }

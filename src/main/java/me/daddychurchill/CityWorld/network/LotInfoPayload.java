@@ -5,7 +5,7 @@ import me.daddychurchill.CityWorld.CityWorldMod;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Server -> client: what is planned in one chunk, already worded for display
@@ -18,7 +18,7 @@ import net.minecraft.resources.Identifier;
 public record LotInfoPayload(int chunkX, int chunkZ, String summary) implements CustomPacketPayload {
 
     public static final Type<LotInfoPayload> TYPE =
-            new Type<>(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "lot_info"));
+            new Type<>(ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "lot_info"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, LotInfoPayload> CODEC = StreamCodec.of(
             (buf, p) -> {

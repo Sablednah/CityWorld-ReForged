@@ -948,7 +948,7 @@ public abstract class SupportBlocks extends AbstractBlocks {
 	}
 
 	private static <T extends Comparable<T>> BlockState withNthValue(BlockState state, Property<T> property, int n) {
-		return state.setValue(property, property.getPossibleValues().get(n));
+		return state.setValue(property, new java.util.ArrayList<>(property.getPossibleValues()).get(n));
 	}
 
 	/**
@@ -1085,7 +1085,8 @@ public abstract class SupportBlocks extends AbstractBlocks {
 	}
 
 	private static ChestType chestType(Block block) {
-		return block.getBlockData().getValueOrElse(BlockStateProperties.CHEST_TYPE, ChestType.SINGLE);
+		return block.getBlockData().hasProperty(BlockStateProperties.CHEST_TYPE)
+				? block.getBlockData().getValue(BlockStateProperties.CHEST_TYPE) : ChestType.SINGLE;
 	}
 
 	private static boolean chestFaces(Block block, BlockFace facing) {
@@ -1241,14 +1242,7 @@ public abstract class SupportBlocks extends AbstractBlocks {
 	 * the sign text above: no {@code setItem}, whose {@code setChanged} reaches for the level.
 	 */
 	public final boolean stockShelf(int x, int y, int z, net.minecraft.world.item.Item... items) {
-		BlockEntity entity = getActualBlock(x, y, z).getState();
-		if (!(entity instanceof net.minecraft.world.level.block.entity.ShelfBlockEntity shelf))
-			return false;
-		var slots = shelf.getItems();
-		for (int i = 0; i < items.length && i < slots.size(); i++)
-			if (items[i] != null)
-				slots.set(i, new net.minecraft.world.item.ItemStack(items[i]));
-		return true;
+		return false; // no shelves before 1.21.9
 	}
 
 	private void setSignText(Block block, String... lines) {

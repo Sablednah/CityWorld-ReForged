@@ -215,7 +215,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     protected void addOptions() {
         List<AbstractWidget> row = new ArrayList<>();
 
-        this.list.addHeader(Component.literal("World style"));
+        header(Component.literal("World style"));
         CycleButton<WorldStyle> stylePicker = cycle("Style", WorldStyle.values(), style,
                 CityWorldCustomizeScreen::styleLabel, this::onStyleChanged);
         if (styleLocked) {
@@ -225,7 +225,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         }
         addRow(stylePicker, null);
 
-        this.list.addHeader(Component.literal("Realms"));
+        header(Component.literal("Realms"));
         CycleButton<Boolean> nether = cycle("Nether", new Boolean[] { false, true }, ruinedNether,
                 v -> Component.literal(v ? "Ruined city (1:1)" : "Vanilla"), v -> ruinedNether = v);
         if (CityWorldPackConfig.lockedRuinedNether().isPresent()) {
@@ -250,7 +250,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         }
         addRow(end, null);
 
-        this.list.addHeader(Component.literal("Features"));
+        header(Component.literal("Features"));
         pair(row, onOff("Roads", includeRoads, v -> includeRoads = v));
         pair(row, onOff("Roundabouts", includeRoundabouts, v -> includeRoundabouts = v));
         pair(row, onOff("Sewers", includeSewers, v -> includeSewers = v));
@@ -269,7 +269,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, onOff("Named roads", includeNamedRoads, v -> includeNamedRoads = v));
         flush(row);
 
-        this.list.addHeader(Component.literal("Terrain"));
+        header(Component.literal("Terrain"));
         pair(row, onOff("Caves", includeCaves, v -> includeCaves = v));
         pair(row, onOff("Winding caves", windingCaves, v -> windingCaves = v));
         pair(row, onOff("Lava fields", includeLavaFields, v -> includeLavaFields = v));
@@ -289,7 +289,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, onOff("Shops", includeShops, v -> includeShops = v));
         flush(row);
 
-        this.list.addHeader(Component.literal("Spawns"));
+        header(Component.literal("Spawns"));
         pair(row, chance("Beings", spawnBeings, v -> spawnBeings = v));
         pair(row, chance("Baddies", spawnBaddies, v -> spawnBaddies = v));
         pair(row, chance("Animals", spawnAnimals, v -> spawnAnimals = v));
@@ -298,7 +298,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, onOff("Show villager names", showVillagersNames, v -> showVillagersNames = v));
         flush(row);
 
-        this.list.addHeader(Component.literal("Treasures"));
+        header(Component.literal("Treasures"));
         pair(row, onOff("Chests in mines", treasuresInMines, v -> treasuresInMines = v));
         pair(row, onOff("Spawners in mines", spawnersInMines, v -> spawnersInMines = v));
         pair(row, onOff("Chests in bunkers", treasuresInBunkers, v -> treasuresInBunkers = v));
@@ -313,7 +313,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, chance("Mine alcove odds", oddsOfAlcoveInMines, v -> oddsOfAlcoveInMines = v));
         flush(row);
 
-        this.list.addHeader(Component.literal("World"));
+        header(Component.literal("World"));
         pair(row, cycle("Tree style", TreeStyle.values(), treeStyle, e -> Component.literal(nice(e.name())),
                 v -> treeStyle = v));
         pair(row, chance("Tree density", spawnTrees, v -> spawnTrees = v));
@@ -419,7 +419,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     }
 
     private CycleButton<Chance> chance(String label, Chance init, Consumer<Chance> setter) {
-        CycleButton<Chance> button = CycleButton.<Chance>builder(c -> Component.literal(c.label), init)
+        CycleButton<Chance> button = CycleButton.<Chance>builder(c -> Component.literal(c.label)).withInitialValue(init)
                 .withValues(Chance.values())
                 .create(0, 0, WIDTH, HEIGHT, Component.literal(label), (b, v) -> setter.accept(v));
         greyIfLocked(button, label);
@@ -523,7 +523,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
 
     private static <T> CycleButton<T> cycle(String label, T[] values, T init,
             java.util.function.Function<T, Component> render, Consumer<T> setter) {
-        return CycleButton.<T>builder(render, init).withValues(values)
+        return CycleButton.<T>builder(render).withInitialValue(init).withValues(values)
                 .create(0, 0, WIDTH, HEIGHT, Component.literal(label), (b, v) -> setter.accept(v));
     }
 
@@ -546,6 +546,12 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
 
     private void addRow(AbstractWidget a, AbstractWidget b) {
         this.list.addSmall(a, b);
+    }
+
+    /** A section header: 1.21.1's OptionsList has no addHeader, so a centred label takes a row. */
+    private void header(Component title) {
+        this.list.addSmall(new net.minecraft.client.gui.components.StringWidget(WIDTH * 2 + 10, HEIGHT, title,
+                this.font).alignCenter(), null);
     }
 
     private static Component styleLabel(WorldStyle s) {

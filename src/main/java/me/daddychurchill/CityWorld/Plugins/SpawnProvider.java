@@ -1,16 +1,17 @@
 package me.daddychurchill.CityWorld.Plugins;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.npc.villager.Villager;
-import net.minecraft.world.entity.npc.villager.VillagerProfession;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
@@ -270,12 +271,12 @@ public class SpawnProvider extends Provider {
         LevelAccessor level = at.getLevel();
         if (!(level instanceof ServerLevelAccessor server))
             return;
-        Entity being = EntityType.VILLAGER.getType().create(server.getLevel(), EntitySpawnReason.CHUNK_GENERATION);
+        Entity being = EntityType.VILLAGER.getType().create(server.getLevel());
         if (!(being instanceof Villager villager))
             return;
-        villager.snapTo(at.getBlockX() + 0.5, at.getBlockY(), at.getBlockZ() + 0.5, 0.0F, 0.0F);
+        villager.moveTo(at.getBlockX() + 0.5, at.getBlockY(), at.getBlockZ() + 0.5, 0.0F, 0.0F);
         EventHooks.finalizeMobSpawn(villager, server, server.getCurrentDifficultyAt(villager.blockPosition()),
-                EntitySpawnReason.CHUNK_GENERATION, null);
+                MobSpawnType.CHUNK_GENERATION, null);
         villager.setBaby(child);
         if (surname != null) {
             villager.setCustomName(Component.literal(
@@ -309,13 +310,13 @@ public class SpawnProvider extends Provider {
         Location at = blocks.getBlockLocation(x, y, z);
         if (!(at.getLevel() instanceof ServerLevelAccessor server))
             return;
-        Entity being = EntityType.VILLAGER.getType().create(server.getLevel(), EntitySpawnReason.CHUNK_GENERATION);
+        Entity being = EntityType.VILLAGER.getType().create(server.getLevel());
         if (!(being instanceof Villager villager))
             return;
-        villager.snapTo(at.getBlockX() + 0.5, at.getBlockY(), at.getBlockZ() + 0.5, 0.0F, 0.0F);
+        villager.moveTo(at.getBlockX() + 0.5, at.getBlockY(), at.getBlockZ() + 0.5, 0.0F, 0.0F);
         EventHooks.finalizeMobSpawn(villager, server, server.getCurrentDifficultyAt(villager.blockPosition()),
-                EntitySpawnReason.CHUNK_GENERATION, null);
-        employ(server.getLevel(), villager, Identifier.withDefaultNamespace("cleric"));
+                MobSpawnType.CHUNK_GENERATION, null);
+        employ(server.getLevel(), villager, ResourceLocation.withDefaultNamespace("cleric"));
         if (generator.getSettings().nameVillagers) {
             villager.setCustomName(Component.literal(
                     "Dr. " + generator.odonymProvider.generateSurname(generator, odds)));
@@ -342,7 +343,7 @@ public class SpawnProvider extends Provider {
      * are switched off ({@code spawnBeings} is 0).
      */
     public final void spawnWorker(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
-            Identifier profession) {
+            ResourceLocation profession) {
         if (profession == null || !odds.playOdds(generator.getSettings().spawnBeings))
             return;
         spawnEntity(generator, blocks, odds, x, y, z, EntityType.VILLAGER, false, true, profession);
@@ -365,7 +366,7 @@ public class SpawnProvider extends Provider {
 
     /** As above, but if {@code workerProfession} is set the villager is employed into that trade. */
     private void spawnEntity(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
-            EntityType entity, boolean ignoreFlood, boolean ensureSpace, Identifier workerProfession) {
+            EntityType entity, boolean ignoreFlood, boolean ensureSpace, ResourceLocation workerProfession) {
         if (!blocks.insideXYZ(x, y, z) || entity == null)
             return;
 
@@ -404,18 +405,18 @@ public class SpawnProvider extends Provider {
 
     /** The three-step vanilla worldgen spawn — see this class's notes. */
     private void placeEntity(CityWorldGenerator generator, Odds odds, Location at, EntityType entity,
-            Identifier workerProfession) {
+            ResourceLocation workerProfession) {
         LevelAccessor level = at.getLevel();
         if (!(level instanceof ServerLevelAccessor server))
             return;
 
-        Entity being = entity.getType().create(server.getLevel(), EntitySpawnReason.CHUNK_GENERATION);
+        Entity being = entity.getType().create(server.getLevel());
         if (being == null)
             return;
 
         // Bukkit spawned at the location's corner; vanilla centres on the block, which is what keeps
         // a mob out of the wall it was placed against.
-        being.snapTo(at.getBlockX() + 0.5, at.getBlockY(), at.getBlockZ() + 0.5, 0.0F, 0.0F);
+        being.moveTo(at.getBlockX() + 0.5, at.getBlockY(), at.getBlockZ() + 0.5, 0.0F, 0.0F);
 
         // Gives the mob its equipment, variant and group data — what "being spawned" means beyond
         // existing at a position. Takes the accessor, not the level.
@@ -427,7 +428,7 @@ public class SpawnProvider extends Provider {
         // WorldGenRegion.addFreshEntity drops it.
         if (being instanceof Mob mob)
             EventHooks.finalizeMobSpawn(mob, server, server.getCurrentDifficultyAt(mob.blockPosition()),
-                    EntitySpawnReason.CHUNK_GENERATION, null);
+                    MobSpawnType.CHUNK_GENERATION, null);
 
         being.setDeltaMovement(odds.getRandomVelocity());
 
@@ -458,11 +459,13 @@ public class SpawnProvider extends Provider {
      * brain so the AI matches. Wrapped defensively — a villager that fails to take the job simply spawns
      * as an ordinary resident rather than taking the chunk down. Returns whether it took.
      */
-    private boolean employ(ServerLevel level, Villager villager, Identifier profession) {
+    private boolean employ(ServerLevel level, Villager villager, ResourceLocation profession) {
         try {
             villager.setBaby(false);
-            ResourceKey<VillagerProfession> key = ResourceKey.create(Registries.VILLAGER_PROFESSION, profession);
-            villager.setVillagerData(villager.getVillagerData().withProfession(level.registryAccess(), key));
+            VillagerProfession found = BuiltInRegistries.VILLAGER_PROFESSION.get(profession);
+            if (found == null)
+                return false;
+            villager.setVillagerData(villager.getVillagerData().setProfession(found));
             villager.setVillagerXp(1);
             villager.refreshBrain(level);
             return true;

@@ -5,7 +5,7 @@ import me.daddychurchill.CityWorld.CityWorldMod;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Client -> server: the player's city-plan settings, from their map mod's own UI (JourneyMap's
@@ -22,7 +22,7 @@ import net.minecraft.resources.Identifier;
 public record CityPlanTogglePayload(boolean on, int keep) implements CustomPacketPayload {
 
     public static final Type<CityPlanTogglePayload> TYPE =
-            new Type<>(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "city_plan_toggle"));
+            new Type<>(ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "city_plan_toggle"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, CityPlanTogglePayload> CODEC = StreamCodec.of(
             (buf, p) -> {
