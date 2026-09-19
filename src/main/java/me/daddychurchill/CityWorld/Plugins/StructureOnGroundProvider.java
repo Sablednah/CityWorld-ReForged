@@ -215,6 +215,17 @@ public class StructureOnGroundProvider extends Provider {
 
 		// now the fire pit
 		generateFirePit(generator, chunk, odds, 10, baseY, 10);
+
+		// a pair of two-tall tiki torches flanking the fire, where the pool has them (Macaw's Lights): one
+		// id placed twice high and reconnected, which the mod reads as a post with a burning head
+		Material tiki = MaterialTags.pick(MaterialTags.LIGHT_TIKI, odds, null);
+		if (tiki != null)
+			for (int[] p : new int[][] { { 13, 13 }, { 13, 8 }, { 8, 13 } })
+				if (odds.playOdds(Odds.oddsPrettyLikely) && chunk.isEmpty(p[0], baseY, p[1])
+						&& chunk.isEmpty(p[0], baseY + 1, p[1]) && !chunk.isEmpty(p[0], baseY - 1, p[1])) {
+					chunk.setBlocks(p[0], baseY, baseY + 2, p[1], tiki);
+					chunk.reconnect(p[0], p[0] + 1, baseY, baseY + 2, p[1], p[1] + 1);
+				}
 //		if (odds.playOdds(Odds.oddsPrettyLikely)) {
 //			// stairs around the fire
 ////			chunk.setStair(11, baseY - 1, 10, matFireRing, BlockFace.SOUTH);
