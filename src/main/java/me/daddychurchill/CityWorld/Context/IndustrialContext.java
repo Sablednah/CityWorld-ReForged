@@ -51,7 +51,7 @@ public class IndustrialContext extends UrbanContext {
 	protected PlatLot getBuilding(CityWorldGenerator generator, PlatMap platmap, Odds odds, int chunkX, int chunkZ) {
 		// silos took over from the silo schematics (owner, 2026-09-19); the backfill's flood-fill
 		// makes batteries of them just as it makes bigger factories
-		if (odds.playOdds(Odds.oddsSomewhatUnlikely))
+		if (odds.playOdds(Odds.oddsVeryUnlikely)) // was one in five: "waaay too common" (owner)
 			return new SiloLot(platmap, chunkX, chunkZ);
 		else if (odds.playOdds(Odds.oddsSomewhatLikely))
 			return new WarehouseBuildingLot(platmap, chunkX, chunkZ);
@@ -69,6 +69,7 @@ public class IndustrialContext extends UrbanContext {
 			int frameHeight = size == 3 ? 30 + odds.getRandomInt(19) : 24 + odds.getRandomInt(13);
 			int fill = odds.getRandomInt(frameHeight); // the bell stands anywhere from empty to full
 			int frameStyle = odds.getRandomInt(4);
+			long paveSeed = odds.getRandomLong();
 			for (int tries = 0; tries < 20; tries++) {
 				int px = odds.getRandomInt(PlatMap.Width - size + 1);
 				int pz = odds.getRandomInt(PlatMap.Width - size + 1);
@@ -76,7 +77,7 @@ public class IndustrialContext extends UrbanContext {
 					for (int x = 0; x < size; x++)
 						for (int z = 0; z < size; z++)
 							platmap.setLot(px + x, pz + z, new GasometerLot(platmap, platmap.originX + px + x,
-									platmap.originZ + pz + z, size, x, z, frameHeight, fill, frameStyle));
+									platmap.originZ + pz + z, size, x, z, frameHeight, fill, frameStyle, paveSeed));
 					break;
 				}
 			}
