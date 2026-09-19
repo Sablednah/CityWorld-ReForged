@@ -147,7 +147,7 @@ any door at all"; a factory yard with two fence styles; and two new lots, a meta
 
 **Open, in the order I would take them:**
 
-0. JourneyMap on 1.21.1 is the one integration still unseen on a client there.
+0. ~~JourneyMap on 1.21.1~~ — owner: "works perfect" (2026-09-19 afternoon). Nothing on the 1.21.1 line is unseen now.
 0. **Release** — now four jars; the release workflow's CurseForge/Modrinth game-version mapping reads the
    jar name, so `+mc1.21.1` should just work, but check the first upload. Everything from the fittings arc is on all three branches, self-tested, and playtested three
    times on 26.2.test. Bump, changelog is written (Unreleased), fleet deploy, tag — the recipe in the release memory.
