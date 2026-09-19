@@ -83,6 +83,8 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 	private double differentInteriorModes = Odds.oddsUnlikely;
 	private Material interiorDoorMaterial;
 	private Material exteriorDoorMaterial;
+	/** A garage door for the street bay of an industrial building (see {@link #garageDoorPool}); null = a door. */
+	protected Material garageDoorMaterial;
 
 	protected enum CornerWallStyle {
 		EMPTY, FILLED, WOODCOLUMN, STONECOLUMN, FILLEDTHENEMPTY, WOODTHENFILLED, STONETHENFILLED
@@ -263,6 +265,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		Trees trees = new Trees(chunkOdds);
 		interiorDoorMaterial = MaterialTags.pick(MaterialTags.FITTINGS_INTERIOR_DOOR, chunkOdds, trees.getRandomWoodDoor());
 		exteriorDoorMaterial = MaterialTags.pick(exteriorDoorPool(), chunkOdds, trees.getRandomWoodDoor());
+		garageDoorMaterial = garageDoorPool() == null ? null : MaterialTags.pick(garageDoorPool(), chunkOdds, null);
 
 	}
 
@@ -273,6 +276,11 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 	 */
 	protected TagKey<Block> exteriorDoorPool() {
 		return MaterialTags.FITTINGS_DOOR;
+	}
+
+	/** The pool a building's street bay may take a garage door from — none for most; industry says which. */
+	protected TagKey<Block> garageDoorPool() {
+		return null;
 	}
 
 	private void validateOptions() {
@@ -2536,6 +2544,18 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			chunk.clearBlocks(x2, y1, y1 + 2, z2);
 			break;
 		case WOOD:
+			if (garageDoorMaterial != null && doorMaterial == exteriorDoorMaterial) {
+				// an industrial bay: the frame's three columns become a garage door two high — a
+				// column of part=middle under part=top per cell. Its facing runs ALONG the panel (the
+				// mod's convention: facing=east is a panel across x), so it is turned across the door's
+				// outward direction.
+				BlockFace along = BlockFace.fromDirection(chunk.fixFacing(direction).toDirection().getClockWise());
+				for (int[] c : new int[][] { { x1, z1 }, { x2, z2 }, { x3, z3 } }) {
+					chunk.setBlock(c[0], y1, c[1], garageDoorMaterial, along, "part", "middle");
+					chunk.setBlock(c[0], y1 + 1, c[1], garageDoorMaterial, along, "part", "top");
+				}
+				break;
+			}
 			chunk.setDoor(x2, y1, z2, doorMaterial, direction);
 			break;
 		case NONE:

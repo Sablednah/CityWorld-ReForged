@@ -751,6 +751,14 @@ public final class Material {
             if (faceProp != null && state.hasProperty(faceProp)) {
                 state = state.setValue(faceProp, true);
                 connected = true;
+            } else if (faceProp != null) {
+                // a mod's own connection booleans (Macaw's metal fences declare their own north/east/
+                // south/west), set by name — same meaning, different property instance
+                BlockState named = withNamedValue(state, faceProp.getName(), "true");
+                if (named != state) {
+                    state = named;
+                    connected = true;
+                }
             }
         }
         if (!connected && !hasFaces() && faces.length > 0) {

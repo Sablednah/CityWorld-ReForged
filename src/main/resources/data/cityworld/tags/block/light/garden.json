@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "#mcwlights:garden_lights",
+      "required": false
+    }
+  ]
+}
