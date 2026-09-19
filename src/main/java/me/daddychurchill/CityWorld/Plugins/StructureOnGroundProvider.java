@@ -147,33 +147,71 @@ public class StructureOnGroundProvider extends Provider {
 		else
 			colors.fixColor();
 
+		// 26.3 and later have wool stairs, and vanilla's own abandoned camps pitch their tents out of them:
+		// a roof of stairs facing inward, two back to back at the ridge, open sides, fence posts under the
+		// eaves, straw beds inside. Where the stairs exist the tent takes that shape (owner, 2026-09-19:
+		// "like the new official abandoned camps"); where they do not, the stepped wool tent below stands.
+		// Neither path rolls any odds the other does not, so the rest of the campground is unchanged.
+		Material stairs = colors.getWoolStairs();
+		Material straw = Material.of("straw_bed");
+		if (straw != Material.AIR)
+			matBed = straw;
+
 		// direction?
 		if (odds.flipCoin()) {
 
-			// north/south tent first
-			for (int z = 3; z < 9; z++) {
-				chunk.setBlock(3, baseY, z, colors.getWool());
-				chunk.setBlock(4, baseY + 1, z, colors.getWool());
-				chunk.setBlock(5, baseY + 2, z, colors.getWool());
-				chunk.setBlock(6, baseY + 3, z, colors.getWool());
-				chunk.setBlock(7, baseY + 2, z, colors.getWool());
-				chunk.setBlock(8, baseY + 1, z, colors.getWool());
-				chunk.setBlock(9, baseY, z, colors.getWool());
+			if (stairs != null) {
+				// north/south tent: the ridge runs along z, the slope across x, eight wide
+				for (int z = 3; z < 9; z++) {
+					chunk.setStair(3, baseY, z, colors.getWoolStairs(), BlockFace.EAST);
+					chunk.setStair(4, baseY + 1, z, colors.getWoolStairs(), BlockFace.EAST);
+					chunk.setStair(5, baseY + 2, z, colors.getWoolStairs(), BlockFace.EAST);
+					chunk.setStair(6, baseY + 3, z, colors.getWoolStairs(), BlockFace.EAST);
+					chunk.setStair(7, baseY + 3, z, colors.getWoolStairs(), BlockFace.WEST);
+					chunk.setStair(8, baseY + 2, z, colors.getWoolStairs(), BlockFace.WEST);
+					chunk.setStair(9, baseY + 1, z, colors.getWoolStairs(), BlockFace.WEST);
+					chunk.setStair(10, baseY, z, colors.getWoolStairs(), BlockFace.WEST);
+				}
+
+				// back wall, filling the gable under the slope
+				chunk.setBlock(4, baseY, 3, colors.getWool());
+				chunk.setBlocks(5, baseY, baseY + 2, 3, colors.getWool());
+				chunk.setBlock(6, baseY, 3, colors.getWool());
+				chunk.setBlock(6, baseY + 1, 3, matWindow, BlockFace.EAST, BlockFace.WEST);
+				chunk.setBlock(6, baseY + 2, 3, colors.getWool());
+				chunk.setBlocks(7, baseY, baseY + 3, 3, colors.getWool());
+				chunk.setBlocks(8, baseY, baseY + 2, 3, colors.getWool());
+				chunk.setBlock(9, baseY, 3, colors.getWool());
+
+				// posts under the eaves at the open end
+				chunk.setBlocks(5, baseY, baseY + 2, 8, matPole);
+				chunk.setBlocks(8, baseY, baseY + 2, 8, matPole);
+			} else {
+				// north/south tent first
+				for (int z = 3; z < 9; z++) {
+					chunk.setBlock(3, baseY, z, colors.getWool());
+					chunk.setBlock(4, baseY + 1, z, colors.getWool());
+					chunk.setBlock(5, baseY + 2, z, colors.getWool());
+					chunk.setBlock(6, baseY + 3, z, colors.getWool());
+					chunk.setBlock(7, baseY + 2, z, colors.getWool());
+					chunk.setBlock(8, baseY + 1, z, colors.getWool());
+					chunk.setBlock(9, baseY, z, colors.getWool());
+				}
+
+				// back wall
+				chunk.setBlock(4, baseY, 3, colors.getWool());
+				chunk.setBlock(5, baseY, 3, colors.getWool());
+				chunk.setBlock(5, baseY + 1, 3, colors.getWool());
+				chunk.setBlock(6, baseY, 3, colors.getWool());
+				chunk.setBlock(6, baseY + 1, 3, matWindow, BlockFace.EAST, BlockFace.WEST);
+				chunk.setBlock(6, baseY + 2, 3, colors.getWool());
+				chunk.setBlock(7, baseY + 1, 3, colors.getWool());
+				chunk.setBlock(7, baseY, 3, colors.getWool());
+				chunk.setBlock(8, baseY, 3, colors.getWool());
+
+				// post
+				chunk.setBlocks(6, baseY, baseY + 3, 8, matPole);
 			}
-
-			// back wall
-			chunk.setBlock(4, baseY, 3, colors.getWool());
-			chunk.setBlock(5, baseY, 3, colors.getWool());
-			chunk.setBlock(5, baseY + 1, 3, colors.getWool());
-			chunk.setBlock(6, baseY, 3, colors.getWool());
-			chunk.setBlock(6, baseY + 1, 3, matWindow, BlockFace.EAST, BlockFace.WEST);
-			chunk.setBlock(6, baseY + 2, 3, colors.getWool());
-			chunk.setBlock(7, baseY + 1, 3, colors.getWool());
-			chunk.setBlock(7, baseY, 3, colors.getWool());
-			chunk.setBlock(8, baseY, 3, colors.getWool());
-
-			// post
-			chunk.setBlocks(6, baseY, baseY + 3, 8, matPole);
 
 			// beds
 			if (odds.playOdds(Odds.oddsPrettyLikely))
@@ -181,30 +219,58 @@ public class StructureOnGroundProvider extends Provider {
 			if (odds.playOdds(Odds.oddsPrettyLikely))
 				chunk.setBed(7, baseY, 4, matBed, BlockFace.SOUTH);
 		} else {
-			// north/south tent first
-			for (int x = 3; x < 9; x++) {
-				chunk.setBlock(x, baseY, 3, colors.getWool());
-				chunk.setBlock(x, baseY + 1, 4, colors.getWool());
-				chunk.setBlock(x, baseY + 2, 5, colors.getWool());
-				chunk.setBlock(x, baseY + 3, 6, colors.getWool());
-				chunk.setBlock(x, baseY + 2, 7, colors.getWool());
-				chunk.setBlock(x, baseY + 1, 8, colors.getWool());
-				chunk.setBlock(x, baseY, 9, colors.getWool());
+			if (stairs != null) {
+				// east/west tent: the ridge runs along x, the slope across z, eight wide
+				for (int x = 3; x < 9; x++) {
+					chunk.setStair(x, baseY, 3, colors.getWoolStairs(), BlockFace.SOUTH);
+					chunk.setStair(x, baseY + 1, 4, colors.getWoolStairs(), BlockFace.SOUTH);
+					chunk.setStair(x, baseY + 2, 5, colors.getWoolStairs(), BlockFace.SOUTH);
+					chunk.setStair(x, baseY + 3, 6, colors.getWoolStairs(), BlockFace.SOUTH);
+					chunk.setStair(x, baseY + 3, 7, colors.getWoolStairs(), BlockFace.NORTH);
+					chunk.setStair(x, baseY + 2, 8, colors.getWoolStairs(), BlockFace.NORTH);
+					chunk.setStair(x, baseY + 1, 9, colors.getWoolStairs(), BlockFace.NORTH);
+					chunk.setStair(x, baseY, 10, colors.getWoolStairs(), BlockFace.NORTH);
+				}
+
+				// back wall, filling the gable under the slope
+				chunk.setBlock(3, baseY, 4, colors.getWool());
+				chunk.setBlocks(3, baseY, baseY + 2, 5, colors.getWool());
+				chunk.setBlock(3, baseY, 6, colors.getWool());
+				chunk.setBlock(3, baseY + 1, 6, matWindow, BlockFace.NORTH, BlockFace.SOUTH);
+				chunk.setBlock(3, baseY + 2, 6, colors.getWool());
+				chunk.setBlocks(3, baseY, baseY + 3, 7, colors.getWool());
+				chunk.setBlocks(3, baseY, baseY + 2, 8, colors.getWool());
+				chunk.setBlock(3, baseY, 9, colors.getWool());
+
+				// posts under the eaves at the open end
+				chunk.setBlocks(8, baseY, baseY + 2, 5, matPole);
+				chunk.setBlocks(8, baseY, baseY + 2, 8, matPole);
+			} else {
+				// north/south tent first
+				for (int x = 3; x < 9; x++) {
+					chunk.setBlock(x, baseY, 3, colors.getWool());
+					chunk.setBlock(x, baseY + 1, 4, colors.getWool());
+					chunk.setBlock(x, baseY + 2, 5, colors.getWool());
+					chunk.setBlock(x, baseY + 3, 6, colors.getWool());
+					chunk.setBlock(x, baseY + 2, 7, colors.getWool());
+					chunk.setBlock(x, baseY + 1, 8, colors.getWool());
+					chunk.setBlock(x, baseY, 9, colors.getWool());
+				}
+
+				// back wall
+				chunk.setBlock(3, baseY, 4, colors.getWool());
+				chunk.setBlock(3, baseY, 5, colors.getWool());
+				chunk.setBlock(3, baseY + 1, 5, colors.getWool());
+				chunk.setBlock(3, baseY, 6, colors.getWool());
+				chunk.setBlock(3, baseY + 1, 6, matWindow, BlockFace.NORTH, BlockFace.SOUTH);
+				chunk.setBlock(3, baseY + 2, 6, colors.getWool());
+				chunk.setBlock(3, baseY + 1, 7, colors.getWool());
+				chunk.setBlock(3, baseY, 7, colors.getWool());
+				chunk.setBlock(3, baseY, 8, colors.getWool());
+
+				// post
+				chunk.setBlocks(8, baseY, baseY + 3, 6, matPole);
 			}
-
-			// back wall
-			chunk.setBlock(3, baseY, 4, colors.getWool());
-			chunk.setBlock(3, baseY, 5, colors.getWool());
-			chunk.setBlock(3, baseY + 1, 5, colors.getWool());
-			chunk.setBlock(3, baseY, 6, colors.getWool());
-			chunk.setBlock(3, baseY + 1, 6, matWindow, BlockFace.NORTH, BlockFace.SOUTH);
-			chunk.setBlock(3, baseY + 2, 6, colors.getWool());
-			chunk.setBlock(3, baseY + 1, 7, colors.getWool());
-			chunk.setBlock(3, baseY, 7, colors.getWool());
-			chunk.setBlock(3, baseY, 8, colors.getWool());
-
-			// post
-			chunk.setBlocks(8, baseY, baseY + 3, 6, matPole);
 
 			// beds
 			if (odds.playOdds(Odds.oddsPrettyLikely))
