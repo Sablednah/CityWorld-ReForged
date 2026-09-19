@@ -147,7 +147,15 @@ public class CityWorldNetherBiomeSource extends BiomeSource implements CityWorld
         return pool().stream();
     }
 
+    /**
+     * 26.3: vanilla asks a biome source for a {@code BiomeResolver} per sampler rather than calling
+     * {@code getNoiseBiome} on it; the resolver is the same per-quart answer, so it just delegates.
+     */
     @Override
+    public net.minecraft.world.level.biome.BiomeResolver createResolver(Climate.Sampler sampler) {
+        return (x, y, z) -> getNoiseBiome(x, y, z, sampler);
+    }
+
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
         Holder<Biome> biome = CityWorldBiomeLookup.biomeAt(this, x, y, z);
         return biome != null ? biome : biomes.getOrThrow(Biomes.NETHER_WASTES);

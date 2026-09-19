@@ -67,8 +67,8 @@ public class CoverProvider_Nether extends CoverProvider_Decayed {
 		flora(chunk, x, y, z, tree || name.contains("SAPLING"));
 	}
 
-	private static final net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>> NETHER_TREES =
-			net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE,
+	private static final net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.Feature> NETHER_TREES =
+			net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.FEATURE,
 					net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", "nether_trees"));
 
 	/** Grows a tree from {@link #NETHER_TREES} at (x, y, z) on the live level; false if it could not. */
@@ -76,7 +76,7 @@ public class CoverProvider_Nether extends CoverProvider_Decayed {
 		if (!(chunk instanceof me.daddychurchill.CityWorld.Support.RealBlocks real)
 				|| !(real.getServerLevel() instanceof net.minecraft.world.level.WorldGenLevel level))
 			return false;
-		var pool = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE)
+		var pool = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.FEATURE)
 				.get(NETHER_TREES);
 		if (pool.isEmpty() || pool.get().size() == 0)
 			return false;

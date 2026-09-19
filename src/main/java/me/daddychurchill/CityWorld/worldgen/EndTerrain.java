@@ -3,11 +3,15 @@ package me.daddychurchill.CityWorld.worldgen;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import net.minecraft.util.KeyDispatchDataCodec;
-import net.minecraft.world.level.levelgen.DensityFunction;
-import net.minecraft.world.level.levelgen.DensityFunctions;
-import net.minecraft.world.level.levelgen.NoiseSettings;
+import net.minecraft.world.level.biome.Climate;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+import net.minecraft.world.level.levelgen.densityfunction.DensityFunction;
 import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.densityfunction.DensityBufferPool;
+import net.minecraft.world.level.levelgen.densityfunction.DensitySampler;
+import net.minecraft.world.level.levelgen.densityfunction.DensityVolume;
+import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
+import net.minecraft.world.level.levelgen.densityfunction.ScopedDensityBuffer;
 
 /**
  * Where vanilla's End terrain is, asked of the noise — without generating a chunk.
@@ -15,19 +19,21 @@ import net.minecraft.world.level.levelgen.RandomState;
  * <p><b>Why it exists.</b> The CityWorld End keeps vanilla's islands (every chunk is filled by a real vanilla End
  * generator) and lays the city on top of them, so the planner has to know how high an island stands at a column
  * long before that chunk exists: {@code HeightInfo} asks about chunks five lots away to route a road. Vanilla's own
- * answer, {@code getBaseHeight}, measured <b>1.6 ms a column</b> (2026-09-17, 50,000 calls) — it rebuilds a
- * {@code NoiseChunk} per call — which is 40 s for one platmap's column heights.
+ * answer, {@code getBaseHeight}, builds a {@code NoiseChunk} per column, and on 1.21.11 measured <b>1.6 ms a
+ * column</b> (2026-09-17, 50,000 calls) — 40 s for one platmap's column heights.
  *
- * <p><b>How it stays exact.</b> This reproduces what {@code NoiseChunk} does rather than approximating it: the
- * function wrapped by the router's {@code interpolated} marker is evaluated at the noise cell corners (8 x 4 x 8
- * blocks in the End) and interpolated trilinearly between them, and a block is solid where that is above zero — the
- * {@code * 0.64} and {@code squeeze} outside the marker keep the sign, and the End has no aquifers, carvers or
- * beards to disagree. {@code -Dcityworld.probe=survey:end} checks it against {@code getBaseHeight} column by
- * column; a mismatch there means a Minecraft version reshaped the End's router and this needs another look.
+ * <p><b>How it stays exact — the 26.3 shape.</b> Before 26.3 this class re-implemented {@code NoiseChunk}'s cell
+ * interpolation by hand, because vanilla only interpolated inside a chunk fill. 26.3 rewrote the density engine:
+ * a function compiles to a {@code DensitySampler}, the router's {@code interpolated} marker carries its own cell
+ * size and interpolates inside {@code sampleVolume}, and the 2D caches are the sampler context's. So this now does
+ * exactly what {@code NoiseBasedChunkGenerator.doFill} does — sample {@code final_density} over the chunk's
+ * volume through a caching context — and reads the sign: a block is solid where the density is above zero, and
+ * the End has no aquifers, carvers or beards to disagree. {@code -Dcityworld.probe=survey:end} still checks it
+ * against {@code getBaseHeight} column by column; a mismatch there means the End's router or the engine changed
+ * shape again and this needs another look.
  *
- * <p>The end-islands function is 2D but costs ~600 simplex lookups, and vanilla only caches it inside a
- * {@code NoiseChunk}; here every 2D cache marker (and the islands function itself) is swapped for a one-column
- * memo, since corners are evaluated a column at a time. That memo is why each thread has its own function tree.
+ * <p>The climate sampler the biome source reads is per thread, because a caching {@code SamplerContext} is
+ * stateful; the engine's own cache is what memoises the ~600-simplex-lookup end-islands field per column.
  */
 public final class EndTerrain {
 
@@ -36,8 +42,9 @@ public final class EndTerrain {
     private static final int CACHED_CHUNKS = 4096;
 
     private final RandomState random;
-    private final int cellWidth, cellHeight, minY, levels;
-    private final ThreadLocal<Functions> functions = ThreadLocal.withInitial(this::wire);
+    private final DensityFunction finalDensity;
+    private final int minY, height;
+    private final ThreadLocal<Climate.Sampler> climate;
     /** Per chunk: [0] the top block of each column, [1] the lowest block of the solid run that top belongs to. */
     private final Map<Long, short[][]> tops = new LinkedHashMap<>(256, 0.75f, true) {
         @Override
@@ -46,54 +53,27 @@ public final class EndTerrain {
         }
     };
 
-    public EndTerrain(RandomState random, NoiseSettings noise) {
+    public EndTerrain(RandomState random, NoiseGeneratorSettings settings) {
         this.random = random;
-        this.cellWidth = noise.getCellWidth();
-        this.cellHeight = noise.getCellHeight();
+        this.finalDensity = settings.noiseRouter().finalDensity();
+        this.climate = ThreadLocal.withInitial(
+                () -> random.createClimateSampler(SamplerContext.builder().enableCaches().build()));
+        var noise = settings.noiseSettings();
         this.minY = noise.minY();
-        this.levels = (Math.min(SCAN_TOP, noise.minY() + noise.height()) - noise.minY()) / cellHeight + 1;
-        if (16 % cellWidth != 0)
-            throw new IllegalStateException("CityWorld: End noise cells are " + cellWidth + " wide; EndTerrain "
-                    + "assumes they tile a chunk");
-    }
-
-    /** The density inside the router's {@code interpolated} marker, and the 2D field the End's biomes read. */
-    private record Functions(DensityFunction density, DensityFunction erosion,
-            net.minecraft.world.level.biome.Climate.Sampler sampler) {}
-
-    private Functions wire() {
-        DensityFunction[] interpolated = new DensityFunction[1];
-        DensityFunction.Visitor visitor = function -> {
-            if (function instanceof DensityFunctions.MarkerOrMarked marker) {
-                // Marker.Type is package-private; its constant names are what we can see of it.
-                String type = String.valueOf((Object) marker.type());
-                if (type.equals("Interpolated") && interpolated[0] == null)
-                    interpolated[0] = marker.wrapped();
-                if (type.equals("Cache2D") || type.equals("FlatCache"))
-                    return new ColumnMemo(marker.wrapped());
-            } else if (function.getClass().getSimpleName().equals("EndIslandDensityFunction"))
-                return new ColumnMemo(function);
-            return function;
-        };
-        DensityFunction whole = random.router().finalDensity().mapAll(visitor);
-        DensityFunction erosion = random.router().erosion().mapAll(visitor), zero = DensityFunctions.zero();
-        return new Functions(interpolated[0] != null ? interpolated[0] : whole, erosion,
-                new net.minecraft.world.level.biome.Climate.Sampler(zero, zero, zero, erosion, zero, zero,
-                        java.util.List.of()));
+        this.height = Math.max(1, Math.min(SCAN_TOP, noise.minY() + noise.height()) - noise.minY());
     }
 
     /**
-     * A climate sampler whose erosion is this world's end-islands field, memoised per column — what a real
-     * {@code TheEndBiomeSource} needs to answer under a generator that is not noise-based. The other five axes are
-     * zero, as they are in vanilla's End. Per thread, like the memo it carries.
+     * Vanilla's End climate for this world — erosion is the end-islands field, the other five axes zero — which is
+     * what a real {@code TheEndBiomeSource} needs to answer under a generator that is not noise-based. Per thread.
      */
-    public net.minecraft.world.level.biome.Climate.Sampler sampler() {
-        return functions.get().sampler();
+    public Climate.Sampler sampler() {
+        return climate.get();
     }
 
     /** Vanilla's End biome field at a block column — what {@code TheEndBiomeSource} reads as erosion. */
     public double erosionAt(int blockX, int blockZ) {
-        return functions.get().erosion().compute(new DensityFunction.SinglePointContext(blockX, 0, blockZ));
+        return climate.get().erosion().sampleValue(blockX, 0, blockZ);
     }
 
     /** The highest solid block of vanilla's terrain in this column, or 0 where the column is void. */
@@ -130,94 +110,30 @@ public final class EndTerrain {
     }
 
     private short[][] compute(int chunkX, int chunkZ) {
-        DensityFunction density = functions.get().density();
-        int cells = 16 / cellWidth, corners = cells + 1;
-        // Corner densities, [cornerX][cornerZ][level] — a column at a time, which is what the 2D memo wants.
-        double[][][] corner = new double[corners][corners][levels];
-        for (int i = 0; i < corners; i++)
-            for (int j = 0; j < corners; j++)
-                for (int level = 0; level < levels; level++)
-                    corner[i][j][level] = density.compute(new DensityFunction.SinglePointContext(
-                            chunkX * 16 + i * cellWidth, minY + level * cellHeight, chunkZ * 16 + j * cellWidth));
-
         short[] result = new short[256], underside = new short[256];
-        boolean[] closed = new boolean[256]; // the run under the top has ended
-        for (int i = 0; i < cells; i++)
-            for (int j = 0; j < cells; j++) {
-                double[] c00 = corner[i][j], c10 = corner[i + 1][j], c01 = corner[i][j + 1], c11 = corner[i + 1][j + 1];
-                for (int level = levels - 2; level >= 0; level--) {
-                    // A cell whose eight corners are all empty interpolates to empty everywhere.
-                    if (c00[level] <= 0 && c10[level] <= 0 && c01[level] <= 0 && c11[level] <= 0 && c00[level + 1] <= 0
-                            && c10[level + 1] <= 0 && c01[level + 1] <= 0 && c11[level + 1] <= 0) {
-                        for (int dx = 0; dx < cellWidth; dx++)
-                            for (int dz = 0; dz < cellWidth; dz++)
-                                if (result[(i * cellWidth + dx) << 4 | (j * cellWidth + dz)] != 0)
-                                    closed[(i * cellWidth + dx) << 4 | (j * cellWidth + dz)] = true;
-                        continue;
-                    }
-                    for (int dy = cellHeight - 1; dy >= 0; dy--) {
-                        double fy = dy / (double) cellHeight;
-                        double y00 = lerp(fy, c00[level], c00[level + 1]), y10 = lerp(fy, c10[level], c10[level + 1]);
-                        double y01 = lerp(fy, c01[level], c01[level + 1]), y11 = lerp(fy, c11[level], c11[level + 1]);
-                        for (int dx = 0; dx < cellWidth; dx++) {
-                            double fx = dx / (double) cellWidth;
-                            double x0 = lerp(fx, y00, y10), x1 = lerp(fx, y01, y11);
-                            for (int dz = 0; dz < cellWidth; dz++) {
-                                int index = (i * cellWidth + dx) << 4 | (j * cellWidth + dz);
-                                if (closed[index])
-                                    continue;
-                                short y = (short) (minY + level * cellHeight + dy);
-                                if (lerp(dz / (double) cellWidth, x0, x1) > 0) {
-                                    if (result[index] == 0)
-                                        result[index] = y;
-                                    underside[index] = y;
-                                } else if (result[index] != 0)
-                                    closed[index] = true;
-                            }
+        DensityVolume volume = new DensityVolume(16, height, 16, chunkX * 16, minY, chunkZ * 16);
+        // As NoiseChunk does it: a pooled buffer arena and a caching context, per fill.
+        DensityBufferPool pool = random.acquireDensityBufferPool();
+        try {
+            SamplerContext context = SamplerContext.builder().enableCaches().useBufferArena(pool).build();
+            DensitySampler.Bound density = random.samplersWithContext(context).get(finalDensity);
+            try (ScopedDensityBuffer buffer = density.sampleVolume(volume)) {
+                for (int x = 0; x < 16; x++)
+                    for (int z = 0; z < 16; z++) {
+                        int index = x << 4 | z;
+                        for (int y = height - 1; y >= 0; y--) {
+                            if (buffer.get(volume.indexUnchecked(x, y, z)) > 0) {
+                                if (result[index] == 0)
+                                    result[index] = (short) (minY + y);
+                                underside[index] = (short) (minY + y);
+                            } else if (result[index] != 0)
+                                break; // the run under the top has ended
                         }
                     }
-                }
             }
+        } finally {
+            random.releaseDensityBufferPool(pool);
+        }
         return new short[][] { result, underside };
-    }
-
-    private static double lerp(double t, double a, double b) {
-        return a + t * (b - a);
-    }
-
-    /** A 2D function remembered for the last column asked — corners are evaluated a column at a time. */
-    private static final class ColumnMemo implements DensityFunction.SimpleFunction {
-        private final DensityFunction wrapped;
-        private int lastX = Integer.MIN_VALUE, lastZ = Integer.MIN_VALUE;
-        private double last;
-
-        ColumnMemo(DensityFunction wrapped) {
-            this.wrapped = wrapped;
-        }
-
-        @Override
-        public double compute(DensityFunction.FunctionContext context) {
-            if (context.blockX() != lastX || context.blockZ() != lastZ) {
-                last = wrapped.compute(context);
-                lastX = context.blockX();
-                lastZ = context.blockZ();
-            }
-            return last;
-        }
-
-        @Override
-        public double minValue() {
-            return wrapped.minValue();
-        }
-
-        @Override
-        public double maxValue() {
-            return wrapped.maxValue();
-        }
-
-        @Override
-        public KeyDispatchDataCodec<? extends DensityFunction> codec() {
-            throw new UnsupportedOperationException("EndTerrain's column memo is never serialised");
-        }
     }
 }

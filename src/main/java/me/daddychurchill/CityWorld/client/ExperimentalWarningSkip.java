@@ -72,7 +72,7 @@ public final class ExperimentalWarningSkip {
     static boolean onlyCityWorld(WorldCreationContext context) {
         if (FeatureFlags.isExperimental(context.dataConfiguration().enabledFeatures()))
             return false;
-        for (RegistryLayer layer : new RegistryLayer[] { RegistryLayer.STATIC, RegistryLayer.WORLDGEN }) {
+        for (RegistryLayer layer : new RegistryLayer[] { RegistryLayer.STATIC, RegistryLayer.WORLD }) {
             boolean foreignUnstable = context.worldgenRegistries().getLayer(layer).registries()
                     .filter(entry -> !entry.key().identifier().getNamespace().equals(CityWorldMod.MODID))
                     .anyMatch(entry -> entry.value().registryLifecycle() != Lifecycle.stable());

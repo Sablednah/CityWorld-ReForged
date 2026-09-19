@@ -1,6 +1,7 @@
 package me.daddychurchill.CityWorld.worldgen;
 
 import java.util.List;
+import java.util.Set;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
@@ -26,7 +27,7 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.resources.RegistryFileCodec;
+import net.minecraft.core.registries.codec.RegistryFileCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.server.level.WorldGenRegion;
@@ -78,7 +79,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     BiomeSource.CODEC.fieldOf("biome_source").forGetter(ChunkGenerator::getBiomeSource),
                     Codec.BOOL.optionalFieldOf("decayed").forGetter(g -> g.decayed),
                     Codec.STRING.optionalFieldOf("style").forGetter(g -> g.style),
-                    RegistryFileCodec.create(CityWorldRegistries.WORLD_SETTINGS, CityWorldSettingsData.CODEC)
+                    RegistryFileCodec.create(CityWorldRegistries.WORLD_SETTINGS, CityWorldSettingsData.CODEC, true)
                             .optionalFieldOf("settings").forGetter(g -> g.settings),
                     net.minecraft.world.level.Level.RESOURCE_KEY_CODEC.optionalFieldOf("twin_of").forGetter(g -> g.twinOf),
                     Codec.STRING.optionalFieldOf("environment").forGetter(g -> g.environment)
@@ -367,9 +368,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     var biomes = registries.lookupOrThrow(Registries.BIOME);
                     var settings = registries.lookupOrThrow(Registries.NOISE_SETTINGS)
                             .getOrThrow(net.minecraft.world.level.levelgen.NoiseGeneratorSettings.END);
-                    vanillaEndRandom = RandomState.create(registries,
-                            net.minecraft.world.level.levelgen.NoiseGeneratorSettings.END, levelSeed);
-                    endTerrain = new EndTerrain(vanillaEndRandom, settings.value().noiseSettings());
+                    vanillaEndRandom = RandomState.create(registries.lookupOrThrow(Registries.NOISE), levelSeed,
+                            settings.value());
+                    endTerrain = new EndTerrain(vanillaEndRandom, settings.value());
                     local = new net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator(
                             net.minecraft.world.level.biome.TheEndBiomeSource.create(biomes), settings);
                     // As TerraBlender would have done for a vanilla End stem — see TerraBlenderBridge.initializeEnd.
@@ -388,16 +389,27 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     /** The same noise, asked for heights without generating — what the End's planner and biomes read. */
     private volatile EndTerrain endTerrain;
 
+    /**
+     * 26.3 folded {@code fillFromNoise}, {@code buildSurface} and {@code applyCarvers} into one step. For CityWorld
+     * that is the same work: shape and build the chunk, no vanilla surface pass (the shaper lays its own strata),
+     * no vanilla carvers (CityWorld carves its own mines and sewers).
+     *
+     * <p>The End's terrain is vanilla's everywhere: the dragon's island in the centre, and beyond the void ring
+     * the outer islands exactly as vanilla grows them. CityWorld then builds on top of what is there
+     * (ShapeProvider_TheEnd shapes nothing) — except in the centre, which stays the dragon's alone. Vanilla's
+     * step now surfaces the islands in the same call as it fills them, so its End surface rules run under a
+     * city chunk <em>before</em> the city is drawn (in a vanilla game they place end stone on end stone; with a
+     * biome mod, that mod's ground) — the city then draws over them, where before 26.3 city chunks skipped the
+     * surface pass altogether because it ran after the city and repainted the yards.
+     */
     @Override
-    public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState,
-            StructureManager structureManager, ChunkAccess chunk) {
-        // The End's terrain is vanilla's everywhere: the dragon's island in the centre, and beyond the void ring
-        // the outer islands exactly as vanilla grows them. CityWorld then builds on top of what is there
-        // (ShapeProvider_TheEnd shapes nothing) — except in the centre, which stays the dragon's alone.
+    public CompletableFuture<ChunkAccess> buildTerrain(ChunkAccess chunk, Blender blender, RandomState randomState,
+            StructureManager structureManager, BiomeManager biomeManager,
+            @org.jspecify.annotations.Nullable WorldGenRegion carverBiomeRegion, Set<Holder<Biome>> possibleBiomes) {
         if (isEnd()) {
             context(chunk);
-            CompletableFuture<ChunkAccess> islands =
-                    vanillaEnd().fillFromNoise(blender, vanillaEndRandom, structureManager, chunk);
+            CompletableFuture<ChunkAccess> islands = vanillaEnd().buildTerrain(chunk, blender, vanillaEndRandom,
+                    structureManager, biomeManager, carverBiomeRegion, possibleBiomes);
             return inEndCentre(chunk) ? islands : islands.thenApply(filled -> {
                 if (!endStructureHere(structureManager, filled))
                     buildCity(structureManager, filled);
@@ -422,7 +434,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             return false;
         try {
             ChunkPos pos = chunk.getPos();
-            for (var start : structureManager.startsForStructure(pos, structure -> true))
+            for (var start : structureManager.startsForStructure(pos.x(), pos.z(), structure -> true))
                 for (var piece : start.getPieces()) {
                     var box = piece.getBoundingBox();
                     if (box.maxX() >= pos.getMinBlockX() && box.minX() <= pos.getMaxBlockX()
@@ -486,7 +498,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             // whose fixed start at y 33 buries them under a full-height city).
             var cavern = structureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE).get(CARVE_CAVERN);
             List<net.minecraft.world.level.levelgen.structure.StructureStart> starts =
-                    structureManager.startsForStructure(pos, structure -> carvesTerrain(structure)
+                    structureManager.startsForStructure(pos.x(), pos.z(), structure -> carvesTerrain(structure)
                             || cavern.map(set -> set.stream().anyMatch(h -> h.value() == structure)).orElse(false));
             if (starts.isEmpty())
                 return;
@@ -596,39 +608,6 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 || adjustment == net.minecraft.world.level.levelgen.structure.TerrainAdjustment.BEARD_THIN;
     }
 
-    @Override
-    public void buildSurface(WorldGenRegion region, StructureManager structureManager,
-            RandomState randomState, ChunkAccess chunk) {
-        // Nothing: the shaper lays its own surface down in fillFromNoise (that is what the
-        // surfaceMaterial/subsurfaceMaterial strata are), so vanilla's surface pass has no job here —
-        // except in the End's central zone, which vanilla generated and must surface itself.
-        if (inEndCentre(chunk) || isEndWild(structureManager, chunk))
-            vanillaEnd().buildSurface(region, structureManager, vanillaEndRandom, chunk);
-    }
-
-    /**
-     * An End chunk CityWorld leaves to nature (or to an end city). It gets the End's own surface rules, which in a
-     * vanilla game do nothing — end stone onto end stone — and with a biome mod lay that mod's ground (BoP's algal
-     * and null end stone). City chunks are skipped: the rules repaint any exposed end stone, yards and all.
-     */
-    private boolean isEndWild(StructureManager structureManager, ChunkAccess chunk) {
-        if (!isEnd())
-            return false;
-        if (endStructureHere(structureManager, chunk))
-            return true;
-        // Block coordinates, not pos.x: ChunkPos became a record on 26.1, and this line is the same on every branch.
-        int chunkX = chunk.getPos().getMinBlockX() >> 4, chunkZ = chunk.getPos().getMinBlockZ() >> 4;
-        CityWorldGenerator context = context(chunk);
-        me.daddychurchill.CityWorld.Plats.PlatLot lot = context.getPlatMap(chunkX, chunkZ).getMapLot(chunkX, chunkZ);
-        return lot == null || lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE;
-    }
-
-    @Override
-    public void applyCarvers(WorldGenRegion region, long seed, RandomState randomState,
-            BiomeManager biomeManager, StructureManager structureManager, ChunkAccess chunk) {
-        // No vanilla carvers (caves/ravines) — CityWorld carves its own mines/sewers.
-    }
-
     /**
      * Fills the chunk's biomes from CityWorld's own terrain instead of the flat plains a fixed source
      * would give — ocean in the deeps, beaches at the waterline, forest/hills/snowy peaks up the
@@ -715,7 +694,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 endBiomes.bindTerrain(endTerrain, vanilla.getBiomeSource());
         }
         return ChunkGeneratorStructureState.createForNormal(
-                randomState, seed, this.biomeSource, onlyAllowed(lookup));
+                randomState, seed, getOrigin(randomState), this.biomeSource, onlyAllowed(lookup));
     }
 
     /**
@@ -861,7 +840,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             if (cavern.isEmpty())
                 return;
             ChunkPos pos = chunk.getPos();
-            List<net.minecraft.world.level.levelgen.structure.StructureStart> starts = structureManager.startsForStructure(pos,
+            List<net.minecraft.world.level.levelgen.structure.StructureStart> starts = structureManager.startsForStructure(pos.x(), pos.z(),
                     structure -> cavern.get().stream().anyMatch(h -> h.value() == structure));
             for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
                 if (!start.isValid())
@@ -1021,7 +1000,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             int index = 0;
             for (Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature> feature : features) {
                 random.setFeatureSeed(decoSeed, index++, step);
-                feature.value().placeWithBiomeCheck(level, this, random, origin);
+                new net.minecraft.world.level.levelgen.placement.FeaturePlacer(level, this)
+                        .placeWithBiomeCheck(feature.value(), random, origin);
             }
         } catch (Throwable t) {
             // cave decoration must never break chunk generation
@@ -1275,7 +1255,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         byStep.getOrDefault(step, java.util.List.of())) {
                     random.setFeatureSeed(decoSeed, index++, step);
                     for (net.minecraft.world.level.levelgen.structure.StructureStart start :
-                            structureManager.startsForStructure(sectionPos, structure))
+                            structureManager.startsForStructure(sectionPos.x(), sectionPos.z(), structure))
                         start.placeInChunk(level, structureManager, this, random, writable, pos);
                 }
             }
@@ -1323,7 +1303,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             for (net.minecraft.core.Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature> pf : settings
                     .features().get(step)) {
                 random.setFeatureSeed(decoSeed, index++, step);
-                pf.value().placeWithBiomeCheck(level, this, random, origin);
+                new net.minecraft.world.level.levelgen.placement.FeaturePlacer(level, this)
+                        .placeWithBiomeCheck(pf.value(), random, origin);
             }
         } catch (Throwable t) {
             // ore decoration must never break chunk generation
@@ -1457,7 +1438,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     }
 
     @Override
-    public void addDebugScreenInfo(List<String> info, RandomState randomState, BlockPos pos) {
+    public void addDebugScreenInfo(List<String> info, RandomState randomState, BlockPos pos,
+            net.minecraft.world.level.levelgen.densityfunction.SamplerContext samplerContext) {
         CityWorldGenerator context = context();
         if (context == null) {
             info.add("CityWorld: context not built yet");

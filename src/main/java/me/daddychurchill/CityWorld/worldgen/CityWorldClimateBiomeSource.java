@@ -33,17 +33,30 @@ import net.minecraft.world.level.biome.Climate;
  */
 public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorldBiomes {
 
+    /** The biome registry when the ops hold a real one, else empty — never an error. */
+    private static final MapCodec<java.util.Optional<net.minecraft.core.HolderLookup.RegistryLookup<Biome>>> BIOME_REGISTRY_IF_ANY =
+            net.minecraft.util.ExtraCodecs.retrieveContext(ops -> {
+                if (!(ops instanceof RegistryOps<?> registryOps))
+                    return com.mojang.serialization.DataResult.error(() -> "Not a registry ops");
+                return com.mojang.serialization.DataResult.success(registryOps.<Biome>getter(Registries.BIOME)
+                        .filter(g -> g instanceof net.minecraft.core.HolderLookup.RegistryLookup)
+                        .map(g -> (net.minecraft.core.HolderLookup.RegistryLookup<Biome>) g));
+            });
+
     /**
-     * Takes the biome <em>registry lookup</em> as well as the getter. {@code Registry} implements
-     * {@code HolderLookup.RegistryLookup}, so at world load this is the real frozen registry — which is
-     * what {@link TerraBlenderBridge} needs and cannot get any other way. It has to arrive here at
-     * decode time because {@code possibleBiomes()} is memoized on first call, so the modded biomes must
-     * be known before anything asks.
+     * Takes the biome <em>registry lookup</em> as well as the getter, when the ops can offer one.
+     * {@code Registry} implements {@code HolderLookup.RegistryLookup}, and before 26.3 a world preset
+     * decoded against the real frozen biome registry — which is what {@link TerraBlenderBridge} needs
+     * and could get no other way. <b>26.3 loads the datapack registries concurrently</b>, so a preset's
+     * codec now sees biomes through a {@code ConcurrentHolderGetter} (references bound as the biomes
+     * land), and {@code RegistryOps.retrieveRegistryLookup} fails the whole registry load with
+     * "Found holder getter but was not a registry lookup" — measured, it stopped the server. So the
+     * lookup is optional here, and {@link #terraBlender()} falls back to the running server's registry.
      */
     public static final MapCodec<CityWorldClimateBiomeSource> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             RegistryOps.retrieveGetter(Registries.BIOME),
-            RegistryOps.retrieveRegistryLookup(Registries.BIOME).forGetter(s -> s.biomeLookup))
-            .apply(i, CityWorldClimateBiomeSource::new));
+            BIOME_REGISTRY_IF_ANY.forGetter(s -> java.util.Optional.ofNullable(s.biomeLookup)))
+            .apply(i, (getter, lookup) -> new CityWorldClimateBiomeSource(getter, lookup.orElse(null))));
 
     // Every biome the matrix below can return — also this source's possibleBiomes().
     private static final List<ResourceKey<Biome>> PALETTE = List.of(
@@ -57,7 +70,8 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
             Biomes.SPARSE_JUNGLE, Biomes.BAMBOO_JUNGLE, Biomes.OLD_GROWTH_BIRCH_FOREST,
             Biomes.OLD_GROWTH_PINE_TAIGA, Biomes.OLD_GROWTH_SPRUCE_TAIGA, Biomes.WINDSWEPT_FOREST,
             Biomes.WINDSWEPT_HILLS, Biomes.WINDSWEPT_GRAVELLY_HILLS, Biomes.WINDSWEPT_SAVANNA, Biomes.ERODED_BADLANDS,
-            Biomes.GROVE, Biomes.SNOWY_SLOPES, Biomes.JAGGED_PEAKS, Biomes.FROZEN_PEAKS, Biomes.STONY_PEAKS);
+            Biomes.GROVE, Biomes.SNOWY_SLOPES, Biomes.JAGGED_PEAKS, Biomes.FROZEN_PEAKS, Biomes.STONY_PEAKS,
+            Biomes.DAPPLED_FOREST); // 26.3: poplar country, the cool-and-dry variant of plains
 
     private final HolderGetter<Biome> biomes;
     private final List<Holder<Biome>> possible;
@@ -100,13 +114,29 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
         if (!bridgeHarvested)
             synchronized (this) {
                 if (!bridgeHarvested) {
-                    bridge = (biomeLookup instanceof net.minecraft.core.Registry<Biome> registry)
-                            ? TerraBlenderBridge.harvest(registry, biomes)
-                            : null;
-                    bridgeHarvested = true;
+                    net.minecraft.core.Registry<Biome> registry = biomeLookup instanceof net.minecraft.core.Registry<Biome> r
+                            ? r : serverBiomeRegistry();
+                    if (registry != null) {
+                        bridge = TerraBlenderBridge.harvest(registry, biomes);
+                        bridgeHarvested = true;
+                    }
+                    // No registry to harvest from yet (26.3 decode, no server up): answer "none" for
+                    // now and try again on the next ask, rather than settling for nothing for good.
                 }
             }
         return bridge;
+    }
+
+    /**
+     * The running server's frozen biome registry, or null before there is one. 26.3 hands the codec a
+     * getter rather than the registry (see {@link #CODEC}); by the time anything asks
+     * {@code possibleBiomes()} the server exists and its registry is the same frozen one.
+     */
+    private static net.minecraft.core.@org.jspecify.annotations.Nullable Registry<Biome> serverBiomeRegistry() {
+        var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server == null)
+            return null;
+        return server.registryAccess().lookupOrThrow(Registries.BIOME);
     }
 
     private volatile SurfaceRegions.@org.jspecify.annotations.Nullable Pools surfacePools;
@@ -195,7 +225,15 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
      * underground. Falls back to plains only in the pre-chunk window before the context is bound
      * (stronghold ring layout); see {@link CityWorldBiomeLookup}.
      */
+    /**
+     * 26.3: vanilla asks a biome source for a {@code BiomeResolver} per sampler rather than calling
+     * {@code getNoiseBiome} on it; the resolver is the same per-quart answer, so it just delegates.
+     */
     @Override
+    public net.minecraft.world.level.biome.BiomeResolver createResolver(Climate.Sampler sampler) {
+        return (x, y, z) -> getNoiseBiome(x, y, z, sampler);
+    }
+
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
         Holder<Biome> biome = CityWorldBiomeLookup.biomeAt(this, x, y, z);
         return biome != null ? biome : b(Biomes.PLAINS);
@@ -282,7 +320,9 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
                 : wet(h) ? b(Biomes.SNOWY_TAIGA) : b(Biomes.SNOWY_PLAINS);
         // mushroom fields kept genuinely rare (vanilla's rarest biome) — only the warm, very-humid
         // corner of temperate lowland; everything else damp stays flower forest.
-        if (temperate(t)) return dry(h) ? b(Biomes.PLAINS)
+        // 26.3's dappled forest is vanilla's variant of the cool, dry middle biome (plains): it takes the
+        // damper quarter of the dry band, so plains -> dappled forest -> meadow as the humidity rises.
+        if (temperate(t)) return dry(h) ? (h > 0.3 ? b(Biomes.DAPPLED_FOREST) : b(Biomes.PLAINS))
                 : (t > 0.5 && h > 0.9) ? b(Biomes.MUSHROOM_FIELDS)
                 : wet(h) ? b(Biomes.FLOWER_FOREST) : b(Biomes.MEADOW);
         // swamp widened (h>0.5, not just wet>0.65) so warm humid lowlands read as swamp more often

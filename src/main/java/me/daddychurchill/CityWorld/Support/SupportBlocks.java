@@ -8,6 +8,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.entity.SignText;
+import net.minecraft.world.level.block.entity.SignTextSlot;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BedPart;
@@ -1258,21 +1259,22 @@ public abstract class SupportBlocks extends AbstractBlocks {
 
 		// Write the same text on both faces so hanging/free-standing signs read from either side (the
 		// back is invisible on a wall sign, so mirroring it there costs nothing).
-		SignText front = sign.getFrontText();
-		SignText back = sign.getText(false);
+		// 26.3: SignText is immutable and edited through a Mutable; the faces are addressed by slot.
+		SignText.Mutable front = sign.getText(SignTextSlot.FRONT).asMutable();
+		SignText.Mutable back = sign.getText(SignTextSlot.BACK).asMutable();
 		for (int i = 0; i < lines.length && i < SignText.LINES; i++) {
 			// A null line means a blank one. Bukkit's setLine tolerated null; modern
 			// Component.literal(null) throws, and it throws inside chunk generation, which fails
 			// the whole chunk. Callers legitimately leave gaps — OdonymProvider's fossil names
 			// fill only line 1 of a String[4] and leave the rest null.
 			Component line = Component.literal(lines[i] == null ? "" : lines[i]);
-			front = front.setMessage(i, line);
-			back = back.setMessage(i, line);
+			front.setLine(i, line);
+			back.setLine(i, line);
 		}
-		sign.frontText = front;
+		sign.frontText = front.asImmutable();
 		// Direct field write, same as frontText above — setText(back, false) routes through
 		// markUpdated(), which NPEs on the null decoration-time level (see accesstransformer.cfg).
-		sign.backText = back;
+		sign.backText = back.asImmutable();
 	}
 
 }

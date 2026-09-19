@@ -987,7 +987,7 @@ public final class CityWorldSelfTest {
         ServerLevel level = server.overworld();
         ChunkGenerator generator = level.getChunkSource().getGenerator();
         BiomeSource source = generator.getBiomeSource();
-        Climate.Sampler sampler = level.getChunkSource().randomState().sampler();
+        Climate.Sampler sampler = level.getChunkSource().randomState().createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().enableCaches().build());
 
         report.put("biome.possible", Integer.toString(source.possibleBiomes().size()));
 
@@ -1368,7 +1368,7 @@ public final class CityWorldSelfTest {
         ServerLevel level = server.overworld();
         ChunkGeneratorStructureState state = level.getChunkSource().getGeneratorState();
         BiomeSource source = level.getChunkSource().getGenerator().getBiomeSource();
-        Climate.Sampler sampler = level.getChunkSource().randomState().sampler();
+        Climate.Sampler sampler = level.getChunkSource().randomState().createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().enableCaches().build());
         StructurePlacement placement = ancientCities.value().placement();
 
         int candidates = 0, generated = 0, minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
@@ -1625,14 +1625,14 @@ public final class CityWorldSelfTest {
     /** Full {@code namespace:path} — the wide probe needs the namespace to tell modded from vanilla. */
     private static String biomeId(BiomeSource source, int quartX, int quartY, int quartZ,
             Climate.Sampler sampler) {
-        return source.getNoiseBiome(quartX, quartY, quartZ, sampler).unwrapKey()
+        return source.createResolver(sampler).getNoiseBiome(quartX, quartY, quartZ).unwrapKey()
                 .map(k -> k.identifier().toString()).orElse("?");
     }
 
     /** The biome's registry path at a quart position, or {@code "?"} if it carries no key. */
     private static String biomeName(BiomeSource source, int quartX, int quartY, int quartZ,
             Climate.Sampler sampler) {
-        return source.getNoiseBiome(quartX, quartY, quartZ, sampler).unwrapKey()
+        return source.createResolver(sampler).getNoiseBiome(quartX, quartY, quartZ).unwrapKey()
                 .map(k -> k.identifier().getPath()).orElse("?");
     }
 
@@ -2029,7 +2029,7 @@ public final class CityWorldSelfTest {
     private static String signText(SignBlockEntity sign) {
         StringBuilder text = new StringBuilder();
         for (int i = 0; i < 4; i++) {
-            var message = sign.getFrontText().getMessage(i, false);
+            var message = sign.getText(net.minecraft.world.level.block.entity.SignTextSlot.FRONT).getMessages(false).get(i);
             if (message != null && !message.getString().isBlank())
                 text.append(text.length() == 0 ? "" : " ").append(message.getString().trim());
         }
@@ -2039,7 +2039,7 @@ public final class CityWorldSelfTest {
     /** The first non-blank line of a sign's front, for the report. */
     private static String readSign(SignBlockEntity sign) {
         for (int i = 0; i < 4; i++) {
-            var message = sign.getFrontText().getMessage(i, false);
+            var message = sign.getText(net.minecraft.world.level.block.entity.SignTextSlot.FRONT).getMessages(false).get(i);
             if (message != null && !message.getString().isBlank())
                 return message.getString();
         }
@@ -2056,9 +2056,10 @@ public final class CityWorldSelfTest {
     }
 
     private static boolean hasText(SignBlockEntity sign, boolean front) {
-        var text = front ? sign.getFrontText() : sign.getText(false);
+        var text = sign.getText(front ? net.minecraft.world.level.block.entity.SignTextSlot.FRONT
+                : net.minecraft.world.level.block.entity.SignTextSlot.BACK);
         for (int i = 0; i < 4; i++) {
-            var message = text.getMessage(i, false);
+            var message = text.getMessages(false).get(i);
             if (message != null && !message.getString().isBlank())
                 return true;
         }

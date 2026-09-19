@@ -530,7 +530,13 @@ def main():
             lines.append(f"    public static final Material {n} = ofItem({color_items[n]});")
 
     constants = "\n".join(lines)
-    OUT.write_text(TEMPLATE.replace("//__CONSTANTS__", constants))
+    text = TEMPLATE.replace("//__CONSTANTS__", constants)
+    # DyeColor is only referenced by the ColorCollection picks, which exist from 26.2. Dropping the
+    # import when nothing needs it keeps older versions' output byte-identical to what they had
+    # before this generator learned about colour collections.
+    if not (color_blocks or color_items):
+        text = text.replace("import net.minecraft.world.item.DyeColor;\n", "")
+    OUT.write_text(text)
 
     total = (len(block_names) + len(legacy_names) + len(item_names)
              + len(color_blocks) + len(color_items))

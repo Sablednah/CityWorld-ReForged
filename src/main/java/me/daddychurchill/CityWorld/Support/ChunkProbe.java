@@ -93,8 +93,7 @@ public final class ChunkProbe {
             }
             int sx = found.getFirst().getX() >> 4, sz = found.getFirst().getZ() >> 4;
             ChunkAccess sc = server.submit(() -> level.getChunk(sx, sz, ChunkStatus.FULL, true)).join();
-            var st = level.structureManager().getStartForStructure(net.minecraft.core.SectionPos.bottomOf(sc),
-                    holder.get().value(), sc);
+            var st = level.structureManager().getStartForStructure(holder.get().value(), sc);
             int ladders = 0, air = 0, volume = 0, haloAir = 0, halo = 0;
             java.util.List<net.minecraft.world.level.levelgen.structure.BoundingBox> pieceBoxes = new java.util.ArrayList<>();
             if (st != null)
@@ -178,8 +177,7 @@ public final class ChunkProbe {
         net.minecraft.core.BlockPos at = located.getFirst();
         int cx = at.getX() >> 4, cz = at.getZ() >> 4;
         ChunkAccess chunk = server.submit(() -> level.getChunk(cx, cz, ChunkStatus.FULL, true)).join();
-        var start = level.structureManager().getStartForStructure(
-                net.minecraft.core.SectionPos.bottomOf(chunk), holder.get().value(), chunk);
+        var start = level.structureManager().getStartForStructure(holder.get().value(), chunk);
         CityWorldMod.LOGGER.warn("PROBE: nearest {} at {} (chunk {}, {})", id, at.toShortString(), cx, cz);
         if (start != null && start.isValid()) {
             var box = start.getBoundingBox();
@@ -243,7 +241,7 @@ public final class ChunkProbe {
         // held six biomes, and the resulting "biome not found" aborted the run (2026-09-16).
         server.submit(() -> level.getChunk(0, 0, ChunkStatus.FULL, true)).join();
         var source = level.getChunkSource().getGenerator().getBiomeSource();
-        var sampler = level.getChunkSource().randomState().sampler();
+        var sampler = level.getChunkSource().randomState().createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().enableCaches().build());
         java.util.Map<String, Integer> census = new java.util.TreeMap<>();
         int limit = Integer.getInteger("cityworld.probe.scan", 3000);
         int[] found = null;
@@ -253,9 +251,9 @@ public final class ChunkProbe {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != ring)
                         continue;
                     int wx = dx * 16, wz = dz * 16;
-                    String here = source.getNoiseBiome(net.minecraft.core.QuartPos.fromBlock(wx),
+                    String here = source.createResolver(sampler).getNoiseBiome(net.minecraft.core.QuartPos.fromBlock(wx),
                             net.minecraft.core.QuartPos.fromBlock(64),
-                            net.minecraft.core.QuartPos.fromBlock(wz), sampler).getRegisteredName();
+                            net.minecraft.core.QuartPos.fromBlock(wz)).getRegisteredName();
                     census.merge(here, 1, Integer::sum);
                     if (found == null && here.equals(id))
                         found = new int[] { wx >> 4, wz >> 4 };
@@ -287,8 +285,8 @@ public final class ChunkProbe {
                     for (int[] d : new int[][] { { 0, 0 }, { 5, 0 }, { 0, 5 }, { 5, 5 } })
                         lowest = Math.min(lowest, generator.getFirstOccupiedHeight(bx + d[0], bz + d[1],
                                 net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, level, random));
-                    String biome = generator.getBiomeSource().getNoiseBiome(bx >> 2, lowest >> 2, bz >> 2,
-                            random.sampler()).unwrapKey().map(k -> k.identifier().getPath()).orElse("?");
+                    String biome = generator.getBiomeSource().createResolver(random.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().enableCaches().build()))
+                            .getNoiseBiome(bx >> 2, lowest >> 2, bz >> 2).unwrapKey().map(k -> k.identifier().getPath()).orElse("?");
                     biomes.merge(biome, 1, Integer::sum);
                     if (lowest >= 60) {
                         tall++;
@@ -304,7 +302,7 @@ public final class ChunkProbe {
         // EndTerrain must agree with vanilla exactly — the planner trusts it for chunks that do not exist yet.
         if (generator instanceof net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator noise) {
             var terrain = new me.daddychurchill.CityWorld.worldgen.EndTerrain(random,
-                    noise.generatorSettings().value().noiseSettings());
+                    noise.generatorSettings().value());
             int checked = 0, wrong = 0, worst = 0;
             long mine = 0, theirs = 0;
             for (int i = 0; i < 24; i++)

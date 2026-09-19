@@ -3,96 +3,91 @@
   "pools": [
     {
       "rolls": {
+        "type": "minecraft:uniform",
         "min": 1,
         "max": 10
       },
       "entries": [
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:iron_ingot",
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 1,
-                "max": 6
-              }
+          "weight": 70,
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 6
             }
-          ],
-          "weight": 70
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:coal",
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 1,
-                "max": 6
-              }
+          "weight": 70,
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 6
             }
-          ],
-          "weight": 70
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:gold_ingot",
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 1,
-                "max": 6
-              }
+          "weight": 30,
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 6
             }
-          ],
-          "weight": 30
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:redstone",
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 1,
-                "max": 6
-              }
+          "weight": 30,
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 6
             }
-          ],
-          "weight": 30
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:diamond",
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 1,
-                "max": 6
-              }
+          "weight": 10,
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 6
             }
-          ],
-          "weight": 10
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:emerald",
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 1,
-                "max": 6
-              }
+          "weight": 10,
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 6
             }
-          ],
-          "weight": 10
+          }
         },
         {
-          "type": "empty",
+          "type": "minecraft:empty",
           "weight": 5
         }
       ]

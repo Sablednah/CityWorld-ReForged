@@ -71,7 +71,15 @@ public class CityWorldEndBiomeSource extends BiomeSource implements CityWorldBio
         return possible.stream();
     }
 
+    /**
+     * 26.3: vanilla asks a biome source for a {@code BiomeResolver} per sampler rather than calling
+     * {@code getNoiseBiome} on it; the resolver is the same per-quart answer, so it just delegates.
+     */
     @Override
+    public net.minecraft.world.level.biome.BiomeResolver createResolver(Climate.Sampler sampler) {
+        return (x, y, z) -> getNoiseBiome(x, y, z, sampler);
+    }
+
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
         // The centre is the dragon's, whatever the terrain says.
         long sectionX = SectionPos.blockToSectionCoord(net.minecraft.core.QuartPos.toBlock(x));
@@ -88,7 +96,7 @@ public class CityWorldEndBiomeSource extends BiomeSource implements CityWorldBio
         // only way a mod's End biomes arrive — TerraBlender (BoP) mixes them into that class, not into this one.
         BiomeSource real = vanilla;
         if (real != null)
-            return real.getNoiseBiome(x, y, z, field.sampler());
+            return real.createResolver(field.sampler()).getNoiseBiome(x, y, z);
         double erosion = field.erosionAt(((int) sectionX * 2 + 1) * 8, ((int) sectionZ * 2 + 1) * 8);
         if (erosion > 0.25)
             return b(Biomes.END_HIGHLANDS);
