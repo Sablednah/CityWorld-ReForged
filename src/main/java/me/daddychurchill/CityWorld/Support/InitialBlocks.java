@@ -48,6 +48,38 @@ public final class InitialBlocks extends AbstractBlocks {
         return chunkData.getBlockState(at(x, y, z));
     }
 
+    /**
+     * Give stacked fence-like blocks their part: a block with a {@code fencepart} property (Macaw's metal
+     * fences) is {@code bottom} when the same block stands on it and {@code top} otherwise. The mod derives
+     * this from neighbours when a player places them; the generation stage has no level for that logic to
+     * run in, but it can read and rewrite its own cells, which is all this needs. Run once a chunk's walls
+     * and fences are drawn, over the height they span.
+     */
+    public void stackFenceParts(int y1, int y2) {
+        for (int x = 0; x < width; x++)
+            for (int z = 0; z < width; z++)
+                for (int y = y1; y < y2; y++) {
+                    BlockState state = getState(x, y, z);
+                    net.minecraft.world.level.block.state.properties.Property<?> part = null;
+                    for (var p : state.getProperties())
+                        if (p.getName().equals("fencepart")) {
+                            part = p;
+                            break;
+                        }
+                    if (part == null)
+                        continue;
+                    boolean stacked = y + 1 < y2 && getState(x, y + 1, z).getBlock() == state.getBlock();
+                    BlockState next = withParsed(state, part, stacked ? "bottom" : "top");
+                    if (next != state)
+                        put(x, y, z, next);
+                }
+    }
+
+    private static <T extends Comparable<T>> BlockState withParsed(BlockState state,
+            net.minecraft.world.level.block.state.properties.Property<T> property, String value) {
+        return property.getValue(value).map(v -> state.setValue(property, v)).orElse(state);
+    }
+
     public boolean isType(int x, int y, int z, Material material) {
         return getState(x, y, z).is(material.getBlock());
     }

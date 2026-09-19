@@ -109,6 +109,8 @@ public final class MaterialTags {
     public static final TagKey<Block> FITTINGS_FENCE = key("cityworld:fittings/fence");
     public static final TagKey<Block> FITTINGS_FARM_FENCE = key("cityworld:fittings/farm_fence");
     public static final TagKey<Block> FITTINGS_SITE_FENCE = key("cityworld:fittings/site_fence");
+    /** The balcony rail of the rare building whose "glass" is bars: iron bars + Macaw's metal fences. */
+    public static final TagKey<Block> FITTINGS_RAILING = key("cityworld:fittings/railing");
     /** One-block stair treads for a house's staircase (Macaw's compact and terrace stairs: a full riser per
      *  block, nothing needed underneath). The matching railing, platform and balcony are found by name from
      *  the tread ({@code oak_compact_stairs} → {@code oak_railing}, {@code oak_platform}, {@code oak_balcony}).
