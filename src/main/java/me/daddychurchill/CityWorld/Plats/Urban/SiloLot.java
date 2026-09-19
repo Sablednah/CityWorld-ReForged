@@ -31,21 +31,25 @@ public class SiloLot extends BuildingLot {
 	// the spiral's eight ring cells (x, z) clockwise from the west-middle, and where each step faces
 	private static final int[][] RING = { { 12, 2 }, { 12, 1 }, { 13, 1 }, { 14, 1 }, { 14, 2 }, { 14, 3 },
 			{ 13, 3 }, { 12, 3 } };
-	private static final BlockFace[] STEP = { BlockFace.NORTH, BlockFace.EAST, BlockFace.EAST, BlockFace.SOUTH,
-			BlockFace.SOUTH, BlockFace.WEST, BlockFace.WEST, BlockFace.NORTH };
+	// each step faces the way you arrive on it — a corner step keeps the previous run's direction, its back
+	// to the cage wall, so the turn happens on the step after (owner's fix, 2026-09-19)
+	private static final BlockFace[] STEP = { BlockFace.NORTH, BlockFace.NORTH, BlockFace.EAST, BlockFace.EAST,
+			BlockFace.SOUTH, BlockFace.SOUTH, BlockFace.WEST, BlockFace.WEST };
 
 	private int turns; // stair revolutions: the tank top sits 8 blocks higher per turn
 	private Material tankMat;
 	private Material frameMat;
 	private Material fillMat;
 	private int fillHeight;
+	private Material floorMat;
 
 	public SiloLot(PlatMap platmap, int chunkX, int chunkZ) {
 		super(platmap, chunkX, chunkZ);
 
 		height = 1;
 		depth = 0;
-		trulyIsolated = true;
+		// not trulyIsolated: silos are meant to stand in batteries, and CivilizedContext.validateMap
+		// swaps an isolated structure with an isolated neighbour for a fresh building
 
 		turns = 2 + chunkOdds.getRandomInt(2);
 		switch (chunkOdds.getRandomInt(4)) {
@@ -78,6 +82,8 @@ public class SiloLot extends BuildingLot {
 			break;
 		}
 		fillHeight = chunkOdds.getRandomInt(tankHeight() - 1);
+		floorMat = platmap.generator.materialProvider.deOre(platmap.generator.materialProvider
+				.itemsSelectMaterial_FactoryInsides.getRandomMaterial(chunkOdds, Material.SMOOTH_STONE), chunkOdds);
 	}
 
 	@Override
@@ -94,6 +100,7 @@ public class SiloLot extends BuildingLot {
 			tankMat = other.tankMat;
 			frameMat = other.frameMat;
 			fillMat = other.fillMat;
+			floorMat = other.floorMat;
 		}
 		return result;
 	}
@@ -109,10 +116,7 @@ public class SiloLot extends BuildingLot {
 	@Override
 	protected void generateActualChunk(CityWorldGenerator generator, PlatMap platmap, InitialBlocks chunk,
 			BiomeGrid biomes, DataContext context, int platX, int platZ) {
-		int groundY = getBottomY(generator);
-		Material floorMat = generator.materialProvider.deOre(generator.materialProvider
-				.itemsSelectMaterial_FactoryInsides.getRandomMaterial(chunkOdds, Material.SMOOTH_STONE), chunkOdds);
-		chunk.setLayer(groundY, 2, floorMat);
+		chunk.setLayer(getBottomY(generator), 2, floorMat);
 	}
 
 	@Override
@@ -169,8 +173,11 @@ public class SiloLot extends BuildingLot {
 		chunk.setBlock(13, tankTop + 2, 2, Material.LANTERN);
 		for (int y = base; y <= tankTop; y++) {
 			int i = (y - base) % 8;
+			if (y == base) // the bottom step sits in the doorway, and the first ring cell is a landing block
+				chunk.setStair(11, y, 2, Material.POLISHED_ANDESITE_STAIRS, BlockFace.EAST);
 			chunk.setStair(RING[i][0], y, RING[i][1], Material.POLISHED_ANDESITE_STAIRS, STEP[i]);
 		}
+		chunk.setBlock(12, base, 2, Material.POLISHED_ANDESITE);
 
 		// the red frame: four legs outside the tank's outline, ring beams at mid-height and the top
 		// (drawn after the cage — its north-east leg and beam ends stand inside the tower's shell)
