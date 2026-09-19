@@ -85,6 +85,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 	private Material exteriorDoorMaterial;
 	/** A garage door for the street bay of an industrial building (see {@link #garageDoorPool}); null = a door. */
 	protected Material garageDoorMaterial;
+	private int garageDoorHeight = 3;
 
 	protected enum CornerWallStyle {
 		EMPTY, FILLED, WOODCOLUMN, STONECOLUMN, FILLEDTHENEMPTY, WOODTHENFILLED, STONETHENFILLED
@@ -266,6 +267,8 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		interiorDoorMaterial = MaterialTags.pick(MaterialTags.FITTINGS_INTERIOR_DOOR, chunkOdds, trees.getRandomWoodDoor());
 		exteriorDoorMaterial = MaterialTags.pick(exteriorDoorPool(), chunkOdds, trees.getRandomWoodDoor());
 		garageDoorMaterial = garageDoorPool() == null ? null : MaterialTags.pick(garageDoorPool(), chunkOdds, null);
+		if (garageDoorMaterial != null)
+			garageDoorHeight = 3 + chunkOdds.getRandomInt(5); // 3..7, the floor permitting
 
 	}
 
@@ -2549,10 +2552,14 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 				// column of part=middle under part=top per cell. Its facing runs ALONG the panel (the
 				// mod's convention: facing=east is a panel across x), so it is turned across the door's
 				// outward direction.
+				// Three to seven high (the owner's first look: two was "too short — can't get in, the open
+				// door eats half a block"), one height per building, never taller than the floor.
 				BlockFace along = BlockFace.fromDirection(chunk.fixFacing(direction).toDirection().getClockWise());
+				int high = Math.max(2, Math.min(garageDoorHeight, y2 - y1));
 				for (int[] c : new int[][] { { x1, z1 }, { x2, z2 }, { x3, z3 } }) {
-					chunk.setBlock(c[0], y1, c[1], garageDoorMaterial, along, "part", "middle", "open", "false");
-					chunk.setBlock(c[0], y1 + 1, c[1], garageDoorMaterial, along, "part", "top", "open", "false");
+					for (int dy = 0; dy < high - 1; dy++)
+						chunk.setBlock(c[0], y1 + dy, c[1], garageDoorMaterial, along, "part", "middle", "open", "false");
+					chunk.setBlock(c[0], y1 + high - 1, c[1], garageDoorMaterial, along, "part", "top", "open", "false");
 				}
 				break;
 			}
