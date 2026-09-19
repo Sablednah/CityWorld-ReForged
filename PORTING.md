@@ -141,8 +141,9 @@ any door at all"; a factory yard with two fence styles; and two new lots, a meta
   holder stands anywhere from nearly empty to full, as the owner asked. Frame 24–36 / 30–48 high. Probe: seed
   8675309 has one at chunk (−7,−5), 2×2, bell about two-thirds up. `reportLocation("silo"|"gasometer")`.
 - All on the four branches (`d6ad374a`, `be6fa99a`, `ae8de51b`, `6f225c31` on master), built, 26.2.test
-  `DEPLOYED-806c4ee8`; self-tests re-run after (see the line below when written). Region renders of both lots
-  are the quickest check: `region_render.py … 8 west`.
+  `DEPLOYED-806c4ee8`; **self-tested on all four after these commits (1.21.11 141, 26.1 141, 26.2 164, 1.21.1 141;
+  `--compare`: plans identical on every version — a new baseline, since the schematic removal moved the plan).**
+  Region renders of both lots are the quickest check: `region_render.py … 8 west`.
 
 **Open, in the order I would take them:**
 
