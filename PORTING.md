@@ -62,8 +62,35 @@ tread sat at floor level and replaced a floor block of the room above (skip a ra
 and the balcony rail stopped a cell short of the wall (rail k=0..3, the corner landing's cell is open too).
 Office stairwells "worked perfectly". Deployed `DEPLOYED-57c79c36`; **owner: "all fixed good."**
 
+**Overnight 2026-09-19 (owner asked for the Macaw's leftovers, then a 1.21.1 version):**
+
+- **Leftovers, all on master + mc26.2 + mc26.1, probe-verified with the mods:** ornamental metal fences in
+  `fittings/fence` (`Material.withFaces` sets a mod's own north/east/south/west booleans by name; the
+  industrial ones stayed OUT of `site_fence` because a three-high stack wants `fencepart=bottom` under `top`
+  and the generation stage cannot set it per row); `fittings/gate` (vanilla gates by id + Macaw's single-block
+  highley/pyramid gates, both plain `FenceGateBlock`s) on paddocks and barn pens, picked with the fence's
+  platmap odds; `fittings/garage_door` on half the factories/warehouses — the door frame's three columns
+  become `part=middle` under `part=top`, facing turned ACROSS the outward direction (the mod's `facing=east`
+  is a panel along x) and `open=false` set explicitly (the block's default is open); `light/tiki` — three
+  two-tall stacks round a campground fire, reconnected (measured `part=bottom` + lit `top`); `light/garden`
+  on the inner post of each park entrance (16 in one sweep). Not re-self-tested after these (the last
+  full run was on the signed-off state); do that before release.
+- **1.21.1: branch `mc1.21.1`, worktree `../CityWorld-ReForged-worktrees/mc1.21.1`, NeoForge 21.1.251, JDK 21,
+  self-test PASS (141 checks, plan hashes identical).** ~800 javac errors in ~40 themes, all mechanical (the
+  commit message lists them). `gen_material.py` grew `FALLBACKS`: an EXTRA the target version lacks stands in
+  as the nearest older block (34 on 1.21.1: pale oak → oak, copper chest → chest, leaf litter → moss carpet…),
+  and the copper weathering families likewise. `ruined_nether`'s dimension type is rewritten in the classic
+  field set (the 1.21.9+ attributes form fails registry load — the registry-JSON-is-per-version trap again).
+  The F3 lines go through `CustomizeGuiOverlayEvent.DebugText` there. **One open discrepancy:** the
+  self-test read back 33 of 55 signs with front text against 53 on every other version (back text 18, as
+  elsewhere); which signs and why is unresolved — see the next session's first job. Not deployed anywhere
+  (no 1.21.1 instance exists); the version bump and the fleet script would need to learn the fourth line.
+
 **Open, in the order I would take them:**
 
+0. **1.21.1 sign text** (above), then a real client look at 1.21.1 (the customize screen's `StringWidget`
+   headers, the F3 readout, JourneyMap's 1.21.1 API) — a 1.21.1 CurseForge instance with Macaw's 1.21.1
+   builds would be the test bed.
 0. **Release.** Everything from the fittings arc is on all three branches, self-tested, and playtested three
    times on 26.2.test. Bump, changelog is written (Unreleased), fleet deploy, tag — the recipe in the release memory.
 0. **The owner's second look at 26.2.test** (`DEPLOYED-8f3a6ecb`): roofs (gables, valleys, hips), the three fence pools, the staircases
