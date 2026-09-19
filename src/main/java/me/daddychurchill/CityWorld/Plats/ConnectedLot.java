@@ -40,7 +40,12 @@ public abstract class ConnectedLot extends PlatLot {
 	public boolean isConnected(PlatLot relative) {
 		if (relative == null)
 			return false;
-		return connectedkey == relative.getConnectedKey();
+		// Same key AND same kind: a key is positional, and CivilizedContext.validateMap can replace a lot
+		// with a fresh one of another class that inherits the position's key while the flood-filled copies
+		// of the old one still carry it — a warehouse then took a silo battery for its own wing and drew no
+		// wall on that side (owner's "half a building", 2026-09-19).
+		return connectedkey == relative.getConnectedKey()
+				&& (getClass().isInstance(relative) || relative.getClass().isInstance(this));
 	}
 
 	@Override

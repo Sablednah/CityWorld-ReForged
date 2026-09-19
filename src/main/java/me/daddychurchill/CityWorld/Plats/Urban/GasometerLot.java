@@ -8,6 +8,7 @@ import me.daddychurchill.CityWorld.Plats.IsolatedLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
+import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.compat.BiomeGrid;
@@ -32,9 +33,10 @@ public class GasometerLot extends IsolatedLot {
 	private final int frameHeight;
 	private final int fill; // 0 .. frameHeight-1: how high the bell stands
 	private final int frameStyle;
+	private final long paveSeed; // one paving roll per structure, not per chunk (owner: "each chunk has different floor")
 
 	public GasometerLot(PlatMap platmap, int chunkX, int chunkZ, int size, int offX, int offZ, int frameHeight,
-			int fill, int frameStyle) {
+			int fill, int frameStyle, long paveSeed) {
 		super(platmap, chunkX, chunkZ);
 		style = LotStyle.STRUCTURE;
 		this.size = size;
@@ -43,11 +45,12 @@ public class GasometerLot extends IsolatedLot {
 		this.frameHeight = frameHeight;
 		this.fill = fill;
 		this.frameStyle = frameStyle;
+		this.paveSeed = paveSeed;
 	}
 
 	@Override
 	public PlatLot newLike(PlatMap platmap, int chunkX, int chunkZ) {
-		return new GasometerLot(platmap, chunkX, chunkZ, size, offX, offZ, frameHeight, fill, frameStyle);
+		return new GasometerLot(platmap, chunkX, chunkZ, size, offX, offZ, frameHeight, fill, frameStyle, paveSeed);
 	}
 
 	@Override
@@ -109,8 +112,9 @@ public class GasometerLot extends IsolatedLot {
 		int groundY = generator.streetLevel;
 		chunk.airoutLayer(generator, groundY + 2, frameHeight + 6, 0, true);
 		chunk.setLayer(groundY - 3, 3, Material.DIRT);
+		Odds paveOdds = new Odds(paveSeed);
 		Material floorMat = generator.materialProvider.deOre(generator.materialProvider
-				.itemsSelectMaterial_FactoryInsides.getRandomMaterial(chunkOdds, Material.SMOOTH_STONE), chunkOdds);
+				.itemsSelectMaterial_FactoryInsides.getRandomMaterial(paveOdds, Material.SMOOTH_STONE), paveOdds);
 		chunk.setLayer(groundY, 2, floorMat);
 	}
 
