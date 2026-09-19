@@ -1018,6 +1018,18 @@ public abstract class BuildingLot extends ConnectedLot {
 
 	protected void drawFence(CityWorldGenerator generator, InitialBlocks chunk, DataContext context, int inset, int y1,
 			int floor, Surroundings neighbors, Material fenceMaterial, int fenceHeight) {
+		drawFence(generator, chunk, context, inset, y1, floor, neighbors, fenceMaterial, fenceHeight, null);
+	}
+
+	/**
+	 * A fence round the lot with a way in. Each street side gets an opening on a coin flip as it always
+	 * did, but a chunk whose flips all came up closed now opens one side anyway — a factory yard could
+	 * come out sealed on every side (owner, 2026-09-19: "industrial factories without any door at
+	 * all"). With a gate material the opening is a gate; without one it is a gap two wide (metal
+	 * fences have no gate, and one block reads as a hole in the wire).
+	 */
+	protected void drawFence(CityWorldGenerator generator, InitialBlocks chunk, DataContext context, int inset, int y1,
+			int floor, Surroundings neighbors, Material fenceMaterial, int fenceHeight, Material gateMaterial) {
 
 		// actual fence
 		drawWallParts(generator, chunk, context, y1, fenceHeight, inset, inset, floor, false, false, false,
@@ -1026,14 +1038,39 @@ public abstract class BuildingLot extends ConnectedLot {
 		// holes in fence
 		int i = 4 + chunkOdds.getRandomInt(chunk.width / 2);
 		int y2 = y1 + fenceHeight;
-		if (chunkOdds.flipCoin() && !neighbors.toWest())
-			chunk.airoutBlocks(generator, inset, y1, y2, i);
-		if (chunkOdds.flipCoin() && !neighbors.toEast())
-			chunk.airoutBlocks(generator, chunk.width - 1 - inset, y1, y2, i);
-		if (chunkOdds.flipCoin() && !neighbors.toNorth())
-			chunk.airoutBlocks(generator, i, y1, y2, inset);
-		if (chunkOdds.flipCoin() && !neighbors.toSouth())
-			chunk.airoutBlocks(generator, i, y1, y2, chunk.width - 1 - inset);
+		boolean west = !neighbors.toWest() && chunkOdds.flipCoin();
+		boolean east = !neighbors.toEast() && chunkOdds.flipCoin();
+		boolean north = !neighbors.toNorth() && chunkOdds.flipCoin();
+		boolean south = !neighbors.toSouth() && chunkOdds.flipCoin();
+		if (!(west || east || north || south)) {
+			if (!neighbors.toWest())
+				west = true;
+			else if (!neighbors.toEast())
+				east = true;
+			else if (!neighbors.toNorth())
+				north = true;
+			else if (!neighbors.toSouth())
+				south = true;
+		}
+		if (west)
+			openFence(generator, chunk, inset, y1, y2, i, true, gateMaterial, BlockFace.WEST);
+		if (east)
+			openFence(generator, chunk, chunk.width - 1 - inset, y1, y2, i, true, gateMaterial, BlockFace.EAST);
+		if (north)
+			openFence(generator, chunk, i, y1, y2, inset, false, gateMaterial, BlockFace.NORTH);
+		if (south)
+			openFence(generator, chunk, i, y1, y2, chunk.width - 1 - inset, false, gateMaterial, BlockFace.SOUTH);
+	}
+
+	private void openFence(CityWorldGenerator generator, InitialBlocks chunk, int x, int y1, int y2, int z,
+			boolean wallRunsNS, Material gateMaterial, BlockFace facing) {
+		chunk.airoutBlocks(generator, x, y1, y2, z);
+		if (gateMaterial != null)
+			chunk.setBlock(x, y1, z, gateMaterial, facing);
+		else if (wallRunsNS)
+			chunk.airoutBlocks(generator, x, y1, y2, z + 1);
+		else
+			chunk.airoutBlocks(generator, x + 1, y1, y2, z);
 	}
 
 	private void drawCornerLotNorthWest(InitialBlocks chunk, int cornerLotStyle, int inset, int y1, int y2,
