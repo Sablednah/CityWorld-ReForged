@@ -760,7 +760,7 @@ public abstract class AbstractBlocks {
 		}
 	}
 
-	BlockFace fixFacing(BlockFace facing) {
+	public BlockFace fixFacing(BlockFace facing) {
 		switch (facing) {
 		case WEST_NORTH_WEST:
 		case WEST_SOUTH_WEST:
