@@ -17,6 +17,12 @@ public abstract class IndustrialBuildingLot extends FinishedBuildingLot {
 		rounded = false;
 	}
 
+	/** Half the time an industrial building's street door is a garage door, where a mod supplies one. */
+	@Override
+	protected net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> garageDoorPool() {
+		return chunkOdds.flipCoin() ? me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_GARAGE_DOOR : null;
+	}
+
 	/** Factories and warehouses open onto the street through metal doors, where a mod supplies them. */
 	@Override
 	protected net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> exteriorDoorPool() {

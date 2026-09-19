@@ -239,15 +239,17 @@ public class FarmLot extends ConnectedLot {
 			case PADDOCK:
 				chunk.setWalls(1, 15, cropY, cropY + 1, 1, 15, me.daddychurchill.CityWorld.Support.MaterialTags.pick(
 						me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FARM_FENCE, platmap.getOddsGenerator(), Material.SPRUCE_FENCE));
+				Material gate = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+						me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_GATE, platmap.getOddsGenerator(), Material.SPRUCE_FENCE_GATE);
 
 				if (chunkOdds.flipCoin())
-					chunk.setGate(7, cropY, 1, Material.SPRUCE_FENCE_GATE, BlockFace.NORTH, chunkOdds.playOdds(Odds.oddsUnlikely));
+					chunk.setGate(7, cropY, 1, gate, BlockFace.NORTH, chunkOdds.playOdds(Odds.oddsUnlikely));
 				if (chunkOdds.flipCoin())
-					chunk.setGate(7, cropY, 14, Material.SPRUCE_FENCE_GATE, BlockFace.SOUTH, chunkOdds.playOdds(Odds.oddsUnlikely));
+					chunk.setGate(7, cropY, 14, gate, BlockFace.SOUTH, chunkOdds.playOdds(Odds.oddsUnlikely));
 				if (chunkOdds.flipCoin())
-					chunk.setGate(1, cropY, 7, Material.SPRUCE_FENCE_GATE, BlockFace.WEST, chunkOdds.playOdds(Odds.oddsUnlikely));
+					chunk.setGate(1, cropY, 7, gate, BlockFace.WEST, chunkOdds.playOdds(Odds.oddsUnlikely));
 				if (chunkOdds.flipCoin())
-					chunk.setGate(14, cropY, 7, Material.SPRUCE_FENCE_GATE, BlockFace.EAST, chunkOdds.playOdds(Odds.oddsUnlikely));
+					chunk.setGate(14, cropY, 7, gate, BlockFace.EAST, chunkOdds.playOdds(Odds.oddsUnlikely));
 				break;
 			case TRELLIS:
 			case VINES:

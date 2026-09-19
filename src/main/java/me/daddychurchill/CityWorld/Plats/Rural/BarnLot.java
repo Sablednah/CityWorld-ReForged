@@ -85,6 +85,8 @@ public class BarnLot extends IsolatedLot {
 		// figure out the doors
 		Material fence = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
 				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FARM_FENCE, platmap.getOddsGenerator(), Material.SPRUCE_FENCE);
+		Material gate = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_GATE, platmap.getOddsGenerator(), Material.SPRUCE_FENCE_GATE);
 		boolean firstDoor = chunkOdds.flipCoin();
 		boolean secondDoor = chunkOdds.flipCoin();
 		if (!firstDoor && !secondDoor)
@@ -107,7 +109,7 @@ public class BarnLot extends IsolatedLot {
 				chunk.setBlock(5, y1, 5, fence, BlockFace.SOUTH, BlockFace.WEST);
 				chunk.setBlock(5, y1, 6, fence, BlockFace.NORTH, BlockFace.SOUTH);
 
-				chunk.setGate(5, y1, 7, Material.SPRUCE_FENCE_GATE, BlockFace.EAST, !includeHorses); // only open if no horses
+				chunk.setGate(5, y1, 7, gate, BlockFace.EAST, !includeHorses); // only open if no horses
 
 				chunk.setBlock(5, y1, 8, fence, BlockFace.NORTH, BlockFace.SOUTH);
 				chunk.setBlock(5, y1, 9, fence, BlockFace.NORTH, BlockFace.SOUTH);
@@ -134,7 +136,7 @@ public class BarnLot extends IsolatedLot {
 				chunk.setBlock(10, y1, 5, fence, BlockFace.SOUTH, BlockFace.EAST);
 				chunk.setBlock(10, y1, 6, fence, BlockFace.NORTH, BlockFace.SOUTH);
 
-				chunk.setGate(10, y1, 7, Material.SPRUCE_FENCE_GATE, BlockFace.WEST, !includeHorses); // only open if no horses 
+				chunk.setGate(10, y1, 7, gate, BlockFace.WEST, !includeHorses); // only open if no horses 
 
 				chunk.setBlock(10, y1, 8, fence, BlockFace.NORTH, BlockFace.SOUTH);
 				chunk.setBlock(10, y1, 9, fence, BlockFace.NORTH, BlockFace.SOUTH);
@@ -227,7 +229,7 @@ public class BarnLot extends IsolatedLot {
 				chunk.setBlock(5, y1, 5, fence, BlockFace.NORTH, BlockFace.EAST);
 				chunk.setBlock(6, y1, 5, fence, BlockFace.EAST, BlockFace.WEST);
 
-				chunk.setGate(7, y1, 5, Material.SPRUCE_FENCE_GATE, BlockFace.SOUTH, true); // open south
+				chunk.setGate(7, y1, 5, gate, BlockFace.SOUTH, true); // open south
 
 				chunk.setBlock(8, y1, 5, fence, BlockFace.EAST, BlockFace.WEST);
 				chunk.setBlock(9, y1, 5, fence, BlockFace.EAST, BlockFace.WEST);
@@ -252,7 +254,7 @@ public class BarnLot extends IsolatedLot {
 				chunk.setBlock(5, y1, 10, fence, BlockFace.SOUTH, BlockFace.EAST);
 				chunk.setBlock(6, y1, 10, fence, BlockFace.EAST, BlockFace.WEST);
 
-				chunk.setGate(7, y1, 10, Material.SPRUCE_FENCE_GATE, BlockFace.NORTH, true); // open north
+				chunk.setGate(7, y1, 10, gate, BlockFace.NORTH, true); // open north
 
 				chunk.setBlock(8, y1, 10, fence, BlockFace.EAST, BlockFace.WEST);
 				chunk.setBlock(9, y1, 10, fence, BlockFace.EAST, BlockFace.WEST);

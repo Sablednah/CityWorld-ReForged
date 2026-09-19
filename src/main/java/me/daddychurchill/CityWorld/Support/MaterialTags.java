@@ -114,6 +114,12 @@ public final class MaterialTags {
      *  the tread ({@code oak_compact_stairs} → {@code oak_railing}, {@code oak_platform}, {@code oak_balcony}).
      *  Ships empty: the vanilla stair run with its under-steps is the fallback. */
     public static final TagKey<Block> FITTINGS_STAIRS = key("cityworld:fittings/stairs");
+    /** The gate in a paddock, pen or zoo fence — vanilla fence gates + Macaw's single-block gates (its
+     *  two-tall double gates are left out). Picked with the same odds as the fence, so the pair agrees. */
+    public static final TagKey<Block> FITTINGS_GATE = key("cityworld:fittings/gate");
+    /** A garage door for a factory or warehouse bay: one block id, a column of {@code part=middle} under a
+     *  {@code part=top}, three columns wide. Ships empty: the metal door is the fallback. */
+    public static final TagKey<Block> FITTINGS_GARAGE_DOOR = key("cityworld:fittings/garage_door");
     /** Stair-shaped sloped roof blocks (Macaw's {@code *_roof}); the house roof pass matches one to the
      *  roof material by name, else picks at random, else uses the vanilla stairs of that material. */
     public static final TagKey<Block> FITTINGS_ROOF = key("cityworld:fittings/roof");
@@ -122,6 +128,10 @@ public final class MaterialTags {
      *  from the stack ({@code RoadLot.generateLightPost}). Ships empty: the fence-and-glowstone post is
      *  the fallback. */
     public static final TagKey<Block> LIGHT_STREET_LAMP = key("cityworld:light/street_lamp");
+    /** Two-tall tiki torches round a campfire (stacked, the mod deriving bottom/top). Ships empty. */
+    public static final TagKey<Block> LIGHT_TIKI = key("cityworld:light/tiki");
+    /** One-block garden lights on the gate posts of a park entrance. Ships empty. */
+    public static final TagKey<Block> LIGHT_GARDEN = key("cityworld:light/garden");
 
     /** A block tag key from a namespaced id, e.g. {@code "minecraft:planks"} or {@code "c:stones"}. */
     public static TagKey<Block> key(String id) {

@@ -33,6 +33,17 @@ public class ParkLot extends ConnectedLot {
 	/** The park's boundary fence: one pick per platmap from the fence pool (so every side of a park agrees),
 	 *  spruce by default. Set at the top of generateActualBlocks, where the platmap is in hand. */
 	private Material fenceMaterial = Material.SPRUCE_FENCE;
+	/** A garden light for the inner post of each entrance, from {@code #cityworld:light/garden}; null = none. */
+	private Material gardenLight;
+
+	private void entranceLights(RealBlocks chunk, int y, int x1, int z1, int x2, int z2) {
+		if (gardenLight == null)
+			return;
+		if (chunk.isEmpty(x1, y, z1))
+			chunk.setBlock(x1, y, z1, gardenLight);
+		if (chunk.isEmpty(x2, y, z2))
+			chunk.setBlock(x2, y, z2, gardenLight);
+	}
 	private final static Material columnMaterial = Material.SMOOTH_STONE;
 	private final static Material grassMaterial = Material.GRASS_BLOCK;
 	private final static Material pathMaterial = Material.GRASS_PATH;
@@ -281,6 +292,8 @@ public class ParkLot extends ConnectedLot {
 			DataContext context, int platX, int platZ) {
 		fenceMaterial = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
 				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_FENCE, platmap.getOddsGenerator(), Material.SPRUCE_FENCE);
+		gardenLight = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+				me.daddychurchill.CityWorld.Support.MaterialTags.LIGHT_GARDEN, platmap.getOddsGenerator(), null);
 		// look around
 		SurroundingLots neighbors = new SurroundingLots(platmap, platX, platZ);
 
@@ -421,6 +434,7 @@ public class ParkLot extends ConnectedLot {
 				chunk.setBlocks(9, surfaceY, surfaceY + 2, 0, columnMaterial);
 				chunk.setBlock(6, surfaceY, 1, columnMaterial);
 				chunk.setBlock(9, surfaceY, 1, columnMaterial);
+				entranceLights(chunk, surfaceY + 1, 6, 1, 9, 1);
 
 				fenceNorth = true;
 				chunk.setBlocks(1, 6, surfaceY + 1, surfaceY + 2, 0, 1, fenceMaterial, BlockFace.EAST, BlockFace.WEST);
@@ -440,6 +454,7 @@ public class ParkLot extends ConnectedLot {
 				chunk.setBlocks(9, surfaceY, surfaceY + 2, 15, columnMaterial);
 				chunk.setBlock(6, surfaceY, 14, columnMaterial);
 				chunk.setBlock(9, surfaceY, 14, columnMaterial);
+				entranceLights(chunk, surfaceY + 1, 6, 14, 9, 14);
 
 				fenceSouth = true;
 				chunk.setBlocks(1, 6, surfaceY + 1, surfaceY + 2, 15, 16, fenceMaterial, BlockFace.EAST,
@@ -460,6 +475,7 @@ public class ParkLot extends ConnectedLot {
 				chunk.setBlocks(0, surfaceY, surfaceY + 2, 9, columnMaterial);
 				chunk.setBlock(1, surfaceY, 6, columnMaterial);
 				chunk.setBlock(1, surfaceY, 9, columnMaterial);
+				entranceLights(chunk, surfaceY + 1, 1, 6, 1, 9);
 
 				fenceWest = true;
 				chunk.setBlocks(0, 1, surfaceY + 1, surfaceY + 2, 1, 6, fenceMaterial, BlockFace.NORTH,
@@ -480,6 +496,7 @@ public class ParkLot extends ConnectedLot {
 				chunk.setBlocks(15, surfaceY, surfaceY + 2, 9, columnMaterial);
 				chunk.setBlock(14, surfaceY, 6, columnMaterial);
 				chunk.setBlock(14, surfaceY, 9, columnMaterial);
+				entranceLights(chunk, surfaceY + 1, 14, 6, 14, 9);
 
 				fenceEast = true;
 				chunk.setBlocks(15, 16, surfaceY + 1, surfaceY + 2, 1, 6, fenceMaterial, BlockFace.NORTH,
