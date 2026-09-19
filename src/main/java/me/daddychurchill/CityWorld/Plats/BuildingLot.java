@@ -1065,9 +1065,10 @@ public abstract class BuildingLot extends ConnectedLot {
 	private void openFence(CityWorldGenerator generator, InitialBlocks chunk, int x, int y1, int y2, int z,
 			boolean wallRunsNS, Material gateMaterial, BlockFace facing) {
 		chunk.airoutBlocks(generator, x, y1, y2, z);
-		if (gateMaterial != null)
+		if (gateMaterial != null) {
 			chunk.setBlock(x, y1, z, gateMaterial, facing);
-		else if (wallRunsNS)
+			chunk.reconnectNeighbours(x, y1, z); // the airout above told the fence either side to let go
+		} else if (wallRunsNS)
 			chunk.airoutBlocks(generator, x, y1, y2, z + 1);
 		else
 			chunk.airoutBlocks(generator, x + 1, y1, y2, z);
