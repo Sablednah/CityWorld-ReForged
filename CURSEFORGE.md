@@ -12,6 +12,10 @@ screen.
 Battle-tested across **135 worlds and 3.2 million generated chunks** — over **830 km²** of procedurally
 generated city, more ground than New York City covers.
 
+**New in 5.10.1: Minecraft 26.3.** A build for the 26.3 line, where campgrounds pitch their tents from
+wool stairs the way 26.3's own abandoned camps do, the new **dappled forest** joins the climate, and
+**poplar** turns up in buildings by itself. The other four versions are unchanged and stay on 5.10.0.
+
 **New in 5.10.0: Macaw's fits the city out** — doors, windows, fences, roofs, staircases and lights from
 the Macaw's mods (see below), pitched roofs on modern houses, silos and gasometers in industry, and a
 **Minecraft 1.21.1** build alongside 1.21.11, 26.1 and 26.2.
@@ -44,7 +48,7 @@ Pick **CityWorld** as your world type and you land in a living city:
   cave tunnels like vanilla's, and basalt-lined lava pools instead of a flat lava sea. Underground you
   will find real **cave biomes** in patches — lush (moss, glow-berry vines, dripleaf, pools with
   axolotls/frogs/tropical fish, surface azaleas), dripstone, deep dark, and sulfur caves on Minecraft
-  26.2 — each decorated the way vanilla decorates it.
+  26.2 and later — each decorated the way vanilla decorates it.
 - **Vanilla structures where they belong** — **strongholds** (so eyes of ender work and the End is
   reachable), **trial chambers**, and **ancient cities** in the deep dark. Villages and mineshafts stay
   off: CityWorld builds its own. A datapack tag can widen the list, including to another mod's
@@ -212,7 +216,7 @@ changes: the defaults are the operator levels the commands always used.
 
 ## Requirements
 
-CityWorld runs on **four Minecraft versions**. Download the file for yours — the Minecraft version is
+CityWorld runs on **five Minecraft versions**. Download the file for yours — the Minecraft version is
 in the filename, so there is no guessing which is which.
 
 | Minecraft | NeoForge | Java | File |
@@ -221,8 +225,9 @@ in the filename, so there is no guessing which is which.
 | 1.21.11 | 21.11.42+ | 21 | `cityworld-5.10.0+mc1.21.11.jar` |
 | 26.1.2 | 26.1.2.95+ | 25 | `cityworld-5.10.0+mc26.1.2.jar` |
 | 26.2 | 26.2.0.59+ | 25 | `cityworld-5.10.0+mc26.2.jar` |
+| 26.3 | 26.3.0.3+ (beta) | 25 | `cityworld-5.10.1+mc26.3.jar` |
 
-**A given seed builds the same city on all four.** The layout — terrain, roads, districts, which
+**A given seed builds the same city on all five.** The layout — terrain, roads, districts, which
 building stands where — is identical across versions; only the materials shift slightly, because newer
 Minecraft versions bring new blocks into the building palettes. Every version is verified automatically
 before release, generating a real world and checking the cities, signs and biomes come out right.
