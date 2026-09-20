@@ -15,14 +15,14 @@ name: Worldgen self-test
 
 on:
   push:
-    branches: [master, mc1.21.1, mc26.1, mc26.2, mc26.3]
+    branches: [master, mc1.20.1, mc1.21.1, mc26.1, mc26.2, mc26.3]
     # Docs-only commits are frequent and cannot affect worldgen, so don't spend 3 runners on them.
     paths-ignore:
       - '**.md'
       - 'branding/**'
       - 'screengrabs/**'
   pull_request:
-    branches: [master, mc1.21.1, mc26.1, mc26.2, mc26.3]
+    branches: [master, mc1.20.1, mc1.21.1, mc26.1, mc26.2, mc26.3]
   workflow_dispatch:
 
 permissions:
@@ -41,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false # one broken version must not hide the state of the others
       matrix:
-        branch: [master, mc1.21.1, mc26.1, mc26.2, mc26.3]
+        branch: [master, mc1.20.1, mc1.21.1, mc26.1, mc26.2, mc26.3]
     steps:
       - uses: actions/checkout@v4
         with:
