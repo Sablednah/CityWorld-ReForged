@@ -33,6 +33,15 @@ public final class CityPlanHud {
      */
     private static volatile long hovered = NONE;
 
+    /**
+     * The screen the hover belongs to. <b>Without this the caption draws over a map mod's own menus:</b>
+     * JourneyMap's waypoint manager and settings screens are {@code journeymap.*} classes too, so
+     * {@link #isMapScreen} matched them, and since the hover deliberately never expires it kept painting
+     * on top of them (owner, 2026-09-20). Identity rather than another name check, so it holds for any
+     * map mod's menus, present and future. Weak, so a closed screen is never held alive by this.
+     */
+    private static volatile java.lang.ref.WeakReference<Screen> hoveredOn = new java.lang.ref.WeakReference<>(null);
+
     public static void register() {
         NeoForge.EVENT_BUS.addListener(ScreenEvent.Render.Post.class, CityPlanHud::onRenderScreen);
     }
@@ -40,10 +49,12 @@ public final class CityPlanHud {
     /** A map mod telling us the mouse is over this chunk. */
     public static void hover(int chunkX, int chunkZ) {
         hovered = (chunkX & 0xFFFFFFFFL) | ((long) chunkZ << 32);
+        hoveredOn = new java.lang.ref.WeakReference<>(Minecraft.getInstance().screen);
     }
 
     public static void clearHover() {
         hovered = NONE;
+        hoveredOn = new java.lang.ref.WeakReference<>(null);
     }
 
     /**
@@ -57,6 +68,10 @@ public final class CityPlanHud {
                 return;
             Screen screen = event.getScreen();
             if (screen == null || !isMapScreen(screen))
+                return;
+            // The map's OWN menus (waypoints, settings) are the map mod's classes too, so the name
+            // check above passes for them. Only draw on the very screen the hover was reported from.
+            if (screen != hoveredOn.get())
                 return;
 
             int chunkX = (int) at;
