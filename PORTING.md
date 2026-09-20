@@ -2034,6 +2034,95 @@ biome id** rather than being stored, so retuning a patch's size or rarity does n
 Defaults verified unchanged when this landed — same 43% ancient-city air, same pool, same plan hash.
 **That is the bar for any future "make it configurable" change**: it must not move the default world.
 
+## 1.20.1 **Forge** spike — measured, not guessed (2026-09-20)
+
+A CurseForge comment asked for **1.20.1 Forge** (the last Forge line before NeoForge, where many mods are
+stranded). That is a *loader* change plus a five-version backport, so it was scoped with a spike rather than an
+estimate. Branch `mc1.20.1` (worktree, cut from **`mc1.21.1`** — closest line: `ResourceLocation` not
+`Identifier`, pre-26.3 worldgen shapes, old loot schema), commit `ac280b4e` "SPIKE: build against MinecraftForge
+1.20.1". **Measured, not started.**
+
+### The headline: **239 unique javac errors across 46 of 442 files**, over half one mechanical rename
+
+| Bucket | Count |
+|---|---|
+| `net.neoforged.*` loader seam **+ its cascade** | **132** (26 files import it; the rest are knock-on `cannot find symbol`) |
+| `ChunkProbe` (dev tool) / Customize screen (client UI drift) | 13 / 12 |
+| `Material.java` | 10 — **regenerate**, see below |
+| 3 payload classes + `CityWorldNetwork` | 21 — payload API is 1.20.5+; Forge 1.20.1 is `SimpleChannel` |
+| `CityWorldChunkGenerator` | 7 — three signatures (below) |
+| the rest | thin tail of 1–4 per file: `ChunkStatus` moved, `PotionContents`, `RandomizableContainer`, `TransparentBlock`, `LevelStem` map types |
+
+### The tooling
+
+- **`net.neoforged.moddev.legacyforge` 2.0.147 builds it** — an addon to the ModDevGradle we already use
+  (MinecraftForge 1.17–1.20.1), so `build.gradle` stays ours instead of becoming a ForgeGradle rewrite. Pipeline
+  green in **956s**: decompile 204s, inject 170s, transformSources 150s, `remapSrgSourcesToOfficial`, MC's 5,453
+  files recompiled 57s.
+- ⚠ **Forge 1.20.1 is SRG-intermediary.** Mid-pipeline artifacts are SRG-named (`f_276598_`, `m_213679_`) — do
+  not read one and conclude an API is missing (I wrongly called `gen_material.py` broken doing exactly that).
+  You compile against official names. **The shipped jar must be `reobfJar`'s output**, not `build/libs` as on
+  every other branch — that alone changes the release pipeline.
+- ✅ **`gen_material.py` needs no change**: the legacy pipeline emits `sourcesAndCompiledWithNeoForge_*_output.jar`
+  — a name it already scans for — official-named, `WORLD_VERSION = 3465`.
+- **Java 17** (1.20.1's own manifest says so); `tools/jdk17` downloaded (Temurin 17.0.20.1).
+
+### The content gap is almost nothing
+
+Measured against the real 1.20.1 registries before compiling: **9 of 554 blocks** (copper grates/bulb, chiseled
+copper/tuff, `SHORT_GRASS`, `POTTED_AZALEA`), **0 of 116 items**, **0 biomes** (`SULFUR_CAVES` appears only in a
+javadoc), **1 of 59 entities** (armadillo) — and the generator absorbs the block/item side. That fits a mod whose
+upstream is a 1.14 Bukkit plugin.
+
+**Loot tables need a DIRECTORY rename, not a schema conversion**: 1.20.1 wants `functions:` with bare
+`{min,max}`, exactly what this branch carries. `loot_table`→`loot_tables` (27), `tags/block`→`tags/blocks` (68),
+`structure`→`structures` (1) — ~96 files, scriptable.
+
+### Forge 1.20.1 API: one real gap, two reprieves
+
+Checked against Forge's own 1.20.x sources **before** compiling:
+
+| Needed | Forge 1.20.1 |
+|---|---|
+| **Data maps** (`cityworld:ground`, furniture orientation) | ❌ **ABSENT** — NeoForge-only. 1 Java file + 2 JSONs → plain JSON behind a reload listener |
+| Datapack registries (P7 `world_settings`) | ✅ present — the per-world settings system survives |
+| `RegisterPresetEditorsEvent` (Customize screen) | ✅ present — the 13-style picker survives |
+| Networking / permissions / `DeferredRegister` / `TagsUpdatedEvent` / event bus | ✅ present (networking a different model) |
+
+⚠ **Presence is not semantics** (Standards' lesson): the concept survives, not the code unchanged.
+
+### ChunkGenerator: three signatures, not a rewrite
+
+From 1.20.1's own `ChunkGenerator`: `fillFromNoise` takes a **leading `Executor`**, `applyCarvers` a **trailing
+`GenerationStep.Carving`**, and `codec()` returns **`Codec`, not `MapCodec`**. `buildSurface`, `getBaseHeight`,
+`getBaseColumn` and `addDebugScreenInfo` keep the shapes `mc1.21.1` has (the last without `SamplerContext` — the
+pre-26.3 form).
+
+### ⚠ The access transformer did NOT apply
+
+`frontText has private access in SignBlockEntity`: the fields exist under those exact names, but
+`accessTransformers.from(...)` inside `legacyForge {}` did not widen them. Wiring ATs on the legacy plugin is an
+open task, and it matters out of proportion to its size — **an AT that silently fails to apply surfaces as a
+worldgen deadlock at runtime, not a compile error** (it exists because `SignBlockEntity`'s public setter notifies
+its level; see `SupportBlocks.setSignText`).
+
+### What would be lost, and what would not
+
+**The JourneyMap integration.** The mod is on 1.20.1 Forge (35 builds) but the **2.0 API has no build below
+1.21.1** (all three BlameJared artifacts checked) and our integration targets 2.0. Dropped here, or rewritten
+against the old 1.x API. It was a 5.7.0 headline.
+
+**The ecosystem the request is about is present**: BoP (42 builds), TerraBlender (12), every Macaw's we use —
+doors, windows, fences, lights, roofs, stairs, trapdoors, paths, bridges (3–5 each) — and Fantasy's Furniture.
+Refurbished is CurseForge-primary and was not confirmed.
+
+### Verdict
+
+**Tractable, and smaller than the pre-spike warning.** 239 errors is ~4x the 26.3 port (58), but the shape is
+benign: half a rename, the palette barely moves, loot is a `mv`, worldgen is three signatures. The awkward parts
+are narrow and known — data maps, the payload model, the AT wiring, the reobf jar, and losing JourneyMap. Days,
+not weeks, with no discovered blocker.
+
 ## 26.3 port — what actually moved (2026-09-19)
 
 Measured against the decompiled `26.3` sources (NeoForm `mergeWithSources_33339083…`, world version 5015+)
