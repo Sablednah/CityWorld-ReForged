@@ -1,6 +1,6 @@
 # CityWorld — Bukkit → NeoForge port plan
 
-## ▶ Resume here — the 26.3 line exists (2026-09-19, late): branch `mc26.3`, self-test green, NOT client-verified
+## ▶ Resume here — v5.10.1 released (2026-09-20): the Minecraft 26.3 line, single-version
 
 **Where it is.** Branch `mc26.3` (from `mc26.2`), checked out at `../CityWorld-ReForged-worktrees/mc26.3` with the
 `tools` symlink and a Java-25 build like the other 26.x lines, one commit (`2fe0c3d0`, "Target Minecraft 26.3").
@@ -13,7 +13,18 @@ over 144 columns, which is the check that matters most after this port (see the 
 the owner's **`26.3` instance** (`DEPLOYED-2fe0c3d0`), halt/exit scan 0 with the detector proved on a synthetic
 positive (the local 5.8.0 jars are all rebuilt now — none is a control any more; `javac` a two-line class that
 calls `System.exit`/`Runtime.halt` and scan that). Master has `mc26.3` in the CI matrix, `deploy-fleet.sh` and
-the self-test header. **Not yet: pushed, playtested.** The dev client was booted here with JourneyMap 26.3 in `run/mods` and
+the self-test header. **Shipped.** Tag `v5.10.1` on master (`931d3fc4`), bump `104f0e43` on `mc26.3`; **one jar** on the GitHub
+release (`cityworld-5.10.1+mc26.3.jar`) because only 26.3 changed — the other four lines are unchanged and stay
+on 5.10.0, which is the first single-version release this project has cut. CI green on all five matrix branches
+plus the cross-version compare; halt/exit scan 0 with the detector proved on a synthetic positive first (build a
+two-line class calling `System.exit`/`Runtime.halt` and scan that — every local 5.8.0 jar has been rebuilt and
+none is a control any more). Deployed to the owner's `26.3` instance (`DEPLOYED-v5.10.1`). `CURSEFORGE.md` has
+the 26.3 row and a 5.10.1 headline — **the owner pastes that by hand.**
+
+**The owner's 26.3 playtest passed everything (2026-09-19 late):** poplar seen and used as a build material,
+Nether and End, the Customize screen, and no experimental warning.
+
+**Earlier in the port:** The dev client was booted here with JourneyMap 26.3 in `run/mods` and
 put in-world with the new `./gradlew runClient -PcwWorld=selftest` (the self-test's `run/world` copied to
 `run/saves/selftest`): title screen clean, JourneyMap client plugin found, integrated server up, JourneyMap
 server API found, plan overlay indexing, fresh chunks generating — no CityWorld errors in `latest.log`. Two
