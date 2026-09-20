@@ -1,0 +1,7 @@
+{
+  "_comment": "Forge 1.20.1 ONLY. Minecraft drops a pack that has no metadata, and Forge's ResourcePackLoader.createPackForMod builds a bare PathPackResources without injecting any — so without this file the whole CityWorld datapack is discarded and the log says only 'Missing metadata in pack mod:cityworld' / 'Missing data pack mod:cityworld'. Everything then silently falls back: level-type cityworld:city fails to parse, the dimension never loads, and every cityworld tag resolves empty. NeoForge synthesises this metadata itself, which is why no other CityWorld branch ships this file. pack_format 15 is 1.20.1's DATA_PACK_FORMAT, read from SharedConstants.",
+  "pack": {
+    "description": "CityWorld — procedurally generated cities",
+    "pack_format": 15
+  }
+}

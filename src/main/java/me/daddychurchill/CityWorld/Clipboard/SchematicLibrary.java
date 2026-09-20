@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import me.daddychurchill.CityWorld.CityWorldMod;
 import me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily;
 
-import net.neoforged.fml.loading.FMLPaths;
+import net.minecraftforge.fml.loading.FMLPaths;
 
 /**
  * The classic schematics, indexed and lazily loaded — both the set <b>bundled</b> in the mod and any

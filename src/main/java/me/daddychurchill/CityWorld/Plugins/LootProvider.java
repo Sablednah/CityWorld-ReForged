@@ -18,7 +18,7 @@ import me.daddychurchill.CityWorld.compat.Block;
  * <p><b>The tables ship with the mod.</b> Upstream extracted its bundled datapack into
  * {@code <world>/datapacks/cityworld/} at world-load and called {@code Bukkit.reloadData()}; a
  * NeoForge mod jar <em>is</em> a datapack, so the 13 tables simply sit in
- * {@code data/cityworld/loot_table/chests/} and are found. That retires two pieces of upstream's
+ * {@code data/cityworld/loot_tables/chests/} and are found. That retires two pieces of upstream's
  * signature:
  *
  * <ul>
@@ -38,7 +38,7 @@ public abstract class LootProvider extends Provider {
      *
      * <p>The order is load-bearing: {@link LootLocation#EMPTY} and {@link LootLocation#RANDOM} are
      * the two non-places, and everything from index 2 on is a real one whose name matches a table in
-     * {@code data/cityworld/loot_table/chests/}. Upstream leant on the same split with
+     * {@code data/cityworld/loot_tables/chests/}. Upstream leant on the same split with
      * {@code Arrays.copyOfRange(values(), 2, …)}.
      */
     public enum LootLocation {

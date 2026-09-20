@@ -33,9 +33,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.TickEvent;
 
 /**
  * Draws CityWorld's <em>plan</em> on the JourneyMap map: district blocks and the street grid, around
@@ -123,11 +123,11 @@ final class CityPlanOverlay {
     }
 
     void register() {
-        NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, this::onTick);
-        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class, e -> states.remove(e.getEntity().getUUID()));
+        MinecraftForge.EVENT_BUS.addListener(this::onTick);
+        MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> states.remove(e.getEntity().getUUID()));
         // Leaving the level drops what was drawn there. The overlays are per-dimension, so they would
         // not be drawn elsewhere anyway, but they would pile up on the client across round trips.
-        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerChangedDimensionEvent.class, e -> {
+        MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerChangedDimensionEvent e) -> {
             states.remove(e.getEntity().getUUID());
             if (e.getEntity() instanceof ServerPlayer player)
                 api.getOverlayApi().clearAll(player, CityWorldMod.MODID);
@@ -143,7 +143,7 @@ final class CityPlanOverlay {
     void selfCheck() {
         if (!Boolean.getBoolean("cityworld.maptest"))
             return;
-        MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        MinecraftServer server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server == null)
             return;
         ServerLevel level = server.overworld();
@@ -205,7 +205,7 @@ final class CityPlanOverlay {
      */
     void toggled(UUID player, boolean on) {
         states.remove(player);
-        MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        MinecraftServer server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server == null)
             return;
         ServerPlayer sp = server.getPlayerList().getPlayer(player);
@@ -213,7 +213,11 @@ final class CityPlanOverlay {
             api.getOverlayApi().clearAll(sp, CityWorldMod.MODID);
     }
 
-    private void onTick(ServerTickEvent.Post event) {
+    private void onTick(TickEvent.ServerTickEvent event) {
+        // Forge fires this at both ends of the tick; NeoForge's ServerTickEvent.Post is the end only,
+        // so without this guard everything below would run twice as often as it is tuned for.
+        if (event.phase != TickEvent.Phase.END)
+            return;
         if (++tickCounter < CHECK_INTERVAL)
             return;
         tickCounter = 0;

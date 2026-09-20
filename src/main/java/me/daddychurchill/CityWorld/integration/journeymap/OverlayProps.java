@@ -2,7 +2,7 @@ package me.daddychurchill.CityWorld.integration.journeymap;
 
 import java.util.EnumSet;
 
-import journeymap.api.v2.client.display.Context;
+import journeymap.api.v2.common.Context;
 import journeymap.api.v2.server.overlay.OverlayShapeProps;
 
 /**

@@ -1,4 +1,10 @@
-# CityWorld — neoforge.mods.toml (values are expanded from gradle.properties at build time).
+# CityWorld — mods.toml (values are expanded from gradle.properties at build time).
+# 1.20.1 Forge reads META-INF/mods.toml, not neoforge.mods.toml, and its dependency blocks take
+# mandatory=true/false where NeoForge takes type="required"/"optional".
+# ⚠ I first wrote type= here, on the grounds that the string "mandatory" appears nowhere in the
+# constant pools of fmlloader/fmlcore while "type" appears eight times. That reasoning was worthless:
+# FML rejected the file outright with "Missing required field mandatory in dependency". Counting
+# string constants is not evidence about a schema — run it and read the error.
 modLoader="javafml"
 loaderVersion="${loader_version_range}"
 license="${mod_license}"
@@ -21,22 +27,21 @@ displayURL="${mod_homepage}"
 #   logoFile   — what 1.21.x and 26.1 show in the info panel, and what 26.2 falls back to if
 #                bannerFile is missing. Kept so older versions still show artwork.
 # Older loaders simply ignore the two keys they don't know.
-iconFile="cityworld.png"
-bannerFile="cityworld-banner.png"
+# 1.20.1's mod list shows logoFile only; iconFile/bannerFile are 26.2+ and would just be ignored.
 logoFile="cityworld.png"
 logoBlur=false
 iconBlur=false
 
 [[dependencies.${mod_id}]]
-    modId="neoforge"
-    type="required"
-    versionRange="${neo_version_range}"
+    modId="forge"
+    mandatory=true
+    versionRange="${forge_version_range}"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.${mod_id}]]
     modId="minecraft"
-    type="required"
+    mandatory=true
     versionRange="${minecraft_version_range}"
     ordering="NONE"
     side="BOTH"
@@ -49,7 +54,7 @@ iconBlur=false
 # version branch needs its own floor.
 [[dependencies.${mod_id}]]
     modId="journeymap"
-    type="optional"
+    mandatory=false
     versionRange="${journeymap_version_range}"
     ordering="AFTER"
     side="BOTH"
@@ -62,7 +67,7 @@ iconBlur=false
 # cave band; BoP tunes it for vanilla's 128-block Nether and ours is ~3x taller. See PORTING.md.)
 [[dependencies.${mod_id}]]
     modId="biomesoplenty"
-    type="optional"
+    mandatory=false
     versionRange="[0,)"
     ordering="AFTER"
     side="BOTH"

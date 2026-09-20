@@ -1,0 +1,25 @@
+{
+  "_comment": "Forge 1.20.1 has no common tag for this family \u2014 its 371 forge: tags cover glass, stone and cobblestone but not these, and the c: namespace is NeoForge's (zero c: tags exist here). The optional #c: entry is kept so the file still reads as intended; the explicit list is what actually fills the pool on this line.",
+  "values": [
+    {
+      "id": "#c:concretes",
+      "required": false
+    },
+    "minecraft:white_concrete",
+    "minecraft:orange_concrete",
+    "minecraft:magenta_concrete",
+    "minecraft:light_blue_concrete",
+    "minecraft:yellow_concrete",
+    "minecraft:lime_concrete",
+    "minecraft:pink_concrete",
+    "minecraft:gray_concrete",
+    "minecraft:light_gray_concrete",
+    "minecraft:cyan_concrete",
+    "minecraft:purple_concrete",
+    "minecraft:blue_concrete",
+    "minecraft:brown_concrete",
+    "minecraft:green_concrete",
+    "minecraft:red_concrete",
+    "minecraft:black_concrete"
+  ]
+}

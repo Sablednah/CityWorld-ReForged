@@ -18,7 +18,7 @@ import me.daddychurchill.CityWorld.api.MapMarkers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import net.minecraftforge.server.ServerLifecycleHooks;
 
 /**
  * CityWorld's JourneyMap integration.

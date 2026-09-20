@@ -2,9 +2,13 @@
   "replace": false,
   "values": [
     "minecraft:strongholds",
-    "minecraft:trial_chambers",
+    {
+      "id": "minecraft:trial_chambers",
+      "required": false
+    },
     "minecraft:ancient_cities",
     "minecraft:nether_complexes",
     "minecraft:end_cities"
-  ]
+  ],
+  "_comment": "trial_chambers is 1.21+, so on this line it MUST be optional: one unknown required entry discards the entire tag, which silently removes strongholds too."
 }

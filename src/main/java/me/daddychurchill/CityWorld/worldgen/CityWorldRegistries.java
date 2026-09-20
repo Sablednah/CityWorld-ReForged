@@ -1,5 +1,6 @@
 package me.daddychurchill.CityWorld.worldgen;
 
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 
 import me.daddychurchill.CityWorld.CityWorldMod;
@@ -10,9 +11,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.registries.DataPackRegistryEvent;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DataPackRegistryEvent;
+import net.minecraftforge.registries.DeferredRegister;
 
 /**
  * Registration of CityWorld's worldgen types:
@@ -31,27 +32,27 @@ public final class CityWorldRegistries {
     private CityWorldRegistries() {
     }
 
-    public static final DeferredRegister<MapCodec<? extends ChunkGenerator>> CHUNK_GENERATORS =
+    public static final DeferredRegister<Codec<? extends ChunkGenerator>> CHUNK_GENERATORS =
             DeferredRegister.create(Registries.CHUNK_GENERATOR, CityWorldMod.MODID);
 
     /** The terrain-driven biome source ({@code cityworld:terrain}) referenced by the dimension/preset JSON. */
-    public static final DeferredRegister<MapCodec<? extends BiomeSource>> BIOME_SOURCES =
+    public static final DeferredRegister<Codec<? extends BiomeSource>> BIOME_SOURCES =
             DeferredRegister.create(Registries.BIOME_SOURCE, CityWorldMod.MODID);
 
     /** Root key of the per-world settings datapack registry. */
     public static final ResourceKey<Registry<CityWorldSettingsData>> WORLD_SETTINGS =
-            ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "world_settings"));
+            ResourceKey.createRegistryKey(new ResourceLocation(CityWorldMod.MODID, "world_settings"));
 
     /** The bundled default profile — what {@code cityworld:city} and the presets reference. */
     public static final ResourceKey<CityWorldSettingsData> DEFAULT_SETTINGS =
-            ResourceKey.create(WORLD_SETTINGS, ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "default"));
+            ResourceKey.create(WORLD_SETTINGS, new ResourceLocation(CityWorldMod.MODID, "default"));
 
     static {
-        CHUNK_GENERATORS.register("city", () -> CityWorldChunkGenerator.CODEC);
-        BIOME_SOURCES.register("terrain", () -> CityWorldBiomeSource.CODEC);   // CLASSIC — elevation only
-        BIOME_SOURCES.register("climate", () -> CityWorldClimateBiomeSource.CODEC); // MODERN — elevation × climate
-        BIOME_SOURCES.register("nether", () -> CityWorldNetherBiomeSource.CODEC); // ruined-city Nether — climate × #nether_pool
-        BIOME_SOURCES.register("end", () -> CityWorldEndBiomeSource.CODEC); // the End — vanilla's biomes (+ TerraBlender's) on vanilla's islands
+        CHUNK_GENERATORS.register("city", () -> CityWorldChunkGenerator.DISPATCH);
+        BIOME_SOURCES.register("terrain", () -> CityWorldBiomeSource.DISPATCH);   // CLASSIC — elevation only
+        BIOME_SOURCES.register("climate", () -> CityWorldClimateBiomeSource.DISPATCH); // MODERN — elevation × climate
+        BIOME_SOURCES.register("nether", () -> CityWorldNetherBiomeSource.DISPATCH); // ruined-city Nether — climate × #nether_pool
+        BIOME_SOURCES.register("end", () -> CityWorldEndBiomeSource.DISPATCH); // the End — vanilla's biomes (+ TerraBlender's) on vanilla's islands
     }
 
     /** Wire the deferred registers and datapack-registry listener onto the mod event bus. */

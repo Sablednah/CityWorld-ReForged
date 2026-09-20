@@ -14,11 +14,9 @@ import me.daddychurchill.CityWorld.Support.InitialBlocks;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 
@@ -437,11 +435,11 @@ public class HospitalLot extends IsolatedLot {
             return;
         for (int s = 0; s < 3; s++) {
             ItemStack potion = new ItemStack(Items.POTION);
-            potion.set(DataComponents.POTION_CONTENTS, new PotionContents(Potions.HEALING));
+            net.minecraft.world.item.alchemy.PotionUtils.setPotion(potion, Potions.HEALING);
             chest.setItem(s + 2, potion);
         }
         ItemStack bandage = new ItemStack(Items.PAPER, 4);
-        bandage.set(DataComponents.CUSTOM_NAME, Component.literal("Bandage"));
+        bandage.setHoverName(Component.literal("Bandage"));
         chest.setItem(6, bandage);
     }
 

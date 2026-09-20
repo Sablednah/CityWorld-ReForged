@@ -34,8 +34,8 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraft.world.level.levelgen.structure.placement.ConcentricRingsStructurePlacement;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 
 /**
  * Headless verification that CityWorld still generates cities on this Minecraft version.
@@ -334,7 +334,7 @@ public final class CityWorldSelfTest {
         for (var role : List.of("chair", "table", "sofa", "desk", "counter", "cabinet", "bookshelf",
                 "sink", "toilet", "bath", "lamp", "bed", "floor_lamp", "shelf")) {
             var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK,
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("cityworld", "furniture/" + role));
+                    new net.minecraft.resources.ResourceLocation("cityworld", "furniture/" + role));
             int n = me.daddychurchill.CityWorld.Support.MaterialTags.resolve(tag).size();
             if (n > 0)
                 roles.put(role, n);
@@ -533,7 +533,7 @@ public final class CityWorldSelfTest {
      * likely to test it.
      */
     private void checkPermissionNodes() {
-        var registered = net.neoforged.neoforge.server.permission.PermissionAPI.getRegisteredNodes();
+        var registered = net.minecraftforge.server.permission.PermissionAPI.getRegisteredNodes();
         var ours = List.of(
                 me.daddychurchill.CityWorld.CityWorldPermissions.INFO,
                 me.daddychurchill.CityWorld.CityWorldPermissions.TELEPORT,
@@ -545,7 +545,7 @@ public final class CityWorldSelfTest {
             if (!registered.contains(node))
                 missing.add(node.getNodeName());
         report.put("permissions.handler", String.valueOf(
-                net.neoforged.neoforge.server.permission.PermissionAPI.getActivePermissionHandler()));
+                net.minecraftforge.server.permission.PermissionAPI.getActivePermissionHandler()));
         report.put("permissions.nodes", ours.stream().map(n -> n.getNodeName()).toList().toString());
         if (!missing.isEmpty())
             fail("permission nodes not registered: " + missing
@@ -736,7 +736,7 @@ public final class CityWorldSelfTest {
      */
     private void checkTwinDimension(MinecraftServer server) {
         ServerLevel city = server.getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION,
-                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "city")));
+                new net.minecraft.resources.ResourceLocation(CityWorldMod.MODID, "city")));
         if (city == null) {
             fail("the cityworld:city dimension (/cityworld) is not loaded");
             return;
@@ -810,23 +810,30 @@ public final class CityWorldSelfTest {
         // server's own overworld alongside the Nether, as level.dat does.
         var overworldStem = registries.lookupOrThrow(net.minecraft.core.registries.Registries.LEVEL_STEM)
                 .getOrThrow(net.minecraft.world.level.dimension.LevelStem.OVERWORLD).value();
-        var dims = new net.minecraft.world.level.levelgen.WorldDimensions(java.util.Map.of(
-                net.minecraft.world.level.dimension.LevelStem.OVERWORLD, overworldStem,
-                net.minecraft.world.level.dimension.LevelStem.NETHER, stem));
+        // 1.20.1's WorldDimensions is a record over a Registry, not a Map.
+        var stems = new net.minecraft.core.MappedRegistry<net.minecraft.world.level.dimension.LevelStem>(
+                net.minecraft.core.registries.Registries.LEVEL_STEM, com.mojang.serialization.Lifecycle.stable());
+        stems.register(net.minecraft.world.level.dimension.LevelStem.OVERWORLD, overworldStem,
+                com.mojang.serialization.Lifecycle.stable());
+        stems.register(net.minecraft.world.level.dimension.LevelStem.NETHER, stem,
+                com.mojang.serialization.Lifecycle.stable());
+        stems.freeze();
+        var dims = new net.minecraft.world.level.levelgen.WorldDimensions(stems);
         var ops = net.minecraft.resources.RegistryOps.create(com.mojang.serialization.JsonOps.INSTANCE, registries);
         var encoded = net.minecraft.world.level.levelgen.WorldDimensions.CODEC.codec().encodeStart(ops, dims);
         if (encoded.error().isPresent()) {
             fail("the ruined-city Nether stem does not encode: " + encoded.error().get().message());
             return;
         }
-        String json = encoded.getOrThrow().toString();
+        String json = encoded.result().orElseThrow().toString();
         report.put("nether.stem.json", json.length() > 400 ? json.substring(0, 400) : json);
-        var decoded = net.minecraft.world.level.levelgen.WorldDimensions.CODEC.codec().parse(ops, encoded.getOrThrow());
+        var decoded = net.minecraft.world.level.levelgen.WorldDimensions.CODEC.codec()
+                .parse(ops, encoded.result().orElseThrow());
         if (decoded.error().isPresent()) {
             fail("the ruined-city Nether stem does not decode: " + decoded.error().get().message());
             return;
         }
-        var back = decoded.getOrThrow().get(net.minecraft.world.level.dimension.LevelStem.NETHER).orElse(null);
+        var back = decoded.result().orElseThrow().get(net.minecraft.world.level.dimension.LevelStem.NETHER).orElse(null);
         if (back == null || !(back.generator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator)
                 || !back.type().is(me.daddychurchill.CityWorld.worldgen.CityWorldRealms.RUINED_NETHER_TYPE)
                 || !json.contains("\"environment\":\"nether\"") || !json.contains("\"twin_of\":\"minecraft:overworld\""))
@@ -1276,10 +1283,19 @@ public final class CityWorldSelfTest {
                     + "of ender have nothing to find");
             return;
         }
-        for (String wanted : List.of("minecraft:strongholds", "minecraft:trial_chambers", "minecraft:ancient_cities"))
+        // A set this Minecraft version does not HAVE cannot survive selection, and that is not CityWorld's
+        // doing: trial chambers are 1.21+, so demanding them on the 1.20.1 line reported a fault that did
+        // not exist. Asking the registry keeps this list honest on every version instead of per-branch.
+        var allSets = level.registryAccess()
+                .registry(net.minecraft.core.registries.Registries.STRUCTURE_SET).orElse(null);
+        for (String wanted : List.of("minecraft:strongholds", "minecraft:trial_chambers", "minecraft:ancient_cities")) {
+            if (allSets != null
+                    && !allSets.containsKey(new net.minecraft.resources.ResourceLocation(wanted)))
+                continue;
             if (!sets.containsKey(wanted))
                 fail("structure set " + wanted + " did not survive selection — either it is missing from "
                         + "the cityworld:allowed tag, or the biome source cannot produce any biome it needs");
+        }
 
         // --- seeding: the stronghold rings ---------------------------------------------------------
         Holder<StructureSet> strongholds = sets.get("minecraft:strongholds");
@@ -2145,7 +2161,8 @@ public final class CityWorldSelfTest {
         }
         json.append("}\n");
 
-        Path out = server.getServerDirectory().resolve("cityworld-selftest.json");
+        // 1.20.1's getServerDirectory() hands back a File, not a Path.
+        Path out = server.getServerDirectory().toPath().resolve("cityworld-selftest.json");
         try {
             Files.writeString(out, json.toString(), StandardCharsets.UTF_8);
             CityWorldMod.LOGGER.info("SELFTEST: report written to {}", out);

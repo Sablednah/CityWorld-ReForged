@@ -7,8 +7,8 @@ import me.daddychurchill.CityWorld.CityWorldMod;
 
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 
 /**
  * The diagnostics report — normally off, enabled with {@code -Dcityworld.diagnostics=true} (and

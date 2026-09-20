@@ -133,7 +133,7 @@ public final class LegacyBlocks {
             case 26:  return bed(data);
             case 29:  return Blocks.STICKY_PISTON.defaultBlockState();
             case 30:  return Blocks.COBWEB.defaultBlockState();
-            case 31:  return data == 2 ? Blocks.FERN.defaultBlockState() : Blocks.SHORT_GRASS.defaultBlockState();
+            case 31:  return data == 2 ? Blocks.FERN.defaultBlockState() : Blocks.GRASS.defaultBlockState();
             case 33:  return Blocks.PISTON.defaultBlockState();
             case 34:  return Blocks.AIR.defaultBlockState(); // piston head — part of the piston
             case 35:  return WOOL[data & 15];

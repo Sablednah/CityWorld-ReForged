@@ -18,8 +18,8 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.levelgen.presets.WorldPreset;
-import net.neoforged.neoforge.client.event.ScreenEvent;
-import net.neoforged.neoforge.common.NeoForge;
+import net.minecraftforge.client.event.ScreenEvent;
+import net.minecraftforge.common.MinecraftForge;
 
 /**
  * Locks the create-world screen's World Type to {@link CityWorldPackConfig#lockedWorldPreset} — the modpack
@@ -54,8 +54,8 @@ public final class WorldTypeLock {
         if (CityWorldPackConfig.lockedWorldPreset().isEmpty() && CityWorldPackConfig.lockedRuinedNether().isEmpty()
                 && CityWorldPackConfig.lockedCityWorldEnd().isEmpty())
             return;
-        NeoForge.EVENT_BUS.addListener(WorldTypeLock::onInit);
-        NeoForge.EVENT_BUS.addListener(WorldTypeLock::onRender);
+        MinecraftForge.EVENT_BUS.addListener(WorldTypeLock::onInit);
+        MinecraftForge.EVENT_BUS.addListener(WorldTypeLock::onRender);
     }
 
     private static void onInit(ScreenEvent.Init.Post event) {
@@ -134,7 +134,7 @@ public final class WorldTypeLock {
     }
 
     private static void trim(List<WorldTypeEntry> list, WorldTypeEntry entry) {
-        if (list.size() == 1 && list.getFirst().equals(entry))
+        if (list.size() == 1 && list.get(0).equals(entry))
             return;
         list.clear();
         list.add(entry);

@@ -1,11 +1,6 @@
 package me.daddychurchill.CityWorld.network;
 
-import me.daddychurchill.CityWorld.CityWorldMod;
-
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.FriendlyByteBuf;
 
 /**
  * Server -> client: what is planned in one chunk, already worded for display
@@ -15,21 +10,15 @@ import net.minecraft.resources.ResourceLocation;
  * and the server already owns the vocabulary — a new lot kind or shop type then needs no client
  * change at all. An empty summary means "nothing planned here" (not a CityWorld level).
  */
-public record LotInfoPayload(int chunkX, int chunkZ, String summary) implements CustomPacketPayload {
+public record LotInfoPayload(int chunkX, int chunkZ, String summary) {
 
-    public static final Type<LotInfoPayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "lot_info"));
+    public static void encode(LotInfoPayload payload, FriendlyByteBuf buf) {
+        buf.writeVarInt(payload.chunkX);
+        buf.writeVarInt(payload.chunkZ);
+        buf.writeUtf(payload.summary, 256);
+    }
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, LotInfoPayload> CODEC = StreamCodec.of(
-            (buf, p) -> {
-                buf.writeVarInt(p.chunkX);
-                buf.writeVarInt(p.chunkZ);
-                buf.writeUtf(p.summary, 256);
-            },
-            buf -> new LotInfoPayload(buf.readVarInt(), buf.readVarInt(), buf.readUtf(256)));
-
-    @Override
-    public Type<LotInfoPayload> type() {
-        return TYPE;
+    public static LotInfoPayload decode(FriendlyByteBuf buf) {
+        return new LotInfoPayload(buf.readVarInt(), buf.readVarInt(), buf.readUtf(256));
     }
 }

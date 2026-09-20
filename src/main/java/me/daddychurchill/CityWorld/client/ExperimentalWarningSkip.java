@@ -21,8 +21,8 @@ import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.WorldDimensions;
-import net.neoforged.neoforge.client.event.ScreenEvent;
-import net.neoforged.neoforge.common.NeoForge;
+import net.minecraftforge.client.event.ScreenEvent;
+import net.minecraftforge.common.MinecraftForge;
 
 /**
  * Skips vanilla's "experimental settings" confirm when a new world is experimental <em>only</em> because of
@@ -51,7 +51,7 @@ public final class ExperimentalWarningSkip {
     private static final String EXPERIMENTAL_TITLE = "selectWorld.warning.experimental.title";
 
     public static void register() {
-        NeoForge.EVENT_BUS.addListener(ExperimentalWarningSkip::onOpening);
+        MinecraftForge.EVENT_BUS.addListener(ExperimentalWarningSkip::onOpening);
     }
 
     private static void onOpening(ScreenEvent.Opening event) {

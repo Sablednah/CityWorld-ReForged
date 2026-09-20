@@ -155,6 +155,13 @@ FALLBACKS = {
     "PALE_MOSS_BLOCK": "MOSS_BLOCK", "PALE_MOSS_CARPET": "MOSS_CARPET", "PALE_HANGING_MOSS": "VINE",
     "LEAF_LITTER": "MOSS_CARPET", "BUSH": "FERN", "FIREFLY_BUSH": "FERN", "WILDFLOWERS": "DANDELION",
     "SHORT_DRY_GRASS": "SHORT_GRASS", "TALL_DRY_GRASS": "TALL_GRASS",
+    # Older lines: 1.20.1 still calls short grass GRASS, and the potted azalea keeps its BUSH suffix.
+    "SHORT_GRASS": "GRASS", "POTTED_AZALEA": "POTTED_AZALEA_BUSH",
+    # The 1.21 copper/tuff decorative set, absent before it. The grates keep their weathering stage,
+    # which is the whole reason they are used, and the bulb stands in as the light it is used as.
+    "COPPER_GRATE": "COPPER_BLOCK", "EXPOSED_COPPER_GRATE": "EXPOSED_COPPER",
+    "WEATHERED_COPPER_GRATE": "WEATHERED_COPPER", "OXIDIZED_COPPER_GRATE": "OXIDIZED_COPPER",
+    "COPPER_BULB": "REDSTONE_LAMP", "CHISELED_COPPER": "CUT_COPPER", "CHISELED_TUFF": "TUFF",
     "RESIN_BRICKS": "BRICKS", "CREAKING_HEART": "OAK_LOG", "OPEN_EYEBLOSSOM": "POPPY",
     "PALE_OAK_LOG": "OAK_LOG", "PALE_OAK_WOOD": "OAK_WOOD", "PALE_OAK_LEAVES": "OAK_LEAVES",
     "PALE_OAK_PLANKS": "OAK_PLANKS", "PALE_OAK_STAIRS": "OAK_STAIRS", "PALE_OAK_SLAB": "OAK_SLAB",
@@ -484,18 +491,51 @@ def main():
         sys.exit("Unmapped names (add to LEGACY): %s" % ", ".join(unknown))
     # A LEGACY target may itself be a dyed block, which on 26.2+ lives in a ColorCollection rather
     # than as a field (BED_BLOCK -> WHITE_BED).
-    bad = [f"{k}->{v[0]}" for k, v in LEGACY.items() if not block_expr(v[0])]
+    # ...and it can equally be absent on an OLDER one: 1.20.1 has no SHORT_GRASS, because there the
+    # block is still called GRASS. So a LEGACY target takes a FALLBACK exactly as an EXTRA does, and
+    # only a target with no usable stand-in stops the run.
+    def resolve_fallback(target):
+        """First name in the FALLBACK chain this Minecraft version actually has, or None.
+
+        It CHAINS, because a stand-in can itself be too new for the line being generated: on 1.20.1
+        SHORT_DRY_GRASS falls back to SHORT_GRASS, which does not exist there either and falls back
+        in turn to GRASS. Chaining lets each version land on the nearest block it has instead of
+        needing a per-version table.
+        """
+        seen = set()
+        while target and target not in seen:
+            seen.add(target)
+            if block_expr(target):
+                return target
+            target = FALLBACKS.get(target)
+        return None
+
+    legacy_fallback = {}
+    bad = []
+    for k, v in LEGACY.items():
+        if block_expr(v[0]):
+            continue
+        alt = resolve_fallback(v[0])
+        if alt:
+            legacy_fallback[k] = alt
+        else:
+            bad.append(f"{k}->{v[0]}")
     if bad:
-        sys.exit("LEGACY targets missing from Blocks: %s" % ", ".join(bad))
+        sys.exit("LEGACY targets missing from Blocks (add a FALLBACK): %s" % ", ".join(bad))
     # An EXTRA this Minecraft version does not have takes its FALLBACK (1.21.1 has no pale oak, no
     # copper chests, no leaf litter…); one without a fallback is a hard stop, as before.
-    fallback_used = {n: FALLBACKS[n] for n in EXTRAS if not block_expr(n) and n in FALLBACKS}
-    missing_extras = [n for n in EXTRAS if not block_expr(n) and n not in FALLBACKS]
+    fallback_used = {}
+    missing_extras = []
+    for n in EXTRAS:
+        if block_expr(n):
+            continue
+        alt = resolve_fallback(n)
+        if alt:
+            fallback_used[n] = alt
+        else:
+            missing_extras.append(n)
     if missing_extras:
         sys.exit("EXTRAS missing from Blocks (add a FALLBACK): %s" % ", ".join(missing_extras))
-    bad_fallbacks = [f"{k}->{v}" for k, v in fallback_used.items() if not block_expr(v)]
-    if bad_fallbacks:
-        sys.exit("FALLBACK targets missing from Blocks: %s" % ", ".join(bad_fallbacks))
     # An EXTRA that the Bukkit source turns out to reference is just a normal block constant, and
     # emitting both would not compile.
     dupe_extras = [n for n in EXTRAS if n in block_names]
@@ -532,7 +572,12 @@ def main():
                  % len(legacy_names))
     for n in legacy_names:
         target, why = LEGACY[n]
-        lines.append(f"    public static final Material {n} = of({block_expr(target)}); // {why}")
+        if n in legacy_fallback:
+            stand_in = legacy_fallback[n]
+            lines.append(f"    public static final Material {n} = of({block_expr(stand_in)}); "
+                         f"// not in Minecraft {MC_VERSION}: {stand_in} stands in — {why}")
+        else:
+            lines.append(f"    public static final Material {n} = of({block_expr(target)}); // {why}")
     lines.append("")
     if color_blocks:
         lines.append("    // ---- Dyed blocks (%d) — one ColorCollection per family since 26.2, --------"

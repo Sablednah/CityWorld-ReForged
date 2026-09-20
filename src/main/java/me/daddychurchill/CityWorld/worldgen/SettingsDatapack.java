@@ -43,7 +43,9 @@ public final class SettingsDatapack {
      */
     public static String toJson(CityWorldSettingsData data) {
         JsonElement json = CityWorldSettingsData.CODEC.encodeStart(JsonOps.INSTANCE, data)
-                .getOrThrow(msg -> new IllegalStateException("CityWorld: failed to encode settings — " + msg));
+                .getOrThrow(false, msg -> {
+                    throw new IllegalStateException("CityWorld: failed to encode settings — " + msg);
+                });
         return GSON.toJson(json);
     }
 

@@ -797,7 +797,7 @@ public abstract class SupportBlocks extends AbstractBlocks {
 	/** Whether the block here is glass (a pane or a full block) — a window, not a wall to hang on. */
 	public final boolean isGlass(int x, int y, int z) {
 		var block = getActualBlock(x, y, z).getBlockData().getBlock();
-		return block instanceof net.minecraft.world.level.block.TransparentBlock
+		return block instanceof net.minecraft.world.level.block.AbstractGlassBlock
 				|| block instanceof net.minecraft.world.level.block.IronBarsBlock;
 	}
 

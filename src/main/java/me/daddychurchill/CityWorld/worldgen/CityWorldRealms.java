@@ -31,7 +31,7 @@ public final class CityWorldRealms {
     private CityWorldRealms() {}
 
     public static final ResourceKey<DimensionType> RUINED_NETHER_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE,
-            ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "ruined_nether"));
+            new ResourceLocation(CityWorldMod.MODID, "ruined_nether"));
 
     /** Whether a world's dimensions already carry the ruined-city Nether. */
     public static boolean hasRuinedNether(WorldDimensions dimensions) {
@@ -95,13 +95,7 @@ public final class CityWorldRealms {
             boolean cityWorld) {
         if (cityWorld == hasCityWorldEnd(dimensions))
             return dimensions;
-        Map<ResourceKey<LevelStem>, LevelStem> map = new LinkedHashMap<>(dimensions.dimensions());
-        if (cityWorld)
-            map.put(LevelStem.END, cityWorldEnd(registries));
-        else
-            vanillaEnd(registries).ifPresentOrElse(stem -> map.put(LevelStem.END, stem),
-                    () -> map.remove(LevelStem.END));
-        return new WorldDimensions(map);
+        return rebuild(dimensions, LevelStem.END, cityWorld ? cityWorldEnd(registries) : vanillaEnd(registries).orElse(null));
     }
 
     /** Vanilla's Nether, as the {@code minecraft:normal} preset builds it — what switching back restores. */
@@ -115,12 +109,26 @@ public final class CityWorldRealms {
             boolean ruined) {
         if (ruined == hasRuinedNether(dimensions))
             return dimensions;
-        Map<ResourceKey<LevelStem>, LevelStem> map = new LinkedHashMap<>(dimensions.dimensions());
-        if (ruined)
-            map.put(LevelStem.NETHER, ruinedNether(registries));
-        else
-            vanillaNether(registries).ifPresentOrElse(stem -> map.put(LevelStem.NETHER, stem),
-                    () -> map.remove(LevelStem.NETHER));
-        return new WorldDimensions(map);
+        return rebuild(dimensions, LevelStem.NETHER, ruined ? ruinedNether(registries) : vanillaNether(registries).orElse(null));
+    }
+
+    /**
+     * A copy of {@code dimensions} with one slot replaced, or removed when {@code replacement} is null.
+     *
+     * <p>1.20.1's {@code WorldDimensions} is a record over a <b>Registry</b>, not the Map later versions
+     * take, so a slot cannot simply be put — the whole thing is rebuilt in order and frozen.
+     */
+    private static WorldDimensions rebuild(WorldDimensions dimensions, ResourceKey<LevelStem> slot,
+            LevelStem replacement) {   // null removes the slot
+        net.minecraft.core.MappedRegistry<LevelStem> rebuilt =
+                new net.minecraft.core.MappedRegistry<>(Registries.LEVEL_STEM, com.mojang.serialization.Lifecycle.stable());
+        dimensions.dimensions().holders().forEach(holder -> {
+            if (!holder.key().equals(slot))
+                rebuilt.register(holder.key(), holder.value(), com.mojang.serialization.Lifecycle.stable());
+        });
+        if (replacement != null)
+            rebuilt.register(slot, replacement, com.mojang.serialization.Lifecycle.stable());
+        rebuilt.freeze();
+        return new WorldDimensions(rebuilt);
     }
 }

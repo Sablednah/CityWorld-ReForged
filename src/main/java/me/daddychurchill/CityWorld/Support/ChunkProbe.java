@@ -6,9 +6,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.status.ChunkStatus;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 
 /**
  * The headless chunk probe: {@code -Dcityworld.probe=<chunkX>,<chunkZ>} forces that chunk (plus a
@@ -255,7 +255,8 @@ public final class ChunkProbe {
                     int wx = dx * 16, wz = dz * 16;
                     String here = source.getNoiseBiome(net.minecraft.core.QuartPos.fromBlock(wx),
                             net.minecraft.core.QuartPos.fromBlock(64),
-                            net.minecraft.core.QuartPos.fromBlock(wz), sampler).getRegisteredName();
+                            net.minecraft.core.QuartPos.fromBlock(wz), sampler)
+                            .unwrapKey().map(k -> k.location().toString()).orElse("?");
                     census.merge(here, 1, Integer::sum);
                     if (found == null && here.equals(id))
                         found = new int[] { wx >> 4, wz >> 4 };

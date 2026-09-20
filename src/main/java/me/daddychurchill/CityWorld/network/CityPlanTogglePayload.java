@@ -1,11 +1,6 @@
 package me.daddychurchill.CityWorld.network;
 
-import me.daddychurchill.CityWorld.CityWorldMod;
-
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.FriendlyByteBuf;
 
 /**
  * Client -> server: the player's city-plan settings, from their map mod's own UI (JourneyMap's
@@ -19,20 +14,16 @@ import net.minecraft.resources.ResourceLocation;
  * @param on   draw the plan at all
  * @param keep how many overlays this client is willing to hold before the furthest are dropped
  */
-public record CityPlanTogglePayload(boolean on, int keep) implements CustomPacketPayload {
+public record CityPlanTogglePayload(boolean on, int keep) {
 
-    public static final Type<CityPlanTogglePayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "city_plan_toggle"));
+    // 1.20.1 has no CustomPacketPayload: a message is a plain object plus an encoder and a decoder,
+    // and its identity is the channel index it is registered under — see CityWorldNetwork.
+    public static void encode(CityPlanTogglePayload payload, FriendlyByteBuf buf) {
+        buf.writeBoolean(payload.on);
+        buf.writeVarInt(payload.keep);
+    }
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, CityPlanTogglePayload> CODEC = StreamCodec.of(
-            (buf, p) -> {
-                buf.writeBoolean(p.on);
-                buf.writeVarInt(p.keep);
-            },
-            buf -> new CityPlanTogglePayload(buf.readBoolean(), buf.readVarInt()));
-
-    @Override
-    public Type<CityPlanTogglePayload> type() {
-        return TYPE;
+    public static CityPlanTogglePayload decode(FriendlyByteBuf buf) {
+        return new CityPlanTogglePayload(buf.readBoolean(), buf.readVarInt());
     }
 }

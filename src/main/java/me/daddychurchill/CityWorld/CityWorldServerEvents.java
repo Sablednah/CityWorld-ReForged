@@ -3,11 +3,11 @@ package me.daddychurchill.CityWorld;
 import me.daddychurchill.CityWorld.api.MapMarkers;
 
 import net.minecraft.server.MinecraftServer;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.event.TagsUpdatedEvent;
-import net.neoforged.neoforge.event.server.ServerStartedEvent;
-import net.neoforged.neoforge.server.permission.events.PermissionGatherEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.TagsUpdatedEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.server.permission.events.PermissionGatherEvent;
 
 /**
  * Server-side registrations on the NeoForge game event bus. Registered from {@link CityWorldMod}.

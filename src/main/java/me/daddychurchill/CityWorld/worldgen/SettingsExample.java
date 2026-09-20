@@ -6,7 +6,7 @@ import java.nio.file.Path;
 
 import me.daddychurchill.CityWorld.CityWorldMod;
 
-import net.neoforged.fml.loading.FMLPaths;
+import net.minecraftforge.fml.loading.FMLPaths;
 
 /**
  * Drops a copy-and-edit settings example on first run, next to the schematics drop-in folder:

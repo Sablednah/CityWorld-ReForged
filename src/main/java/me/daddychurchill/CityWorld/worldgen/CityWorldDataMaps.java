@@ -15,8 +15,14 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.neoforge.registries.datamaps.DataMapType;
-import net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.mojang.serialization.JsonOps;
+
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraftforge.event.AddReloadListenerEvent;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -59,9 +65,12 @@ public final class CityWorldDataMaps {
         ).apply(i, Ground::new));
     }
 
-    public static final DataMapType<Biome, Ground> GROUND = DataMapType
-            .builder(ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "ground"), Registries.BIOME, Ground.CODEC)
-            .build();
+    /**
+     * Forge 1.20.1 has no data maps — they are a NeoForge feature — so the very same JSON is read by
+     * a reload listener instead, one per directory, so any pack can still contribute entries. The
+     * accessors below keep their signatures, so no caller can tell the difference.
+     */
+    private static volatile Map<ResourceLocation, Ground> GROUND_DATA = Map.of();
 
     /**
      * How a furniture block's {@code facing} relates to the way its front points, in degrees
@@ -151,15 +160,46 @@ public final class CityWorldDataMaps {
         }
     }
 
-    public static final DataMapType<Block, Facing> FURNITURE = DataMapType
-            .builder(ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "furniture"), Registries.BLOCK,
-                    Facing.CODEC)
-            .build();
+    private static volatile Map<ResourceLocation, Facing> FURNITURE_DATA = Map.of();
 
-    /** Registered from {@code CityWorldMod} on the mod event bus. */
-    public static void register(RegisterDataMapTypesEvent event) {
-        event.register(GROUND);
-        event.register(FURNITURE);
+    /** Registered from {@code CityWorldMod} on the game event bus. */
+    public static void register(AddReloadListenerEvent event) {
+        event.addListener(loader("data_maps/worldgen/biome", "ground", Ground.CODEC, m -> GROUND_DATA = m));
+        event.addListener(loader("data_maps/block", "furniture", Facing.CODEC, m -> FURNITURE_DATA = m));
+    }
+
+    /**
+     * Reads one data-map file out of every pack that has it and decodes its {@code values} block.
+     *
+     * <p>Two shapes are accepted, because that is what the files contain: a bare value, and a
+     * {@code {"neoforge:conditions": …, "value": …}} wrapper. The condition itself needs no
+     * evaluating — every entry names a block or biome, so an entry whose id is not in the registry
+     * belongs to a mod that is not installed, which is precisely when it should be skipped.
+     */
+    private static <T> SimpleJsonResourceReloadListener loader(String directory, String file,
+            com.mojang.serialization.Codec<T> codec, java.util.function.Consumer<Map<ResourceLocation, T>> sink) {
+        return new SimpleJsonResourceReloadListener(new com.google.gson.GsonBuilder().create(), directory) {
+            @Override
+            protected void apply(Map<ResourceLocation, JsonElement> files, ResourceManager manager,
+                    ProfilerFiller profiler) {
+                Map<ResourceLocation, T> out = new java.util.HashMap<>();
+                files.forEach((id, element) -> {
+                    if (!id.getPath().equals(file) || !element.isJsonObject())
+                        return;
+                    JsonElement values = element.getAsJsonObject().get("values");
+                    if (values == null || !values.isJsonObject())
+                        return;
+                    for (Map.Entry<String, JsonElement> entry : values.getAsJsonObject().entrySet()) {
+                        JsonElement value = entry.getValue();
+                        if (value.isJsonObject() && value.getAsJsonObject().has("value"))
+                            value = value.getAsJsonObject().get("value");
+                        codec.parse(JsonOps.INSTANCE, value).result()
+                                .ifPresent(decoded -> out.put(new ResourceLocation(entry.getKey()), decoded));
+                    }
+                });
+                sink.accept(Map.copyOf(out));
+            }
+        };
     }
 
     /** The declared facing offset for a furniture block, or {@code 0} if it declares none. */
@@ -207,12 +247,9 @@ public final class CityWorldDataMaps {
         Block block = piece.getBlock();
         if (block == null)
             return null;
-        Holder<Block> holder = BuiltInRegistries.BLOCK.wrapAsHolder(block);
-        if (holder instanceof Holder.Reference<Block> reference) {
-            Facing declared = reference.getData(FURNITURE);
-            if (declared != null)
-                return declared; // a datapack entry always wins over a runtime-derived one
-        }
+        Facing declared = FURNITURE_DATA.get(BuiltInRegistries.BLOCK.getKey(block));
+        if (declared != null)
+            return declared; // a datapack entry always wins over a runtime-derived one
         return me.daddychurchill.CityWorld.Support.FurnitureSets.dataFor(block);
     }
 
@@ -223,8 +260,8 @@ public final class CityWorldDataMaps {
      * entry) carries no data, which is a legitimate answer rather than an error.
      */
     public static @Nullable Ground groundFor(@Nullable Holder<Biome> biome) {
-        if (biome instanceof Holder.Reference<Biome> reference)
-            return reference.getData(GROUND);
-        return null;
+        if (biome == null)
+            return null;
+        return biome.unwrapKey().map(key -> GROUND_DATA.get(key.location())).orElse(null);
     }
 }

@@ -43,7 +43,7 @@ public final class SurfaceRegions {
 
     /** Biomes that get a patch whether or not the climate lookup would ever pick them. */
     public static final TagKey<Biome> SURFACE_POOL = TagKey.create(Registries.BIOME,
-            ResourceLocation.fromNamespaceAndPath("cityworld", "surface_pool"));
+            new ResourceLocation("cityworld", "surface_pool"));
 
     /**
      * Beach and shore variants that may stand in for CityWorld's own beach.
@@ -57,7 +57,7 @@ public final class SurfaceRegions {
      * terrain's answer and changes only the label.
      */
     public static final TagKey<Biome> SHORE_POOL = TagKey.create(Registries.BIOME,
-            ResourceLocation.fromNamespaceAndPath("cityworld", "shore_pool"));
+            new ResourceLocation("cityworld", "shore_pool"));
 
     /**
      * Ocean variants that may stand in for CityWorld's own ocean and deep ocean.
@@ -69,7 +69,7 @@ public final class SurfaceRegions {
      * is a gap worth closing for the mods that do add them, not a BoP-shaped one.
      */
     public static final TagKey<Biome> OCEAN_POOL = TagKey.create(Registries.BIOME,
-            ResourceLocation.fromNamespaceAndPath("cityworld", "ocean_pool"));
+            new ResourceLocation("cityworld", "ocean_pool"));
 
     /**
      * Patch grid, in blocks, and the share of cells a pool biome claims.

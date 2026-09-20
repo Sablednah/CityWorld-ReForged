@@ -174,7 +174,7 @@ public final class FurnitureSets {
         List<TagKey<Block>> keys = new ArrayList<>();
         if (spec.has("role"))
             keys.add(TagKey.create(Registries.BLOCK,
-                    ResourceLocation.fromNamespaceAndPath("cityworld", "furniture/" + spec.get("role").getAsString())));
+                    new ResourceLocation("cityworld", "furniture/" + spec.get("role").getAsString())));
         if (spec.has("decor")) {
             JsonElement decor = spec.get("decor");
             List<String> names = new ArrayList<>();
@@ -183,7 +183,7 @@ public final class FurnitureSets {
             else
                 names.add(decor.getAsString());
             for (String pool : names)
-                keys.add(TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath("cityworld", "decor/" + pool)));
+                keys.add(TagKey.create(Registries.BLOCK, new ResourceLocation("cityworld", "decor/" + pool)));
         }
         return keys;
     }

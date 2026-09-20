@@ -1,9 +1,9 @@
 {
   "_comment": "CityWorld override of BoP's own file. BoP places this with count 6 over a height_range spanning the whole dimension, which is tuned for vanilla's 128-block Nether. The ruined-city Nether is full height (-64..319), about 3x taller, so the same 6 attempts scatter over 3x the column and nearly all land in solid rock or open sky: measured 6 rose quartz blocks across a 13x13-chunk sweep, i.e. the pillars the owner reported missing. Count is left at BoP's own 6 - only the band is aimed at where the caves actually are. Measured: 75 blocks, all covered, 44 of them carrying quartz directly above and below (real columns).",
-  "_comment2": "The condition is NOT optional. This file names a BoP configured feature, and without BoP that reference is unbound: the whole registry load fails and the SERVER REFUSES TO START ('Unbound values in registry minecraft:worldgen/configured_feature', 'Failed to load datapacks, can't proceed with server load'). Measured 2026-09-16 — it killed the self-test on both branches that have no BoP in run/mods. A dangling feature reference is fatal, unlike a dangling tag entry which is merely dropped.",
-  "neoforge:conditions": [
+  "_comment2": "The condition is NOT optional. This file names a BoP configured feature, and without BoP that reference is unbound: the whole registry load fails and the SERVER REFUSES TO START (on this line the keys are forge:conditions / forge:mod_loaded) ('Unbound values in registry minecraft:worldgen/configured_feature', 'Failed to load datapacks, can't proceed with server load'). Measured 2026-09-16 — it killed the self-test on both branches that have no BoP in run/mods. A dangling feature reference is fatal, unlike a dangling tag entry which is merely dropped.",
+  "forge:conditions": [
     {
-      "type": "neoforge:mod_loaded",
+      "type": "forge:mod_loaded",
       "modid": "biomesoplenty"
     }
   ],

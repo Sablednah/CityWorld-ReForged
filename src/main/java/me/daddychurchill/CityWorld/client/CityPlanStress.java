@@ -3,8 +3,8 @@ package me.daddychurchill.CityWorld.client;
 import me.daddychurchill.CityWorld.CityWorldMod;
 
 import net.minecraft.client.Minecraft;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.common.NeoForge;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.common.MinecraftForge;
 
 /**
  * Frame-rate readout for measuring what map overlays cost the client:
@@ -34,12 +34,15 @@ public final class CityPlanStress {
     public static void register() {
         if (!enabled())
             return;
-        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, CityPlanStress::onTick);
+        MinecraftForge.EVENT_BUS.addListener(CityPlanStress::onTick);
         CityWorldMod.LOGGER.info("CityWorld: -D{} on — logging the frame rate every {} ticks",
                 ENABLE_PROPERTY, INTERVAL);
     }
 
-    private static void onTick(ClientTickEvent.Post event) {
+    private static void onTick(TickEvent.ClientTickEvent event) {
+        // Forge fires both ends of the tick; NeoForge's ClientTickEvent.Post is the end only.
+        if (event.phase != TickEvent.Phase.END)
+            return;
         if (++ticks < INTERVAL)
             return;
         ticks = 0;

@@ -6,8 +6,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.neoforged.neoforge.client.event.ScreenEvent;
-import net.neoforged.neoforge.common.NeoForge;
+import net.minecraftforge.client.event.ScreenEvent;
+import net.minecraftforge.common.MinecraftForge;
 
 /**
  * Draws "what is planned here" over a map mod's fullscreen map, next to the cursor.
@@ -34,7 +34,7 @@ public final class CityPlanHud {
     private static volatile long hovered = NONE;
 
     public static void register() {
-        NeoForge.EVENT_BUS.addListener(ScreenEvent.Render.Post.class, CityPlanHud::onRenderScreen);
+        MinecraftForge.EVENT_BUS.addListener(CityPlanHud::onRenderScreen);
     }
 
     /** A map mod telling us the mouse is over this chunk. */

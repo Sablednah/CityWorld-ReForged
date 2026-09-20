@@ -134,7 +134,7 @@ public final class Clipboard {
             // A .nbt file already IS a structure tag; data-fix it (old files) then load. Air handling
             // matches the other formats: recorded air is stripped unless KeepAir — a structure-block
             // export records explicit air for its whole box, which would stamp an air cuboid on terrain.
-            CompoundTag tag = NbtIo.readCompressed(data, NbtAccounter.unlimitedHeap());
+            CompoundTag tag = NbtIo.readCompressed(data);
             return Templates.build(tag, tag.getInt("DataVersion"), blocks, keepAir);
         }
         if (lower.endsWith(".schem"))

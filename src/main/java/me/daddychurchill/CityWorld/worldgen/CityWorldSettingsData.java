@@ -15,7 +15,7 @@ import me.daddychurchill.CityWorld.Support.Odds;
  *
  * <p><b>This is the P7 answer to "per-world config in a per-instance mod" (PORTING.md top risk
  * #4).</b> Upstream {@code CityWorldSettings} parsed ~100 knobs out of each world's YAML; NeoForge's
- * {@code ModConfigSpec} is per-<em>instance</em>, so it cannot express "this world crazy, that world
+ * {@code ForgeConfigSpec} is per-<em>instance</em>, so it cannot express "this world crazy, that world
  * plain". A datapack registry can: entries live at
  * {@code data/<namespace>/cityworld/world_settings/<name>.json}, they are pure data, and a server op
  * can ship a different set per save. The generator references one by holder (see

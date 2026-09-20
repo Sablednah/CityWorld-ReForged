@@ -69,7 +69,7 @@ public class CoverProvider_Nether extends CoverProvider_Decayed {
 
 	private static final net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>> NETHER_TREES =
 			net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE,
-					net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("cityworld", "nether_trees"));
+					new net.minecraft.resources.ResourceLocation("cityworld", "nether_trees"));
 
 	/** Grows a tree from {@link #NETHER_TREES} at (x, y, z) on the live level; false if it could not. */
 	private boolean hugeTree(SupportBlocks chunk, int x, int y, int z) {

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -49,7 +50,7 @@ public class CityWorldNetherBiomeSource extends BiomeSource implements CityWorld
             RegistryOps.retrieveGetter(Registries.BIOME)).apply(i, CityWorldNetherBiomeSource::new));
 
     public static final TagKey<Biome> NETHER_POOL = TagKey.create(Registries.BIOME,
-            ResourceLocation.fromNamespaceAndPath("cityworld", "nether_pool"));
+            new ResourceLocation("cityworld", "nether_pool"));
 
     private static final Map<ResourceKey<Biome>, double[]> ANCHORS = Map.of(
             Biomes.NETHER_WASTES, new double[] { 0.5, 0.5 },
@@ -137,9 +138,19 @@ public class CityWorldNetherBiomeSource extends BiomeSource implements CityWorld
         return biome.unwrapKey().map(k -> k.location().toString()).orElse("");
     }
 
+    /**
+     * <b>One instance, because codec dispatch compares by identity.</b> {@code MapCodec.codec()} builds a
+     * NEW wrapper every call, so returning {@code CODEC.codec()} from {@link #codec()} handed back an
+     * object the registry had never seen, and encoding a dimension failed with "Unknown registry element".
+     * It compiles fine and only shows up when something serialises a stem.
+     */
+    public static final Codec<CityWorldNetherBiomeSource> DISPATCH = CODEC.codec();
+
     @Override
-    protected MapCodec<? extends BiomeSource> codec() {
-        return CODEC;
+    protected Codec<? extends BiomeSource> codec() {
+        // 1.20.1's BiomeSource still dispatches on a plain Codec; MapCodec arrived with 1.21.
+        // The CODEC above stays a MapCodec because RecordCodecBuilder.mapCodec builds one either way.
+        return DISPATCH;
     }
 
     @Override

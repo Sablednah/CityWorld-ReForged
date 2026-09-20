@@ -22,8 +22,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.presets.WorldPreset;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.client.event.RegisterPresetEditorsEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.client.event.RegisterPresetEditorsEvent;
 
 /**
  * Client-only wiring: registers the {@link CityWorldCustomizeScreen} as the preset editor for the
@@ -40,18 +40,20 @@ public final class CityWorldClient {
 
     /** The world preset key whose Customize button opens {@link CityWorldCustomizeScreen}. */
     private static final ResourceKey<WorldPreset> CITY = ResourceKey.create(Registries.WORLD_PRESET,
-            ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "city"));
+            new ResourceLocation(CityWorldMod.MODID, "city"));
 
-    public static void init(IEventBus modEventBus, net.neoforged.fml.ModContainer container) {
-        // Modpack lock: config/cityworld-startup.toml. STARTUP so it is already loaded when the preset
-        // editors below are registered (see CityWorldPackConfig).
-        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.STARTUP, CityWorldPackConfig.SPEC);
+    public static void init(IEventBus modEventBus, net.minecraftforge.fml.ModContainer container) {
+        // Modpack lock: config/cityworld-startup.toml. 1.20.1 has no STARTUP config type (COMMON,
+        // CLIENT and SERVER only), so this rides on CLIENT — which is still loaded before the world
+        // creation screen can be reached, which is all the preset editors below need.
+        net.minecraftforge.fml.ModLoadingContext.get().registerConfig(
+                net.minecraftforge.fml.config.ModConfig.Type.CLIENT, CityWorldPackConfig.SPEC);
         WorldTypeLock.register();
         // Vanilla calls every CityWorld world "experimental" (it has more than the three vanilla dimensions);
         // skip that confirm when CityWorld is the only reason. See ExperimentalWarningSkip.
         ExperimentalWarningSkip.register();
         modEventBus.addListener(CityWorldClient::onRegisterPresetEditors);
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(CityWorldClient::onDebugText);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(CityWorldClient::onDebugText);
         // Hover text over a map mod's fullscreen map. Inert unless a map mod tells it where the
         // mouse is, so this costs nothing when none is installed.
         CityPlanHud.register();
@@ -62,8 +64,8 @@ public final class CityWorldClient {
     /** Adds CityWorld's plan/technical readout to the F3 debug screen (see {@link CityWorldDebugEntry}). */
     private static final CityWorldDebugEntry DEBUG_ENTRY = new CityWorldDebugEntry();
 
-    private static void onDebugText(net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent.DebugText event) {
-        if (Minecraft.getInstance().getDebugOverlay().showDebugScreen())
+    private static void onDebugText(net.minecraftforge.client.event.CustomizeGuiOverlayEvent.DebugText event) {
+        if (Minecraft.getInstance().options.renderDebug)
             DEBUG_ENTRY.display(event.getLeft());
     }
 

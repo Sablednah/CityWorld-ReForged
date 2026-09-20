@@ -117,11 +117,11 @@ public final class FurnitureTags {
     }
 
     private static TagKey<Block> key(String role) {
-        return TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath("cityworld", "furniture/" + role));
+        return TagKey.create(Registries.BLOCK, new ResourceLocation("cityworld", "furniture/" + role));
     }
 
     private static TagKey<Block> decorKey(String pool) {
-        return TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath("cityworld", "decor/" + pool));
+        return TagKey.create(Registries.BLOCK, new ResourceLocation("cityworld", "decor/" + pool));
     }
 
     /**

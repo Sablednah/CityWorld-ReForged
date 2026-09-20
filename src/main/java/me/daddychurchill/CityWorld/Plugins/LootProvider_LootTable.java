@@ -5,7 +5,7 @@ import java.util.Locale;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.RandomizableContainer;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.storage.loot.LootTable;
 
@@ -49,14 +49,14 @@ public final class LootProvider_LootTable extends LootProvider {
             lootLocation = realLocations[odds.getRandomInt(realLocations.length)];
 
         BlockEntity entity = block.getState();
-        if (!(entity instanceof RandomizableContainer container))
+        if (!(entity instanceof RandomizableContainerBlockEntity container))
             return;
 
         container.setLootTable(keyFor(lootLocation), odds.getRandomLong());
     }
 
-    private static ResourceKey<LootTable> keyFor(LootLocation lootLocation) {
-        return ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.fromNamespaceAndPath("cityworld",
-                "chests/" + lootLocation.name().toLowerCase(Locale.ROOT)));
+    // 1.20.1 keys a loot table by ResourceLocation; the ResourceKey<LootTable> form arrived with 1.21.
+    private static ResourceLocation keyFor(LootLocation lootLocation) {
+        return new ResourceLocation("cityworld", "chests/" + lootLocation.name().toLowerCase(Locale.ROOT));
     }
 }

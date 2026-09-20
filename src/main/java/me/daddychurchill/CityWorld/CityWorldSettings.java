@@ -14,7 +14,7 @@ import me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData;
  * brain branches on (which structures, which terrain, spawn odds, treasure odds, city radii).
  *
  * <p><b>P7: these now come from a datapack.</b> CityWorld's settings were <em>per-world</em>, while
- * a NeoForge {@code ModConfigSpec} is per-instance (PORTING.md top risk #4). The port resolves the
+ * a NeoForge {@code ForgeConfigSpec} is per-instance (PORTING.md top risk #4). The port resolves the
  * tension with a datapack registry: {@link CityWorldSettingsData} entries live under
  * {@code data/<ns>/cityworld/world_settings/}, the generator references one by holder, and
  * {@link #applyData} copies it onto the fields below. A server op can therefore make each world

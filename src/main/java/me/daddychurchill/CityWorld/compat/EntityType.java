@@ -143,7 +143,6 @@ public final class EntityType {
     public static final EntityType GOAT = of(net.minecraft.world.entity.EntityType.GOAT);
     public static final EntityType AXOLOTL = of(net.minecraft.world.entity.EntityType.AXOLOTL);
     public static final EntityType SNIFFER = of(net.minecraft.world.entity.EntityType.SNIFFER);
-    public static final EntityType ARMADILLO = of(net.minecraft.world.entity.EntityType.ARMADILLO);
     public static final EntityType ALLAY = of(net.minecraft.world.entity.EntityType.ALLAY);
     public static final EntityType GLOW_SQUID = of(net.minecraft.world.entity.EntityType.GLOW_SQUID);
     public static final EntityType STRIDER = of(net.minecraft.world.entity.EntityType.STRIDER);

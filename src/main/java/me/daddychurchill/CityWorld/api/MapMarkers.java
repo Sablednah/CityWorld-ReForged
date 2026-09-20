@@ -152,7 +152,7 @@ public final class MapMarkers {
 
     /** Sets it, clamped to something sane whatever the caller asked for. */
     public static void setCityPlanBudget(UUID player, int overlays) {
-        PLAN_BUDGET.put(player, Math.clamp(overlays, MIN_PLAN_BUDGET, MAX_PLAN_BUDGET));
+        PLAN_BUDGET.put(player, net.minecraft.util.Mth.clamp(overlays, MIN_PLAN_BUDGET, MAX_PLAN_BUDGET));
     }
 
     /** True when some installed map mod can draw the plan (so {@code /citymap} has something to say). */

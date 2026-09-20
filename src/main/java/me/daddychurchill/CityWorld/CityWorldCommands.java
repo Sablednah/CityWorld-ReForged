@@ -62,7 +62,7 @@ public final class CityWorldCommands {
 
     /** The dimension registered in {@code data/cityworld/dimension/city.json}. */
     private static final ResourceKey<Level> CITY = ResourceKey.create(Registries.DIMENSION,
-            ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "city"));
+            new ResourceLocation(CityWorldMod.MODID, "city"));
 
     private CityWorldCommands() {}
 
@@ -786,7 +786,7 @@ public final class CityWorldCommands {
             name = "cityworld-settings";
         me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData data =
                 cityGenerator.getContext(level).getSettings().toData();
-        java.nio.file.Path root = net.neoforged.fml.loading.FMLPaths.CONFIGDIR.get()
+        java.nio.file.Path root = net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get()
                 .resolve(CityWorldMod.MODID).resolve("exports").resolve(name);
         try {
             me.daddychurchill.CityWorld.worldgen.SettingsDatapack.writePack(root,

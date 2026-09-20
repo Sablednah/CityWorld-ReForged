@@ -6,7 +6,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.levelgen.presets.WorldPreset;
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec;
 
 /**
  * Modpack-author settings for the client's create-world screen — {@code config/cityworld-startup.toml}.
@@ -25,13 +25,13 @@ public final class CityWorldPackConfig {
 
     private CityWorldPackConfig() {}
 
-    public static final ModConfigSpec SPEC;
-    private static final ModConfigSpec.ConfigValue<String> LOCKED_WORLD_PRESET;
-    private static final ModConfigSpec.ConfigValue<String> RUINED_NETHER;
-    private static final ModConfigSpec.ConfigValue<String> CITYWORLD_END;
+    public static final ForgeConfigSpec SPEC;
+    private static final ForgeConfigSpec.ConfigValue<String> LOCKED_WORLD_PRESET;
+    private static final ForgeConfigSpec.ConfigValue<String> RUINED_NETHER;
+    private static final ForgeConfigSpec.ConfigValue<String> CITYWORLD_END;
 
     static {
-        ModConfigSpec.Builder b = new ModConfigSpec.Builder();
+        ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
         b.comment("Create-world screen settings for modpacks. Per-instance, client-only; a server uses",
                 "level-type in server.properties instead.").push("worldCreation");
         LOCKED_WORLD_PRESET = b.comment(

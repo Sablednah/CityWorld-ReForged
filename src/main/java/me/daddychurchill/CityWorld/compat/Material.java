@@ -79,7 +79,7 @@ public final class Material {
      * world generation); prefer the typed constants for anything referenced at class-load time.
      */
     public static Material of(String id) {
-        ResourceLocation key = id.indexOf(':') >= 0 ? ResourceLocation.parse(id) : ResourceLocation.withDefaultNamespace(id);
+        ResourceLocation key = id.indexOf(':') >= 0 ? ResourceLocation.parse(id) : new ResourceLocation(id);
         Block resolved = BuiltInRegistries.BLOCK.get(key);
         return of(resolved == null ? Blocks.AIR : resolved);
     }
@@ -790,7 +790,7 @@ public final class Material {
     public static final Material DOUBLE_STEP = of(Blocks.SMOOTH_STONE); // legacy double stone slab -> the full block
     public static final Material ENCHANTMENT_TABLE = of(Blocks.ENCHANTING_TABLE); // renamed
     public static final Material ENDER_PORTAL_FRAME = of(Blocks.END_PORTAL_FRAME); // renamed
-    public static final Material GRASS = of(Blocks.SHORT_GRASS); // 1.14 GRASS was the plant; renamed in 1.20.3
+    public static final Material GRASS = of(Blocks.GRASS); // not in Minecraft 1.20.1: GRASS stands in — 1.14 GRASS was the plant; renamed in 1.20.3
     public static final Material GRASS_PATH = of(Blocks.DIRT_PATH); // renamed
     public static final Material IRON_DOOR_BLOCK = of(Blocks.IRON_DOOR); // legacy block name
     public static final Material LONG_GRASS = of(Blocks.TALL_GRASS); // legacy tall-grass name
@@ -817,7 +817,7 @@ public final class Material {
     public static final Material BLACKSTONE = of(Blocks.BLACKSTONE); // P12 MODERN build stone
     public static final Material BLAST_FURNACE = of(Blocks.BLAST_FURNACE); // P9 mine prop: miners' camp
     public static final Material BLUE_ICE = of(Blocks.BLUE_ICE); // P8 MODERN: glacier-blue ice for the highest peaks; 1.14 had none
-    public static final Material BUSH = of(Blocks.FERN); // not in Minecraft 1.21.1: FERN stands in — P14 overgrowth: plain leafy bush (1.21.5)
+    public static final Material BUSH = of(Blocks.FERN); // not in Minecraft 1.20.1: FERN stands in — P14 overgrowth: plain leafy bush (1.21.5)
     public static final Material CANDLE = of(Blocks.CANDLE); // P12 interior: tabletop/shelf candle accent
     public static final Material CANDLE_CAKE = of(Blocks.CANDLE_CAKE); // P14 interior: lit-cake accent on a table
     public static final Material CARTOGRAPHY_TABLE = of(Blocks.CARTOGRAPHY_TABLE); // P9 mine prop: miners' camp (drawing up plans)
@@ -825,22 +825,22 @@ public final class Material {
     public static final Material CAVE_VINES_PLANT = of(Blocks.CAVE_VINES_PLANT); // lush caves: the ceiling-anchored top of a glow-berry vine
     public static final Material CHERRY_LEAVES = of(Blocks.CHERRY_LEAVES); // P14 overgrowth: cherry foliage for biome-matched shrubs
     public static final Material CHISELED_BOOKSHELF = of(Blocks.CHISELED_BOOKSHELF); // P12 interior: studies/libraries
-    public static final Material CHISELED_COPPER = of(Blocks.CHISELED_COPPER); // P12 interior: decorative modern wall/counter block
+    public static final Material CHISELED_COPPER = of(Blocks.CUT_COPPER); // not in Minecraft 1.20.1: CUT_COPPER stands in — P12 interior: decorative modern wall/counter block
     public static final Material CHISELED_POLISHED_BLACKSTONE = of(Blocks.CHISELED_POLISHED_BLACKSTONE); // P12 MODERN build stone
-    public static final Material CHISELED_TUFF = of(Blocks.CHISELED_TUFF); // P12 interior: decorative modern stone block
+    public static final Material CHISELED_TUFF = of(Blocks.TUFF); // not in Minecraft 1.20.1: TUFF stands in — P12 interior: decorative modern stone block
     public static final Material CHORUS_FLOWER = of(Blocks.CHORUS_FLOWER); // P13 biodome: end
     public static final Material CHORUS_PLANT = of(Blocks.CHORUS_PLANT); // P13 biodome: end
     public static final Material COCOA = of(Blocks.COCOA); // P13 biodome: jungle cocoa pods
     public static final Material COMPOSTER = of(Blocks.COMPOSTER); // P11 shop/farm: greengrocer/farmer job block
     public static final Material COPPER_BLOCK = of(Blocks.COPPER_BLOCK); // P12 MODERN build stone (weathers over time)
-    public static final Material COPPER_BULB = of(Blocks.COPPER_BULB); // P12 interior: warm modern light source
-    public static final Material COPPER_CHEST = of(Blocks.CHEST); // not in Minecraft 1.21.1: CHEST stands in — P9 copper mine: loot chest, copper-age flavour (fresh)
-    public static final Material COPPER_GRATE = of(Blocks.COPPER_GRATE); // P9 copper mine: cage/machinery grate (fresh)
+    public static final Material COPPER_BULB = of(Blocks.REDSTONE_LAMP); // not in Minecraft 1.20.1: REDSTONE_LAMP stands in — P12 interior: warm modern light source
+    public static final Material COPPER_CHEST = of(Blocks.CHEST); // not in Minecraft 1.20.1: CHEST stands in — P9 copper mine: loot chest, copper-age flavour (fresh)
+    public static final Material COPPER_GRATE = of(Blocks.COPPER_BLOCK); // not in Minecraft 1.20.1: COPPER_BLOCK stands in — P9 copper mine: cage/machinery grate (fresh)
     public static final Material COPPER_ORE = of(Blocks.COPPER_ORE); // P9: copper ore in mine walls
-    public static final Material COPPER_TORCH = of(Blocks.TORCH); // not in Minecraft 1.21.1: TORCH stands in — P9 copper mine: standing copper torch (green flame)
-    public static final Material COPPER_WALL_TORCH = of(Blocks.WALL_TORCH); // not in Minecraft 1.21.1: WALL_TORCH stands in — P9 copper mine: wall-mounted copper torch
+    public static final Material COPPER_TORCH = of(Blocks.TORCH); // not in Minecraft 1.20.1: TORCH stands in — P9 copper mine: standing copper torch (green flame)
+    public static final Material COPPER_WALL_TORCH = of(Blocks.WALL_TORCH); // not in Minecraft 1.20.1: WALL_TORCH stands in — P9 copper mine: wall-mounted copper torch
     public static final Material CRACKED_POLISHED_BLACKSTONE_BRICKS = of(Blocks.CRACKED_POLISHED_BLACKSTONE_BRICKS); // P12 MODERN build stone
-    public static final Material CREAKING_HEART = of(Blocks.OAK_LOG); // not in Minecraft 1.21.1: OAK_LOG stands in — P13 biodome: pale garden
+    public static final Material CREAKING_HEART = of(Blocks.OAK_LOG); // not in Minecraft 1.20.1: OAK_LOG stands in — P13 biodome: pale garden
     public static final Material CRIMSON_FUNGUS = of(Blocks.CRIMSON_FUNGUS); // P13 biodome: nether
     public static final Material CRIMSON_NYLIUM = of(Blocks.CRIMSON_NYLIUM); // P13 biodome: nether ground
     public static final Material CRIMSON_STEM = of(Blocks.CRIMSON_STEM); // P13 biodome: nether
@@ -856,10 +856,10 @@ public final class Material {
     public static final Material DEEPSLATE_LAPIS_ORE = of(Blocks.DEEPSLATE_LAPIS_ORE); // P9: deepslate ore variant for deep mines
     public static final Material DEEPSLATE_REDSTONE_ORE = of(Blocks.DEEPSLATE_REDSTONE_ORE); // P9: deepslate ore variant for deep mines
     public static final Material DRIPSTONE_BLOCK = of(Blocks.DRIPSTONE_BLOCK); // P10 overgrowth: dripstone clumps underground
-    public static final Material EXPOSED_COPPER_CHEST = of(Blocks.CHEST); // not in Minecraft 1.21.1: CHEST stands in — P9 copper mine: loot chest (exposed)
-    public static final Material EXPOSED_COPPER_GRATE = of(Blocks.EXPOSED_COPPER_GRATE); // P9 copper mine: cage/machinery grate (exposed)
+    public static final Material EXPOSED_COPPER_CHEST = of(Blocks.CHEST); // not in Minecraft 1.20.1: CHEST stands in — P9 copper mine: loot chest (exposed)
+    public static final Material EXPOSED_COPPER_GRATE = of(Blocks.EXPOSED_COPPER); // not in Minecraft 1.20.1: EXPOSED_COPPER stands in — P9 copper mine: cage/machinery grate (exposed)
     public static final Material EXPOSED_CUT_COPPER = of(Blocks.EXPOSED_CUT_COPPER); // P12 MODERN build stone
-    public static final Material FIREFLY_BUSH = of(Blocks.FERN); // not in Minecraft 1.21.1: FERN stands in — P14 overgrowth: rare glowing firefly bush (1.21.5)
+    public static final Material FIREFLY_BUSH = of(Blocks.FERN); // not in Minecraft 1.20.1: FERN stands in — P14 overgrowth: rare glowing firefly bush (1.21.5)
     public static final Material FLETCHING_TABLE = of(Blocks.FLETCHING_TABLE); // P11 shop: fletcher's job block
     public static final Material FLOWERING_AZALEA = of(Blocks.FLOWERING_AZALEA); // P10 overgrowth: flowering azalea bush
     public static final Material FLOWERING_AZALEA_LEAVES = of(Blocks.FLOWERING_AZALEA_LEAVES); // P13 biodome: flower forest / jungle canopy
@@ -867,10 +867,10 @@ public final class Material {
     public static final Material GLOW_LICHEN = of(Blocks.GLOW_LICHEN); // P9 mine: glow lichen creeping the abandoned walls, thicker with depth
     public static final Material GRINDSTONE = of(Blocks.GRINDSTONE); // P9 mine prop: miners' camp
     public static final Material HANGING_ROOTS = of(Blocks.HANGING_ROOTS); // P10 overgrowth: roots dangling from ceilings/overhangs
-    public static final Material IRON_CHAIN = of(Blocks.CHAIN); // not in Minecraft 1.21.1: CHAIN stands in — P9: chains in mine lift shafts (1.21 renamed CHAIN -> IRON_CHAIN)
+    public static final Material IRON_CHAIN = of(Blocks.CHAIN); // not in Minecraft 1.20.1: CHAIN stands in — P9: chains in mine lift shafts (1.21 renamed CHAIN -> IRON_CHAIN)
     public static final Material IRON_TRAPDOOR = of(Blocks.IRON_TRAPDOOR); // silo: hatches on the tank roof and the stair tower landings
     public static final Material LANTERN = of(Blocks.LANTERN); // P9: mine lighting
-    public static final Material LEAF_LITTER = of(Blocks.MOSS_CARPET); // not in Minecraft 1.21.1: MOSS_CARPET stands in — P10 overgrowth: fallen leaves littering floors (1.21.4 multiface)
+    public static final Material LEAF_LITTER = of(Blocks.MOSS_CARPET); // not in Minecraft 1.20.1: MOSS_CARPET stands in — P10 overgrowth: fallen leaves littering floors (1.21.4 multiface)
     public static final Material LECTERN = of(Blocks.LECTERN); // P11 shop: newsagent/bookshop job block
     public static final Material LIGHTNING_ROD = of(Blocks.LIGHTNING_ROD); // P14 rooftop: lightning rod on MODERN building roofs
     public static final Material LIGHT_GRAY_CANDLE = of(Blocks.LIGHT_GRAY_CANDLE); // P14 interior: candle accent (neutral colour)
@@ -889,17 +889,17 @@ public final class Material {
     public static final Material NETHER_WART_BLOCK = of(Blocks.NETHER_WART_BLOCK); // P13 biodome: nether
     public static final Material OAK_HANGING_SIGN = of(Blocks.OAK_HANGING_SIGN); // P9 mine entrance: the named-mine headframe sign
     public static final Material OAK_WALL_HANGING_SIGN = of(Blocks.OAK_WALL_HANGING_SIGN); // P12 shop: exterior shopfront sign above the door
-    public static final Material OPEN_EYEBLOSSOM = of(Blocks.POPPY); // not in Minecraft 1.21.1: POPPY stands in — P13 biodome: pale garden flower
+    public static final Material OPEN_EYEBLOSSOM = of(Blocks.POPPY); // not in Minecraft 1.20.1: POPPY stands in — P13 biodome: pale garden flower
     public static final Material ORANGE_CANDLE = of(Blocks.ORANGE_CANDLE); // P14 interior: candle accent (warm colour)
-    public static final Material OXIDIZED_COPPER_CHEST = of(Blocks.CHEST); // not in Minecraft 1.21.1: CHEST stands in — P9 copper mine: loot chest (oxidized, deepest)
-    public static final Material OXIDIZED_COPPER_GRATE = of(Blocks.OXIDIZED_COPPER_GRATE); // P9 copper mine: cage/machinery grate (oxidized, deepest)
+    public static final Material OXIDIZED_COPPER_CHEST = of(Blocks.CHEST); // not in Minecraft 1.20.1: CHEST stands in — P9 copper mine: loot chest (oxidized, deepest)
+    public static final Material OXIDIZED_COPPER_GRATE = of(Blocks.OXIDIZED_COPPER); // not in Minecraft 1.20.1: OXIDIZED_COPPER stands in — P9 copper mine: cage/machinery grate (oxidized, deepest)
     public static final Material OXIDIZED_CUT_COPPER = of(Blocks.OXIDIZED_CUT_COPPER); // P12 MODERN build stone
-    public static final Material PALE_HANGING_MOSS = of(Blocks.VINE); // not in Minecraft 1.21.1: VINE stands in — P10 overgrowth: pale moss hanging from overhangs
-    public static final Material PALE_MOSS_BLOCK = of(Blocks.MOSS_BLOCK); // not in Minecraft 1.21.1: MOSS_BLOCK stands in — P10 overgrowth: pale (grey) moss cushion
-    public static final Material PALE_MOSS_CARPET = of(Blocks.MOSS_CARPET); // not in Minecraft 1.21.1: MOSS_CARPET stands in — P10 overgrowth: pale moss carpet
-    public static final Material PALE_OAK_LEAVES = of(Blocks.OAK_LEAVES); // not in Minecraft 1.21.1: OAK_LEAVES stands in — P13 biodome: pale garden
-    public static final Material PALE_OAK_LOG = of(Blocks.OAK_LOG); // not in Minecraft 1.21.1: OAK_LOG stands in — P13 biodome: pale garden
-    public static final Material PALE_OAK_WOOD = of(Blocks.OAK_WOOD); // not in Minecraft 1.21.1: OAK_WOOD stands in — P13 biodome: pale garden
+    public static final Material PALE_HANGING_MOSS = of(Blocks.VINE); // not in Minecraft 1.20.1: VINE stands in — P10 overgrowth: pale moss hanging from overhangs
+    public static final Material PALE_MOSS_BLOCK = of(Blocks.MOSS_BLOCK); // not in Minecraft 1.20.1: MOSS_BLOCK stands in — P10 overgrowth: pale (grey) moss cushion
+    public static final Material PALE_MOSS_CARPET = of(Blocks.MOSS_CARPET); // not in Minecraft 1.20.1: MOSS_CARPET stands in — P10 overgrowth: pale moss carpet
+    public static final Material PALE_OAK_LEAVES = of(Blocks.OAK_LEAVES); // not in Minecraft 1.20.1: OAK_LEAVES stands in — P13 biodome: pale garden
+    public static final Material PALE_OAK_LOG = of(Blocks.OAK_LOG); // not in Minecraft 1.20.1: OAK_LOG stands in — P13 biodome: pale garden
+    public static final Material PALE_OAK_WOOD = of(Blocks.OAK_WOOD); // not in Minecraft 1.20.1: OAK_WOOD stands in — P13 biodome: pale garden
     public static final Material PINK_PETALS = of(Blocks.PINK_PETALS); // P10 overgrowth: petals scattered on the ground
     public static final Material POINTED_DRIPSTONE = of(Blocks.POINTED_DRIPSTONE); // P10 overgrowth: stalactites/stalagmites in mines and caves
     public static final Material POLISHED_ANDESITE = of(Blocks.POLISHED_ANDESITE); // P12 MODERN build stone
@@ -916,10 +916,10 @@ public final class Material {
     public static final Material POWDER_SNOW = of(Blocks.POWDER_SNOW); // P8 MODERN: powder-snow pockets on snowy slopes; a 1.17 block
     public static final Material RED_CANDLE = of(Blocks.RED_CANDLE); // P14 interior: candle accent (warm colour)
     public static final Material RED_SAND = of(Blocks.RED_SAND); // P8 MODERN: badlands surface; the 1.14 Bukkit source never referenced it
-    public static final Material RESIN_BRICKS = of(Blocks.BRICKS); // not in Minecraft 1.21.1: BRICKS stands in — P12 MODERN build stone
+    public static final Material RESIN_BRICKS = of(Blocks.BRICKS); // not in Minecraft 1.20.1: BRICKS stands in — P12 MODERN build stone
     public static final Material ROOTED_DIRT = of(Blocks.ROOTED_DIRT); // lush caves: rooted dirt under a surface azalea (hanging roots drip below)
-    public static final Material SHORT_DRY_GRASS = of(Blocks.SHORT_GRASS); // not in Minecraft 1.21.1: SHORT_GRASS stands in — P14 overgrowth: dry grass for arid/ruined ground (1.21.5)
-    public static final Material SHORT_GRASS = of(Blocks.SHORT_GRASS); // P10 overgrowth: grass tufts pushing through
+    public static final Material SHORT_DRY_GRASS = of(Blocks.GRASS); // not in Minecraft 1.20.1: GRASS stands in — P14 overgrowth: dry grass for arid/ruined ground (1.21.5)
+    public static final Material SHORT_GRASS = of(Blocks.GRASS); // not in Minecraft 1.20.1: GRASS stands in — P10 overgrowth: grass tufts pushing through
     public static final Material SHROOMLIGHT = of(Blocks.SHROOMLIGHT); // P13 biodome: nether light
     public static final Material SMALL_DRIPLEAF = of(Blocks.SMALL_DRIPLEAF); // P10 overgrowth: dripleaf in damp corners
     public static final Material SMITHING_TABLE = of(Blocks.SMITHING_TABLE); // P9 mine prop: miners' camp
@@ -934,31 +934,31 @@ public final class Material {
     public static final Material STONECUTTER = of(Blocks.STONECUTTER); // P9 mine prop: miners' camp
     public static final Material STONE_BUTTON = of(Blocks.STONE_BUTTON); // P15 vault: the surface-hut iron-door opener (industrial button)
     public static final Material SWEET_BERRY_BUSH = of(Blocks.SWEET_BERRY_BUSH); // P14 overgrowth: berry bush gone feral
-    public static final Material TALL_DRY_GRASS = of(Blocks.TALL_GRASS); // not in Minecraft 1.21.1: TALL_GRASS stands in — P14 overgrowth: tall dry grass (1.21.5)
+    public static final Material TALL_DRY_GRASS = of(Blocks.TALL_GRASS); // not in Minecraft 1.20.1: TALL_GRASS stands in — P14 overgrowth: tall dry grass (1.21.5)
     public static final Material WALL_TORCH = of(Blocks.WALL_TORCH); // P9: wall-mounted torches for mine corridors; the Bukkit source only used standing TORCH
     public static final Material WARPED_FUNGUS = of(Blocks.WARPED_FUNGUS); // P13 biodome: nether
     public static final Material WARPED_NYLIUM = of(Blocks.WARPED_NYLIUM); // P13 biodome: nether ground
     public static final Material WARPED_STEM = of(Blocks.WARPED_STEM); // P13 biodome: nether
     public static final Material WARPED_WART_BLOCK = of(Blocks.WARPED_WART_BLOCK); // P13 biodome: nether
-    public static final Material WEATHERED_COPPER_CHEST = of(Blocks.CHEST); // not in Minecraft 1.21.1: CHEST stands in — P9 copper mine: loot chest (weathered)
-    public static final Material WEATHERED_COPPER_GRATE = of(Blocks.WEATHERED_COPPER_GRATE); // P9 copper mine: cage/machinery grate (weathered)
+    public static final Material WEATHERED_COPPER_CHEST = of(Blocks.CHEST); // not in Minecraft 1.20.1: CHEST stands in — P9 copper mine: loot chest (weathered)
+    public static final Material WEATHERED_COPPER_GRATE = of(Blocks.WEATHERED_COPPER); // not in Minecraft 1.20.1: WEATHERED_COPPER stands in — P9 copper mine: cage/machinery grate (weathered)
     public static final Material WEATHERED_CUT_COPPER = of(Blocks.WEATHERED_CUT_COPPER); // P12 MODERN build stone
     public static final Material WHITE_CANDLE = of(Blocks.WHITE_CANDLE); // P12 interior: candle accent (white)
-    public static final Material WILDFLOWERS = of(Blocks.DANDELION); // not in Minecraft 1.21.1: DANDELION stands in — P14 overgrowth: segmented wildflower patch (1.21.5)
+    public static final Material WILDFLOWERS = of(Blocks.DANDELION); // not in Minecraft 1.20.1: DANDELION stands in — P14 overgrowth: segmented wildflower patch (1.21.5)
 
     // ---- Copper weathering stages (12) — reached via WeatheringCopperBlocks accessors -
-    public static final Material COPPER_BARS = of(Blocks.IRON_BARS); // not in Minecraft 1.21.1: IRON_BARS stands in — P9 copper mine: cage bars (fresh)
-    public static final Material COPPER_CHAIN = of(Blocks.CHAIN); // not in Minecraft 1.21.1: CHAIN stands in — P9 copper mine: lift-shaft chain (fresh)
-    public static final Material COPPER_LANTERN = of(Blocks.LANTERN); // not in Minecraft 1.21.1: LANTERN stands in — P9 mine prop/light: copper lantern (fresh)
-    public static final Material EXPOSED_COPPER_BARS = of(Blocks.IRON_BARS); // not in Minecraft 1.21.1: IRON_BARS stands in — P9 copper mine: cage bars (exposed)
-    public static final Material EXPOSED_COPPER_CHAIN = of(Blocks.CHAIN); // not in Minecraft 1.21.1: CHAIN stands in — P9 copper mine: lift-shaft chain (exposed)
-    public static final Material EXPOSED_COPPER_LANTERN = of(Blocks.LANTERN); // not in Minecraft 1.21.1: LANTERN stands in — P9 mine prop/light: copper lantern (exposed)
-    public static final Material OXIDIZED_COPPER_BARS = of(Blocks.IRON_BARS); // not in Minecraft 1.21.1: IRON_BARS stands in — P9 copper mine: cage bars (oxidized, deepest)
-    public static final Material OXIDIZED_COPPER_CHAIN = of(Blocks.CHAIN); // not in Minecraft 1.21.1: CHAIN stands in — P9 copper mine: lift-shaft chain (oxidized, deepest)
-    public static final Material OXIDIZED_COPPER_LANTERN = of(Blocks.LANTERN); // not in Minecraft 1.21.1: LANTERN stands in — P9 mine prop/light: copper lantern (oxidized)
-    public static final Material WEATHERED_COPPER_BARS = of(Blocks.IRON_BARS); // not in Minecraft 1.21.1: IRON_BARS stands in — P9 copper mine: cage bars (weathered)
-    public static final Material WEATHERED_COPPER_CHAIN = of(Blocks.CHAIN); // not in Minecraft 1.21.1: CHAIN stands in — P9 copper mine: lift-shaft chain (weathered)
-    public static final Material WEATHERED_COPPER_LANTERN = of(Blocks.LANTERN); // not in Minecraft 1.21.1: LANTERN stands in — P9 mine prop/light: copper lantern (weathered)
+    public static final Material COPPER_BARS = of(Blocks.IRON_BARS); // not in Minecraft 1.20.1: IRON_BARS stands in — P9 copper mine: cage bars (fresh)
+    public static final Material COPPER_CHAIN = of(Blocks.CHAIN); // not in Minecraft 1.20.1: CHAIN stands in — P9 copper mine: lift-shaft chain (fresh)
+    public static final Material COPPER_LANTERN = of(Blocks.LANTERN); // not in Minecraft 1.20.1: LANTERN stands in — P9 mine prop/light: copper lantern (fresh)
+    public static final Material EXPOSED_COPPER_BARS = of(Blocks.IRON_BARS); // not in Minecraft 1.20.1: IRON_BARS stands in — P9 copper mine: cage bars (exposed)
+    public static final Material EXPOSED_COPPER_CHAIN = of(Blocks.CHAIN); // not in Minecraft 1.20.1: CHAIN stands in — P9 copper mine: lift-shaft chain (exposed)
+    public static final Material EXPOSED_COPPER_LANTERN = of(Blocks.LANTERN); // not in Minecraft 1.20.1: LANTERN stands in — P9 mine prop/light: copper lantern (exposed)
+    public static final Material OXIDIZED_COPPER_BARS = of(Blocks.IRON_BARS); // not in Minecraft 1.20.1: IRON_BARS stands in — P9 copper mine: cage bars (oxidized, deepest)
+    public static final Material OXIDIZED_COPPER_CHAIN = of(Blocks.CHAIN); // not in Minecraft 1.20.1: CHAIN stands in — P9 copper mine: lift-shaft chain (oxidized, deepest)
+    public static final Material OXIDIZED_COPPER_LANTERN = of(Blocks.LANTERN); // not in Minecraft 1.20.1: LANTERN stands in — P9 mine prop/light: copper lantern (oxidized)
+    public static final Material WEATHERED_COPPER_BARS = of(Blocks.IRON_BARS); // not in Minecraft 1.20.1: IRON_BARS stands in — P9 copper mine: cage bars (weathered)
+    public static final Material WEATHERED_COPPER_CHAIN = of(Blocks.CHAIN); // not in Minecraft 1.20.1: CHAIN stands in — P9 copper mine: lift-shaft chain (weathered)
+    public static final Material WEATHERED_COPPER_LANTERN = of(Blocks.LANTERN); // not in Minecraft 1.20.1: LANTERN stands in — P9 mine prop/light: copper lantern (weathered)
 
     // ---- Items (116) — Bukkit's Material spanned blocks AND items; these are ----
     // ---- item-only (loot/chest contents). They carry no block state. -----------

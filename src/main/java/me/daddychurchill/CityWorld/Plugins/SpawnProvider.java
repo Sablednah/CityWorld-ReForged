@@ -15,7 +15,7 @@ import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
-import net.neoforged.neoforge.event.EventHooks;
+import net.minecraftforge.event.ForgeEventFactory;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Support.AbstractEntityList;
@@ -275,8 +275,8 @@ public class SpawnProvider extends Provider {
         if (!(being instanceof Villager villager))
             return;
         villager.moveTo(at.getBlockX() + 0.5, at.getBlockY(), at.getBlockZ() + 0.5, 0.0F, 0.0F);
-        EventHooks.finalizeMobSpawn(villager, server, server.getCurrentDifficultyAt(villager.blockPosition()),
-                MobSpawnType.CHUNK_GENERATION, null);
+        ForgeEventFactory.onFinalizeSpawn(villager, server, server.getCurrentDifficultyAt(villager.blockPosition()),
+                MobSpawnType.CHUNK_GENERATION, null, null);
         villager.setBaby(child);
         if (surname != null) {
             villager.setCustomName(Component.literal(
@@ -314,9 +314,9 @@ public class SpawnProvider extends Provider {
         if (!(being instanceof Villager villager))
             return;
         villager.moveTo(at.getBlockX() + 0.5, at.getBlockY(), at.getBlockZ() + 0.5, 0.0F, 0.0F);
-        EventHooks.finalizeMobSpawn(villager, server, server.getCurrentDifficultyAt(villager.blockPosition()),
-                MobSpawnType.CHUNK_GENERATION, null);
-        employ(server.getLevel(), villager, ResourceLocation.withDefaultNamespace("cleric"));
+        ForgeEventFactory.onFinalizeSpawn(villager, server, server.getCurrentDifficultyAt(villager.blockPosition()),
+                MobSpawnType.CHUNK_GENERATION, null, null);
+        employ(server.getLevel(), villager, new ResourceLocation("cleric"));
         if (generator.getSettings().nameVillagers) {
             villager.setCustomName(Component.literal(
                     "Dr. " + generator.odonymProvider.generateSurname(generator, odds)));
@@ -421,14 +421,14 @@ public class SpawnProvider extends Provider {
         // Gives the mob its equipment, variant and group data — what "being spawned" means beyond
         // existing at a position. Takes the accessor, not the level.
         //
-        // Via EventHooks rather than Mob.finalizeSpawn directly: NeoForge marks the latter
+        // Via ForgeEventFactory rather than Mob.finalizeSpawn directly: the loader marks the latter
         // @ApiStatus.OverrideOnly, and going through here fires FinalizeSpawnEvent so other mods get
         // their say on our mobs. It must follow snapTo, since the event reports the mob's position.
         // A cancelled spawn needs no handling on our side — Forge marks the mob and
         // WorldGenRegion.addFreshEntity drops it.
         if (being instanceof Mob mob)
-            EventHooks.finalizeMobSpawn(mob, server, server.getCurrentDifficultyAt(mob.blockPosition()),
-                    MobSpawnType.CHUNK_GENERATION, null);
+            ForgeEventFactory.onFinalizeSpawn(mob, server, server.getCurrentDifficultyAt(mob.blockPosition()),
+                    MobSpawnType.CHUNK_GENERATION, null, null);
 
         being.setDeltaMovement(odds.getRandomVelocity());
 

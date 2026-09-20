@@ -281,7 +281,7 @@ public final class Furniture {
                     .registryOrThrow(net.minecraft.core.registries.Registries.PAINTING_VARIANT)
                     .getTagOrEmpty(net.minecraft.tags.PaintingVariantTags.PLACEABLE)
                     .forEach(holder -> {
-                        if (holder.value().width() == 1 && holder.value().height() == 1)
+                        if (holder.value().getWidth() == 1 && holder.value().getHeight() == 1)
                             variants.add(holder);
                     });
             if (variants.isEmpty())

@@ -16,14 +16,14 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.options.OptionsSubScreen;
+import net.minecraft.client.gui.screens.OptionsSubScreen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
 /**
  * The "Customize" screen for the CityWorld world type on the single-player create-world screen — the
  * modded counterpart of vanilla's Superflat/Single-Biome editors, reached via
- * {@link net.neoforged.neoforge.client.event.RegisterPresetEditorsEvent} (see {@link CityWorldClient}).
+ * {@link net.minecraftforge.client.event.RegisterPresetEditorsEvent} (see {@link CityWorldClient}).
  *
  * <p>It edits the world <b>style</b> plus the value knobs of {@link CityWorldSettingsData}, laid out in
  * scrollable, headed sections (Features / Terrain / Spawns / Treasures / World). On <em>Done</em> it
@@ -211,8 +211,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         announcedLandmarks = w.announcedLandmarks();
     }
 
-    @Override
-    protected void addOptions() {
+    /** 1.20.1's OptionsSubScreen has no addOptions() hook, so {@link #init()} calls this. */
+    private void buildOptions() {
         List<AbstractWidget> row = new ArrayList<>();
 
         header(Component.literal("World style"));
@@ -339,14 +339,86 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         flush(row);
     }
 
+    /**
+     * 1.20.1 has neither the layout helper nor the addOptions/addFooter hooks 1.21 added, so the
+     * screen builds itself: a scrolling list of option rows, and the two buttons under it.
+     */
     @Override
-    protected void addFooter() {
-        LinearLayout footer = this.layout.addToFooter(LinearLayout.horizontal().spacing(8));
-        footer.addChild(Button.builder(CommonComponents.GUI_DONE, b -> {
+    protected void init() {
+        this.rows = new Rows(this.minecraft, this.width, this.height, 32, this.height - 44, HEIGHT + 5);
+        buildOptions();
+        addWidget(this.rows);
+        addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, b -> {
             this.onDone.accept(buildResult());
             this.onClose();
-        }).width(150).build());
-        footer.addChild(Button.builder(CommonComponents.GUI_CANCEL, b -> this.onClose()).width(150).build());
+        }).bounds(this.width / 2 - 155, this.height - 32, WIDTH, HEIGHT).build());
+        addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, b -> this.onClose())
+                .bounds(this.width / 2 + 5, this.height - 32, WIDTH, HEIGHT).build());
+    }
+
+    @Override
+    public void render(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partial) {
+        renderBackground(graphics);
+        this.rows.render(graphics, mouseX, mouseY, partial);
+        graphics.drawCenteredString(this.font, this.title, this.width / 2, 16, 0xFFFFFF);
+        super.render(graphics, mouseX, mouseY, partial);
+    }
+
+    private Rows rows;
+
+    /**
+     * A scrolling list of rows, each holding one or two widgets.
+     *
+     * <p>1.21's {@code OptionsList.addSmall} takes raw widgets; 1.20.1's takes an {@code OptionInstance}
+     * and cannot carry ours, so the list is built on the same base class vanilla uses. Laying the
+     * widgets out by hand instead would have cost the scrolling, and this screen has thirty options.
+     */
+    private static final class Rows
+            extends net.minecraft.client.gui.components.ContainerObjectSelectionList<Rows.Row> {
+
+        Rows(net.minecraft.client.Minecraft minecraft, int width, int height, int top, int bottom, int itemHeight) {
+            super(minecraft, width, height, top, bottom, itemHeight);
+        }
+
+        void add(AbstractWidget first, AbstractWidget second) {
+            addEntry(new Row(first, second));
+        }
+
+        @Override
+        public int getRowWidth() {
+            return WIDTH * 2 + 10;
+        }
+
+        private static final class Row extends
+                net.minecraft.client.gui.components.ContainerObjectSelectionList.Entry<Row> {
+
+            private final java.util.List<AbstractWidget> widgets;
+
+            Row(AbstractWidget first, AbstractWidget second) {
+                this.widgets = second == null ? java.util.List.of(first) : java.util.List.of(first, second);
+            }
+
+            @Override
+            public void render(net.minecraft.client.gui.GuiGraphics graphics, int index, int top, int left,
+                    int width, int height, int mouseX, int mouseY, boolean hovering, float partial) {
+                int x = left + width / 2 - (WIDTH + 5);
+                for (AbstractWidget widget : this.widgets) {
+                    widget.setPosition(this.widgets.size() == 1 ? left + width / 2 - widget.getWidth() / 2 : x, top);
+                    widget.render(graphics, mouseX, mouseY, partial);
+                    x += WIDTH + 10;
+                }
+            }
+
+            @Override
+            public java.util.List<? extends net.minecraft.client.gui.components.events.GuiEventListener> children() {
+                return this.widgets;
+            }
+
+            @Override
+            public java.util.List<? extends net.minecraft.client.gui.narration.NarratableEntry> narratables() {
+                return this.widgets;
+            }
+        }
     }
 
     private Result buildResult() {
@@ -545,12 +617,12 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     }
 
     private void addRow(AbstractWidget a, AbstractWidget b) {
-        this.list.addSmall(a, b);
+        this.rows.add(a, b);
     }
 
     /** A section header: 1.21.1's OptionsList has no addHeader, so a centred label takes a row. */
     private void header(Component title) {
-        this.list.addSmall(new net.minecraft.client.gui.components.StringWidget(WIDTH * 2 + 10, HEIGHT, title,
+        this.rows.add(new net.minecraft.client.gui.components.StringWidget(WIDTH * 2 + 10, HEIGHT, title,
                 this.font).alignCenter(), null);
     }
 

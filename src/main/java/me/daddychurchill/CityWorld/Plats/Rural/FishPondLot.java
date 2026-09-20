@@ -113,7 +113,7 @@ public class FishPondLot extends IsolatedLot {
 
         // the angler, at the barrel
         generator.spawnProvider.spawnWorker(generator, chunk, chunkOdds, barrelCell[0], surfaceY + 1, barrelCell[1],
-                net.minecraft.resources.ResourceLocation.withDefaultNamespace("fisherman"));
+                new net.minecraft.resources.ResourceLocation("fisherman"));
     }
 
     /** The dominant horizontal direction from (x,z) toward the pond centre. */

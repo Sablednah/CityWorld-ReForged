@@ -6,9 +6,9 @@ import com.mojang.logging.LogUtils;
 
 import me.daddychurchill.CityWorld.worldgen.CityWorldRegistries;
 
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.common.Mod;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.ModContainer;
+import net.minecraftforge.fml.common.Mod;
 
 /**
  * CityWorld — main mod entrypoint (common: loaded on both client and dedicated server).
@@ -32,12 +32,23 @@ public class CityWorldMod {
     /** Shared logger. */
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public CityWorldMod(IEventBus modEventBus, ModContainer modContainer) {
+    /**
+     * <b>No-arg, because FML 1.20.1 constructs a mod that way</b> — it does not inject the bus and
+     * container the way NeoForge's constructor does, and a two-arg constructor fails at load with
+     * {@code NoSuchMethodException: CityWorldMod.<init>()}. The same two values are fetched here
+     * instead, so everything below is unchanged.
+     */
+    public CityWorldMod() {
+        IEventBus modEventBus = net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus();
+        ModContainer modContainer = net.minecraftforge.fml.ModLoadingContext.get().getActiveContainer();
         // Register the custom ChunkGenerator codec (cityworld:city). The dimension and world
         // preset that reference it live in src/main/resources/data/cityworld/...
         CityWorldRegistries.register(modEventBus);
-        // Biome -> ground block, so a mod's biome can name a block only that mod has.
-        modEventBus.addListener(me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps::register);
+        // Biome -> ground block, so a mod's biome can name a block only that mod has. On this line it
+        // is a datapack RELOAD listener on the game bus, not a mod-bus data-map event: Forge has no
+        // data maps, so CityWorld reads the same JSON itself. See CityWorldDataMaps.
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(
+                me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps::register);
 
         // Per-world settings are datapack-driven (the cityworld:world_settings registry, registered
         // above), not a per-instance config — see CityWorldSettingsData / PORTING.md top risk #4.
@@ -45,31 +56,31 @@ public class CityWorldMod {
         // Networking: the two questions a map mod's client UI asks the server (the city-plan toggle,
         // and "what is planned in this chunk?" for map hover text). Optional channel — a client
         // without CityWorld connects fine and never asks.
-        modEventBus.addListener(me.daddychurchill.CityWorld.network.CityWorldNetwork::register);
+        me.daddychurchill.CityWorld.network.CityWorldNetwork.register();
 
         // Server-side registrations on the game event bus (commands: /cityinfo, /cityworld).
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(CityWorldServerEvents.class);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(CityWorldServerEvents.class);
 
         // Headless cross-version verification. Dormant unless -Dcityworld.selftest=true, so players
         // never pay for it; see scripts/selftest.sh and selftest/CityWorldSelfTest.
         if (me.daddychurchill.CityWorld.selftest.CityWorldSelfTest.enabled())
-            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
                     new me.daddychurchill.CityWorld.selftest.CityWorldSelfTest());
 
         // The tag-pool diagnostics report: -Dcityworld.diagnostics=true (auto-on under the
         // self-test). Every worst bug here was a pool silently resolving empty; this makes them
         // shout at startup instead of costing a playtest round.
         if (me.daddychurchill.CityWorld.Support.ChunkProbe.enabled())
-            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
                     new me.daddychurchill.CityWorld.Support.ChunkProbe());
 
         if (me.daddychurchill.CityWorld.Support.Diagnostics.enabled())
-            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
                     new me.daddychurchill.CityWorld.Support.Diagnostics());
 
         // Client-only: the create-world "Customize" button for the CityWorld world type. Guarded so
         // the dedicated server never loads the @OnlyIn(CLIENT) preset-editor classes.
-        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT)
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist == net.minecraftforge.api.distmarker.Dist.CLIENT)
             me.daddychurchill.CityWorld.client.CityWorldClient.init(modEventBus, modContainer);
 
         // Create the drop-in folder (config/cityworld/schematics/) so players can add their own

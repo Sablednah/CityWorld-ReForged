@@ -44,7 +44,7 @@ public final class SpongeSchematic {
     }
 
     public static SpongeSchematic read(InputStream in) throws IOException {
-        CompoundTag tag = NbtIo.readCompressed(in, NbtAccounter.unlimitedHeap());
+        CompoundTag tag = NbtIo.readCompressed(in);
         CompoundTag root = tag.getCompound("Schematic"); // v3 nests under "Schematic"
 
         int w = root.getShort("Width");

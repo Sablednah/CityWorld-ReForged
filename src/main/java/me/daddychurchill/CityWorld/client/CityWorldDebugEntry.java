@@ -84,7 +84,7 @@ public class CityWorldDebugEntry {
     private static String buildStamp() {
         String stamp = me.daddychurchill.CityWorld.BuildInfo.describe();
         try {
-            var file = net.neoforged.fml.ModList.get().getModFileById("cityworld").getFile().getFilePath();
+            var file = net.minecraftforge.fml.ModList.get().getModFileById("cityworld").getFile().getFilePath();
             if (java.nio.file.Files.isRegularFile(file)) {
                 var time = java.nio.file.Files.getLastModifiedTime(file).toInstant()
                         .atZone(java.time.ZoneId.systemDefault());

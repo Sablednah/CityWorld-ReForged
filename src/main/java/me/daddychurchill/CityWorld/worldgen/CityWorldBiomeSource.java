@@ -2,6 +2,7 @@ package me.daddychurchill.CityWorld.worldgen;
 
 import java.util.stream.Stream;
 
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -77,9 +78,19 @@ public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes
         this.dry = dry;
     }
 
+    /**
+     * <b>One instance, because codec dispatch compares by identity.</b> {@code MapCodec.codec()} builds a
+     * NEW wrapper every call, so returning {@code CODEC.codec()} from {@link #codec()} handed back an
+     * object the registry had never seen, and encoding a dimension failed with "Unknown registry element".
+     * It compiles fine and only shows up when something serialises a stem.
+     */
+    public static final Codec<CityWorldBiomeSource> DISPATCH = CODEC.codec();
+
     @Override
-    protected MapCodec<? extends BiomeSource> codec() {
-        return CODEC;
+    protected Codec<? extends BiomeSource> codec() {
+        // 1.20.1's BiomeSource still dispatches on a plain Codec; MapCodec arrived with 1.21.
+        // The CODEC above stays a MapCodec because RecordCodecBuilder.mapCodec builds one either way.
+        return DISPATCH;
     }
 
     /**

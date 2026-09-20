@@ -58,7 +58,7 @@ public final class LegacySchematic {
     }
 
     public static LegacySchematic read(InputStream in) throws IOException {
-        CompoundTag tag = NbtIo.readCompressed(in, NbtAccounter.unlimitedHeap());
+        CompoundTag tag = NbtIo.readCompressed(in);
         int w = tag.getShort("Width");
         int h = tag.getShort("Height");
         int l = tag.getShort("Length");

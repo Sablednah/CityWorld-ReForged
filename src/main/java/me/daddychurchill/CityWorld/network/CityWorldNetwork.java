@@ -4,6 +4,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 
 import me.daddychurchill.CityWorld.CityWorldMod;
 import me.daddychurchill.CityWorld.api.CityWorldAPI;
@@ -13,10 +14,11 @@ import me.daddychurchill.CityWorld.api.MapMarkers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.PacketDistributor;
+import net.minecraftforge.network.simple.SimpleChannel;
 
 /**
  * CityWorld's networking: the two questions a map mod's client-side UI needs the server to answer.
@@ -43,32 +45,49 @@ public final class CityWorldNetwork {
         return thread;
     });
 
-    /** Registered on the mod event bus from {@link CityWorldMod}. */
-    public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("1").optional();
-        registrar.playToServer(CityPlanTogglePayload.TYPE, CityPlanTogglePayload.CODEC,
-                CityWorldNetwork::handleToggle);
-        registrar.playToServer(LotInfoRequestPayload.TYPE, LotInfoRequestPayload.CODEC,
-                CityWorldNetwork::handleLotInfoRequest);
-        registrar.playToClient(LotInfoPayload.TYPE, LotInfoPayload.CODEC, CityWorldNetwork::handleLotInfo);
+    private static final String VERSION = "1";
+
+    /**
+     * The channel. {@code acceptMissingOr} on BOTH sides is how Forge 1.20.1 spells what NeoForge's
+     * {@code registrar.optional()} meant: a client without CityWorld — or a server without it —
+     * still connects, and simply never speaks on this channel.
+     */
+    public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
+            new ResourceLocation(CityWorldMod.MODID, "main"), () -> VERSION,
+            NetworkRegistry.acceptMissingOr(VERSION), NetworkRegistry.acceptMissingOr(VERSION));
+
+    /** Called straight from {@link CityWorldMod}: 1.20.1 has no payload-registration event. */
+    public static void register() {
+        int id = 0;
+        CHANNEL.registerMessage(id++, CityPlanTogglePayload.class, CityPlanTogglePayload::encode,
+                CityPlanTogglePayload::decode, CityWorldNetwork::handleToggle);
+        CHANNEL.registerMessage(id++, LotInfoRequestPayload.class, LotInfoRequestPayload::encode,
+                LotInfoRequestPayload::decode, CityWorldNetwork::handleLotInfoRequest);
+        CHANNEL.registerMessage(id++, LotInfoPayload.class, LotInfoPayload::encode,
+                LotInfoPayload::decode, CityWorldNetwork::handleLotInfo);
     }
 
-    private static void handleToggle(CityPlanTogglePayload payload, IPayloadContext context) {
+    private static void handleToggle(CityPlanTogglePayload payload, Supplier<NetworkEvent.Context> ctx) {
+        NetworkEvent.Context context = ctx.get();
         context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player) {
+            ServerPlayer player = context.getSender();
+            if (player != null) {
                 MapMarkers.setCityPlanBudget(player.getUUID(), payload.keep());
                 MapMarkers.setCityPlan(player.getUUID(), payload.on());
             }
         });
+        context.setPacketHandled(true);
     }
 
     /**
      * Looks the chunk's plan up and sends it back. The lookup itself runs off the server thread; only
      * grabbing the player's level happens on it.
      */
-    private static void handleLotInfoRequest(LotInfoRequestPayload payload, IPayloadContext context) {
+    private static void handleLotInfoRequest(LotInfoRequestPayload payload, Supplier<NetworkEvent.Context> ctx) {
+        NetworkEvent.Context context = ctx.get();
         context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player))
+            ServerPlayer player = context.getSender();
+            if (player == null)
                 return;
             ServerLevel level = player.serverLevel();
             LOOKUP.execute(() -> {
@@ -81,10 +100,11 @@ public final class CityWorldNetwork {
                     summary = "";
                 }
                 final String answer = summary;
-                level.getServer().execute(() -> PacketDistributor.sendToPlayer(player,
+                level.getServer().execute(() -> CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                         new LotInfoPayload(payload.chunkX(), payload.chunkZ(), answer)));
             });
         });
+        context.setPacketHandled(true);
     }
 
     /**
@@ -140,7 +160,9 @@ public final class CityWorldNetwork {
      * Client-side handler. {@code CityPlanClient} imports client classes, so it is named only inside
      * the enqueued lambda — a dedicated server registering this payload never loads it.
      */
-    private static void handleLotInfo(LotInfoPayload payload, IPayloadContext context) {
+    private static void handleLotInfo(LotInfoPayload payload, Supplier<NetworkEvent.Context> ctx) {
+        NetworkEvent.Context context = ctx.get();
         context.enqueueWork(() -> me.daddychurchill.CityWorld.client.CityPlanClient.accept(payload));
+        context.setPacketHandled(true);
     }
 }

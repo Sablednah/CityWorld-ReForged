@@ -69,7 +69,7 @@ public final class CaveRegions {
 
     /** The pool. Ship it with a datapack; add to it with another. */
     public static final TagKey<Biome> CAVE_POOL = TagKey.create(Registries.BIOME,
-            ResourceLocation.fromNamespaceAndPath("cityworld", "cave_pool"));
+            new ResourceLocation("cityworld", "cave_pool"));
 
     /**
      * Order of preference, rarest and deepest first — an entry earlier in this list wins a cell it

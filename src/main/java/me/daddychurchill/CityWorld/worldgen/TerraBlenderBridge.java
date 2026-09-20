@@ -52,7 +52,7 @@ public final class TerraBlenderBridge {
 
     private static boolean detect() {
         try {
-            return net.neoforged.fml.ModList.get() != null && net.neoforged.fml.ModList.get().isLoaded(MOD_ID);
+            return net.minecraftforge.fml.ModList.get() != null && net.minecraftforge.fml.ModList.get().isLoaded(MOD_ID);
         } catch (Throwable t) {
             return false; // no mod list (datagen, tests) — treat as absent
         }

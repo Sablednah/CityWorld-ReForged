@@ -49,8 +49,8 @@ public enum ShopTrade {
 
     ShopTrade(String displayName, String professionPath, String jobBlockPath, EnumSet<ShopScale> scales) {
         this.displayName = displayName;
-        this.profession = ResourceLocation.withDefaultNamespace(professionPath);
-        this.jobBlock = ResourceLocation.withDefaultNamespace(jobBlockPath);
+        this.profession = new ResourceLocation(professionPath);
+        this.jobBlock = new ResourceLocation(jobBlockPath);
         this.scales = scales;
     }
 

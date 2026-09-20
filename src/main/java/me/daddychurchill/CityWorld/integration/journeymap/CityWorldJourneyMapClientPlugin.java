@@ -58,7 +58,7 @@ public class CityWorldJourneyMapClientPlugin implements IClientPlugin {
      * means no dependency on another mod's internal asset layout, this version's or the next one's.
      */
     private static final ResourceLocation ICON =
-            ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "textures/gui/city_plan.png");
+            new ResourceLocation(CityWorldMod.MODID, "textures/gui/city_plan.png");
 
     private BooleanOption cityPlan;
 

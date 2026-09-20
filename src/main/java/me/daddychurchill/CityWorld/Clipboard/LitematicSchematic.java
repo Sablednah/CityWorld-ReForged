@@ -40,7 +40,7 @@ public final class LitematicSchematic {
     }
 
     public static LitematicSchematic read(InputStream in) throws IOException {
-        CompoundTag root = NbtIo.readCompressed(in, NbtAccounter.unlimitedHeap());
+        CompoundTag root = NbtIo.readCompressed(in);
         int dv = root.getInt("MinecraftDataVersion");
         CompoundTag regionsTag = root.getCompound("Regions");
         List<Region> regions = new ArrayList<>();

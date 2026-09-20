@@ -3,6 +3,7 @@ package me.daddychurchill.CityWorld.worldgen;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -244,7 +245,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private CityWorldChunkGenerator twinSource() {
         if (twinOf.isEmpty())
             return null;
-        net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        net.minecraft.server.MinecraftServer server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
         net.minecraft.server.level.ServerLevel source = server == null ? null : server.getLevel(twinOf.get());
         if (source != null && source.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator cw && cw != this)
             return cw;
@@ -321,9 +322,18 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         return context(level);
     }
 
+    /**
+     * <b>One instance, because codec dispatch compares by identity.</b> {@code MapCodec.codec()} builds a
+     * NEW wrapper every call, so returning {@code CODEC.codec()} from {@link #codec()} handed back an
+     * object the registry had never seen, and encoding a dimension failed with "Unknown registry element".
+     * It compiles fine and only shows up when something serialises a stem.
+     */
+    public static final Codec<CityWorldChunkGenerator> DISPATCH = CODEC.codec();
+
     @Override
-    protected MapCodec<? extends ChunkGenerator> codec() {
-        return CODEC;
+    protected Codec<? extends ChunkGenerator> codec() {
+        // 1.20.1's ChunkGenerator dispatches on a plain Codec; MapCodec arrived with 1.21.
+        return DISPATCH;
     }
 
     /**
@@ -363,7 +373,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             synchronized (this) {
                 local = vanillaEnd;
                 if (local == null) {
-                    var registries = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess();
+                    var registries = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess();
                     var biomes = registries.lookupOrThrow(Registries.BIOME);
                     var settings = registries.lookupOrThrow(Registries.NOISE_SETTINGS)
                             .getOrThrow(net.minecraft.world.level.levelgen.NoiseGeneratorSettings.END);
@@ -389,15 +399,15 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private volatile EndTerrain endTerrain;
 
     @Override
-    public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState,
-            StructureManager structureManager, ChunkAccess chunk) {
+    public CompletableFuture<ChunkAccess> fillFromNoise(Executor executor, Blender blender,
+            RandomState randomState, StructureManager structureManager, ChunkAccess chunk) {
         // The End's terrain is vanilla's everywhere: the dragon's island in the centre, and beyond the void ring
         // the outer islands exactly as vanilla grows them. CityWorld then builds on top of what is there
         // (ShapeProvider_TheEnd shapes nothing) — except in the centre, which stays the dragon's alone.
         if (isEnd()) {
             context(chunk);
             CompletableFuture<ChunkAccess> islands =
-                    vanillaEnd().fillFromNoise(blender, vanillaEndRandom, structureManager, chunk);
+                    vanillaEnd().fillFromNoise(executor, blender, vanillaEndRandom, structureManager, chunk);
             return inEndCentre(chunk) ? islands : islands.thenApply(filled -> {
                 if (!endStructureHere(structureManager, filled))
                     buildCity(structureManager, filled);
@@ -588,7 +598,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     /** Whether this structure expects terrain to be carved away from it (a beard), rather than piled on. */
     /** Structures that get a carved cavern whatever their {@code terrain_adaptation}; see {@link #carveForStructures}. */
     public static final TagKey<net.minecraft.world.level.levelgen.structure.Structure> CARVE_CAVERN = TagKey.create(
-            Registries.STRUCTURE, ResourceLocation.fromNamespaceAndPath("cityworld", "carve_cavern"));
+            Registries.STRUCTURE, new ResourceLocation("cityworld", "carve_cavern"));
 
     private static boolean carvesTerrain(net.minecraft.world.level.levelgen.structure.Structure structure) {
         net.minecraft.world.level.levelgen.structure.TerrainAdjustment adjustment = structure.terrainAdaptation();
@@ -644,10 +654,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * make sure the context is built — and so handed to the source — before the fill runs.
      */
     @Override
-    public CompletableFuture<ChunkAccess> createBiomes(RandomState randomState, Blender blender,
-            StructureManager structureManager, ChunkAccess chunk) {
+    public CompletableFuture<ChunkAccess> createBiomes(Executor executor, RandomState randomState,
+            Blender blender, StructureManager structureManager, ChunkAccess chunk) {
         context(chunk);
-        return super.createBiomes(randomState, blender, structureManager, chunk);
+        return super.createBiomes(executor, randomState, blender, structureManager, chunk);
     }
 
     /**
@@ -679,7 +689,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * that builds its own.
      */
     private static final TagKey<StructureSet> ALLOWED_STRUCTURE_SETS = TagKey.create(Registries.STRUCTURE_SET,
-            ResourceLocation.fromNamespaceAndPath("cityworld", "allowed"));
+            new ResourceLocation("cityworld", "allowed"));
 
     /**
      * Selectively re-enables vanilla structures — CityWorld builds its own cities, but it has no
@@ -709,7 +719,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // The End's biomes come from its noise, and structure placement asks for biomes before any chunk exists:
         // a /locate (or the probe's) on a dimension nobody has visited found no end city in 87,000 candidate
         // cells, because an unbound source answers "barrens" and barrens hold none. Bind now, not at first chunk.
-        if (isEnd() && net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer() != null) {
+        if (isEnd() && net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer() != null) {
             var vanilla = vanillaEnd();
             if (this.biomeSource instanceof CityWorldEndBiomeSource endBiomes)
                 endBiomes.bindTerrain(endTerrain, vanilla.getBiomeSource());
