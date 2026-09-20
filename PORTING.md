@@ -2034,7 +2034,7 @@ biome id** rather than being stored, so retuning a patch's size or rarity does n
 Defaults verified unchanged when this landed — same 43% ancient-city air, same pool, same plan hash.
 **That is the bar for any future "make it configurable" change**: it must not move the default world.
 
-## 1.20.1 **Forge** spike — measured, not guessed (2026-09-20)
+## 1.20.1 **Forge** — PORTED, self-test green (2026-09-20)
 
 A CurseForge comment asked for **1.20.1 Forge** (the last Forge line before NeoForge, where many mods are
 stranded). That is a *loader* change plus a five-version backport, so it was scoped with a spike rather than an
@@ -2126,7 +2126,42 @@ of the false negative that the tag-reference and detector-control notes warn abo
 doors, windows, fences, lights, roofs, stairs, trapdoors, paths, bridges (3–5 each) — and Fantasy's Furniture.
 Refurbished is CurseForge-primary and was not confirmed.
 
-### Verdict
+### Outcome: done, and the API was never the hard part
+
+**Self-test PASS, 131 checks**, plan hashes identical to all five other versions (MODERN `886d202b`,
+APOCALYPSE `f5916d4e`, CLASSIC `db5a2698`). Branch `mc1.20.1`. Compile went 239 → 0; the self-test then took
+**four rounds**, and *every* failure was a loader convention rather than a worldgen fault:
+
+| Round | Failed on | Real cause |
+|---|---|---|
+| 1 | died in 18s | `mods.toml` wants `mandatory=true/false`, not `type="required"` |
+| 2 | died in 1m02s | FML constructs `@Mod` from a **no-arg constructor**; it does not inject the bus/container |
+| 3 | 21 problems | **no `pack.mcmeta`** → Minecraft discarded the whole datapack |
+| 4 | 2, then 1 | codec identity; `trial_chambers` voiding a tag; a version-blind harness check |
+
+⚠ **`pack.mcmeta` is the one to remember.** Forge's `ResourcePackLoader.createPackForMod` builds a bare
+`PathPackResources` and injects no metadata, so without that file the log says only *"Missing metadata in pack
+mod:cityworld"* and **every** datapack-sourced thing silently vanishes — tags, the `cityworld:city` preset, the
+dimension. 21 failures from one absent file. NeoForge synthesises it, which is why no other branch ships one.
+
+⚠ **Codec dispatch compares by identity.** `MapCodec.codec()` returns a NEW wrapper on every call, so `codec()`
+must hand back the same instance that was registered or encoding a dimension fails with *"Unknown registry
+element"*. It compiles perfectly and only appears when something serialises a stem.
+
+⚠ **Access transformers are SRG-named here** (`f_276598_`, not `frontText`) because MDG validates them at
+`transformSources`, *before* `remapSrgSourcesToOfficial` runs. Derive them from the `intermediateToNamed.srg`
+that MDG writes into `build/moddev/artifacts/`, and leave `validateAccessTransformers = true` — an AT that
+silently fails to apply is a worldgen deadlock, not a compile error.
+
+⚠ **One unknown REQUIRED tag entry discards the whole tag.** `trial_chambers` is 1.21+, and listing it as a
+bare string voided `#cityworld:allowed` entirely — which removed **strongholds**, and with them the End portal.
+Version-specific entries must be `"required": false`.
+
+**Also corrected here:** the harness demanded `trial_chambers` on every version. It now asks the registry
+whether a set exists before requiring it. The other five branches carry the same hardcoded list, but the set
+exists there, so it is latent rather than broken — polish, not a fix.
+
+### Verdict (pre-port, and it held)
 
 **Tractable, and smaller than the pre-spike warning.** 239 errors is ~4x the 26.3 port (58), but the shape is
 benign: half a rename, the palette barely moves, loot is a `mv`, worldgen is three signatures. The awkward parts
