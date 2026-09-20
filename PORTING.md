@@ -2108,9 +2108,19 @@ its level; see `SupportBlocks.setSignText`).
 
 ### What would be lost, and what would not
 
-**The JourneyMap integration.** The mod is on 1.20.1 Forge (35 builds) but the **2.0 API has no build below
-1.21.1** (all three BlameJared artifacts checked) and our integration targets 2.0. Dropped here, or rewritten
-against the old 1.x API. It was a 5.7.0 headline.
+~~**The JourneyMap integration.**~~ **CORRECTED 2026-09-20 — nothing is lost.** The first pass said the 2.0 API
+had no build below 1.21.1; that was wrong, and wrong because of a **truncated, filtered version listing** (a grep
+plus `head -6` hid the rest). The full listing of `info.journeymap:journeymap-api-forge` carries
+**`1.20.1-2.0.0`** — TeamJM backported the 2.0 API to the old lines (1.16.5, 1.12.2, even 1.7.10). Fetched and
+opened: 124 KB, the whole v2 surface (`IClientAPI`, `IClientPlugin`, `PolygonOverlay`, `MarkerOverlay`,
+`InfoSlotDisplayEvent`, `FullscreenMapEvent`, `RegistryEvent`, the waypoint and server-overlay packages).
+
+**22 of our 23 journeymap imports resolve unchanged.** The one that moves is `Context`:
+`journeymap.api.v2.client.display.Context` on our lines, **`journeymap.api.v2.common.Context`** on the 1.20.1
+build (same nested `MapType`/`UI`). That is a one-line import, not a rewrite — so the integration ships on
+1.20.1 too, and the store's feature claims hold on every line. The lesson is the one this project keeps
+relearning: **never conclude "absent" from a filtered list** — the earlier `grep … | head` is exactly the shape
+of the false negative that the tag-reference and detector-control notes warn about.
 
 **The ecosystem the request is about is present**: BoP (42 builds), TerraBlender (12), every Macaw's we use —
 doors, windows, fences, lights, roofs, stairs, trapdoors, paths, bridges (3–5 each) — and Fantasy's Furniture.
@@ -2120,8 +2130,8 @@ Refurbished is CurseForge-primary and was not confirmed.
 
 **Tractable, and smaller than the pre-spike warning.** 239 errors is ~4x the 26.3 port (58), but the shape is
 benign: half a rename, the palette barely moves, loot is a `mv`, worldgen is three signatures. The awkward parts
-are narrow and known — data maps, the payload model, the AT wiring, the reobf jar, and losing JourneyMap. Days,
-not weeks, with no discovered blocker.
+are narrow and known — data maps, the payload model, the AT wiring and the reobf jar. **JourneyMap is NOT a
+cost** (see the correction above). Days, not weeks, with no discovered blocker.
 
 ## 26.3 port — what actually moved (2026-09-19)
 
