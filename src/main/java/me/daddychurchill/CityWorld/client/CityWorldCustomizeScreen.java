@@ -389,6 +389,22 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
             return WIDTH * 2 + 10;
         }
 
+        /**
+         * Vanilla's 1.20.1 default is {@code width / 2 + 124}, and that constant is not arbitrary: it is
+         * the stock 220-wide row (110 to its edge) plus a 14px gap. Our rows are {@link #getRowWidth()}
+         * = 310 wide, so the default lands <b>31px inside</b> them and the bar is drawn straight through
+         * the right-hand column, leaving the row ends stranded beyond it (owner, 2026-09-21).
+         *
+         * <p>1.20.1 only. The 1.21+/26.x lines take the position from the list's own right edge, so the
+         * same screen is correct there and none of those branches carries this override — nor the whole
+         * {@link Rows} class, which exists because 1.20.1's {@code OptionsList} cannot hold our widgets.
+         * Deriving it from the row width reproduces vanilla's spacing at any width (220/2 + 14 = 124).
+         */
+        @Override
+        protected int getScrollbarPosition() {
+            return this.width / 2 + this.getRowWidth() / 2 + 14;
+        }
+
         private static final class Row extends
                 net.minecraft.client.gui.components.ContainerObjectSelectionList.Entry<Row> {
 
