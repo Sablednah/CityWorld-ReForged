@@ -33,6 +33,18 @@ public final class CityPlanHud {
      */
     private static volatile long hovered = NONE;
 
+    /**
+     * The map screen the caption was last drawn on. <b>Without this it draws over a map mod's own
+     * menus:</b> JourneyMap's waypoint manager and settings are {@code journeymap.*} classes too, so
+     * {@link #isMapScreen} matches them, and the hover deliberately never expires, so it kept painting
+     * on top of them (owner, 2026-09-20).
+     *
+     * <p>Taken from the render event rather than from {@code Minecraft}'s current screen, because that
+     * field is not in the same place on every version. Weakly held, so a closed screen is never kept
+     * alive by this.
+     */
+    private static volatile java.lang.ref.WeakReference<Screen> drawnOn = new java.lang.ref.WeakReference<>(null);
+
     public static void register() {
         MinecraftForge.EVENT_BUS.addListener(CityPlanHud::onRenderScreen);
     }
@@ -44,6 +56,7 @@ public final class CityPlanHud {
 
     public static void clearHover() {
         hovered = NONE;
+        drawnOn = new java.lang.ref.WeakReference<>(null);
     }
 
     /**
@@ -58,6 +71,15 @@ public final class CityPlanHud {
             Screen screen = event.getScreen();
             if (screen == null || !isMapScreen(screen))
                 return;
+            // The map's OWN menus (waypoints, settings) are the map mod's classes too, so the name check
+            // above passes for them. A screen other than the one we last drew on means the caption belongs
+            // to a screen no longer in front: drop it rather than paint over whatever opened.
+            Screen previous = drawnOn.get();
+            if (previous != null && previous != screen) {
+                hovered = NONE;
+                drawnOn = new java.lang.ref.WeakReference<>(null);
+                return;
+            }
 
             int chunkX = (int) at;
             int chunkZ = (int) (at >> 32);
@@ -83,6 +105,7 @@ public final class CityPlanHud {
             // the ground beneath it should still show through.
             graphics.fill(x - 3, y - 3, x + width + 3, y + font.lineHeight + 2, 0x70000000);
             HudText.draw(graphics, font, text, x, y, 0xFFFFFFFF);
+            drawnOn = new java.lang.ref.WeakReference<>(screen);
         } catch (Throwable t) {
             // Never take a screen down over a caption.
             CityWorldMod.LOGGER.debug("CityWorld hover text failed", t);
