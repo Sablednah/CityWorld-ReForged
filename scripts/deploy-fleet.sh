@@ -46,6 +46,7 @@ warn() { echo "!! $*" >&2; }
 CHECKOUTS=(
     "master|$ROOT|$ROOT/tools/jdk21"
     "mc1.21.1|$WORKTREES/mc1.21.1|$ROOT/tools/jdk21"
+    "mc1.20.1|$WORKTREES/mc1.20.1|$ROOT/tools/jdk17"   # the Forge line
     "mc26.1|$WORKTREES/mc26.1|$ROOT/tools/jdk25"
     "mc26.2|$WORKTREES/mc26.2|$ROOT/tools/jdk25"
     "mc26.3|$WORKTREES/mc26.3|$ROOT/tools/jdk25"

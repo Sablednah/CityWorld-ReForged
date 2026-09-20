@@ -79,6 +79,9 @@ fi
 # Picking by hand is the sort of thing you get wrong once per version, so derive it.
 if [ -z "${JAVA_HOME:-}" ]; then
     case "$(mc_version)" in
+        # 1.20.1 is the Forge line and ships Java 17; the 1.21 line ships 21. A bare 1.* glob would
+        # hand that branch a JDK it cannot build with.
+        1.20.*) wanted="jdk17" ;;
         1.*) wanted="jdk21" ;;
         *)   wanted="jdk25" ;;
     esac

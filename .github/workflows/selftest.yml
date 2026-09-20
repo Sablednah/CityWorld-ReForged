@@ -54,6 +54,7 @@ jobs:
           neo="$(grep -E '^neo_version=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')"
           # Minecraft 26.x ships the Java 25 runtime; the 1.21 line ships Java 21.
           case "$mc" in
+            1.20.*) java=17 ;;
             1.*) java=21 ;;
             *)   java=25 ;;
           esac
