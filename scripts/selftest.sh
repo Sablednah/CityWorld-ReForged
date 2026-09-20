@@ -98,6 +98,12 @@ echo ">> CityWorld self-test — Minecraft $VERSION"
 
 mkdir -p "$REPORTS" "$ROOT/run"
 
+# Accept Mojang's EULA for this headless test server. The dedicated server refuses to start without
+# it ("You need to agree to the EULA"), and a fresh checkout has no run/ directory at all — which is
+# why CI failed on the Forge line while passing everywhere else: NeoForge's dev runServer writes this
+# itself, the legacyforge path does not. Writing it here makes a clean checkout work on every line.
+printf 'eula=true\n' > "$ROOT/run/eula.txt"
+
 # A fresh world every time: existing chunks never regenerate, so a stale one would test nothing.
 rm -rf "$ROOT/run/world"
 
