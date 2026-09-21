@@ -39,6 +39,11 @@ public abstract class PlatLot {
 	public boolean trulyIsolated;
 	protected final boolean inACity;
 
+	/** Whether a vanilla or modded structure is planned here, so this chunk was deliberately left as
+	 *  bare terrain for it to land on. Asked once, at construction, exactly as {@link #inACity} is —
+	 *  the answer is analytic and seed-stable, so it cannot change under the lot. */
+	protected final boolean structureReserved;
+
 	final Material pavementSidewalk;
 	final Material dirtroadSidewalk;
 
@@ -49,6 +54,7 @@ public abstract class PlatLot {
 		this.style = LotStyle.NATURE;
 		this.trulyIsolated = false;
 		this.inACity = platmap.generator.getSettings().inCityRange(chunkX, chunkZ);
+		this.structureReserved = platmap.generator.isStructureReserved(chunkX, chunkZ);
 
 		// pavement is 0, read in RoadLot
 		// lines is 1, read in RoadLot
