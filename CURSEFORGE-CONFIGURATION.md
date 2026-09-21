@@ -191,6 +191,27 @@ Two things here are **datapack tags, not settings**, because they are lists of i
 | `#cityworld:allowed` (structure sets) | Which vanilla structures generate. Ships as strongholds, trial chambers and ancient cities. Add another mod's structure set here and it will generate; **an absent or empty tag means none**, so a stripped datapack falls back to CityWorld-only worldgen rather than letting villages loose. |
 | `#cityworld:cave_pool` (biomes) | Which cave biomes the underground draws from. Ships as deep dark, lush, dripstone, and sulfur caves (Minecraft 26.2+, marked optional so it is simply absent on older versions). Add a modded cave biome here and it will appear. |
 
+> **Adding another mod's structures — and telling whether it worked.**
+>
+> Put `data/cityworld/tags/worldgen/structure_set/allowed.json` either in a world datapack
+> (`<world>/datapacks/<name>/`, that world only) or in a data-only mod jar in `mods/` (every world).
+> Keep `"replace": false`, and write each entry as `{ "id": "themod:their_set", "required": false }` —
+> **one unknown *required* entry discards the entire tag**, which silently removes strongholds and with
+> them the End portal. List the mod's *structure **sets*** (`worldgen/structure_set/`), not its structures.
+>
+> Three different things look alike here, and confusing them costs an afternoon:
+>
+> | What you see | What it actually proves |
+> |---|---|
+> | `/locate structure <id>` offers the name in **autocomplete** | Only that the **mod** is installed — that list comes from the structure registry, which the mod fills on its own. It looks identical whether or not your tag took. |
+> | The pack appears in the **Mods list** (or `/datapack list`) | Your **file loaded**. Still not that the tag merged. |
+> | `/locate structure <id>` **returns a position** | Placement works — the tag took. This is the only one that answers the question. |
+>
+> Two silent failures worth knowing. A structure whose biomes CityWorld's biome source cannot produce is
+> **dropped even when allowed** (the game discards any structure set it cannot host), so check the mod's
+> `tags/worldgen/biome/has_structure/` against what CityWorld actually generates. And nothing retro-fits
+> into existing chunks — **test in a new world**, or at least in terrain that has never been generated.
+
 The `caves` settings group is the numbers those tags cannot express:
 
 | Setting | Default | What it does |
