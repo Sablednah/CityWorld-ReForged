@@ -186,12 +186,144 @@ public final class CityWorldCommands {
         // /cwlocate <biome> [tp] — like vanilla /locate biome, but driven by CityWorld's own climate map
         // (vanilla /locate is blind here: the biome source only reports a plains fallback). Add "tp" to
         // teleport to the match.
+        //
+        //   /cwlocate structure <id>        report the nearest one
+        //   /cwlocate structure tp <id>     and teleport onto it
+        //
+        // Vanilla's own /locate structure already reports a position; what this adds is the teleport, and
+        // it answers a question vanilla's cannot: our generator filters placements through
+        // #cityworld:allowed, so a structure that is installed but NOT allowed is simply not found here.
+        // That distinguishes "the mod is loaded" from "the tag took", which the /locate autocomplete
+        // cannot — it lists the structure registry either way.
+        //
+        // "tp" is a literal BEFORE the id for the same reason the schematic search does it: the id is a
+        // greedy argument (namespaced ids contain a colon, which StringArgumentType.word() rejects), so a
+        // trailing literal would be swallowed by it.
         dispatcher.register(Commands.literal("cwlocate")
                 .requires(CityWorldPermissions.check(CityWorldPermissions.FIND))
+                .then(Commands.literal("structure")
+                        .then(Commands.literal("tp")
+                                .then(Commands.argument("id", StringArgumentType.greedyString())
+                                        .suggests(SUGGEST_STRUCTURES)
+                                        .executes(ctx -> locateStructure(ctx, true))))
+                        .then(Commands.argument("id", StringArgumentType.greedyString())
+                                .suggests(SUGGEST_STRUCTURES)
+                                .executes(ctx -> locateStructure(ctx, false))))
                 .then(Commands.argument("biome", StringArgumentType.word())
                         .executes(ctx -> locateBiome(ctx, false))
                         .then(Commands.literal("tp")
                                 .executes(ctx -> locateBiome(ctx, true)))));
+    }
+
+    /** Every structure id in the world's registry. Declared here rather than beside the other
+     *  SUGGEST_* constants so this addition touches one region of the file, not two. */
+    private static final SuggestionProvider<CommandSourceStack> SUGGEST_STRUCTURES = (ctx, builder) ->
+            SharedSuggestionProvider.suggest(
+                    ctx.getSource().registryAccess().lookupOrThrow(Registries.STRUCTURE).listElements()
+                            .map(CityWorldCommands::structureId).sorted().toList(),
+                    builder);
+
+    /**
+     * A structure holder's id as a plain string.
+     *
+     * <p><b>⚠ This is the one line in this file that differs per Minecraft line.</b> {@code ResourceKey}
+     * exposes {@code identifier()} on 1.21.11+ and {@code location()} on 1.20.1 — the
+     * {@code ResourceLocation -> Identifier} rename took the accessor with it, and there is no common
+     * String-returning alternative: 1.20.1's {@code Holder} has no {@code getRegisteredName()} (added
+     * later), so nothing spans all six lines. The divergence is deliberately confined to this one
+     * expression, so a cherry-pick conflicts here and nowhere else.
+     *
+     * <p>Built on {@code unwrapKey()} rather than {@code key()} because the latter exists only on
+     * {@code Holder.Reference}, while this must accept any holder.
+     */
+    private static String structureId(net.minecraft.core.Holder<
+            net.minecraft.world.level.levelgen.structure.Structure> holder) {
+        return holder.unwrapKey().map(k -> k.identifier().toString()).orElse("");
+    }
+
+    // ------------------------------------------------------------------ /cwlocate structure
+
+    /** Chunks to search out for a structure, matching vanilla {@code /locate}'s own radius. */
+    private static final int LOCATE_STRUCTURE_CHUNKS = 100;
+
+    /**
+     * Finds the nearest instance of one structure, and optionally teleports onto it.
+     *
+     * <p><b>This runs on the server thread, unlike {@link #locateBiome}.</b> That one scans off a daemon
+     * thread because classifying a biome is pure arithmetic; {@code findNearestMapStructure} is not — it
+     * reads the level and its chunk source, and vanilla's own {@code /locate} runs it on the server
+     * thread for exactly that reason. Moving it off-thread would be a data race whose symptom is rare
+     * and unreproducible, which is the worst kind to go looking for later.
+     *
+     * <p>The search is analytic, so it finds structures in land that has never been generated — and in a
+     * CityWorld world it only finds what {@code #cityworld:allowed} permits, which makes it a direct test
+     * of whether a compatibility datapack actually took.
+     */
+    private static int locateStructure(CommandContext<CommandSourceStack> ctx, boolean teleport)
+            throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        ServerLevel level = player.level();
+        String query = StringArgumentType.getString(ctx, "id").trim().toLowerCase(Locale.ROOT);
+
+        // Match on the full id, or on the path alone so "village_plains" works as well as
+        // "minecraft:village_plains". The id type is deliberately never named: it is Identifier on the
+        // 1.21+ lines and ResourceLocation on 1.20.1, and naming it would break the cherry-pick.
+        var lookup = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
+        var match = lookup.listElements()
+                .filter(h -> {
+                    String id = structureId(h);
+                    return id.equals(query) || id.endsWith(":" + query);
+                })
+                .findFirst();
+        if (match.isEmpty()) {
+            ctx.getSource().sendFailure(Component.literal("No structure called '" + query
+                    + "'. Tab-completion lists every structure this world has registered."));
+            return 0;
+        }
+
+        var holder = match.get();
+        String name = structureId(holder);
+        ChunkGenerator generator = level.getChunkSource().getGenerator();
+
+        ctx.getSource().sendSuccess(() -> Component.literal("Searching for " + name + "..."), false);
+
+        com.mojang.datafixers.util.Pair<BlockPos,
+                net.minecraft.core.Holder<net.minecraft.world.level.levelgen.structure.Structure>> found;
+        try {
+            found = generator.findNearestMapStructure(level,
+                    net.minecraft.core.HolderSet.direct(holder), player.blockPosition(),
+                    LOCATE_STRUCTURE_CHUNKS, false);
+        } catch (Exception e) {
+            ctx.getSource().sendFailure(Component.literal("The search failed: " + e));
+            return 0;
+        }
+
+        if (found == null) {
+            player.sendSystemMessage(Component.literal("Found no " + name + " within "
+                    + (LOCATE_STRUCTURE_CHUNKS * 16) + " blocks."
+                    + (generator instanceof CityWorldChunkGenerator
+                            ? "  (In a CityWorld world only structures in #cityworld:allowed are placed.)"
+                            : "")));
+            return 0;
+        }
+
+        BlockPos at = found.getFirst();
+        double dist = Math.hypot(at.getX() - player.getX(), at.getZ() - player.getZ());
+        player.sendSystemMessage(Component.literal("Nearest " + name + " at x=" + at.getX() + " z=" + at.getZ()
+                + "  (" + Math.round(dist) + " blocks "
+                + compass(at.getX() - player.getX(), at.getZ() - player.getZ()) + ")"
+                + mark(player, name, at.getX(), at.getZ())));
+
+        if (teleport) {
+            // Force the target chunk so the heightmap is real before reading it — the position comes back
+            // from placement maths and the land there may never have been generated.
+            level.getChunk(at.getX() >> 4, at.getZ() >> 4);
+            int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, at.getX(), at.getZ());
+            player.teleportTo(level, at.getX() + 0.5, y, at.getZ() + 0.5, Set.<Relative>of(),
+                    player.getYRot(), player.getXRot(), false);
+            player.sendSystemMessage(Component.literal("Teleported to the nearest " + name + "."));
+        }
+        return 1;
     }
 
     // ------------------------------------------------------------------ /cityinfo
