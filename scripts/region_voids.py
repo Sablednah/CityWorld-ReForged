@@ -64,6 +64,7 @@ def main():
     cols = 0
     hit_cols = 0
     total = 0
+    unclosed = 0
     worst = []
     for x in range(x0, x1 + 1):
         for z in range(z0, z1 + 1):
@@ -78,6 +79,7 @@ def main():
             cols += 1
             found = 0
             biggest = 0
+            open_run = False
             i = top - 1
             floor_i = max(0, top - near)
             while i >= floor_i:
@@ -89,7 +91,17 @@ def main():
                         run = start - i
                         found += run
                         biggest = max(biggest, run)
+                    else:
+                        # The air reached the BOTTOM of the scan window without meeting a floor, so
+                        # we cannot tell whether it is a cavity or an open shaft — and dropping it
+                        # silently is how this tool under-reported by a factor of three: scanning
+                        # y60..110 gave "max 6 tall", while y40..130 over the identical box gave 18.
+                        # A window that clips what you are measuring returns a QUIETER answer, not an
+                        # error. Count it and say so, rather than let a truncated scan read as clean.
+                        open_run = True
                 i -= 1
+            if open_run:
+                unclosed += 1
             if found:
                 hit_cols += 1
                 total += found
@@ -100,6 +112,11 @@ def main():
     print(f"columns with ground: {cols}")
     print(f"columns with enclosed air within {near} of the surface: {hit_cols}  ({pct:.1f}%)")
     print(f"total enclosed air blocks: {total}")
+    if unclosed:
+        print(f"!! {unclosed} column(s) had air reaching the BOTTOM of the scan window (y{y0}) with no")
+        print(f"   floor beneath it, so they were NOT counted. Lower y0 and re-run: a window that clips")
+        print(f"   a cavity reports a quieter answer, not an error. (y60..110 once gave 'max 6 tall'")
+        print(f"   where y40..130 over the same box gave 18.)")
     if worst:
         print("worst columns (tallest run, total, x, z, surface y):")
         for big, tot, x, z, ty in worst[:listn]:

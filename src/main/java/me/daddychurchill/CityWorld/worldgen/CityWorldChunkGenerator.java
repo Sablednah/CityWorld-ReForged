@@ -452,6 +452,12 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // routes to whichever lot owns this chunk, and the lot calls the shape provider itself —
         // so terrain and city come from one path rather than two.
         PlatMap platmap = context.getPlatMap(chunkX, chunkZ);
+
+        // Smooth the PLANNED ground under any surface structure BEFORE terrain is drawn from it.
+        // Order is the whole fix: the previous pad ran after this line and rewrote blocks, leaving the
+        // planned heights untouched, so decoration later painted a surface at the old level over a void.
+        padPlanForStructures(context, structureManager, chunk, platmap);
+
         platmap.generateChunk(blocks, IGNORE_BIOMES);
 
         // Make room for any structure that expects the terrain to get out of its way. Vanilla does this
@@ -604,6 +610,120 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private static final boolean PAD_LOG = System.getProperty("cityworld.padlog") != null
             || System.getProperty("cityworld.probe") != null
             || System.getProperty("cityworld.diagnostics") != null;
+
+    /**
+     * Smooths the <b>planned</b> ground under a surface structure, before terrain is drawn from it.
+     *
+     * <p>This is the replacement for the block-rewriting pad below, and the difference is the whole
+     * point: it edits {@code AbstractCachedYs.blockYs}, which {@code PlatLot.generateChunk} hands to the
+     * shape provider at the terrain stage AND {@code PlatLot.generateSurface} hands to the surface
+     * provider at decoration. One source of truth, so terrain and surface cannot disagree. The old pad
+     * moved blocks and left those heights alone, which put a floating lid over a cavity in 28.5% of one
+     * village's columns.
+     *
+     * <p>Kept from the old one because they were right: buried and {@code #cityworld:carve_cavern}
+     * starts belong to {@link #carveForStructures}, and the target is an inverse-square distance-weighted
+     * blend of nearby piece bases rather than the nearest one — snapping to the nearest gave adjacent
+     * columns targets up to 110 blocks apart on a mountainside village and built the step between them.
+     *
+     * <p>One-shot per chunk ({@code isPadded}): blending a second time would weigh ground this had
+     * already moved. Heights are indexed 0..15 within the chunk while piece distances are world
+     * coordinates — easy to conflate, and silently wrong if conflated.
+     */
+    private void padPlanForStructures(CityWorldGenerator context, StructureManager structureManager,
+            ChunkAccess chunk, PlatMap platmap) {
+        try {
+            ChunkPos pos = chunk.getPos();
+            me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x, pos.z);
+            if (lot == null)
+                return;
+            me.daddychurchill.CityWorld.Support.AbstractCachedYs ys = lot.getCachedYs();
+            if (ys == null || ys.isPadded())
+                return;
+
+            List<net.minecraft.world.level.levelgen.structure.StructureStart> starts =
+                    structureManager.startsForStructure(pos, structure -> true);
+            if (starts.isEmpty())
+                return;
+
+            var cavern = structureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE).get(CARVE_CAVERN);
+            int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
+            List<net.minecraft.world.level.levelgen.structure.BoundingBox> boxes = new java.util.ArrayList<>();
+
+            for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
+                String id = PAD_LOG ? String.valueOf(start.getStructure()) : "";
+                var whole = start.getBoundingBox();
+                if (cavern.map(set -> set.stream().anyMatch(h -> h.value() == start.getStructure())).orElse(false)) {
+                    if (PAD_LOG)
+                        LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: SKIP cavern — {}", pos.x, pos.z, id);
+                    continue;
+                }
+                int groundAtCentre = context.shapeProvider.findBlockY(context,
+                        (whole.minX() + whole.maxX()) / 2, (whole.minZ() + whole.maxZ()) / 2);
+                if (whole.maxY() <= groundAtCentre) {
+                    if (PAD_LOG)
+                        LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: SKIP buried — {} box y {}..{} vs ground {}",
+                                pos.x, pos.z, id, whole.minY(), whole.maxY(), groundAtCentre);
+                    continue;
+                }
+                for (net.minecraft.world.level.levelgen.structure.StructurePiece piece : start.getPieces()) {
+                    net.minecraft.world.level.levelgen.structure.BoundingBox b = piece.getBoundingBox();
+                    if (b.maxX() + PAD_TAPER < minX || b.minX() - PAD_TAPER > minX + 15
+                            || b.maxZ() + PAD_TAPER < minZ || b.minZ() - PAD_TAPER > minZ + 15)
+                        continue;
+                    boxes.add(b);
+                }
+            }
+            if (boxes.isEmpty())
+                return;
+
+            int moved = 0;
+            double deltaMin = Double.MAX_VALUE, deltaMax = -Double.MAX_VALUE;
+            for (int x = 0; x < 16; x++)
+                for (int z = 0; z < 16; z++) {
+                    int wx = minX + x, wz = minZ + z;   // plan is chunk-local, boxes are world coords
+                    double nearest = 1.0, weightSum = 0.0, baseSum = 0.0;
+                    for (net.minecraft.world.level.levelgen.structure.BoundingBox b : boxes) {
+                        int dx = Math.max(0, Math.max(b.minX() - wx, wx - b.maxX()));
+                        int dz = Math.max(0, Math.max(b.minZ() - wz, wz - b.maxZ()));
+                        double dist = Math.max(dx, dz);
+                        double d = dist / (double) PAD_TAPER;
+                        if (d < nearest)
+                            nearest = d;
+                        double w = 1.0 / (dist * dist + 1.0);
+                        weightSum += w;
+                        baseSum += w * (b.minY() - 1); // the block the structure stands ON
+                    }
+                    if (nearest >= 1.0 || weightSum <= 0.0)
+                        continue;
+
+                    double blended = baseSum / weightSum;
+                    double natural = ys.getPerciseY(x, z);
+                    double ease = nearest * nearest * (3.0 - 2.0 * nearest);
+                    double target = blended + (natural - blended) * ease;
+                    if (Math.abs(target - natural) >= 0.5) {
+                        moved++;
+                        deltaMin = Math.min(deltaMin, target - natural);
+                        deltaMax = Math.max(deltaMax, target - natural);
+                    }
+                    ys.setPerciseY(x, z, target);
+                }
+
+            // Derived state must follow: calcMinMax only widens, and getMinHeight() drives the mine
+            // level loops and calcState decides sea/buildable/peak.
+            ys.recompute(context);
+            ys.markPadded();
+            if (PAD_LOG)
+                LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: {} of 256 columns moved, delta {} .. {}",
+                        pos.x, pos.z, moved,
+                        deltaMin == Double.MAX_VALUE ? 0 : Math.round(deltaMin),
+                        deltaMax == -Double.MAX_VALUE ? 0 : Math.round(deltaMax));
+        } catch (Throwable t) {
+            // getMapLot can throw IndexOutOfBounds; nothing here may break terrain generation.
+            if (PAD_LOG)
+                LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: FAILED", chunk.getPos().x, chunk.getPos().z, t);
+        }
+    }
 
     /**
      * ⚠ <b>DISABLED — not called from {@link #buildCity}. Do not re-enable as-is.</b>
