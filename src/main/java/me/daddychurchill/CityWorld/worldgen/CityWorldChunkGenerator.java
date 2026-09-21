@@ -456,7 +456,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
         // Make room for any structure that expects the terrain to get out of its way. Vanilla does this
         // in the same pass, via the Beardifier density function — see carveForStructures.
+        //
+        // The two halves of that job are deliberately separate, because they want opposite things:
+        // a BURIED structure needs terrain removed (a cavern), while one standing on the SURFACE needs
+        // terrain added under it (a pad). Doing the former to the latter is what open-cast a quarry
+        // around Cataclysm's desert structures; doing neither is what left villages on platforms.
         carveForStructures(context, structureManager, chunk);
+        padForSurfaceStructures(context, structureManager, chunk);
     }
 
     /**
@@ -566,6 +572,114 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     }
         } catch (Throwable t) {
             // never let terrain adaptation break chunk generation
+        }
+    }
+
+    /** How far a pad eases back to natural ground. Vanilla's beard falls off over roughly this much. */
+    private static final int PAD_TAPER = 8;
+
+    /**
+     * Levels the ground <em>under</em> a surface structure — our stand-in for vanilla's Beardifier.
+     *
+     * <p><b>Why this exists.</b> Vanilla shapes terrain around a {@code BEARD_THIN}/{@code BEARD_BOX}
+     * structure inside noise generation, via {@code Beardifier}. CityWorld lays its own terrain and
+     * never runs that, so before this a village simply sat at its own fixed Y with the hillside
+     * stepping away underneath — houses on visible platforms, worst on slopes (owner, 2026-09-21).
+     * The previous stand-in was {@link #carveForStructures}, which hollowed out the piece boxes plus a
+     * 10-block halo; on a surface structure that open-casts a quarry, which is why it now runs only for
+     * buried starts. This is the other half: buried structures get a cavern, surface ones get a pad.
+     *
+     * <p><b>It fills widely and shaves narrowly, and that asymmetry is the whole design.</b> Filling
+     * outward across the taper is what removes the platform edge. Shaving outward is what produced the
+     * quarry — so terrain is only ever removed <em>inside</em> a piece box, where the structure is about
+     * to be built anyway, and never in the taper. The worst case is therefore a structure sitting on a
+     * gentle mound, never a pit cut into the landscape.
+     *
+     * <p>Fill uses {@code oreProvider}'s own surface/subsurface materials, so a pad is snow on Astral,
+     * end stone in the End, netherrack in the Nether and sandstone on dunes rather than a dirt scar.
+     */
+    private void padForSurfaceStructures(CityWorldGenerator context, StructureManager structureManager,
+            ChunkAccess chunk) {
+        try {
+            ChunkPos pos = chunk.getPos();
+            List<net.minecraft.world.level.levelgen.structure.StructureStart> starts =
+                    structureManager.startsForStructure(pos, CityWorldChunkGenerator::carvesTerrain);
+            if (starts.isEmpty())
+                return;
+
+            int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
+            List<net.minecraft.world.level.levelgen.structure.BoundingBox> boxes = new java.util.ArrayList<>();
+            for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
+                // Buried starts belong to carveForStructures; only the ones standing on the ground get a pad.
+                var whole = start.getBoundingBox();
+                int groundAtCentre = context.shapeProvider.findBlockY(context,
+                        (whole.minX() + whole.maxX()) / 2, (whole.minZ() + whole.maxZ()) / 2);
+                if (whole.maxY() <= groundAtCentre)
+                    continue;
+                for (net.minecraft.world.level.levelgen.structure.StructurePiece piece : start.getPieces()) {
+                    net.minecraft.world.level.levelgen.structure.BoundingBox b = piece.getBoundingBox();
+                    if (b.maxX() + PAD_TAPER < minX || b.minX() - PAD_TAPER > minX + 15
+                            || b.maxZ() + PAD_TAPER < minZ || b.minZ() - PAD_TAPER > minZ + 15)
+                        continue;
+                    boxes.add(b);
+                }
+            }
+            if (boxes.isEmpty())
+                return;
+
+            net.minecraft.world.level.block.state.BlockState surface =
+                    context.oreProvider.surfaceMaterial.getBlockState();
+            net.minecraft.world.level.block.state.BlockState subsurface =
+                    context.oreProvider.subsurfaceMaterial.getBlockState();
+            net.minecraft.world.level.block.state.BlockState air =
+                    net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+            net.minecraft.core.BlockPos.MutableBlockPos cursor = new net.minecraft.core.BlockPos.MutableBlockPos();
+
+            int floorLimit = chunk.getMinY() + 1; // leave bedrock alone, as the carve does
+            int roofLimit = chunk.getMaxY();
+
+            for (int x = minX; x <= minX + 15; x++)
+                for (int z = minZ; z <= minZ + 15; z++) {
+                    // Nearest piece box, and how far outside it this column is: 0 inside, 1 at the taper edge.
+                    double nearest = 1.0;
+                    int padY = Integer.MIN_VALUE, boxTop = Integer.MIN_VALUE;
+                    for (net.minecraft.world.level.levelgen.structure.BoundingBox b : boxes) {
+                        int dx = Math.max(0, Math.max(b.minX() - x, x - b.maxX()));
+                        int dz = Math.max(0, Math.max(b.minZ() - z, z - b.maxZ()));
+                        double d = Math.max(dx, dz) / (double) PAD_TAPER;
+                        if (d < nearest || (d == nearest && b.minY() - 1 > padY)) {
+                            nearest = d;
+                            padY = b.minY() - 1; // the block the structure stands ON
+                            boxTop = b.maxY();
+                        }
+                    }
+                    if (nearest >= 1.0 || padY == Integer.MIN_VALUE)
+                        continue;
+
+                    int natural = chunk.getHeight(
+                            net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, x, z) - 1;
+                    // Ease from the structure's floor out to the natural ground across the taper.
+                    int target = (int) Math.round(padY + (natural - padY) * nearest);
+
+                    if (natural < target) {
+                        // FILL — everywhere in the taper. This is what removes the platform edge.
+                        for (int y = Math.max(natural + 1, floorLimit); y <= Math.min(target, roofLimit); y++) {
+                            cursor.set(x, y, z);
+                            chunk.setBlockState(cursor, y == target ? surface : subsurface);
+                        }
+                    } else if (natural > target && nearest <= 0.0) {
+                        // SHAVE — only directly under a piece, never in the taper, and never above the
+                        // structure itself: anything higher is hillside that is none of our business.
+                        for (int y = Math.max(target + 1, floorLimit); y <= Math.min(Math.min(natural, boxTop),
+                                roofLimit); y++) {
+                            cursor.set(x, y, z);
+                            if (!chunk.getBlockState(cursor).isAir())
+                                chunk.setBlockState(cursor, air);
+                        }
+                    }
+                }
+        } catch (Throwable t) {
+            // a pad must never break chunk generation, exactly as the carve must not
         }
     }
 
