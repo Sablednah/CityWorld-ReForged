@@ -579,6 +579,23 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private static final int PAD_TAPER = 8;
 
     /**
+     * Whether the pad narrates what it decides, per start and per chunk.
+     *
+     * <p><b>Why this exists.</b> Judging the pad from the finished world does not work: a height
+     * transect through a desert pyramid showed flat sand at y64 butting straight into the structure with
+     * no dish and no taper (2026-09-21), and that single observation is consistent with two completely
+     * different faults — the start being skipped as buried, or the pad running and having nothing to do
+     * because the ground was already at the target. Those want opposite fixes, and no amount of reading
+     * blocks afterwards can separate them. So the pad says which branch it took.
+     *
+     * <p>Automatically on under a probe, because that is exactly when someone is asking. Off otherwise:
+     * a line per start per chunk would be in every user's log forever for the sake of one afternoon.
+     */
+    private static final boolean PAD_LOG = System.getProperty("cityworld.padlog") != null
+            || System.getProperty("cityworld.probe") != null
+            || System.getProperty("cityworld.diagnostics") != null;
+
+    /**
      * Levels the ground <em>under</em> a surface structure — our stand-in for vanilla's Beardifier.
      *
      * <p><b>Why this exists.</b> Vanilla shapes terrain around a {@code BEARD_THIN}/{@code BEARD_BOX}
@@ -621,14 +638,24 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
             List<net.minecraft.world.level.levelgen.structure.BoundingBox> boxes = new java.util.ArrayList<>();
             for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
-                if (cavern.map(set -> set.stream().anyMatch(h -> h.value() == start.getStructure())).orElse(false))
-                    continue;
-                // Buried starts belong to carveForStructures; only the ones standing on the ground get a pad.
+                String id = PAD_LOG ? String.valueOf(start.getStructure()) : "";
                 var whole = start.getBoundingBox();
+                if (cavern.map(set -> set.stream().anyMatch(h -> h.value() == start.getStructure())).orElse(false)) {
+                    if (PAD_LOG)
+                        LOGGER_STRUCTURES.warn("PAD chunk {},{}: SKIP cavern — {} box y {}..{}",
+                                pos.x, pos.z, id, whole.minY(), whole.maxY());
+                    continue;
+                }
+                // Buried starts belong to carveForStructures; only the ones standing on the ground get a pad.
                 int groundAtCentre = context.shapeProvider.findBlockY(context,
                         (whole.minX() + whole.maxX()) / 2, (whole.minZ() + whole.maxZ()) / 2);
-                if (whole.maxY() <= groundAtCentre)
+                if (whole.maxY() <= groundAtCentre) {
+                    if (PAD_LOG)
+                        LOGGER_STRUCTURES.warn("PAD chunk {},{}: SKIP buried — {} box y {}..{} vs ground {}",
+                                pos.x, pos.z, id, whole.minY(), whole.maxY(), groundAtCentre);
                     continue;
+                }
+                int before = boxes.size();
                 for (net.minecraft.world.level.levelgen.structure.StructurePiece piece : start.getPieces()) {
                     net.minecraft.world.level.levelgen.structure.BoundingBox b = piece.getBoundingBox();
                     if (b.maxX() + PAD_TAPER < minX || b.minX() - PAD_TAPER > minX + 15
@@ -636,9 +663,18 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         continue;
                     boxes.add(b);
                 }
+                if (PAD_LOG)
+                    LOGGER_STRUCTURES.warn(
+                            "PAD chunk {},{}: PAD — {} box y {}..{} vs ground {}, {} of {} pieces in range",
+                            pos.x, pos.z, id, whole.minY(), whole.maxY(), groundAtCentre,
+                            boxes.size() - before, start.getPieces().size());
             }
-            if (boxes.isEmpty())
+            if (boxes.isEmpty()) {
+                if (PAD_LOG)
+                    LOGGER_STRUCTURES.warn("PAD chunk {},{}: nothing to pad — {} start(s), no piece in range",
+                            pos.x, pos.z, starts.size());
                 return;
+            }
 
             net.minecraft.world.level.block.state.BlockState surface =
                     context.oreProvider.surfaceMaterial.getBlockState();
@@ -650,6 +686,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
             int floorLimit = chunk.getMinY() + 1; // leave bedrock alone, as the carve does
             int roofLimit = chunk.getMaxY();
+
+            // Counted only to be reported (see PAD_LOG): "ran and moved nothing" and "never ran" look
+            // identical in a finished world, and telling them apart is the whole point.
+            int padFilled = 0, padShaved = 0, padUnchanged = 0;
+            int padDeltaMin = Integer.MAX_VALUE, padDeltaMax = Integer.MIN_VALUE;
 
             for (int x = minX; x <= minX + 15; x++)
                 for (int z = minZ; z <= minZ + 15; z++) {
@@ -689,13 +730,18 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     double ease = nearest * nearest * (3.0 - 2.0 * nearest);
                     int target = (int) Math.round(blended + (natural - blended) * ease);
 
+                    padDeltaMin = Math.min(padDeltaMin, target - natural);
+                    padDeltaMax = Math.max(padDeltaMax, target - natural);
+
                     if (natural < target) {
+                        padFilled++;
                         // FILL — everywhere in the taper. This is what removes the platform edge.
                         for (int y = Math.max(natural + 1, floorLimit); y <= Math.min(target, roofLimit); y++) {
                             cursor.set(x, y, z);
                             chunk.setBlockState(cursor, y == target ? surface : subsurface);
                         }
                     } else if (natural > target) {
+                        padShaved++;
                         // SHAVE — across the taper too, not just under the piece, so the structure sits in
                         // ground that eases into the landscape instead of on a shelf cut out of it.
                         //
@@ -710,10 +756,27 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             if (!chunk.getBlockState(cursor).isAir())
                                 chunk.setBlockState(cursor, air);
                         }
+                    } else {
+                        // Target already equals the natural surface. Counted, because a chunk full of
+                        // these is a pad that ran and correctly had nothing to do — which is exactly what
+                        // the flat-desert pyramid transect could not distinguish from a pad that never ran.
+                        padUnchanged++;
                     }
                 }
+            if (PAD_LOG)
+                LOGGER_STRUCTURES.warn(
+                        "PAD chunk {},{}: {} filled, {} shaved, {} unchanged; target-natural {}..{}",
+                        pos.x, pos.z, padFilled, padShaved, padUnchanged,
+                        padDeltaMin == Integer.MAX_VALUE ? 0 : padDeltaMin,
+                        padDeltaMax == Integer.MIN_VALUE ? 0 : padDeltaMax);
         } catch (Throwable t) {
-            // a pad must never break chunk generation, exactly as the carve must not
+            // A pad must never break chunk generation, exactly as the carve must not — but it must not
+            // hide either. A silently swallowed throw is indistinguishable from "ran and did nothing",
+            // which is the very ambiguity this instrumentation exists to remove, and this project has
+            // already lost half a day to a caught exception reading as scarcity (populateLots FAILED).
+            if (PAD_LOG)
+                LOGGER_STRUCTURES.warn("PAD chunk {},{}: FAILED",
+                        chunk.getPos().x, chunk.getPos().z, t);
         }
     }
 
