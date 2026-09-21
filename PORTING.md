@@ -22,9 +22,16 @@ method, so a single override fixed all three; derived from the row width, so it 
 CurseForge loader tag and Modrinth's `loaders` array — and the Java case mapped `1.*` to 21, so a Java 17 jar
 would have been tagged Java 21. All three now key off `$MC_VERSION`; neither workflow needed changing, since
 they already read it from the jar's `+mc` suffix. *A publishing script is only ever exercised by the kinds of
-jar you have already shipped.* (2) **Push the version branch BEFORE master**: `selftest.yml` fires only on
-master pushes and its matrix then checks out each branch's head, so the wrong order gives a green gate for a
-tree you are not releasing.
+jar you have already shipped.* (2) **Push the version branch BEFORE master**: the matrix checks out each
+branch's head, so the wrong order gives a green gate for a tree you are not releasing.
+
+> ⚠ **Correction (2026-09-21).** I first wrote that as "`selftest.yml` fires only on master pushes", which
+> was **not true when written** — every branch carried its own drifted copy of the workflow, and `mc26.1`'s
+> *did* list itself, so pushes there fired their own runs while identical pushes to `mc1.20.1` and
+> `mc1.21.1` fired nothing. I generalised from a single observation. It is true *now*, but only because the
+> workflows were then deleted from every version branch (owner: *"cant drift if they dont exist"*), leaving
+> master as the sole copy. Right advice, invented reason — check `gh run list --branch <b>` rather than
+> assuming either way.
 
 **Next up:** nothing queued for 1.20.1. See "▶ Next up" further down for the standing queue.
 
@@ -2979,11 +2986,16 @@ It is dormant unless `-Dcityworld.selftest=true`. Run it with `./scripts/selftes
 right JDK from `minecraft_version`), then `./scripts/selftest.sh --compare` once several versions
 have been run.
 
-**It also runs in CI** — `.github/workflows/selftest.yml`, on every push to the three version
-branches and on demand. A three-branch matrix runs the harness on each version, then a compare job
-fails if any two disagree on the plan hash. Warm, that is **4–5 minutes per version in parallel**;
-cold it has to let NeoForm decompile Minecraft, which is 10–15 minutes and is why the cache is keyed
-on the NeoForge version. Docs-only pushes are ignored.
+**It also runs in CI** — `.github/workflows/selftest.yml`, on pushes to **`master`** and on demand. A
+**six-branch** matrix (`master, mc1.20.1, mc1.21.1, mc26.1, mc26.2, mc26.3`) runs the harness on each
+version, then a compare job fails if any two disagree on the plan hash. Warm, that is **4–5 minutes per
+version in parallel**; cold it has to let NeoForm decompile Minecraft, which is 10–15 minutes and is why
+the cache is keyed on the NeoForge version. Docs-only pushes are ignored (`paths-ignore: '**.md'`).
+
+**Since 2026-09-21 the workflows exist ONLY on `master`** — they were deleted from every version branch,
+which had each carried its own drifted copy. So **a push to a version branch runs nothing at all**, and
+coverage is unaffected because the matrix checks out each branch's head (`actions/checkout` with
+`ref: ${{ matrix.branch }}`) rather than relying on a file living there.
 
 **It earned its keep immediately.** The first green-building CI run caught that on a *fresh
 checkout* the server silently fell back to vanilla `NoiseBasedChunkGenerator`: `set_prop` had two
