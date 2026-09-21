@@ -230,6 +230,20 @@ if [ "${ORPHANED_BE:-0}" -ge 10 ]; then
     exit 1
 fi
 
+# Datapack parse failures: an element that fails to parse is logged as ONE error line and then simply
+# does not exist — no crash, no empty-pool warning, just a chest that silently carries no loot table.
+# Seven CityWorld tables were unparseable on 1.20.1 from 5.11.0 until 2026-09-21: they referenced
+# another table with 1.21's "value" spelling where 1.20.1's LootTableReference reads "name". It sat in
+# plain sight in every run log while ~88 checks looked straight past it. Any count above zero is a bug.
+PARSE_FAILS="$(grep -c "Couldn't parse element" "$LOG" || true)"
+echo "   datapack elements that failed to parse: $PARSE_FAILS"
+if [ "${PARSE_FAILS:-0}" -ge 1 ]; then
+    echo "!! FAIL — $PARSE_FAILS datapack element(s) failed to parse, so the objects they define do not" >&2
+    echo "!! exist at runtime (a chest keeps no table, a tag resolves empty). Offenders:" >&2
+    grep "Couldn't parse element" "$LOG" | sed "s/.*Couldn't parse element/     /" | sort -u | head -10 >&2
+    exit 1
+fi
+
 if grep -q "SELFTEST: PASS" "$LOG"; then
     echo ">> PASS — Minecraft $VERSION. Report: $REPORTS/$VERSION.json"
     echo ">> Run './scripts/selftest.sh --compare' once other versions have been run."
