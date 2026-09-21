@@ -614,14 +614,28 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             ChunkAccess chunk) {
         try {
             ChunkPos pos = chunk.getPos();
+            // EVERY start, not only the beard-declaring ones. terrain_adaptation describes what
+            // vanilla's NOISE pass would have done, not what a structure needs from us — and CityWorld
+            // never runs that pass at all. Cataclysm's cursed_pyramid declares "none", so gating on the
+            // beard skipped it entirely and it sat in untouched terrain with a hard diagonal edge
+            // (owner, 2026-09-21). Vanilla's own mansions, monuments, shipwrecks, desert pyramids and
+            // end cities all declare "none" too, so the gate was excluding most of what people enable.
             List<net.minecraft.world.level.levelgen.structure.StructureStart> starts =
-                    structureManager.startsForStructure(pos.x(), pos.z(), CityWorldChunkGenerator::carvesTerrain);
+                    // 26.3 takes chunk coords, not a ChunkPos; master's predicate is the change.
+                    structureManager.startsForStructure(pos.x(), pos.z(), structure -> true);
             if (starts.isEmpty())
                 return;
+
+            // Anything a datapack asked a cavern for is carveForStructures' business, not ours — a
+            // bastion breaks the surface, so the buried test below would not catch it and it would get
+            // a pad on top of its cavern.
+            var cavern = structureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE).get(CARVE_CAVERN);
 
             int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
             List<net.minecraft.world.level.levelgen.structure.BoundingBox> boxes = new java.util.ArrayList<>();
             for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
+                if (cavern.map(set -> set.stream().anyMatch(h -> h.value() == start.getStructure())).orElse(false))
+                    continue;
                 // Buried starts belong to carveForStructures; only the ones standing on the ground get a pad.
                 var whole = start.getBoundingBox();
                 int groundAtCentre = context.shapeProvider.findBlockY(context,
@@ -652,25 +666,41 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
             for (int x = minX; x <= minX + 15; x++)
                 for (int z = minZ; z <= minZ + 15; z++) {
-                    // Nearest piece box, and how far outside it this column is: 0 inside, 1 at the taper edge.
-                    double nearest = 1.0;
-                    int padY = Integer.MIN_VALUE;
+                    // A distance-weighted BLEND of every nearby piece's base — not the nearest one's.
+                    //
+                    // Nearest-snap is what produced the cliffs. Measured on the owner's world
+                    // (2026-09-21): village_taiga scatters 203 pieces with bases from y66 to y176 up a
+                    // mountainside — a 110-block spread. Two adjacent columns nearest to different houses
+                    // were therefore handed targets 110 blocks apart, and the pad dutifully built the
+                    // step between them. Weighting by distance makes the ground RAMP between houses
+                    // instead of stepping, which is the whole difference between terraces and terrain.
+                    //
+                    // Inverse-square, so the piece you are standing on dominates and distant ones only
+                    // bend the result. The box list is already limited to pieces within PAD_TAPER of this
+                    // chunk, which is exactly the set that can influence any column in it — so no column
+                    // sees a different blend depending on which chunk computed it, and there is no seam.
+                    double nearest = 1.0, weightSum = 0.0, baseSum = 0.0;
                     for (net.minecraft.world.level.levelgen.structure.BoundingBox b : boxes) {
                         int dx = Math.max(0, Math.max(b.minX() - x, x - b.maxX()));
                         int dz = Math.max(0, Math.max(b.minZ() - z, z - b.maxZ()));
-                        double d = Math.max(dx, dz) / (double) PAD_TAPER;
-                        if (d < nearest || (d == nearest && b.minY() - 1 > padY)) {
+                        double dist = Math.max(dx, dz);
+                        double d = dist / (double) PAD_TAPER;
+                        if (d < nearest)
                             nearest = d;
-                            padY = b.minY() - 1; // the block the structure stands ON
-                        }
+                        double w = 1.0 / (dist * dist + 1.0);
+                        weightSum += w;
+                        baseSum += w * (b.minY() - 1); // the block the structure stands ON
                     }
-                    if (nearest >= 1.0 || padY == Integer.MIN_VALUE)
+                    if (nearest >= 1.0 || weightSum <= 0.0)
                         continue;
+                    double blended = baseSum / weightSum;
 
                     int natural = chunk.getHeight(
                             net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                    // Ease from the structure's floor out to the natural ground across the taper.
-                    int target = (int) Math.round(padY + (natural - padY) * nearest);
+                    // Ease from the blended floor out to natural ground across the taper — smoothstep
+                    // rather than linear, so the join has no crease where the pad meets the landscape.
+                    double ease = nearest * nearest * (3.0 - 2.0 * nearest);
+                    int target = (int) Math.round(blended + (natural - blended) * ease);
 
                     if (natural < target) {
                         // FILL — everywhere in the taper. This is what removes the platform edge.
