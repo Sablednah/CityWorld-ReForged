@@ -467,12 +467,22 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // Make room for any structure that expects the terrain to get out of its way. Vanilla does this
         // in the same pass, via the Beardifier density function — see carveForStructures.
         //
-        // The two halves of that job are deliberately separate, because they want opposite things:
-        // a BURIED structure needs terrain removed (a cavern), while one standing on the SURFACE needs
-        // terrain added under it (a pad). Doing the former to the latter is what open-cast a quarry
-        // around Cataclysm's desert structures; doing neither is what left villages on platforms.
+        // A BURIED structure needs terrain removed (a cavern); that is carveForStructures, and it is
+        // correct because it only ever deletes blocks that the plan already considers underground.
+        //
+        // ⚠ The SURFACE half — padForSurfaceStructures — is DISABLED, and deliberately not called.
+        // It rewrote blocks at this stage while AbstractCachedYs.blockYs (a final double[][] with no
+        // mutator) kept the ORIGINAL planned heights. Decoration then painted grass, snow and biome
+        // ground at those planned heights, so wherever the pad had shaved the ground away it laid a
+        // floating lid over a void: measured at 28.5% of columns in one village's footprint, with
+        // cavities up to 20 blocks tall (2026-09-21). Everything downstream of the plan — the surface
+        // pass, getMaxYWithin, foundations, flood, the mine loops — trusts those cached heights, so
+        // rewriting blocks behind their back desynchronises the world from its own plan.
+        //
+        // The rework is to smooth the PLAN: adjust the cached heights before terrain is drawn (and
+        // recompute the min/max/average they derive), so terrain, surface and every other consumer
+        // follow one agreed ground level. See padForSurfaceStructures for the parts worth keeping.
         carveForStructures(context, structureManager, chunk);
-        padForSurfaceStructures(context, structureManager, chunk);
     }
 
     /**
@@ -606,7 +616,28 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             || System.getProperty("cityworld.diagnostics") != null;
 
     /**
-     * Levels the ground <em>under</em> a surface structure — our stand-in for vanilla's Beardifier.
+     * ⚠ <b>DISABLED — not called from {@link #buildCity}. Do not re-enable as-is.</b>
+     *
+     * <p>This approach is wrong at the root, not mis-tuned. It rewrites BLOCKS during terrain
+     * generation, but the planned column heights live in {@code AbstractCachedYs.blockYs} — a
+     * {@code final double[][]} built once from {@code shapeProvider.findPerciseY}, with no setter
+     * anywhere — and this never updated them. {@code PlatLot.generateSurface} hands that same array to
+     * the surface provider at DECORATION time, so grass, snow and biome ground were painted at the
+     * original heights: wherever this had shaved ground away, the result was a floating lid over a
+     * cavity. Measured on the owner's world, 2026-09-21: <b>28.5% of columns</b> in one village's
+     * footprint had enclosed air within 25 blocks of the surface, 18,653 void blocks, runs up to 20
+     * tall. It was invisible to a top-down render and to height transects, because both report the
+     * topmost solid block — that is, the lid.
+     *
+     * <p>Kept, rather than deleted, because the parts worth reusing are here: the buried/cavern
+     * classification, gathering piece boxes within a taper of the chunk, the inverse-square blend of
+     * nearby piece bases, and the instrumentation. The rework should apply that blend to the PLAN —
+     * the cached heights, before terrain is drawn, with the derived min/max/average recomputed — so
+     * that terrain, the surface pass and every other {@code getBlockY} consumer agree on one ground.
+     *
+     * <p>Below is the original description, kept for the rework.
+     *
+     * <p>Levels the ground <em>under</em> a surface structure — our stand-in for vanilla's Beardifier.
      *
      * <p><b>Why this exists.</b> Vanilla shapes terrain around a {@code BEARD_THIN}/{@code BEARD_BOX}
      * structure inside noise generation, via {@code Beardifier}. CityWorld lays its own terrain and
