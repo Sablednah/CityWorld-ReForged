@@ -35,12 +35,24 @@ import net.minecraft.world.level.levelgen.structure.placement.ConcentricRingsStr
 public final class StructureReservations {
 
     /**
-     * Chunks of clear ground left around a planned structure. One ring is enough to keep a road from
-     * running along a village's doorstep while costing almost no city. Deliberately a constant for now:
-     * the right value is a thing to see in a world, not to guess in a datapack field, and every other
-     * knob here was added after its default had been played.
+     * Chunks of clear ground reserved around a planned structure.
+     *
+     * <p><b>Five, because that is what the structures themselves declare.</b> This started at 1 — a
+     * single polite ring — on the assumption that the reservation only had to keep a road off the
+     * doorstep. It does not: the reservation has to cover the structure's own <em>footprint</em>, and a
+     * vanilla village declares {@code max_distance_from_center: 80}, which is 5 chunks. At 1 the city
+     * planned straight through everything beyond the start chunk, which in game looked like a cleared
+     * corner with the rest of the structure still sliced through a farm and a road grid (owner,
+     * 2026-09-21, on Cataclysm's cursed pyramid — but villages and pillager outposts, both also 80,
+     * would have done exactly the same).
+     *
+     * <p>Vanilla bounds any jigsaw structure at {@code MAX_TOTAL_STRUCTURE_RANGE = 128} blocks, so 5
+     * covers villages and outposts outright and most of the worst case. It is not free: at village
+     * spacing (34 chunks) an 11x11 reservation is roughly a tenth of the land, and a structure that
+     * grows from its origin rather than its centre — a custom, non-jigsaw one — is still only partly
+     * covered, because nothing exposes that offset without generating the structure first.
      */
-    public static final int DEFAULT_CLEARANCE = 1;
+    public static final int DEFAULT_CLEARANCE = 5;
 
     private final ChunkGeneratorStructureState state;
     private final int clearance;
