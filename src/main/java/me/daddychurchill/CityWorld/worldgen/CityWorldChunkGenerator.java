@@ -635,14 +635,14 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
             net.minecraft.core.BlockPos.MutableBlockPos cursor = new net.minecraft.core.BlockPos.MutableBlockPos();
 
-            int floorLimit = chunk.getMinY() + 1; // leave bedrock alone, as the carve does
-            int roofLimit = chunk.getMaxY();
+            int floorLimit = chunk.getMinBuildHeight() + 1; // leave bedrock alone, as the carve does
+            int roofLimit = chunk.getMaxBuildHeight() - 1;
 
             for (int x = minX; x <= minX + 15; x++)
                 for (int z = minZ; z <= minZ + 15; z++) {
                     // Nearest piece box, and how far outside it this column is: 0 inside, 1 at the taper edge.
                     double nearest = 1.0;
-                    int padY = Integer.MIN_VALUE, boxTop = Integer.MIN_VALUE;
+                    int padY = Integer.MIN_VALUE;
                     for (net.minecraft.world.level.levelgen.structure.BoundingBox b : boxes) {
                         int dx = Math.max(0, Math.max(b.minX() - x, x - b.maxX()));
                         int dz = Math.max(0, Math.max(b.minZ() - z, z - b.maxZ()));
@@ -650,7 +650,6 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         if (d < nearest || (d == nearest && b.minY() - 1 > padY)) {
                             nearest = d;
                             padY = b.minY() - 1; // the block the structure stands ON
-                            boxTop = b.maxY();
                         }
                     }
                     if (nearest >= 1.0 || padY == Integer.MIN_VALUE)
@@ -665,16 +664,22 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         // FILL — everywhere in the taper. This is what removes the platform edge.
                         for (int y = Math.max(natural + 1, floorLimit); y <= Math.min(target, roofLimit); y++) {
                             cursor.set(x, y, z);
-                            chunk.setBlockState(cursor, y == target ? surface : subsurface);
+                            chunk.setBlockState(cursor, y == target ? surface : subsurface, false);
                         }
-                    } else if (natural > target && nearest <= 0.0) {
-                        // SHAVE — only directly under a piece, never in the taper, and never above the
-                        // structure itself: anything higher is hillside that is none of our business.
-                        for (int y = Math.max(target + 1, floorLimit); y <= Math.min(Math.min(natural, boxTop),
-                                roofLimit); y++) {
+                    } else if (natural > target) {
+                        // SHAVE — across the taper too, not just under the piece, so the structure sits in
+                        // ground that eases into the landscape instead of on a shelf cut out of it.
+                        //
+                        // This is only safe because the ground is RESERVED. Every structure that gets a pad
+                        // declares a beard; a structure declaring a beard is in a set containing a surface
+                        // structure; and StructureReservations keeps the city out of those. So there is
+                        // nothing here to quarry. When the shave was last this generous it ran on
+                        // unreserved land with a 10-block halo and open-cast a pit through a farm and a
+                        // road grid — the difference is the reservation, not the radius.
+                        for (int y = Math.max(target + 1, floorLimit); y <= Math.min(natural, roofLimit); y++) {
                             cursor.set(x, y, z);
                             if (!chunk.getBlockState(cursor).isAir())
-                                chunk.setBlockState(cursor, air);
+                                chunk.setBlockState(cursor, air, false);
                         }
                     }
                 }
