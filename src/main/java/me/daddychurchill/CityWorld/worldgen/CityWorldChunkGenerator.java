@@ -491,6 +491,29 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             if (starts.isEmpty())
                 return;
 
+            // ⚠ A cavern is right for something BURIED and catastrophic for something standing on the
+            // ground. Vanilla never digs a pit: it runs Beardifier during noise generation, which SHAPES
+            // terrain around a structure. We have no Beardifier — CityWorld lays its own terrain — so we
+            // emulate by deleting, and deleting a surface structure's box plus a 10-block halo open-casts
+            // a square quarry around it. BEARD_THIN is what vanilla villages, outposts and pillager towers
+            // use, and Cataclysm's desert_site/abandoned_* too, so this disfigured every surface structure
+            // anyone enabled. Owner, 2026-09-21: "to a non-tech regular player it reads as a chunk error".
+            //
+            // So carve only for a start that is genuinely underground — its whole box at or below the
+            // natural ground at its own centre — or one a datapack explicitly asked a cavern for. That
+            // keeps ancient cities, Cataclysm's ancient_factory (y -30) and tagged bastions carving,
+            // and leaves anything standing on the surface to sit on the land as vanilla intends.
+            // Ground comes from the shaper that laid the terrain, so it cannot disagree with it.
+            starts = starts.stream().filter(start -> {
+                if (cavern.map(set -> set.stream().anyMatch(h -> h.value() == start.getStructure())).orElse(false))
+                    return true;
+                var box = start.getBoundingBox();
+                return box.maxY() <= context.shapeProvider.findBlockY(context,
+                        (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+            }).toList();
+            if (starts.isEmpty())
+                return;
+
             int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
             // Only the piece boxes whose *halo* reaches this chunk matter. Collected first so the
             // per-block loop can take the nearest piece rather than re-walking every piece of a
