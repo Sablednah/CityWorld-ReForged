@@ -217,14 +217,16 @@ export PATH="$JAVA_HOME/bin:$PATH"
      EULA; the legacyforge path does not, and a clean checkout has no `run/` at all.
   5. **The `@Mod` class needs a no-arg constructor**; FML injects nothing. Get the bus and container
      from `FMLJavaModLoadingContext.get()` / `ModLoadingContext.get()`.
-- **⚠ CI triggers differ per branch, because every branch carries its OWN copy of `selftest.yml`**,
-  cut at different times and never synced. Measured 2026-09-21: master's copy lists all six branches;
-  `mc1.20.1` and `mc1.21.1` still list `[master, mc26.1, mc26.2]`, so they do **not** fire on their own
-  pushes; `mc26.1` does; and **`mc26.2` and `mc26.3` have no workflow file at all**. So never assume a
-  version-branch push was covered — `gh run list --branch <b>` is the only honest check.
-  **The dependable gate is a `master` push**, whose matrix checks out each branch's head: push the
-  version branch FIRST, then master, or the gate tests a tree you are not releasing. Note
-  `paths-ignore: ['**.md', …]` — a docs-only commit deliberately fires nothing, anywhere.
+- **⚠ The workflows live ONLY on `master`, deliberately — so no push to a version branch ever runs CI.**
+  Every branch used to carry its own copies, cut at different times and never synced, and they had
+  drifted badly: `mc26.1` fired on its own pushes while `mc1.20.1` and `mc1.21.1` did not, `mc26.2` and
+  `mc26.3` had no workflow at all, and the version branches' `curseforge.yml`/`modrinth.yml` were still
+  the pre-fix copies that hardcoded the NeoForge loader. Deleted from every version branch on
+  2026-09-21 (owner's call: *"cant drift if they dont exist"*).
+  **The gate is a `master` push**, whose matrix checks out each branch's head (`actions/checkout` with
+  `ref: ${{ matrix.branch }}`) — so coverage is unchanged. **Push the version branch FIRST, then
+  master**, or the gate tests a tree you are not releasing. Note `paths-ignore: ['**.md', …]`: a
+  docs-only commit deliberately fires nothing.
 - **The publish scripts key their loader off the Minecraft version** (`1.20.* -> Forge/forge/Java 17`,
   else NeoForge). Both once hardcoded NeoForge, which was invisible until the first non-NeoForge jar.
   **Before publishing a jar of a new KIND** (new loader, Java, or channel), read the uploader for
