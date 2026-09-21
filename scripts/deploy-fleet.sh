@@ -182,7 +182,7 @@ for inst in "${FLEET[@]}"; do
         printf '%-28s %-8s %-36s %-12s %s\n' "$name" "$mc" "$jarname" "$stamp" "SKIPPED: cannot write mods/ (game running?)"; rc=1; continue
     fi
     locked=0
-    for old in "$mods"/cityworld-*.jar; do
+    for old in "$mods"/cityworld-*+mc*.jar; do
         [ -e "$old" ] || continue
         rm -f "$old" 2>/dev/null || { locked=1; break; }
     done
