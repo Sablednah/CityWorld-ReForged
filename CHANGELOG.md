@@ -1,9 +1,27 @@
 # Changelog
 
-All notable changes to the NeoForge port of CityWorld.
+All notable changes to the modern port of CityWorld — NeoForge, and MinecraftForge on 1.20.1.
 
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
+
+## 5.11.0
+
+Released for Minecraft 1.20.1 only — the other versions are unchanged and stay on 5.10.1 (26.3) and
+5.10.0 (1.21.1, 1.21.11, 26.1, 26.2).
+
+### Added
+
+- **Minecraft 1.20.1, on MinecraftForge.** A sixth jar, `cityworld-<version>+mc1.20.1.jar`, for
+  Forge 47 — the first CityWorld build that is not NeoForge. It was asked for on CurseForge, because
+  1.20.1 is where a great many mods still live. Nothing is cut down for it: all thirteen world
+  styles, the ruined Nether and the End cities, strongholds, mines, sewers, interiors, schematics
+  and the Customize screen all work as they do everywhere else, and **the plan of a world is
+  identical to the other five versions** — same seed, same city, checked by the self-test's plan
+  hashes rather than by eye.
+- **The furniture and map mods come too.** Macaw's doors, trapdoors, windows, fences, roofs, lights
+  and stairs, Fantasy's Furniture, Biomes O' Plenty and JourneyMap are all supported on 1.20.1 on
+  the same terms as on the newer versions.
 
 ## 5.10.1
 

@@ -4,13 +4,20 @@
 
 **Drop into an endless, hand-crafted-feeling city** — procedurally generated, seed-deterministic, and
 packed with detail: named streets, furnished buildings, roundabouts, factories, farms, mines, sewers,
-and wild nature in between. This is a full **NeoForge port** of the classic Bukkit/Spigot plugin
+and wild nature in between. This is a full **NeoForge port** (and, on Minecraft 1.20.1, a **Forge**
+build) of the classic Bukkit/Spigot plugin
 [CityWorld](https://www.spigotmc.org/resources/cityworld.2250/), rebuilt from the ground up for modern
 Minecraft — same generator brain, same GPL-3 license, now a world type you can pick from the create-world
 screen.
 
 Battle-tested across **135 worlds and 3.2 million generated chunks** — over **830 km²** of procedurally
 generated city, more ground than New York City covers.
+
+**New in 5.11.0: Minecraft 1.20.1, on Forge.** The first CityWorld build that is not NeoForge — asked
+for here in the comments, because 1.20.1 is where a great many mods still live. Nothing is cut down for
+it: every world style, the ruined Nether and End cities, strongholds, interiors, schematics, the
+Customize screen, and the furniture and map mods all work as they do on the newer versions, and a seed
+builds the same city there as everywhere else. The other five versions are unchanged.
 
 **New in 5.10.1: Minecraft 26.3.** A build for the 26.3 line, where campgrounds pitch their tents from
 wool stairs the way 26.3's own abandoned camps do, the new **dappled forest** joins the climate, and
@@ -216,18 +223,19 @@ changes: the defaults are the operator levels the commands always used.
 
 ## Requirements
 
-CityWorld runs on **five Minecraft versions**. Download the file for yours — the Minecraft version is
-in the filename, so there is no guessing which is which.
+CityWorld runs on **six Minecraft versions**, across two loaders. Download the file for yours — the
+Minecraft version is in the filename, so there is no guessing which is which.
 
-| Minecraft | NeoForge | Java | File |
+| Minecraft | Loader | Java | File |
 |---|---|---|---|
-| 1.21.1 | 21.1.251+ | 21 | `cityworld-5.10.0+mc1.21.1.jar` |
-| 1.21.11 | 21.11.42+ | 21 | `cityworld-5.10.0+mc1.21.11.jar` |
-| 26.1.2 | 26.1.2.95+ | 25 | `cityworld-5.10.0+mc26.1.2.jar` |
-| 26.2 | 26.2.0.59+ | 25 | `cityworld-5.10.0+mc26.2.jar` |
-| 26.3 | 26.3.0.3+ (beta) | 25 | `cityworld-5.10.1+mc26.3.jar` |
+| 1.20.1 | **Forge** 47+ | 17 | `cityworld-5.11.0+mc1.20.1.jar` |
+| 1.21.1 | NeoForge 21.1.251+ | 21 | `cityworld-5.10.0+mc1.21.1.jar` |
+| 1.21.11 | NeoForge 21.11.42+ | 21 | `cityworld-5.10.0+mc1.21.11.jar` |
+| 26.1.2 | NeoForge 26.1.2.95+ | 25 | `cityworld-5.10.0+mc26.1.2.jar` |
+| 26.2 | NeoForge 26.2.0.59+ | 25 | `cityworld-5.10.0+mc26.2.jar` |
+| 26.3 | NeoForge 26.3.0.3+ (beta) | 25 | `cityworld-5.10.1+mc26.3.jar` |
 
-**A given seed builds the same city on all five.** The layout — terrain, roads, districts, which
+**A given seed builds the same city on all six.** The layout — terrain, roads, districts, which
 building stands where — is identical across versions; only the materials shift slightly, because newer
 Minecraft versions bring new blocks into the building palettes. Every version is verified automatically
 before release, generating a real world and checking the cities, signs and biomes come out right.
