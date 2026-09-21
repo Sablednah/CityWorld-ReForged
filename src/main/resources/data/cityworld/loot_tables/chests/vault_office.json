@@ -75,7 +75,7 @@
         },
         {
           "type": "minecraft:loot_table",
-          "value": "cityworld:chests/vault_office_extra",
+          "name": "cityworld:chests/vault_office_extra",
           "weight": 15
         }
       ]

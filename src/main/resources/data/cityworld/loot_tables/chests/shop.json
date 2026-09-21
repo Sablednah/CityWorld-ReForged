@@ -97,7 +97,7 @@
         },
         {
           "type": "minecraft:loot_table",
-          "value": "cityworld:chests/shop_extra",
+          "name": "cityworld:chests/shop_extra",
           "weight": 15
         }
       ]

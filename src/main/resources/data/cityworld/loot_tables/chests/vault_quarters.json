@@ -90,7 +90,7 @@
         },
         {
           "type": "minecraft:loot_table",
-          "value": "cityworld:chests/vault_quarters_extra",
+          "name": "cityworld:chests/vault_quarters_extra",
           "weight": 15
         }
       ]

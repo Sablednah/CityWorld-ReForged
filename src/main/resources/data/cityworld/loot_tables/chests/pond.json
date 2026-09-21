@@ -93,7 +93,7 @@
         },
         {
           "type": "minecraft:loot_table",
-          "value": "cityworld:chests/pond_extra",
+          "name": "cityworld:chests/pond_extra",
           "weight": 15
         }
       ]

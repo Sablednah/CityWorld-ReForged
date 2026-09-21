@@ -98,7 +98,7 @@
         },
         {
           "type": "minecraft:loot_table",
-          "value": "cityworld:chests/nightstand_extra",
+          "name": "cityworld:chests/nightstand_extra",
           "weight": 15
         }
       ]

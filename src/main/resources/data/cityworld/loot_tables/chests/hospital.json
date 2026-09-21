@@ -89,7 +89,7 @@
         },
         {
           "type": "minecraft:loot_table",
-          "value": "cityworld:chests/hospital_extra",
+          "name": "cityworld:chests/hospital_extra",
           "weight": 15
         }
       ]
