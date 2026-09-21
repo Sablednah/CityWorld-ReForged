@@ -49,9 +49,15 @@ if [ -z "$MC_ID" ]; then
     exit 1
 fi
 
-# The modloader tag, so the file is filtered correctly on the site.
-LOADER_ID="$(jq -r 'map(select(.name == "NeoForge")) | .[0].id // empty' <<<"$VERSIONS_JSON")"
-[ -n "$LOADER_ID" ] || echo "!! Warning: no 'NeoForge' modloader tag found; uploading without it." >&2
+# The modloader tag, so the file is filtered correctly on the site. CityWorld's 1.20.x line is
+# MinecraftForge; every later line is NeoForge. Keyed off the Minecraft version because that is the
+# only thing the workflow passes — it reads it from the jar's +mc suffix.
+case "$MC_VERSION" in
+    1.20.*) LOADER_NAME="Forge" ;;
+    *)      LOADER_NAME="NeoForge" ;;
+esac
+LOADER_ID="$(jq -r --arg l "$LOADER_NAME" 'map(select(.name == $l)) | .[0].id // empty' <<<"$VERSIONS_JSON")"
+[ -n "$LOADER_ID" ] || echo "!! Warning: no '$LOADER_NAME' modloader tag found; uploading without it." >&2
 
 # CurseForge rejects an upload that names no environment ("You must select at least one version from
 # the environment group of versions"). CityWorld needs both sides: the server generates the world,
@@ -64,10 +70,16 @@ if [ -z "$CLIENT_ID" ] || [ -z "$SERVER_ID" ]; then
 fi
 
 # The Java tag, so the file's requirements are visible on the site without reading the description.
-# Minecraft 26.x ships the Java 25 runtime; the 1.21 line ships Java 21.
+# Minecraft 26.x ships the Java 25 runtime, the 1.21 line ships Java 21, and 1.20.1 ships Java 17.
+#
+# ⚠ The 1.20.* arm MUST come first: "1.20.1" matches "1.*" too, and without its own arm the Forge
+# jar was tagged **Java 21**, which is worse than carrying no tag at all. CurseForge lists only
+# Java 20/21/22/25, so Java 17 resolves to nothing and the warn-and-upload path below is the
+# expected, correct outcome for that line — not a failure.
 case "$MC_VERSION" in
-    1.*) JAVA_VERSION=21 ;;
-    *)   JAVA_VERSION=25 ;;
+    1.20.*) JAVA_VERSION=17 ;;
+    1.*)    JAVA_VERSION=21 ;;
+    *)      JAVA_VERSION=25 ;;
 esac
 JAVA_ID="$(jq -r --arg j "Java $JAVA_VERSION" 'map(select(.name == $j)) | .[0].id // empty' <<<"$VERSIONS_JSON")"
 # Optional, unlike the environment: if CurseForge has not added a Java version yet (likely right
@@ -75,7 +87,7 @@ JAVA_ID="$(jq -r --arg j "Java $JAVA_VERSION" 'map(select(.name == $j)) | .[0].i
 [ -n "$JAVA_ID" ] || echo "!! Warning: CurseForge does not list 'Java $JAVA_VERSION'; uploading without a Java tag." >&2
 
 GAME_VERSIONS="[$MC_ID${LOADER_ID:+,$LOADER_ID},$CLIENT_ID,$SERVER_ID${JAVA_ID:+,$JAVA_ID}]"
-echo "   Minecraft $MC_VERSION = $MC_ID${LOADER_ID:+, NeoForge = $LOADER_ID}, Client = $CLIENT_ID, Server = $SERVER_ID${JAVA_ID:+, Java $JAVA_VERSION = $JAVA_ID}"
+echo "   Minecraft $MC_VERSION = $MC_ID${LOADER_ID:+, $LOADER_NAME = $LOADER_ID}, Client = $CLIENT_ID, Server = $SERVER_ID${JAVA_ID:+, Java $JAVA_VERSION = $JAVA_ID}"
 
 # "CityWorld 5.1.0 / MC 26.2" reads far better in the file list than the raw filename does. The mod
 # version comes out of the filename (cityworld-5.1.0+mc26.2.jar), falling back to the whole basename

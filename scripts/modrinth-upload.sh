@@ -84,8 +84,17 @@ echo "   $SLUG = $PROJECT_ID"
 # `environment` is a version field on v2 (the project-level pair is client_side/server_side).
 # server_only_client_optional is the exact truth: the mod does its work on the server, and a client
 # that has it also gets the Customize screen when creating a single-player world.
+# Modrinth's loader slug. CityWorld's 1.20.x line is MinecraftForge ("forge"); every later line is
+# "neoforge". Getting this wrong is not cosmetic — it decides who finds the file in a search and who
+# is offered a jar their loader cannot load.
+case "$MC_VERSION" in
+    1.20.*) LOADER="forge" ;;
+    *)      LOADER="neoforge" ;;
+esac
+echo "   loader: $LOADER"
+
 DATA="$(CHANGELOG="$CHANGELOG_FILE" PID="$PROJECT_ID" VN="$VERSION_NUMBER" MC="$MC_VERSION" \
-        RTYPE="$RELEASE_TYPE" NAME="CityWorld $VERSION_NUMBER" python3 -c '
+        RTYPE="$RELEASE_TYPE" NAME="CityWorld $VERSION_NUMBER" LOADER="$LOADER" python3 -c '
 import json, os
 print(json.dumps({
   "name": os.environ["NAME"],
@@ -94,7 +103,7 @@ print(json.dumps({
   "dependencies": [],
   "game_versions": [os.environ["MC"]],
   "version_type": os.environ["RTYPE"],
-  "loaders": ["neoforge"],
+  "loaders": [os.environ["LOADER"]],
   "featured": True,
   "environment": "server_only_client_optional",
   "project_id": os.environ["PID"],
