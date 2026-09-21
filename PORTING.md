@@ -18,6 +18,29 @@ so the right ~21% of every right-column button was **dead to clicks**. Draw, dra
 method, so a single override fixed all three; derived from the row width, so it holds at any GUI scale
 (owner confirmed across scales). 1.20.1-only — no other branch has the `Rows` class at all.
 
+**Post-release (2026-09-21): two more 1.20.1-only bugs, both from one crash.** The owner reported the game
+"locked up" after a `/tp`; it was a **crash**, and `tail latest.log` named it in a single look — an NPE in
+`HospitalLot.medicineChest` during chunk generation (*"Exception generating new chunk"*, chunk `-330,-299`).
+Fixed in `23124c3e`, rebuilt, deployed, and confirmed in the owner's own client: a hospital generates, and the
+custom-named "Bandage" paper is in its chests.
+
+1. **The hospital medicine chest could not be written to.** It set a loot table and *then* hand-placed
+   potions and a bandage. 1.20.1's `RandomizableContainerBlockEntity.setItem` calls `unpackLootTable`, whose
+   guard is `this.lootTable != null && this.level.getServer() != null` — it dereferences a level it never
+   null-checks, and a block entity handed back over a `ProtoChunk` during worldgen has none. **1.21 moved that
+   method to `RandomizableContainer` and added `level != null`**, which is why the *character-identical* code
+   on the other five branches cannot crash. The chest is now placed with `LootLocation.EMPTY`, the items
+   written, and the table applied last — a plain field write that never touches the level (see
+   `LootProvider_LootTable`) — so the finished chest matches every other branch's.
+   ⚠ **This is the backport shape to watch for: not a missing API, but a null check vanilla added _later_.**
+   It compiles everywhere, reviews as identical, and fails on exactly one line.
+2. **Seven loot tables were unparseable** — see the correction under "The content gap is almost nothing" below.
+
+⚠ **"Locked up" is a crash until the log says otherwise.** Reaching for `jstack` (the 2026-09-15 Nether-hang
+recipe) was the wrong first move: the integrated server thread had died and the client sat on a frozen world,
+which is indistinguishable from a hang at the window. Read `logs/latest.log` and `crash-reports/` **first**,
+and grep the log with `-a` — it carries CRLF/NUL bytes, and a plain `grep -c` silently printed nothing at all.
+
 **Two things this release taught that outlive it.** (1) **Both publish scripts hardcoded NeoForge** — the
 CurseForge loader tag and Modrinth's `loaders` array — and the Java case mapped `1.*` to 21, so a Java 17 jar
 would have been tagged Java 21. All three now key off `$MC_VERSION`; neither workflow needed changing, since
@@ -2118,6 +2141,21 @@ upstream is a 1.14 Bukkit plugin.
 **Loot tables need a DIRECTORY rename, not a schema conversion**: 1.20.1 wants `functions:` with bare
 `{min,max}`, exactly what this branch carries. `loot_table`→`loot_tables` (27), `tags/block`→`tags/blocks` (68),
 `structure`→`structures` (1) — ~96 files, scriptable.
+
+> ⚠ **Correction (2026-09-21, post-release).** "Not a schema conversion" was *nearly* right, and the gap hid
+> for a week because of it. **Seven** tables also carry a **reference to another table**, and that entry's
+> field was renamed between the lines: 1.20.1's `LootTableReference.Serializer` reads **`"name"`**, 1.21+
+> reads **`"value"`**. So `hospital`, `shop`, `pond`, `nightstand`, `vault_quarters`, `vault_office` and
+> `vault_armoury` failed to parse at **every** datapack load from v5.11.0 until `23124c3e` — and a parse
+> failure is *one ERROR line, after which the object simply does not exist*. Those chests silently carried no
+> table at all. Nothing crashed, nothing warned, the plan hashes were unchanged, and ~88 self-test checks
+> looked straight past it; it surfaced only because an unrelated crash put a human in front of the log.
+> `scripts/selftest.sh` now fails on any `Couldn't parse element` (master `408c1cd7`, cherry-picked to all
+> five version branches — the CI gate checks out each branch's own tree, so a check living only on master
+> would never have run against this one).
+>
+> **The lesson is the shape of the check, not the field:** a directory-level diff answers "did the files
+> move", never "does each file still parse".
 
 ### Forge 1.20.1 API: one real gap, two reprieves
 
