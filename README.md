@@ -2,7 +2,8 @@
   <img src="branding/cityworld-banner.png" alt="CityWorld ReForged" width="600">
 </p>
 
-A **NeoForge** port of the classic [CityWorld](https://www.spigotmc.org/resources/cityworld.2250/)
+A **NeoForge** port — and, on Minecraft 1.20.1, a **Forge** build — of the classic
+[CityWorld](https://www.spigotmc.org/resources/cityworld.2250/)
 Bukkit plugin — a procedural world generator that fills the world with **cities, roads, buildings,
 mines, sewers, farms and wild nature**, all seed-deterministic.
 
@@ -12,9 +13,9 @@ mines, sewers, farms and wild nature**, all seed-deterministic.
 
 | | |
 |---|---|
-| **Minecraft** | 1.21.11, 26.1.2, 26.2 |
-| **Loader** | NeoForge 21.11.42 / 26.1.2.95 / 26.2.0.59 |
-| **Java** | 21 (1.21.x) · 25 (26.x) |
+| **Minecraft** | 1.20.1, 1.21.1, 1.21.11, 26.1.2, 26.2, 26.3 |
+| **Loader** | **Forge 47+** (1.20.1) · NeoForge 21.1.251+ / 21.11.42+ / 26.1.2.95+ / 26.2.0.59+ / 26.3.0.3+ |
+| **Java** | 17 (1.20.1) · 21 (1.21.x) · 25 (26.x) |
 | **Licence** | GPL-3.0-only |
 | **Status** | ✅ Playable — full cities generate, inhabited and furnished, across 13 world styles |
 
@@ -202,7 +203,10 @@ world-jumping without handing out schematic pasting. See [`NODES.md`](NODES.md).
 
 ## Building from source
 
-Requires a JDK 21 (standard [NeoForge ModDevGradle](https://github.com/neoforged/ModDevGradle) setup):
+Standard [ModDevGradle](https://github.com/neoforged/ModDevGradle) setup. The JDK depends on the line
+you are building: **17** for 1.20.1, **21** for the 1.21.x lines, **25** for 26.x. Each Minecraft
+version lives on its own branch (`mc1.20.1`, `mc1.21.1`, `mc26.1`, `mc26.2`, `mc26.3`; `master` is
+1.21.11), and the 1.20.1 branch builds on MinecraftForge through ModDevGradle's `legacyforge` addon:
 
 ```bash
 ./gradlew build          # -> build/libs/cityworld-<version>.jar
@@ -221,7 +225,8 @@ CityWorld is licensed under the **GNU General Public License v3** — see [`LICE
 - Original **CityWorld** Bukkit plugin by **DaddyChurchill**
   ([echurchill/CityWorld](https://github.com/echurchill/CityWorld)), released under GPL-3. The
   original author knows about this port and has approved it.
-- This **NeoForge port** by **Sablednah**, continuing under GPL-3 as a derivative work.
+- This **NeoForge port** (and the 1.20.1 **Forge** build) by **Sablednah**, continuing under GPL-3 as
+  a derivative work.
 - CityWorld's terrain noise is vendored from Bukkit (GPL-3), which in turn derives it from Stefan
   Gustavson's public-domain simplex work — attribution preserved in `compat/noise`.
 

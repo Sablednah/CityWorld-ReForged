@@ -1,5 +1,33 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Resume here — v5.11.0 released (2026-09-21): the 1.20.1 **Forge** line, and the first non-NeoForge jar
+
+**Where it is.** Branch `mc1.20.1` (worktree, cut from `mc1.21.1`), head `9c2e9f9d`. **Shipped**: tag
+`v5.11.0` on master (`6227b71b`), **one jar**, `cityworld-5.11.0+mc1.20.1.jar`. CurseForge file **8937666**
+(tags resolved `Minecraft 1.20.1 = 9990, Forge = 7498, Client = 9638, Server = 9639, Java 17 = 8326`),
+Modrinth version **`nRwF1TTF`**, `loaders: ["forge"]`. The other five lines are unchanged: 5.10.1 on 26.3,
+5.10.0 on 1.21.1 / 1.21.11 / 26.1 / 26.2. Deployed to the owner's new `1.20.1  Forge` instance
+(`DEPLOYED-v5.11.0`). CI matrix is **six** branches; `deploy-fleet.sh` knows the worktree.
+
+**Owner playtested it and signed off** (2026-09-21): Nether, End, **strongholds**, BoP biomes, furniture
+packs and JourneyMap all correct. **One bug found, and only a human looking at the screen could have found
+it:** the Customize scrollbar (`2666b5aa`). 1.20.1's `AbstractSelectionList.getScrollbarPosition()` is
+`width/2 + 124` — the stock 220-wide row plus a 14px gap — and our rows are 310 wide, so the bar drew 31px
+**inside** them. Not merely cosmetic: `getEntryAtPosition` gates clicks on `mouseX < getScrollbarPosition()`,
+so the right ~21% of every right-column button was **dead to clicks**. Draw, drag and click all read that one
+method, so a single override fixed all three; derived from the row width, so it holds at any GUI scale
+(owner confirmed across scales). 1.20.1-only — no other branch has the `Rows` class at all.
+
+**Two things this release taught that outlive it.** (1) **Both publish scripts hardcoded NeoForge** — the
+CurseForge loader tag and Modrinth's `loaders` array — and the Java case mapped `1.*` to 21, so a Java 17 jar
+would have been tagged Java 21. All three now key off `$MC_VERSION`; neither workflow needed changing, since
+they already read it from the jar's `+mc` suffix. *A publishing script is only ever exercised by the kinds of
+jar you have already shipped.* (2) **Push the version branch BEFORE master**: `selftest.yml` fires only on
+master pushes and its matrix then checks out each branch's head, so the wrong order gives a green gate for a
+tree you are not releasing.
+
+**Next up:** nothing queued for 1.20.1. See "▶ Next up" further down for the standing queue.
+
 ## ▶ Resume here — v5.10.1 released (2026-09-20): the Minecraft 26.3 line, single-version
 
 **Where it is.** Branch `mc26.3` (from `mc26.2`), checked out at `../CityWorld-ReForged-worktrees/mc26.3` with the
@@ -2034,7 +2062,13 @@ biome id** rather than being stored, so retuning a patch's size or rarity does n
 Defaults verified unchanged when this landed — same 43% ancient-city air, same pool, same plan hash.
 **That is the bar for any future "make it configurable" change**: it must not move the default world.
 
-## 1.20.1 **Forge** — PORTED, self-test green (2026-09-20)
+## 1.20.1 **Forge** — RELEASED as v5.11.0 (2026-09-21; ported 2026-09-20)
+
+> **Status: shipped.** Owner-playtested and signed off; released as `v5.11.0` — CurseForge file
+> **8937666**, Modrinth **`nRwF1TTF`**. The one bug the playtest found (the Customize scrollbar) and the
+> two publishing traps this release exposed are written up in the **"▶ Resume here — v5.11.0"** section
+> at the top of this file. Everything below is the original spike and port record, kept as it was
+> written — it is the measurement, not the status.
 
 A CurseForge comment asked for **1.20.1 Forge** (the last Forge line before NeoForge, where many mods are
 stranded). That is a *loader* change plus a five-version backport, so it was scoped with a spike rather than an

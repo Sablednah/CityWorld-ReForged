@@ -5,19 +5,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 A fork of **CityWorld** — originally a Bukkit/Spigot 1.14 plugin that procedurally generates worlds
-full of cities, roads, buildings, mines, sewers, farms and nature — being **ported to a modern
-NeoForge mod**. The port is built in place at the repo root; the original Bukkit project was removed
-from the working tree and lives on in git history as the reference implementation.
+full of cities, roads, buildings, mines, sewers, farms and nature — ported to a modern **NeoForge**
+mod, and since v5.11.0 to **MinecraftForge on 1.20.1** as well. The port is built in place at the
+repo root; the original Bukkit project was removed from the working tree and lives on in git history
+as the reference implementation.
 
 **Read `PORTING.md` first.** It is the living plan and the source of truth for decisions, progress,
 verified API notes, and what to do next. Start at its "Resume here" section.
 
 | | |
 |---|---|
-| Minecraft | 1.21.11 |
-| Loader | NeoForge 21.11.42 |
-| Java | 21 |
-| Build | Gradle + ModDevGradle (`net.neoforged.moddev`) |
+| Minecraft | **this checkout** 1.21.11 — six lines ship: 1.20.1, 1.21.1, 1.21.11, 26.1, 26.2, 26.3 |
+| Loader | NeoForge 21.11.42 here; **MinecraftForge 47 on the 1.20.1 line only** |
+| Java | 21 here — **17 on 1.20.x, 21 on the 1.21 lines, 25 on 26.1+** |
+| Build | Gradle + ModDevGradle (`net.neoforged.moddev`; the 1.20.1 line adds its `legacyforge` addon) |
 | Licence | **GPL-3.0-only** (see below — non-negotiable) |
 | Branch | work happens on `master` (the `neoforge-port` branch was merged into it and deleted) |
 
@@ -33,7 +34,9 @@ terrain shape. See `PORTING.md`.
 
 ## Build & run
 
-Requires a JDK 21. There is **no system Java**; a JDK lives at `./tools/jdk21` (git-ignored):
+There is **no system Java**; the JDKs live in `./tools/` (git-ignored) — `jdk17`, `jdk21` and `jdk25`.
+**This checkout (1.21.11) needs JDK 21**; the worktrees need their own (17 for 1.20.1, 25 for 26.x), and
+they reach these same JDKs through a `tools` symlink:
 
 ```bash
 export JAVA_HOME="$PWD/tools/jdk21"
@@ -52,10 +55,10 @@ export PATH="$JAVA_HOME/bin:$PATH"
 - Gradle can't forward piped stdin to the server console — to verify in-world behaviour, register a
   temporary `ServerStartedEvent` listener that logs what you need, rather than piping commands.
 - **Build the version branches in their worktrees, don't switch branches here.** `master` is 1.21.11;
-  `mc26.1`, `mc26.2`, `mc26.3` and `mc1.21.1` are checked out permanently at
-  `../CityWorld-ReForged-worktrees/{mc26.1,mc26.2,mc26.3,mc1.21.1}`, each with a `tools` symlink back to this
+  `mc1.20.1`, `mc1.21.1`, `mc26.1`, `mc26.2` and `mc26.3` are checked out permanently at
+  `../CityWorld-ReForged-worktrees/{mc1.20.1,mc1.21.1,mc26.1,mc26.2,mc26.3}`, each with a `tools` symlink back to this
   checkout's JDKs (`tools/` is git-ignored, so a worktree has none of its own). Build with an explicit
-  `JAVA_HOME` — **the 1.21 lines need JDK 21, 26.1+ needs JDK 25**. A new Minecraft line is a worktree
+  `JAVA_HOME` — **1.20.x needs JDK 17, the 1.21 lines need JDK 21, 26.1+ needs JDK 25**. A new Minecraft line is a worktree
   branched from the previous one plus `gradle.properties`/MDG bumps, then compile-fix against the
   decompiled sources; **26.3 was not a one-liner** (PORTING.md "26.3 port — what actually moved": the
   density engine, `ConfiguredFeature`, `buildTerrain`, concurrent registry loading, loot-table schema). `compat/Material.java` is generated per
@@ -172,12 +175,15 @@ export PATH="$JAVA_HOME/bin:$PATH"
   (2) a "wall" for art/sconces/shelves is `isWallBacking` (full cube, sturdy, not glass, not pooled),
   checked behind EVERY cell of a wide piece, and blocks go before entities (a painting is invisible to
   `isEmpty`, so a chandelier chain went through one).
-- **Fleet deploy: `scripts/deploy-fleet.sh`** (`--dry-run` first). Eleven CurseForge instances carry a
+- **Fleet deploy: `scripts/deploy-fleet.sh`** (`--dry-run` first). Twelve CurseForge instances carry a
   CityWorld jar — five on 1.21.11 (`CityWork-ReForged`, `MobHealth - Forge`, `Neoforge 1.21.11 - sci
-  fi/wasteland`, `Standards`), `26.1.2`, three on 26.2 (`26.2`, `26.2.test`, `BoP+Cityworld`), `26.3` and `1.21.1`. The
-  fleet is whatever `Instances/*/mods` already holds a `cityworld-*.jar` or `DEPLOYED-*` stamp; the
+  fi/wasteland`, `Standards`), `26.1.2`, three on 26.2 (`26.2`, `26.2.test`, `BoP+Cityworld`), `26.3`, `1.21.1`
+  and **`1.20.1  Forge`** (⚠ TWO spaces in that folder name — `--only` matches the exact basename, so
+  `--only 1.20.1` silently matches nothing and reports "no instances carry CityWorld"). The
+  fleet is whatever `Instances/*/mods` already holds a `cityworld-*.jar` or `DEPLOYED-*` stamp, so a
+  brand-new instance is invisible until one jar is copied in by hand; the
   script reads each instance's Minecraft version from `minecraftinstance.json`, picks the newest
-  built jar for it across master + the four worktrees (`--version X.Y.Z` for a release, `--build` to
+  built jar for it across master + the five worktrees (`--version X.Y.Z` for a release, `--build` to
   build them all first), and stamps `DEPLOYED-<sha|vX.Y.Z>` (vX.Y.Z when the jar's Build-Commit is
   the tag or a "Bump to X.Y.Z" commit). A running game locks its jar ("Permission denied") — the
   script reports SKIPPED and carries on; rerun for that one after the game is closed.
@@ -192,8 +198,35 @@ export PATH="$JAVA_HOME/bin:$PATH"
   appears in your own command line: it kills your own shell.
 - Versions/metadata live in `gradle.properties` and expand into
   `src/main/templates/META-INF/neoforge.mods.toml` at build time — **edit the template and
-  gradle.properties, never a generated `mods.toml`**.
+  gradle.properties, never a generated `mods.toml`**. On the **1.20.1 Forge** line that template is
+  `META-INF/mods.toml` instead, and its schema differs: `mandatory=true/false`, not `type="required"`.
 - Mod id `cityworld`; `@Mod` entrypoint `me.daddychurchill.CityWorld.CityWorldMod`.
+- **⚠ The 1.20.1 Forge line breaks five rules the NeoForge lines let you assume** (full account in
+  PORTING.md "1.20.1 **Forge**"; released as v5.11.0):
+  1. **`pack.mcmeta` is MANDATORY.** Forge injects no pack metadata, so without that file Minecraft
+     discards the **entire mod datapack** — every tag empty, no world preset, no dimension. NeoForge
+     synthesises it, so no other branch ships one. One missing file, 21 self-test failures.
+  2. **Ship `build/libs`, never `build/devlibs`.** legacyforge writes **same-named jars** to both and
+     only `build/libs` is reobfuscated (check the SRG count, not the filename). The dev-mapped one
+     installs and loads fine, then crashes at every access-transformed call site.
+  3. **Verify an override of a vanilla method by its SRG name**, not the readable one —
+     `getScrollbarPosition` ships as `m_5756_`. Grepping the readable name finds nothing and looks
+     exactly like "the fix never made it into the build". Map it via
+     `build/moddev/artifacts/intermediateToNamed.srg`, and `javap -p -cp .` — the `-cp .` is not optional.
+  4. **`scripts/selftest.sh` writes `run/eula.txt` itself.** NeoForge's dev `runServer` accepts the
+     EULA; the legacyforge path does not, and a clean checkout has no `run/` at all.
+  5. **The `@Mod` class needs a no-arg constructor**; FML injects nothing. Get the bus and container
+     from `FMLJavaModLoadingContext.get()` / `ModLoadingContext.get()`.
+- **⚠ A push to a version branch alone starts NO CI run.** `selftest.yml` fires on **master** pushes,
+  and its matrix then checks out each branch's head — so push the version branch FIRST, then master,
+  or the gate tests a tree you are not releasing. A fix committed only on a version branch is
+  uncovered until the next master push.
+- **The publish scripts key their loader off the Minecraft version** (`1.20.* -> Forge/forge/Java 17`,
+  else NeoForge). Both once hardcoded NeoForge, which was invisible until the first non-NeoForge jar.
+  **Before publishing a jar of a new KIND** (new loader, Java, or channel), read the uploader for
+  values it *assumes* rather than derives — and check the workflow log's
+  `Minecraft <v> = <id>, <Loader> = <id>` line, because that lookup needs the API token and cannot be
+  tested locally.
 
 ## Reading the original Bukkit source
 
@@ -252,7 +285,8 @@ edges are often thin (single method signatures), so they can be stubbed to break
 Modern worldgen wraps this in a codec-registered `ChunkGenerator` (`worldgen/CityWorldChunkGenerator`,
 registered `cityworld:city`), exposed as both a dimension and a world preset. **The port is complete
 and the brain is wired in** — it generates real CityWorld terrain, cities, interiors, mines, caves and
-decoration across 13 world styles, on five Minecraft versions (1.21.1, 1.21.11, 26.1, 26.2, 26.3). It suppresses *most* vanilla
+decoration across 13 world styles, on six Minecraft versions across two loaders (1.20.1 on
+MinecraftForge; 1.21.1, 1.21.11, 26.1, 26.2, 26.3 on NeoForge). It suppresses *most* vanilla
 structures/decoration/carvers so CityWorld owns the chunk, with deliberate exceptions: strongholds,
 trial chambers and ancient cities are placed (see PORTING.md), and vanilla biome features may decorate
 wild land depending on `world.wildDecoration`.

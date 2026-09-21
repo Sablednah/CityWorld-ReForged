@@ -246,7 +246,8 @@ CityWorld is licensed under **GPL-3.0-only**.
 
 - Original **CityWorld** Bukkit plugin by **DaddyChurchill** — the original author knows about this port
   and has approved it.
-- This NeoForge port by **Sablednah**, continuing under GPL-3 as a derivative work.
+- This NeoForge port — and the 1.20.1 Forge build — by **Sablednah**, continuing under GPL-3 as a
+  derivative work.
 - Terrain noise vendored from Bukkit (GPL-3), in turn derived from Stefan Gustavson's public-domain
   simplex work.
 
