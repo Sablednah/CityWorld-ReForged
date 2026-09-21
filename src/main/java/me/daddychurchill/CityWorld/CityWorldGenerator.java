@@ -152,6 +152,22 @@ public class CityWorldGenerator {
     public volatile me.daddychurchill.CityWorld.worldgen.EndTerrain endTerrain;
 
     /**
+     * Which chunks a vanilla or modded structure has already claimed — bound by the chunk generator
+     * when this context is built, and null in any world that has no structures to plan around.
+     */
+    public volatile me.daddychurchill.CityWorld.worldgen.StructureReservations structureReservations;
+
+    /**
+     * Whether a structure is planned in or near this chunk, so the planner should leave it as nature
+     * and let the structure have the ground. False until the chunk generator binds the reservations,
+     * and false forever in a world with none — which is exactly CityWorld's behaviour before this.
+     */
+    public boolean isStructureReserved(int chunkX, int chunkZ) {
+        me.daddychurchill.CityWorld.worldgen.StructureReservations local = structureReservations;
+        return local != null && local.isReserved(chunkX, chunkZ);
+    }
+
+    /**
      * The world's real block bounds — {@code -64} and {@code 319} for a modern overworld.
      *
      * <p><b>These are deliberately not the same as {@link #height}.</b> In 1.14 the world was
