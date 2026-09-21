@@ -548,8 +548,18 @@ public abstract class PlatLot {
 	public void generateMines(CityWorldGenerator generator, SupportBlocks chunk) {
 
 		// get shafted!
+		//
+		// ⚠ This loop must cover EXACTLY the levels the carving pass cut (generateMines(InitialBlocks),
+		// which runs `for (y = (getMinHeight()/16 - 1)*16; y >= lowestMineSegment; y -= 16)`). It used to
+		// stop at `y + 16 < getMinHeight()`, which drops the topmost level whenever getMinHeight() is an
+		// exact multiple of 16 — flat ground at y 64, in other words most of the world. That level was
+		// carved and never dressed, so above the proper copper-age mines sat a second, bare corridor
+		// system: no rails, no cobwebs, no copper frames, and the OAK_FENCE shaft supports left as raw
+		// wood because weatherAndLichen never ran over that slice. It read as "the old classic CityWorld
+		// mineshafts are back", and it was on every branch since the copper-age pass landed (owner spotted
+		// it in game, 2026-09-21, standing at y 54 = level 48 + 6).
 		if (generator.getSettings().includeMines)
-			for (int y = lowestMineSegment; y + 16 < blockYs.getMinHeight(); y += 16) {
+			for (int y = lowestMineSegment; y <= (blockYs.getMinHeight() / 16 - 1) * 16; y += 16) {
 				if (isShaftableLevel(generator, y))
 					generateVerticalMineLevel(generator, chunk, y);
 			}
