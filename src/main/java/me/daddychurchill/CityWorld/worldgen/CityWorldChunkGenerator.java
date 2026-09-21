@@ -305,6 +305,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         if (this.biomeSource instanceof CityWorldEndBiomeSource endBiomes)
                             endBiomes.bindTerrain(endTerrain, vanillaEnd.getBiomeSource());
                     }
+                    // Where vanilla's structures are going, so the planner can leave them room. Built
+                    // eagerly: this runs exactly once per world and provably after createState (the seed
+                    // check above would have thrown otherwise), so there is nothing to defer.
+                    local.structureReservations = StructureReservations.of(structureState,
+                            StructureReservations.DEFAULT_CLEARANCE);
                     context = local;
                 }
             }
@@ -737,9 +742,20 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             if (this.biomeSource instanceof CityWorldEndBiomeSource endBiomes)
                 endBiomes.bindTerrain(endTerrain, vanilla.getBiomeSource());
         }
-        return ChunkGeneratorStructureState.createForNormal(
+        ChunkGeneratorStructureState state = ChunkGeneratorStructureState.createForNormal(
                 randomState, seed, this.biomeSource, onlyAllowed(lookup));
+        this.structureState = state;
+        return state;
     }
+
+    /**
+     * The world's structure placements, kept so the <em>planner</em> can ask where structures are going
+     * before it lays a city on one. Vanilla hands this out exactly once per world, here, and never
+     * offers it to a {@code ChunkGenerator} again — so catching it on the way past is the only way the
+     * planning side can ever see it. Read by {@link StructureReservations}; see there for why the
+     * question is answerable with no chunk, no terrain and no biomes.
+     */
+    private volatile ChunkGeneratorStructureState structureState;
 
     /**
      * The structure-set registry as seen through {@link #ALLOWED_STRUCTURE_SETS} — every element not in
