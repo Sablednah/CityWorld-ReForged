@@ -47,7 +47,18 @@ public class NatureLot extends IsolatedLot {
 		// In MODERN, vanilla decorates the wild (biome-appropriate trees/flowers), so don't also plant
 		// CityWorld's own trees here — that doubling was making forests read too dense. Other styles keep
 		// placing them. The grass/snow surface is still laid down either way (vanilla needs it to plant on).
-		boolean cityworldTrees = !generator.isModernStyle();
+		// ...and never on a chunk reserved for a structure. CityWorld's own decoration runs at the TOP of
+		// applyBiomeDecoration, well before the structure step further down, so a tree planted here is one
+		// a village house then stamps through. A reserved chunk is meant to be bare ground for the
+		// structure to land on, and for the pad to smooth.
+		//
+		// ⚠ Only the TREES are suppressed, never generateSurface itself — see the note below: skipping the
+		// whole pass was the first version of that change and it left the MODERN peaks bare.
+		//
+		// On MODERN this is already false (vanilla decorates the wild, and it places SURFACE_STRUCTURES
+		// before VEGETAL_DECORATION, so its own trees land after the structure). This therefore matters on
+		// CLASSIC and the other styles that still plant CityWorld's trees.
+		boolean cityworldTrees = !generator.isModernStyle() && !structureReserved;
 		// Always run the surface pass — wildDecoration=VANILLA suppresses CityWorld's *plants* inside it
 		// (see SurfaceProvider_Normal) rather than skipping the pass, so the MODERN icecap survives.
 		// Skipping the whole pass was the first version and it left the peaks bare.

@@ -642,7 +642,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 for (int z = minZ; z <= minZ + 15; z++) {
                     // Nearest piece box, and how far outside it this column is: 0 inside, 1 at the taper edge.
                     double nearest = 1.0;
-                    int padY = Integer.MIN_VALUE, boxTop = Integer.MIN_VALUE;
+                    int padY = Integer.MIN_VALUE;
                     for (net.minecraft.world.level.levelgen.structure.BoundingBox b : boxes) {
                         int dx = Math.max(0, Math.max(b.minX() - x, x - b.maxX()));
                         int dz = Math.max(0, Math.max(b.minZ() - z, z - b.maxZ()));
@@ -650,7 +650,6 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         if (d < nearest || (d == nearest && b.minY() - 1 > padY)) {
                             nearest = d;
                             padY = b.minY() - 1; // the block the structure stands ON
-                            boxTop = b.maxY();
                         }
                     }
                     if (nearest >= 1.0 || padY == Integer.MIN_VALUE)
@@ -667,11 +666,17 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             cursor.set(x, y, z);
                             chunk.setBlockState(cursor, y == target ? surface : subsurface);
                         }
-                    } else if (natural > target && nearest <= 0.0) {
-                        // SHAVE — only directly under a piece, never in the taper, and never above the
-                        // structure itself: anything higher is hillside that is none of our business.
-                        for (int y = Math.max(target + 1, floorLimit); y <= Math.min(Math.min(natural, boxTop),
-                                roofLimit); y++) {
+                    } else if (natural > target) {
+                        // SHAVE — across the taper too, not just under the piece, so the structure sits in
+                        // ground that eases into the landscape instead of on a shelf cut out of it.
+                        //
+                        // This is only safe because the ground is RESERVED. Every structure that gets a pad
+                        // declares a beard; a structure declaring a beard is in a set containing a surface
+                        // structure; and StructureReservations keeps the city out of those. So there is
+                        // nothing here to quarry. When the shave was last this generous it ran on
+                        // unreserved land with a 10-block halo and open-cast a pit through a farm and a
+                        // road grid — the difference is the reservation, not the radius.
+                        for (int y = Math.max(target + 1, floorLimit); y <= Math.min(natural, roofLimit); y++) {
                             cursor.set(x, y, z);
                             if (!chunk.getBlockState(cursor).isAir())
                                 chunk.setBlockState(cursor, air);
