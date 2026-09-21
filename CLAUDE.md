@@ -217,10 +217,14 @@ export PATH="$JAVA_HOME/bin:$PATH"
      EULA; the legacyforge path does not, and a clean checkout has no `run/` at all.
   5. **The `@Mod` class needs a no-arg constructor**; FML injects nothing. Get the bus and container
      from `FMLJavaModLoadingContext.get()` / `ModLoadingContext.get()`.
-- **⚠ A push to a version branch alone starts NO CI run.** `selftest.yml` fires on **master** pushes,
-  and its matrix then checks out each branch's head — so push the version branch FIRST, then master,
-  or the gate tests a tree you are not releasing. A fix committed only on a version branch is
-  uncovered until the next master push.
+- **⚠ CI triggers differ per branch, because every branch carries its OWN copy of `selftest.yml`**,
+  cut at different times and never synced. Measured 2026-09-21: master's copy lists all six branches;
+  `mc1.20.1` and `mc1.21.1` still list `[master, mc26.1, mc26.2]`, so they do **not** fire on their own
+  pushes; `mc26.1` does; and **`mc26.2` and `mc26.3` have no workflow file at all**. So never assume a
+  version-branch push was covered — `gh run list --branch <b>` is the only honest check.
+  **The dependable gate is a `master` push**, whose matrix checks out each branch's head: push the
+  version branch FIRST, then master, or the gate tests a tree you are not releasing. Note
+  `paths-ignore: ['**.md', …]` — a docs-only commit deliberately fires nothing, anywhere.
 - **The publish scripts key their loader off the Minecraft version** (`1.20.* -> Forge/forge/Java 17`,
   else NeoForge). Both once hardcoded NeoForge, which was invisible until the first non-NeoForge jar.
   **Before publishing a jar of a new KIND** (new loader, Java, or channel), read the uploader for
