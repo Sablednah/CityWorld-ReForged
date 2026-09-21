@@ -304,8 +304,12 @@ public class PlatMap {
 		}
 	}
 
+	// ⚠ paveLot writes platLots[][] DIRECTLY rather than going through setLot, so it needs its own
+	// structure check — gating setLot alone would leave roads driving straight through a reservation
+	// while the buildings politely stepped around it.
 	public void paveLot(int x, int z, boolean roundaboutPart) {
 		if (generator.getSettings().inRoadRange(originX + x, originZ + z)
+				&& !generator.isStructureReserved(originX + x, originZ + z)
 				&& (platLots[x][z] == null || roundaboutPart || platLots[x][z].style != LotStyle.ROAD)) {
 
 			// remember the old one
@@ -327,7 +331,12 @@ public class PlatMap {
 //			if (lot.getChunkX() == 21 && lot.getChunkZ() == -22)
 //				generator.reportMessage("#####>>>>> setting it");
 
-			boolean result = lot.isPlaceableAt(generator, originX + x, originZ + z);
+			// The structure check belongs HERE, not in isPlaceableAt: all four overrides of that method
+			// (RoadLot, RoundaboutCenterLot, ConstructLot, ClipboardLot) substitute their own range gate
+			// and none of them call super, so a reservation checked there would be silently ignored by
+			// everything except plain building lots. Every built lot passes through this one line.
+			boolean result = lot.isPlaceableAt(generator, originX + x, originZ + z)
+					&& !generator.isStructureReserved(originX + x, originZ + z);
 			if (result) {
 
 				// clear it please
