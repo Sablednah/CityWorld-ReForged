@@ -179,6 +179,19 @@ public abstract class PlatLot {
 		return blockYs == null ? 0 : blockYs.getBlockY(x, z);
 	}
 
+	/**
+	 * This lot's PLANNED column heights, so the structure pad can adjust them before terrain is drawn.
+	 *
+	 * <p>Exposed because the pad lives in the worldgen package and these are the single source of truth
+	 * for ground level: {@code generateChunk} hands this array to the shape provider at the terrain
+	 * stage, and {@code generateSurface} hands the same array to the surface provider at decoration.
+	 * Moving blocks without moving these is what put a floating lid over a cavity in 28.5% of one
+	 * village's columns (2026-09-21).
+	 */
+	public AbstractCachedYs getCachedYs() {
+		return blockYs;
+	}
+
 	//	public double getAverageY() {
 //		return blockYs == null ? 0 : blockYs.averageHeight;
 //	}

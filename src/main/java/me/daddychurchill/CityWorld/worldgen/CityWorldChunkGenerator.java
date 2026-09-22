@@ -452,6 +452,15 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // routes to whichever lot owns this chunk, and the lot calls the shape provider itself —
         // so terrain and city come from one path rather than two.
         PlatMap platmap = context.getPlatMap(chunkX, chunkZ);
+
+        // Smooth the PLANNED ground under any surface structure BEFORE terrain is drawn from it.
+        // Order is the whole fix: the previous pad ran after this line and rewrote blocks, leaving the
+        // planned heights untouched, so decoration later painted a surface at the old level over a void.
+        // The missing half of vanilla's beard_thin contract: bend the planned ground to each piece.
+        // Measured 745/745 columns seated exactly, 0 buried; with it off, 70.4% and 32.4%. PAD_ENABLED.
+        if (PAD_ENABLED)
+            padPlanForStructures(context, structureManager, chunk, platmap);
+
         platmap.generateChunk(blocks, IGNORE_BIOMES);
 
         // Make room for any structure that expects the terrain to get out of its way. Vanilla does this
@@ -586,6 +595,61 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     }
 
     /** How far a pad eases back to natural ground. Vanilla's beard falls off over roughly this much. */
+    /**
+     * Whether the beard runs. <b>ON by default; {@code -Dcityworld.structurepad=false} disables it.</b>
+     *
+     * <p>CityWorld lays its own terrain and never runs vanilla's {@code Beardifier}, so for a jigsaw
+     * structure only half of vanilla's contract was ever honoured: villages declare
+     * {@code terrain_adaptation: beard_thin} and {@code project_start_to_heightmap: WORLD_SURFACE_WG},
+     * meaning "project the start once, then bend the terrain to each piece" — and nothing bent the
+     * terrain. Hence houses in mid-air. This is that missing half.
+     *
+     * <p><b>Measured 2026-09-22, one taiga village, 31 RIGID pieces, 745 columns, judged against each
+     * piece's OWN declared support level</b> ({@code scripts/region_pieceground.py}, the only metric
+     * here that classifies nothing):
+     * <table>
+     *   <tr><th></th><th>beard OFF</th><th>beard ON</th></tr>
+     *   <tr><td>seated exactly</td><td>499/709 (70.4%)</td><td><b>745/745 (100.0%)</b></td></tr>
+     *   <tr><td>hanging</td><td>210 columns, tail to −17</td><td><b>0</b></td></tr>
+     *   <tr><td>buried</td><td>230/709 (32.4%)</td><td><b>0</b></td></tr>
+     *   <tr><td>lid-like crust</td><td>3.2%</td><td><b>0.0%</b></td></tr>
+     *   <tr><td>enclosed natural air</td><td>37.0% / 623</td><td><b>34.7% / 552</b></td></tr>
+     * </table>
+     * The worst beard-OFF case is x1216..1220, z−769..−773: target 92, ground 75 — a path and house
+     * seventeen blocks up. The metric fails in both directions on the control, so the 100% is a
+     * result and not a tautology.
+     *
+     * <p><b>What made it work, after two failed attempts.</b> The reference level is
+     * {@code box.minY() + getGroundLevelDelta()}, per PIECE — the delta is how far a piece's floor
+     * sits above its box bottom, it is a field on {@code PoolElementStructurePiece}, and it was simply
+     * missing. Aiming at {@code box.minY()} could not work for any constant, because the delta varies
+     * per piece. Also from vanilla rather than from eye: radius 12 ({@code BEARD_KERNEL_RADIUS}), only
+     * RIGID pieces ({@code TERRAIN_MATCHING} carry a {@code GravityProcessor} and drop deliberately),
+     * and starts declaring {@code NONE} excluded.
+     *
+     * <p>That exclusion matters: a desert pyramid is a {@code ScatteredFeaturePiece} and re-levels
+     * ITSELF via {@code updateHeightPositionToLowestGroundHeight}. Beard on and off produced
+     * layer-for-layer identical pyramids (140 cut_sandstone, 46 chiseled, 17 stairs both times), so
+     * shaping for it was pointless and mildly harmful. It is skipped.
+     *
+     * <p><b>⚠ Do not compare any of this with figures quoted before {@code fd9ab12b}.</b> {@code is_solid}
+     * substring-matched, so GRASS_BLOCK and SNOW_BLOCK counted as not solid — the two commonest ground
+     * blocks in a snowy taiga. Every measurement before that fix is skewed the same way, including the
+     * ones in {@code 413d525f} and {@code 6e0bfb83}.
+     *
+     * <p>Reservation is independent of this gate ({@link StructureReservations}): terrain is kept clear
+     * around structures either way.
+     */
+    private static final boolean PAD_ENABLED =
+            Boolean.parseBoolean(System.getProperty("cityworld.structurepad", "true"));
+
+    /**
+     * How far the beard reaches, horizontally, in blocks. <b>12 because that is
+     * {@code Beardifier.BEARD_KERNEL_RADIUS}</b> — vanilla's kernel is 24 wide and every piece is
+     * gathered with {@code isCloseToChunk(pos, 12)}. The first two attempts used 8, picked by eye.
+     */
+    private static final int BEARD_RADIUS = 12;
+
     private static final int PAD_TAPER = 8;
 
     /**
@@ -604,6 +668,178 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private static final boolean PAD_LOG = System.getProperty("cityworld.padlog") != null
             || System.getProperty("cityworld.probe") != null
             || System.getProperty("cityworld.diagnostics") != null;
+
+    /**
+     * Smooths the <b>planned</b> ground under a surface structure, before terrain is drawn from it.
+     *
+     * <p>This is the replacement for the block-rewriting pad below, and the difference is the whole
+     * point: it edits {@code AbstractCachedYs.blockYs}, which {@code PlatLot.generateChunk} hands to the
+     * shape provider at the terrain stage AND {@code PlatLot.generateSurface} hands to the surface
+     * provider at decoration. One source of truth, so terrain and surface cannot disagree. The old pad
+     * moved blocks and left those heights alone, which put a floating lid over a cavity in 28.5% of one
+     * village's columns.
+     *
+     * <p>Kept from the old one because they were right: buried and {@code #cityworld:carve_cavern}
+     * starts belong to {@link #carveForStructures}, and the target is an inverse-square distance-weighted
+     * blend of nearby piece bases rather than the nearest one — snapping to the nearest gave adjacent
+     * columns targets up to 110 blocks apart on a mountainside village and built the step between them.
+     *
+     * <p>One-shot per chunk ({@code isPadded}): blending a second time would weigh ground this had
+     * already moved. Heights are indexed 0..15 within the chunk while piece distances are world
+     * coordinates — easy to conflate, and silently wrong if conflated.
+     */
+    private void padPlanForStructures(CityWorldGenerator context, StructureManager structureManager,
+            ChunkAccess chunk, PlatMap platmap) {
+        try {
+            ChunkPos pos = chunk.getPos();
+            me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x, pos.z);
+            if (lot == null)
+                return;
+            me.daddychurchill.CityWorld.Support.AbstractCachedYs ys = lot.getCachedYs();
+            if (ys == null || ys.isPadded())
+                return;
+
+            // Exactly vanilla's filter (Beardifier.forStructuresInChunk): a structure declaring NONE
+            // wants no help. That is not laziness — a desert pyramid is a ScatteredFeaturePiece and
+            // RE-LEVELS ITSELF at placement time via updateHeightPositionToLowestGroundHeight, which
+            // moves its whole bounding box onto whatever ground it finds. Measured 2026-09-22: pad off
+            // and pad on gave layer-for-layer identical pyramids, offset only by the 1 block the pad
+            // had moved the ground. Shaping for it is pointless at best and fights it at worst.
+            List<net.minecraft.world.level.levelgen.structure.StructureStart> starts =
+                    structureManager.startsForStructure(pos,
+                            structure -> structure.terrainAdaptation()
+                                    != net.minecraft.world.level.levelgen.structure.TerrainAdjustment.NONE);
+            if (starts.isEmpty())
+                return;
+
+            var cavern = structureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE).get(CARVE_CAVERN);
+            int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
+
+            // One entry per piece: its footprint, and the ground level it actually wants underneath.
+            record Beard(int minX, int minZ, int maxX, int maxZ, double top) {
+            }
+            List<Beard> beards = new java.util.ArrayList<>();
+
+            for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
+                String id = PAD_LOG ? String.valueOf(start.getStructure()) : "";
+                var whole = start.getBoundingBox();
+                if (cavern.map(set -> set.stream().anyMatch(h -> h.value() == start.getStructure())).orElse(false)) {
+                    if (PAD_LOG)
+                        LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: SKIP cavern — {}", pos.x, pos.z, id);
+                    continue;
+                }
+                int groundAtCentre = context.shapeProvider.findBlockY(context,
+                        (whole.minX() + whole.maxX()) / 2, (whole.minZ() + whole.maxZ()) / 2);
+                if (whole.maxY() <= groundAtCentre) {
+                    if (PAD_LOG)
+                        LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: SKIP buried — {} box y {}..{} vs ground {}",
+                                pos.x, pos.z, id, whole.minY(), whole.maxY(), groundAtCentre);
+                    continue;
+                }
+                for (net.minecraft.world.level.levelgen.structure.StructurePiece piece : start.getPieces()) {
+                    if (!piece.isCloseToChunk(pos, BEARD_RADIUS))
+                        continue;
+                    int delta = 0;
+                    if (piece instanceof net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece pool) {
+                        // TERRAIN_MATCHING pieces carry a GravityProcessor and drop onto the ground on
+                        // purpose; vanilla beards only RIGID ones, and so do we.
+                        if (pool.getElement().getProjection()
+                                != net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool.Projection.RIGID) {
+                            if (PAD_LOG) {
+                                var rb = piece.getBoundingBox();
+                                LOGGER_STRUCTURES.warn(
+                                        "PLANPAD chunk {},{}: REJECT non-rigid {} box x {}..{} z {}..{} y {}..{}",
+                                        pos.x, pos.z, pool.getElement().getProjection(),
+                                        rb.minX(), rb.maxX(), rb.minZ(), rb.maxZ(), rb.minY(), rb.maxY());
+                            }
+                            continue;
+                        }
+                        // ⚠ THE FIELD THIS WHOLE FEATURE TURNED ON. Beardifier's reference level is
+                        // box.minY() + groundLevelDelta, not box.minY(): the delta is how far the
+                        // piece's own floor sits above the bottom of its box. Two earlier attempts
+                        // aimed at minY-1 and left houses hanging — 1683 columns at a uniform 2 and a
+                        // tail to 12 — because the delta varies per piece and was simply missing. It
+                        // was never a constant to tune; it was a field to read.
+                        delta = pool.getGroundLevelDelta();
+                    }
+                    var b = piece.getBoundingBox();
+                    if (PAD_LOG)
+                        LOGGER_STRUCTURES.warn(
+                                "PLANPAD chunk {},{}: BEARD {} {} box x {}..{} z {}..{} y {}..{} delta {} -> top {}",
+                                pos.x, pos.z, piece.getClass().getSimpleName(),
+                                piece instanceof net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece pl
+                                        ? pl.getElement().getProjection() : "n/a",
+                                b.minX(), b.maxX(), b.minZ(), b.maxZ(), b.minY(), b.maxY(), delta,
+                                b.minY() + delta - 1);
+                    beards.add(new Beard(b.minX(), b.minZ(), b.maxX(), b.maxZ(), b.minY() + delta - 1));
+                }
+            }
+            if (beards.isEmpty())
+                return;
+
+            int moved = 0;
+            double deltaMin = Double.MAX_VALUE, deltaMax = -Double.MAX_VALUE;
+            for (int x = 0; x < 16; x++)
+                for (int z = 0; z < 16; z++) {
+                    int wx = minX + x, wz = minZ + z;   // plan is chunk-local, boxes are world coords
+                    double nearest = 1.0, weightSum = 0.0, baseSum = 0.0;
+                    double insideTop = Double.NEGATIVE_INFINITY;
+                    for (Beard b : beards) {
+                        int dx = Math.max(0, Math.max(b.minX() - wx, wx - b.maxX()));
+                        int dz = Math.max(0, Math.max(b.minZ() - wz, wz - b.maxZ()));
+                        double dist = Math.max(dx, dz);
+                        if (dx == 0 && dz == 0)
+                            // Under a piece: the HIGHEST floor wins, so an overlapping piece is never
+                            // buried by a lower neighbour.
+                            insideTop = Math.max(insideTop, b.top());
+                        double d = dist / (double) BEARD_RADIUS;
+                        if (d < nearest)
+                            nearest = d;
+                        double w = 1.0 / (dist * dist + 1.0);
+                        weightSum += w;
+                        baseSum += w * b.top();
+                    }
+                    if (nearest >= 1.0 || weightSum <= 0.0)
+                        continue;
+
+                    double natural = ys.getPerciseY(x, z);
+                    double target;
+                    if (insideTop != Double.NEGATIVE_INFINITY) {
+                        // Under a piece the ground is EXACTLY the block it stands on, never a blend:
+                        // blending here averaged in every other piece in range and dragged the ground
+                        // below the floor almost everywhere.
+                        target = insideTop;
+                    } else {
+                        // Outside every footprint: blend toward nearby floors and ease back to natural
+                        // ground over BEARD_RADIUS. Snapping to the nearest instead gave adjacent
+                        // columns targets up to 110 blocks apart on a mountainside and built the step.
+                        double blended = baseSum / weightSum;
+                        double ease = nearest * nearest * (3.0 - 2.0 * nearest);
+                        target = blended + (natural - blended) * ease;
+                    }
+                    if (Math.abs(target - natural) >= 0.5) {
+                        moved++;
+                        deltaMin = Math.min(deltaMin, target - natural);
+                        deltaMax = Math.max(deltaMax, target - natural);
+                    }
+                    ys.setPerciseY(x, z, target);
+                }
+
+            // Derived state must follow: calcMinMax only widens, and getMinHeight() drives the mine
+            // level loops and calcState decides sea/buildable/peak.
+            ys.recompute(context);
+            ys.markPadded();
+            if (PAD_LOG)
+                LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: {} of 256 columns moved over {} beards, delta {} .. {}",
+                        pos.x, pos.z, moved, beards.size(),
+                        deltaMin == Double.MAX_VALUE ? 0 : Math.round(deltaMin),
+                        deltaMax == -Double.MAX_VALUE ? 0 : Math.round(deltaMax));
+        } catch (Throwable t) {
+            // getMapLot can throw IndexOutOfBounds; nothing here may break terrain generation.
+            if (PAD_LOG)
+                LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: FAILED", chunk.getPos().x, chunk.getPos().z, t);
+        }
+    }
 
     /**
      * ⚠ <b>DISABLED — not called from {@link #buildCity}. Do not re-enable as-is.</b>
