@@ -662,6 +662,18 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private static final int BEARD_RADIUS = 12;
 
+    /**
+     * Blocks of taper for a structure that DECLARES {@code clearance} chunks. 12 is right against a
+     * village house and far too tight against something eight chunks across — Cataclysm's
+     * frosted_prison blended onto its footprint and then ended in a sheer wall of snow. An UNDECLARED
+     * structure must get {@link #BEARD_RADIUS} exactly and never this: feeding the default clearance
+     * of 5 through gives 76, which widened every village's gather from 625 to 23,409 blocks^2 and
+     * timed the self-test out.
+     */
+    private static int beardRadiusFor(int clearanceChunks) {
+        return Math.max(BEARD_RADIUS, clearanceChunks * 16 - 4);
+    }
+
     private static final int PAD_TAPER = 8;
 
     /**
@@ -711,6 +723,35 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * A mod whose pieces are template-based and expect pre-existing terrain (Cataclysm's cursed pyramid
      * has no self-levelling call anywhere in its 1344 classes) declares itself in the data map instead.
      */
+    private static final java.util.Map<Object, java.util.Map<
+            net.minecraft.world.level.levelgen.structure.Structure,
+            me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit>> FITS_BY_STRUCTURE =
+                    java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+    /** Declared fits by structure, one cached walk per world. */
+    private static java.util.Map<net.minecraft.world.level.levelgen.structure.Structure,
+            me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit> fitsByStructure(
+                    net.minecraft.core.HolderLookup.RegistryLookup<
+                            net.minecraft.world.level.levelgen.structure.Structure> lookup) {
+        var cached = FITS_BY_STRUCTURE.get(lookup);
+        if (cached != null)
+            return cached;
+        java.util.Map<net.minecraft.world.level.levelgen.structure.Structure,
+                me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit> out =
+                        new java.util.IdentityHashMap<>();
+        try {
+            lookup.listElements().forEach(reference -> {
+                var f = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.fitFor(reference);
+                if (f != null)
+                    out.put(reference.value(), f);
+            });
+        } catch (Throwable t) {
+            return java.util.Map.of();
+        }
+        FITS_BY_STRUCTURE.put(lookup, out);
+        return out;
+    }
+
     private static java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> beardOptIn(
             net.minecraft.core.HolderLookup.RegistryLookup<
                     net.minecraft.world.level.levelgen.structure.Structure> lookup) {
@@ -762,11 +803,16 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
 
             // One entry per piece: its footprint, and the ground level it actually wants underneath.
-            record Beard(int minX, int minZ, int maxX, int maxZ, double top) {
+            record Beard(int minX, int minZ, int maxX, int maxZ, double top, int taper) {
             }
             List<Beard> beards = new java.util.ArrayList<>();
+            var fitsIndex = fitsByStructure(structureLookup);
 
             for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
+                var fit = fitsIndex.get(start.getStructure());
+                int taper = fit == null || fit.clearance() <= 0
+                        ? BEARD_RADIUS
+                        : beardRadiusFor(fit.clearance());
                 String id = PAD_LOG ? String.valueOf(start.getStructure()) : "";
                 if (PAD_LOG && optedIn.contains(start.getStructure()))
                     LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: OPT-IN beard (terrain_adaptation none) — {}",
@@ -786,7 +832,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     continue;
                 }
                 for (net.minecraft.world.level.levelgen.structure.StructurePiece piece : start.getPieces()) {
-                    if (!piece.isCloseToChunk(pos, BEARD_RADIUS))
+                    if (!piece.isCloseToChunk(pos, taper))
                         continue;
                     int delta = 0;
                     if (piece instanceof net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece pool) {
@@ -820,7 +866,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                         ? pl.getElement().getProjection() : "n/a",
                                 b.minX(), b.maxX(), b.minZ(), b.maxZ(), b.minY(), b.maxY(), delta,
                                 b.minY() + delta - 1);
-                    beards.add(new Beard(b.minX(), b.minZ(), b.maxX(), b.maxZ(), b.minY() + delta - 1));
+                    beards.add(new Beard(b.minX(), b.minZ(), b.maxX(), b.maxZ(), b.minY() + delta - 1, taper));
                 }
             }
             if (beards.isEmpty())
@@ -841,7 +887,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             // Under a piece: the HIGHEST floor wins, so an overlapping piece is never
                             // buried by a lower neighbour.
                             insideTop = Math.max(insideTop, b.top());
-                        double d = dist / (double) BEARD_RADIUS;
+                        double d = dist / (double) b.taper();
                         if (d < nearest)
                             nearest = d;
                         double w = 1.0 / (dist * dist + 1.0);
