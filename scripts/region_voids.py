@@ -27,10 +27,20 @@ from region_dump import block_at_fn
 AIR = {'air', 'cave_air', 'void_air'}
 
 # Things that legitimately stand in open air: they are not a ceiling and not a floor.
-THIN = ('snow', 'grass', 'fern', 'flower', 'tulip', 'poppy', 'dandelion', 'bush', 'sapling',
-        'leaves', 'vine', 'torch', 'lantern', 'rail', 'sign', 'pot', 'mushroom', 'seagrass',
-        'kelp', 'sugar', 'wheat', 'carrot', 'potato', 'beet', 'berry', 'lily', 'azalea',
-        'moss_carpet', 'dead_bush', 'water', 'lava', 'cobweb', 'button', 'lever', 'tripwire')
+#
+# ⚠ SUBSTRING MATCHING HERE WAS A REAL BUG, and it silently skewed every measurement taken on
+# 2026-09-22. 'grass' matched GRASS_BLOCK and 'snow' matched SNOW_BLOCK, so the two commonest ground
+# blocks in a snowy taiga counted as NOT SOLID. region_pieceground then reported the beard as one
+# block low in 689 of 745 columns -- the beard was putting grass_block exactly on target and the
+# detector refused to see it. Anything whose whole name is thin goes in THIN_EXACT; only patterns
+# that are safe as substrings go in THIN_SUB.
+THIN_EXACT = {'snow', 'grass', 'short_grass', 'tall_grass', 'fern', 'large_fern', 'dead_bush',
+              'vine', 'glow_lichen', 'cobweb', 'lily_pad', 'water', 'lava', 'moss_carpet',
+              'sugar_cane', 'kelp', 'seagrass', 'tall_seagrass', 'snow_layer'}
+THIN_SUB = ('flower', 'tulip', 'poppy', 'dandelion', 'sapling', 'leaves', 'torch', 'lantern',
+            'rail', 'sign', 'mushroom', 'wheat', 'carrot', 'potato', 'beetroot', 'berry',
+            'azalea', 'button', 'lever', 'tripwire', 'pressure_plate', 'banner', 'candle',
+            'sprouts', 'roots', 'pickle', 'coral_fan', 'amethyst_cluster', 'bud')
 
 
 # A cavity in TERRAIN is the fault we are hunting. A room in a village house is also "solid above,
@@ -81,10 +91,12 @@ def is_natural(name):
 def is_solid(name):
     if not name:
         return False
-    name = name.split('[')[0]
+    name = name.split('[')[0].split(':')[-1]
     if name in AIR:
         return False
-    return not any(k in name for k in THIN)
+    if name in THIN_EXACT:
+        return False
+    return not any(k in name for k in THIN_SUB)
 
 
 def main():

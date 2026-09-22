@@ -741,8 +741,16 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         // TERRAIN_MATCHING pieces carry a GravityProcessor and drop onto the ground on
                         // purpose; vanilla beards only RIGID ones, and so do we.
                         if (pool.getElement().getProjection()
-                                != net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool.Projection.RIGID)
+                                != net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool.Projection.RIGID) {
+                            if (PAD_LOG) {
+                                var rb = piece.getBoundingBox();
+                                LOGGER_STRUCTURES.warn(
+                                        "PLANPAD chunk {},{}: REJECT non-rigid {} box x {}..{} z {}..{} y {}..{}",
+                                        pos.x, pos.z, pool.getElement().getProjection(),
+                                        rb.minX(), rb.maxX(), rb.minZ(), rb.maxZ(), rb.minY(), rb.maxY());
+                            }
                             continue;
+                        }
                         // ⚠ THE FIELD THIS WHOLE FEATURE TURNED ON. Beardifier's reference level is
                         // box.minY() + groundLevelDelta, not box.minY(): the delta is how far the
                         // piece's own floor sits above the bottom of its box. Two earlier attempts
@@ -752,6 +760,14 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         delta = pool.getGroundLevelDelta();
                     }
                     var b = piece.getBoundingBox();
+                    if (PAD_LOG)
+                        LOGGER_STRUCTURES.warn(
+                                "PLANPAD chunk {},{}: BEARD {} {} box x {}..{} z {}..{} y {}..{} delta {} -> top {}",
+                                pos.x, pos.z, piece.getClass().getSimpleName(),
+                                piece instanceof net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece pl
+                                        ? pl.getElement().getProjection() : "n/a",
+                                b.minX(), b.maxX(), b.minZ(), b.maxZ(), b.minY(), b.maxY(), delta,
+                                b.minY() + delta - 1);
                     beards.add(new Beard(b.minX(), b.minZ(), b.maxX(), b.maxZ(), b.minY() + delta - 1));
                 }
             }

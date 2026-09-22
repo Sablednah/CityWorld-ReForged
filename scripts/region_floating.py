@@ -9,6 +9,15 @@ question is whether the structure sits on ground, and only its underside answers
 
 usage: region_floating.py <region dir> x0 x1 y0 y1 z0 z1 <label>
 
+⚠ INDICATIVE ONLY. Use scripts/region_pieceground.py to judge whether structures sit on the ground.
+This script cannot tell a HANG from an INTERIOR, and not for want of patching -- it is missing the
+information needed. A column inside a house whose floor is the terrain itself has its roof as the
+only build block in the column, with the room's air beneath and real ground below that; x1266,-751
+reads "spruce_log over 10 air" and is a correctly seated upstairs, with a bed and a wall torch two
+columns away at the same heights. Deciding that needs the PIECE BOUNDING BOX, which only the
+generator's own PLANPAD log carries. Two successive attempts to fix it here (first-from-top ->
+lowest-near-surface -> skip-if-build-below) each fixed one case and missed the next.
+
 ⚠ Run this beside region_voids.py, never instead of it. They catch OPPOSITE faults and each is blind
 to the other's: voids wants ENCLOSED air (a lid painted over a cavity), this wants OPEN air (a piece
 left hanging). The structure pad produced one fault, was "fixed", and produced the other; four clean-
@@ -53,6 +62,18 @@ for x in range(x0, x1 + 1):
         while j >= 0 and not is_solid(col[j]):
             run += 1
             j -= 1
+        # ⚠ A ROOF OVER A ROOM IS NOT A HANG. Confound six, 2026-09-22: v1 took the first build
+        # block from the top (a roof, over its own room); v2 took the LOWEST build block near the
+        # surface -- but where a column's only blocks are upper storey, with the floor being the
+        # terrain itself, the lowest IS the roof. x1266,-751 reported "spruce_log over 10 air" and
+        # was quoted as a floating house; the column actually reads y87 roof, interior air, then
+        # grass_block at y77 exactly where the beard put it, and x1269,-752 has a bed and a wall
+        # torch in that same "gap". If the air below is bounded by MORE of the structure lower down
+        # in this column, or the structure continues below the gap, it is an interior.
+        below_build = any(is_solid(col[k]) and not is_natural(col[k]) for k in range(0, low))
+        if below_build:
+            resting += 1
+            continue
         if run == 0:
             resting += 1
         elif j >= 0:
