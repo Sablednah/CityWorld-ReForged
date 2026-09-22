@@ -640,6 +640,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private static final boolean PAD_ENABLED = Boolean.getBoolean("cityworld.structurepad");
 
+    /**
+     * How far the beard reaches, horizontally, in blocks. <b>12 because that is
+     * {@code Beardifier.BEARD_KERNEL_RADIUS}</b> — vanilla's kernel is 24 wide and every piece is
+     * gathered with {@code isCloseToChunk(pos, 12)}. The first two attempts used 8, picked by eye.
+     */
+    private static final int BEARD_RADIUS = 12;
+
     private static final int PAD_TAPER = 8;
 
     /**
@@ -689,14 +696,26 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             if (ys == null || ys.isPadded())
                 return;
 
+            // Exactly vanilla's filter (Beardifier.forStructuresInChunk): a structure declaring NONE
+            // wants no help. That is not laziness — a desert pyramid is a ScatteredFeaturePiece and
+            // RE-LEVELS ITSELF at placement time via updateHeightPositionToLowestGroundHeight, which
+            // moves its whole bounding box onto whatever ground it finds. Measured 2026-09-22: pad off
+            // and pad on gave layer-for-layer identical pyramids, offset only by the 1 block the pad
+            // had moved the ground. Shaping for it is pointless at best and fights it at worst.
             List<net.minecraft.world.level.levelgen.structure.StructureStart> starts =
-                    structureManager.startsForStructure(pos, structure -> true);
+                    structureManager.startsForStructure(pos,
+                            structure -> structure.terrainAdaptation()
+                                    != net.minecraft.world.level.levelgen.structure.TerrainAdjustment.NONE);
             if (starts.isEmpty())
                 return;
 
             var cavern = structureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE).get(CARVE_CAVERN);
             int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
-            List<net.minecraft.world.level.levelgen.structure.BoundingBox> boxes = new java.util.ArrayList<>();
+
+            // One entry per piece: its footprint, and the ground level it actually wants underneath.
+            record Beard(int minX, int minZ, int maxX, int maxZ, double top) {
+            }
+            List<Beard> beards = new java.util.ArrayList<>();
 
             for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
                 String id = PAD_LOG ? String.valueOf(start.getStructure()) : "";
@@ -715,14 +734,28 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     continue;
                 }
                 for (net.minecraft.world.level.levelgen.structure.StructurePiece piece : start.getPieces()) {
-                    net.minecraft.world.level.levelgen.structure.BoundingBox b = piece.getBoundingBox();
-                    if (b.maxX() + PAD_TAPER < minX || b.minX() - PAD_TAPER > minX + 15
-                            || b.maxZ() + PAD_TAPER < minZ || b.minZ() - PAD_TAPER > minZ + 15)
+                    if (!piece.isCloseToChunk(pos, BEARD_RADIUS))
                         continue;
-                    boxes.add(b);
+                    int delta = 0;
+                    if (piece instanceof net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece pool) {
+                        // TERRAIN_MATCHING pieces carry a GravityProcessor and drop onto the ground on
+                        // purpose; vanilla beards only RIGID ones, and so do we.
+                        if (pool.getElement().getProjection()
+                                != net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool.Projection.RIGID)
+                            continue;
+                        // ⚠ THE FIELD THIS WHOLE FEATURE TURNED ON. Beardifier's reference level is
+                        // box.minY() + groundLevelDelta, not box.minY(): the delta is how far the
+                        // piece's own floor sits above the bottom of its box. Two earlier attempts
+                        // aimed at minY-1 and left houses hanging — 1683 columns at a uniform 2 and a
+                        // tail to 12 — because the delta varies per piece and was simply missing. It
+                        // was never a constant to tune; it was a field to read.
+                        delta = pool.getGroundLevelDelta();
+                    }
+                    var b = piece.getBoundingBox();
+                    beards.add(new Beard(b.minX(), b.minZ(), b.maxX(), b.maxZ(), b.minY() + delta - 1));
                 }
             }
-            if (boxes.isEmpty())
+            if (beards.isEmpty())
                 return;
 
             int moved = 0;
@@ -731,47 +764,36 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 for (int z = 0; z < 16; z++) {
                     int wx = minX + x, wz = minZ + z;   // plan is chunk-local, boxes are world coords
                     double nearest = 1.0, weightSum = 0.0, baseSum = 0.0;
-                    int insideTop = Integer.MIN_VALUE;
-                    for (net.minecraft.world.level.levelgen.structure.BoundingBox b : boxes) {
+                    double insideTop = Double.NEGATIVE_INFINITY;
+                    for (Beard b : beards) {
                         int dx = Math.max(0, Math.max(b.minX() - wx, wx - b.maxX()));
                         int dz = Math.max(0, Math.max(b.minZ() - wz, wz - b.maxZ()));
                         double dist = Math.max(dx, dz);
                         if (dx == 0 && dz == 0)
-                            // Directly under a piece: the HIGHEST such base wins, so an overlapping
-                            // piece is never buried by a lower neighbour.
-                            insideTop = Math.max(insideTop, b.minY() - 1);
-                        double d = dist / (double) PAD_TAPER;
+                            // Under a piece: the HIGHEST floor wins, so an overlapping piece is never
+                            // buried by a lower neighbour.
+                            insideTop = Math.max(insideTop, b.top());
+                        double d = dist / (double) BEARD_RADIUS;
                         if (d < nearest)
                             nearest = d;
                         double w = 1.0 / (dist * dist + 1.0);
                         weightSum += w;
-                        baseSum += w * (b.minY() - 1); // the block the structure stands ON
+                        baseSum += w * b.top();
                     }
                     if (nearest >= 1.0 || weightSum <= 0.0)
                         continue;
 
                     double natural = ys.getPerciseY(x, z);
                     double target;
-                    if (insideTop != Integer.MIN_VALUE) {
-                        // ⚠ UNDER a piece the ground must be EXACTLY the block it stands on — never a
-                        // blend. The blend used to apply here too (dist 0 -> ease 0 -> target =
-                        // weighted mean of every box in range), and with ~110 village pieces each
-                        // contributing 1/(d*d+1) the mean sat a couple of blocks below the piece's own
-                        // base almost everywhere, and much further where neighbours were lower. Measured
-                        // 2026-09-22 before this fix: 1994 of 3682 build-bearing columns (54.2%) had
-                        // their lowest block over open air -- 1683 of them at a uniform 2 blocks (the
-                        // background drag) and a tail to 12 (spruce_log houses hanging at x1266..1272).
-                        // The owner saw it as floating houses in Schemy; the void scans never could,
-                        // because open air under a floating house is not ENCLOSED air.
-                        //
-                        // blockYs is the TOPMOST SOLID block -- actualGenerateStratas puts
-                        // surfaceMaterial at subsurfaceY, which is this y -- so minY-1 is right: the
-                        // floor at minY lands on it. The constant was never wrong; the averaging was.
+                    if (insideTop != Double.NEGATIVE_INFINITY) {
+                        // Under a piece the ground is EXACTLY the block it stands on, never a blend:
+                        // blending here averaged in every other piece in range and dragged the ground
+                        // below the floor almost everywhere.
                         target = insideTop;
                     } else {
-                        // Outside every box: blend toward the nearby bases and ease back to natural
-                        // ground. Snapping to the nearest base instead gave adjacent columns targets up
-                        // to 110 blocks apart on a mountainside village and built the step between them.
+                        // Outside every footprint: blend toward nearby floors and ease back to natural
+                        // ground over BEARD_RADIUS. Snapping to the nearest instead gave adjacent
+                        // columns targets up to 110 blocks apart on a mountainside and built the step.
                         double blended = baseSum / weightSum;
                         double ease = nearest * nearest * (3.0 - 2.0 * nearest);
                         target = blended + (natural - blended) * ease;
@@ -789,8 +811,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             ys.recompute(context);
             ys.markPadded();
             if (PAD_LOG)
-                LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: {} of 256 columns moved, delta {} .. {}",
-                        pos.x, pos.z, moved,
+                LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: {} of 256 columns moved over {} beards, delta {} .. {}",
+                        pos.x, pos.z, moved, beards.size(),
                         deltaMin == Double.MAX_VALUE ? 0 : Math.round(deltaMin),
                         deltaMax == -Double.MAX_VALUE ? 0 : Math.round(deltaMax));
         } catch (Throwable t) {
