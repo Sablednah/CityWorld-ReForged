@@ -820,9 +820,15 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 // ⚠ From the CACHED index, never a fresh registry scan. Resolving this per start walked
                 // all 52 vanilla structures plus 29 from Cataclysm for every start in every chunk --
                 // exactly the hot-path cost removed from beardOptIn earlier.
+                // ⚠ An UNDECLARED structure gets BEARD_RADIUS exactly — never beardRadiusFor(default).
+                // Passing the default clearance of 5 gave max(12, 5*16-4) = 76, so every village
+                // gathered with isCloseToChunk(pos, 76) instead of 12: ~40x the area, 369 beards per
+                // chunk against ~40, and the column loop runs once per beard per column. It timed the
+                // 1.21.11 self-test out at 1800s. Only a structure that DECLARES a clearance widens.
                 var fit = fitsIndex.get(start.getStructure());
-                int taper = beardRadiusFor(fit == null || fit.clearance() <= 0
-                        ? StructureReservations.DEFAULT_CLEARANCE : fit.clearance());
+                int taper = fit == null || fit.clearance() <= 0
+                        ? BEARD_RADIUS
+                        : beardRadiusFor(fit.clearance());
                 String id = PAD_LOG ? String.valueOf(start.getStructure()) : "";
                 if (PAD_LOG && optedIn.contains(start.getStructure()))
                     LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: OPT-IN beard (terrain_adaptation none) — {}",
