@@ -5110,3 +5110,60 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
   seats an entity, how tall it sits, whether it wants a wall behind it. **So the owner's instinct that
   this should be datapack-driven is achievable — it is just data maps rather than tags.** Worth a spike
   on one role (`chair`) before committing to the whole vocabulary.
+
+## Structure integration — the pad, and four ways a measurement lied (2026-09-21/22)
+
+**Status: the pad is written, measured, and GATED OFF** (`-Dcityworld.structurepad=true` to enable).
+Reservation is separate and stays on: terrain is kept clear around structures either way. The full
+numbers live in `CityWorldChunkGenerator.PAD_ENABLED`'s javadoc; this is the narrative.
+
+**The goal** (owner's, verbatim): *"use a combo of making cityworld avoid planning into structure
+areas — so that whats left is just terrain. And then that's 'safe' to carve up and smooth and padd as
+much as needed to look good and let stuctures place."*
+
+**Where it landed.** Pad OFF vs ON, same seed and box, buried builds excluded: terrain measurably
+improves (enclosed natural air 37.0% -> 30.2%, lid-like crust 3.2% -> 1.6%) but floating pieces do
+not (4+ tail 48 -> 45, flat) and the worst house gets WORSE (x1266 `spruce_log`, 8 blocks -> 11,
+spreading to x1268..1272). Terrain better, houses no better, worst one worse — so it is off.
+
+**The real fault is placement, not shaping.** `getBaseHeight` hands vanilla ONE Y for a whole village
+start; CityWorld terrain varies roughly +/-10 across that footprint, so edge pieces hang however well
+the ground is shaped. With the pad OFF, x1266,-751 is a `spruce_log` at y87 **with snow on top of it**,
+six blocks of open air, then real ground at y80 — decoration painted a surface onto a log in the sky.
+An earlier note here recommended levelling to the start's reference plane; that is **withdrawn**, because
+the offset data (median 2, p10 0, p90 2) says the plane is already about right for the bulk.
+
+### The four false measurements, in order, because each cost a cycle
+
+1. **Enclosed-air scans counted house interiors and caves.** A room is also "solid above, air, solid
+   below". `region_voids.py` read ~50% of columns in the village footprint whether the pad rewrote
+   blocks or the plan, because the confound dominated the signal. The quoted 28.5% and 50.8% were never
+   measurements of the fault. Fix: `--natural` (ceiling and floor both natural ground) plus
+   `region_crust.py`, which separates a cave (metres of stone above) from a floating lid (1-3 blocks).
+2. **No control existed.** Padded terrain turned out to be equal or BETTER than untouched terrain on
+   four 441-column boxes — the ~50% was baseline. Three earlier attempts at a control all landed on flat
+   ground and produced nothing usable. **A cavity count without a control box is uninterpretable.**
+3. **The void scan is blind to the opposite fault.** It hunts ENCLOSED air; a house floating over open
+   ground has air all the way down, so four clean-ish scans said nothing was wrong while the owner
+   opened the same `.schem` in Schemy and saw floating houses in one look. Hence
+   `scripts/region_floating.py` — **run the two together, never one instead of the other.**
+4. **The floating scan counted mines as structures.** Lowest build block within 20 of the surface caught
+   CityWorld's own mine and sewer works under intact ground; excluding buried builds cut the denominator
+   from 3872 columns to 1000. An 18-block "regression" blamed on the second pad attempt was x1240,-760:
+   a `copper_grate`/`copper_chain` mine cap under 15 blocks of stone. Every floating figure quoted before
+   that fix (57.1% / 54.2% / 48.1%) is void.
+
+**And a benign population that ate two hypotheses.** With the pad OFF, 1889 of 3860 build columns
+already sit at an offset of exactly 2 — a structural bimodal at 0 and 2, two kinds of
+lowest-build-block. Two explanations were built on that uniform 2 and both were falsified. **Only the
+4+ tail is the fault.**
+
+**Tooling gotchas earned here.** `cmd | tail -15 && echo OK` reads *tail's* exit status, so three
+branches reported `COMPILE OK` while Gradle said `BUILD FAILED`; use `set -o pipefail` and print the
+status. And a patch script whose anchor does not match exits without editing, after which the next
+`BUILD SUCCESSFUL` is about the **unchanged** file — make the edit assert, and check both.
+
+**If resuming:** the pad code and its notes are intact behind the flag. The open problem is vanilla's
+single-Y-per-start placement, not the ground under it. Measure with `region_floating.py` +
+`region_voids.py --natural` + `region_crust.py` together, always against a pad-OFF control on the same
+seed and box.
