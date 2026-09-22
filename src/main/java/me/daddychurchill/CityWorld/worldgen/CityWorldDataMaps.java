@@ -215,7 +215,23 @@ public final class CityWorldDataMaps {
     }
 
     /**
-     * Reads one data-map file out of every pack that has it and decodes its {@code values} block.
+     * ⚠ <b>KNOWN DEFECT: this reads ONE pack's file, not every pack's.</b> Proved 2026-09-22 with two
+     * packs both writing {@code data/cityworld/data_maps/worldgen/structure/structure_fit.json}:
+     * {@code SimpleJsonResourceReloadListener} keys by NAMESPACED FILE ID, so both collapse onto the
+     * single id {@code cityworld:structure_fit} and the listener is handed exactly one -- logged as
+     * {@code DATAMAP RAW: ... offered 1 file id(s)}. The winner is decided by pack order; the loser is
+     * never seen. {@code "replace": false} is read by nothing here.
+     *
+     * <p>All three maps share this loader ({@code ground}, {@code furniture}, {@code structure_fit}),
+     * so on this line a Biomes O' Plenty ground pack or a furniture pack CANNOT extend CityWorld's
+     * entries -- it can only supplant them. The NeoForge branches use real {@code DataMapType}s and do
+     * not behave this way, so the same two packs give different results per Minecraft line.
+     *
+     * <p>Latent today: only CityWorld itself writes {@code data/cityworld/data_maps/} on the owner's
+     * 1.20.1 instance. It bites the moment a third-party compat pack does. Fixing it means iterating
+     * every pack's copy via {@code ResourceManager.getResourceStack} and honouring {@code replace}.
+     *
+     * <p>Reads one data-map file out of every pack that has it and decodes its {@code values} block.
      *
      * <p>Two shapes are accepted, because that is what the files contain: a bare value, and a
      * {@code {"neoforge:conditions": …, "value": …}} wrapper. The condition itself needs no
@@ -229,6 +245,14 @@ public final class CityWorldDataMaps {
             protected void apply(Map<ResourceLocation, JsonElement> files, ResourceManager manager,
                     ProfilerFiller profiler) {
                 Map<ResourceLocation, T> out = new java.util.HashMap<>();
+                // ⚠ SimpleJsonResourceReloadListener keys by NAMESPACED FILE ID, so every pack writing
+                // data/cityworld/data_maps/.../structure_fit.json collapses onto ONE key -- the
+                // highest-priority pack wins and the others are never offered. Print what we are given.
+                if (System.getProperty("cityworld.probe") != null
+                        || System.getProperty("cityworld.diagnostics") != null)
+                    me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                            "DATAMAP RAW: {} offered {} file id(s): {}", directory, files.size(),
+                            files.keySet().stream().map(Object::toString).toList());
                 files.forEach((id, element) -> {
                     if (!id.getPath().equals(file) || !element.isJsonObject())
                         return;
@@ -244,6 +268,15 @@ public final class CityWorldDataMaps {
                     }
                 });
                 sink.accept(Map.copyOf(out));
+                // ⚠ Say how many entries each map actually decoded. A file that is never found, and a
+                // file that decodes to nothing, produce identical silence -- and on this line the
+                // structure_fit map read zero while the sibling allow-list TAG in another pack loaded
+                // fine, which is indistinguishable from "not registered" without this line.
+                if (System.getProperty("cityworld.probe") != null
+                        || System.getProperty("cityworld.diagnostics") != null)
+                    me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                            "DATAMAP: {}/{} -> {} entries {}", directory, file, out.size(),
+                            out.keySet().stream().limit(6).map(Object::toString).toList());
             }
         };
     }
