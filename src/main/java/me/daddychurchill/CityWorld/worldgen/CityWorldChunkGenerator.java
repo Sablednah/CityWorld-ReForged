@@ -709,6 +709,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * A mod whose pieces are template-based and expect pre-existing terrain (Cataclysm's cursed pyramid
      * has no self-levelling call anywhere in its 1344 classes) declares itself in the data map instead.
      */
+    private static final java.util.Map<Object, java.util.Set<
+            net.minecraft.world.level.levelgen.structure.Structure>> BEARD_OPT_IN =
+                    java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
     private static java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> beardOptIn(
             net.minecraft.core.HolderLookup.RegistryLookup<
                     net.minecraft.world.level.levelgen.structure.Structure> lookup) {
@@ -716,6 +720,12 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // registry inside the startsForStructure predicate, so it ran per start per chunk -- bounded,
         // but needless work in the hot worldgen path. Deliberately NOT cached across calls: data maps
         // are reload-scoped, and a stale cache would survive /reload and quietly disagree with the pack.
+        // Cached per lookup instance: the registry is fixed for a world, and this walked all 52 vanilla
+        // structures plus 29 from Cataclysm on EVERY chunk that had a start. Keyed on the lookup itself
+        // so a datapack reload, which hands out a new one, cannot be served a stale answer.
+        java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> cached = BEARD_OPT_IN.get(lookup);
+        if (cached != null)
+            return cached;
         java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> out =
                 java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
         try {
@@ -726,6 +736,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         } catch (Throwable t) {
             return java.util.Set.of();
         }
+        BEARD_OPT_IN.put(lookup, out);
         return out;
     }
 
