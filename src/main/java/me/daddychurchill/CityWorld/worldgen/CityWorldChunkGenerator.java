@@ -456,7 +456,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // Smooth the PLANNED ground under any surface structure BEFORE terrain is drawn from it.
         // Order is the whole fix: the previous pad ran after this line and rewrote blocks, leaving the
         // planned heights untouched, so decoration later painted a surface at the old level over a void.
-        padPlanForStructures(context, structureManager, chunk, platmap);
+        // ⚠ Gated OFF by default: see PAD_ENABLED. It still leaves 48% of structure
+        // columns standing over air, so it must not run in a shipped jar.
+        if (PAD_ENABLED)
+            padPlanForStructures(context, structureManager, chunk, platmap);
 
         platmap.generateChunk(blocks, IGNORE_BIOMES);
 
@@ -592,6 +595,33 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     }
 
     /** How far a pad eases back to natural ground. Vanilla's beard falls off over roughly this much. */
+    /**
+     * Whether the structure pad runs at all. <b>OFF by default, because it does not work yet.</b>
+     *
+     * <p>Measured 2026-09-22 on a taiga village, after two attempts: 48.1% of build-bearing columns
+     * (1612 of 3349) still had their lowest block standing over open air, 1305 of them at a uniform
+     * 2 blocks, with spruce_log houses hanging 9-11 blocks up. The owner saw it immediately in Schemy
+     * as floating houses; four void scans had missed it, because {@code region_voids.py} hunts
+     * ENCLOSED air and a house floating over open ground has air all the way down.
+     *
+     * <p><b>Why this is a design limit, not a constant to tune.</b> A structure's Y comes from
+     * {@code getBaseHeight}, which reads the shaper directly and never sees this pad, so the piece
+     * stays where vanilla put it while the ground moves out from under it. Aiming the ground at a
+     * piece's {@code box.minY() - 1} cannot fix that: {@code minY} is the bottom of the WHOLE box at
+     * its lowest corner, not the floor level of each column beneath it, so under a tall piece or one
+     * on a slope the ground lands far below that column's actual lowest block. Removing the cross-box
+     * averaging (attempt two, {@code 413d525f}) moved the number only from 54.2% to 48.1%, which is
+     * what falsified the averaging explanation.
+     *
+     * <p>The next attempt should level to the start's own reference plane — the {@code getBaseHeight}
+     * value vanilla placed the pieces against — not to per-box bottoms. Measure the
+     * box-minY-versus-lowest-block relationship BEFORE changing code again.
+     *
+     * <p>Enable for development with {@code -Dcityworld.structurepad=true}. Terrain is still reserved
+     * around structures either way ({@link StructureReservations}); only the shaping is gated.
+     */
+    private static final boolean PAD_ENABLED = Boolean.getBoolean("cityworld.structurepad");
+
     private static final int PAD_TAPER = 8;
 
     /**
