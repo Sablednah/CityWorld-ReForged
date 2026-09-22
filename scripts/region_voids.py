@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Find air trapped UNDER the ground: solid above, solid below, near the surface.
 
-usage: region_voids.py <region dir> x0 x1 y0 y1 z0 z1 [near] [--list N] [--natural]
+usage: region_voids.py <region dir> x0 x1 y0 y1 z0 z1 [near] [--list N] [--natural] [--masonry-is-build]
 
 This exists because of a fault that every other tool here was blind to. The structure pad rewrote
 blocks during terrain generation while the PLANNED column heights (AbstractCachedYs.blockYs) kept
@@ -50,11 +50,29 @@ NATURAL_EXACT = {
 }
 
 
+# ⚠ A desert structure is built OUT OF the desert. sandstone, smooth/cut/chiseled sandstone and
+# terracotta are a desert pyramid's masonry AND the surrounding ground, so with them counted as
+# natural, the pyramid's own rooms and corridors score as terrain cavities: the footprint read 68.3%
+# enclosed air, which measures the building, not a fault. Scoring a desert structure needs them
+# treated as BUILD. Pass structure_materials=... to do that; the default stays ground-first, because
+# outside a desert structure sandstone really is terrain.
+DESERT_MASONRY = {
+    'sandstone', 'cut_sandstone', 'smooth_sandstone', 'chiseled_sandstone',
+    'red_sandstone', 'cut_red_sandstone', 'smooth_red_sandstone', 'chiseled_red_sandstone',
+    'terracotta', 'blue_terracotta', 'orange_terracotta',
+}
+
+# Set true (or pass --masonry-is-build) when scoring a desert structure's footprint.
+MASONRY_IS_BUILD = False
+
+
 def is_natural(name):
     """Natural ground only: NOT cobblestone/planks/bricks, which are village and mine vocabulary."""
     if not name:
         return False
     name = name.split('[')[0].split(':')[-1]
+    if MASONRY_IS_BUILD and name in DESERT_MASONRY:
+        return False
     if name in NATURAL_EXACT:
         return True
     return name.endswith('_ore') or name.endswith('_terracotta')
@@ -83,6 +101,8 @@ def main():
     if '--list' in rest:
         listn = int(rest[rest.index('--list') + 1])
     natural_only = '--natural' in rest
+    if '--masonry-is-build' in rest:
+        globals()['MASONRY_IS_BUILD'] = True
 
     x0, x1 = min(x0, x1), max(x0, x1)
     y0, y1 = min(y0, y1), max(y0, y1)
