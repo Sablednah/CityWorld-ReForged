@@ -1,11 +1,11 @@
 {
   "replace": false,
   "values": {
-    "cataclysm:cursed_pyramid":  { "clearance": 7,  "beard": true },
-    "cataclysm:acropolis":       { "clearance": 12, "beard": true },
-    "cataclysm:frosted_prison":  { "clearance": 8,  "beard": true },
-    "cataclysm:soul_black_smith":{ "beard": true },
-    "cataclysm:burning_arena":   { "beard": true },
-    "cataclysm:ruined_citadel":  { "beard": true }
+    "cataclysm:cursed_pyramid":   { "clearance": 7,  "beard": true },
+    "cataclysm:frosted_prison":   { "clearance": 8,  "beard": true },
+    "cataclysm:soul_black_smith": { "beard": true },
+    "cataclysm:burning_arena":    { "beard": true },
+    "cataclysm:ruined_citadel":   { "beard": true },
+    "cataclysm:acropolis":        { "clearance": 12 }
   }
 }
