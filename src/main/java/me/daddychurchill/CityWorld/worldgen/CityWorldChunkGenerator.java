@@ -810,9 +810,17 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 if (PAD_LOG && optedIn.contains(start.getStructure()))
                     LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: OPT-IN beard (terrain_adaptation none) — {}",
                             pos.x, pos.z, id);
+                // ⚠ An UNDECLARED structure gets BEARD_RADIUS exactly — never beardRadiusFor(default).
+                // Passing the default clearance of 5 through gave max(12, 5*16-4) = 76, so every
+                // village suddenly gathered pieces with isCloseToChunk(pos, 76) instead of 12: a 6x
+                // radius, ~40x the area, and 369 beards per chunk where there had been ~40. The column
+                // loop runs once per beard per column, so that is 256*369 iterations a chunk. It timed
+                // the self-test out at 1800s and is almost certainly the minute-long stall the owner
+                // saw in game. Only a structure that DECLARES a clearance gets a wider taper.
                 var fit = fits.byStructure().get(start.getStructure());
-                int taper = beardRadiusFor(fit == null || fit.clearance() <= 0
-                        ? StructureReservations.DEFAULT_CLEARANCE : fit.clearance());
+                int taper = fit == null || fit.clearance() <= 0
+                        ? BEARD_RADIUS
+                        : beardRadiusFor(fit.clearance());
                 var whole = start.getBoundingBox();
                 if (cavern.map(set -> set.stream().anyMatch(h -> h.value() == start.getStructure())).orElse(false)) {
                     if (PAD_LOG)
