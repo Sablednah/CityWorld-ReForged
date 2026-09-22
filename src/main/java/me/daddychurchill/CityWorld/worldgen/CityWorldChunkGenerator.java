@@ -683,10 +683,15 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 for (int z = 0; z < 16; z++) {
                     int wx = minX + x, wz = minZ + z;   // plan is chunk-local, boxes are world coords
                     double nearest = 1.0, weightSum = 0.0, baseSum = 0.0;
+                    int insideTop = Integer.MIN_VALUE;
                     for (net.minecraft.world.level.levelgen.structure.BoundingBox b : boxes) {
                         int dx = Math.max(0, Math.max(b.minX() - wx, wx - b.maxX()));
                         int dz = Math.max(0, Math.max(b.minZ() - wz, wz - b.maxZ()));
                         double dist = Math.max(dx, dz);
+                        if (dx == 0 && dz == 0)
+                            // Directly under a piece: the HIGHEST such base wins, so an overlapping
+                            // piece is never buried by a lower neighbour.
+                            insideTop = Math.max(insideTop, b.minY() - 1);
                         double d = dist / (double) PAD_TAPER;
                         if (d < nearest)
                             nearest = d;
@@ -697,10 +702,32 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     if (nearest >= 1.0 || weightSum <= 0.0)
                         continue;
 
-                    double blended = baseSum / weightSum;
                     double natural = ys.getPerciseY(x, z);
-                    double ease = nearest * nearest * (3.0 - 2.0 * nearest);
-                    double target = blended + (natural - blended) * ease;
+                    double target;
+                    if (insideTop != Integer.MIN_VALUE) {
+                        // ⚠ UNDER a piece the ground must be EXACTLY the block it stands on — never a
+                        // blend. The blend used to apply here too (dist 0 -> ease 0 -> target =
+                        // weighted mean of every box in range), and with ~110 village pieces each
+                        // contributing 1/(d*d+1) the mean sat a couple of blocks below the piece's own
+                        // base almost everywhere, and much further where neighbours were lower. Measured
+                        // 2026-09-22 before this fix: 1994 of 3682 build-bearing columns (54.2%) had
+                        // their lowest block over open air -- 1683 of them at a uniform 2 blocks (the
+                        // background drag) and a tail to 12 (spruce_log houses hanging at x1266..1272).
+                        // The owner saw it as floating houses in Schemy; the void scans never could,
+                        // because open air under a floating house is not ENCLOSED air.
+                        //
+                        // blockYs is the TOPMOST SOLID block -- actualGenerateStratas puts
+                        // surfaceMaterial at subsurfaceY, which is this y -- so minY-1 is right: the
+                        // floor at minY lands on it. The constant was never wrong; the averaging was.
+                        target = insideTop;
+                    } else {
+                        // Outside every box: blend toward the nearby bases and ease back to natural
+                        // ground. Snapping to the nearest base instead gave adjacent columns targets up
+                        // to 110 blocks apart on a mountainside village and built the step between them.
+                        double blended = baseSum / weightSum;
+                        double ease = nearest * nearest * (3.0 - 2.0 * nearest);
+                        target = blended + (natural - blended) * ease;
+                    }
                     if (Math.abs(target - natural) >= 0.5) {
                         moved++;
                         deltaMin = Math.min(deltaMin, target - natural);
