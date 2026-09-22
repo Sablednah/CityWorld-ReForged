@@ -166,6 +166,52 @@ public final class CityWorldDataMaps {
     public static void register(AddReloadListenerEvent event) {
         event.addListener(loader("data_maps/worldgen/biome", "ground", Ground.CODEC, m -> GROUND_DATA = m));
         event.addListener(loader("data_maps/block", "furniture", Facing.CODEC, m -> FURNITURE_DATA = m));
+        event.addListener(loader("data_maps/worldgen/structure", "structure_fit", StructureFit.CODEC,
+                m -> STRUCTURE_FIT_DATA = m));
+    }
+
+    /**
+     * How much room a structure needs, and whether to build ground up to meet it.
+     *
+     * <p>Mirrors the NeoForge branches' {@code cityworld:structure_fit} data map; this line has no
+     * {@code DataMapType}, so it reads the same JSON through the reload listener above. Keep the two
+     * in step — the resource file is shared verbatim, only the plumbing differs.
+     *
+     * <p>{@code clearance} overrides {@link StructureReservations#DEFAULT_CLEARANCE} (never shrinks
+     * it); {@code beard} opts a {@code terrain_adaptation: none} structure into shaping. Opt-in only:
+     * vanilla's NONE structures either self-level or are deliberately off the ground, and buildCity
+     * runs in every dimension.
+     */
+    public record StructureFit(int clearance, boolean beard) {
+
+        public static final Codec<StructureFit> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.INT.optionalFieldOf("clearance", 0).forGetter(StructureFit::clearance),
+                Codec.BOOL.optionalFieldOf("beard", false).forGetter(StructureFit::beard)
+        ).apply(i, StructureFit::new));
+    }
+
+    private static volatile Map<ResourceLocation, StructureFit> STRUCTURE_FIT_DATA = Map.of();
+
+    /** The declaration for this structure, or {@code null} if it has none. */
+    public static @Nullable StructureFit fitFor(
+            @Nullable Holder<net.minecraft.world.level.levelgen.structure.Structure> structure) {
+        if (structure == null)
+            return null;
+        return structure.unwrapKey().map(key -> STRUCTURE_FIT_DATA.get(key.location())).orElse(null);
+    }
+
+    /** Declared clearance in chunks, or {@code fallback} when none is declared. Never shrinks it. */
+    public static int clearanceFor(
+            @Nullable Holder<net.minecraft.world.level.levelgen.structure.Structure> structure, int fallback) {
+        StructureFit fit = fitFor(structure);
+        return fit == null || fit.clearance() <= 0 ? fallback : Math.max(fallback, fit.clearance());
+    }
+
+    /** Whether this structure opts in to being bearded despite declaring {@code none}. */
+    public static boolean beardsAnyway(
+            @Nullable Holder<net.minecraft.world.level.levelgen.structure.Structure> structure) {
+        StructureFit fit = fitFor(structure);
+        return fit != null && fit.beard();
     }
 
     /**

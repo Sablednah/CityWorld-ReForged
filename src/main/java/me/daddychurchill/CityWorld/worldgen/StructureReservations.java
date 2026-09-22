@@ -57,11 +57,20 @@ public final class StructureReservations {
     private final ChunkGeneratorStructureState state;
     private final int clearance;
 
-    /** Resolved once: the sets worth asking about, with the ring placements already filtered out. */
-    private final List<Holder<StructureSet>> sets;
+    /**
+     * Resolved once: the sets worth asking about, each with the clearance IT needs.
+     *
+     * <p>Per set, not per world, because one number cannot fit both a pillager outpost and a 209-block
+     * acropolis. Resolved at construction rather than per query so the answer cannot depend on what has
+     * generated so far — a reservation that varied with generation order would make the same seed plan
+     * differently between runs, and the self-test hashes plans across six Minecraft versions.
+     */
+    private record Reserved(Holder<StructureSet> set, int clearance) {}
+
+    private final List<Reserved> sets;
 
     private StructureReservations(ChunkGeneratorStructureState state, int clearance,
-            List<Holder<StructureSet>> sets) {
+            List<Reserved> sets) {
         this.state = state;
         this.clearance = clearance;
         this.sets = sets;
@@ -76,11 +85,19 @@ public final class StructureReservations {
         if (state == null)
             return null;
         try {
-            List<Holder<StructureSet>> usable = state.possibleStructureSets().stream()
+            int base = Math.max(0, clearance);
+            List<Reserved> usable = state.possibleStructureSets().stream()
                     .filter(set -> !(set.value().placement() instanceof ConcentricRingsStructurePlacement))
                     .filter(StructureReservations::reachesTheSurface)
+                    .map(set -> new Reserved(set, clearanceOf(set, base)))
                     .toList();
-            return usable.isEmpty() ? null : new StructureReservations(state, Math.max(0, clearance), usable);
+            if (DIAG)
+                me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                        "RESERVE: {} of {} possible sets kept (surface, non-ring); clearances {}",
+                        usable.size(), state.possibleStructureSets().size(),
+                        usable.stream().map(r -> r.set().unwrapKey().map(k -> k.location().getPath()).orElse("?")
+                                + "=" + r.clearance()).toList());
+            return usable.isEmpty() ? null : new StructureReservations(state, base, usable);
         } catch (Throwable t) {
             // Planning must never fail because of this: no reservations is the old behaviour.
             return null;
@@ -101,6 +118,33 @@ public final class StructureReservations {
      * <p>A set is kept if <em>any</em> of its structures is a surface one: a mixed set (Cataclysm's
      * {@code desert_structures} pairs a surface village with a buried site) still wants its room.
      */
+    /**
+     * The widest clearance any structure in this set declares, or {@code base} if none does.
+     *
+     * <p>A set can hold several structures (Cataclysm's {@code desert_structures} pairs a village with
+     * a buried site), and the reservation has to cover whichever turns up.
+     */
+    private static int clearanceOf(Holder<StructureSet> set, int base) {
+        int want = base;
+        try {
+            for (var entry : set.value().structures())
+                want = Math.max(want, me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps
+                        .clearanceFor(entry.structure(), base));
+        } catch (Throwable t) {
+            if (DIAG)
+                me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                        "RESERVE: clearanceOf THREW for {} -- falling back to {}", set.unwrapKey().orElse(null), base, t);
+            return base;
+        }
+        if (DIAG)
+            me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn("RESERVE: set {} -> clearance {}",
+                    set.unwrapKey().map(Object::toString).orElse("?"), want);
+        return want;
+    }
+
+    private static final boolean DIAG = System.getProperty("cityworld.probe") != null
+            || System.getProperty("cityworld.diagnostics") != null;
+
     private static boolean reachesTheSurface(Holder<StructureSet> set) {
         for (var entry : set.value().structures())
             if (entry.structure().value().step() == GenerationStep.Decoration.SURFACE_STRUCTURES)
@@ -117,8 +161,8 @@ public final class StructureReservations {
      */
     public boolean isReserved(int chunkX, int chunkZ) {
         try {
-            for (Holder<StructureSet> set : sets)
-                if (state.hasStructureChunkInRange(set, chunkX, chunkZ, clearance))
+            for (Reserved reserved : sets)
+                if (state.hasStructureChunkInRange(reserved.set(), chunkX, chunkZ, reserved.clearance()))
                     return true;
         } catch (Throwable t) {
             return false;
