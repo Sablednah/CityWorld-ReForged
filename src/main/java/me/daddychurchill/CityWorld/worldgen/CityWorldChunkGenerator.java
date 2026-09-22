@@ -650,6 +650,17 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private static final int BEARD_RADIUS = 12;
 
+    /**
+     * Blocks of taper for a structure declaring {@code clearance} chunks — {@link #BEARD_RADIUS} is a
+     * FLOOR, not a constant. 12 blocks of run-out is right against a village house and far too tight
+     * against something eight chunks across: Cataclysm's frosted_prison blended onto its footprint and
+     * then ended in a sheer wall of snow where the taper ran out (owner, in game, 2026-09-22). A
+     * village declares no clearance and is therefore unchanged.
+     */
+    private static int beardRadiusFor(int clearanceChunks) {
+        return Math.max(BEARD_RADIUS, clearanceChunks * 16 - 4);
+    }
+
     private static final int PAD_TAPER = 8;
 
     /**
@@ -699,24 +710,44 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * A mod whose pieces are template-based and expect pre-existing terrain (Cataclysm's cursed pyramid
      * has no self-levelling call anywhere in its 1344 classes) declares itself in the data map instead.
      */
-    private static java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> beardOptIn(
-            net.minecraft.core.HolderLookup.RegistryLookup<
-                    net.minecraft.world.level.levelgen.structure.Structure> lookup) {
-        // ⚠ Resolved ONCE per chunk, not once per start. The first cut scanned the whole structure
-        // registry inside the startsForStructure predicate, so it ran per start per chunk -- bounded,
-        // but needless work in the hot worldgen path. Deliberately NOT cached across calls: data maps
-        // are reload-scoped, and a stale cache would survive /reload and quietly disagree with the pack.
-        java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> out =
+    /** The beard opt-ins AND the declared clearances, from ONE registry walk. */
+    private record FitIndex(
+            java.util.Map<net.minecraft.world.level.levelgen.structure.Structure,
+                    me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit> byStructure,
+            java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> bearding) {}
+
+    private static final java.util.Map<Object, FitIndex> FIT_INDEX =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+    private static FitIndex fitIndex(net.minecraft.core.HolderLookup.RegistryLookup<
+            net.minecraft.world.level.levelgen.structure.Structure> lookup) {
+        // ONE walk per world, cached on the lookup. This previously walked all 52 vanilla structures
+        // plus 29 from Cataclysm on every chunk with a start; resolving clearance separately would
+        // have reintroduced exactly that scan, so both answers come from the same pass. Keyed on the
+        // lookup itself, so a datapack reload (which hands out a new one) cannot be served stale data.
+        FitIndex cached = FIT_INDEX.get(lookup);
+        if (cached != null)
+            return cached;
+        java.util.Map<net.minecraft.world.level.levelgen.structure.Structure,
+                me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit> byStructure =
+                        new java.util.IdentityHashMap<>();
+        java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> bearding =
                 java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
         try {
             lookup.listElements().forEach(reference -> {
-                if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.beardsAnyway(reference))
-                    out.add(reference.value());
+                var fit = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.fitFor(reference);
+                if (fit == null)
+                    return;
+                byStructure.put(reference.value(), fit);
+                if (fit.beard())
+                    bearding.add(reference.value());
             });
         } catch (Throwable t) {
-            return java.util.Set.of();
+            return new FitIndex(java.util.Map.of(), java.util.Set.of());
         }
-        return out;
+        FitIndex built = new FitIndex(byStructure, bearding);
+        FIT_INDEX.put(lookup, built);
+        return built;
     }
 
     private void padPlanForStructures(CityWorldGenerator context, StructureManager structureManager,
@@ -737,7 +768,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             // and pad on gave layer-for-layer identical pyramids, offset only by the 1 block the pad
             // had moved the ground. Shaping for it is pointless at best and fights it at worst.
             var structureLookup = structureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE);
-            var optedIn = beardOptIn(structureLookup);
+            var fits = fitIndex(structureLookup);
+            var optedIn = fits.bearding();
             if (PAD_LOG) {
                 LOGGER_STRUCTURES.warn("PLANPAD: structures declaring a structure_fit: {}",
                         me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.declaredFits(structureLookup));
@@ -769,7 +801,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
 
             // One entry per piece: its footprint, and the ground level it actually wants underneath.
-            record Beard(int minX, int minZ, int maxX, int maxZ, double top) {
+            record Beard(int minX, int minZ, int maxX, int maxZ, double top, int taper) {
             }
             List<Beard> beards = new java.util.ArrayList<>();
 
@@ -778,6 +810,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 if (PAD_LOG && optedIn.contains(start.getStructure()))
                     LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: OPT-IN beard (terrain_adaptation none) — {}",
                             pos.x, pos.z, id);
+                var fit = fits.byStructure().get(start.getStructure());
+                int taper = beardRadiusFor(fit == null || fit.clearance() <= 0
+                        ? StructureReservations.DEFAULT_CLEARANCE : fit.clearance());
                 var whole = start.getBoundingBox();
                 if (cavern.map(set -> set.stream().anyMatch(h -> h.value() == start.getStructure())).orElse(false)) {
                     if (PAD_LOG)
@@ -793,7 +828,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     continue;
                 }
                 for (net.minecraft.world.level.levelgen.structure.StructurePiece piece : start.getPieces()) {
-                    if (!piece.isCloseToChunk(pos, BEARD_RADIUS))
+                    if (!piece.isCloseToChunk(pos, taper))
                         continue;
                     int delta = 0;
                     if (piece instanceof net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece pool) {
@@ -827,7 +862,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                         ? pl.getElement().getProjection() : "n/a",
                                 b.minX(), b.maxX(), b.minZ(), b.maxZ(), b.minY(), b.maxY(), delta,
                                 b.minY() + delta - 1);
-                    beards.add(new Beard(b.minX(), b.minZ(), b.maxX(), b.maxZ(), b.minY() + delta - 1));
+                    beards.add(new Beard(b.minX(), b.minZ(), b.maxX(), b.maxZ(), b.minY() + delta - 1, taper));
                 }
             }
             if (beards.isEmpty())
@@ -848,7 +883,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             // Under a piece: the HIGHEST floor wins, so an overlapping piece is never
                             // buried by a lower neighbour.
                             insideTop = Math.max(insideTop, b.top());
-                        double d = dist / (double) BEARD_RADIUS;
+                        double d = dist / (double) b.taper();
                         if (d < nearest)
                             nearest = d;
                         double w = 1.0 / (dist * dist + 1.0);

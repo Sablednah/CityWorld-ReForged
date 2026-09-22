@@ -159,14 +159,34 @@ public final class StructureReservations {
      * {@code populateLots} catches everything and falls back to nature for the whole 10x10 grid, so an
      * exception escaping here would read as "the cities stopped appearing".
      */
+    /**
+     * Memo for {@link #isReserved}. Safe because the answer is a pure function of the chunk position:
+     * {@code sets} is fixed at construction and {@code state} is fixed for the world, so nothing here
+     * can vary with generation order — unlike a learned clearance, which would have made the same seed
+     * plan differently between runs.
+     *
+     * <p><b>Why it is needed.</b> {@code hasStructureChunkInRange} is a flat {@code (2r+1)^2} scan, and
+     * every candidate in it builds a {@code WorldgenRandom(new LegacyRandomSource(0L))} and runs
+     * {@code setLargeFeatureWithSalt} — an allocation plus seeded maths per candidate, not a lookup. At
+     * the default clearance of 5 that is 121 per query; at the 12 an acropolis declares it is 625. And
+     * planning asks the same coordinates repeatedly from THREE sites: the PlatLot constructor,
+     * setLot and paveLot. A 10x10 platmap therefore issued on the order of 100-300 queries, each
+     * re-deriving what the others had just computed. Measured in game 2026-09-22: chunks stopped
+     * arriving for a minute or two, then landed in one go.
+     */
+    private final java.util.concurrent.ConcurrentHashMap<Long, Boolean> memo =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
     public boolean isReserved(int chunkX, int chunkZ) {
-        try {
-            for (Reserved reserved : sets)
-                if (state.hasStructureChunkInRange(reserved.set(), chunkX, chunkZ, reserved.clearance()))
-                    return true;
-        } catch (Throwable t) {
-            return false;
-        }
-        return false;
+        return memo.computeIfAbsent(net.minecraft.world.level.ChunkPos.asLong(chunkX, chunkZ), key -> {
+            try {
+                for (Reserved reserved : sets)
+                    if (state.hasStructureChunkInRange(reserved.set(), chunkX, chunkZ, reserved.clearance()))
+                        return Boolean.TRUE;
+            } catch (Throwable t) {
+                return Boolean.FALSE;
+            }
+            return Boolean.FALSE;
+        });
     }
 }
