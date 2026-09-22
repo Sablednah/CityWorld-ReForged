@@ -534,6 +534,144 @@ public final class ChunkProbe {
                     CityWorldMod.LOGGER.warn("PLANvWORLD z{} {}", cz + dz, row);
                 }
             }
+            // RESERVED vs USED. Reservation is analytic -- hasStructureChunkInRange answers PLACEMENT only
+            // and deliberately ignores the biome predicate -- so a candidate chunk whose biome check later
+            // fails reserves its whole clearance and stays blank forever. That is invisible in a lot map,
+            // because a reserved chunk and genuinely wild land are both NatureLot. This counts it.
+            if (sweep > 0 && level.getChunkSource().getGenerator()
+                    instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator rplanner) {
+                var rctx = rplanner.getContext(level);
+                int resUsed = 0, resIdle = 0, freeUsed = 0, freeIdle = 0;
+                for (int dz = -sweep; dz <= sweep; dz++)
+                    for (int dx = -sweep; dx <= sweep; dx++) {
+                        int rx = cx + dx, rz = cz + dz;
+                        boolean reserved = rctx.isStructureReserved(rx, rz);
+                        var rpos = new net.minecraft.world.level.ChunkPos(rx, rz);
+                        boolean used = false;
+                        for (var start : level.structureManager().startsForStructure(rpos, st2 -> true)) {
+                            for (var piece : start.getPieces()) {
+                                var pb = piece.getBoundingBox();
+                                if (pb.maxX() >= rpos.getMinBlockX() && pb.minX() <= rpos.getMaxBlockX()
+                                        && pb.maxZ() >= rpos.getMinBlockZ() && pb.minZ() <= rpos.getMaxBlockZ()) {
+                                    used = true;
+                                    break;
+                                }
+                            }
+                            if (used)
+                                break;
+                        }
+                        if (reserved && used) resUsed++;
+                        else if (reserved) resIdle++;
+                        else if (used) freeUsed++;
+                        else freeIdle++;
+                    }
+                // WHICH structures sit in unreserved chunks, and WHY reserved chunks are empty. An
+                // aggregate count cannot tell "correctly unreserved because it is underground" from
+                // "the city could build on top of a village", nor "normal gap between houses" from
+                // "clearance ring around the whole thing".
+                java.util.Map<String, Integer> unreservedBy = new java.util.TreeMap<>();
+                java.util.List<net.minecraft.world.level.levelgen.structure.BoundingBox> surfaceBoxes =
+                        new java.util.ArrayList<>();
+                for (int dz = -sweep; dz <= sweep; dz++)
+                    for (int dx = -sweep; dx <= sweep; dx++) {
+                        var qpos = new net.minecraft.world.level.ChunkPos(cx + dx, cz + dz);
+                        for (var start : level.structureManager().startsForStructure(qpos, st3 -> true)) {
+                            boolean here = false;
+                            for (var piece : start.getPieces()) {
+                                var pb = piece.getBoundingBox();
+                                if (pb.maxX() >= qpos.getMinBlockX() && pb.minX() <= qpos.getMaxBlockX()
+                                        && pb.maxZ() >= qpos.getMinBlockZ() && pb.minZ() <= qpos.getMaxBlockZ()) {
+                                    here = true;
+                                    break;
+                                }
+                            }
+                            if (!here)
+                                continue;
+                            String sid = String.valueOf(level.registryAccess()
+                                    .lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE)
+                                    .getKey(start.getStructure()));
+                            boolean surf = start.getStructure().step()
+                                    == net.minecraft.world.level.levelgen.GenerationStep.Decoration.SURFACE_STRUCTURES;
+                            if (surf)
+                                surfaceBoxes.add(start.getBoundingBox());
+                            if (!rctx.isStructureReserved(cx + dx, cz + dz))
+                                unreservedBy.merge(sid + (surf ? " [SURFACE]" : " [underground]"), 1, Integer::sum);
+                        }
+                    }
+                int idleInBox = 0, idleOutBox = 0, idleRing = 0, idleNeverPlaced = 0;
+                for (int dz = -sweep; dz <= sweep; dz++)
+                    for (int dx = -sweep; dx <= sweep; dx++) {
+                        int qx = cx + dx, qz = cz + dz;
+                        if (!rctx.isStructureReserved(qx, qz))
+                            continue;
+                        var qpos = new net.minecraft.world.level.ChunkPos(qx, qz);
+                        boolean hasPiece = false;
+                        for (var start : level.structureManager().startsForStructure(qpos, st4 -> true))
+                            for (var piece : start.getPieces()) {
+                                var pb = piece.getBoundingBox();
+                                if (pb.maxX() >= qpos.getMinBlockX() && pb.minX() <= qpos.getMaxBlockX()
+                                        && pb.maxZ() >= qpos.getMinBlockZ() && pb.minZ() <= qpos.getMaxBlockZ())
+                                    hasPiece = true;
+                            }
+                        if (hasPiece)
+                            continue;
+                        boolean inBox = false;
+                        for (var b : surfaceBoxes)
+                            if (b.maxX() >= qpos.getMinBlockX() && b.minX() <= qpos.getMaxBlockX()
+                                    && b.maxZ() >= qpos.getMinBlockZ() && b.minZ() <= qpos.getMaxBlockZ())
+                                inBox = true;
+                        if (inBox) {
+                            idleInBox++;
+                        } else {
+                            // Outside every placed box. Two very different causes, and the fix differs:
+                            // within clearance of a start that DID place is ring overhang (fixed by
+                            // sizing the reservation to the structure); further away means only a
+                            // CANDIDATE reserved it and the structure never placed there at all --
+                            // hasStructureChunkInRange ignores the biome predicate (fixed by gating it).
+                            int nearest = Integer.MAX_VALUE;
+                            for (var b : surfaceBoxes) {
+                                int bdx = Math.max(0, Math.max((b.minX() >> 4) - qx, qx - (b.maxX() >> 4)));
+                                int bdz = Math.max(0, Math.max((b.minZ() >> 4) - qz, qz - (b.maxZ() >> 4)));
+                                nearest = Math.min(nearest, Math.max(bdx, bdz));
+                            }
+                            if (nearest <= me.daddychurchill.CityWorld.worldgen.StructureReservations.DEFAULT_CLEARANCE)
+                                idleRing++;
+                            else
+                                idleNeverPlaced++;
+                            idleOutBox++;
+                        }
+                    }
+                CityWorldMod.LOGGER.warn("PROBE reserve: empty-reserved split — {} INSIDE a surface start's box "
+                        + "(gaps between pieces, vanilla has these too), {} OUTSIDE any box (clearance ring / "
+                        + "candidates that never placed)", idleInBox, idleOutBox);
+                CityWorldMod.LOGGER.warn("PROBE reserve: of those {} outside — {} are clearance RING around a start "
+                        + "that did place (fix: size the reservation), {} were reserved by a candidate that NEVER "
+                        + "placed (fix: gate on the biome predicate)", idleOutBox, idleRing, idleNeverPlaced);
+                CityWorldMod.LOGGER.warn("PROBE reserve: unreserved chunks holding pieces, by structure: {}",
+                        unreservedBy.isEmpty() ? "none" : unreservedBy);
+
+                int rtotal = resUsed + resIdle + freeUsed + freeIdle;
+                CityWorldMod.LOGGER.warn(
+                        "PROBE reserve: {} chunks swept | reserved {} (with pieces {}, EMPTY {}) | unreserved {} (with pieces {})",
+                        rtotal, resUsed + resIdle, resUsed, resIdle, freeUsed + freeIdle, freeUsed);
+                if (resUsed + resIdle > 0)
+                    CityWorldMod.LOGGER.warn("PROBE reserve: {}% of reserved chunks never receive a structure piece",
+                            Math.round(100.0 * resIdle / (resUsed + resIdle)));
+                // ⚠ Only a SURFACE structure being unreserved is a fault. StructureReservations
+                // filters out non-surface sets on purpose (reachesTheSurface), and carveForStructures
+                // handles those instead -- measured 2026-09-22, all 17 unreserved piece-bearing chunks
+                // around a desert village were minecraft:ancient_city, which is underground_decoration
+                // and correctly unreserved. An earlier version of this line shouted about them.
+                long freeSurface = unreservedBy.entrySet().stream()
+                        .filter(e -> e.getKey().endsWith("[SURFACE]")).mapToInt(java.util.Map.Entry::getValue).sum();
+                if (freeSurface > 0)
+                    CityWorldMod.LOGGER.warn("PROBE reserve: !! {} chunks hold SURFACE structure pieces but were "
+                            + "NOT reserved -- the city could plan on top of them", freeSurface);
+                else if (freeUsed > 0)
+                    CityWorldMod.LOGGER.warn("PROBE reserve: {} unreserved chunks hold pieces, all underground "
+                            + "(correct: they are filtered out deliberately)", freeUsed);
+            }
+
             if (sweep > 0) {
                 CityWorldMod.LOGGER.warn("PROBE sweep: all chunks within {} of ({}, {}) generated", sweep, cx, cz);
                 // What each biome's ground actually IS: the top solid block of every column, keyed by the biome
