@@ -660,6 +660,17 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private static final int BEARD_RADIUS = 12;
 
+    /**
+     * Blocks of taper for a structure declaring {@code clearance} chunks — {@link #BEARD_RADIUS} is a
+     * FLOOR, not a constant. 12 blocks of run-out is right against a village house and far too tight
+     * against something eight chunks across: Cataclysm's frosted_prison blended onto its footprint
+     * and then ended in a sheer wall of snow (owner, in game, 2026-09-22). A village declares no
+     * clearance and is therefore unchanged.
+     */
+    private static int beardRadiusFor(int clearanceChunks) {
+        return Math.max(BEARD_RADIUS, clearanceChunks * 16 - 4);
+    }
+
     private static final int PAD_TAPER = 8;
 
     /**
@@ -713,6 +724,35 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             net.minecraft.world.level.levelgen.structure.Structure>> BEARD_OPT_IN =
                     java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
 
+    private static final java.util.Map<Object, java.util.Map<
+            net.minecraft.world.level.levelgen.structure.Structure,
+            me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit>> FITS_BY_STRUCTURE =
+                    java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+    /** Declared fits by structure, one cached walk per world — see {@link #beardOptIn}. */
+    private static java.util.Map<net.minecraft.world.level.levelgen.structure.Structure,
+            me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit> fitsByStructure(
+                    net.minecraft.core.HolderLookup.RegistryLookup<
+                            net.minecraft.world.level.levelgen.structure.Structure> lookup) {
+        var cached = FITS_BY_STRUCTURE.get(lookup);
+        if (cached != null)
+            return cached;
+        java.util.Map<net.minecraft.world.level.levelgen.structure.Structure,
+                me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit> out =
+                        new java.util.IdentityHashMap<>();
+        try {
+            lookup.listElements().forEach(reference -> {
+                var f = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.fitFor(reference);
+                if (f != null)
+                    out.put(reference.value(), f);
+            });
+        } catch (Throwable t) {
+            return java.util.Map.of();
+        }
+        FITS_BY_STRUCTURE.put(lookup, out);
+        return out;
+    }
+
     private static java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> beardOptIn(
             net.minecraft.core.HolderLookup.RegistryLookup<
                     net.minecraft.world.level.levelgen.structure.Structure> lookup) {
@@ -759,6 +799,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             // had moved the ground. Shaping for it is pointless at best and fights it at worst.
             var structureLookup = structureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE);
             var optedIn = beardOptIn(structureLookup);
+            var fitsIndex = fitsByStructure(structureLookup);
             List<net.minecraft.world.level.levelgen.structure.StructureStart> starts =
                     structureManager.startsForStructure(pos,
                             structure -> structure.terrainAdaptation()
@@ -771,11 +812,17 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
 
             // One entry per piece: its footprint, and the ground level it actually wants underneath.
-            record Beard(int minX, int minZ, int maxX, int maxZ, double top) {
+            record Beard(int minX, int minZ, int maxX, int maxZ, double top, int taper) {
             }
             List<Beard> beards = new java.util.ArrayList<>();
 
             for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
+                // ⚠ From the CACHED index, never a fresh registry scan. Resolving this per start walked
+                // all 52 vanilla structures plus 29 from Cataclysm for every start in every chunk --
+                // exactly the hot-path cost removed from beardOptIn earlier.
+                var fit = fitsIndex.get(start.getStructure());
+                int taper = beardRadiusFor(fit == null || fit.clearance() <= 0
+                        ? StructureReservations.DEFAULT_CLEARANCE : fit.clearance());
                 String id = PAD_LOG ? String.valueOf(start.getStructure()) : "";
                 if (PAD_LOG && optedIn.contains(start.getStructure()))
                     LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: OPT-IN beard (terrain_adaptation none) — {}",
@@ -795,7 +842,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     continue;
                 }
                 for (net.minecraft.world.level.levelgen.structure.StructurePiece piece : start.getPieces()) {
-                    if (!piece.isCloseToChunk(pos, BEARD_RADIUS))
+                    if (!piece.isCloseToChunk(pos, taper))
                         continue;
                     int delta = 0;
                     if (piece instanceof net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece pool) {
@@ -829,7 +876,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                         ? pl.getElement().getProjection() : "n/a",
                                 b.minX(), b.maxX(), b.minZ(), b.maxZ(), b.minY(), b.maxY(), delta,
                                 b.minY() + delta - 1);
-                    beards.add(new Beard(b.minX(), b.minZ(), b.maxX(), b.maxZ(), b.minY() + delta - 1));
+                    beards.add(new Beard(b.minX(), b.minZ(), b.maxX(), b.maxZ(), b.minY() + delta - 1, taper));
                 }
             }
             if (beards.isEmpty())
@@ -850,7 +897,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             // Under a piece: the HIGHEST floor wins, so an overlapping piece is never
                             // buried by a lower neighbour.
                             insideTop = Math.max(insideTop, b.top());
-                        double d = dist / (double) BEARD_RADIUS;
+                        double d = dist / (double) b.taper();
                         if (d < nearest)
                             nearest = d;
                         double w = 1.0 / (dist * dist + 1.0);
