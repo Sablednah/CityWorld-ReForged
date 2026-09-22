@@ -456,8 +456,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // Smooth the PLANNED ground under any surface structure BEFORE terrain is drawn from it.
         // Order is the whole fix: the previous pad ran after this line and rewrote blocks, leaving the
         // planned heights untouched, so decoration later painted a surface at the old level over a void.
-        // ⚠ Gated OFF by default: see PAD_ENABLED. It still leaves 48% of structure
-        // columns standing over air, so it must not run in a shipped jar.
+        // ⚠ Gated OFF by default: see PAD_ENABLED. Terrain measures better with it; the floating
+        // pieces do not, and the worst one gets worse. That is a placement fault, not this pad's.
         if (PAD_ENABLED)
             padPlanForStructures(context, structureManager, chunk, platmap);
 
@@ -596,29 +596,47 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
     /** How far a pad eases back to natural ground. Vanilla's beard falls off over roughly this much. */
     /**
-     * Whether the structure pad runs at all. <b>OFF by default, because it does not work yet.</b>
+     * Whether the structure pad runs at all. <b>OFF by default: it improves the terrain but does not
+     * fix the floating pieces, and it makes the worst one worse.</b>
      *
-     * <p>Measured 2026-09-22 on a taiga village, after two attempts: 48.1% of build-bearing columns
-     * (1612 of 3349) still had their lowest block standing over open air, 1305 of them at a uniform
-     * 2 blocks, with spruce_log houses hanging 9-11 blocks up. The owner saw it immediately in Schemy
-     * as floating houses; four void scans had missed it, because {@code region_voids.py} hunts
-     * ENCLOSED air and a house floating over open ground has air all the way down.
+     * <p><b>Measured 2026-09-22, one taiga village, pad OFF vs pad ON, same seed and box, with
+     * {@code scripts/region_floating.py} excluding buried builds:</b>
+     * <table>
+     *   <tr><th></th><th>pad OFF</th><th>pad ON (this code)</th></tr>
+     *   <tr><td>build columns hanging over air</td><td>161 of 1000 (16.1%)</td><td>189 of 1256 (15.0%)</td></tr>
+     *   <tr><td>hanging by 4+ blocks — the visible fault</td><td>48</td><td>45</td></tr>
+     *   <tr><td>worst single gap</td><td>8</td><td><b>11</b></td></tr>
+     *   <tr><td>enclosed natural air near surface</td><td>37.0% / 623</td><td><b>30.2% / 572</b></td></tr>
+     *   <tr><td>lid-like crust (&lt;=3 blocks)</td><td>3.2%</td><td><b>1.6%</b></td></tr>
+     * </table>
+     * Read the tail, not the rate: the pad exposes build columns that were buried, so the denominator
+     * moves (1000 -> 1256) and the percentages are not directly comparable. On the absolute 4+ tail it
+     * is flat (48 vs 45). It fixes the floating {@code dirt_path} at x1216..1217 and worsens the
+     * {@code spruce_log} house at x1266 from 8 blocks to 11, spreading it to x1268..1272. Terrain
+     * better, houses no better and the worst one worse — hence off.
      *
-     * <p><b>Why this is a design limit, not a constant to tune.</b> A structure's Y comes from
-     * {@code getBaseHeight}, which reads the shaper directly and never sees this pad, so the piece
-     * stays where vanilla put it while the ground moves out from under it. Aiming the ground at a
-     * piece's {@code box.minY() - 1} cannot fix that: {@code minY} is the bottom of the WHOLE box at
-     * its lowest corner, not the floor level of each column beneath it, so under a tall piece or one
-     * on a slope the ground lands far below that column's actual lowest block. Removing the cross-box
-     * averaging (attempt two, {@code 413d525f}) moved the number only from 54.2% to 48.1%, which is
-     * what falsified the averaging explanation.
+     * <p><b>Do not compare these with any earlier figure.</b> Attempt 1 and attempt 2 were quoted at
+     * 54.2% and 48.1% against a 57.1% baseline; all three came from a detector that counted CityWorld's
+     * own MINE AND SEWER works as structures. Excluding buried builds cut the denominator from 3872 to
+     * 1000 — about three quarters of those "build columns" were underground. An 18-block "regression"
+     * blamed on attempt 2 was x1240,-760: a {@code copper_grate}/{@code copper_chain} mine cap under 15
+     * blocks of intact stone.
      *
-     * <p>The next attempt should level to the start's own reference plane — the {@code getBaseHeight}
-     * value vanilla placed the pieces against — not to per-box bottoms. Measure the
-     * box-minY-versus-lowest-block relationship BEFORE changing code again.
+     * <p><b>A second trap worth keeping.</b> The aggregate hanging figure is mostly benign. With the pad
+     * OFF, 1889 of 3860 build columns sat at an offset of exactly 2 (median 2, p10 0, p90 2): a
+     * structural bimodal at 0 and 2, two kinds of lowest-build-block. Two separate hypotheses were built
+     * on that uniform 2 and both were falsified. Only the 4+ tail is the fault.
      *
-     * <p>Enable for development with {@code -Dcityworld.structurepad=true}. Terrain is still reserved
-     * around structures either way ({@link StructureReservations}); only the shaping is gated.
+     * <p><b>What the residual fault is, and why it is not this pad.</b> x1266,-751 with the pad OFF: a
+     * {@code spruce_log} at y87 with SNOW ON TOP OF IT, six blocks of open air, then the real surface at
+     * y80. {@code getBaseHeight} hands vanilla ONE Y for a whole village start, and CityWorld's terrain
+     * varies by roughly +/-10 across that footprint, so edge pieces hang however well the ground is
+     * shaped. The offset data says the pad's plane is already close to right for the bulk, so levelling
+     * to the start's reference plane would fix a problem that mostly is not there. Attack the
+     * single-Y-per-start PLACEMENT, not the ground under it.
+     *
+     * <p>Enable with {@code -Dcityworld.structurepad=true}. Reservation is independent of this gate
+     * ({@link StructureReservations}): terrain is kept clear around structures either way.
      */
     private static final boolean PAD_ENABLED = Boolean.getBoolean("cityworld.structurepad");
 

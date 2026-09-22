@@ -41,6 +41,13 @@ for x in range(x0, x1 + 1):
         if not built:
             continue
         low = min(built)
+        # ⚠ A BURIED build is not a floating one. x1240,-760 is a copper_grate/copper_chain mine cap
+        # under 15 blocks of intact stone, sitting over its own shaft -- and it was reported as an
+        # 18-block "floating build", which then got quoted as the worst regression of a pad attempt
+        # that had not caused it. If natural ground lies between this block and the surface, the
+        # structure is underground and its air pocket belongs to region_voids.py, not here.
+        if any(is_solid(col[k]) and is_natural(col[k]) for k in range(low + 1, top + 1)):
+            continue
         j = low - 1
         run = 0
         while j >= 0 and not is_solid(col[j]):
