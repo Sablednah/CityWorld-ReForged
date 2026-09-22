@@ -159,14 +159,29 @@ public final class StructureReservations {
      * {@code populateLots} catches everything and falls back to nature for the whole 10x10 grid, so an
      * exception escaping here would read as "the cities stopped appearing".
      */
+    /**
+     * Memo for {@link #isReserved}. Safe because the answer is a pure function of the chunk position:
+     * {@code sets} is fixed at construction and {@code state} is fixed for the world, so nothing here
+     * can vary with generation order.
+     *
+     * <p>{@code hasStructureChunkInRange} is a flat {@code (2r+1)^2} scan whose every candidate builds
+     * a {@code WorldgenRandom} and runs {@code setLargeFeatureWithSalt} — an allocation plus seeded
+     * maths per candidate. 121 per query at the default clearance, 625 at the 12 an acropolis declares,
+     * and planning asks the same coordinates from THREE sites (PlatLot, setLot, paveLot).
+     */
+    private final java.util.concurrent.ConcurrentHashMap<Long, Boolean> memo =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
     public boolean isReserved(int chunkX, int chunkZ) {
-        try {
-            for (Reserved reserved : sets)
-                if (state.hasStructureChunkInRange(reserved.set(), chunkX, chunkZ, reserved.clearance()))
-                    return true;
-        } catch (Throwable t) {
-            return false;
-        }
-        return false;
+        return memo.computeIfAbsent(net.minecraft.world.level.ChunkPos.asLong(chunkX, chunkZ), key -> {
+            try {
+                for (Reserved reserved : sets)
+                    if (state.hasStructureChunkInRange(reserved.set(), chunkX, chunkZ, reserved.clearance()))
+                        return Boolean.TRUE;
+            } catch (Throwable t) {
+                return Boolean.FALSE;
+            }
+            return Boolean.FALSE;
+        });
     }
 }
