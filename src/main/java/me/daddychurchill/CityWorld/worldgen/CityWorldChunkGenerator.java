@@ -856,8 +856,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     var b = piece.getBoundingBox();
                     if (PAD_LOG)
                         LOGGER_STRUCTURES.warn(
-                                "PLANPAD chunk {},{}: BEARD {} {} box x {}..{} z {}..{} y {}..{} delta {} -> top {}",
-                                pos.x, pos.z, piece.getClass().getSimpleName(),
+                                "PLANPAD chunk {},{}: BEARD taper {} {} {} box x {}..{} z {}..{} y {}..{} delta {} -> top {}",
+                                pos.x, pos.z, taper, piece.getClass().getSimpleName(),
                                 piece instanceof net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece pl
                                         ? pl.getElement().getProjection() : "n/a",
                                 b.minX(), b.maxX(), b.minZ(), b.maxZ(), b.minY(), b.maxY(), delta,
