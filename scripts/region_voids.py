@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Find air trapped UNDER the ground: solid above, solid below, near the surface.
 
-usage: region_voids.py <region dir> x0 x1 y0 y1 z0 z1 [near] [--list N]
+usage: region_voids.py <region dir> x0 x1 y0 y1 z0 z1 [near] [--list N] [--natural]
 
 This exists because of a fault that every other tool here was blind to. The structure pad rewrote
 blocks during terrain generation while the PLANNED column heights (AbstractCachedYs.blockYs) kept
@@ -33,6 +33,33 @@ THIN = ('snow', 'grass', 'fern', 'flower', 'tulip', 'poppy', 'dandelion', 'bush'
         'moss_carpet', 'dead_bush', 'water', 'lava', 'cobweb', 'button', 'lever', 'tripwire')
 
 
+# A cavity in TERRAIN is the fault we are hunting. A room in a village house is also "solid above,
+# air, solid below, near the surface" — and a dense built area is full of them. Measuring the village
+# footprint without this distinction gave 224 of 441 columns whether the pad rewrote blocks or the
+# plan, because the house interiors are identical either way: the instrument was dominated by the
+# thing it was not looking for. --natural requires BOTH the ceiling and the floor of a run to be
+# natural ground, so a floor/ceiling of planks, cobblestone or glass no longer counts as a void.
+NATURAL_EXACT = {
+    'stone', 'dirt', 'coarse_dirt', 'rooted_dirt', 'grass_block', 'podzol', 'mycelium', 'mud',
+    'gravel', 'sand', 'red_sand', 'sandstone', 'red_sandstone', 'clay', 'deepslate', 'tuff',
+    'andesite', 'diorite', 'granite', 'calcite', 'dripstone_block', 'magma_block', 'obsidian',
+    'netherrack', 'soul_sand', 'soul_soil', 'blackstone', 'basalt', 'smooth_basalt', 'end_stone',
+    'snow_block', 'powder_snow', 'ice', 'packed_ice', 'blue_ice', 'moss_block', 'bedrock',
+    'sculk', 'amethyst_block', 'budding_amethyst', 'raw_iron_block', 'raw_copper_block',
+    'raw_gold_block', 'terracotta', 'suspicious_sand', 'suspicious_gravel',
+}
+
+
+def is_natural(name):
+    """Natural ground only: NOT cobblestone/planks/bricks, which are village and mine vocabulary."""
+    if not name:
+        return False
+    name = name.split('[')[0].split(':')[-1]
+    if name in NATURAL_EXACT:
+        return True
+    return name.endswith('_ore') or name.endswith('_terracotta')
+
+
 def is_solid(name):
     if not name:
         return False
@@ -55,6 +82,7 @@ def main():
         near = int(rest[0]); rest = rest[1:]
     if '--list' in rest:
         listn = int(rest[rest.index('--list') + 1])
+    natural_only = '--natural' in rest
 
     x0, x1 = min(x0, x1), max(x0, x1)
     y0, y1 = min(y0, y1), max(y0, y1)
@@ -89,8 +117,12 @@ def main():
                         i -= 1
                     if i >= 0:                     # closed underneath -> genuinely enclosed
                         run = start - i
-                        found += run
-                        biggest = max(biggest, run)
+                        ceiling = column[start + 1] if start + 1 < len(column) else None
+                        if natural_only and not (is_natural(ceiling) and is_natural(column[i])):
+                            pass               # a room, not a cavity in the ground
+                        else:
+                            found += run
+                            biggest = max(biggest, run)
                     else:
                         # The air reached the BOTTOM of the scan window without meeting a floor, so
                         # we cannot tell whether it is a cavity or an open shaft — and dropping it
@@ -109,6 +141,7 @@ def main():
 
     worst.sort(reverse=True)
     pct = (100.0 * hit_cols / cols) if cols else 0.0
+    print(f"mode: {'NATURAL ground only (house interiors excluded)' if natural_only else 'ANY enclosure (counts house interiors too)'}")
     print(f"columns with ground: {cols}")
     print(f"columns with enclosed air within {near} of the surface: {hit_cols}  ({pct:.1f}%)")
     print(f"total enclosed air blocks: {total}")
