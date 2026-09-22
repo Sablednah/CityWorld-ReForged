@@ -738,6 +738,25 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             // had moved the ground. Shaping for it is pointless at best and fights it at worst.
             var structureLookup = structureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE);
             var optedIn = beardOptIn(structureLookup);
+            if (PAD_LOG) {
+                LOGGER_STRUCTURES.warn("PLANPAD: structures declaring a structure_fit: {}",
+                        me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.declaredFits(structureLookup));
+                // ⚠ CONTROL for the line above. declaredFits has only ever printed [] or one key, and a
+                // detector that has never produced a real positive proves nothing. The GROUND map is
+                // known-good (13 entries decoded on the Forge line), so counting biomes that carry it
+                // says whether getData() works at all on a DATAPACK registry holder.
+                try {
+                    var biomes = structureManager.registryAccess()
+                            .lookupOrThrow(net.minecraft.core.registries.Registries.BIOME);
+                    int withGround = 0;
+                    for (var ref : biomes.listElements().toList())
+                        if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.groundFor(ref) != null)
+                            withGround++;
+                    LOGGER_STRUCTURES.warn("PLANPAD: CONTROL biomes carrying the ground data map: {}", withGround);
+                } catch (Throwable t) {
+                    LOGGER_STRUCTURES.warn("PLANPAD: CONTROL threw", t);
+                }
+            }
             List<net.minecraft.world.level.levelgen.structure.StructureStart> starts =
                     structureManager.startsForStructure(pos,
                             structure -> structure.terrainAdaptation()

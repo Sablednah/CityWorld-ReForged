@@ -188,11 +188,34 @@ public final class CityWorldDataMaps {
         ).apply(i, StructureFit::new));
     }
 
+    // ⚠ The 1.20.1 Forge line has NO DataMapType and hand-rolls a SimpleJsonResourceReloadListener,
+    // which collapses every pack's copy of this file onto one id and keeps only the winner (proved
+    // 2026-09-22). So a compat pack that extends structure_fit works here and silently does nothing
+    // there. Keep the two in step, and see CityWorldDataMaps on mc1.20.1 before relying on packs.
     public static final DataMapType<net.minecraft.world.level.levelgen.structure.Structure, StructureFit>
             STRUCTURE_FIT = DataMapType
                     .builder(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "structure_fit"),
                             Registries.STRUCTURE, StructureFit.CODEC)
                     .build();
+
+    /**
+     * How many structures declare a fit, for the probe. A data map that a pack REPLACED rather than
+     * extended looks identical to one that merged, unless you count what is actually in it.
+     */
+    public static java.util.List<String> declaredFits(net.minecraft.core.HolderLookup.RegistryLookup<
+            net.minecraft.world.level.levelgen.structure.Structure> lookup) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        try {
+            lookup.listElements().forEach(reference -> {
+                if (reference.getData(STRUCTURE_FIT) != null)
+                    out.add(reference.key().identifier().toString());
+            });
+        } catch (Throwable t) {
+            return java.util.List.of("<threw: " + t + ">");
+        }
+        java.util.Collections.sort(out);
+        return out;
+    }
 
     /** The declaration for this structure, or {@code null} if it has none. */
     public static @Nullable StructureFit fitFor(
