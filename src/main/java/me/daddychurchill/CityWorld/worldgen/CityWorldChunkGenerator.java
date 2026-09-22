@@ -700,6 +700,37 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * already moved. Heights are indexed 0..15 within the chunk while piece distances are world
      * coordinates — easy to conflate, and silently wrong if conflated.
      */
+    /**
+     * Whether a {@code terrain_adaptation: none} structure has opted in to being bearded.
+     *
+     * <p>Opt-in only, and nothing is opted in by default. Vanilla's {@code NONE} structures either
+     * re-level themselves ({@code desert_pyramid}, {@code jungle_pyramid}, {@code swamp_hut} are
+     * {@code ScatteredFeaturePiece}s) or are deliberately not sitting on the ground — a ruined portal
+     * is half-buried on purpose, a bastion floats over lava, a shipwreck lies on the seabed. And
+     * {@link #buildCity} runs in EVERY dimension, so a blanket rule would reach the Nether and the End.
+     * A mod whose pieces are template-based and expect pre-existing terrain (Cataclysm's cursed pyramid
+     * has no self-levelling call anywhere in its 1344 classes) declares itself in the data map instead.
+     */
+    private static java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> beardOptIn(
+            net.minecraft.core.HolderLookup.RegistryLookup<
+                    net.minecraft.world.level.levelgen.structure.Structure> lookup) {
+        // ⚠ Resolved ONCE per chunk, not once per start. The first cut scanned the whole structure
+        // registry inside the startsForStructure predicate, so it ran per start per chunk -- bounded,
+        // but needless work in the hot worldgen path. Deliberately NOT cached across calls: data maps
+        // are reload-scoped, and a stale cache would survive /reload and quietly disagree with the pack.
+        java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> out =
+                java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        try {
+            lookup.listElements().forEach(reference -> {
+                if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.beardsAnyway(reference))
+                    out.add(reference.value());
+            });
+        } catch (Throwable t) {
+            return java.util.Set.of();
+        }
+        return out;
+    }
+
     private void padPlanForStructures(CityWorldGenerator context, StructureManager structureManager,
             ChunkAccess chunk, PlatMap platmap) {
         try {
@@ -717,14 +748,17 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             // moves its whole bounding box onto whatever ground it finds. Measured 2026-09-22: pad off
             // and pad on gave layer-for-layer identical pyramids, offset only by the 1 block the pad
             // had moved the ground. Shaping for it is pointless at best and fights it at worst.
+            var structureLookup = structureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE);
+            var optedIn = beardOptIn(structureLookup);
             List<net.minecraft.world.level.levelgen.structure.StructureStart> starts =
                     structureManager.startsForStructure(pos.x(), pos.z(),
                             structure -> structure.terrainAdaptation()
-                                    != net.minecraft.world.level.levelgen.structure.TerrainAdjustment.NONE);
+                                    != net.minecraft.world.level.levelgen.structure.TerrainAdjustment.NONE
+                                    || optedIn.contains(structure));
             if (starts.isEmpty())
                 return;
 
-            var cavern = structureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE).get(CARVE_CAVERN);
+            var cavern = structureLookup.get(CARVE_CAVERN);
             int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
 
             // One entry per piece: its footprint, and the ground level it actually wants underneath.
@@ -734,6 +768,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
             for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
                 String id = PAD_LOG ? String.valueOf(start.getStructure()) : "";
+                if (PAD_LOG && optedIn.contains(start.getStructure()))
+                    LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: OPT-IN beard (terrain_adaptation none) — {}",
+                            pos.x(), pos.z(), id);
                 var whole = start.getBoundingBox();
                 if (cavern.map(set -> set.stream().anyMatch(h -> h.value() == start.getStructure())).orElse(false)) {
                     if (PAD_LOG)

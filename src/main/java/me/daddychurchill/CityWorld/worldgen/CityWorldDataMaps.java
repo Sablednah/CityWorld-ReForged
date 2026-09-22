@@ -156,10 +156,71 @@ public final class CityWorldDataMaps {
                     Facing.CODEC)
             .build();
 
+    /**
+     * How much room a structure needs, and whether CityWorld should build ground up to meet it.
+     *
+     * <p><b>clearance</b> — chunks of clear ground reserved around the structure, overriding
+     * {@link StructureReservations#DEFAULT_CLEARANCE}. It exists because the declared
+     * {@code max_distance_from_center} is unreachable for the structures that need it most: it is a
+     * private field on {@code JigsawStructure} (so an Access Transformer at best), and a custom
+     * structure type such as {@code cataclysm:cataclysm_jigsaw} does not use that class at all, so
+     * its declared 187 lives in a codec CityWorld cannot see. Measured on the owner's worlds,
+     * 2026-09-22: acropolis spans 209x103 with a reach of 109 blocks and cursed_pyramid 89x107 with
+     * 106 — both need 7 chunks against a default of 5, so both are clipped today.
+     *
+     * <p><b>beard</b> — build the planned ground up to each piece even though the structure declares
+     * {@code terrain_adaptation: none}. Vanilla's own {@code NONE} structures must NOT get this: three
+     * of them ({@code desert_pyramid}, {@code jungle_pyramid}, {@code swamp_hut}) are
+     * {@code ScatteredFeaturePiece}s that re-level themselves, and the rest are deliberately not on
+     * the ground — {@code ruined_portal} is half-buried by design, {@code bastion_remnant} floats over
+     * lava, {@code shipwreck} and {@code ocean_ruin} sit on the seabed. {@code buildCity} runs in every
+     * dimension, so an automatic rule would reach the Nether and the End. Hence opt-in, per structure,
+     * and nothing is opted in by default.
+     *
+     * <p>Values are plain numbers and flags, so — unlike the ground map, whose values are block ids —
+     * an entry for an absent mod needs no {@code neoforge:conditions}: the key simply never matches.
+     */
+    public record StructureFit(int clearance, boolean beard) {
+
+        public static final Codec<StructureFit> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.INT.optionalFieldOf("clearance", 0).forGetter(StructureFit::clearance),
+                Codec.BOOL.optionalFieldOf("beard", false).forGetter(StructureFit::beard)
+        ).apply(i, StructureFit::new));
+    }
+
+    public static final DataMapType<net.minecraft.world.level.levelgen.structure.Structure, StructureFit>
+            STRUCTURE_FIT = DataMapType
+                    .builder(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "structure_fit"),
+                            Registries.STRUCTURE, StructureFit.CODEC)
+                    .build();
+
+    /** The declaration for this structure, or {@code null} if it has none. */
+    public static @Nullable StructureFit fitFor(
+            @Nullable Holder<net.minecraft.world.level.levelgen.structure.Structure> structure) {
+        if (structure instanceof Holder.Reference<net.minecraft.world.level.levelgen.structure.Structure> reference)
+            return reference.getData(STRUCTURE_FIT);
+        return null;
+    }
+
+    /** Declared clearance in chunks, or {@code fallback} when none is declared. Never shrinks it. */
+    public static int clearanceFor(
+            @Nullable Holder<net.minecraft.world.level.levelgen.structure.Structure> structure, int fallback) {
+        StructureFit fit = fitFor(structure);
+        return fit == null || fit.clearance() <= 0 ? fallback : Math.max(fallback, fit.clearance());
+    }
+
+    /** Whether this structure opts in to being bearded despite declaring {@code none}. */
+    public static boolean beardsAnyway(
+            @Nullable Holder<net.minecraft.world.level.levelgen.structure.Structure> structure) {
+        StructureFit fit = fitFor(structure);
+        return fit != null && fit.beard();
+    }
+
     /** Registered from {@code CityWorldMod} on the mod event bus. */
     public static void register(RegisterDataMapTypesEvent event) {
         event.register(GROUND);
         event.register(FURNITURE);
+        event.register(STRUCTURE_FIT);
     }
 
     /** The declared facing offset for a furniture block, or {@code 0} if it declares none. */
