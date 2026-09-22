@@ -54,6 +54,60 @@ public abstract class AbstractCachedYs extends AbstractYs {
 		return blockYs[x][z];
 	}
 
+	/**
+	 * Whether the structure pad has already adjusted this chunk's planned heights. One-shot: the pad
+	 * must never run twice over the same chunk, or it would blend against ground it had itself moved.
+	 */
+	private boolean padded;
+
+	public boolean isPadded() {
+		return padded;
+	}
+
+	public void markPadded() {
+		padded = true;
+	}
+
+	/**
+	 * Adjust one column's PLANNED height.
+	 *
+	 * <p>This is the seam the structure pad needs. {@code blockYs} is {@code final}, but only the
+	 * reference is — the contents are writable, and terrain is drawn from this array
+	 * ({@code PlatLot.generateChunk} hands it to {@code preGenerateChunk}/{@code postGenerateChunk})
+	 * while {@code PlatLot.generateSurface} hands the same array to the surface provider at decoration
+	 * time. Changing it here therefore moves terrain and surface together.
+	 *
+	 * <p>That single source of truth is the whole point: the previous pad rewrote BLOCKS at the terrain
+	 * stage and left these heights alone, so decoration painted grass and snow at the old level and left
+	 * a floating lid over a cavity — 28.5% of columns in one village footprint (2026-09-21).
+	 *
+	 * <p><b>Call {@link #recompute} once after any run of these.</b>
+	 */
+	public void setPerciseY(int x, int z, double y) {
+		blockYs[x][z] = y;
+	}
+
+	/**
+	 * Recompute the derived state after {@link #setPerciseY}.
+	 *
+	 * <p>⚠ {@code calcMinMax} only ever WIDENS the extremes — it cannot lower a minimum — so the
+	 * extremes must be reset before re-walking, or a column that was shaved down would leave a stale
+	 * {@code minHeight} behind. That matters well beyond cosmetics: {@code isShaftableLevel} and the
+	 * mine level loops key off {@code getMinHeight()}, and {@code calcState} decides whether this chunk
+	 * counts as sea, buildable or peak.
+	 */
+	public void recompute(CityWorldGenerator generator) {
+		minHeight = Integer.MAX_VALUE;
+		maxHeight = Integer.MIN_VALUE;
+		double sumHeight = 0.0;
+		for (int x = 0; x < width; x++)
+			for (int z = 0; z < width; z++) {
+				sumHeight += blockYs[x][z];
+				calcMinMax(x, NoiseGenerator.floor(blockYs[x][z]), z);
+			}
+		calcState(generator, NoiseGenerator.floor(sumHeight), width * width);
+	}
+
 	public Point getHighPoint() {
 		return new Point(maxHeightX, maxHeight, maxHeightZ);
 	}
