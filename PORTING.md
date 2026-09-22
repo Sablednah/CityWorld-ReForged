@@ -5111,7 +5111,30 @@ These bit us / would bite anyone porting; confirmed by grepping the neoform sour
   this should be datapack-driven is achievable — it is just data maps rather than tags.** Worth a spike
   on one role (`chair`) before committing to the whole vocabulary.
 
-## Structure integration — the pad, and four ways a measurement lied (2026-09-21/22)
+## Structure integration — SOLVED by emulating the beard (2026-09-22)
+
+**Status: ON by default** (`-Dcityworld.structurepad=false` disables it). Measured 745 of 745 columns
+seated exactly on their piece's own declared support level, 0 buried; with it off, 70.4% and 32.4%
+buried, hanging by up to 17 blocks. `CityWorldChunkGenerator.PAD_ENABLED` carries the full table.
+
+**What it was.** Villages declare `terrain_adaptation: beard_thin` and
+`project_start_to_heightmap: WORLD_SURFACE_WG`: vanilla projects the start to the heightmap once, then
+bends terrain to every piece via `Beardifier` during noise generation. CityWorld lays its own terrain
+and never runs `Beardifier`, so only the first half ever happened — hence houses in mid-air. A desert
+pyramid was fine all along because a `ScatteredFeaturePiece` re-levels ITSELF
+(`updateHeightPositionToLowestGroundHeight`); it is excluded, exactly as `forStructuresInChunk` does.
+
+**The field that made it work:** `PoolElementStructurePiece.getGroundLevelDelta()`. The reference level
+is `box.minY() + groundLevelDelta`, per piece. Two attempts aimed at `box.minY()` and could not have
+worked for any constant, because the delta varies per piece. It was never a constant to tune; it was a
+field to read.
+
+**⚠ Every figure in the section below predates `fd9ab12b`** and is skewed: `is_solid` substring-matched
+its thin-block list, so `grass_block` and `snow_block` — the two commonest ground blocks in a snowy
+taiga — counted as NOT SOLID. The narrative of how the measurements went wrong is kept because the
+traps are real; the numbers in it are not to be quoted.
+
+### Superseded: the pad, and the ways a measurement lied
 
 **Status: the pad is written, measured, and GATED OFF** (`-Dcityworld.structurepad=true` to enable).
 Reservation is separate and stays on: terrain is kept clear around structures either way. The full
