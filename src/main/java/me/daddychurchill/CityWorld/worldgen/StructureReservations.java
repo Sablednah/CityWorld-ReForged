@@ -174,14 +174,24 @@ public final class StructureReservations {
 
     public boolean isReserved(int chunkX, int chunkZ) {
         return memo.computeIfAbsent(net.minecraft.world.level.ChunkPos.pack(chunkX, chunkZ), key -> {
+            // ⚠ THIS is the suspect for the minute-long stall, so it is timed separately from
+            // the memoised query around it: a memo HIT costs a map lookup, a MISS runs the whole
+            // (2r+1)^2 scan once per reserved set. At the acropolis's clearance of 12 that is 625
+            // candidates for that set alone, each allocating a WorldgenRandom.
+            long tScan = me.daddychurchill.CityWorld.Support.Timings.start();
             try {
-                for (Reserved reserved : sets)
-                    if (state.hasStructureChunkInRange(reserved.set(), chunkX, chunkZ, reserved.clearance()))
-                        return Boolean.TRUE;
-            } catch (Throwable t) {
+                try {
+                    for (Reserved reserved : sets)
+                        if (state.hasStructureChunkInRange(reserved.set(), chunkX, chunkZ, reserved.clearance()))
+                            return Boolean.TRUE;
+                } catch (Throwable t) {
+                    return Boolean.FALSE;
+                }
                 return Boolean.FALSE;
+            } finally {
+                me.daddychurchill.CityWorld.Support.Timings.stop("reserve-scan", tScan,
+                        (int) (long) key, (int) (key >> 32));
             }
-            return Boolean.FALSE;
-        });
+});
     }
 }
