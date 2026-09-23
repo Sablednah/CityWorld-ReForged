@@ -5176,6 +5176,33 @@ mid-curve at the ring's outer edge and would leave a step there instead of at th
 `clearance` no longer touches the taper at all. It still does its other job: `StructureReservations`
 keeps the city that many chunks away.
 
+### The acropolis gets NEITHER — owner's call, 2026-09-23
+
+The three-way choice above (beard / carve / neither) was settled for Cataclysm's acropolis by trying
+two of the three in game, in order:
+
+1. **Beard** (`"beard": true`) built a 40-block column of badlands strata up into a floating structure.
+2. **Nothing** left its bounding box punching a rectangular void through a hillside.
+3. **Carve** (`#cityworld:carve_cavern`) fixed that, then produced three faults of its own, each
+   found by the owner and each fixed: the seabed dug out from under it (two-pass, standing structures
+   carve only above ground), the water column deleted in an ocean (start above `max(ground, sea)`),
+   and a 10-block halo chewing into a hillside (no halo for a standing structure).
+4. After all three fixes it **still** cut a flat rectangular face into a hill, and this one has no fix:
+   the carve clears the piece BOUNDING BOXES, and a jigsaw box is a rectangle far larger than the
+   build inside it. Wherever that rectangle meets a hillside above the waterline, the hill goes.
+
+So it is **neither** — removed from `carve_cavern`, no `beard` flag, `terrain_adaptation: none` of its
+own. Terrain now simply stays where it is and the structure's lower parts sit embedded in it. Owner:
+*"in this case the bottom will look find embedded - so for acropolipse -carve nothing"*.
+
+**The general rule this leaves.** A carve is right for something ENTOMBED, where the box is underground
+anyway and clearing it opens a cavern nobody sees from outside. For anything standing in the open,
+clearing a rectangle reads as a chunk error — the same phrase already recorded in `carveForStructures`
+for the same reason. `clearance: 12` stays, so the city still keeps its distance.
+
+The two-pass split and the halo/waterline rules stay in `carveForStructures`: they are correct for any
+other tagged structure that turns out to stand rather than be buried.
+
 ### ⚠ The pad must never dig below the waterline
 
 CityWorld floods every column it plans below sea level, so a pad that lowers ground onto a buried
