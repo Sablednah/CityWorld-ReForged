@@ -825,10 +825,12 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 // gathered with isCloseToChunk(pos, 76) instead of 12: ~40x the area, 369 beards per
                 // chunk against ~40, and the column loop runs once per beard per column. It timed the
                 // 1.21.11 self-test out at 1800s. Only a structure that DECLARES a clearance widens.
-                var fit = fitsIndex.get(start.getStructure());
-                int taper = fit == null || fit.clearance() <= 0
-                        ? BEARD_RADIUS
-                        : beardRadiusFor(fit.clearance());
+                // ⚠ TAPER SCALING WITHDRAWN — it removed the gradient instead of widening it.
+                // nearest = dist/taper, ease = smoothstep(nearest): raising taper to 124 makes nearest
+                // tiny nearby, ease -> 0, and every column SNAPS flat instead of easing back to natural.
+                // It also cannot reach past the footprint: this runs only where startsForStructure
+                // returns a start, and references exist only for chunks the box overlaps.
+                int taper = BEARD_RADIUS;
                 String id = PAD_LOG ? String.valueOf(start.getStructure()) : "";
                 if (PAD_LOG && optedIn.contains(start.getStructure()))
                     LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: OPT-IN beard (terrain_adaptation none) — {}",
