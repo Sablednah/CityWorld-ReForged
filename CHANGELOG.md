@@ -5,6 +5,53 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 5.12.0
+
+Released for every supported Minecraft version — 1.20.1, 1.21.1, 1.21.11, 26.1, 26.2 and 26.3 — which
+brings the five older lines up from 5.10.0/5.10.1.
+
+A worldgen release, and all of it about the seam where a structure meets CityWorld's own terrain.
+Structures from other mods — Cataclysm in particular — now sit in the land instead of on top of it.
+
+### Fixed
+
+- **Village houses no longer hang in the air, and the ground they sit on reaches a chunk further.**
+  A structure that asks Minecraft to bend the terrain under it (`terrain_adaptation: beard_thin`, which
+  is what villages, pillager outposts and many modded structures use) was only getting half of that
+  contract: CityWorld lays its own terrain and never ran vanilla's beard. Measured on a fixed seed,
+  745 of 745 columns now sit exactly on the block their piece declares as its floor, with none buried.
+  The blend also now reaches one chunk past a structure's own footprint, which is what removed the
+  sheer drops at its edge.
+- **No more moats.** The ground under a structure could be cut below sea level, and CityWorld floods
+  anything it plans under water — so a buried structure left a water-filled trench beside it. One was
+  8 blocks wide with 14 blocks of standing water in it. Terrain is never lowered below the waterline
+  now; cutting into a dune above it still works.
+- **A tall building no longer sits on a mountain.** Where a structure has storeys stacked over the
+  same footprint, the ground was aimed at the *top* storey's floor rather than the base, so a 97-piece
+  tower built terrain up to its roof — a snow mound climbing 65 blocks with a vertical face. It aims
+  at the base the building stands on.
+- **Floating structures are left alone.** A structure that hangs above the ground was variously
+  filled with a column of strata, dug out from underneath, drained of the water it stood in, or had a
+  rectangular bite taken out of a neighbouring hillside. None of that happens: terrain stays where it
+  is and the structure's lower parts sit embedded in it.
+- **No more half-built schematics.** A CityWorld landmark whose footprint straddled the ground
+  reserved for a structure placed the chunks outside the reservation and silently dropped the rest.
+  A building is not a per-chunk decision — the whole site is now taken or skipped.
+- **Buried structures still get their cavern**, and only they do. The 10-block clearance that keeps an
+  ancient city reading as one hall rather than a row of boxes no longer applies to anything standing in
+  the open, where it just ate the landscape.
+
+### Notes
+
+- Terrain fixes only affect **newly generated chunks**. A fresh world, or unexplored land, is needed
+  to see any of this.
+- Per-structure tuning lives in the `cityworld:structure_fit` data map, so a pack can declare how much
+  room a modded structure needs and whether its ground should be shaped at all. The Cataclysm entries
+  ship with the mod and are inert if Cataclysm is not installed.
+- A structure much larger than vanilla's own 128-block bound (Cataclysm's frosted prison is ~174) can
+  still be unblended along one far edge. Minecraft only lets a chunk see structures whose origin is
+  within 8 chunks, and vanilla has the same limit; a different mechanism is needed and is planned.
+
 ## 5.11.0
 
 Released for Minecraft 1.20.1 only — the other versions are unchanged and stay on 5.10.1 (26.3) and

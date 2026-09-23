@@ -1,6 +1,34 @@
 # CityWorld — Bukkit → NeoForge port plan
 
-## ▶ Resume here — v5.11.0 released (2026-09-21): the 1.20.1 **Forge** line, and the first non-NeoForge jar
+## ▶ Resume here — 5.12.0 staged (2026-09-23): the structure/terrain seam, all six versions
+
+**Where it is.** `mod_version=5.12.0` on **all six** branches (up from 5.11.0 on 1.21.11/1.20.1,
+5.10.0 on 1.21.1/26.1/26.2, 5.10.1 on 26.3). Everything below is pushed; **not tagged, not uploaded**.
+All six self-tests PASS with 0 datapack parse failures, and `selftest.sh --compare` agrees on MODERN,
+APOCALYPSE and CLASSIC plan hashes across all six on same-day reports.
+
+**What the release is.** One arc: a structure from another mod now sits IN the land rather than on it.
+The pad (vanilla's `beard_thin` half that CityWorld never ran) blends one chunk past a structure's
+box, never digs below the waterline, and aims at a building's BASE rather than its roof. The carve
+only opens a cavern for something genuinely BURIED — a standing structure gets no halo, nothing below
+`max(ground, sea)`, and a floating one (Cataclysm's acropolis) is left alone entirely. Schematic
+footprints are all-or-nothing against a reservation. Each of those came from the owner finding it in
+game; the sections below carry the measurements and the several wrong turns.
+
+**⚠ Two things are open, and neither is a mystery.**
+1. **The worldgen stall is measured but not fixed.** `context.populateMap` took **71.5 s** once on the
+   owner's machine against a 477 ms mean. Reservation (2%) and the carve (0.2%) were both diagnosed as
+   the cause and both were wrong. Which line inside `populateMap` runs away is unknown: the
+   stack-dumping watchdog was built and proved on a positive, then removed from the jar before it ever
+   caught a real stall. To finish it, restore `Support/Timings` and its six call sites from history,
+   run until it stalls, read the `TIMING STUCK` stack, then strip it again before shipping.
+2. **Reservation-driven levelling**, for structures larger than vanilla's 128-block bound. Accepted
+   as-is for this release (owner's call); see "Structures larger than vanilla's own bound".
+
+**Before tagging:** the halt/exit bytecode scan with a detector proved on a known positive first, and
+push version branches BEFORE master so the CI gate tests the trees being released.
+
+## v5.11.0 (2026-09-21): the 1.20.1 **Forge** line, and the first non-NeoForge jar
 
 **Where it is.** Branch `mc1.20.1` (worktree, cut from `mc1.21.1`), head `9c2e9f9d`. **Shipped**: tag
 `v5.11.0` on master (`6227b71b`), **one jar**, `cityworld-5.11.0+mc1.20.1.jar`. CurseForge file **8937666**

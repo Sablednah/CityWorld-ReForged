@@ -171,8 +171,15 @@ public final class StructureReservations {
      * the default clearance of 5 that is 121 per query; at the 12 an acropolis declares it is 625. And
      * planning asks the same coordinates repeatedly from THREE sites: the PlatLot constructor,
      * setLot and paveLot. A 10x10 platmap therefore issued on the order of 100-300 queries, each
-     * re-deriving what the others had just computed. Measured in game 2026-09-22: chunks stopped
-     * arriving for a minute or two, then landed in one go.
+     * re-deriving what the others had just computed.
+     *
+     * <p>⚠ <b>This was written as the fix for the owner's minute-long stall, and it was not.</b>
+     * The claim here used to read "measured in game 2026-09-22: chunks stopped arriving for a minute
+     * or two" — which was the SYMPTOM going away once, not a measurement of this code. Proper timing
+     * on 2026-09-23, on the owner's machine with Cataclysm installed, put reservation at 2125 ms
+     * across 492,863 calls (0.00 ms mean) against a single {@code context.populateMap} of 71,557 ms.
+     * The memo is still worth having — it is the difference between one scan per chunk and three —
+     * but it is a tidy-up, not a cure. See PORTING.md, "The worldgen stall".
      */
     private final java.util.concurrent.ConcurrentHashMap<Long, Boolean> memo =
             new java.util.concurrent.ConcurrentHashMap<>();
