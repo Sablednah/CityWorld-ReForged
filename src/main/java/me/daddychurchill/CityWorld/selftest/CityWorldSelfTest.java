@@ -1377,6 +1377,11 @@ public final class CityWorldSelfTest {
                         + "the cityworld:allowed tag, or the biome source cannot produce any biome it needs");
         }
 
+        // The forecast check runs BEFORE any early return below: 1.20.1 has no trial chambers, and the
+        // first placement of this call sat past "if (trials == null) return", so it silently never ran
+        // there while the report still read PASS (2026-09-24).
+        checkForecast(server, state);
+
         // --- seeding: the stronghold rings ---------------------------------------------------------
         Holder<StructureSet> strongholds = sets.get("minecraft:strongholds");
         if (strongholds != null
@@ -1433,7 +1438,6 @@ public final class CityWorldSelfTest {
         report.put("structures.trial.foundAt", foundAt);
 
         checkAncientCityDepth(server, sets.get("minecraft:ancient_cities"));
-        checkForecast(server, state);
 
         if (examined == 0)
             fail("the trial-chamber placement claimed no chunk within " + STRUCTURE_SCAN_CHUNKS
