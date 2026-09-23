@@ -797,10 +797,18 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             var fitsIndex = fitsByStructure(structureLookup);
 
             for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
-                var fit = fitsIndex.get(start.getStructure());
-                int taper = fit == null || fit.clearance() <= 0
-                        ? BEARD_RADIUS
-                        : beardRadiusFor(fit.clearance());
+                // ⚠ TAPER SCALING WITHDRAWN — it removed the gradient instead of widening it.
+                // The blend is nearest = dist/taper, ease = smoothstep(nearest); a bigger taper makes
+                // nearest tiny for every nearby column, so ease -> 0 and the column SNAPS to the flat
+                // target rather than easing back to natural ground. The owner saw exactly that:
+                // "so is tapering gone completely".
+                //
+                // And it could never have worked anyway: this method only runs where
+                // startsForStructure(pos, ...) returns something, and structure references exist only
+                // for chunks the bounding box overlaps. No taper value slopes terrain OUTSIDE the
+                // footprint; that needs starts gathered from neighbouring chunks, which is a separate
+                // change. beardRadiusFor is kept for when that lands.
+                int taper = BEARD_RADIUS;
                 String id = PAD_LOG ? String.valueOf(start.getStructure()) : "";
                 if (PAD_LOG && optedIn.contains(start.getStructure()))
                     LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: OPT-IN beard (terrain_adaptation none) — {}",
