@@ -106,7 +106,14 @@ stamp_for() {
         case "$commit" in *-dirty) echo "$commit"; return ;; esac
         tags="$(git -C "$ROOT" tag --points-at "$commit" 2>/dev/null || true)"
         subject="$(git -C "$ROOT" log -1 --format=%s "$commit" 2>/dev/null || true)"
-        if grep -qx "v$ver" <<<"$tags" || [ "$subject" = "Bump to $ver" ]; then echo "v$ver"; return; fi
+        # ⚠ PREFIX, not equality. This required the subject to be EXACTLY "Bump to X.Y.Z", so
+        # v5.12.0 — whose bump commit reads "Bump to 5.12.0, and make the comments tell the truth
+        # again" — stamped six instances with a sha while the five built from the tagged master
+        # commit stamped v5.12.0. The jars were byte-identical; only the at-a-glance check lied.
+        # The [!0-9] guard keeps "Bump to 5.12.0" from matching a hypothetical "Bump to 5.12.01".
+        local is_bump=0
+        case "$subject" in "Bump to $ver") is_bump=1 ;; "Bump to $ver"[!0-9]*) is_bump=1 ;; esac
+        if grep -qx "v$ver" <<<"$tags" || [ "$is_bump" = 1 ]; then echo "v$ver"; return; fi
         echo "$commit"; return
     fi
     echo "v${ver:-unknown}"
