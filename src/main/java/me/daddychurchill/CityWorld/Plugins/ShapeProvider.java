@@ -64,31 +64,53 @@ public abstract class ShapeProvider extends Provider {
 
 	public void populateLots(CityWorldGenerator generator, PlatMap platmap) {
 		try {
+			// ⚠ Timed per phase. The outer 'plan' phase measured 79 SECONDS for a single platmap on
+			// the owner's machine (2026-09-23, chunk 9,169, with the server thread 77951 ms behind),
+			// against a 16 ms mean. Two earlier diagnoses of that stall -- the reservation scan and
+			// the carve -- were both wrong, and both were reasoned rather than measured. This says
+			// which phase of planning is eating it instead of inviting a third guess.
+			int px = platmap.originX, pz = platmap.originZ;
+			long tAlloc = me.daddychurchill.CityWorld.Support.Timings.start();
 			allocateContexts(generator);
+			me.daddychurchill.CityWorld.Support.Timings.stop("plan.alloc", tAlloc, px, pz);
 
 			// assume everything is natural for the moment
 			platmap.context = natureContext;
+			long tNature = me.daddychurchill.CityWorld.Support.Timings.start();
 			natureContext.populateMap(generator, platmap);
+			me.daddychurchill.CityWorld.Support.Timings.stop("plan.nature", tNature, px, pz);
+			long tNatureOk = me.daddychurchill.CityWorld.Support.Timings.start();
 			natureContext.validateMap(generator, platmap);
+			me.daddychurchill.CityWorld.Support.Timings.stop("plan.natureOk", tNatureOk, px, pz);
 
 			// place and validate the roads
 			if (generator.getSettings().includeRoads) {
+				long tCtx = me.daddychurchill.CityWorld.Support.Timings.start();
 				platmap.context = getContext(platmap);
+				me.daddychurchill.CityWorld.Support.Timings.stop("plan.context", tCtx, px, pz);
+				long tRoads = me.daddychurchill.CityWorld.Support.Timings.start();
 				platmap.populateRoads(); // this will see the platmap's context as natural since it hasn't been re-set
 				// yet, see below
 				platmap.validateRoads();
+				me.daddychurchill.CityWorld.Support.Timings.stop("plan.roads", tRoads, px, pz);
 
 				// place the buildings
 				if (generator.getSettings().includeBuildings) {
 
 					// recalculate the context based on the "natural-ness" of the platmap
 //					platmap.context = getContext(platmap);
+					long tBuild = me.daddychurchill.CityWorld.Support.Timings.start();
 					platmap.context.populateMap(generator, platmap);
+					me.daddychurchill.CityWorld.Support.Timings.stop("plan.build", tBuild, px, pz);
+					long tBuildOk = me.daddychurchill.CityWorld.Support.Timings.start();
 					platmap.context.validateMap(generator, platmap);
+					me.daddychurchill.CityWorld.Support.Timings.stop("plan.buildOk", tBuildOk, px, pz);
 				}
 
 				// one last check
+				long tLots = me.daddychurchill.CityWorld.Support.Timings.start();
 				validateLots(generator, platmap);
+				me.daddychurchill.CityWorld.Support.Timings.stop("plan.lotsOk", tLots, px, pz);
 			}
 		} catch (Exception e) {
 			generator.reportException("ShapeProvider.populateLots FAILED", e);
