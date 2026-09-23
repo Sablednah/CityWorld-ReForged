@@ -55,9 +55,98 @@ public final class Timings {
     private Timings() {
     }
 
+    /**
+     * In-flight phases, so the watchdog can catch one WHILE it is stuck.
+     *
+     * <p>A SLOW line is a post-mortem: it says a phase took 71 seconds, which is how the stall was
+     * narrowed to plan.build, and then stops being useful — by the time it prints, the stack that
+     * would name the actual method is gone. The watchdog samples the offending thread while it is
+     * still in there.
+     */
+    private static final Map<Long, Object[]> INFLIGHT = new ConcurrentHashMap<>();
+    private static final long STACK_NANOS =
+            Long.getLong("cityworld.timing.stackms", 5000L) * 1_000_000L;
+    private static volatile boolean watching;
+    /**
+     * How often the watchdog looks. Two seconds is right for hunting a 71-second stall and useless
+     * for proving the watchdog works, because a phase that starts and ends inside one gap is never
+     * seen — which is exactly what a first test showed (0 dumps, and nothing broken). Tunable so the
+     * detector can be fired deliberately before it is trusted.
+     */
+    private static final long POLL_MS = Long.getLong("cityworld.timing.pollms", 2000L);
+
     /** Nanosecond clock, or 0 when off — pass the result straight back to {@link #stop}. */
     public static long start() {
-        return ON ? System.nanoTime() : 0L;
+        if (!ON)
+            return 0L;
+        long now = System.nanoTime();
+        return now == 0L ? 1L : now;   // 0 is the "off" sentinel; never hand it back
+    }
+
+    /** As {@link #start}, but the watchdog may dump this thread's stack if it takes too long. */
+    public static long startWatched(String phase) {
+        if (!ON)
+            return 0L;
+        long t = start();
+        INFLIGHT.put(Thread.currentThread().getId(),
+                new Object[] { phase, t, Thread.currentThread(), Boolean.FALSE });
+        ensureWatchdog();
+        return t;
+    }
+
+    /** Pair with {@link #startWatched}. */
+    public static void stopWatched(String phase, long started, int chunkX, int chunkZ) {
+        if (!ON)
+            return;
+        INFLIGHT.remove(Thread.currentThread().getId());
+        stop(phase, started, chunkX, chunkZ);
+    }
+
+    private static void ensureWatchdog() {
+        if (watching)
+            return;
+        synchronized (Timings.class) {
+            if (watching)
+                return;
+            watching = true;
+            // ⚠ Daemon, and it only ever reads and logs. Nothing here stops, halts or exits
+            // anything — see CLAUDE.md on why the shipped jar must contain no path to stopping a
+            // server. A daemon thread also cannot hold the JVM open on its own.
+            Thread t = new Thread(() -> {
+                while (true) {
+                    try {
+                        Thread.sleep(POLL_MS);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                    long now = System.nanoTime();
+                    for (Object[] e : INFLIGHT.values()) {
+                        if (Boolean.TRUE.equals(e[3]))
+                            continue;                       // already dumped this one
+                        long age = now - (Long) e[1];
+                        if (age < STACK_NANOS)
+                            continue;
+                        e[3] = Boolean.TRUE;
+                        Thread stuck = (Thread) e[2];
+                        StringBuilder sb = new StringBuilder();
+                        int shown = 0;
+                        for (StackTraceElement f : stuck.getStackTrace()) {
+                            String cn = f.getClassName();
+                            if (!cn.startsWith("me.daddychurchill") && !cn.startsWith("net.minecraft"))
+                                continue;
+                            sb.append("\n        at ").append(f);
+                            if (++shown >= 30)
+                                break;
+                        }
+                        LOGGER.warn("TIMING STUCK: {} has been running {} ms on thread {}:{}",
+                                e[0], age / 1_000_000L, stuck.getName(), sb);
+                    }
+                }
+            }, "cityworld-timing-watchdog");
+            t.setDaemon(true);
+            t.start();
+        }
     }
 
     /** Record one call of {@code phase}. {@code chunkX,chunkZ} only appear in a SLOW line. */
