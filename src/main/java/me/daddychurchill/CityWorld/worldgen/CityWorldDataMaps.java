@@ -177,16 +177,30 @@ public final class CityWorldDataMaps {
      * {@code DataMapType}, so it reads the same JSON through the reload listener above. Keep the two
      * in step — the resource file is shared verbatim, only the plumbing differs.
      *
-     * <p>{@code clearance} overrides {@link StructureReservations#DEFAULT_CLEARANCE} (never shrinks
-     * it); {@code beard} opts a {@code terrain_adaptation: none} structure into shaping. Opt-in only:
-     * vanilla's NONE structures either self-level or are deliberately off the ground, and buildCity
-     * runs in every dimension.
+     * <p><b>beard</b> — build the planned ground up to each piece even though the structure declares
+     * {@code terrain_adaptation: none}. Vanilla's own {@code NONE} structures must NOT get this: three
+     * of them ({@code desert_pyramid}, {@code jungle_pyramid}, {@code swamp_hut}) are
+     * {@code ScatteredFeaturePiece}s that re-level themselves, and the rest are deliberately not on
+     * the ground — {@code ruined_portal} is half-buried by design, {@code bastion_remnant} floats over
+     * lava, {@code shipwreck} and {@code ocean_ruin} sit on the seabed. {@code buildCity} runs in every
+     * dimension, so an automatic rule would reach the Nether and the End. Hence opt-in, per structure,
+     * and nothing is opted in by default.
+     *
+     * <p><b>shave</b> — for a standing structure that cuts its own volume out of a hill (Cataclysm's
+     * acropolis: its NBT is air where the hill was). The plan is LOWERED to the storey the hill cuts
+     * into, inside the box, and feathered back to natural ground outside it, so the cut is painted as
+     * ground rather than left as a raw strata face. Only ever lowers, never below the waterline. See
+     * {@code padPlanForStructures}.
+     *
+     * <p>Values are plain numbers and flags, so — unlike the ground map, whose values are block ids —
+     * an entry for an absent mod needs no {@code neoforge:conditions}: the key simply never matches.
      */
-    public record StructureFit(int clearance, boolean beard) {
+    public record StructureFit(int clearance, boolean beard, boolean shave) {
 
         public static final Codec<StructureFit> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.optionalFieldOf("clearance", 0).forGetter(StructureFit::clearance),
-                Codec.BOOL.optionalFieldOf("beard", false).forGetter(StructureFit::beard)
+                Codec.BOOL.optionalFieldOf("beard", false).forGetter(StructureFit::beard),
+                Codec.BOOL.optionalFieldOf("shave", false).forGetter(StructureFit::shave)
         ).apply(i, StructureFit::new));
     }
 
@@ -214,71 +228,18 @@ public final class CityWorldDataMaps {
         return fit != null && fit.beard();
     }
 
-    /**
-     * ⚠ <b>KNOWN DEFECT: this reads ONE pack's file, not every pack's.</b> Proved 2026-09-22 with two
-     * packs both writing {@code data/cityworld/data_maps/worldgen/structure/structure_fit.json}:
-     * {@code SimpleJsonResourceReloadListener} keys by NAMESPACED FILE ID, so both collapse onto the
-     * single id {@code cityworld:structure_fit} and the listener is handed exactly one -- logged as
-     * {@code DATAMAP RAW: ... offered 1 file id(s)}. The winner is decided by pack order; the loser is
-     * never seen. {@code "replace": false} is read by nothing here.
-     *
-     * <p>All three maps share this loader ({@code ground}, {@code furniture}, {@code structure_fit}),
-     * so on this line a Biomes O' Plenty ground pack or a furniture pack CANNOT extend CityWorld's
-     * entries -- it can only supplant them. The NeoForge branches use real {@code DataMapType}s and do
-     * not behave this way, so the same two packs give different results per Minecraft line.
-     *
-     * <p>Latent today: only CityWorld itself writes {@code data/cityworld/data_maps/} on the owner's
-     * 1.20.1 instance. It bites the moment a third-party compat pack does. Fixing it means iterating
-     * every pack's copy via {@code ResourceManager.getResourceStack} and honouring {@code replace}.
-     *
-     * <p>Reads one data-map file out of every pack that has it and decodes its {@code values} block.
-     *
-     * <p>Two shapes are accepted, because that is what the files contain: a bare value, and a
-     * {@code {"neoforge:conditions": …, "value": …}} wrapper. The condition itself needs no
-     * evaluating — every entry names a block or biome, so an entry whose id is not in the registry
-     * belongs to a mod that is not installed, which is precisely when it should be skipped.
-     */
-    private static <T> SimpleJsonResourceReloadListener loader(String directory, String file,
-            com.mojang.serialization.Codec<T> codec, java.util.function.Consumer<Map<ResourceLocation, T>> sink) {
-        return new SimpleJsonResourceReloadListener(new com.google.gson.GsonBuilder().create(), directory) {
-            @Override
-            protected void apply(Map<ResourceLocation, JsonElement> files, ResourceManager manager,
-                    ProfilerFiller profiler) {
-                Map<ResourceLocation, T> out = new java.util.HashMap<>();
-                // ⚠ SimpleJsonResourceReloadListener keys by NAMESPACED FILE ID, so every pack writing
-                // data/cityworld/data_maps/.../structure_fit.json collapses onto ONE key -- the
-                // highest-priority pack wins and the others are never offered. Print what we are given.
-                if (System.getProperty("cityworld.probe") != null
-                        || System.getProperty("cityworld.diagnostics") != null)
-                    me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
-                            "DATAMAP RAW: {} offered {} file id(s): {}", directory, files.size(),
-                            files.keySet().stream().map(Object::toString).toList());
-                files.forEach((id, element) -> {
-                    if (!id.getPath().equals(file) || !element.isJsonObject())
-                        return;
-                    JsonElement values = element.getAsJsonObject().get("values");
-                    if (values == null || !values.isJsonObject())
-                        return;
-                    for (Map.Entry<String, JsonElement> entry : values.getAsJsonObject().entrySet()) {
-                        JsonElement value = entry.getValue();
-                        if (value.isJsonObject() && value.getAsJsonObject().has("value"))
-                            value = value.getAsJsonObject().get("value");
-                        codec.parse(JsonOps.INSTANCE, value).result()
-                                .ifPresent(decoded -> out.put(new ResourceLocation(entry.getKey()), decoded));
-                    }
-                });
-                sink.accept(Map.copyOf(out));
-                // ⚠ Say how many entries each map actually decoded. A file that is never found, and a
-                // file that decodes to nothing, produce identical silence -- and on this line the
-                // structure_fit map read zero while the sibling allow-list TAG in another pack loaded
-                // fine, which is indistinguishable from "not registered" without this line.
-                if (System.getProperty("cityworld.probe") != null
-                        || System.getProperty("cityworld.diagnostics") != null)
-                    me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
-                            "DATAMAP: {}/{} -> {} entries {}", directory, file, out.size(),
-                            out.keySet().stream().limit(6).map(Object::toString).toList());
-            }
-        };
+    /** Whether this structure asks for the plan to be shaved to it. */
+    public static boolean shaves(
+            @Nullable Holder<net.minecraft.world.level.levelgen.structure.Structure> structure) {
+        StructureFit fit = fitFor(structure);
+        return fit != null && fit.shave();
+    }
+
+    /** Registered from {@code CityWorldMod} on the mod event bus. */
+    public static void register(RegisterDataMapTypesEvent event) {
+        event.register(GROUND);
+        event.register(FURNITURE);
+        event.register(STRUCTURE_FIT);
     }
 
     /** The declared facing offset for a furniture block, or {@code 0} if it declares none. */

@@ -20,12 +20,19 @@ import net.minecraft.world.level.levelgen.structure.placement.ConcentricRingsStr
  * that works — reserving after the fact would mean amputating roads and buildings at the boundary,
  * which looks worse than the problem it fixes.
  *
- * <p><b>This deliberately over-reserves.</b> {@code hasStructureChunkInRange} answers the placement
+ * <p><b>Two ways to answer, and the first is exact.</b> With a {@link StructureForecast} the reservation
+ * is the structure's REAL footprint: the forecast makes vanilla's own {@code createStructures} call
+ * ahead of any chunk, so it knows the bounding box, and it knows when the biome or water check will
+ * fail and nothing will be built at all. Reserved = a forecast start's box plus a one-chunk margin for
+ * the pad's taper. The owner's complaint this answers (2026-09-23): "we reserve the best space we can
+ * when plotting the city, but sometimes nothing ends up in there, and when it does it has to reserve
+ * loads more". The clearance square below is now the FALLBACK, for the moments before the level that
+ * owns the generator is registered (the forecast cannot bind yet) or when {@code -Dcityworld.reserve=clearance}
+ * asks for the old behaviour.
+ *
+ * <p><b>The fallback deliberately over-reserves.</b> {@code hasStructureChunkInRange} answers the placement
  * question only; whether the structure's <em>biome</em> predicate will pass is decided later, at
- * structure-start time. So some reserved chunks never receive a structure and simply stay natural. The
- * error is one-directional and cheap — an unexplained meadow, never a half-built city — and the
- * alternative (resolving biomes per candidate chunk during planning) would drag the biome source into
- * the planner for a cosmetic gain.
+ * structure-start time. So some reserved chunks never receive a structure and simply stay natural.
  *
  * <p><b>Concentric rings are skipped</b> — that is strongholds. They are underground, so they never
  * compete with what CityWorld builds on the surface, and asking about them forces
@@ -56,6 +63,11 @@ public final class StructureReservations {
 
     private final ChunkGeneratorStructureState state;
     private final int clearance;
+    /** Null when the world has none (a twin without a forecast, or a test harness). */
+    private final StructureForecast forecast;
+    private static final boolean FORCE_CLEARANCE = "clearance".equals(System.getProperty("cityworld.reserve"));
+    /** Chunks of margin around a forecast footprint: the pad's taper needs one. */
+    public static final int FOOTPRINT_MARGIN = 1;
 
     /**
      * Resolved once: the sets worth asking about, each with the clearance IT needs.
@@ -70,10 +82,11 @@ public final class StructureReservations {
     private final List<Reserved> sets;
 
     private StructureReservations(ChunkGeneratorStructureState state, int clearance,
-            List<Reserved> sets) {
+            List<Reserved> sets, StructureForecast forecast) {
         this.state = state;
         this.clearance = clearance;
         this.sets = sets;
+        this.forecast = FORCE_CLEARANCE ? null : forecast;
     }
 
     /**
@@ -82,6 +95,11 @@ public final class StructureReservations {
      * entirely rather than pay for a query that can only ever answer false.
      */
     public static StructureReservations of(ChunkGeneratorStructureState state, int clearance) {
+        return of(state, clearance, null);
+    }
+
+    public static StructureReservations of(ChunkGeneratorStructureState state, int clearance,
+            StructureForecast forecast) {
         if (state == null)
             return null;
         try {
@@ -97,7 +115,7 @@ public final class StructureReservations {
                         usable.size(), state.possibleStructureSets().size(),
                         usable.stream().map(r -> r.set().unwrapKey().map(k -> k.location().getPath()).orElse("?")
                                 + "=" + r.clearance()).toList());
-            return usable.isEmpty() ? null : new StructureReservations(state, base, usable);
+            return usable.isEmpty() ? null : new StructureReservations(state, base, usable, forecast);
         } catch (Throwable t) {
             // Planning must never fail because of this: no reservations is the old behaviour.
             return null;
@@ -185,15 +203,48 @@ public final class StructureReservations {
             new java.util.concurrent.ConcurrentHashMap<>();
 
     public boolean isReserved(int chunkX, int chunkZ) {
-        return memo.computeIfAbsent(net.minecraft.world.level.ChunkPos.asLong(chunkX, chunkZ), key -> {
-            try {
-                for (Reserved reserved : sets)
-                    if (state.hasStructureChunkInRange(reserved.set(), chunkX, chunkZ, reserved.clearance()))
-                        return Boolean.TRUE;
-            } catch (Throwable t) {
-                return Boolean.FALSE;
+        long key = net.minecraft.world.level.ChunkPos.asLong(chunkX, chunkZ);
+        Boolean got = memo.get(key);
+        if (got != null)
+            return got;
+        // Computed OUTSIDE the map's lock: a forecast may assemble a jigsaw, and a long mapping
+        // function inside computeIfAbsent is exactly what froze the server on 2026-09-23.
+        // Memoise only an answer that cannot change: a forecast that has not bound to its level yet
+        // would fall back to the clearance square, and caching THAT would make the plan depend on
+        // timing. Planning never runs before the level registers in practice; this keeps it true.
+        boolean cacheable = forecast == null || forecast.available();
+        Boolean answer = Boolean.FALSE;
+        try {
+            answer = compute(chunkX, chunkZ);
+        } catch (Throwable t) {
+            answer = Boolean.FALSE;
+        }
+        if (!cacheable)
+            return answer;
+        Boolean winner = memo.putIfAbsent(key, answer);
+        return winner != null ? winner : answer;
+    }
+
+    /** Whether the exact footprint path is in use (the probe reports it). */
+    public boolean byFootprint() {
+        return forecast != null && forecast.available();
+    }
+
+    private boolean compute(int chunkX, int chunkZ) {
+        if (forecast != null && forecast.available()) {
+            // The exact answer: is this chunk under (or one chunk from) a structure that WILL be built?
+            // Only surface-step sets compete for the ground; a buried start reserves nothing, exactly
+            // as the fallback's reachesTheSurface filter intends.
+            for (net.minecraft.world.level.levelgen.structure.StructureStart start
+                    : forecast.startsCovering(chunkX, chunkZ, FOOTPRINT_MARGIN)) {
+                if (start.getStructure().step() == GenerationStep.Decoration.SURFACE_STRUCTURES)
+                    return true;
             }
-            return Boolean.FALSE;
-});
+            return false;
+        }
+        for (Reserved reserved : sets)
+            if (state.hasStructureChunkInRange(reserved.set(), chunkX, chunkZ, reserved.clearance()))
+                return true;
+        return false;
     }
 }

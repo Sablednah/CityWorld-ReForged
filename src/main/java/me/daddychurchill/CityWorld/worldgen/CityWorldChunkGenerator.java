@@ -310,7 +310,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     // eagerly: this runs exactly once per world and provably after createState (the seed
                     // check above would have thrown otherwise), so there is nothing to defer.
                     local.structureReservations = StructureReservations.of(structureState,
-                            StructureReservations.DEFAULT_CLEARANCE);
+                            StructureReservations.DEFAULT_CLEARANCE, forecast);
                     context = local;
                 }
             }
@@ -821,9 +821,12 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * A mod whose pieces are template-based and expect pre-existing terrain (Cataclysm's cursed pyramid
      * has no self-levelling call anywhere in its 1344 classes) declares itself in the data map instead.
      */
-    private static final java.util.Map<Object, java.util.Set<
-            net.minecraft.world.level.levelgen.structure.Structure>> BEARD_OPT_IN =
-                    java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+    /** The beard opt-ins AND the declared clearances, from ONE registry walk. */
+    private record FitIndex(
+            java.util.Map<net.minecraft.world.level.levelgen.structure.Structure,
+                    me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit> byStructure,
+            java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> bearding,
+            java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> shaving) {}
 
     private static final java.util.Map<Object, java.util.Map<
             net.minecraft.world.level.levelgen.structure.Structure,
@@ -869,16 +872,25 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             return cached;
         java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> out =
                 java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> shaving =
+                java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
         try {
             lookup.listElements().forEach(reference -> {
-                if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.beardsAnyway(reference))
-                    out.add(reference.value());
+                var fit = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.fitFor(reference);
+                if (fit == null)
+                    return;
+                byStructure.put(reference.value(), fit);
+                if (fit.beard())
+                    bearding.add(reference.value());
+                if (fit.shave())
+                    shaving.add(reference.value());
             });
         } catch (Throwable t) {
-            return java.util.Set.of();
+            return new FitIndex(java.util.Map.of(), java.util.Set.of(), java.util.Set.of());
         }
-        BEARD_OPT_IN.put(lookup, out);
-        return out;
+        FitIndex built = new FitIndex(byStructure, bearding, shaving);
+        FIT_INDEX.put(lookup, built);
+        return built;
     }
 
     private void padPlanForStructures(CityWorldGenerator context, StructureManager structureManager,
@@ -905,210 +917,230 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     structure -> structure.terrainAdaptation()
                             != net.minecraft.world.level.levelgen.structure.TerrainAdjustment.NONE
                             || optedIn.contains(structure);
-            // ⚠ A chunk references a structure only where the BOUNDING BOX overlaps it, so asking
-            // this chunk alone — which is all vanilla's Beardifier ever does — means that past the box
-            // edge there is nothing to taper from and the ground falls off a cliff. No taper value can
-            // fix that; the starts have to come from further out. Gather the neighbours.
-            //
-            // Safe here: this runs inside fillFromNoise, at NOISE status, and the chunk-status graph
-            // guarantees every chunk within 8 is already at STRUCTURE_REFERENCES. It is the same
-            // contract ChunkGenerator.createReferences leans on when it loops +/-8.
-            //
-            // Dedupe is by identity: startsForStructure resolves a reference by reading the origin
-            // chunk, so every neighbour hands back the SAME StructureStart instance.
-            java.util.Set<net.minecraft.world.level.levelgen.structure.StructureStart> seen =
-                    java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+            // Where the starts come from. With a forecast: every start whose box comes within a chunk
+            // of this one, from ANY origin -- no region read, so no 8-chunk ceiling, and the far side of
+            // a 174-block prison is bearded like its near side (owner's screenshot, chunk -209,654,
+            // 2026-09-23: a 30-block vertical face where the reach ran out). Without one (a harness,
+            // or the level not yet registered): the old 3x3 region gather, which the chunk pipeline
+            // serves at NOISE status -- see BLEND_CHUNKS for why it can reach no further.
             List<net.minecraft.world.level.levelgen.structure.StructureStart> starts =
                     new java.util.ArrayList<>();
-            int unreadable = 0;
-            for (int ox = -BLEND_CHUNKS; ox <= BLEND_CHUNKS; ox++)
-                for (int oz = -BLEND_CHUNKS; oz <= BLEND_CHUNKS; oz++) {
-                    ChunkPos near = (ox == 0 && oz == 0) ? pos
-                            : new ChunkPos(pos.x + ox, pos.z + oz);
-                    // Per-neighbour, so a version that serves a smaller radius costs us that
-                    // neighbour's blend rather than the whole chunk's pad. The outer catch already
-                    // swallows everything and logs one FAILED line, which is precisely how a radius
-                    // of 2 managed to disable the pad entirely while looking fine.
-                    try {
-                        for (var found : structureManager.startsForStructure(near, wanted))
-                            if (seen.add(found))
-                                starts.add(found);
-                    } catch (Exception e) {
-                        unreadable++;
+            StructureForecast fc = forecast;
+            boolean fromForecast = fc != null && fc.available();
+            if (fromForecast) {
+                for (var found : fc.startsCovering(pos.x, pos.z, BLEND_CHUNKS))
+                    if (wanted.test(found.getStructure()) || fits.shaving().contains(found.getStructure()))
+                        starts.add(found);
+            } else {
+                java.util.Set<net.minecraft.world.level.levelgen.structure.StructureStart> seen =
+                        java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+                int unreadable = 0;
+                for (int ox = -BLEND_CHUNKS; ox <= BLEND_CHUNKS; ox++)
+                    for (int oz = -BLEND_CHUNKS; oz <= BLEND_CHUNKS; oz++) {
+                        ChunkPos near = (ox == 0 && oz == 0) ? pos : new ChunkPos(pos.x + ox, pos.z + oz);
+                        try {
+                            for (var found : structureManager.startsForStructure(near,
+                                    st -> wanted.test(st) || fits.shaving().contains(st)))
+                                if (seen.add(found))
+                                    starts.add(found);
+                        } catch (Exception e) {
+                            unreadable++;
+                        }
                     }
-                }
-            if (unreadable > 0 && PAD_LOG)
-                LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: {} of 9 neighbours unreadable at this"
-                        + " status — blend is narrower than one chunk here", pos.x, pos.z, unreadable);
+                if (unreadable > 0 && PAD_LOG)
+                    LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: {} of 9 neighbours unreadable at this"
+                            + " status — blend is narrower than one chunk here", pos.x, pos.z, unreadable);
+            }
             if (starts.isEmpty())
                 return;
 
             var cavern = structureLookup.get(CARVE_CAVERN);
             int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
 
-            // One entry per piece: its footprint, and the ground level it actually wants underneath.
-            record Beard(int minX, int minZ, int maxX, int maxZ, double top, int taper) {
+            // One entry per piece: its footprint, the ground level it wants underneath, and whether
+            // it is a GROUND piece -- one no lower-floored piece of the same start overlaps in X/Z.
+            record Beard(int minX, int minZ, int maxX, int maxZ, double top, int taper, boolean ground) {
             }
             List<Beard> beards = new java.util.ArrayList<>();
+            // Shave entries: pieces of a structure that cuts its own volume; the plan is lowered to them.
+            List<Beard> shaves = new java.util.ArrayList<>();
 
             for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
-                // ⚠ From the CACHED index, never a fresh registry scan. Resolving this per start walked
-                // all 52 vanilla structures plus 29 from Cataclysm for every start in every chunk --
-                // exactly the hot-path cost removed from beardOptIn earlier.
-                // How far this structure's ground bends past its own pieces, in blocks. An
-                // UNDECLARED structure gets one chunk; one that declares a big clearance gets two.
-                // ⚠ Both numbers are small ON PURPOSE. beardRadiusFor once returned
-                // max(12, clearance*16 - 4) — 124 blocks for the frosted_prison — and since the blend
-                // is smoothstep(dist/taper), a longer taper holds the ground NEAR the structure at its
-                // level for longer: a column one chunk out sat at 97% of the prison's floor. That is
-                // the flat white dome in the owner's screenshot. It also fed the default clearance of
-                // 5 through as 76 blocks for every UNDECLARED structure, which put a village's gather
-                // radius up from 12 to 76 and timed the self-test out.
+                String id = PAD_LOG ? String.valueOf(start.getStructure()) : "";
+                boolean shave = fits.shaving().contains(start.getStructure());
+                if (!shave && !wanted.test(start.getStructure()))
+                    continue;
+                if (PAD_LOG && optedIn.contains(start.getStructure()))
+                    LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: OPT-IN beard (terrain_adaptation none) — {}",
+                            pos.x, pos.z, id);
+                // How far this structure's ground bends past its own pieces, in blocks. Small ON
+                // PURPOSE: the blend is smoothstep(dist/taper), so a longer taper holds the ground near
+                // the structure at its level for longer -- the flat dome under the prison at 124.
                 int taper = beardRadiusFor(0);
                 String id = PAD_LOG ? String.valueOf(start.getStructure()) : "";
                 if (PAD_LOG && optedIn.contains(start.getStructure()))
                     LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: OPT-IN beard (terrain_adaptation none) — {}",
                             pos.x, pos.z, id);
                 var whole = start.getBoundingBox();
-                if (cavern.map(set -> set.stream().anyMatch(h -> h.value() == start.getStructure())).orElse(false)) {
+                if (!shave && cavern.map(set -> set.stream().anyMatch(h -> h.value() == start.getStructure())).orElse(false)) {
                     if (PAD_LOG)
                         LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: SKIP cavern — {}", pos.x, pos.z, id);
                     continue;
                 }
                 int groundAtCentre = context.shapeProvider.findBlockY(context,
                         (whole.minX() + whole.maxX()) / 2, (whole.minZ() + whole.maxZ()) / 2);
-                if (whole.maxY() <= groundAtCentre) {
+                if (!shave && whole.maxY() <= groundAtCentre) {
                     if (PAD_LOG)
                         LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: SKIP buried — {} box y {}..{} vs ground {}",
                                 pos.x, pos.z, id, whole.minY(), whole.maxY(), groundAtCentre);
                     continue;
                 }
+                // The whole start's pieces first, because ground-ness is a property of the start:
+                // a piece is GROUND if no other piece with a lower floor overlaps its footprint.
+                List<net.minecraft.world.level.levelgen.structure.BoundingBox> boxes = new java.util.ArrayList<>();
+                List<Double> tops = new java.util.ArrayList<>();
+                List<net.minecraft.world.level.levelgen.structure.StructurePiece> kept = new java.util.ArrayList<>();
                 for (net.minecraft.world.level.levelgen.structure.StructurePiece piece : start.getPieces()) {
-                    if (!piece.isCloseToChunk(pos, taper))
-                        continue;
                     int delta = 0;
                     if (piece instanceof net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece pool) {
                         // TERRAIN_MATCHING pieces carry a GravityProcessor and drop onto the ground on
                         // purpose; vanilla beards only RIGID ones, and so do we.
                         if (pool.getElement().getProjection()
-                                != net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool.Projection.RIGID) {
-                            if (PAD_LOG) {
-                                var rb = piece.getBoundingBox();
-                                LOGGER_STRUCTURES.warn(
-                                        "PLANPAD chunk {},{}: REJECT non-rigid {} box x {}..{} z {}..{} y {}..{}",
-                                        pos.x, pos.z, pool.getElement().getProjection(),
-                                        rb.minX(), rb.maxX(), rb.minZ(), rb.maxZ(), rb.minY(), rb.maxY());
-                            }
+                                != net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool.Projection.RIGID)
                             continue;
-                        }
-                        // ⚠ THE FIELD THIS WHOLE FEATURE TURNED ON. Beardifier's reference level is
-                        // box.minY() + groundLevelDelta, not box.minY(): the delta is how far the
-                        // piece's own floor sits above the bottom of its box. Two earlier attempts
-                        // aimed at minY-1 and left houses hanging — 1683 columns at a uniform 2 and a
-                        // tail to 12 — because the delta varies per piece and was simply missing. It
-                        // was never a constant to tune; it was a field to read.
+                        // ⚠ THE FIELD THIS WHOLE FEATURE TURNED ON: the reference level is
+                        // box.minY() + groundLevelDelta, per piece, not box.minY().
                         delta = pool.getGroundLevelDelta();
                     }
                     var b = piece.getBoundingBox();
+                    boxes.add(b);
+                    tops.add((double) (b.minY() + delta - 1));
+                    kept.add(piece);
+                }
+                for (int i = 0; i < kept.size(); i++) {
+                    var b = boxes.get(i);
+                    if (!kept.get(i).isCloseToChunk(pos, taper))
+                        continue;
+                    boolean ground = true;
+                    for (int j = 0; j < kept.size() && ground; j++) {
+                        if (j == i || tops.get(j) >= tops.get(i))
+                            continue;
+                        var o = boxes.get(j);
+                        if (o.maxX() >= b.minX() && o.minX() <= b.maxX() && o.maxZ() >= b.minZ() && o.minZ() <= b.maxZ())
+                            ground = false;
+                    }
                     if (PAD_LOG)
                         LOGGER_STRUCTURES.warn(
-                                "PLANPAD chunk {},{}: BEARD {} {} box x {}..{} z {}..{} y {}..{} delta {} -> top {}",
-                                pos.x, pos.z, piece.getClass().getSimpleName(),
-                                piece instanceof net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece pl
-                                        ? pl.getElement().getProjection() : "n/a",
-                                b.minX(), b.maxX(), b.minZ(), b.maxZ(), b.minY(), b.maxY(), delta,
-                                b.minY() + delta - 1);
-                    beards.add(new Beard(b.minX(), b.minZ(), b.maxX(), b.maxZ(), b.minY() + delta - 1, taper));
+                                "PLANPAD chunk {},{}: {} taper {} {} box x {}..{} z {}..{} y {}..{} -> top {} {}",
+                                pos.x, pos.z, shave ? "SHAVE" : "BEARD", taper, kept.get(i).getClass().getSimpleName(),
+                                b.minX(), b.maxX(), b.minZ(), b.maxZ(), b.minY(), b.maxY(), tops.get(i),
+                                ground ? "GROUND" : "upper");
+                    (shave ? shaves : beards).add(new Beard(b.minX(), b.minZ(), b.maxX(), b.maxZ(), tops.get(i), taper, ground));
                 }
             }
-            if (beards.isEmpty())
+            if (beards.isEmpty() && shaves.isEmpty())
                 return;
 
             int moved = 0;
             double deltaMin = Double.MAX_VALUE, deltaMax = -Double.MAX_VALUE;
-            for (int x = 0; x < 16; x++)
-                for (int z = 0; z < 16; z++) {
-                    int wx = minX + x, wz = minZ + z;   // plan is chunk-local, boxes are world coords
-                    double nearest = 1.0, weightSum = 0.0, baseSum = 0.0;
-                    double insideBase = Double.POSITIVE_INFINITY;
-                    for (Beard b : beards) {
-                        int dx = Math.max(0, Math.max(b.minX() - wx, wx - b.maxX()));
-                        int dz = Math.max(0, Math.max(b.minZ() - wz, wz - b.maxZ()));
-                        double dist = Math.max(dx, dz);
-                        if (dx == 0 && dz == 0)
-                            // ⚠ Under a piece the LOWEST floor wins -- the building's BASE.
-                            //
-                            // This was max(), on the reasoning that an overlapping piece should never
-                            // be buried by a lower neighbour. That holds for pieces side by side at
-                            // one storey, which is all a village has, and is catastrophic for anything
-                            // with storeys ON TOP of each other. Cataclysm's frosted_prison is 97
-                            // pieces whose floors span y65..y181, and several share an X/Z footprint
-                            // exactly -- y65..112 and y85..132 over x -3392..-3345, z 10577..10624.
-                            // max() therefore aimed the ground at the ROOF: the owner found the prison
-                            // on a snow mountain rising from terrainY 64 to about y129, with a sheer
-                            // vertical face where the 16-block taper ran out (chunk -212,654,
-                            // 2026-09-23). min() aims at the base the building actually stands on;
-                            // storeys above it are held up by the building, which is the point of a
-                            // building.
-                            //
-                            // Villages are unaffected: single-storey pieces do not overlap
-                            // vertically, so min and max are the same number. region_pieceground must
-                            // still read 745 of 745.
-                            insideBase = Math.min(insideBase, b.top());
-                        double d = dist / (double) b.taper();
-                        if (d < nearest)
-                            nearest = d;
-                        double w = 1.0 / (dist * dist + 1.0);
-                        weightSum += w;
-                        baseSum += w * b.top();
-                    }
-                    if (nearest >= 1.0 || weightSum <= 0.0)
-                        continue;
+            if (!beards.isEmpty())
+                for (int x = 0; x < 16; x++)
+                    for (int z = 0; z < 16; z++) {
+                        int wx = minX + x, wz = minZ + z;   // plan is chunk-local, boxes are world coords
+                        double nearest = 1.0, weightSum = 0.0, baseSum = 0.0;
+                        double insideBase = Double.POSITIVE_INFINITY;
+                        for (Beard b : beards) {
+                            int dx = Math.max(0, Math.max(b.minX() - wx, wx - b.maxX()));
+                            int dz = Math.max(0, Math.max(b.minZ() - wz, wz - b.maxZ()));
+                            double dist = Math.max(dx, dz);
+                            if (dx == 0 && dz == 0)
+                                // ⚠ Under a piece the LOWEST floor wins -- the building's BASE. max()
+                                // aimed the ground at the ROOF of a 97-piece prison (2026-09-23).
+                                insideBase = Math.min(insideBase, b.top());
+                            // ⚠ Outside a footprint only GROUND pieces pull. Every piece used to: beside
+                            // a wall with floors at y65/85/112/132 the average aimed at ~98, which is
+                            // the ~y95 cliff top the owner stood on next to the prison (2026-09-23).
+                            if (!b.ground())
+                                continue;
+                            double d = dist / (double) b.taper();
+                            if (d < nearest)
+                                nearest = d;
+                            double w = 1.0 / (dist * dist + 1.0);
+                            weightSum += w;
+                            baseSum += w * b.top();
+                        }
+                        if (insideBase == Double.POSITIVE_INFINITY && (nearest >= 1.0 || weightSum <= 0.0))
+                            continue;
 
-                    double natural = ys.getPerciseY(x, z);
-                    double target;
-                    // (clamped against the waterline below — see WATERLINE)
-                    if (insideBase != Double.POSITIVE_INFINITY) {
-                        // Under a piece the ground is EXACTLY the block the building stands on, never
-                        // blending here averaged in every other piece in range and dragged the ground
-                        // below the floor almost everywhere.
-                        target = insideBase;
-                    } else {
-                        // Outside every footprint: blend toward nearby floors and ease back to natural
-                        // ground over the taper. Snapping to the nearest instead gave adjacent
-                        // columns targets up to 110 blocks apart on a mountainside and built the step.
-                        double blended = baseSum / weightSum;
+                        double natural = ys.getPerciseY(x, z);
+                        double target;
+                        if (insideBase != Double.POSITIVE_INFINITY) {
+                            // Under a piece the ground is EXACTLY the block the building stands on.
+                            target = insideBase;
+                        } else {
+                            // Outside every footprint: blend toward nearby ground floors and ease back to
+                            // natural ground over the taper.
+                            double blended = baseSum / weightSum;
+                            double ease = nearest * nearest * (3.0 - 2.0 * nearest);
+                            target = blended + (natural - blended) * ease;
+                        }
+                        // ⚠ WATERLINE: never dig. CityWorld floods every column it plans below sea
+                        // level, so lowering ground onto a buried piece's floor fills with water.
+                        if (target < natural)
+                            target = Math.max(target, Math.min(natural, context.seaLevel + 1));
+                        if (Math.abs(target - natural) >= 0.5) {
+                            moved++;
+                            deltaMin = Math.min(deltaMin, target - natural);
+                            deltaMax = Math.max(deltaMax, target - natural);
+                        }
+                        ys.setPerciseY(x, z, target);
+                    }
+
+            // SHAVE: a structure that cuts its own volume (the acropolis's NBT is air where the hill
+            // was) leaves a vertical face at its box edge and a raw strata cut inside it. Lower the PLAN
+            // instead: inside the box, to the storey the hill cuts into -- the highest piece floor at
+            // or below natural ground; outside, feather from that floor back to natural over the
+            // taper. Only ever lowering (raising built a 40-block column of strata into it), never below
+            // the waterline. Owner, 2026-09-23: "accept it's gonna cut -- so do our own feathering into it".
+            int shaved = 0;
+            if (!shaves.isEmpty())
+                for (int x = 0; x < 16; x++)
+                    for (int z = 0; z < 16; z++) {
+                        int wx = minX + x, wz = minZ + z;
+                        double natural = ys.getPerciseY(x, z);
+                        double nearest = 1.0, storey = Double.NEGATIVE_INFINITY;
+                        for (Beard b : shaves) {
+                            int dx = Math.max(0, Math.max(b.minX() - wx, wx - b.maxX()));
+                            int dz = Math.max(0, Math.max(b.minZ() - wz, wz - b.maxZ()));
+                            double d = Math.max(dx, dz) / (double) b.taper();
+                            if (d >= 1.0 || b.top() > natural)
+                                continue;
+                            if (d < nearest)
+                                nearest = d;
+                            if (b.top() > storey)
+                                storey = b.top();
+                        }
+                        if (storey == Double.NEGATIVE_INFINITY || nearest >= 1.0)
+                            continue;
                         double ease = nearest * nearest * (3.0 - 2.0 * nearest);
-                        target = blended + (natural - blended) * ease;
-                    }
-                    // ⚠ WATERLINE: never dig. CityWorld floods every column it plans below sea
-                    // level, so lowering ground onto a buried piece's floor does not open a hollow —
-                    // it fills with water. Measured on the owner's save 2026-09-23: a
-                    // cataclysm:cursed_pyramid in chunk 22,178 left a trench 8 blocks wide with its
-                    // floor at y49 and 14 blocks of water standing in it, hard against the pyramid.
-                    // The owner's rule, and it is the right one: "anything below sea level is water —
-                    // means that we dont need to dig any pits or mess with anything below the land
-                    // level." Cutting into a dune ABOVE the waterline is still allowed; drowning it
-                    // is not.
-                    if (target < natural)
+                        double target = storey + (natural - storey) * ease;
                         target = Math.max(target, Math.min(natural, context.seaLevel + 1));
-                    if (Math.abs(target - natural) >= 0.5) {
-                        moved++;
-                        deltaMin = Math.min(deltaMin, target - natural);
-                        deltaMax = Math.max(deltaMax, target - natural);
+                        if (target < natural - 0.5) {
+                            shaved++;
+                            ys.setPerciseY(x, z, target);
+                        }
                     }
-                    ys.setPerciseY(x, z, target);
-                }
 
             // Derived state must follow: calcMinMax only widens, and getMinHeight() drives the mine
             // level loops and calcState decides sea/buildable/peak.
             ys.recompute(context);
             ys.markPadded();
             if (PAD_LOG)
-                LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: {} of 256 columns moved over {} beards, delta {} .. {}",
+                LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: {} of 256 columns moved over {} beards, delta {} .. {}; {} shaved over {} shave pieces; starts from {}",
                         pos.x, pos.z, moved, beards.size(),
                         deltaMin == Double.MAX_VALUE ? 0 : Math.round(deltaMin),
-                        deltaMax == -Double.MAX_VALUE ? 0 : Math.round(deltaMax));
+                        deltaMax == -Double.MAX_VALUE ? 0 : Math.round(deltaMax), shaved, shaves.size(),
+                        fromForecast ? "forecast" : "region");
         } catch (Throwable t) {
             // getMapLot can throw IndexOutOfBounds; nothing here may break terrain generation.
             if (PAD_LOG)
@@ -1445,7 +1477,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     public void createStructures(RegistryAccess registryAccess, ChunkGeneratorStructureState structureState,
             StructureManager structureManager, ChunkAccess chunk, StructureTemplateManager templateManager) {
         context(chunk);
-        super.createStructures(registryAccess, structureState, structureManager, chunk, templateManager);
+        StructureForecast local = forecast;
+        if (local != null)
+            local.bind();
+        super.createStructures(registryAccess, structureState, structureManager, chunk, templateManager, dimension);
     }
 
     /**
@@ -1498,6 +1533,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         ChunkGeneratorStructureState state = ChunkGeneratorStructureState.createForNormal(
                 randomState, seed, this.biomeSource, onlyAllowed(lookup));
         this.structureState = state;
+        this.forecast = new StructureForecast(this, state);
         return state;
     }
 
@@ -1510,9 +1546,19 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private volatile ChunkGeneratorStructureState structureState;
 
-    /** SPIKE: the world's structure state, for {@link StructureForecast}. */
+    /** The world's structure state, for {@link StructureForecast} and the probe. */
     public ChunkGeneratorStructureState structureState() {
         return structureState;
+    }
+
+    /**
+     * What vanilla will place, computed ahead of any chunk -- see {@link StructureForecast}. Built with
+     * the structure state in {@link #createState}, so it exists before the first platmap is planned.
+     */
+    private volatile StructureForecast forecast;
+
+    public StructureForecast forecast() {
+        return forecast;
     }
 
     /**
