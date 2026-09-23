@@ -4,6 +4,9 @@
 #   scripts/gen-wiki.sh            # clone/refresh the wiki, write the pages, show the diff
 #   scripts/gen-wiki.sh --push     # ...and push it
 #
+# Pages this script does not write are left alone, so hand-written pages (Welcome-to-City-17) survive
+# and can be linked from Home. Only the generated pages below are overwritten.
+#
 # ⚠ The repo is the source of truth. The wiki is GENERATED, never hand-edited: a hand-kept copy of a
 # 413-line configuration doc drifts from the real one, and a wiki that quietly disagrees with the mod
 # is worse than no wiki. Anything typed into the wiki by hand is overwritten by the next run, so edit
@@ -58,6 +61,9 @@ emit NODES.md                    "Permission-Nodes" \
 
 cat > "$WORK/Home.md" <<'HOME'
 # CityWorld ReForged
+
+> *"You have chosen, or been chosen, to relocate to one of our finest remaining urban centers."*
+> — [Welcome to City 17](Welcome-to-City-17)
 
 Procedurally generated cities for Minecraft — NeoForge on 1.21.1, 1.21.11, 26.1, 26.2 and 26.3, and
 MinecraftForge on 1.20.1.
