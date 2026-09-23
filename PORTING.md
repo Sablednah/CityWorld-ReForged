@@ -5134,6 +5134,52 @@ its thin-block list, so `grass_block` and `snow_block` — the two commonest gro
 taiga — counted as NOT SOLID. The narrative of how the measurements went wrong is kept because the
 traps are real; the numbers in it are not to be quoted.
 
+### ⚠ Widening the taper REMOVES the blend (withdrawn 2026-09-23)
+
+A structure that declared a `clearance` was given a proportionally wider beard taper,
+`beardRadiusFor(n) = max(12, n*16 - 4)`, on the theory that a big structure wants a longer run-out.
+It does the opposite. The blend is
+
+    nearest = dist / taper;  ease = nearest*nearest*(3 - 2*nearest);  // smoothstep
+
+so a **bigger** taper makes `nearest` smaller for every column near the structure, `ease` collapses
+toward 0, and each column **snaps to the flat target** instead of easing back to natural ground. The
+owner's report was literally accurate: *"so is tapering gone completely"*. Cataclysm's frosted_prison
+(`clearance: 8` -> taper 124) stopped blending and sat on a wide flat dome.
+
+It could not have worked regardless, and this is the part worth remembering:
+`padPlanForStructures` only runs for chunks where `structureManager.startsForStructure(pos, ...)`
+returns a start, and **structure references exist only for chunks the bounding box overlaps**. No
+taper value slopes terrain OUTSIDE a structure's footprint. Reaching past the edge — which is what
+*"prison blends, but then ran out at edge"* actually asks for — means gathering starts from
+neighbouring chunks, the way `Beardifier.forStructuresInChunk` does with `isCloseToChunk(pos, 12)`.
+`beardRadiusFor` is kept, unused, for when that lands.
+
+`clearance` still does its other job: `StructureReservations` keeps the city out of that many chunks.
+
+### ⚠ A floating structure wants a CLEAR, not a FILL
+
+Cataclysm's acropolis floats. Bearding it built a 40-block column of badlands strata up into it;
+removing the beard left its bounding box punching a rectangular void through nearby hillsides. Neither
+is right, and the mechanism for the right answer already existed: `#cityworld:carve_cavern`
+(`carveForStructures`) clears the box plus a halo — `structureCarveHalo` 10 out, `structureCarveHaloUp`
+6 up — and **never** digs below a piece, so nothing is left hanging. Acropolis joined the tag beside
+`minecraft:bastion_remnant`. Owner's diagnosis, which was the whole fix: *"it needs a clear but not a
+fill"*.
+
+So the three-way choice for any structure is: **beard** (fill up to the piece floor, for things that
+sit on the ground), **carve** (clear, for things that hang above it), or **neither** (for things that
+level themselves, like `ScatteredFeaturePiece`).
+
+### ⚠ The default clearance must never reach the taper
+
+`beardRadiusFor(DEFAULT_CLEARANCE = 5)` is 76. Feeding an **undeclared** structure that default made
+every village gather pieces with `isCloseToChunk(pos, 76)` instead of 12 — a 6x radius, ~40x the area,
+beards per chunk from 11-16 up to 32-40, and the column loop runs once per beard per column. It timed
+the self-test out at 1800s and is the best candidate for the minute-long in-game stall. Only a
+structure that DECLARES a clearance may ever get a wider radius; an undeclared one gets `BEARD_RADIUS`
+exactly.
+
 ### Superseded: the pad, and the ways a measurement lied
 
 **Status: the pad is written, measured, and GATED OFF** (`-Dcityworld.structurepad=true` to enable).
