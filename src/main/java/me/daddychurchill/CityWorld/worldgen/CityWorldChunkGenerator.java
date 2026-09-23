@@ -1000,15 +1000,31 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 for (int z = 0; z < 16; z++) {
                     int wx = minX + x, wz = minZ + z;   // plan is chunk-local, boxes are world coords
                     double nearest = 1.0, weightSum = 0.0, baseSum = 0.0;
-                    double insideTop = Double.NEGATIVE_INFINITY;
+                    double insideBase = Double.POSITIVE_INFINITY;
                     for (Beard b : beards) {
                         int dx = Math.max(0, Math.max(b.minX() - wx, wx - b.maxX()));
                         int dz = Math.max(0, Math.max(b.minZ() - wz, wz - b.maxZ()));
                         double dist = Math.max(dx, dz);
                         if (dx == 0 && dz == 0)
-                            // Under a piece: the HIGHEST floor wins, so an overlapping piece is never
-                            // buried by a lower neighbour.
-                            insideTop = Math.max(insideTop, b.top());
+                            // ⚠ Under a piece the LOWEST floor wins -- the building's BASE.
+                            //
+                            // This was max(), on the reasoning that an overlapping piece should never
+                            // be buried by a lower neighbour. That holds for pieces side by side at
+                            // one storey, which is all a village has, and is catastrophic for anything
+                            // with storeys ON TOP of each other. Cataclysm's frosted_prison is 97
+                            // pieces whose floors span y65..y181, and several share an X/Z footprint
+                            // exactly -- y65..112 and y85..132 over x -3392..-3345, z 10577..10624.
+                            // max() therefore aimed the ground at the ROOF: the owner found the prison
+                            // on a snow mountain rising from terrainY 64 to about y129, with a sheer
+                            // vertical face where the 16-block taper ran out (chunk -212,654,
+                            // 2026-09-23). min() aims at the base the building actually stands on;
+                            // storeys above it are held up by the building, which is the point of a
+                            // building.
+                            //
+                            // Villages are unaffected: single-storey pieces do not overlap
+                            // vertically, so min and max are the same number. region_pieceground must
+                            // still read 745 of 745.
+                            insideBase = Math.min(insideBase, b.top());
                         double d = dist / (double) b.taper();
                         if (d < nearest)
                             nearest = d;
@@ -1021,11 +1037,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
                     double natural = ys.getPerciseY(x, z);
                     double target;
-                    if (insideTop != Double.NEGATIVE_INFINITY) {
+                    if (insideBase != Double.POSITIVE_INFINITY) {
                         // Under a piece the ground is EXACTLY the block it stands on, never a blend:
                         // blending here averaged in every other piece in range and dragged the ground
                         // below the floor almost everywhere.
-                        target = insideTop;
+                        target = insideBase;
                     } else {
                         // Outside every footprint: blend toward nearby floors and ease back to natural
                         // ground over BEARD_RADIUS. Snapping to the nearest instead gave adjacent
