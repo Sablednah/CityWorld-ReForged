@@ -168,15 +168,20 @@ public final class SettingsExample {
             generate is #cityworld:allowed. This group is the numbers those two can't express.
 
             structureCarveHalo    10  How far, horizontally, terrain is cleared past the pieces of a
-                                      structure whose terrain_adaptation is a "beard" — an ancient
-                                      city, in practice. Vanilla carves these with a density function
-                                      CityWorld has no equivalent of, so this stands in for it.
-                                      Too small and the city reads as a row of boxes instead of one
-                                      cavern; larger gives a roomier, emptier hall.
+                                      BURIED structure — an ancient city, in practice. Vanilla carves
+                                      these with a density function CityWorld has no equivalent of, so
+                                      this stands in for it. Too small and the city reads as a row of
+                                      boxes instead of one cavern; larger gives a roomier hall.
+                                      BURIED ONLY. Something standing in the open gets no halo: around
+                                      Cataclysm's acropolis, whose pillars sit against a hillside, 10
+                                      blocks of halo chewed into the hill and read as a chunk error.
             structureCarveHaloUp   6  The same, upward. Deliberately smaller — headroom, not a
                                       chimney. Nothing is EVER carved below a piece: vanilla's beard
                                       adds material there to hold the structure up, and digging it
-                                      out leaves the city hanging over a void.
+                                      out leaves the city hanging over a void. A structure that stands
+                                      rather than sits buried is limited further, to above
+                                      max(natural ground, sea level), so a carve can neither open a pit
+                                      nor drain the water out of an ocean.
             surfaceMargin          8  How far below the terrain surface a cave patch begins, so a
                                       patch can't bleed into surface grass/foliage colour on a
                                       hillside.

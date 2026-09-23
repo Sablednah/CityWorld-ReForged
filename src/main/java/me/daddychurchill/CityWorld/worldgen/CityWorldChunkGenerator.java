@@ -694,9 +694,17 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * {@code box.minY() + getGroundLevelDelta()}, per PIECE — the delta is how far a piece's floor
      * sits above its box bottom, it is a field on {@code PoolElementStructurePiece}, and it was simply
      * missing. Aiming at {@code box.minY()} could not work for any constant, because the delta varies
-     * per piece. Also from vanilla rather than from eye: radius 12 ({@code BEARD_KERNEL_RADIUS}), only
-     * RIGID pieces ({@code TERRAIN_MATCHING} carry a {@code GravityProcessor} and drop deliberately),
-     * and starts declaring {@code NONE} excluded.
+     * per piece. Also from vanilla rather than from eye: only RIGID pieces ({@code TERRAIN_MATCHING}
+     * carry a {@code GravityProcessor} and drop deliberately), and starts declaring {@code NONE}
+     * excluded.
+     *
+     * <p><b>Three rules were added on 2026-09-23, each from something the owner saw in game</b>; the
+     * 745/745 above was re-measured after all three and is unchanged. See each for the evidence:
+     * the pad reaches one chunk past a structure's bounding box and no further ({@link #BLEND_CHUNKS});
+     * it never lowers a column below the waterline, because CityWorld floods what it plans under sea
+     * level and a "hollow" becomes a moat (WATERLINE, in {@code padPlanForStructures}); and under
+     * overlapping pieces it takes the LOWEST floor, the building's base, not the highest — aiming at
+     * the highest built terrain up to the roof of a 97-piece, 116-block-tall prison.
      *
      * <p>That exclusion matters: a desert pyramid is a {@code ScatteredFeaturePiece} and re-levels
      * ITSELF via {@code updateHeightPositionToLowestGroundHeight}. Beard on and off produced
@@ -715,18 +723,20 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             Boolean.parseBoolean(System.getProperty("cityworld.structurepad", "true"));
 
     /**
-     * How far the beard reaches, horizontally, in blocks. <b>12 because that is
-     * {@code Beardifier.BEARD_KERNEL_RADIUS}</b> — vanilla's kernel is 24 wide and every piece is
-     * gathered with {@code isCloseToChunk(pos, 12)}. The first two attempts used 8, picked by eye.
-     */
-    private static final int BEARD_RADIUS = 12;
-
-    /**
-     * Blocks of taper for a structure declaring {@code clearance} chunks — {@link #BEARD_RADIUS} is a
-     * FLOOR, not a constant. 12 blocks of run-out is right against a village house and far too tight
-     * against something eight chunks across: Cataclysm's frosted_prison blended onto its footprint
-     * and then ended in a sheer wall of snow (owner, in game, 2026-09-22). A village declares no
-     * clearance and is therefore unchanged.
+     * Blocks of taper: how far a bearded structure's ground eases back to natural terrain.
+     *
+     * <p>{@code clearanceChunks} is <b>deliberately ignored</b>, and the signature is kept only so a
+     * per-structure taper can come back if {@link #BLEND_CHUNKS} ever rises. It briefly returned
+     * {@code max(12, clearance * 16 - 4)} — 124 blocks for Cataclysm's frosted_prison — on the
+     * reasoning that a big structure wants a longer run-out. That is backwards. The blend is
+     * {@code smoothstep(dist / taper)}, so the taper is the LENGTH of the transition: at 124 a column
+     * a whole chunk out is still held at 97% of the structure's level, which is a plateau rather than
+     * a slope, and it is the flat dome the owner photographed under the prison. Worse, feeding the
+     * DEFAULT clearance of 5 through gave 76 blocks for every undeclared structure, which put a
+     * village's gather radius up from 12 to 76 and timed the self-test out.
+     *
+     * <p>One chunk, 16 blocks, is also all the ease can use: see {@link #BLEND_CHUNKS} for why the
+     * pad can never reach further than one chunk outside a structure's bounding box.
      */
     private static int beardRadiusFor(int clearanceChunks) {
         return BLEND_CHUNKS * 16;
@@ -1059,13 +1069,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     double target;
                     // (clamped against the waterline below — see WATERLINE)
                     if (insideBase != Double.POSITIVE_INFINITY) {
-                        // Under a piece the ground is EXACTLY the block it stands on, never a blend:
+                        // Under a piece the ground is EXACTLY the block the building stands on, never
                         // blending here averaged in every other piece in range and dragged the ground
                         // below the floor almost everywhere.
                         target = insideBase;
                     } else {
                         // Outside every footprint: blend toward nearby floors and ease back to natural
-                        // ground over BEARD_RADIUS. Snapping to the nearest instead gave adjacent
+                        // ground over the taper. Snapping to the nearest instead gave adjacent
                         // columns targets up to 110 blocks apart on a mountainside and built the step.
                         double blended = baseSum / weightSum;
                         double ease = nearest * nearest * (3.0 - 2.0 * nearest);
