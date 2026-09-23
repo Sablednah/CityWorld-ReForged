@@ -27,6 +27,136 @@ game; the sections below carry the measurements and the several wrong turns.
 **Before tagging:** the halt/exit bytecode scan with a detector proved on a known positive first, and
 push version branches BEFORE master so the CI gate tests the trees being released.
 
+## ▶ PLAN (2026-09-23 night): know where a structure will be, then reserve, pad and shave from that
+
+Written overnight at the owner's request ("step back and look again at 3 things ... think and plan on
+this"). Three complaints, one root: **the planner does not know a structure's real footprint**, so it
+reserves a square guess (over-reserving, #3), the pad can only see starts within the chunk pipeline's
+8-chunk reach (the prison's vertical side, #2), and the acropolis gets "neither" because nothing knew
+its true box early enough to shape around it (#1).
+
+### The foundation, PROVED tonight: `StructureForecast`
+
+Vanilla's `ChunkGenerator.createStructures` is a pure function: seed, structure sets, the generator's
+own `getBaseHeight`/biome answers, and the template files. It reads a chunk only to count references,
+which never moves a piece. So the same call can be made **from the planner, for any chunk, at any
+distance, with no chunk in existence** — and it must give the same `StructureStart`. Not "override
+where structures go": compute what vanilla will compute, earlier. Cataclysm's own structure classes
+(`CataclysmStructure`, `CataclysmJigsawStructure`, decompiled) read nothing outside the
+`GenerationContext` either.
+
+`worldgen/StructureForecast` (on master, spike) replicates `createStructures` for one chunk: per set,
+`placement.isStructureChunk`, then vanilla's exact weighted draw (same `WorldgenRandom`, same
+`setLargeFeatureSeed`), then `structure.generate(...)`. The probe compares it with what the chunk
+really carries (`-Dcityworld.probe.forecast=true`, with `find:structure:` and a radius):
+
+    FORECAST: 2809 chunks, 5 with real starts: match 3, mismatch 2, missing 0, extra 0;
+              total 420 ms (149 us/chunk), 5 forecast starts costing 396 ms together
+
+The two "mismatches" are the same start in every way that matters — identical footprint, identical
+minY, identical 81/125 pieces, and a re-forecast is byte-identical — except that the STORED
+`TERRAIN_MATCHING` village streets have 1-block-tall boxes where the forecast has 13. That is vanilla's
+own reload quirk: `JigsawPlacement` grows a terrain-matching child's box upward with
+`BoundingBox.encapsulate` (line ~440), and a chunk that was evicted and reloaded from disk rebuilds the
+piece from its template without that growth. A 441-chunk sweep never evicted, and matched 1/1; the
+2809-chunk one evicted and "mismatched" on box TOPS only. The pad beards RIGID pieces only and the
+carve runs for buried starts only, so neither reads a terrain-matching top. **Compare footprint, floor
+and piece count, not maxY.**
+
+Cost: ~80 ms per start the first time (template loads included), 0.15 ms per chunk for the placement
+scan over every set. Memoised per (set, origin chunk) it is paid once per structure per world.
+
+**What it needs at planning time**, all available: the generator, `structureState` (from
+`createState`), `RegistryAccess` and the `StructureTemplateManager` (both from the server —
+`ServerLifecycleHooks.getCurrentServer()`, already used elsewhere — or stashed on the first
+`createStructures` call), a `LevelHeightAccessor` (the `ServerLevel`, or the dimension's min/max), and
+the dimension key. Three `Structure.generate` shapes across the six lines, so three small adapters:
+1.20.1 and 1.21.1 (10 args), 1.21.11/26.1/26.2 (12: `Holder<Structure>` + dimension first), 26.3
+(13: plus a `Climate.Sampler`).
+
+**Two rules that keep it a pure function.** (1) `getBaseHeight` must keep answering the RAW terrain
+(`shapeProvider.findBlockY`), never the planned or padded height — vanilla asks it while placing, and
+if it answered the plan there WOULD be a chicken-and-egg cycle (plan needs forecast, forecast needs
+plan). Today it is raw, which is why there is no cycle: forecast → reserve → plan → pad. (2) The
+forecast must never recurse into `getPlatMap` and never throw into planning: catch, reserve nothing,
+log `FORECAST FAILED` under diagnostics.
+
+**Self-test check to add:** for every chunk in the test region carrying a start, forecast == stored on
+footprint, minY and piece count. That re-proves the claim on all six versions every release, which is
+the only way a claim like this stays true.
+
+### #3 Over-reserving → reserve the footprint
+
+`StructureReservations.isReserved(chunk)` becomes: for each surface-step set, enumerate the ORIGIN
+chunks whose structure could reach this chunk. For a `RandomSpreadStructurePlacement` (Cataclysm's
+placement is a subclass) there is exactly one candidate per region cell, `getPotentialStructureChunk`,
+so within reach R that is a handful of cells rather than a (2R+1)^2 scan; R = jigsaw
+`max_distance_from_center / 16 + 1` (acropolis 187 -> 12), 8 for anything else (vanilla's own 128-block
+bound), overridable by `structure_fit`. Other placement types keep the flat scan. Each candidate:
+`isStructureChunk` -> forecast (memo) -> does its bounding box, plus a margin M (default 1 chunk, the
+pad's taper), overlap this chunk?
+
+What changes: the reservation IS the footprint plus one chunk. A candidate whose biome or water check
+fails forecasts INVALID, exactly as vanilla will, and reserves nothing — the "sometimes nothing ends up
+in there" meadows go away. The acropolis's 25x25-chunk square (clearance 12) becomes its real ~12x12
+plus a ring. `clearance` survives as an optional extra ring for a structure that wants breathing room,
+default 0. Plan hashes stay stable because the forecast is deterministic; `selftest.sh --compare`
+proves that across versions.
+
+Answer to the chicken-and-egg question: **there is no egg.** Vanilla places from raw terrain, which
+the plan never changes, so the structure can be known before the first road is drawn.
+
+### #2 The prison's vertical side → pad from the forecast, and aim outside the box at the BASE
+
+The pad gathers starts from the forecast (every origin within reach), not from
+`structureManager.startsForStructure` — no region reads, so no 8-chunk ceiling and no "unreadable
+neighbour". `BLEND_CHUNKS` stops being a pipeline limit and becomes a taper choice; the 16-block taper
+stays, it is the right slope.
+
+The mound itself is a second defect, visible in the screenshot: the far side is raised ~30 blocks and
+ends in a cliff. Outside a footprint the blend averages EVERY piece's floor in range by 1/(d^2+1) — all
+storeys, not the base. Beside a wall whose floors are y65/85/112/132 that aims at ~98, which is the
+~y95 cliff top the owner stood on (F3: terrainY 64). Fix: outside the box, only GROUND pieces
+contribute — a piece is ground if no piece of the same start with a lower floor overlaps its X/Z
+footprint. Measure first: extend the probe to print, for a column at the cliff, the target and the
+pieces that fed it. `region_pieceground` must still read 745/745 on the village afterwards.
+
+To measure the prison locally: extend tonight's Cataclysm stand-in (PORTING.md "The stall, found and
+fixed") with the REAL template pools and NBTs, with every `processors` reference rewritten to
+`minecraft:empty` (unknown blocks load as air, which is fine for boxes; an unknown processor type is
+an unbound reference and stops the server).
+
+### #1 The acropolis → SHAVE in the plan, feather outside
+
+A new `structure_fit` mode, `"shave": true`, for a standing structure whose NBT cuts its own volume:
+inside the box, lower the PLAN to the piece floor wherever natural ground is above it — the cut then
+happens in the plan, so the surface pass paints grass on the new floor instead of leaving a raw strata
+face; outside the box, feather from the floor at the box edge back to natural over the taper. Only
+ever lowering (raising was the 40-block strata column), never below `seaLevel + 1` (the moat rule).
+The hill then slopes down onto a plateau the structure stands on: no vertical face, no rectangle. It
+needs the forecast, because the acropolis reaches 12 chunks from its origin.
+
+The straight line in the water is the structure's own doing — its `water_logging_fix` processor and
+the NBT's water/air replace the seabed's plants inside the box — and is not ours to fix; but with the
+reservation exact, our own edge no longer coincides with it.
+
+### Order, and what to measure at each step
+
+1. Forecast + adapters on all six lines + the self-test check. Restore `Support/Timings` for the
+   session; add `forecast` to its table; strip before shipping.
+2. Reserve by footprint, behind `structures.reserveByFootprint` (default on) with the clearance path
+   as the fallback. Prove with `--compare` and with a probe `PLANvWORLD` around a village.
+3. Pad from the forecast + ground-only blend. Measure the prison on the extended stand-in and the
+   village with `region_pieceground`.
+4. Shave mode; measure the acropolis on the stand-in with `region_render.py`.
+5. Owner playtest on his seed (839526485548327865): the acropolis at chunk -311,573, the prison at
+   -212,664, the pyramid at 22,178.
+
+Risks, named: a giant jigsaw's first forecast may cost a second on a planning thread (measure; it can
+be pre-warmed when the reservation is built); a third-party structure type that reads outside its
+`GenerationContext` would forecast wrongly (the probe check is the tool; Cataclysm's do not); memory
+per retained start is small and bounded by explored area.
+
 ## v5.11.0 (2026-09-21): the 1.20.1 **Forge** line, and the first non-NeoForge jar
 
 **Where it is.** Branch `mc1.20.1` (worktree, cut from `mc1.21.1`), head `9c2e9f9d`. **Shipped**: tag

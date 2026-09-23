@@ -60,7 +60,12 @@ it). The instrument was stripped again before committing — `grep -r Timings sr
 whether the same chunk stalls twice, before reasoning about causes. Two code diagnoses were wrong;
 the instrument plus the owner's own log lines were right in one run each.
 
-**NEXT, when it is worth doing: reservation-driven levelling.** A structure larger than vanilla's 128-block bound (Cataclysm's
+**NEXT: the forecast plan** — PORTING.md "▶ PLAN (2026-09-23 night)". `StructureForecast` (spike on
+master) computes vanilla's exact `StructureStart` from the planner before any chunk exists, proved
+5/5 against stored starts (compare footprint, floor and piece count, not maxY — reload drops a
+terrain-matching piece's box growth). It answers all three of the owner's asks: reserve the real
+footprint instead of a clearance square, pad past the 8-chunk pipeline limit, and shave the acropolis
+in the plan. Superseded: reservation-driven levelling.** A structure larger than vanilla's 128-block bound (Cataclysm's
 frosted prison is ~174) cannot be fully bearded: a chunk can only resolve a start whose ORIGIN chunk
 is within 8, and vanilla has the same limit. `StructureReservations` already computes WHERE a
 structure will be, deterministically, at any distance and with no chunk loading — levelling the
