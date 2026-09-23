@@ -671,8 +671,32 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * timed the self-test out.
      */
     private static int beardRadiusFor(int clearanceChunks) {
-        return Math.max(BEARD_RADIUS, clearanceChunks * 16 - 4);
+        return BLEND_CHUNKS * 16;
     }
+
+    /**
+     * How many chunks OUTSIDE its own footprint a structure may bend the ground. <b>One, and one is
+     * the hard ceiling of the chunk pipeline, not a taste decision.</b>
+     *
+     * <p>The owner asked for two: <i>"i think we need to use at least one more chunk, maybe 2 for
+     * bigger ones to blend around it"</i>. Two is not reachable from here. This runs inside
+     * {@code fillFromNoise}, and {@code WorldGenRegion.getChunk} serves a neighbour only at the status
+     * its step declared for that distance: {@code ChunkPyramid} gives NOISE
+     * {@code STRUCTURE_STARTS} at radius 8 but {@code BIOMES} at radius 1, and
+     * {@code StructureManager.startsForStructure} asks for {@code STRUCTURE_REFERENCES}. At distance
+     * 0-1 the available status is BIOMES, which is AFTER structure references, so the read succeeds;
+     * at distance 2+ it is only STRUCTURE_STARTS, which is before, and the read throws
+     * {@code ReportedException: Exception generating new chunk}. Measured, not reasoned: a first cut
+     * with a radius of 2 threw on every padded chunk, the pad's own catch swallowed it, and the probe
+     * logged 59 {@code PLANPAD ... FAILED} lines while the terrain looked like a working build.
+     *
+     * <p>One chunk is still the fix for what the owner saw. Before this, a chunk OUTSIDE a structure's
+     * bounding box got no pad at all, which is what put a sheer drop at the box edge. A LONGER taper
+     * would be worse, not better: the blend is {@code smoothstep(dist / taper)}, so taper is the
+     * LENGTH of the transition — at 124 a column a whole chunk out still sits at 97% of the
+     * structure's level, the flat dome the owner photographed under the frosted_prison.
+     */
+    private static final int BLEND_CHUNKS = 1;
 
     private static final int PAD_TAPER = 8;
 
@@ -791,11 +815,35 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             // had moved the ground. Shaping for it is pointless at best and fights it at worst.
             var structureLookup = structureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE);
             var optedIn = beardOptIn(structureLookup);
+            java.util.function.Predicate<net.minecraft.world.level.levelgen.structure.Structure> wanted =
+                    structure -> structure.terrainAdaptation()
+                            != net.minecraft.world.level.levelgen.structure.TerrainAdjustment.NONE
+                            || optedIn.contains(structure);
+            // ⚠ A chunk references a structure only where the BOUNDING BOX overlaps it, so asking
+            // this chunk alone — all vanilla's Beardifier ever does — means that past the box edge
+            // there is nothing to taper from and the ground falls off a cliff. Gather the neighbours.
+            // One chunk only: see BLEND_CHUNKS for why two throws.
+            java.util.Set<net.minecraft.world.level.levelgen.structure.StructureStart> seen =
+                    java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
             List<net.minecraft.world.level.levelgen.structure.StructureStart> starts =
-                    structureManager.startsForStructure(pos.x(), pos.z(),
-                            structure -> structure.terrainAdaptation()
-                                    != net.minecraft.world.level.levelgen.structure.TerrainAdjustment.NONE
-                                    || optedIn.contains(structure));
+                    new java.util.ArrayList<>();
+            int unreadable = 0;
+            for (int ox = -BLEND_CHUNKS; ox <= BLEND_CHUNKS; ox++)
+                for (int oz = -BLEND_CHUNKS; oz <= BLEND_CHUNKS; oz++) {
+                    // Per-neighbour, so a version serving a smaller radius costs that neighbour's
+                    // blend rather than the whole chunk's pad.
+                    try {
+                        for (var found : structureManager.startsForStructure(
+                                pos.x() + ox, pos.z() + oz, wanted))
+                            if (seen.add(found))
+                                starts.add(found);
+                    } catch (Exception e) {
+                        unreadable++;
+                    }
+                }
+            if (unreadable > 0 && PAD_LOG)
+                LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: {} of 9 neighbours unreadable at this"
+                        + " status — blend is narrower than one chunk here", pos.x(), pos.z(), unreadable);
             if (starts.isEmpty())
                 return;
 
@@ -809,18 +857,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             var fitsIndex = fitsByStructure(structureLookup);
 
             for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
-                // ⚠ TAPER SCALING WITHDRAWN — it removed the gradient instead of widening it.
-                // The blend is nearest = dist/taper, ease = smoothstep(nearest); a bigger taper makes
-                // nearest tiny for every nearby column, so ease -> 0 and the column SNAPS to the flat
-                // target rather than easing back to natural ground. The owner saw exactly that:
-                // "so is tapering gone completely".
-                //
-                // And it could never have worked anyway: this method only runs where
-                // startsForStructure(pos, ...) returns something, and structure references exist only
-                // for chunks the bounding box overlaps. No taper value slopes terrain OUTSIDE the
-                // footprint; that needs starts gathered from neighbouring chunks, which is a separate
-                // change. beardRadiusFor is kept for when that lands.
-                int taper = BEARD_RADIUS;
+                // One chunk of run-out, always. ⚠ Small ON PURPOSE: beardRadiusFor once returned
+                // max(12, clearance*16 - 4) — 124 blocks for the frosted_prison — and since the blend
+                // is smoothstep(dist/taper), a longer taper holds ground NEAR the structure at its
+                // level for longer: a column one chunk out sat at 97% of the prison's floor, which is
+                // the flat dome the owner photographed. 16 eases fully inside the one chunk we can
+                // reach. See BLEND_CHUNKS.
+                int taper = beardRadiusFor(0);
                 String id = PAD_LOG ? String.valueOf(start.getStructure()) : "";
                 if (PAD_LOG && optedIn.contains(start.getStructure()))
                     LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: OPT-IN beard (terrain_adaptation none) — {}",
@@ -920,6 +963,16 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         double ease = nearest * nearest * (3.0 - 2.0 * nearest);
                         target = blended + (natural - blended) * ease;
                     }
+                    // ⚠ WATERLINE: never dig. CityWorld floods every column it plans below sea
+                    // level, so lowering ground onto a buried piece's floor does not open a hollow —
+                    // it fills with water. Measured on the owner's save 2026-09-23: a
+                    // cataclysm:cursed_pyramid in chunk 22,178 left a trench 8 blocks wide, floor at
+                    // y49, 14 blocks of water standing in it, hard against the pyramid. Owner's rule:
+                    // "anything below sea level is water - means that we dont need to dig any pits or
+                    // mess with anything below the land level." Cutting into a dune ABOVE the
+                    // waterline is still allowed; drowning it is not.
+                    if (target < natural)
+                        target = Math.max(target, Math.min(natural, context.seaLevel + 1));
                     if (Math.abs(target - natural) >= 0.5) {
                         moved++;
                         deltaMin = Math.min(deltaMin, target - natural);
