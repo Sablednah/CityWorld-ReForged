@@ -594,6 +594,14 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 }
                 if (boxes.isEmpty())
                     continue;
+                // ⚠ NO HALO AROUND A STANDING STRUCTURE. The halo exists to make a buried
+                // structure's cavern look like a cave rather than a box -- 10 blocks of ragged,
+                // noise-driven wall. Around something that stands in the open it just eats the
+                // landscape: the acropolis's pillars sit against a hillside and the halo chewed 10
+                // blocks into it, which the owner saw as "acropalips it cutting hills nearby again".
+                // Carve the pieces' own boxes and nothing more.
+                int useHalo = keepGround ? 0 : halo;
+                int useHaloUp = keepGround ? 0 : haloUp;
 
                 net.minecraft.world.level.block.state.BlockState air =
                         net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
@@ -613,24 +621,30 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         column.clear();
                         int colMinY = Integer.MAX_VALUE, colMaxY = Integer.MIN_VALUE;
                         for (net.minecraft.world.level.levelgen.structure.BoundingBox box : boxes) {
-                            if (box.maxX() + halo < x || box.minX() - halo > x
-                                    || box.maxZ() + halo < z || box.minZ() - halo > z)
+                            if (box.maxX() + useHalo < x || box.minX() - useHalo > x
+                                    || box.maxZ() + useHalo < z || box.minZ() - useHalo > z)
                                 continue;
                             column.add(box);
                             colMinY = Math.min(colMinY, box.minY());
-                            colMaxY = Math.max(colMaxY, box.maxY() + haloUp);
+                            colMaxY = Math.max(colMaxY, box.maxY() + useHaloUp);
                         }
                         if (column.isEmpty())
                             continue;
                         // The ground the shaper actually laid, so this cannot disagree with it.
+                        // ⚠ AND NEVER BELOW THE WATERLINE EITHER. Carving from ground+1 up in an
+                        // ocean deletes the WATER COLUMN and leaves a dry rectangular hole in the sea
+                        // -- the owner, standing under the acropolis in a warm ocean: "its stopped
+                        // messin gland under it - but the water is gone still". Same rule the pad
+                        // already follows.
                         int floor = keepGround
-                                ? context.shapeProvider.findBlockY(context, x, z) + 1
+                                ? Math.max(context.shapeProvider.findBlockY(context, x, z),
+                                        context.seaLevel) + 1
                                 : Integer.MIN_VALUE;
                         // minY + 1 keeps the bedrock floor intact, as vanilla's writable area does.
                         int y0 = Math.max(Math.max(colMinY, chunk.getMinY() + 1), floor);
                         int y1 = Math.min(colMaxY, chunk.getMaxY());
                         for (int y = y0; y <= y1; y++) {
-                            double t = outsideness(column, x, y, z, halo, haloUp);
+                            double t = outsideness(column, x, y, z, useHalo, useHaloUp);
                             if (t >= 1.0)
                                 continue;
                             // Inside a piece box, always carve. Outside, carve with a probability that
