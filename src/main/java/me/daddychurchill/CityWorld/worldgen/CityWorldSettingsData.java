@@ -181,11 +181,13 @@ public record CityWorldSettingsData(
      * vanilla structures generate is {@code #cityworld:allowed} — this group is the numbers those two
      * cannot express.
      *
-     * @param structureCarveHalo   how far, horizontally, terrain is cleared past a beard structure's
+     * @param structureCarveHalo   how far, horizontally, terrain is cleared past a BURIED structure's
      *                             pieces. Vanilla's beard kernel is radius 12 and tapers; this is the
      *                             equivalent for a generator that writes blocks rather than density.
      *                             Bigger means a roomier ancient city; too small and it reads as a row
-     *                             of boxes rather than one cavern.
+     *                             of boxes rather than one cavern. It applies to a buried structure
+     *                             only — one standing in the open gets no halo, because around
+     *                             Cataclysm's acropolis 10 blocks of it chewed into a hillside.
      * @param structureCarveHaloUp the same, upward. Deliberately smaller — headroom, not a chimney.
      *                             Nothing is ever carved <em>below</em> a piece, because vanilla's beard
      *                             adds material there to hold the structure up.
