@@ -7,6 +7,24 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ## Unreleased
 
+### Changed
+
+- **CityWorld now knows exactly where a structure will be before it plans the city around it.** It
+  makes the same placement call Minecraft will make later, ahead of any chunk, so the ground it keeps
+  clear is the structure's real footprint plus one chunk, not a square guess. Measured on one
+  2,809-chunk sweep: chunks reserved fell from 1,160 to 279, and the 804 chunks that used to be kept
+  empty for a structure that never came are gone. The self-test now proves the forecast against what
+  the chunk really stores on every version.
+- **The ground under a large modded structure is shaped on every side.** The blend used to reach only
+  as far as the chunk pipeline could read, which left the far side of a 174-block prison as a vertical
+  wall. It now reads the forecast instead, at any distance. Beside a multi-storey wall the ground also
+  aims at the building's base rather than the average of every storey, which had raised a 30-block
+  mound.
+- **A structure that cuts its own volume out of a hill can be declared `shave`** in
+  `cityworld:structure_fit`: the plan is lowered to the storey the hill cuts into inside its box and
+  feathered back to natural ground outside it, only ever lowering and never below the waterline. Set
+  for Cataclysm's acropolis.
+
 ### Fixed
 
 - **The minute-long stall next to a large modded structure is gone.** Planning a city block that a

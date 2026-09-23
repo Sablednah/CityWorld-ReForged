@@ -177,14 +177,21 @@ public final class CityWorldDataMaps {
      * dimension, so an automatic rule would reach the Nether and the End. Hence opt-in, per structure,
      * and nothing is opted in by default.
      *
+     * <p><b>shave</b> — for a standing structure that cuts its own volume out of a hill (Cataclysm's
+     * acropolis: its NBT is air where the hill was). The plan is LOWERED to the storey the hill cuts
+     * into, inside the box, and feathered back to natural ground outside it, so the cut is painted as
+     * ground rather than left as a raw strata face. Only ever lowers, never below the waterline. See
+     * {@code padPlanForStructures}.
+     *
      * <p>Values are plain numbers and flags, so — unlike the ground map, whose values are block ids —
      * an entry for an absent mod needs no {@code neoforge:conditions}: the key simply never matches.
      */
-    public record StructureFit(int clearance, boolean beard) {
+    public record StructureFit(int clearance, boolean beard, boolean shave) {
 
         public static final Codec<StructureFit> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.optionalFieldOf("clearance", 0).forGetter(StructureFit::clearance),
-                Codec.BOOL.optionalFieldOf("beard", false).forGetter(StructureFit::beard)
+                Codec.BOOL.optionalFieldOf("beard", false).forGetter(StructureFit::beard),
+                Codec.BOOL.optionalFieldOf("shave", false).forGetter(StructureFit::shave)
         ).apply(i, StructureFit::new));
     }
 
@@ -237,6 +244,13 @@ public final class CityWorldDataMaps {
             @Nullable Holder<net.minecraft.world.level.levelgen.structure.Structure> structure) {
         StructureFit fit = fitFor(structure);
         return fit != null && fit.beard();
+    }
+
+    /** Whether this structure asks for the plan to be shaved to it. */
+    public static boolean shaves(
+            @Nullable Holder<net.minecraft.world.level.levelgen.structure.Structure> structure) {
+        StructureFit fit = fitFor(structure);
+        return fit != null && fit.shave();
     }
 
     /** Registered from {@code CityWorldMod} on the mod event bus. */
