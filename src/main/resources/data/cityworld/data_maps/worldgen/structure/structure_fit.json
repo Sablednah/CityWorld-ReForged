@@ -6,6 +6,6 @@
     "cataclysm:soul_black_smith": { "beard": true },
     "cataclysm:burning_arena":    { "beard": true },
     "cataclysm:ruined_citadel":   { "beard": true },
-    "cataclysm:acropolis":        { "clearance": 12 }
+    "cataclysm:acropolis":        { "clearance": 12, "shave": true }
   }
 }
