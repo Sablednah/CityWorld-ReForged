@@ -99,9 +99,10 @@ public abstract class ShapeProvider extends Provider {
 
 					// recalculate the context based on the "natural-ness" of the platmap
 //					platmap.context = getContext(platmap);
-					long tBuild = me.daddychurchill.CityWorld.Support.Timings.start();
+					// watched: this is the phase that measured 71557 ms on the owner's machine
+					long tBuild = me.daddychurchill.CityWorld.Support.Timings.startWatched("plan.build");
 					platmap.context.populateMap(generator, platmap);
-					me.daddychurchill.CityWorld.Support.Timings.stop("plan.build", tBuild, px, pz);
+					me.daddychurchill.CityWorld.Support.Timings.stopWatched("plan.build", tBuild, px, pz);
 					long tBuildOk = me.daddychurchill.CityWorld.Support.Timings.start();
 					platmap.context.validateMap(generator, platmap);
 					me.daddychurchill.CityWorld.Support.Timings.stop("plan.buildOk", tBuildOk, px, pz);
