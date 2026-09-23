@@ -5176,6 +5176,68 @@ mid-curve at the ring's outer edge and would leave a step there instead of at th
 `clearance` no longer touches the taper at all. It still does its other job: `StructureReservations`
 keeps the city that many chunks away.
 
+### The worldgen stall: measured, then the instrument removed from the jar
+
+**What it was.** Chunks stopped arriving for up to a minute near a Cataclysm structure. Diagnosed from
+the code twice and fixed twice, and **both fixes were wrong**: first the reservation scan (memoised
+2026-09-22, and "measured in game" written into the javadoc on the strength of the symptom seeming to
+go away), then the carve's cubic loop — an A/B against a control measured that as noise
+(`ancient_city`, 96 pieces, 120 chunks: 125 ms/chunk before, 117/142/158 after).
+
+**What it actually is**, from the owner's own machine with Cataclysm installed:
+
+    plan.build   98652 ms    207 calls   mean 476.58 ms   worst 71557 ms
+    plan         71029 ms   4000 calls   mean  17.76 ms   worst 61923 ms
+    draw         36478 ms   4000 calls   mean   9.12 ms   worst    171 ms
+    plan.nature   8260 ms    208 calls   mean  39.71 ms   worst     88 ms
+    reserve       2125 ms 492863 calls   mean   0.00 ms   worst     36 ms
+    carve          184 ms   4000 calls   mean   0.05 ms   worst      6 ms
+    pad             87 ms   4000 calls   mean   0.02 ms   worst      2 ms
+
+**One `context.populateMap` took 71.5 seconds** and took the server thread with it ("Can't keep up!
+Running 77951ms or 1559 ticks behind"). It is an OUTLIER — the mean is 477 ms — not uniform slowness.
+Reservation is 2% and the carve 0.2%, so both earlier diagnoses are dead. Placement tries are already
+bounded (`maxPlaceTries` 16 plus two exhaustive 10×10 scans), so which line inside `populateMap` runs
+away is **still unknown**. A watchdog that dumped the stack of any phase still running after 5 s was
+built and proved on a positive; it never got a run with a real stall before being removed.
+
+**⚠ The instrument is NOT in the shipped jar, deliberately.** `Support/Timings` was off unless
+`-Dcityworld.timing=true` and only ever logged — but CurseForge rejected 5.7.0 and 5.8.0 over
+flag-gated code, because a reviewer greps the shipped bytecode, not the flag guarding it. Owner,
+2026-09-23: *"gate out that diagnostic, we got but by one before - and although its just timeing - no
+need to trigger people or bots looking for 'hidden' code."* To bring it back for a debugging session,
+restore it from git history — it is one new file plus six call sites in `CityWorldChunkGenerator`,
+`CityWorldGenerator`, `StructureReservations` and `ShapeProvider` — and strip it again before shipping.
+
+**Two things it proved that are worth keeping.** A detector polling every 2 s cannot see a phase that
+starts and ends inside one gap: its first run produced zero dumps with nothing broken, and only a
+tunable poll interval at 25 ms proved it worked at all. And the self-test's 42-minute runtime, which
+had been suspected as a pad regression, turned out to be the local test packs — with `run/mods`
+emptied it is 16m47s, and CI's `run/mods` is empty anyway because `run/` is git-ignored.
+
+### ⚠ Structures larger than vanilla's own bound cannot be fully bearded
+
+`Beardifier.forStructuresInChunk` asks only for the CURRENT chunk's starts, and vanilla bounds a
+jigsaw structure at `MaxDistance(128)` — 8 chunks from centre. `StructureManager.startsForStructure`
+reads references from a chunk at `STRUCTURE_REFERENCES` (radius 1 at NOISE) and then resolves each
+start from its ORIGIN chunk at `STRUCTURE_STARTS` (radius 8). For a vanilla-sized structure the origin
+is therefore always in range.
+
+Cataclysm's `frosted_prison` is 174 blocks across, about 11 chunks, and we opted it into bearding via
+`structure_fit`. Chunks at the far end sit more than 8 from its start chunk, so they **cannot resolve
+their own structure** and get no beard at all — the owner's "perfect 3 sides, not so good the 3rd",
+and the repeated `Requested chunk : -212 664 / Region bounds : -217 647 | -201 663` errors in his log,
+where `-212,664` is that prison's start chunk. The one-chunk gather makes the boundary slightly worse:
+a chunk inside the box at distance 8 resolves, the ring chunk one further out asks at 9 and fails.
+
+**Accepted as-is** (owner, 2026-09-23). The fix, when it is worth doing, is not to read further —
+the region will not serve it — but to sidestep it: `StructureReservations` already computes WHERE a
+structure will be, deterministically from the seed, with no chunk loading at all and at any distance.
+Levelling the reserved area toward the structure's projected start height would blend the whole
+footprint including the far edge, at the cost of one level for the whole structure rather than
+per-piece. Replicating jigsaw assembly to recover real piece boxes is the alternative and is not worth
+it across six Minecraft versions.
+
 ### The acropolis gets NEITHER — owner's call, 2026-09-23
 
 The three-way choice above (beard / carve / neither) was settled for Cataclysm's acropolis by trying
