@@ -5,6 +5,17 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Fixed
+
+- **The minute-long stall next to a large modded structure is gone.** Planning a city block that a
+  structure reservation cuts through (Cataclysm's acropolis keeps the city 12 chunks away) could take
+  over a minute and freeze the server with it. A multi-chunk building's flood fill kept re-entering
+  chunks the reservation had refused, planning a fresh lot each time — exponentially many times. It now
+  stops at the reservation. On the seed it was reported from, that block plans in a second instead of
+  38 to 72. Planning one block also no longer blocks other blocks from being planned at the same time.
+
 ## 5.12.0
 
 Released for every supported Minecraft version — 1.20.1, 1.21.1, 1.21.11, 26.1, 26.2 and 26.3 — which

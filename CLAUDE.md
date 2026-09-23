@@ -44,19 +44,23 @@ round:
   ceiling, not a preference. See `BLEND_CHUNKS`.
 - **A halo is for a cavern.** Around something standing in the open it eats the landscape.
 
-**⚠ NEXT: finish the stall diagnosis.** `context.populateMap` took **71.5 s** once on the owner's
-machine (mean 477 ms), taking the server thread with it. It was diagnosed from the code twice — the
-reservation scan, then the carve — and **both were wrong**, which is why the third attempt used an
-instrument. Reservation is 2% of the time and the carve 0.2%. *Which line inside `populateMap`* runs
-away is still unknown.
+**The stall is FOUND and FIXED (2026-09-23 evening, unreleased).** It was never random: the owner's
+logs put every 60-80 s `plan.build` on the SAME platmap (0,160) of the same seed, so it was
+reproduced here with the owner's seed and a placement-only stand-in for Cataclysm's structure sets
+(the real jar's SRG mixins cannot load in a named dev runtime — PORTING.md "The stall, found"). The
+restored watchdog's stack named it in one run: `UrbanContext.fillOutBuilding` ignored `setLot`'s
+result, and `setLot` refuses a reserved chunk — so the chunk stayed empty and every monotone path
+through the reservation re-entered it, constructing a fresh lot (256 columns of octave noise) per
+visit. Exponential in the reservation's size. A/B on the same platmap: **37,669 ms → 1,040 ms**.
+Second fix in the same commit: `getPlatMap` no longer plans inside `ConcurrentHashMap`'s bin lock
+(a 71 s plan there held a worker wanting a DIFFERENT platmap for 62 s, and the server thread with
+it). The instrument was stripped again before committing — `grep -r Timings src` reads 0.
 
-To finish it: restore `Support/Timings` and its six call sites (`CityWorldChunkGenerator`,
-`CityWorldGenerator`, `StructureReservations`, `ShapeProvider`) from git history — they were removed
-deliberately, see below — run with `-Dcityworld.timing=true` until it stalls, read the
-`TIMING STUCK: plan.build has been running N ms` stack, fix, then **strip the instrument again before
-shipping**.
+**⚠ The lesson that outlives it: a stall that looks random is a platmap.** Ask which chunk, and
+whether the same chunk stalls twice, before reasoning about causes. Two code diagnoses were wrong;
+the instrument plus the owner's own log lines were right in one run each.
 
-**Then: reservation-driven levelling.** A structure larger than vanilla's 128-block bound (Cataclysm's
+**NEXT, when it is worth doing: reservation-driven levelling.** A structure larger than vanilla's 128-block bound (Cataclysm's
 frosted prison is ~174) cannot be fully bearded: a chunk can only resolve a start whose ORIGIN chunk
 is within 8, and vanilla has the same limit. `StructureReservations` already computes WHERE a
 structure will be, deterministically, at any distance and with no chunk loading — levelling the

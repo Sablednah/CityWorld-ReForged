@@ -16,12 +16,11 @@ footprints are all-or-nothing against a reservation. Each of those came from the
 game; the sections below carry the measurements and the several wrong turns.
 
 **⚠ Two things are open, and neither is a mystery.**
-1. **The worldgen stall is measured but not fixed.** `context.populateMap` took **71.5 s** once on the
-   owner's machine against a 477 ms mean. Reservation (2%) and the carve (0.2%) were both diagnosed as
-   the cause and both were wrong. Which line inside `populateMap` runs away is unknown: the
-   stack-dumping watchdog was built and proved on a positive, then removed from the jar before it ever
-   caught a real stall. To finish it, restore `Support/Timings` and its six call sites from history,
-   run until it stalls, read the `TIMING STUCK` stack, then strip it again before shipping.
+1. **The worldgen stall is FIXED** (2026-09-23 evening, after the 5.12.0 release — unreleased as of
+   this note). `UrbanContext.fillOutBuilding` recursed through chunks that `setLot` had refused as
+   reserved, constructing a full lot per visit, exponentially many times through a large reservation.
+   A/B on the owner's seed's platmap 0,160: 37,669 ms → 1,040 ms. Full account under "The stall,
+   found and fixed" below; the section before it keeps the measurements that led there.
 2. **Reservation-driven levelling**, for structures larger than vanilla's 128-block bound. Accepted
    as-is for this release (owner's call); see "Structures larger than vanilla's own bound".
 
@@ -5242,6 +5241,62 @@ starts and ends inside one gap: its first run produced zero dumps with nothing b
 tunable poll interval at 25 ms proved it worked at all. And the self-test's 42-minute runtime, which
 had been suspected as a pad regression, turned out to be the local test packs — with `run/mods`
 emptied it is 16m47s, and CI's `run/mods` is empty anyway because `run/` is git-ignored.
+
+### The stall, found and fixed (2026-09-23 evening)
+
+**It was never an outlier.** The owner's own logs answered the first question before any code was
+read: run 5 had `plan took 79059 ms at chunk 9,169` and run 7 `plan.build took 71557 ms at chunk
+0,160` — the **same platmap** (origin 0,160), on the same seed (`839526485548327865`, reused across
+his saves), stalling to within 10% both times. Also in run 7: `plan took 61923 ms at chunk 24,190`
+on a worker — a *different* platmap, which was waiting, not planning (see the second fix). A stall
+that reproduces on one platmap is deterministic, and deterministic means it can be probed.
+
+**Reproducing it without Cataclysm's code.** The stall needs Cataclysm's reservations, and its jar
+(like every code mod in the owner's instance) carries SRG-named mixins that cannot apply in a
+named-mappings dev runtime (`@Shadow method m_258073_ ... was not located`). Two things stood in:
+a datapack-only jar carrying Cataclysm's eleven `structure_set` JSONs and `*_avoid` tags verbatim,
+with each structure stubbed to a `minecraft:jigsaw` over a one-element empty pool (a pool with NO
+elements throws `Bound must be positive` in `getRandomTemplate` — cost one run); and a named
+transcription of `cataclysm:cataclysm_random_spread` (vanilla random_spread plus a
+`super_exclusion_zone` over a *tag* of sets), registered under the `cataclysm` namespace from a
+debug class in the 1.20.1 worktree. Both were deleted after the run; the recipe is here in case it
+is needed again. `RESERVE: 11 of 13 possible sets kept` with the same clearances as the owner's log
+confirmed the reservations matched. Control run (no Cataclysm): platmap 0,160 plans in **908 ms**.
+With the stand-in: **37,669 ms**, and the watchdog dumped the same stack every 3 s for 37 s:
+
+    UrbanContext.fillOutBuilding -> addToBigBuilding -> GovernmentBuildingLot.newLike
+      -> PlatLot.<init> -> ShapeProvider.getCachedYs -> TraditionalCachedYs.<init>
+      -> ShapeProvider_Normal.findPerciseY -> OctaveGenerator.noise
+
+**The bug.** `fillOutBuilding` is upstream's flood fill for a multi-chunk building: if the lot is
+empty, add a copy of the building there and recurse to `x+1` and `z+1`. `setLot` refuses a chunk
+that `isStructureReserved` — and returns false, and leaves the chunk **empty**. The flood ignored
+the result. So a reserved chunk stayed a valid target, and every monotone path through the reserved
+region re-entered the same chunks, each visit paying for `newLike` — a full `PlatLot` construction,
+which is 256 columns of octave noise. The number of monotone lattice paths across a k-chunk block
+is binomial in k; the acropolis's clearance of 12 reserves a 25-chunk square, so a platmap it covers
+gets tens of thousands of visits. Reservation itself (2%) and the carve (0.2%) were never the cost;
+they were the *trigger* that made a refused lot exist. That is why both code diagnoses were wrong:
+neither started from "which chunk".
+
+**The fix** (`UrbanContext`): `addToBigBuilding` checks the reservation before building the lot
+and returns `setLot`'s result; `fillOutBuilding` stops where a lot cannot be placed. A/B on the
+same seed, platmap, and reservations: **37,669 ms → 1,040 ms**. The plan changes only in platmaps
+where a lot was refused — which were exactly the ones taking a minute — because the RNG is
+consumed once per visit and the visits are gone. Upstream's other oddity in that method (it rolls
+`oddsOfFloodFill` rather than the decaying `theOdds` it was passed) is left alone: changing it would
+alter every world.
+
+**The second fix** (`CityWorldGenerator.getPlatMap`): planning used to run inside
+`ConcurrentHashMap.computeIfAbsent`, i.e. under the map's bin lock. That is what turned one slow
+platmap into a stalled server: a resize has to lock every bin, so a 71 s mapping function stalls
+every other writer — the worker planning 20,190 waited 62 s, and the server thread behind it.
+Planning now happens outside the map, behind a per-key `CompletableFuture` that later askers join.
+Reasoned rather than measured, but it removes a documented contract violation (`computeIfAbsent`'s
+mapping function "must be short and simple") at no behavioural cost.
+
+**The instrument is stripped again** — `grep -r Timings src` reads 0 — per the rule above. Restoring
+it is still a checkout of the five files from `4671737d^`.
 
 ### ⚠ Structures larger than vanilla's own bound cannot be fully bearded
 
