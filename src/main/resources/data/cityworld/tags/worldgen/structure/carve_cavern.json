@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "minecraft:bastion_remnant"
+    "minecraft:bastion_remnant",
+    { "id": "cataclysm:acropolis", "required": false }
   ]
 }
