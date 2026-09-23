@@ -484,8 +484,7 @@ public final class ChunkProbe {
             int sweep = Integer.getInteger("cityworld.probe.radius", 0);
             if (Boolean.getBoolean("cityworld.probe.forecast")
                     && level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator pcw) {
-                for (var f : me.daddychurchill.CityWorld.worldgen.StructureForecast.forecast(pcw, pcw.structureState(),
-                        level.registryAccess(), level.getStructureManager(), level, level.dimension(), cx, cz))
+                for (var f : pcw.forecast().startsAt(cx, cz))
                     CityWorldMod.LOGGER.warn("FORECAST pre-sweep: chunk {},{} {} box {} x{}", cx, cz, f.getStructure(), f.getBoundingBox(), f.getPieces().size());
             }
             for (int ring = 1; ring <= sweep; ring++)
@@ -510,9 +509,7 @@ public final class ChunkProbe {
                         int sx = cx + dx, sz = cz + dz;
                         ChunkAccess sc = server.submit(() -> level.getChunk(sx, sz, ChunkStatus.FULL, true)).join();
                         long t0 = System.nanoTime();
-                        var forecast = me.daddychurchill.CityWorld.worldgen.StructureForecast.forecast(fcw,
-                                fcw.structureState(), level.registryAccess(), level.getStructureManager(), level,
-                                level.dimension(), sx, sz);
+                        var forecast = fcw.forecast().startsAt(sx, sz);
                         long t1 = System.nanoTime();
                         nanos += t1 - t0;
                         if (!forecast.isEmpty()) { forecastNanos += t1 - t0; forecasts += forecast.size(); }
@@ -551,7 +548,7 @@ public final class ChunkProbe {
                                     }
                                 }
                                 // is the forecast itself stable? compute it again right now
-                                var again = me.daddychurchill.CityWorld.worldgen.StructureForecast.forecast(fcw, fcw.structureState(), level.registryAccess(), level.getStructureManager(), level, level.dimension(), sx, sz);
+                                var again = fcw.forecast().startsAt(sx, sz);
                                 for (var g : again) if (g.getStructure() == f.getStructure())
                                     CityWorldMod.LOGGER.warn("FORECAST   re-forecast now: {} x{} ({})", g.getBoundingBox(), g.getPieces().size(), g.getBoundingBox().equals(f.getBoundingBox()) ? "same as first forecast" : "DIFFERENT from first forecast");
                             }
@@ -562,6 +559,7 @@ public final class ChunkProbe {
                 int n = (2 * sweep + 1) * (2 * sweep + 1);
                 CityWorldMod.LOGGER.warn("FORECAST: {} chunks, {} with real starts: match {}, mismatch {}, missing {}, extra {}; total {} ms ({} us/chunk), {} forecast starts costing {} ms together",
                         n, chunksWithStarts, match, mismatch, missing, extra, nanos / 1_000_000, nanos / 1000 / Math.max(1, n), forecasts, forecastNanos / 1_000_000);
+                CityWorldMod.LOGGER.warn("FORECAST: memo holds {} origins", fcw.forecast().size());
             }
             // -Dcityworld.probe.layers=<y1>..<y2>: what is on each layer of the swept region, top down. "What hangs
             // under the End's islands" and "what did a lot draw below the street" are both questions about height.
