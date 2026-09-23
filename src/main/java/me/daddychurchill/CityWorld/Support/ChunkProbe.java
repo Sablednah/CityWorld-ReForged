@@ -482,6 +482,12 @@ public final class ChunkProbe {
             // -Dcityworld.probe.radius=N: generate every chunk within N of the target, one at a time, logging each
             // before it starts — a chunk whose generation never returns is then named by the last line logged.
             int sweep = Integer.getInteger("cityworld.probe.radius", 0);
+            if (Boolean.getBoolean("cityworld.probe.forecast")
+                    && level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator pcw) {
+                for (var f : me.daddychurchill.CityWorld.worldgen.StructureForecast.forecast(pcw, pcw.structureState(),
+                        level.registryAccess(), level.getStructureManager(), level, level.dimension(), cx, cz))
+                    CityWorldMod.LOGGER.warn("FORECAST pre-sweep: chunk {},{} {} box {} x{}", cx, cz, f.getStructure(), f.getBoundingBox(), f.getPieces().size());
+            }
             for (int ring = 1; ring <= sweep; ring++)
                 for (int dx = -ring; dx <= ring; dx++)
                     for (int dz = -ring; dz <= ring; dz++) {
@@ -491,6 +497,72 @@ public final class ChunkProbe {
                         CityWorldMod.LOGGER.warn("PROBE sweep: generating chunk {}, {}", sx, sz);
                         server.submit(() -> level.getChunk(sx, sz, ChunkStatus.FULL, true)).join();
                     }
+            // SPIKE -Dcityworld.probe.forecast=true: for every swept chunk, compute what vanilla WILL place there
+            // (StructureForecast) and compare with what the chunk actually carries. Same boxes = the planner can
+            // know a structure's real footprint before any chunk exists.
+            if (Boolean.getBoolean("cityworld.probe.forecast")
+                    && level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator fcw) {
+                int match = 0, mismatch = 0, missing = 0, extra = 0, chunksWithStarts = 0;
+                long nanos = 0, forecastNanos = 0; int forecasts = 0;
+                var sets = fcw.structureState().possibleStructureSets();
+                for (int dx = -sweep; dx <= sweep; dx++)
+                    for (int dz = -sweep; dz <= sweep; dz++) {
+                        int sx = cx + dx, sz = cz + dz;
+                        ChunkAccess sc = server.submit(() -> level.getChunk(sx, sz, ChunkStatus.FULL, true)).join();
+                        long t0 = System.nanoTime();
+                        var forecast = me.daddychurchill.CityWorld.worldgen.StructureForecast.forecast(fcw,
+                                fcw.structureState(), level.registryAccess(), level.getStructureManager(), level,
+                                level.dimension(), sx, sz);
+                        long t1 = System.nanoTime();
+                        nanos += t1 - t0;
+                        if (!forecast.isEmpty()) { forecastNanos += t1 - t0; forecasts += forecast.size(); }
+                        // what the chunk really carries, per structure of every set
+                        java.util.Map<String, net.minecraft.world.level.levelgen.structure.StructureStart> actual = new java.util.HashMap<>();
+                        for (var set : sets)
+                            for (var entry : set.value().structures()) {
+                                var st = level.structureManager().getStartForStructure(
+                                        net.minecraft.core.SectionPos.bottomOf(sc), entry.structure().value(), sc);
+                                if (st != null && st.isValid())
+                                    actual.put(String.valueOf(entry.structure().unwrapKey().map(k -> k.identifier()).orElse(null)), st);
+                            }
+                        if (!actual.isEmpty()) chunksWithStarts++;
+                        java.util.Set<String> seenIds = new java.util.HashSet<>();
+                        for (var f : forecast) {
+                            String id = String.valueOf(fcw.structureState().possibleStructureSets().stream()
+                                    .flatMap(set -> set.value().structures().stream())
+                                    .filter(e -> e.structure().value() == f.getStructure())
+                                    .map(e -> e.structure().unwrapKey().map(k -> k.identifier()).orElse(null)).findFirst().orElse(null));
+                            seenIds.add(id);
+                            var a = actual.get(id);
+                            if (a == null) { extra++; CityWorldMod.LOGGER.warn("FORECAST extra: chunk {},{} {} box {} ({} pieces) but chunk has no such start", sx, sz, id, f.getBoundingBox(), f.getPieces().size()); continue; }
+                            boolean same = a.getBoundingBox().equals(f.getBoundingBox()) && a.getPieces().size() == f.getPieces().size();
+                            if (same) {
+                                for (int i = 0; i < a.getPieces().size() && same; i++)
+                                    same = a.getPieces().get(i).getBoundingBox().equals(f.getPieces().get(i).getBoundingBox());
+                            }
+                            if (same) match++; else {
+                                mismatch++;
+                                CityWorldMod.LOGGER.warn("FORECAST MISMATCH: chunk {},{} {} forecast {} x{} vs actual {} x{}", sx, sz, id, f.getBoundingBox(), f.getPieces().size(), a.getBoundingBox(), a.getPieces().size());
+                                for (int i = 0; i < Math.min(a.getPieces().size(), f.getPieces().size()); i++) {
+                                    var pa = a.getPieces().get(i); var pf = f.getPieces().get(i);
+                                    if (!pa.getBoundingBox().equals(pf.getBoundingBox())) {
+                                        String proj = pf instanceof net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece pp ? String.valueOf(pp.getElement().getProjection()) + " " + pp.getElement() : "n/a";
+                                        CityWorldMod.LOGGER.warn("FORECAST   piece {} {} {}: forecast {} vs actual {}", i, pa.getClass().getSimpleName(), proj, pf.getBoundingBox(), pa.getBoundingBox());
+                                    }
+                                }
+                                // is the forecast itself stable? compute it again right now
+                                var again = me.daddychurchill.CityWorld.worldgen.StructureForecast.forecast(fcw, fcw.structureState(), level.registryAccess(), level.getStructureManager(), level, level.dimension(), sx, sz);
+                                for (var g : again) if (g.getStructure() == f.getStructure())
+                                    CityWorldMod.LOGGER.warn("FORECAST   re-forecast now: {} x{} ({})", g.getBoundingBox(), g.getPieces().size(), g.getBoundingBox().equals(f.getBoundingBox()) ? "same as first forecast" : "DIFFERENT from first forecast");
+                            }
+                        }
+                        for (var e : actual.entrySet())
+                            if (!seenIds.contains(e.getKey())) { missing++; CityWorldMod.LOGGER.warn("FORECAST missing: chunk {},{} has {} box {} that the forecast did not predict", sx, sz, e.getKey(), e.getValue().getBoundingBox()); }
+                    }
+                int n = (2 * sweep + 1) * (2 * sweep + 1);
+                CityWorldMod.LOGGER.warn("FORECAST: {} chunks, {} with real starts: match {}, mismatch {}, missing {}, extra {}; total {} ms ({} us/chunk), {} forecast starts costing {} ms together",
+                        n, chunksWithStarts, match, mismatch, missing, extra, nanos / 1_000_000, nanos / 1000 / Math.max(1, n), forecasts, forecastNanos / 1_000_000);
+            }
             // -Dcityworld.probe.layers=<y1>..<y2>: what is on each layer of the swept region, top down. "What hangs
             // under the End's islands" and "what did a lot draw below the street" are both questions about height.
             String layers = System.getProperty("cityworld.probe.layers");
