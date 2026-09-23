@@ -164,14 +164,7 @@ public class CityWorldGenerator {
      */
     public boolean isStructureReserved(int chunkX, int chunkZ) {
         me.daddychurchill.CityWorld.worldgen.StructureReservations local = structureReservations;
-        if (local == null)
-            return false;
-        long t = me.daddychurchill.CityWorld.Support.Timings.start();
-        try {
-            return local.isReserved(chunkX, chunkZ);
-        } finally {
-            me.daddychurchill.CityWorld.Support.Timings.stop("reserve", t, chunkX, chunkZ);
-        }
+        return local != null && local.isReserved(chunkX, chunkZ);
     }
 
     /**
