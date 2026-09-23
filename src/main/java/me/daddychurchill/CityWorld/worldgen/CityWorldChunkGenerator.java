@@ -461,17 +461,24 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // Fetch (or plan) the city block this chunk belongs to, then let it drive. The platmap
         // routes to whichever lot owns this chunk, and the lot calls the shape provider itself —
         // so terrain and city come from one path rather than two.
+        long tPlan = me.daddychurchill.CityWorld.Support.Timings.start();
         PlatMap platmap = context.getPlatMap(chunkX, chunkZ);
+        me.daddychurchill.CityWorld.Support.Timings.stop("plan", tPlan, chunkX, chunkZ);
 
         // Smooth the PLANNED ground under any surface structure BEFORE terrain is drawn from it.
         // Order is the whole fix: the previous pad ran after this line and rewrote blocks, leaving the
         // planned heights untouched, so decoration later painted a surface at the old level over a void.
         // The missing half of vanilla's beard_thin contract: bend the planned ground to each piece.
         // Measured 745/745 columns seated exactly, 0 buried; with it off, 70.4% and 32.4%. PAD_ENABLED.
-        if (PAD_ENABLED)
+        if (PAD_ENABLED) {
+            long tPad = me.daddychurchill.CityWorld.Support.Timings.start();
             padPlanForStructures(context, structureManager, chunk, platmap);
+            me.daddychurchill.CityWorld.Support.Timings.stop("pad", tPad, chunkX, chunkZ);
+        }
 
+        long tDraw = me.daddychurchill.CityWorld.Support.Timings.start();
         platmap.generateChunk(blocks, IGNORE_BIOMES);
+        me.daddychurchill.CityWorld.Support.Timings.stop("draw", tDraw, chunkX, chunkZ);
 
         // Make room for any structure that expects the terrain to get out of its way. Vanilla does this
         // in the same pass, via the Beardifier density function — see carveForStructures.
@@ -491,7 +498,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // The rework is to smooth the PLAN: adjust the cached heights before terrain is drawn (and
         // recompute the min/max/average they derive), so terrain, surface and every other consumer
         // follow one agreed ground level. See padForSurfaceStructures for the parts worth keeping.
+        long tCarve = me.daddychurchill.CityWorld.Support.Timings.start();
         carveForStructures(context, structureManager, chunk);
+        me.daddychurchill.CityWorld.Support.Timings.stop("carve", tCarve, chunkX, chunkZ);
+        me.daddychurchill.CityWorld.Support.Timings.chunkDone();
     }
 
     /**
