@@ -1466,6 +1466,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private volatile ChunkGeneratorStructureState structureState;
 
+    /** SPIKE: the world's structure state, for {@link StructureForecast}. */
+    public ChunkGeneratorStructureState structureState() {
+        return structureState;
+    }
+
     /**
      * The structure-set registry as seen through {@link #ALLOWED_STRUCTURE_SETS} — every element not in
      * the tag simply isn't there.
