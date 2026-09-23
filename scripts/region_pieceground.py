@@ -38,7 +38,7 @@ def main():
     beards = {}
     with open(log, 'rb') as f:
         for raw in f:
-            m = re.search(r'BEARD (\w+) (\w+) box x (-?\d+)\.\.(-?\d+) z (-?\d+)\.\.(-?\d+) '
+            m = re.search(r'BEARD (?:taper \d+ )?(\w+) (\w+) box x (-?\d+)\.\.(-?\d+) z (-?\d+)\.\.(-?\d+) '
                           r'y (-?\d+)\.\.(-?\d+) delta (-?\d+) -> top (-?\d+)',
                           raw.decode('utf-8', 'replace'))
             if m:

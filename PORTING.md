@@ -5134,28 +5134,60 @@ its thin-block list, so `grass_block` and `snow_block` — the two commonest gro
 taiga — counted as NOT SOLID. The narrative of how the measurements went wrong is kept because the
 traps are real; the numbers in it are not to be quoted.
 
-### ⚠ Widening the taper REMOVES the blend (withdrawn 2026-09-23)
+### ⚠ The taper is a LENGTH, and one chunk is the pipeline's ceiling (2026-09-23)
 
-A structure that declared a `clearance` was given a proportionally wider beard taper,
-`beardRadiusFor(n) = max(12, n*16 - 4)`, on the theory that a big structure wants a longer run-out.
-It does the opposite. The blend is
+**An earlier version of this section said a wider taper "removes the gradient". That was the wrong
+mechanism and is withdrawn.** The blend is
 
     nearest = dist / taper;  ease = nearest*nearest*(3 - 2*nearest);  // smoothstep
+    target  = blended + (natural - blended) * ease;
 
-so a **bigger** taper makes `nearest` smaller for every column near the structure, `ease` collapses
-toward 0, and each column **snaps to the flat target** instead of easing back to natural ground. The
-owner's report was literally accurate: *"so is tapering gone completely"*. Cataclysm's frosted_prison
-(`clearance: 8` -> taper 124) stopped blending and sat on a wide flat dome.
+so `taper` is the **length of the transition**. A bigger taper does not flatten the curve, it
+*stretches* it: at taper 124 a column a whole chunk out still has `ease = 0.026`, i.e. it sits at 97%
+of the structure's level. That is a plateau, not a slope — the flat white dome the owner photographed
+under Cataclysm's frosted_prison (`clearance: 8` -> taper 124). The taper was never inverted; 124 was
+simply far too long.
 
-It could not have worked regardless, and this is the part worth remembering:
-`padPlanForStructures` only runs for chunks where `structureManager.startsForStructure(pos, ...)`
-returns a start, and **structure references exist only for chunks the bounding box overlaps**. No
-taper value slopes terrain OUTSIDE a structure's footprint. Reaching past the edge — which is what
-*"prison blends, but then ran out at edge"* actually asks for — means gathering starts from
-neighbouring chunks, the way `Beardifier.forStructuresInChunk` does with `isCloseToChunk(pos, 12)`.
-`beardRadiusFor` is kept, unused, for when that lands.
+**One chunk is the hard ceiling, and it is the chunk pipeline's, not a taste decision.** The pad runs
+inside `fillFromNoise`. `WorldGenRegion.getChunk` serves a neighbour only at the status its step
+declared for that chessboard distance, and `ChunkPyramid` gives NOISE:
 
-`clearance` still does its other job: `StructureReservations` keeps the city out of that many chunks.
+    .addRequirement(ChunkStatus.STRUCTURE_STARTS, 8)
+    .addRequirement(ChunkStatus.BIOMES, 1)
+
+`StructureManager.startsForStructure` asks for `STRUCTURE_REFERENCES`. At distance 0-1 the available
+status is BIOMES, which is *after* structure references, so the read succeeds. At distance 2-8 it is
+only STRUCTURE_STARTS, which is *before*, so the read throws `ReportedException: Exception generating
+new chunk`. Reaching two chunks means padding at a later status, and padding after terrain is drawn
+from the plan is the exact bug this feature exists to fix.
+
+**Measured, and it is a textbook silent failure.** A first cut used a radius of 2. Every padded chunk
+threw, `padPlanForStructures`'s own catch swallowed it, and the probe logged 59 `PLANPAD ... FAILED`
+lines while producing terrain that looked like a working build. Grep any probe log for `FAILED`
+before believing a shape.
+
+**What one chunk buys, which is the actual fix.** Before this, a chunk OUTSIDE a structure's bounding
+box got no pad at all — that is what put a sheer drop at the box edge (owner: *"others still a bit
+showing sheer drops - i think we need to use at least one more chunk"*). Now the ring around the box
+is padded too, with a 16-block taper, so the ease reaches 1.0 before it runs out of chunks to work in.
+A longer taper with the same one-chunk reach would be strictly worse: the ease would still be
+mid-curve at the ring's outer edge and would leave a step there instead of at the box edge.
+
+`clearance` no longer touches the taper at all. It still does its other job: `StructureReservations`
+keeps the city that many chunks away.
+
+### ⚠ The pad must never dig below the waterline
+
+CityWorld floods every column it plans below sea level, so a pad that lowers ground onto a buried
+piece's floor does not open a hollow — it fills with water. Measured on the owner's save, 2026-09-23:
+a `cataclysm:cursed_pyramid` start in chunk 22,178 left a trench 8 blocks wide with its floor at y49
+and 14 blocks of standing water in it, hard against the pyramid, with `smooth_sandstone_stairs`
+terracing at y71 on one side and flat desert at y64 on the other. The owner spotted it from the ground
+and called the rule before the measurement did: *"anything below sea level is water - means that we
+dont need to dig any pits or mess with anything below the land level."*
+
+`target` is now clamped so the pad never lowers a column below `seaLevel + 1`. Cutting into a dune
+above the waterline is still allowed; drowning it is not.
 
 ### ⚠ A floating structure wants a CLEAR, not a FILL
 
