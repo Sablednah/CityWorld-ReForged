@@ -60,12 +60,16 @@ it). The instrument was stripped again before committing — `grep -r Timings sr
 whether the same chunk stalls twice, before reasoning about causes. Two code diagnoses were wrong;
 the instrument plus the owner's own log lines were right in one run each.
 
-**NEXT: the forecast plan** — PORTING.md "▶ PLAN (2026-09-23 night)". `StructureForecast` (spike on
-master) computes vanilla's exact `StructureStart` from the planner before any chunk exists, proved
-5/5 against stored starts (compare footprint, floor and piece count, not maxY — reload drops a
-terrain-matching piece's box growth). It answers all three of the owner's asks: reserve the real
-footprint instead of a clearance square, pad past the 8-chunk pipeline limit, and shave the acropolis
-in the plan. Superseded: reservation-driven levelling.** A structure larger than vanilla's 128-block bound (Cataclysm's
+**BUILT, unreleased (2026-09-24 small hours): the structure forecast.** `StructureForecast` makes
+vanilla's own `createStructures` call from the planner, for any chunk, before it exists, and is
+proved against the stored start by the self-test (`checkForecast`: compare footprint, floor and
+piece count, never maxY). Reservation = the real footprint + 1 chunk (2,809-chunk sweep: 1160 -> 279
+reserved, 804 -> 0 reserved-for-nothing); the pad gathers from it (no 8-chunk limit) and blends
+outside a box to GROUND pieces only; `structure_fit` has `shave` (the acropolis). On all six lines.
+**NEXT: the owner's playtest** of the prison's far side and the acropolis on his seed; then
+`selftest.sh --compare` across all six and release. PORTING.md "▶ Resume here — the forecast is BUILT".
+Two rules that keep the forecast pure: `getBaseHeight` answers RAW terrain, and no reservation answer
+is memoised before the forecast has bound to its level. A structure larger than vanilla's 128-block bound (Cataclysm's
 frosted prison is ~174) cannot be fully bearded: a chunk can only resolve a start whose ORIGIN chunk
 is within 8, and vanilla has the same limit. `StructureReservations` already computes WHERE a
 structure will be, deterministically, at any distance and with no chunk loading — levelling the

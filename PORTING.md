@@ -27,7 +27,53 @@ game; the sections below carry the measurements and the several wrong turns.
 **Before tagging:** the halt/exit bytecode scan with a detector proved on a known positive first, and
 push version branches BEFORE master so the CI gate tests the trees being released.
 
-## ▶ PLAN (2026-09-23 night): know where a structure will be, then reserve, pad and shave from that
+## ▶ Resume here — the forecast is BUILT (2026-09-24, small hours): reserve, pad and shave from vanilla's own starts
+
+**Where it is.** Commits on master: `03abc4bb` (spike), `8fc88c4a` (the feature); cherry-picked to all
+five version branches with one "Adapt the structure forecast to the X line" commit each (three
+`Structure.generate` shapes, `ChunkPos` as a record on 26.x, `getStructureTemplateManager` and a
+`Climate.Sampler` on 26.3, Forge's server hooks and `location()` on 1.20.1). Unreleased. The owner
+said "go ahead and build it" at 23:5x on the 23rd; the plan below is what was built, and this
+section records what was measured.
+
+**Measured.** Same 2,809-chunk sweep (`find:structure:minecraft:village_plains`, radius 26, seed
+8675309, villages + desert pyramids enabled), old clearance path (`-Dcityworld.reserve=clearance`)
+against the footprint path:
+
+    reserved chunks                       1160 -> 279
+    reserved but never receive a piece    1040 -> 182
+      of which: candidate never placed     804 -> 0
+      of which: gaps inside a start's box  114 -> 117
+      of which: margin ring                122 -> 65
+    surface pieces left unreserved           0 -> 0
+
+Forecast vs stored starts: 5 of 5 on footprint, floor and piece count, in three separate runs; the
+self-test's new `checkForecast` reads `structures.forecast.compared 6 / matched 6` on 1.21.11 and
+PASSES (141 checks). Cost after planning has run: 0.15 ms per chunk for the placement scan, and the
+starts themselves are already memoised by the time the pad asks.
+
+**Not measured here, and it is the owner's playtest that measures it:** the prison's far side
+(#2) and the acropolis shave (#1) on his seed. Cataclysm cannot load in a dev run, and its jigsaw
+type has its own assembler and a `size` of 25 that vanilla's codec caps at 20, so a template-level
+stand-in would assemble a DIFFERENT prison. The village case (745/745 seated) is what the harness
+proves; the ground-only blend and the shave are reasoned from the code plus the owner's two
+screenshots, and are written to be measured with `-Dcityworld.padlog` (each PLANPAD line now says
+`GROUND` or `upper` per piece, `SHAVE` or `BEARD`, and whether the starts came from `forecast` or
+`region`).
+
+**Traps met building it.**
+- Every version branch had drifted from master's `fitIndex` refactor (they still carried
+  `FITS_BY_STRUCTURE`/`BEARD_OPT_IN`), so the cherry-pick conflicted in 5-9 hunks per branch and a
+  hunk-level "theirs" produced code mixing both generations. The fix was to splice master's two
+  self-contained regions (the fit index and `padPlanForStructures`, between two comment anchors that
+  exist verbatim on every branch) into each branch's own file, then let the compiler name the API
+  drift. `scripts/`-less; the splice script lived in the scratchpad.
+- A forecast memo must not be filled inside `computeIfAbsent` -- it assembles a jigsaw. Same lesson
+  as the stall, applied on the same night.
+- A reservation answer computed before the forecast has bound to its level must NOT be memoised, or
+  the plan would depend on timing.
+
+### The plan as written before building (kept: it says why)
 
 Written overnight at the owner's request ("step back and look again at 3 things ... think and plan on
 this"). Three complaints, one root: **the planner does not know a structure's real footprint**, so it
