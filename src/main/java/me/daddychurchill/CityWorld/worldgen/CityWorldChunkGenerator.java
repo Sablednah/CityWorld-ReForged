@@ -817,10 +817,18 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 // loop runs once per beard per column, so that is 256*369 iterations a chunk. It timed
                 // the self-test out at 1800s and is almost certainly the minute-long stall the owner
                 // saw in game. Only a structure that DECLARES a clearance gets a wider taper.
-                var fit = fits.byStructure().get(start.getStructure());
-                int taper = fit == null || fit.clearance() <= 0
-                        ? BEARD_RADIUS
-                        : beardRadiusFor(fit.clearance());
+                // ⚠ TAPER SCALING WITHDRAWN — it removed the gradient instead of widening it.
+                // The blend is nearest = dist/taper then ease = smoothstep(nearest). Raising taper from
+                // 12 to 124 makes `nearest` tiny for every nearby column, so ease -> 0 and each column
+                // SNAPS to the flat target rather than easing back to natural ground. Owner, in game
+                // 2026-09-23: "so is tapering gone completely" — literally correct.
+                //
+                // And it could never have worked anyway: this method only runs where
+                // startsForStructure(pos, ...) returns something, and structure references exist only
+                // for chunks the bounding box overlaps. No taper value slopes terrain OUTSIDE the
+                // footprint; that needs starts gathered from neighbouring chunks, which is a separate
+                // change. beardRadiusFor is kept for when that lands.
+                int taper = BEARD_RADIUS;
                 var whole = start.getBoundingBox();
                 if (cavern.map(set -> set.stream().anyMatch(h -> h.value() == start.getStructure())).orElse(false)) {
                     if (PAD_LOG)
