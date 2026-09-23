@@ -657,7 +657,8 @@ public class CityWorldGenerator {
      * not, so this is a {@code ConcurrentHashMap} and {@link #getPlatMap} uses
      * {@code computeIfAbsent}, which builds exactly once per key however many threads ask at once.
      */
-    private final ConcurrentHashMap<Long, PlatMap> platmaps = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, java.util.concurrent.CompletableFuture<PlatMap>> platmaps =
+            new ConcurrentHashMap<>();
 
     public PlatMap getPlatMap(int chunkX, int chunkZ) {
 
@@ -668,12 +669,27 @@ public class CityWorldGenerator {
         // calculate the plat's key
         Long platkey = ((long) platX * (long) Integer.MAX_VALUE + (long) platZ);
 
-        // Build-once, however many threads race here. Note this runs PlatMap's constructor —
-        // i.e. the whole city plan for that block — inside the map's per-bin lock, which is what
-        // makes "exactly once" true. Everything it calls must therefore avoid touching the platmap
-        // collection again, or it would deadlock; nothing does, because planning only ever reads
-        // the shape provider.
-        return platmaps.computeIfAbsent(platkey, key -> new PlatMap(this, shapeProvider, platX, platZ));
+        // Build-once, however many threads race here: the first thread to claim the key plans it,
+        // everyone else joins that thread's future. The plan is built OUTSIDE the map's lock, and
+        // that is deliberate. It used to run inside computeIfAbsent, i.e. under the per-bin lock,
+        // and a slow plan there stalled threads that wanted OTHER platmaps -- on the owner's machine
+        // a 71 s plan of platmap 0,160 held a worker planning 20,190 for 62 s, and the server thread
+        // with it ("Running 77951ms behind"). A ConcurrentHashMap resize has to lock every bin, so
+        // one long mapping function can stall every other writer, not just the ones sharing a bin.
+        java.util.concurrent.CompletableFuture<PlatMap> mine = new java.util.concurrent.CompletableFuture<>();
+        java.util.concurrent.CompletableFuture<PlatMap> claimed = platmaps.putIfAbsent(platkey, mine);
+        if (claimed != null)
+            return claimed.join();
+        try {
+            PlatMap built = new PlatMap(this, shapeProvider, platX, platZ);
+            mine.complete(built);
+            return built;
+        } catch (RuntimeException | Error e) {
+            // let the next asker try again rather than joining a failure forever
+            platmaps.remove(platkey, mine);
+            mine.completeExceptionally(e);
+            throw e;
+        }
     }
 
     // Supporting code used by getPlatMap
