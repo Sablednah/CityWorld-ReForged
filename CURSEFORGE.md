@@ -177,8 +177,8 @@ toggles, city radius, decay intensity, even the villager-name and mob lists. Bec
 per-world, they ship as a **datapack**, not a global config: edit them by hand, or use the in-game
 **Customize** screen and export what you like with `/cityexport`.
 
-**→ Full settings reference, example datapacks, and guides (a gentler apocalypse, sparse cities,
-custom villager names, taller skyscrapers, and more): [sablecraft.co.uk/cityworld-reforged](https://sablecraft.co.uk/cityworld-reforged/)**
+**→ Full settings reference, example datapacks, and guides (villages and other vanilla structures,
+a gentler apocalypse, sparse cities, custom villager names, taller skyscrapers, and more): [sablecraft.co.uk/cityworld-reforged](https://sablecraft.co.uk/cityworld-reforged/)**
 
 ### Your other mods' blocks build cities too
 

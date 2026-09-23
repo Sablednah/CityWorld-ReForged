@@ -122,6 +122,59 @@ A few common asks, as complete `default.json` files.
 
 ---
 
+**Villages — and any other vanilla structure:**
+
+CityWorld builds its own cities, so it suppresses vanilla structures unless a tag lets them through.
+This is not a setting in `default.json`; it is a small datapack. Two files, in the world's own
+datapack folder:
+
+```
+<world>/datapacks/cityworld-villages/
+├── pack.mcmeta
+└── data/cityworld/tags/worldgen/structure_set/allowed.json
+```
+
+`allowed.json` — one set covers all five village variants (plains, desert, savanna, snowy, taiga):
+
+```json
+{
+  "replace": false,
+  "values": [ "minecraft:villages" ]
+}
+```
+
+`pack.mcmeta` — `pack_format` must match your Minecraft version (**15** on 1.20.1; use your version's
+data-pack format otherwise):
+
+```json
+{ "pack": { "description": "Villages in CityWorld", "pack_format": 15 } }
+```
+
+Then `/reload`, or just start the world with it in place.
+
+**`"replace": false` is the one thing not to get wrong.** With `true` your file *replaces* CityWorld's
+list instead of adding to it, which drops `minecraft:strongholds` — and no stronghold means no End
+portal and nothing for an eye of ender to find.
+
+The other sets you can name the same way: `minecraft:pillager_outposts`, `minecraft:woodland_mansions`,
+`minecraft:mineshafts`, `minecraft:ocean_monuments`, `minecraft:desert_pyramids`,
+`minecraft:swamp_huts`, `minecraft:igloos`, `minecraft:jungle_temples`, `minecraft:shipwrecks`,
+`minecraft:ocean_ruins`, `minecraft:buried_treasures`, `minecraft:ruined_portals`,
+`minecraft:trail_ruins`, `minecraft:nether_fossils`.
+
+**What to expect.** An allowed structure is not simply dropped on top of the city. CityWorld reserves
+ground around it so streets and buildings plan *around* it, and bends the terrain under each piece so
+it sits in the land — measured on a fixed seed at 745 of 745 columns resting exactly on the block their
+piece asks for, none buried, with the ground easing back to natural terrain a chunk past the structure's
+footprint.
+
+**Telling whether it worked:** `/cwlocate structure minecraft:village_plains` (add `tp` to teleport
+there). In a CityWorld world that command only finds what `#cityworld:allowed` permits, so "not found"
+means the tag has not taken — which distinguishes a datapack problem from an unlucky seed. See
+[`caves`](#caves--the-underground-cave-biomes-and-structure-caverns) below for the three
+look-alike outcomes and the two silent failures, and remember **nothing retro-fits into chunks that
+already exist** — test in a new world or in land you have never visited.
+
 ## Full settings reference
 
 ### `features` — what the planner is allowed to build
