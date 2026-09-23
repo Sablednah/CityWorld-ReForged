@@ -739,6 +739,16 @@ public class PlatMap {
 		int chunksX = clip.footprintChunkX(rotation);
 		int chunksZ = clip.footprintChunkZ(rotation);
 
+		// ⚠ ALL OR NOTHING. setLot rejects a RESERVED chunk one at a time, so a footprint straddling
+		// a structure reservation placed only the chunks outside it and silently dropped the rest --
+		// the owner found exactly that in game on 2026-09-23: "half a schematic - where the
+		// reservation was removed - but it still put a schematics in". A building is not a per-chunk
+		// decision. If any chunk of the footprint is spoken for, the site is not available at all.
+		for (int x = 0; x < chunksX; x++)
+			for (int z = 0; z < chunksZ; z++)
+				if (generator.isStructureReserved(originX + placeX + x, originZ + placeZ + z))
+					return;
+
 		// One ClipboardLot per chunk of the (already rotated) footprint; each carries its (x, z) offset
 		// so it knows which slice of the turned building to paste during decoration.
 		for (int x = 0; x < chunksX; x++) {
