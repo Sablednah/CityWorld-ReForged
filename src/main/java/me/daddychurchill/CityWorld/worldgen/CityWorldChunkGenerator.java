@@ -555,50 +555,97 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 return;
 
             int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
-            // Only the piece boxes whose *halo* reaches this chunk matter. Collected first so the
-            // per-block loop can take the nearest piece rather than re-walking every piece of a
-            // 7-deep jigsaw for every block.
-            List<net.minecraft.world.level.levelgen.structure.BoundingBox> boxes = new java.util.ArrayList<>();
-            int regionMinY = Integer.MAX_VALUE, regionMaxY = Integer.MIN_VALUE;
-            for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts)
-                for (net.minecraft.world.level.levelgen.structure.StructurePiece piece : start.getPieces()) {
-                    net.minecraft.world.level.levelgen.structure.BoundingBox box = piece.getBoundingBox();
-                    if (box.maxX() + halo < minX || box.minX() - halo > minX + 15
-                            || box.maxZ() + halo < minZ || box.minZ() - halo > minZ + 15)
+
+            // ⚠ A CAVERN-TAGGED STRUCTURE THAT IS NOT BURIED MUST NOT BE DUG OUT FROM UNDER.
+            // The tag exists for something entombed -- a bastion sits at a fixed y 33 under a
+            // full-height city -- and for those, deleting the whole box is exactly right. Cataclysm's
+            // acropolis is tagged too, but it FLOATS: it wanted a clear rather than a fill (bearding
+            // it built a column of strata up into it). Carving its box took the seabed with it,
+            // because its pillars reach down through the water. Measured on the owner's save
+            // 2026-09-23, x 2889 under the structure: ground at y47..y62 against y64 just outside it,
+            // void from y35 up to y64, and the pit flooded -- "something is happening to ground for
+            // the acropolipse, holes in the water".
+            //
+            // So: carve a buried start's box entirely, a standing one's only ABOVE natural ground.
+            // Same principle as the pad's waterline clamp -- do not dig pits.
+            java.util.Set<net.minecraft.world.level.levelgen.structure.StructureStart> buried =
+                    java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+            for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
+                var whole = start.getBoundingBox();
+                if (whole.maxY() <= context.shapeProvider.findBlockY(context,
+                        (whole.minX() + whole.maxX()) / 2, (whole.minZ() + whole.maxZ()) / 2))
+                    buried.add(start);
+            }
+
+            for (int pass = 0; pass < 2; pass++) {
+                boolean keepGround = pass == 1;   // pass 0: buried, dig freely. pass 1: standing.
+                // Only the piece boxes whose *halo* reaches this chunk matter.
+                List<net.minecraft.world.level.levelgen.structure.BoundingBox> boxes = new java.util.ArrayList<>();
+                for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
+                    if (buried.contains(start) == keepGround)
                         continue;
-                    boxes.add(box);
-                    regionMinY = Math.min(regionMinY, box.minY());
-                    regionMaxY = Math.max(regionMaxY, box.maxY() + haloUp);
-                }
-            if (boxes.isEmpty())
-                return;
-
-            net.minecraft.world.level.block.state.BlockState air =
-                    net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
-            net.minecraft.core.BlockPos.MutableBlockPos cursor = new net.minecraft.core.BlockPos.MutableBlockPos();
-            me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator noise = carveNoise();
-
-            // minY + 1 keeps the bedrock floor intact, exactly as vanilla's writable area does.
-            int y0 = Math.max(regionMinY, chunk.getMinBuildHeight() + 1);
-            int y1 = Math.min(regionMaxY, (chunk.getMaxBuildHeight() - 1));
-
-            for (int x = minX; x <= minX + 15; x++)
-                for (int z = minZ; z <= minZ + 15; z++)
-                    for (int y = y0; y <= y1; y++) {
-                        double t = outsideness(boxes, x, y, z, halo, haloUp);
-                        if (t >= 1.0)
+                    for (net.minecraft.world.level.levelgen.structure.StructurePiece piece : start.getPieces()) {
+                        net.minecraft.world.level.levelgen.structure.BoundingBox box = piece.getBoundingBox();
+                        if (box.maxX() + halo < minX || box.minX() - halo > minX + 15
+                                || box.maxZ() + halo < minZ || box.minZ() - halo > minZ + 15)
                             continue;
-                        // Inside a piece box, always carve. Outside, carve with a probability that
-                        // falls off to nothing at the halo's edge — driven by smooth noise rather than
-                        // randomness so the result is a ragged cave wall, not static.
-                        if (t > 0.0
-                                && noise.noise(x * CARVE_NOISE_SCALE, y * CARVE_NOISE_SCALE, z * CARVE_NOISE_SCALE)
-                                        <= t * 2.0 - 1.0)
-                            continue;
-                        cursor.set(x, y, z);
-                        if (!chunk.getBlockState(cursor).isAir())
-                            chunk.setBlockState(cursor, air, false);
+                        boxes.add(box);
                     }
+                }
+                if (boxes.isEmpty())
+                    continue;
+
+                net.minecraft.world.level.block.state.BlockState air =
+                        net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+                net.minecraft.core.BlockPos.MutableBlockPos cursor = new net.minecraft.core.BlockPos.MutableBlockPos();
+                me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator noise = carveNoise();
+                List<net.minecraft.world.level.levelgen.structure.BoundingBox> column = new java.util.ArrayList<>();
+
+                for (int x = minX; x <= minX + 15; x++)
+                    for (int z = minZ; z <= minZ + 15; z++) {
+                        // ⚠ NARROW TO THIS COLUMN BEFORE WALKING Y, and take the Y range from the
+                        // boxes that survive. outsideness() is O(boxes) per BLOCK, so the old shape --
+                        // every column x every level of the whole structure's Y span x every piece --
+                        // is cubic in a big jigsaw. Cataclysm's acropolis spans ~85 levels with a large
+                        // piece count, on every chunk its 10-block halo touches, which is the
+                        // minute-long stall the owner kept hitting next to one: "the delay in
+                        // generting city chunks near a cataclism struture is still ther".
+                        column.clear();
+                        int colMinY = Integer.MAX_VALUE, colMaxY = Integer.MIN_VALUE;
+                        for (net.minecraft.world.level.levelgen.structure.BoundingBox box : boxes) {
+                            if (box.maxX() + halo < x || box.minX() - halo > x
+                                    || box.maxZ() + halo < z || box.minZ() - halo > z)
+                                continue;
+                            column.add(box);
+                            colMinY = Math.min(colMinY, box.minY());
+                            colMaxY = Math.max(colMaxY, box.maxY() + haloUp);
+                        }
+                        if (column.isEmpty())
+                            continue;
+                        // The ground the shaper actually laid, so this cannot disagree with it.
+                        int floor = keepGround
+                                ? context.shapeProvider.findBlockY(context, x, z) + 1
+                                : Integer.MIN_VALUE;
+                        // minY + 1 keeps the bedrock floor intact, as vanilla's writable area does.
+                        int y0 = Math.max(Math.max(colMinY, chunk.getMinBuildHeight() + 1), floor);
+                        int y1 = Math.min(colMaxY, (chunk.getMaxBuildHeight() - 1));
+                        for (int y = y0; y <= y1; y++) {
+                            double t = outsideness(column, x, y, z, halo, haloUp);
+                            if (t >= 1.0)
+                                continue;
+                            // Inside a piece box, always carve. Outside, carve with a probability that
+                            // falls off to nothing at the halo's edge -- driven by smooth noise rather
+                            // than randomness so the result is a ragged cave wall, not static.
+                            if (t > 0.0
+                                    && noise.noise(x * CARVE_NOISE_SCALE, y * CARVE_NOISE_SCALE, z * CARVE_NOISE_SCALE)
+                                            <= t * 2.0 - 1.0)
+                                continue;
+                            cursor.set(x, y, z);
+                            if (!chunk.getBlockState(cursor).isAir())
+                                chunk.setBlockState(cursor, air, false);
+                        }
+                    }
+            }
         } catch (Throwable t) {
             // never let terrain adaptation break chunk generation
         }
