@@ -515,8 +515,7 @@ public final class ChunkProbe {
                         java.util.Map<String, net.minecraft.world.level.levelgen.structure.StructureStart> actual = new java.util.HashMap<>();
                         for (var set : sets)
                             for (var entry : set.value().structures()) {
-                                var st = level.structureManager().getStartForStructure(
-                                        net.minecraft.core.SectionPos.bottomOf(sc), entry.structure().value(), sc);
+                                var st = level.structureManager().getStartForStructure(entry.structure().value(), sc);
                                 if (st != null && st.isValid())
                                     actual.put(String.valueOf(entry.structure().unwrapKey().map(k -> k.identifier()).orElse(null)), st);
                             }
