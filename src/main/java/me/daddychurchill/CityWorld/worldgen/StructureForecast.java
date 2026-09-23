@@ -118,7 +118,7 @@ public final class StructureForecast {
 
     /** The starts whose origin is this chunk: what {@code createStructures} will store there. Never throws. */
     public List<StructureStart> startsAt(int chunkX, int chunkZ) {
-        long key = ChunkPos.asLong(chunkX, chunkZ);
+        long key = ChunkPos.pack(chunkX, chunkZ);
         List<StructureStart> got = memo.get(key);
         if (got != null)
             return got;
@@ -178,10 +178,10 @@ public final class StructureForecast {
                 for (int rx = Math.floorDiv(chunkX - REACH, spacing); rx <= Math.floorDiv(chunkX + REACH, spacing); rx++)
                     for (int rz = Math.floorDiv(chunkZ - REACH, spacing); rz <= Math.floorDiv(chunkZ + REACH, spacing); rz++) {
                         ChunkPos cand = spread.getPotentialStructureChunk(state.getLevelSeed(), rx * spacing, rz * spacing);
-                        if (Math.abs(cand.x - chunkX) > REACH || Math.abs(cand.z - chunkZ) > REACH)
+                        if (Math.abs(cand.x() - chunkX) > REACH || Math.abs(cand.z() - chunkZ) > REACH)
                             continue;
-                        if (seen.add(ChunkPos.asLong(cand.x, cand.z)))
-                            visit.at(cand.x, cand.z);
+                        if (seen.add(ChunkPos.pack(cand.x(), cand.z())))
+                            visit.at(cand.x(), cand.z());
                     }
             } else if (!(placement instanceof net.minecraft.world.level.levelgen.structure.placement.ConcentricRingsStructurePlacement)) {
                 flat = true;   // an unknown placement type: scan every chunk in reach once, below
@@ -190,7 +190,7 @@ public final class StructureForecast {
         if (flat)
             for (int x = chunkX - REACH; x <= chunkX + REACH; x++)
                 for (int z = chunkZ - REACH; z <= chunkZ + REACH; z++)
-                    if (seen.add(ChunkPos.asLong(x, z)))
+                    if (seen.add(ChunkPos.pack(x, z)))
                         visit.at(x, z);
     }
 

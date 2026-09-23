@@ -191,7 +191,7 @@ public final class StructureReservations {
             new java.util.concurrent.ConcurrentHashMap<>();
 
     public boolean isReserved(int chunkX, int chunkZ) {
-        long key = net.minecraft.world.level.ChunkPos.asLong(chunkX, chunkZ);
+        long key = net.minecraft.world.level.ChunkPos.pack(chunkX, chunkZ);
         Boolean got = memo.get(key);
         if (got != null)
             return got;
