@@ -110,16 +110,33 @@ public abstract class UrbanContext extends CivilizedContext {
 		}
 	}
 
-	private void addToBigBuilding(CityWorldGenerator generator, PlatMap platmap, PlatLot source, int x, int z) {
+	/**
+	 * Extends a building into the lot at {@code x,z}; {@code true} if it took.
+	 *
+	 * <p>Asks about the reservation BEFORE building the lot: {@code newLike} constructs a full
+	 * {@code PlatLot}, and that costs 256 columns of octave noise ({@code getCachedYs}) for a lot
+	 * that {@code setLot} would then refuse.
+	 */
+	private boolean addToBigBuilding(CityWorldGenerator generator, PlatMap platmap, PlatLot source, int x, int z) {
+		if (generator.isStructureReserved(platmap.originX + x, platmap.originZ + z))
+			return false;
 		PlatLot destination = source.newLike(platmap, platmap.originX + x, platmap.originZ + z);
 		destination.makeConnected(source);
-		platmap.setLot(x, z, destination);
+		return platmap.setLot(x, z, destination);
 	}
 
 	private boolean fillOutBuilding(CityWorldGenerator generator, PlatMap platmap, Odds odds, double theOdds,
 			PlatLot source, int x, int z) {
 		if (odds.playOdds(oddsOfFloodFill) && platmap.inBounds(x, z) && platmap.isEmptyLot(x, z)) {
-			addToBigBuilding(generator, platmap, source, x, z);
+			// ⚠ The flood STOPS where the lot cannot be placed. It used to ignore the result and recurse
+			// anyway, and a refused lot stays empty -- so every monotone path through a refused region
+			// re-entered the same chunks, each visit constructing a fresh lot (256 columns of octave
+			// noise). Through a structure reservation the size of an acropolis's clearance that is tens
+			// of thousands of visits: the "minute-long stall" (71.5 s on the owner's machine, 37.7 s
+			// here, on the same seed's platmap 0,160), found with the stack-dumping watchdog after two
+			// wrong diagnoses from the code. Reservation and carve were each under 2% of it.
+			if (!addToBigBuilding(generator, platmap, source, x, z))
+				return false;
 			return fillOutBuilding(generator, platmap, odds, theOdds * oddsOfFloodDecay, source, x + 1, z)
 					|| fillOutBuilding(generator, platmap, odds, theOdds * oddsOfFloodDecay, source, x, z + 1);
 		} else
