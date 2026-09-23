@@ -812,38 +812,22 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> bearding,
             java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> shaving) {}
 
-    /** Declared fits by structure, one cached walk per world. */
-    private static java.util.Map<net.minecraft.world.level.levelgen.structure.Structure,
-            me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit> fitsByStructure(
-                    net.minecraft.core.HolderLookup.RegistryLookup<
-                            net.minecraft.world.level.levelgen.structure.Structure> lookup) {
-        var cached = FITS_BY_STRUCTURE.get(lookup);
+    private static final java.util.Map<Object, FitIndex> FIT_INDEX =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+    private static FitIndex fitIndex(net.minecraft.core.HolderLookup.RegistryLookup<
+            net.minecraft.world.level.levelgen.structure.Structure> lookup) {
+        // ONE walk per world, cached on the lookup. This previously walked all 52 vanilla structures
+        // plus 29 from Cataclysm on every chunk with a start; resolving clearance separately would
+        // have reintroduced exactly that scan, so both answers come from the same pass. Keyed on the
+        // lookup itself, so a datapack reload (which hands out a new one) cannot be served stale data.
+        FitIndex cached = FIT_INDEX.get(lookup);
         if (cached != null)
             return cached;
         java.util.Map<net.minecraft.world.level.levelgen.structure.Structure,
-                me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit> out =
+                me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit> byStructure =
                         new java.util.IdentityHashMap<>();
-        try {
-            lookup.listElements().forEach(reference -> {
-                var f = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.fitFor(reference);
-                if (f != null)
-                    out.put(reference.value(), f);
-            });
-        } catch (Throwable t) {
-            return java.util.Map.of();
-        }
-        FITS_BY_STRUCTURE.put(lookup, out);
-        return out;
-    }
-
-    private static java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> beardOptIn(
-            net.minecraft.core.HolderLookup.RegistryLookup<
-                    net.minecraft.world.level.levelgen.structure.Structure> lookup) {
-        // ⚠ Resolved ONCE per chunk, not once per start. The first cut scanned the whole structure
-        // registry inside the startsForStructure predicate, so it ran per start per chunk -- bounded,
-        // but needless work in the hot worldgen path. Deliberately NOT cached across calls: data maps
-        // are reload-scoped, and a stale cache would survive /reload and quietly disagree with the pack.
-        java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> out =
+        java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> bearding =
                 java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
         java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> shaving =
                 java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
@@ -884,7 +868,27 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             // and pad on gave layer-for-layer identical pyramids, offset only by the 1 block the pad
             // had moved the ground. Shaping for it is pointless at best and fights it at worst.
             var structureLookup = structureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE);
-            var optedIn = beardOptIn(structureLookup);
+            var fits = fitIndex(structureLookup);
+            var optedIn = fits.bearding();
+            if (PAD_LOG) {
+                LOGGER_STRUCTURES.warn("PLANPAD: structures declaring a structure_fit: {}",
+                        "(not listed on this line)");
+                // ⚠ CONTROL for the line above. declaredFits has only ever printed [] or one key, and a
+                // detector that has never produced a real positive proves nothing. The GROUND map is
+                // known-good (13 entries decoded on the Forge line), so counting biomes that carry it
+                // says whether getData() works at all on a DATAPACK registry holder.
+                try {
+                    var biomes = structureManager.registryAccess()
+                            .lookupOrThrow(net.minecraft.core.registries.Registries.BIOME);
+                    int withGround = 0;
+                    for (var ref : biomes.listElements().toList())
+                        if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.groundFor(ref) != null)
+                            withGround++;
+                    LOGGER_STRUCTURES.warn("PLANPAD: CONTROL biomes carrying the ground data map: {}", withGround);
+                } catch (Throwable t) {
+                    LOGGER_STRUCTURES.warn("PLANPAD: CONTROL threw", t);
+                }
+            }
             java.util.function.Predicate<net.minecraft.world.level.levelgen.structure.Structure> wanted =
                     structure -> structure.terrainAdaptation()
                             != net.minecraft.world.level.levelgen.structure.TerrainAdjustment.NONE
@@ -900,7 +904,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             StructureForecast fc = forecast;
             boolean fromForecast = fc != null && fc.available();
             if (fromForecast) {
-                for (var found : fc.startsCovering(pos.x, pos.z, BLEND_CHUNKS))
+                for (var found : fc.startsCovering(pos.x(), pos.z(), BLEND_CHUNKS))
                     if (wanted.test(found.getStructure()) || fits.shaving().contains(found.getStructure()))
                         starts.add(found);
             } else {
@@ -909,7 +913,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 int unreadable = 0;
                 for (int ox = -BLEND_CHUNKS; ox <= BLEND_CHUNKS; ox++)
                     for (int oz = -BLEND_CHUNKS; oz <= BLEND_CHUNKS; oz++) {
-                        ChunkPos near = (ox == 0 && oz == 0) ? pos : new ChunkPos(pos.x + ox, pos.z + oz);
+                        ChunkPos near = (ox == 0 && oz == 0) ? pos : new ChunkPos(pos.x() + ox, pos.z() + oz);
                         try {
                             for (var found : structureManager.startsForStructure(near,
                                     st -> wanted.test(st) || fits.shaving().contains(st)))
@@ -921,7 +925,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     }
                 if (unreadable > 0 && PAD_LOG)
                     LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: {} of 9 neighbours unreadable at this"
-                            + " status — blend is narrower than one chunk here", pos.x, pos.z, unreadable);
+                            + " status — blend is narrower than one chunk here", pos.x(), pos.z(), unreadable);
             }
             if (starts.isEmpty())
                 return;
@@ -938,20 +942,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             List<Beard> shaves = new java.util.ArrayList<>();
 
             for (net.minecraft.world.level.levelgen.structure.StructureStart start : starts) {
-                // One chunk of run-out, always. ⚠ Small ON PURPOSE: beardRadiusFor once returned
-                // max(12, clearance*16 - 4) — 124 blocks for the frosted_prison — and since the blend
-                // is smoothstep(dist/taper), a longer taper holds ground NEAR the structure at its
-                // level for longer: a column one chunk out sat at 97% of the prison's floor, which is
-                // the flat dome the owner photographed. 16 eases fully inside the one chunk we can
-                // reach. See BLEND_CHUNKS.
-                int taper = beardRadiusFor(0);
                 String id = PAD_LOG ? String.valueOf(start.getStructure()) : "";
                 boolean shave = fits.shaving().contains(start.getStructure());
                 if (!shave && !wanted.test(start.getStructure()))
                     continue;
                 if (PAD_LOG && optedIn.contains(start.getStructure()))
                     LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: OPT-IN beard (terrain_adaptation none) — {}",
-                            pos.x, pos.z, id);
+                            pos.x(), pos.z(), id);
                 // How far this structure's ground bends past its own pieces, in blocks. Small ON
                 // PURPOSE: the blend is smoothstep(dist/taper), so a longer taper holds the ground near
                 // the structure at its level for longer -- the flat dome under the prison at 124.
@@ -1007,7 +1004,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     if (PAD_LOG)
                         LOGGER_STRUCTURES.warn(
                                 "PLANPAD chunk {},{}: {} taper {} {} box x {}..{} z {}..{} y {}..{} -> top {} {}",
-                                pos.x, pos.z, shave ? "SHAVE" : "BEARD", taper, kept.get(i).getClass().getSimpleName(),
+                                pos.x(), pos.z(), shave ? "SHAVE" : "BEARD", taper, kept.get(i).getClass().getSimpleName(),
                                 b.minX(), b.maxX(), b.minZ(), b.maxZ(), b.minY(), b.maxY(), tops.get(i),
                                 ground ? "GROUND" : "upper");
                     (shave ? shaves : beards).add(new Beard(b.minX(), b.minZ(), b.maxX(), b.maxZ(), tops.get(i), taper, ground));
@@ -1112,7 +1109,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             ys.markPadded();
             if (PAD_LOG)
                 LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: {} of 256 columns moved over {} beards, delta {} .. {}; {} shaved over {} shave pieces; starts from {}",
-                        pos.x, pos.z, moved, beards.size(),
+                        pos.x(), pos.z(), moved, beards.size(),
                         deltaMin == Double.MAX_VALUE ? 0 : Math.round(deltaMin),
                         deltaMax == -Double.MAX_VALUE ? 0 : Math.round(deltaMax), shaved, shaves.size(),
                         fromForecast ? "forecast" : "region");
@@ -1521,7 +1518,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private volatile ChunkGeneratorStructureState structureState;
 
-    /** The world's structure state, for {@link StructureForecast} and the probe. */
+    /** SPIKE: the world's structure state, for {@link StructureForecast}. */
     public ChunkGeneratorStructureState structureState() {
         return structureState;
     }
