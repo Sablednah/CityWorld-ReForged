@@ -828,49 +828,22 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> bearding,
             java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> shaving) {}
 
-    private static final java.util.Map<Object, java.util.Map<
-            net.minecraft.world.level.levelgen.structure.Structure,
-            me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit>> FITS_BY_STRUCTURE =
-                    java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+    private static final java.util.Map<Object, FitIndex> FIT_INDEX =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
 
-    /** Declared fits by structure, one cached walk per world — see {@link #beardOptIn}. */
-    private static java.util.Map<net.minecraft.world.level.levelgen.structure.Structure,
-            me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit> fitsByStructure(
-                    net.minecraft.core.HolderLookup.RegistryLookup<
-                            net.minecraft.world.level.levelgen.structure.Structure> lookup) {
-        var cached = FITS_BY_STRUCTURE.get(lookup);
+    private static FitIndex fitIndex(net.minecraft.core.HolderLookup.RegistryLookup<
+            net.minecraft.world.level.levelgen.structure.Structure> lookup) {
+        // ONE walk per world, cached on the lookup. This previously walked all 52 vanilla structures
+        // plus 29 from Cataclysm on every chunk with a start; resolving clearance separately would
+        // have reintroduced exactly that scan, so both answers come from the same pass. Keyed on the
+        // lookup itself, so a datapack reload (which hands out a new one) cannot be served stale data.
+        FitIndex cached = FIT_INDEX.get(lookup);
         if (cached != null)
             return cached;
         java.util.Map<net.minecraft.world.level.levelgen.structure.Structure,
-                me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit> out =
+                me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.StructureFit> byStructure =
                         new java.util.IdentityHashMap<>();
-        try {
-            lookup.listElements().forEach(reference -> {
-                var f = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.fitFor(reference);
-                if (f != null)
-                    out.put(reference.value(), f);
-            });
-        } catch (Throwable t) {
-            return java.util.Map.of();
-        }
-        FITS_BY_STRUCTURE.put(lookup, out);
-        return out;
-    }
-
-    private static java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> beardOptIn(
-            net.minecraft.core.HolderLookup.RegistryLookup<
-                    net.minecraft.world.level.levelgen.structure.Structure> lookup) {
-        // ⚠ Resolved ONCE per chunk, not once per start. The first cut scanned the whole structure
-        // registry inside the startsForStructure predicate, so it ran per start per chunk -- bounded,
-        // but needless work in the hot worldgen path. Deliberately NOT cached across calls: data maps
-        // are reload-scoped, and a stale cache would survive /reload and quietly disagree with the pack.
-        // Cached per lookup instance: the registry is fixed for a world, and this walked all 52 vanilla
-        // structures plus 29 from Cataclysm on EVERY chunk that had a start. Keyed on the lookup itself
-        // so a datapack reload, which hands out a new one, cannot be served a stale answer.
-        java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> cached = BEARD_OPT_IN.get(lookup);
-        if (cached != null)
-            return cached;
-        java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> out =
+        java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> bearding =
                 java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
         java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> shaving =
                 java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
@@ -911,8 +884,27 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             // and pad on gave layer-for-layer identical pyramids, offset only by the 1 block the pad
             // had moved the ground. Shaping for it is pointless at best and fights it at worst.
             var structureLookup = structureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE);
-            var optedIn = beardOptIn(structureLookup);
-            var fitsIndex = fitsByStructure(structureLookup);
+            var fits = fitIndex(structureLookup);
+            var optedIn = fits.bearding();
+            if (PAD_LOG) {
+                LOGGER_STRUCTURES.warn("PLANPAD: structures declaring a structure_fit: {}",
+                        "(not listed on the 1.20.1 line)");
+                // ⚠ CONTROL for the line above. declaredFits has only ever printed [] or one key, and a
+                // detector that has never produced a real positive proves nothing. The GROUND map is
+                // known-good (13 entries decoded on the Forge line), so counting biomes that carry it
+                // says whether getData() works at all on a DATAPACK registry holder.
+                try {
+                    var biomes = structureManager.registryAccess()
+                            .lookupOrThrow(net.minecraft.core.registries.Registries.BIOME);
+                    int withGround = 0;
+                    for (var ref : biomes.listElements().toList())
+                        if (me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.groundFor(ref) != null)
+                            withGround++;
+                    LOGGER_STRUCTURES.warn("PLANPAD: CONTROL biomes carrying the ground data map: {}", withGround);
+                } catch (Throwable t) {
+                    LOGGER_STRUCTURES.warn("PLANPAD: CONTROL threw", t);
+                }
+            }
             java.util.function.Predicate<net.minecraft.world.level.levelgen.structure.Structure> wanted =
                     structure -> structure.terrainAdaptation()
                             != net.minecraft.world.level.levelgen.structure.TerrainAdjustment.NONE
@@ -977,10 +969,6 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 // PURPOSE: the blend is smoothstep(dist/taper), so a longer taper holds the ground near
                 // the structure at its level for longer -- the flat dome under the prison at 124.
                 int taper = beardRadiusFor(0);
-                String id = PAD_LOG ? String.valueOf(start.getStructure()) : "";
-                if (PAD_LOG && optedIn.contains(start.getStructure()))
-                    LOGGER_STRUCTURES.warn("PLANPAD chunk {},{}: OPT-IN beard (terrain_adaptation none) — {}",
-                            pos.x, pos.z, id);
                 var whole = start.getBoundingBox();
                 if (!shave && cavern.map(set -> set.stream().anyMatch(h -> h.value() == start.getStructure())).orElse(false)) {
                     if (PAD_LOG)
@@ -1480,7 +1468,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         StructureForecast local = forecast;
         if (local != null)
             local.bind();
-        super.createStructures(registryAccess, structureState, structureManager, chunk, templateManager, dimension);
+        super.createStructures(registryAccess, structureState, structureManager, chunk, templateManager);
     }
 
     /**
@@ -1546,7 +1534,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private volatile ChunkGeneratorStructureState structureState;
 
-    /** The world's structure state, for {@link StructureForecast} and the probe. */
+    /** SPIKE: the world's structure state, for {@link StructureForecast}. */
     public ChunkGeneratorStructureState structureState() {
         return structureState;
     }

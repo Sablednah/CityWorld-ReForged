@@ -521,7 +521,7 @@ public final class ChunkProbe {
                                 var st = level.structureManager().getStartForStructure(
                                         net.minecraft.core.SectionPos.bottomOf(sc), entry.structure().value(), sc);
                                 if (st != null && st.isValid())
-                                    actual.put(String.valueOf(entry.structure().unwrapKey().map(k -> k.identifier()).orElse(null)), st);
+                                    actual.put(String.valueOf(entry.structure().unwrapKey().map(k -> k.location()).orElse(null)), st);
                             }
                         if (!actual.isEmpty()) chunksWithStarts++;
                         java.util.Set<String> seenIds = new java.util.HashSet<>();
@@ -529,7 +529,7 @@ public final class ChunkProbe {
                             String id = String.valueOf(fcw.structureState().possibleStructureSets().stream()
                                     .flatMap(set -> set.value().structures().stream())
                                     .filter(e -> e.structure().value() == f.getStructure())
-                                    .map(e -> e.structure().unwrapKey().map(k -> k.identifier()).orElse(null)).findFirst().orElse(null));
+                                    .map(e -> e.structure().unwrapKey().map(k -> k.location()).orElse(null)).findFirst().orElse(null));
                             seenIds.add(id);
                             var a = actual.get(id);
                             if (a == null) { extra++; CityWorldMod.LOGGER.warn("FORECAST extra: chunk {},{} {} box {} ({} pieces) but chunk has no such start", sx, sz, id, f.getBoundingBox(), f.getPieces().size()); continue; }
