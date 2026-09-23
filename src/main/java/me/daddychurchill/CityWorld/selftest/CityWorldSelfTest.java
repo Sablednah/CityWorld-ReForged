@@ -1256,6 +1256,86 @@ public final class CityWorldSelfTest {
      *       and look for the structure's own block entities.
      * </ul>
      */
+    /**
+     * The forecast must equal what vanilla stores. {@code StructureForecast} makes vanilla's own
+     * {@code createStructures} call ahead of any chunk; the planner reserves and the pad shapes from
+     * it, so if it ever drifted from the real start the city would build over a structure while
+     * looking exactly like a working world. Compared on footprint, floor and piece count -- never
+     * {@code maxY}, which a reloaded TERRAIN_MATCHING piece rebuilds without the growth the
+     * assembler gave it (measured 2026-09-23, PORTING.md "PLAN (2026-09-23 night)").
+     */
+    private void checkForecast(MinecraftServer server, ChunkGeneratorStructureState state) {
+        ServerLevel level = server.overworld();
+        if (!(level.getChunkSource().getGenerator()
+                instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw) || cw.forecast() == null) {
+            fail("no structure forecast on the overworld generator");
+            return;
+        }
+        var forecast = cw.forecast();
+        if (!forecast.available()) {
+            fail("the structure forecast could not bind to the overworld level");
+            return;
+        }
+        int compared = 0, matched = 0, examined = 0;
+        java.util.List<String> mismatches = new java.util.ArrayList<>();
+        outer:
+        for (int r = 0; r <= STRUCTURE_SCAN_CHUNKS && compared < 6; r++)
+            for (int cx = -r; cx <= r; cx++)
+                for (int cz = -r; cz <= r; cz++) {
+                    if (Math.max(Math.abs(cx), Math.abs(cz)) != r)
+                        continue;
+                    boolean candidate = false;
+                    for (Holder<StructureSet> set : state.possibleStructureSets())
+                        if (!(set.value().placement() instanceof ConcentricRingsStructurePlacement)
+                                && set.value().placement().isStructureChunk(state, cx, cz))
+                            candidate = true;
+                    if (!candidate)
+                        continue;
+                    if (++examined > STRUCTURE_SCAN_CANDIDATES * 3)
+                        break outer;
+                    final int fx = cx, fz = cz;
+                    LevelChunk chunk = server.submit(() -> level.getChunk(fx, fz)).join();
+                    var stored = chunk.getAllStarts();
+                    var predicted = forecast.startsAt(cx, cz);
+                    for (var e : stored.entrySet()) {
+                        if (!e.getValue().isValid())
+                            continue;
+                        var a = e.getValue();
+                        var f = predicted.stream().filter(p -> p.getStructure() == e.getKey()).findFirst().orElse(null);
+                        compared++;
+                        String id = String.valueOf(e.getKey());
+                        if (f == null) {
+                            mismatches.add(id + " at " + cx + "," + cz + ": stored but not forecast");
+                            continue;
+                        }
+                        var ab = a.getBoundingBox();
+                        var fb = f.getBoundingBox();
+                        boolean same = ab.minX() == fb.minX() && ab.maxX() == fb.maxX() && ab.minZ() == fb.minZ()
+                                && ab.maxZ() == fb.maxZ() && ab.minY() == fb.minY()
+                                && a.getPieces().size() == f.getPieces().size();
+                        if (same)
+                            matched++;
+                        else
+                            mismatches.add(id + " at " + cx + "," + cz + ": forecast " + fb + " x" + f.getPieces().size()
+                                    + " vs stored " + ab + " x" + a.getPieces().size());
+                    }
+                    for (var p : predicted)
+                        if (!stored.containsKey(p.getStructure()) || !stored.get(p.getStructure()).isValid()) {
+                            compared++;
+                            mismatches.add(p.getStructure() + " at " + cx + "," + cz + ": forecast but not stored");
+                        }
+                    if (compared >= 6)
+                        break outer;
+                }
+        report.put("structures.forecast.compared", Integer.toString(compared));
+        report.put("structures.forecast.matched", Integer.toString(matched));
+        report.put("structures.forecast.origins", Integer.toString(forecast.size()));
+        if (compared == 0)
+            fail("the forecast check found no structure start to compare against");
+        for (String m : mismatches)
+            fail("structure forecast disagrees with the stored start: " + m);
+    }
+
     private void checkStructures(MinecraftServer server) {
         ServerLevel level = server.overworld();
         ChunkGeneratorStructureState state = level.getChunkSource().getGeneratorState();
@@ -1331,6 +1411,7 @@ public final class CityWorldSelfTest {
         report.put("structures.trial.foundAt", foundAt);
 
         checkAncientCityDepth(server, sets.get("minecraft:ancient_cities"));
+        checkForecast(server, state);
 
         if (examined == 0)
             fail("the trial-chamber placement claimed no chunk within " + STRUCTURE_SCAN_CHUNKS
