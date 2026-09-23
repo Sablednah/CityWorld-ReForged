@@ -22,6 +22,47 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 | Licence | **GPL-3.0-only** (see below — non-negotiable) |
 | Branch | work happens on `master` (the `neoforge-port` branch was merged into it and deleted) |
 
+## ▶ Where this is, and what's next (2026-09-23)
+
+**v5.12.0 is released** — tagged, on GitHub, CurseForge (files 8957340–8957345) and Modrinth, and
+deployed to all 11 fleet instances (`DEPLOYED-v5.12.0`). All six lines are on the same version for the
+first time since 5.9.0. All six self-tests pass and `selftest.sh --compare` agrees on plan hashes.
+
+**The release was one arc:** a structure from another mod now sits IN the land instead of on it. Read
+PORTING.md's "Resume here" for the detail. The rules that came out of it, each paid for in a playtest
+round:
+
+- Every structure is **beard**, **carve**, or **neither**. Beard = fill up to the piece floor, for
+  something standing on the ground. Carve = clear the box plus a halo, for something genuinely
+  BURIED. Neither = for anything that levels itself (`ScatteredFeaturePiece`) or floats.
+- **Never dig.** The pad never lowers ground below `seaLevel + 1`, and a standing structure's carve
+  starts above `max(ground, sea)`. CityWorld floods whatever it plans under sea level, so a "hollow"
+  becomes a moat and a cleared ocean column becomes a dry hole.
+- **Aim at a building's BASE, not its roof.** Under overlapping pieces take the LOWEST floor. Taking
+  the highest built terrain up to the roof of a 97-piece tower.
+- **The blend reaches one chunk past the bounding box and no further** — that is the chunk pipeline's
+  ceiling, not a preference. See `BLEND_CHUNKS`.
+- **A halo is for a cavern.** Around something standing in the open it eats the landscape.
+
+**⚠ NEXT: finish the stall diagnosis.** `context.populateMap` took **71.5 s** once on the owner's
+machine (mean 477 ms), taking the server thread with it. It was diagnosed from the code twice — the
+reservation scan, then the carve — and **both were wrong**, which is why the third attempt used an
+instrument. Reservation is 2% of the time and the carve 0.2%. *Which line inside `populateMap`* runs
+away is still unknown.
+
+To finish it: restore `Support/Timings` and its six call sites (`CityWorldChunkGenerator`,
+`CityWorldGenerator`, `StructureReservations`, `ShapeProvider`) from git history — they were removed
+deliberately, see below — run with `-Dcityworld.timing=true` until it stalls, read the
+`TIMING STUCK: plan.build has been running N ms` stack, fix, then **strip the instrument again before
+shipping**.
+
+**Then: reservation-driven levelling.** A structure larger than vanilla's 128-block bound (Cataclysm's
+frosted prison is ~174) cannot be fully bearded: a chunk can only resolve a start whose ORIGIN chunk
+is within 8, and vanilla has the same limit. `StructureReservations` already computes WHERE a
+structure will be, deterministically, at any distance and with no chunk loading — levelling the
+reserved area toward the structure's projected start height would blend the far edge too. Accepted
+as-is for 5.12.0 (owner's call).
+
 ## Licence — important
 
 Upstream CityWorld is **GPL-3**, so this port is a derivative work and **must stay GPL-3**.
@@ -160,6 +201,22 @@ export PATH="$JAVA_HOME/bin:$PATH"
   classes>`, not one javap per class, which takes over ten minutes). A `strings`-based check reported 0 for everything — including methods that were certainly
   there — because constant-pool entries sit adjacent. **Never trust a zero from a detector that has never
   produced a positive.**
+- **⚠ The same caution applies to DIAGNOSTIC code, not just shutdown code.** `Support/Timings` was
+  off unless `-Dcityworld.timing=true`, cost nothing when off, and only ever logged — and it was still
+  stripped before release, on the owner's call: *"we got but by one before - and although its just
+  timeing - no need to trigger people or bots looking for 'hidden' code."* A reviewer greps the shipped
+  bytecode, not the flag guarding it. Restore it from history for a debugging session, strip it again
+  before shipping, and verify with a detector **proved on a positive first** — the pre-strip jar reads
+  1 `Timings` class, a stripped one reads 0.
+- **⚠ A detector that has never fired is worth nothing, and a polling one can lie by timing.** The
+  stall watchdog's first run produced **zero** dumps with nothing broken: it polled every 2 s while the
+  phase it watched took ~800 ms locally, so every phase began and ended inside one poll gap. Only a
+  tunable interval (25 ms) proved it worked. Same family as the `strings`-based halt check that read 0
+  for everything.
+- **⚠ "Measured in game" is not a measurement.** `StructureReservations`' memo javadoc claimed the memo
+  fixed the minute-long stall because the symptom seemed to go away once. It had not: proper timing put
+  reservation at 2125 ms across 492,863 calls against a single 71,557 ms `populateMap`. A false claim
+  in a comment is worse than no comment. Always A/B against a control on the same seed.
 - **Never compile in a checkout whose dev server or self-test is running.** `runSelfTest`/`runServer`
   run off that checkout's `build/classes`; a `compileJava` mid-run replaces class files under the JVM
   and the harness dies with `NoClassDefFoundError: …CityWorldSelfTest$1`. That is a race, not a code
