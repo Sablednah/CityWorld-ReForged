@@ -20,6 +20,13 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   wall. It now reads the forecast instead, at any distance. Beside a multi-storey wall the ground also
   aims at the building's base rather than the average of every storey, which had raised a 30-block
   mound.
+- **The ground under a tall structure now rises as a hill, not a stepped pyramid.** The blend's run
+  is sized from its rise (two and a half blocks of run per block of climb, and never less than
+  sixteen) and its contours are wobbled by seeded noise, so a prison forty blocks above its plain
+  gets a hundred-block slope instead of a terraced ramp.
+- **A structure that sinks itself below the surface no longer sits in a one-block trench** at a
+  sea-level plain: the ground under it may now settle to sea level itself, which is a dry beach in
+  CityWorld, rather than stopping one block above it.
 - **A structure that cuts its own volume out of a hill can be declared `shave`** in
   `cityworld:structure_fit`: the plan is lowered to the storey the hill cuts into inside its box and
   feathered back to natural ground outside it, only ever lowering and never below the waterline. Set
