@@ -1,5 +1,111 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Resume here — the owner's next four mods (2026-09-24 evening): Alex's Caves, Pam's, Battle Towers, Dungeon Crawl
+
+**Where it is.** Built and self-tested on master (PASS, 151 checks; `orchard.lotsWithCherry = 6` of 8
+temperate orchards, 527 cherry logs; `biome.caveFeatures` unchanged at 12 for vanilla), cherry-picked to
+the five version branches, deployed to the owner's `1.20.1  Forge` instance. **Unreleased** — it waits on
+his playtest, because none of the four mods can load in the named dev runtime (SRG mixins, same as
+Cataclysm), so what the self-test proves is the MECHANISM on vanilla content and what only he can see is
+the look: an Alex's cave in galena, a Battle Tower seated, a Pam orchard with fruit.
+
+**What he added and why** (his words: *"battle towers, dungeon crawl, to see how they work with new
+structure detection. And also Alexes caves to add to caves list. and pams harvest so we can add crops and
+trees"*). Everything below was read out of the jars with `unzip`/`javap`, not guessed from wikis.
+
+### Structures: Battle Towers (`ba_bt` 3.0.0-beta3.2.1) and Dungeon Crawl (2.3.15)
+
+Both are ordinary vanilla structure sets, so the forecast sees them the moment they are allowed — and
+**nothing is placed unless its set is in `#cityworld:allowed`**, which is why a mod that "does not
+generate in CityWorld" is a one-line tag question before it is anything else. The shipped tag now carries
+every set the owner has installed, all `"required": false`: Cataclysm's eleven (so the hand-built
+`cataclysm-cityworld-compat-1.0.jar` from the 21st is redundant — it can stay, duplicates are harmless),
+Dungeon Crawl's one, Battle Towers' three, and twelve of Alex's Caves' fourteen (below).
+
+| | placement | step | terrain | verdict |
+|---|---|---|---|---|
+| `ba_bt:land_tower` | `ba_bt:tower_structure_placement` extends `RandomSpreadStructurePlacement` (spacing 24/20, avoids villages/outposts/mansions… none of which we place) | surface | `getBaseHeight(WORLD_SURFACE_WG)` at its centre, adaptation absent | **beard**, clearance 3 (`structure_fit`) |
+| `ba_bt:ocean_tower` | same class (44/36) | surface | in water | neither (the pad never lowers below the waterline anyway) |
+| `ba_bt:core_tower` | same class (36/24), `locate_offset y -60` | underground | buried | neither, not reserved |
+| `dungeoncrawl:dungeon` | random_spread 32/12 | underground, `terrain_adaptation: none` | its own entrance stair reaches the surface | neither, not reserved |
+
+The forecast already handles the custom placement (a `RandomSpreadStructurePlacement` subclass takes the
+per-cell candidate path; anything else falls back to the flat scan). The land tower's beard is the one
+declaration made without seeing it: it stands on raw terrain with no adaptation, exactly the case the
+pad exists for. **If he photographs it floating or buried, the fix is in `structure_fit.json`, not code.**
+
+### Alex's Caves (2.0.2) — five biomes in the cave pool, and what the pool had to learn
+
+**How the mod places itself, and why none of it happens in a CityWorld world.** Its biomes reach the
+overworld through ONE mixin, `MultiNoiseBiomeSourceMixin` on `getNoiseBiome` (`ACBiomeRarity` Voronoi
+cells + per-biome `BiomeGenerationNoiseCondition`: overworld only, depth `0.15..1.5`, i.e. the whole
+underground column from ~20 blocks below the surface to bedrock). CityWorld's biome source is not a
+`MultiNoiseBiomeSource`, so Alex's biomes exist nowhere in it — until `#cityworld:cave_pool` emits them.
+That was the plan since wave A ("Alex's Caves is then one cave_pool line"), and it turned out to be one
+line plus three things the pool had never needed:
+
+1. **Its cave SHAPES are structures, not carvers.** `ferrocave`, `dino_bowl`, `forlorn_canyon`,
+   `cake_cave`, `ocean_trench` are `raw_generation`-step structures (`AbstractCaveGenerationStructure`),
+   gated on the biome at their origin — ferrocave at `y 20 + rand(40)`, dino bowl `y -1`, forlorn canyon
+   `y -10`, cake cave `y -48` — then sized by `biomeContinuesInDirectionFor` in six directions. So the
+   patch band must contain those origins and reach bedrock: **`-64..40`** for all five, the 40 chosen so
+   a carve can never break into the cisterns (y 49) or sewers (57–62). Cells are bigger (160–224) and
+   rarer (1–2%) than the vanilla types: the caves themselves are 100–200 blocks across. Toxic caves has
+   no carver of its own (vanilla carvers + acid lakes), so it gets CityWorld's caves in radrock.
+2. **Its rock is the whole column, not a lining.** `ACSurfaceRules` replaces EVERY stone in the biome —
+   galena (with energized bands), limestone, radrock, guanostone/coprolith, chocolate/frosted chocolate —
+   and its ores and features then target THAT rock (galena iron ore replaces galena, the ferrocave carves
+   through it). Sulfur's lining rule was the wrong model, hence `CaveRegions.SOLID_ROCK`: for those five
+   the paint pass skips the "touches cave air" test and paints the band solid.
+3. **Its look lives in every decoration step.** Acid lakes in LAKES, magnetic ruins in
+   UNDERGROUND_STRUCTURES, ice-cream scoops and the subterranodon roost in SURFACE_STRUCTURES, lollipops,
+   thornwood trees and the caveman house in **STRONGHOLDS**, magnetic nodes and acid vents in
+   FLUID_SPRINGS, sulfur stacks and the nuclear siren in TOP_LAYER_MODIFICATION. On the three steps the
+   cave pass used to read, magnetic caves would have kept one feature (tesla bulb) and toxic caves one
+   (underweed). `CAVE_POOL_STEPS` is now every step but ORES (the ore pass already runs the bottom biome's
+   ores, and a band that reaches bedrock IS the bottom biome). Safe for the same reason as before: only
+   features NO surface biome can place survive the filter, every survivor is biome-checked at its
+   position, and the self-test's "surface feature reached the cave-only set" guard still stands. The
+   Nether/End own-biome pass keeps its two steps — that was tuned by playtest and springs would flood
+   the ruined city.
+
+**Left out on purpose:** `abyssal_chasm` — a sea-floor biome (continentalness −0.95..−0.65) whose
+`ocean_trench` carves down from the sea bed; under dry land that is a pit open to the sky. With it, its
+two sets (`abyssal_ruins`, `ocean_trench`) stay out of the allow-list. `underground_cabin` (any overworld
+biome, spacing 10) IS allowed: a small cabin in a cave pocket, not reserved; if it turns up inside a
+sewer that is a tag line to remove.
+
+**Not verifiable here.** Everything above is bytecode-read. The ferrocave's carve against our band, the
+solid galena, the strongholds-step features: his playtest. Ask for F3 (biome line) and a screenshot from
+inside the cave.
+
+### Pam's HarvestCraft 2 (crops 1.0.3, trees 1.0.2)
+
+- **Crops** are `pamhc2crops:pam<name>crop`, plain `CropBlock`s with `age 0..7`; thirty field crops are
+  in `#cityworld:farm/crops` (`required: false`). The field code needed nothing: one draw per field,
+  farmland under, the levelled setter finds the age property. Not the gardens (`aridgarden` etc., wild
+  bushes) and not the water/tropical oddities.
+- **Trees** are the real addition. Pam's fifty are `pamhc2trees:<fruit>` configured features of type
+  `minecraft:tree` (vanilla trunk placer + its own fruit foliage placer, oak logs — so a log tally does
+  NOT identify a Pam tree; note their id `pamhc2trees:gauva`). New seam: **`#cityworld:orchard/{temperate,
+  cold,dry,tropical}`** on the configured-feature registry, resolved in `FarmLot.plantFruitOrchard` and
+  grown through `ConfiguredFeature.place` on the live level — the Nether huge-fungus idiom
+  (`CoverProvider_Nether.hugeTree`), which is the only way a modded tree's placers run. Climate comes from
+  the orchard's `CropType` (`orchardPoolFor`: OAK/BIRCH → temperate, PINE → cold, ACACIA → dry,
+  JUNGLE/SWAMP → tropical), so the MODERN palettes' choice of orchard already picks the pool. Two orchards
+  in three draw from a non-empty pool; the roll is not made when the pool is empty, so a world with no
+  tagged tree generates block for block as before. **Vanilla's `minecraft:cherry` is in the temperate
+  pool** — partly because cherry orchards look right, mostly so the self-test can prove the path on every
+  version without a mod: `checkOrchards` hunts eight temperate orchards and fails if the pool holds cherry
+  and none grew one ((1/3)^6 to be wrong).
+
+### Ship notes
+
+- Cherry-pick order and the usual API drift: `Identifier.fromNamespaceAndPath` → `new ResourceLocation`,
+  `lookupOrThrow` → `registryOrThrow`, `k.identifier()` → `k.location()` on 1.20.1; the 1.20.1 tag folder
+  is `tags/blocks/` (plural), so `farm/crops.json` moves.
+- `Map.of` takes ten entries at most; `GEOMETRY` is `Map.ofEntries` now.
+
 ## ▶ Resume here — 5.12.0 staged (2026-09-23): the structure/terrain seam, all six versions
 
 **Where it is.** `mod_version=5.12.0` on **all six** branches (up from 5.11.0 on 1.21.11/1.20.1,

@@ -91,8 +91,13 @@ then let the compiler name the API drift (26.x: `ChunkPos` is a record, `pack()`
 `getStructureTemplateManager`, a `Climate.Sampler` on `Structure.generate`, two-arg
 `getStartForStructure`; 1.20.1/1.21.1: ten-arg `generate`, `location()`, Forge's server hooks).
 
-**NEXT:** nothing queued from this arc. The owner is playtesting 5.13.0 on his 1.20.1 instance; whatever
-he photographs next is the queue. See "▶ Next up" in PORTING.md for the standing list.
+**NEXT (2026-09-24 evening, unreleased, deployed to his 1.20.1 instance):** the owner added Battle Towers,
+Dungeon Crawl, Alex's Caves and Pam's HarvestCraft 2. All four are now wired — allow-list entries and a
+land-tower beard; five Alex's biomes in the cave pool with SOLID rock and an all-steps decoration read;
+Pam's crops in the field pool and a new `#cityworld:orchard/<climate>` fruit-tree seam placed through the
+tree's own feature (vanilla cherry proves it on every version). None of the four loads in the dev runtime,
+so the self-test proves mechanisms only: **his playtest is the verification**. PORTING.md "the owner's next
+four mods" has the per-mod bytecode findings and the one-line fixes for what he may photograph.
 
 ## Licence — important
 

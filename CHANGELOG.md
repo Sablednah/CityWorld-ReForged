@@ -5,6 +5,37 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **Alex's Caves joins the cave pool** (1.20.1, where the mod exists). Five of its biomes — magnetic,
+  primordial, toxic, forlorn hollows and candy cavity — now appear as CityWorld's underground patches,
+  in bigger, rarer cells than the vanilla types, with the whole band painted in the biome's own rock
+  (galena, limestone, radrock, guanostone, chocolate) the way the mod's surface rules do, and its cave
+  shapes — the ferrocave, the dino bowl, the forlorn canyon, the cake cave — allowed through as the
+  structures they are. Its abyssal chasm is deliberately left out: it is a sea-floor biome whose
+  trench carves down from the sea bed, which under dry land would be a pit open to the sky.
+- **Cave biomes keep more of their character.** The cave-decoration pass now reads every generation
+  step but ores, not three. Alex's Caves puts its look everywhere (acid lakes, magnetic ruins, the
+  caveman house — in the strongholds step); on the old three steps magnetic caves would have kept one
+  feature. Still safe on a city chunk: only features no surface biome can place survive, and every
+  survivor is biome-checked at its position.
+- **Fruit orchards.** A farm's orchard used to be six hand-drawn vanilla trees. It now draws from a
+  fruit-tree pool per climate (`#cityworld:orchard/temperate`, `cold`, `dry`, `tropical`, on the
+  configured-feature registry), grown through the tree's own feature so a mod's fruit hangs where the
+  mod put it. Pam's HarvestCraft 2 Trees ships forty-odd of them, split by climate (apples and walnuts
+  in temperate country, olives and dates on a savanna farm, bananas and mangoes in the jungle), and
+  vanilla's cherry is in the temperate pool on every version. Two orchards in three draw from the pool;
+  the classic oak and birch orchards keep a third.
+- **Pam's HarvestCraft 2 Crops in the fields.** Thirty of its field crops — corn, tomatoes, lettuce,
+  onions, garlic, cucumbers, peppers, brassicas, strawberries, peas, beans, grains, roots, squash,
+  cotton, flax, rice — join `#cityworld:farm/crops`, so a tilled field grows them at a random stage.
+- **Dungeon Crawl and Battle Towers are placed** when installed: their structure sets are in the
+  shipped allow-list, the land tower is declared a beard so the ground rises to its floor, and the
+  forecast reserves the towers' real footprints. Cataclysm's sets are in the shipped list too, so the
+  separate `cataclysm-cityworld-compat` jar is no longer needed.
+
 ## 5.13.0
 
 Released for all six Minecraft versions. One theme: CityWorld now knows exactly where every
