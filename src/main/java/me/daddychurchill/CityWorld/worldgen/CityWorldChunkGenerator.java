@@ -756,6 +756,26 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private static final int BLEND_CHUNKS = 1;
 
+    /**
+     * How far the FORECAST path gathers starts, and so how long a beard's taper may run: 8 chunks. The
+     * one-chunk ceiling above is the chunk pipeline's, and the forecast reads no chunk, so it does not
+     * apply there. The taper itself is sized per column by {@link #PAD_SLOPE}, and 128 blocks is its cap.
+     */
+    private static final int BLEND_REACH_CHUNKS = 8;
+
+    /**
+     * Blocks of run per block of rise in a beard's taper, and the shortest taper regardless. The owner's
+     * frosted prison stands ~40 blocks above the plain: forced through the 16-block taper that came out
+     * as a terraced rectangular pyramid ("a pyramid itself", 2026-09-24). At 2.5:1 the same rise runs
+     * out over 100 blocks, one step every two or three blocks -- a hill, not a ziggurat.
+     */
+    private static final double PAD_SLOPE = 2.5;
+    private static final int PAD_TAPER_MIN = 16;
+
+    /** Horizontal scale and amplitude of the noise that wobbles a beard's taper so its contours are not straight. */
+    private static final double PAD_NOISE_SCALE = 1.0 / 24.0;
+    private static final double PAD_NOISE_AMOUNT = 0.25;
+
     private static final int PAD_TAPER = 8;
 
     /**
@@ -904,7 +924,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             StructureForecast fc = forecast;
             boolean fromForecast = fc != null && fc.available();
             if (fromForecast) {
-                for (var found : fc.startsCovering(pos.x, pos.z, BLEND_CHUNKS))
+                for (var found : fc.startsCovering(pos.x, pos.z, BLEND_REACH_CHUNKS))
                     if (wanted.test(found.getStructure()) || fits.shaving().contains(found.getStructure()))
                         starts.add(found);
             } else {
@@ -995,9 +1015,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     tops.add((double) (shave ? b.minY() - 1 : b.minY() + delta - 1));
                     kept.add(piece);
                 }
+                int reachBlocks = fromForecast ? BLEND_REACH_CHUNKS * 16 : taper;
                 for (int i = 0; i < kept.size(); i++) {
                     var b = boxes.get(i);
-                    if (!kept.get(i).isCloseToChunk(pos, taper))
+                    if (!kept.get(i).isCloseToChunk(pos, shave ? taper : reachBlocks))
                         continue;
                     boolean ground = true;
                     for (int j = 0; j < kept.size() && ground; j++) {
@@ -1021,11 +1042,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
             int moved = 0;
             double deltaMin = Double.MAX_VALUE, deltaMax = -Double.MAX_VALUE;
+            me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator wobble = beards.isEmpty() ? null : carveNoise();
+            double maxTaper = fromForecast ? BLEND_REACH_CHUNKS * 16 - 8 : PAD_TAPER_MIN;
             if (!beards.isEmpty())
                 for (int x = 0; x < 16; x++)
                     for (int z = 0; z < 16; z++) {
                         int wx = minX + x, wz = minZ + z;   // plan is chunk-local, boxes are world coords
-                        double nearest = 1.0, weightSum = 0.0, baseSum = 0.0;
+                        double nearestDist = Double.POSITIVE_INFINITY, weightSum = 0.0, baseSum = 0.0;
                         double insideBase = Double.POSITIVE_INFINITY;
                         for (Beard b : beards) {
                             int dx = Math.max(0, Math.max(b.minX() - wx, wx - b.maxX()));
@@ -1040,14 +1063,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             // the ~y95 cliff top the owner stood on next to the prison (2026-09-23).
                             if (!b.ground())
                                 continue;
-                            double d = dist / (double) b.taper();
-                            if (d < nearest)
-                                nearest = d;
+                            if (dist < nearestDist)
+                                nearestDist = dist;
                             double w = 1.0 / (dist * dist + 1.0);
                             weightSum += w;
                             baseSum += w * b.top();
                         }
-                        if (insideBase == Double.POSITIVE_INFINITY && (nearest >= 1.0 || weightSum <= 0.0))
+                        if (insideBase == Double.POSITIVE_INFINITY && (nearestDist > maxTaper || weightSum <= 0.0))
                             continue;
 
                         double natural = ys.getPerciseY(x, z);
@@ -1057,15 +1079,30 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             target = insideBase;
                         } else {
                             // Outside every footprint: blend toward nearby ground floors and ease back to
-                            // natural ground over the taper.
+                            // natural ground. The taper is sized by the RISE -- PAD_SLOPE blocks of run
+                            // per block of climb, never shorter than PAD_TAPER_MIN -- and the distance
+                            // is wobbled by seeded noise so the contours come out as a hillside rather
+                            // than the straight terraces of the owner's "pyramid" (2026-09-24). Under a
+                            // piece nothing changes: the seated-exactly metric stays 745/745.
                             double blended = baseSum / weightSum;
-                            double ease = nearest * nearest * (3.0 - 2.0 * nearest);
+                            double rise = Math.abs(blended - natural);
+                            double taperEff = Math.min(maxTaper, Math.max(PAD_TAPER_MIN, rise * PAD_SLOPE));
+                            double n = wobble.noise(wx * PAD_NOISE_SCALE, 0.0, wz * PAD_NOISE_SCALE);
+                            double d = Math.max(0.0, nearestDist + n * PAD_NOISE_AMOUNT * taperEff) / taperEff;
+                            if (d >= 1.0)
+                                continue;
+                            double ease = d * d * (3.0 - 2.0 * d);
                             target = blended + (natural - blended) * ease;
                         }
-                        // ⚠ WATERLINE: never dig. CityWorld floods every column it plans below sea
-                        // level, so lowering ground onto a buried piece's floor fills with water.
+                        // ⚠ WATERLINE: never dig BELOW sea level. CityWorld floods every column it plans
+                        // under sea level, so lowering ground onto a buried piece's floor fills with
+                        // water. A column AT sea level is a dry beach (ShapeProvider_Normal: "on the
+                        // beach"), so that is the floor. It was seaLevel + 1, which left a structure that
+                        // sinks itself below the surface (Cataclysm's desert village: start_height -3 off
+                        // the heightmap) one block down in a trench (owner, 2026-09-24: "structures are
+                        // 1 level lower ... they build at sea level and we build at sea level + 1").
                         if (target < natural)
-                            target = Math.max(target, Math.min(natural, context.seaLevel + 1));
+                            target = Math.max(target, Math.min(natural, context.seaLevel));
                         if (Math.abs(target - natural) >= 0.5) {
                             moved++;
                             deltaMin = Math.min(deltaMin, target - natural);
