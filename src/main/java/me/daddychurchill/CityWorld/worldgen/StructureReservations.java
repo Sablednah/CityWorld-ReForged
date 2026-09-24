@@ -235,8 +235,12 @@ public final class StructureReservations {
             // The exact answer: is this chunk under (or one chunk from) a structure that WILL be built?
             // Only surface-step sets compete for the ground; a buried start reserves nothing, exactly
             // as the fallback's reachesTheSurface filter intends.
+            // The margin is the blend's own reach for that start: a bearded structure 40 blocks above
+            // its plain tapers over ~100 blocks, and a city planned inside that taper gets lifted around
+            // (the owner's houses in pits and roads ending at a wall, 2026-09-24). A flat village keeps
+            // the one-chunk margin.
             for (net.minecraft.world.level.levelgen.structure.StructureStart start
-                    : forecast.startsCovering(chunkX, chunkZ, FOOTPRINT_MARGIN)) {
+                    : forecast.startsCovering(chunkX, chunkZ, forecast.generator()::reserveMarginChunks)) {
                 if (start.getStructure().step() == GenerationStep.Decoration.SURFACE_STRUCTURES)
                     return true;
             }
