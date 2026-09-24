@@ -5,6 +5,37 @@
     "minecraft:trial_chambers",
     "minecraft:ancient_cities",
     "minecraft:nether_complexes",
-    "minecraft:end_cities"
+    "minecraft:end_cities",
+
+    { "id": "cataclysm:cursed_pyramid",       "required": false },
+    { "id": "cataclysm:frosted_prison",       "required": false },
+    { "id": "cataclysm:acropolis",            "required": false },
+    { "id": "cataclysm:sunken_city",          "required": false },
+    { "id": "cataclysm:ancient_factory",      "required": false },
+    { "id": "cataclysm:burning_arena",        "required": false },
+    { "id": "cataclysm:soul_black_smith",     "required": false },
+    { "id": "cataclysm:ruined_citadel",       "required": false },
+    { "id": "cataclysm:abandoned_structures", "required": false },
+    { "id": "cataclysm:desert_structures",    "required": false },
+    { "id": "cataclysm:amethyst_nest",        "required": false },
+
+    { "id": "dungeoncrawl:dungeons",          "required": false },
+
+    { "id": "ba_bt:land_tower_set",           "required": false },
+    { "id": "ba_bt:ocean_tower_set",          "required": false },
+    { "id": "ba_bt:core_tower_set",           "required": false },
+
+    { "id": "alexscaves:ferrocave",           "required": false },
+    { "id": "alexscaves:dino_bowl",           "required": false },
+    { "id": "alexscaves:volcano",             "required": false },
+    { "id": "alexscaves:acid_pit",            "required": false },
+    { "id": "alexscaves:forlorn_canyon",      "required": false },
+    { "id": "alexscaves:forlorn_bridge",      "required": false },
+    { "id": "alexscaves:cake_cave",           "required": false },
+    { "id": "alexscaves:donut_arch",          "required": false },
+    { "id": "alexscaves:gingerbread_town",    "required": false },
+    { "id": "alexscaves:licowitch_tower",     "required": false },
+    { "id": "alexscaves:soda_bottle",         "required": false },
+    { "id": "alexscaves:underground_cabin",   "required": false }
   ]
 }

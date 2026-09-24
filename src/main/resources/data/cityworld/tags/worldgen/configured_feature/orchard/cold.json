@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "pamhc2trees:apple", "required": false },
+    { "id": "pamhc2trees:cherry", "required": false },
+    { "id": "pamhc2trees:plum", "required": false },
+    { "id": "pamhc2trees:hazelnut", "required": false },
+    { "id": "pamhc2trees:pinenut", "required": false },
+    { "id": "pamhc2trees:gooseberry", "required": false },
+    { "id": "pamhc2trees:maple", "required": false }
+  ]
+}
