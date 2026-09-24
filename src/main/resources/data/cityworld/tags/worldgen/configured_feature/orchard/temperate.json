@@ -1,0 +1,20 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "minecraft:cherry", "required": false },
+
+    { "id": "pamhc2trees:apple", "required": false },
+    { "id": "pamhc2trees:pear", "required": false },
+    { "id": "pamhc2trees:plum", "required": false },
+    { "id": "pamhc2trees:cherry", "required": false },
+    { "id": "pamhc2trees:peach", "required": false },
+    { "id": "pamhc2trees:apricot", "required": false },
+    { "id": "pamhc2trees:walnut", "required": false },
+    { "id": "pamhc2trees:chestnut", "required": false },
+    { "id": "pamhc2trees:hazelnut", "required": false },
+    { "id": "pamhc2trees:pecan", "required": false },
+    { "id": "pamhc2trees:persimmon", "required": false },
+    { "id": "pamhc2trees:maple", "required": false },
+    { "id": "pamhc2trees:gooseberry", "required": false }
+  ]
+}
