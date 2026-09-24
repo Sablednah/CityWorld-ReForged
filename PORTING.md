@@ -52,7 +52,21 @@ self-test's new `checkForecast` reads `structures.forecast.compared 6 / matched 
 PASSES (141 checks). Cost after planning has run: 0.15 ms per chunk for the placement scan, and the
 starts themselves are already memoised by the time the pad asks.
 
-**Not measured here, and it is the owner's playtest that measures it:** the prison's far side
+**Owner's playtest (2026-09-24 morning):** "acropalypse is still cutting - but everything else works
+great. City now generates right against structures - the prison blends on all sides." The acropolis
+was a real bug, found with the pad log on his seed via a stand-in that carries Cataclysm's REAL
+template pools (processors rewritten to `minecraft:empty`, `cataclysm_jigsaw` rewritten to
+`minecraft:jigsaw` with `size` clamped to 1.20.1's limit of 7, biome tags stripped to vanilla
+entries): every piece reported `top 199.0`. A beard aims at `box.minY() + groundLevelDelta - 1`, and
+for a rigid jigsaw that delta encodes the structure's ONE ground plane -- the acropolis's start
+height of 200 -- so no piece floor was ever at or below the hill and the shave shaved nothing. Fixed
+in `b86d3925`: a shave uses the piece box BOTTOM (`minY - 1`, what a cut leaves), and where pieces
+stack, the LOWEST one below natural ground. Proved on the stand-in lowered to y80 so its pieces
+intersect the hill: 256 of 256 columns shaved inside the box, 12-129 in the ring chunks, and
+`region_render.py` shows a plateau at the waterline with the hill sloping down onto it. The real
+acropolis's shape is still his to judge.
+
+**Not measured here before his playtest:** the prison's far side
 (#2) and the acropolis shave (#1) on his seed. Cataclysm cannot load in a dev run, and its jigsaw
 type has its own assembler and a `size` of 25 that vanilla's codec caps at 20, so a template-level
 stand-in would assemble a DIFFERENT prison. The village case (745/745 seated) is what the harness
