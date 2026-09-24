@@ -29,6 +29,13 @@ push version branches BEFORE master so the CI gate tests the trees being release
 
 ## ▶ Resume here — v5.13.0 (2026-09-24): the forecast arc, playtested and released
 
+**Shipped.** Tag `v5.13.0` on master (`b2775285`), six jars on the GitHub release; CurseForge files
+**8966281–8966287** (loader line correct on both loaders again: `1.20.1 = 9990, Forge = 7498, Java 17`,
+the rest NeoForge 10150); Modrinth `gSXLf5YU CYcEY1fC xpoxUL4J vNZLvnhP 3TDOFtcs v6z7b6UX`; fleet stamped
+`DEPLOYED-v5.13.0` on all 12. Gates: six local self-tests PASS with `--compare` agreeing, CI run
+36041227097 green on every branch head, halt/exit scan 0 over ~620 classes per jar after the Sep 14
+control read 4, the 1.20.1 jar from `build/libs` (108 SRG names in the generator class).
+
 **Release day.** Five rounds of owner playtest on his 1.20.1 instance, each fixed and redeployed the
 same day: the acropolis shave aimed at a floor no piece had (box BOTTOM, lowest below ground); the
 prison's beard as a terraced pyramid (taper sized by the rise, noise on the distance, 8-chunk gather);

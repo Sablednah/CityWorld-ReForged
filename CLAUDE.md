@@ -24,9 +24,12 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-09-24)
 
-**v5.13.0 is being cut** (2026-09-24 evening) on all six lines: the structure forecast arc plus the
-stall fix, playtested by the owner on his 1.20.1 instance through five rounds in one day. v5.12.0
-(2026-09-23) was the previous release: tagged, on CurseForge (files 8957340–8957345) and Modrinth.
+**v5.13.0 is released** (2026-09-24 evening) on all six lines — tag `v5.13.0` (`b2775285`), GitHub
+release with six jars, CurseForge files 8966281–8966287, Modrinth versions `gSXLf5YU CYcEY1fC xpoxUL4J
+vNZLvnhP 3TDOFtcs v6z7b6UX`, fleet `DEPLOYED-v5.13.0` on all 12. The structure forecast arc plus the
+stall fix, playtested by the owner on his 1.20.1 instance through five rounds in one day. CI green on
+the tagged commit on all six branches, six self-tests PASS, `--compare` agrees, halt/exit scan 0 on
+all six after the control read 4.
 
 **The release was one arc:** a structure from another mod now sits IN the land instead of on it. Read
 PORTING.md's "Resume here" for the detail. The rules that came out of it, each paid for in a playtest
