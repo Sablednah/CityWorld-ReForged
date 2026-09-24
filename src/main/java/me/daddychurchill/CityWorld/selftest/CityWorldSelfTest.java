@@ -697,10 +697,10 @@ public final class CityWorldSelfTest {
         boolean cherryShipped = false;
         for (String climate : List.of("temperate", "cold", "dry", "tropical")) {
             var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE,
-                    net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", "orchard/" + climate));
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("cityworld", "orchard/" + climate));
             var pool = features.get(tag);
             List<String> names = pool.map(set -> set.stream()
-                    .map(h -> h.unwrapKey().map(k -> k.identifier().toString()).orElse("?")).toList())
+                    .map(h -> h.unwrapKey().map(k -> k.location().toString()).orElse("?")).toList())
                     .orElse(List.of());
             report.put("orchard.pool." + climate, names.size() + ": " + names);
             if (climate.equals("temperate"))

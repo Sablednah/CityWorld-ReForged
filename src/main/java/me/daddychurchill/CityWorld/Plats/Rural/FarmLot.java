@@ -898,7 +898,7 @@ public class FarmLot extends ConnectedLot {
 	private static net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>> orchardTag(
 			String climate) {
 		return net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE,
-				net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", "orchard/" + climate));
+				net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("cityworld", "orchard/" + climate));
 	}
 
 	/**
