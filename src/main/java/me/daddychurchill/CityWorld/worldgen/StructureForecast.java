@@ -54,11 +54,12 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 public final class StructureForecast {
 
     /**
-     * Chunks from an origin a structure may reach. Vanilla bounds a jigsaw at 128 blocks (8 chunks);
-     * Cataclysm's own jigsaw at 192 (12). A candidate further out than its structure reaches costs one
-     * memo lookup and nothing else, so this errs wide.
+     * Chunks from an origin a structure may reach, PLUS the widest reservation margin a start may ask for.
+     * Vanilla bounds a jigsaw at 128 blocks (8 chunks), Cataclysm's own jigsaw at 192 (12), and a bearded
+     * structure's blend may reserve up to 8 chunks beyond its box ({@code reserveMarginChunks}). A
+     * candidate further out than its structure reaches costs one memo lookup and nothing else.
      */
-    public static final int REACH = 12;
+    public static final int REACH = 20;
 
     private static final boolean DIAG = System.getProperty("cityworld.probe") != null
             || System.getProperty("cityworld.diagnostics") != null;
@@ -142,13 +143,20 @@ public final class StructureForecast {
      * chunk loaded to get the answer.
      */
     public List<StructureStart> startsCovering(int chunkX, int chunkZ, int marginChunks) {
+        return startsCovering(chunkX, chunkZ, start -> marginChunks);
+    }
+
+    /** As above, with the margin decided per start -- the reservation asks for the blend's own reach. */
+    public List<StructureStart> startsCovering(int chunkX, int chunkZ,
+            java.util.function.ToIntFunction<StructureStart> marginOf) {
         List<StructureStart> out = new ArrayList<>();
         if (!available())
             return out;
-        int minX = (chunkX << 4) - (marginChunks << 4), maxX = (chunkX << 4) + 15 + (marginChunks << 4);
-        int minZ = (chunkZ << 4) - (marginChunks << 4), maxZ = (chunkZ << 4) + 15 + (marginChunks << 4);
         forEachCandidate(chunkX, chunkZ, (ox, oz) -> {
             for (StructureStart start : startsAt(ox, oz)) {
+                int m = marginOf.applyAsInt(start) << 4;
+                int minX = (chunkX << 4) - m, maxX = (chunkX << 4) + 15 + m;
+                int minZ = (chunkZ << 4) - m, maxZ = (chunkZ << 4) + 15 + m;
                 BoundingBox box = start.getBoundingBox();
                 if (box.maxX() < minX || box.minX() > maxX || box.maxZ() < minZ || box.minZ() > maxZ)
                     continue;
@@ -157,6 +165,17 @@ public final class StructureForecast {
             }
         });
         return out;
+    }
+
+    /** The registry access the forecast is bound to, or null before binding. */
+    public RegistryAccess registries() {
+        Bound b = bound;
+        return b == null ? null : b.registries();
+    }
+
+    /** The generator this forecast serves. */
+    public CityWorldChunkGenerator generator() {
+        return generator;
     }
 
     private interface Candidate {

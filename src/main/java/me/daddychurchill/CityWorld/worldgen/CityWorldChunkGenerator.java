@@ -788,6 +788,72 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private static final double PAD_SLOPE = 2.5;
     private static final int PAD_TAPER_MIN = 16;
 
+    /** Per start: how many chunks past its box the reservation must cover, memoised by identity. */
+    private final java.util.concurrent.ConcurrentHashMap<net.minecraft.world.level.levelgen.structure.StructureStart, Integer> reserveMargins =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * How far past a start's bounding box the city must keep off, in chunks: the reach of the beard's
+     * blend for THAT start. One chunk for anything the pad leaves alone; otherwise the same taper
+     * arithmetic the pad uses ({@link #PAD_SLOPE}, {@link #PAD_TAPER_MIN}), from the rise between the
+     * structure's ground plane and the natural terrain sampled around its box. Pure -- the terrain is
+     * the raw shaper's, the pieces are the forecast's -- so the plan cannot depend on timing.
+     */
+    public int reserveMarginChunks(net.minecraft.world.level.levelgen.structure.StructureStart start) {
+        Integer got = reserveMargins.get(start);
+        if (got != null)
+            return got;
+        int margin = StructureReservations.FOOTPRINT_MARGIN;
+        try {
+            CityWorldGenerator ctx = context();
+            StructureForecast fc = forecast;
+            var registries = fc == null ? null : fc.registries();
+            if (ctx != null && registries != null) {
+                var fits = fitIndex(registries.lookupOrThrow(Registries.STRUCTURE));
+                var structure = start.getStructure();
+                boolean shave = fits.shaving().contains(structure);
+                boolean beard = structure.terrainAdaptation()
+                        != net.minecraft.world.level.levelgen.structure.TerrainAdjustment.NONE
+                        || fits.bearding().contains(structure);
+                if (shave) {
+                    margin = 2;   // its taper is the fixed 16 blocks, plus one chunk of grace
+                } else if (beard) {
+                    double plane = Double.POSITIVE_INFINITY;
+                    for (var piece : start.getPieces()) {
+                        int delta = 0;
+                        if (piece instanceof net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece pool) {
+                            if (pool.getElement().getProjection()
+                                    != net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool.Projection.RIGID)
+                                continue;
+                            delta = pool.getGroundLevelDelta();
+                        }
+                        plane = Math.min(plane, piece.getBoundingBox().minY() + delta - 1);
+                    }
+                    if (plane != Double.POSITIVE_INFINITY) {
+                        var box = start.getBoundingBox();
+                        int[] xs = { box.minX(), (box.minX() + box.maxX()) / 2, box.maxX() };
+                        int[] zs = { box.minZ(), (box.minZ() + box.maxZ()) / 2, box.maxZ() };
+                        double rise = 0;
+                        for (int sx : xs)
+                            for (int sz : zs) {
+                                if (sx == xs[1] && sz == zs[1])
+                                    continue;   // the centre is under the building
+                                double natural = Math.max(ctx.shapeProvider.findBlockY(ctx, sx, sz), ctx.seaLevel);
+                                rise = Math.max(rise, Math.abs(plane - natural));
+                            }
+                        double taper = Math.min(BLEND_REACH_CHUNKS * 16 - 8, Math.max(PAD_TAPER_MIN, rise * PAD_SLOPE));
+                        margin = Math.max(StructureReservations.FOOTPRINT_MARGIN,
+                                Math.min(BLEND_REACH_CHUNKS, (int) Math.ceil((taper + 8) / 16.0)));
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            margin = StructureReservations.FOOTPRINT_MARGIN;
+        }
+        Integer winner = reserveMargins.putIfAbsent(start, margin);
+        return winner != null ? winner : margin;
+    }
+
     /** Horizontal scale and amplitude of the noise that wobbles a beard's taper so its contours are not straight. */
     private static final double PAD_NOISE_SCALE = 1.0 / 24.0;
     private static final double PAD_NOISE_AMOUNT = 0.25;
@@ -1081,7 +1147,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                 continue;
                             if (dist < nearestDist)
                                 nearestDist = dist;
-                            double w = 1.0 / (dist * dist + 1.0);
+                            // Squared inverse-square: at a box edge the piece you are standing beside
+                            // must own the blend, or forty other ground pieces at 10-20 blocks pull
+                            // the target a few blocks off its floor and leave a ridge along the edge
+                            // (the owner's "a bit of a ridge", 2026-09-24). Further out the weights
+                            // still cross over smoothly.
+                            double q = dist * dist + 1.0;
+                            double w = 1.0 / (q * q);
                             weightSum += w;
                             baseSum += w * b.top();
                         }
