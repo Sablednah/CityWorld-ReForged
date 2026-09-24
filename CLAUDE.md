@@ -98,6 +98,10 @@ Pam's crops in the field pool and a new `#cityworld:orchard/<climate>` fruit-tre
 tree's own feature (vanilla cherry proves it on every version). None of the four loads in the dev runtime,
 so the self-test proves mechanisms only: **his playtest is the verification**. PORTING.md "the owner's next
 four mods" has the per-mod bytecode findings and the one-line fixes for what he may photograph.
+**Same night, for the ZARP pack session:** `worldCreation.lockCustomize` (no Customize button for the locked
+preset, so a pack's replaced `world_settings` entry is authoritative) and an `_extra` loot hook on every chest
+table. **The ZARP instance takes only released CurseForge jars** (`.sablecraft-no-deploy`, which the fleet script
+honours), so ZARP is waiting on a release — the owner's call. Six self-tests + CI green on `ad8e3508`.
 
 ## Licence — important
 
