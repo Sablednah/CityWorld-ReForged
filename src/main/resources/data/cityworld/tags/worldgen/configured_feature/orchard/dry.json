@@ -1,0 +1,17 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "pamhc2trees:olive", "required": false },
+    { "id": "pamhc2trees:fig", "required": false },
+    { "id": "pamhc2trees:date", "required": false },
+    { "id": "pamhc2trees:pomegranate", "required": false },
+    { "id": "pamhc2trees:almond", "required": false },
+    { "id": "pamhc2trees:pistachio", "required": false },
+    { "id": "pamhc2trees:orange", "required": false },
+    { "id": "pamhc2trees:lemon", "required": false },
+    { "id": "pamhc2trees:lime", "required": false },
+    { "id": "pamhc2trees:grapefruit", "required": false },
+    { "id": "pamhc2trees:avocado", "required": false },
+    { "id": "pamhc2trees:tamarind", "required": false }
+  ]
+}
