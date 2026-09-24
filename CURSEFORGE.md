@@ -13,6 +13,15 @@ screen.
 Battle-tested across **135 worlds and 3.2 million generated chunks** — over **830 km²** of procedurally
 generated city, more ground than New York City covers.
 
+**New in 5.13.0: the city knows where every structure will be.** CityWorld now makes the same
+placement call Minecraft will make, ahead of any chunk, so it keeps clear exactly a structure's real
+footprint — no more empty fields reserved for a structure that never came, and the city builds right
+up to a village or a Cataclysm prison. The ground under a big modded structure is shaped on every side
+and rises to it as a hill rather than a terraced pyramid; a structure that cuts into a hillside can be
+declared `shave` so the hill slopes down onto it instead of ending in a face. The minute-long stall
+next to a large modded structure is fixed. 5.12.0, released the day before, was the first half of the
+same arc: structures sit in the land rather than on it, never dig moats, and aim at a building's base.
+
 **New in 5.11.0: Minecraft 1.20.1, on Forge.** The first CityWorld build that is not NeoForge — asked
 for here in the comments, because 1.20.1 is where a great many mods still live. Nothing is cut down for
 it: every world style, the ruined Nether and End cities, strongholds, interiors, schematics, the
@@ -228,12 +237,12 @@ Minecraft version is in the filename, so there is no guessing which is which.
 
 | Minecraft | Loader | Java | File |
 |---|---|---|---|
-| 1.20.1 | **Forge** 47+ | 17 | `cityworld-5.11.0+mc1.20.1.jar` |
-| 1.21.1 | NeoForge 21.1.251+ | 21 | `cityworld-5.10.0+mc1.21.1.jar` |
-| 1.21.11 | NeoForge 21.11.42+ | 21 | `cityworld-5.10.0+mc1.21.11.jar` |
-| 26.1.2 | NeoForge 26.1.2.95+ | 25 | `cityworld-5.10.0+mc26.1.2.jar` |
-| 26.2 | NeoForge 26.2.0.59+ | 25 | `cityworld-5.10.0+mc26.2.jar` |
-| 26.3 | NeoForge 26.3.0.3+ (beta) | 25 | `cityworld-5.10.1+mc26.3.jar` |
+| 1.20.1 | **Forge** 47+ | 17 | `cityworld-5.13.0+mc1.20.1.jar` |
+| 1.21.1 | NeoForge 21.1.251+ | 21 | `cityworld-5.13.0+mc1.21.1.jar` |
+| 1.21.11 | NeoForge 21.11.42+ | 21 | `cityworld-5.13.0+mc1.21.11.jar` |
+| 26.1.2 | NeoForge 26.1.2.95+ | 25 | `cityworld-5.13.0+mc26.1.2.jar` |
+| 26.2 | NeoForge 26.2.0.59+ | 25 | `cityworld-5.13.0+mc26.2.jar` |
+| 26.3 | NeoForge 26.3.0.3+ (beta) | 25 | `cityworld-5.13.0+mc26.3.jar` |
 
 **A given seed builds the same city on all six.** The layout — terrain, roads, districts, which
 building stands where — is identical across versions; only the materials shift slightly, because newer

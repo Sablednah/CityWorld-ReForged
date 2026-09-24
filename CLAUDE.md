@@ -22,11 +22,11 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 | Licence | **GPL-3.0-only** (see below — non-negotiable) |
 | Branch | work happens on `master` (the `neoforge-port` branch was merged into it and deleted) |
 
-## ▶ Where this is, and what's next (2026-09-23)
+## ▶ Where this is, and what's next (2026-09-24)
 
-**v5.12.0 is released** — tagged, on GitHub, CurseForge (files 8957340–8957345) and Modrinth, and
-deployed to all 11 fleet instances (`DEPLOYED-v5.12.0`). All six lines are on the same version for the
-first time since 5.9.0. All six self-tests pass and `selftest.sh --compare` agrees on plan hashes.
+**v5.13.0 is being cut** (2026-09-24 evening) on all six lines: the structure forecast arc plus the
+stall fix, playtested by the owner on his 1.20.1 instance through five rounds in one day. v5.12.0
+(2026-09-23) was the previous release: tagged, on CurseForge (files 8957340–8957345) and Modrinth.
 
 **The release was one arc:** a structure from another mod now sits IN the land instead of on it. Read
 PORTING.md's "Resume here" for the detail. The rules that came out of it, each paid for in a playtest
@@ -60,7 +60,7 @@ it). The instrument was stripped again before committing — `grep -r Timings sr
 whether the same chunk stalls twice, before reasoning about causes. Two code diagnoses were wrong;
 the instrument plus the owner's own log lines were right in one run each.
 
-**BUILT, unreleased (2026-09-24 small hours): the structure forecast.** `StructureForecast` makes
+**BUILT and playtested (2026-09-24), shipping as 5.13.0: the structure forecast.** `StructureForecast` makes
 vanilla's own `createStructures` call from the planner, for any chunk, before it exists, and is
 proved against the stored start by the self-test (`checkForecast`: compare footprint, floor and
 piece count, never maxY). Reservation = the real footprint + 1 chunk (2,809-chunk sweep: 1160 -> 279

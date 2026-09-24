@@ -5,7 +5,11 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
-## Unreleased
+## 5.13.0
+
+Released for all six Minecraft versions. One theme: CityWorld now knows exactly where every
+structure will be before it plans, and shapes the land to it properly. Also the minute-long stall
+next to a large modded structure is gone.
 
 ### Changed
 

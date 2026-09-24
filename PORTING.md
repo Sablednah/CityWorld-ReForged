@@ -27,7 +27,18 @@ game; the sections below carry the measurements and the several wrong turns.
 **Before tagging:** the halt/exit bytecode scan with a detector proved on a known positive first, and
 push version branches BEFORE master so the CI gate tests the trees being released.
 
-## ▶ Resume here — the forecast is BUILT (2026-09-24, small hours): reserve, pad and shave from vanilla's own starts
+## ▶ Resume here — v5.13.0 (2026-09-24): the forecast arc, playtested and released
+
+**Release day.** Five rounds of owner playtest on his 1.20.1 instance, each fixed and redeployed the
+same day: the acropolis shave aimed at a floor no piece had (box BOTTOM, lowest below ground); the
+prison's beard as a terraced pyramid (taper sized by the rise, noise on the distance, 8-chunk gather);
+the one-block trench under a self-sinking village (beards settle at seaLevel, a dry beach); houses in
+pits and a road into the mound (reserve as far as the blend reaches, per start); and the pyramid's
+barren sand ring with snaking edges (blend and reserve toward the plane the pad can REACH --
+max(floor, seaLevel + 1) -- because a box bottom can be underground chambers). Left as Cataclysm's own:
+the acropolis pillar bases one block into the water (its absolute start height, same in vanilla).
+
+### The forecast is BUILT (2026-09-24, small hours): reserve, pad and shave from vanilla's own starts
 
 **Where it is.** Commits on master: `03abc4bb` (spike), `8fc88c4a` (the feature); cherry-picked to all
 five version branches with one "Adapt the structure forecast to the X line" commit each (three
