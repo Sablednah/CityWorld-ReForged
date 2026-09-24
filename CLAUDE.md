@@ -25,59 +25,74 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 ## ▶ Where this is, and what's next (2026-09-24)
 
 **v5.13.0 is released** (2026-09-24 evening) on all six lines — tag `v5.13.0` (`b2775285`), GitHub
-release with six jars, CurseForge files 8966281–8966287, Modrinth versions `gSXLf5YU CYcEY1fC xpoxUL4J
-vNZLvnhP 3TDOFtcs v6z7b6UX`, fleet `DEPLOYED-v5.13.0` on all 12. The structure forecast arc plus the
-stall fix, playtested by the owner on his 1.20.1 instance through five rounds in one day. CI green on
-the tagged commit on all six branches, six self-tests PASS, `--compare` agrees, halt/exit scan 0 on
-all six after the control read 4.
+release with six jars, CurseForge files 8966281–8966287, Modrinth `gSXLf5YU CYcEY1fC xpoxUL4J vNZLvnhP
+3TDOFtcs v6z7b6UX`, fleet `DEPLOYED-v5.13.0` on all 12. Gates: six self-tests PASS, `--compare` agrees,
+CI green on every tagged branch head, halt/exit scan 0 on all six after the control read 4.
 
-**The release was one arc:** a structure from another mod now sits IN the land instead of on it. Read
-PORTING.md's "Resume here" for the detail. The rules that came out of it, each paid for in a playtest
-round:
+**The release is one idea: the planner knows exactly where every structure will be.** `StructureForecast`
+makes vanilla's own `createStructures` call from the planner, for any chunk, before it exists, and the
+self-test proves it against the stored start on every version (`checkForecast`: compare footprint, floor
+and piece count — never maxY, which a chunk reload rebuilds for a terrain-matching piece). Everything
+else follows from it. Read PORTING.md "▶ Resume here — v5.13.0" for the measurements. The rules, each
+paid for in an owner playtest round on 2026-09-24:
 
-- Every structure is **beard**, **carve**, or **neither**. Beard = fill up to the piece floor, for
-  something standing on the ground. Carve = clear the box plus a halo, for something genuinely
-  BURIED. Neither = for anything that levels itself (`ScatteredFeaturePiece`) or floats.
-- **Never dig.** The pad never lowers ground below `seaLevel + 1`, and a standing structure's carve
-  starts above `max(ground, sea)`. CityWorld floods whatever it plans under sea level, so a "hollow"
-  becomes a moat and a cleared ocean column becomes a dry hole.
-- **Aim at a building's BASE, not its roof.** Under overlapping pieces take the LOWEST floor. Taking
-  the highest built terrain up to the roof of a 97-piece tower.
-- **The blend reaches one chunk past the bounding box and no further** — that is the chunk pipeline's
-  ceiling, not a preference. See `BLEND_CHUNKS`.
-- **A halo is for a cavern.** Around something standing in the open it eats the landscape.
+- **Reserve the real footprint, plus as far as the blend will reach.** Reservation = a forecast start's
+  box + `reserveMarginChunks(start)`: one chunk for anything the pad leaves alone, otherwise the same
+  taper arithmetic the pad uses. One 2,809-chunk sweep: 1160 → 279 chunks reserved, 804 → 0 reserved for
+  a structure that never came. A city planned inside the taper gets lifted around (houses in pits, a road
+  into a wall) — so the reservation and the blend must be sized by the SAME number.
+- **The blend is sized by the RISE and wobbled by noise.** `PAD_SLOPE` 2.5 blocks of run per block of
+  climb, never under 16, capped at 120 (the forecast path gathers 8 chunks out; the region fallback keeps
+  the pipeline's one-chunk ceiling). A 40-block rise through a 16-block taper is a terraced pyramid.
+- **Blend toward the plane the pad can REACH, never the box bottom.** Outside a piece the ground never
+  goes below `seaLevel + 1`; a box bottom can be underground chambers (the cursed pyramid: ~35 blocks
+  down), and aiming at it sized an 88-block taper and sank the whole ring to the beach line. Under a
+  piece the ground may settle to `seaLevel` (a dry beach in CityWorld), which is what closes the trench
+  under a structure that sinks itself below the heightmap (Cataclysm's desert village, `start_height -3`).
+- **A beard aims at a FLOOR, a shave at a box BOTTOM.** `box.minY() + groundLevelDelta - 1` is a rigid
+  jigsaw's single ground plane — every acropolis piece reported y199 while the hill it cuts sits at y60,
+  and the shave shaved nothing. A structure that cuts removes everything from its box bottom up, so a
+  shave lowers the plan to the LOWEST box bottom below natural ground and feathers outside; only ever
+  lowering. Beards: under a piece the LOWEST floor wins (the base, not the roof); outside a footprint
+  only GROUND pieces pull (pieces with no lower-floored piece under them in X/Z), weighted by the square
+  of inverse-square so the piece beside you owns the edge (no ridge).
+- **Every structure is beard, carve, shave or neither.** Carve = a cavern for something BURIED, halo only
+  then. Neither = anything that levels itself (`ScatteredFeaturePiece`) or genuinely floats.
+- **Two rules keep the forecast a pure function:** `getBaseHeight` answers RAW terrain (vanilla asks it
+  while placing; answering the plan would make a real chicken-and-egg), and no reservation answer is
+  memoised before the forecast has bound to its level (a timing-dependent plan). Fill the forecast memo
+  OUTSIDE any map lock — a jigsaw assembly inside `computeIfAbsent` is the stall below in another coat.
+- **Left as Cataclysm's own:** the acropolis pillar bases one block into the water (its absolute start
+  height; identical in a vanilla world). Not worth tricking the heightmap answer, which would float
+  every village by one.
 
-**The stall is FOUND and FIXED (2026-09-23 evening, unreleased).** It was never random: the owner's
-logs put every 60-80 s `plan.build` on the SAME platmap (0,160) of the same seed, so it was
-reproduced here with the owner's seed and a placement-only stand-in for Cataclysm's structure sets
-(the real jar's SRG mixins cannot load in a named dev runtime — PORTING.md "The stall, found"). The
-restored watchdog's stack named it in one run: `UrbanContext.fillOutBuilding` ignored `setLot`'s
-result, and `setLot` refuses a reserved chunk — so the chunk stayed empty and every monotone path
-through the reservation re-entered it, constructing a fresh lot (256 columns of octave noise) per
-visit. Exponential in the reservation's size. A/B on the same platmap: **37,669 ms → 1,040 ms**.
-Second fix in the same commit: `getPlatMap` no longer plans inside `ConcurrentHashMap`'s bin lock
-(a 71 s plan there held a worker wanting a DIFFERENT platmap for 62 s, and the server thread with
-it). The instrument was stripped again before committing — `grep -r Timings src` reads 0.
+**The stall (fixed in the same release).** It was never random: the owner's logs put every 60-80 s
+`plan.build` on the SAME platmap of the same seed. `UrbanContext.fillOutBuilding` ignored `setLot`'s
+refusal of a reserved chunk, so every monotone path through the reservation re-entered it, building a
+fresh lot (256 noise columns) per visit — exponential in the reservation's width. 37,669 ms → 1,040 ms.
+And `getPlatMap` no longer plans inside `ConcurrentHashMap`'s bin lock (a resize locks every bin, so one
+slow plan froze unrelated workers and the server thread). **A stall that looks random is a platmap: ask
+which chunk, and whether the same chunk stalls twice, before reasoning.** Two code diagnoses were wrong;
+the restored `Support/Timings` watchdog (at `4671737d^`, strip before shipping) named it in one run.
 
-**⚠ The lesson that outlives it: a stall that looks random is a platmap.** Ask which chunk, and
-whether the same chunk stalls twice, before reasoning about causes. Two code diagnoses were wrong;
-the instrument plus the owner's own log lines were right in one run each.
+**Reproducing a modded structure locally.** Cataclysm's jar (like every code mod in the owner's
+instance) carries SRG-named mixins that cannot apply in a named dev runtime. What works: a datapack-only
+stand-in jar with its `structure_set` JSONs + `*_avoid` tags verbatim, its template pools with
+`processors` rewritten to `minecraft:empty`, its NBTs, biome tags stripped to vanilla entries, and a
+named transcription of any custom placement type registered under the mod's namespace from a debug
+class (deleted before committing — `find me -path '*debug*'` in the jar must read 0). Its jigsaw
+assembler is NOT vanilla's, so the pieces are an approximation: good for exercising a mechanism, never
+for the real shape — that is the owner's playtest. Recipe in PORTING.md "The stall, found and fixed".
 
-**BUILT and playtested (2026-09-24), shipping as 5.13.0: the structure forecast.** `StructureForecast` makes
-vanilla's own `createStructures` call from the planner, for any chunk, before it exists, and is
-proved against the stored start by the self-test (`checkForecast`: compare footprint, floor and
-piece count, never maxY). Reservation = the real footprint + 1 chunk (2,809-chunk sweep: 1160 -> 279
-reserved, 804 -> 0 reserved-for-nothing); the pad gathers from it (no 8-chunk limit) and blends
-outside a box to GROUND pieces only; `structure_fit` has `shave` (the acropolis). On all six lines.
-**NEXT: the owner's playtest** of the prison's far side and the acropolis on his seed; then
-`selftest.sh --compare` across all six and release. PORTING.md "▶ Resume here — the forecast is BUILT".
-Two rules that keep the forecast pure: `getBaseHeight` answers RAW terrain, and no reservation answer
-is memoised before the forecast has bound to its level. A structure larger than vanilla's 128-block bound (Cataclysm's
-frosted prison is ~174) cannot be fully bearded: a chunk can only resolve a start whose ORIGIN chunk
-is within 8, and vanilla has the same limit. `StructureReservations` already computes WHERE a
-structure will be, deterministically, at any distance and with no chunk loading — levelling the
-reserved area toward the structure's projected start height would blend the far edge too. Accepted
-as-is for 5.12.0 (owner's call).
+**⚠ Cherry-picking the pad to a version branch:** the branches never received master's `fitIndex`
+refactor and a hunk-level merge mixed two generations of that code. Splice master's whole fit-index
+and `padPlanForStructures` regions between the two comment anchors that exist verbatim on every branch,
+then let the compiler name the API drift (26.x: `ChunkPos` is a record, `pack()`/`x()`; 26.3:
+`getStructureTemplateManager`, a `Climate.Sampler` on `Structure.generate`, two-arg
+`getStartForStructure`; 1.20.1/1.21.1: ten-arg `generate`, `location()`, Forge's server hooks).
+
+**NEXT:** nothing queued from this arc. The owner is playtesting 5.13.0 on his 1.20.1 instance; whatever
+he photographs next is the queue. See "▶ Next up" in PORTING.md for the standing list.
 
 ## Licence — important
 
