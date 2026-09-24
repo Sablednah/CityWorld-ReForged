@@ -992,7 +992,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     }
                     var b = piece.getBoundingBox();
                     boxes.add(b);
-                    tops.add((double) (b.minY() + delta - 1));
+                    // A beard aims at the piece's FLOOR, box.minY() + groundLevelDelta - 1. A shave
+                    // must not: for a rigid jigsaw that delta encodes the structure's ONE ground
+                    // plane, so every acropolis piece reported y199 (its start height, 200) while the
+                    // hill it cuts sits at y60-90 -- "0 shaved over 10 shave pieces", measured
+                    // 2026-09-24. A structure that cuts removes everything from its box BOTTOM up, so
+                    // the ground that survives inside the box is box.minY() - 1.
+                    tops.add((double) (shave ? b.minY() - 1 : b.minY() + delta - 1));
                     kept.add(piece);
                 }
                 for (int i = 0; i < kept.size(); i++) {
@@ -1076,8 +1082,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
             // SHAVE: a structure that cuts its own volume (the acropolis's NBT is air where the hill
             // was) leaves a vertical face at its box edge and a raw strata cut inside it. Lower the PLAN
-            // instead: inside the box, to the storey the hill cuts into -- the highest piece floor at
-            // or below natural ground; outside, feather from that floor back to natural over the
+            // instead: inside the box, to the bottom of the lowest piece box that is below natural
+            // ground (what the cut leaves); outside, feather from that level back to natural over the
             // taper. Only ever lowering (raising built a 40-block column of strata into it), never below
             // the waterline. Owner, 2026-09-23: "accept it's gonna cut -- so do our own feathering into it".
             int shaved = 0;
@@ -1086,19 +1092,22 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     for (int z = 0; z < 16; z++) {
                         int wx = minX + x, wz = minZ + z;
                         double natural = ys.getPerciseY(x, z);
-                        double nearest = 1.0, storey = Double.NEGATIVE_INFINITY;
+                        // The LOWEST box bottom below natural ground among the pieces that reach this
+                        // column: stacked pieces each clear their own box, so the hill goes down to the
+                        // bottom of the lowest one, not to the storey nearest the surface.
+                        double nearest = 1.0, storey = Double.POSITIVE_INFINITY;
                         for (Beard b : shaves) {
                             int dx = Math.max(0, Math.max(b.minX() - wx, wx - b.maxX()));
                             int dz = Math.max(0, Math.max(b.minZ() - wz, wz - b.maxZ()));
                             double d = Math.max(dx, dz) / (double) b.taper();
-                            if (d >= 1.0 || b.top() > natural)
+                            if (d >= 1.0 || b.top() >= natural)
                                 continue;
                             if (d < nearest)
                                 nearest = d;
-                            if (b.top() > storey)
+                            if (b.top() < storey)
                                 storey = b.top();
                         }
-                        if (storey == Double.NEGATIVE_INFINITY || nearest >= 1.0)
+                        if (storey == Double.POSITIVE_INFINITY || nearest >= 1.0)
                             continue;
                         double ease = nearest * nearest * (3.0 - 2.0 * nearest);
                         double target = storey + (natural - storey) * ease;
