@@ -118,7 +118,8 @@ Vanilla under Customize → Realms):
   stretches. Nothing digs through the islands; basements go only as deep as the rock allows.
 - **`/cityworld`** visits the city before the fall — the overworld's own plan, pristine.
 - Modpacks can lock any of it: `lockedWorldPreset`, `ruinedNether` and `cityworldEnd` in
-  `config/cityworld-startup.toml`.
+  `config/cityworld-startup.toml`, and `lockCustomize = true` removes the Customize button for the locked
+  preset so every new world gets the preset's settings exactly as the pack ships them.
 
 ## Furnished — and furniture mods make it more so
 

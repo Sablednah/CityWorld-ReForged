@@ -31,6 +31,16 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 - **Pam's HarvestCraft 2 Crops in the fields.** Thirty of its field crops — corn, tomatoes, lettuce,
   onions, garlic, cucumbers, peppers, brassicas, strawberries, peas, beans, grains, roots, squash,
   cotton, flax, rice — join `#cityworld:farm/crops`, so a tilled field grows them at a random stage.
+- **`lockCustomize` for modpacks.** With `lockedWorldPreset` set, `lockCustomize = true` in
+  `config/cityworld-startup.toml` removes the Customize button for that preset, so a new world always
+  gets the preset's `world_settings` datapack entry unchanged. A pack that replaces that entry (schematics,
+  shops, landmark announcements, its own street and villager names) is then authoritative; nothing a
+  player can click switches it off.
+- **Every chest table has an `_extra` hook now.** The thirteen tables that had none — building, bunker,
+  warehouse, storage shed, sewer, mine, food, and the three works' input and output tables — end with a
+  reference to an empty `cityworld:chests/<name>_extra` at weight 15, the same shape the vault rooms,
+  hospital, shop, pond and nightstand have had since 5.9.0. A pack replaces just that file to seed its
+  own items (quest parts in the industrial warehouse, say) without touching CityWorld's contents.
 - **Dungeon Crawl and Battle Towers are placed** when installed: their structure sets are in the
   shipped allow-list, the land tower is declared a beard so the ground rises to its floor, and the
   forecast reserves the towers' real footprints. Cataclysm's sets are in the shipped list too, so the

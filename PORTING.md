@@ -104,6 +104,20 @@ inside the cave.
   version without a mod: `checkOrchards` hunts eight temperate orchards and fails if the pool holds cherry
   and none grew one ((1/3)^6 to be wrong).
 
+### Same evening, from the ZARP session (the LegendQuest ZARP pack, 26.2, on 5.13.0)
+
+Two asks built, one noted. **`worldCreation.lockCustomize`** (startup config, default false): with a
+preset lock, register NO preset editor for the locked preset — vanilla shows no Customize button for a
+preset without one, and since Customize is what bakes an inline settings copy, a world made without it
+carries the preset's `world_settings` entry by reference, so a pack that replaces that entry
+(Threadwork's TOP built-in datapack replacing `cityworld:apocalypse`) is authoritative. **`_extra`
+hooks on every chest table**: `scripts/add_loot_extras.py <dir> <key>` gave the thirteen hook-less
+tables (warehouse first among them — ZARP seeds quest parts there) an empty companion at weight 15,
+idempotent, parametrised because 1.20.1 keeps `loot_tables/` and the `name` key. **Heads-up, not built:**
+the owner wants the vault to worsen floor by floor (loot, spawners, broken lights by depth) — a
+lot-level depth gradient in the vault generator; if built, expose a per-floor loot hook
+(`vault_<room>_extra_<depth>` or a depth-indexed name) for Threadwork to fill.
+
 ### Ship notes
 
 - Cherry-pick order and the usual API drift: `Identifier.fromNamespaceAndPath` → `new ResourceLocation`,
