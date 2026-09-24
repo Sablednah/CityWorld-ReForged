@@ -120,6 +120,13 @@ lot-level depth gradient in the vault generator; if built, expose a per-floor lo
 
 ### Ship notes
 
+- **⚠ A cherry-pick onto 1.20.1 carried the 1.21 loot key into `loot_tables/`.** Git's rename detection
+  merged master's edits to `loot_table/chests/*.json` into the branch's `loot_tables/chests/*.json` — hunk
+  by hunk, so the thirteen new `"type": "minecraft:loot_table", "value": …` entries landed verbatim, and
+  1.20.1 wants `"name"`. A mis-keyed reference entry is a table that fails to parse and logs once at
+  datapack load, which is silent from in-game. After any loot cherry-pick onto 1.20.1:
+  `grep -l '"value": "cityworld:chests' src/main/resources/data/cityworld/loot_tables/chests/*.json` must
+  read nothing. `scripts/add_loot_extras.py` is parametrised (`loot_tables name`) for exactly this.
 - Cherry-pick order and the usual API drift: `Identifier.fromNamespaceAndPath` → `new ResourceLocation`,
   `lookupOrThrow` → `registryOrThrow`, `k.identifier()` → `k.location()` on 1.20.1; the 1.20.1 tag folder
   is `tags/blocks/` (plural), so `farm/crops.json` moves.
