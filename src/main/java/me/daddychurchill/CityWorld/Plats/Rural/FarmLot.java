@@ -461,24 +461,30 @@ public class FarmLot extends ConnectedLot {
 				plantSaplings(generator, chunk, cropY, CoverageType.DARK_OAK_SAPLING);
 				break;
 			case OAK_TREE:
-				plantTrees(generator, chunk, cropY, CoverageSets.OAK_TREES);
+				if (!plantFruitOrchard(generator, chunk, cropY, orchardPoolFor(CropType.OAK_TREE)))
+					plantTrees(generator, chunk, cropY, CoverageSets.OAK_TREES);
 				generateSurface(generator, chunk, false);
 				break;
 			case PINE_TREE:
-				plantTrees(generator, chunk, cropY, CoverageSets.PINE_TREES);
+				if (!plantFruitOrchard(generator, chunk, cropY, orchardPoolFor(CropType.PINE_TREE)))
+					plantTrees(generator, chunk, cropY, CoverageSets.PINE_TREES);
 				break;
 			case BIRCH_TREE:
-				plantTrees(generator, chunk, cropY, CoverageSets.BIRCH_TREES);
+				if (!plantFruitOrchard(generator, chunk, cropY, orchardPoolFor(CropType.BIRCH_TREE)))
+					plantTrees(generator, chunk, cropY, CoverageSets.BIRCH_TREES);
 				generateSurface(generator, chunk, false);
 				break;
 			case JUNGLE_TREE:
-				plantTrees(generator, chunk, cropY, CoverageSets.JUNGLE_TREES);
+				if (!plantFruitOrchard(generator, chunk, cropY, orchardPoolFor(CropType.JUNGLE_TREE)))
+					plantTrees(generator, chunk, cropY, CoverageSets.JUNGLE_TREES);
 				break;
 			case ACACIA_TREE:
-				plantTrees(generator, chunk, cropY, CoverageSets.ACACIA_TREES);
+				if (!plantFruitOrchard(generator, chunk, cropY, orchardPoolFor(CropType.ACACIA_TREE)))
+					plantTrees(generator, chunk, cropY, CoverageSets.ACACIA_TREES);
 				break;
 			case SWAMP_TREE:
-				plantTrees(generator, chunk, cropY, CoverageSets.SWAMP_TREES);
+				if (!plantFruitOrchard(generator, chunk, cropY, orchardPoolFor(CropType.SWAMP_TREE)))
+					plantTrees(generator, chunk, cropY, CoverageSets.SWAMP_TREES);
 				break;
 			case WHEAT:
 				plantPooledField(generator, chunk, cropY, CoverageType.WHEAT, 1, 2);
@@ -861,6 +867,82 @@ public class FarmLot extends ConnectedLot {
 			CoverageType coverageType) {
 		for (int i = 0; i < 4; i++)
 			generator.coverProvider.generateCoverage(generator, chunk, x, y, z + i * 3, coverageType);
+	}
+
+	/**
+	 * The fruit-orchard pools: one configured-feature tag per climate, {@code #cityworld:orchard/<climate>}.
+	 *
+	 * <p>A farm's orchard used to be six hand-drawn vanilla trees and nothing a tree mod added could ever
+	 * grow there. Pam's HarvestCraft 2 Trees ships fifty fruit trees as ordinary {@code minecraft:tree}
+	 * configured features (its own foliage placer hangs the fruit), so the pool is the feature registry,
+	 * split by climate the way the MODERN crop palettes already are: apples and walnuts for a temperate
+	 * farm, olives and dates for a savanna one, bananas and mangoes in the jungle. Vanilla's cherry is in
+	 * the temperate pool too, so orchards gain something on every version, mod or no mod.
+	 */
+	private static final net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>>
+			ORCHARD_TEMPERATE = orchardTag("temperate"), ORCHARD_COLD = orchardTag("cold"),
+			ORCHARD_DRY = orchardTag("dry"), ORCHARD_TROPICAL = orchardTag("tropical");
+
+	/** The fruit-tree pool an orchard of this crop type draws from, or {@code null} for anything else. */
+	public static net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>> orchardPoolFor(
+			CropType cropType) {
+		return switch (cropType) {
+		case OAK_TREE, BIRCH_TREE -> ORCHARD_TEMPERATE;
+		case PINE_TREE -> ORCHARD_COLD;
+		case ACACIA_TREE -> ORCHARD_DRY;
+		case JUNGLE_TREE, SWAMP_TREE -> ORCHARD_TROPICAL;
+		default -> null;
+		};
+	}
+
+	private static net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>> orchardTag(
+			String climate) {
+		return net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE,
+				net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", "orchard/" + climate));
+	}
+
+	/**
+	 * Plants the orchard grid from a fruit-tree pool, one species for the whole orchard; false when the
+	 * pool is empty here, when the roll kept the classic hand-drawn orchard, or when the ground refused
+	 * the first tree -- the caller then draws the classic orchard instead, so a farm is never bare.
+	 *
+	 * <p>Two orchards in three go to the pool when it has anything: the vanilla oak and birch orchards
+	 * keep a third so a farmed landscape still reads as mixed rather than as a fruit plantation. The
+	 * roll is only made when the pool is non-empty, so a world without any tagged tree generates block
+	 * for block as it did before this existed.
+	 *
+	 * <p>Grown through the feature's own {@code place} on the live level, the way the Nether grows its
+	 * huge fungi -- a modded tree's trunk placer, foliage placer and decorators all run as the mod
+	 * wrote them, which is the only way its fruit ends up on it.
+	 */
+	private boolean plantFruitOrchard(CityWorldGenerator generator, SupportBlocks chunk, int croplevel,
+			net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>> pool) {
+		if (!(chunk instanceof RealBlocks real)
+				|| !(real.getServerLevel() instanceof net.minecraft.world.level.WorldGenLevel level))
+			return false;
+		var trees = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE)
+				.get(pool);
+		if (trees.isEmpty() || trees.get().size() == 0)
+			return false;
+		if (chunkOdds.getRandomInt(3) == 0)
+			return false;
+		var pick = trees.get().get(chunkOdds.getRandomInt(trees.get().size()));
+		var worldGenerator = level.getLevel().getChunkSource().getGenerator();
+		int planted = 0;
+		for (int x : new int[] { 2, 7, 12 })
+			for (int z : new int[] { 2, 7, 12 }) {
+				if (!chunkOdds.playOdds(oddsOfCrop))
+					continue;
+				net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(
+						me.daddychurchill.CityWorld.Support.AbstractBlocks.getBlockX(chunk.sectionX, x), croplevel,
+						me.daddychurchill.CityWorld.Support.AbstractBlocks.getBlockZ(chunk.sectionZ, z));
+				if (pick.value().place(level, worldGenerator,
+						net.minecraft.util.RandomSource.create(chunkOdds.getRandomLong()), pos))
+					planted++;
+				else if (planted == 0)
+					return false;
+			}
+		return true;
 	}
 
 	private void plantTrees(CityWorldGenerator generator, SupportBlocks chunk, int croplevel,

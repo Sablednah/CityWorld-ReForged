@@ -82,7 +82,13 @@ public final class CaveRegions {
             // 26.2's sulfur caves ship from a source tree that also builds on 1.21.11. They are listed
             // after the vanilla four so a vanilla type wins a shared cell.
             "biomesoplenty:glowing_grotto", "biomesoplenty:crystalline_chasm",
-            "biomesoplenty:spider_nest");
+            "biomesoplenty:spider_nest",
+            // Alex's Caves' five land biomes (1.20.1 only, where the mod exists), after everything else
+            // so a vanilla or BoP type wins a shared cell. Its abyssal chasm is deliberately NOT here: it
+            // is an ocean-floor biome, and its trench structure carves down from the sea bed -- under dry
+            // land that would be a pit open to the sky.
+            "alexscaves:magnetic_caves", "alexscaves:primordial_caves", "alexscaves:toxic_caves",
+            "alexscaves:forlorn_hollows", "alexscaves:candy_cavity");
 
     /**
      * Per-biome patch geometry: {@code {cell size, percent of cells, minY, maxY}}.
@@ -94,11 +100,11 @@ public final class CaveRegions {
      * so those cannot open into a warden's lair. Only the mines reach that deep, which reads as the
      * miners having downed tools when they broke through.
      */
-    private static final Map<String, int[]> GEOMETRY = Map.of(
-            "minecraft:deep_dark", new int[] { 176, 4, -64, -24 },
-            "minecraft:sulfur_caves", new int[] { 112, 5, -64, -8 },
-            "minecraft:lush_caves", new int[] { 80, 5, -40, 40 },
-            "minecraft:dripstone_caves", new int[] { 96, 6, -60, 20 },
+    private static final Map<String, int[]> GEOMETRY = Map.ofEntries(
+            Map.entry("minecraft:deep_dark", new int[] { 176, 4, -64, -24 }),
+            Map.entry("minecraft:sulfur_caves", new int[] { 112, 5, -64, -8 }),
+            Map.entry("minecraft:lush_caves", new int[] { 80, 5, -40, 40 }),
+            Map.entry("minecraft:dripstone_caves", new int[] { 96, 6, -60, 20 }),
             // BoP's underground three. Rarer than the vanilla types so a modded world still reads as
             // CityWorld with guests, not as a BoP world; spider_nest rarest of all, since it is the one
             // that bites.
@@ -109,9 +115,22 @@ public final class CaveRegions {
             // whatever biome is at the actual surface, so the biome filter rejected every one of them —
             // the biome generated and nothing whatsoever grew in it. Check a candidate's feature
             // PLACEMENT, not its name: height_range means underground, heightmap means surface.
-            "biomesoplenty:glowing_grotto", new int[] { 96, 4, -60, 0 },
-            "biomesoplenty:crystalline_chasm", new int[] { 112, 3, -64, -16 },
-            "biomesoplenty:spider_nest", new int[] { 128, 2, -48, 8 });
+            Map.entry("biomesoplenty:glowing_grotto", new int[] { 96, 4, -60, 0 }),
+            Map.entry("biomesoplenty:crystalline_chasm", new int[] { 112, 3, -64, -16 }),
+            Map.entry("biomesoplenty:spider_nest", new int[] { 128, 2, -48, 8 }),
+            // Alex's Caves. Its biomes are whole underground COLUMNS in its own worlds (the biome runs
+            // from ~20 blocks below the surface to bedrock: depth 0.15..1.5 in its noise conditions), and
+            // its cave shapes are STRUCTURES gated on the biome at their origin -- ferrocave at y 20..59,
+            // dino bowl at y -1, forlorn canyon at y -10, cake cave at y -48 -- each then carving as far
+            // as the biome continues. So the band must reach bedrock and up to those origins, and it
+            // stops at 40 so the carve never breaks into CityWorld's cisterns (y 49) and sewers (57-62).
+            // Bigger cells than the vanilla types because the caves themselves are 100-200 blocks across;
+            // rarer because in Alex's own worlds they are a treat, not the norm.
+            Map.entry("alexscaves:magnetic_caves", new int[] { 192, 2, -64, 40 }),
+            Map.entry("alexscaves:primordial_caves", new int[] { 224, 2, -64, 40 }),
+            Map.entry("alexscaves:toxic_caves", new int[] { 160, 2, -64, 40 }),
+            Map.entry("alexscaves:forlorn_hollows", new int[] { 192, 2, -64, 40 }),
+            Map.entry("alexscaves:candy_cavity", new int[] { 160, 1, -64, 40 }));
 
     /** What an unrecognised (modded, datapack-added) cave biome gets: a mid-depth, modest patch. */
     private static final int[] DEFAULT_GEOMETRY = { 96, 5, -60, 20 };
@@ -145,7 +164,34 @@ public final class CaveRegions {
             "minecraft:sulfur_caves", List.of(
                     new WallBand(-0.4, -0.1, "minecraft:cinnabar"),
                     new WallBand(0.0, 0.4, "minecraft:sulfur"),
-                    new WallBand(0.4, Double.MAX_VALUE, "minecraft:cinnabar")));
+                    new WallBand(0.4, Double.MAX_VALUE, "minecraft:cinnabar")),
+            // Alex's Caves paints the WHOLE column, not a lining: its surface rules replace every stone
+            // in the biome with the biome's rock (galena, limestone, radrock, guanostone, chocolate), and
+            // its features and ores then target THAT rock -- galena iron ore replaces galena, radrock
+            // uranium replaces radrock, the ferrocave carves through galena. Hence SOLID_ROCK below.
+            "alexscaves:magnetic_caves", List.of(
+                    new WallBand(-Double.MAX_VALUE, 0.55, "alexscaves:galena"),
+                    new WallBand(0.55, Double.MAX_VALUE, "alexscaves:energized_galena_neutral")),
+            "alexscaves:primordial_caves", List.of(
+                    new WallBand(-Double.MAX_VALUE, Double.MAX_VALUE, "alexscaves:limestone")),
+            "alexscaves:toxic_caves", List.of(
+                    new WallBand(-Double.MAX_VALUE, Double.MAX_VALUE, "alexscaves:radrock")),
+            "alexscaves:forlorn_hollows", List.of(
+                    new WallBand(-Double.MAX_VALUE, 0.45, "alexscaves:guanostone"),
+                    new WallBand(0.45, Double.MAX_VALUE, "alexscaves:coprolith")),
+            "alexscaves:candy_cavity", List.of(
+                    new WallBand(-Double.MAX_VALUE, 0.5, "alexscaves:block_of_chocolate"),
+                    new WallBand(0.5, Double.MAX_VALUE, "alexscaves:block_of_frosted_chocolate")));
+
+    /**
+     * Cave biomes whose rock is painted throughout the band rather than only where it meets cave air.
+     * Vanilla's sulfur caves are a lining (the gradient rule keys off the surface); Alex's Caves' are
+     * solid, see {@link #WALL_ROCK}. The distinction matters for the mod's own decoration, which
+     * replaces its rock in the solid, not on a face.
+     */
+    private static final java.util.Set<String> SOLID_ROCK = java.util.Set.of(
+            "alexscaves:magnetic_caves", "alexscaves:primordial_caves", "alexscaves:toxic_caves",
+            "alexscaves:forlorn_hollows", "alexscaves:candy_cavity");
 
     /**
      * One band of a cave biome's wall rock: the noise range that selects it, and the block.
@@ -268,6 +314,16 @@ public final class CaveRegions {
                 return WALL_ROCK.get(idOf(patch.biome()));
             }
             return null;
+        }
+
+        /** Whether this column's cave type paints its rock solid (see {@link CaveRegions#SOLID_ROCK}). */
+        public boolean paintsSolid(long worldSeed, int blockX, int blockZ) {
+            for (Patch patch : patches) {
+                if (!inCell(worldSeed, patch, blockX, blockZ))
+                    continue;
+                return SOLID_ROCK.contains(idOf(patch.biome()));
+            }
+            return false;
         }
 
         /** Whether this column paints its walls at all — lets a caller skip the whole column cheaply. */

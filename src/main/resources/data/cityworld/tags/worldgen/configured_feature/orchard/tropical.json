@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "pamhc2trees:banana", "required": false },
+    { "id": "pamhc2trees:coconut", "required": false },
+    { "id": "pamhc2trees:mango", "required": false },
+    { "id": "pamhc2trees:papaya", "required": false },
+    { "id": "pamhc2trees:gauva", "required": false },
+    { "id": "pamhc2trees:lychee", "required": false },
+    { "id": "pamhc2trees:starfruit", "required": false },
+    { "id": "pamhc2trees:dragonfruit", "required": false },
+    { "id": "pamhc2trees:jackfruit", "required": false },
+    { "id": "pamhc2trees:breadfruit", "required": false },
+    { "id": "pamhc2trees:cashew", "required": false },
+    { "id": "pamhc2trees:pawpaw", "required": false },
+    { "id": "pamhc2trees:rambutan", "required": false },
+    { "id": "pamhc2trees:soursop", "required": false },
+    { "id": "pamhc2trees:passionfruit", "required": false },
+    { "id": "pamhc2trees:durian", "required": false },
+    { "id": "pamhc2trees:cinnamon", "required": false },
+    { "id": "pamhc2trees:nutmeg", "required": false },
+    { "id": "pamhc2trees:vanillabean", "required": false },
+    { "id": "pamhc2trees:peppercorn", "required": false },
+    { "id": "pamhc2trees:candlenut", "required": false },
+    { "id": "pamhc2trees:lime", "required": false },
+    { "id": "pamhc2trees:lemon", "required": false },
+    { "id": "pamhc2trees:orange", "required": false }
+  ]
+}

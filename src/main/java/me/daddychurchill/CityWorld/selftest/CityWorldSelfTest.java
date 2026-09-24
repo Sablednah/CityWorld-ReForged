@@ -681,6 +681,66 @@ public final class CityWorldSelfTest {
         report.put("farmland.growing", onFarmland.toString());
         report.put("flowers.singleBlock", Integer.toString(shortFlowers));
         report.put("flowers.doubleBlock", Integer.toString(tallFlowers));
+        checkOrchards(server, level, context);
+    }
+
+    /**
+     * The fruit-orchard pools ({@code #cityworld:orchard/<climate>}, configured features) stated outright,
+     * and proof that a pool tree actually grows: the shipped temperate pool carries vanilla's cherry on
+     * every version, so among the temperate orchards generated there must be cherry logs. Two orchards in
+     * three draw from the pool, so six orchards with none is a (1/3)^6 accident -- and a placement path
+     * that silently fails (the ground refusing the feature, the level not being a WorldGenLevel) looks
+     * exactly like that accident from in-world.
+     */
+    private void checkOrchards(MinecraftServer server, ServerLevel level, CityWorldGenerator context) {
+        var features = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE);
+        boolean cherryShipped = false;
+        for (String climate : List.of("temperate", "cold", "dry", "tropical")) {
+            var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE,
+                    net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", "orchard/" + climate));
+            var pool = features.get(tag);
+            List<String> names = pool.map(set -> set.stream()
+                    .map(h -> h.unwrapKey().map(k -> k.identifier().toString()).orElse("?")).toList())
+                    .orElse(List.of());
+            report.put("orchard.pool." + climate, names.size() + ": " + names);
+            if (climate.equals("temperate"))
+                cherryShipped = names.contains("minecraft:cherry");
+        }
+        List<int[]> orchardChunks = new ArrayList<>();
+        for (int cx = -FARM_SEARCH_RADIUS; cx <= FARM_SEARCH_RADIUS && orchardChunks.size() < 8; cx++)
+            for (int cz = -FARM_SEARCH_RADIUS; cz <= FARM_SEARCH_RADIUS && orchardChunks.size() < 8; cz++)
+                if (lotAt(context, cx, cz) instanceof me.daddychurchill.CityWorld.Plats.Rural.FarmLot farm
+                        && me.daddychurchill.CityWorld.Plats.Rural.FarmLot.orchardPoolFor(farm.getCropType())
+                                == me.daddychurchill.CityWorld.Plats.Rural.FarmLot.orchardPoolFor(
+                                        me.daddychurchill.CityWorld.Plats.Rural.FarmLot.CropType.OAK_TREE))
+                    orchardChunks.add(new int[] { cx, cz });
+        Map<String, Integer> logs = new TreeMap<>();
+        int withCherry = 0;
+        for (int[] coord : orchardChunks) {
+            final int cx = coord[0], cz = coord[1];
+            LevelChunk chunk = server.submit(() -> level.getChunk(cx, cz)).join();
+            boolean cherry = false;
+            for (int x = 0; x < 16; x++)
+                for (int z = 0; z < 16; z++)
+                    for (int y = context.streetLevel; y <= context.streetLevel + 14; y++) {
+                        BlockState state = chunk.getBlockState(new BlockPos(cx * 16 + x, y, cz * 16 + z));
+                        if (!state.is(net.minecraft.tags.BlockTags.LOGS))
+                            continue;
+                        String id = String.valueOf(BuiltInRegistries.BLOCK.getKey(state.getBlock()));
+                        logs.merge(id, 1, Integer::sum);
+                        if (id.equals("minecraft:cherry_log"))
+                            cherry = true;
+                    }
+            if (cherry)
+                withCherry++;
+        }
+        report.put("orchard.temperateLots", Integer.toString(orchardChunks.size()));
+        report.put("orchard.lotsWithCherry", Integer.toString(withCherry));
+        report.put("orchard.logs", logs.toString());
+        if (cherryShipped && orchardChunks.size() >= 6 && withCherry == 0)
+            fail("the temperate orchard pool holds minecraft:cherry, " + orchardChunks.size()
+                    + " temperate orchards generated and none grew a cherry -- the fruit-orchard placement "
+                    + "path is silently doing nothing");
     }
 
     /** First few entries of a resolved pool, named, for eyeballing what a mod contributed. */

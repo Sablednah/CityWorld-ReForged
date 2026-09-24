@@ -2003,6 +2003,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     // Cheap reject: the column's cave type is fixed, so one question answers the column.
                     if (!pool.paintsWalls(seed, x, z))
                         continue;
+                    // Alex's Caves' rock is the whole column (its surface rules replace every stone in the
+                    // biome), vanilla's sulfur is a lining; see CaveRegions.SOLID_ROCK.
+                    boolean solid = pool.paintsSolid(seed, x, z);
                     for (int y = bottom; y <= top; y++) {
                         String rockId = pool.wallRockAt(seed, x, y, z);
                         if (rockId == null)
@@ -2011,7 +2014,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         net.minecraft.world.level.block.state.BlockState state = level.getBlockState(cursor);
                         if (!state.is(net.minecraft.tags.BlockTags.BASE_STONE_OVERWORLD))
                             continue;
-                        if (!touchesCaveAir(level, cursor))
+                        if (!solid && !touchesCaveAir(level, cursor))
                             continue;
                         net.minecraft.world.level.block.state.BlockState rock = rocks.computeIfAbsent(rockId,
                                 id -> net.minecraft.core.registries.BuiltInRegistries.BLOCK
@@ -2125,11 +2128,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         new java.util.HashSet<>();
                 for (Holder<Biome> biome : this.biomeSource.possibleBiomes())
                     if (!pool.contains(biome))
-                        collectCaveSteps(biome, elsewhere::add);
+                        collectStepHolders(biome, CAVE_POOL_STEPS, h -> elsewhere.add(h.value()));
                 java.util.LinkedHashSet<Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature>> keep =
                         new java.util.LinkedHashSet<>();
                 for (Holder<Biome> biome : pool)
-                    collectCaveStepHolders(biome, h -> {
+                    collectStepHolders(biome, CAVE_POOL_STEPS, h -> {
                         if (!elsewhere.contains(h.value()))
                             keep.add(h);
                     });
@@ -2141,26 +2144,34 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     }
 
     /**
-     * The generation steps a cave biome keeps its own look in: {@code LOCAL_MODIFICATIONS}
-     * (large dripstone), {@code UNDERGROUND_DECORATION} (dripstone clusters, sculk) and
-     * {@code VEGETAL_DECORATION} (all of lush caves). Fluid springs are deliberately excluded — those
-     * carve water into whatever is above them.
+     * The steps the cave-pool pass reads: every decoration step but {@code UNDERGROUND_ORES}, which
+     * {@link #placeUndergroundOres} already runs for the chunk's bottom biome (a cave band that reaches
+     * bedrock, as Alex's Caves' do, is that biome).
+     *
+     * <p>Until 2026-09-24 this was three steps -- LOCAL_MODIFICATIONS (large dripstone),
+     * UNDERGROUND_DECORATION (dripstone clusters, sculk) and VEGETAL_DECORATION (all of lush caves) --
+     * with fluid springs deliberately excluded because they carve water into whatever is above them.
+     * Wider now because a modded cave biome keeps its character wherever its author put it. Alex's Caves spreads its look across LAKES (acid lakes), UNDERGROUND_STRUCTURES
+     * (magnetic ruins), SURFACE_STRUCTURES (ice-cream scoops, the subterranodon roost), STRONGHOLDS
+     * (lollipops, thornwood trees, the caveman house -- yes, the strongholds step), FLUID_SPRINGS
+     * (magnetic nodes, acid vents, the amber monolith) and TOP_LAYER_MODIFICATION (sulfur stacks, the
+     * nuclear siren); on the three steps alone magnetic caves would have kept one feature (tesla bulb)
+     * and toxic caves one (underweed). Safe for the same reason the narrow set was: only features NO
+     * surface biome can place survive the filter, and every survivor is still biome-checked at its
+     * position, so a surface-height placement under a city lands in the surface biome and skips.
+     * The springs are safe for the same reason. The Nether and End keep {@link #UNDERGROUND_STEPS}: their
+     * own-biome pass was tuned in a playtest and fluid springs there would flood the ruined city.
      */
-    private static final int[] CAVE_STEPS = {
-            net.minecraft.world.level.levelgen.GenerationStep.Decoration.LOCAL_MODIFICATIONS.ordinal(),
-            net.minecraft.world.level.levelgen.GenerationStep.Decoration.UNDERGROUND_DECORATION.ordinal(),
-            net.minecraft.world.level.levelgen.GenerationStep.Decoration.VEGETAL_DECORATION.ordinal() };
+    private static final int[] CAVE_POOL_STEPS = java.util.stream.IntStream
+            .range(0, net.minecraft.world.level.levelgen.GenerationStep.Decoration.values().length)
+            .filter(step -> step != net.minecraft.world.level.levelgen.GenerationStep.Decoration.UNDERGROUND_ORES.ordinal())
+            .toArray();
 
-    private static void collectCaveSteps(Holder<Biome> biome,
-            java.util.function.Consumer<net.minecraft.world.level.levelgen.placement.PlacedFeature> sink) {
-        collectCaveStepHolders(biome, h -> sink.accept(h.value()));
-    }
-
-    private static void collectCaveStepHolders(Holder<Biome> biome,
+    private static void collectStepHolders(Holder<Biome> biome, int[] steps,
             java.util.function.Consumer<Holder<net.minecraft.world.level.levelgen.placement.PlacedFeature>> sink) {
         List<net.minecraft.core.HolderSet<net.minecraft.world.level.levelgen.placement.PlacedFeature>> byStep =
                 biome.value().getGenerationSettings().features();
-        for (int step : CAVE_STEPS)
+        for (int step : steps)
             if (step < byStep.size())
                 byStep.get(step).forEach(sink);
     }
