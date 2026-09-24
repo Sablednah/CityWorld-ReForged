@@ -820,6 +820,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         plane = Math.min(plane, piece.getBoundingBox().minY() + delta - 1);
                     }
                     if (plane != Double.POSITIVE_INFINITY) {
+                        plane = Math.max(plane, ctx.seaLevel + 1);   // the pad never lowers the ring below this
                         var box = start.getBoundingBox();
                         int[] xs = { box.minX(), (box.minX() + box.maxX()) / 2, box.maxX() };
                         int[] zs = { box.minZ(), (box.minZ() + box.maxZ()) / 2, box.maxZ() };
@@ -1145,7 +1146,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             double q = dist * dist + 1.0;
                             double w = 1.0 / (q * q);
                             weightSum += w;
-                            baseSum += w * b.top();
+                            // ⚠ Outside a piece the ground can never go below seaLevel + 1 (the clamp
+                            // below), so blend toward the plane the pad can REACH. The cursed pyramid's
+                            // box bottom is its underground chambers, ~35 blocks under the desert:
+                            // blending toward that sized an 88-block taper and sank the whole ring to
+                            // the beach line -- the owner's barren sand sea with snaking edges
+                            // (2026-09-24). Toward 64 the rise is zero and nothing outside moves.
+                            baseSum += w * Math.max(b.top(), context.seaLevel + 1);
                         }
                         if (insideBase == Double.POSITIVE_INFINITY && (nearestDist > maxTaper || weightSum <= 0.0))
                             continue;
@@ -1180,7 +1187,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         // the heightmap) one block down in a trench (owner, 2026-09-24: "structures are
                         // 1 level lower ... they build at sea level and we build at sea level + 1").
                         if (target < natural)
-                            target = Math.max(target, Math.min(natural, context.seaLevel));
+                            target = Math.max(target, Math.min(natural,
+                                    insideBase != Double.POSITIVE_INFINITY ? context.seaLevel : context.seaLevel + 1));
                         if (Math.abs(target - natural) >= 0.5) {
                             moved++;
                             deltaMin = Math.min(deltaMin, target - natural);
