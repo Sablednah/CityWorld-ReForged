@@ -879,12 +879,12 @@ public class FarmLot extends ConnectedLot {
 	 * farm, olives and dates for a savanna one, bananas and mangoes in the jungle. Vanilla's cherry is in
 	 * the temperate pool too, so orchards gain something on every version, mod or no mod.
 	 */
-	private static final net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>>
+	private static final net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.Feature>
 			ORCHARD_TEMPERATE = orchardTag("temperate"), ORCHARD_COLD = orchardTag("cold"),
 			ORCHARD_DRY = orchardTag("dry"), ORCHARD_TROPICAL = orchardTag("tropical");
 
 	/** The fruit-tree pool an orchard of this crop type draws from, or {@code null} for anything else. */
-	public static net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>> orchardPoolFor(
+	public static net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.Feature> orchardPoolFor(
 			CropType cropType) {
 		return switch (cropType) {
 		case OAK_TREE, BIRCH_TREE -> ORCHARD_TEMPERATE;
@@ -895,9 +895,9 @@ public class FarmLot extends ConnectedLot {
 		};
 	}
 
-	private static net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>> orchardTag(
+	private static net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.Feature> orchardTag(
 			String climate) {
-		return net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE,
+		return net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.FEATURE,
 				net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", "orchard/" + climate));
 	}
 
@@ -916,11 +916,11 @@ public class FarmLot extends ConnectedLot {
 	 * wrote them, which is the only way its fruit ends up on it.
 	 */
 	private boolean plantFruitOrchard(CityWorldGenerator generator, SupportBlocks chunk, int croplevel,
-			net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>> pool) {
+			net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.feature.Feature> pool) {
 		if (!(chunk instanceof RealBlocks real)
 				|| !(real.getServerLevel() instanceof net.minecraft.world.level.WorldGenLevel level))
 			return false;
-		var trees = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE)
+		var trees = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.FEATURE)
 				.get(pool);
 		if (trees.isEmpty() || trees.get().size() == 0)
 			return false;

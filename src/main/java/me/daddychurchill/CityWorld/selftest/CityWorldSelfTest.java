@@ -693,10 +693,10 @@ public final class CityWorldSelfTest {
      * exactly like that accident from in-world.
      */
     private void checkOrchards(MinecraftServer server, ServerLevel level, CityWorldGenerator context) {
-        var features = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE);
+        var features = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.FEATURE);
         boolean cherryShipped = false;
         for (String climate : List.of("temperate", "cold", "dry", "tropical")) {
-            var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE,
+            var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.FEATURE,
                     net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", "orchard/" + climate));
             var pool = features.get(tag);
             List<String> names = pool.map(set -> set.stream()
