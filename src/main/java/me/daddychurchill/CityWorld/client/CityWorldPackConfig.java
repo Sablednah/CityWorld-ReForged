@@ -29,6 +29,7 @@ public final class CityWorldPackConfig {
     private static final ModConfigSpec.ConfigValue<String> LOCKED_WORLD_PRESET;
     private static final ModConfigSpec.ConfigValue<String> RUINED_NETHER;
     private static final ModConfigSpec.ConfigValue<String> CITYWORLD_END;
+    private static final ModConfigSpec.BooleanValue LOCK_CUSTOMIZE;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -49,6 +50,11 @@ public final class CityWorldPackConfig {
                 "dragon fight, CityWorld cities on the outer islands), \"vanilla\" = vanilla's End.",
                 "Empty = the player chooses in Customize (default vanilla).")
                 .define("cityworldEnd", "");
+        LOCK_CUSTOMIZE = b.comment(
+                "With lockedWorldPreset set: true removes the Customize button for that preset, so every new world",
+                "gets the preset's own world_settings datapack entry unchanged (a pack that replaces that entry is",
+                "then authoritative). false keeps Customize open with only the style held. Ignored without a lock.")
+                .define("lockCustomize", false);
         b.pop();
         SPEC = b.build();
     }
@@ -79,6 +85,11 @@ public final class CityWorldPackConfig {
                 yield Optional.empty();
             }
         };
+    }
+
+    /** Whether the locked preset's Customize button is removed as well — meaningless without a preset lock. */
+    public static boolean lockCustomize() {
+        return LOCK_CUSTOMIZE.get() && lockedWorldPreset().isPresent();
     }
 
     /** The preset new worlds are locked to, or empty when no lock is configured (or the id is malformed). */

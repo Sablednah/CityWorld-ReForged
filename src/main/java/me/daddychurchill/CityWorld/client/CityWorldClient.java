@@ -67,6 +67,16 @@ public final class CityWorldClient {
     }
 
     private static void onRegisterPresetEditors(RegisterPresetEditorsEvent event) {
+        // A pack's lockCustomize: register NO editor for the locked preset, and vanilla shows no Customize
+        // button for a preset without one. The world then carries the preset's world_settings entry by
+        // REFERENCE (Customize is what bakes an inline copy), so the datapack entry stays authoritative --
+        // which is the point: a pack that replaces cityworld:apocalypse's settings wants them un-editable.
+        if (CityWorldPackConfig.lockCustomize()) {
+            CityWorldMod.LOGGER.info("CityWorld: lockCustomize is on -- no Customize button for the locked preset {}",
+                    CityWorldPackConfig.lockedWorldPreset().map(k -> k.identifier().toString()).orElse("?"));
+            if (CityWorldPackConfig.lockedWorldPreset().filter(CITY::equals).isPresent())
+                return;
+        }
         event.register(CITY, (parent, context) -> new CityWorldCustomizeScreen(
                 parent,
                 currentStyle(context),
@@ -79,6 +89,7 @@ public final class CityWorldClient {
         // cityworld:city has one otherwise — but with the style picker held on the preset's own style, so
         // "settings open, type locked" cannot be undone from inside the editor.
         CityWorldPackConfig.lockedWorldPreset()
+                .filter(key -> !CityWorldPackConfig.lockCustomize())
                 .filter(key -> key.identifier().getNamespace().equals(CityWorldMod.MODID) && !key.equals(CITY))
                 .ifPresent(key -> event.register(key, (parent, context) -> new CityWorldCustomizeScreen(
                         parent,
