@@ -24,6 +24,10 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   is sized from its rise (two and a half blocks of run per block of climb, and never less than
   sixteen) and its contours are wobbled by seeded noise, so a prison forty blocks above its plain
   gets a hundred-block slope instead of a terraced ramp.
+- **The city keeps off the whole slope, not just the structure.** The ground reserved around a
+  structure now reaches as far as its blend does, sized from its rise, so no house is planned where
+  the hill will rise around it and no road runs into the hill's wall. A flat village still reserves
+  one chunk past its footprint.
 - **A structure that sinks itself below the surface no longer sits in a one-block trench** at a
   sea-level plain: the ground under it may now settle to sea level itself, which is a dry beach in
   CityWorld, rather than stopping one block above it.
