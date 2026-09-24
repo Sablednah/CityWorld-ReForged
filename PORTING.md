@@ -2,9 +2,14 @@
 
 ## ▶ Resume here — the owner's next four mods (2026-09-24 evening): Alex's Caves, Pam's, Battle Towers, Dungeon Crawl
 
-**Where it is.** Built and self-tested on master (PASS, 151 checks; `orchard.lotsWithCherry = 6` of 8
-temperate orchards, 527 cherry logs; `biome.caveFeatures` unchanged at 12 for vanilla), cherry-picked to
-the five version branches, deployed to the owner's `1.20.1  Forge` instance. **Unreleased** — it waits on
+**Where it is.** Master `1dc14234` (code) + `057a9503` (docs); branch heads `533fc1a4` (1.20.1),
+`28052687` (1.21.1), `3cb4c1f3` (26.1), `a38785ef` (26.2), `2eeb0d65` (26.3), all pushed. Gates: six
+self-tests PASS (141–174 checks, 0 failures; `orchard.lotsWithCherry` 6–7 of 8 temperate orchards on
+every version, 527–682 cherry logs; `biome.caveFeatures` unchanged at 12 on the lines without sulfur,
+16 on 26.3 where the wider read adds `rooted_sulfur_spring` and `sulfur_pool` to the sulfur set),
+`--compare` agrees on all three styles, CI run 36063649182 green on every branch head. Deployed to the
+owner's `1.20.1  Forge` instance as `DEPLOYED-533fc1a4` (jar was not locked, so his game was closed).
+**Unreleased** — it waits on
 his playtest, because none of the four mods can load in the named dev runtime (SRG mixins, same as
 Cataclysm), so what the self-test proves is the MECHANISM on vanilla content and what only he can see is
 the look: an Alex's cave in galena, a Battle Tower seated, a Pam orchard with fruit.
