@@ -3081,9 +3081,11 @@ a check that cannot fail proves nothing, and looks exactly like a pass.
 
 ## Vivo — the shared test machine, and CityWorld's spot on it
 
-`ssh -i ~/.ssh/vivo_ed25519 sable@192.168.7.102` — an Ubuntu VivoBook beside the desktop, set up by
+`ssh -i ~/.ssh/vivo_ed25519 sable@192.168.7.246` — an Ubuntu VivoBook beside the desktop, set up by
 the LegendQuest/StoryTeller session. **Read `~/dev/README.md` there first**; it carries the traps and
 is the authority, not this section.
+
+> **2026-09-24: Vivo now has a FIXED IP, `192.168.7.246`** (no longer DHCP). Any `.102`/`.105` below is history. `ssh -i ~/.ssh/vivo_ed25519 sable@192.168.7.246`.
 
 **Why it exists, and it is a capability difference rather than spare capacity:** on Windows a
 Minecraft client cannot be driven by a background process at all (`SetForegroundWindow` is refused,
