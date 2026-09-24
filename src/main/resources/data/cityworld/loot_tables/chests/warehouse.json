@@ -257,6 +257,11 @@
         {
           "type": "empty",
           "weight": 5
+        },
+        {
+          "type": "minecraft:loot_table",
+          "name": "cityworld:chests/warehouse_extra",
+          "weight": 15
         }
       ]
     }
