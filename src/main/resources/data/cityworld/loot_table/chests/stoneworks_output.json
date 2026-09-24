@@ -89,6 +89,11 @@
         {
           "type": "minecraft:empty",
           "weight": 5
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cityworld:chests/stoneworks_output_extra",
+          "weight": 15
         }
       ]
     }

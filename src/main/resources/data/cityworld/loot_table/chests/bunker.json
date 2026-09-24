@@ -136,6 +136,11 @@
         {
           "type": "minecraft:empty",
           "weight": 5
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cityworld:chests/bunker_extra",
+          "weight": 15
         }
       ]
     }
