@@ -186,6 +186,13 @@ default. `chests/schematic/winchester.json` ships as the example — its second 
 `chests/building`, which is how "schematic-specific AND generic" is spelled. Self-test line
 `lotsWithOwnTable` counts lots that resolved one.
 
+**Caverns: owner-confirmed (2026-09-25 evening).** On his 1.20.1 apocalypse world (seed
+6532995379955308710) `scripts/CavernScan.java` listed the rooms round him from the noise alone; he
+teleported into five: *"confirmed — they are there — the last one is blatant — but they all look natural,
+not standing out, which is a pass for what we're after."* Density as shipped: 172 rooms of any size in a
+3,000×3,000 sweep (fields cover ~10% of the land, rooms every 60–100 blocks inside one). Not retuned; he
+said pass. If "rarer" ever comes: `cavernRegionThreshold`; "bigger": `cavernRoomThreshold`.
+
 ### Ship notes
 
 - **⚠ 26.3 has its own loot-table dialect, and a table in the 1.21 form stops the server.** Typed rolls
