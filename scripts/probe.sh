@@ -1,49 +1,29 @@
 #!/usr/bin/env bash
-# Run one chunk probe headlessly and stop the server when it is done.
-#
-#   ./scripts/probe.sh <probe spec> [extra -D options...]
-#   ./scripts/probe.sh find:HouseLot -Dcityworld.probe.radius=1 -Dcityworld.probe.layers=60..82
-#   ./scripts/probe.sh 12,-7 -Dcityworld.watch=200,66,-100
-#
-# The probe itself (Support/ChunkProbe) generates the chunk(s), logs per-layer tallies, PLANvWORLD
-# and whatever else its options ask for, then logs "PROBE complete" — it must never stop the server
-# (CurseForge, see CLAUDE.md), so this script does: it waits for that line and kills the run's
-# process group, exactly as selftest.sh does. Output goes to build/probe/<spec>.log, and the
-# PROBE lines are echoed at the end. The world is regenerated every run (existing chunks never
-# regenerate, so a stale one would probe old code); the seed is whatever run/server.properties says.
-set -euo pipefail
+# Run the dev server under the chunk probe and stop it when the probe reports complete.
+#   scripts/probe.sh "<java -D options>"   e.g. "-Dcityworld.probe=0,0 -Dcityworld.probe.radius=10"
+# Deletes run/world first (a probe wants fresh chunks), passes the options through JAVA_TOOL_OPTIONS,
+# waits for "PROBE complete", then kills the whole process group by job-control PGID -- the same
+# rule as selftest.sh: never a pkill pattern, never the gradle pid alone. Log: build/probe.log.
+set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SPEC="${1:?probe spec, e.g. find:HouseLot or 12,-7}"
-shift
-if [ -z "${JAVA_HOME:-}" ]; then
-    case "$(grep -E '^minecraft_version=' "$ROOT/gradle.properties" | cut -d= -f2 | tr -d '[:space:]')" in
-        1.*) export JAVA_HOME="$ROOT/tools/jdk21" ;;
-        *)   export JAVA_HOME="$ROOT/tools/jdk25" ;;
-    esac
-fi
-export PATH="$JAVA_HOME/bin:$PATH"
-mkdir -p "$ROOT/build/probe"
-LOG="$ROOT/build/probe/$(echo "$SPEC" | tr ':,/' '___').log"
-rm -rf "$ROOT/run/world"
-export JAVA_TOOL_OPTIONS="-Dcityworld.probe=$SPEC $*"
-echo ">> probe $SPEC $* (log: $LOG)"
-set +e
+cd "$ROOT"
+# ⚠ Also the old log: the wait below greps latest.log for "PROBE complete", and a stale line from the
+# previous run makes it kill this one before the server has started (three silent non-runs, 2026-09-25).
+rm -rf run/world run/logs/latest.log
+export JAVA_TOOL_OPTIONS="${1:-}"
+LOG="$ROOT/build/probe.log"
 set -m
-"$ROOT/gradlew" runServer --console=plain > "$LOG" 2>&1 &
+./gradlew runServer --console=plain > "$LOG" 2>&1 &
 PID=$!
 set +m
-OWN="$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')"
-end_run() {
-    [ "$PID" = "$OWN" ] && { echo "!! refusing to kill own process group" >&2; return; }
-    kill -TERM "-$PID" 2>/dev/null
-    for _ in 1 2 3 4 5 6 7 8 9 10; do kill -0 "-$PID" 2>/dev/null || return; sleep 1; done
-    kill -KILL "-$PID" 2>/dev/null
-}
-waited=0
-while :; do
-    if grep -q "PROBE complete\|PROBE failed" "$LOG" 2>/dev/null; then end_run; wait "$PID" 2>/dev/null; break; fi
-    if ! kill -0 "$PID" 2>/dev/null; then wait "$PID"; echo "!! gradle exited before the probe finished ($?)" >&2; break; fi
-    if [ "$waited" -ge "${CITYWORLD_PROBE_TIMEOUT:-900}" ]; then echo "!! timed out" >&2; end_run; break; fi
-    sleep 2; waited=$((waited + 2))
+for _ in $(seq 1 150); do
+    grep -q "PROBE complete" run/logs/latest.log 2>/dev/null && break
+    kill -0 "$PID" 2>/dev/null || break
+    sleep 6
 done
-grep -a "PROBE\|WATCH\|Exception\|ERROR\]" "$LOG" | grep -v "refmap\|DEBUG" | cut -c1-400
+grep -a "PROBE: dimension\|PROBE complete\|FAILED" run/logs/latest.log | head -3 | cut -c60-200
+kill -TERM "-$PID" 2>/dev/null
+for _ in 1 2 3 4 5 6 7 8 9 10; do kill -0 "-$PID" 2>/dev/null || break; sleep 1; done
+kill -KILL "-$PID" 2>/dev/null
+wait "$PID" 2>/dev/null
+echo "probe run finished; regions: $(ls run/world/region 2>/dev/null | wc -l)"
