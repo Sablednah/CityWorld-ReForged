@@ -148,6 +148,36 @@ the head, `slot.isArmor()` filters the rest) along the side wall, barrels + a po
 far wall rolling `chests/vault_ammo` (`ContainerLoot.assignAt` for the shelf, a new `LootLocation.VAULT_AMMO`).
 Item tags live in `tags/item/` (1.21+) — `tags/items/` on 1.20.1, like `blocks/` and `loot_tables/`.
 
+### Playtest round 2 (2026-09-25 late morning): what he saw, and the two things it asked for
+
+**Owner's report on the 1.20.1 instance:** Alex's Caves all appearing and working (the dino cave carves
+its own, the cake cave covers well; the donut arch and friends sometimes lack room, which is fine);
+Battle Towers great; every vanilla structure from the playtest pack worked; Pam's crops in the fields
+and its trees in the orchards. **The one misbehaviour: Dungeon Crawl placed wherever it liked** —
+screenshots `2026-09-25_11.28.02/11.28.08/11.35.47.png`: its brick entrance tower up through a highrise
+and out of a roof. Cause: its set is `underground_structures`, and both reservation paths keep only
+surface-step sets (rightly — reserving for every ancient city would punch meadows through cities).
+Fix: `structure_fit` gains **`reserve: true`**, `reachesTheSurface` honours it, and on the forecast path
+`CityWorldChunkGenerator.surfacesAt(start, chunk)` reserves only the chunks (plus a one-chunk ring)
+touched by a piece whose box top reaches the raw ground (`shapeProvider.findBlockY`) — the doorstep,
+not the dungeon. Shipped for `dungeoncrawl:dungeon`; the 1.20.1 hand-rolled fit loader mirrors the
+field. **If any other buried-with-an-entrance mod turns up, it is a data line.**
+
+**Large caverns** (`largeCaverns`, Terrain's sixteenth and last codec field): his ask was *"another cave
+noise layer — large rare caverns in the deepslate layer to just above it, crossing the boundary, so mods
+like Alex's Caves can get to work, as well as big vanilla lush caverns; not just a big blob though —
+shelves and texture inside."* `ShapeProvider_Normal.inCavern`: a 2D region noise (1/400 blocks,
+threshold 0.60, smoothstepped over 0.12) says WHERE, a 3D room noise (1/60, 1/30 vertical) says the
+room, a 1/11 texture noise at 0.22 roughens it, a vertical envelope fades the room out over the top and
+bottom 14 blocks of the y -52..26 band so every cavern closes, and the SHELVES are the threshold
+itself: `+ 0.14 * (y mod 6)/6`, a sawtooth that steps the wall in through each six-block band and snaps
+it out again — terraces with a vertical face. Overworld only (the Nether keeps its own cheese). Seeds
+909/919/929 off the world seed, so nothing existing resamples. Tunable live: `-Dcityworld.caverns.region`
+(higher = rarer), `-Dcityworld.caverns.room` (lower = bigger). **The proof is a picture**: probe with
+`region=0.05` so fields are everywhere, then `scripts/region_render.py run/world/region -80 80 -64 64 0 3
+out.png 4 north` for the cross-section. Independent of the cave-pool patches on purpose: a cavern under a
+lush patch is a lush cavern, under an Alex's patch Alex's own carvers add to it.
+
 ### Ship notes
 
 - **⚠ A cherry-pick onto 1.20.1 carried the 1.21 loot key into `loot_tables/`.** Git's rename detection

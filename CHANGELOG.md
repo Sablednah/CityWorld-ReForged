@@ -41,6 +41,16 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   reference to an empty `cityworld:chests/<name>_extra` at weight 15, the same shape the vault rooms,
   hospital, shop, pond and nightstand have had since 5.9.0. A pack replaces just that file to seed its
   own items (quest parts in the industrial warehouse, say) without touching CityWorld's contents.
+- **Large caverns** (`largeCaverns`, on by default for MODERN and APOCALYPSE, a free toggle for any
+  style). Rare, big rooms astride the deepslate line, roughly y -50 to +25, shelved and rough inside
+  rather than a blob: terraces every six blocks with a vertical face, rough walls, a roof and a floor
+  always closed over. Room for a cave biome to be something, whether vanilla's lush and dripstone or a
+  mod's. Tune without a rebuild with `-Dcityworld.caverns.region` (rarity) and `-Dcityworld.caverns.room`
+  (size).
+- **Dungeon Crawl is reserved.** Its dungeon is declared underground, so the planner ignored it and its
+  entrance tower came up through a highrise roof. A structure fit can now say `reserve: true`, and a
+  buried structure that does reserves only the chunks its surfacing pieces touch, plus a one-chunk
+  doorstep, not its whole underground box. Shipped for `dungeoncrawl:dungeon`.
 - **Every container gets a loot table.** A new end-of-lot pass walks each chunk's block entities and
   gives every empty, untouched container the lot's default table: pooled storage furniture (Macaw's
   cabinets and drawers, Fantasy's chests and lockboxes), the chests inside a pasted schematic, a modded
