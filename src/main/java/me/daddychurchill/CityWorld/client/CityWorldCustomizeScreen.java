@@ -69,7 +69,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private boolean includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
             includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
             includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, includeOvergrowth, capVines,
-            includeShops, windingCaves;
+            includeShops, windingCaves, largeCaverns;
     private double oddsOfPristineBuilding, overgrowthIntensity; // carried through untouched (no picker yet)
     // decay group — carried through untouched (the world style sets these; datapack tunes them, no picker yet)
     private double buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad;
@@ -165,6 +165,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         includeDecayedNature = t.includeDecayedNature();
         oddsOfPristineBuilding = t.oddsOfPristineBuilding();
         windingCaves = t.windingCaves();
+        largeCaverns = t.largeCaverns();
         CityWorldSettingsData.Overgrowth og = data.overgrowth();
         includeOvergrowth = og.enabled();
         overgrowthIntensity = og.intensity();
@@ -272,6 +273,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         this.list.addHeader(Component.literal("Terrain"));
         pair(row, onOff("Caves", includeCaves, v -> includeCaves = v));
         pair(row, onOff("Winding caves", windingCaves, v -> windingCaves = v));
+        pair(row, onOff("Large caverns", largeCaverns, v -> largeCaverns = v));
         pair(row, onOff("Lava fields", includeLavaFields, v -> includeLavaFields = v));
         pair(row, onOff("Seas", includeSeas, v -> includeSeas = v));
         pair(row, onOff("Mountains", includeMountains, v -> includeMountains = v));
@@ -359,7 +361,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
                 includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
                 includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, oddsOfPristineBuilding,
-                windingCaves);
+                windingCaves, largeCaverns);
         CityWorldSettingsData.Spawns spawns = new CityWorldSettingsData.Spawns(
                 spawnBeings.value, spawnBaddies.value, spawnAnimals.value, spawnVagrants.value, nameVillagers,
                 showVillagersNames);

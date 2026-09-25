@@ -56,6 +56,9 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	private final SimplexNoiseGenerator wormShapeA;
 	private final SimplexNoiseGenerator wormShapeB;
 	private final SimplexNoiseGenerator cheeseShape;
+	private final SimplexNoiseGenerator cavernRegionShape;
+	private final SimplexNoiseGenerator cavernShape;
+	private final SimplexNoiseGenerator cavernTextureShape;
 	private final SimplexNoiseGenerator lavaShape;
 	private final SimplexNoiseGenerator mineShape;
 	private final SimplexNoiseGenerator mineRegionShape;
@@ -161,6 +164,9 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		wormShapeA = new SimplexNoiseGenerator(seed + 101);
 		wormShapeB = new SimplexNoiseGenerator(seed + 202);
 		cheeseShape = new SimplexNoiseGenerator(seed + 303);
+		cavernRegionShape = new SimplexNoiseGenerator(seed + 909);
+		cavernShape = new SimplexNoiseGenerator(seed + 919);
+		cavernTextureShape = new SimplexNoiseGenerator(seed + 929);
 		lavaShape = new SimplexNoiseGenerator(seed + 404);
 		mineShape = new SimplexNoiseGenerator(seed + 1);
 		mineRegionShape = new SimplexNoiseGenerator(seed + 811);
@@ -534,10 +540,59 @@ public class ShapeProvider_Normal extends ShapeProvider {
 				&& mineShape.noise(chunkX * mineScale, chunkY * mineScale + 0.5, chunkZ * mineScale) > 0.0;
 	}
 
+	// Large caverns: rare, big rooms astride the deepslate line, with shelves and texture inside — "not just a
+	// big blob" (owner, 2026-09-25), room for a cave biome to be something. Three noises at three scales:
+	//   region  — 2D, ~400-block wavelength, thresholded high: WHERE a cavern field exists at all (rare);
+	//   room    — 3D, ~60-block wavelength: the room itself, thresholded, faded to nothing at the top and
+	//             bottom of the band so every cavern closes over and floors out;
+	//   texture — 3D, ~11-block wavelength, a quarter of the room's weight: rough walls and stalactite stubs.
+	// Shelves come from the threshold itself: it rises through each 6-block band and snaps back, so the wall
+	// steps in a little every six blocks and then jumps out again — terraces with a vertical face, climbable.
+	// Tuning without a rebuild: -Dcityworld.caverns.region=<threshold> (higher = rarer, default 0.60) and
+	// -Dcityworld.caverns.room=<threshold> (lower = bigger, default 0.40).
+	private final static double cavernRegionScale = 1.0 / 400.0;
+	private final static double cavernRegionThreshold = Double.parseDouble(System.getProperty("cityworld.caverns.region", "0.60"));
+	private final static double cavernRoomScale = 1.0 / 60.0;
+	private final static double cavernRoomScaleY = 1.0 / 30.0;
+	private final static double cavernRoomThreshold = Double.parseDouble(System.getProperty("cityworld.caverns.room", "0.40"));
+	private final static double cavernTextureScale = 1.0 / 11.0;
+	private final static double cavernTextureWeight = 0.22;
+	private final static int cavernShelfPeriod = 6;
+	private final static double cavernShelfDepth = 0.14;
+	private final static int cavernMinY = -52, cavernMaxY = 26, cavernFade = 14;
+
+	/** The cavern-field strength at a column: 0 outside a field, rising to 1 well inside one. */
+	private double cavernField(int blockX, int blockZ) {
+		double region = cavernRegionShape.noise(blockX * cavernRegionScale, blockZ * cavernRegionScale);
+		double t = (region - cavernRegionThreshold) / 0.12;
+		return t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+	}
+
+	private boolean inCavern(int blockX, int blockY, int blockZ) {
+		if (blockY < cavernMinY || blockY > cavernMaxY)
+			return false;
+		double field = cavernField(blockX, blockZ);
+		if (field <= 0)
+			return false;
+		// fade at the band's top and bottom so the room always has a roof and a floor
+		double edge = Math.min(blockY - cavernMinY, cavernMaxY - blockY) / (double) cavernFade;
+		double envelope = edge >= 1 ? 1 : edge * edge * (3 - 2 * edge);
+		double room = cavernShape.noise(blockX * cavernRoomScale, blockY * cavernRoomScaleY, blockZ * cavernRoomScale);
+		double texture = cavernTextureShape.noise(blockX * cavernTextureScale, blockY * cavernTextureScale,
+				blockZ * cavernTextureScale) * cavernTextureWeight;
+		double shelf = (Math.floorMod(blockY, cavernShelfPeriod) / (double) cavernShelfPeriod) * cavernShelfDepth;
+		return (room + texture) * envelope * field > cavernRoomThreshold + shelf;
+	}
+
 	@Override
 	public boolean notACave(CityWorldGenerator generator, int blockX, int blockY, int blockZ) {
 		if (!generator.getSettings().includeCaves)
 			return true;
+
+		if (generator.getSettings().largeCaverns
+				&& generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.NORMAL
+				&& inCavern(blockX, blockY, blockZ))
+			return false;
 
 		// Winding "noodle" caves: carve where two noise iso-surfaces cross — thin wandering tunnels that
 		// branch, plus the odd big "cheese" cavern. Default on for MODERN/APOCALYPSE, a toggle for the rest.
