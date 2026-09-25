@@ -61,12 +61,18 @@ public final class ContainerLoot {
     public static final TagKey<Block> NEVER = MaterialTags.key("cityworld:loot/never");
 
     private static final AtomicInteger DEFERRED = new AtomicInteger(), FILLED = new AtomicInteger(),
-            CAPABILITY = new AtomicInteger(), SKIPPED = new AtomicInteger();
+            CAPABILITY = new AtomicInteger(), NEVER_TAGGED = new AtomicInteger(), HAS_TABLE = new AtomicInteger(),
+            HAS_ITEMS = new AtomicInteger(), NOT_A_CONTAINER = new AtomicInteger();
 
-    /** For the self-test: how many containers each path has handled since startup. */
+    /**
+     * For the self-test: how many block entities each path has handled since startup. {@code hasTable} is
+     * every chest CityWorld placed on purpose (already tabled by {@code setChest}); {@code notAContainer}
+     * is signs, beds, skulls and the like; the three live counts are what this pass actually did.
+     */
     public static String summary() {
         return "deferred=" + DEFERRED.get() + " filled=" + FILLED.get() + " capability=" + CAPABILITY.get()
-                + " skipped=" + SKIPPED.get();
+                + " hasTable=" + HAS_TABLE.get() + " hasItems=" + HAS_ITEMS.get() + " never=" + NEVER_TAGGED.get()
+                + " notAContainer=" + NOT_A_CONTAINER.get();
     }
 
     /** The end-of-lot pass: every untouched empty container in this chunk gets the lot's default table. */
@@ -112,12 +118,16 @@ public final class ContainerLoot {
             long seed) {
         BlockState state = entity.getBlockState();
         if (state.is(NEVER) || isStation(state)) {
-            SKIPPED.incrementAndGet();
+            NEVER_TAGGED.incrementAndGet();
             return false;
         }
         if (entity instanceof RandomizableContainer randomizable) {
-            if (randomizable.getLootTable() != null || (entity instanceof Container c && !c.isEmpty())) {
-                SKIPPED.incrementAndGet();
+            if (randomizable.getLootTable() != null) {
+                HAS_TABLE.incrementAndGet();
+                return false;
+            }
+            if (entity instanceof Container c && !c.isEmpty()) {
+                HAS_ITEMS.incrementAndGet();
                 return false;
             }
             randomizable.setLootTable(key, seed);
@@ -126,7 +136,7 @@ public final class ContainerLoot {
         }
         if (entity instanceof Container container) {
             if (!container.isEmpty()) {
-                SKIPPED.incrementAndGet();
+                HAS_ITEMS.incrementAndGet();
                 return false;
             }
             LootTable table = tableFor(level, key);
@@ -136,7 +146,10 @@ public final class ContainerLoot {
             FILLED.incrementAndGet();
             return true;
         }
-        return fillViaCapability(level, pos, entity, state, key, seed);
+        boolean done = fillViaCapability(level, pos, entity, state, key, seed);
+        if (!done)
+            NOT_A_CONTAINER.incrementAndGet();
+        return done;
     }
 
     /** A furniture crafting station is an inventory, not a store. Recognised by id, since every set has one. */
@@ -174,8 +187,8 @@ public final class ContainerLoot {
             return false;
         for (int i = 0; i < handler.getSlots(); i++)
             if (!handler.getStackInSlot(i).isEmpty()) {
-                SKIPPED.incrementAndGet();
-                return false;
+                HAS_ITEMS.incrementAndGet();
+                return true;
             }
         LootTable table = tableFor(level, key);
         if (table == null)
