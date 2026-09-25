@@ -6,6 +6,11 @@ import me.daddychurchill.CityWorld.Support.PlatMap;
 
 public abstract class IndustrialBuildingLot extends FinishedBuildingLot {
 
+	@Override
+	public me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation defaultLoot() {
+		return me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation.WAREHOUSE;
+	}
+
 	IndustrialBuildingLot(PlatMap platmap, int chunkX, int chunkZ) {
 		super(platmap, chunkX, chunkZ);
 

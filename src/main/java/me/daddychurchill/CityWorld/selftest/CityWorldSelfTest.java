@@ -734,6 +734,9 @@ public final class CityWorldSelfTest {
             if (cherry)
                 withCherry++;
         }
+        // The end-of-lot container pass: how many containers took a table by which path. Zero deferred
+        // after a sweep with pooled storage furniture in it means the pass is not running.
+        report.put("loot.containers", me.daddychurchill.CityWorld.Support.ContainerLoot.summary());
         report.put("orchard.temperateLots", Integer.toString(orchardChunks.size()));
         report.put("orchard.lotsWithCherry", Integer.toString(withCherry));
         report.put("orchard.logs", logs.toString());

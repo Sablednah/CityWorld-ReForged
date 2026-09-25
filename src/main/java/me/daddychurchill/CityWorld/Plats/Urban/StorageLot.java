@@ -16,6 +16,11 @@ import me.daddychurchill.CityWorld.Support.SurroundingLots;
 
 public class StorageLot extends BuildingLot {
 
+	@Override
+	public me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation defaultLoot() {
+		return me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation.WAREHOUSE;
+	}
+
 	public StorageLot(PlatMap platmap, int chunkX, int chunkZ) {
 		super(platmap, chunkX, chunkZ);
 
