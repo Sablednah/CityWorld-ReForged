@@ -3,7 +3,8 @@
     "includeSchematics": true
   },
   "terrain": {
-    "windingCaves": true
+    "windingCaves": true,
+    "largeCaverns": true
   },
   "world": {
     "maxBuildingFloors": 40,
