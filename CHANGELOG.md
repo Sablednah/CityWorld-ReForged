@@ -5,7 +5,13 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
-## Unreleased
+## 5.14.0
+
+Released for all six Minecraft versions. Three themes: the owner's next mods — Alex's Caves in the
+cave pool, Pam's crops and fruit orchards, Battle Towers and Dungeon Crawl placed and reserved — plus
+large caverns of CityWorld's own; loot everywhere, with a hook a pack can own on every table, per
+schematic, and a vault armoury with an identity; and the two things a modpack needs to lock a world
+down, `lockCustomize` and the `_extra` hooks.
 
 ### Added
 

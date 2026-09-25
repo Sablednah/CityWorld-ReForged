@@ -13,6 +13,16 @@ screen.
 Battle-tested across **135 worlds and 3.2 million generated chunks** — over **830 km²** of procedurally
 generated city, more ground than New York City covers.
 
+**New in 5.14.0: caverns, loot everywhere, and the mods you asked for.** Rare **large caverns** now
+open astride the deepslate line — shelved, rough, natural, and room enough for a cave biome to be
+something. **Alex's Caves** joins the cave pool (five of its biomes, in its own rock, its own cave
+shapes allowed through), **Pam's HarvestCraft** grows in the fields and the orchards, and **Battle
+Towers** and **Dungeon Crawl** are placed and reserved. **Every container gets a loot table** — pooled
+furniture, modded crates, a schematic's chests — and every table ends in an `_extra` hook a pack can
+own, per schematic too (`chests/schematic/<name>`). The vault **armoury** has weapon racks, armour
+stands and ammunition shelves, all tag-driven so a gun mod adds guns. For modpacks: `lockCustomize`
+makes a locked preset's settings final.
+
 **New in 5.13.0: the city knows where every structure will be.** CityWorld now makes the same
 placement call Minecraft will make, ahead of any chunk, so it keeps clear exactly a structure's real
 footprint — no more empty fields reserved for a structure that never came, and the city builds right
