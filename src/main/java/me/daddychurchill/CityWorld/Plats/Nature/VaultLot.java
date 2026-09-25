@@ -11,6 +11,7 @@ import me.daddychurchill.CityWorld.Plats.RoadLot;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
+import me.daddychurchill.CityWorld.Support.Armoury;
 import me.daddychurchill.CityWorld.Plugins.LootProvider;
 import me.daddychurchill.CityWorld.Support.SupportBlocks;
 
@@ -32,6 +33,11 @@ import me.daddychurchill.CityWorld.Support.SupportBlocks;
  * up under the terrain; deeper levels just add more hollow bands + fill).
  */
 public class VaultLot extends BunkerLot {
+
+	@Override
+	public me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation defaultLoot() {
+		return me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation.VAULT_QUARTERS;
+	}
 
     static final Material WALL = Material.LIGHT_GRAY_CONCRETE;
     static final Material FLOOR = Material.LIGHT_GRAY_CONCRETE;
@@ -371,7 +377,7 @@ public class VaultLot extends BunkerLot {
         case 0, 1, 2, 3 -> livingQuarters(generator, odds, chunk, fy, x1, x2, z1, z2);
         case 4, 5 -> office(generator, odds, chunk, fy, x1, x2, z1, z2);
         case 6 -> lab(generator, odds, chunk, fy, x1, x2, z1, z2);
-        case 7 -> storage(generator, odds, chunk, fy, x1, x2, z1, z2);
+        case 7 -> armoury(generator, odds, chunk, fy, x1, x2, z1, z2);
         case 8 -> hydroponics(chunk, floorY, x1, x2, z1, z2);
         default -> messHall(generator, odds, chunk, fy, x1, x2, z1, z2); // 9
         }
@@ -473,11 +479,39 @@ public class VaultLot extends BunkerLot {
         put(chunk, x1, fy, z2, Material.COPPER_BULB); // a lit lab lamp
     }
 
-    private static void storage(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
-        for (int x = x1; x <= x2; x += 2) // a row of crates along the back wall
-            putLoot(generator, odds, chunk, x, fy, z1, Material.BARREL, LootProvider.LootLocation.VAULT_ARMOURY);
-        putLoot(generator, odds, chunk, x1, fy, z2, Material.CHEST, LootProvider.LootLocation.VAULT_ARMOURY);
+    /**
+     * The armoury, with an identity: a weapon rack of item frames along one wall, armour stands wearing
+     * bits of a set along another, ammunition on shelves and in crates along a third, and the two
+     * armoury chests. It used to be a row of barrels indistinguishable from the office next door
+     * (owner, 2026-09-25).
+     *
+     * <p>Everything a gun mod would want to add is a tag or a table: weapons in the frames come from the
+     * item tag {@code #cityworld:armoury/weapons}, the stands' armour from {@code #cityworld:armoury/armour},
+     * the shelves and crates roll {@code cityworld:chests/vault_ammo} (with its {@code _extra} hook), and
+     * the chests keep {@code vault_armoury}.
+     */
+    private static void armoury(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
+        RealBlocks real = chunk instanceof RealBlocks r ? r : null;
+        // the weapon rack: frames at eye height on whichever of the room's walls actually backs them
+        int racked = 0;
+        for (int x = x1; x <= x2 && real != null; x++)
+            if (Armoury.weaponFrame(real, odds, x, fy + 1, z1, BlockFace.NORTH))
+                racked++;
+        if (racked == 0 && real != null)
+            for (int z = z1; z <= z2; z++)
+                Armoury.weaponFrame(real, odds, x1, fy + 1, z, BlockFace.WEST);
+        // the stands, along the side wall, a cell apart
+        for (int z = z1 + 1; z <= z2 && real != null; z += 2)
+            if (chunk.isEmpty(x2, fy, z) && chunk.isEmpty(x2, fy + 1, z) && !chunk.isEmpty(x2, fy - 1, z))
+                Armoury.armourStand(real, odds, x2, fy, z, BlockFace.WEST);
+        // ammunition: crates along the far wall with a shelf over each where a shelf block exists
+        for (int x = x1; x <= x2 - 1; x += 2) {
+            putLoot(generator, odds, chunk, x, fy, z2, Material.BARREL, LootProvider.LootLocation.VAULT_AMMO);
+            if (real != null)
+                Armoury.ammoShelf(real, odds, x, fy + 1, z2, BlockFace.SOUTH);
+        }
         putLoot(generator, odds, chunk, x2, fy, z2, Material.CHEST, LootProvider.LootLocation.VAULT_ARMOURY);
+        putLoot(generator, odds, chunk, x1, fy, z1 + 1, Material.CHEST, LootProvider.LootLocation.VAULT_ARMOURY);
     }
 
     private static final Material[] CROPS = { Material.WHEAT, Material.CARROTS, Material.POTATOES,

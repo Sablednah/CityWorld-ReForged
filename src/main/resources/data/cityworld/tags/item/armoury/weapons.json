@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:iron_sword",
+    "minecraft:iron_axe",
+    "minecraft:diamond_sword",
+    "minecraft:bow",
+    "minecraft:crossbow",
+    "minecraft:shield",
+    "minecraft:trident",
+    { "id": "minecraft:mace", "required": false }
+  ]
+}
