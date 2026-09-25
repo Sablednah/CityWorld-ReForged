@@ -167,13 +167,13 @@ public final class ContainerLoot {
      */
     private static boolean fillViaCapability(WorldGenLevel level, BlockPos pos, BlockEntity entity, BlockState state,
             ResourceKey<LootTable> key, long seed) {
-        var handler = level.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK,
-                pos, state, entity, null);
+        // 1.21.1: the IItemHandler capability, before the transfer API
+        net.neoforged.neoforge.items.IItemHandler handler = level.getLevel().getCapability(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, pos, state, entity, null);
         if (handler == null)
             return false;
-        // already holds something: leave it
-        for (int i = 0; i < handler.size(); i++)
-            if (handler.getAmountAsInt(i) > 0) {
+        for (int i = 0; i < handler.getSlots(); i++)
+            if (!handler.getStackInSlot(i).isEmpty()) {
                 SKIPPED.incrementAndGet();
                 return false;
             }
@@ -182,13 +182,11 @@ public final class ContainerLoot {
             return false;
         var stacks = table.getRandomItems(params(level, pos), net.minecraft.util.RandomSource.create(seed));
         int inserted = 0;
-        try (var tx = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
-            for (var stack : stacks)
-                if (!stack.isEmpty())
-                    inserted += handler.insert(net.neoforged.neoforge.transfer.item.ItemResource.of(stack),
-                            stack.getCount(), tx);
-            tx.commit();
-        }
+        for (var stack : stacks)
+            if (!stack.isEmpty()) {
+                var left = net.neoforged.neoforge.items.ItemHandlerHelper.insertItemStacked(handler, stack.copy(), false);
+                inserted += stack.getCount() - left.getCount();
+            }
         CAPABILITY.incrementAndGet();
         return inserted > 0 || stacks.isEmpty();
     }
