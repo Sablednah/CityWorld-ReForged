@@ -84,10 +84,15 @@ public final class ContainerLoot {
             if (!(chunk.getServerLevel() instanceof WorldGenLevel level))
                 return;
             ChunkAccess access = level.getChunk(chunk.sectionX, chunk.sectionZ);
-            ResourceLocation key = LootProvider_LootTable.keyFor(loot);
-            // copy: assigning may touch the block entity map
+            ResourceKey<LootTable> key = LootProvider_LootTable.keyFor(loot);
+            // ⚠ Ask the REGION for each entity, not the chunk. A block placed during generation leaves only a
+            // "DUMMY" NBT stub in the proto-chunk's pending map; WorldGenRegion.getBlockEntity materialises
+            // the real block entity from that stub on demand, ChunkAccess.getBlockEntity answers null for it.
+            // The first version asked the chunk and so found only the chests setChest had already
+            // materialised — 848 "skipped", zero handled, with three furniture mods installed. Copy the
+            // key set: materialising moves an entry from the pending map into the live one.
             for (BlockPos pos : List.copyOf(access.getBlockEntitiesPos())) {
-                BlockEntity entity = access.getBlockEntity(pos);
+                BlockEntity entity = level.getBlockEntity(pos);
                 if (entity != null)
                     assign(level, pos, entity, key, odds.getRandomLong());
             }
