@@ -98,6 +98,20 @@ Pam's crops in the field pool and a new `#cityworld:orchard/<climate>` fruit-tre
 tree's own feature (vanilla cherry proves it on every version). None of the four loads in the dev runtime,
 so the self-test proves mechanisms only: **his playtest is the verification**. PORTING.md "the owner's next
 four mods" has the per-mod bytecode findings and the one-line fixes for what he may photograph.
+**Playtest round 2 (2026-09-25):** Alex's Caves, Battle Towers, every vanilla structure and Pam's all worked
+in his 1.20.1 instance; Dungeon Crawl came up through a highrise (its set is underground-step) → `structure_fit`
+`reserve: true`, which reserves only the chunks its SURFACING pieces touch. Then three more of his asks the
+same morning, all built and self-tested: **every container gets a loot table** (`Support/ContainerLoot`, an
+end-of-lot pass over the chunk's block entities — ⚠ ask the REGION for each entity, not the chunk: a
+generation-time block leaves only a DUMMY stub in the proto-chunk and `ChunkAccess.getBlockEntity` answers
+null for it; three tiers, the capability one is per-loader); **the vault armoury has an identity**
+(`Support/Armoury`: frames from `#cityworld:armoury/weapons`, stands from `#cityworld:armoury/armour`, ammo
+shelves rolling `chests/vault_ammo`); **large caverns** (`largeCaverns`, `ShapeProvider_Normal.inCavern`:
+region × room × texture noises, a sawtooth threshold for shelves, y -52..26; proven by `scripts/probe.sh`
++ `region_render.py` — three "identical picture" probes were silent non-runs before the probe script
+learned to delete the stale log; and `modern.json`/`apocalypse.json` name every cave toggle explicitly,
+so a style default alone never reaches a preset world). `scripts/gen_allow_structures_pack.py` makes the
+all-vanilla-structures playtest jar that is in his instance.
 **Same night, for the ZARP pack session:** `worldCreation.lockCustomize` (no Customize button for the locked
 preset, so a pack's replaced `world_settings` entry is authoritative) and an `_extra` loot hook on every chest
 table. **The ZARP instance takes only released CurseForge jars** (`.sablecraft-no-deploy`, which the fleet script
