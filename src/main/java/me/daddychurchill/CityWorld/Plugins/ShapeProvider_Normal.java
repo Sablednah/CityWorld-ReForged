@@ -560,6 +560,11 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	private final static int cavernShelfPeriod = 6;
 	private final static double cavernShelfDepth = 0.14;
 	private final static int cavernMinY = -52, cavernMaxY = 26, cavernFade = 14;
+	/** Probe/diagnostics only: says what the layer resolved to and how much it carved. */
+	private final static boolean CAVERN_DIAG = System.getProperty("cityworld.probe") != null
+			|| System.getProperty("cityworld.diagnostics") != null;
+	private final static java.util.concurrent.atomic.AtomicLong CAVERN_CALLS = new java.util.concurrent.atomic.AtomicLong(),
+			CAVERN_HITS = new java.util.concurrent.atomic.AtomicLong();
 
 	/** The cavern-field strength at a column: 0 outside a field, rising to 1 well inside one. */
 	private double cavernField(int blockX, int blockZ) {
@@ -589,10 +594,18 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		if (!generator.getSettings().includeCaves)
 			return true;
 
+		if (CAVERN_DIAG && CAVERN_CALLS.incrementAndGet() == 1)
+			me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+					"CAVERNS: largeCaverns={} environment={} regionThreshold={} roomThreshold={}",
+					generator.getSettings().largeCaverns, generator.worldEnvironment, cavernRegionThreshold, cavernRoomThreshold);
 		if (generator.getSettings().largeCaverns
 				&& generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.NORMAL
-				&& inCavern(blockX, blockY, blockZ))
+				&& inCavern(blockX, blockY, blockZ)) {
+			if (CAVERN_DIAG && CAVERN_HITS.incrementAndGet() % 50000 == 1)
+				me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn("CAVERNS: {} cells carved so far (of {} asked)",
+						CAVERN_HITS.get(), CAVERN_CALLS.get());
 			return false;
+		}
 
 		// Winding "noodle" caves: carve where two noise iso-surfaces cross — thin wandering tunnels that
 		// branch, plus the odd big "cheese" cavern. Default on for MODERN/APOCALYPSE, a toggle for the rest.
