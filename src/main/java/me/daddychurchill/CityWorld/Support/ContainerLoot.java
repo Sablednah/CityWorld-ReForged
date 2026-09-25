@@ -176,7 +176,7 @@ public final class ContainerLoot {
         if (own == null)
             return null;
         try {
-            var id = net.minecraft.resources.Identifier.tryParse(own);
+            var id = net.minecraft.resources.ResourceLocation.tryParse(own);
             if (id == null)
                 return null;
             ResourceKey<LootTable> key = ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE, id);
