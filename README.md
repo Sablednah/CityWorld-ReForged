@@ -164,6 +164,13 @@ Drop your own building schematics into `config/cityworld/schematics/<Family>/` (
 WorldEdit `.schem`, Litematica `.litematic`, or vanilla `.nbt`). Turn on `includeSchematics` and the
 generator salts them into cities. Filenames may contain spaces.
 
+Every container in a pasted schematic gets a loot table. A datapack that ships
+`data/cityworld/loot_table/chests/schematic/<name>.json` (the file's name, lowercased, spaces as
+underscores: `Fire Station.schematic` → `fire_station.json`) owns that building's chests; a table that
+also wants the generic building loot references `cityworld:chests/building` from a pool of its own. A
+`Loot: <table id>` line in the `.yml` sidecar points the building at any table instead. With neither,
+chests draw from `cityworld:chests/building`. The bundled Winchester ships an example.
+
 ## Commands
 
 | Command | Who | What |

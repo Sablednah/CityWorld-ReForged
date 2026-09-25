@@ -48,6 +48,33 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 public class ClipboardLot extends IsolatedLot {
 
 	private final Clipboard clip;
+
+	/**
+	 * Per-schematic loot: the sidecar's {@code Loot:} if set, else {@code cityworld:chests/schematic/<name>}
+	 * — a datapack ships that file and every chest in the build draws from it (a table that wants the
+	 * generic building loot as well references {@code cityworld:chests/building} from a pool). Without
+	 * either, the building table. The name is the file's, lowercased with spaces as underscores and
+	 * anything a resource path cannot hold dropped, so {@code Fire Station.schematic} is
+	 * {@code chests/schematic/fire_station}.
+	 */
+	@Override
+	public String ownLootTable() {
+		if (clip.loot != null)
+			return clip.loot;
+		return "cityworld:chests/schematic/" + tableName(clip.name);
+	}
+
+	/** {@code Fire Station} -> {@code fire_station}: a valid resource-path segment from a file name. */
+	public static String tableName(String schematicName) {
+		StringBuilder out = new StringBuilder();
+		for (char c : schematicName.toLowerCase(java.util.Locale.ROOT).toCharArray()) {
+			if (c == ' ')
+				out.append('_');
+			else if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-' || c == '.')
+				out.append(c);
+		}
+		return out.toString();
+	}
 	private final int lotX;
 	private final int lotZ;
 	private final Rotation rotation;
