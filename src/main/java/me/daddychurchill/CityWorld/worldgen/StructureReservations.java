@@ -165,7 +165,8 @@ public final class StructureReservations {
 
     private static boolean reachesTheSurface(Holder<StructureSet> set) {
         for (var entry : set.value().structures())
-            if (entry.structure().value().step() == GenerationStep.Decoration.SURFACE_STRUCTURES)
+            if (entry.structure().value().step() == GenerationStep.Decoration.SURFACE_STRUCTURES
+                    || me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.reserves(entry.structure()))
                 return true;
         return false;
     }
@@ -242,6 +243,12 @@ public final class StructureReservations {
             for (net.minecraft.world.level.levelgen.structure.StructureStart start
                     : forecast.startsCovering(chunkX, chunkZ, forecast.generator()::reserveMarginChunks)) {
                 if (start.getStructure().step() == GenerationStep.Decoration.SURFACE_STRUCTURES)
+                    return true;
+                // An underground structure declaring "reserve" (Dungeon Crawl: its entrance tower came up
+                // through a highrise roof, 2026-09-25) reserves only the chunks its surfacing pieces touch,
+                // not its whole buried box.
+                if (forecast.generator().fitReserves(start.getStructure())
+                        && forecast.generator().surfacesAt(start, chunkX, chunkZ))
                     return true;
             }
             return false;

@@ -8,6 +8,8 @@
     "cataclysm:ruined_citadel":   { "beard": true },
     "cataclysm:acropolis":        { "clearance": 12, "shave": true },
 
-    "ba_bt:land_tower":           { "clearance": 3,  "beard": true }
+    "ba_bt:land_tower":           { "clearance": 3,  "beard": true },
+
+    "dungeoncrawl:dungeon":       { "reserve": true }
   }
 }

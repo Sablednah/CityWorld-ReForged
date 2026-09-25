@@ -115,6 +115,9 @@ public final class SettingsExample {
                                              like) instead of the classic noise blobs. On by default for
                                              MODERN/APOCALYPSE; a free toggle for any style (needs
                                              includeCaves). Never style-locked.
+            largeCaverns              false  Rare, large caverns astride the deepslate line (about y -50 to
+                                             +25), shelved and rough inside rather than a blob. On by
+                                             default for MODERN/APOCALYPSE; a free toggle for any style.
             includeLavaFields         true   Underground lava fields.
             includeSeas               true   Oceans/lakes. Off = a dry, land-only world.
             includeMountains          true   Mountainous terrain. Off = flatter.

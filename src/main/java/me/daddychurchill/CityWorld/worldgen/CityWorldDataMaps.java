@@ -182,12 +182,15 @@ public final class CityWorldDataMaps {
      * vanilla's NONE structures either self-level or are deliberately off the ground, and buildCity
      * runs in every dimension.
      */
-    public record StructureFit(int clearance, boolean beard, boolean shave) {
+    public record StructureFit(int clearance, boolean beard, boolean shave, boolean reserve) {
 
         public static final Codec<StructureFit> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.optionalFieldOf("clearance", 0).forGetter(StructureFit::clearance),
                 Codec.BOOL.optionalFieldOf("beard", false).forGetter(StructureFit::beard),
-                Codec.BOOL.optionalFieldOf("shave", false).forGetter(StructureFit::shave)
+                Codec.BOOL.optionalFieldOf("shave", false).forGetter(StructureFit::shave),
+                // An UNDERGROUND-step structure that still breaks the surface (Dungeon Crawl's entrance
+                // tower) is reserved like a surface one -- but only the chunks its surfacing pieces touch.
+                Codec.BOOL.optionalFieldOf("reserve", false).forGetter(StructureFit::reserve)
         ).apply(i, StructureFit::new));
     }
 
@@ -206,6 +209,13 @@ public final class CityWorldDataMaps {
             @Nullable Holder<net.minecraft.world.level.levelgen.structure.Structure> structure, int fallback) {
         StructureFit fit = fitFor(structure);
         return fit == null || fit.clearance() <= 0 ? fallback : Math.max(fallback, fit.clearance());
+    }
+
+    /** Whether this structure asks to be reserved although its step is not a surface one. */
+    public static boolean reserves(
+            @Nullable Holder<net.minecraft.world.level.levelgen.structure.Structure> structure) {
+        StructureFit fit = fitFor(structure);
+        return fit != null && fit.reserve();
     }
 
     /** Whether this structure asks for the plan to be shaved to it (see the NeoForge lines' javadoc). */

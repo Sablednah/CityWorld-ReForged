@@ -788,6 +788,36 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private static final double PAD_SLOPE = 2.5;
     private static final int PAD_TAPER_MIN = 16;
 
+    /** Whether a structure's fit declares {@code reserve} (see {@link CityWorldDataMaps.StructureFit}). */
+    public boolean fitReserves(net.minecraft.world.level.levelgen.structure.Structure structure) {
+        StructureForecast fc = forecast;
+        var registries = fc == null ? null : fc.registries();
+        if (registries == null)
+            return false;
+        var fit = fitIndex(registries.lookupOrThrow(Registries.STRUCTURE)).byStructure().get(structure);
+        return fit != null && fit.reserve();
+    }
+
+    /**
+     * Whether any piece of this start that reaches the natural ground stands in, or one chunk from, this
+     * chunk. For a buried structure with a surfacing part: reserve the doorstep, not the dungeon.
+     */
+    public boolean surfacesAt(net.minecraft.world.level.levelgen.structure.StructureStart start, int chunkX, int chunkZ) {
+        CityWorldGenerator ctx = context();
+        if (ctx == null)
+            return true;   // cannot tell: keep the city off, the safe answer
+        int natural = Math.max(ctx.shapeProvider.findBlockY(ctx, chunkX * 16 + 8, chunkZ * 16 + 8), ctx.seaLevel);
+        int minX = chunkX * 16 - 16, maxX = chunkX * 16 + 31, minZ = chunkZ * 16 - 16, maxZ = chunkZ * 16 + 31;
+        for (var piece : start.getPieces()) {
+            var box = piece.getBoundingBox();
+            if (box.maxX() < minX || box.minX() > maxX || box.maxZ() < minZ || box.minZ() > maxZ)
+                continue;
+            if (box.maxY() >= natural - 2)
+                return true;
+        }
+        return false;
+    }
+
     /** Per start: how many chunks past its box the reservation must cover, memoised by identity. */
     private final java.util.concurrent.ConcurrentHashMap<net.minecraft.world.level.levelgen.structure.StructureStart, Integer> reserveMargins =
             new java.util.concurrent.ConcurrentHashMap<>();
