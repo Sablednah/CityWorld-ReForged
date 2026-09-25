@@ -62,7 +62,7 @@ public final class ContainerLoot {
 
     private static final AtomicInteger DEFERRED = new AtomicInteger(), FILLED = new AtomicInteger(),
             CAPABILITY = new AtomicInteger(), NEVER_TAGGED = new AtomicInteger(), HAS_TABLE = new AtomicInteger(),
-            HAS_ITEMS = new AtomicInteger(), NOT_A_CONTAINER = new AtomicInteger();
+            HAS_ITEMS = new AtomicInteger(), NOT_A_CONTAINER = new AtomicInteger(), OWN_TABLE = new AtomicInteger();
 
     /**
      * For the self-test: how many block entities each path has handled since startup. {@code hasTable} is
@@ -72,7 +72,7 @@ public final class ContainerLoot {
     public static String summary() {
         return "deferred=" + DEFERRED.get() + " filled=" + FILLED.get() + " capability=" + CAPABILITY.get()
                 + " hasTable=" + HAS_TABLE.get() + " hasItems=" + HAS_ITEMS.get() + " never=" + NEVER_TAGGED.get()
-                + " notAContainer=" + NOT_A_CONTAINER.get();
+                + " notAContainer=" + NOT_A_CONTAINER.get() + " lotsWithOwnTable=" + OWN_TABLE.get();
     }
 
     /** The end-of-lot pass: every untouched empty container in this chunk gets the lot's default table. */
@@ -84,7 +84,11 @@ public final class ContainerLoot {
             if (!(chunk.getServerLevel() instanceof WorldGenLevel level))
                 return;
             ChunkAccess access = level.getChunk(chunk.sectionX, chunk.sectionZ);
-            ResourceLocation key = LootProvider_LootTable.keyFor(loot);
+            ResourceLocation key = ownTableOrNull(level, lot);
+            if (key == null)
+                key = LootProvider_LootTable.keyFor(loot);
+            else
+                OWN_TABLE.incrementAndGet();
             // ⚠ Ask the REGION for each entity, not the chunk. A block placed during generation leaves only a
             // "DUMMY" NBT stub in the proto-chunk's pending map; WorldGenRegion.getBlockEntity materialises
             // the real block entity from that stub on demand, ChunkAccess.getBlockEntity answers null for it.
@@ -162,6 +166,25 @@ public final class ContainerLoot {
     private static boolean isStation(BlockState state) {
         var key = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock());
         return key != null && key.getPath().endsWith("furniture_station");
+    }
+
+    /**
+     * The lot's own table ({@link PlatLot#ownLootTable()}) if it names one that exists — a schematic's
+     * {@code chests/schematic/<name>}, or its sidecar's {@code Loot:} — else null for the lot default.
+     */
+    private static ResourceLocation ownTableOrNull(WorldGenLevel level, PlatLot lot) {
+        String own = lot.ownLootTable();
+        if (own == null)
+            return null;
+        try {
+            var id = net.minecraft.resources.Identifier.tryParse(own);
+            if (id == null)
+                return null;
+            ResourceLocation key = ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE, id);
+            return tableFor(level, key) == null ? null : key;
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     private static LootTable tableFor(WorldGenLevel level, ResourceLocation key) {
