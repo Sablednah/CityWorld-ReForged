@@ -2,7 +2,18 @@
 
 ## ▶ Resume here — the owner's next four mods (2026-09-24 evening): Alex's Caves, Pam's, Battle Towers, Dungeon Crawl
 
-**Where it is.** Master `1dc14234` (code) + `057a9503` (docs); branch heads `533fc1a4` (1.20.1),
+**RELEASED as v5.14.0 (2026-09-25 evening).** Tag `v5.14.0` = master bump `1513c89c`; branch bumps
+`3bf8569f` (1.20.1), `420d7020` (1.21.1), `ab541b78` (26.1), `cafeb36a` (26.2), `24d4d190` (26.3). GitHub
+release with six jars; CurseForge files **8974359–8974364** (1.20.1 → 26.3 in order, loader line
+`1.20.1 = 9990, Forge = 7498, Java 17`, the rest NeoForge 10150); Modrinth `XouovttV gH5dPP55 RE5TKg5L
+QFtsFBcV SS1UebU3 SDDtTAEJ`. Gates: six self-tests PASS at the pre-bump heads (141–175 checks),
+`--compare` agrees, CI run 36176398954 green on every bump head, halt/exit scan 0 on all six (detector
+proved on a synthetic positive: 2 hits; ⚠ the 26.1 worktree's `cityworld-5.8.0+mc26.1.2.jar` is dated
+Sep 18 — rebuilt after the fix — so it is NOT a control either; only a jar built from the 5.8.0 tag
+would be). Fleet `DEPLOYED-v5.14.0` on 11 of 12 (26.2.test was open in his game: rerun the deploy).
+Owner's verdict on the caverns in 26.2.test: *"amazing — just the right shapes."* ZARP told.
+
+**Where it was.** Master `1dc14234` (code) + `057a9503` (docs); branch heads `533fc1a4` (1.20.1),
 `28052687` (1.21.1), `3cb4c1f3` (26.1), `a38785ef` (26.2), `2eeb0d65` (26.3), all pushed. Gates: six
 self-tests PASS (141–174 checks, 0 failures; `orchard.lotsWithCherry` 6–7 of 8 temperate orchards on
 every version, 527–682 cherry logs; `biome.caveFeatures` unchanged at 12 on the lines without sulfur,

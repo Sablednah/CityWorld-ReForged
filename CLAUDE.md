@@ -91,7 +91,12 @@ then let the compiler name the API drift (26.x: `ChunkPos` is a record, `pack()`
 `getStructureTemplateManager`, a `Climate.Sampler` on `Structure.generate`, two-arg
 `getStartForStructure`; 1.20.1/1.21.1: ten-arg `generate`, `location()`, Forge's server hooks).
 
-**NEXT (2026-09-24 evening, unreleased, deployed to his 1.20.1 instance):** the owner added Battle Towers,
+**v5.14.0 is released** (2026-09-25 evening): everything below plus the morning's asks — tag `v5.14.0`
+(`1513c89c`), CurseForge files 8974359–8974364, Modrinth `XouovttV gH5dPP55 RE5TKg5L QFtsFBcV SS1UebU3
+SDDtTAEJ`, fleet `DEPLOYED-v5.14.0` (26.2.test still to redeploy once his game is closed). PORTING.md
+"the owner's next four mods" has the gates. **NEXT:** nothing queued; his playtest is the queue.
+
+**What 5.14.0 was (2026-09-24 evening → 25th):** the owner added Battle Towers,
 Dungeon Crawl, Alex's Caves and Pam's HarvestCraft 2. All four are now wired — allow-list entries and a
 land-tower beard; five Alex's biomes in the cave pool with SOLID rock and an all-steps decoration read;
 Pam's crops in the field pool and a new `#cityworld:orchard/<climate>` fruit-tree seam placed through the
