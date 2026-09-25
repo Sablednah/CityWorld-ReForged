@@ -48,7 +48,9 @@ public abstract class LootProvider extends Provider {
         // each of those tables ends with a reference to an EMPTY cityworld:chests/<name>_extra that we
         // also ship — a mod or pack replaces just that file to drop its own items in without touching
         // (or clashing with) CityWorld's own contents. Ammo in nightstands, guns in the armoury.
-        HOSPITAL, NIGHTSTAND, VAULT_QUARTERS, VAULT_OFFICE, VAULT_ARMOURY, SHOP, POND
+        HOSPITAL, NIGHTSTAND, VAULT_QUARTERS, VAULT_OFFICE, VAULT_ARMOURY, SHOP, POND,
+        // The armoury's ammunition shelves and crates: arrows and powder, and the hook a gun mod fills.
+        VAULT_AMMO
     }
 
     public abstract void setLoot(CityWorldGenerator generator, Odds odds, LootLocation lootLocation, Block block);

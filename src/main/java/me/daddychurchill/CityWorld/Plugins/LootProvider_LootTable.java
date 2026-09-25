@@ -55,7 +55,8 @@ public final class LootProvider_LootTable extends LootProvider {
         container.setLootTable(keyFor(lootLocation), odds.getRandomLong());
     }
 
-    private static ResourceKey<LootTable> keyFor(LootLocation lootLocation) {
+    /** The table a location names: {@code cityworld:chests/<lowercase name>}. */
+    public static ResourceKey<LootTable> keyFor(LootLocation lootLocation) {
         return ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.fromNamespaceAndPath("cityworld",
                 "chests/" + lootLocation.name().toLowerCase(Locale.ROOT)));
     }
