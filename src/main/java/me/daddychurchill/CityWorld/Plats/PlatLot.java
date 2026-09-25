@@ -350,6 +350,15 @@ public abstract class PlatLot {
 		return LootLocation.BUILDING;
 	}
 
+	/**
+	 * A loot table id this lot would rather its containers used than {@link #defaultLoot()} — a pasted
+	 * schematic names {@code cityworld:chests/schematic/<its name>}. Used only if a table by that id
+	 * exists, so a schematic with no table of its own falls back to the lot default. Null for most lots.
+	 */
+	public String ownLootTable() {
+		return null;
+	}
+
 	/** MODERN: whether the base biome-ground pass runs on this lot's exposed grass. True by default. */
 	protected boolean wantsBiomeGround() {
 		return true;
