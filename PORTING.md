@@ -118,6 +118,36 @@ the owner wants the vault to worsen floor by floor (loot, spawners, broken light
 lot-level depth gradient in the vault generator; if built, expose a per-floor loot hook
 (`vault_<room>_extra_<depth>` or a depth-indexed name) for Threadwork to fill.
 
+### The morning after (2026-09-25): all vanilla structures for the playtest, loot everywhere, the armoury
+
+**Playtest pack.** `scripts/gen_allow_structures_pack.py forge 15 <jar>` writes a lowcode datapack jar
+admitting all fifteen vanilla surface/underground sets to `#cityworld:allowed`; one is installed in the
+owner's `1.20.1  Forge` instance as `allstructures-cityworld-test-1.0.jar` so he can watch the forecast,
+reservation and pad handle each of vanilla's own structures. Not for shipping (CityWorld builds its own
+villages and mines), and NOT a `structure_fit` carrier: on 1.20.1 a second pack's structure_fit replaces
+the shipped one whole. Villages and outposts beard themselves (`beard_thin`); mansions, monuments and the
+scattered features self-level; mineshafts and trail ruins are underground and unreserved.
+
+**`ContainerLoot`** (Support): the end-of-lot pass from `PlatLot.generateBlocks`, after everything else,
+over `ChunkAccess.getBlockEntitiesPos()` of the chunk being decorated. Three tiers, read from what the
+mods actually are (`javap`): Macaw's `StorageTileEntity extends RandomizableContainerBlockEntity` → a
+deferred table like a chest; vanilla shelves and chiseled bookshelves are plain `Container`s → filled now
+by `LootTable.fill`; Fantasy's Furniture is an apexcore `InventoryBlockEntity` that is neither — it holds
+a NeoForge `ItemStacksResourceHandler` and exposes it only through `Capabilities.Item.BLOCK` — so
+`fillViaCapability` rolls the table and inserts through the transfer API (21.11/26.x), `IItemHandler`
+on 1.21.1, `ForgeCapabilities.ITEM_HANDLER` on 1.20.1: **the one loader-specific method, adapt it per
+branch**. `PlatLot.defaultLoot()` = BUILDING; overrides FarmLot→FARMWORKS, IndustrialBuildingLot and
+StorageLot→WAREHOUSE, HospitalLot→HOSPITAL, CornerShopLot→SHOP, VaultLot→VAULT_QUARTERS. Guards:
+`#cityworld:loot/never` (machines), a `*furniture_station` id, anything already holding items or a table.
+Self-test line `loot.containers` counts each path; on a run with no furniture mods only `deferred` moves.
+
+**Armoury** (`Support/Armoury`, from `VaultLot.armoury`, room type 7): item frames with weapons from item
+tag `#cityworld:armoury/weapons` on whichever wall backs them (`isWallBacking`, the sconce rule), armour
+stands (`ArmorStand` built directly, `getEquipmentSlotForItem` picks the slot so a mod's helmet lands on
+the head, `slot.isArmor()` filters the rest) along the side wall, barrels + a pooled shelf over each on the
+far wall rolling `chests/vault_ammo` (`ContainerLoot.assignAt` for the shelf, a new `LootLocation.VAULT_AMMO`).
+Item tags live in `tags/item/` (1.21+) — `tags/items/` on 1.20.1, like `blocks/` and `loot_tables/`.
+
 ### Ship notes
 
 - **⚠ A cherry-pick onto 1.20.1 carried the 1.21 loot key into `loot_tables/`.** Git's rename detection

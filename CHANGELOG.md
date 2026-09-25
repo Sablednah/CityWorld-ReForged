@@ -41,6 +41,20 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   reference to an empty `cityworld:chests/<name>_extra` at weight 15, the same shape the vault rooms,
   hospital, shop, pond and nightstand have had since 5.9.0. A pack replaces just that file to seed its
   own items (quest parts in the industrial warehouse, say) without touching CityWorld's contents.
+- **Every container gets a loot table.** A new end-of-lot pass walks each chunk's block entities and
+  gives every empty, untouched container the lot's default table: pooled storage furniture (Macaw's
+  cabinets and drawers, Fantasy's chests and lockboxes), the chests inside a pasted schematic, a modded
+  crate in a warehouse. Warehouses roll the warehouse table, farms the farmworks one, hospitals,
+  shops and the vault their own, everything else the building table, and every table ends in an
+  `_extra` hook. Vanilla containers take a deferred table the vanilla way; a mod inventory that exposes
+  only an item handler is filled at generation. Machines are excluded by `#cityworld:loot/never`
+  (furnaces, hoppers, brewing stands, jukeboxes, lecterns…), and a container that already holds
+  anything is left alone.
+- **The vault armoury has an identity.** A weapon rack of item frames along one wall (items from the
+  item tag `#cityworld:armoury/weapons`, so a gun mod adds guns), armour stands wearing one to three
+  pieces of a set along another (`#cityworld:armoury/armour`), ammunition crates with a shelf over
+  each along the third (rolling the new `cityworld:chests/vault_ammo`, with its `_extra` hook for a
+  mod's ammunition), and the two armoury chests. It was a row of barrels.
 - **Dungeon Crawl and Battle Towers are placed** when installed: their structure sets are in the
   shipped allow-list, the land tower is declared a beard so the ground rises to its floor, and the
   forecast reserves the towers' real footprints. Cataclysm's sets are in the shipped list too, so the
