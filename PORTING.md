@@ -180,6 +180,12 @@ lush patch is a lush cavern, under an Alex's patch Alex's own carvers add to it.
 
 ### Ship notes
 
+- **⚠ 26.3 has its own loot-table dialect, and a table in the 1.21 form stops the server.** Typed rolls
+  (`"rolls": {"type": "minecraft:uniform", "min": 2, "max": 4}`) and a single `"modifier": {"type":
+  "set_count", "count": {...typed...}}` per entry instead of `"functions": [...]`. `vault_ammo.json`
+  cherry-picked in the 1.21 form failed registry loading ("Not a number: {min:2,max:4}") and the CI 26.3
+  job's server never started — the local 26.3 self-test had not been re-run since the previous night, so
+  CI caught it. Every other 26.3 table was already in its dialect; write a new one from one of them.
 - **⚠ A cherry-pick onto 1.20.1 carried the 1.21 loot key into `loot_tables/`.** Git's rename detection
   merged master's edits to `loot_table/chests/*.json` into the branch's `loot_tables/chests/*.json` — hunk
   by hunk, so the thirteen new `"type": "minecraft:loot_table", "value": …` entries landed verbatim, and
