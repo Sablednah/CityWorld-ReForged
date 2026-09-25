@@ -41,6 +41,9 @@ public class CityWorldSettings {
     /** MODERN/APOCALYPSE default: winding "noodle" cave tunnels (that wander + branch, vanilla-like) instead
      *  of the classic noise blobs. A free toggle — any style can opt in for better caves; never style-locked. */
     public boolean windingCaves = false;
+    /** MODERN/APOCALYPSE default: rare, large caverns astride the deepslate line, shelved and rough inside —
+     *  room for a cave biome (vanilla's lush and dripstone, Alex's Caves) to be something. Same free toggle. */
+    public boolean largeCaverns = false;
     public boolean includeLavaFields = true;
     public boolean includeSeas = true;
     public boolean includeMountains = true;
@@ -242,6 +245,7 @@ public class CityWorldSettings {
         includeBunkers = false;
         includeCaves = false;
         windingCaves = false;
+        largeCaverns = false;
         includeLavaFields = false;
         includeOres = false;
         includeBones = false;
@@ -406,6 +410,7 @@ public class CityWorldSettings {
         // turn them on or off.
         if (style == WorldStyle.MODERN || style == WorldStyle.APOCALYPSE) {
             s.windingCaves = true;
+            s.largeCaverns = true;
             // Wild land is vanilla's to decorate on the modern styles. Running both passes doubled the
             // planting and read as unnaturally lush, and vanilla's own decoration is the half that a
             // biome mod extends — so on the styles built around modern Minecraft, hand it over.
@@ -474,7 +479,7 @@ public class CityWorldSettings {
                 v, v, v);
         CityWorldSettingsData.Terrain t = d.terrain();
         CityWorldSettingsData.Terrain t2 = new CityWorldSettingsData.Terrain(v, v, v, v, v, v, v, v, v, v, v, v, v,
-                t.oddsOfPristineBuilding(), v);
+                t.oddsOfPristineBuilding(), v, v);
         CityWorldSettingsData.Overgrowth og = d.overgrowth();
         CityWorldSettingsData.Overgrowth og2 = new CityWorldSettingsData.Overgrowth(v, og.intensity(), v);
         CityWorldSettingsData.Shops sh = new CityWorldSettingsData.Shops(v);
@@ -522,6 +527,7 @@ public class CityWorldSettings {
         includeDecayedNature = t.includeDecayedNature();
         oddsOfPristineBuilding = t.oddsOfPristineBuilding();
         windingCaves = t.windingCaves();
+        largeCaverns = t.largeCaverns();
         CityWorldSettingsData.Overgrowth og = data.overgrowth();
         includeOvergrowth = og.enabled();
         overgrowthIntensity = og.intensity();
@@ -624,7 +630,7 @@ public class CityWorldSettings {
                 includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
                 includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
                 includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, oddsOfPristineBuilding,
-                windingCaves);
+                windingCaves, largeCaverns);
         CityWorldSettingsData.Spawns spawns = new CityWorldSettingsData.Spawns(
                 spawnBeings, spawnBaddies, spawnAnimals, spawnVagrants, nameVillagers, showVillagersNames);
         CityWorldSettingsData.Treasures treasures = new CityWorldSettingsData.Treasures(

@@ -137,14 +137,15 @@ public record CityWorldSettingsData(
             boolean includeDecayedBuildings,
             boolean includeDecayedNature,
             double oddsOfPristineBuilding,
-            boolean windingCaves) {
+            boolean windingCaves,
+            boolean largeCaverns) {
 
         /** Default pristine chance — tiny, so a spared building is a rare find even in a ruined world. */
         public static final double DEFAULT_ODDS_OF_PRISTINE = 0.0001; // 0.01%
 
         public static final Terrain DEFAULT = new Terrain(
                 true, true, true, true, true, true, true, true, true, true, false, false, false,
-                DEFAULT_ODDS_OF_PRISTINE, false);
+                DEFAULT_ODDS_OF_PRISTINE, false, false);
 
         public static final Codec<Terrain> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("includeCaves", true).forGetter(Terrain::includeCaves),
@@ -161,7 +162,9 @@ public record CityWorldSettingsData(
                 Codec.BOOL.optionalFieldOf("includeDecayedBuildings", false).forGetter(Terrain::includeDecayedBuildings),
                 Codec.BOOL.optionalFieldOf("includeDecayedNature", false).forGetter(Terrain::includeDecayedNature),
                 Codec.DOUBLE.optionalFieldOf("oddsOfPristineBuilding", DEFAULT_ODDS_OF_PRISTINE).forGetter(Terrain::oddsOfPristineBuilding),
-                Codec.BOOL.optionalFieldOf("windingCaves", false).forGetter(Terrain::windingCaves)
+                Codec.BOOL.optionalFieldOf("windingCaves", false).forGetter(Terrain::windingCaves),
+                // sixteenth and last field this group can take: RecordCodecBuilder stops at 16
+                Codec.BOOL.optionalFieldOf("largeCaverns", false).forGetter(Terrain::largeCaverns)
         ).apply(i, Terrain::new));
     }
 
