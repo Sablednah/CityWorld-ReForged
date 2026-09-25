@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:hopper",
+    "minecraft:dispenser",
+    "minecraft:dropper",
+    { "id": "minecraft:crafter", "required": false },
+    "minecraft:furnace",
+    "minecraft:blast_furnace",
+    "minecraft:smoker",
+    "minecraft:brewing_stand",
+    "minecraft:jukebox",
+    "minecraft:lectern",
+    "minecraft:chiseled_bookshelf",
+    "minecraft:decorated_pot",
+    "minecraft:campfire",
+    "minecraft:soul_campfire",
+    "minecraft:beacon",
+    "minecraft:enchanting_table"
+  ]
+}

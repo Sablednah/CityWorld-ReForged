@@ -30,6 +30,11 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
  */
 public class HospitalLot extends IsolatedLot {
 
+	@Override
+	public me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation defaultLoot() {
+		return me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation.HOSPITAL;
+	}
+
     private static final Material WALL = Material.WHITE_CONCRETE;
     private static final Material TRIM = Material.LIGHT_GRAY_CONCRETE;
     private static final Material WINDOW = Material.LIGHT_BLUE_STAINED_GLASS;
