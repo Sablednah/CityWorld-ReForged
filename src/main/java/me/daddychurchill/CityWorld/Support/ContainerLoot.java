@@ -84,7 +84,7 @@ public final class ContainerLoot {
             if (!(chunk.getServerLevel() instanceof WorldGenLevel level))
                 return;
             ChunkAccess access = level.getChunk(chunk.sectionX, chunk.sectionZ);
-            ResourceKey<LootTable> key = LootProvider_LootTable.keyFor(loot);
+            ResourceLocation key = LootProvider_LootTable.keyFor(loot);
             // ⚠ Ask the REGION for each entity, not the chunk. A block placed during generation leaves only a
             // "DUMMY" NBT stub in the proto-chunk's pending map; WorldGenRegion.getBlockEntity materialises
             // the real block entity from that stub on demand, ChunkAccess.getBlockEntity answers null for it.
