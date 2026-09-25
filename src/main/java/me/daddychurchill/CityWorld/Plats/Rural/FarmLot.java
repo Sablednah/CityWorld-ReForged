@@ -23,6 +23,11 @@ import me.daddychurchill.CityWorld.Support.SurroundingLots;
 
 public class FarmLot extends ConnectedLot {
 
+	@Override
+	public me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation defaultLoot() {
+		return me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation.FARMWORKS;
+	}
+
 	// TODO Apple farm?
 	// TODO Cocoa farm?
 	// TODO PPPwPPPPPPwPPP based

@@ -335,6 +335,19 @@ public abstract class PlatLot {
 
 		// polish things off
 		generator.shapeProvider.postGenerateBlocks(generator, this, chunk, blockYs);
+
+		// Last of all: every container this lot left without a table gets its default one — pooled storage
+		// furniture, a schematic's chests, a modded crate. See ContainerLoot.
+		me.daddychurchill.CityWorld.Support.ContainerLoot.apply(generator, this, chunk, chunkOdds);
+	}
+
+	/**
+	 * The loot table for any container this lot leaves without one — pooled storage furniture, a pasted
+	 * schematic's chests, a mod's crate. {@code BUILDING} unless a lot knows better (farms, warehouses,
+	 * the hospital, shops, the vault override it); {@code null} or {@code EMPTY} to leave containers bare.
+	 */
+	public LootLocation defaultLoot() {
+		return LootLocation.BUILDING;
 	}
 
 	/** MODERN: whether the base biome-ground pass runs on this lot's exposed grass. True by default. */

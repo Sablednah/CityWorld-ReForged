@@ -19,6 +19,11 @@ import me.daddychurchill.CityWorld.api.ShopType;
  */
 public class CornerShopLot extends HouseLot {
 
+	@Override
+	public me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation defaultLoot() {
+		return me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation.SHOP;
+	}
+
     private final ShopType shopType;
 
     public CornerShopLot(PlatMap platmap, int chunkX, int chunkZ) {
