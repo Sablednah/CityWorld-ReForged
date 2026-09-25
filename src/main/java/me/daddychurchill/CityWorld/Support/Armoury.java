@@ -79,7 +79,6 @@ public final class Armoury {
         ItemFrame frame = new ItemFrame(server.getLevel(), pos, out);
         frame.setSilent(true);
         frame.setItem(new ItemStack(weapons.get(odds.getRandomInt(weapons.size()))), false);
-        frame.setInvulnerable(false);
         server.addFreshEntityWithPassengers(frame);
         return true;
     }
