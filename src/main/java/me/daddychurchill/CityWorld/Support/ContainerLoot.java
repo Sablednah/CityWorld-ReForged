@@ -9,10 +9,10 @@ import me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation;
 import me.daddychurchill.CityWorld.Plugins.LootProvider_LootTable;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.Container;
-import net.minecraft.world.RandomizableContainer;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -61,12 +61,18 @@ public final class ContainerLoot {
     public static final TagKey<Block> NEVER = MaterialTags.key("cityworld:loot/never");
 
     private static final AtomicInteger DEFERRED = new AtomicInteger(), FILLED = new AtomicInteger(),
-            CAPABILITY = new AtomicInteger(), SKIPPED = new AtomicInteger();
+            CAPABILITY = new AtomicInteger(), NEVER_TAGGED = new AtomicInteger(), HAS_TABLE = new AtomicInteger(),
+            HAS_ITEMS = new AtomicInteger(), NOT_A_CONTAINER = new AtomicInteger();
 
-    /** For the self-test: how many containers each path has handled since startup. */
+    /**
+     * For the self-test: how many block entities each path has handled since startup. {@code hasTable} is
+     * every chest CityWorld placed on purpose (already tabled by {@code setChest}); {@code notAContainer}
+     * is signs, beds, skulls and the like; the three live counts are what this pass actually did.
+     */
     public static String summary() {
         return "deferred=" + DEFERRED.get() + " filled=" + FILLED.get() + " capability=" + CAPABILITY.get()
-                + " skipped=" + SKIPPED.get();
+                + " hasTable=" + HAS_TABLE.get() + " hasItems=" + HAS_ITEMS.get() + " never=" + NEVER_TAGGED.get()
+                + " notAContainer=" + NOT_A_CONTAINER.get();
     }
 
     /** The end-of-lot pass: every untouched empty container in this chunk gets the lot's default table. */
@@ -78,7 +84,7 @@ public final class ContainerLoot {
             if (!(chunk.getServerLevel() instanceof WorldGenLevel level))
                 return;
             ChunkAccess access = level.getChunk(chunk.sectionX, chunk.sectionZ);
-            ResourceKey<LootTable> key = LootProvider_LootTable.keyFor(loot);
+            ResourceLocation key = LootProvider_LootTable.keyFor(loot);
             // copy: assigning may touch the block entity map
             for (BlockPos pos : List.copyOf(access.getBlockEntitiesPos())) {
                 BlockEntity entity = access.getBlockEntity(pos);
@@ -108,16 +114,21 @@ public final class ContainerLoot {
         }
     }
 
-    private static boolean assign(WorldGenLevel level, BlockPos pos, BlockEntity entity, ResourceKey<LootTable> key,
+    private static boolean assign(WorldGenLevel level, BlockPos pos, BlockEntity entity, ResourceLocation key,
             long seed) {
         BlockState state = entity.getBlockState();
         if (state.is(NEVER) || isStation(state)) {
-            SKIPPED.incrementAndGet();
+            NEVER_TAGGED.incrementAndGet();
             return false;
         }
-        if (entity instanceof RandomizableContainer randomizable) {
-            if (randomizable.getLootTable() != null || (entity instanceof Container c && !c.isEmpty())) {
-                SKIPPED.incrementAndGet();
+        if (entity instanceof RandomizableContainerBlockEntity randomizable) {
+            // 1.20.1 has no getter for the table; the saved tag says whether one is set
+            if (entity.saveWithoutMetadata().contains("LootTable")) {
+                HAS_TABLE.incrementAndGet();
+                return false;
+            }
+            if (entity instanceof Container c && !c.isEmpty()) {
+                HAS_ITEMS.incrementAndGet();
                 return false;
             }
             randomizable.setLootTable(key, seed);
@@ -126,7 +137,7 @@ public final class ContainerLoot {
         }
         if (entity instanceof Container container) {
             if (!container.isEmpty()) {
-                SKIPPED.incrementAndGet();
+                HAS_ITEMS.incrementAndGet();
                 return false;
             }
             LootTable table = tableFor(level, key);
@@ -136,7 +147,10 @@ public final class ContainerLoot {
             FILLED.incrementAndGet();
             return true;
         }
-        return fillViaCapability(level, pos, entity, state, key, seed);
+        boolean done = fillViaCapability(level, pos, entity, state, key, seed);
+        if (!done)
+            NOT_A_CONTAINER.incrementAndGet();
+        return done;
     }
 
     /** A furniture crafting station is an inventory, not a store. Recognised by id, since every set has one. */
@@ -145,11 +159,11 @@ public final class ContainerLoot {
         return key != null && key.getPath().endsWith("furniture_station");
     }
 
-    private static LootTable tableFor(WorldGenLevel level, ResourceKey<LootTable> key) {
+    private static LootTable tableFor(WorldGenLevel level, ResourceLocation key) {
         var server = level.getServer();
         if (server == null)
             return null;
-        LootTable table = server.reloadableRegistries().getLootTable(key);
+        LootTable table = server.getLootData().getLootTable(key);
         return table == LootTable.EMPTY ? null : table;
     }
 
@@ -166,29 +180,27 @@ public final class ContainerLoot {
      * {@code ForgeCapabilities.ITEM_HANDLER} on 1.20.1); nothing else here is loader-specific.
      */
     private static boolean fillViaCapability(WorldGenLevel level, BlockPos pos, BlockEntity entity, BlockState state,
-            ResourceKey<LootTable> key, long seed) {
-        var handler = level.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK,
-                pos, state, entity, null);
+            ResourceLocation key, long seed) {
+        // 1.20.1 Forge: the block entity's own item-handler capability
+        net.minecraftforge.items.IItemHandler handler = entity
+                .getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER).orElse(null);
         if (handler == null)
             return false;
-        // already holds something: leave it
-        for (int i = 0; i < handler.size(); i++)
-            if (handler.getAmountAsInt(i) > 0) {
-                SKIPPED.incrementAndGet();
-                return false;
+        for (int i = 0; i < handler.getSlots(); i++)
+            if (!handler.getStackInSlot(i).isEmpty()) {
+                HAS_ITEMS.incrementAndGet();
+                return true;
             }
         LootTable table = tableFor(level, key);
         if (table == null)
             return false;
-        var stacks = table.getRandomItems(params(level, pos), net.minecraft.util.RandomSource.create(seed));
+        var stacks = table.getRandomItems(params(level, pos), seed);
         int inserted = 0;
-        try (var tx = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
-            for (var stack : stacks)
-                if (!stack.isEmpty())
-                    inserted += handler.insert(net.neoforged.neoforge.transfer.item.ItemResource.of(stack),
-                            stack.getCount(), tx);
-            tx.commit();
-        }
+        for (var stack : stacks)
+            if (!stack.isEmpty()) {
+                var left = net.minecraftforge.items.ItemHandlerHelper.insertItemStacked(handler, stack.copy(), false);
+                inserted += stack.getCount() - left.getCount();
+            }
         CAPABILITY.incrementAndGet();
         return inserted > 0 || stacks.isEmpty();
     }

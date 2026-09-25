@@ -56,7 +56,7 @@ public final class LootProvider_LootTable extends LootProvider {
     }
 
     // 1.20.1 keys a loot table by ResourceLocation; the ResourceKey<LootTable> form arrived with 1.21.
-    private static ResourceLocation keyFor(LootLocation lootLocation) {
+    public static ResourceLocation keyFor(LootLocation lootLocation) {
         return new ResourceLocation("cityworld", "chests/" + lootLocation.name().toLowerCase(Locale.ROOT));
     }
 }

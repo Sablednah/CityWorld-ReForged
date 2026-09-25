@@ -11,7 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -36,9 +36,9 @@ public final class Armoury {
     }
 
     public static final TagKey<Item> WEAPONS = TagKey.create(Registries.ITEM,
-            Identifier.fromNamespaceAndPath("cityworld", "armoury/weapons"));
+            new ResourceLocation("cityworld", "armoury/weapons"));
     public static final TagKey<Item> ARMOUR = TagKey.create(Registries.ITEM,
-            Identifier.fromNamespaceAndPath("cityworld", "armoury/armour"));
+            new ResourceLocation("cityworld", "armoury/armour"));
 
     /** What the shipped tags say without a datapack, and the fallback if a pack empties them. */
     private static final Item[] WEAPON_FALLBACK = { Items.IRON_SWORD, Items.IRON_AXE, Items.BOW, Items.CROSSBOW,
@@ -52,7 +52,7 @@ public final class Armoury {
     static List<Item> pool(TagKey<Item> tag, Item[] fallback) {
         List<Item> out = new ArrayList<>();
         try {
-            BuiltInRegistries.ITEM.get(tag).ifPresent(set -> set.forEach(h -> out.add(h.value())));
+            BuiltInRegistries.ITEM.getTag(tag).ifPresent(set -> set.forEach(h -> out.add(h.value())));
         } catch (Throwable ignored) {
         }
         if (out.isEmpty())
@@ -102,8 +102,8 @@ public final class Armoury {
         int pieces = 1 + odds.getRandomInt(3);
         for (int i = 0; i < pieces && !armour.isEmpty(); i++) {
             ItemStack stack = new ItemStack(armour.get(odds.getRandomInt(armour.size())));
-            EquipmentSlot slot = stand.getEquipmentSlotForItem(stack);
-            if (!slot.isArmor() || !stand.getItemBySlot(slot).isEmpty())
+            EquipmentSlot slot = net.minecraft.world.entity.Mob.getEquipmentSlotForItem(stack);
+            if (slot.getType() != EquipmentSlot.Type.ARMOR || !stand.getItemBySlot(slot).isEmpty())
                 continue;
             stand.setItemSlot(slot, stack);
         }
