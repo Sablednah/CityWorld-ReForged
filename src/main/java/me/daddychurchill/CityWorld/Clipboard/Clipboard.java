@@ -85,6 +85,12 @@ public final class Clipboard {
      * an offshore build stands on real legs to the seabed instead of floating on a stub of rock.
      */
     public final boolean anchor;
+    /**
+     * {@code Loot:} in the {@code .yml} — the loot table every container in this schematic that has none
+     * of its own gets ({@code minecraft:chests/village/village_toolsmith}, say). Null when unset, in which
+     * case {@code cityworld:chests/schematic/<name>} is used if a datapack ships it, else the lot's table.
+     */
+    public final String loot;
 
     private Clipboard(String name, SchematicFamily family, StructureTemplate template, Meta meta) {
         this.name = name;
@@ -106,6 +112,7 @@ public final class Clipboard {
         this.ocean = meta.ocean;
         this.keepAir = meta.keepAir;
         this.anchor = meta.anchor;
+        this.loot = meta.loot == null || meta.loot.isBlank() ? null : meta.loot.trim();
     }
 
     private static int ceilDiv(int a, int b) {
@@ -252,6 +259,7 @@ public final class Clipboard {
         boolean ocean = false;
         boolean keepAir = false;
         boolean anchor = false;
+        String loot = null;
 
         static Meta parse(InputStream in) throws IOException {
             Meta m = new Meta();
@@ -279,6 +287,7 @@ public final class Clipboard {
                             case "Ocean" -> m.ocean = Boolean.parseBoolean(val);
                             case "KeepAir" -> m.keepAir = Boolean.parseBoolean(val);
                             case "Anchor" -> m.anchor = Boolean.parseBoolean(val);
+                            case "Loot" -> m.loot = val;
                             default -> { /* ignore unknown keys */ }
                         }
                     } catch (NumberFormatException ignored) {

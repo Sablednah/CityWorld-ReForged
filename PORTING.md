@@ -178,6 +178,14 @@ it out again — terraces with a vertical face. Overworld only (the Nether keeps
 out.png 4 north` for the cross-section. Independent of the cave-pool patches on purpose: a cavern under a
 lush patch is a lush cavern, under an Alex's patch Alex's own carvers add to it.
 
+**Per-schematic loot** (his follow-up question, "can a chest pull from multiple?"): a chest holds ONE table
+id; composition is inside the table (a `loot_table` entry is *instead of* its pool-mates, a second pool is
+*as well as*). So `ClipboardLot.ownLootTable()` names `cityworld:chests/schematic/<sanitised file name>`,
+or the sidecar's `Loot:`; `ContainerLoot.ownTableOrNull` uses it only if the registry has it, else the lot
+default. `chests/schematic/winchester.json` ships as the example — its second pool is a 100% reference to
+`chests/building`, which is how "schematic-specific AND generic" is spelled. Self-test line
+`lotsWithOwnTable` counts lots that resolved one.
+
 ### Ship notes
 
 - **⚠ 26.3 has its own loot-table dialect, and a table in the 1.21 form stops the server.** Typed rolls

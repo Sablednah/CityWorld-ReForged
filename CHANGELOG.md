@@ -60,6 +60,12 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   only an item handler is filled at generation. Machines are excluded by `#cityworld:loot/never`
   (furnaces, hoppers, brewing stands, jukeboxes, lecterns…), and a container that already holds
   anything is left alone.
+- **Per-schematic loot.** A pasted schematic's chests draw from `cityworld:chests/schematic/<name>`
+  when a datapack ships that table (file name lowercased, spaces as underscores), or from whatever
+  table its sidecar's new `Loot:` line names, and from the generic building table otherwise. A
+  per-schematic table that wants the generic loot as well references `cityworld:chests/building`
+  from a pool. The bundled Winchester ships an example: bottles, honey, bread and a music disc on top
+  of the building loot.
 - **The vault armoury has an identity.** A weapon rack of item frames along one wall (items from the
   item tag `#cityworld:armoury/weapons`, so a gun mod adds guns), armour stands wearing one to three
   pieces of a set along another (`#cityworld:armoury/armour`), ammunition crates with a shelf over
