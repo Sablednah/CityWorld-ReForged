@@ -51,12 +51,17 @@ public final class Subway {
     public static final int EW_DEPTH = 24;
     /** Floor of the north-south level: eight below the other, two pairs of stairs, one block of rock between. */
     public static final int NS_DEPTH = 32;
-    /** Air above a floor slab; the ceiling slab sits at floor + HEIGHT + 1. */
-    public static final int HEIGHT = 5;
+    /** Air above a floor slab; the ceiling slab sits at floor + HEIGHT + 1. (Six: the owner asked for a block
+     *  taller than the first cut, with the road tunnels' arched profile.) */
+    public static final int HEIGHT = 6;
 
     public static final int N = 1, S = 2, E = 4, W = 8;
 
     public static final Material SHELL = Material.SMOOTH_STONE;
+    /** The tunnel lining: the road tunnels' sandstone tile, in white concrete (owner, 2026-09-26). */
+    public static final Material TILE = Material.WHITE_CONCRETE;
+    /** A glowing conduit run along the walls — end rods laid end to end, horizontal, read as one white rod. */
+    public static final Material ROD = Material.END_ROD;
     public static final Material RING = Material.STONE_BRICKS;
     public static final Material BED = Material.GRAVEL;
     public static final Material PLATFORM = Material.POLISHED_ANDESITE;
@@ -283,54 +288,89 @@ public final class Subway {
     }
 
     /**
-     * A running tunnel: the 6x6 centre plus an arm out to each open side, walled, floored and roofed one
-     * block beyond that, so a straight, a bend and (never planned, but drawable) a junction are one shape.
+     * The arched profile of a tunnel, the road tunnels' shape: full width for three blocks, then a step
+     * in, then the crown. {@code lo}/{@code hi} are the interior's across-extent at height {@code dy}
+     * above the floor (1-based; 0 and HEIGHT+1 are the floor and ceiling slabs).
+     */
+    static int lo(int dy) {
+        return dy <= 3 ? 5 : dy <= 5 ? 6 : 7;
+    }
+
+    static int hi(int dy) {
+        return 15 - lo(dy);
+    }
+
+    /**
+     * A running tunnel: at each height, the centre square plus an arm out to each open side, so a
+     * straight, a bend and (never planned, but drawable) a junction are one shape; the profile narrows
+     * with height ({@link #lo}) into the road tunnels' arch. Every cell beside the interior is lined
+     * in white tile and the layer behind that in smooth stone, floor to ceiling, so the box is sealed
+     * against whatever it cuts through. A glowing rod runs each wall at head height on a straight, and
+     * lights sit in the crown every four blocks (dark, some of them, in a ruin).
      */
     static void tunnel(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int floorY, int mask, boolean ruined) {
-        boolean[][] inside = new boolean[16][16];
-        for (int x = 5; x <= 10; x++)
-            for (int z = 5; z <= 10; z++)
-                inside[x][z] = true;
-        for (int i = 0; i < 5; i++)
-            for (int j = 5; j <= 10; j++) {
-                if ((mask & W) != 0)
-                    inside[i][j] = true;
-                if ((mask & E) != 0)
-                    inside[15 - i][j] = true;
-                if ((mask & N) != 0)
-                    inside[j][i] = true;
-                if ((mask & S) != 0)
-                    inside[j][15 - i] = true;
-            }
-        int ceilY = floorY + HEIGHT + 1;
-        for (int x = 0; x < 16; x++)
-            for (int z = 0; z < 16; z++) {
-                if (inside[x][z]) {
-                    chunk.setBlock(x, floorY, z, BED);
-                    chunk.setBlocks(x, floorY + 1, ceilY, z, Material.AIR);
-                    chunk.setBlock(x, ceilY, z, SHELL);
-                } else if (nextToInside(inside, x, z)) {
-                    // a ring of brick every four blocks along whichever way the tunnel runs here
-                    boolean ring = (mask == (W | E) ? x : mask == (N | S) ? z : x + z) % 4 == 0;
-                    chunk.setBlocks(x, floorY, ceilY + 1, z, ring ? RING : SHELL);
+        boolean[][][] inside = new boolean[HEIGHT + 2][16][16];
+        for (int dy = 1; dy <= HEIGHT; dy++) {
+            int l = lo(dy), h = hi(dy);
+            for (int x = l; x <= h; x++)
+                for (int z = l; z <= h; z++)
+                    inside[dy][x][z] = true;
+            for (int i = 0; i < l; i++)
+                for (int j = l; j <= h; j++) {
+                    if ((mask & W) != 0)
+                        inside[dy][i][j] = true;
+                    if ((mask & E) != 0)
+                        inside[dy][15 - i][j] = true;
+                    if ((mask & N) != 0)
+                        inside[dy][j][i] = true;
+                    if ((mask & S) != 0)
+                        inside[dy][j][15 - i] = true;
                 }
-            }
-        // lights along the crown, dark in a ruin
+        }
+        int ceilY = floorY + HEIGHT + 1;
+        for (int dy = 0; dy <= HEIGHT + 1; dy++) {
+            boolean[][] at = dy == 0 ? inside[1] : dy == HEIGHT + 1 ? inside[HEIGHT] : inside[dy];
+            boolean slab = dy == 0 || dy == HEIGHT + 1;
+            int y = floorY + dy;
+            for (int x = 0; x < 16; x++)
+                for (int z = 0; z < 16; z++) {
+                    if (at[x][z])
+                        chunk.setBlock(x, y, z, slab ? (dy == 0 ? BED : SHELL) : Material.AIR);
+                    else if (nextToInside(at, x, z, 1))
+                        chunk.setBlock(x, y, z, slab ? SHELL : TILE);
+                    else if (nextToInside(at, x, z, 2))
+                        chunk.setBlock(x, y, z, SHELL);
+                }
+        }
+        // lights in the crown, dark in a ruin
         for (int i = 2; i < 16; i += 4) {
             int x = mask == (N | S) ? 7 + (i / 4 & 1) : i;
             int z = mask == (N | S) ? i : 7 + (i / 4 & 1);
-            if (inside[x][z])
+            if (inside[HEIGHT][x][z])
                 chunk.setBlock(x, ceilY, z, ruined && Math.floorMod(chunk.sectionX * 7 + chunk.sectionZ * 13 + i, 5) < 3
                         ? DEAD_LIGHT : LIGHT);
         }
+        // the conduit: a rod along each wall at head height, the length of a straight
+        if (mask == (W | E) || mask == (N | S))
+            rods(chunk, floorY + 3, mask == (W | E), 5, 10);
         rails(chunk, odds, floorY, mask, ruined);
         if (ruined)
-            ruin(generator, chunk, odds, floorY, mask, inside);
+            ruin(generator, chunk, odds, floorY, mask, inside[1]);
     }
 
-    private static boolean nextToInside(boolean[][] inside, int x, int z) {
-        for (int dx = -1; dx <= 1; dx++)
-            for (int dz = -1; dz <= 1; dz++) {
+    /** End rods laid end to end along the full chunk at {@code y}, on the two across lines given, pointing along. */
+    static void rods(RealBlocks chunk, int y, boolean alongX, int... acrossLines) {
+        for (int across : acrossLines)
+            for (int along = 0; along < 16; along++) {
+                int x = alongX ? along : across, z = alongX ? across : along;
+                if (chunk.isEmpty(x, y, z))
+                    chunk.setBlock(x, y, z, ROD, alongX ? BlockFace.EAST : BlockFace.SOUTH);
+            }
+    }
+
+    private static boolean nextToInside(boolean[][] inside, int x, int z, int r) {
+        for (int dx = -r; dx <= r; dx++)
+            for (int dz = -r; dz <= r; dz++) {
                 int nx = x + dx, nz = z + dz;
                 if (nx >= 0 && nx < 16 && nz >= 0 && nz < 16 && inside[nx][nz])
                     return true;
@@ -459,10 +499,11 @@ public final class Subway {
                 boolean dead = ruined && Math.floorMod(chunk.sectionX * 7 + chunk.sectionZ * 13 + along * 3 + across, 5) < 2;
                 chunk.setBlock(alongX ? along : across, ceilY, alongX ? across : along, dead ? DEAD_LIGHT : LIGHT);
             }
-        // benches against the walls
+        // benches against the walls, and the conduit rods above them
         for (int along : new int[] { 5, 6, 9, 10 })
             for (int across : new int[] { 1, 14 })
                 chunk.setBlock(alongX ? along : across, floorY + 2, alongX ? across : along, Material.SMOOTH_STONE_SLAB);
+        rods(chunk, floorY + 5, alongX, 1, 14);
         rails(chunk, odds, floorY, negSide | posSide, ruined && odds.playOdds(0.5));
         for (int end = 0; end < 2; end++) { // no line that way: the track stops short at a pair of buffers
             if ((mask & (end == 0 ? negSide : posSide)) != 0)
@@ -508,10 +549,21 @@ public final class Subway {
      */
     public static void zigzag(RealBlocks chunk, int x0, int z0, boolean alongX, boolean entryPositive, int standBottom,
             int standTop, int wallsFrom, Door bottomDoor, Door topDoor) {
+        zigzag(chunk, x0, z0, alongX, entryPositive, standBottom, standTop, wallsFrom, bottomDoor, topDoor, 2);
+    }
+
+    /**
+     * As above with {@code flight} steps per run (the shaft is {@code flight + 2} long, a landing at each
+     * end; the rise per pair is {@code 2 * flight}). The owner's "think escalators": the surface stairs
+     * use four, the interchange keeps two.
+     */
+    public static void zigzag(RealBlocks chunk, int x0, int z0, boolean alongX, boolean entryPositive, int standBottom,
+            int standTop, int wallsFrom, Door bottomDoor, Door topDoor, int flight) {
+        int len = flight + 2;
         // the lane beside the across-side door is lane A (the one the landings are in); else the low lane
         int laneA = topDoor == Door.ACROSS_HIGH || bottomDoor == Door.ACROSS_HIGH ? 2 : 0;
         int laneB = 2 - laneA;
-        int aIn = entryPositive ? 3 : 0, aOut = 3 - aIn;
+        int aIn = entryPositive ? len - 1 : 0, aOut = len - 1 - aIn;
         int step = entryPositive ? -1 : 1;
         BlockFace away = alongX ? (entryPositive ? BlockFace.WEST : BlockFace.EAST)
                 : (entryPositive ? BlockFace.NORTH : BlockFace.SOUTH);
@@ -520,31 +572,31 @@ public final class Subway {
         // the shaft: air inside the 4x4 from the bottom stand (the floor there stays) to the top stand's
         // floor, walls one block outside it from wallsFrom up — the hall's ceiling, so the first flight
         // rises in the open off the platform and the shaft proper starts overhead
-        for (int a = -1; a <= 4; a++)
+        for (int a = -1; a <= len; a++)
             for (int c = -1; c <= 4; c++) {
                 int x = alongX ? x0 + a : x0 + c, z = alongX ? z0 + c : z0 + a;
                 if (x < 0 || x > 15 || z < 0 || z > 15)
                     continue;
-                boolean wall = a < 0 || a > 3 || c < 0 || c > 3;
+                boolean wall = a < 0 || a >= len || c < 0 || c > 3;
                 if (wall)
                     chunk.setBlocks(x, wallsFrom, standTop, z, RING);
                 else
                     chunk.setBlocks(x, standBottom, standTop, z, Material.AIR);
             }
-        door(chunk, x0, z0, alongX, aIn, laneA, entryPositive, standBottom, bottomDoor);
-        door(chunk, x0, z0, alongX, aIn, laneA, entryPositive, standTop, topDoor);
+        door(chunk, x0, z0, alongX, aIn, laneA, entryPositive, standBottom, bottomDoor, len);
+        door(chunk, x0, z0, alongX, aIn, laneA, entryPositive, standTop, topDoor, len);
 
-        for (int stand = standBottom; stand + 4 <= standTop; stand += 4) {
+        for (int stand = standBottom; stand + 2 * flight <= standTop; stand += 2 * flight) {
             lane(chunk, x0, z0, alongX, aIn, laneA, stand - 1, PLATFORM, null); // landing
-            lane(chunk, x0, z0, alongX, aIn + step, laneA, stand, Material.POLISHED_ANDESITE_STAIRS, away);
-            lane(chunk, x0, z0, alongX, aIn + 2 * step, laneA, stand + 1, Material.POLISHED_ANDESITE_STAIRS, away);
-            lane(chunk, x0, z0, alongX, aOut, laneA, stand + 1, PLATFORM, null); // turn
-            lane(chunk, x0, z0, alongX, aOut, laneB, stand + 1, PLATFORM, null);
-            lane(chunk, x0, z0, alongX, aOut - step, laneB, stand + 2, Material.POLISHED_ANDESITE_STAIRS, back);
-            lane(chunk, x0, z0, alongX, aOut - 2 * step, laneB, stand + 3, Material.POLISHED_ANDESITE_STAIRS, back);
-            lane(chunk, x0, z0, alongX, aIn, laneB, stand + 3, PLATFORM, null); // turn
+            for (int k = 1; k <= flight; k++)
+                lane(chunk, x0, z0, alongX, aIn + k * step, laneA, stand + k - 1, Material.POLISHED_ANDESITE_STAIRS, away);
+            lane(chunk, x0, z0, alongX, aOut, laneA, stand + flight - 1, PLATFORM, null); // turn
+            lane(chunk, x0, z0, alongX, aOut, laneB, stand + flight - 1, PLATFORM, null);
+            for (int k = 1; k <= flight; k++)
+                lane(chunk, x0, z0, alongX, aOut - k * step, laneB, stand + flight - 1 + k, Material.POLISHED_ANDESITE_STAIRS, back);
+            lane(chunk, x0, z0, alongX, aIn, laneB, stand + 2 * flight - 1, PLATFORM, null); // turn
             // a lamp in the end wall over each turn
-            int lx = alongX ? x0 + (entryPositive ? 4 : -1) : x0 + 1, lz = alongX ? z0 + 1 : z0 + (entryPositive ? 4 : -1);
+            int lx = alongX ? x0 + (entryPositive ? len : -1) : x0 + 1, lz = alongX ? z0 + 1 : z0 + (entryPositive ? len : -1);
             if (lx >= 0 && lx <= 15 && lz >= 0 && lz <= 15 && stand + 2 >= wallsFrom)
                 chunk.setBlock(lx, stand + 2, lz, LIGHT);
         }
@@ -554,12 +606,12 @@ public final class Subway {
 
     /** Open the wall beside the landing at {@code stand} on the {@code door} side, three high. */
     private static void door(RealBlocks chunk, int x0, int z0, boolean alongX, int aIn, int laneA, boolean entryPositive,
-            int stand, Door door) {
+            int stand, Door door, int len) {
         for (int i = 0; i < 2; i++) {
             int a, c;
             switch (door) {
             case ALONG -> {
-                a = entryPositive ? 4 : -1;
+                a = entryPositive ? len : -1;
                 c = laneA + i;
             }
             case ACROSS_LOW -> {
