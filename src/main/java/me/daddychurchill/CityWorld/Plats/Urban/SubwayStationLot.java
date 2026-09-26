@@ -100,8 +100,8 @@ public class SubwayStationLot extends BuildingLot {
             int ewCeiling = ewY + Subway.HEIGHT + 1, nsCeiling = nsY + Subway.HEIGHT + 1;
             Subway.zigzag(chunk, 2, 2, true, true, ewY + 2, stand, ewCeiling, Subway.Door.ALONG, Subway.Door.ALONG, 4);
             Subway.zigzag(chunk, 8, 10, true, false, ewY + 2, stand, ewCeiling, Subway.Door.ALONG, Subway.Door.ALONG, 4);
-            railings(chunk, stand, 1, 8, 1, 6, 8, 2, 3); // round the openings in the hall floor, a gap at the stair head
-            railings(chunk, stand, 7, 14, 9, 14, 7, 10, 11);
+            stairHeadRails(chunk, stand, 2, 2, 6, true, 4); // as the owner railed them by hand, 2026-09-26
+            stairHeadRails(chunk, stand, 8, 10, 6, false, -1);
             if (piece.nsMask() != 0) { // the interchange: on down to the north-south hall
                 Subway.zigzag(chunk, 11, 1, false, true, nsY + 2, ewY + 2, nsCeiling, Subway.Door.ALONG, Subway.Door.ACROSS_LOW);
                 Subway.zigzag(chunk, 1, 11, false, false, nsY + 2, ewY + 2, nsCeiling, Subway.Door.ALONG, Subway.Door.ACROSS_HIGH);
@@ -177,7 +177,7 @@ public class SubwayStationLot extends BuildingLot {
             default -> BlockFace.EAST;
             };
             int wall = side == 0 || side == 3 ? 1 : 14; // where that wall stands
-            for (int along = 6; along <= 9; along++) {
+            for (int along = 7; along <= 9; along++) { // three wide, between the pillars at 6 and 10
                 int x = side < 2 ? along : wall, z = side < 2 ? wall : along;
                 chunk.setBlocks(x, stand, stand + 3, z, Material.AIR);
             }
@@ -220,6 +220,26 @@ public class SubwayStationLot extends BuildingLot {
                 if (chunk.isEmpty(x, y, z) && !chunk.isEmpty(x, y - 1, z))
                     chunk.setBlock(x, y, z, Material.IRON_BARS);
             }
+    }
+
+    /**
+     * The railing round a surface stair's opening, copied from the owner's hand fix in his 1.20.1 save
+     * (2026-09-26): bars only where there is a drop — along the shaft's hall-side rim ({@code rimC}, -1 or
+     * 4 across the lanes) for every cell but the stair head, and a two-cell bar across the landing lane's
+     * ledge beside the exit. Nothing round the entry end (you walk in there) or over the hall walls.
+     */
+    private static void stairHeadRails(RealBlocks chunk, int y, int x0, int z0, int len, boolean entryPositive, int rimC) {
+        int aIn = entryPositive ? len - 1 : 0, step = entryPositive ? -1 : 1;
+        for (int a = 0; a < len; a++)
+            if (a != aIn)
+                bar(chunk, x0 + a, y, z0 + rimC);
+        for (int c = 0; c <= 1; c++)
+            bar(chunk, x0 + aIn + step, y, z0 + c);
+    }
+
+    private static void bar(RealBlocks chunk, int x, int y, int z) {
+        if (x >= 0 && x <= 15 && z >= 0 && z <= 15 && chunk.isEmpty(x, y, z) && !chunk.isEmpty(x, y - 1, z))
+            chunk.setBlock(x, y, z, Material.IRON_BARS);
     }
 
     private static void signs(RealBlocks chunk, int y, String... lines) {
