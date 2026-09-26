@@ -116,6 +116,11 @@ public final class Armoury {
      * or install with no shelf block, or where the cell is not free.
      */
     public static boolean ammoShelf(RealBlocks chunk, Odds odds, int x, int y, int z, BlockFace wallSide) {
+        return ammoShelf(chunk, odds, x, y, z, wallSide, 0);
+    }
+
+    /** As above on loot tier {@code tier} (the vault's deeper floors). */
+    public static boolean ammoShelf(RealBlocks chunk, Odds odds, int x, int y, int z, BlockFace wallSide, int tier) {
         if (!chunk.isEmpty(x, y, z))
             return false;
         int bx = x + wallSide.getModX(), bz = z + wallSide.getModZ();
@@ -127,7 +132,7 @@ public final class Armoury {
         BlockFace facing = FurnitureTags.facingFor(shelf, wallSide.getOppositeFace());
         if (!chunk.setFurniture(x, y, z, shelf, facing))
             return false;
-        ContainerLoot.assignAt(chunk, x, y, z, LootLocation.VAULT_AMMO, odds);
+        ContainerLoot.assignAt(chunk, x, y, z, LootLocation.VAULT_AMMO, odds, tier);
         return true;
     }
 }
