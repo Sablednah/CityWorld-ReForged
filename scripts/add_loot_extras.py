@@ -11,7 +11,7 @@ the same shape the vault rooms, hospital, shop, pond and nightstand have carried
 import json, os, sys
 d, key = sys.argv[1], sys.argv[2]
 for f in sorted(os.listdir(d)):
-    if not f.endswith('.json') or f.endswith('_extra.json'):
+    if not f.endswith('.json') or f.endswith('_extra.json') or '_floor' in f:  # the vault floor wrappers compose their own hooks
         continue
     name = f[:-5]
     p = os.path.join(d, f)
