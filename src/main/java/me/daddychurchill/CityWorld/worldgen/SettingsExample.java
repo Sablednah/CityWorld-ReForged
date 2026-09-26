@@ -216,6 +216,21 @@ public final class SettingsExample {
                                       clear of CityWorld's own cisterns (y 49) and sewers (y 57-62).
 
             ============================================================================
+            subways  — a metro under the city (MODERN and APOCALYPSE; forced off elsewhere)
+            ============================================================================
+            enabled   true   A station in every urban district (a ticket hall beside a road, two
+                             switchback stairs down to twin-track platforms 24 blocks under the
+                             street), and tunnels from each station to the stations of the
+                             neighbouring districts: east-west lines on the upper level, north-south
+                             lines eight blocks lower, so lines never junction and a station both
+                             lines call at is an interchange with stairs between its two halls. The
+                             tunnels are lit, ringed in brick, and boosted with powered rails, so a
+                             cart runs the line; a ruined world has dark lamps, gaps in the track,
+                             standing water and spawners in the wall niches. Stations announce as
+                             the landmark kind "subway" (off by default, see announcedLandmarks).
+            spawners  true   Sewer-bag spawners in the ruined tunnels' niches (APOCALYPSE only).
+
+            ============================================================================
             shops  — themed retail with villager job blocks (MODERN dressing)
             ============================================================================
             enabled     false  Villager job-site blocks so a store/farm reads as its trade and a

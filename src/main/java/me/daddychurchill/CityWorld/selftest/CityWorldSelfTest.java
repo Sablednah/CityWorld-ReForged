@@ -205,6 +205,7 @@ public final class CityWorldSelfTest {
             checkBiomeDepth(server);
             checkStructures(server);
             checkDecorationAndSigns(server);
+            checkSubways(server);
             checkFarmPlanting(server);
             checkAirships(server);
             checkAirshipHeadings();
@@ -2212,6 +2213,125 @@ public final class CityWorldSelfTest {
     }
 
     /** The lot the generator itself would use for this chunk, or null if it cannot be resolved. */
+    /**
+     * The subway, both halves. The PLAN: every station within the plan radius, and every tunnel piece
+     * consistent with its neighbours — a side open on one chunk must be open on the chunk it faces, on
+     * the same level, or a cart would run into rock (the piece table is a pure function of two stations,
+     * so a mismatch is an arithmetic slip in {@code Subway.at}). The WORLD: a station chunk and a plain
+     * tunnel chunk are generated and read back — rails on the bed at the level the plan says, stairs
+     * climbing the shafts, lights in the ceiling — because a hall that draws nothing looks, from the
+     * plan, exactly like one that does.
+     */
+    private void checkSubways(MinecraftServer server) {
+        ServerLevel level = server.overworld();
+        CityWorldGenerator plan = level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator g
+                ? g.getContext(level) : null;
+        if (plan == null || !me.daddychurchill.CityWorld.Support.Subway.planned(plan)) {
+            report.put("subway.planned", "no (" + (plan == null ? "not our generator" : "off for this style") + ")");
+            return;
+        }
+        int radius = PLAN_RADIUS;
+        int stations = 0, interchanges = 0, tunnels = 0, bends = 0, platforms = 0, mismatches = 0;
+        List<String> mismatchSamples = new ArrayList<>();
+        int[] firstStation = null, firstStraight = null;
+        for (int cx = -radius; cx <= radius; cx++)
+            for (int cz = -radius; cz <= radius; cz++) {
+                var piece = me.daddychurchill.CityWorld.Support.Subway.at(plan, cx, cz);
+                if (!piece.any())
+                    continue;
+                if (piece.station()) {
+                    stations++;
+                    if (piece.nsMask() != 0)
+                        interchanges++;
+                    if (firstStation == null)
+                        firstStation = new int[] { cx, cz };
+                } else {
+                    if (piece.ewPlatform() || piece.nsPlatform())
+                        platforms++;
+                    for (int m : new int[] { piece.ewMask(), piece.nsMask() })
+                        if (m != 0) {
+                            tunnels++;
+                            if (Integer.bitCount(m) == 2 && m != 3 && m != 12)
+                                bends++;
+                        }
+                    if (firstStraight == null && piece.ewMask() == 12 && !piece.ewPlatform() && piece.nsMask() == 0)
+                        firstStraight = new int[] { cx, cz };
+                }
+                // every open side must be answered by the chunk it faces, on the same level
+                for (int lvl = 0; lvl < 2; lvl++) {
+                    int mask = lvl == 0 ? piece.ewMask() : piece.nsMask();
+                    if (piece.station() && lvl == 0 && mask == 0)
+                        continue;
+                    for (int[] d : new int[][] { { 1, 0, -1, 0 }, { 2, 0, 1, 0 }, { 4, 1, 0, 0 }, { 8, -1, 0, 0 } }) {
+                        if ((mask & d[0]) == 0)
+                            continue;
+                        var other = me.daddychurchill.CityWorld.Support.Subway.at(plan, cx + d[1], cz + d[2]);
+                        int otherMask = lvl == 0 ? other.ewMask() : other.nsMask();
+                        int opposite = d[0] == 1 ? 2 : d[0] == 2 ? 1 : d[0] == 4 ? 8 : 4;
+                        if ((otherMask & opposite) == 0) {
+                            mismatches++;
+                            if (mismatchSamples.size() < 6)
+                                mismatchSamples.add(cx + "," + cz + " level " + lvl + " mask " + mask + " -> "
+                                        + (cx + d[1]) + "," + (cz + d[2]) + " mask " + otherMask);
+                        }
+                    }
+                }
+            }
+        report.put("subway.stations", Integer.toString(stations));
+        report.put("subway.interchanges", Integer.toString(interchanges));
+        report.put("subway.tunnelPieces", tunnels + " (" + bends + " bends, " + platforms + " platform chunks)");
+        report.put("subway.mismatches", mismatches + (mismatchSamples.isEmpty() ? "" : " " + mismatchSamples));
+        if (stations == 0)
+            fail("no subway station planned within " + radius + " chunks of spawn");
+        if (mismatches > 0)
+            fail(mismatches + " subway tunnel sides open onto rock: " + mismatchSamples);
+
+        int ewRail = me.daddychurchill.CityWorld.Support.Subway.ewFloor(plan) + 1;
+        if (firstStation != null) {
+            int[] c = firstStation;
+            var counts = countBlocks(server, level, c[0], c[1], ewRail - 3, plan.streetLevel + 2);
+            report.put("subway.station.chunk", c[0] + "," + c[1] + " " + counts);
+            if (counts.getOrDefault("rails", 0) < 8)
+                fail("subway station at " + c[0] + "," + c[1] + " has " + counts.getOrDefault("rails", 0)
+                        + " rails on its bed (want a track pair)");
+            if (counts.getOrDefault("stairs", 0) < 24)
+                fail("subway station at " + c[0] + "," + c[1] + " has " + counts.getOrDefault("stairs", 0)
+                        + " stair blocks (two switchbacks of six pairs want 48)");
+            if (counts.getOrDefault("lights", 0) == 0)
+                fail("subway station at " + c[0] + "," + c[1] + " is unlit");
+        }
+        if (firstStraight != null) {
+            int[] c = firstStraight;
+            var counts = countBlocks(server, level, c[0], c[1], ewRail - 1, ewRail + 6);
+            report.put("subway.tunnel.chunk", c[0] + "," + c[1] + " " + counts);
+            int want = plan.isApocalypseStyle() ? 16 : 30;
+            if (counts.getOrDefault("rails", 0) < want)
+                fail("subway tunnel at " + c[0] + "," + c[1] + " has " + counts.getOrDefault("rails", 0)
+                        + " rails (a straight wants 32" + (plan.isApocalypseStyle() ? ", less a ruin's gaps" : "") + ")");
+        } else if (stations > 1)
+            report.put("subway.tunnel.chunk", "no plain east-west straight found");
+    }
+
+    /** Rails, stairs, lights and air in one chunk between two heights — the subway's tell-tales. */
+    private static Map<String, Integer> countBlocks(MinecraftServer server, ServerLevel level, int cx, int cz, int lo, int hi) {
+        LevelChunk chunk = server.submit(() -> level.getChunk(cx, cz)).join();
+        Map<String, Integer> counts = new TreeMap<>();
+        for (int x = 0; x < 16; x++)
+            for (int z = 0; z < 16; z++)
+                for (int y = lo; y <= hi; y++) {
+                    BlockState state = chunk.getBlockState(new BlockPos(cx * 16 + x, y, cz * 16 + z));
+                    if (state.is(net.minecraft.tags.BlockTags.RAILS))
+                        counts.merge("rails", 1, Integer::sum);
+                    else if (state.is(net.minecraft.tags.BlockTags.STAIRS))
+                        counts.merge("stairs", 1, Integer::sum);
+                    else if (state.is(net.minecraft.world.level.block.Blocks.SEA_LANTERN))
+                        counts.merge("lights", 1, Integer::sum);
+                    else if (state.isAir())
+                        counts.merge("air", 1, Integer::sum);
+                }
+        return counts;
+    }
+
     private static PlatLot lotAt(CityWorldGenerator gen, int chunkX, int chunkZ) {
         try {
             return gen.getPlatMap(chunkX, chunkZ).getMapLot(chunkX, chunkZ);

@@ -52,14 +52,16 @@ public record CityWorldSettingsData(
         Overgrowth overgrowth,
         Shops shops,
         Decay decay,
-        Caves caves) {
+        Caves caves,
+        Subways subways) {
 
     /** 1875000 chunks — the modern world-format radius ceiling (30,000,000 blocks / 16). */
     public static final int MAX_RADIUS = 30000000 / 16;
 
     public static final CityWorldSettingsData DEFAULT = new CityWorldSettingsData(
             Features.DEFAULT, Terrain.DEFAULT, Spawns.DEFAULT, Treasures.DEFAULT, World.DEFAULT, Radius.DEFAULT,
-            Naming.DEFAULT, Mobs.DEFAULT, Overgrowth.DEFAULT, Shops.DEFAULT, Decay.DEFAULT, Caves.DEFAULT);
+            Naming.DEFAULT, Mobs.DEFAULT, Overgrowth.DEFAULT, Shops.DEFAULT, Decay.DEFAULT, Caves.DEFAULT,
+            Subways.DEFAULT);
 
     public static final Codec<CityWorldSettingsData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Features.CODEC.optionalFieldOf("features", Features.DEFAULT).forGetter(CityWorldSettingsData::features),
@@ -73,7 +75,8 @@ public record CityWorldSettingsData(
             Overgrowth.CODEC.optionalFieldOf("overgrowth", Overgrowth.DEFAULT).forGetter(CityWorldSettingsData::overgrowth),
             Shops.CODEC.optionalFieldOf("shops", Shops.DEFAULT).forGetter(CityWorldSettingsData::shops),
             Decay.CODEC.optionalFieldOf("decay", Decay.DEFAULT).forGetter(CityWorldSettingsData::decay),
-            Caves.CODEC.optionalFieldOf("caves", Caves.DEFAULT).forGetter(CityWorldSettingsData::caves)
+            Caves.CODEC.optionalFieldOf("caves", Caves.DEFAULT).forGetter(CityWorldSettingsData::caves),
+            Subways.CODEC.optionalFieldOf("subways", Subways.DEFAULT).forGetter(CityWorldSettingsData::subways)
     ).apply(i, CityWorldSettingsData::new));
 
     // --- what gets built ----------------------------------------------------------------------
@@ -267,6 +270,21 @@ public record CityWorldSettingsData(
      * Off by default; MODERN ships it on. The classification itself (see the {@code api} package /
      * {@code /cityinfo}) is always computed — this only governs the block placement.
      */
+    /**
+     * The subway: a station under every urban district, joined to its neighbours' stations by twin-track
+     * tunnels (see {@code Support/Subway}). Its own group because {@code Features} is at the codec's
+     * sixteen-field cap. {@code spawners} puts the sewer mob bag's spawners in the tunnels.
+     */
+    public record Subways(boolean enabled, boolean spawners) {
+
+        public static final Subways DEFAULT = new Subways(true, true);
+
+        public static final Codec<Subways> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.BOOL.optionalFieldOf("enabled", true).forGetter(Subways::enabled),
+                Codec.BOOL.optionalFieldOf("spawners", true).forGetter(Subways::spawners)
+        ).apply(i, Subways::new));
+    }
+
     public record Shops(boolean enabled) {
 
         public static final Shops DEFAULT = new Shops(false);
@@ -456,7 +474,7 @@ public record CityWorldSettingsData(
          * rares by default; a server owner can widen or narrow the list per world. Known keys:
          * {@code airship, saucer, vault, zoo, biodome, hospital, schematic} (default on) and
          * {@code castle, oilplatform, radiotower, bunker, museum, mineentrance, campground, shack,
-         * balloon, fishpond, vaultroad, hospitaldept} (default off). Everything always logs at debug.
+         * balloon, fishpond, vaultroad, hospitaldept, subway} (default off). Everything always logs at debug.
          */
         public static final java.util.List<String> DEFAULT_ANNOUNCED = java.util.List.of(
                 "airship", "saucer", "vault", "zoo", "biodome", "hospital", "schematic");
