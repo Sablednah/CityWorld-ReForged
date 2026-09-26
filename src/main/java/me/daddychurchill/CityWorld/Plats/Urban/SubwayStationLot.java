@@ -95,12 +95,13 @@ public class SubwayStationLot extends BuildingLot {
         ticketHall(generator, chunk, platmap, platX, platZ, floor, stand, name);
 
         if (underground) {
-            // down from the ticket hall to the east-west platforms: one stair at each end of each platform
+            // down from the ticket hall to the east-west platforms: one stair at each end of each platform,
+            // four steps a flight (six long, three pairs for the 24 of rise), in the hall's two free corners
             int ewCeiling = ewY + Subway.HEIGHT + 1, nsCeiling = nsY + Subway.HEIGHT + 1;
-            Subway.zigzag(chunk, 1, 1, true, true, ewY + 2, stand, ewCeiling, Subway.Door.ALONG, Subway.Door.ALONG);
-            Subway.zigzag(chunk, 11, 11, true, false, ewY + 2, stand, ewCeiling, Subway.Door.ALONG, Subway.Door.ALONG);
-            railings(chunk, stand, 0, 5, 0, 5, 5, 1, 2); // round the openings in the hall floor, a gap at the stair head
-            railings(chunk, stand, 10, 15, 10, 15, 10, 11, 12);
+            Subway.zigzag(chunk, 2, 2, true, true, ewY + 2, stand, ewCeiling, Subway.Door.ALONG, Subway.Door.ALONG, 4);
+            Subway.zigzag(chunk, 8, 10, true, false, ewY + 2, stand, ewCeiling, Subway.Door.ALONG, Subway.Door.ALONG, 4);
+            railings(chunk, stand, 1, 8, 1, 6, 8, 2, 3); // round the openings in the hall floor, a gap at the stair head
+            railings(chunk, stand, 7, 14, 9, 14, 7, 10, 11);
             if (piece.nsMask() != 0) { // the interchange: on down to the north-south hall
                 Subway.zigzag(chunk, 11, 1, false, true, nsY + 2, ewY + 2, nsCeiling, Subway.Door.ALONG, Subway.Door.ACROSS_LOW);
                 Subway.zigzag(chunk, 1, 11, false, false, nsY + 2, ewY + 2, nsCeiling, Subway.Door.ALONG, Subway.Door.ACROSS_HIGH);
@@ -109,10 +110,14 @@ public class SubwayStationLot extends BuildingLot {
                 signs(chunk, ewY + 3, "INTERCHANGE", "north - south", "line below");
             }
         }
+        // panes and bars only join up when told to
+        chunk.reconnect(0, 16, stand, stand + 6, 0, 16);
+        if (underground)
+            chunk.reconnect(0, 16, ewY + 1, ewY + 4, 0, 16);
         generator.reportLocation("subway", name + " Station", chunk);
         if (buildingsDecay(generator))
             destroyLot(generator, stand, stand + 5);
-        generator.spawnProvider.spawnBeing(generator, chunk, chunkOdds, 7, stand, 4);
+        generator.spawnProvider.spawnBeing(generator, chunk, chunkOdds, 7, stand, 7);
     }
 
     /** The name of the road this station stands beside, or "Subway" in a world without street names. */
@@ -135,29 +140,29 @@ public class SubwayStationLot extends BuildingLot {
     }
 
     /**
-     * The hall at street level: a full-chunk box, five high, white tile with a glass band and the line's
-     * stripe, brick corners and pillars, a flat roof, a doorway in every road-facing wall (the south one if
-     * none), the name over each door inside, lit, with a ticket booth in the middle.
+     * The hall at street level: a box inset one from the chunk edge (a pavement ring round it, and room
+     * for the name on the outside), five high, white tile with a glass band and the line's stripe, brick
+     * corners and pillars, a flat roof, a doorway in every road-facing wall (the south one if none), the
+     * name over each door inside and out, lit, with a ticket booth in the middle.
      */
     private void ticketHall(CityWorldGenerator generator, RealBlocks chunk, PlatMap platmap, int platX, int platZ,
             int floor, int stand, String name) {
         Material stripe = lineColour();
         chunk.setLayer(floor, Subway.PLATFORM);
-        chunk.setBlocks(0, 16, stand, stand + 5, 0, 16, Material.AIR);
-        for (int i = 0; i < 16; i++)
-            for (int[] w : new int[][] { { i, 0 }, { i, 15 }, { 0, i }, { 15, i } }) {
+        chunk.setBlocks(0, 16, stand, stand + 7, 0, 16, Material.AIR);
+        for (int i = 1; i <= 14; i++)
+            for (int[] w : new int[][] { { i, 1 }, { i, 14 }, { 1, i }, { 14, i } }) {
                 int x = w[0], z = w[1];
-                boolean pillar = i % 5 == 0 || i == 15;
+                boolean pillar = i == 1 || i == 14 || i % 4 == 2;
                 chunk.setBlock(x, stand, z, pillar ? Subway.RING : Subway.HALL_WALL);
                 chunk.setBlocks(x, stand + 1, stand + 3, z, pillar ? Subway.RING : Material.GLASS_PANE);
                 chunk.setBlock(x, stand + 3, z, pillar ? Subway.RING : stripe);
                 chunk.setBlock(x, stand + 4, z, pillar ? Subway.RING : Subway.HALL_WALL);
             }
-        chunk.setLayer(stand + 5, Subway.SHELL); // the roof
-        chunk.setBlocks(0, 16, stand + 6, stand + 7, 0, 1, Subway.RING); // a low parapet
-        chunk.setBlocks(0, 16, stand + 6, stand + 7, 15, 16, Subway.RING);
-        chunk.setBlocks(0, 1, stand + 6, stand + 7, 0, 16, Subway.RING);
-        chunk.setBlocks(15, 16, stand + 6, stand + 7, 0, 16, Subway.RING);
+        chunk.setBlocks(1, 15, stand + 5, stand + 6, 1, 15, Subway.SHELL); // the roof
+        for (int i = 1; i <= 14; i++) // a low parapet
+            for (int[] w : new int[][] { { i, 1 }, { i, 14 }, { 1, i }, { 14, i } })
+                chunk.setBlock(w[0], stand + 6, w[1], Subway.RING);
 
         boolean[] roads = roadSides(platmap, platX, platZ);
         if (!roads[0] && !roads[1] && !roads[2] && !roads[3])
@@ -171,30 +176,36 @@ public class SubwayStationLot extends BuildingLot {
             case 2 -> BlockFace.WEST;
             default -> BlockFace.EAST;
             };
+            int wall = side == 0 || side == 3 ? 1 : 14; // where that wall stands
             for (int along = 6; along <= 9; along++) {
-                int x = side < 2 ? along : side == 2 ? 15 : 0, z = side < 2 ? (side == 0 ? 0 : 15) : along;
+                int x = side < 2 ? along : wall, z = side < 2 ? wall : along;
                 chunk.setBlocks(x, stand, stand + 3, z, Material.AIR);
             }
-            // the name over the door, inside
-            int sx = side < 2 ? 7 : side == 2 ? 14 : 1, sz = side < 2 ? (side == 0 ? 1 : 14) : 7;
-            int dx = side < 2 ? 1 : 0, dz = side < 2 ? 0 : 1;
-            chunk.setWallSign(sx, stand + 3, sz, into, "SUBWAY", name, "Station");
-            chunk.setWallSign(sx + dx, stand + 3, sz + dz, into, "↓ platforms", "", "");
+            // the name over the door: inside, facing into the hall, and outside, facing the street
+            for (int face = 0; face < 2; face++) {
+                int d = face == 0 ? 1 : -1; // one cell in, or one cell out
+                int sx = side < 2 ? 7 : wall + (side == 2 ? -d : d), sz = side < 2 ? wall + (side == 0 ? d : -d) : 7;
+                int dx = side < 2 ? 1 : 0, dz = side < 2 ? 0 : 1;
+                BlockFace facing = face == 0 ? into : into.getOppositeFace();
+                chunk.setWallSign(sx, stand + 3, sz, facing, "SUBWAY", name, "Station");
+                chunk.setWallSign(sx + dx, stand + 3, sz + dz, facing, face == 0 ? "\u2193 platforms" : "SUBWAY", "", "");
+            }
         }
 
-        for (int[] p : new int[][] { { 3, 3 }, { 12, 3 }, { 3, 12 }, { 12, 12 }, { 7, 7 }, { 8, 8 } })
+        for (int[] p : new int[][] { { 4, 4 }, { 11, 4 }, { 4, 11 }, { 11, 11 }, { 7, 7 }, { 8, 8 } })
             chunk.setBlock(p[0], stand + 5, p[1], Subway.LIGHT);
 
-        // the ticket booth: a quartz counter round a clerk's square, glass on top
-        for (int x = 6; x <= 9; x++)
-            for (int z = 6; z <= 9; z++)
-                if (x == 6 || x == 9 || z == 6 || z == 9) {
+        // the ticket booth, in the north-east corner (the stairs take the other two): a quartz counter
+        // round a clerk's square, glass on top, the clerk's way in on the west side
+        for (int x = 10; x <= 13; x++)
+            for (int z = 2; z <= 5; z++)
+                if (x == 10 || x == 13 || z == 2 || z == 5) {
                     chunk.setBlock(x, stand, z, Material.QUARTZ_BLOCK);
                     chunk.setBlock(x, stand + 1, z, Material.GLASS_PANE);
                 }
-        chunk.setBlocks(9, stand, stand + 2, 7, Material.AIR); // the clerk's way in
-        chunk.setBlock(7, stand, 7, Material.LECTERN);
-        chunk.setBlock(8, stand + 2, 8, Material.LANTERN);
+        chunk.setBlocks(10, stand, stand + 2, 4, Material.AIR);
+        chunk.setBlock(11, stand, 3, Material.LECTERN);
+        chunk.setBlock(12, stand + 2, 4, Material.LANTERN);
     }
 
     /** Iron railings round a shaft's rim at {@code y}: the border of the ring {@code x1..x2, z1..z2}, on the

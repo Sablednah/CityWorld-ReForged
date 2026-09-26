@@ -81,6 +81,15 @@ y 42 to 65; the E-W hall (platform 1..5 / edge / bed 6..9 / edge / platform, pil
 stripe at floor+3); the lower hall with buffer stops at its closed end; and at chunk column -151 two jog
 columns turning east into their target rows with the two curves at rows 6 and 9 as derived.
 
+**First playtest (evening):** *"the mechanism, joining up and everything, is great."* Asked for and done:
+panes joined (`reconnect` over the hall and the rims — panes and bars only join when told), the name signs
+outside as well as inside (the hall is inset one from the chunk edge now, so the outside sign has a cell),
+longer flights (`zigzag(..., flight)`: four steps a run, a 6-long shaft, three pairs; the interchange keeps
+two), and the tunnels restyled as the road tunnels' arch (`lo(dy)`: full width three high, a step in, the
+crown), a block taller (`HEIGHT` 6), white concrete for the sandstone, and end rods laid end to end along
+each wall at head height as a glowing conduit (`rods`; `Material.withFacing` sets the six-way FACING). The
+booth moved to the hall's north-east corner: centred, it sat on both stair rims.
+
 ### Traps met this afternoon
 
 - The first stair version cut the platform under the whole 4×4, leaving a 1-deep pit round the first flight;
