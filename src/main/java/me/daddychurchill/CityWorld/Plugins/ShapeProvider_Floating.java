@@ -29,6 +29,11 @@ import me.daddychurchill.CityWorld.Support.RealBlocks;
 
 public class ShapeProvider_Floating extends ShapeProvider_Normal {
 
+	@Override
+	public boolean supportsSubways() {
+		return false; // see ShapeProvider.supportsSubways
+	}
+
 	public ShapeProvider_Floating(CityWorldGenerator generator, Odds odds) {
 		super(generator, odds);
 		long seed = generator.getWorldSeed();

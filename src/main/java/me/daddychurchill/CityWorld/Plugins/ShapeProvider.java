@@ -438,4 +438,13 @@ public abstract class ShapeProvider extends Provider {
 		return microScaleAt(chunkX, chunkZ, microIsolatedLotSlot) < oddsOfIsolatedLots;
 	}
 
+	/**
+	 * Whether this terrain can carry the subway ({@code Support/Subway}): a rock column from street level
+	 * down thirty blocks under every urban chunk. True for the normal ground; false where the ground is not
+	 * there (floating islands, the End) or is not a city's (the maze, the flood).
+	 */
+	public boolean supportsSubways() {
+		return false;
+	}
+
 }
