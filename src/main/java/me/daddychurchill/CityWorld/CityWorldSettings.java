@@ -175,6 +175,15 @@ public class CityWorldSettings {
      */
     public boolean includeShops = false;
 
+    /**
+     * The subway: a station lot in every urban platmap and twin-track tunnels between neighbouring stations,
+     * two levels deep (east-west above, north-south below; see {@code Support/Subway}). MODERN-family only —
+     * forced off on every other style, so it locks there. {@code spawnersInSubways}: sewer-bag spawners in the
+     * tunnels.
+     */
+    public boolean includeSubways = true;
+    public boolean spawnersInSubways = true;
+
     /** Who turns up, and how often. {@code SpawnProvider} branches on all of these. */
     public double spawnBeings = Odds.oddsLikely;
     public double spawnBaddies = Odds.oddsPrettyUnlikely;
@@ -241,6 +250,7 @@ public class CityWorldSettings {
         includeMines = false;
         includeSewers = false;
         includeCisterns = false;
+        includeSubways = false;
         // Basements stay the twin's choice: ShapeProvider_TheEnd.getMaxBasementFloors keeps each inside its island.
         includeBunkers = false;
         includeCaves = false;
@@ -468,6 +478,7 @@ public class CityWorldSettings {
         mark.accept("Decayed nature", ta.includeDecayedNature() == tb.includeDecayedNature());
         mark.accept("Overgrowth", on.overgrowth().enabled() == off.overgrowth().enabled());
         mark.accept("Shops", on.shops().enabled() == off.shops().enabled());
+        mark.accept("Subways", on.subways().enabled() == off.subways().enabled());
         return locked;
     }
 
@@ -483,8 +494,9 @@ public class CityWorldSettings {
         CityWorldSettingsData.Overgrowth og = d.overgrowth();
         CityWorldSettingsData.Overgrowth og2 = new CityWorldSettingsData.Overgrowth(v, og.intensity(), v);
         CityWorldSettingsData.Shops sh = new CityWorldSettingsData.Shops(v);
+        CityWorldSettingsData.Subways sw = new CityWorldSettingsData.Subways(v, v);
         return new CityWorldSettingsData(f, t2, d.spawns(), d.treasures(), d.world(), d.radius(), d.naming(),
-                d.mobs(), og2, sh, d.decay(), d.caves());
+                d.mobs(), og2, sh, d.decay(), d.caves(), sw);
     }
 
     /**
@@ -534,6 +546,8 @@ public class CityWorldSettings {
         capVines = og.capVines();
         caves = data.caves();
         includeShops = data.shops().enabled();
+        includeSubways = data.subways().enabled();
+        spawnersInSubways = data.subways().spawners();
         CityWorldSettingsData.Decay dk = data.decay();
         buildingDecayIntensity = dk.buildingIntensity();
         roadDecayIntensity = dk.roadIntensity();
@@ -655,8 +669,9 @@ public class CityWorldSettings {
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops);
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
+        CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
-                overgrowth, shops, decay, caves);
+                overgrowth, shops, decay, caves, subways);
     }
 
     private static List<String> ids(List<EntityType> types) {
@@ -747,6 +762,11 @@ public class CityWorldSettings {
      * radii). {@code CLASSIC} only pins the subsurface style. Comments preserved.
      */
     private void validateSettingsAgainstWorldStyle(WorldStyle style) {
+        // The subway is a modern-Minecraft thing (rails, glazed tiles, copper): MODERN and APOCALYPSE only,
+        // forced off everywhere else so the Customize screen greys it there.
+        if (style != WorldStyle.MODERN && style != WorldStyle.APOCALYPSE)
+            includeSubways = false; // DIFFERENT
+
         // now get the right defaults for the world style
         // anything commented out is up for user modification
         switch (style) {

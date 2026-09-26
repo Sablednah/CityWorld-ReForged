@@ -1,5 +1,85 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Resume here — the subway, and the vault by depth (2026-09-26, owner out for the afternoon)
+
+**UNRELEASED, master only, self-tested here, not playtested.** Two things built while he was out: the vault
+worsening floor by floor (the ZARP heads-up from the 25th), and a commenter's idea he relayed — *"a station
+is each city clump, steps zigzagging down to either side of a 2 track subway with platform either side, and
+tunnel and tracks like the road tunnels to another station."* Vault first (small, one file plus data), then
+the subway (`Support/Subway`, `Plats/Urban/SubwayStationLot`, a settings group, hooks in four places).
+
+### The vault, floor by floor (`VaultLot`, commit `1769938c`)
+
+`generateLevel` now takes its floor index (0 = the entry level with the lobby, 3 = the bottom) and everything
+that worsens keys off it: **lights** (`lightAt`: 0/2/4/7 in ten dead — a dark `COPPER_BULB`, or from the
+second floor down half of those smashed to bare ceiling), **corridor lanterns** missing from their chains at
+the same rate, **wear** (`wear`: 4/6/8/9 in ten of the wear points, more points per floor, and the deeper
+cases — gravelled floor, cracked/mossy wall, standing water, web-and-moss — only exist from the first floor
+down), **spawners** (`haunt`: 0/20/40/60% of rooms, zombies with skeletons joining on floor 3, in the open on a
+free floor cell, gated on `spawnersInBunkers`), and **loot** the other way: `putLoot(..., depth)` →
+`setChest(..., lootTier)` → `LootProvider.setLoot(..., tier)` → `keyFor(loc, tier)` =
+`cityworld:chests/<name>_floor<k>`. `PlatLot.lootTierAt(y)` (VaultLot and RoadThroughVaultLot answer the band)
+lets `ContainerLoot`'s end-of-lot pass tier the pooled furniture too, and `Armoury.ammoShelf` takes the tier.
+**Data:** `scripts/gen_vault_floor_tables.py <dir> <key> <dialect>` writes 18 tables — `vault_floor<k>`
+(the bonus: iron/gold one down, diamonds two down, netherite scrap/notch apple/totem at the bottom, ending in
+the `vault_floor<k>_extra` hook ZARP asked for) and `vault_<room>_floor<k>` = [100% `vault_<room>`] +
+[100% `vault_floor<k>`], which is how one chest id composes two tables. Dialects: `legacy` (1.20.1 through
+26.2) and `26.3`; key `value` or `name`. Run it on every branch after the cherry-pick rather than picking the
+JSON. `add_loot_extras.py` skips `_floor` names.
+
+### The subway (`Support/Subway`, `SubwayStationLot`) — how it is plannable
+
+The whole design is two rules, both there so that **planning a platmap never looks at another platmap**
+(that is planning inside planning, the stall's cousin):
+
+1. **The station is a lot**, claimed first in `UrbanContext.populateMap` (`Subway.placeStation`): a chunk in
+   plat 1..8 both ways, empty after the roads, beside a road; its own dice (`Odds(origin hash)`) so every other
+   roll in the platmap is what it was; recorded as `platmap.subwayStation`. Every `UrbanContext` platmap
+   gets one — highrise, midrise, lowrise, municipal, construction, industrial, park. Neighborhoods (rural)
+   do not. That is what "a station per city clump" became: the network's extent IS the clump.
+2. **Every tunnel chunk is a pure function of two stations** (`Subway.at`): station A in P links to station B
+   in P+East along A's row to P's last column, a jog along that column to B's row, then along B's row into B.
+   Same to P+South on the other axis. A chunk asks only where its platmap's station is and where the four
+   neighbours' are (`stationNear` → `getPlatMap` — allowed at DRAW time, never at plan time; `blocksMines`,
+   which runs at terrain time, deliberately asks nothing and just keeps the band clear under every city chunk).
+
+**Two levels, so lines never junction:** east-west on the upper level (floor `streetLevel - 24` = 39), north-south
+eight lower (31). A station always has an east-west hall (both ends bricked with buffer stops if no link that
+way) and a north-south hall too when a N/S link exists — an interchange, with two more switchback stairs. The
+depths were chosen so the rises are multiples of four: 24 to the ticket hall = six stair pairs, 8 between halls
+= two. Cisterns bottom at 48, basements at 51, sewers 56–62; the upper box is 39–45.
+
+**Geometry (all in `Subway`):** a tunnel is the 6×6 centre plus an arm to each open side, walled/floored/roofed
+one block out (`tunnel`), so straight, bend and junction are one shape; tracks at 6 and 9; a bend pairs
+outer-with-outer so the two curves never cross (`rails`, the comment has the derivation); powered rail over a
+redstone block every eighth block; lights on the crown every four; a brick ring every four. A hall (`hall`):
+platforms 1..5 and 10..14 a block above the bed at 6..9, yellow edge, white tile walls with the station's
+line-colour stripe, pillars between the tracks, lit, benches, a lost-property chest. The chunk either side of
+the station along a line is drawn as hall too (`ewPlatform`) so the platform is 48 long. The stairs (`zigzag`):
+a 4×4 shaft, two 2-wide lanes, landing–step–step–landing and back, four of rise per pair, with the first
+flight rising in the open off the platform (walls start at the hall ceiling) — surface stairs in the NW and SE
+corners, interchange stairs NE/SW, each arriving on the lower hall's platform through a side door.
+
+**Settings:** `Features` is at the 16-field codec cap, so a new group `subways { enabled, spawners }`
+(`CityWorldSettingsData.Subways`); `includeSubways` is forced false for every style but MODERN/APOCALYPSE in
+`validateSettingsAgainstWorldStyle`, so it locks (greys) there; `applyEndRealm` turns it off; the Nether twin
+plans the stations (same plan) but `drawsIn` requires `Environment.NORMAL`, so it gets the ticket halls as
+ruins and nothing below. `ShapeProvider.supportsSubways()`: Normal true; Floating, Flooded, Maze, TheEnd false.
+`subway` is a landmark kind (default-off announce list).
+
+**Self-test** `checkSubways`: the plan over the 300-chunk square (stations, interchanges, tunnel pieces, and a
+mask-consistency check — every open side must be answered by the chunk it faces on the same level, which is
+the arithmetic of `at` proving itself), then a station chunk and a plain straight generated and read back
+(rails, stairs, lights). First run's numbers are below once it finishes.
+
+### Traps met this afternoon
+
+- The first stair version cut the platform under the whole 4×4, leaving a 1-deep pit round the first flight;
+  the air fill starts at the bottom STAND now, not below it.
+- Buffer stops placed before the rails were overwritten by them; rails, then stubs cleared, then buffers.
+- A station's `Piece` is only trusted if the lot at the recorded cell still IS a `SubwayStationLot` — nothing
+  replaces it today, but a hall with no stairs is the failure that would follow if something did.
+
 ## ▶ Resume here — the owner's next four mods (2026-09-24 evening): Alex's Caves, Pam's, Battle Towers, Dungeon Crawl
 
 **RELEASED as v5.14.0 (2026-09-25 evening).** Tag `v5.14.0` = master bump `1513c89c`; branch bumps

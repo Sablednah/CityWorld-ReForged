@@ -44,6 +44,13 @@ public class PlatMap {
 	 */
 	public boolean roadsPopulated = false;
 
+	/**
+	 * Where this platmap's subway station is, as plat-local {x, z}, or null for none. Set by
+	 * {@code Support/Subway.placeStation} during {@code UrbanContext.populateMap}; every tunnel piece in
+	 * this platmap and its neighbours is derived from it (see {@code Subway.at}).
+	 */
+	public int[] subwayStation;
+
 	public PlatMap(CityWorldGenerator generator, ShapeProvider shapeProvider, int originX, int originZ) {
 		super();
 

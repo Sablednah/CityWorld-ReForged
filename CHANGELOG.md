@@ -5,6 +5,32 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **The subway.** Every urban district now has a station: a one-storey ticket hall beside a road
+  (white tile, a band in the line's colour, glass, a doorway onto each road it touches, the station
+  named after its street), with two switchback stairs down to a pair of platforms twenty-four blocks
+  under the street and twin tracks between them, the chunk either side of the station widened into
+  platform too. Tunnels run from each station to the stations of the neighbouring districts —
+  east-west lines on the upper level, north-south lines eight blocks lower, so lines never have to
+  junction (vanilla has no crossing rail), and a station both lines call at is an interchange with a
+  second hall below and stairs between them. Tunnels are ringed in brick, lit, and boosted with
+  powered rails, so a minecart runs the line; where a station has no neighbour that way the track ends
+  at buffer stops. In APOCALYPSE the lamps are dark, the track has gaps, water stands in the bed and
+  sewer mobs spawn from niches in the walls. MODERN and APOCALYPSE only (forced off, and greyed out in
+  Customize, on every other style); a new `subways` settings group (`enabled`, `spawners`); the
+  landmark kind `subway` for the announce list; mines keep out of the band. Suggested by a commenter.
+- **The vault worsens floor by floor** (the ZARP pack's heads-up). The entry level is as it was; each
+  floor down has more lights dead (dark copper bulbs, then smashed sockets), corridor lanterns gone
+  from their chains, more and worse wear — cobwebs, moss, crumbled floor, cracked walls, standing water
+  — and zombie spawners in the rooms (one room in five, then two, then three; skeletons join at the
+  bottom; gated on *spawners in bunkers*). Loot is tiered the other way: a container on floor *k* rolls
+  its room's table plus `cityworld:chests/vault_floor<k>` — metal one down, gems two down, the real
+  prizes at the bottom — and each of those ends in a `vault_floor<k>_extra` hook a pack can fill
+  per floor. Pooled storage furniture on a deep floor rolls the floor's table too.
+
 ## 5.14.0
 
 Released for all six Minecraft versions. Three themes: the owner's next mods — Alex's Caves in the
