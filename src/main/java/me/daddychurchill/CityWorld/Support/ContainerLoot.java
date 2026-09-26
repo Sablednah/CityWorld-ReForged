@@ -84,10 +84,8 @@ public final class ContainerLoot {
             if (!(chunk.getServerLevel() instanceof WorldGenLevel level))
                 return;
             ChunkAccess access = level.getChunk(chunk.sectionX, chunk.sectionZ);
-            ResourceLocation key = ownTableOrNull(level, lot);
-            if (key == null)
-                key = LootProvider_LootTable.keyFor(loot);
-            else
+            ResourceLocation own = ownTableOrNull(level, lot);
+            if (own != null)
                 OWN_TABLE.incrementAndGet();
             // ⚠ Ask the REGION for each entity, not the chunk. A block placed during generation leaves only a
             // "DUMMY" NBT stub in the proto-chunk's pending map; WorldGenRegion.getBlockEntity materialises
@@ -98,7 +96,9 @@ public final class ContainerLoot {
             for (BlockPos pos : List.copyOf(access.getBlockEntitiesPos())) {
                 BlockEntity entity = level.getBlockEntity(pos);
                 if (entity != null)
-                    assign(level, pos, entity, key, odds.getRandomLong());
+                    assign(level, pos, entity,
+                            own != null ? own : LootProvider_LootTable.keyFor(loot, lot.lootTierAt(pos.getY())),
+                            odds.getRandomLong());
             }
         } catch (Throwable t) {
             // loot must never take a chunk down
@@ -112,12 +112,17 @@ public final class ContainerLoot {
      * vault's ammunition shelves) rather than the lot default. No-op when nothing at the cell can hold loot.
      */
     public static boolean assignAt(RealBlocks chunk, int x, int y, int z, LootLocation loot, Odds odds) {
+        return assignAt(chunk, x, y, z, loot, odds, 0);
+    }
+
+    /** As above on loot tier {@code tier} (the vault's deeper floors). */
+    public static boolean assignAt(RealBlocks chunk, int x, int y, int z, LootLocation loot, Odds odds, int tier) {
         try {
             if (!(chunk.getServerLevel() instanceof WorldGenLevel level))
                 return false;
             BlockPos pos = new BlockPos(chunk.getOriginX() + x, y, chunk.getOriginZ() + z);
             BlockEntity entity = level.getBlockEntity(pos);
-            return entity != null && assign(level, pos, entity, LootProvider_LootTable.keyFor(loot), odds.getRandomLong());
+            return entity != null && assign(level, pos, entity, LootProvider_LootTable.keyFor(loot, tier), odds.getRandomLong());
         } catch (Throwable t) {
             return false;
         }

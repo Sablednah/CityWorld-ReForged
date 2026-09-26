@@ -55,6 +55,17 @@ public abstract class LootProvider extends Provider {
 
     public abstract void setLoot(CityWorldGenerator generator, Odds odds, LootLocation lootLocation, Block block);
 
+    /**
+     * As {@link #setLoot(CityWorldGenerator, Odds, LootLocation, Block)}, for a container on a deeper
+     * {@code tier} of a place that worsens (and richens) with depth: the vault's floors. Tier 0 is the
+     * plain table; tier {@code k} names {@code cityworld:chests/<name>_floor<k>}, which the shipped data
+     * composes as the room's own table plus {@code chests/vault_floor<k>} (the depth bonus and the
+     * per-floor {@code _extra} hook a pack fills). The default ignores the tier.
+     */
+    public void setLoot(CityWorldGenerator generator, Odds odds, LootLocation lootLocation, Block block, int tier) {
+        setLoot(generator, odds, lootLocation, block);
+    }
+
     public static LootProvider loadProvider(CityWorldGenerator generator) {
         return new LootProvider_LootTable();
     }

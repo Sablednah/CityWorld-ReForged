@@ -36,6 +36,11 @@ public final class LootProvider_LootTable extends LootProvider {
 
     @Override
     public void setLoot(CityWorldGenerator generator, Odds odds, LootLocation lootLocation, Block block) {
+        setLoot(generator, odds, lootLocation, block, 0);
+    }
+
+    @Override
+    public void setLoot(CityWorldGenerator generator, Odds odds, LootLocation lootLocation, Block block, int tier) {
 
         // An empty chest is one with no table on it, so there is nothing to do. Upstream instead
         // assigned minecraft:empty, which rolls nothing — same chest, one more table lookup.
@@ -52,11 +57,24 @@ public final class LootProvider_LootTable extends LootProvider {
         if (!(entity instanceof RandomizableContainerBlockEntity container))
             return;
 
-        container.setLootTable(keyFor(lootLocation), odds.getRandomLong());
+        container.setLootTable(keyFor(lootLocation, tier), odds.getRandomLong());
     }
 
     // 1.20.1 keys a loot table by ResourceLocation; the ResourceKey<LootTable> form arrived with 1.21.
     public static ResourceLocation keyFor(LootLocation lootLocation) {
-        return new ResourceLocation("cityworld", "chests/" + lootLocation.name().toLowerCase(Locale.ROOT));
+        return keyFor(lootLocation, 0);
+    }
+
+    /**
+     * The table a location names on depth {@code tier}: the plain table for tier 0, else
+     * {@code cityworld:chests/<lowercase name>_floor<tier>} — shipped for every vault room table, and
+     * composed there as the room's table plus that floor's bonus and hook (see {@code
+     * scripts/gen_vault_floor_tables.py}).
+     */
+    public static ResourceLocation keyFor(LootLocation lootLocation, int tier) {
+        String name = "chests/" + lootLocation.name().toLowerCase(Locale.ROOT);
+        if (tier > 0)
+            name += "_floor" + tier;
+        return new ResourceLocation("cityworld", name);
     }
 }
