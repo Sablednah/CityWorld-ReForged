@@ -2,7 +2,7 @@
 
 ## ▶ Resume here — the subway, and the vault by depth (2026-09-26, owner out for the afternoon)
 
-**UNRELEASED, master only, self-tested here, not playtested.** Two things built while he was out: the vault
+**UNRELEASED — on master and all five branches (pushed; CI run 36235322156 green on every job), deployed to the fleet as the branch shas (`DEPLOYED-7ffcbf51` on 1.21.11, `ac6d9e65` on his `1.20.1  Forge`), self-tested on every line, not playtested.** Two things built while he was out: the vault
 worsening floor by floor (the ZARP heads-up from the 25th), and a commenter's idea he relayed — *"a station
 is each city clump, steps zigzagging down to either side of a 2 track subway with platform either side, and
 tunnel and tracks like the road tunnels to another station."* Vault first (small, one file plus data), then
