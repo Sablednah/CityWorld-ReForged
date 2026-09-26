@@ -650,6 +650,13 @@ public abstract class SupportBlocks extends AbstractBlocks {
 	// container block entity, neither of which is specific to plain oak chests.
 	public final void setChest(CityWorldGenerator generator, int x, int y, int z, Odds odds,
 			LootProvider lootProvider, LootLocation lootLocation, Material chestMaterial) {
+		setChest(generator, x, y, z, odds, lootProvider, lootLocation, chestMaterial, 0);
+	}
+
+	/** As above, on loot tier {@code lootTier} (see {@link LootProvider#setLoot(CityWorldGenerator, Odds,
+	 *  LootLocation, me.daddychurchill.CityWorld.compat.Block, int)}) — the vault's deeper floors. */
+	public final void setChest(CityWorldGenerator generator, int x, int y, int z, Odds odds,
+			LootProvider lootProvider, LootLocation lootLocation, Material chestMaterial, int lootTier) {
 		if (!onEdgeXZ(x, z)) {
 			BlockFace facing = BlockFace.NORTH;
 			if (isEmpty(x - 1, y, z))
@@ -658,7 +665,7 @@ public abstract class SupportBlocks extends AbstractBlocks {
 				facing = BlockFace.EAST;
 			else if (isEmpty(x, y, z + 1))
 				facing = BlockFace.SOUTH;
-			setChest(generator, x, y, z, facing, odds, lootProvider, lootLocation, chestMaterial);
+			setChest(generator, x, y, z, facing, odds, lootProvider, lootLocation, chestMaterial, lootTier);
 		}
 	}
 
@@ -669,13 +676,18 @@ public abstract class SupportBlocks extends AbstractBlocks {
 
 	public final void setChest(CityWorldGenerator generator, int x, int y, int z, BlockFace facing, Odds odds,
 			LootProvider lootProvider, LootLocation lootLocation, Material chestMaterial) {
+		setChest(generator, x, y, z, facing, odds, lootProvider, lootLocation, chestMaterial, 0);
+	}
+
+	public final void setChest(CityWorldGenerator generator, int x, int y, int z, BlockFace facing, Odds odds,
+			LootProvider lootProvider, LootLocation lootLocation, Material chestMaterial, int lootTier) {
 		if (!onNearEdgeXZ(x, z)) {
 //			generator.reportFormatted("CHEST AT %d, %d, %d", x, y, z);
 			setBlock(x, y, z, chestMaterial, facing);
 			Block block = getActualBlock(x, y, z);
 			connectDoubleChest(x, y, z, facing, chestMaterial);
 			if (isType(block, chestMaterial))
-				lootProvider.setLoot(generator, odds, lootLocation, block);
+				lootProvider.setLoot(generator, odds, lootLocation, block, lootTier);
 		}
 //		else
 //			generator.reportFormatted("SKIPPED CHEST AT %d, %d, %d", x, y, z);

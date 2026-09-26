@@ -359,6 +359,15 @@ public abstract class PlatLot {
 		return null;
 	}
 
+	/**
+	 * The loot tier of a container at world height {@code y} in this lot — 0 everywhere but in a place that
+	 * worsens with depth (the vault: floor {@code k} is tier {@code k}). {@link ContainerLoot} resolves the
+	 * lot default through it, so a pooled desk on the deepest floor rolls that floor's table too.
+	 */
+	public int lootTierAt(int y) {
+		return 0;
+	}
+
 	/** MODERN: whether the base biome-ground pass runs on this lot's exposed grass. True by default. */
 	protected boolean wantsBiomeGround() {
 		return true;
