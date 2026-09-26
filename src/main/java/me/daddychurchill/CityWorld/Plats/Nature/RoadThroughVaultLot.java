@@ -58,6 +58,11 @@ public class RoadThroughVaultLot extends RoadLot {
     }
 
     @Override
+    public int lootTierAt(int y) {
+        return VaultLot.tierForY(bottomOfVault, y);
+    }
+
+    @Override
     protected void generateActualChunk(CityWorldGenerator generator, PlatMap platmap, InitialBlocks chunk,
             BiomeGrid biomes, DataContext context, int platX, int platZ) {
         super.generateActualChunk(generator, platmap, chunk, biomes, context, platX, platZ);
