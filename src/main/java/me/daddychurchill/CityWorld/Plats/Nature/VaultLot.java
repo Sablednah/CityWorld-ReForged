@@ -34,6 +34,26 @@ import me.daddychurchill.CityWorld.Support.SupportBlocks;
  */
 public class VaultLot extends BunkerLot {
 
+	/**
+	 * The vault worsens floor by floor (owner, via the ZARP pack, 2026-09-25): every container on floor
+	 * {@code k} rolls its room's table on loot tier {@code k} — the room table plus {@code chests/vault_floor<k>},
+	 * whose {@code vault_floor<k>_extra} is the per-floor hook a pack fills. Pooled furniture with storage
+	 * goes through the end-of-lot pass, which asks this too.
+	 */
+	@Override
+	public int lootTierAt(int y) {
+		return tierForY(bottomOfBunker, y);
+	}
+
+	/** The floor index of world height {@code y} inside this vault's bands: 0 for the entry level (and for
+	 *  anything outside a band), {@code k} for the {@code k}th level down. */
+	static int tierForY(int bottom, int y) {
+		for (int k = 1; k < NUM_LEVELS; k++)
+			if (y >= levelFloor(bottom, k) && y <= levelFloor(bottom, k) + 6)
+				return k;
+		return 0;
+	}
+
 	@Override
 	public me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation defaultLoot() {
 		return me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation.VAULT_QUARTERS;
@@ -126,7 +146,7 @@ public class VaultLot extends BunkerLot {
     static void generateLowerLevels(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int bottom, boolean[] walls, int oX, int oZ,
             boolean entrance, int chunkX, int chunkZ) {
         for (int k = 1; k < NUM_LEVELS; k++)
-            generateLevel(generator, odds, chunk, levelFloor(bottom, k), levelFloor(bottom, k) + 6, walls, oX, oZ);
+            generateLevel(generator, odds, chunk, levelFloor(bottom, k), levelFloor(bottom, k) + 6, walls, oX, oZ, k);
         for (int k = 0; k < NUM_LEVELS - 1; k++)
             if (!(entrance && k == 0) && Math.floorMod(chunkX * 7 + chunkZ * 13 + k * 29, 3) == 0)
                 stairwellDown(chunk, levelFloor(bottom, k), levelFloor(bottom, k + 1));
@@ -238,7 +258,7 @@ public class VaultLot extends BunkerLot {
 
     /** The vault interior of one chunk: the corridor-and-rooms level. */
     static void generateVaultHall(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int bottom, int top, boolean[] wall, int oX, int oZ) {
-        generateLevel(generator, odds, chunk, floorY(bottom), ceilingY(bottom, top), wall, oX, oZ);
+        generateLevel(generator, odds, chunk, floorY(bottom), ceilingY(bottom, top), wall, oX, oZ, 0);
     }
 
     /**
@@ -248,8 +268,13 @@ public class VaultLot extends BunkerLot {
      * {@link #furnishRoom} into living quarters, offices, labs, storage, hydroponics or a mess hall, and
      * some chunks carry a full-height lift shaft in their NW quadrant. Corridor centre is x/z 7-8 so it
      * lines up with the centre-positioned lobby door.
+     *
+     * <p>{@code depth} is the floor index (0 = the entry level, {@link #NUM_LEVELS}-1 the deepest) and the
+     * vault worsens with it: more lights out, more wear, spawners in the rooms, and richer loot tiers —
+     * see {@link #lightAt}, {@link #dressLevel}, {@link #haunt} and {@link #lootTierAt}.
      */
-    static void generateLevel(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int floorY, int ceilY, boolean[] wall, int oX, int oZ) {
+    static void generateLevel(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int floorY, int ceilY, boolean[] wall, int oX, int oZ,
+            int depth) {
         chunk.setLayer(floorY, FLOOR);
         chunk.setLayer(ceilY, CEIL);
         chunk.setBlocks(0, 16, floorY + 1, ceilY, 0, 16, Material.AIR); // clear
@@ -281,10 +306,10 @@ public class VaultLot extends BunkerLot {
         if (wall[3])
             chunk.setBlocks(0, 1, floorY + 1, ceilY, 0, 16, WALL);
 
-        // lights — corridor ceiling + each room
+        // lights — corridor ceiling + each room; the deeper the floor, the more of them are dead
         for (int[] p : new int[][] { { 7, 3 }, { 8, 12 }, { 3, 7 }, { 12, 8 }, { 3, 3 }, { 12, 3 }, { 3, 12 },
                 { 12, 12 } })
-            chunk.setBlock(p[0], ceilY, p[1], LIGHT);
+            lightAt(chunk, p[0], ceilY, p[1], depth, oX, oZ);
 
         // a weathered copper trim band along the corridor walls (Fallout-industrial, rusted with age) — only
         // where there's actually a wall, so it never floats in the corridor or a doorway
@@ -304,36 +329,99 @@ public class VaultLot extends BunkerLot {
 
         // furnish each quadrant — the room TYPE is keyed to the chunk-corner it belongs to, so all four
         // quadrants of a room merged across chunk boundaries agree and it reads as one coherent room
-        furnishRoom(generator, odds, chunk, floorY, 1, 5, 1, 5, oX, oZ); // NW quadrant -> corner (oX, oZ)
-        furnishRoom(generator, odds, chunk, floorY, 10, 14, 1, 5, oX + 16, oZ); // NE -> (oX+16, oZ)
-        furnishRoom(generator, odds, chunk, floorY, 1, 5, 10, 14, oX, oZ + 16); // SW -> (oX, oZ+16)
-        furnishRoom(generator, odds, chunk, floorY, 10, 14, 10, 14, oX + 16, oZ + 16); // SE -> (oX+16, oZ+16)
+        furnishRoom(generator, odds, chunk, floorY, 1, 5, 1, 5, oX, oZ, depth); // NW quadrant -> corner (oX, oZ)
+        furnishRoom(generator, odds, chunk, floorY, 10, 14, 1, 5, oX + 16, oZ, depth); // NE -> (oX+16, oZ)
+        furnishRoom(generator, odds, chunk, floorY, 1, 5, 10, 14, oX, oZ + 16, depth); // SW -> (oX, oZ+16)
+        furnishRoom(generator, odds, chunk, floorY, 10, 14, 10, 14, oX + 16, oZ + 16, depth); // SE -> (oX+16, oZ+16)
 
-        dressLevel(chunk, floorY, ceilY, oX, oZ);
+        dressLevel(chunk, floorY, ceilY, oX, oZ, depth);
+        haunt(generator, odds, chunk, floorY, oX, oZ, depth);
+    }
+
+    /** How many of ten lights are out on each floor, and how many of ten wear points are worn. */
+    private static final int[] DEAD_LIGHTS_IN_TEN = { 0, 2, 4, 7 };
+    private static final int[] WORN_IN_TEN = { 4, 6, 8, 9 };
+    private static final double[] SPAWNER_ODDS_PER_ROOM = { 0.0, 0.2, 0.4, 0.6 };
+
+    /** A ceiling light that is lit on the entry level and, floor by floor, more often dead: a dark
+     *  copper bulb (the lamp still there, the power gone), or on the lower floors smashed out entirely. */
+    private static void lightAt(SupportBlocks chunk, int x, int ceilY, int z, int depth, int oX, int oZ) {
+        int d = Math.min(depth, DEAD_LIGHTS_IN_TEN.length - 1);
+        int roll = Math.floorMod((oX + x) * 7 + (oZ + z) * 13 + depth * 31, 10);
+        if (roll >= DEAD_LIGHTS_IN_TEN[d])
+            chunk.setBlock(x, ceilY, z, LIGHT);
+        else if (d >= 2 && (roll & 1) == 1)
+            chunk.setBlock(x, ceilY, z, CEIL); // smashed: nothing left in the socket
+        else
+            chunk.setBlock(x, ceilY, z, Material.COPPER_BULB); // dead lamp (an unlit bulb)
+    }
+
+    /**
+     * Spawners in the rooms, more of them the deeper you go: none on the entry level, then one room in
+     * five, two in five, three in five. Zombies, with skeletons joining on the deepest floor. Out in the
+     * open (the vault reads as overrun, not booby-trapped), on a floor cell the furniture left free.
+     * Gated on {@code spawnersInBunkers} like the bunkers this lot grew from.
+     */
+    static void haunt(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int floorY, int oX, int oZ, int depth) {
+        int d = Math.min(depth, SPAWNER_ODDS_PER_ROOM.length - 1);
+        if (d == 0 || !generator.getSettings().spawnersInBunkers)
+            return;
+        int fy = floorY + 1;
+        for (int[] room : new int[][] { { 1, 5, 1, 5 }, { 10, 14, 1, 5 }, { 1, 5, 10, 14 }, { 10, 14, 10, 14 } }) {
+            int h = (oX + room[0]) * 374761393 + (oZ + room[2]) * 668265263 + depth * 972897521;
+            h = (h ^ (h >>> 13)) * 1274126177;
+            if (Math.floorMod(h ^ (h >>> 16), 100) >= SPAWNER_ODDS_PER_ROOM[d] * 100)
+                continue;
+            me.daddychurchill.CityWorld.compat.EntityType mob = d >= 3 && (h & 4) != 0
+                    ? me.daddychurchill.CityWorld.compat.EntityType.SKELETON
+                    : me.daddychurchill.CityWorld.compat.EntityType.ZOMBIE;
+            for (int[] c : new int[][] { { room[0] + 2, room[2] + 2 }, { room[1] - 2, room[3] - 2 },
+                    { room[0] + 2, room[3] - 2 }, { room[1] - 2, room[2] + 2 } })
+                if (chunk.isEmpty(c[0], fy, c[1]) && chunk.isEmpty(c[0], fy + 1, c[1]) && !chunk.isEmpty(c[0], fy - 1, c[1])) {
+                    generator.spawnProvider.setSpawner(generator, chunk, odds, c[0], fy, c[1], mob, true);
+                    break;
+                }
+        }
     }
 
     /** The abandoned-vault dressing (Fallout × Black-Mesa): hanging industrial lanterns down the corridor, and
-     *  sparse decay — creeping moss, cobwebs, the odd broken light — worn in but still lit and navigable. */
-    static void dressLevel(SupportBlocks chunk, int floorY, int ceilY, int oX, int oZ) {
-        hangLantern(chunk, 7, ceilY, 3); // industrial lanterns down the two corridor arms
-        hangLantern(chunk, 8, ceilY, 12);
-        hangLantern(chunk, 3, ceilY, 8);
-        hangLantern(chunk, 12, ceilY, 7);
+     *  decay — creeping moss, cobwebs, the odd broken light — sparse on the entry level, worn in but still lit
+     *  and navigable, and heavier floor by floor: more wear points, more of them worn, corridor lanterns gone
+     *  from their chains, crumbled floor, cracked walls, standing water on the deepest floors. */
+    static void dressLevel(SupportBlocks chunk, int floorY, int ceilY, int oX, int oZ, int depth) {
+        hangLantern(chunk, 7, ceilY, 3, depth, oX, oZ); // industrial lanterns down the two corridor arms
+        hangLantern(chunk, 8, ceilY, 12, depth, oX, oZ);
+        hangLantern(chunk, 3, ceilY, 8, depth, oX, oZ);
+        hangLantern(chunk, 12, ceilY, 7, depth, oX, oZ);
         for (int[] c : new int[][] { { 2, 2 }, { 13, 2 }, { 2, 13 }, { 13, 13 } }) // wear in the room corners
-            wear(chunk, floorY, ceilY, c[0], c[1], oX, oZ);
+            wear(chunk, floorY, ceilY, c[0], c[1], oX, oZ, depth);
+        if (depth >= 1)
+            for (int[] c : new int[][] { { 4, 4 }, { 11, 4 }, { 4, 11 }, { 11, 11 } }) // and further into the rooms
+                wear(chunk, floorY, ceilY, c[0], c[1], oX, oZ, depth);
+        if (depth >= 2)
+            for (int[] c : new int[][] { { 2, 4 }, { 13, 4 }, { 2, 11 }, { 13, 11 }, { 7, 5 }, { 8, 10 } }) // and the corridor
+                wear(chunk, floorY, ceilY, c[0], c[1], oX, oZ, depth);
     }
 
-    private static void hangLantern(SupportBlocks chunk, int x, int ceilY, int z) {
+    /** A corridor lantern on its chain — or, more often the deeper the floor, just the chain. */
+    private static void hangLantern(SupportBlocks chunk, int x, int ceilY, int z, int depth, int oX, int oZ) {
         if (!chunk.isEmpty(x, ceilY - 1, z) || !chunk.isEmpty(x, ceilY - 2, z))
             return; // only where the corridor is actually open below the ceiling
         chunk.setBlock(x, ceilY - 1, z, Material.IRON_CHAIN);
-        chunk.setHangingLantern(x, ceilY - 2, z, Material.LANTERN);
+        int d = Math.min(depth, DEAD_LIGHTS_IN_TEN.length - 1);
+        if (Math.floorMod((oX + x) * 11 + (oZ + z) * 5 + depth * 17, 10) >= DEAD_LIGHTS_IN_TEN[d])
+            chunk.setHangingLantern(x, ceilY - 2, z, Material.LANTERN);
     }
 
-    /** A little decay in a room corner, sparse and deterministic — mostly nothing, occasionally a cobweb up
-     *  in the corner, a patch of creeping moss, or a burnt-out light. */
-    private static void wear(SupportBlocks chunk, int floorY, int ceilY, int x, int z, int oX, int oZ) {
-        switch (Math.floorMod((oX + x) * 5 + (oZ + z) * 11, 6)) {
+    /** A little decay at one point, deterministic — on the entry level mostly nothing, occasionally a cobweb up
+     *  in the corner, a patch of creeping moss, or a burnt-out light; deeper floors are worn more often and in
+     *  worse ways (crumbled floor, a cracked wall, standing water). */
+    private static void wear(SupportBlocks chunk, int floorY, int ceilY, int x, int z, int oX, int oZ, int depth) {
+        int d = Math.min(depth, WORN_IN_TEN.length - 1);
+        int h = (oX + x) * 5 + (oZ + z) * 11 + depth * 23;
+        if (Math.floorMod(h * 7, 10) >= WORN_IN_TEN[d])
+            return;
+        switch (Math.floorMod(h, d == 0 ? 3 : 4 + d)) {
         case 0 -> {
             if (chunk.isEmpty(x, ceilY - 1, z))
                 chunk.setBlock(x, ceilY - 1, z, Material.COBWEB);
@@ -342,6 +430,28 @@ public class VaultLot extends BunkerLot {
         case 2 -> {
             if (chunk.isEmpty(x, ceilY - 1, z))
                 chunk.setHangingLantern(x, ceilY - 1, z, Material.OXIDIZED_COPPER_LANTERN); // a dim, corroded light
+        }
+        case 3 -> { // crumbled floor: the concrete gone to gravel, with a web in the corner above
+            if (chunk.isEmpty(x, floorY + 1, z) && !chunk.isEmpty(x, floorY, z))
+                chunk.setBlock(x, floorY, z, Material.GRAVEL);
+        }
+        case 4 -> { // a cracked wall beside the point, whichever of the four neighbours is wall
+            for (int[] n : new int[][] { { x - 1, z }, { x + 1, z }, { x, z - 1 }, { x, z + 1 } })
+                if (n[0] >= 0 && n[0] < 16 && n[1] >= 0 && n[1] < 16 && !chunk.isEmpty(n[0], floorY + 2, n[1])) {
+                    chunk.setBlock(n[0], floorY + 2, n[1], Material.CRACKED_STONE_BRICKS);
+                    if (d >= 3)
+                        chunk.setBlock(n[0], floorY + 1, n[1], Material.MOSSY_STONE_BRICKS);
+                    break;
+                }
+        }
+        case 5 -> { // standing water: a puddle sunk into the floor (the rock under it is solid)
+            if (chunk.isEmpty(x, floorY + 1, z) && !chunk.isEmpty(x, floorY, z) && !chunk.isEmpty(x, floorY - 1, z))
+                chunk.setBlock(x, floorY, z, Material.WATER);
+        }
+        case 6 -> { // a web and moss together: nobody has walked here in years
+            if (chunk.isEmpty(x, ceilY - 1, z))
+                chunk.setBlock(x, ceilY - 1, z, Material.COBWEB);
+            put(chunk, x, floorY + 1, z, Material.MOSS_CARPET);
         }
         default -> {
         }
@@ -368,16 +478,16 @@ public class VaultLot extends BunkerLot {
      * hydroponics or mess. Everything is guarded with empty-cell checks so nothing lands in a wall/doorway.
      */
     static void furnishRoom(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int floorY, int x1, int x2, int z1, int z2, int cornerX,
-            int cornerZ) {
+            int cornerZ, int depth) {
         int fy = floorY + 1; // furniture stands on the floor
         // corners are multiples of 16, so hashing them raw is always even (types 7/9 never hit); divide to a
         // chunk index first so every type can occur. Mix in floorY so the type varies by level (each level
         // isn't a copy of the one above) — still coherent since a merged room lives within one level.
         switch (Math.floorMod((cornerX / 16) * 13 + (cornerZ / 16) * 7 + floorY, 10)) {
-        case 0, 1, 2, 3 -> livingQuarters(generator, odds, chunk, fy, x1, x2, z1, z2);
-        case 4, 5 -> office(generator, odds, chunk, fy, x1, x2, z1, z2);
+        case 0, 1, 2, 3 -> livingQuarters(generator, odds, chunk, fy, x1, x2, z1, z2, depth);
+        case 4, 5 -> office(generator, odds, chunk, fy, x1, x2, z1, z2, depth);
         case 6 -> lab(generator, odds, chunk, fy, x1, x2, z1, z2);
-        case 7 -> armoury(generator, odds, chunk, fy, x1, x2, z1, z2);
+        case 7 -> armoury(generator, odds, chunk, fy, x1, x2, z1, z2, depth);
         case 8 -> hydroponics(chunk, floorY, x1, x2, z1, z2);
         default -> messHall(generator, odds, chunk, fy, x1, x2, z1, z2); // 9
         }
@@ -415,8 +525,14 @@ public class VaultLot extends BunkerLot {
      */
     private static void putLoot(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int x, int y,
             int z, Material m, LootProvider.LootLocation loot) {
+        putLoot(generator, odds, chunk, x, y, z, m, loot, 0);
+    }
+
+    /** As above on loot tier {@code depth}: floor {@code k}'s containers roll {@code <table>_floor<k>}. */
+    private static void putLoot(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int x, int y,
+            int z, Material m, LootProvider.LootLocation loot, int depth) {
         if (chunk.isEmpty(x, y, z) && !chunk.isEmpty(x, y - 1, z))
-            chunk.setChest(generator, x, y, z, odds, generator.lootProvider, loot, m);
+            chunk.setChest(generator, x, y, z, odds, generator.lootProvider, loot, m, depth);
     }
 
     private static void put(SupportBlocks chunk, int x, int y, int z, Material m) {
@@ -440,16 +556,18 @@ public class VaultLot extends BunkerLot {
             chunk.setBlocks(x, floorY + 1, ceilY, ze, WALL);
     }
 
-    private static void livingQuarters(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
+    private static void livingQuarters(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2,
+            int depth) {
         if (z1 + 1 <= z2 && chunk.isEmpty(x1, fy, z1) && chunk.isEmpty(x1, fy, z1 + 1)
                 && !chunk.isEmpty(x1, fy - 1, z1))
             chunk.setBed(x1, fy, z1, BEDS[Math.floorMod(x1 + z1, BEDS.length)], BlockFace.SOUTH); // head to the wall
-        putLoot(generator, odds, chunk, x2, fy, z1, Material.CHEST, LootProvider.LootLocation.VAULT_QUARTERS); // footlocker
+        putLoot(generator, odds, chunk, x2, fy, z1, Material.CHEST, LootProvider.LootLocation.VAULT_QUARTERS, depth); // footlocker
         put(chunk, x1, fy, z2, Material.CRAFTING_TABLE);
         put(chunk, x2, fy, z2, Material.POTTED_FERN);
     }
 
-    private static void office(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
+    private static void office(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2,
+            int depth) {
         Material vDesk = me.daddychurchill.CityWorld.Support.FurnitureTags.pick(
                 me.daddychurchill.CityWorld.Support.FurnitureTags.DESK, odds);
         if (vDesk != null && chunk.isEmpty(x1, fy, z1) && !chunk.isEmpty(x1, fy - 1, z1))
@@ -467,8 +585,8 @@ public class VaultLot extends BunkerLot {
             put(chunk, x1, fy + 1, z1, Material.LECTERN); // a terminal on it
         if (chunk.isEmpty(x1 + 1, fy, z1) && !chunk.isEmpty(x1 + 1, fy - 1, z1))
             chairAt(chunk, x1 + 1, fy, z1, BlockFace.EAST); // chair facing the desk
-        putLoot(generator, odds, chunk, x2, fy, z2, Material.CHEST, LootProvider.LootLocation.VAULT_OFFICE); // filing
-        putLoot(generator, odds, chunk, x2, fy, z1, Material.BARREL, LootProvider.LootLocation.VAULT_OFFICE);
+        putLoot(generator, odds, chunk, x2, fy, z2, Material.CHEST, LootProvider.LootLocation.VAULT_OFFICE, depth); // filing
+        putLoot(generator, odds, chunk, x2, fy, z1, Material.BARREL, LootProvider.LootLocation.VAULT_OFFICE, depth);
     }
 
     private static void lab(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
@@ -490,7 +608,8 @@ public class VaultLot extends BunkerLot {
      * the shelves and crates roll {@code cityworld:chests/vault_ammo} (with its {@code _extra} hook), and
      * the chests keep {@code vault_armoury}.
      */
-    private static void armoury(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2) {
+    private static void armoury(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int fy, int x1, int x2, int z1, int z2,
+            int depth) {
         RealBlocks real = chunk instanceof RealBlocks r ? r : null;
         // the weapon rack: frames at eye height on whichever of the room's walls actually backs them
         int racked = 0;
@@ -506,12 +625,12 @@ public class VaultLot extends BunkerLot {
                 Armoury.armourStand(real, odds, x2, fy, z, BlockFace.WEST);
         // ammunition: crates along the far wall with a shelf over each where a shelf block exists
         for (int x = x1; x <= x2 - 1; x += 2) {
-            putLoot(generator, odds, chunk, x, fy, z2, Material.BARREL, LootProvider.LootLocation.VAULT_AMMO);
+            putLoot(generator, odds, chunk, x, fy, z2, Material.BARREL, LootProvider.LootLocation.VAULT_AMMO, depth);
             if (real != null)
-                Armoury.ammoShelf(real, odds, x, fy + 1, z2, BlockFace.SOUTH);
+                Armoury.ammoShelf(real, odds, x, fy + 1, z2, BlockFace.SOUTH, depth);
         }
-        putLoot(generator, odds, chunk, x2, fy, z2, Material.CHEST, LootProvider.LootLocation.VAULT_ARMOURY);
-        putLoot(generator, odds, chunk, x1, fy, z1 + 1, Material.CHEST, LootProvider.LootLocation.VAULT_ARMOURY);
+        putLoot(generator, odds, chunk, x2, fy, z2, Material.CHEST, LootProvider.LootLocation.VAULT_ARMOURY, depth);
+        putLoot(generator, odds, chunk, x1, fy, z1 + 1, Material.CHEST, LootProvider.LootLocation.VAULT_ARMOURY, depth);
     }
 
     private static final Material[] CROPS = { Material.WHEAT, Material.CARROTS, Material.POTATOES,
