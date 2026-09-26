@@ -70,7 +70,16 @@ ruins and nothing below. `ShapeProvider.supportsSubways()`: Normal true; Floatin
 **Self-test** `checkSubways`: the plan over the 300-chunk square (stations, interchanges, tunnel pieces, and a
 mask-consistency check — every open side must be answered by the chunk it faces on the same level, which is
 the arithmetic of `at` proving itself), then a station chunk and a plain straight generated and read back
-(rails, stairs, lights). First run's numbers are below once it finishes.
+(rails, stairs, lights). **All six lines PASS** (1.21.11 and 26.1/26.3/1.21.1 158 checks, 26.2 181, 1.20.1
+148; `--compare` identical on all three styles): a fresh generator plans **264 stations** in the square on
+every version; the live sweep reads 230 on 1.21.11 and 26.2 and 248 on the other four — the two with
+structure test packs in `run/mods` (`villages-cityworld-compat`, `desertpyramid`, `beardoptin`) reserve
+chunks, and a platmap whose every road-side interior chunk is reserved gets no station. Station chunk
+`-149,-106`: 24 rails, 112 stair blocks, 30 lights; straight `-150,-146`: 32 rails. **Pictures** (the
+`scripts/region_slice.py` sections, seed 8675309): the switchback shaft with every landing and step from
+y 42 to 65; the E-W hall (platform 1..5 / edge / bed 6..9 / edge / platform, pillars at along 2/7/12,
+stripe at floor+3); the lower hall with buffer stops at its closed end; and at chunk column -151 two jog
+columns turning east into their target rows with the two curves at rows 6 and 9 as derived.
 
 ### Traps met this afternoon
 
