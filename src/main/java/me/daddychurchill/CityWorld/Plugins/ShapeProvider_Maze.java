@@ -11,6 +11,11 @@ import me.daddychurchill.CityWorld.Support.PlatMap;
 
 public class ShapeProvider_Maze extends ShapeProvider_Normal {
 
+	@Override
+	public boolean supportsSubways() {
+		return false; // see ShapeProvider.supportsSubways
+	}
+
 	private final SimplexNoiseGenerator ecoShape;
 	private MazeNexusContext nexusContext;
 
