@@ -22,19 +22,71 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 | Licence | **GPL-3.0-only** (see below — non-negotiable) |
 | Branch | work happens on `master` (the `neoforge-port` branch was merged into it and deleted) |
 
-## ▶ Where this is, and what's next (2026-09-24)
+## ▶ Where this is, and what's next (2026-09-26)
 
-**v5.13.0 is released** (2026-09-24 evening) on all six lines — tag `v5.13.0` (`b2775285`), GitHub
-release with six jars, CurseForge files 8966281–8966287, Modrinth `gSXLf5YU CYcEY1fC xpoxUL4J vNZLvnhP
-3TDOFtcs v6z7b6UX`, fleet `DEPLOYED-v5.13.0` on all 12. Gates: six self-tests PASS, `--compare` agrees,
-CI green on every tagged branch head, halt/exit scan 0 on all six after the control read 4.
+**v5.14.0 is released** (2026-09-25 evening) on all six lines — tag `v5.14.0` (`1513c89c`), GitHub release
+with six jars, CurseForge files 8974359–8974364, Modrinth `XouovttV gH5dPP55 RE5TKg5L QFtsFBcV SS1UebU3
+SDDtTAEJ`, fleet `DEPLOYED-v5.14.0` on all 12. Gates: six self-tests PASS, `--compare` agrees, CI green on
+every bump head, halt/exit scan 0 on all six — **proved on a synthetic positive, because no real
+known-positive jar exists any more** (both 5.8.0 jars on disk were rebuilt after the fix). The ZARP pack
+(LegendQuest ZARP, 26.2; its own Claude session) takes only released CurseForge jars and was told.
 
-**The release is one idea: the planner knows exactly where every structure will be.** `StructureForecast`
+**NEXT: nothing queued.** The owner's playtest is the queue, as always. Ideas parked, none asked for yet:
+the vault worsening floor by floor (ZARP's heads-up: loot, spawners, broken lights by depth, with a
+per-floor loot hook); cavern density (he called the shipped density a pass); the capability tier of
+`ContainerLoot` is per-loader (transfer API on 21.11/26.x, `IItemHandler` on 1.21.1, Forge caps on 1.20.1)
+and grows with every new loader API.
+
+**What 5.14.0 is** (2026-09-24 evening → 25th; PORTING.md "the owner's next four mods" has the measurements):
+- **Four mods from his 1.20.1 instance, read from their jars with `unzip`/`javap`, never wikis.** Alex's Caves
+  reaches the overworld only through a mixin on `MultiNoiseBiomeSource`, so CityWorld's biome source never
+  had it: five of its biomes now join `#cityworld:cave_pool` with bands `-64..40` (its cave SHAPES are
+  `raw_generation` structures gated on the biome at their origin, y -48..59), painted SOLID in its rock
+  (`CaveRegions.SOLID_ROCK`: its surface rules replace every stone, and its ores target that rock), and the
+  cave-pool decoration pass reads every step but ores (`CAVE_POOL_STEPS`; the mod puts its look in LAKES,
+  SURFACE_STRUCTURES, even STRONGHOLDS). Pam's crops are tag entries; Pam's trees needed a seam —
+  `#cityworld:orchard/{temperate,cold,dry,tropical}` configured-feature pools grown through the tree's own
+  feature (vanilla cherry sits in temperate so the self-test proves the path everywhere). Battle Towers,
+  Dungeon Crawl, Cataclysm and Alex's structure sets ship in `#cityworld:allowed` as optional entries.
+- **`structure_fit` `reserve: true`** for an underground-step structure with a surfacing part (Dungeon
+  Crawl's entrance tower came up through a highrise roof): reserves only the chunks its pieces reaching the
+  raw ground touch, plus a one-chunk doorstep — never its buried box.
+- **Every container gets a loot table** (`Support/ContainerLoot`, end of `PlatLot.generateBlocks`; the lot's
+  `defaultLoot()`, or `ownLootTable()` when that table exists — a schematic's `chests/schematic/<name>` or
+  its sidecar's `Loot:`). Three tiers: `RandomizableContainer` deferred, plain `Container` filled now, a
+  capability-only mod inventory filled through the handler. **⚠ Ask the REGION for a block entity, never
+  the chunk:** a block placed during generation is a `DUMMY` NBT stub in the proto-chunk until
+  `WorldGenRegion.getBlockEntity` materialises it; `ChunkAccess.getBlockEntity` answers null, and the first
+  version found only the chests `setChest` had already touched — 848 skipped, 0 handled, with three
+  furniture mods installed. Every table ends in an `_extra` hook a pack can own (`scripts/add_loot_extras.py`).
+- **The armoury** (`Support/Armoury`): item frames from item tag `#cityworld:armoury/weapons`, armour stands
+  from `#cityworld:armoury/armour` (`getEquipmentSlotForItem` picks the slot), ammo shelves rolling
+  `chests/vault_ammo`. Entities built directly and added through the region — never `create`/`survives`.
+- **Large caverns** (`largeCaverns`, `ShapeProvider_Normal.inCavern`): region × room × texture noises, a
+  sawtooth on the threshold for shelves, y -52..26, on for MODERN/APOCALYPSE. Owner: *"just the right
+  shapes."* `scripts/CavernScan.java <seed> <x> <z> <r>` lists them with `/tp` points from the noise alone.
+- **For modpacks:** `worldCreation.lockCustomize` removes the Customize button for a locked preset, so a
+  pack's replaced `world_settings` entry is authoritative (Customize is what bakes an inline copy).
+
+**Traps this arc paid for, each once:**
+- **A probe that prints the same picture three times has not run.** `scripts/probe.sh` deletes the stale
+  `latest.log` first: a leftover `PROBE complete` line made the wait loop kill the new server at once.
+- **`modern.json`/`apocalypse.json` name every cave toggle explicitly**, so a style default in
+  `styleDefaults` never reaches a preset world; a new Terrain toggle goes in both files. Terrain's codec
+  is at its 16-field cap.
+- **26.3 has its own loot dialect** (typed rolls, `modifier` not `functions`); a table cherry-picked in the
+  1.21 form stops its server at registry load. **1.20.1 keeps `loot_tables/`, `tags/blocks/`, `tags/items/`
+  and the `name` key**, and git's rename detection carries master's `value` key straight into them: grep
+  after any loot pick.
+- **A conflict resolver that asserts before writing leaves the markers in place**, and `git add -A` then
+  commits them. Grep for `<<<<` after every resolved pick.
+
+**5.13.0 (2026-09-24) was one idea: the planner knows exactly where every structure will be.** `StructureForecast`
 makes vanilla's own `createStructures` call from the planner, for any chunk, before it exists, and the
 self-test proves it against the stored start on every version (`checkForecast`: compare footprint, floor
 and piece count — never maxY, which a chunk reload rebuilds for a terrain-matching piece). Everything
-else follows from it. Read PORTING.md "▶ Resume here — v5.13.0" for the measurements. The rules, each
-paid for in an owner playtest round on 2026-09-24:
+else follows from it. PORTING.md "▶ Resume here — v5.13.0" has the measurements. The rules, each paid for in a
+playtest round:
 
 - **Reserve the real footprint, plus as far as the blend will reach.** Reservation = a forecast start's
   box + `reserveMarginChunks(start)`: one chunk for anything the pad leaves alone, otherwise the same
@@ -90,37 +142,6 @@ and `padPlanForStructures` regions between the two comment anchors that exist ve
 then let the compiler name the API drift (26.x: `ChunkPos` is a record, `pack()`/`x()`; 26.3:
 `getStructureTemplateManager`, a `Climate.Sampler` on `Structure.generate`, two-arg
 `getStartForStructure`; 1.20.1/1.21.1: ten-arg `generate`, `location()`, Forge's server hooks).
-
-**v5.14.0 is released** (2026-09-25 evening): everything below plus the morning's asks — tag `v5.14.0`
-(`1513c89c`), CurseForge files 8974359–8974364, Modrinth `XouovttV gH5dPP55 RE5TKg5L QFtsFBcV SS1UebU3
-SDDtTAEJ`, fleet `DEPLOYED-v5.14.0` (26.2.test still to redeploy once his game is closed). PORTING.md
-"the owner's next four mods" has the gates. **NEXT:** nothing queued; his playtest is the queue.
-
-**What 5.14.0 was (2026-09-24 evening → 25th):** the owner added Battle Towers,
-Dungeon Crawl, Alex's Caves and Pam's HarvestCraft 2. All four are now wired — allow-list entries and a
-land-tower beard; five Alex's biomes in the cave pool with SOLID rock and an all-steps decoration read;
-Pam's crops in the field pool and a new `#cityworld:orchard/<climate>` fruit-tree seam placed through the
-tree's own feature (vanilla cherry proves it on every version). None of the four loads in the dev runtime,
-so the self-test proves mechanisms only: **his playtest is the verification**. PORTING.md "the owner's next
-four mods" has the per-mod bytecode findings and the one-line fixes for what he may photograph.
-**Playtest round 2 (2026-09-25):** Alex's Caves, Battle Towers, every vanilla structure and Pam's all worked
-in his 1.20.1 instance; Dungeon Crawl came up through a highrise (its set is underground-step) → `structure_fit`
-`reserve: true`, which reserves only the chunks its SURFACING pieces touch. Then three more of his asks the
-same morning, all built and self-tested: **every container gets a loot table** (`Support/ContainerLoot`, an
-end-of-lot pass over the chunk's block entities — ⚠ ask the REGION for each entity, not the chunk: a
-generation-time block leaves only a DUMMY stub in the proto-chunk and `ChunkAccess.getBlockEntity` answers
-null for it; three tiers, the capability one is per-loader); **the vault armoury has an identity**
-(`Support/Armoury`: frames from `#cityworld:armoury/weapons`, stands from `#cityworld:armoury/armour`, ammo
-shelves rolling `chests/vault_ammo`); **large caverns** (`largeCaverns`, `ShapeProvider_Normal.inCavern`:
-region × room × texture noises, a sawtooth threshold for shelves, y -52..26; proven by `scripts/probe.sh`
-+ `region_render.py` — three "identical picture" probes were silent non-runs before the probe script
-learned to delete the stale log; and `modern.json`/`apocalypse.json` name every cave toggle explicitly,
-so a style default alone never reaches a preset world). `scripts/gen_allow_structures_pack.py` makes the
-all-vanilla-structures playtest jar that is in his instance.
-**Same night, for the ZARP pack session:** `worldCreation.lockCustomize` (no Customize button for the locked
-preset, so a pack's replaced `world_settings` entry is authoritative) and an `_extra` loot hook on every chest
-table. **The ZARP instance takes only released CurseForge jars** (`.sablecraft-no-deploy`, which the fleet script
-honours), so ZARP is waiting on a release — the owner's call. Six self-tests + CI green on `ad8e3508`.
 
 ## Licence — important
 

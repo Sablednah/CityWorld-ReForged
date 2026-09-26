@@ -10,7 +10,7 @@ QFtsFBcV SS1UebU3 SDDtTAEJ`. Gates: six self-tests PASS at the pre-bump heads (1
 `--compare` agrees, CI run 36176398954 green on every bump head, halt/exit scan 0 on all six (detector
 proved on a synthetic positive: 2 hits; ⚠ the 26.1 worktree's `cityworld-5.8.0+mc26.1.2.jar` is dated
 Sep 18 — rebuilt after the fix — so it is NOT a control either; only a jar built from the 5.8.0 tag
-would be). Fleet `DEPLOYED-v5.14.0` on 11 of 12 (26.2.test was open in his game: rerun the deploy).
+would be). Fleet `DEPLOYED-v5.14.0` on all 12 (26.2.test on the morning after, once his game was closed).
 Owner's verdict on the caverns in 26.2.test: *"amazing — just the right shapes."* ZARP told.
 
 **Where it was.** Master `1dc14234` (code) + `057a9503` (docs); branch heads `533fc1a4` (1.20.1),
