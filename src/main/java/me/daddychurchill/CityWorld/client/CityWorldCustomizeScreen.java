@@ -69,7 +69,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private boolean includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
             includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
             includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, includeOvergrowth, capVines,
-            includeShops, windingCaves, largeCaverns;
+            includeShops, windingCaves, largeCaverns, includeSubways, spawnersInSubways;
     private double oddsOfPristineBuilding, overgrowthIntensity; // carried through untouched (no picker yet)
     // decay group — carried through untouched (the world style sets these; datapack tunes them, no picker yet)
     private double buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad;
@@ -171,6 +171,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         overgrowthIntensity = og.intensity();
         capVines = og.capVines();
         includeShops = data.shops().enabled();
+        includeSubways = data.subways().enabled();
+        spawnersInSubways = data.subways().spawners();
         CityWorldSettingsData.Decay dk = data.decay();
         buildingDecayIntensity = dk.buildingIntensity();
         roadDecayIntensity = dk.roadIntensity();
@@ -268,6 +270,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, onOff("Building interiors", includeBuildingInteriors, v -> includeBuildingInteriors = v));
         pair(row, onOff("Schematics", includeSchematics, v -> includeSchematics = v));
         pair(row, onOff("Named roads", includeNamedRoads, v -> includeNamedRoads = v));
+        pair(row, onOff("Subways", includeSubways, v -> includeSubways = v));
         flush(row);
 
         this.list.addHeader(Component.literal("Terrain"));
@@ -307,6 +310,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, onOff("Spawners in bunkers", spawnersInBunkers, v -> spawnersInBunkers = v));
         pair(row, onOff("Chests in sewers", treasuresInSewers, v -> treasuresInSewers = v));
         pair(row, onOff("Spawners in sewers", spawnersInSewers, v -> spawnersInSewers = v));
+        pair(row, onOff("Spawners in subways", spawnersInSubways, v -> spawnersInSubways = v));
         pair(row, onOff("Chests in buildings", treasuresInBuildings, v -> treasuresInBuildings = v));
         pair(row, chance("Chest odds: mines", oddsOfTreasureInMines, v -> oddsOfTreasureInMines = v));
         pair(row, chance("Chest odds: bunkers", oddsOfTreasureInBunkers, v -> oddsOfTreasureInBunkers = v));
@@ -378,9 +382,10 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops);
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
+        CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);
         CityWorldSettingsData data = new CityWorldSettingsData(
                 features, terrain, spawns, treasures, world, radius, naming, mobs, overgrowth, shops, decay,
-                caves);
+                caves, subways);
         return new Result(style, data, ruinedNether, cityWorldEnd);
     }
 
@@ -407,7 +412,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                         world.ruralnessLevel(), world.maxBuildingFloors(), world.broadcastSpecialPlaces(),
                         announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
                         moddedBiomeShare),
-                radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves);
+                radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves,
+                defaults.subways());
         this.minecraft.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.ruinedNether, this.cityWorldEnd, this.styleLocked, this.onDone));
     }
 

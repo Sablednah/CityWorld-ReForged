@@ -333,6 +333,13 @@ public abstract class PlatLot {
 		if (generator.getSettings().includeShops && getShopType() != null)
 			me.daddychurchill.CityWorld.Support.ShopFitter.apply(generator, this, chunk, chunkOdds);
 
+		// The subway: the tunnel or hall running under this chunk, if the plan puts one here. The station lot
+		// draws its own (its stairs cut through the hall), every other city lot gets it here, after its own
+		// decoration and before the container pass so the halls' chests take a table. See Support/Subway.
+		if (!(this instanceof me.daddychurchill.CityWorld.Plats.Urban.SubwayStationLot)
+				&& me.daddychurchill.CityWorld.Support.Subway.drawsIn(generator, this))
+			me.daddychurchill.CityWorld.Support.Subway.generate(generator, this, chunk, chunkOdds);
+
 		// polish things off
 		generator.shapeProvider.postGenerateBlocks(generator, this, chunk, blockYs);
 
@@ -490,7 +497,7 @@ public abstract class PlatLot {
 		// get shafted! (this builds down to keep the support poles happy)
 		if (generator.getSettings().includeMines)
 			for (int y = (blockYs.getMinHeight() / 16 - 1) * 16; y >= lowestMineSegment; y -= 16) {
-				if (isShaftableLevel(generator, y))
+				if (isShaftableLevel(generator, y) && !me.daddychurchill.CityWorld.Support.Subway.blocksMines(generator, this, y))
 					generateHorizontalMineLevel(generator, chunk, y);
 			}
 	}
@@ -499,7 +506,7 @@ public abstract class PlatLot {
 
 		// keep going down until we find what we are looking for
 		for (int y = (blockYs.getMinHeight() / 16 - 1) * 16; y >= lowestMineSegment; y -= 16) {
-			if (isShaftableLevel(generator, y)
+			if (isShaftableLevel(generator, y) && !me.daddychurchill.CityWorld.Support.Subway.blocksMines(generator, this, y)
 					&& generator.shapeProvider.isHorizontalWEShaft(chunk.sectionX, y, chunk.sectionZ))
 				return y + 7;
 		}
@@ -610,7 +617,7 @@ public abstract class PlatLot {
 		// it in game, 2026-09-21, standing at y 54 = level 48 + 6).
 		if (generator.getSettings().includeMines)
 			for (int y = lowestMineSegment; y <= (blockYs.getMinHeight() / 16 - 1) * 16; y += 16) {
-				if (isShaftableLevel(generator, y))
+				if (isShaftableLevel(generator, y) && !me.daddychurchill.CityWorld.Support.Subway.blocksMines(generator, this, y))
 					generateVerticalMineLevel(generator, chunk, y);
 			}
 	}
