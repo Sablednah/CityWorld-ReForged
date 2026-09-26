@@ -271,6 +271,11 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	}
 
 	@Override
+	public boolean supportsSubways() {
+		return true;
+	}
+
+	@Override
 	public String getCollectionName() {
 		return "Normal";
 	}

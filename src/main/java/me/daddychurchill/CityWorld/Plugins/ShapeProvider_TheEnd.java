@@ -38,6 +38,11 @@ import me.daddychurchill.CityWorld.worldgen.EndTerrain;
  */
 public class ShapeProvider_TheEnd extends ShapeProvider_Normal {
 
+	@Override
+	public boolean supportsSubways() {
+		return false; // see ShapeProvider.supportsSubways
+	}
+
 	/** The top block of buildable ground. Vanilla's islands cluster at y 57..60 (top block). */
 	public final static int STREET_LEVEL = 59;
 	/** Island tops within this many blocks of street level are planed flat to it. */

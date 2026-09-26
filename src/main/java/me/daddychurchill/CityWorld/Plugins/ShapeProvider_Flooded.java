@@ -19,6 +19,11 @@ import me.daddychurchill.CityWorld.Support.Odds;
 
 public class ShapeProvider_Flooded extends ShapeProvider_Normal {
 
+	@Override
+	public boolean supportsSubways() {
+		return false; // see ShapeProvider.supportsSubways
+	}
+
 	private final static Material floodMaterial = Material.WATER;
 
 	private final int floodY;
