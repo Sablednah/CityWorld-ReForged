@@ -22,7 +22,22 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 | Licence | **GPL-3.0-only** (see below — non-negotiable) |
 | Branch | work happens on `master` (the `neoforge-port` branch was merged into it and deleted) |
 
-## ▶ Where this is, and what's next (2026-09-26)
+## ▶ Where this is, and what's next (2026-09-26, afternoon)
+
+**UNRELEASED on master + all five branches, self-tested, awaiting the owner's playtest: the subway and the
+vault-by-depth** (PORTING.md "▶ Resume here — the subway, and the vault by depth" has the design and the
+measurements). Master `1769938c` (vault) + `71f8441f` (subway); the branches carry both cherry-picked and
+compiling (`gen_vault_floor_tables.py` re-run per dialect on 1.20.1 and 26.3). **The subway in one breath:**
+a `SubwayStationLot` per urban platmap (claimed first, beside a road, off the road lines 2/7), and every
+tunnel chunk a pure function of two stations (`Subway.at`) — east-west lines 24 under the street, north-south
+32, so lines never junction and a station on both is an interchange. **Planning never looks at a neighbour
+platmap; drawing does** (`stationNear` → `getPlatMap` at decoration time only). Modern-family only; a new
+`subways` settings group because `Features` is at the 16-field cap. What he should look at: a station's
+ticket hall (white tile, colour stripe, the name over the door), the switchback stairs, the platforms, a ride
+in a minecart between two stations, a bend, an interchange; and whether one station per district is too many.
+The ASCII slicer that read the world back is at `scratchpad/slice.py` in this session — worth adopting as
+`scripts/region_slice.py` (plan / x-section / z-section of a saved region as characters; it found the mine
+lift dropping through the upper hall in one look).
 
 **v5.14.0 is released** (2026-09-25 evening) on all six lines — tag `v5.14.0` (`1513c89c`), GitHub release
 with six jars, CurseForge files 8974359–8974364, Modrinth `XouovttV gH5dPP55 RE5TKg5L QFtsFBcV SS1UebU3
