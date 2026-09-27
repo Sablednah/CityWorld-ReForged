@@ -69,7 +69,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private boolean includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
             includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
             includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, includeOvergrowth, capVines,
-            includeShops, windingCaves, largeCaverns, includeSubways, spawnersInSubways;
+            includeShops, windingCaves, largeCaverns, includeSubways, spawnersInSubways, includeMalls;
     private double oddsOfPristineBuilding, overgrowthIntensity; // carried through untouched (no picker yet)
     // decay group — carried through untouched (the world style sets these; datapack tunes them, no picker yet)
     private double buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad;
@@ -171,6 +171,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         overgrowthIntensity = og.intensity();
         capVines = og.capVines();
         includeShops = data.shops().enabled();
+        includeMalls = data.shops().malls();
         includeSubways = data.subways().enabled();
         spawnersInSubways = data.subways().spawners();
         CityWorldSettingsData.Decay dk = data.decay();
@@ -271,6 +272,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, onOff("Schematics", includeSchematics, v -> includeSchematics = v));
         pair(row, onOff("Named roads", includeNamedRoads, v -> includeNamedRoads = v));
         pair(row, onOff("Subways", includeSubways, v -> includeSubways = v));
+        pair(row, onOff("Malls", includeMalls, v -> includeMalls = v));
         flush(row);
 
         header(Component.literal("Terrain"));
@@ -467,7 +469,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 moddedBiomeShare);
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
-        CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops);
+        CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops, includeMalls);
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);

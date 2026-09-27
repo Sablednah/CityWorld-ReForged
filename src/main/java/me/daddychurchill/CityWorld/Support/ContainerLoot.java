@@ -84,9 +84,8 @@ public final class ContainerLoot {
             if (!(chunk.getServerLevel() instanceof WorldGenLevel level))
                 return;
             ChunkAccess access = level.getChunk(chunk.sectionX, chunk.sectionZ);
-            ResourceLocation own = ownTableOrNull(level, lot);
-            if (own != null)
-                OWN_TABLE.incrementAndGet();
+            java.util.Map<String, java.util.Optional<ResourceLocation>> resolved = new java.util.HashMap<>();
+            boolean counted = false;
             // ⚠ Ask the REGION for each entity, not the chunk. A block placed during generation leaves only a
             // "DUMMY" NBT stub in the proto-chunk's pending map; WorldGenRegion.getBlockEntity materialises
             // the real block entity from that stub on demand, ChunkAccess.getBlockEntity answers null for it.
@@ -95,10 +94,18 @@ public final class ContainerLoot {
             // key set: materialising moves an entry from the pending map into the live one.
             for (BlockPos pos : List.copyOf(access.getBlockEntitiesPos())) {
                 BlockEntity entity = level.getBlockEntity(pos);
-                if (entity != null)
-                    assign(level, pos, entity,
-                            own != null ? own : LootProvider_LootTable.keyFor(loot, lot.lootTierAt(pos.getY())),
-                            odds.getRandomLong());
+                if (entity == null)
+                    continue;
+                String id = lot.lootTableAt(pos.getX(), pos.getY(), pos.getZ());
+                ResourceLocation own = id == null ? null
+                        : resolved.computeIfAbsent(id, k -> java.util.Optional.ofNullable(ownTableOrNull(level, k))).orElse(null);
+                if (own != null && !counted) {
+                    OWN_TABLE.incrementAndGet();
+                    counted = true;
+                }
+                assign(level, pos, entity,
+                        own != null ? own : LootProvider_LootTable.keyFor(loot, lot.lootTierAt(pos.getY())),
+                        odds.getRandomLong());
             }
         } catch (Throwable t) {
             // loot must never take a chunk down
@@ -177,8 +184,7 @@ public final class ContainerLoot {
      * The lot's own table ({@link PlatLot#ownLootTable()}) if it names one that exists — a schematic's
      * {@code chests/schematic/<name>}, or its sidecar's {@code Loot:} — else null for the lot default.
      */
-    private static ResourceLocation ownTableOrNull(WorldGenLevel level, PlatLot lot) {
-        String own = lot.ownLootTable();
+    private static ResourceLocation ownTableOrNull(WorldGenLevel level, String own) {
         if (own == null)
             return null;
         try {
