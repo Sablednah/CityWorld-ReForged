@@ -58,7 +58,7 @@ public class ParkingLot extends IsolatedLot {
     protected void generateActualChunk(CityWorldGenerator generator, PlatMap platmap, InitialBlocks chunk,
             BiomeGrid biomes, DataContext context, int platX, int platZ) {
         chunk.airoutLayer(generator, generator.streetLevel + 1, 8, 0, true);
-        chunk.setLayer(generator.streetLevel, Material.GRAY_CONCRETE);
+        chunk.setLayer(generator.streetLevel, me.daddychurchill.CityWorld.Plats.RoadLot.cityPavement(generator));
         chunk.setLayer(generator.streetLevel - 3, 3, Material.DIRT);
     }
 
@@ -78,13 +78,14 @@ public class ParkingLot extends IsolatedLot {
         int y = generator.streetLevel, stand = y + 1;
         boolean ruined = generator.isApocalypseStyle();
         Odds odds = chunkOdds;
+        Material asphalt = me.daddychurchill.CityWorld.Plats.RoadLot.cityPavement(generator);
         // bays run north-south in two rows (z 1..5 and 10..14) either side of an aisle (z 6..9)
         for (int x = 0; x < 16; x++)
             for (int z = 0; z < 16; z++) {
                 boolean bayRow = z >= 1 && z <= 5 || z >= 10 && z <= 14;
                 boolean line = bayRow && x % 4 == 0;
                 Material m = line ? Material.WHITE_CONCRETE : (z == 7 || z == 8) && x % 3 == 0 ? Material.YELLOW_CONCRETE
-                        : Material.GRAY_CONCRETE;
+                        : asphalt;
                 if (ruined && odds.playOdds(0.06))
                     m = odds.flipCoin() ? Material.GRAVEL : Material.MOSS_BLOCK;
                 chunk.setBlock(x, y, z, m);

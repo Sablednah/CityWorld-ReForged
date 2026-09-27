@@ -1486,6 +1486,10 @@ public class RoadLot extends ConnectedLot {
 				generateHangingVine(chunk, base2Y - 1, BlockFace.EAST, 13, i, 14, i);
 			}
 		}
+
+		// a dropped kerb wherever this road runs past a car park (a mall's): the raised pavement on that side is
+		// lowered to road level and surfaced like the road, so cars and players roll straight in
+		dropKerbs(generator, platmap, chunk, platX, platZ);
 	}
 
 	// MODERN: a sparse scatter of biome-right trees across a tunnel roof (the mountain surface above the
@@ -1558,6 +1562,33 @@ public class RoadLot extends ConnectedLot {
 //			else
 ////				chunk.setBlocks(x1, x2, y, z1, z2, dirtroadMat);
 //				chunk.setBlocks(x1, x2, y, z1, z2, Material.DIAMOND_BLOCK);
+	}
+
+	/** The city road surface this world paves with: what a car park that meets the road should be made of. */
+	public static Material cityPavement(CityWorldGenerator generator) {
+		Material m = generator.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(0, Material.WHITE_TERRACOTTA);
+		return m == Material.WHITE_TERRACOTTA ? pavementClay : m;
+	}
+
+	private void dropKerbs(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk, int platX, int platZ) {
+		if (!inACity)
+			return; // outside town the verge is already at road level
+		int street = generator.streetLevel;
+		Material surface = pavementIsClay ? pavementClay : pavementMat;
+		int[][] sides = { { 0, -1 }, { 0, 1 }, { 1, 0 }, { -1, 0 } }; // N S E W
+		for (int s = 0; s < 4; s++) {
+			int nx = platX + sides[s][0], nz = platZ + sides[s][1];
+			if (!platmap.inBounds(nx, nz)
+					|| !(platmap.getLot(nx, nz) instanceof me.daddychurchill.CityWorld.Plats.Urban.ParkingLot))
+				continue;
+			for (int along = sidewalkWidth; along < 16 - sidewalkWidth; along++)
+				for (int depth = 0; depth < sidewalkWidth; depth++) {
+					int x = s == 0 || s == 1 ? along : s == 2 ? 15 - depth : depth;
+					int z = s == 2 || s == 3 ? along : s == 1 ? 15 - depth : depth;
+					chunk.setBlocks(x, street + 1, street + 6, z, Material.AIR);
+					chunk.setBlock(x, street, z, surface);
+				}
+		}
 	}
 
 	protected void paveSidewalk(CityWorldGenerator generator, SupportBlocks chunk, int x1, int x2, int y, int z1,
