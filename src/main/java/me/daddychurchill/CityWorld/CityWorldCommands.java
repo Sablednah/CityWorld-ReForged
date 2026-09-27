@@ -81,7 +81,7 @@ public final class CityWorldCommands {
     private static final java.util.List<String> LOT_KINDS = java.util.List.of(
             "zoo", "biodome", "saucer", "airship", "balloon", "blimp", "fishpond", "cornershop", "castle",
             "oilplatform", "radiotower", "watertower", "monument", "library", "museum", "campground",
-            "mineentrance", "bunker", "farm", "park");
+            "mineentrance", "bunker", "farm", "park", "mall", "subwaystation");
 
     private static final SuggestionProvider<CommandSourceStack> SUGGEST_LOTKINDS =
             (ctx, builder) -> SharedSuggestionProvider.suggest(LOT_KINDS, builder);
