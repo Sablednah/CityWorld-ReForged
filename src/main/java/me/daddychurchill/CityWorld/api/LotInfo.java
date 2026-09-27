@@ -28,6 +28,10 @@ import org.jspecify.annotations.Nullable;
  * @param shop          this lot's {@link ShopType}, or {@code null} if it is not a shop
  * @param interior      what the interior is furnished as ("Courthouse", "Apartments"…), what a farm grows, or
  *                      for a road the street it is on ("Main Street & West Oak Avenue"); {@code null} if none
+ * @param streetLevel   the world's street level: the height of the road surface. Everything underground is laid
+ *                      out below it (sewers 3-9 under a road, the subway's levels, then the mines), so depth below
+ *                      this is how to tell what a player is in where no lot says so
+ * @param subway        true if a subway station or line is under this chunk (see {@link CityWorldAPI#subwayAt})
  */
 public record LotInfo(
         ResourceKey<Level> dimension,
@@ -40,7 +44,9 @@ public record LotInfo(
         int roadCount,
         @Nullable String schematicName,
         @Nullable ShopType shop,
-        @Nullable String interior) {
+        @Nullable String interior,
+        int streetLevel,
+        boolean subway) {
 
     /** True if this lot is a placed schematic (see {@link #schematicName()}). */
     public boolean isSchematic() {
