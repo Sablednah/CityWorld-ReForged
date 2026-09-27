@@ -90,6 +90,19 @@ crown), a block taller (`HEIGHT` 6), white concrete for the sandstone, and end r
 each wall at head height as a glowing conduit (`rods`; `Material.withFacing` sets the six-way FACING). The
 booth moved to the hall's north-east corner: centred, it sat on both stair rims.
 
+**Long links and loops (2026-09-27, the owner's next ask: "longer links and loops between city clusters").**
+A station now links to the FIRST station along its row/column within `REACH` platmaps (6, i.e. up to 60
+chunks; `-Dcityworld.subway.reach`), not only the next-door one. Still a pure function: a chunk in a platmap
+with no station asks for the first station each way (`firstStation`) and lies on the line if `linkMask` says
+so — the same row / jog-in-the-column-before-B's-platmap / B's-row route as before, generalised past one
+platmap. Consecutive stations are symmetric by construction (A's first east is B iff B's first west is A).
+**`linkOk`** gates every link on its route (memoised, filled outside the map): each chunk's planned min
+terrain must stay `HEIGHT + 4` over the level's floor (so the roof never breaks out under a valley, river,
+sea or a road bridge), and none may be a bunker or vault lot. Loops fall out of the grid: wherever clusters
+connect both along rows and columns. Self-test: tunnel pieces 2,309 → 7,692, **3,963 of them in
+station-less platmaps**, interchanges 148 → 216, mismatches 0; `run/cityworld-subway-map.txt` is the
+network as characters (S station, # east-west, | north-south, + both).
+
 ### Traps met this afternoon
 
 - The first stair version cut the platform under the whole 4×4, leaving a 1-deep pit round the first flight;

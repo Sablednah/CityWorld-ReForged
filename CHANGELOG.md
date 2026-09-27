@@ -20,7 +20,11 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   powered rails, so a minecart runs the line; where a station has no neighbour that way the track ends
   at buffer stops. Tunnels take the road tunnels' arched profile in white tile, a block taller, with a
   glowing rod run along each wall at head height; the ticket hall carries its name inside and out and
-  the stairs climb in four-step flights (the first playtest's asks). In APOCALYPSE the lamps are dark, the track has gaps, water stands in the bed and
+  the stairs climb in four-step flights (the first playtest's asks). Lines reach past the next district: a station
+  links to the first station along its row or column up to six districts away, so tunnels cross the
+  countryside between city clusters and the network closes into loops. A long line is only dug where
+  the ground stays over its roof the whole way (never out under a valley, river or sea) and clear of
+  bunkers and vaults. In APOCALYPSE the lamps are dark, the track has gaps, water stands in the bed and
   sewer mobs spawn from niches in the walls. MODERN and APOCALYPSE only (forced off, and greyed out in
   Customize, on every other style); a new `subways` settings group (`enabled`, `spawners`); the
   landmark kind `subway` for the announce list; mines keep out of the band. Suggested by a commenter.
