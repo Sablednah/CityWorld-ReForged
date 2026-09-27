@@ -9,6 +9,16 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Added
 
+- **Shopping malls.** Rare and big, at the edge of town: a two- or three-storey mall three or four chunks on a
+  side inside a ring of roads, with car parks filling the rest of the block and every lot across the road —
+  painted bays, lamp posts, parked cars. Inside, a glass-roofed atrium runs the length of the mall between two
+  anchor department stores, ringed by walkways that become balconies upstairs; a fountain, planters with trees,
+  benches, sculptures and food kiosks on the atrium floor; glass lifts at two corners and escalators between
+  floors. Around it, shops of every size and kind — music, florist, fashion, hardware, grocer, bakery, cafe,
+  books, toys, pets, jeweller, electronics, sports, pharmacy, furniture, gifts, art — each with its own name on
+  the fascia, fittings to match, and its own loot table (`cityworld:chests/mall_<kind>`, each with an `_extra`
+  hook). MODERN and APOCALYPSE; a new "Malls" toggle; announced as a landmark.
+
 - **The subway.** Every urban district now has a station: a one-storey ticket hall beside a road
   (white tile, a band in the line's colour, glass, a doorway onto each road it touches, the station
   named after its street), with two switchback stairs down to a pair of platforms twenty-four blocks

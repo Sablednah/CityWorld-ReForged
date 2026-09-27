@@ -285,12 +285,13 @@ public record CityWorldSettingsData(
         ).apply(i, Subways::new));
     }
 
-    public record Shops(boolean enabled) {
+    public record Shops(boolean enabled, boolean malls) {
 
-        public static final Shops DEFAULT = new Shops(false);
+        public static final Shops DEFAULT = new Shops(false, true);
 
         public static final Codec<Shops> CODEC = RecordCodecBuilder.create(i -> i.group(
-                Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Shops::enabled)
+                Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Shops::enabled),
+                Codec.BOOL.optionalFieldOf("malls", true).forGetter(Shops::malls)
         ).apply(i, Shops::new));
     }
 
@@ -477,7 +478,7 @@ public record CityWorldSettingsData(
          * balloon, fishpond, vaultroad, hospitaldept, subway} (default off). Everything always logs at debug.
          */
         public static final java.util.List<String> DEFAULT_ANNOUNCED = java.util.List.of(
-                "airship", "saucer", "vault", "zoo", "biodome", "hospital", "schematic");
+                "airship", "saucer", "vault", "zoo", "biodome", "hospital", "schematic", "mall");
 
         public static final World DEFAULT = new World(TreeStyle.NORMAL, Odds.oddsLikely, SubSurfaceStyle.LAND, 0.0,
                 DEFAULT_MAX_BUILDING_FLOORS, false, DEFAULT_ANNOUNCED, true, WildDecoration.BOTH,

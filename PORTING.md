@@ -1,5 +1,58 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Resume here — shopping malls (2026-09-27)
+
+**The owner's ask:** *"a new multi chunk lot, rare, big, on the edge or outside cities, like real malls. Shops from
+1 chunk to many, different themes, around an open atrium with walkways, seating, flowers, fountains and
+sculptures; balconies over the atrium; elevators between several levels; each shop a random name and type with
+loot tables and furnishing to match — music, flowers, fashion, hardware, food, food kiosks and more. Outside,
+plenty of parking the road connects to."*
+
+**Files.** `Plats/Urban/Mall` (the plan, the placer and all the drawing), `MallLot` (a building chunk),
+`ParkingLot` (a car-park chunk); hooks at the top of `NeighborhoodContext`, `FarmContext` and `OutlandContext`
+`populateMap`; `scripts/gen_mall_tables.py` (19 tables × 3 dialects); self-test `checkMalls`.
+
+**Where (the planning rule).** Regions of 4×4 platmaps; each nominates ONE platmap from macro-noise dice
+(`Mall.nominated`); that platmap builds a mall only if it is one of the three edge-of-town contexts, modern-family,
+`shops.malls` on, a 75% roll on its own dice, and the ring-road block (plat 3..6 both ways) is empty, flat
+(`PlatMap.isBuildableLots`, the schematic footprint test made public), unreserved, and has road on at least two
+sides. Spacing without ever looking at a neighbour platmap. The building takes 4×3 or 4×4 of that block; the rest
+of it and every empty buildable lot across the ring road become `ParkingLot`s.
+
+**How it draws.** One `Mall` object per mall, shared by all its lots. Everything is laid out in mall coordinates
+(`a` along the long axis, `c` across) and drawn through `Mall.Canvas`, which maps to world columns and clips to
+the chunk being decorated — so each chunk runs the whole drawing and keeps its slice (the hospital's
+world-coordinate mask idea, generalised). Across: apron 2 | shops (11 or 15 deep) | walkway 4 | atrium (10 or 18)
+| walkway | shops | apron. Along: anchor store (11/13) | units round the atrium | anchor. Floors 2–3, 6 high;
+upper floors leave the atrium open to a raised glass skylight, walkways become balconies railed in glass panes.
+Ground-floor entrance corridors cut both long sides at the middle; each anchor has its own outside entrance and
+stairs between its floors. **The atrium is laid out on a reservation grid in the constructor** (lifts, escalators,
+fountain, kiosks first; then sculptures, planters with azalea trees and benches only where still free) — without
+it the first draft put planters on the escalators.
+
+**Units.** Each floor/side is cut into units 5–15 wide with one-block walls (`partition`); each gets a `Kind`
+(music, florist, fashion, hardware, grocer, bakery, cafe, books, toys, pets, jeweller, electronics, sports,
+pharmacy, furniture, gifts, art; anchors are department/grocer/furniture; kiosks sell food), a name from the kind's
+nouns/adjectives or a surname (`shopName`), a fascia in the kind's colour with the name on wall signs, and
+`fit`: side shelving, a counter across the back with the till, stock chest and barrels against the back wall,
+display islands (or the kind's special — cafe tables, clothes rails, fish tanks, a furniture showroom from the
+furniture pools). **Loot by position:** `PlatLot.lootTableAt(x, y, z)` (default `ownLootTable()`) is new;
+`ContainerLoot.apply` resolves it per container (memoised per id within a chunk), and `MallLot` answers the table
+of the unit/anchor/kiosk the container stands in: `cityworld:chests/mall_<kind>`, each ending in its `_extra`
+hook. Containers are placed bare and take their table in that pass.
+
+**Lifts:** a 4×4 glass tower at two opposite atrium corners, quartz back, iron core, a ladder right inside the
+door on every floor with an iron threshold, a gap in the balcony rail (vanilla has no lift car). **Escalators:**
+two-wide stair flights in the atrium beside the long balconies (ground→1st on one side; 1st→2nd on the other when
+there is a third floor), a handrail on the open side, rail gaps where they land.
+
+**Car parks:** asphalt at road level, two bay rows with painted lines round a yellow-dashed aisle, lamp posts,
+verges only on sides that are not road/mall/car park (so roads run straight in), cars (2×4 body, glass cabin,
+dark wheels; rusted and broken in APOCALYPSE), a customer-parking sign.
+
+**Settings:** `shops.malls` (default true; a Customize toggle "Malls"; drawn only on MODERN/APOCALYPSE). `mall` is
+a default announced landmark.
+
 ## ▶ Resume here — the subway, and the vault by depth (2026-09-26, owner out for the afternoon)
 
 **UNRELEASED — on master and all five branches (pushed; CI run 36235322156 green on every job), deployed to the fleet as the branch shas (`DEPLOYED-7ffcbf51` on 1.21.11, `ac6d9e65` on his `1.20.1  Forge`), self-tested on every line, not playtested.** Two things built while he was out: the vault
