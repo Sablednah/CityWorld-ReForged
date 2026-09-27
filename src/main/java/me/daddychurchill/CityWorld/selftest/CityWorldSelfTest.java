@@ -2214,7 +2214,8 @@ public final class CityWorldSelfTest {
             return;
         }
         int radius = PLAN_RADIUS;
-        int stations = 0, interchanges = 0, tunnels = 0, bends = 0, platforms = 0, mismatches = 0;
+        int stations = 0, interchanges = 0, tunnels = 0, bends = 0, platforms = 0, mismatches = 0, crossCountry = 0;
+        int[] firstCross = null;
         List<String> mismatchSamples = new ArrayList<>();
         int[] firstStation = null, firstStraight = null;
         for (int cx = -radius; cx <= radius; cx++)
@@ -2229,6 +2230,12 @@ public final class CityWorldSelfTest {
                     if (firstStation == null)
                         firstStation = new int[] { cx, cz };
                 } else {
+                    // a piece in a platmap with no station of its own is a long link crossing open country
+                    if (me.daddychurchill.CityWorld.Support.Subway.stationNear(plan, cx, cz) == null) {
+                        crossCountry++;
+                        if (firstCross == null)
+                            firstCross = new int[] { cx, cz };
+                    }
                     if (piece.ewPlatform() || piece.nsPlatform())
                         platforms++;
                     for (int m : new int[] { piece.ewMask(), piece.nsMask() })
@@ -2263,6 +2270,23 @@ public final class CityWorldSelfTest {
         report.put("subway.stations", Integer.toString(stations));
         report.put("subway.interchanges", Integer.toString(interchanges));
         report.put("subway.tunnelPieces", tunnels + " (" + bends + " bends, " + platforms + " platform chunks)");
+        // the network as a picture: one character per chunk (S station, # east-west, | north-south, + both)
+        try {
+            StringBuilder map = new StringBuilder();
+            for (int cz = -radius; cz <= radius; cz++) {
+                for (int cx = -radius; cx <= radius; cx++) {
+                    var pc = me.daddychurchill.CityWorld.Support.Subway.at(plan, cx, cz);
+                    map.append(pc.station() ? 'S' : pc.ewMask() != 0 && pc.nsMask() != 0 ? '+'
+                            : pc.ewMask() != 0 ? '#' : pc.nsMask() != 0 ? '|' : '.');
+                }
+                map.append('\n');
+            }
+            Files.writeString(server.getServerDirectory().resolve("cityworld-subway-map.txt"), map.toString(),
+                    StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            report.put("subway.map", "not written: " + e);
+        }
+        report.put("subway.crossCountryPieces", crossCountry + (firstCross == null ? "" : " (first at " + firstCross[0] + "," + firstCross[1] + ")"));
         report.put("subway.mismatches", mismatches + (mismatchSamples.isEmpty() ? "" : " " + mismatchSamples));
         if (stations == 0)
             fail("no subway station planned within " + radius + " chunks of spawn");
