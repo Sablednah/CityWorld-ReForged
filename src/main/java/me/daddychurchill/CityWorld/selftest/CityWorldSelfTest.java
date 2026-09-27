@@ -2402,7 +2402,7 @@ public final class CityWorldSelfTest {
                 }
             }
         }
-        report.put("mall.first", mall.name() + " (" + first.getValue().size() + " chunks, " + mall.floors() + " floors, "
+        report.put("mall.first", mall.name() + " (" + mall.shape() + ", " + first.getValue().size() + " chunks, " + mall.floors() + " floors, "
                 + mall.unitCount() + " units)");
         report.put("mall.first.readback", "signs=" + signs + " glass=" + glass + " water=" + water + " containers=" + containers
                 + " tabled=" + tabled + " mallTabled=" + mallTabled);

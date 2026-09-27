@@ -20,19 +20,18 @@ import me.daddychurchill.CityWorld.compat.Material;
 public class MallLot extends IsolatedLot {
 
     final Mall mall;
-    private final int offX, offZ;
+    private final boolean origin;
 
-    public MallLot(PlatMap platmap, int chunkX, int chunkZ, Mall mall, int offX, int offZ) {
+    public MallLot(PlatMap platmap, int chunkX, int chunkZ, Mall mall, boolean origin) {
         super(platmap, chunkX, chunkZ);
         style = LotStyle.STRUCTURE;
         this.mall = mall;
-        this.offX = offX;
-        this.offZ = offZ;
+        this.origin = origin;
     }
 
     @Override
     public PlatLot newLike(PlatMap platmap, int chunkX, int chunkZ) {
-        return new MallLot(platmap, chunkX, chunkZ, mall, offX, offZ);
+        return new MallLot(platmap, chunkX, chunkZ, mall, false);
     }
 
     public Mall getMall() {
@@ -86,9 +85,8 @@ public class MallLot extends IsolatedLot {
     protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
             DataContext context, int platX, int platZ) {
         mall.draw(generator, chunk, chunkOdds);
-        if (offX == 0 && offZ == 0)
-            generator.reportLocation("mall", mall.name, chunk, mall.alongX ? mall.longChunks : mall.shortChunks,
-                    mall.alongX ? mall.shortChunks : mall.longChunks);
+        if (origin)
+            generator.reportLocation("mall", mall.name, chunk, 1, 1);
         if (buildingsDecay(generator))
             destroyLot(generator, generator.streetLevel + 1, mall.roofY());
     }
