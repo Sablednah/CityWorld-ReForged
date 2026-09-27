@@ -18,6 +18,12 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   books, toys, pets, jeweller, electronics, sports, pharmacy, furniture, gifts, art — each with its own name on
   the fascia, fittings to match, and its own loot table (`cityworld:chests/mall_<kind>`, each with an `_extra`
   hook). MODERN and APOCALYPSE; a new "Malls" toggle; announced as a landmark.
+  Malls grow in wings, the way UK shopping centres do: a long main wing with arms joined to its flanks — a
+  bar, an L, a T, a U, a Z or a cross, up to eight chunks each way — through passages cut across the main
+  wing's shop rows on every floor. Car parks meet the road with a dropped kerb and the road's own surface.
+- **API: street level and the subway.** `LotInfo` carries the street level and whether a subway runs under
+  the chunk; `CityWorldAPI.streetLevel`, `isSubway` and `subwayAt` (station, which lines, and the heights of
+  both levels) — so a pack can tell a sewer from a subway tunnel from a mine by depth.
 
 - **The subway.** Every urban district now has a station: a one-storey ticket hall beside a road
   (white tile, a band in the line's colour, glass, a doorway onto each road it touches, the station

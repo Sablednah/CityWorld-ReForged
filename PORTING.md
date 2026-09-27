@@ -1,5 +1,39 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Resume here — bigger malls in wings, the first mall playtest, and API for ZARP (2026-09-27 night)
+
+**Owner, on finding his first mall:** *"love it — just a few extras on top of making them bigger."* Everything below
+is on master and all five branches; unreleased; he tests in the morning.
+
+**Bigger, and not rectangles (`Mall.Wing`).** A mall is now one main wing (5–8 chunks long, 3 wide) plus up to two
+arms (2–4 chunks) joined to its flanks: bar, L, T, U, Z or cross (`shapeSpec`), anywhere in plat 1..8 of its
+platmap, over the platmap's own roads if need be (their stubs dead-end at the walls) but never over a building,
+a roundabout or a reservation (`fits`). Each wing is the old mall geometry in its own coordinates, with two
+additions: an OPEN end (no apron, no anchor, walkways and atrium run to the edge; wall only across the shop bands)
+and per-side aprons (a flank an arm joins has none, so the walls stand back to back). The main wing cuts a
+**link** through its shop band and wall on every floor, as wide as the arm's walkways + atrium (`Wing.links`), so
+the ground floor runs through and the balconies bridge across; shop units partition round the links and the
+ground-floor entrance corridor (which moves off any flank a link uses). Each wing clips its drawing to its own
+rectangle (`Canvas.in`). Lifts, escalators and the fountain only where a wing's atrium is long enough for them
+(12/14/16). Car parks: wild levellable lots touching the building, then touching those, kept only where the chain
+reaches a road. `Mall.sites()` now counts shapes; the probe showed a T (5-long main, 2-long arm) at 83,91.
+
+**His playtest list, all done:** dropped kerbs (`RoadLot.dropKerbs`: a road's pavement strip facing a
+`ParkingLot` is lowered to road level; `RoadLot.cityPavement` is the surface both use now, so the car park matches
+the road); the pet-shop tanks leaked (glass above and below only — now a sealed 4×3 glass box, and never across a
+chunk edge, where the water could run before the other half's glass exists); panes not joining (a chunk-edge pane
+is placed before its neighbour exists; the mall now reconnects one row into each neighbour, `reconnect(-1, 17)`);
+lanterns not on their chains (placed standing: `Canvas.hanging` → `setHangingLantern`); escalators ("OSHA would not
+approve"): the handrail is two bars high at each step so consecutive steps' bars share a height and join, a
+two-cell landing at the top (and the bottom of the free-standing upper flight) railed on its open side and end, and
+the balcony gap sits at the landing. The fountain now waits for the lifts and escalators to claim their cells and
+takes the free spot nearest the middle, sized to the gap between the escalators (a 12-wide atrium had none).
+
+**API for the ZARP pack (Threadwork's zone music).** `LotInfo` gains `streetLevel` and `subway`;
+`CityWorldAPI.streetLevel(level)`, `isSubway(level, pos)` and `subwayAt(level, pos)` → `SubwayInfo` (station,
+east-west, north-south, both floor heights, `height`, and `contains(y)` for "is this height inside a tunnel").
+`MallLot` keeps its class name — ZARP keys a music zone on it.
+
 ## ▶ Resume here — shopping malls (2026-09-27)
 
 **The owner's ask:** *"a new multi chunk lot, rare, big, on the edge or outside cities, like real malls. Shops from
