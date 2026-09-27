@@ -168,67 +168,162 @@ public final class Subway {
         }
     }
 
+    /**
+     * How far a line reaches for the next station along its row or column, in platmaps. Beyond the
+     * next-door platmap this is what joins one city cluster to the next across the countryside (owner,
+     * 2026-09-27: "longer links and loops between city clusters"); the grid of such links is what makes
+     * the loops. Tunable live with {@code -Dcityworld.subway.reach}.
+     */
+    static final int REACH = Integer.getInteger("cityworld.subway.reach", 6);
+
+    /** The first station east (dir 0), south (1), west (2) or north (3) of platmap {@code p}, within REACH. */
+    private static int[] firstStation(CityWorldGenerator generator, PlatMap p, int dir) {
+        int dx = dir == 0 ? 1 : dir == 2 ? -1 : 0, dz = dir == 1 ? 1 : dir == 3 ? -1 : 0;
+        for (int k = 1; k <= REACH; k++) {
+            int[] st = stationNear(generator, p.originX + dx * k * PlatMap.Width, p.originZ + dz * k * PlatMap.Width);
+            if (st != null)
+                return st;
+        }
+        return null;
+    }
+
+    /** Link validity, memoised: {@code (a, b, axis)} -> whether the route stays in rock and clear of bunkers. */
+    private static final java.util.concurrent.ConcurrentHashMap<String, Boolean> LINKS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * Whether the line from station {@code a} to station {@code b} ({@code ew}: a west of b; else a north
+     * of b) may be built: every chunk of its route must keep solid ground two blocks over the tunnel's
+     * shell (so the roof never breaks out under a valley, a river or the sea), and must not be a bunker
+     * or vault (which sit in exactly that band under the hills a long link crosses). A pure function of
+     * the two stations; memoised, and filled outside the map (never compute a plan inside a map lock).
+     */
+    private static boolean linkOk(CityWorldGenerator generator, int[] a, int[] b, boolean ew) {
+        String key = a[0] + "," + a[1] + (ew ? "e" : "s") + b[0] + "," + b[1] + "@" + System.identityHashCode(generator);
+        Boolean known = LINKS.get(key);
+        if (known != null)
+            return known;
+        int top = (ew ? ewFloor(generator) : nsFloor(generator)) + HEIGHT + 4;
+        boolean ok = true;
+        for (int[] c : route(generator, a, b, ew)) {
+            PlatLot lot = generator.getPlatMap(c[0], c[1]).getMapLot(c[0], c[1]);
+            if (lot == null || lot instanceof me.daddychurchill.CityWorld.Plats.Nature.BunkerLot
+                    || lot instanceof me.daddychurchill.CityWorld.Plats.Nature.RoadThroughBunkerLot
+                    || lot instanceof me.daddychurchill.CityWorld.Plats.Nature.RoadThroughVaultLot
+                    || lot.getCachedYs() != null && lot.getCachedYs().getMinHeight() < top) {
+                ok = false;
+                break;
+            }
+        }
+        LINKS.put(key, ok);
+        return ok;
+    }
+
+    /** The chunks strictly between two linked stations: along a's row (column), the jog, along b's. */
+    private static java.util.List<int[]> route(CityWorldGenerator generator, int[] a, int[] b, boolean ew) {
+        java.util.List<int[]> out = new java.util.ArrayList<>();
+        int i = ew ? 0 : 1, j = 1 - i; // i runs along the line, j across it
+        int jog = originOf(b[i]) - 1;
+        for (int v = a[i] + 1; v <= jog; v++)
+            out.add(pt(ew, v, a[j]));
+        for (int w = Math.min(a[j], b[j]); w <= Math.max(a[j], b[j]); w++)
+            if (w != a[j])
+                out.add(pt(ew, jog, w));
+        for (int v = jog + 1; v < b[i]; v++)
+            out.add(pt(ew, v, b[j]));
+        return out;
+    }
+
+    private static int[] pt(boolean ew, int along, int across) {
+        return ew ? new int[] { along, across } : new int[] { across, along };
+    }
+
+    /** The origin chunk of the platmap holding chunk coordinate {@code c} (the generator's calcOrigin). */
+    private static int originOf(int c) {
+        return Math.floorDiv(c, PlatMap.Width) * PlatMap.Width;
+    }
+
+    /**
+     * The open sides the link {@code a -> b} gives chunk {@code (x, z)}: along a's row to the column just
+     * before b's platmap, a jog there to b's row, then along b's row — the east-west case, with the
+     * north-south one its transpose. Zero if the chunk is not on it. The two stations themselves are
+     * not "on" the link (their masks are set from whether the link exists).
+     */
+    private static int linkMask(int x, int z, int[] a, int[] b, boolean ew) {
+        int along = ew ? x : z, across = ew ? z : x;
+        int ai = ew ? a[0] : a[1], aj = ew ? a[1] : a[0], bi = ew ? b[0] : b[1], bj = ew ? b[1] : b[0];
+        int back = ew ? W : N, fwd = ew ? E : S, lo = ew ? N : W, hi = ew ? S : E;
+        int jog = originOf(bi) - 1;
+        if (across == aj && along > ai && along <= jog)
+            return along < jog || bj == aj ? back | fwd : back | (bj > aj ? hi : lo);
+        if (along == jog && bj != aj && between(across, aj, bj))
+            return across == bj ? (aj < bj ? lo : hi) | fwd : lo | hi;
+        if (across == bj && along > jog && along < bi)
+            return back | fwd;
+        return 0;
+    }
+
     public static Piece at(CityWorldGenerator generator, int chunkX, int chunkZ) {
         if (!planned(generator))
             return Piece.NONE;
         PlatMap p = generator.getPlatMap(chunkX, chunkZ);
         int[] own = stationOf(p);
-        if (own == null)
-            return Piece.NONE;
-        int p0x = p.originX, p0z = p.originZ, last = PlatMap.Width - 1;
-        int ax = own[0], az = own[1];
-        int[] east = stationNear(generator, p0x + PlatMap.Width, p0z);
-        int[] west = stationNear(generator, p0x - PlatMap.Width, p0z);
-        int[] south = stationNear(generator, p0x, p0z + PlatMap.Width);
-        int[] north = stationNear(generator, p0x, p0z - PlatMap.Width);
-
-        int ew = 0;
-        if (chunkZ == az) {
-            if (chunkX < ax) {
-                if (west != null)
-                    ew = W | E;
-            } else if (chunkX == ax) {
+        int ew = 0, ns = 0;
+        boolean station = false;
+        int[] east = null, west = null, south = null, north = null;
+        if (own != null) {
+            // this platmap's station: its links out each way, if the far station is in reach and the route is good
+            east = firstStation(generator, p, 0);
+            if (east != null && !linkOk(generator, own, east, true))
+                east = null;
+            west = firstStation(generator, p, 2);
+            if (west != null && !linkOk(generator, west, own, true))
+                west = null;
+            south = firstStation(generator, p, 1);
+            if (south != null && !linkOk(generator, own, south, false))
+                south = null;
+            north = firstStation(generator, p, 3);
+            if (north != null && !linkOk(generator, north, own, false))
+                north = null;
+            station = chunkX == own[0] && chunkZ == own[1];
+            if (station) {
                 ew = (west != null ? W : 0) | (east != null ? E : 0);
-            } else if (east != null) {
-                if (chunkX < p0x + last)
-                    ew = W | E;
-                else
-                    ew = east[1] == az ? W | E : W | (east[1] > az ? S : N);
-            }
-        } else if (east != null && chunkX == p0x + last && east[1] != az && between(chunkZ, az, east[1])) {
-            ew = chunkZ == east[1] ? (az < east[1] ? N : S) | E : N | S;
-        }
-
-        int ns = 0;
-        if (chunkX == ax) {
-            if (chunkZ < az) {
-                if (north != null)
-                    ns = N | S;
-            } else if (chunkZ == az) {
                 ns = (north != null ? N : 0) | (south != null ? S : 0);
-            } else if (south != null) {
-                if (chunkZ < p0z + last)
-                    ns = N | S;
-                else
-                    ns = south[0] == ax ? N | S : N | (south[0] > ax ? E : W);
+            } else {
+                if (east != null)
+                    ew |= linkMask(chunkX, chunkZ, own, east, true);
+                if (west != null)
+                    ew |= linkMask(chunkX, chunkZ, west, own, true);
+                if (south != null)
+                    ns |= linkMask(chunkX, chunkZ, own, south, false);
+                if (north != null)
+                    ns |= linkMask(chunkX, chunkZ, north, own, false);
             }
-        } else if (south != null && chunkZ == p0z + last && south[0] != ax && between(chunkX, ax, south[0])) {
-            ns = chunkX == south[0] ? (ax < south[0] ? W : E) | S : W | E;
+        } else {
+            // no station here: a line may pass through, between the first station each way along the axis
+            int[] w = firstStation(generator, p, 2), e = firstStation(generator, p, 0);
+            if (w != null && e != null && originOf(e[0]) - originOf(w[0]) <= REACH * PlatMap.Width
+                    && linkOk(generator, w, e, true))
+                ew = linkMask(chunkX, chunkZ, w, e, true);
+            int[] n = firstStation(generator, p, 3), s2 = firstStation(generator, p, 1);
+            if (n != null && s2 != null && originOf(s2[1]) - originOf(n[1]) <= REACH * PlatMap.Width
+                    && linkOk(generator, n, s2, false))
+                ns = linkMask(chunkX, chunkZ, n, s2, false);
         }
+        if (!station && ew == 0 && ns == 0)
+            return Piece.NONE;
 
-        boolean station = chunkX == ax && chunkZ == az;
         // the chunk either side of the station along a line is a platform if it is a plain straight there
-        boolean ewPlatform = !station && chunkZ == az && Math.abs(chunkX - ax) == 1 && ew == (W | E);
-        boolean nsPlatform = !station && chunkX == ax && Math.abs(chunkZ - az) == 1 && ns == (N | S);
+        boolean ewPlatform = own != null && !station && chunkZ == own[1] && Math.abs(chunkX - own[0]) == 1 && ew == (W | E);
+        boolean nsPlatform = own != null && !station && chunkX == own[0] && Math.abs(chunkZ - own[1]) == 1 && ns == (N | S);
         int ewWide = 0, nsWide = 0;
         if (station) {
-            if ((ew & W) != 0 && straightEW(generator, p, ax - 1, az))
+            if ((ew & W) != 0 && (west != null && linkMask(own[0] - 1, own[1], west, own, true) == (W | E)))
                 ewWide |= W;
-            if ((ew & E) != 0 && straightEW(generator, p, ax + 1, az))
+            if ((ew & E) != 0 && linkMask(own[0] + 1, own[1], own, east, true) == (W | E))
                 ewWide |= E;
-            if ((ns & N) != 0 && straightNS(generator, p, ax, az - 1))
+            if ((ns & N) != 0 && (north != null && linkMask(own[0], own[1] - 1, north, own, false) == (N | S)))
                 nsWide |= N;
-            if ((ns & S) != 0 && straightNS(generator, p, ax, az + 1))
+            if ((ns & S) != 0 && linkMask(own[0], own[1] + 1, own, south, false) == (N | S))
                 nsWide |= S;
         }
         return new Piece(ew, ns, station, ewWide, nsWide, ewPlatform, nsPlatform);
@@ -237,19 +332,6 @@ public final class Subway {
     /** {@code v} strictly past {@code from} on the way to {@code to}, up to and including {@code to}. */
     private static boolean between(int v, int from, int to) {
         return to > from ? v > from && v <= to : v < from && v >= to;
-    }
-
-    /** Whether the east-west piece at a station's neighbour is a plain straight (its jog, if any, is further on). */
-    private static boolean straightEW(CityWorldGenerator generator, PlatMap p, int chunkX, int chunkZ) {
-        return chunkX >= p.originX && chunkX < p.originX + PlatMap.Width - 1 // never the jog column
-                || chunkX == p.originX + PlatMap.Width - 1 && stationNear(generator, chunkX + 1, chunkZ) != null
-                        && stationNear(generator, chunkX + 1, chunkZ)[1] == chunkZ;
-    }
-
-    private static boolean straightNS(CityWorldGenerator generator, PlatMap p, int chunkX, int chunkZ) {
-        return chunkZ >= p.originZ && chunkZ < p.originZ + PlatMap.Width - 1
-                || chunkZ == p.originZ + PlatMap.Width - 1 && stationNear(generator, chunkX, chunkZ + 1) != null
-                        && stationNear(generator, chunkX, chunkZ + 1)[0] == chunkX;
     }
 
     // ---- drawing -------------------------------------------------------------------------------
