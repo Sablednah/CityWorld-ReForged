@@ -367,6 +367,15 @@ public abstract class PlatLot {
 	}
 
 	/**
+	 * The table a container at world {@code (x, y, z)} should roll, if this lot knows better than one table for
+	 * the whole chunk — a mall's containers take the table of the shop they stand in. Default: {@link
+	 * #ownLootTable()}. Used only if a table by that id exists.
+	 */
+	public String lootTableAt(int x, int y, int z) {
+		return ownLootTable();
+	}
+
+	/**
 	 * The loot tier of a container at world height {@code y} in this lot — 0 everywhere but in a place that
 	 * worsens with depth (the vault: floor {@code k} is tier {@code k}). {@link ContainerLoot} resolves the
 	 * lot default through it, so a pooled desk on the deepest floor rolls that floor's table too.

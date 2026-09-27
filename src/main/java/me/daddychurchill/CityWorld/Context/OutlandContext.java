@@ -27,6 +27,9 @@ public class OutlandContext extends RuralContext {
 
 	@Override
 	public void populateMap(CityWorldGenerator generator, PlatMap platmap) {
+		// a shopping mall claims the ring-road block first, if this is its region's site (Plats/Urban/Mall)
+		me.daddychurchill.CityWorld.Plats.Urban.Mall.place(generator, platmap);
+
 
 		// now add our stuff
 		Odds platmapOdds = platmap.getOddsGenerator();
