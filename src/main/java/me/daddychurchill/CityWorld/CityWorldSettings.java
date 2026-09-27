@@ -175,6 +175,9 @@ public class CityWorldSettings {
      */
     public boolean includeShops = false;
 
+    /** Shopping malls: rare, big, at the edge of town with car parks round them (MODERN-family only; see Plats/Urban/Mall). */
+    public boolean includeMalls = true;
+
     /**
      * The subway: a station lot in every urban platmap and twin-track tunnels between neighbouring stations,
      * two levels deep (east-west above, north-south below; see {@code Support/Subway}). MODERN-family only —
@@ -478,6 +481,7 @@ public class CityWorldSettings {
         mark.accept("Decayed nature", ta.includeDecayedNature() == tb.includeDecayedNature());
         mark.accept("Overgrowth", on.overgrowth().enabled() == off.overgrowth().enabled());
         mark.accept("Shops", on.shops().enabled() == off.shops().enabled());
+        mark.accept("Malls", on.shops().malls() == off.shops().malls());
         mark.accept("Subways", on.subways().enabled() == off.subways().enabled());
         return locked;
     }
@@ -493,7 +497,7 @@ public class CityWorldSettings {
                 t.oddsOfPristineBuilding(), v, v);
         CityWorldSettingsData.Overgrowth og = d.overgrowth();
         CityWorldSettingsData.Overgrowth og2 = new CityWorldSettingsData.Overgrowth(v, og.intensity(), v);
-        CityWorldSettingsData.Shops sh = new CityWorldSettingsData.Shops(v);
+        CityWorldSettingsData.Shops sh = new CityWorldSettingsData.Shops(v, v);
         CityWorldSettingsData.Subways sw = new CityWorldSettingsData.Subways(v, v);
         return new CityWorldSettingsData(f, t2, d.spawns(), d.treasures(), d.world(), d.radius(), d.naming(),
                 d.mobs(), og2, sh, d.decay(), d.caves(), sw);
@@ -546,6 +550,7 @@ public class CityWorldSettings {
         capVines = og.capVines();
         caves = data.caves();
         includeShops = data.shops().enabled();
+        includeMalls = data.shops().malls();
         includeSubways = data.subways().enabled();
         spawnersInSubways = data.subways().spawners();
         CityWorldSettingsData.Decay dk = data.decay();
@@ -666,7 +671,7 @@ public class CityWorldSettings {
                 ids(mobSewers), ids(mobMine), ids(mobBunker), ids(mobWaterPit), ids(mobLavaPit), mobsAppend);
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
-        CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops);
+        CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops, includeMalls);
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);

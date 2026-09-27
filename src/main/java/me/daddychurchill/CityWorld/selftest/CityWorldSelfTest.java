@@ -206,6 +206,7 @@ public final class CityWorldSelfTest {
             checkStructures(server);
             checkDecorationAndSigns(server);
             checkSubways(server);
+            checkMalls(server);
             checkFarmPlanting(server);
             checkAirships(server);
             checkAirshipHeadings();
@@ -2317,6 +2318,84 @@ public final class CityWorldSelfTest {
                         + " rails (a straight wants 32" + (plan.isApocalypseStyle() ? ", less a ruin's gaps" : "") + ")");
         } else if (stations > 1)
             report.put("subway.tunnel.chunk", "no plain east-west straight found");
+    }
+
+    /**
+     * The malls, plan and world. PLAN: how many malls and car parks the sweep holds (rare by design: one
+     * site per 4x4 platmaps, only at the edge of town). WORLD: every chunk of the first mall generated and
+     * read back — signs (the shop names), glass (fronts, rails, the skylight), water (the fountain), and
+     * every container: how many took a table at all, and how many took a mall shop's own table
+     * ({@code cityworld:chests/mall_*}), which is the per-position loot path proving itself.
+     */
+    private void checkMalls(MinecraftServer server) {
+        ServerLevel level = server.overworld();
+        CityWorldGenerator plan = level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator g
+                ? g.getContext(level) : null;
+        if (plan == null || !plan.isModernStyle() || !plan.getSettings().includeMalls) {
+            report.put("mall.planned", "no (not a modern-family world, or malls off)");
+            return;
+        }
+        java.util.Map<me.daddychurchill.CityWorld.Plats.Urban.Mall, List<int[]>> malls = new java.util.LinkedHashMap<>();
+        int parking = 0;
+        for (int cx = -PLAN_RADIUS; cx <= PLAN_RADIUS; cx++)
+            for (int cz = -PLAN_RADIUS; cz <= PLAN_RADIUS; cz++) {
+                PlatLot lot = lotAt(plan, cx, cz);
+                if (lot instanceof me.daddychurchill.CityWorld.Plats.Urban.MallLot m)
+                    malls.computeIfAbsent(m.getMall(), k -> new ArrayList<>()).add(new int[] { cx, cz });
+                else if (lot instanceof me.daddychurchill.CityWorld.Plats.Urban.ParkingLot)
+                    parking++;
+            }
+        report.put("mall.count", Integer.toString(malls.size()));
+        report.put("mall.sites", me.daddychurchill.CityWorld.Plats.Urban.Mall.sites());
+        report.put("mall.parkingLots", Integer.toString(parking));
+        if (malls.isEmpty()) {
+            fail("no mall planned within " + PLAN_RADIUS + " chunks of spawn on a modern-family world");
+            return;
+        }
+        var first = malls.entrySet().iterator().next();
+        var mall = first.getKey();
+        int signs = 0, glass = 0, water = 0, containers = 0, tabled = 0, mallTabled = 0;
+        java.util.Set<String> names = new java.util.TreeSet<>();
+        for (int[] c : first.getValue()) {
+            LevelChunk chunk = server.submit(() -> level.getChunk(c[0], c[1])).join();
+            for (int x = 0; x < 16; x++)
+                for (int z = 0; z < 16; z++)
+                    for (int y = plan.streetLevel; y <= plan.streetLevel + mall.floors() * 6 + 2; y++) {
+                        BlockState state = chunk.getBlockState(new BlockPos(c[0] * 16 + x, y, c[1] * 16 + z));
+                        if (state.is(net.minecraft.tags.BlockTags.IMPERMEABLE) || state.getBlock() instanceof net.minecraft.world.level.block.IronBarsBlock)
+                            glass++;
+                        else if (state.is(net.minecraft.world.level.block.Blocks.WATER))
+                            water++;
+                    }
+            for (BlockEntity entity : chunk.getBlockEntities().values()) {
+                if (entity instanceof SignBlockEntity sign) {
+                    signs++;
+                    String line = sign.getFrontText().getMessage(1, false).getString();
+                    if (!line.isBlank() && names.size() < 12)
+                        names.add(line);
+                } else if (entity instanceof net.minecraft.world.RandomizableContainer rc) {
+                    containers++;
+                    var table = rc.getLootTable();
+                    if (table != null) {
+                        tabled++;
+                        if (table.identifier().getPath().startsWith("chests/mall_"))
+                            mallTabled++;
+                    }
+                }
+            }
+        }
+        report.put("mall.first", mall.name() + " (" + first.getValue().size() + " chunks, " + mall.floors() + " floors, "
+                + mall.unitCount() + " units)");
+        report.put("mall.first.readback", "signs=" + signs + " glass=" + glass + " water=" + water + " containers=" + containers
+                + " tabled=" + tabled + " mallTabled=" + mallTabled);
+        report.put("mall.first.signs", names.toString());
+        if (signs < 10)
+            fail("the mall " + mall.name() + " has " + signs + " signs (every shop front carries its name)");
+        if (water == 0)
+            fail("the mall " + mall.name() + " has no fountain water");
+        if (containers == 0 || mallTabled == 0)
+            fail("the mall " + mall.name() + ": " + containers + " containers, " + mallTabled
+                    + " with a mall shop's table -- the per-position loot path is not reaching them");
     }
 
     /** Rails, stairs, lights and air in one chunk between two heights — the subway's tell-tales. */
