@@ -469,6 +469,7 @@ public final class ChunkProbe {
             } else if (spec.startsWith("find:")) {
                 // -Dcityworld.probe=find:ParkLot — the nearest chunk (by platmap ring) planned as that lot class.
                 int[] found = findLot(level, spec.substring(5));
+                CityWorldMod.LOGGER.warn("PROBE: mall sites {}", me.daddychurchill.CityWorld.Plats.Urban.Mall.sites());
                 if (found == null)
                     throw new IllegalStateException("no " + spec.substring(5) + " planned within 20 platmaps of the origin");
                 cx = found[0];
