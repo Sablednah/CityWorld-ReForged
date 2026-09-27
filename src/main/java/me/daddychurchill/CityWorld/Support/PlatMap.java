@@ -733,6 +733,29 @@ public class PlatMap {
 	 * scar into the slope) or in an ocean. It restricts wild builds to the flat lowland patches that
 	 * dot the wilderness, which is where a lone landmark belongs anyway.
 	 */
+	/**
+	 * Whether every lot of a run is ground a building can be levelled onto: none of it below sea level, and
+	 * nothing more than {@code maxRise} above the street (the lot's pad fills the dips and the air-out cuts
+	 * the rise). Looser than {@link #isBuildableLots}, which wants ground already flat at street level —
+	 * what a mall's edge-of-town district seldom has in a 4x4 block.
+	 */
+	public boolean isLevellableLots(int x, int z, int width, int length, int maxRise) {
+		for (int a = x; a < x + width; a++)
+			for (int b = z; b < z + length; b++) {
+				if (!inBounds(a, b))
+					return false;
+				int max = lotMax(generator, a, b);
+				if (max <= generator.seaLevel || max > generator.streetLevel + maxRise)
+					return false;
+			}
+		return true;
+	}
+
+	/** Whether every lot of a run is flat, buildable ground at street level (see {@link #footprintBuildable}). */
+	public boolean isBuildableLots(int x, int z, int width, int length) {
+		return footprintBuildable(generator, x, z, width, length);
+	}
+
 	private boolean footprintBuildable(CityWorldGenerator generator, int placeX, int placeZ, int chunksX, int chunksZ) {
 		for (int x = 0; x < chunksX; x++)
 			for (int z = 0; z < chunksZ; z++)
