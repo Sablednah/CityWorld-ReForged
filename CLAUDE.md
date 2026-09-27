@@ -22,7 +22,16 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 | Licence | **GPL-3.0-only** (see below — non-negotiable) |
 | Branch | work happens on `master` (the `neoforge-port` branch was merged into it and deleted) |
 
-## ▶ Where this is, and what's next (2026-09-26, afternoon)
+## ▶ Where this is, and what's next (2026-09-27)
+
+**UNRELEASED, on master + all five branches, self-tested, deployed, awaiting playtest: shopping malls** (PORTING.md
+"▶ Resume here — shopping malls"), on top of the subway's long links and loops (playtested: *"the interlinking is
+good"*) and the vault by depth. Malls: `Plats/Urban/Mall` (plan + placer + drawing), `MallLot`, `ParkingLot`;
+one site per 4×4-platmap region, edge-of-town districts only; per-position loot via `PlatLot.lootTableAt`;
+19 tables from `scripts/gen_mall_tables.py` (re-run per dialect on 1.20.1 and 26.3 after a pick). Find one with
+`-Dcityworld.probe=find:MallLot` or `/cityfind lot mall`.
+
+## ▶ Before that (2026-09-26, afternoon)
 
 **UNRELEASED on master + all five branches, self-tested, awaiting the owner's playtest: the subway and the
 vault-by-depth** (PORTING.md "▶ Resume here — the subway, and the vault by depth" has the design and the
