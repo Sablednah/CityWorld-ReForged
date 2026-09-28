@@ -50,6 +50,10 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   sewer mobs spawn from niches in the walls. MODERN and APOCALYPSE only (forced off, and greyed out in
   Customize, on every other style); a new `subways` settings group (`enabled`, `spawners`); the
   landmark kind `subway` for the announce list; mines keep out of the band. Suggested by a commenter.
+  An interchange with a single line each way no longer ends in two buffer stops, one above the other:
+  the upper line runs on past its platform, round the three chunks beside the station's corner and down
+  the eight blocks between the levels on powered sloped rails, into the lower platform's far end — a
+  train through the station rather than two terminuses.
 - **The vault worsens floor by floor** (the ZARP pack's heads-up). The entry level is as it was; each
   floor down has more lights dead (dark copper bulbs, then smashed sockets), corridor lanterns gone
   from their chains, more and worse wear — cobwebs, moss, crumbled floor, cracked walls, standing water

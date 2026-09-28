@@ -84,7 +84,7 @@ public final class CityWorldAPI {
                     ? me.daddychurchill.CityWorld.Support.Subway.at(context, cx, cz)
                     : me.daddychurchill.CityWorld.Support.Subway.Piece.NONE;
             return Optional.of(new SubwayInfo(new ChunkPos(cx, cz), piece.station(),
-                    piece.station() || piece.ewMask() != 0, piece.nsMask() != 0,
+                    piece.station() || piece.ewMask() != 0 || piece.ramp() != null, piece.nsMask() != 0 || piece.ramp() != null,
                     me.daddychurchill.CityWorld.Support.Subway.ewFloor(context),
                     me.daddychurchill.CityWorld.Support.Subway.nsFloor(context),
                     me.daddychurchill.CityWorld.Support.Subway.HEIGHT));
