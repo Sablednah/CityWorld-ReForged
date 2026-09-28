@@ -210,6 +210,8 @@ public final class CityWorldSelfTest {
             checkFarmPlanting(server);
             checkAirships(server);
             checkAirshipHeadings();
+            checkVaultRegions();
+            checkReservedSite(server); // last: it changes the plan (far from everything else checked)
         } catch (Throwable t) {
             fail("harness threw: " + t);
             CityWorldMod.LOGGER.error("SELFTEST: harness threw", t);
@@ -2129,6 +2131,103 @@ public final class CityWorldSelfTest {
      * neighbours recompute their connections, which would quietly repair the very mistake being looked for.
      * Worldgen does no such recomputing, so a mistake there would stay.
      */
+    /**
+     * {@code CityWorldAPI.findVaultEntrances} skips every platmap outside a vault region without planning it (the
+     * 90 s -> 15 s difference). That is only sound while every planned vault lies in one, so plan an APOCALYPSE
+     * disc in full and check it — a vault outside a region would be a vault the API can never find.
+     */
+    private void checkVaultRegions() {
+        CityWorldGenerator plan = new CityWorldGenerator(PLAN_SEED, 256, 63, WorldStyle.APOCALYPSE, -64, 320,
+                java.util.Optional.empty(), me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.DEFAULT);
+        int vaults = 0, entrances = 0, outside = 0;
+        for (int px = -6; px <= 5; px++)
+            for (int pz = -6; pz <= 5; pz++) {
+                PlatMap pm = plan.getPlatMap(px * PlatMap.Width, pz * PlatMap.Width);
+                boolean region = me.daddychurchill.CityWorld.Context.NatureContext.isVaultRegion(plan, pm.originX, pm.originZ);
+                for (int x = 0; x < PlatMap.Width; x++)
+                    for (int z = 0; z < PlatMap.Width; z++)
+                        if (pm.getLot(x, z) instanceof me.daddychurchill.CityWorld.Plats.Nature.VaultLot vault) {
+                            vaults++;
+                            if (vault.isEntrance())
+                                entrances++;
+                            if (!region)
+                                outside++;
+                        }
+            }
+        report.put("vault.lots", Integer.toString(vaults));
+        report.put("vault.entrances", Integer.toString(entrances));
+        if (vaults == 0 || entrances == 0)
+            fail("APOCALYPSE planned no vault (or no vault entrance) over 144 platmaps, so the region check proves nothing");
+        if (outside > 0)
+            fail(outside + " vault lots lie outside a vault region — CityWorldAPI.findVaultEntrances would never find them");
+    }
+
+    /**
+     * {@code CityWorldAPI.reserveSite}: a site far from everything else checked plans as nature, reserves its blend
+     * ring, is saved with the world, and generates as flat ground at the height asked — the top solid block at
+     * {@code y}. Plus the find API's contract: nearest first, matching like {@code /cityfind lot}.
+     */
+    private void checkReservedSite(MinecraftServer server) {
+        ServerLevel level = server.overworld();
+        var found = me.daddychurchill.CityWorld.api.CityWorldAPI.findLots(level, BlockPos.ZERO, "road", 2000, 5);
+        double last = -1;
+        boolean ordered = true, matching = true;
+        for (var info : found) {
+            double d = Math.hypot(info.chunk().getMiddleBlockX(), info.chunk().getMiddleBlockZ());
+            ordered &= d >= last;
+            last = d;
+            matching &= info.lotClass().toLowerCase(java.util.Locale.ROOT).contains("road");
+        }
+        report.put("api.findLots.road", Integer.toString(found.size()));
+        if (found.size() != 5 || !ordered || !matching)
+            fail("CityWorldAPI.findLots(road, 5) returned " + found.size() + " lots, ordered " + ordered + ", matching "
+                    + matching);
+
+        ChunkPos centre = new ChunkPos(3000, 3000);
+        int y = 90;
+        var result = me.daddychurchill.CityWorld.api.CityWorldAPI.reserveSite(level, centre, 1, y);
+        report.put("api.reserveSite", result.toString());
+        if (result != me.daddychurchill.CityWorld.api.SiteResult.RESERVED) {
+            fail("CityWorldAPI.reserveSite at " + centre + " answered " + result);
+            return;
+        }
+        CityWorldGenerator plan = ((CityWorldChunkGenerator) level.getChunkSource().getGenerator()).getContext(level);
+        if (!plan.isStructureReserved(centre.x() + 3, centre.z()) || plan.isSiteCore(centre.x() + 2, centre.z())
+                || !plan.isSiteCore(centre.x() + 1, centre.z() + 1))
+            fail("a reserved site's core/blend ring is not where it should be");
+        if (!Files.isRegularFile(server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
+                .resolve("data").resolve("cityworld_sites.json")))
+            fail("a reserved site was not saved with the world");
+        int flat = 0, total = 0, cluttered = 0;
+        Map<Integer, Integer> off = new TreeMap<>();
+        for (int cx = centre.x() - 1; cx <= centre.x() + 1; cx++)
+            for (int cz = centre.z() - 1; cz <= centre.z() + 1; cz++) {
+                PlatLot lot = plan.getPlatMap(cx, cz).getMapLot(cx, cz);
+                if (lot.style != PlatLot.LotStyle.NATURE)
+                    fail("reserved site chunk " + cx + "," + cz + " planned as " + lot.getClass().getSimpleName());
+                final int fx = cx, fz = cz;
+                LevelChunk chunk = server.submit(() -> level.getChunk(fx, fz)).join();
+                for (int x = 0; x < 16; x++)
+                    for (int z = 0; z < 16; z++) {
+                        int top = chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+                        int surface = chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, x, z) - 1;
+                        total++;
+                        off.merge(top - y, 1, Integer::sum);
+                        if (top == y)
+                            flat++;
+                        if (surface > top + 1)
+                            cluttered++;
+                    }
+            }
+        report.put("api.site.flat", flat + "/" + total);
+        report.put("api.site.offsets", off.toString());
+        report.put("api.site.cluttered", Integer.toString(cluttered));
+        if (flat < total * 95 / 100)
+            fail("a reserved site generated only " + flat + " of " + total + " columns at its height (top - y: " + off + ")");
+        if (cluttered > total / 50)
+            fail("a reserved site has " + cluttered + " columns with something taller than a plant on them");
+    }
+
     private void checkAirshipHeadings() {
         net.minecraft.core.Direction[] sides = { net.minecraft.core.Direction.NORTH, net.minecraft.core.Direction.SOUTH,
                 net.minecraft.core.Direction.EAST, net.minecraft.core.Direction.WEST };

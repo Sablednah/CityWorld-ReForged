@@ -199,9 +199,15 @@ public class NatureContext extends UncivilizedContext {
 	/** Whether this platmap sits in a rare, seed-deterministic "vault region". Decided per coarse region so a
 	 *  whole mountain mass becomes one sprawling vault instead of scattered 1-2 chunk stubs. */
 	private static boolean isVaultRegion(CityWorldGenerator generator, PlatMap platmap) {
+		return isVaultRegion(generator, platmap.originX, platmap.originZ);
+	}
+
+	/** The same answer from a platmap's origin chunk alone, without planning it: a platmap outside a vault
+	 *  region can never hold a vault, which is what lets {@code CityWorldAPI.findVaultEntrances} skip it. */
+	public static boolean isVaultRegion(CityWorldGenerator generator, int originX, int originZ) {
 		int span = PlatMap.Width * VAULT_REGION;
-		long rx = Math.floorDiv(platmap.originX, span);
-		long rz = Math.floorDiv(platmap.originZ, span);
+		long rx = Math.floorDiv(originX, span);
+		long rz = Math.floorDiv(originZ, span);
 		long h = generator.getWorldSeed() ^ (rx * 0x2545F4914F6CDD1DL) ^ (rz * 0x9E3779B97F4A7C15L);
 		h ^= h >>> 29;
 		h *= 0xBF58476D1CE4E5B9L;
