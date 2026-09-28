@@ -11,33 +11,241 @@
         {
           "type": "minecraft:item",
           "name": "minecraft:leather_helmet",
-          "weight": 6,
+          "weight": 2,
           "modifier": {
-            "type": "enchant_randomly"
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 3556687,
+              "minecraft:trim": {
+                "material": "minecraft:gold",
+                "pattern": "minecraft:dune"
+              }
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:leather_helmet",
+          "weight": 2,
+          "modifier": {
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 13148872,
+              "minecraft:trim": {
+                "material": "minecraft:copper",
+                "pattern": "minecraft:wayfinder"
+              }
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:leather_helmet",
+          "weight": 2,
+          "modifier": {
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 16744272,
+              "minecraft:trim": {
+                "material": "minecraft:redstone",
+                "pattern": "minecraft:sentry"
+              }
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:leather_helmet",
+          "weight": 2,
+          "modifier": {
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 16744272,
+              "minecraft:trim": {
+                "material": "minecraft:quartz",
+                "pattern": "minecraft:dune"
+              }
+            }
           }
         },
         {
           "type": "minecraft:item",
           "name": "minecraft:leather_chestplate",
-          "weight": 6,
+          "weight": 2,
           "modifier": {
-            "type": "enchant_randomly"
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 16117980,
+              "minecraft:trim": {
+                "material": "minecraft:amethyst",
+                "pattern": "minecraft:silence"
+              }
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:leather_chestplate",
+          "weight": 2,
+          "modifier": {
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 2792847,
+              "minecraft:trim": {
+                "material": "minecraft:redstone",
+                "pattern": "minecraft:host"
+              }
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:leather_chestplate",
+          "weight": 2,
+          "modifier": {
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 16033463,
+              "minecraft:trim": {
+                "material": "minecraft:emerald",
+                "pattern": "minecraft:silence"
+              }
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:leather_chestplate",
+          "weight": 2,
+          "modifier": {
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 3556687,
+              "minecraft:trim": {
+                "material": "minecraft:amethyst",
+                "pattern": "minecraft:shaper"
+              }
+            }
           }
         },
         {
           "type": "minecraft:item",
           "name": "minecraft:leather_leggings",
-          "weight": 6,
+          "weight": 2,
           "modifier": {
-            "type": "enchant_randomly"
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 16117980,
+              "minecraft:trim": {
+                "material": "minecraft:redstone",
+                "pattern": "minecraft:snout"
+              }
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:leather_leggings",
+          "weight": 2,
+          "modifier": {
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 16744272,
+              "minecraft:trim": {
+                "material": "minecraft:diamond",
+                "pattern": "minecraft:sentry"
+              }
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:leather_leggings",
+          "weight": 2,
+          "modifier": {
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 10019008,
+              "minecraft:trim": {
+                "material": "minecraft:emerald",
+                "pattern": "minecraft:host"
+              }
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:leather_leggings",
+          "weight": 2,
+          "modifier": {
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 13148872,
+              "minecraft:trim": {
+                "material": "minecraft:diamond",
+                "pattern": "minecraft:tide"
+              }
+            }
           }
         },
         {
           "type": "minecraft:item",
           "name": "minecraft:leather_boots",
-          "weight": 6,
+          "weight": 2,
           "modifier": {
-            "type": "enchant_randomly"
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 14789889,
+              "minecraft:trim": {
+                "material": "minecraft:lapis",
+                "pattern": "minecraft:coast"
+              }
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:leather_boots",
+          "weight": 2,
+          "modifier": {
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 16033463,
+              "minecraft:trim": {
+                "material": "minecraft:iron",
+                "pattern": "minecraft:dune"
+              }
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:leather_boots",
+          "weight": 2,
+          "modifier": {
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 13148872,
+              "minecraft:trim": {
+                "material": "minecraft:redstone",
+                "pattern": "minecraft:shaper"
+              }
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:leather_boots",
+          "weight": 2,
+          "modifier": {
+            "type": "set_components",
+            "components": {
+              "minecraft:dyed_color": 16033463,
+              "minecraft:trim": {
+                "material": "minecraft:redstone",
+                "pattern": "minecraft:wild"
+              }
+            }
           }
         },
         {
