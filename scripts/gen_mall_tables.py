@@ -4,17 +4,34 @@
     scripts/gen_mall_tables.py <loot dir> <reference key> <dialect>
 
 <loot dir> is data/cityworld/loot_table/chests (loot_tables/ on 1.20.1); <reference key> is the
-loot_table entry's id field: "value" on 1.21+, "name" on 1.20.1; <dialect> is "legacy" (1.20.1 to 26.2)
-or "26.3" (typed rolls, a single "modifier"). Writes mall_<kind>.json (overwriting) and an empty
-mall_<kind>_extra.json a pack can replace (never overwritten). Only items that exist from 1.20.1 on.
+loot_table entry's id field: "value" on 1.21+, "name" on 1.20.1; <dialect> is how that line writes a table:
+  1.20    1.20.1           functions; dye and trim as NBT through set_nbt
+  1.21.1  1.21.1           functions; set_components, dyed_color as {"rgb": n}
+  1.21.5  1.21.11 26.1 26.2 functions; set_components, dyed_color as a plain int
+  26.3    26.3             typed rolls and a single "modifier" per entry
+("legacy" is accepted as 1.21.5.) Writes mall_<kind>.json (overwriting) and an empty mall_<kind>_extra.json a
+pack can replace (never overwritten). Only items that exist from 1.20.1 on. The fashion shop's leather comes
+dyed and trimmed ("the latest fashions", owner 2026-09-28); the jeweller has a rare extra roll for diamonds.
 """
 import json, os, sys
 d, key, dialect = sys.argv[1], sys.argv[2], sys.argv[3]
+if dialect == 'legacy':
+    dialect = '1.21.5'
+assert dialect in ('1.20', '1.21.1', '1.21.5', '26.3'), dialect
 modern = dialect == '26.3'
 
-def item(name, weight, lo=None, hi=None, enchant=False):
+def item(name, weight, lo=None, hi=None, enchant=False, dress=None):
     e = {'type': 'minecraft:item' if modern else 'item', 'name': 'minecraft:' + name, 'weight': weight}
     mods = []
+    if dress is not None:  # (rgb, trim material, trim pattern)
+        rgb, material, pattern = dress
+        if dialect == '1.20':
+            mods.append({'function': 'set_nbt', 'tag': '{Trim:{material:"minecraft:%s",pattern:"minecraft:%s"},display:{color:%d}}'
+                         % (material, pattern, rgb)})
+        else:
+            comps = {'minecraft:dyed_color': {'rgb': rgb} if dialect == '1.21.1' else rgb,
+                     'minecraft:trim': {'material': 'minecraft:' + material, 'pattern': 'minecraft:' + pattern}}
+            mods.append({'type' if modern else 'function': 'set_components', 'components': comps})
     if lo is not None:
         count = {'type': 'minecraft:uniform', 'min': lo, 'max': hi} if modern else {'min': lo, 'max': hi}
         mods.append({'type' if modern else 'function': 'set_count', 'count': count})
@@ -34,6 +51,16 @@ def rolls(lo, hi):
     return {'type': 'minecraft:uniform', 'min': lo, 'max': hi} if modern else {'min': lo, 'max': hi}
 
 I = item
+import random
+PATTERNS = ['coast', 'dune', 'eye', 'host', 'raiser', 'rib', 'sentry', 'shaper', 'silence', 'snout', 'spire', 'tide', 'vex',
+            'ward', 'wayfinder', 'wild']
+MATERIALS = ['amethyst', 'copper', 'diamond', 'emerald', 'gold', 'iron', 'lapis', 'netherite', 'quartz', 'redstone']
+COLOURS = [0xF4A6B7, 0x87CEEB, 0x98E0C0, 0xC8A2C8, 0xE1AD01, 0xFF7F50, 0x2A9D8F, 0xF5F0DC, 0x36454F, 0x800020]
+_r = random.Random(20260928)  # fixed, so every line ships the same season
+def fashions(pieces, per, weight):
+    return [I(p, weight, dress=(_r.choice(COLOURS), _r.choice(MATERIALS), _r.choice(PATTERNS)))
+            for p in pieces for _ in range(per)]
+LEATHER = ['leather_helmet', 'leather_chestplate', 'leather_leggings', 'leather_boots']
 KINDS = {
     'music': [I('music_disc_13', 3), I('music_disc_cat', 3), I('music_disc_blocks', 3), I('music_disc_chirp', 3),
               I('music_disc_far', 3), I('music_disc_mall', 4), I('music_disc_mellohi', 3), I('music_disc_stal', 3),
@@ -43,8 +70,7 @@ KINDS = {
                 I('red_tulip', 5, 1, 4), I('oxeye_daisy', 5, 1, 4), I('azure_bluet', 5, 1, 4), I('lily_of_the_valley', 4, 1, 3),
                 I('sunflower', 3, 1, 2), I('rose_bush', 3, 1, 2), I('peony', 3, 1, 2), I('flower_pot', 6, 1, 4),
                 I('bone_meal', 8, 2, 8), I('wheat_seeds', 4, 2, 6), I('azalea', 2), I('flowering_azalea', 2), I('cherry_sapling', 1)],
-    'fashion': [I('leather_helmet', 6, enchant=True), I('leather_chestplate', 6, enchant=True), I('leather_leggings', 6, enchant=True),
-                I('leather_boots', 6, enchant=True), I('white_wool', 6, 1, 4), I('pink_wool', 4, 1, 4), I('black_wool', 4, 1, 4),
+    'fashion': fashions(LEATHER, 4, 2) + [I('white_wool', 6, 1, 4), I('pink_wool', 4, 1, 4), I('black_wool', 4, 1, 4),
                 I('string', 6, 2, 6), I('pink_dye', 3, 1, 3), I('light_blue_dye', 3, 1, 3), I('golden_helmet', 1)],
     'hardware': [I('iron_pickaxe', 3), I('iron_shovel', 3), I('iron_axe', 3), I('stone_pickaxe', 5), I('shears', 4),
                  I('flint_and_steel', 3), I('bucket', 4), I('iron_nugget', 8, 3, 9), I('iron_ingot', 4, 1, 3),
@@ -82,7 +108,7 @@ KINDS = {
     'art': [I('painting', 8, 1, 2), I('item_frame', 6, 1, 3), I('red_dye', 5, 1, 4), I('blue_dye', 5, 1, 4), I('yellow_dye', 5, 1, 4),
             I('green_dye', 5, 1, 4), I('white_dye', 5, 1, 4), I('black_dye', 5, 1, 4), I('paper', 5, 2, 6), I('ink_sac', 4, 1, 3),
             I('brush', 2)],
-    'department': [I('leather_chestplate', 4, enchant=True), I('white_wool', 5, 1, 4), I('book', 5, 1, 3), I('clock', 3),
+    'department': fashions(['leather_chestplate'], 2, 2) + [ I('white_wool', 5, 1, 4), I('book', 5, 1, 3), I('clock', 3),
                    I('compass', 3), I('bread', 5, 1, 3), I('candle', 5, 1, 3), I('lantern', 3), I('painting', 3),
                    I('gold_nugget', 5, 2, 6), I('redstone', 4, 2, 6), I('cookie', 5, 2, 6), I('white_bed', 1)],
     'food': [I('bread', 8, 1, 3), I('cookie', 10, 2, 8), I('baked_potato', 8, 1, 3), I('cooked_chicken', 6, 1, 2),
@@ -93,6 +119,8 @@ for kind, entries in KINDS.items():
     entries = [e for e in entries if e['weight'] > 0]
     table = {'type': 'minecraft:chest', 'pools': [{'rolls': rolls(2, 5), 'entries': entries + [empty(10),
              {'type': 'minecraft:loot_table', key: 'cityworld:chests/mall_%s_extra' % kind, 'weight': 15}]}]}
+    if kind == 'jeweller':  # the rare one: a diamond or two in about one case in ten
+        table['pools'].append({'rolls': 1, 'entries': [I('diamond', 10, 1, 2), empty(90)]})
     p = os.path.join(d, 'mall_%s.json' % kind)
     json.dump(table, open(p, 'w'), indent=2); open(p, 'a').write('\n')
     x = os.path.join(d, 'mall_%s_extra.json' % kind)
