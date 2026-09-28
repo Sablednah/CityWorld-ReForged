@@ -105,8 +105,8 @@ public class SubwayStationLot extends BuildingLot {
             if (piece.nsMask() != 0) { // the interchange: on down to the north-south hall
                 Subway.zigzag(chunk, 11, 1, false, true, nsY + 2, ewY + 2, nsCeiling, Subway.Door.ALONG, Subway.Door.ACROSS_LOW);
                 Subway.zigzag(chunk, 1, 11, false, false, nsY + 2, ewY + 2, nsCeiling, Subway.Door.ALONG, Subway.Door.ACROSS_HIGH);
-                railings(chunk, ewY + 2, 10, 15, 0, 5, 10, 3, 4);
-                railings(chunk, ewY + 2, 0, 5, 10, 15, 5, 11, 12);
+                interchangeRails(chunk, ewY + 1, 11, 1, true, 0);
+                interchangeRails(chunk, ewY + 1, 1, 11, false, 2);
                 signs(chunk, ewY + 3, "INTERCHANGE", "north - south", "line below");
             }
         }
@@ -208,18 +208,30 @@ public class SubwayStationLot extends BuildingLot {
         chunk.setBlock(12, stand + 2, 4, Material.LANTERN);
     }
 
-    /** Iron railings round a shaft's rim at {@code y}: the border of the ring {@code x1..x2, z1..z2}, on the
-     *  cells that are open there and solid below (a hall wall is neither), skipping the stair head's two cells. */
-    private static void railings(RealBlocks chunk, int y, int x1, int x2, int z1, int z2, int gx, int gz1, int gz2) {
-        for (int x = x1; x <= x2; x++)
-            for (int z = z1; z <= z2; z++) {
-                if (x != x1 && x != x2 && z != z1 && z != z2)
-                    continue; // the border only
-                if (x < 0 || x > 15 || z < 0 || z > 15 || x == gx && (z == gz1 || z == gz2))
-                    continue;
-                if (chunk.isEmpty(x, y, z) && !chunk.isEmpty(x, y - 1, z))
-                    chunk.setBlock(x, y, z, Material.IRON_BARS);
-            }
+    /**
+     * The top of an interchange stair on the upper platform, as the owner fixed one by hand in his 1.20.1
+     * save (2026-09-28). The shaft fills the platform's whole width, so its end wall on the track side is
+     * the platform edge again (yellow, no railing), the one way past it; you leave the stair straight
+     * onto that edge from the last flight's lane. Bars stand along the landing lane's side, along the
+     * other side except beside the exit, and on the landing lane's cell at the exit end (the hole behind
+     * it). {@code x0, z0, entryPositive, laneA} are the shaft's, as passed to {@link Subway#zigzag}
+     * (flights along z, four long); {@code floorY} is the platform's floor block.
+     */
+    private static void interchangeRails(RealBlocks chunk, int floorY, int x0, int z0, boolean entryPositive, int laneA) {
+        int y = floorY + 1, aIn = entryPositive ? 3 : 0, edge = z0 + (entryPositive ? 4 : -1);
+        for (int c = -1; c <= 4; c++) {
+            int x = x0 + c;
+            if (x >= 0 && x <= 15 && edge >= 0 && edge <= 15 && chunk.isEmpty(x, y, edge))
+                chunk.setBlock(x, floorY, edge, Subway.EDGE);
+        }
+        int sideA = laneA == 0 ? -1 : 4, sideB = laneA == 0 ? 4 : -1;
+        for (int a = 0; a < 4; a++) {
+            bar(chunk, x0 + sideA, y, z0 + a);
+            if (a != aIn)
+                bar(chunk, x0 + sideB, y, z0 + a);
+        }
+        for (int c = laneA; c <= laneA + 1; c++)
+            bar(chunk, x0 + c, y, z0 + aIn);
     }
 
     /**
