@@ -34,7 +34,12 @@ public final class WallDecor {
 
     /** An item frame showing {@code item}, on the wall toward {@code wallSide}. */
     public static boolean frame(RealBlocks chunk, int x, int y, int z, BlockFace wallSide, Item item) {
-        if (item == null || !backed(chunk, x, y, z, wallSide))
+        return item != null && frame(chunk, x, y, z, wallSide, new ItemStack(item));
+    }
+
+    /** As above with a prepared stack (a dyed, trimmed piece from {@link Fashion}). */
+    public static boolean frame(RealBlocks chunk, int x, int y, int z, BlockFace wallSide, ItemStack stack) {
+        if (stack == null || stack.isEmpty() || !backed(chunk, x, y, z, wallSide))
             return false;
         ServerLevelAccessor server = chunk.getServerLevel();
         Direction out = wallSide.getOppositeFace().toDirection();
@@ -42,7 +47,7 @@ public final class WallDecor {
             return false;
         ItemFrame frame = new ItemFrame(server.getLevel(), new BlockPos(chunk.getOriginX() + x, y, chunk.getOriginZ() + z), out);
         frame.setSilent(true); // setItem would otherwise play a sound on the real level mid-worldgen
-        frame.setItem(new ItemStack(item), false);
+        frame.setItem(stack, false);
         server.addFreshEntityWithPassengers(frame);
         return true;
     }
