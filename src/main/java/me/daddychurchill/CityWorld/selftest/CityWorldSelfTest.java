@@ -2197,11 +2197,10 @@ public final class CityWorldSelfTest {
         return "";
     }
 
-    /** The lot the generator itself would use for this chunk, or null if it cannot be resolved. */
     /**
      * The subway, both halves. The PLAN: every station within the plan radius, and every tunnel piece
      * consistent with its neighbours — a side open on one chunk must be open on the chunk it faces, on
-     * the same level, or a cart would run into rock (the piece table is a pure function of two stations,
+     * the same level (a loop chunk joins the levels, so any level answers it), or a cart would run into rock (the piece table is a pure function of two stations,
      * so a mismatch is an arithmetic slip in {@code Subway.at}). The WORLD: a station chunk and a plain
      * tunnel chunk are generated and read back — rails on the bed at the level the plan says, stairs
      * climbing the shafts, lights in the ceiling — because a hall that draws nothing looks, from the
@@ -2281,7 +2280,7 @@ public final class CityWorldSelfTest {
         report.put("subway.interchanges", Integer.toString(interchanges));
         report.put("subway.tunnelPieces", tunnels + " (" + bends + " bends, " + platforms + " platform chunks)");
         report.put("subway.rampPieces", ramps + (firstRamp == null ? "" : " (first at " + firstRamp[0] + "," + firstRamp[1] + ")"));
-        // the network as a picture: one character per chunk (S station, # east-west, | north-south, + both)
+        // the network as a picture: one character per chunk (S station, R loop, # east-west, | north-south, + both)
         try {
             StringBuilder map = new StringBuilder();
             for (int cz = -radius; cz <= radius; cz++) {
@@ -2323,7 +2322,7 @@ public final class CityWorldSelfTest {
                         + " rails on its bed (want a track pair)");
             if (counts.getOrDefault("stairs", 0) < 24)
                 fail("subway station at " + c[0] + "," + c[1] + " has " + counts.getOrDefault("stairs", 0)
-                        + " stair blocks (two switchbacks of six pairs want 48)");
+                        + " stair blocks (two switchbacks of three four-step pairs want 48)");
             if (counts.getOrDefault("lights", 0) == 0)
                 fail("subway station at " + c[0] + "," + c[1] + " is unlit");
         }
@@ -2467,6 +2466,7 @@ public final class CityWorldSelfTest {
         return counts;
     }
 
+    /** The lot the generator itself would use for this chunk, or null if it cannot be resolved. */
     private static PlatLot lotAt(CityWorldGenerator gen, int chunkX, int chunkZ) {
         try {
             return gen.getPlatMap(chunkX, chunkZ).getMapLot(chunkX, chunkZ);

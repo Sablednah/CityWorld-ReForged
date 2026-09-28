@@ -19,28 +19,31 @@ import net.minecraft.world.level.block.Blocks;
  *
  * <p><b>Where.</b> The world is cut into regions of 4x4 platmaps; each region nominates ONE platmap
  * ({@link #nominated}), and that platmap builds a mall only if it is an edge-of-town district
- * (neighbourhood, farm or outland — the caller's context), the style is modern-family, and the central
- * 4x4 block its ring roads enclose (plat 3..6 both ways) is empty, flat and unreserved. So malls are
- * spread out without any platmap ever looking at another (planning inside planning is the stall's cousin).
- * The building takes 4x3 or 4x4 of that block; the rest of the block and every empty lot across the ring
- * road from it becomes a {@link ParkingLot}, so every car park fronts a road.
+ * (neighbourhood, farm or outland — the caller's context), the style is modern-family, and a shape fits
+ * ({@link #place}): a bar, L, T, U, Z or cross of three-lot-wide wings, up to 8x8, inside plat 1..8, on
+ * lots that are wild or road (never a building, a roundabout or a structure reservation) and levellable
+ * to within {@code MAX_RISE} of the street, with at least two roads reaching it. So malls are spread out
+ * without any platmap ever looking at another (planning inside planning is the stall's cousin). Car
+ * parks ({@link ParkingLot}) fill wild, levellable lots in two rings round the building, kept only where
+ * they join a road.
  *
  * <p><b>What.</b> One {@code Mall} object is the whole plan, built once in the placer and shared by every
- * lot it claims. Everything is laid out in the mall's own coordinates — {@code a} along the long axis,
+ * lot it claims. Each {@link Wing} is laid out in its own coordinates — {@code a} along its long axis,
  * {@code c} across it — and drawn through a {@link Canvas} that maps to world columns and clips to the
- * chunk being decorated, so each {@link MallLot} simply runs the whole drawing and keeps its own slice.
- * The layout, long axis first:
+ * wing and to the chunk being decorated, so each {@link MallLot} simply runs the whole drawing and keeps
+ * its own slice. A wing, long axis first:
  * <pre>
  *   apron | anchor store | shop units (both sides) round the atrium | anchor store | apron
  * </pre>
- * and across: {@code apron | shop units | walkway | ATRIUM | walkway | shop units | apron}. The atrium runs
- * the length of the middle, open to a glass roof through every floor; the walkways ring it and become
- * balconies upstairs, railed in glass. A mall entrance corridor cuts through the ground-floor units on
- * both long sides. Two glass lifts stand at opposite atrium corners, escalators climb beside the
- * balconies, and the atrium floor carries a fountain, planters with trees, benches, sculptures and food
- * kiosks. Each unit has a {@link Kind}, a name on its fascia, its kind's fittings, and a loot table
- * {@code cityworld:chests/mall_<kind>} (with an {@code _extra} hook) that the container pass assigns by
- * position ({@link MallLot#lootTableAt}).
+ * and across: {@code apron | shop units | walkway | ATRIUM | walkway | shop units | apron}, where an end
+ * that opens into another wing has no anchor or apron, and a flank joined to an arm has no apron and a
+ * passage through its shop rows on every floor instead. The atrium runs the length of the middle, open to
+ * a glass roof through every floor; the walkways ring it and become balconies upstairs, railed in glass.
+ * Entrance corridors cut through the ground-floor units on the free flanks. Glass lifts, escalators and a
+ * fountain come as the atrium is long enough for them; planters, benches, sculptures and food kiosks fill
+ * the rest of its floor. Each unit has a {@link Kind}, a name on its fascia, its kind's fittings, and a
+ * loot table {@code cityworld:chests/mall_<kind>} (with an {@code _extra} hook) that the container pass
+ * assigns by position ({@link MallLot#lootTableAt}).
  */
 public final class Mall {
 
@@ -251,7 +254,7 @@ public final class Mall {
         return street + floors * H;
     }
 
-    /** The loot table for a container at world (x, y, z): the wing it stands in decides; null for none. */
+    /** The loot table for a container at world (x, y, z): the wing it stands in decides; null outside every wing. */
     String lootTableAt(int wx, int y, int wz) {
         for (Wing w : wings)
             if (w.contains(wx, wz))
@@ -746,7 +749,7 @@ public final class Mall {
             return chunkZ0 * 16 + (alongX ? c : a);
         }
 
-        /** Mall coordinates of a world column: {a, c}. */
+        /** This wing's coordinates of a world column: {a, c}. */
         int[] local(int wx, int wz) {
             int rx = wx - chunkX0 * 16, rz = wz - chunkZ0 * 16;
             return alongX ? new int[] { rx, rz } : new int[] { rz, rx };
@@ -785,7 +788,7 @@ public final class Mall {
             return Math.max(0, Math.min(floors - 1, Math.floorDiv(y - street, H)));
         }
 
-        /** The loot table for a container at world (x, y, z), by the unit or anchor it stands in; null for none. */
+        /** The loot table for a container at world (x, y, z), by the unit or anchor it stands in, else the food kiosks'. */
         String lootTableAt(int wx, int y, int wz) {
             int[] ac = local(wx, wz);
             int a = ac[0], c = ac[1], f = floorOf(y);
@@ -801,7 +804,7 @@ public final class Mall {
 
         // ---- drawing -------------------------------------------------------------------------------
 
-        /** Draws in mall coordinates onto one chunk, clipping everything outside it. */
+        /** Draws in this wing's coordinates onto one chunk, clipping everything outside the wing and the chunk. */
         final class Canvas {
             final RealBlocks chunk;
             final int ox, oz;
@@ -1104,7 +1107,8 @@ public final class Mall {
                 k.fill(a, a + 1, top + 1, top + 2, C - eC1 - 6, C - eC1 - 5, Material.IRON_BLOCK);
         }
 
-        /** One floor: its slab (upper floors leave the atrium open), the balcony rail, the ceiling lights. */
+        /** One floor: its slab (upper floors leave the atrium open), the balcony rail, and the ground floor's
+         *  entrance corridors. The ceiling lights are {@code lighting}'s, drawn last. */
         private void floor(CityWorldGenerator generator, Canvas k, int f) {
             int y = floorY(f);
             for (int a = aIn0(); a <= aIn1(); a++)
@@ -1425,7 +1429,7 @@ public final class Mall {
                 }
                 for (int c = cF1 + 3; c <= cF2 - 3; c += 5)
                     k.sign(front + in, c, stand + 3, toWalk, lines); // on the walkway side of the fascia
-                // floor and lights
+                // floor
                 for (int a = aMin; a <= aMax; a++)
                     for (int c = eC0 + 1; c <= C - 2 - eC1; c++) {
                         k.set(a, c, y, kind == Kind.DEPARTMENT ? ((a + c) % 2 == 0 ? Material.POLISHED_DIORITE : Material.WHITE_CONCRETE)
@@ -1582,7 +1586,7 @@ public final class Mall {
         };
     }
 
-    /** Fashion: a clothes rail — fence posts with a carpet "garment" row, or a wool stack. */
+    /** Fashion: a clothes rail — two fence posts, each hung with a wool "garment". */
     private static void mannequin(Wing m, Wing.Canvas k, int a, int c, int stand, Odds odds) {
         k.set(a, c, stand, Material.SPRUCE_FENCE);
         k.set(a, c, stand + 1, odds.flipCoin() ? Material.PINK_WOOL : Material.LIGHT_BLUE_WOOL);

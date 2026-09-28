@@ -47,7 +47,8 @@ public class PlatMap {
 	/**
 	 * Where this platmap's subway station is, as plat-local {x, z}, or null for none. Set by
 	 * {@code Support/Subway.placeStation} during {@code UrbanContext.populateMap}; every tunnel piece in
-	 * this platmap and its neighbours is derived from it (see {@code Subway.at}).
+	 * this platmap, and in platmaps up to {@code Subway.REACH} away along its row and column, is derived
+	 * from it (see {@code Subway.at}).
 	 */
 	public int[] subwayStation;
 
@@ -727,17 +728,10 @@ public class PlatMap {
 	}
 
 	/**
-	 * True only when every lot of the footprint is flat, buildable ground at street level — the same
-	 * test the city uses to decide where roads and buildings can sit. Schematics place at street level,
-	 * so without this a wild build lands on a mountainside (its foundation pad carves a 40-block dirt
-	 * scar into the slope) or in an ocean. It restricts wild builds to the flat lowland patches that
-	 * dot the wilderness, which is where a lone landmark belongs anyway.
-	 */
-	/**
 	 * Whether every lot of a run is ground a building can be levelled onto: none of it below sea level, and
 	 * nothing more than {@code maxRise} above the street (the lot's pad fills the dips and the air-out cuts
 	 * the rise). Looser than {@link #isBuildableLots}, which wants ground already flat at street level —
-	 * what a mall's edge-of-town district seldom has in a 4x4 block.
+	 * what a mall's edge-of-town district seldom has across a mall's footprint.
 	 */
 	public boolean isLevellableLots(int x, int z, int width, int length, int maxRise) {
 		for (int a = x; a < x + width; a++)
@@ -756,6 +750,13 @@ public class PlatMap {
 		return footprintBuildable(generator, x, z, width, length);
 	}
 
+	/**
+	 * True only when every lot of the footprint is flat, buildable ground at street level — the same
+	 * test the city uses to decide where roads and buildings can sit. Schematics place at street level,
+	 * so without this a wild build lands on a mountainside (its foundation pad carves a 40-block dirt
+	 * scar into the slope) or in an ocean. It restricts wild builds to the flat lowland patches that
+	 * dot the wilderness, which is where a lone landmark belongs anyway.
+	 */
 	private boolean footprintBuildable(CityWorldGenerator generator, int placeX, int placeZ, int chunksX, int chunksZ) {
 		for (int x = 0; x < chunksX; x++)
 			for (int z = 0; z < chunksZ; z++)
