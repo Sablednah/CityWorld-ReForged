@@ -10,40 +10,176 @@
         {
           "type": "item",
           "name": "minecraft:leather_helmet",
-          "weight": 6,
+          "weight": 2,
           "functions": [
             {
-              "function": "enchant_randomly"
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:gold\",pattern:\"minecraft:dune\"},display:{color:3556687}}"
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "minecraft:leather_helmet",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:copper\",pattern:\"minecraft:wayfinder\"},display:{color:13148872}}"
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "minecraft:leather_helmet",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:redstone\",pattern:\"minecraft:sentry\"},display:{color:16744272}}"
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "minecraft:leather_helmet",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:quartz\",pattern:\"minecraft:dune\"},display:{color:16744272}}"
             }
           ]
         },
         {
           "type": "item",
           "name": "minecraft:leather_chestplate",
-          "weight": 6,
+          "weight": 2,
           "functions": [
             {
-              "function": "enchant_randomly"
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:amethyst\",pattern:\"minecraft:silence\"},display:{color:16117980}}"
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "minecraft:leather_chestplate",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:redstone\",pattern:\"minecraft:host\"},display:{color:2792847}}"
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "minecraft:leather_chestplate",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:emerald\",pattern:\"minecraft:silence\"},display:{color:16033463}}"
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "minecraft:leather_chestplate",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:amethyst\",pattern:\"minecraft:shaper\"},display:{color:3556687}}"
             }
           ]
         },
         {
           "type": "item",
           "name": "minecraft:leather_leggings",
-          "weight": 6,
+          "weight": 2,
           "functions": [
             {
-              "function": "enchant_randomly"
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:redstone\",pattern:\"minecraft:snout\"},display:{color:16117980}}"
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "minecraft:leather_leggings",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:diamond\",pattern:\"minecraft:sentry\"},display:{color:16744272}}"
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "minecraft:leather_leggings",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:emerald\",pattern:\"minecraft:host\"},display:{color:10019008}}"
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "minecraft:leather_leggings",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:diamond\",pattern:\"minecraft:tide\"},display:{color:13148872}}"
             }
           ]
         },
         {
           "type": "item",
           "name": "minecraft:leather_boots",
-          "weight": 6,
+          "weight": 2,
           "functions": [
             {
-              "function": "enchant_randomly"
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:lapis\",pattern:\"minecraft:coast\"},display:{color:14789889}}"
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "minecraft:leather_boots",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:iron\",pattern:\"minecraft:dune\"},display:{color:16033463}}"
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "minecraft:leather_boots",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:redstone\",pattern:\"minecraft:shaper\"},display:{color:13148872}}"
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "minecraft:leather_boots",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "set_nbt",
+              "tag": "{Trim:{material:\"minecraft:redstone\",pattern:\"minecraft:wild\"},display:{color:16033463}}"
             }
           ]
         },
