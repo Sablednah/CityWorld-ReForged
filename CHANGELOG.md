@@ -21,6 +21,11 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   Malls grow in wings, the way UK shopping centres do: a long main wing with arms joined to its flanks — a
   bar, an L, a T, a U, a Z or a cross, up to eight chunks each way — through passages cut across the main
   wing's shop rows on every floor. Car parks meet the road with a dropped kerb and the road's own surface.
+- **Malls are lit on every floor and dressed on the walls.** Lanterns hang under every lower ceiling (they
+  used to be buried in the floor above); each shop shows its goods in item frames and, on versions with
+  shelves, on shelves of its stock; the art shop hangs paintings, and so do the passages between wings. In
+  APOCALYPSE most of the lights are dead — dark malls, for the zombies. Pet-shop tanks have tropical fish in
+  them, kept for good.
 - **API: street level and the subway.** `LotInfo` carries the street level and whether a subway runs under
   the chunk; `CityWorldAPI.streetLevel`, `isSubway` and `subwayAt` (station, which lines, and the heights of
   both levels) — so a pack can tell a sewer from a subway tunnel from a mine by depth.

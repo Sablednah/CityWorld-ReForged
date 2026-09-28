@@ -1,5 +1,28 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Resume here — mall lighting and walls, dead lights, aquarium fish (2026-09-28)
+
+**Owner:** *"new ones looking good, nearly there — parking works, wings work, pet shop fixed, stairs OSHA approved.
+The corridor between wings is a little dark, as are some shops: the top floor is OK but others have no ceiling
+lights; some show through where a wall is, but not reliably."* Cause, exactly that pattern: a floor's ceiling
+lights were set into the slab above, and the NEXT floor's floor pass redraws that slab later, so every floor but
+the top had its lights paved over — except under walls, which the upper floor does not repave. **Fix:
+`Wing.lighting`, drawn last** — walkways, shops, anchors and links; flush sea lanterns in the roof on the top
+floor, lanterns hung under the slab below that. **`Wing.walls`, after it** (entities last): each shop's goods in
+item frames at eye height (`Mall.GOODS`, per kind, vanilla items from 1.20.1 on) along both side walls and the
+back wall, every other cell a SHELF of its stock where the version has one (`WallDecor.shelf`: the
+`#cityworld:furniture/shelf` pool, one wood per shop, filled now from the shop's own table through
+`ContainerLoot.assignTableAt` — a vanilla shelf is a plain container, so its items show); the art shop hangs
+1x1 paintings; the link corridors and anchor walls get paintings too. `Support/WallDecor` holds frame, painting and
+shelf (entities constructed directly and added through the region, the Armoury/Furniture rule).
+
+**His follow-ups, same day:** *"a lot of them broken in apocalypse — the lighting WAS good for zombie spawns"*:
+in a ruined world three in four fittings are dead (a dead copper bulb in the roof; a bare chain or nothing
+where a lantern hung) and half the atrium's lanterns are gone. *"Fish in the fishtanks?"*:
+`SpawnProvider.spawnAquariumFish` — always placed (does not roll the animal chance), pattern from the normal
+finalize-spawn, and marked from-a-bucket (`Bucketable.setFromBucket`, set in `placeEntity` behind a thread-local
+flag) so they never despawn. Self-test readback now counts hung lanterns, frames, paintings, fish and shelves.
+
 ## ▶ Resume here — bigger malls in wings, the first mall playtest, and API for ZARP (2026-09-27 night)
 
 **Owner, on finding his first mall:** *"love it — just a few extras on top of making them bigger."* Everything below
