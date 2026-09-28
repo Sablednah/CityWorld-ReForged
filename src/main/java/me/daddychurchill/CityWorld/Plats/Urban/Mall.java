@@ -1035,7 +1035,14 @@ public final class Mall {
         }
 
         private void frame(Canvas k, int a, int c, int y, BlockFace wallSide, net.minecraft.world.item.Item item) {
-            if (k.in(a, c))
+            if (!k.in(a, c))
+                return;
+            // leather in the frames wears this season's colours and trims (Support/Fashion)
+            if (me.daddychurchill.CityWorld.Support.Fashion.isLeather(item) && k.chunk.getServerLevel() != null)
+                me.daddychurchill.CityWorld.Support.WallDecor.frame(k.chunk, k.lx(a, c), y, k.lz(a, c), wallSide,
+                        me.daddychurchill.CityWorld.Support.Fashion.dress(k.chunk.getServerLevel(), item,
+                                new Odds(worldX(a, c) * 31L + worldZ(a, c) * 17L + y)));
+            else
                 me.daddychurchill.CityWorld.Support.WallDecor.frame(k.chunk, k.lx(a, c), y, k.lz(a, c), wallSide, item);
         }
 
@@ -1548,7 +1555,9 @@ public final class Mall {
         case PETS -> new Fittings(new Material[] { Material.BARREL, Material.HAY_BLOCK }, null, Material.GLASS, null,
                 Material.LIGHT_BLUE_CONCRETE, Material.BARREL, Mall::fishTank);
         case JEWELLER -> new Fittings(new Material[] { Material.SMOOTH_QUARTZ }, new Material[] { Material.GOLD_BLOCK, Material.EMERALD_BLOCK },
-                Material.SMOOTH_QUARTZ, new Material[] { Material.AMETHYST_CLUSTER, Material.GOLD_BLOCK, Material.EMERALD_BLOCK, Material.CANDLE },
+                Material.SMOOTH_QUARTZ, new Material[] { Material.AMETHYST_CLUSTER, Material.AMETHYST_CLUSTER, Material.GOLD_BLOCK,
+                        Material.GOLD_BLOCK, Material.EMERALD_BLOCK, Material.EMERALD_BLOCK, Material.CANDLE, Material.CANDLE,
+                        Material.AMETHYST_CLUSTER, Material.GOLD_BLOCK, Material.CANDLE, Material.DIAMOND_BLOCK }, // the rare one
                 Material.SMOOTH_QUARTZ, Material.GOLD_BLOCK, null);
         case ELECTRONICS -> new Fittings(new Material[] { Material.REDSTONE_LAMP, OBSERVER }, new Material[] { DAYLIGHT },
                 Material.LIGHT_GRAY_CONCRETE, new Material[] { Material.REDSTONE_LAMP, OBSERVER, DAYLIGHT, TARGET },
