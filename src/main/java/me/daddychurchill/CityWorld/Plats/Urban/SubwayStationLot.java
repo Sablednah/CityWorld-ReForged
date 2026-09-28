@@ -95,7 +95,7 @@ public class SubwayStationLot extends BuildingLot {
         ticketHall(generator, chunk, platmap, platX, platZ, floor, stand, name);
 
         if (underground) {
-            // down from the ticket hall to the east-west platforms: one stair at each end of each platform,
+            // down from the ticket hall to the east-west platforms: one stair per platform, at opposite ends of the hall,
             // four steps a flight (six long, three pairs for the 24 of rise), in the hall's two free corners
             int ewCeiling = ewY + Subway.HEIGHT + 1, nsCeiling = nsY + Subway.HEIGHT + 1;
             Subway.zigzag(chunk, 2, 2, true, true, ewY + 2, stand, ewCeiling, Subway.Door.ALONG, Subway.Door.ALONG, 4);

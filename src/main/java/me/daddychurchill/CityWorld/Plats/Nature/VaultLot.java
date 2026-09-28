@@ -29,14 +29,14 @@ import me.daddychurchill.CityWorld.Support.SupportBlocks;
  *     the vault is always reachable — the road-tunnel branch ({@link RoadThroughVaultLot}) is a bonus.</li>
  * </ul>
  *
- * <p>Spike scope: one lit hall level. The multi-level room set is the next phase (the Y-box already reaches
- * up under the terrain; deeper levels just add more hollow bands + fill).
+ * <p>Four levels ({@code NUM_LEVELS}): the entry level and three below it, each furnished, and each
+ * worse than the one above (see {@link #lootTierAt}).
  */
 public class VaultLot extends BunkerLot {
 
 	/**
-	 * The vault worsens floor by floor (owner, via the ZARP pack, 2026-09-25): every container on floor
-	 * {@code k} rolls its room's table on loot tier {@code k} — the room table plus {@code chests/vault_floor<k>},
+	 * The vault worsens floor by floor (owner, via the ZARP pack, 2026-09-25): every quarters, office,
+	 * armoury and ammo container on floor {@code k} rolls its room's table on loot tier {@code k} — the room table plus {@code chests/vault_floor<k>},
 	 * whose {@code vault_floor<k>_extra} is the per-floor hook a pack fills. Pooled furniture with storage
 	 * goes through the end-of-lot pass, which asks this too.
 	 */
@@ -91,7 +91,7 @@ public class VaultLot extends BunkerLot {
     }
 
     /** Only the built level bands are hollow; everything else stays solid rock (no hollowed-out mountain).
-     *  The entrance lobby gets a taller top band; a second level sits in a band below the first. */
+     *  The entrance lobby gets a taller top band; the levels below each sit in their own band. */
     @Override
     public boolean isValidStrataY(CityWorldGenerator generator, int blockX, int blockY, int blockZ) {
         return vaultIsValidStrataY(blockY, bottomOfBunker, topOfBunker, entrance);
@@ -431,7 +431,7 @@ public class VaultLot extends BunkerLot {
             if (chunk.isEmpty(x, ceilY - 1, z))
                 chunk.setHangingLantern(x, ceilY - 1, z, Material.OXIDIZED_COPPER_LANTERN); // a dim, corroded light
         }
-        case 3 -> { // crumbled floor: the concrete gone to gravel, with a web in the corner above
+        case 3 -> { // crumbled floor: the concrete gone to gravel
             if (chunk.isEmpty(x, floorY + 1, z) && !chunk.isEmpty(x, floorY, z))
                 chunk.setBlock(x, floorY, z, Material.GRAVEL);
         }
