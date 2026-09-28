@@ -2221,7 +2221,8 @@ public final class CityWorldSelfTest {
             return;
         }
         int radius = PLAN_RADIUS;
-        int stations = 0, interchanges = 0, tunnels = 0, bends = 0, platforms = 0, mismatches = 0, crossCountry = 0;
+        int stations = 0, interchanges = 0, tunnels = 0, bends = 0, platforms = 0, mismatches = 0, crossCountry = 0, ramps = 0;
+        int[] firstRamp = null;
         int[] firstCross = null;
         List<String> mismatchSamples = new ArrayList<>();
         int[] firstStation = null, firstStraight = null;
@@ -2251,19 +2252,26 @@ public final class CityWorldSelfTest {
                             if (Integer.bitCount(m) == 2 && m != 3 && m != 12)
                                 bends++;
                         }
+                    if (piece.ramp() != null) {
+                        ramps++;
+                        if (firstRamp == null)
+                            firstRamp = new int[] { cx, cz };
+                    }
                     if (firstStraight == null && piece.ewMask() == 12 && !piece.ewPlatform() && piece.nsMask() == 0)
                         firstStraight = new int[] { cx, cz };
                 }
-                // every open side must be answered by the chunk it faces, on the same level
-                for (int lvl = 0; lvl < 2; lvl++) {
-                    int mask = lvl == 0 ? piece.ewMask() : piece.nsMask();
+                // every open side must be answered by the chunk it faces, on the same level (or by a ramp,
+                // which joins the levels; level 2 is the ramp's own sides, answered by anything)
+                for (int lvl = 0; lvl < 3; lvl++) {
+                    int mask = lvl == 0 ? piece.ewMask() : lvl == 1 ? piece.nsMask() : piece.rampMask();
                     if (piece.station() && lvl == 0 && mask == 0)
                         continue;
                     for (int[] d : new int[][] { { 1, 0, -1, 0 }, { 2, 0, 1, 0 }, { 4, 1, 0, 0 }, { 8, -1, 0, 0 } }) {
                         if ((mask & d[0]) == 0)
                             continue;
                         var other = me.daddychurchill.CityWorld.Support.Subway.at(plan, cx + d[1], cz + d[2]);
-                        int otherMask = lvl == 0 ? other.ewMask() : other.nsMask();
+                        int otherMask = (lvl == 0 ? other.ewMask() : lvl == 1 ? other.nsMask()
+                                : other.ewMask() | other.nsMask()) | other.rampMask();
                         int opposite = d[0] == 1 ? 2 : d[0] == 2 ? 1 : d[0] == 4 ? 8 : 4;
                         if ((otherMask & opposite) == 0) {
                             mismatches++;
@@ -2277,13 +2285,14 @@ public final class CityWorldSelfTest {
         report.put("subway.stations", Integer.toString(stations));
         report.put("subway.interchanges", Integer.toString(interchanges));
         report.put("subway.tunnelPieces", tunnels + " (" + bends + " bends, " + platforms + " platform chunks)");
+        report.put("subway.rampPieces", ramps + (firstRamp == null ? "" : " (first at " + firstRamp[0] + "," + firstRamp[1] + ")"));
         // the network as a picture: one character per chunk (S station, # east-west, | north-south, + both)
         try {
             StringBuilder map = new StringBuilder();
             for (int cz = -radius; cz <= radius; cz++) {
                 for (int cx = -radius; cx <= radius; cx++) {
                     var pc = me.daddychurchill.CityWorld.Support.Subway.at(plan, cx, cz);
-                    map.append(pc.station() ? 'S' : pc.ewMask() != 0 && pc.nsMask() != 0 ? '+'
+                    map.append(pc.station() ? 'S' : pc.ramp() != null ? 'R' : pc.ewMask() != 0 && pc.nsMask() != 0 ? '+'
                             : pc.ewMask() != 0 ? '#' : pc.nsMask() != 0 ? '|' : '.');
                 }
                 map.append('\n');
@@ -2301,6 +2310,15 @@ public final class CityWorldSelfTest {
             fail(mismatches + " subway tunnel sides open onto rock: " + mismatchSamples);
 
         int ewRail = me.daddychurchill.CityWorld.Support.Subway.ewFloor(plan) + 1;
+        if (firstRamp != null) { // a loop chunk: its two tracks, sloped or level, somewhere between the levels
+            int[] c = firstRamp;
+            var counts = countBlocks(server, level, c[0], c[1], me.daddychurchill.CityWorld.Support.Subway.nsFloor(plan),
+                    ewRail + 1);
+            report.put("subway.ramp.chunk", c[0] + "," + c[1] + " " + counts);
+            if (counts.getOrDefault("rails", 0) < 16)
+                fail("subway loop chunk at " + c[0] + "," + c[1] + " has " + counts.getOrDefault("rails", 0)
+                        + " rails (want two curved tracks)");
+        }
         if (firstStation != null) {
             int[] c = firstStation;
             var counts = countBlocks(server, level, c[0], c[1], ewRail - 3, plan.streetLevel + 2);
