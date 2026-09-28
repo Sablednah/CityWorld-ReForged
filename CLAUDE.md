@@ -22,14 +22,21 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 | Licence | **GPL-3.0-only** (see below — non-negotiable) |
 | Branch | work happens on `master` (the `neoforge-port` branch was merged into it and deleted) |
 
-## ▶ Where this is, and what's next (2026-09-27)
+## ▶ Where this is, and what's next (2026-09-28)
 
-**UNRELEASED, on master + all five branches, self-tested, deployed, awaiting playtest: shopping malls** (PORTING.md
-"▶ Resume here — shopping malls"), on top of the subway's long links and loops (playtested: *"the interlinking is
-good"*) and the vault by depth. Malls: `Plats/Urban/Mall` (plan + placer + drawing), `MallLot`, `ParkingLot`;
-one site per 4×4-platmap region, edge-of-town districts only; per-position loot via `PlatLot.lootTableAt`;
-19 tables from `scripts/gen_mall_tables.py` (re-run per dialect on 1.20.1 and 26.3 after a pick). Find one with
-`-Dcityworld.probe=find:MallLot` or `/cityfind lot mall`.
+**v5.15.0 is released** on all six lines — tag `v5.15.0` (`6dcc8e8d`), GitHub release with six jars, CurseForge
+files 9003156–9003161, fleet `DEPLOYED-v5.15.0` on all 11 deployable instances (ZARP opts out). It is the
+subway (stations, long links and loops, interchanges, the sloped loop joining an interchange's dead ends),
+shopping malls (wings, car parks, lit and dressed shops, per-position loot), and the vault by depth. Gates: six
+self-tests PASS, `--compare` agrees, CI green on the bump head, halt/exit 0 on all six (detector proved on a
+synthetic positive), 1.20.1 jar reobfuscated (SRG names present).
+
+**⚠ Modrinth no longer publishes on release.** Modrinth rejected the projects under its rule 6.1 (AI-generated
+logos/descriptions); the owner won't fight it. `modrinth.yml`'s `release:` trigger is commented out
+(`workflow_dispatch` remains). Do not suggest resubmitting.
+
+**NEXT: nothing queued** — the owner's playtest is the queue. PORTING.md "▶ Resume here" sections carry the
+subway, mall and vault designs and the playtest rounds that shaped them.
 
 ## ▶ Before that (2026-09-26, afternoon)
 

@@ -1,5 +1,14 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Released: v5.15.0 (2026-09-28 evening)
+
+Tag `v5.15.0` at the master bump `6dcc8e8d`; CurseForge files 9003156–9003161 (1.20.1 Forge first, then 1.21.1,
+1.21.11, 26.1.2, 26.2, 26.3). **No Modrinth upload** — its release trigger is off (rejected under Modrinth rule
+6.1; owner's call). Before tagging: a comment-rot sweep over everything since 5.14.0 (about thirty stale
+comments, orphaned javadocs re-attached) turned up one real bug, car-park east/west verges transposed onto the
+north/south edges; and the interchange stair top was fixed from the owner's hand edit in his save (headroom
+over a two-step flight; the shaft's track-side wall is the platform edge again).
+
 ## ▶ Resume here — the interchange loop (2026-09-28, `2821e80c`)
 
 **Owner** (screenshot of an interchange whose two halls both end in buffers, one above the other): *"when two
