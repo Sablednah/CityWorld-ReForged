@@ -71,7 +71,7 @@ public class NatureLot extends IsolatedLot {
 		// shot through with water pools — only the low, flat interior is brought flush to the water table;
 		// rises just get muddied in place (never flattened) and edges feather to a dry bank. Vanilla then
 		// adds lily pads, mangrove roots and blue orchids.
-		if (generator.isModernStyle()
+		if (generator.isModernStyle() && !generator.isSiteCore(getChunkX(), getChunkZ())
 				&& chunk.isSwampBiome(8, getBlockY(8, 8), 8))
 			generateSwampSurface(generator, chunk);
 
