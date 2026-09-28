@@ -472,6 +472,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // Measured 745/745 columns seated exactly, 0 buried; with it off, 70.4% and 32.4%. PAD_ENABLED.
         if (PAD_ENABLED)
             padPlanForStructures(context, structureManager, chunk, platmap);
+        // A reserved site (CityWorldAPI.reserveSite) levels its core after any structure has had its say.
+        levelReservedSite(context, chunk, platmap);
 
         platmap.generateChunk(blocks, IGNORE_BIOMES);
 
@@ -977,6 +979,54 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         FitIndex built = new FitIndex(byStructure, bearding, shaving);
         FIT_INDEX.put(lookup, built);
         return built;
+    }
+
+    /**
+     * Level the planned ground over a reserved site's core to the site's height and ease it back to natural across
+     * the reserved {@link ReservedSites#MARGIN} ring — the taper sized by the rise, as the structure pad sizes its
+     * own ({@link #PAD_SLOPE}, never under {@link #PAD_TAPER_MIN}), and capped at the ring so it never reaches a
+     * chunk the city may have built on. One-shot per chunk, for the reason {@code isPadded} is.
+     */
+    private void levelReservedSite(CityWorldGenerator context, ChunkAccess chunk, PlatMap platmap) {
+        ReservedSites sites = context.reservedSites;
+        if (sites == null || sites.isEmpty())
+            return;
+        try {
+            ChunkPos pos = chunk.getPos();
+            ReservedSites.Site site = sites.siteAt(pos.x(), pos.z());
+            if (site == null)
+                return;
+            me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x(), pos.z());
+            me.daddychurchill.CityWorld.Support.AbstractCachedYs ys = lot == null ? null : lot.getCachedYs();
+            if (ys == null || ys.isSiteLevelled())
+                return;
+            int maxTaper = ReservedSites.MARGIN * 16;
+            int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
+            for (int x = 0; x < 16; x++)
+                for (int z = 0; z < 16; z++) {
+                    int wx = minX + x, wz = minZ + z;
+                    int dx = Math.max(0, Math.max(site.minBlockX() - wx, wx - site.maxBlockX()));
+                    int dz = Math.max(0, Math.max(site.minBlockZ() - wz, wz - site.maxBlockZ()));
+                    double dist = Math.max(dx, dz);
+                    double natural = ys.getPerciseY(x, z);
+                    // A nature lot's planned height is the first block ABOVE its ground (measured: planning
+                    // exactly y put every one of 2,304 columns' top block at y - 1), and a site's y is the ground.
+                    double target = site.y() + 1;
+                    if (dist > 0) {
+                        double taper = Math.min(maxTaper, Math.max(PAD_TAPER_MIN, Math.abs(target - natural) * PAD_SLOPE));
+                        double d = dist / taper;
+                        if (d >= 1.0)
+                            continue;
+                        double ease = d * d * (3.0 - 2.0 * d);
+                        target = target + (natural - target) * ease;
+                    }
+                    ys.setPerciseY(x, z, target);
+                }
+            ys.recompute(context);
+            ys.markSiteLevelled();
+        } catch (Throwable t) {
+            // nothing here may break terrain generation
+        }
     }
 
     private void padPlanForStructures(CityWorldGenerator context, StructureManager structureManager,
@@ -1767,7 +1817,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // In the End the wild is vanilla's outright — its islands, so its chorus plants too — whatever the style.
         boolean wild = (isEnd() || context.isModernStyle() && context.getSettings().vanillaDecoratesWild())
                 && lot != null && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE
-                && lot.allowsWildDecoration();
+                && lot.allowsWildDecoration()
+                && !context.isSiteCore(pos.x(), pos.z()); // a reserved site is bare level ground for its owner to build on
 
         if (wild) {
             // The full vanilla pass: biome-appropriate trees, flowers, coral, sugar cane — and the
