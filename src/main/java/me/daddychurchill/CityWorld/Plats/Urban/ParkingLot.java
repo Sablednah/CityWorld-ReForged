@@ -124,16 +124,22 @@ public class ParkingLot extends IsolatedLot {
         chunk.reconnect(0, 16, stand, stand + 4, 0, 16);
     }
 
+    /** One cell of a verge along a north or south edge: grass, an azalea every five, tufts between. */
     private static void verge(RealBlocks chunk, Odds odds, int x, int stand, int z) {
+        vergeCell(chunk, odds, x, stand, z, x);
+    }
+
+    /** The same along an east or west edge, spaced down z. */
+    private static void vergeX(RealBlocks chunk, Odds odds, int x, int stand, int z) {
+        vergeCell(chunk, odds, x, stand, z, z);
+    }
+
+    private static void vergeCell(RealBlocks chunk, Odds odds, int x, int stand, int z, int along) {
         chunk.setBlock(x, stand - 1, z, Material.GRASS_BLOCK);
-        if (x % 5 == 2)
+        if (along % 5 == 2)
             chunk.setBlock(x, stand, z, Material.AZALEA);
         else if (odds.playOdds(0.4))
             chunk.setBlock(x, stand, z, Material.GRASS);
-    }
-
-    private static void vergeX(RealBlocks chunk, Odds odds, int x, int stand, int z) {
-        verge(chunk, odds, z, stand, x); // the same, transposed
     }
 
     /** A little car, two wide and four long: body, glass cabin, dark wheels. Rusted and doorless in a ruin. */
