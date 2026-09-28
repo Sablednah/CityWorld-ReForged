@@ -163,8 +163,24 @@ public class CityWorldGenerator {
      * and false forever in a world with none — which is exactly CityWorld's behaviour before this.
      */
     public boolean isStructureReserved(int chunkX, int chunkZ) {
+        me.daddychurchill.CityWorld.worldgen.ReservedSites sites = reservedSites;
+        if (sites != null && sites.isReserved(chunkX, chunkZ))
+            return true;
         me.daddychurchill.CityWorld.worldgen.StructureReservations local = structureReservations;
         return local != null && local.isReserved(chunkX, chunkZ);
+    }
+
+    /**
+     * Sites another mod reserved as open, level ground ({@code CityWorldAPI.reserveSite}) — bound when the level
+     * loads, before it plans anything. Planned like a structure reservation, which is why
+     * {@link #isStructureReserved} answers for them too.
+     */
+    public volatile me.daddychurchill.CityWorld.worldgen.ReservedSites reservedSites;
+
+    /** True inside a reserved site's levelled core: no vanilla wild decoration, no swamp pools. */
+    public boolean isSiteCore(int chunkX, int chunkZ) {
+        me.daddychurchill.CityWorld.worldgen.ReservedSites sites = reservedSites;
+        return sites != null && sites.isCore(chunkX, chunkZ);
     }
 
     /**
@@ -699,6 +715,17 @@ public class CityWorldGenerator {
         } else {
             return -((Math.abs(i + 1) / PlatMap.Width * PlatMap.Width) + PlatMap.Width);
         }
+    }
+
+    /**
+     * Forget the plan of the platmap holding this chunk, so the next asker plans it afresh. Only for a change to
+     * what the plan is GIVEN (a reserved site) made before any of its chunks generate — a platmap re-planned
+     * after its chunks exist would disagree with them.
+     */
+    public void forgetPlatMap(int chunkX, int chunkZ) {
+        int platX = calcOrigin(chunkX);
+        int platZ = calcOrigin(chunkZ);
+        platmaps.remove((long) platX * (long) Integer.MAX_VALUE + (long) platZ);
     }
 
     /** How many platmaps have been planned — diagnostics only. */

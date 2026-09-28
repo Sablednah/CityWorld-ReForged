@@ -225,6 +225,20 @@ public class VaultLot extends BunkerLot {
         return Math.floorMod(getChunkX() * 31 + getChunkZ() * 17, 100);
     }
 
+    /** True for the chunk that carries the lobby, the ladder shaft and the surface hut (see {@link #surfaceHut}). */
+    public boolean isEntrance() {
+        return entrance;
+    }
+
+    /** The number on this vault's signs ("VAULT 42") and in its announcement. */
+    public int getVaultNumber() {
+        return vaultNumber();
+    }
+
+    /** Chunk-local x/z of the block outside the hut's door, where a path to the vault ends: the door is at
+     *  (2, 3) facing south and {@link #surfaceHut} clears this step. */
+    public static final int DOORSTEP_X = 2, DOORSTEP_Z = 4;
+
     /** Walkable floor of the hall (one above the box bottom, where the entry ladder lands). */
     static int floorY(int bottom) {
         return bottom + 1;
