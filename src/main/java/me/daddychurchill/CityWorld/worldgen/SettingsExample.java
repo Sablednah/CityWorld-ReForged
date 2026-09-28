@@ -247,7 +247,8 @@ public final class SettingsExample {
             spawnBeings         0.5      Villagers/witches appearing in populated spots.
             spawnBaddies        0.0476   Hostile mobs at the surface. Raise for a rougher world.
             spawnAnimals        0.6667   Farm/wild animals.
-            spawnVagrants       0.2      Stray animals/people wandering the streets.
+            spawnVagrants       0.2      "Wanderers" in Customize: strays out of town, on wild land and
+                                     dirt roads. Hostile on a Baddies roll, or always in a ruined world.
             nameVillagers       true     Give villagers generated names (see [naming]).
             showVillagersNames  true     Show those names as floating nametags.
 
@@ -370,7 +371,7 @@ public final class SettingsExample {
             baddies      Surface hostiles.
             animals      Farm/wild animals.
             seaAnimals   Fish and sea life.
-            vagrants     Wandering strays in the streets.
+            vagrants     The "Wanderers": strays out of town (see spawnVagrants).
             sewers       What lurks in the sewers.
             mine         What lurks in the mines.
             bunker       What is sealed in the bunkers.
