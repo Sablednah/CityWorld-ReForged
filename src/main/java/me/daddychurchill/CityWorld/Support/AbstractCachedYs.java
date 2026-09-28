@@ -68,6 +68,17 @@ public abstract class AbstractCachedYs extends AbstractYs {
 		padded = true;
 	}
 
+	/** Whether a reserved site has levelled this chunk's planned heights — one-shot, like {@link #isPadded}. */
+	private boolean siteLevelled;
+
+	public boolean isSiteLevelled() {
+		return siteLevelled;
+	}
+
+	public void markSiteLevelled() {
+		siteLevelled = true;
+	}
+
 	/**
 	 * Adjust one column's PLANNED height.
 	 *

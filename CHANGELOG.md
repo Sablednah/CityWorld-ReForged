@@ -5,6 +5,21 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **API for modpacks that build at spawn** (asked for by the ZARP pack, to put its starting camp beside a vault).
+  All plan-only, so they answer for land that has never generated, and safe on the server thread during world
+  creation:
+  - `CityWorldAPI.findLot` / `findLots(level, from, kind, maxBlocks, limit)` — the nearest lot(s) of a kind,
+    matched like `/cityfind lot`.
+  - `CityWorldAPI.findVaultEntrances(level, from, maxBlocks, limit)` and `vaultEntrance(level, chunk)` — the
+    block outside a vault's surface hut door, where a path to it ends.
+  - `CityWorldAPI.reserveSite(level, centreChunk, radiusChunks, y)` — keeps a square of chunks as open, level
+    ground at `y` (no buildings, roads, trees or vanilla wild decoration), blending back to natural ground over a
+    two-chunk ring. Saved with the world (`data/cityworld_sites.json`); never costs a vault.
+
 ## 5.15.0
 
 ### Added

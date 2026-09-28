@@ -49,6 +49,13 @@ public final class CityWorldServerEvents {
         me.daddychurchill.CityWorld.Support.MaterialTags.invalidate();
     }
 
+    /** Bind any reserved sites (CityWorldAPI.reserveSite) to a level as it loads, before it plans a chunk. */
+    @SubscribeEvent
+    public static void onLevelLoad(net.neoforged.neoforge.event.level.LevelEvent.Load event) {
+        if (event.getLevel() instanceof net.minecraft.server.level.ServerLevel level)
+            me.daddychurchill.CityWorld.worldgen.ReservedSites.bind(level);
+    }
+
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         if (!MapMarkers.hasListeners())

@@ -9,6 +9,31 @@ comments, orphaned javadocs re-attached) turned up one real bug, car-park east/w
 north/south edges; and the interchange stair top was fixed from the owner's hand edit in his save (headroom
 over a two-step flight; the shaft's track-side wall is the platform edge again).
 
+## ▶ Resume here — the camp-site API for ZARP (2026-09-29)
+
+**Asked by the ZARP session, Sable approved:** Threadwork picks a camp site beside a vault at world spawn from
+`LevelEvent.CreateSpawnPosition`, before any chunk exists. Four calls on `CityWorldAPI`: `findLot`/`findLots`
+(the `/cityfind lot` match, nearest first), `findVaultEntrances`/`vaultEntrance` (the block outside the hut
+door, `VaultLot.DOORSTEP_X/Z`, height from the plan), and `reserveSite` → `SiteResult`.
+- **A site is a structure reservation with a floor.** `ReservedSites` folds into `isStructureReserved` (so
+  `setLot`/`paveLot` refuse it: nature, no road, no CityWorld trees), its core is kept from vanilla wild
+  decoration and swamp pools (`isSiteCore`), and `levelReservedSite` (after the structure pad, one-shot per
+  chunk via `AbstractCachedYs.isSiteLevelled`) sets the plan to `y + 1` in the core and eases back to natural
+  over the `MARGIN` ring (2 chunks, also reserved) with the pad's own taper arithmetic.
+- **⚠ `y + 1`, measured:** a nature lot's planned height is the first block ABOVE its ground; planning exactly
+  `y` put all 2,304 columns' top block at `y - 1`. The self-test caught it (`api.site.offsets`).
+- **Persisted, because it changes the plan:** `data/cityworld_sites.json` keyed by dimension, bound on
+  `LevelEvent.Load` before anything plans. `reserveSite` forgets and re-plans the platmaps it touches — only
+  sound before their chunks generate (documented as the contract).
+- **Never costs a vault:** refused (`OVERLAPS_VAULT`) if the reservation covers a vault chunk, rolled back
+  (`VAULT_MOVED`) if the re-plan changes any vault entrance in the touched platmaps.
+- **Vault search skips non-vault regions without planning them** (`NatureContext.isVaultRegion(ctx, ox, oz)`):
+  5 entrances out to 2,500 blocks went 90 s → 15 s on the server thread. The self-test's `checkVaultRegions`
+  plans 144 APOCALYPSE platmaps in full and fails on any vault outside a region (126 lots, 0 outside).
+- Proved on an APOCALYPSE world with a throwaway `CreateSpawnPosition` listener (deleted): the doorstep had the
+  iron door north of it and grass under it; the site core generated 2300/2304 flat; a restart rebound the site
+  from the file. Plan hashes unchanged (no site = the old plan).
+
 ## ▶ Resume here — the interchange loop (2026-09-28, `2821e80c`)
 
 **Owner** (screenshot of an interchange whose two halls both end in buffers, one above the other): *"when two
