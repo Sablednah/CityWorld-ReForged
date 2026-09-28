@@ -33,9 +33,11 @@ import net.minecraft.world.phys.Vec3;
  * {@link me.daddychurchill.CityWorld.Plugins.LootProvider}). Everything else did not: the storage
  * furniture the pools draw (Macaw's cabinets and drawers, Fantasy's chests and lockboxes), the chests
  * inside a pasted schematic, a modded crate in a warehouse. This runs once per lot after every other
- * decoration, walks the chunk's block entities, and gives each untouched, empty container the lot's
- * {@link PlatLot#defaultLoot() default table} — a warehouse's crates roll the warehouse table, a
- * hospital's cabinets the hospital's, and every table ends in an {@code _extra} hook a pack can own.
+ * decoration, walks the chunk's block entities, and gives each untouched, empty container the table the
+ * lot names for that spot ({@link PlatLot#lootTableAt} — a schematic's own, a mall shop's) or else the
+ * lot's {@link PlatLot#defaultLoot() default table} at that height's tier — a warehouse's crates roll the
+ * warehouse table, a hospital's cabinets the hospital's, a deep vault floor its floor's, and every table
+ * ends in an {@code _extra} hook a pack can own.
  *
  * <p><b>Three kinds of container, three ways in.</b>
  * <ol>
@@ -75,7 +77,8 @@ public final class ContainerLoot {
                 + " notAContainer=" + NOT_A_CONTAINER.get() + " lotsWithOwnTable=" + OWN_TABLE.get();
     }
 
-    /** The end-of-lot pass: every untouched empty container in this chunk gets the lot's default table. */
+    /** The end-of-lot pass: every untouched empty container in this chunk gets the table the lot names for its
+     *  position ({@link PlatLot#lootTableAt}, when that table exists), else the lot's default at its tier there. */
     public static void apply(CityWorldGenerator generator, PlatLot lot, RealBlocks chunk, Odds odds) {
         LootLocation loot = lot.defaultLoot();
         if (loot == null || loot == LootLocation.EMPTY || loot == LootLocation.RANDOM)
@@ -195,8 +198,8 @@ public final class ContainerLoot {
     }
 
     /**
-     * The lot's own table ({@link PlatLot#ownLootTable()}) if it names one that exists — a schematic's
-     * {@code chests/schematic/<name>}, or its sidecar's {@code Loot:} — else null for the lot default.
+     * The table named by {@code own} if it exists — a schematic's {@code chests/schematic/<name>} or its
+     * sidecar's {@code Loot:}, a mall shop's, or one handed to {@code assignTableAt} — else null.
      */
     private static ResourceLocation ownTableOrNull(WorldGenLevel level, String own) {
         if (own == null)

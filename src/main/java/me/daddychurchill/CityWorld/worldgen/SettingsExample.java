@@ -220,12 +220,13 @@ public final class SettingsExample {
             ============================================================================
             enabled   true   A station in every urban district (a ticket hall beside a road, two
                              switchback stairs down to twin-track platforms 24 blocks under the
-                             street), and tunnels from each station to the stations of the
-                             neighbouring districts: east-west lines on the upper level, north-south
-                             lines eight blocks lower, so lines never junction and a station both
-                             lines call at is an interchange with stairs between its two halls. The
-                             tunnels are lit, ringed in brick, and boosted with powered rails, so a
-                             cart runs the line; a ruined world has dark lamps, gaps in the track,
+                             street), and tunnels to the first station each way along its row and
+                             column, up to six districts off, across the countryside between cities:
+                             east-west lines on the upper level, north-south lines eight blocks
+                             lower, so lines never junction and a station both lines call at is an
+                             interchange with stairs between its two halls (with one line each way,
+                             a sloped loop joins its two ends). The tunnels are arched, tiled white,
+                             lit, and boosted with powered rails, so a cart runs the line; a ruined world has dark lamps, gaps in the track,
                              standing water and spawners in the wall niches. Stations announce as
                              the landmark kind "subway" (off by default, see announcedLandmarks).
             spawners  true   Sewer-bag spawners in the ruined tunnels' niches (APOCALYPSE only).
@@ -240,6 +241,11 @@ public final class SettingsExample {
                                and a rare fish-pond farm (barrel + fish). The shop classification
                                itself (see /cityinfo and the api package) is always computed; this
                                only governs the block placement.
+            malls       true   Shopping malls (MODERN and APOCALYPSE): rare, at the edge of town, two
+                               or three storeys round a glass-roofed atrium, built in wings (a bar,
+                               L, T, U, Z or cross, up to eight chunks each way), dozens of named
+                               shops each with its own loot table (chests/mall_<kind>), car parks
+                               out to the road. Announced as the landmark kind "mall".
 
             ============================================================================
             spawns  — who turns up, and how often   (odds 0.0 .. 1.0)
@@ -290,11 +296,12 @@ public final class SettingsExample {
                                         log at debug level either way.
             announcedLandmarks [...]    Which landmark kinds may chat-announce (needs the toggle
                                         above on). Default: ["airship", "saucer", "vault", "zoo",
-                                        "biodome", "hospital", "schematic"] — the genuine rares;
+                                        "biodome", "hospital", "schematic", "mall"] — the rares;
                                         "schematic" covers builds whose .yml sets
                                         BroadcastLocation: true. Other known kinds a server can add:
                                         castle, oilplatform, radiotower, bunker, museum,
-                                        mineentrance, campground, shack, balloon, fishpond.
+                                        mineentrance, campground, shack, balloon, fishpond,
+                                        subway.
 
             ============================================================================
             radius  — where cities may appear   (distances in CHUNKS; 16 blocks each)

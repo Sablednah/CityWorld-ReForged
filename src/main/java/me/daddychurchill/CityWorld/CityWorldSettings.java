@@ -179,8 +179,8 @@ public class CityWorldSettings {
     public boolean includeMalls = true;
 
     /**
-     * The subway: a station lot in every urban platmap and twin-track tunnels between neighbouring stations,
-     * two levels deep (east-west above, north-south below; see {@code Support/Subway}). MODERN-family only —
+     * The subway: a station lot in every urban platmap and twin-track tunnels to the first station each
+     * way, up to six districts off, two levels deep (east-west above, north-south below; see {@code Support/Subway}). MODERN-family only —
      * forced off on every other style, so it locks there. {@code spawnersInSubways}: sewer-bag spawners in the
      * tunnels.
      */
@@ -767,7 +767,7 @@ public class CityWorldSettings {
      * radii). {@code CLASSIC} only pins the subsurface style. Comments preserved.
      */
     private void validateSettingsAgainstWorldStyle(WorldStyle style) {
-        // The subway is a modern-Minecraft thing (rails, glazed tiles, copper): MODERN and APOCALYPSE only,
+        // The subway is a modern-Minecraft thing (rails, white tile, copper bulbs): MODERN and APOCALYPSE only,
         // forced off everywhere else so the Customize screen greys it there.
         if (style != WorldStyle.MODERN && style != WorldStyle.APOCALYPSE)
             includeSubways = false; // DIFFERENT
