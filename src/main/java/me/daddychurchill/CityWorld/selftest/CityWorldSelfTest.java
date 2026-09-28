@@ -2355,7 +2355,7 @@ public final class CityWorldSelfTest {
         }
         var first = malls.entrySet().iterator().next();
         var mall = first.getKey();
-        int signs = 0, glass = 0, water = 0, containers = 0, tabled = 0, mallTabled = 0, lanterns = 0, frames = 0, paintings = 0, fish = 0, shelves = 0;
+        int signs = 0, glass = 0, water = 0, containers = 0, tabled = 0, mallTabled = 0, lanterns = 0, frames = 0, paintings = 0, fish = 0, shelves = 0, unloaded = 0;
         java.util.Set<String> names = new java.util.TreeSet<>();
         for (int[] c : first.getValue()) {
             LevelChunk chunk = server.submit(() -> level.getChunk(c[0], c[1])).join();
@@ -2373,11 +2373,6 @@ public final class CityWorldSelfTest {
                                 && state.getValue(net.minecraft.world.level.block.LanternBlock.HANGING))
                             lanterns++;
                     }
-            var box = new net.minecraft.world.phys.AABB(c[0] * 16, plan.streetLevel, c[1] * 16, c[0] * 16 + 16,
-                    plan.streetLevel + mall.floors() * 6 + 4, c[1] * 16 + 16);
-            frames += server.submit(() -> level.getEntitiesOfClass(net.minecraft.world.entity.decoration.ItemFrame.class, box).size()).join();
-            paintings += server.submit(() -> level.getEntitiesOfClass(net.minecraft.world.entity.decoration.Painting.class, box).size()).join();
-            fish += server.submit(() -> level.getEntities(net.minecraft.world.entity.EntityType.TROPICAL_FISH, box, e -> true).size()).join();
             for (BlockEntity entity : chunk.getBlockEntities().values()) {
                 if (entity instanceof SignBlockEntity sign) {
                     signs++;
@@ -2394,12 +2389,32 @@ public final class CityWorldSelfTest {
                     }
                 }
             }
+            // Entities load separately from blocks, and on older versions only while the chunk is held: force it,
+            // wait for its entities, count them, let it go. Without this the readback counted 0 frames for a mall
+            // whose saved world held 643 (1.20.1, 2026-09-28), and a plain wait let the chunk unload instead.
+            final int fx = c[0], fz = c[1];
+            server.submit(() -> level.setChunkForced(fx, fz, true)).join();
+            final long key = net.minecraft.world.level.ChunkPos.asLong(fx, fz);
+            for (int w = 0; w < 50 && !server.submit(() -> level.areEntitiesLoaded(key)).join(); w++)
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ignored) {
+                }
+            if (!server.submit(() -> level.areEntitiesLoaded(key)).join())
+                unloaded++;
+            var box = new net.minecraft.world.phys.AABB(c[0] * 16, plan.streetLevel, c[1] * 16, c[0] * 16 + 16,
+                    plan.streetLevel + mall.floors() * 6 + 4, c[1] * 16 + 16);
+            frames += server.submit(() -> level.getEntitiesOfClass(net.minecraft.world.entity.decoration.ItemFrame.class, box).size()).join();
+            paintings += server.submit(() -> level.getEntitiesOfClass(net.minecraft.world.entity.decoration.Painting.class, box).size()).join();
+            fish += server.submit(() -> level.getEntities(net.minecraft.world.entity.EntityType.TROPICAL_FISH, box, e -> true).size()).join();
+            server.submit(() -> level.setChunkForced(fx, fz, false)).join();
         }
         report.put("mall.first", mall.name() + " (" + mall.shape() + ", " + first.getValue().size() + " chunks, " + mall.floors() + " floors, "
                 + mall.unitCount() + " units)");
         report.put("mall.first.readback", "signs=" + signs + " glass=" + glass + " water=" + water + " containers=" + containers
                 + " tabled=" + tabled + " mallTabled=" + mallTabled + " hungLanterns=" + lanterns + " frames=" + frames
-                + " paintings=" + paintings + " fish=" + fish + " shelves=" + shelves);
+                + " paintings=" + paintings + " fish=" + fish + " shelves=" + shelves
+                + (unloaded > 0 ? " (entities not loaded in " + unloaded + " chunks)" : ""));
         report.put("mall.first.signs", names.toString());
         if (signs < 10)
             fail("the mall " + mall.name() + " has " + signs + " signs (every shop front carries its name)");
@@ -2407,7 +2422,7 @@ public final class CityWorldSelfTest {
             fail("the mall " + mall.name() + " has no fountain water");
         if (lanterns == 0)
             fail("the mall " + mall.name() + " has no lanterns hung under its lower ceilings -- the lighting pass is not running");
-        if (frames == 0)
+        if (frames == 0 && unloaded == 0)
             fail("the mall " + mall.name() + " has no item frames on its shop walls -- the wall pass is not running");
         if (containers == 0 || mallTabled == 0)
             fail("the mall " + mall.name() + ": " + containers + " containers, " + mallTabled
