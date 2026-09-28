@@ -264,15 +264,8 @@ public record CityWorldSettingsData(
     // --- shops: themed retail with villager job blocks (its own group, room to grow) -----------
 
     /**
-     * The shop-fitting pass — MODERN dressing that drops a villager job-site block (cartography table
-     * for a map seller, fletching table for a fletcher, …) on the ground floor of a classified shop, so
-     * a store reads as its trade and a villager can claim the profession. {@code enabled} turns it on.
-     * Off by default; MODERN ships it on. The classification itself (see the {@code api} package /
-     * {@code /cityinfo}) is always computed — this only governs the block placement.
-     */
-    /**
-     * The subway: a station under every urban district, joined to its neighbours' stations by twin-track
-     * tunnels (see {@code Support/Subway}). Its own group because {@code Features} is at the codec's
+     * The subway: a station under every urban district, joined by twin-track tunnels to the first
+     * station each way along its row and column, up to six districts off (see {@code Support/Subway}). Its own group because {@code Features} is at the codec's
      * sixteen-field cap. {@code spawners} puts the sewer mob bag's spawners in the tunnels.
      */
     public record Subways(boolean enabled, boolean spawners) {
@@ -285,6 +278,14 @@ public record CityWorldSettingsData(
         ).apply(i, Subways::new));
     }
 
+    /**
+     * The shop-fitting pass — MODERN dressing that drops a villager job-site block (cartography table
+     * for a map seller, fletching table for a fletcher, …) on the ground floor of a classified shop, so
+     * a store reads as its trade and a villager can claim the profession. {@code enabled} turns it on.
+     * Off by default; MODERN ships it on. The classification itself (see the {@code api} package /
+     * {@code /cityinfo}) is always computed — this only governs the block placement. {@code malls}:
+     * shopping malls at the edge of town (modern-family only; on by default, independent of the rest).
+     */
     public record Shops(boolean enabled, boolean malls) {
 
         public static final Shops DEFAULT = new Shops(false, true);
@@ -473,7 +474,7 @@ public record CityWorldSettingsData(
         /**
          * Which landmark kinds may chat-announce when {@code broadcastSpecialPlaces} is on — the genuine
          * rares by default; a server owner can widen or narrow the list per world. Known keys:
-         * {@code airship, saucer, vault, zoo, biodome, hospital, schematic} (default on) and
+         * {@code airship, saucer, vault, zoo, biodome, hospital, schematic, mall} (default on) and
          * {@code castle, oilplatform, radiotower, bunker, museum, mineentrance, campground, shack,
          * balloon, fishpond, vaultroad, hospitaldept, subway} (default off). Everything always logs at debug.
          */

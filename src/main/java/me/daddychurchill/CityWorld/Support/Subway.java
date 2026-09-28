@@ -13,7 +13,8 @@ import me.daddychurchill.CityWorld.compat.Material;
 
 /**
  * The subway (a commenter's idea, via the owner, 2026-09-26): a station under every urban district, and
- * twin-track tunnels from each station to its neighbours' stations. Two things make it plannable without
+ * twin-track tunnels from each station to the first station each way along its row and column, up to
+ * {@link #REACH} districts off. Two things make it plannable without
  * the planner ever looking past its own platmap:
  *
  * <ol>
@@ -22,10 +23,11 @@ import me.daddychurchill.CityWorld.compat.Material;
  *     buildings fill in — beside a road, inside the platmap's interior (plat 1..8 both ways, so the jog
  *     column below is never the station's own). Where it went is recorded on the platmap.</li>
  * <li><b>Every tunnel chunk is a pure function of two stations.</b> The link from a station {@code A}
- *     in platmap {@code P} to the station {@code B} in the platmap east of it runs east along A's row to
- *     P's last column, jogs north or south along that column to B's row, and runs east into B. A link to
- *     the platmap south runs the same way on the other axis. So a chunk asks: where is my platmap's
- *     station, and where are the four neighbours' ({@link #at}) — and nothing else. Planning a platmap
+ *     in platmap {@code P} to {@code B}, the first station east of it, runs east along A's row to the
+ *     column just before B's platmap, jogs north or south along that column to B's row, and runs east
+ *     into B. A link south runs the same way on the other axis. So a chunk asks: where is my platmap's
+ *     station, and where is the first station each way along the row and column ({@link #at}) — and
+ *     nothing else; a platmap with no station of its own carries the lines passing through it. Planning a platmap
  *     never asks its neighbours (that would be planning inside planning); drawing a chunk may, and does.</li>
  * </ol>
  *
@@ -38,8 +40,10 @@ import me.daddychurchill.CityWorld.compat.Material;
  * round, so a cave or mine that crosses is closed off, and the mines are kept out of the band by
  * {@link #blocksMines}): a straight is a 6-wide bed with the two tracks, a bend curves both tracks
  * (outer-with-outer, so they never cross), the station hall is the bed flanked by platforms with the
- * chunk on either side along the line widened into platform too, and the tunnels are lit, ringed in
- * brick every four blocks, and boosted with powered rails so a cart actually runs. An APOCALYPSE world
+ * chunk on either side along the line widened into platform too, and the tunnels take the road tunnels'
+ * arch in white tile, lit in the crown, a glowing rod along each wall, with powered rails so a cart
+ * actually runs. An interchange with one line each way joins its two dead ends in a sloped loop
+ * ({@link Ramp}). An APOCALYPSE world
  * ruins it: dark lamps, missing rails, standing water, sewer-bag spawners in wall niches.
  */
 public final class Subway {
@@ -47,9 +51,9 @@ public final class Subway {
     private Subway() {
     }
 
-    /** Floor of the east-west level below street level: the rise to the ticket hall is 24, six zigzag pairs. */
+    /** Floor of the east-west level below street level: the rise to the ticket hall is 24: three pairs of four-step flights. */
     public static final int EW_DEPTH = 24;
-    /** Floor of the north-south level: eight below the other, two pairs of stairs, one block of rock between. */
+    /** Floor of the north-south level: eight below the other, two pairs of the interchange's two-step flights; its ceiling slab lies directly under the upper floor. */
     public static final int NS_DEPTH = 32;
     /** Air above a floor slab; the ceiling slab sits at floor + HEIGHT + 1. (Six: the owner asked for a block
      *  taller than the first cut, with the road tunnels' arched profile.) */
@@ -156,7 +160,8 @@ public final class Subway {
      * What one chunk carries. {@code ewMask}/{@code nsMask} are the open sides (N/S/E/W bits) of the
      * piece on each level, 0 for none. A station always has an east-west hall (both ends closed if it has
      * no link that way); {@code ewWide}/{@code nsWide} say which of that hall's two ends open into a
-     * widened platform chunk rather than a plain tunnel; {@code platform} marks that widened chunk.
+     * widened platform chunk rather than a plain tunnel; {@code ewPlatform}/{@code nsPlatform} mark that
+     * widened chunk; {@code ramp} is set on a chunk of an interchange's loop (null otherwise).
      */
     public record Piece(int ewMask, int nsMask, boolean station, int ewWide, int nsWide, boolean ewPlatform,
             boolean nsPlatform, Ramp ramp) {
@@ -820,11 +825,12 @@ public final class Subway {
      * A switchback stair in a 4x4 shaft whose corner is {@code (x0, z0)}: two 2-wide lanes side by side,
      * flights running along x ({@code alongX}) or z. Each pair of flights is a landing, two steps, a
      * landing, then the same back in the other lane — four of rise per pair, so the rise from
-     * {@code standBottom} to {@code standTop} (the heights you stand at) must be a multiple of four, and
-     * with an even number of pairs you enter and leave in the same lane at the same end
-     * ({@code entryPositive}: the far end of the along axis). {@code bottomDoor}/{@code topDoor} say
-     * which wall is opened there: the end wall, or a long side beside the landing (the interchange stair
-     * arrives on a platform that runs across it). Walls all round, from the floor below to the top.
+     * {@code standBottom} to {@code standTop} (the heights you stand at) must be a multiple of four; every
+     * pair comes back to the entry end ({@code entryPositive}: the far end of the along axis).
+     * {@code bottomDoor}/{@code topDoor} say which wall is opened there: the end wall, or a long side beside
+     * the landing. An ACROSS door also picks which lane is the landing lane; the interchange's top is
+     * railed afterwards by {@code SubwayStationLot.interchangeRails}, which closes that side and lets out
+     * over the shaft's end onto the platform edge. Walls all round, from the floor below to the top.
      */
     public static void zigzag(RealBlocks chunk, int x0, int z0, boolean alongX, boolean entryPositive, int standBottom,
             int standTop, int wallsFrom, Door bottomDoor, Door topDoor) {
