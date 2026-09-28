@@ -1,5 +1,23 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Resume here — the interchange loop (2026-09-28, `2821e80c`)
+
+**Owner** (screenshot of an interchange whose two halls both end in buffers, one above the other): *"when two
+terminating subway stations join like this, can they instead use sloped tracks to join the two tracks into a
+corner bend."* A single corner cannot do it: the lower hall runs under the SAME chunk at right angles, so the
+upper line has to go out past its end and come back — three chunks round the station's corner (out, across,
+back), every one a bend turning the same way, so the two tracks never cross (outer-with-outer, as `rails`).
+`Subway.Ramp` per chunk: the side at the upper end, the lower, the drop at the upper edge, and how many sloped
+rails each arm carries — 1+2, 1+1, 2+1 = the eight blocks between the levels. **Sloped rails cannot curve**, so
+the descent is on each bend's straight arms (cells 1..r from an edge; the edge cell and the centre square stay
+level); the tunnel is built as a 3-D solid of interior cells over a per-column floor and lined around it, so
+the stepped floor and ceiling are sealed like the rest. Sloped rails are powered over redstone (a cart climbs
+back up); plain in a ruin. Planned only when the station has exactly one line each way and the three chunks
+are not a road crossing (roundabout centres dig through the band), a bunker/vault, or under-roofed ground —
+they are always inside the station's own platmap, where only that station's own links run. Self-test: 90 loop
+chunks (30 loops) on the fixed seed, every side answered (a ramp side is answered by any level), rails read
+back; `region_slice.py` sections showed each step of the descent and the lower hall's buffers gone.
+
 ## ▶ Resume here — mall lighting and walls, dead lights, aquarium fish (2026-09-28)
 
 **Owner:** *"new ones looking good, nearly there — parking works, wings work, pet shop fixed, stairs OSHA approved.
