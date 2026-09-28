@@ -23,6 +23,17 @@ where a lantern hung) and half the atrium's lanterns are gone. *"Fish in the fis
 finalize-spawn, and marked from-a-bucket (`Bucketable.setFromBucket`, set in `placeEntity` behind a thread-local
 flag) so they never despawn. Self-test readback now counts hung lanterns, frames, paintings, fish and shelves.
 
+**Then:** *"can leather armour take trims? … the latest fashions — jeweller needs rare diamonds."* Leather in the
+fashion/department frames is dressed by `Support/Fashion` (a dye from ten colours, a trim from sixteen patterns ×
+ten materials); the chests' leather comes from 16 pre-dressed variants in `gen_mall_tables.py`, which now takes a
+dialect per line — `1.20` (set_nbt `{Trim:{…},display:{color:n}}`), `1.21.1` (set_components, `dyed_color`
+`{"rgb":n}`), `1.21.5` (1.21.11/26.1/26.2: `dyed_color` a plain int — proved: the `{"rgb"}` form makes the
+server log "Couldn't parse data file 'cityworld:chests/mall_fashion'"), `26.3`. Jeweller: a second pool, one or
+two diamonds in ~1 case in 10, and a diamond block among the display pieces (~1 in 12).
+**1.20.1 found in passing:** PaintingVariant sizes are PIXELS there (kebab is 16×16), blocks from 1.21 — the
+"1×1 only" filter asked for 1, so that line never hung a painting, in malls or building interiors (fixed on the
+branch only: `== 16`). Found by reading a probe's saved entities (672 frames, 0 paintings).
+
 ## ▶ Resume here — bigger malls in wings, the first mall playtest, and API for ZARP (2026-09-27 night)
 
 **Owner, on finding his first mall:** *"love it — just a few extras on top of making them bigger."* Everything below

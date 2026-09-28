@@ -25,7 +25,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   used to be buried in the floor above); each shop shows its goods in item frames and, on versions with
   shelves, on shelves of its stock; the art shop hangs paintings, and so do the passages between wings. In
   APOCALYPSE most of the lights are dead — dark malls, for the zombies. Pet-shop tanks have tropical fish in
-  them, kept for good.
+  them, kept for good. The fashion shop sells this season's leather — dyed and trimmed, on the walls and in
+  the chests — and the jeweller keeps the odd diamond.
 - **API: street level and the subway.** `LotInfo` carries the street level and whether a subway runs under
   the chunk; `CityWorldAPI.streetLevel`, `isSubway` and `subwayAt` (station, which lines, and the heights of
   both levels) — so a pack can tell a sewer from a subway tunnel from a mine by depth.
