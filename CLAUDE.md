@@ -38,22 +38,19 @@ logos/descriptions); the owner won't fight it. `modrinth.yml`'s `release:` trigg
 **NEXT: nothing queued** — the owner's playtest is the queue. PORTING.md "▶ Resume here" sections carry the
 subway, mall and vault designs and the playtest rounds that shaped them.
 
-## ▶ Before that (2026-09-26, afternoon)
+## ▶ The subway, in one breath (shipped in 5.15.0)
 
-**UNRELEASED on master + all five branches, self-tested, awaiting the owner's playtest: the subway and the
-vault-by-depth** (PORTING.md "▶ Resume here — the subway, and the vault by depth" has the design and the
-measurements). Master `1769938c` (vault) + `71f8441f` (subway); the branches carry both cherry-picked and
-compiling (`gen_vault_floor_tables.py` re-run per dialect on 1.20.1 and 26.3). **The subway in one breath:**
-a `SubwayStationLot` per urban platmap (claimed first, beside a road, off the road lines 2/7), and every
-tunnel chunk a pure function of two stations (`Subway.at`) — east-west lines 24 under the street, north-south
-32, so lines never junction and a station on both is an interchange. **Planning never looks at a neighbour
-platmap; drawing does** (`stationNear` → `getPlatMap` at decoration time only). Modern-family only; a new
-`subways` settings group because `Features` is at the 16-field cap. What he should look at: a station's
-ticket hall (white tile, colour stripe, the name over the door), the switchback stairs, the platforms, a ride
-in a minecart between two stations, a bend, an interchange; and whether one station per district is too many.
-The ASCII slicer that read the world back is at `scratchpad/slice.py` in this session — worth adopting as
-`scripts/region_slice.py` (plan / x-section / z-section of a saved region as characters; it found the mine
-lift dropping through the upper hall in one look).
+A `SubwayStationLot` per urban platmap (claimed first, beside a road, off the road lines 2/7), and every tunnel
+chunk a pure function of two stations (`Subway.at`) — east-west lines 24 under the street, north-south 32, so
+lines never junction and a station on both is an interchange; an interchange with one line each way joins its
+dead ends in a three-chunk sloped loop (`Subway.Ramp`; sloped rails only on a bend's straight arms). Links reach
+the first station up to `REACH` (6) platmaps away. **Planning never looks at a neighbour platmap; drawing does**
+(`stationNear` → `getPlatMap` at decoration time only). Modern-family only; its own `subways` settings group
+because `Features` is at the 16-field cap. `scripts/region_slice.py` (plan / x-section / z-section of a saved
+region as characters) is how its shape was read back — and how the owner's hand fixes in his save are diffed
+against a regenerated chunk of the same seed.
+
+## ▶ Before that
 
 **v5.14.0 is released** (2026-09-25 evening) on all six lines — tag `v5.14.0` (`1513c89c`), GitHub release
 with six jars, CurseForge files 8974359–8974364, Modrinth `XouovttV gH5dPP55 RE5TKg5L QFtsFBcV SS1UebU3
@@ -63,8 +60,7 @@ known-positive jar exists any more** (both 5.8.0 jars on disk were rebuilt after
 (LegendQuest ZARP, 26.2; its own Claude session) takes only released CurseForge jars and was told.
 
 **NEXT: nothing queued.** The owner's playtest is the queue, as always. Ideas parked, none asked for yet:
-the vault worsening floor by floor (ZARP's heads-up: loot, spawners, broken lights by depth, with a
-per-floor loot hook); cavern density (he called the shipped density a pass); the capability tier of
+cavern density (he called the shipped density a pass); the capability tier of
 `ContainerLoot` is per-loader (transfer API on 21.11/26.x, `IItemHandler` on 1.21.1, Forge caps on 1.20.1)
 and grows with every new loader API.
 
