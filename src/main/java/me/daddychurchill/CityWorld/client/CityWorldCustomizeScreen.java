@@ -300,7 +300,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, chance("Beings", spawnBeings, v -> spawnBeings = v));
         pair(row, chance("Baddies", spawnBaddies, v -> spawnBaddies = v));
         pair(row, chance("Animals", spawnAnimals, v -> spawnAnimals = v));
-        pair(row, chance("Vagrants", spawnVagrants, v -> spawnVagrants = v));
+        pair(row, chance("Wanderers", spawnVagrants, v -> spawnVagrants = v)); // key stays spawnVagrants
         pair(row, onOff("Name villagers", nameVillagers, v -> nameVillagers = v));
         pair(row, onOff("Show villager names", showVillagersNames, v -> showVillagersNames = v));
         flush(row);
