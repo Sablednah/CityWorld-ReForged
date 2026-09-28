@@ -11,6 +11,7 @@ import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.compat.BlockFace;
 import me.daddychurchill.CityWorld.compat.Material;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 
 /**
@@ -104,6 +105,50 @@ public final class Mall {
         }
     }
 
+    /** What each kind of shop shows in its item frames: its own goods, vanilla items that exist from 1.20.1 on. */
+    static final java.util.Map<Kind, net.minecraft.world.item.Item[]> GOODS = goods();
+
+    private static net.minecraft.world.item.Item[] of(net.minecraft.world.item.Item... items) {
+        return items;
+    }
+
+    private static java.util.Map<Kind, net.minecraft.world.item.Item[]> goods() {
+        java.util.EnumMap<Kind, net.minecraft.world.item.Item[]> m = new java.util.EnumMap<>(Kind.class);
+        m.put(Kind.MUSIC, of(Items.MUSIC_DISC_CAT, Items.MUSIC_DISC_13, Items.MUSIC_DISC_BLOCKS, Items.MUSIC_DISC_MALL,
+                Items.MUSIC_DISC_CHIRP, Items.MUSIC_DISC_FAR, Items.NOTE_BLOCK, Items.GOAT_HORN));
+        m.put(Kind.FLORIST, of(Items.POPPY, Items.DANDELION, Items.CORNFLOWER, Items.ALLIUM, Items.OXEYE_DAISY, Items.RED_TULIP,
+                Items.AZURE_BLUET, Items.LILY_OF_THE_VALLEY));
+        m.put(Kind.FASHION, of(Items.LEATHER_HELMET, Items.LEATHER_CHESTPLATE, Items.LEATHER_LEGGINGS, Items.LEATHER_BOOTS,
+                Items.GOLDEN_HELMET, Items.WOOL.pick(net.minecraft.world.item.DyeColor.PINK), Items.BANNER.pick(net.minecraft.world.item.DyeColor.WHITE)));
+        m.put(Kind.HARDWARE, of(Items.IRON_PICKAXE, Items.IRON_AXE, Items.IRON_SHOVEL, Items.IRON_HOE, Items.SHEARS, Items.BUCKET,
+                Items.FLINT_AND_STEEL, Items.LANTERN));
+        m.put(Kind.GROCER, of(Items.APPLE, Items.BREAD, Items.CARROT, Items.POTATO, Items.MELON_SLICE, Items.BEETROOT,
+                Items.SWEET_BERRIES, Items.EGG));
+        m.put(Kind.BAKERY, of(Items.BREAD, Items.CAKE, Items.COOKIE, Items.PUMPKIN_PIE, Items.WHEAT));
+        m.put(Kind.CAFE, of(Items.COOKIE, Items.HONEY_BOTTLE, Items.MILK_BUCKET, Items.COCOA_BEANS, Items.PUMPKIN_PIE));
+        m.put(Kind.BOOKS, of(Items.BOOK, Items.WRITABLE_BOOK, Items.MAP, Items.FEATHER, Items.PAPER, Items.BOOKSHELF));
+        m.put(Kind.TOYS, of(Items.FIREWORK_ROCKET, Items.SNOWBALL, Items.SLIME_BALL, Items.CARROT_ON_A_STICK, Items.SPYGLASS,
+                Items.NAME_TAG, Items.BELL));
+        m.put(Kind.PETS, of(Items.LEAD, Items.NAME_TAG, Items.BONE, Items.COD, Items.TROPICAL_FISH_BUCKET, Items.SADDLE,
+                Items.WHEAT_SEEDS));
+        m.put(Kind.JEWELLER, of(Items.GOLD_INGOT, Items.EMERALD, Items.DIAMOND, Items.AMETHYST_SHARD, Items.CLOCK,
+                Items.GOLDEN_APPLE, Items.GOLD_NUGGET));
+        m.put(Kind.ELECTRONICS, of(Items.REDSTONE, Items.REPEATER, Items.COMPARATOR, Items.CLOCK, Items.COMPASS, Items.SPYGLASS,
+                Items.REDSTONE_TORCH));
+        m.put(Kind.SPORTS, of(Items.BOW, Items.ARROW, Items.FISHING_ROD, Items.CROSSBOW, Items.SHIELD, Items.SADDLE));
+        m.put(Kind.PHARMACY, of(Items.GLASS_BOTTLE, Items.GLISTERING_MELON_SLICE, Items.GOLDEN_CARROT, Items.HONEY_BOTTLE,
+                Items.SPIDER_EYE, Items.SUGAR));
+        m.put(Kind.FURNITURE, of(Items.PAINTING, Items.ITEM_FRAME, Items.LANTERN, Items.BED.pick(net.minecraft.world.item.DyeColor.WHITE), Items.FLOWER_POT, Items.CANDLE));
+        m.put(Kind.GIFTS, of(Items.CANDLE, Items.DECORATED_POT, Items.FLOWER_POT, Items.FIREWORK_ROCKET, Items.NAME_TAG,
+                Items.DYE.pick(net.minecraft.world.item.DyeColor.PINK)));
+        m.put(Kind.ART, of(Items.DYE.pick(net.minecraft.world.item.DyeColor.RED), Items.DYE.pick(net.minecraft.world.item.DyeColor.BLUE), Items.DYE.pick(net.minecraft.world.item.DyeColor.YELLOW), Items.DYE.pick(net.minecraft.world.item.DyeColor.GREEN), Items.BRUSH, Items.PAINTING,
+                Items.INK_SAC));
+        m.put(Kind.DEPARTMENT, of(Items.LEATHER_CHESTPLATE, Items.CLOCK, Items.COMPASS, Items.LANTERN, Items.BOOK, Items.CANDLE,
+                Items.GOLDEN_HELMET));
+        m.put(Kind.KIOSK, of(Items.COOKIE, Items.BREAD));
+        return m;
+    }
+
     private static final Kind[] SHOP_KINDS = { Kind.MUSIC, Kind.FLORIST, Kind.FASHION, Kind.FASHION, Kind.HARDWARE,
             Kind.GROCER, Kind.BAKERY, Kind.CAFE, Kind.CAFE, Kind.BOOKS, Kind.TOYS, Kind.PETS, Kind.JEWELLER,
             Kind.ELECTRONICS, Kind.SPORTS, Kind.PHARMACY, Kind.FURNITURE, Kind.GIFTS, Kind.ART };
@@ -136,11 +181,15 @@ public final class Mall {
     final String shape;
     final Material wall, band, trim, tile1, tile2;
     final long seed;
+    final boolean ruined; // APOCALYPSE: most of the lights are dead
+    final CityWorldGenerator generator;
     final List<Wing> wings = new ArrayList<>();
 
     private Mall(CityWorldGenerator generator, String shape, Odds odds) {
         this.shape = shape;
         this.street = generator.streetLevel;
+        this.ruined = generator.isApocalypseStyle();
+        this.generator = generator;
         this.seed = odds.getRandomLong();
         this.floors = 2 + odds.getRandomInt(2);
         this.name = PLACES[odds.getRandomInt(PLACES.length)] + " " + MALL_WORDS[odds.getRandomInt(MALL_WORDS.length)];
@@ -502,6 +551,7 @@ public final class Mall {
      * joins has no apron ({@code eC0}/{@code eC1} = 0), so the two walls stand back to back.
      */
     final class Wing {
+        final CityWorldGenerator generator = Mall.this.generator;
         final int chunkX0, chunkZ0, lenChunks, widthChunks;
         final boolean alongX, open0, open1;
         final int L, C, eA0, eA1, eC0, eC1;
@@ -853,6 +903,140 @@ public final class Mall {
             for (Kiosk q : kiosks)
                 kiosk(k, q);
             exterior(k);
+            lighting(k);
+            walls(k);
+        }
+
+        /**
+         * Ceiling lights, drawn after everything else. A floor's ceiling is the next floor's slab, which is
+         * drawn after the floor below it, so lights set into it were paved over on every floor but the top —
+         * the "dark shops", and the lights that showed only where a wall happened to stand above. On the top
+         * floor a light sits flush in the roof; below that it is a lantern hung under the slab.
+         */
+        private void lighting(Canvas k) {
+            int stairC = C - 3 - eC1;
+            for (int f = 0; f < floors; f++) {
+                for (int a = aIn0(); a <= aIn1(); a++)
+                    for (int c = eC0 + 1; c <= C - 2 - eC1; c++) {
+                        boolean atrium = a >= aA0 && a <= aA1 && c >= cA0 && c <= cA1;
+                        boolean walk = !atrium && a > aFront1 && a < aFront2 && c > cF1 && c < cF2;
+                        if (walk && (a + 2 * c) % 6 == 0)
+                            light(k, a, c, f);
+                    }
+                for (Unit u : units) {
+                    if (u.floor != f)
+                        continue;
+                    int front = u.side == 0 ? cF1 : cF2, back = u.side == 0 ? eC0 + 1 : C - 2 - eC1;
+                    int dir = u.side == 0 ? -1 : 1, depth = Math.abs(back - front);
+                    for (int a = u.a0 + 1; a <= u.a1 - 1; a += 3)
+                        for (int v = 2; v < depth; v += 4)
+                            light(k, a, front + dir * v, f);
+                }
+                for (int e = 0; e < 2; e++) {
+                    if (anchors[e] == null)
+                        continue;
+                    int front = e == 0 ? aFront1 : aFront2, outer = e == 0 ? eA0 : L - 1 - eA1;
+                    for (int a = Math.min(front, outer) + 2; a <= Math.max(front, outer) - 2; a += 4)
+                        for (int c = eC0 + 3; c < stairC - 1; c += 4)
+                            light(k, a, c, f);
+                }
+                for (int[] l : links) {
+                    int c0 = l[0] == 0 ? 0 : cF2, c1 = l[0] == 0 ? cF1 : C - 1;
+                    for (int c = c0 + 2; c <= c1 - 2; c += 3)
+                        light(k, (l[1] + l[2]) / 2, c, f);
+                }
+            }
+        }
+
+        /**
+         * One ceiling light. In a ruined world three in four are dead, which the owner asked for because a dark
+         * mall is a mall the zombies spawn in: a dead bulb in the roof, or a bare chain (or nothing) where a
+         * lantern hung.
+         */
+        private void light(Canvas k, int a, int c, int f) {
+            int h = (worldX(a, c) * 73856093) ^ (worldZ(a, c) * 19349663) ^ (f * 83492791);
+            boolean dead = ruined && Math.floorMod(h, 4) != 0;
+            if (f == floors - 1) {
+                k.set(a, c, roofY(), dead ? Material.COPPER_BULB : Material.SEA_LANTERN);
+                return;
+            }
+            int y = floorY(f) + H - 1;
+            if (!k.empty(a, c, y) || k.empty(a, c, y + 1))
+                return;
+            if (!dead)
+                k.hanging(a, c, y);
+            else if (Math.floorMod(h >> 3, 2) == 0)
+                k.set(a, c, y, Material.IRON_CHAIN);
+        }
+
+        /**
+         * The walls: in every shop, its goods in item frames at eye height along both side walls and the back
+         * wall, every other cell a shelf of its stock where the version has a shelf block; the art shop hangs
+         * paintings as well. Paintings along the link corridors, paintings and frames on the anchor stores' outer
+         * walls. Entities go last, after every block they could collide with.
+         */
+        private void walls(Canvas k) {
+            for (Unit u : units) {
+                int y = floorY(u.floor) + 3; // eye height, above the shelving
+                int front = u.side == 0 ? cF1 : cF2, back = u.side == 0 ? eC0 + 1 : C - 2 - eC1;
+                int dir = u.side == 0 ? -1 : 1, depth = Math.abs(back - front);
+                Odds odds = new Odds(u.seed ^ 0x5eedL);
+                for (int v = 2; v <= depth - 3; v += 2) {
+                    decor(k, u, u.a0, front + dir * v, y, minusA(), odds, v);
+                    decor(k, u, u.a1, front + dir * v, y, plusA(), odds, v + 1);
+                }
+                for (int a = u.a0 + 1; a <= u.a1 - 1; a += 2)
+                    decor(k, u, a, front + dir * depth, y, dir < 0 ? minusC() : plusC(), odds, a);
+            }
+            for (int f = 0; f < floors; f++) {
+                int y = floorY(f) + 3;
+                Odds odds = new Odds(seed ^ (f * 7919L));
+                for (int[] l : links) {
+                    int c0 = l[0] == 0 ? 1 : cF2 + 1, c1 = l[0] == 0 ? cF1 - 1 : C - 2;
+                    for (int c = c0 + 1; c <= c1 - 1; c += 3) {
+                        paint(k, l[1], c, y, minusA(), odds);
+                        paint(k, l[2], c, y, plusA(), odds);
+                    }
+                }
+                for (int e = 0; e < 2; e++) {
+                    if (anchors[e] == null)
+                        continue;
+                    int outer = e == 0 ? eA0 : L - 1 - eA1, in = e == 0 ? 1 : -1;
+                    BlockFace wallSide = e == 0 ? minusA() : plusA();
+                    net.minecraft.world.item.Item[] goods = GOODS.get(anchors[e]);
+                    for (int c = eC0 + 3; c <= C - 6 - eC1; c += 3)
+                        if (odds.flipCoin())
+                            paint(k, outer + in, c, y, wallSide, odds);
+                        else if (goods != null)
+                            frame(k, outer + in, c, y, wallSide, goods[odds.getRandomInt(goods.length)]);
+                }
+            }
+        }
+
+        private void decor(Canvas k, Unit u, int a, int c, int y, BlockFace wallSide, Odds odds, int i) {
+            if (!k.in(a, c))
+                return;
+            if (u.kind == Kind.ART && i % 2 == 0) {
+                paint(k, a, c, y, wallSide, odds);
+                return;
+            }
+            Material shelf = FurnitureTags.pick(FurnitureTags.SHELF, new Odds(u.seed)); // one wood per shop
+            if (i % 2 == 1 && shelf != null && me.daddychurchill.CityWorld.Support.WallDecor.shelf(k.chunk, odds, k.lx(a, c), y,
+                    k.lz(a, c), wallSide, u.kind.lootTable(), shelf))
+                return;
+            net.minecraft.world.item.Item[] goods = GOODS.get(u.kind);
+            if (goods != null)
+                frame(k, a, c, y, wallSide, goods[odds.getRandomInt(goods.length)]);
+        }
+
+        private void paint(Canvas k, int a, int c, int y, BlockFace wallSide, Odds odds) {
+            if (k.in(a, c))
+                me.daddychurchill.CityWorld.Support.WallDecor.painting(k.chunk, odds, k.lx(a, c), y, k.lz(a, c), wallSide);
+        }
+
+        private void frame(Canvas k, int a, int c, int y, BlockFace wallSide, net.minecraft.world.item.Item item) {
+            if (k.in(a, c))
+                me.daddychurchill.CityWorld.Support.WallDecor.frame(k.chunk, k.lx(a, c), y, k.lz(a, c), wallSide, item);
         }
 
         /** The first and last column of the interior along the wing: an open end runs to the rectangle's edge. */
@@ -932,9 +1116,6 @@ public final class Mall {
                     if (f > 0 && walk && (a == aA0 - 1 || a == aA1 + 1 || c == cA0 - 1 || c == cA1 + 1)
                             && a >= aA0 - 1 && a <= aA1 + 1 && c >= cA0 - 1 && c <= cA1 + 1)
                         k.set(a, c, y + 1, Material.GLASS_PANE);
-                    // walkway ceiling lights
-                    if (walk && (a + 2 * c) % 6 == 0)
-                        k.set(a, c, y + H, Material.SEA_LANTERN);
                 }
             // the mall entrance corridors on the ground floor, through the shop band, on the outward sides
             if (f == 0)
@@ -975,8 +1156,6 @@ public final class Mall {
                     k.fill(a0, a1, y + 1, (f == floors - 1 ? top : floorY(f + 1)) - 1, c0, c1, Material.AIR);
                     k.fill(a0 - 1, a0 - 1, y + 1, y + H - 1, c0, c1, trim);
                     k.fill(a1 + 1, a1 + 1, y + 1, y + H - 1, c0, c1, trim);
-                    for (int a = a0 + 1; a < a1; a += 3)
-                        k.set(a, (c0 + c1) / 2, y + H, Material.SEA_LANTERN);
                 }
                 k.fill(a0 - 1, a1 + 1, top, top, c0, c1, Material.SMOOTH_STONE);
             }
@@ -1013,7 +1192,8 @@ public final class Mall {
             int top = roofY();
             for (int a = aA0 + 2; a <= aA1 - 2; a += 4) {
                 k.fill(a, a, top - 3, top, cm, cm, Material.IRON_CHAIN);
-                k.hanging(a, cm, top - 4);
+                if (!ruined || Math.floorMod(worldX(a, cm) * 31 + worldZ(a, cm) * 17, 2) == 0)
+                    k.hanging(a, cm, top - 4);
             }
         }
 
@@ -1165,10 +1345,6 @@ public final class Mall {
                 k.sign(u.a0 + 1, signC, stand + 3, outward, lines);
                 k.sign(u.a1 - 1, signC, stand + 3, outward, lines);
             }
-            // ceiling lights
-            for (int a = u.a0 + 1; a <= u.a1 - 1; a += 3)
-                for (int v = 2; v < depth; v += 4)
-                    k.set(a, front + dir * v, y + H, Material.SEA_LANTERN);
             fit(generator, k, u, stand, front, dir, depth);
         }
 
@@ -1247,8 +1423,6 @@ public final class Mall {
                     for (int c = eC0 + 1; c <= C - 2 - eC1; c++) {
                         k.set(a, c, y, kind == Kind.DEPARTMENT ? ((a + c) % 2 == 0 ? Material.POLISHED_DIORITE : Material.WHITE_CONCRETE)
                                 : kind.floor);
-                        if (a % 3 == 0 && c % 4 == 1)
-                            k.set(a, c, y + H, Material.SEA_LANTERN);
                     }
                 // display islands, clear of the stairs
                 for (int a = aMin + 2; a <= aMax - 2; a += 3)
@@ -1431,6 +1605,12 @@ public final class Mall {
         k.fill(a - 1, a + 2, stand + 1, stand + 2, c - 1, c + 1, Material.GLASS);
         k.fill(a, a + 1, stand + 1, stand + 2, c, c, Material.WATER);
         k.fill(a - 1, a + 2, stand + 3, stand + 3, c - 1, c + 1, Material.GLASS);
+        // and fish in it: one or two, kept for good
+        if (m.generator != null && k.in(a, c)) {
+            int n = 1 + odds.getRandomInt(2);
+            for (int i = 0; i < n; i++)
+                m.generator.spawnProvider.spawnAquariumFish(m.generator, k.chunk, odds, k.lx(a + i, c), stand + 1, k.lz(a + i, c));
+        }
     }
 
     /** Furniture: a showroom set from the furniture pools, vanilla beds and stairs where there are none. */

@@ -2354,7 +2354,7 @@ public final class CityWorldSelfTest {
         }
         var first = malls.entrySet().iterator().next();
         var mall = first.getKey();
-        int signs = 0, glass = 0, water = 0, containers = 0, tabled = 0, mallTabled = 0;
+        int signs = 0, glass = 0, water = 0, containers = 0, tabled = 0, mallTabled = 0, lanterns = 0, frames = 0, paintings = 0, fish = 0, shelves = 0;
         java.util.Set<String> names = new java.util.TreeSet<>();
         for (int[] c : first.getValue()) {
             LevelChunk chunk = server.submit(() -> level.getChunk(c[0], c[1])).join();
@@ -2366,7 +2366,17 @@ public final class CityWorldSelfTest {
                             glass++;
                         else if (state.is(net.minecraft.world.level.block.Blocks.WATER))
                             water++;
+                        else if (String.valueOf(BuiltInRegistries.BLOCK.getKey(state.getBlock())).endsWith("_shelf"))
+                            shelves++;
+                        else if (state.is(net.minecraft.world.level.block.Blocks.LANTERN)
+                                && state.getValue(net.minecraft.world.level.block.LanternBlock.HANGING))
+                            lanterns++;
                     }
+            var box = new net.minecraft.world.phys.AABB(c[0] * 16, plan.streetLevel, c[1] * 16, c[0] * 16 + 16,
+                    plan.streetLevel + mall.floors() * 6 + 4, c[1] * 16 + 16);
+            frames += server.submit(() -> level.getEntitiesOfClass(net.minecraft.world.entity.decoration.ItemFrame.class, box).size()).join();
+            paintings += server.submit(() -> level.getEntitiesOfClass(net.minecraft.world.entity.decoration.painting.Painting.class, box).size()).join();
+            fish += server.submit(() -> level.getEntities(net.minecraft.world.entity.EntityTypes.TROPICAL_FISH, box, e -> true).size()).join();
             for (BlockEntity entity : chunk.getBlockEntities().values()) {
                 if (entity instanceof SignBlockEntity sign) {
                     signs++;
@@ -2387,12 +2397,17 @@ public final class CityWorldSelfTest {
         report.put("mall.first", mall.name() + " (" + mall.shape() + ", " + first.getValue().size() + " chunks, " + mall.floors() + " floors, "
                 + mall.unitCount() + " units)");
         report.put("mall.first.readback", "signs=" + signs + " glass=" + glass + " water=" + water + " containers=" + containers
-                + " tabled=" + tabled + " mallTabled=" + mallTabled);
+                + " tabled=" + tabled + " mallTabled=" + mallTabled + " hungLanterns=" + lanterns + " frames=" + frames
+                + " paintings=" + paintings + " fish=" + fish + " shelves=" + shelves);
         report.put("mall.first.signs", names.toString());
         if (signs < 10)
             fail("the mall " + mall.name() + " has " + signs + " signs (every shop front carries its name)");
         if (water == 0)
             fail("the mall " + mall.name() + " has no fountain water");
+        if (lanterns == 0)
+            fail("the mall " + mall.name() + " has no lanterns hung under its lower ceilings -- the lighting pass is not running");
+        if (frames == 0)
+            fail("the mall " + mall.name() + " has no item frames on its shop walls -- the wall pass is not running");
         if (containers == 0 || mallTabled == 0)
             fail("the mall " + mall.name() + ": " + containers + " containers, " + mallTabled
                     + " with a mall shop's table -- the per-position loot path is not reaching them");
