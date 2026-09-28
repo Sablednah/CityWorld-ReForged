@@ -159,13 +159,57 @@ public final class Subway {
      * widened platform chunk rather than a plain tunnel; {@code platform} marks that widened chunk.
      */
     public record Piece(int ewMask, int nsMask, boolean station, int ewWide, int nsWide, boolean ewPlatform,
-            boolean nsPlatform) {
+            boolean nsPlatform, Ramp ramp) {
 
-        public static final Piece NONE = new Piece(0, 0, false, 0, 0, false, false);
+        public static final Piece NONE = new Piece(0, 0, false, 0, 0, false, false, null);
 
         public boolean any() {
-            return station || ewMask != 0 || nsMask != 0;
+            return station || ewMask != 0 || nsMask != 0 || ramp != null;
         }
+
+        /** The open sides of this chunk's ramp, 0 if it has none. */
+        public int rampMask() {
+            return ramp == null ? 0 : ramp.in() | ramp.out();
+        }
+    }
+
+    /**
+     * One chunk of the loop that joins an interchange's two dead ends (owner, 2026-09-28: "when two
+     * terminating subway stations join like this, can they instead use sloped tracks to join the two
+     * tracks into a corner bend"). A station with one east-west line and one north-south line had a
+     * buffer stop at the far end of each hall, one above the other. Instead the upper hall's dead end
+     * runs on round the three chunks beside the station's corner — out, across, back — and down the
+     * eight blocks between the levels, into the lower hall's dead end: a train through the station
+     * rather than two terminuses. Every piece of it is a bend, turning the same way, so the two tracks
+     * never cross; the descent is on the straight arms of each bend (sloped rails cannot curve), the
+     * centre square stays level for the curve.
+     *
+     * <p>{@code in} is the side at the upper end, {@code out} the lower; {@code top} how far below the
+     * upper level's floor the {@code in} edge is; {@code rIn}/{@code rOut} how many sloped rails each
+     * arm carries (a block of descent each).
+     */
+    public record Ramp(int in, int out, int top, int rIn, int rOut) {
+
+        /** How far below the upper level's floor the floor of column {@code (x, z)} lies. */
+        int drop(int x, int z) {
+            int i = fromEdge(in, x, z);
+            if (i < 5) // the upper arm: level at its edge, then a rail down per cell
+                return top + Math.min(i, rIn);
+            int j = fromEdge(out, x, z);
+            int bottom = top + rIn + rOut;
+            if (j < 5) // the lower arm: level at its edge and the cell inside it, then a rail up per cell
+                return bottom - Math.max(0, Math.min(j - 1, rOut));
+            return top + rIn;
+        }
+    }
+
+    /** Cells from the chunk edge on {@code side} to {@code (x, z)}. */
+    static int fromEdge(int side, int x, int z) {
+        return side == W ? x : side == E ? 15 - x : side == N ? z : 15 - z;
+    }
+
+    static int opposite(int side) {
+        return side == N ? S : side == S ? N : side == E ? W : E;
     }
 
     /**
@@ -270,6 +314,7 @@ public final class Subway {
         int ew = 0, ns = 0;
         boolean station = false;
         int[] east = null, west = null, south = null, north = null;
+        Ramp ramp = null;
         if (own != null) {
             // this platmap's station: its links out each way, if the far station is in reach and the route is good
             east = firstStation(generator, p, 0);
@@ -285,10 +330,18 @@ public final class Subway {
             if (north != null && !linkOk(generator, north, own, false))
                 north = null;
             station = chunkX == own[0] && chunkZ == own[1];
+            int[] loop = loopEnds(generator, p, own, (west != null ? W : 0) | (east != null ? E : 0),
+                    (north != null ? N : 0) | (south != null ? S : 0));
             if (station) {
                 ew = (west != null ? W : 0) | (east != null ? E : 0);
                 ns = (north != null ? N : 0) | (south != null ? S : 0);
+                if (loop != null) { // the dead ends open into the loop
+                    ew |= loop[0];
+                    ns |= loop[1];
+                }
             } else {
+                if (loop != null)
+                    ramp = rampAt(chunkX - own[0], chunkZ - own[1], loop[0], loop[1]);
                 if (east != null)
                     ew |= linkMask(chunkX, chunkZ, own, east, true);
                 if (west != null)
@@ -309,7 +362,7 @@ public final class Subway {
                     && linkOk(generator, n, s2, false))
                 ns = linkMask(chunkX, chunkZ, n, s2, false);
         }
-        if (!station && ew == 0 && ns == 0)
+        if (!station && ew == 0 && ns == 0 && ramp == null)
             return Piece.NONE;
 
         // the chunk either side of the station along a line is a platform if it is a plain straight there
@@ -319,14 +372,60 @@ public final class Subway {
         if (station) {
             if ((ew & W) != 0 && (west != null && linkMask(own[0] - 1, own[1], west, own, true) == (W | E)))
                 ewWide |= W;
-            if ((ew & E) != 0 && linkMask(own[0] + 1, own[1], own, east, true) == (W | E))
+            if ((ew & E) != 0 && east != null && linkMask(own[0] + 1, own[1], own, east, true) == (W | E))
                 ewWide |= E;
             if ((ns & N) != 0 && (north != null && linkMask(own[0], own[1] - 1, north, own, false) == (N | S)))
                 nsWide |= N;
-            if ((ns & S) != 0 && linkMask(own[0], own[1] + 1, own, south, false) == (N | S))
+            if ((ns & S) != 0 && south != null && linkMask(own[0], own[1] + 1, own, south, false) == (N | S))
                 nsWide |= S;
         }
-        return new Piece(ew, ns, station, ewWide, nsWide, ewPlatform, nsPlatform);
+        return new Piece(ew, ns, station, ewWide, nsWide, ewPlatform, nsPlatform, ramp);
+    }
+
+    /**
+     * The interchange's two dead ends, {@code {ewEnd, nsEnd}}, if its station should close them into a
+     * loop ({@link Ramp}): exactly one line each way, and the three chunks round the corner between
+     * the dead ends clear — never a road crossing (a roundabout's centre digs down through the band),
+     * a bunker or vault, or ground too low to roof the upper level. Those chunks are always inside the
+     * station's own platmap (it sits in plat 1..8), where no other line runs: a platmap with a station
+     * carries only that station's links, along its row and column, which the dead ends face away from.
+     */
+    private static int[] loopEnds(CityWorldGenerator generator, PlatMap p, int[] own, int ewOpen, int nsOpen) {
+        if (Integer.bitCount(ewOpen) != 1 || Integer.bitCount(nsOpen) != 1)
+            return null;
+        int e = opposite(ewOpen), n = opposite(nsOpen);
+        int dx = e == E ? 1 : -1, dz = n == S ? 1 : -1;
+        int top = ewFloor(generator) + HEIGHT + 4;
+        for (int[] d : new int[][] { { dx, 0 }, { dx, dz }, { 0, dz } }) {
+            int cx = own[0] + d[0], cz = own[1] + d[1];
+            int px = cx - p.originX, pz = cz - p.originZ;
+            if ((px == RoadLot.PlatMapRoadInset - 1 || px == PlatMap.Width - RoadLot.PlatMapRoadInset)
+                    && (pz == RoadLot.PlatMapRoadInset - 1 || pz == PlatMap.Width - RoadLot.PlatMapRoadInset))
+                return null;
+            PlatLot lot = p.getMapLot(cx, cz);
+            if (lot == null || lot instanceof me.daddychurchill.CityWorld.Plats.Nature.BunkerLot
+                    || lot instanceof me.daddychurchill.CityWorld.Plats.Nature.RoadThroughBunkerLot
+                    || lot instanceof me.daddychurchill.CityWorld.Plats.Nature.RoadThroughVaultLot
+                    || lot.getCachedYs() != null && lot.getCachedYs().getMinHeight() < top)
+                return null;
+        }
+        return new int[] { e, n };
+    }
+
+    /**
+     * The loop chunk at {@code (dx, dz)} from the station, closing dead ends {@code e} (east-west) and
+     * {@code n} (north-south): out past the upper hall's end, across the corner, and back into the lower
+     * hall's end, turning the same way each time. Eight of descent: 1+2, 1+1, 2+1 sloped rails.
+     */
+    private static Ramp rampAt(int dx, int dz, int e, int n) {
+        int ox = e == E ? 1 : -1, oz = n == S ? 1 : -1;
+        if (dx == ox && dz == 0)
+            return new Ramp(opposite(e), n, 0, 1, 2);
+        if (dx == ox && dz == oz)
+            return new Ramp(opposite(n), opposite(e), 3, 1, 1);
+        if (dx == 0 && dz == oz)
+            return new Ramp(e, opposite(n), 5, 2, 1);
+        return null;
     }
 
     /** {@code v} strictly past {@code from} on the way to {@code to}, up to and including {@code to}. */
@@ -353,6 +452,8 @@ public final class Subway {
                 hall(generator, chunk, odds, nsFloor(generator), false, piece.nsMask(), piece.nsWide(), stripe, ruined);
             return;
         }
+        if (piece.ramp() != null)
+            ramp(chunk, odds, ewFloor(generator), piece.ramp(), ruined);
         if (piece.ewMask() != 0) {
             if (piece.ewPlatform())
                 hall(generator, chunk, odds, ewFloor(generator), true, piece.ewMask(),
@@ -391,24 +492,7 @@ public final class Subway {
      * lights sit in the crown every four blocks (dark, some of them, in a ruin).
      */
     static void tunnel(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int floorY, int mask, boolean ruined) {
-        boolean[][][] inside = new boolean[HEIGHT + 2][16][16];
-        for (int dy = 1; dy <= HEIGHT; dy++) {
-            int l = lo(dy), h = hi(dy);
-            for (int x = l; x <= h; x++)
-                for (int z = l; z <= h; z++)
-                    inside[dy][x][z] = true;
-            for (int i = 0; i < l; i++)
-                for (int j = l; j <= h; j++) {
-                    if ((mask & W) != 0)
-                        inside[dy][i][j] = true;
-                    if ((mask & E) != 0)
-                        inside[dy][15 - i][j] = true;
-                    if ((mask & N) != 0)
-                        inside[dy][j][i] = true;
-                    if ((mask & S) != 0)
-                        inside[dy][j][15 - i] = true;
-                }
-        }
+        boolean[][][] inside = profile(mask);
         int ceilY = floorY + HEIGHT + 1;
         for (int dy = 0; dy <= HEIGHT + 1; dy++) {
             boolean[][] at = dy == 0 ? inside[1] : dy == HEIGHT + 1 ? inside[HEIGHT] : inside[dy];
@@ -438,6 +522,119 @@ public final class Subway {
         rails(chunk, odds, floorY, mask, ruined);
         if (ruined)
             ruin(generator, chunk, odds, floorY, mask, inside[1]);
+    }
+
+    /** The tunnel's interior at each height above the floor (1..HEIGHT): the arch, with an arm to each open side. */
+    static boolean[][][] profile(int mask) {
+        boolean[][][] inside = new boolean[HEIGHT + 2][16][16];
+        for (int dy = 1; dy <= HEIGHT; dy++) {
+            int l = lo(dy), h = hi(dy);
+            for (int x = l; x <= h; x++)
+                for (int z = l; z <= h; z++)
+                    inside[dy][x][z] = true;
+            for (int i = 0; i < l; i++)
+                for (int j = l; j <= h; j++) {
+                    if ((mask & W) != 0)
+                        inside[dy][i][j] = true;
+                    if ((mask & E) != 0)
+                        inside[dy][15 - i][j] = true;
+                    if ((mask & N) != 0)
+                        inside[dy][j][i] = true;
+                    if ((mask & S) != 0)
+                        inside[dy][j][15 - i] = true;
+                }
+        }
+        return inside;
+    }
+
+    /**
+     * A chunk of the loop between an interchange's dead ends ({@link Ramp}): the tunnel's arch and
+     * lining over a floor that steps down a block per sloped rail. Built as a solid of interior cells
+     * and lined around in three dimensions, so the stepped ceiling and floor are sealed like the rest.
+     * The sloped rails are powered, over redstone, so a cart climbs back up; a ruin's are plain.
+     */
+    static void ramp(RealBlocks chunk, Odds odds, int topFloor, Ramp r, boolean ruined) {
+        int mask = r.in() | r.out();
+        boolean[][][] prof = profile(mask);
+        int y0 = topFloor - (r.top() + r.rIn() + r.rOut()) - 1, y1 = topFloor - r.top() + HEIGHT + 2;
+        int ny = y1 - y0 + 1;
+        boolean[][][] in = new boolean[16][ny][16];
+        for (int x = 0; x < 16; x++)
+            for (int z = 0; z < 16; z++) {
+                int f = topFloor - r.drop(x, z);
+                for (int dy = 1; dy <= HEIGHT; dy++)
+                    if (prof[dy][x][z])
+                        in[x][f + dy - y0][z] = true;
+            }
+        for (int x = 0; x < 16; x++)
+            for (int k = 0; k < ny; k++)
+                for (int z = 0; z < 16; z++) {
+                    int y = y0 + k;
+                    if (in[x][k][z])
+                        chunk.setBlock(x, y, z, Material.AIR);
+                    else if (k + 1 < ny && in[x][k + 1][z])
+                        chunk.setBlock(x, y, z, BED);
+                    else if (k > 0 && in[x][k - 1][z])
+                        chunk.setBlock(x, y, z, SHELL);
+                    else if (near(in, x, k, z, 1, 0))
+                        chunk.setBlock(x, y, z, TILE);
+                    else if (near(in, x, k, z, 2, 1))
+                        chunk.setBlock(x, y, z, SHELL);
+                }
+        // lights in the crown: along each arm and over the curve
+        int[][] lamps = new int[][] { armCell(r.in(), 2), armCell(r.out(), 2), { 7, 7 }, { 8, 8 } };
+        for (int[] l : lamps) {
+            int x = l[0], z = l[1];
+            if (prof[HEIGHT][x][z])
+                chunk.setBlock(x, topFloor - r.drop(x, z) + HEIGHT + 1, z,
+                        ruined && Math.floorMod(chunk.sectionX * 7 + chunk.sectionZ * 13 + x + z, 5) < 3 ? DEAD_LIGHT : LIGHT);
+        }
+        // the tracks: the bend's two curves (see rails), each cell at its own floor, sloped on the arms
+        int a = mask & (W | E), b = mask & (N | S);
+        int zFar = b == S ? 6 : 9, zNear = 15 - zFar;
+        int xFar = a == W ? 9 : 6, xNear = 15 - xFar;
+        RailShape corner = a == W ? (b == S ? RailShape.SOUTH_WEST : RailShape.NORTH_WEST)
+                : (b == S ? RailShape.SOUTH_EAST : RailShape.NORTH_EAST);
+        for (int[] t : new int[][] { { xFar, zFar }, { xNear, zNear } }) {
+            int cx = t[0], cz = t[1];
+            for (int x = a == W ? 0 : 15; x != cx; x += a == W ? 1 : -1)
+                rampRail(chunk, odds, r, topFloor, x, cz, RailShape.EAST_WEST, ruined);
+            for (int z = b == S ? 15 : 0; z != cz; z += b == S ? -1 : 1)
+                rampRail(chunk, odds, r, topFloor, cx, z, RailShape.NORTH_SOUTH, ruined);
+            chunk.setBlock(cx, topFloor - r.drop(cx, cz) + 1, cz, Material.RAIL, corner, false);
+        }
+    }
+
+    /** One rail of a ramp: sloped where its arm descends (rising toward the higher neighbour), else {@code flat}. */
+    private static void rampRail(RealBlocks chunk, Odds odds, Ramp r, int topFloor, int x, int z, RailShape flat,
+            boolean ruined) {
+        int i = fromEdge(r.in(), x, z), j = fromEdge(r.out(), x, z);
+        RailShape shape = i >= 1 && i <= r.rIn() ? ascending(r.in())
+                : i >= 5 && j >= 1 && j <= r.rOut() ? ascending(opposite(r.out())) : null;
+        rail(chunk, odds, x, topFloor - r.drop(x, z), z, shape == null ? flat : shape, shape != null && !ruined, ruined);
+    }
+
+    private static RailShape ascending(int side) {
+        return side == N ? RailShape.ASCENDING_NORTH : side == S ? RailShape.ASCENDING_SOUTH
+                : side == E ? RailShape.ASCENDING_EAST : RailShape.ASCENDING_WEST;
+    }
+
+    /** The crown cell {@code d} in from the edge on {@code side}. */
+    private static int[] armCell(int side, int d) {
+        return side == W ? new int[] { d, 7 } : side == E ? new int[] { 15 - d, 8 }
+                : side == N ? new int[] { 8, d } : new int[] { 7, 15 - d };
+    }
+
+    /** Whether any interior cell lies within {@code r} across and {@code v} up or down of {@code (x, k, z)}. */
+    private static boolean near(boolean[][][] in, int x, int k, int z, int r, int v) {
+        for (int dx = -r; dx <= r; dx++)
+            for (int dk = -v; dk <= v; dk++)
+                for (int dz = -r; dz <= r; dz++) {
+                    int nx = x + dx, nk = k + dk, nz = z + dz;
+                    if (nx >= 0 && nx < 16 && nz >= 0 && nz < 16 && nk >= 0 && nk < in[0].length && in[nx][nk][nz])
+                        return true;
+                }
+        return false;
     }
 
     /** End rods laid end to end along the full chunk at {@code y}, on the two across lines given, pointing along. */
