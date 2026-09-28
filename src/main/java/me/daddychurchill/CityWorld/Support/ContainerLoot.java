@@ -135,6 +135,20 @@ public final class ContainerLoot {
         }
     }
 
+    /** A named table (e.g. a mall shop's) onto one placed container, if the table exists. */
+    public static boolean assignTableAt(RealBlocks chunk, int x, int y, int z, String table, Odds odds) {
+        try {
+            if (!(chunk.getServerLevel() instanceof WorldGenLevel level))
+                return false;
+            BlockPos pos = new BlockPos(chunk.getOriginX() + x, y, chunk.getOriginZ() + z);
+            BlockEntity entity = level.getBlockEntity(pos);
+            var key = ownTableOrNull(level, table);
+            return entity != null && key != null && assign(level, pos, entity, key, odds.getRandomLong());
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     private static boolean assign(WorldGenLevel level, BlockPos pos, BlockEntity entity, ResourceLocation key,
             long seed) {
         BlockState state = entity.getBlockState();

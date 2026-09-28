@@ -223,6 +223,23 @@ public class SpawnProvider extends Provider {
             spawnEntity(generator, blocks, odds, x, y, z, entity, inWater, !inWater);
     }
 
+    /** Set while placing an aquarium's fish, so {@link #placeEntity} marks them never to despawn. */
+    private static final ThreadLocal<Boolean> KEEP = ThreadLocal.withInitial(() -> false);
+
+    /**
+     * A tropical fish in an aquarium's water at (x, y, z): always placed (a shop's tank is stocked, it does not
+     * roll the animal chance), with its pattern from the normal spawn, and marked as if released from a bucket,
+     * which is vanilla's way of keeping a fish for good — a pet shop's fish must not despawn when you walk off.
+     */
+    public final void spawnAquariumFish(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z) {
+        KEEP.set(true);
+        try {
+            spawnEntity(generator, blocks, odds, x, y, z, EntityType.TROPICAL_FISH, true, false);
+        } finally {
+            KEEP.set(false);
+        }
+    }
+
     public final void spawnBeing(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z) {
         spawnBeing(generator, blocks, odds, x, y, z, itemsEntities_Goodies.getRandomEntity(odds),
                 itemsEntities_Baddies.getRandomEntity(odds));
@@ -431,6 +448,8 @@ public class SpawnProvider extends Provider {
                     MobSpawnType.CHUNK_GENERATION, null, null);
 
         being.setDeltaMovement(odds.getRandomVelocity());
+        if (KEEP.get() && being instanceof net.minecraft.world.entity.animal.Bucketable kept)
+            kept.setFromBucket(true);
 
         // employ a worker villager into its trade, and give it a role-themed name
         boolean employed = false;
