@@ -22,9 +22,12 @@ name: Publish to Modrinth
 #
 # Until the secret exists this workflow skips rather than fails, so it will not redden a release.
 
+# ⚠ The release trigger is OFF (owner's call, 2026-09-28): Modrinth rejected the projects under its rule
+# 6.1, and a release no longer publishes there. Restore the two commented lines below to turn it back on;
+# workflow_dispatch still works by hand.
 on:
-  release:
-    types: [published]
+  # release:
+  #   types: [published]
   workflow_dispatch:
     inputs:
       action:

@@ -118,7 +118,12 @@ generated city, more ground than New York City covers.
   buildings from houses to highrises, furnished inside; municipal, industrial and farm districts.
 - **Underground** — mine networks (with vertical lift shafts), wet sewers, bunkers, basements and
   cisterns, with loot chests and mob spawners. APOCALYPSE hides a rare Fallout-style vault complex —
-  multiple furnished levels behind a blast door — off the road tunnels through big mountains.
+  multiple furnished levels behind a blast door — off the road tunnels through big mountains, darker and
+  better-looted the deeper you go.
+- **Subway** (MODERN/APOCALYPSE) — a station in every urban district and twin-track tunnels between
+  stations near and far, on two levels with interchanges and powered track; a minecart runs the network.
+- **Shopping malls** (MODERN/APOCALYPSE) — rare, sprawling, at the edge of town: an atrium in wings,
+  escalators and lifts, dozens of named shops each with its own loot table, car parks out to the road.
 - **Inhabitants** — villagers (named, employed at their shop's trade), animals in the fields, fish in
   the seas, hostiles in the dark.
 - **Set-pieces** — oil platforms, castles, radio towers, flying saucers, hot-air balloons, campgrounds,

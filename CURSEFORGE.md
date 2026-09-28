@@ -13,6 +13,17 @@ screen.
 Battle-tested across **135 worlds and 3.2 million generated chunks** — over **830 km²** of procedurally
 generated city, more ground than New York City covers.
 
+**New in 5.15.0: a subway under the city, and shopping malls on its edge.** Every urban district now
+has a **station** — a ticket hall on the street, switchback stairs down to twin-track platforms — and
+**tunnels** join it to the stations of the districts round it, and on across the countryside to the next
+city: two levels, so the lines never cross, interchanges where they meet, powered track so a minecart
+runs the whole network. Out at the edge of town, rare and big, **shopping malls**: two or three storeys
+round a glass-roofed atrium, built in wings the way real shopping centres sprawl, with escalators, glass
+lifts, a fountain and food kiosks, dozens of named shops — music, fashion, pets, jeweller, art and more —
+each stocked and furnished for its trade with its own loot, and car parks out to the road. And the
+**vault gets worse the deeper you go**: darker, wetter, more spawners — and better loot at the bottom.
+Suggested by a commenter; ruined and dark, as you'd expect, in APOCALYPSE.
+
 **New in 5.14.0: caverns, loot everywhere, and the mods you asked for.** Rare **large caverns** now
 open astride the deepslate line — shelved, rough, natural, and room enough for a cave biome to be
 something. **Alex's Caves** joins the cave pool (five of its biomes, in its own rock, its own cave
@@ -67,6 +78,10 @@ Pick **CityWorld** as your world type and you land in a living city:
   their trade (cartography tables, fletching benches, looms, smokers…) and a hanging sign out front.
 - **Districts** — municipal civic centres, industrial factories/warehouses (with bunkers underneath),
   farms with animals and crops, and parks with **zoos and glass biodomes**.
+- **A subway** — a station in every district, stairs down to the platforms, and twin-track tunnels
+  between stations near and far, on two levels with interchanges; a minecart runs the line.
+- **Shopping malls** — rare, sprawling, at the edge of town: an atrium with balconies, escalators and
+  lifts, dozens of named shops with their own goods and loot, and car parks out to the road.
 - **Underground** — mine networks with copper-age fittings, ore veins that get richer with depth,
   cave-spider nests, hanging lanterns, and vertical lift shafts; wet sewers; bunkers and basements with
   loot and mob spawners.

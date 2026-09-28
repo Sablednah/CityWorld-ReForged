@@ -5,12 +5,12 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
-## Unreleased
+## 5.15.0
 
 ### Added
 
-- **Shopping malls.** Rare and big, at the edge of town: a two- or three-storey mall three or four chunks on a
-  side inside a ring of roads, with car parks filling the rest of the block and every lot across the road —
+- **Shopping malls.** Rare and big, at the edge of town: a two- or three-storey mall, three chunks or more on
+  a side, inside a ring of roads, with car parks filling the rest of the block and every lot across the road —
   painted bays, lamp posts, parked cars. Inside, a glass-roofed atrium runs the length of the mall between two
   anchor department stores, ringed by walkways that become balconies upstairs; a fountain, planters with trees,
   benches, sculptures and food kiosks on the atrium floor; glass lifts at two corners and escalators between
@@ -53,7 +53,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   An interchange with a single line each way no longer ends in two buffer stops, one above the other:
   the upper line runs on past its platform, round the three chunks beside the station's corner and down
   the eight blocks between the levels on powered sloped rails, into the lower platform's far end — a
-  train through the station rather than two terminuses.
+  train through the station rather than two terminuses. The interchange stair lets out onto the platform
+  edge, so the platform stays walkable past it (the playtest's fix).
 - **The vault worsens floor by floor** (the ZARP pack's heads-up). The entry level is as it was; each
   floor down has more lights dead (dark copper bulbs, then smashed sockets), corridor lanterns gone
   from their chains, more and worse wear — cobwebs, moss, crumbled floor, cracked walls, standing water
@@ -62,6 +63,11 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   its room's table plus `cityworld:chests/vault_floor<k>` — metal one down, gems two down, the real
   prizes at the bottom — and each of those ends in a `vault_floor<k>_extra` hook a pack can fill
   per floor. Pooled storage furniture on a deep floor rolls the floor's table too.
+
+### Changed
+
+- **"Vagrants" is now "Wanderers"** in Customize. The settings keys (`spawnVagrants`, the `vagrants` mob
+  list) keep their names, so existing worlds and datapacks are unaffected.
 
 ## 5.14.0
 

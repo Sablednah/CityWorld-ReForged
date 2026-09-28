@@ -307,6 +307,14 @@ Cave biomes bring their own mobs. The deep dark carries none at all, plus warden
 | Setting | Default | What it does |
 |---|---|---|
 | `enabled` | `false` | Villager job-site blocks so a store/farm reads as its trade (cartography table = map seller, fletching table = fletcher, smoker = butcher, ...), a composter at farm edges, and a rare fish-pond farm. The shop classification itself is always computed for `/cityinfo`; this only governs block placement. |
+| `malls` | `true` | Shopping malls (MODERN and APOCALYPSE): rare, at the edge of town, two or three storeys round a glass-roofed atrium, built in wings — a bar, L, T, U, Z or cross, up to eight chunks each way — with dozens of named shops, each with its own loot table (`chests/mall_<kind>`, each ending in an `_extra` hook), and car parks out to the road. Announced as the landmark kind `mall`. Independent of `enabled`. |
+
+### `subways` — a metro under the city (MODERN and APOCALYPSE; forced off elsewhere)
+
+| Setting | Default | What it does |
+|---|---|---|
+| `enabled` | `true` | A station in every urban district — a ticket hall beside a road, switchback stairs down to twin-track platforms 24 blocks under the street — and tunnels to the first station along its row or column up to six districts away, so lines cross the countryside between city clusters. East-west lines run on the upper level, north-south lines eight blocks lower, so lines never junction; a station on both is an interchange with stairs between its halls, and one with a single line each way joins them in a sloped loop instead of two dead ends. Lit, ringed in brick, powered rails so a cart runs the line. Stations announce as the landmark kind `subway` (off by default). |
+| `spawners` | `true` | In a ruined (APOCALYPSE) world, sewer-mob spawners in niches in the tunnel walls. |
 
 ### `spawns` — who turns up, and how often (odds `0.0`–`1.0`)
 
@@ -315,7 +323,7 @@ Cave biomes bring their own mobs. The deep dark carries none at all, plus warden
 | `spawnBeings` | `0.5` | Villagers/witches appearing in populated spots. |
 | `spawnBaddies` | `0.0476` | Hostile mobs at the surface. Raise for a rougher world. |
 | `spawnAnimals` | `0.667` | Farm/wild animals. |
-| `spawnVagrants` | `0.2` | Stray animals/people wandering the streets. |
+| `spawnVagrants` | `0.2` | **Wanderers** in Customize: strays out of town, on wild land and dirt roads. Hostile on a Baddies roll, or always in a ruined world. (The key keeps its old name.) |
 | `nameVillagers` | `true` | Give villagers generated names (see `naming`). |
 | `showVillagersNames` | `true` | Show those names as floating nametags. |
 
@@ -340,7 +348,7 @@ Cave biomes bring their own mobs. The deep dark carries none at all, plus warden
 | `ruralnessLevel` | `0.0` | Skews the world more rural (more nature, fewer cities) — up toward `1.0`. |
 | `maxBuildingFloors` | `20` | Tallest a building may rise, in floors (4 blocks each) above street level. 20 = the classic 1.8 look; MODERN ships taller. Sensible range 8–60. Also on the Customize screen. |
 | `broadcastSpecialPlaces` | `false` | Announce landmarks in chat as they generate ("Vault 42 generated near 1520, -340"), to the players in the world it happened in. Off by default — chunks generate wherever anyone explores. The same events always go to the debug log regardless. Schematics join in only if their `.yml` also sets `BroadcastLocation: true`. |
-| `announcedLandmarks` | the rares | Which landmark kinds may chat-announce (with the toggle above on). Default `["airship","saucer","vault","zoo","biodome","hospital","schematic"]`; a server can add `castle`, `oilplatform`, `radiotower`, `bunker`, `museum`, `mineentrance`, `campground`, `shack`, `balloon`, `fishpond` — or trim the list down. **With JourneyMap installed this list also decides which landmarks get a map waypoint**, and that happens whether or not chat announces are on. |
+| `announcedLandmarks` | the rares | Which landmark kinds may chat-announce (with the toggle above on). Default `["airship","saucer","vault","zoo","biodome","hospital","schematic","mall"]`; a server can add `castle`, `oilplatform`, `radiotower`, `bunker`, `museum`, `mineentrance`, `campground`, `shack`, `balloon`, `fishpond`, `subway` — or trim the list down. **With JourneyMap installed this list also decides which landmarks get a map waypoint**, and that happens whether or not chat announces are on. |
 
 #### Modded biomes
 
@@ -402,7 +410,7 @@ Each list is empty by default (= keep the built-in bag). List entity ids to **re
 | `baddies` | Surface hostiles. |
 | `animals` | Farm/wild animals. |
 | `seaAnimals` | Fish and sea life. |
-| `vagrants` | Wandering strays in the streets. |
+| `vagrants` | The Wanderers: strays out of town (see `spawnVagrants`). |
 | `sewers` / `mine` / `bunker` | What lurks in each. |
 | `waterPit` / `lavaPit` | What's dropped in water pits/cisterns, and lava pits. |
 
