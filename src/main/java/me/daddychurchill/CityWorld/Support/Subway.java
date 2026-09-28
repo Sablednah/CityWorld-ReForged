@@ -880,7 +880,10 @@ public final class Subway {
                 chunk.setBlock(lx, stand + 2, lz, LIGHT);
         }
         lane(chunk, x0, z0, alongX, aIn, laneA, standTop - 1, PLATFORM, null); // the exit landing, two cells
-        lane(chunk, x0, z0, alongX, aIn + step, laneA, standTop - 1, PLATFORM, null);
+        // ...but not over a two-step flight: its second cell sits over the last pair's first step with only
+        // two of air between, and a player walking DOWN hits his head on it (the owner's playtest, 2026-09-28)
+        if (flight > 2)
+            lane(chunk, x0, z0, alongX, aIn + step, laneA, standTop - 1, PLATFORM, null);
     }
 
     /** Open the wall beside the landing at {@code stand} on the {@code door} side, three high. */
