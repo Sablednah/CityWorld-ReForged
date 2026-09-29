@@ -2210,8 +2210,10 @@ public final class CityWorldSelfTest {
                 LevelChunk chunk = server.submit(() -> level.getChunk(fx, fz)).join();
                 for (int x = 0; x < 16; x++)
                     for (int z = 0; z < 16; z++) {
-                        int top = chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
-                        int surface = chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, x, z) - 1;
+                        // ChunkAccess.getHeight already answers the top block (getFirstAvailable - 1). Taking one
+                        // more off here in 5.15.1 read a correct pad as one low, and the "fix" made every pad one high.
+                        int top = chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+                        int surface = chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, x, z);
                         total++;
                         off.merge(top - y, 1, Integer::sum);
                         if (top == y)
