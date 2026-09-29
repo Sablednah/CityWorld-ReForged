@@ -24,6 +24,13 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-09-28)
 
+**v5.15.3 is released** (2026-09-29) on all six lines: `reserveSite` levels to `y` (5.15.1/5.15.2 gave `y + 1`;
+old site files load as ground `y + 1`, and Threadwork passes `y - 1` below 5.15.3), mall cafe stair seats face
+their tables, and structure_fit entries are guarded by `mod_loaded`. Tag `v5.15.3` (`6a7b2f91`), CurseForge
+9012676–9012681, fleet deployed (branch instances stamped with a sha because the mall fix landed after the bump).
+26.2 did not compile against NeoForge 26.2.0.88, but the failure was in NeoForge's own `createMinecraftArtifacts`
+recompile, not ours, and no class was removed between .59 and .88; 26.2 still builds on .59.
+
 **v5.15.2 is released for 26.3 only** (2026-09-29): NeoForge 26.3.0.20 renamed the datapack-registry event, so
 earlier 26.3 jars crash on current NeoForge; the 26.3 line now builds on .33 and requires .20+. CurseForge 9008253.
 
