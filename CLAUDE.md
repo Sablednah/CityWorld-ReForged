@@ -24,7 +24,11 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-09-28)
 
-**v5.15.0 is released** on all six lines — tag `v5.15.0` (`6dcc8e8d`), GitHub release with six jars, CurseForge
+**v5.15.1 is released** (2026-09-29): API-only, from the ZARP ask. `CityWorldAPI.findLot(s)`,
+`findVaultEntrances`/`vaultEntrance` and `reserveSite` (a persisted, levelled, vault-safe camp site,
+`worldgen/ReservedSites`). CurseForge 9007687–9007694, fleet `DEPLOYED-v5.15.1`. PORTING.md "the camp-site API".
+
+**v5.15.0 was released** on all six lines — tag `v5.15.0` (`6dcc8e8d`), GitHub release with six jars, CurseForge
 files 9003156–9003161, fleet `DEPLOYED-v5.15.0` on all 11 deployable instances (ZARP opts out). It is the
 subway (stations, long links and loops, interchanges, the sloped loop joining an interchange's dead ends),
 shopping malls (wings, car parks, lit and dressed shops, per-position loot), and the vault by depth. Gates: six

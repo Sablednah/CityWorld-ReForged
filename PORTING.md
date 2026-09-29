@@ -1,5 +1,15 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Released: v5.15.1 (2026-09-29): the camp-site API, nothing visible
+
+Tag `v5.15.1` at the master bump `70c889a8`; the only code since 5.15.0 is the ZARP API below (owner: a patch
+number, because people expect a visible feature from 5.16). CurseForge files 9007687, 9007689, 9007690, 9007691,
+9007693, 9007694 (1.20.1 Forge → 26.3). Gates: six self-tests PASS with fresh reports, all six plan hashes
+identical (`dceb5705 db5a2698 29ad6798`, the same as 5.15.0: no site = the old plan), CI run 36547917326 green,
+halt/exit 0 on all six after a synthetic positive read 2, 1.20.1 jar reobfuscated. Fleet `DEPLOYED-v5.15.1` on
+all 11 (ZARP opts out). Branch drift for the pick: 26.x `ChunkPos` record accessors and `pack`; 1.20.1/1.21.1
+`location()` and `getMin/MaxBuildHeight`; 1.20.1 Forge's `LevelEvent`.
+
 ## ▶ Released: v5.15.0 (2026-09-28 evening)
 
 Tag `v5.15.0` at the master bump `6dcc8e8d`; CurseForge files 9003156–9003161 (1.20.1 Forge first, then 1.21.1,
