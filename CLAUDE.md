@@ -24,6 +24,9 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-09-28)
 
+**v5.15.2 is released for 26.3 only** (2026-09-29): NeoForge 26.3.0.20 renamed the datapack-registry event, so
+earlier 26.3 jars crash on current NeoForge; the 26.3 line now builds on .33 and requires .20+. CurseForge 9008253.
+
 **v5.15.1 is released** (2026-09-29): API-only, from the ZARP ask. `CityWorldAPI.findLot(s)`,
 `findVaultEntrances`/`vaultEntrance` and `reserveSite` (a persisted, levelled, vault-safe camp site,
 `worldgen/ReservedSites`). CurseForge 9007687–9007694, fleet `DEPLOYED-v5.15.1`. PORTING.md "the camp-site API".

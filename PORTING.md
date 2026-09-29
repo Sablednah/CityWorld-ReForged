@@ -1,5 +1,18 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Released: v5.15.2 (2026-09-29): 26.3 only, NeoForge 26.3.0.20+
+
+**NeoForge 26.3.0.20 renamed `DataPackRegistryEvent.NewRegistry` → `NewDatapackRegistryEvent`
+(`dataPackRegistry` → `worldRegistry`)**, so every 26.3 jar built against .7 died at mod construction on .20+
+(`NoClassDefFoundError`, observed by the LegendQuest session on .33). Bisected by downloading universal jars from
+maven: .19 old, .20 new. `mc26.3` now builds against `26.3.0.33-beta` and its range is `[26.3.0.20-beta,26.4)`,
+so an older NeoForge gets a refusal, not a crash (`ddff5710`, bump `d200410b`). The other four NeoForge lines'
+newest builds (21.1.252, 21.11.45, 26.1.2.112, 26.2.0.88) all still carry the old class. Tag at master docs
+`76faad84` (the 5.10.1 pattern); CI run 36557959815 dispatched by hand (a docs-only master push fires nothing);
+CurseForge file 9008253; `26.3` instance `DEPLOYED-v5.15.2`, the owner confirmed it in game on .33.
+**Lesson: `[26.3,26.4)` on a beta NeoForge admits builds with different APIs.** Check the loader's newest build
+against every line before a release, not just the one the instance runs.
+
 ## ▶ Released: v5.15.1 (2026-09-29): the camp-site API, nothing visible
 
 Tag `v5.15.1` at the master bump `70c889a8`; the only code since 5.15.0 is the ZARP API below (owner: a patch
