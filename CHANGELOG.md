@@ -5,6 +5,14 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Fixed
+
+- **A reserved site slopes down to lower ground instead of standing on a sheer step.** A site only a block or two
+  above the natural ground lost its first block right at the core edge, leaving a square platform with a dirt wall
+  round it. Its edge now steps down part way along the blend ring, on wobbly contours.
+
 ## 5.15.3
 
 All six Minecraft lines.

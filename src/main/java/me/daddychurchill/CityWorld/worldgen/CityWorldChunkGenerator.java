@@ -1009,11 +1009,19 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     double target = site.y();
                     if (dist > 0) {
                         double taper = Math.min(maxTaper, Math.max(PAD_TAPER_MIN, Math.abs(target - natural) * PAD_SLOPE));
-                        double d = dist / taper;
+                        // wobbled like a beard's taper, so the contours come out as a hillside, not a square — but in
+                        // proportion to the distance, so the core edge stays put: a beard's added wobble put some edge
+                        // columns a quarter of the way down the ring already, which on a big rise is a step
+                        double n = carveNoise().noise(wx * PAD_NOISE_SCALE, 0.0, wz * PAD_NOISE_SCALE);
+                        double d = dist * (1.0 + 2.0 * PAD_NOISE_AMOUNT * n) / taper;
                         if (d >= 1.0)
                             continue;
                         double ease = d * d * (3.0 - 2.0 * d);
-                        target = target + (natural - target) * ease;
+                        // The block height is the FLOOR of this, so a pad one or two blocks above the ground lost
+                        // its first block one column into the ring (64.99 -> 64): a sheer step at the core edge
+                        // (ZARP, 5.15.3). Rounding instead, fading to nothing where the ring meets natural ground,
+                        // puts each step part way down the slope and leaves the ring's outer edge seamless.
+                        target = target + (natural - target) * ease + 0.5 * (1.0 - ease);
                     }
                     ys.setPerciseY(x, z, target);
                 }
