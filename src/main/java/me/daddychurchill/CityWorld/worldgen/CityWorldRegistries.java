@@ -11,7 +11,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.registries.DataPackRegistryEvent;
+import net.neoforged.neoforge.registries.NewDatapackRegistryEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
@@ -61,9 +61,9 @@ public final class CityWorldRegistries {
         modEventBus.addListener(CityWorldRegistries::onNewDataPackRegistry);
     }
 
-    private static void onNewDataPackRegistry(DataPackRegistryEvent.NewRegistry event) {
+    private static void onNewDataPackRegistry(NewDatapackRegistryEvent event) {
         // Unsynced (no network codec): the settings only drive server-side worldgen, so a client need
         // not carry them — and the mod itself is required on both sides for the custom generator.
-        event.dataPackRegistry(WORLD_SETTINGS, CityWorldSettingsData.CODEC);
+        event.worldRegistry(WORLD_SETTINGS, CityWorldSettingsData.CODEC);
     }
 }
