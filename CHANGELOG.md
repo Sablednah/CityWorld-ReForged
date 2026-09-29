@@ -5,6 +5,16 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 5.15.2
+
+Minecraft 26.3 only; the other lines stay on 5.15.1.
+
+### Fixed
+
+- **Loads on NeoForge 26.3.0.20 and later** (26.3.0.33 is current). NeoForge renamed the event CityWorld registers
+  its world-settings registry through, so the 26.3 jar could not load on any build from .20 on. The 26.3 jar now
+  requires NeoForge 26.3.0.20 or newer, and tells you so on an older one instead of crashing.
+
 ## 5.15.1
 
 ### Added
