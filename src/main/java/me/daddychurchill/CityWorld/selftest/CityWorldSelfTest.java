@@ -2248,8 +2248,8 @@ public final class CityWorldSelfTest {
         for (int k = 0; k < 12 && centre == null; k++) {
             ChunkPos c = new ChunkPos(3000 + 100 * k, 3100);
             List<Integer> ground = new ArrayList<>();
-            for (int cx = c.x - 3; cx <= c.x + 3; cx++)
-                for (int cz = c.z - 3; cz <= c.z + 3; cz++)
+            for (int cx = c.x() - 3; cx <= c.x() + 3; cx++)
+                for (int cz = c.z() - 3; cz <= c.z() + 3; cz++)
                     ground.add(plan.getPlatMap(cx, cz).getMapLot(cx, cz).getCachedYs().getBlockY(8, 8));
             java.util.Collections.sort(ground);
             int median = ground.get(ground.size() / 2);
@@ -2265,8 +2265,8 @@ public final class CityWorldSelfTest {
             fail("no dry, reservable candidate for the low-rise site check");
             return;
         }
-        int minX = (centre.x - 1) * 16, maxX = (centre.x + 1) * 16 + 15;
-        int minZ = (centre.z - 1) * 16, maxZ = (centre.z + 1) * 16 + 15;
+        int minX = (centre.x() - 1) * 16, maxX = (centre.x() + 1) * 16 + 15;
+        int minZ = (centre.z() - 1) * 16, maxZ = (centre.z() + 1) * 16 + 15;
         int edges = 0, drops = 0;
         for (int i = 0; i < 48; i++) {
             int[][] pairs = { { minX + i, minZ, minX + i, minZ - 1 }, { minX + i, maxZ, minX + i, maxZ + 1 },
