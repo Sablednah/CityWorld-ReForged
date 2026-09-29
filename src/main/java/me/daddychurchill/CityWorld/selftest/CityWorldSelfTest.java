@@ -2245,6 +2245,60 @@ public final class CityWorldSelfTest {
             fail("a reserved site generated only " + flat + " of " + total + " columns at its height (top - y: " + off + ")");
         if (cluttered > total / 50)
             fail("a reserved site has " + cluttered + " columns with something taller than a plant on them");
+        checkLowSiteEdge(server, level, plan);
+    }
+
+    /**
+     * A site one block above the natural ground must slope down across its ring, not stand on a sheer step. The ring's
+     * block height is the floor of the blend, so 5.15.3 dropped a block one column out from the core all the way
+     * round (ZARP, 2026-09-29): counted here as the core-edge columns whose first ring neighbour is lower.
+     */
+    private void checkLowSiteEdge(MinecraftServer server, ServerLevel level, CityWorldGenerator plan) {
+        ChunkPos centre = null;
+        int y = 0;
+        for (int k = 0; k < 12 && centre == null; k++) {
+            ChunkPos c = new ChunkPos(3000 + 100 * k, 3100);
+            List<Integer> ground = new ArrayList<>();
+            for (int cx = c.x - 3; cx <= c.x + 3; cx++)
+                for (int cz = c.z - 3; cz <= c.z + 3; cz++)
+                    ground.add(plan.getPlatMap(cx, cz).getMapLot(cx, cz).getCachedYs().getBlockY(8, 8));
+            java.util.Collections.sort(ground);
+            int median = ground.get(ground.size() / 2);
+            if (median > plan.seaLevel + 2 && median + 1 < level.getMaxY()
+                    && me.daddychurchill.CityWorld.api.CityWorldAPI.reserveSite(level, c, 1, median + 1)
+                            == me.daddychurchill.CityWorld.api.SiteResult.RESERVED) {
+                centre = c;
+                y = median + 1;
+            }
+        }
+        report.put("api.site.low", centre == null ? "no dry candidate" : centre + " at " + y);
+        if (centre == null) {
+            fail("no dry, reservable candidate for the low-rise site check");
+            return;
+        }
+        int minX = (centre.x - 1) * 16, maxX = (centre.x + 1) * 16 + 15;
+        int minZ = (centre.z - 1) * 16, maxZ = (centre.z + 1) * 16 + 15;
+        int edges = 0, drops = 0;
+        for (int i = 0; i < 48; i++) {
+            int[][] pairs = { { minX + i, minZ, minX + i, minZ - 1 }, { minX + i, maxZ, minX + i, maxZ + 1 },
+                    { minX, minZ + i, minX - 1, minZ + i }, { maxX, minZ + i, maxX + 1, minZ + i } };
+            for (int[] p : pairs) {
+                int in = topSolid(server, level, p[0], p[1]), out = topSolid(server, level, p[2], p[3]);
+                if (in != y)
+                    continue; // something stands on the edge column; not a reading of the ground
+                edges++;
+                if (out < in)
+                    drops++;
+            }
+        }
+        report.put("api.site.lowEdgeDrops", drops + "/" + edges);
+        if (edges < 100 || drops > edges / 20)
+            fail("a site one block above the ground drops at its core edge in " + drops + " of " + edges + " columns");
+    }
+
+    private int topSolid(MinecraftServer server, ServerLevel level, int x, int z) {
+        LevelChunk chunk = server.submit(() -> level.getChunk(x >> 4, z >> 4)).join();
+        return chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x & 15, z & 15);
     }
 
     private void checkAirshipHeadings() {
