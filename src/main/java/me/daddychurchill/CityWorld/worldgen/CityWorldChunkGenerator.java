@@ -1009,9 +1009,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     int dz = Math.max(0, Math.max(site.minBlockZ() - wz, wz - site.maxBlockZ()));
                     double dist = Math.max(dx, dz);
                     double natural = ys.getPerciseY(x, z);
-                    // A nature lot's planned height is the first block ABOVE its ground (measured: planning
-                    // exactly y put every one of 2,304 columns' top block at y - 1), and a site's y is the ground.
-                    double target = site.y() + 1;
+                    // A nature lot's planned height IS its top solid block, and so is a site's y. (5.15.1 planned
+                    // y + 1 here, "measured" by a self-test that took one off ChunkAccess.getHeight — which already
+                    // answers the top block, not the first air — so every pad came out one high. ZARP, 2026-09-29.)
+                    double target = site.y();
                     if (dist > 0) {
                         double taper = Math.min(maxTaper, Math.max(PAD_TAPER_MIN, Math.abs(target - natural) * PAD_SLOPE));
                         double d = dist / taper;
