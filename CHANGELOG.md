@@ -5,6 +5,14 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Fixed
+
+- **No more ERROR lines at startup for mods you don't have.** CityWorld's structure-fit data named Cataclysm,
+  Battle Towers and Dungeon Crawl structures unconditionally, so a server without those mods logged eight "doesn't
+  exist" errors every start. Each entry now applies only when its mod is loaded.
+
 ## 5.15.2
 
 Minecraft 26.3 only; the other lines stay on 5.15.1.
