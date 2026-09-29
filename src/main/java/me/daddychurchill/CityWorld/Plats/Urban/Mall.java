@@ -883,8 +883,11 @@ public final class Mall {
                     return;
                 if (pooled != null && chunk.setFurniture(lx(a, c), y, lz(a, c), pooled, FurnitureTags.facingFor(pooled, look)))
                     return;
+                // a stair's facing is the side its tall back is on, so a stair seat looking one way faces the other
+                // (placed with look, every cafe chair had its back to its table)
                 if (fallback != null)
-                    chunk.setBlock(lx(a, c), y, lz(a, c), fallback, look);
+                    chunk.setBlock(lx(a, c), y, lz(a, c), fallback,
+                            fallback.getBlock() instanceof net.minecraft.world.level.block.StairBlock ? look.getOppositeFace() : look);
             }
         }
 
