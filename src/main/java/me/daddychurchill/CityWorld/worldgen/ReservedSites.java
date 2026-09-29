@@ -37,7 +37,7 @@ public final class ReservedSites {
     /** Chunks of blend ring around a site's core, reserved with it. */
     public static final int MARGIN = 2;
 
-    /** The core square: chunks within {@code radius} (Chebyshev) of the centre, levelled to {@code y}. */
+    /** The core square: chunks within {@code radius} (Chebyshev) of the centre, levelled so {@code y} is its top solid block. */
     public record Site(int centreX, int centreZ, int radius, int y) {
         public boolean inCore(int chunkX, int chunkZ) {
             return Math.max(Math.abs(chunkX - centreX), Math.abs(chunkZ - centreZ)) <= radius;
@@ -155,8 +155,12 @@ public final class ReservedSites {
             if (root != null && root.get(dimension) instanceof JsonArray list)
                 for (JsonElement e : list) {
                     JsonObject o = e.getAsJsonObject();
+                    // "ground" is the top solid block. A 5.15.1/5.15.2 file has only "y", which those
+                    // versions levelled one block higher: read it as y + 1 so an existing world keeps the pad
+                    // its generated chunks already have (the plan must not change under them).
+                    int ground = o.has("ground") ? o.get("ground").getAsInt() : o.get("y").getAsInt() + 1;
                     loaded.sites.add(new Site(o.get("x").getAsInt(), o.get("z").getAsInt(),
-                            o.get("radius").getAsInt(), o.get("y").getAsInt()));
+                            o.get("radius").getAsInt(), ground));
                 }
             if (!loaded.sites.isEmpty())
                 CityWorldMod.LOGGER.info("CityWorld: {} reserved site(s) in {}: {}", loaded.sites.size(), dimension,
@@ -183,7 +187,7 @@ public final class ReservedSites {
                 o.addProperty("x", site.centreX());
                 o.addProperty("z", site.centreZ());
                 o.addProperty("radius", site.radius());
-                o.addProperty("y", site.y());
+                o.addProperty("ground", site.y());
                 list.add(o);
             }
             root.add(dimension, list);
