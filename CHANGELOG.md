@@ -17,6 +17,8 @@ All six Minecraft lines.
 - **`CityWorldAPI.reserveSite` levels to the height you ask.** 5.15.1 and 5.15.2 put the site's top solid block
   at `y + 1`, not `y`. A site saved by those versions keeps its old height, so a world that already has its pad
   is unchanged.
+- **Mall cafe chairs face their tables.** Where no furniture mod supplies a chair, the plain stair seats had their
+  backs to the table; showroom stair seats were turned the same wrong way.
 
 ## 5.15.2
 
