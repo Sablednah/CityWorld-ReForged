@@ -12,6 +12,9 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 - **No more ERROR lines at startup for mods you don't have.** CityWorld's structure-fit data named Cataclysm,
   Battle Towers and Dungeon Crawl structures unconditionally, so a server without those mods logged eight "doesn't
   exist" errors every start. Each entry now applies only when its mod is loaded.
+- **`CityWorldAPI.reserveSite` levels to the height you ask.** 5.15.1 and 5.15.2 put the site's top solid block
+  at `y + 1`, not `y`. A site saved by those versions keeps its old height, so a world that already has its pad
+  is unchanged.
 
 ## 5.15.2
 
