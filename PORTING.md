@@ -43,8 +43,12 @@ door, `VaultLot.DOORSTEP_X/Z`, height from the plan), and `reserveSite` → `Sit
   decoration and swamp pools (`isSiteCore`), and `levelReservedSite` (after the structure pad, one-shot per
   chunk via `AbstractCachedYs.isSiteLevelled`) sets the plan to `y + 1` in the core and eases back to natural
   over the `MARGIN` ring (2 chunks, also reserved) with the pad's own taper arithmetic.
-- **⚠ `y + 1`, measured:** a nature lot's planned height is the first block ABOVE its ground; planning exactly
-  `y` put all 2,304 columns' top block at `y - 1`. The self-test caught it (`api.site.offsets`).
+- **⚠ The plan is `y`, not `y + 1` (fixed after 5.15.2, `87d51c9f`).** 5.15.1 planned `y + 1` on a "measurement"
+  from a self-test that took one off `ChunkAccess.getHeight`, which already answers the TOP BLOCK
+  (`getFirstAvailable - 1`; only `Level.getHeight` answers the first air). So every pad came out one high; ZARP
+  found it in a real world (asked 65, got 66). A 5.15.1/5.15.2 `cityworld_sites.json` has only `"y"` and loads as
+  ground `y + 1`; new saves write `"ground"`. Threadwork passes `y - 1` below 5.15.3. **A wrong measurement fed
+  into a "fix" is worse than no test: check which `getHeight` you are calling.**
 - **Persisted, because it changes the plan:** `data/cityworld_sites.json` keyed by dimension, bound on
   `LevelEvent.Load` before anything plans. `reserveSite` forgets and re-plans the platmaps it touches — only
   sound before their chunks generate (documented as the contract).
