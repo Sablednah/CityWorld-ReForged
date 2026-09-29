@@ -1,15 +1,13 @@
 {
   "replace": false,
   "values": {
-    "cataclysm:cursed_pyramid":   { "clearance": 7,  "beard": true },
-    "cataclysm:frosted_prison":   { "clearance": 8,  "beard": true },
-    "cataclysm:soul_black_smith": { "beard": true },
-    "cataclysm:burning_arena":    { "beard": true },
-    "cataclysm:ruined_citadel":   { "beard": true },
-    "cataclysm:acropolis":        { "clearance": 12, "shave": true },
-
-    "ba_bt:land_tower":           { "clearance": 3,  "beard": true },
-
-    "dungeoncrawl:dungeon":       { "reserve": true }
+    "cataclysm:cursed_pyramid": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cataclysm" }], "value": { "clearance": 7,  "beard": true } },
+    "cataclysm:frosted_prison": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cataclysm" }], "value": { "clearance": 8,  "beard": true } },
+    "cataclysm:soul_black_smith": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cataclysm" }], "value": { "beard": true } },
+    "cataclysm:burning_arena": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cataclysm" }], "value": { "beard": true } },
+    "cataclysm:ruined_citadel": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cataclysm" }], "value": { "beard": true } },
+    "cataclysm:acropolis": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cataclysm" }], "value": { "clearance": 12, "shave": true } },
+    "ba_bt:land_tower": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "ba_bt" }], "value": { "clearance": 3,  "beard": true } },
+    "dungeoncrawl:dungeon": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "dungeoncrawl" }], "value": { "reserve": true } }
   }
 }
