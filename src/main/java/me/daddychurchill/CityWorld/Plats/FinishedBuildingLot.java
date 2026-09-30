@@ -1,5 +1,8 @@
 package me.daddychurchill.CityWorld.Plats;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import me.daddychurchill.CityWorld.compat.Material;
 import me.daddychurchill.CityWorld.compat.BlockFace;
 import me.daddychurchill.CityWorld.compat.BiomeGrid;
@@ -64,11 +67,17 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 	// , SLANT_NORTH, SLANT_SOUTH, SLANT_WEST, SLANT_EAST};
 	protected enum RoofFeature {
 		PLAIN, ANTENNAS, CONDITIONERS, TILE, SKYLIGHT, SKYPEAK, ALTPEAK, ALTPEAK2, SKYLIGHT_NS, SKYLIGHT_WE,
-		SKYLIGHT_BOX, SKYLIGHT_TINY, SKYLIGHT_CHECKERS, SKYLIGHT_CROSS
+		SKYLIGHT_BOX, SKYLIGHT_TINY, SKYLIGHT_CHECKERS, SKYLIGHT_CROSS, HELIPAD
 	}
 
 	protected RoofStyle roofStyle;
 	protected RoofFeature roofFeature;
+
+	/**
+	 * A building opened up round an atrium (Ed's "TODO Atrium in the middle of 2x2", done the way the mall does it):
+	 * shared by every chunk of a connected building. See {@link #atriumCorner}.
+	 */
+	protected boolean atrium = false;
 	private int roofScale;
 
 	protected enum InteriorStyle {
@@ -316,6 +325,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			// any other bits
 			roofStyle = relativebuilding.roofStyle;
 			roofFeature = relativebuilding.roofFeature;
+			atrium = relativebuilding.atrium;
 			roofScale = relativebuilding.roofScale;
 //			stairStyle = relativebuilding.stairStyle; // commented out because different parts of the building can have different stair styles
 			interiorStyle = relativebuilding.interiorStyle;
@@ -883,6 +893,18 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		StairWell stairLocation = getStairWellLocation(allowRounded, neighborFloors);
 		if (!needStairsUp)
 			stairLocation = StairWell.NONE;
+		// an atrium corner takes the quadrant the stairwell would lean into: send the stairs to a corner it leaves
+		List<int[]> atria = atriumCorners(neighborFloors);
+		if (!atria.isEmpty() && stairLocation != StairWell.NONE) {
+			int[] first = atria.get(0);
+			for (int[] c : new int[][] { { 1 - first[0], 1 - first[1] }, { first[0], 1 - first[1] },
+					{ 1 - first[0], first[1] } })
+				if (atria.stream().noneMatch(a -> a[0] == c[0] && a[1] == c[1])) {
+					stairLocation = c[0] == 1 ? (c[1] == 1 ? StairWell.SOUTHEAST : StairWell.NORTHEAST)
+							: (c[1] == 1 ? StairWell.SOUTHWEST : StairWell.NORTHWEST);
+					break;
+				}
+		}
 
 		// work on the basement stairs first
 		for (int floor = 0; floor < depth; floor++) {
@@ -1059,6 +1081,10 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 
 		// the stairwell claims its cells before ANY furnisher runs (see BuildingLot.claimStairs)
 		claimStairs(chunk, floorHeight, drawStairs ? stairLocation : StairWell.NONE);
+		// and so does an atrium's void, with the railing round it
+		List<int[]> atria = atriumCorners(heights);
+		for (int[] at : atria)
+			claimRect(at[0] == 1 ? 10 : 0, at[1] == 1 ? 10 : 0, at[0] == 1 ? 15 : 5, at[1] == 1 ? 15 : 5);
 
 		// calculate initial door state
 		DoorStyle drawInteriorDoors = DoorStyle.NONE;
@@ -1133,6 +1159,11 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		if (drawStairs) {
 			drawStairs(generator, chunk, floorAt, aboveFloorHeight, stairLocation, materialStair, materialPlatform);
 		}
+
+		// the atrium is cut after the walls, rooms and stairs of this floor and before the sweep that furnishes and
+		// hangs art, so nothing is left standing in the void or hung on a wall that is about to go
+		for (int[] at : atria)
+			cutAtrium(chunk, at, floor, floorAt, floorHeight, topFloor);
 
 		if (me.daddychurchill.CityWorld.Support.ChunkProbe.tracing())
 			me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
@@ -1267,6 +1298,55 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			if (heights.toSouthEast())
 				column(chunk, 11, y1, y2, 11);
 		}
+	}
+
+	/**
+	 * This chunk's shares of an atrium: {east?1:0, south?1:0} for each corner one opens at. An atrium opens at a
+	 * chunk corner whose world chunk coordinates sum to an even number, when all four chunks round it belong to this
+	 * building at this floor. That is two diagonal corners of every chunk, so a chunk gives up at most two opposite
+	 * quadrants and always keeps a corner for its stairs; half of all 2x2 buildings qualify (the first rule, both
+	 * coordinates even, let only a quarter of them, and the probe's 2x2 was not one).
+	 */
+	private List<int[]> atriumCorners(Surroundings heights) {
+		List<int[]> corners = new ArrayList<>();
+		if (!atrium)
+			return corners;
+		for (int east = 0; east < 2; east++)
+			for (int south = 0; south < 2; south++) {
+				if (Math.floorMod(chunkX + east + chunkZ + south, 2) != 0)
+					continue;
+				boolean side = east == 1 ? heights.toEast() : heights.toWest();
+				boolean end = south == 1 ? heights.toSouth() : heights.toNorth();
+				boolean diagonal = east == 1 ? (south == 1 ? heights.toSouthEast() : heights.toNorthEast())
+						: (south == 1 ? heights.toSouthWest() : heights.toNorthWest());
+				if (side && end && diagonal)
+					corners.add(new int[] { east, south });
+			}
+		return corners;
+	}
+
+	/**
+	 * This chunk's quarter of the atrium on one floor: a 5x5 void at its corner (the floor under it cut away above the
+	 * ground floor), a glass railing round its edge, a pool at the foot and a glass skylight at the top.
+	 */
+	private void cutAtrium(RealBlocks chunk, int[] at, int floor, int floorAt, int floorHeight, boolean topFloor) {
+		int x1 = at[0] == 1 ? 11 : 0, x2 = x1 + 5, z1 = at[1] == 1 ? 11 : 0, z2 = z1 + 5;
+		int railX = at[0] == 1 ? 10 : 5, railZ = at[1] == 1 ? 10 : 5;
+		if (floor == 0) {
+			int px = at[0] == 1 ? 14 : 0, pz = at[1] == 1 ? 14 : 0;
+			chunk.setBlocks(x1, x2, floorAt, floorAt + floorHeight, z1, z2, Material.AIR);
+			chunk.setBlocks(px, px + 2, floorAt - 1, pz, pz + 2, Material.WATER);
+			chunk.setBlock(at[0] == 1 ? 12 : 3, floorAt, at[1] == 1 ? 12 : 3, Material.of(net.minecraft.world.level.block.Blocks.POTTED_FLOWERING_AZALEA));
+		} else {
+			chunk.setBlocks(x1, x2, floorAt - 1, floorAt + floorHeight, z1, z2, Material.AIR);
+			chunk.setBlocks(railX, railX + 1, floorAt, z1, z2, Material.GLASS_PANE);
+			chunk.setBlocks(x1, x2, floorAt, railZ, railZ + 1, Material.GLASS_PANE);
+			chunk.setBlock(railX, floorAt, railZ, Material.GLASS_PANE);
+			chunk.reconnect(Math.min(railX, x1), Math.max(railX, x2 - 1) + 1, floorAt, floorAt + 1,
+					Math.min(railZ, z1), Math.max(railZ, z2 - 1) + 1);
+		}
+		if (topFloor)
+			chunk.setBlocks(x1, x2, floorAt + floorHeight, z1, z2, Material.GLASS);
 	}
 
 	/** One interior column, unless the stairwell has claimed that cell. */
@@ -2395,6 +2475,13 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 					heights);
 		if (features == RoofFeature.ANTENNAS && heights.getCompleteNeighborCount() != 0)
 			features = RoofFeature.CONDITIONERS;
+		// a helipad wants a tall flat roof with room for the pad (first version also wanted the tower standing alone,
+		// and 40 probed candidates drew none: tall towers here are nearly always joined to their neighbours)
+		// — and one pad per building, not one per chunk: the roof feature is shared across a connected building, so
+		// only its north-west chunk (nothing joined to the north or west) draws it; the rest get air conditioners
+		if (features == RoofFeature.HELIPAD && (floor < 6 || Math.max(insetNS, insetWE) > 3 || heights.toNorth()
+				|| heights.toWest()))
+			features = RoofFeature.CONDITIONERS;
 
 		// add the special features
 		switch (features) {
@@ -2412,6 +2499,9 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			drawConditioner(chunk, 6, y1, 9);
 			drawConditioner(chunk, 9, y1, 6);
 			drawConditioner(chunk, 9, y1, 9);
+			break;
+		case HELIPAD:
+			drawHelipad(chunk, y1);
 			break;
 		case TILE:
 			drawCeilings(generator, chunk, context, y1, 1, insetNS + 1, insetWE + 1, allowRounded, outsetEffect, true,
@@ -2485,6 +2575,21 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			chunk.setBlocks(6, 10, y1 - 1, 7, 9, Material.GLASS);
 			break;
 		}
+	}
+
+	/**
+	 * A helipad let into the roof (from Ed's roof-fixture TODO): a grey pad with a yellow edge, a white H across the
+	 * middle, and a light standing at each corner.
+	 */
+	private void drawHelipad(InitialBlocks chunk, int y1) {
+		int y = y1 - 1;
+		chunk.setBlocks(4, 12, y, 4, 12, Material.YELLOW_CONCRETE);
+		chunk.setBlocks(5, 11, y, 5, 11, Material.GRAY_CONCRETE);
+		chunk.setBlocks(6, 7, y, 6, 10, Material.WHITE_CONCRETE);
+		chunk.setBlocks(9, 10, y, 6, 10, Material.WHITE_CONCRETE);
+		chunk.setBlocks(7, 9, y, 7, 9, Material.WHITE_CONCRETE);
+		for (int[] c : new int[][] { { 4, 4 }, { 4, 11 }, { 11, 4 }, { 11, 11 } })
+			chunk.setBlock(c[0], y1, c[1], Material.END_ROD);
 	}
 
 	private void drawAntenna(InitialBlocks chunk, int x, int y, int z) {
