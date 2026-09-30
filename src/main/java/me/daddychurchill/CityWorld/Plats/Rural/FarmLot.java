@@ -42,7 +42,7 @@ public class FarmLot extends ConnectedLot {
 		ACACIA_SAPLING, DARK_OAK_SAPLING, OAK_TREE, PINE_TREE, BIRCH_TREE, JUNGLE_TREE, SWAMP_TREE, ACACIA_TREE, WHEAT,
 		CARROT, POTATO, MELON, PUMPKIN, BEETROOT, BROWN_MUSHROOM, RED_MUSHROOM, NETHERWART, SHORT_FLOWERS, TALL_FLOWERS,
 		ALL_FLOWERS, SHORT_PLANTS, TALL_PLANTS, ALL_PLANTS, PRARIE_PLANTS, EDIBLE_PLANTS, NETHER_PLANTS, DECAY_PLANTS,
-		PADDOCK, HOTAIR_BALLOON, HAYSTACK
+		PADDOCK, HOTAIR_BALLOON, HAYSTACK, COCOA
 	}
 
 	private CropType cropType;
@@ -65,6 +65,7 @@ public class FarmLot extends ConnectedLot {
 		case PADDOCK -> "Paddock, livestock";
 		case HAYSTACK -> "Haystacks";
 		case HOTAIR_BALLOON -> "Balloon field";
+		case COCOA -> "Cocoa plantation";
 		case VINES -> "Vineyard";
 		case TRELLIS -> "Trellised crop";
 		case REED -> "Reed beds";
@@ -304,6 +305,7 @@ public class FarmLot extends ConnectedLot {
 			case JUNGLE_TREE:
 			case ACACIA_TREE:
 			case SWAMP_TREE:
+			case COCOA:
 				// leave the grass alone
 				break;
 			case CACTUS:
@@ -490,6 +492,9 @@ public class FarmLot extends ConnectedLot {
 			case SWAMP_TREE:
 				if (!plantFruitOrchard(generator, chunk, cropY, orchardPoolFor(CropType.SWAMP_TREE)))
 					plantTrees(generator, chunk, cropY, CoverageSets.SWAMP_TREES);
+				break;
+			case COCOA:
+				plantCocoa(chunk, cropY);
 				break;
 			case WHEAT:
 				plantPooledField(generator, chunk, cropY, CoverageType.WHEAT, 1, 2);
@@ -950,6 +955,42 @@ public class FarmLot extends ConnectedLot {
 		return true;
 	}
 
+	/**
+	 * A cocoa plantation (Ed's "Cocoa farm?" TODO, 2014): a grid of short jungle trees, each a four- or five-log
+	 * trunk under a small leaf crown, with pods of mixed ripeness on the bare trunk below it. Cocoa grows only on
+	 * a jungle log, and a pod's facing points AT the log it hangs from.
+	 */
+	private void plantCocoa(SupportBlocks chunk, int croplevel) {
+		BlockFace[] sides = { BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST };
+		for (int x : new int[] { 3, 7, 11 })
+			for (int z : new int[] { 3, 7, 11 }) {
+				if (!chunkOdds.playOdds(oddsOfCrop) || !chunk.isEmpty(x, croplevel, z))
+					continue;
+				int top = croplevel + 3 + chunkOdds.getRandomInt(2);
+				chunk.setBlocks(x, croplevel, top + 1, z, Material.JUNGLE_LOG);
+				// the crown: a 5x5 less its corners at the top of the trunk, a 3x3 above, then a single leaf
+				for (int dx = -2; dx <= 2; dx++)
+					for (int dz = -2; dz <= 2; dz++) {
+						if (Math.abs(dx) == 2 && Math.abs(dz) == 2)
+							continue;
+						if (chunk.isEmpty(x + dx, top, z + dz))
+							chunk.setLeaf(x + dx, top, z + dz, Material.JUNGLE_LEAVES, false);
+						if (Math.abs(dx) <= 1 && Math.abs(dz) <= 1)
+							chunk.setLeaf(x + dx, top + 1, z + dz, Material.JUNGLE_LEAVES, false);
+					}
+				chunk.setLeaf(x, top + 2, z, Material.JUNGLE_LEAVES, false);
+				// pods on the trunk below the crown, facing back at it
+				for (int y = croplevel + 1; y < top; y++)
+					for (BlockFace side : sides) {
+						int px = x + side.getModX(), pz = z + side.getModZ();
+						if (chunkOdds.playOdds(Odds.oddsSomewhatLikely) && chunk.isEmpty(px, y, pz))
+							chunk.setBlockState(px, y, pz, net.minecraft.world.level.block.Blocks.COCOA.defaultBlockState()
+									.setValue(net.minecraft.world.level.block.CocoaBlock.FACING, side.getOppositeFace().toDirection())
+									.setValue(net.minecraft.world.level.block.CocoaBlock.AGE, Math.min(2, chunkOdds.getRandomInt(4))));
+					}
+			}
+	}
+
 	private void plantTrees(CityWorldGenerator generator, SupportBlocks chunk, int croplevel,
 			CoverageSets coverageSet) {
 		plantTreesRow(generator, chunk, 2, croplevel, 2, coverageSet);
@@ -1036,7 +1077,7 @@ public class FarmLot extends ConnectedLot {
 			CropType.BEETROOT, CropType.MELON, CropType.PUMPKIN, CropType.SHORT_FLOWERS, CropType.TALL_FLOWERS,
 			CropType.ALL_FLOWERS, CropType.SHORT_PLANTS, CropType.TALL_PLANTS, CropType.EDIBLE_PLANTS, CropType.PADDOCK,
 			CropType.PADDOCK, CropType.PADDOCK, CropType.PADDOCK, CropType.PADDOCK, CropType.PADDOCK, CropType.PADDOCK,
-			CropType.PADDOCK, CropType.HAYSTACK, CropType.HAYSTACK, CropType.HOTAIR_BALLOON };
+			CropType.PADDOCK, CropType.HAYSTACK, CropType.HAYSTACK, CropType.HOTAIR_BALLOON, CropType.COCOA };
 
 	protected CropType setNormalCrop() {
 		CropType result = pickACrop(normalCrops);
@@ -1097,7 +1138,7 @@ public class FarmLot extends ConnectedLot {
 			CropType.BEETROOT, CropType.WHEAT,
 			CropType.PADDOCK, CropType.PADDOCK, CropType.HAYSTACK,
 			CropType.MELON, CropType.PUMPKIN, CropType.REED,
-			CropType.JUNGLE_TREE, CropType.JUNGLE_SAPLING, CropType.SWAMP_TREE,
+			CropType.JUNGLE_TREE, CropType.JUNGLE_SAPLING, CropType.SWAMP_TREE, CropType.COCOA, CropType.COCOA,
 			CropType.BLUE_ORCHID, CropType.ALL_FLOWERS,
 			CropType.FERN, CropType.EDIBLE_PLANTS };
 
