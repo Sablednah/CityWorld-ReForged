@@ -17,6 +17,7 @@ public class FarmContext extends RuralContext {
 
 	private final static double oddsOfFarmHouse = Odds.oddsSomewhatUnlikely;
 	private final static double oddsOfBarn = Odds.oddsSomewhatUnlikely;
+	private final static double oddsOfWell = Odds.oddsUnlikely;
 	private final static double oddsOfWaterTower = Odds.oddsSomewhatUnlikely;
 	/** A fish pond is a rare treat — at most one per farm platmap, and only where there's surface water. */
 	private final static double oddsOfFishPond = Odds.oddsVeryUnlikely;
@@ -42,6 +43,7 @@ public class FarmContext extends RuralContext {
 		boolean barnPlaced = false;
 		boolean waterTowerPlaced = false;
 		boolean fishPondPlaced = false;
+		boolean wellPlaced = false;
 		int lastX = 0, lastZ = 0;
 
 		// where do we begin?
@@ -92,8 +94,6 @@ public class FarmContext extends RuralContext {
 				PlatLot current = platmap.getLot(x, z);
 				if (current == null) {
 
-					// TODO Barns and Wells
-
 					// farm house here?
 					if (!housePlaced && platmapOdds.playOdds(oddsOfFarmHouse) && generator.getSettings().includeHouses) {
 						housePlaced = platmap.setLot(x, z,
@@ -116,6 +116,12 @@ public class FarmContext extends RuralContext {
 							&& platmapOdds.playOdds(oddsOfFishPond)) {
 						fishPondPlaced = platmap.setLot(x, z,
 								new FishPondLot(platmap, originX + x, originZ + z));
+
+						// a farmyard with a well (Ed's "Barns and Wells": the barns were already here)
+					} else if (!wellPlaced && generator.getSettings().includeBuildings
+							&& platmapOdds.playOdds(oddsOfWell)) {
+						wellPlaced = platmap.setLot(x, z,
+								new me.daddychurchill.CityWorld.Plats.Rural.FarmyardWellLot(platmap, originX + x, originZ + z));
 
 						// place the farm
 					} else {
