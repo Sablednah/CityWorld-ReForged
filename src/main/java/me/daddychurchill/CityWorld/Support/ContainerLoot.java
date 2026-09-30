@@ -7,12 +7,11 @@ import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation;
 import me.daddychurchill.CityWorld.Plugins.LootProvider_LootTable;
+import me.daddychurchill.CityWorld.compat.Loot;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.Container;
-import net.minecraft.world.RandomizableContainer;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -41,14 +40,17 @@ import net.minecraft.world.phys.Vec3;
  *
  * <p><b>Three kinds of container, three ways in.</b>
  * <ol>
- *   <li>A {@link RandomizableContainer} (vanilla chests, barrels, shulkers; Macaw's storage extends the
+ *   <li>A randomizable container (vanilla chests, barrels, shulkers; Macaw's storage extends the
  *       same base) takes a deferred table the vanilla way: nothing is rolled until a player opens it.</li>
  *   <li>A plain {@link Container} block entity (vanilla shelves, chiseled bookshelves) is filled now
  *       from the table, seeded from the lot's odds.</li>
  *   <li>A mod inventory that is neither (Fantasy's Furniture: an apexcore {@code InventoryBlockEntity}
  *       exposing only a NeoForge item handler) is filled now through that capability — see
- *       {@link #fillViaCapability}, the one loader-specific method here.</li>
+ *       {@link #fillViaCapability}.</li>
  * </ol>
+ *
+ * <p>Everything that differs by version or loader (how a table is keyed and looked up, the item-handler
+ * capability) is in the per-branch {@link Loot}, so this file is the same on every branch.
  *
  * <p>Two guards keep this from being a nuisance: {@code #cityworld:loot/never} lists the block entities
  * that are containers but not storage (furnaces, hoppers, brewing stands, jukeboxes, lecterns…), and a
@@ -64,7 +66,8 @@ public final class ContainerLoot {
 
     private static final AtomicInteger DEFERRED = new AtomicInteger(), FILLED = new AtomicInteger(),
             CAPABILITY = new AtomicInteger(), NEVER_TAGGED = new AtomicInteger(), HAS_TABLE = new AtomicInteger(),
-            HAS_ITEMS = new AtomicInteger(), NOT_A_CONTAINER = new AtomicInteger(), OWN_TABLE = new AtomicInteger();
+            HAS_ITEMS = new AtomicInteger(), NOT_A_CONTAINER = new AtomicInteger(), OWN_TABLE = new AtomicInteger(),
+            SCATTERED = new AtomicInteger();
 
     /**
      * For the self-test: how many block entities each path has handled since startup. {@code hasTable} is
@@ -73,6 +76,7 @@ public final class ContainerLoot {
      */
     public static String summary() {
         return "deferred=" + DEFERRED.get() + " filled=" + FILLED.get() + " capability=" + CAPABILITY.get()
+                + " scattered=" + SCATTERED.get()
                 + " hasTable=" + HAS_TABLE.get() + " hasItems=" + HAS_ITEMS.get() + " never=" + NEVER_TAGGED.get()
                 + " notAContainer=" + NOT_A_CONTAINER.get() + " lotsWithOwnTable=" + OWN_TABLE.get();
     }
@@ -87,7 +91,7 @@ public final class ContainerLoot {
             if (!(chunk.getServerLevel() instanceof WorldGenLevel level))
                 return;
             ChunkAccess access = level.getChunk(chunk.sectionX, chunk.sectionZ);
-            java.util.Map<String, java.util.Optional<ResourceKey<LootTable>>> resolved = new java.util.HashMap<>();
+            java.util.Map<String, java.util.Optional<Loot.Ref>> resolved = new java.util.HashMap<>();
             boolean counted = false;
             // ⚠ Ask the REGION for each entity, not the chunk. A block placed during generation leaves only a
             // "DUMMY" NBT stub in the proto-chunk's pending map; WorldGenRegion.getBlockEntity materialises
@@ -100,14 +104,14 @@ public final class ContainerLoot {
                 if (entity == null)
                     continue;
                 String id = lot.lootTableAt(pos.getX(), pos.getY(), pos.getZ());
-                ResourceKey<LootTable> own = id == null ? null
+                Loot.Ref own = id == null ? null
                         : resolved.computeIfAbsent(id, k -> java.util.Optional.ofNullable(ownTableOrNull(level, k))).orElse(null);
                 if (own != null && !counted) {
                     OWN_TABLE.incrementAndGet();
                     counted = true;
                 }
                 assign(level, pos, entity,
-                        own != null ? own : LootProvider_LootTable.keyFor(loot, lot.lootTierAt(pos.getY())),
+                        own != null ? own : Loot.ref(LootProvider_LootTable.keyFor(loot, lot.lootTierAt(pos.getY()))),
                         odds.getRandomLong());
             }
         } catch (Throwable t) {
@@ -132,7 +136,7 @@ public final class ContainerLoot {
                 return false;
             BlockPos pos = new BlockPos(chunk.getOriginX() + x, y, chunk.getOriginZ() + z);
             BlockEntity entity = level.getBlockEntity(pos);
-            return entity != null && assign(level, pos, entity, LootProvider_LootTable.keyFor(loot, tier), odds.getRandomLong());
+            return entity != null && assign(level, pos, entity, Loot.ref(LootProvider_LootTable.keyFor(loot, tier)), odds.getRandomLong());
         } catch (Throwable t) {
             return false;
         }
@@ -152,15 +156,15 @@ public final class ContainerLoot {
         }
     }
 
-    private static boolean assign(WorldGenLevel level, BlockPos pos, BlockEntity entity, ResourceKey<LootTable> key,
+    private static boolean assign(WorldGenLevel level, BlockPos pos, BlockEntity entity, Loot.Ref key,
             long seed) {
         BlockState state = entity.getBlockState();
         if (state.is(NEVER) || isStation(state)) {
             NEVER_TAGGED.incrementAndGet();
             return false;
         }
-        if (entity instanceof RandomizableContainer randomizable) {
-            if (randomizable.getLootTable() != null) {
+        if (Loot.isRandomizable(entity)) {
+            if (Loot.hasTable(entity)) {
                 HAS_TABLE.incrementAndGet();
                 return false;
             }
@@ -168,7 +172,7 @@ public final class ContainerLoot {
                 HAS_ITEMS.incrementAndGet();
                 return false;
             }
-            randomizable.setLootTable(key, seed);
+            Loot.setTable(entity, key, seed);
             DEFERRED.incrementAndGet();
             return true;
         }
@@ -177,7 +181,7 @@ public final class ContainerLoot {
                 HAS_ITEMS.incrementAndGet();
                 return false;
             }
-            LootTable table = tableFor(level, key);
+            LootTable table = Loot.table(level, key);
             if (table == null)
                 return false;
             table.fill(container, params(level, pos), seed);
@@ -200,26 +204,13 @@ public final class ContainerLoot {
      * The table named by {@code own} if it exists — a schematic's {@code chests/schematic/<name>} or its
      * sidecar's {@code Loot:}, a mall shop's, or one handed to {@code assignTableAt} — else null.
      */
-    private static ResourceKey<LootTable> ownTableOrNull(WorldGenLevel level, String own) {
-        if (own == null)
-            return null;
+    private static Loot.Ref ownTableOrNull(WorldGenLevel level, String own) {
         try {
-            var id = net.minecraft.resources.Identifier.tryParse(own);
-            if (id == null)
-                return null;
-            ResourceKey<LootTable> key = ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE, id);
-            return tableFor(level, key) == null ? null : key;
+            Loot.Ref ref = Loot.parse(own);
+            return Loot.table(level, ref) == null ? null : ref;
         } catch (Throwable t) {
             return null;
         }
-    }
-
-    private static LootTable tableFor(WorldGenLevel level, ResourceKey<LootTable> key) {
-        var server = level.getServer();
-        if (server == null)
-            return null;
-        LootTable table = server.reloadableRegistries().getLootTable(key);
-        return table == LootTable.EMPTY ? null : table;
     }
 
     private static LootParams params(WorldGenLevel level, BlockPos pos) {
@@ -229,36 +220,49 @@ public final class ContainerLoot {
     }
 
     /**
-     * The loader-specific path: a mod block entity that exposes its inventory only as a NeoForge item
-     * handler. The table is rolled now and the stacks inserted through the handler. Each version branch
-     * adapts this one method (the transfer API on 21.11 and 26.x, {@code IItemHandler} on 1.21.1, Forge's
-     * {@code ForgeCapabilities.ITEM_HANDLER} on 1.20.1); nothing else here is loader-specific.
+     * A mod block entity that exposes its inventory only through the loader's item handler ({@link Loot#inventory}).
+     * The table is rolled now and each stack put in a random empty slot, the way a vanilla chest scatters its loot
+     * (inserting in order packed every roll into the top-left corner).
      */
     private static boolean fillViaCapability(WorldGenLevel level, BlockPos pos, BlockEntity entity, BlockState state,
-            ResourceKey<LootTable> key, long seed) {
-        var handler = level.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK,
-                pos, state, entity, null);
-        if (handler == null)
+            Loot.Ref key, long seed) {
+        Loot.Inventory inventory = Loot.inventory(level, pos, state, entity);
+        if (inventory == null)
             return false;
         // already holds something: leave it
-        for (int i = 0; i < handler.size(); i++)
-            if (handler.getAmountAsInt(i) > 0) {
+        java.util.List<Integer> empty = new java.util.ArrayList<>();
+        for (int i = 0; i < inventory.size(); i++) {
+            if (!inventory.isEmpty(i)) {
                 HAS_ITEMS.incrementAndGet();
                 return true;
             }
-        LootTable table = tableFor(level, key);
+            empty.add(i);
+        }
+        LootTable table = Loot.table(level, key);
         if (table == null)
             return false;
-        var stacks = table.getRandomItems(params(level, pos), net.minecraft.util.RandomSource.create(seed));
-        int inserted = 0;
-        try (var tx = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
-            for (var stack : stacks)
-                if (!stack.isEmpty())
-                    inserted += handler.insert(net.neoforged.neoforge.transfer.item.ItemResource.of(stack),
-                            stack.getCount(), tx);
-            tx.commit();
+        var stacks = Loot.roll(table, params(level, pos), seed);
+        java.util.Collections.shuffle(empty, new java.util.Random(seed));
+        int inserted = 0, used = 0, highest = -1;
+        for (var stack : stacks) {
+            if (stack.isEmpty())
+                continue;
+            var left = stack.copy();
+            for (var slots = empty.iterator(); slots.hasNext() && !left.isEmpty();) {
+                int slot = slots.next();
+                int in = inventory.insert(slot, left);
+                if (in > 0) {
+                    slots.remove();
+                    used++;
+                    highest = Math.max(highest, slot);
+                    left.shrink(in);
+                    inserted += in;
+                }
+            }
         }
         CAPABILITY.incrementAndGet();
+        if (highest >= used) // not just the first slots, in order: the self-test's proof that loot is scattered
+            SCATTERED.incrementAndGet();
         return inserted > 0 || stacks.isEmpty();
     }
 }
