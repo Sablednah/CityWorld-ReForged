@@ -14,7 +14,6 @@ import me.daddychurchill.CityWorld.Support.*;
 
 public class RoadLot extends ConnectedLot {
 
-	// TODO Lines on the road
 
 	public static final int PlatMapRoadInset = 3;
 
@@ -1026,6 +1025,19 @@ public class RoadLot extends ConnectedLot {
 			generateWECrosswalk(generator, chunk, chunk.width - sidewalkWidth, chunk.width, pavementLevel,
 					sidewalkWidth, chunk.width - sidewalkWidth, crosswalkEast, doingTunnel);
 
+			if (inACity) {
+				// lines on the road (Ed's TODO since 2011): a dashed centre line down a straight stretch, two on and two
+				// off so it runs on unbroken from chunk to chunk; junctions keep their crosswalks instead. After the second
+				// paving of the crosswalk arms just above, which would wipe the dashes at each end
+				if (roads.toNorth() && roads.toSouth() && !roads.toWest() && !roads.toEast()) {
+					for (int z = 0; z < chunk.width; z += 4)
+						chunk.setBlocks(7, 9, pavementLevel, z, z + 2, linesMat);
+				} else if (roads.toWest() && roads.toEast() && !roads.toNorth() && !roads.toSouth()) {
+					for (int x = 0; x < chunk.width; x += 4)
+						chunk.setBlocks(x, x + 2, pavementLevel, 7, 9, linesMat);
+				}
+			}
+
 			// decay please
 			if (roadsDecay(generator)) {
 
@@ -1094,7 +1106,9 @@ public class RoadLot extends ConnectedLot {
 				if (modernRoof)
 					scatterRoofTrees(generator, chunk);
 
-				// TODO decay tunnels please!
+				// decay tunnels please! (Ed's TODO — the road inside was decaying, its tunnel never did)
+				if (inACity && roadsDecay(generator))
+					decayTunnel(chunk, pavementLevel, roads.toWest() && roads.toEast(), context.lightMat);
 
 				// stuff that only can happen outside of tunnels and bridges
 			} else {
@@ -1672,6 +1686,49 @@ public class RoadLot extends ConnectedLot {
 			generator.spawnProvider.spawnBeings(generator, chunk, chunkOdds, x, y, z);
 		else
 			generator.spawnProvider.spawnVagrants(generator, chunk, chunkOdds, x, y, z);
+	}
+
+	/**
+	 * A road tunnel gone to ruin: holes in its tiling and glass, the stone shell crumbling where it shows, rubble
+	 * along the kerbs, cobwebs in the vault and some of its lights out. {@code alongX} for an east-west tunnel.
+	 */
+	private void decayTunnel(RealBlocks chunk, int pavementLevel, boolean alongX, Material lightMat) {
+		for (int a = 0; a < chunk.width; a++)
+			for (int c = 0; c < chunk.width; c++)
+				for (int y = pavementLevel + 1; y <= pavementLevel + 9; y++) {
+					int x = alongX ? a : c, z = alongX ? c : a;
+					if (chunk.isOfTypes(x, y, z, tunnelTileMaterial, tunnelCeilingMaterial)) {
+						if (chunkOdds.playOdds(Odds.oddsSomewhatUnlikely))
+							chunk.setBlock(x, y, z, Material.AIR);
+					} else if (chunk.isType(x, y, z, tunnelWallMaterial) && chunkOdds.playOdds(Odds.oddsUnlikely)
+							&& (chunk.isEmpty(x + 1, y, z) || chunk.isEmpty(x - 1, y, z) || chunk.isEmpty(x, y - 1, z)
+									|| chunk.isEmpty(x, y, z + 1) || chunk.isEmpty(x, y, z - 1)))
+						chunk.setBlock(x, y, z, chunkOdds.flipCoin() ? Material.COBBLESTONE : Material.MOSSY_COBBLESTONE);
+				}
+		// rubble at the foot of the walls, where the tiling fell
+		for (int i = 0; i < 6; i++) {
+			int a = chunkOdds.getRandomInt(chunk.width), c = chunkOdds.flipCoin() ? 2 + chunkOdds.getRandomInt(2)
+					: 12 + chunkOdds.getRandomInt(2);
+			int x = alongX ? a : c, z = alongX ? c : a;
+			if (chunk.isEmpty(x, pavementLevel + 1, z) && !chunk.isEmpty(x, pavementLevel, z))
+				chunk.setBlock(x, pavementLevel + 1, z,
+						chunkOdds.flipCoin() ? Material.COBBLESTONE_SLAB : Material.COBBLESTONE);
+		}
+		// cobwebs up in the vault
+		for (int i = 0; i < 3; i++) {
+			int a = chunkOdds.getRandomInt(chunk.width), c = 4 + chunkOdds.getRandomInt(8);
+			int x = alongX ? a : c, z = alongX ? c : a;
+			for (int y = pavementLevel + 7; y >= pavementLevel + 4; y--)
+				if (chunk.isEmpty(x, y, z) && !chunk.isEmpty(x, y + 1, z)) {
+					chunk.setBlock(x, y, z, Material.COBWEB);
+					break;
+				}
+		}
+		// and some lights out
+		for (int y = pavementLevel + 7; y <= pavementLevel + 9; y++)
+			for (int[] p : new int[][] { { 3, 8 }, { 12, 7 }, { 8, 3 }, { 7, 12 } })
+				if (chunk.isType(p[0], y, p[1], lightMat) && chunkOdds.flipCoin())
+					chunk.setBlock(p[0], y, p[1], Material.AIR);
 	}
 
 	protected void decayRoad(RealBlocks chunk, int x1, int x2, int y, int z1, int z2) {
