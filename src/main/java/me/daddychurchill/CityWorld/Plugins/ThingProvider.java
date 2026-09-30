@@ -23,7 +23,11 @@ public class ThingProvider extends Provider {
 	}
 
 	public void generateStatue(AbstractBlocks chunk, Odds odds, int x, int y, int z) {
-		Material matBlock = Material.QUARTZ_BLOCK;
+		generateStatue(chunk, odds, x, y, z, Material.QUARTZ_BLOCK);
+	}
+
+	/** The statue in {@code matBlock} (the hilltop one comes in weathered copper too). */
+	public void generateStatue(AbstractBlocks chunk, Odds odds, int x, int y, int z, Material matBlock) {
 		int tallness = odds.calcRandomRange(3, 5);
 
 		// legs
