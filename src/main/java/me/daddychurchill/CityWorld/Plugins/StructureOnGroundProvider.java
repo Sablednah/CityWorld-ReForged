@@ -409,8 +409,11 @@ public class StructureOnGroundProvider extends Provider {
 		HouseRoofStyle styleRoof = pickRoofStyle(odds);
 		int floors = odds.getRandomInt(maxFloors) + 1;
 
-		// a split-level house now and then (Ed's TODO): one wing raised half a floor
+		// a split-level house now and then (Ed's TODO): one wing raised half a floor, under a flat roof — the pitched
+		// roofs grow from one roof plane and made a mess of two (worse with a roof mod's stairs)
 		boolean splitLevel = odds.playOdds(Odds.oddsSomewhatUnlikely);
+		if (splitLevel)
+			styleRoof = HouseRoofStyle.FLAT;
 
 		// draw the house
 		generateColonial(generator, chunk, context, odds, baseY, matFloor, matWall, matCeiling, matRoof, floors,
@@ -1176,11 +1179,21 @@ public class StructureOnGroundProvider extends Provider {
 			int doorZ = z == 1 ? roomOffsetZ + 2 : roomOffsetZ - 2;
 			for (int f = 0; f < floors; f++) {
 				Room lower = rooms[f][entryColumn][z], upper = rooms[f][raised][z];
-				if (lower.missing || upper.missing || !lower.located)
+				// only one of the pair on this floor: its door in the shared wall opens half a floor above or below the
+				// terrace the missing room left, so it is walled up
+				if (lower.missing != upper.missing) {
+					Room present = lower.missing ? upper : lower;
+					if (present.located)
+						chunk.setBlocks(roomOffsetX, present.y1, present.y1 + 2, doorZ, matWall);
+					continue;
+				}
+				if (lower.missing || !lower.located)
 					continue;
 				int y = lower.y1;
 				chunk.setBlock(roomOffsetX, y, doorZ, matWall); // the lower door's foot, under the flight
-				chunk.setBlocks(roomOffsetX, y + 1, y + SplitLift + 3, doorZ, Material.AIR);
+				// the flight's two treads and headroom over the upper one — no more: a third block cut into the roof
+				// over the lower wing (a hole to the sky on a flat roof, owner's screenshots, 2026-09-30)
+				chunk.setBlocks(roomOffsetX, y + 1, y + SplitLift + 2, doorZ, Material.AIR);
 				chunk.setBlocks(lowerCell, y, y + 3, doorZ, Material.AIR);
 				chunk.setBlock(lowerCell, y, doorZ, materialStair, up);
 				chunk.setBlock(roomOffsetX, y + 1, doorZ, materialStair, up);
