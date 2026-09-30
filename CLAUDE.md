@@ -73,10 +73,11 @@ every bump head, halt/exit scan 0 on all six — **proved on a synthetic positiv
 known-positive jar exists any more** (both 5.8.0 jars on disk were rebuilt after the fix). The ZARP pack
 (LegendQuest ZARP, 26.2; its own Claude session) takes only released CurseForge jars and was told.
 
-**NEXT: nothing queued.** The owner's playtest is the queue, as always. Ideas parked, none asked for yet:
-cavern density (he called the shipped density a pass); the capability tier of
-`ContainerLoot` is per-loader (transfer API on 21.11/26.x, `IItemHandler` on 1.21.1, Forge caps on 1.20.1)
-and grows with every new loader API.
+**NEXT: nothing queued.** The owner's playtest is the queue, as always. Cavern density: confirmed good
+(2026-09-30). `ContainerLoot` is now ONE source on every branch; what differs per loader (table key and lookup,
+the item-handler capability) is the per-branch `compat/Loot` — keep the branch's copy on a conflict, like
+`compat/Material`. Unbuilt ideas from Ed's own upstream TODOs (lane lines, tunnel decay, helipad, park
+pond/gazebo, lowland statue, dead `oddsOfMissingRoad`, ...) were swept 2026-09-30 and offered; none asked for.
 
 **What 5.14.0 is** (2026-09-24 evening → 25th; PORTING.md "the owner's next four mods" has the measurements):
 - **Four mods from his 1.20.1 instance, read from their jars with `unzip`/`javap`, never wikis.** Alex's Caves
