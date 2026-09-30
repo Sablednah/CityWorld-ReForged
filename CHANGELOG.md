@@ -12,6 +12,9 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 - **A reserved site slopes down to lower ground instead of standing on a sheer step.** A site only a block or two
   above the natural ground lost its first block right at the core edge, leaving a square platform with a dirt wall
   round it. Its edge now steps down part way along the blend ring, on wobbly contours.
+- **Loot in furniture-mod storage is scattered like a chest's.** Storage that CityWorld fills through the loader's
+  item handler (Fantasy's Furniture chests and lockboxes) had every item packed into its first slots; each stack now
+  lands in a random empty slot.
 
 ## 5.15.3
 
