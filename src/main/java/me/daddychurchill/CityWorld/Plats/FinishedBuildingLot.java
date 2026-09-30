@@ -893,18 +893,13 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		StairWell stairLocation = getStairWellLocation(allowRounded, neighborFloors);
 		if (!needStairsUp)
 			stairLocation = StairWell.NONE;
-		// an atrium corner takes the quadrant the stairwell would lean into: send the stairs to a corner it leaves
+		// an atrium corner takes the quadrant the stairwell would lean into. The stairs go to the middle of the side the
+		// atrium opens on: that side is joined to the building (no wall inset to fall outside of), and the well's x run
+		// (5..10) misses both voids (0..4, 11..15). The far corner, the first choice, faces the outside walls, and with
+		// their inset the stairs ran up the outside of the building (owner's screenshots, 2026-09-30).
 		List<int[]> atria = atriumCorners(neighborFloors);
-		if (!atria.isEmpty() && stairLocation != StairWell.NONE) {
-			int[] first = atria.get(0);
-			for (int[] c : new int[][] { { 1 - first[0], 1 - first[1] }, { first[0], 1 - first[1] },
-					{ 1 - first[0], first[1] } })
-				if (atria.stream().noneMatch(a -> a[0] == c[0] && a[1] == c[1])) {
-					stairLocation = c[0] == 1 ? (c[1] == 1 ? StairWell.SOUTHEAST : StairWell.NORTHEAST)
-							: (c[1] == 1 ? StairWell.SOUTHWEST : StairWell.NORTHWEST);
-					break;
-				}
-		}
+		if (!atria.isEmpty() && stairLocation != StairWell.NONE)
+			stairLocation = atria.get(0)[1] == 1 ? StairWell.SOUTH : StairWell.NORTH;
 
 		// work on the basement stairs first
 		for (int floor = 0; floor < depth; floor++) {
@@ -1083,8 +1078,9 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		claimStairs(chunk, floorHeight, drawStairs ? stairLocation : StairWell.NONE);
 		// and so does an atrium's void, with the railing round it
 		List<int[]> atria = atriumCorners(heights);
-		for (int[] at : atria)
-			claimRect(at[0] == 1 ? 10 : 0, at[1] == 1 ? 10 : 0, at[0] == 1 ? 15 : 5, at[1] == 1 ? 15 : 5);
+		boolean[] stairCells = claimSnapshot();
+		for (int[] at : atria) // the void, its railing and the gallery beside it
+			claimRect(at[0] == 1 ? 9 : 0, at[1] == 1 ? 9 : 0, at[0] == 1 ? 15 : 6, at[1] == 1 ? 15 : 6);
 
 		// calculate initial door state
 		DoorStyle drawInteriorDoors = DoorStyle.NONE;
@@ -1163,7 +1159,9 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		// the atrium is cut after the walls, rooms and stairs of this floor and before the sweep that furnishes and
 		// hangs art, so nothing is left standing in the void or hung on a wall that is about to go
 		for (int[] at : atria)
-			cutAtrium(chunk, at, floor, floorAt, floorHeight, topFloor);
+			cutAtrium(chunk, at, floor, floorAt, floorHeight, topFloor, stairCells);
+		if (!atria.isEmpty())
+			clearHalfDoors(chunk, floorAt);
 
 		if (me.daddychurchill.CityWorld.Support.ChunkProbe.tracing())
 			me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
@@ -1329,7 +1327,8 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 	 * This chunk's quarter of the atrium on one floor: a 5x5 void at its corner (the floor under it cut away above the
 	 * ground floor), a glass railing round its edge, a pool at the foot and a glass skylight at the top.
 	 */
-	private void cutAtrium(RealBlocks chunk, int[] at, int floor, int floorAt, int floorHeight, boolean topFloor) {
+	private void cutAtrium(RealBlocks chunk, int[] at, int floor, int floorAt, int floorHeight, boolean topFloor,
+			boolean[] stairCells) {
 		int x1 = at[0] == 1 ? 11 : 0, x2 = x1 + 5, z1 = at[1] == 1 ? 11 : 0, z2 = z1 + 5;
 		int railX = at[0] == 1 ? 10 : 5, railZ = at[1] == 1 ? 10 : 5;
 		if (floor == 0) {
@@ -1344,9 +1343,44 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			chunk.setBlock(railX, floorAt, railZ, Material.GLASS_PANE);
 			chunk.reconnect(Math.min(railX, x1), Math.max(railX, x2 - 1) + 1, floorAt, floorAt + 1,
 					Math.min(railZ, z1), Math.max(railZ, z2 - 1) + 1);
+			// nothing above the railing, and a gallery walked round it: the rooms on this floor ran into the void, and a
+			// room whose only door was in the cut part was sealed off (owner, 2026-09-30); every wall crossing the
+			// gallery is opened, so each room that touched the void opens onto the walk round it. The stairwell's cells
+			// are left alone.
+			int galX = at[0] == 1 ? 9 : 6, galZ = at[1] == 1 ? 9 : 6;
+			int lo = at[1] == 1 ? galZ : 0, hi = at[1] == 1 ? 15 : galZ;
+			for (int z = lo; z <= hi; z++) {
+				clearGallery(chunk, galX, z, floorAt, floorHeight, stairCells);
+				if (z != railZ && (z >= z1 && z < z2))
+					clearGallery(chunk, railX, z, floorAt + 1, floorHeight - 1, stairCells);
+			}
+			lo = at[0] == 1 ? galX : 0;
+			hi = at[0] == 1 ? 15 : galX;
+			for (int x = lo; x <= hi; x++) {
+				clearGallery(chunk, x, galZ, floorAt, floorHeight, stairCells);
+				if (x >= x1 && x < x2)
+					clearGallery(chunk, x, railZ, floorAt + 1, floorHeight - 1, stairCells);
+			}
+			clearGallery(chunk, railX, railZ, floorAt + 1, floorHeight - 1, stairCells);
 		}
 		if (topFloor)
 			chunk.setBlocks(x1, x2, floorAt + floorHeight, z1, z2, Material.GLASS);
+	}
+
+	/** Clear one gallery column from {@code y} up {@code height} blocks, unless it is part of the stairwell. */
+	private void clearGallery(RealBlocks chunk, int x, int z, int y, int height, boolean[] stairCells) {
+		if (x < 0 || x > 15 || z < 0 || z > 15 || stairCells[x * 16 + z])
+			return;
+		chunk.setBlocks(x, y, y + height, z, Material.AIR);
+	}
+
+	/** After an atrium's cut, any door on this floor left with one half is taken out: a half door is no door. */
+	private void clearHalfDoors(RealBlocks chunk, int floorAt) {
+		for (int x = 0; x < 16; x++)
+			for (int z = 0; z < 16; z++)
+				for (int y = floorAt; y <= floorAt + 1; y++)
+					if (chunk.isDoor(x, y, z) && !chunk.isDoor(x, y + 1, z) && !chunk.isDoor(x, y - 1, z))
+						chunk.setBlock(x, y, z, Material.AIR);
 	}
 
 	/** One interior column, unless the stairwell has claimed that cell. */
