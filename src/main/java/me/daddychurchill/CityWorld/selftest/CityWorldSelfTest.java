@@ -741,6 +741,14 @@ public final class CityWorldSelfTest {
         // The end-of-lot container pass: how many containers took a table by which path. Zero deferred
         // after a sweep with pooled storage furniture in it means the pass is not running.
         report.put("loot.containers", me.daddychurchill.CityWorld.Support.ContainerLoot.summary());
+        {
+            // a capability-only inventory (Fantasy's Furniture, in the 26.2 worktree) gets its loot scattered like a
+            // vanilla chest's; 5.15.3 and earlier inserted every stack in order, packed into the first slots
+            var m = java.util.regex.Pattern.compile("capability=(\\d+) scattered=(\\d+)")
+                    .matcher(me.daddychurchill.CityWorld.Support.ContainerLoot.summary());
+            if (m.find() && Integer.parseInt(m.group(1)) >= 20 && Integer.parseInt(m.group(2)) == 0)
+                fail("container loot: " + m.group(1) + " mod inventories filled through the capability, none scattered");
+        }
         report.put("orchard.temperateLots", Integer.toString(orchardChunks.size()));
         report.put("orchard.lotsWithCherry", Integer.toString(withCherry));
         report.put("orchard.logs", logs.toString());
