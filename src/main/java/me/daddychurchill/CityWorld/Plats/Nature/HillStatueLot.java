@@ -62,7 +62,7 @@ public class HillStatueLot extends ConstructLot {
 		chunk.setBlocks(5, 11, top + 1, 5, 11, Material.CHISELED_STONE_BRICKS);
 		chunk.setBlocks(6, 10, top + 2, 6, 10, Material.POLISHED_ANDESITE);
 
-		Material stone = chunkOdds.flipCoin() ? Material.QUARTZ_BLOCK : Material.of(net.minecraft.world.level.block.Blocks.WEATHERED_COPPER);
+		Material stone = chunkOdds.flipCoin() ? Material.QUARTZ_BLOCK : Material.WEATHERED_CUT_COPPER;
 		generator.thingProvider.generateStatue(chunk, chunkOdds, 8, top + 3, 8, stone);
 		generator.reportLocation("statue", "Hilltop Statue", chunk);
 	}
