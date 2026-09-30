@@ -55,9 +55,10 @@ public abstract class DataContext {
 	public double oddsOfFlatWalledBuildings = Odds.oddsNeverGoingToHappen; // the ceilings are inset like the walls 1/n
 	// of the time
 
-	// TODO oddsOfMissingRoad is current not used... I need to fix this
-	// public double oddsOfMissingRoad = oddsNeverGoingToHappen; // roads are
-	// missing 1/n of the time
+	// Upstream never wired this up ("is current not used... I need to fix this"); PlatMap.populateRoads now reads
+	// it: each of a platmap's four INNER road stretches is left out at these odds (at most two), so a district's
+	// blocks are not all the same size.
+	public double oddsOfMissingRoad = Odds.oddsNeverGoingToHappen; // an inner road is missing this often
 	public double oddsOfRoundAbouts = Odds.oddsNeverGoingToHappen; // roundabouts are created 1/n of the time
 
 	public double oddsOfArt = Odds.oddsNeverGoingToHappen; // art is missing 1/n of the time

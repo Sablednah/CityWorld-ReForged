@@ -408,8 +408,50 @@ public class PlatMap {
 		return true;
 	}
 
+	/**
+	 * Which of this platmap's four INNER road stretches are left out: {north, south, west, east}, the stretches
+	 * between its own intersections (north is the one along the northern intersections' row). Upstream meant roads
+	 * to go missing ({@code oddsOfMissingRoad}, "likely" for lowrise and rural districts) and never wired it up, so
+	 * every district was the same grid of 4x4 blocks. Only inner stretches, because the planner never looks at a
+	 * neighbour platmap: a stretch that crosses into one must be decided the same way on both sides.
+	 */
+	private boolean[] missingRoads = new boolean[4];
+
+	private void rollMissingRoads() {
+		missingRoads = new boolean[4];
+		double odds = context == null ? 0 : context.oddsOfMissingRoad;
+		if (odds <= 0)
+			return; // no roll at all, so a district that keeps its roads plans exactly as before
+		// a stream of its own: the platmap's own odds would repeat the rolls populateMap makes next
+		Odds roll = new Odds(getOddsGenerator().getRandomLong() ^ 0x0DD50F3155L);
+		int lo = RoadLot.PlatMapRoadInset - 1, hi = Width - RoadLot.PlatMapRoadInset;
+		int[][] ends = { { lo, lo, hi, lo }, { lo, hi, hi, hi }, { lo, lo, lo, hi }, { hi, lo, hi, hi } };
+		int missing = 0;
+		for (int i = 0; i < 4; i++) {
+			boolean drop = roll.playOdds(odds);
+			if (!drop || missing >= 2)
+				continue;
+			// only a plain street: both ends and the whole stretch still unclaimed, both ends buildable ground (a
+			// bridge or tunnel end paves itself from the other branch of placeIntersection)
+			int x0 = ends[i][0], z0 = ends[i][1], x1 = ends[i][2], z1 = ends[i][3];
+			boolean clear = true;
+			for (int x = x0; x <= x1; x++)
+				for (int z = z0; z <= z1; z++)
+					clear &= isEmptyLot(x, z);
+			clear &= HeightInfo.isBuildableAt(generator, (originX + x0) * SupportBlocks.sectionBlockWidth,
+					(originZ + z0) * SupportBlocks.sectionBlockWidth)
+					&& HeightInfo.isBuildableAt(generator, (originX + x1) * SupportBlocks.sectionBlockWidth,
+							(originZ + z1) * SupportBlocks.sectionBlockWidth);
+			if (clear) {
+				missingRoads[i] = true;
+				missing++;
+			}
+		}
+	}
+
 	public void populateRoads() {
 		roadsPopulated = true;
+		rollMissingRoads();
 
 		// place the big four
 		placeIntersection(RoadLot.PlatMapRoadInset - 1, RoadLot.PlatMapRoadInset - 1);
@@ -457,6 +499,25 @@ public class PlatMap {
 			roadToSouth = isRoadTowards(x, z, 0, 5);
 			roadToEast = isRoadTowards(x, z, 5, 0);
 			roadToWest = isRoadTowards(x, z, -5, 0);
+
+			// less any inner stretch this platmap leaves out (rollMissingRoads)
+			int lo = RoadLot.PlatMapRoadInset - 1, hi = Width - RoadLot.PlatMapRoadInset;
+			if (z == lo && missingRoads[0]) {
+				if (x == lo) roadToEast = false;
+				if (x == hi) roadToWest = false;
+			}
+			if (z == hi && missingRoads[1]) {
+				if (x == lo) roadToEast = false;
+				if (x == hi) roadToWest = false;
+			}
+			if (x == lo && missingRoads[2]) {
+				if (z == lo) roadToSouth = false;
+				if (z == hi) roadToNorth = false;
+			}
+			if (x == hi && missingRoads[3]) {
+				if (z == lo) roadToSouth = false;
+				if (z == hi) roadToNorth = false;
+			}
 
 			// is there a need for this intersection?
 			if (roadToNorth || roadToSouth || roadToEast || roadToWest) {
