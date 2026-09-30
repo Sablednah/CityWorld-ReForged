@@ -51,12 +51,9 @@ public class ParkLot extends ConnectedLot {
 	private final static Material ledgeMaterial = Material.CLAY;
 
 	// TODO NW/SE quarter partial circle sidewalks
-	// TODO pond inside of circle sidewalks instead of tree
-	// TODO park benches
-	// TODO gazebos
 
 	public enum CenterStyles {
-		CROSS_PATH, CIRCLE_PATH, WATER_TOWER, HEDGE_MAZE, CIRCLE_MAZE, LABYRINTH_MAZE
+		CROSS_PATH, CIRCLE_PATH, WATER_TOWER, HEDGE_MAZE, CIRCLE_MAZE, LABYRINTH_MAZE, GAZEBO
 	}
 
 	private final CenterStyles centerStyle;
@@ -92,6 +89,8 @@ public class ParkLot extends ConnectedLot {
 				return CenterStyles.CIRCLE_MAZE;
 			else if (chunkOdds.playOdds(Odds.oddsExtremelyUnlikely))
 				return CenterStyles.WATER_TOWER;
+			else if (chunkOdds.playOdds(Odds.oddsSomewhatUnlikely))
+				return CenterStyles.GAZEBO;
 			else
 				return CenterStyles.CIRCLE_PATH;
 		} else
@@ -735,6 +734,10 @@ public class ParkLot extends ConnectedLot {
 			case CROSS_PATH:
 				generateTreePark(generator, chunk, surfaceY, 7, false);
 				break;
+			case GAZEBO:
+				generateTreePark(generator, chunk, surfaceY, 7, false);
+				drawGazebo(chunk, surfaceY);
+				break;
 			default:
 				for (int x = 4; x < 12; x += 7)
 					for (int z = 4; z < 12; z += 7)
@@ -812,7 +815,11 @@ public class ParkLot extends ConnectedLot {
 		}
 
 		if (singleTree) {
-			generator.coverProvider.generateRandomCoverage(generator, chunk, 7, surfaceY, 7, getTallTrees());
+			// a pond inside the circle path instead of its tree, half the time (Ed's TODO)
+			if (generator.getSettings().includeAbovegroundFluids && chunkOdds.flipCoin())
+				drawPond(chunk, surfaceY);
+			else
+				generator.coverProvider.generateRandomCoverage(generator, chunk, 7, surfaceY, 7, getTallTrees());
 		} else {
 			if (!NW)
 				generator.coverProvider.generateRandomCoverage(generator, chunk, 4, surfaceY, 4, getSmallTrees());
@@ -823,8 +830,70 @@ public class ParkLot extends ConnectedLot {
 			if (!SE)
 				generator.coverProvider.generateRandomCoverage(generator, chunk, 11, surfaceY, 11, getSmallTrees());
 		}
+		// a bench beside the path in each quadrant that has no bench ring, facing the path, its back to the tree
+		if (!singleTree) {
+			if (!NW)
+				pathBench(chunk, surfaceY, stairs, 6, 3, BlockFace.WEST);
+			if (!NE)
+				pathBench(chunk, surfaceY, stairs, 9, 3, BlockFace.EAST);
+			if (!SW)
+				pathBench(chunk, surfaceY, stairs, 6, 11, BlockFace.WEST);
+			if (!SE)
+				pathBench(chunk, surfaceY, stairs, 9, 11, BlockFace.EAST);
+		}
 		generateSurface(generator, chunk, false);
 		scatterBiomeFlowers(generator, chunk, surfaceY);
+	}
+
+	/** Two stair seats at {@code x}, {@code z} and {@code z + 1}; {@code back} is the side the backrest is on. */
+	private void pathBench(RealBlocks chunk, int surfaceY, Material stairs, int x, int z, BlockFace back) {
+		for (int i = 0; i < 2; i++)
+			if (chunk.isEmpty(x, surfaceY, z + i) && !chunk.isEmpty(x, surfaceY - 1, z + i))
+				chunk.setBlock(x, surfaceY, z + i, stairs, back);
+	}
+
+	/** A small round pond in the middle of the circle path, clay under the water and a lily pad or two on it. */
+	private void drawPond(RealBlocks chunk, int surfaceY) {
+		for (int x = 5; x <= 10; x++)
+			for (int z = 5; z <= 10; z++) {
+				double dx = x - 7.5, dz = z - 7.5;
+				if (dx * dx + dz * dz > 6.5)
+					continue;
+				chunk.setBlock(x, surfaceY - 2, z, Material.CLAY);
+				chunk.setBlock(x, surfaceY - 1, z, Material.WATER);
+				chunk.clearBlocks(x, surfaceY, surfaceY + 2, z);
+				if (chunkOdds.playOdds(Odds.oddsUnlikely))
+					chunk.setBlock(x, surfaceY, z, Material.LILY_PAD);
+			}
+	}
+
+	/**
+	 * A gazebo over the crossing of the paths (Ed's TODO): a 6x6 floor of stone bricks, a fence post at each corner,
+	 * a two-step roof of dark oak stairs under a slab cap, and a lantern hung from the middle. Open on every side, so
+	 * the paths run through it.
+	 */
+	private void drawGazebo(RealBlocks chunk, int surfaceY) {
+		int roof = surfaceY + 3;
+		chunk.setBlocks(5, 11, surfaceY - 1, 5, 11, Material.STONE_BRICKS);
+		chunk.clearBlocks(5, 11, surfaceY, roof + 3, 5, 11);
+		for (int[] c : new int[][] { { 5, 5 }, { 5, 10 }, { 10, 5 }, { 10, 10 } })
+			chunk.setBlocks(c[0], surfaceY, roof, c[1], Material.OAK_FENCE);
+		// the eaves, their high sides inward, then the next ring up, then the cap
+		for (int step = 0; step < 2; step++) {
+			int lo = 5 + step, hi = 10 - step, y = roof + step;
+			for (int i = lo; i <= hi; i++) {
+				chunk.setBlock(i, y, lo, Material.DARK_OAK_STAIRS, BlockFace.SOUTH);
+				chunk.setBlock(i, y, hi, Material.DARK_OAK_STAIRS, BlockFace.NORTH);
+			}
+			for (int i = lo + 1; i < hi; i++) {
+				chunk.setBlock(lo, y, i, Material.DARK_OAK_STAIRS, BlockFace.EAST);
+				chunk.setBlock(hi, y, i, Material.DARK_OAK_STAIRS, BlockFace.WEST);
+			}
+			chunk.setBlocks(lo + 1, hi, y, lo + 1, hi, Material.DARK_OAK_PLANKS);
+		}
+		chunk.setBlocks(7, 9, roof + 2, 7, 9, Material.DARK_OAK_SLAB);
+		chunk.setBlockState(7, roof - 1, 7, net.minecraft.world.level.block.Blocks.LANTERN.defaultBlockState()
+				.setValue(net.minecraft.world.level.block.LanternBlock.HANGING, true));
 	}
 
 	private void pokeHoleSomewhere(RealBlocks chunk, int x1, int x2, int y, int z1, int z2) {
