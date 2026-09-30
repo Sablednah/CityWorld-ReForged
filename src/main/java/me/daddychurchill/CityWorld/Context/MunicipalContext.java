@@ -22,7 +22,7 @@ public class MunicipalContext extends UrbanContext {
 		oddsOfSimilarBuildingRounding = Odds.oddsAlwaysGoingToHappen;
 		oddsOfUnfinishedBuildings = Odds.oddsExtremelyUnlikely;
 		oddsOfOnlyUnfinishedBasements = Odds.oddsUnlikely;
-		// oddsOfMissingRoad = oddsNeverGoingToHappen;
+		oddsOfMissingRoad = Odds.oddsNeverGoingToHappen;
 		oddsOfRoundAbouts = Odds.oddsVeryLikely;
 
 		oddsOfStairWallMaterialIsWallMaterial = Odds.oddsAlwaysGoingToHappen;
