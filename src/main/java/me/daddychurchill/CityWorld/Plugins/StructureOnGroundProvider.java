@@ -318,12 +318,17 @@ public class StructureOnGroundProvider extends Provider {
 		// chunk.setWalls(2, 13, baseY, baseY + ContextData.FloorHeight, 2, 13,
 		// Material.SPRUCE_WOOD);
 		generateColonial(generator, chunk, context, odds, baseY, matFloor, matWall, matCeiling, matRoof, floors,
-				roomWidth, roomWidth, styleRoof, false);
+				roomWidth, roomWidth, styleRoof, false, false, false);
 		return floors;
 	}
 
 	public int generateHouse(CityWorldGenerator generator, RealBlocks chunk, DataContext context, Odds odds, int baseY,
 			int maxFloors, int maxRoomWidth) {
+
+		// A modern house now and then, in the modern styles: the look that fills the schematic sites (owner,
+		// 2026-09-30) — white and grey boxes, flat roofs, floor-to-ceiling glass, glass railings, often split-level.
+		if (generator.isModernStyle() && odds.playOdds(Odds.oddsSomewhatLikely))
+			return generateModernHouse(generator, chunk, context, odds, baseY, maxFloors, maxRoomWidth);
 
 		// what are we made of? (deOre swaps plain stone for a decorative stone on MODERN, so the ore pass
 		// doesn't pepper the build with diorite/dirt)
@@ -338,14 +343,35 @@ public class StructureOnGroundProvider extends Provider {
 		HouseRoofStyle styleRoof = pickRoofStyle(odds);
 		int floors = odds.getRandomInt(maxFloors) + 1;
 
-		// TODO add bed
-		// TODO add kitchen
-		// TODO add living room
-		// TODO add split level house style
+		// a split-level house now and then (Ed's TODO): one wing raised half a floor
+		boolean splitLevel = odds.playOdds(Odds.oddsSomewhatUnlikely);
 
 		// draw the house
 		generateColonial(generator, chunk, context, odds, baseY, matFloor, matWall, matCeiling, matRoof, floors,
-				MinSize, maxRoomWidth, styleRoof, true);
+				MinSize, maxRoomWidth, styleRoof, true, splitLevel, false);
+		return floors;
+	}
+
+	private static final Material[] MODERN_WALLS = { Material.WHITE_CONCRETE, Material.WHITE_CONCRETE,
+			Material.LIGHT_GRAY_CONCRETE, Material.SMOOTH_QUARTZ, Material.WHITE_TERRACOTTA };
+	private static final Material[] MODERN_FLOORS = { Material.POLISHED_ANDESITE, Material.SMOOTH_STONE,
+			Material.BIRCH_PLANKS, Material.OAK_PLANKS, Material.POLISHED_DIORITE };
+	private static final Material[] MODERN_ROOFS = { Material.LIGHT_GRAY_CONCRETE, Material.GRAY_CONCRETE,
+			Material.SMOOTH_STONE, Material.WHITE_CONCRETE };
+
+	/**
+	 * A modern house on the colonial house's bones: the same rooms and furnishing, drawn as white and grey boxes
+	 * with flat roofs, glass from floor to ceiling, glass railings round the roof terraces, and split-level half the
+	 * time, so the wings stand at different heights.
+	 */
+	private int generateModernHouse(CityWorldGenerator generator, RealBlocks chunk, DataContext context, Odds odds,
+			int baseY, int maxFloors, int maxRoomWidth) {
+		Material matWall = MODERN_WALLS[odds.getRandomInt(MODERN_WALLS.length)];
+		Material matFloor = MODERN_FLOORS[odds.getRandomInt(MODERN_FLOORS.length)];
+		Material matRoof = MODERN_ROOFS[odds.getRandomInt(MODERN_ROOFS.length)];
+		int floors = odds.getRandomInt(maxFloors) + 1;
+		generateColonial(generator, chunk, context, odds, baseY, matFloor, matWall, Material.WHITE_CONCRETE, matRoof,
+				floors, MinSize, maxRoomWidth, HouseRoofStyle.FLAT, true, odds.flipCoin(), true);
 		return floors;
 	}
 
@@ -356,7 +382,8 @@ public class StructureOnGroundProvider extends Provider {
 
 	private void generateColonial(CityWorldGenerator generator, RealBlocks chunk, DataContext context, Odds odds,
 			int baseY, Material matFloor, Material matWall, Material matCeiling, Material matRoof, int floors,
-			int minRoomWidth, int maxRoomWidth, HouseRoofStyle styleRoof, boolean allowMissingRooms) {
+			int minRoomWidth, int maxRoomWidth, HouseRoofStyle styleRoof, boolean allowMissingRooms, boolean splitLevel,
+			boolean modern) {
 
 		Trees trees = new Trees(odds);
 		// The fittings, one pick per house so the rooms match: a trapdoor for the attic hatch, a front
@@ -367,6 +394,10 @@ public class StructureOnGroundProvider extends Provider {
 		Material matInteriorDoor = MaterialTags.pick(MaterialTags.FITTINGS_INTERIOR_DOOR, odds, Material.BIRCH_DOOR);
 		Material matWindow = MaterialTags.pick(MaterialTags.FITTINGS_WINDOW, odds, materialGlass);
 		Material matFence = MaterialTags.pick(MaterialTags.FITTINGS_FENCE, odds, materialFence);
+		if (modern) { // plain glass walls and glass railings, whatever the pools hold (drawn above all the same, so
+			matWindow = materialGlass; // the rolls after this are the ones a colonial house would make)
+			matFence = Material.GLASS_PANE;
+		}
 		Material matStairs = MaterialTags.pick(MaterialTags.FITTINGS_STAIRS, odds, null);
 		// drawn only when there is a pooled stair to style: a draw here on a vanilla world would shift
 		// every later choice the house makes (measured: the rooms moved)
@@ -396,6 +427,7 @@ public class StructureOnGroundProvider extends Provider {
 					// create the room
 					rooms[f][x][z] = new Room(thisRoomMissing, thisRoomWidthZ, thisRoomWidthX, thisRoomHasWalls,
 							thisRoomStyle, matTrapDoor, matDoor, matInteriorDoor, matWindow, matFence, matStairs, railStyle);
+					rooms[f][x][z].tallWindows = modern;
 
 					// single floor is a little different
 					if (floors == 1) {
@@ -464,6 +496,13 @@ public class StructureOnGroundProvider extends Provider {
 				}
 			}
 		}
+
+		// the split-level house raises the wing the entry is not in by half a floor, on every floor
+		int entryColumn = roomX;
+		if (splitLevel)
+			for (int f = 0; f < floors; f++)
+				for (int z = 0; z < 2; z++)
+					rooms[f][flip(entryColumn)][z].lift = SplitLift;
 
 		// now the kitchen
 		roomZ = flip(roomZ);
@@ -551,6 +590,8 @@ public class StructureOnGroundProvider extends Provider {
 		// standing in a doorway. Now that every door and every furnishing is down, clear whatever blocks
 		// a door's threshold so you can always walk through.
 		clearDoorways(chunk, baseY, floors);
+		if (splitLevel)
+			joinSplitLevels(chunk, rooms, floors, entryColumn, roomOffsetX, roomOffsetZ, matWall);
 
 		// figure out roofs
 		int roofBottom = baseY + floors * DataContext.FloorHeight - 1;
@@ -1047,6 +1088,40 @@ public class StructureOnGroundProvider extends Provider {
 		chunk.setBlock(x, y, z, Material.AIR);
 	}
 
+	/** How much higher a split-level house's raised wing stands: half a floor. */
+	private final static int SplitLift = DataContext.FloorHeight / 2;
+
+	/**
+	 * A split-level house's two wings meet across the wall at {@code roomOffsetX}, half a floor apart, and each room
+	 * cut its interior door there at its own floor, so the doors stand out of line. On every floor where both rooms
+	 * exist, that door column becomes the half-flight: a stair in the lower room, a stair in the wall, headroom cleared
+	 * above. And the raised wing gets a footing under its floor.
+	 */
+	private void joinSplitLevels(RealBlocks chunk, Room[][][] rooms, int floors, int entryColumn, int roomOffsetX,
+			int roomOffsetZ, Material matWall) {
+		int raised = flip(entryColumn);
+		BlockFace up = raised == 1 ? BlockFace.EAST : BlockFace.WEST;
+		int lowerCell = roomOffsetX + (raised == 1 ? -1 : 1);
+		for (int z = 0; z < 2; z++) {
+			Room footing = rooms[0][raised][z];
+			if (!footing.missing && footing.located)
+				chunk.setBlocks(footing.x1, footing.x2 + 1, footing.y1 - 1 - SplitLift, footing.y1 - 1, footing.z1,
+						footing.z2 + 1, matWall);
+			int doorZ = z == 1 ? roomOffsetZ + 2 : roomOffsetZ - 2;
+			for (int f = 0; f < floors; f++) {
+				Room lower = rooms[f][entryColumn][z], upper = rooms[f][raised][z];
+				if (lower.missing || upper.missing || !lower.located)
+					continue;
+				int y = lower.y1;
+				chunk.setBlock(roomOffsetX, y, doorZ, matWall); // the lower door's foot, under the flight
+				chunk.setBlocks(roomOffsetX, y + 1, y + SplitLift + 3, doorZ, Material.AIR);
+				chunk.setBlocks(lowerCell, y, y + 3, doorZ, Material.AIR);
+				chunk.setBlock(lowerCell, y, doorZ, materialStair, up);
+				chunk.setBlock(roomOffsetX, y + 1, doorZ, materialStair, up);
+			}
+		}
+	}
+
 	private HouseRoofStyle pickRoofStyle(Odds odds) {
 		switch (odds.getRandomInt(4)) {
 		default:
@@ -1101,6 +1176,8 @@ public class StructureOnGroundProvider extends Provider {
 		final Material fence; // the railing round a missing room's floor
 		final Material stairs; // a pooled one-block stair tread, or null for the vanilla run
 		final String railStyle; // classic / harp / smooth, for the pooled railings and balconies
+		int lift; // a split-level house's raised wing stands this much higher (SplitLift)
+		boolean tallWindows; // glass from floor to ceiling (the modern house)
 
 		Room(boolean aMissing, int aWidthX, int aWidthZ, boolean aWalls, Style aStyle, Material aTrapDoor,
 				Material aDoor, Material aInteriorDoor, Material aWindow, Material aFence, Material aStairs,
@@ -1142,7 +1219,7 @@ public class StructureOnGroundProvider extends Provider {
 				x2 = roomOffsetX + (roomEast ? widthX : 0);
 				z1 = roomOffsetZ - (roomSouth ? 0 : widthZ);
 				z2 = roomOffsetZ + (roomSouth ? widthZ : 0);
-				y1 = baseY + floor * DataContext.FloorHeight;
+				y1 = baseY + floor * DataContext.FloorHeight + lift;
 				y2 = y1 + DataContext.FloorHeight - 1;
 			}
 		}
@@ -1152,6 +1229,7 @@ public class StructureOnGroundProvider extends Provider {
 
 			// find ourselves
 			Locate(context, floor, floors, x, z, roomOffsetX, roomOffsetZ, baseY);
+			int wy1 = tallWindows ? y1 : y1 + 1; // the window band's bottom row
 
 			// draw the walls. A window band is placed the way a pane would be connected — along the
 			// wall — which is what turns a framed window from the pool across the wall (Material.withFaces;
@@ -1159,18 +1237,18 @@ public class StructureOnGroundProvider extends Provider {
 			// of frames, which worldgen placement alone never triggers
 			if (roomEast) {
 				chunk.setBlocks(x2, x2 + 1, y1, y2, z1, z2 + 1, matWall); // east wall
-				chunk.setBlocks(x2, x2 + 1, y1 + 1, y2 - 1, z1 + 1, z2, window, BlockFace.NORTH, BlockFace.SOUTH); // eastern window
+				chunk.setBlocks(x2, x2 + 1, wy1, y2 - 1, z1 + 1, z2, window, BlockFace.NORTH, BlockFace.SOUTH); // eastern window
 
 				if (roomSouth) {
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z2, z2 + 1, matWall); // south wall
-					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z2, z2 + 1, window, BlockFace.EAST, BlockFace.WEST); // southern window
+					chunk.setBlocks(x1 + 1, x2, wy1, y2 - 1, z2, z2 + 1, window, BlockFace.EAST, BlockFace.WEST); // southern window
 
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z1, z1 + 1, matWall); // north wall
 					chunk.setBlocks(x1, x1 + 1, y1, y2, z1, z2 + 1, matWall); // west wall
 
 				} else {
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z1, z1 + 1, matWall); // north wall
-					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z1, z1 + 1, window, BlockFace.EAST, BlockFace.WEST); // northern window
+					chunk.setBlocks(x1 + 1, x2, wy1, y2 - 1, z1, z1 + 1, window, BlockFace.EAST, BlockFace.WEST); // northern window
 
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z2, z2 + 1, matWall); // south wall
 					chunk.setBlocks(x1, x1 + 1, y1, y2, z1, z2 + 1, matWall); // west wall
@@ -1178,18 +1256,18 @@ public class StructureOnGroundProvider extends Provider {
 				}
 			} else {
 				chunk.setBlocks(x1, x1 + 1, y1, y2, z1, z2 + 1, matWall); // west wall
-				chunk.setBlocks(x1, x1 + 1, y1 + 1, y2 - 1, z1 + 1, z2, window, BlockFace.NORTH, BlockFace.SOUTH); // western window
+				chunk.setBlocks(x1, x1 + 1, wy1, y2 - 1, z1 + 1, z2, window, BlockFace.NORTH, BlockFace.SOUTH); // western window
 
 				if (roomSouth) {
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z2, z2 + 1, matWall); // south wall
-					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z2, z2 + 1, window, BlockFace.EAST, BlockFace.WEST); // southern window
+					chunk.setBlocks(x1 + 1, x2, wy1, y2 - 1, z2, z2 + 1, window, BlockFace.EAST, BlockFace.WEST); // southern window
 
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z1, z1 + 1, matWall); // north wall
 					chunk.setBlocks(x2, x2 + 1, y1, y2, z1, z2 + 1, matWall); // east wall
 
 				} else {
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z1, z1 + 1, matWall); // north wall
-					chunk.setBlocks(x1 + 1, x2, y1 + 1, y2 - 1, z1, z1 + 1, window, BlockFace.EAST, BlockFace.WEST); // northern window
+					chunk.setBlocks(x1 + 1, x2, wy1, y2 - 1, z1, z1 + 1, window, BlockFace.EAST, BlockFace.WEST); // northern window
 
 					chunk.setBlocks(x1, x2 + 1, y1, y2, z2, z2 + 1, matWall); // south wall
 					chunk.setBlocks(x2, x2 + 1, y1, y2, z1, z2 + 1, matWall); // east wall
@@ -1197,7 +1275,7 @@ public class StructureOnGroundProvider extends Provider {
 			}
 
 			if (window != materialGlass)
-				chunk.reconnect(x1, x2 + 1, y1 + 1, y2 - 1, z1, z2 + 1);
+				chunk.reconnect(x1, x2 + 1, wy1, y2 - 1, z1, z2 + 1);
 		}
 
 		void DrawFloor(RealBlocks chunk, DataContext context, int floor, int floors, int x, int z,
