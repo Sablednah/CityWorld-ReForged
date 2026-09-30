@@ -661,13 +661,72 @@ public class BunkerLot extends ConnectedLot {
 		generateQuadConnectors(chunk, odds, x1 + 7, x1 + 12, y1 + 3, Math.min(colY3, colY4) - 3, z1 + 5, z1 + 7, true);
 		generateQuadConnectors(chunk, odds, x1 + 5, x1 + 7, y1 + 3, Math.min(colY2, colY4) - 3, z1 + 7, z1 + 12, false);
 
-		// TODO make them hollow
-		// TODO vertical windows
-		// TODO horizontal connections from time to time, place treasures here
-		// TODO spiral staircase up the middle
+		// Ed's four TODOs: the towers are hollow (setWalls), so give each a way in, a window slit up every wall and a
+		// stair spiralling round a post up the middle; and now and then a bridge between two towers with a chest on it
+		quadTowerInside(chunk, x1, z1, y1, colY1, BlockFace.EAST, coreColor);
+		quadTowerInside(chunk, x1, z2 - 5, y1, colY2, BlockFace.EAST, coreColor);
+		quadTowerInside(chunk, x2 - 5, z1, y1, colY3, BlockFace.WEST, coreColor);
+		quadTowerInside(chunk, x2 - 5, z2 - 5, y1, colY4, BlockFace.WEST, coreColor);
+		if (odds.flipCoin())
+			quadBridge(generator, chunk, odds, x1 + 4, z1, y1, Math.min(colY1, colY3), true);
+		if (odds.flipCoin())
+			quadBridge(generator, chunk, odds, x1 + 4, z2 - 5, y1, Math.min(colY2, colY4), true);
 
 		// lift the surface? NOPE
 		return 0;
+	}
+
+	/** The ring of cells round a quad tower's 3x3 inside, in climbing order (offsets from the tower's corner). */
+	private static final int[][] QUAD_SPIRAL = { { 1, 1 }, { 2, 1 }, { 3, 1 }, { 3, 2 }, { 3, 3 }, { 2, 3 }, { 1, 3 },
+			{ 1, 2 } };
+
+	/**
+	 * The inside of one 5x5 quad tower whose corner is {@code x, z}: a doorway on its {@code door} side (east or west,
+	 * where the stair's first lap leaves the cell inside it clear), a glass slit up the middle of every wall, and a
+	 * stair spiralling round a post in the middle, one step per cell, to the top.
+	 */
+	private static void quadTowerInside(SupportBlocks chunk, int x, int z, int y1, int y2, BlockFace door,
+			Material coreColor) {
+		int floor = y1 + 2, top = y2 - 3;
+		if (top - floor < 4)
+			return;
+		for (int y = floor + 3; y < top - 1; y++) {
+			chunk.setBlock(x + 2, y, z, Material.GLASS);
+			chunk.setBlock(x + 2, y, z + 4, Material.GLASS);
+			chunk.setBlock(x, y, z + 2, Material.GLASS);
+			chunk.setBlock(x + 4, y, z + 2, Material.GLASS);
+		}
+		int doorX = door == BlockFace.EAST ? x + 4 : x;
+		chunk.setBlocks(doorX, floor, floor + 2, z + 2, Material.AIR);
+		chunk.setBlocks(x + 2, floor, top, z + 2, coreColor);
+		// a west-door tower starts its spiral half a lap round, so both towers of a pair pass the cell inside their
+		// facing walls (east wall: cell 3, west wall: cell 7) at the same heights — where a bridge can meet them
+		int offset = door == BlockFace.EAST ? 0 : 4;
+		for (int step = 0; floor + step < top; step++) {
+			int[] cell = QUAD_SPIRAL[(step + offset) % 8], next = QUAD_SPIRAL[(step + offset + 1) % 8];
+			BlockFace up = next[0] > cell[0] ? BlockFace.EAST : next[0] < cell[0] ? BlockFace.WEST
+					: next[1] > cell[1] ? BlockFace.SOUTH : BlockFace.NORTH;
+			chunk.setBlock(x + cell[0], floor + step, z + cell[1], Material.POLISHED_ANDESITE_STAIRS, up);
+		}
+	}
+
+	/**
+	 * A bridge across the two-block gap between two quad towers, from the tower whose east wall is at {@code x} to the
+	 * one beyond, high up: a floor, a doorway through each tower wall, and a chest of bunker loot on it.
+	 */
+	private static void quadBridge(CityWorldGenerator generator, SupportBlocks chunk, Odds odds, int x, int z, int y1,
+			int lowerTop, boolean alongX) {
+		// level with a step of both spirals (floor + 3, then every lap of eight), so the stair runs out onto the bridge,
+		// as high as the lower tower allows under its cap (the towers are only ~17 tall, so often the first lap)
+		int floor = y1 + 2, room = lowerTop - 5 - (floor + 3);
+		if (room < 0)
+			return;
+		int laps = room / 8;
+		int y = floor + 3 + laps * 8;
+		chunk.setBlocks(x + 1, x + 3, y, z + 1, z + 4, Material.POLISHED_ANDESITE);
+		chunk.setBlocks(x + 1, x + 3, y + 1, y + 4, z + 1, z + 4, Material.AIR);
+		chunk.setBlocks(x, x + 4, y + 1, y + 3, z + 2, z + 3, Material.AIR);
+		chunk.setChest(generator, x + 1, y + 1, z + 1, odds, generator.lootProvider, LootLocation.BUNKER);
 	}
 
 	private static void generateQuadTowers(SupportBlocks chunk, Odds odds, int x1, int x2, int y1, int y2, int z1,
