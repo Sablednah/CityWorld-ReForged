@@ -127,6 +127,9 @@ public final class Overgrowth {
                 int wallH = Math.max(4, topY - generator.streetLevel);
                 int len = wallH / 4 + odds.getRandomInt(wallH - wallH / 4 + 1);
                 hangVineString(level, wx, topY, wz, topDir, len, odds, capVines);
+                // and now and then shelf mushrooms (26.3) low on the same wall
+                if (odds.playOdds(0.3))
+                    shelfMushrooms(level, wx, surfaceY, wz, odds);
             }
         }
 
@@ -303,6 +306,8 @@ public final class Overgrowth {
             // silhouette, so ten percent of every reclaimed surface wearing them read as a thicket — a
             // persistent leaf block of the local tree species is quieter and matches the trees around it.
             pick = shrubLeaves(level, pos, odds);
+        else if (r >= 86 && r < 88)
+            pick = net.minecraft.world.level.block.Blocks.RED_SHRUB.defaultBlockState(); // 26.3's red shrub
         else
             pick = (r < 88 ? Material.SMALL_DRIPLEAF : r < 91 ? Material.WILDFLOWERS
                     : r < 93 ? Material.BUSH : r < 95 ? Material.PALE_MOSS_CARPET
@@ -382,6 +387,22 @@ public final class Overgrowth {
     /** The direction from the air cell {@code (wx,y,wz)} to an adjacent solid wall face, or null. Reads
      *  the neighbour even across a chunk boundary (guarded by {@code hasChunk}), so a wall on the seam is
      *  still found — the caller only ever WRITES the vine into the air cell itself, which is in-chunk. */
+    /** One to three 26.3 shelf mushrooms on the wall beside this column, a few blocks up, facing out from it. */
+    private static void shelfMushrooms(ServerLevelAccessor level, int wx, int surfaceY, int wz, Odds odds) {
+        int placed = 0, want = 1 + odds.getRandomInt(3);
+        for (int y = surfaceY + 1; y <= surfaceY + 5 && placed < want; y++) {
+            Direction dir = wallDir(level, wx, y, wz);
+            if (dir == null || odds.flipCoin())
+                continue;
+            BlockState shelf = net.minecraft.world.level.block.Blocks.SHELF_MUSHROOM.defaultBlockState()
+                    .setValue(net.minecraft.world.level.block.ShelfMushroomBlock.FACING, dir.getOpposite())
+                    .setValue(net.minecraft.world.level.block.ShelfMushroomBlock.AGE,
+                            odds.getRandomInt(net.minecraft.world.level.block.ShelfMushroomBlock.MAX_AGE + 1));
+            if (tryPlace(level, new BlockPos(wx, y, wz), shelf))
+                placed++;
+        }
+    }
+
     private static Direction wallDir(ServerLevelAccessor level, int wx, int y, int wz) {
         for (Direction dir : Direction.Plane.HORIZONTAL) {
             int nwx = wx + dir.getStepX(), nwz = wz + dir.getStepZ();
