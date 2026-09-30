@@ -39,6 +39,8 @@ public class OfficeBuildingLot extends FinishedBuildingLot {
 
 		rounded = false;
 		contentStyle = residential ? ContentStyle.APARTMENTS : pickContentStyle();
+		// now and then an office block built round an atrium (it only opens where the building is 2x2 or bigger)
+		atrium = !residential && chunkOdds.playOdds(me.daddychurchill.CityWorld.Support.Odds.oddsSomewhatUnlikely);
 	}
 
 	@Override
