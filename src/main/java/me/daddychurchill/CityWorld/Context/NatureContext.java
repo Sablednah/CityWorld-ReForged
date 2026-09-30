@@ -290,9 +290,12 @@ public class NatureContext extends UncivilizedContext {
 						// the airship spans this lot and a wild neighbour, and sets both halves itself
 					} else if (platmapOdds.playOdds(Odds.oddsPrettyUnlikely))
 						current = new HotairBalloonLot(platmap, platmap.originX + x, platmap.originZ + z);
-
-					// TODO statue overlooking the city?
 				}
+				// a statue overlooking the city (Ed's TODO)
+				if (current == null && generator.getSettings().includeBuildings
+						&& platmapOdds.playOdds(Odds.oddsSomewhatUnlikely))
+					current = new me.daddychurchill.CityWorld.Plats.Nature.HillStatueLot(platmap, platmap.originX + x,
+							platmap.originZ + z);
 				break;
 			case MIDLAND:
 				// mine entrances handled above (any band over a field); nothing else here
