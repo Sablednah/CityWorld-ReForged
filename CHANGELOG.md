@@ -7,6 +7,35 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ## Unreleased
 
+### Added
+
+Most of these are ideas the original author, Ed Churchill, left himself as TODO comments in CityWorld's source
+between 2011 and 2018 and never got to.
+
+- **Districts are no longer one rigid grid.** Lowrise, midrise, construction and rural districts now leave out some
+  of the roads between their own intersections (at most two per district), so their blocks come in different sizes
+  and some buildings run a whole block long. Downtown, industrial, civic and park districts keep every road. The
+  setting for this, `oddsOfMissingRoad`, had been in the code since 2012 but was never connected to anything.
+- **Lane lines.** Straight city streets get a dashed centre line; junctions keep their crosswalks.
+- **Ruined road tunnels.** Where roads decay, the tunnels they run through decay too: holes in the tiling and glass,
+  crumbling stone, rubble along the kerbs, cobwebs in the roof, and some lights out.
+- **Office buildings with an atrium**, now and then: a 2x2 (or bigger) block opened up in the middle from ground to
+  roof, with glass railings on every floor, a pool and a potted azalea at the foot and a glass skylight.
+- **Rooftop helipads** on some tall flat-roofed towers, one per building.
+- **Split-level houses**: one wing raised half a floor, with a short flight of stairs between the wings on every
+  floor.
+- **Modern houses** in the modern styles: white and grey boxes with flat roofs, glass from floor to ceiling and
+  glass railings round the roof terraces, often split-level.
+- **Parks**: gazebos over the crossing of the paths, a pond inside some circle-path parks instead of the big tree,
+  and benches beside the paths.
+- **A statue on a hill overlooking the city**, in quartz or weathered copper, on rare level hilltops.
+- **Cocoa plantations**: rows of short jungle trees with cocoa pods on their trunks, in jungle farm country and
+  now and then elsewhere.
+- **Farmyard wells**: a stone well with a little roof, a path, a haystack and barrels.
+- **Bunker towers you can climb**: the four-tower bunker's towers now have a door, window slits and a spiral stair
+  inside, and now and then a bridge between two of them with a chest on it.
+- **(26.3)** Overgrown ruins grow 26.3's red shrubs, and shelf mushrooms on their walls.
+
 ### Fixed
 
 - **A reserved site slopes down to lower ground instead of standing on a sheer step.** A site only a block or two
