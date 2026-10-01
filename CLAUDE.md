@@ -33,7 +33,10 @@ defaults in a shipped jar). Local commits: master `d1007ea4`, `93339994` (+ docs
 self-tests PASS, `--compare` agrees, the screen was driven on real clients (Vivo) on 1.21.11, 1.20.1, 26.2 and
 1.21.1, and the dev jars are on the 11 fleet instances (stamps = each branch's head sha) for the owner's playtest.
 The same evening his 1.20.1 playtest found **5.16.0's museum deadlock** (below, "A hang at Preparing spawn
-area"); fixed in `35a52032` + picks, so the next release also fixes a hang in the released 5.16.0.
+area"); fixed in `35a52032` + picks, so the next release also fixes a hang in the released 5.16.0. Six self-tests PASS
+with the new `directload` check, the fixed jars are on the fleet, and the owner confirmed 1.20.1 (world creates,
+ticked structures appear). His test jars `allstructures-cityworld-test` and `cataclysm-cityworld-compat` in the
+`1.20.1  Forge` instance are renamed `.jar.disabled` at his request.
 **Next: his word to release** — then push branches, push master, CI, bump (5.17.0: a visible feature), tag,
 release, and add the CURSEFORGE.md "New in" paragraph + update its "Vanilla structures" bullet. PORTING.md
 "▶ Resume here — the Structures page and MCA".

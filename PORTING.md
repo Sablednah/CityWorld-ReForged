@@ -117,6 +117,10 @@ that chunk. `setRotation(int)` always passes `updateNeighbours = true`; the fram
   `getChunkSource().updateChunkForced` (tickets only); and `getChunkNow` answers null off the server thread on
   1.20.1, so the count is asked ON it, with a timeout (a deadlocked server thread never answers). A/B on the same
   seed: unfixed `0/100 … Exhibits.podium:82 <- MuseumBuildingLot.drawExhibits:164`, fixed `100/100 in 8.5 s`.
+- **Gates after the fix (2026-10-01 night):** six full self-tests PASS with `directload` 100/100 (6–12.5 s),
+  `--compare` agrees, and a one-off wide load on mc26.2 (BoP + the furniture mods; a temporary debug listener,
+  deleted) — FORCED tickets on 40x40 chunks at once — finished 1600/1600 on MODERN (88 s) and APOCALYPSE (82 s).
+  The owner's 1.20.1 world then created normally on the installed jar, with the structures he ticked.
 - **The rule:** an entity built during decoration holds the REAL level. Any method on it that "notifies" —
   neighbours, comparators, sounds, `setChanged` — reaches the chunk system from a worker. Read the vanilla method
   before calling it; prefer the overload with the `false`. Signs (`markUpdated`), frames (`setItem`'s sound, now
