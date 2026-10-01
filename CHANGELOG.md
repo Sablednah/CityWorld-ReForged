@@ -20,7 +20,8 @@ between 2011 and 2018 and never got to.
 - **Ruined road tunnels.** Where roads decay, the tunnels they run through decay too: holes in the tiling and glass,
   crumbling stone, rubble along the kerbs, cobwebs in the roof, and some lights out.
 - **Office buildings with an atrium**, now and then: a 2x2 (or bigger) block opened up in the middle from ground to
-  roof, with glass railings on every floor, a pool and a potted azalea at the foot and a glass skylight.
+  roof, with glass railings on every floor, a pool (or a moss garden, over a basement) at the foot and a glass
+  skylight.
 - **Rooftop helipads** on some tall flat-roofed towers, one per building.
 - **Split-level houses**: one wing raised half a floor, with a short flight of stairs between the wings on every
   floor.
