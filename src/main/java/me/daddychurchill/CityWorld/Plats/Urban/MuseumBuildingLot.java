@@ -9,6 +9,7 @@ import me.daddychurchill.CityWorld.Plats.FinishedBuildingLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Plugins.RoomProvider;
 import me.daddychurchill.CityWorld.Support.Colors;
+import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.Support.Surroundings;
@@ -120,19 +121,53 @@ public class MuseumBuildingLot extends FinishedBuildingLot {
 				Colors colors = new Colors(chunkOdds);
 				chunk.setBlocks(3, 13, sidewalkLevel, 3, 13, colors.getConcrete());
 				generator.reportLocation("museum", "Museum", chunk);
-				generator.thingProvider.generateBones(generator, this, chunk, 7, sidewalkLevel + 1, 11, chunkOdds,
-						true);
+				me.daddychurchill.CityWorld.Support.Fossils.Species species = me.daddychurchill.CityWorld.Support.Fossils
+						.draw(chunk, me.daddychurchill.CityWorld.Support.Fossils.speciesAt(getChunkX(), getChunkZ()),
+								sidewalkLevel + 1);
 
 				// it looked so nice for a moment... but the moment has passed
 				if (buildingsDecay(generator)) {
 					destroyLot(generator, sidewalkLevel, sidewalkLevel + firstFloorHeight);
 
 				} else {
-					chunk.setBlocks(7, sidewalkLevel + 1, sidewalkLevel + 3, 4, Material.SMOOTH_STONE);
-					chunk.setWallSign(7, sidewalkLevel + 2, 3, BlockFace.NORTH,
-							generator.odonymProvider.generateFossilOdonym(generator, chunkOdds));
-					chunk.setBlock(7, sidewalkLevel + 1, 5, Material.TORCH, BlockFace.SOUTH);
+					// the name plaque under the skull, two wide like the skeleton, and lights let into the floor
+					chunk.setBlocks(7, 9, sidewalkLevel + 1, sidewalkLevel + 3, 4, 5, Material.SMOOTH_STONE);
+					String[] name = generator.odonymProvider.generateFossilOdonym(generator, chunkOdds);
+					chunk.setWallSign(7, sidewalkLevel + 2, 3, BlockFace.NORTH, name);
+					chunk.setWallSign(8, sidewalkLevel + 2, 3, BlockFace.NORTH, "", species.title);
+					for (int[] corner : new int[][] { { 3, 3 }, { 12, 3 }, { 3, 12 }, { 12, 12 } })
+						chunk.setBlock(corner[0], sidewalkLevel, corner[1], Material.SEA_LANTERN);
 				}
+				drawExhibits(chunk, sidewalkLevel);
+			}
+		}
+	}
+
+	/** Where an exhibit may stand: beside the fossil's floor and along the walls, clear of the middle of each
+	 *  side, where the doors are. {x, z, the way it faces}. */
+	private static final Object[][] EXHIBIT_SPOTS = { { 3, 4, BlockFace.EAST }, { 3, 11, BlockFace.EAST },
+			{ 12, 4, BlockFace.WEST }, { 12, 11, BlockFace.WEST }, { 4, 2, BlockFace.SOUTH },
+			{ 11, 2, BlockFace.SOUTH }, { 4, 13, BlockFace.NORTH }, { 11, 13, BlockFace.NORTH } };
+
+	/**
+	 * The exhibits round the hall (owner, 2026-10-01): about two spots in three hold a podium with an artifact, an
+	 * armour stand, or a shelf of artifacts (a podium where this version has no shelf block). Drawn after any
+	 * decay, and only where the floor is still there and the spot is clear, so a ruined museum keeps what survived.
+	 */
+	private void drawExhibits(RealBlocks chunk, int sidewalkLevel) {
+		int y = sidewalkLevel + 1;
+		for (Object[] spot : EXHIBIT_SPOTS) {
+			int x = (Integer) spot[0], z = (Integer) spot[1];
+			BlockFace facing = (BlockFace) spot[2];
+			if (!chunkOdds.playOdds(Odds.oddsVeryLikely))
+				continue;
+			int kind = chunkOdds.getRandomInt(20);
+			if (chunk.isEmpty(x, sidewalkLevel, z))
+				continue; // the floor went with the ruin
+			if (kind < 5) {
+				me.daddychurchill.CityWorld.Support.Exhibits.armour(chunk, chunkOdds, x, y, z, facing);
+			} else if (kind >= 11 || !me.daddychurchill.CityWorld.Support.Exhibits.shelf(chunk, chunkOdds, x, y, z, facing)) {
+				me.daddychurchill.CityWorld.Support.Exhibits.podium(chunk, chunkOdds, x, y, z);
 			}
 		}
 	}

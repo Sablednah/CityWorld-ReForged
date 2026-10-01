@@ -1,0 +1,26 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:leather_helmet",
+    "minecraft:leather_chestplate",
+    "minecraft:leather_leggings",
+    "minecraft:leather_boots",
+    "minecraft:chainmail_helmet",
+    "minecraft:chainmail_chestplate",
+    "minecraft:chainmail_leggings",
+    "minecraft:chainmail_boots",
+    "minecraft:golden_helmet",
+    "minecraft:golden_chestplate",
+    "minecraft:golden_leggings",
+    "minecraft:golden_boots",
+    "minecraft:iron_helmet",
+    "minecraft:iron_chestplate",
+    "minecraft:iron_leggings",
+    "minecraft:iron_boots",
+    "minecraft:turtle_helmet",
+    { "id": "minecraft:copper_helmet", "required": false },
+    { "id": "minecraft:copper_chestplate", "required": false },
+    { "id": "minecraft:copper_leggings", "required": false },
+    { "id": "minecraft:copper_boots", "required": false }
+  ]
+}
