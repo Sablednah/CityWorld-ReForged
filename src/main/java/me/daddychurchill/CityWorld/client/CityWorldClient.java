@@ -43,11 +43,10 @@ public final class CityWorldClient {
             new ResourceLocation(CityWorldMod.MODID, "city"));
 
     public static void init(IEventBus modEventBus, net.minecraftforge.fml.ModContainer container) {
-        // Modpack lock: config/cityworld-startup.toml. 1.20.1 has no STARTUP config type (COMMON,
-        // CLIENT and SERVER only), so this rides on CLIENT — which is still loaded before the world
-        // creation screen can be reached, which is all the preset editors below need.
-        net.minecraftforge.fml.ModLoadingContext.get().registerConfig(
-                net.minecraftforge.fml.config.ModConfig.Type.CLIENT, CityWorldPackConfig.SPEC);
+        // Modpack lock: config/cityworld-startup.toml. 1.20.1 has no STARTUP config type (COMMON, CLIENT and
+        // SERVER only), and those load AFTER this constructor and after the preset editors register — so the
+        // file is opened here, by hand, the way NeoForge opens a STARTUP config. See CityWorldPackConfig.load.
+        CityWorldPackConfig.load();
         WorldTypeLock.register();
         // Vanilla calls every CityWorld world "experimental" (it has more than the three vanilla dimensions);
         // skip that confirm when CityWorld is the only reason. See ExperimentalWarningSkip.

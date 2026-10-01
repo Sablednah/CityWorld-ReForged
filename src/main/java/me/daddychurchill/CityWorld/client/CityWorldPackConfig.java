@@ -15,11 +15,16 @@ import net.minecraftforge.common.ForgeConfigSpec;
  * ({@code CityWorldSettingsData}). This one is per-<em>instance</em>, which is exactly what a modpack ships:
  * "every world made in this pack is CityWorld Apocalypse".
  *
- * <p><b>Why a STARTUP config and not CLIENT.</b> FML opens a STARTUP config the moment it is registered, in
- * the mod constructor. CLIENT/COMMON configs load at a later loading stage, and the preset-editor
- * registration that reads this ({@code PresetEditorManager.init}, from {@code ClientHooks.initClientHooks})
- * is not guaranteed to come after it. A lock read once at boot is also the right semantics — a pack does
- * not change its world type mid-session.
+ * <p><b>Read at startup, by hand.</b> The lock is read in the mod constructor ({@code WorldTypeLock.register})
+ * and when the preset editors register ({@code PresetEditorManager.init}), and both come before Forge loads a
+ * CLIENT or COMMON config. NeoForge has a STARTUP config type for this; Forge 1.20.1 does not, so {@link #load}
+ * opens the file itself. A lock read once at boot is also the right semantics — a pack does not change its
+ * world type mid-session.
+ *
+ * <p><b>What registering it as a CLIENT config did (until 2026-10-01):</b> every read came before the load. A
+ * shipped jar got the defaults back without a word — Forge only throws for that in a development environment —
+ * so the lock never applied on 1.20.1, and the file Forge wrote was {@code cityworld-client.toml}, not the
+ * documented one. The dev client did throw, at startup, which is how it was found.
  */
 public final class CityWorldPackConfig {
 
@@ -57,6 +62,28 @@ public final class CityWorldPackConfig {
                 .define("lockCustomize", false);
         b.pop();
         SPEC = b.build();
+    }
+
+    /**
+     * Opens {@code config/cityworld-startup.toml} (written with its defaults and comments when absent) and binds
+     * the spec to it, so the values can be read from here on. Called once, from the client's mod constructor.
+     */
+    public static void load() {
+        java.nio.file.Path path = net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get()
+                .resolve("cityworld-startup.toml");
+        try {
+            com.electronwill.nightconfig.core.file.CommentedFileConfig file =
+                    com.electronwill.nightconfig.core.file.CommentedFileConfig.builder(path).sync()
+                            .preserveInsertionOrder()
+                            .writingMode(com.electronwill.nightconfig.core.io.WritingMode.REPLACE).build();
+            file.load();
+            SPEC.setConfig(file); // corrects and saves anything missing, which is what writes a fresh file
+        } catch (RuntimeException e) {
+            // an unreadable file must not stop the game: no lock, said once
+            me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                    "CityWorld: could not read {} — no world type lock applied", path, e);
+            SPEC.setConfig(com.electronwill.nightconfig.core.CommentedConfig.inMemory());
+        }
     }
 
     /** The Nether lock: true = ruined city, false = vanilla, empty = the player's choice (or an unrecognised value). */
