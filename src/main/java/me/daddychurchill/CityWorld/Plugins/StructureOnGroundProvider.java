@@ -594,7 +594,7 @@ public class StructureOnGroundProvider extends Provider {
 		// a door's threshold so you can always walk through.
 		clearDoorways(chunk, baseY, floors);
 		if (splitLevel)
-			joinSplitLevels(chunk, rooms, floors, entryColumn, roomOffsetX, roomOffsetZ, matWall);
+			joinSplitLevels(chunk, rooms, floors, entryColumn, roomOffsetX, roomOffsetZ, matWall, matCeiling, matRoof);
 
 		// figure out roofs
 		int roofBottom = baseY + floors * DataContext.FloorHeight - 1;
@@ -1097,14 +1097,22 @@ public class StructureOnGroundProvider extends Provider {
 	/**
 	 * A split-level house's two wings meet across the wall at {@code roomOffsetX}, half a floor apart, and each room
 	 * cut its interior door there at its own floor, so the doors stand out of line. On every floor where both rooms
-	 * exist, that door column becomes the half-flight: a stair in the lower room, a stair in the wall, headroom cleared
-	 * above. And the raised wing gets a footing under its floor.
+	 * exist, that door column becomes the half-flight: one tread in the wall, the next in the raised room (in place of
+	 * its floor block there), arriving on the raised floor one cell further in — or both a cell further in, under the
+	 * entry hall's main staircase. Both treads are on the raised side
+	 * because that is where the headroom is: a tread in the lower room needs the lower room's ceiling opened over it,
+	 * which on the top floor is a hole in the roof (the first two versions; owner's playtests, 2026-09-30 and 10-01).
+	 *
+	 * <p>{@code clearDoorways} has run by now and treated both doors' approaches as furniture: the lower room's
+	 * ceiling block beside the wall and the raised room's floor block beside it went with them. Both are put back.
+	 * And the raised wing gets a footing under its floor.
 	 */
 	private void joinSplitLevels(RealBlocks chunk, Room[][][] rooms, int floors, int entryColumn, int roomOffsetX,
-			int roomOffsetZ, Material matWall) {
+			int roomOffsetZ, Material matWall, Material matCeiling, Material matRoof) {
 		int raised = flip(entryColumn);
+		int toRaised = raised == 1 ? 1 : -1;
 		BlockFace up = raised == 1 ? BlockFace.EAST : BlockFace.WEST;
-		int lowerCell = roomOffsetX + (raised == 1 ? -1 : 1);
+		int lowerCell = roomOffsetX - toRaised, upperCell = roomOffsetX + toRaised;
 		for (int z = 0; z < 2; z++) {
 			Room footing = rooms[0][raised][z];
 			if (!footing.missing && footing.located)
@@ -1114,23 +1122,38 @@ public class StructureOnGroundProvider extends Provider {
 			for (int f = 0; f < floors; f++) {
 				Room lower = rooms[f][entryColumn][z], upper = rooms[f][raised][z];
 				// only one of the pair on this floor: its door in the shared wall opens half a floor above or below the
-				// terrace the missing room left, so it is walled up
+				// terrace the missing room left, so it is walled up — and the terrace block clearDoorways took from
+				// beside a lower room's door (the roof of the raised room below) is put back
 				if (lower.missing != upper.missing) {
 					Room present = lower.missing ? upper : lower;
 					if (present.located)
 						chunk.setBlocks(roomOffsetX, present.y1, present.y1 + 2, doorZ, matWall);
+					if (upper.missing && f > 0 && !rooms[f - 1][raised][z].missing && lower.located)
+						chunk.setBlock(upperCell, lower.y1 + 1, doorZ, matCeiling);
 					continue;
 				}
 				if (lower.missing || !lower.located)
 					continue;
 				int y = lower.y1;
-				chunk.setBlock(roomOffsetX, y, doorZ, matWall); // the lower door's foot, under the flight
-				// the flight's two treads and headroom over the upper one — no more: a third block cut into the roof
-				// over the lower wing (a hole to the sky on a flat roof, owner's screenshots, 2026-09-30)
-				chunk.setBlocks(roomOffsetX, y + 1, y + SplitLift + 2, doorZ, Material.AIR);
-				chunk.setBlocks(lowerCell, y, y + 3, doorZ, Material.AIR);
-				chunk.setBlock(lowerCell, y, doorZ, materialStair, up);
-				chunk.setBlock(roomOffsetX, y + 1, doorZ, materialStair, up);
+				// Where the lower room is the entry hall with the main staircase going up, that staircase may hug this
+				// wall and pass over the doorway: no headroom to climb from under it, and its stairwell is the gap in
+				// the ceiling there. So the flight starts a cell further in, wholly inside the raised room (reached on
+				// the level through the wall), and the ceiling is left alone. Anywhere else the first tread is in the
+				// wall, and the ceiling block beside it goes back where clearDoorways took it.
+				boolean underMainStairs = lower.style == Room.Style.ENTRY && f < floors - 1;
+				int first = underMainStairs ? upperCell : roomOffsetX;
+				if (!underMainStairs)
+					chunk.setBlock(lowerCell, lower.y2, doorZ, f == floors - 1 ? matRoof : matCeiling);
+				// the wall column: both doors out, and headroom to step from one tread up to the next
+				chunk.setBlocks(roomOffsetX, y, y + SplitLift + 2, doorZ, Material.AIR);
+				if (underMainStairs)
+					chunk.setBlock(upperCell, y + 1, doorZ, Material.AIR); // the raised floor, over the first tread
+				chunk.setBlock(first, y, doorZ, materialStair, up);
+				// the second tread takes the place of the raised room's floor block; room to arrive beyond it
+				chunk.setBlock(first + toRaised, y + 1, doorZ, materialStair, up);
+				for (int yy = y + SplitLift; yy < y + SplitLift + 2; yy++)
+					for (int i = 1; i <= (underMainStairs ? 3 : 2); i++)
+						clearFurniture(chunk, roomOffsetX + i * toRaised, yy, doorZ);
 			}
 		}
 	}
