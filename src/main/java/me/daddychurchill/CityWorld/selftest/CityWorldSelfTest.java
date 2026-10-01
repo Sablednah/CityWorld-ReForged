@@ -204,6 +204,7 @@ public final class CityWorldSelfTest {
             checkFarmCrops();
             checkBiomeDepth(server);
             checkStructures(server);
+            checkStructureChoices(server);
             checkDecorationAndSigns(server);
             checkSubways(server);
             checkMalls(server);
@@ -1415,6 +1416,62 @@ public final class CityWorldSelfTest {
             fail("the forecast check found no structure start to compare against");
         for (String m : mismatches)
             fail("structure forecast disagrees with the stored start: " + m);
+    }
+
+    /**
+     * The structure choice (settings "structures", the Customize screen's Structures page): the install's sets are
+     * listed with the tag's defaults, a choice overrules the tag set by set, survives its codec, and a set
+     * switched on reaches vanilla's structure state — villages, which CityWorld does not place by default.
+     */
+    private void checkStructureChoices(MinecraftServer server) {
+        ServerLevel level = server.overworld();
+        var entries = me.daddychurchill.CityWorld.worldgen.StructureChoices.list(server.registryAccess());
+        Map<String, Boolean> inTag = new TreeMap<>();
+        for (var entry : entries)
+            inTag.put(entry.id(), entry.byDefault());
+        long byDefault = inTag.values().stream().filter(on -> on).count();
+        report.put("structures.choices", entries.size() + " sets, " + byDefault + " on by default");
+        if (inTag.get("minecraft:villages") == null || !Boolean.TRUE.equals(inTag.get("minecraft:strongholds"))) {
+            fail("the structure list should hold villages and strongholds (on by default): villages="
+                    + inTag.get("minecraft:villages") + " strongholds=" + inTag.get("minecraft:strongholds"));
+            return;
+        }
+        // Off as shipped; a dev instance may carry a datapack that tags them (run/mods has had one), and then
+        // there is nothing for "allow" to add — the rest of the check still holds.
+        boolean villagesTagged = inTag.get("minecraft:villages");
+        for (var entry : entries)
+            if (entry.id().equals("minecraft:villages") && !entry.realms().contains("Overworld"))
+                fail("villages should read as an overworld structure set, got " + entry.realms());
+
+        var none = me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Structures.DEFAULT;
+        var choice = none.with(Map.of("minecraft:villages", true, "minecraft:strongholds", false,
+                "minecraft:ancient_cities", true), inTag);
+        if (!choice.allow().equals(villagesTagged ? List.of() : List.of("minecraft:villages"))
+                || !choice.deny().equals(List.of("minecraft:strongholds")))
+            fail("a structure choice should store only its differences from the tag, got allow=" + choice.allow()
+                    + " deny=" + choice.deny());
+        var json = me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Structures.CODEC
+                .encodeStart(com.mojang.serialization.JsonOps.INSTANCE, choice).result();
+        var back = json.flatMap(j -> me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Structures.CODEC
+                .parse(com.mojang.serialization.JsonOps.INSTANCE, j).result());
+        if (back.isEmpty() || !back.get().equals(choice))
+            fail("a structure choice did not survive its codec: " + json + " -> " + back);
+
+        ChunkGeneratorStructureState state = level.getChunkSource().getGeneratorState();
+        var all = server.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE_SET);
+        ChunkGeneratorStructureState chosen = ChunkGeneratorStructureState.createForNormal(state.randomState(),
+                state.getLevelSeed(), level.getChunkSource().getGenerator().getBiomeSource(),
+                me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator.onlyAllowed(all, choice));
+        java.util.Set<String> placed = new java.util.TreeSet<>();
+        for (Holder<StructureSet> set : chosen.possibleStructureSets())
+            set.unwrapKey().ifPresent(k -> placed.add(k.location().toString()));
+        report.put("structures.chosen", placed.toString());
+        if (!placed.contains("minecraft:villages"))
+            fail("villages switched on by the structure choice did not reach the structure state: " + placed);
+        if (placed.contains("minecraft:strongholds"))
+            fail("strongholds switched off by the structure choice were still in the structure state");
+        if (!placed.contains("minecraft:ancient_cities"))
+            fail("a set the choice left alone (ancient cities) dropped out of the structure state: " + placed);
     }
 
     private void checkStructures(MinecraftServer server) {
