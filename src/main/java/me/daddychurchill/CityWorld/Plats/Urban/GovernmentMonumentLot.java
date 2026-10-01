@@ -124,18 +124,22 @@ public class GovernmentMonumentLot extends ConnectedLot {
 		}
 	}
 
+	/**
+	 * A pedestal with a monument on it. Six wide, like the column: it was five, centred on cell 7, half a block off
+	 * the middle of the chunk, for a statue five wide and one deep. The monuments are drawn for an even width.
+	 */
 	private void drawPedestal(CityWorldGenerator generator, InitialBlocks chunk, int y1, boolean doTop) {
 		int y2 = y1 + botHeight * sectionHeight;
 		int y3 = y2 + topHeight * sectionHeight;
-		chunk.setBlocks(5, 10, y1, y2, 5, 10, columnMaterial);
+		chunk.setBlocks(5, 11, y1, y2, 5, 11, columnMaterial);
 		if (chunkOdds.flipCoin()) {
 
 			// corner supports?
 			chunk.setBlocks(5, y2, y3, 5, columnMaterial);
-			chunk.setBlocks(5, y2, y3, 9, columnMaterial);
+			chunk.setBlocks(5, y2, y3, 10, columnMaterial);
 
-			chunk.setBlocks(9, y2, y3, 5, columnMaterial);
-			chunk.setBlocks(9, y2, y3, 9, columnMaterial);
+			chunk.setBlocks(10, y2, y3, 5, columnMaterial);
+			chunk.setBlocks(10, y2, y3, 10, columnMaterial);
 
 			int yT = y3;
 			if (chunkOdds.flipCoin())
@@ -143,30 +147,38 @@ public class GovernmentMonumentLot extends ConnectedLot {
 
 			// side supports?
 			if (chunkOdds.flipCoin()) {
-				chunk.setBlocks(5, y2, yT, 7, columnMaterial);
+				chunk.setBlocks(5, 6, y2, yT, 7, 9, columnMaterial);
 
-				chunk.setBlocks(7, y2, yT, 5, columnMaterial);
-				chunk.setBlocks(7, y2, yT, 9, columnMaterial);
+				chunk.setBlocks(7, 9, y2, yT, 5, 6, columnMaterial);
+				chunk.setBlocks(7, 9, y2, yT, 10, 11, columnMaterial);
 
-				chunk.setBlocks(9, y2, yT, 7, columnMaterial);
+				chunk.setBlocks(10, 11, y2, yT, 7, 9, columnMaterial);
 			}
 
 			// center bit?
 			if (chunkOdds.flipCoin()) {
 				if (chunkOdds.flipCoin())
-					chunk.setBlocks(7, y2, y3, 7, columnMaterial);
+					chunk.setBlocks(7, 9, y2, y3, 7, 9, columnMaterial);
 				else
-					chunk.setBlocks(6, 9, y2, yT, 6, 9, colors.getGlass());
+					chunk.setBlocks(6, 10, y2, yT, 6, 10, colors.getGlass());
 			}
 
 		} else {
-			chunk.setBlocks(6, 9, y2, y3, 6, 9, colors.getGlass());
+			chunk.setBlocks(6, 10, y2, y3, 6, 10, colors.getGlass());
 		}
-		chunk.setBlocks(5, 10, y3, 5, 10, columnMaterial);
+		chunk.setBlocks(5, 11, y3, 5, 11, columnMaterial);
 		if (doTop) {
-			generator.thingProvider.generateStatue(chunk, chunkOdds, 7, y3 + 1, 7);
+			me.daddychurchill.CityWorld.Support.Monuments.Design design =
+					me.daddychurchill.CityWorld.Support.Monuments.pick(chunkOdds);
+			boolean turned = chunkOdds.flipCoin();
+			me.daddychurchill.CityWorld.Support.Monuments.draw((a, y, c, material) -> {
+				if (turned)
+					chunk.setBlock(c, y, a, material);
+				else
+					chunk.setBlock(a, y, c, material);
+			}, design, y3 + 1, me.daddychurchill.CityWorld.Support.Monuments.pickStone(chunkOdds), chunkOdds);
 		} else {
-			chunk.setBlocks(6, 9, y3 + 1, 6, 9, columnMaterial);
+			chunk.setBlocks(6, 10, y3 + 1, 6, 10, columnMaterial);
 		}
 	}
 
