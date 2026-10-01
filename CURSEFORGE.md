@@ -13,6 +13,18 @@ screen.
 Battle-tested across **135 worlds and 3.2 million generated chunks** — over **830 km²** of procedurally
 generated city, more ground than New York City covers.
 
+**New in 5.16.0: the things the original author meant to build.** Ed Churchill left himself notes in
+CityWorld's source between 2011 and 2018 for features he never got to; this release builds them. Districts are
+**no longer one rigid grid** — outside downtown, some roads go missing, so blocks come in different sizes and
+big buildings sprawl across them. Streets get **lane lines**, ruined worlds get **ruined road tunnels**, some
+office blocks open round a glass-railed **atrium**, tall towers carry **helipads**, and houses come
+**split-level** or as white-box **modern houses** with floor-to-ceiling glass. Parks gain **gazebos, ponds
+and benches**; farm country gains **cocoa plantations and wells**; bunker towers can be **climbed**.
+**Monuments** stand on the hills over a city and in its civic squares — a torch bearer, an obelisk, an arch,
+a globe, a great sword. And **museums are worth visiting**: hand-drawn fossil skeletons (a different one in
+every hall), with exhibits round them — artifacts in frames, armour on stands, shelves of relics — all of it
+real, worn loot, from item tags a pack can add to.
+
 **New in 5.15.0: a subway under the city, and shopping malls on its edge.** Every urban district now
 has a **station** — a ticket hall on the street, switchback stairs down to twin-track platforms — and
 **tunnels** join it to the stations of the districts round it, and on across the countryside to the next

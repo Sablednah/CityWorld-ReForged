@@ -32,6 +32,49 @@ comments, orphaned javadocs re-attached) turned up one real bug, car-park east/w
 north/south edges; and the interchange stair top was fixed from the owner's hand edit in his save (headroom
 over a two-step flight; the shaft's track-side wall is the platform edge again).
 
+## ▶ Resume here — Ed's TODOs, museums and monuments (v5.16.0, 2026-09-30 → 10-01)
+
+**Owner:** *"check back in the old 1.8 branches upstream — Eddie's stuff — for any old comments of stuff he was
+gonna add."* 580 upstream commits swept for planned-feature comments: 58 ideas, 24 never built. He picked a
+batch; two playtest rounds on his 26.3 instance shaped it. What shipped, and what each cost:
+
+- **`oddsOfMissingRoad`** (set per context since 2011, disconnected in 2012): `PlatMap.rollMissingRoads` drops up
+  to two of a platmap's four INNER road stretches at the context's odds, from a stream of its own. **Only inner
+  stretches**: the planner never looks at a neighbour platmap, so a shared stretch could not be decided the same
+  way on both sides. Side effect the owner loves: blocks merge and buildings sprawl across them.
+- **Lane lines** must be drawn AFTER the second paving of the crosswalk arms, or each chunk's end dashes vanish.
+- **Atria** (`FinishedBuildingLot.cutAtrium`): the third design is the right one. A chunk of a big building is a
+  4x4 room in each corner, walled at x/z = 4 and 11, with hallways between; the atrium **replaces one corner room
+  exactly** — room cleared, a pillar at its corner, railing on the wall lines, the hallway is the gallery, stairs
+  `CENTER`. (A 5x5 void with a cleared walkway cut across the plan: half doors, sealed rooms, a stairwell in the
+  walkway, stairs up the outside of an inset building.) Railing panes get **explicit faces**: `reconnect` never
+  joins across the chunk seam and grabs nearby walls. Over a basement the pool is a moss garden.
+- **Split-level houses** (`joinSplitLevels`): **`clearDoorways` runs before any post-pass and treats a door's
+  approach as furniture** — it took the lower wing's ceiling block (the roof) and the raised wing's floor block
+  beside the shared wall. Both treads sit on the RAISED side (one in the wall, one replacing the raised floor
+  block), where the headroom is; under the entry hall's main staircase (it hugs that wall in two of four
+  layouts) the flight starts a cell further in and the ceiling there, which is the main stairwell, is left alone.
+  Split houses take flat roofs. **A tally said the first two versions were fine; a section through a regenerated
+  house showed they were not.**
+- **Hill statues** (`NatureContext.placeHillStatue`): the lowland case Ed's TODO sat in is the flat edge of town.
+  Now the platmap's highest natural chunk, >= street + 10, chunk range <= 8, a dozen buildable chunks in the
+  platmap, two in three by a position hash (no roll: both planning passes run it).
+- **`Support/Monuments`**: five designs, all EVEN-width (centred on the 7|8 seam, the middle of a chunk) and two
+  deep; shared by `HillStatueLot` and `GovernmentMonumentLot`, whose pedestal went from five wide to six.
+- **Museums**: the lot overrides `drawInteriorParts`, so no room populator ever ran there (the dead one is
+  removed). `Support/Fossils`: four drawn skeletons, species by chunk position `(x + 2z) mod 4` so neighbouring
+  halls differ — **rolled from `chunkOdds`, four halls in a row matched; neighbouring chunks' first rolls are
+  correlated.** `Support/Exhibits`: podium + flat item frame, armour stand (`Armoury.armourStand` generalised),
+  shelf; item tags `museum/{artifacts,relics,armour}`, durability worn to 5-40%. Entities read back from a saved
+  world with `region_dump.chunk_nbt(<world>/entities, cx, cz)['Entities']`.
+- **Per-branch:** prefer `Material.X` over `Blocks.X` (26.2 dropped the copper block fields; `IRON_CHAIN`,
+  `GRASS_PATH` map per branch); on `mc1.20.1` new item tags live in `tags/items/` and `Armoury` keeps
+  `Mob.getEquipmentSlotForItem`; `ContainerLoot` is one source everywhere, its per-version half is `compat/Loot`.
+- **Method that worked:** a temporary `@EventBusSubscriber` listener under `debug/` that finds lots by class in
+  the plan, generates them and saves; then `scripts/region_slice.py` or a few lines over `region_dump` to read
+  them back. Deleted before every commit (`find src build/classes -path '*debug*'` must read 0).
+- **Parked by the owner:** the boat (his schematics cover it), the Astral nexus rooms ("another one").
+
 ## ▶ Resume here — the camp-site API for ZARP (2026-09-29)
 
 **Asked by the ZARP session, Sable approved:** Threadwork picks a camp site beside a vault at world spawn from
