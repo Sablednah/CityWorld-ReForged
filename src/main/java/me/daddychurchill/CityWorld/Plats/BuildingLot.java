@@ -259,11 +259,6 @@ public abstract class BuildingLot extends ConnectedLot {
 		return x >= 0 && x < 16 && z >= 0 && z < 16 && stairClaim[x * 16 + z];
 	}
 
-	/** The claim mask as it stands, so a later pass can tell the stairwell's cells from what was claimed after it. */
-	protected final boolean[] claimSnapshot() {
-		return stairClaim.clone();
-	}
-
 	/** Claim a placed room's footprint too (owner's cascade: each pass claims what it uses plus
 	 *  access, and smaller passes fill what remains). Shares the stair mask — one claim grid. */
 	protected final void claimRect(int x1, int z1, int x2, int z2) {
