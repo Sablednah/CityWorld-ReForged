@@ -194,6 +194,42 @@ public class NatureContext extends UncivilizedContext {
 		// any special things to do?
 		populateSpecial(generator, platmap, maxHeightX, maxHeight, maxHeightZ, maxState);
 		populateSpecial(generator, platmap, minHeightX, minHeight, minHeightZ, minState);
+		placeHillStatue(generator, platmap, maxHeightX, maxHeight, maxHeightZ, maxState);
+	}
+
+	/**
+	 * A statue overlooking the city (Ed's TODO, which sat in the lowland case of {@link #populateSpecial}). There it
+	 * landed on the flat ground at the edge of town, at street level (owner's playtest, 2026-10-01); a statue that
+	 * overlooks something stands on the district's highest natural chunk, a real rise above the streets, with town
+	 * in the same district below it. Two qualifying districts in three, by a hash of its position (no roll: this runs
+	 * in both planning passes).
+	 */
+	private void placeHillStatue(CityWorldGenerator generator, PlatMap platmap, int x, int height, int z,
+			HeightState state) {
+		if (x < 0 || !generator.getSettings().includeBuildings
+				|| (state != HeightState.LOWLAND && state != HeightState.MIDLAND)
+				|| height < generator.streetLevel + 10
+				|| !(platmap.getLot(x, z) instanceof me.daddychurchill.CityWorld.Plats.NatureLot))
+			return;
+		long h = generator.getWorldSeed() ^ (platmap.originX * 0x9E3779B97F4A7C15L) ^ (platmap.originZ * 0xC2B2AE3D27D4EB4FL);
+		h ^= h >>> 31;
+		h *= 0xBF58476D1CE4E5B9L;
+		h ^= h >>> 29;
+		if (Math.floorMod(h, 3) == 0)
+			return;
+		HeightInfo hill = HeightInfo.getHeightsFaster(generator, (platmap.originX + x) * SupportBlocks.sectionBlockWidth,
+				(platmap.originZ + z) * SupportBlocks.sectionBlockWidth);
+		if (hill.getMaxHeight() - hill.getMinHeight() > 8)
+			return; // a cliff, not a hilltop
+		int town = 0;
+		for (int cx = 0; cx < PlatMap.Width; cx++)
+			for (int cz = 0; cz < PlatMap.Width; cz++)
+				if (HeightInfo.isBuildableAt(generator, (platmap.originX + cx) * SupportBlocks.sectionBlockWidth,
+						(platmap.originZ + cz) * SupportBlocks.sectionBlockWidth))
+					town++;
+		if (town >= 12)
+			platmap.setLot(x, z, new me.daddychurchill.CityWorld.Plats.Nature.HillStatueLot(platmap, platmap.originX + x,
+					platmap.originZ + z));
 	}
 
 	/** Whether this platmap sits in a rare, seed-deterministic "vault region". Decided per coarse region so a
@@ -291,11 +327,6 @@ public class NatureContext extends UncivilizedContext {
 					} else if (platmapOdds.playOdds(Odds.oddsPrettyUnlikely))
 						current = new HotairBalloonLot(platmap, platmap.originX + x, platmap.originZ + z);
 				}
-				// a statue overlooking the city (Ed's TODO)
-				if (current == null && generator.getSettings().includeBuildings
-						&& platmapOdds.playOdds(Odds.oddsSomewhatUnlikely))
-					current = new me.daddychurchill.CityWorld.Plats.Nature.HillStatueLot(platmap, platmap.originX + x,
-							platmap.originZ + z);
 				break;
 			case MIDLAND:
 				// mine entrances handled above (any band over a field); nothing else here
