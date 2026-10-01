@@ -1693,11 +1693,14 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     }
 
     /**
-     * The structure-set tag that decides which vanilla structures a CityWorld world keeps.
+     * The structure-set tag that says which vanilla and mod structures a CityWorld world keeps by default;
+     * a world's own {@link CityWorldSettingsData.Structures} lists (the Customize screen's Structures page)
+     * add to it and take from it, set by set — see {@link #onlyAllowed}.
      *
      * <p>Shipped as {@code data/cityworld/tags/worldgen/structure_set/allowed.json} with strongholds,
-     * trial chambers and ancient cities. A datapack can widen it — including to a <em>mod's</em>
-     * structure set — with no code change, which is the same seam the block palettes use.
+     * trial chambers, ancient cities, the Nether's and the End's sets and several mods' as optional
+     * entries. A datapack can widen it — including to a <em>mod's</em> structure set — with no code
+     * change, which is the same seam the block palettes use.
      *
      * <p><b>Absent means none.</b> If the tag is missing, no vanilla structure places: an empty tag
      * fails to today's behaviour rather than silently letting villages and mineshafts loose in a world
