@@ -29,6 +29,11 @@ made when the world is created — it is part of the world's settings.
   naturally or with a structure, and CityWorld's were marked as chunk generation, so they stayed vanilla. They now
   spawn as residents of a structure, the way a village's villagers do. (On 5.16.0 and earlier, add
   `"chunk_generation"` to `allowedSpawnReasons` in `config/mca.json` for the same result.)
+- **1.20.1 (Forge): the modpack world-type lock now works.** `lockedWorldPreset`, the Nether and End locks and
+  `lockCustomize` were read before Forge had loaded the file, so on 1.20.1 they silently did nothing — and the file
+  Forge wrote was `cityworld-client.toml`, not the documented `config/cityworld-startup.toml`. The documented file
+  is now read at startup, as on the NeoForge versions. A pack that set these on 1.20.1 should move them into
+  `cityworld-startup.toml`.
 
 ## 5.16.0
 

@@ -32,6 +32,74 @@ comments, orphaned javadocs re-attached) turned up one real bug, car-park east/w
 north/south edges; and the interchange stair top was fixed from the owner's hand edit in his save (headroom
 over a two-step flight; the shaft's track-side wall is the platform edge again).
 
+## ▶ Resume here — the Structures page and MCA (2026-10-01, unreleased; next release carries both)
+
+**Owner:** *"at the moment people have to datapack to turn them on. Would it be possible in config to have a
+section that shows all available structures for the install (inc from mods) — and let them be toggled — with
+current defaults ticked?"* and, on MCA, *"hold release, we'll drop mca and structures together as then they can
+enable villages easier."* Both are built, self-tested on six lines, and the screen is checked on four real
+clients. **Not pushed, not released** at the time of writing — see CLAUDE.md "Where this is".
+
+**The structure choice.** `CityWorldSettingsData.Structures(allow, deny)` — the 14th top-level settings group
+(the top codec's cap is 16) — is two lists of structure-SET ids laid over `#cityworld:allowed`:
+`allows(id, inTag) = !deny.contains(id) && (inTag || allow.contains(id))`. Differences only, never a copy of the
+tag, so a world keeps following the tag for whatever it never touched. `createState` builds vanilla's structure
+state from `onlyAllowed(lookup, choice)`; **a twin (Nether, End, `/cityworld`) takes its source's choice**
+(`twinSource(false)` — the overworld level exists by then, levels are created overworld first), because the
+Customize screen edits one settings object. One INFO line per dimension says what was read and which ids name
+nothing installed. `worldgen/StructureChoices.list(registries)` is the list the screen shows: every set, its mod
+(`ModList` display name), its structures, whether the tag holds it, and a realm hint.
+
+- **The realm hint comes from biome TAGS, not from the generator's `possibleBiomes()`.** `possibleBiomes()` is
+  memoised on the biome source, and the generator object on the create-world screen is the one the world then
+  runs: asking it there would freeze the answer before TerraBlender's regions (and our tag pools) are final.
+  `is_overworld`/`is_nether`/`is_end` on the structures' biomes is a pure question. It labels; it does not
+  promise the biome exists in this world — vanilla's own filter in `createForNormal` still decides that.
+- **The tag is bound on the create-world screen** (`context.worldgenLoadContext()` has tags, the same way the
+  world-type list reads `#normal`): the button read "5 of 20" on a vanilla install on first try.
+- **The page never returns to the screen that opened it.** `back.apply(choice)` builds a fresh Customize screen
+  (`reopened`, via `settings.withStructures`), as a style change does (there, an in-place rebuild stacked a
+  ghost list). Whether simply re-showing the old screen would be safe on every line was not tested; the fresh
+  screen is the path already proven on all six. Cancel and Escape go back the same way with the choice the page
+  was opened with.
+- **Per-line drift:** 26.2/26.3 `minecraft.gui.setScreen`; 26.3 `createForNormal` takes the origin
+  (`getOrigin(randomState)`, in the generator AND the self-test); 1.21.1 has no `OptionsList.addHeader` (a
+  centred `StringWidget` row); 1.20.1 has no widget-holding options list at all — the page extends `Screen` and
+  reuses the Customize screen's own `Rows` (made package-private), `ResourceLocation`/`location()`, Forge's
+  `ModList`.
+- **Measured (seed 8675309, master):** no `village_plains` within 100 chunks by default; with
+  `allow: ["minecraft:villages"]` (a `run/world/datapacks` override of `world_settings/modern.json`) a
+  125-piece village at chunk 1,25 — bells, beds, 11 villagers, a golem — and the log line for all three realms.
+  Self-test `structures.choices` / `structures.chosen`. **`run/mods` in master and mc26.2 has carried a
+  `villages-cityworld-compat` jar that tags villages**: the self-test tolerates it, but a "no village by default"
+  control needs it moved out.
+
+**MCA (Minecraft Comes Alive).** No worldgen at all; it swaps a vanilla villager for its own as the villager is
+added (mixins on `ServerLevel`/`ProtoChunk.addEntity`), but only for the spawn reasons in its config, default
+`natural` and `structure`. Ours were `CHUNK_GENERATION`; they are `STRUCTURE` now (`SpawnProvider.RESIDENT`,
+villagers and zombie villagers; `MobSpawnType` on 1.20.1/1.21.1). Three runs with the real jar in the mc26.2 dev
+server: stock 3 vanilla / 0 MCA; `"chunk_generation"` added to MCA's `allowedSpawnReasons` 6 MCA; fix with MCA's
+defaults 5 MCA / 0 vanilla. **A chained command that failed early once skipped the config reset and the patch
+both, and the run still printed MCA villagers** — verify the patched file and the config before believing a run.
+
+**1.20.1 pack lock (found by the client check, fixed on `mc1.20.1` only).** Forge 1.20.1 has no STARTUP config
+type, so `CityWorldPackConfig` rode on CLIENT — and every read (`WorldTypeLock.register` in the mod constructor,
+the preset editors) precedes Forge's CLIENT load. `ForgeConfigSpec.get()` throws for that **only in a dev
+environment**; a shipped jar gets defaults silently, so the lock never applied on 1.20.1 and the file was
+`cityworld-client.toml`. `CityWorldPackConfig.load()` now opens `config/cityworld-startup.toml` itself
+(night-config `CommentedFileConfig` + `SPEC.setConfig`). It was found because `runClient` on that line would not
+start (the throw is unconditional in dev, so no dev client can have run on that line since the lock was
+ported; its earlier client sign-off was the owner's installed jar). *A client check per line is not optional.*
+
+**Client checks on Vivo** (display `:2`, throwaway rsynced copies `~/dev/CityWorld-ReForged-ui*`, deleted after;
+a JDK 17 now lives at `~/dev/jdk17-cityworld` there): 1.21.11, 1.20.1, 26.2 and 1.21.1 each driven with
+`xdotool` — title, Create New World, World tab, World Type to CityWorld (five clicks from Default), Customize,
+the Structures button, toggle, Done, create — and the created world's log read back. The window is 854x480 at
+(213,120) on the 1280x720 display at `guiScale:2`. **NeoForge 26.2 shows a "Warning while loading mods" screen
+about `logoFile` in dev only** (`LogoFileWarningsHandler` returns at once when `FMLEnvironment.isProduction()`);
+players never see it. And a kill loop that also matched `pgrep -f <script name>` killed its own ssh shell — match
+java PIDs by `/proc/<pid>/cwd`, nothing else.
+
 ## ▶ Resume here — Ed's TODOs, museums and monuments (v5.16.0, 2026-09-30 → 10-01)
 
 **Owner:** *"check back in the old 1.8 branches upstream — Eddie's stuff — for any old comments of stuff he was
