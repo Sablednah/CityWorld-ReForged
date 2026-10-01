@@ -124,9 +124,23 @@ A few common asks, as complete `default.json` files.
 
 **Villages — and any other vanilla structure:**
 
-CityWorld builds its own cities, so it suppresses vanilla structures unless a tag lets them through.
-This is not a setting in `default.json`; it is a small datapack. Two files, in the world's own
-datapack folder:
+CityWorld builds its own cities, so it places only the vanilla and mod structures that are switched on.
+
+**The easy way (5.17.0+): the Structures page.** On the create-world screen pick a CityWorld world type,
+press **Customize**, then **Vanilla & mod structures**. Every structure set the install has is listed,
+grouped by mod, with an on/off each — the ones CityWorld places by default start on. Switch on
+**Villages** and create the world. Hover a button to see the structures in the set and which realm they
+belong to.
+
+**For a server or a pack (5.17.0+): the `structures` settings group** — two lists in the world settings
+(see [`structures`](#structures--which-vanilla-and-mod-structures-this-world-places) below):
+
+```json
+{ "structures": { "allow": ["minecraft:villages"] } }
+```
+
+**The datapack way (any version)** still works, and is what sets the *default* for every world. Two
+files, in the world's own datapack folder:
 
 ```
 <world>/datapacks/cityworld-villages/
@@ -169,8 +183,9 @@ piece asks for, none buried, with the ground easing back to natural terrain a ch
 footprint.
 
 **Telling whether it worked:** `/cwlocate structure minecraft:village_plains` (add `tp` to teleport
-there). In a CityWorld world that command only finds what `#cityworld:allowed` permits, so "not found"
-means the tag has not taken — which distinguishes a datapack problem from an unlucky seed. See
+there). In a CityWorld world that command only finds what is switched on for that world, so "not found"
+means the choice has not taken — which distinguishes a settings or datapack problem from an unlucky seed.
+(A server also logs what it read: `CityWorld: structure settings (overworld) allow [...] deny [...]`.) See
 [`caves`](#caves--the-underground-cave-biomes-and-structure-caverns) below for the three
 look-alike outcomes and the two silent failures, and remember **nothing retro-fits into chunks that
 already exist** — test in a new world or in land you have never visited.
@@ -308,6 +323,21 @@ Cave biomes bring their own mobs. The deep dark carries none at all, plus warden
 |---|---|---|
 | `enabled` | `false` | Villager job-site blocks so a store/farm reads as its trade (cartography table = map seller, fletching table = fletcher, smoker = butcher, ...), a composter at farm edges, and a rare fish-pond farm. The shop classification itself is always computed for `/cityinfo`; this only governs block placement. |
 | `malls` | `true` | Shopping malls (MODERN and APOCALYPSE): rare, at the edge of town, two or three storeys round a glass-roofed atrium, built in wings — a bar, L, T, U, Z or cross, up to eight chunks each way — with dozens of named shops, each with its own loot table (`chests/mall_<kind>`, each ending in an `_extra` hook), and car parks out to the road. Announced as the landmark kind `mall`. Independent of `enabled`. |
+
+### `structures` — which vanilla and mod structures this world places
+
+Two lists of structure-**set** ids laid over the tag `#cityworld:allowed` (CityWorld's defaults: strongholds,
+trial chambers, ancient cities, the Nether's fortresses and bastions, end cities, and several mods' sets). This is
+what the Structures page of the Customize screen writes.
+
+| Setting | Default | What it does |
+|---|---|---|
+| `allow` | `[]` | Structure sets to place as well: `["minecraft:villages", "minecraft:woodland_mansions"]`. |
+| `deny` | `[]` | Structure sets to stop placing: `["minecraft:trial_chambers"]`. |
+
+Ids are sets (`data/<namespace>/worldgen/structure_set/`), not single structures. An id whose mod is not installed
+is ignored. A structure still only appears where its biomes exist. The Nether and the End follow the overworld's
+lists. Cities keep clear of whatever is placed.
 
 ### `subways` — a metro under the city (MODERN and APOCALYPSE; forced off elsewhere)
 
