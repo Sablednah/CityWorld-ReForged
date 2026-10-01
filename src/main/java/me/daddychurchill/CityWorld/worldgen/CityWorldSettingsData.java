@@ -53,7 +53,14 @@ public record CityWorldSettingsData(
         Shops shops,
         Decay decay,
         Caves caves,
-        Subways subways) {
+        Subways subways,
+        Structures structures) {
+
+    /** These settings with another structure choice (the Customize screen's Structures page). */
+    public CityWorldSettingsData withStructures(Structures chosen) {
+        return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
+                overgrowth, shops, decay, caves, subways, chosen);
+    }
 
     /** 1875000 chunks — the modern world-format radius ceiling (30,000,000 blocks / 16). */
     public static final int MAX_RADIUS = 30000000 / 16;
@@ -61,7 +68,7 @@ public record CityWorldSettingsData(
     public static final CityWorldSettingsData DEFAULT = new CityWorldSettingsData(
             Features.DEFAULT, Terrain.DEFAULT, Spawns.DEFAULT, Treasures.DEFAULT, World.DEFAULT, Radius.DEFAULT,
             Naming.DEFAULT, Mobs.DEFAULT, Overgrowth.DEFAULT, Shops.DEFAULT, Decay.DEFAULT, Caves.DEFAULT,
-            Subways.DEFAULT);
+            Subways.DEFAULT, Structures.DEFAULT);
 
     public static final Codec<CityWorldSettingsData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Features.CODEC.optionalFieldOf("features", Features.DEFAULT).forGetter(CityWorldSettingsData::features),
@@ -76,7 +83,8 @@ public record CityWorldSettingsData(
             Shops.CODEC.optionalFieldOf("shops", Shops.DEFAULT).forGetter(CityWorldSettingsData::shops),
             Decay.CODEC.optionalFieldOf("decay", Decay.DEFAULT).forGetter(CityWorldSettingsData::decay),
             Caves.CODEC.optionalFieldOf("caves", Caves.DEFAULT).forGetter(CityWorldSettingsData::caves),
-            Subways.CODEC.optionalFieldOf("subways", Subways.DEFAULT).forGetter(CityWorldSettingsData::subways)
+            Subways.CODEC.optionalFieldOf("subways", Subways.DEFAULT).forGetter(CityWorldSettingsData::subways),
+            Structures.CODEC.optionalFieldOf("structures", Structures.DEFAULT).forGetter(CityWorldSettingsData::structures)
     ).apply(i, CityWorldSettingsData::new));
 
     // --- what gets built ----------------------------------------------------------------------
@@ -276,6 +284,59 @@ public record CityWorldSettingsData(
                 Codec.BOOL.optionalFieldOf("enabled", true).forGetter(Subways::enabled),
                 Codec.BOOL.optionalFieldOf("spawners", true).forGetter(Subways::spawners)
         ).apply(i, Subways::new));
+    }
+
+    /**
+     * Which vanilla and mod structures this world places, as two lists of structure-set ids laid over the tag
+     * {@code #cityworld:allowed}: {@code allow} adds sets the tag does not hold ({@code "minecraft:villages"}),
+     * {@code deny} removes sets it does. Both empty (the default) is the tag exactly.
+     *
+     * <p>Two lists over the tag, not a full copy of it, so a world keeps following the tag for everything it
+     * never touched: a mod installed later whose sets CityWorld ships as allowed still appears. This is what the
+     * Customize screen's Structures page writes, and what a server sets instead of a tag datapack. An id that
+     * names no installed structure set is ignored (the mod is not installed), and allowing a set does not make it
+     * appear where none of its biomes exist: vanilla drops those itself.
+     */
+    public record Structures(java.util.List<String> allow, java.util.List<String> deny) {
+
+        public static final Structures DEFAULT = new Structures(java.util.List.of(), java.util.List.of());
+
+        public static final Codec<Structures> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.STRING.listOf().optionalFieldOf("allow", java.util.List.of()).forGetter(Structures::allow),
+                Codec.STRING.listOf().optionalFieldOf("deny", java.util.List.of()).forGetter(Structures::deny)
+        ).apply(i, Structures::new));
+
+        /**
+         * The choice that gives exactly these sets, given which the tag holds. A set this install does not have
+         * (its mod is absent today) keeps whatever the previous choice said about it.
+         */
+        public Structures with(java.util.Map<String, Boolean> placed, java.util.Map<String, Boolean> inTag) {
+            java.util.List<String> allowed = new java.util.ArrayList<>();
+            java.util.List<String> denied = new java.util.ArrayList<>();
+            for (String id : allow)
+                if (!placed.containsKey(id))
+                    allowed.add(id);
+            for (String id : deny)
+                if (!placed.containsKey(id))
+                    denied.add(id);
+            placed.forEach((id, on) -> {
+                boolean tagged = inTag.getOrDefault(id, false);
+                if (on && !tagged)
+                    allowed.add(id);
+                else if (!on && tagged)
+                    denied.add(id);
+            });
+            java.util.Collections.sort(allowed);
+            java.util.Collections.sort(denied);
+            return new Structures(java.util.List.copyOf(allowed), java.util.List.copyOf(denied));
+        }
+
+        /** Whether a set is placed: {@code inTag} is the tag's answer, which these lists overrule. */
+        public boolean allows(String id, boolean inTag) {
+            if (deny.contains(id))
+                return false;
+            return inTag || allow.contains(id);
+        }
     }
 
     /**

@@ -40,8 +40,8 @@ import net.minecraft.network.chat.Component;
 public class CityWorldCustomizeScreen extends OptionsSubScreen {
 
     private static final Component TITLE = Component.translatable("cityworld.customize.title");
-    private static final int WIDTH = 150;
-    private static final int HEIGHT = 20;
+    static final int WIDTH = 150;
+    static final int HEIGHT = 20;
 
     /** The result of a Done: the chosen style and the edited settings. */
     public record Result(WorldStyle style, CityWorldSettingsData settings, boolean ruinedNether, boolean cityWorldEnd) {}
@@ -54,6 +54,10 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private final CityWorldSettingsData.Mobs mobs;
     /** The underground dials (carve halo, cave patch shaping) — datapack-only, no widget here. */
     private final CityWorldSettingsData.Caves caves;
+    /** Which vanilla and mod structures the world places — edited on its own page ({@link CityWorldStructuresScreen}). */
+    private final CityWorldSettingsData.Structures structures;
+    /** Every structure set the install has, for that page; empty when the registries could not be read. */
+    private final List<me.daddychurchill.CityWorld.worldgen.StructureChoices.Entry> structureEntries;
 
     // Working state — mutated live by the widgets, read back in buildResult().
     private WorldStyle style;
@@ -106,9 +110,13 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private boolean cityWorldEnd;
 
     public CityWorldCustomizeScreen(Screen parent, WorldStyle initialStyle, CityWorldSettingsData initial,
-            boolean ruinedNether, boolean cityWorldEnd, boolean styleLocked, Consumer<Result> onDone) {
+            boolean ruinedNether, boolean cityWorldEnd, boolean styleLocked,
+            List<me.daddychurchill.CityWorld.worldgen.StructureChoices.Entry> structureEntries,
+            Consumer<Result> onDone) {
         super(parent, Minecraft.getInstance().options, TITLE);
         this.onDone = onDone;
+        this.structureEntries = structureEntries;
+        this.structures = initial.structures();
         this.styleLocked = styleLocked;
         // A pack lock wins over whatever the world carried.
         this.ruinedNether = CityWorldPackConfig.lockedRuinedNether().orElse(ruinedNether);
@@ -254,6 +262,22 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         }
         addRow(end, null);
 
+        // One button, not a section: an install with a few structure mods has a hundred sets.
+        if (!structureEntries.isEmpty()) {
+            header(Component.literal("Structures"));
+            Button pick = Button.builder(
+                    Component.literal("Vanilla & mod structures: "
+                            + me.daddychurchill.CityWorld.worldgen.StructureChoices.count(structureEntries, structures)
+                            + " of " + structureEntries.size()),
+                    b -> this.minecraft.setScreen(new CityWorldStructuresScreen(this, structureEntries, structures,
+                            this::reopened)))
+                    .size(WIDTH * 2 + 10, HEIGHT).build();
+            pick.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                    "Which vanilla and mod structures this world places: villages, mansions, a mod's dungeons. "
+                            + "CityWorld keeps its cities clear of them.")));
+            addRow(pick, null);
+        }
+
         header(Component.literal("Features"));
         pair(row, onOff("Roads", includeRoads, v -> includeRoads = v));
         pair(row, onOff("Roundabouts", includeRoundabouts, v -> includeRoundabouts = v));
@@ -381,7 +405,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
      * and cannot carry ours, so the list is built on the same base class vanilla uses. Laying the
      * widgets out by hand instead would have cost the scrolling, and this screen has thirty options.
      */
-    private static final class Rows
+    static final class Rows
             extends net.minecraft.client.gui.components.ContainerObjectSelectionList<Rows.Row> {
 
         Rows(net.minecraft.client.Minecraft minecraft, int width, int height, int top, int bottom, int itemHeight) {
@@ -475,7 +499,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);
         CityWorldSettingsData data = new CityWorldSettingsData(
                 features, terrain, spawns, treasures, world, radius, naming, mobs, overgrowth, shops, decay,
-                caves, subways);
+                caves, subways, structures);
         return new Result(style, data, ruinedNether, cityWorldEnd);
     }
 
@@ -503,8 +527,17 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                         announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
                         moddedBiomeShare),
                 radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves,
-                defaults.subways());
-        this.minecraft.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.ruinedNether, this.cityWorldEnd, this.styleLocked, this.onDone));
+                defaults.subways(), structures);
+        this.minecraft.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.ruinedNether, this.cityWorldEnd, this.styleLocked, this.structureEntries, this.onDone));
+    }
+
+    /**
+     * This screen again, with everything as it stands and another structure choice — where the Structures page
+     * comes back to. A fresh screen rather than this one for the reason {@link #onStyleChanged} gives.
+     */
+    private Screen reopened(CityWorldSettingsData.Structures chosen) {
+        return new CityWorldCustomizeScreen(this.lastScreen, style, buildResult().settings().withStructures(chosen),
+                this.ruinedNether, this.cityWorldEnd, this.styleLocked, this.structureEntries, this.onDone);
     }
 
     // ---- widget helpers ----------------------------------------------------------------------
