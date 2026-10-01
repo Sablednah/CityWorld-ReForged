@@ -89,6 +89,13 @@ public final class Armoury {
      * anything the pool holds that is not wearable is skipped.
      */
     public static boolean armourStand(RealBlocks chunk, Odds odds, int x, int y, int z, BlockFace facing) {
+        return armourStand(chunk, odds, x, y, z, facing, pool(ARMOUR, ARMOUR_FALLBACK), 3, null);
+    }
+
+    /** As above from any pool of armour, up to {@code maxPieces}, each stack passed through {@code finish} (a
+     *  museum wears its exhibits down) when one is given. */
+    public static boolean armourStand(RealBlocks chunk, Odds odds, int x, int y, int z, BlockFace facing,
+            List<Item> armour, int maxPieces, java.util.function.UnaryOperator<ItemStack> finish) {
         ServerLevelAccessor server = chunk.getServerLevel();
         if (server == null)
             return false;
@@ -97,10 +104,11 @@ public final class Armoury {
         Direction dir = facing.toDirection();
         stand.setYRot(dir == null ? 0 : dir.toYRot());
         stand.setSilent(true);
-        List<Item> armour = pool(ARMOUR, ARMOUR_FALLBACK);
-        int pieces = 1 + odds.getRandomInt(3);
+        int pieces = 1 + odds.getRandomInt(maxPieces);
         for (int i = 0; i < pieces && !armour.isEmpty(); i++) {
             ItemStack stack = new ItemStack(armour.get(odds.getRandomInt(armour.size())));
+            if (finish != null)
+                stack = finish.apply(stack);
             EquipmentSlot slot = stand.getEquipmentSlotForItem(stack);
             if (!slot.isArmor() || !stand.getItemBySlot(slot).isEmpty())
                 continue;
