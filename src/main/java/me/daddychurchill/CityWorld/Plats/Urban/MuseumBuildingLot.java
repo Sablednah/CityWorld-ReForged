@@ -24,23 +24,12 @@ public class MuseumBuildingLot extends FinishedBuildingLot {
 		depth = 0;
 		rounded = false;
 		roofFeature = roofFeature == RoofFeature.ANTENNAS ? RoofFeature.CONDITIONERS : roofFeature;
-		interiorStyle = InteriorStyle.COLUMNS_OFFICES; // EMPTY never draws rooms — no exhibits
+		interiorStyle = InteriorStyle.COLUMNS_OFFICES;
 	}
-
-	// museums stood empty before the civic-interiors round
-	private static final me.daddychurchill.CityWorld.Plugins.RoomProvider contentsExhibits =
-			new me.daddychurchill.CityWorld.Rooms.Populators.MuseumWithExhibits();
 
 	@Override
 	public String getInteriorDescription() {
 		return "Museum exhibits";
-	}
-
-	@Override
-	public me.daddychurchill.CityWorld.Plugins.RoomProvider roomProviderForFloor(
-			me.daddychurchill.CityWorld.CityWorldGenerator generator,
-			me.daddychurchill.CityWorld.Support.SupportBlocks chunk, int floor, int floorY) {
-		return contentsExhibits;
 	}
 
 	@Override
@@ -81,6 +70,11 @@ public class MuseumBuildingLot extends FinishedBuildingLot {
 		insetStyle = InsetStyle.STRAIGHT;
 	}
 
+	/**
+	 * A museum is one tall hall: this replaces the whole interior pass (no rooms, walls or stairs are drawn), and
+	 * what stands in the hall is the fossil and {@link #drawExhibits}. An exhibit-room populator once sat on this
+	 * class and was never reached for that reason.
+	 */
 	@Override
 	protected void drawInteriorParts(CityWorldGenerator generator, RealBlocks chunk, DataContext context,
 			RoomProvider rooms, int floor, int floorAt, int floorHeight, int insetNS, int insetWE, boolean allowRounded,

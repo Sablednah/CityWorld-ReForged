@@ -75,7 +75,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 
 	/**
 	 * A building opened up round an atrium (Ed's "TODO Atrium in the middle of 2x2", done the way the mall does it):
-	 * shared by every chunk of a connected building. See {@link #atriumCorner}.
+	 * shared by every chunk of a connected building. See {@link #atriumCorners}.
 	 */
 	protected boolean atrium = false;
 	private int roofScale;
@@ -1401,8 +1401,6 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			boolean allowRounded, Material wallMaterial, Material glassMaterial, StairWell stairsLocation,
 			Surroundings heights) {
 
-		// TODO Atrium in the middle of 2x2
-
 		// precalculate
 		int y2 = y1 + floorHeight;
 		int x1 = heights.toWest() ? 0 : insetWE + 1;
@@ -2262,8 +2260,8 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		}
 	}
 
-	// TODO roof fixtures (peak, helipad, air conditioning, stairwells access,
-	// penthouse, castle trim, etc.
+	// TODO roof fixtures still to do: stairwell access, castle trim. (Peaks, air conditioning, the penthouse floor
+	// and the helipad exist.)
 	protected void drawRoof(CityWorldGenerator generator, InitialBlocks chunk, DataContext context, int y1, int insetNS,
 			int insetWE, int floor, boolean allowRounded, Material material, Surroundings heights) {
 		drawRoof(generator, chunk, context, y1, insetNS, insetWE, floor, allowRounded, false, material, heights,
