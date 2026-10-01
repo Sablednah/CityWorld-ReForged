@@ -13,6 +13,15 @@ screen.
 Battle-tested across **135 worlds and 3.2 million generated chunks** — over **830 km²** of procedurally
 generated city, more ground than New York City covers.
 
+**New in 5.17.0: choose your structures in game.** The Customize screen has a new **Structures** page that
+lists every structure the install has — vanilla's and each mod's — with an on/off switch each. Want **villages**
+in your city world, woodland mansions, pillager outposts, a mod's dungeons? Tick them and create the world; the
+city keeps clear of them, as it does for the structures CityWorld places by default. No datapack needed (servers
+and packs get the same thing as two lists in the world settings). **Minecraft Comes Alive** now turns
+CityWorld's villagers into its own people out of the box. And two fixes worth updating for: **5.16.0 could hang
+at "Preparing spawn area"** when a museum generated inside the spawn area, and on 1.20.1 the modpack world-type
+lock now actually applies.
+
 **New in 5.16.0: the things the original author meant to build.** Ed Churchill left himself notes in
 CityWorld's source between 2011 and 2018 for features he never got to; this release builds them. Districts are
 **no longer one rigid grid** — outside downtown, some roads go missing, so blocks come in different sizes and
@@ -103,9 +112,10 @@ Pick **CityWorld** as your world type and you land in a living city:
   axolotls/frogs/tropical fish, surface azaleas), dripstone, deep dark, and sulfur caves on Minecraft
   26.2 and later — each decorated the way vanilla decorates it.
 - **Vanilla structures where they belong** — **strongholds** (so eyes of ender work and the End is
-  reachable), **trial chambers**, and **ancient cities** in the deep dark. Villages and mineshafts stay
-  off: CityWorld builds its own. A datapack tag can widen the list, including to another mod's
-  structures.
+  reachable), **trial chambers**, and **ancient cities** in the deep dark. Villages and mineshafts are
+  off by default — CityWorld builds its own — but the **Structures** page of the Customize screen
+  switches on any structure the install has, vanilla's or a mod's (a datapack tag or the world settings
+  do the same for servers).
 - **Inhabitants** — named villagers employed at their shop's actual trade, animals in the fields, fish in
   the sea, hostiles lurking in mines, sewers and the dark.
 - **Set-pieces** — castles, radio towers, oil platforms, flying saucers, hot-air balloons, two-chunk
