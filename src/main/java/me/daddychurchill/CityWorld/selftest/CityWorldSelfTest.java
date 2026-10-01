@@ -213,6 +213,7 @@ public final class CityWorldSelfTest {
             checkAirshipHeadings();
             checkVaultRegions();
             checkReservedSite(server); // last: it changes the plan (far from everything else checked)
+            checkDirectLoad(server); // truly last: if it finds a deadlock the server thread never answers again
         } catch (Throwable t) {
             fail("harness threw: " + t);
             CityWorldMod.LOGGER.error("SELFTEST: harness threw", t);
@@ -2704,6 +2705,106 @@ public final class CityWorldSelfTest {
     }
 
     /** The lot the generator itself would use for this chunk, or null if it cannot be resolved. */
+    /**
+     * Loads a whole district at once — every chunk holding a FULL ticket BEFORE it generates, which is what the
+     * spawn area, a teleport and a login into new land do — and requires generation to finish.
+     *
+     * <p>Every other check here asks for chunks one after another, and a chunk asked for that way has almost always
+     * decorated already, as the neighbour ring of the chunk before it. While it is only a neighbour,
+     * {@code Level.hasChunkAt} answers false for it, so decoration code that reaches for the REAL level from a
+     * worker (instead of the region it was handed) returns early and looks fine. Under a FULL ticket the same call
+     * goes on to {@code getChunk}, joins the server thread, and the server thread is waiting for that chunk: the
+     * world stops at "Preparing spawn area". 5.16.0 shipped exactly that in the museum podiums
+     * ({@code ItemFrame.setRotation}); six self-tests, every probe and a week of flying about never saw it.
+     *
+     * <p>The district is the first one in a far window that holds a museum (the lot that proved the point), else
+     * the window's first district.
+     */
+    private void checkDirectLoad(MinecraftServer server) {
+        ServerLevel level = server.overworld();
+        CityWorldGenerator plan = level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator g
+                ? g.getContext(level) : null;
+        if (plan == null)
+            return;
+        final int window = 1200; // chunks from the origin: nothing else in this harness generates out here
+        int originX = window, originZ = window;
+        boolean museum = false;
+        search: for (int px = 0; px < 12; px++)
+            for (int pz = 0; pz < 12; pz++) {
+                int ox = window + px * PlatMap.Width, oz = window + pz * PlatMap.Width;
+                for (int dx = 0; dx < PlatMap.Width; dx++)
+                    for (int dz = 0; dz < PlatMap.Width; dz++)
+                        if (lotAt(plan, ox + dx, oz + dz) instanceof me.daddychurchill.CityWorld.Plats.Urban.MuseumBuildingLot) {
+                            originX = ox;
+                            originZ = oz;
+                            museum = true;
+                            break search;
+                        }
+            }
+        final int ox = originX, oz = originZ, total = PlatMap.Width * PlatMap.Width;
+        long started = System.currentTimeMillis();
+        // Tickets only, through the chunk source: ServerLevel.setChunkForced also LOADS each chunk on the spot, on
+        // the server thread — one at a time, and with the fault present its first call never returns, so this
+        // harness hung with it instead of reporting (the first version of this check did exactly that).
+        server.submit(() -> {
+            for (int dx = 0; dx < PlatMap.Width; dx++)
+                for (int dz = 0; dz < PlatMap.Width; dz++)
+                    level.getChunkSource().updateChunkForced(new net.minecraft.world.level.ChunkPos(ox + dx, oz + dz), true);
+        }).join();
+        int done = 0;
+        boolean answered = true;
+        while (System.currentTimeMillis() - started < 240_000L) {
+            try {
+                // on the server thread (getChunkNow answers null elsewhere), and with a timeout: a deadlocked
+                // server thread never answers
+                done = server.submit(() -> {
+                    int full = 0;
+                    for (int dx = 0; dx < PlatMap.Width; dx++)
+                        for (int dz = 0; dz < PlatMap.Width; dz++)
+                            if (level.getChunkSource().getChunkNow(ox + dx, oz + dz) != null)
+                                full++;
+                    return full;
+                }).get(10, java.util.concurrent.TimeUnit.SECONDS);
+                answered = true;
+            } catch (Exception e) {
+                answered = false;
+            }
+            if (done == total)
+                break;
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+        long took = System.currentTimeMillis() - started;
+        report.put("directload", (museum ? "museum district" : "district (no museum in the window)") + " at chunk " + ox
+                + "," + oz + ": " + done + "/" + total + " chunks in " + took + " ms");
+        if (done == total) {
+            server.submit(() -> {
+                for (int dx = 0; dx < PlatMap.Width; dx++)
+                    for (int dz = 0; dz < PlatMap.Width; dz++)
+                        level.getChunkSource().updateChunkForced(new net.minecraft.world.level.ChunkPos(ox + dx, oz + dz), false);
+            }).join();
+            return;
+        }
+        // Name what it is stuck in: the CityWorld frames of any thread that is inside CityWorld right now.
+        StringBuilder stuck = new StringBuilder();
+        for (Map.Entry<Thread, StackTraceElement[]> thread : Thread.getAllStackTraces().entrySet()) {
+            if (thread.getKey() == Thread.currentThread())
+                continue;
+            int shown = 0;
+            for (StackTraceElement frame : thread.getValue())
+                if (frame.getClassName().startsWith("me.daddychurchill.CityWorld") && shown++ < 3)
+                    stuck.append(shown == 1 ? " [" + thread.getKey().getName() + "] " : " <- ")
+                            .append(frame.getClassName().substring(frame.getClassName().lastIndexOf('.') + 1))
+                            .append('.').append(frame.getMethodName()).append(':').append(frame.getLineNumber());
+        }
+        fail("a district loaded all at once never finished generating (" + done + "/" + total + " chunks after "
+                + took + " ms" + (answered ? "" : ", and the server thread stopped answering")
+                + ") — decoration code is reaching for the real level from a worker:" + stuck);
+    }
+
     private static PlatLot lotAt(CityWorldGenerator gen, int chunkX, int chunkZ) {
         try {
             return gen.getPlatMap(chunkX, chunkZ).getMapLot(chunkX, chunkZ);
