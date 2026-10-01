@@ -120,6 +120,9 @@ public class CityWorldSettings {
      * the two consumers ({@code CaveRegions} and the chunk generator's carve) want the group as a unit.
      */
     public CityWorldSettingsData.Caves caves = CityWorldSettingsData.Caves.DEFAULT;
+    /** Which vanilla/mod structure sets are added to or taken from {@code #cityworld:allowed}; read by the
+     *  chunk generator when it builds the world's structure state, carried here only to round-trip. */
+    public CityWorldSettingsData.Structures structures = CityWorldSettingsData.Structures.DEFAULT;
 
     /**
      * Let installed TerraBlender biome mods (Biomes O' Plenty and most others) contribute biomes.
@@ -500,7 +503,7 @@ public class CityWorldSettings {
         CityWorldSettingsData.Shops sh = new CityWorldSettingsData.Shops(v, v);
         CityWorldSettingsData.Subways sw = new CityWorldSettingsData.Subways(v, v);
         return new CityWorldSettingsData(f, t2, d.spawns(), d.treasures(), d.world(), d.radius(), d.naming(),
-                d.mobs(), og2, sh, d.decay(), d.caves(), sw);
+                d.mobs(), og2, sh, d.decay(), d.caves(), sw, d.structures());
     }
 
     /**
@@ -549,6 +552,7 @@ public class CityWorldSettings {
         overgrowthIntensity = og.intensity();
         capVines = og.capVines();
         caves = data.caves();
+        structures = data.structures();
         includeShops = data.shops().enabled();
         includeMalls = data.shops().malls();
         includeSubways = data.subways().enabled();
@@ -676,7 +680,7 @@ public class CityWorldSettings {
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
-                overgrowth, shops, decay, caves, subways);
+                overgrowth, shops, decay, caves, subways, structures);
     }
 
     private static List<String> ids(List<EntityType> types) {

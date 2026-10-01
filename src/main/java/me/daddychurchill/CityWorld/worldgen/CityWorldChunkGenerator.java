@@ -243,12 +243,18 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
     /** The CityWorld generator {@link #twinOf} names, or null (none named, not loaded, or not CityWorld). */
     private CityWorldChunkGenerator twinSource() {
+        return twinSource(true);
+    }
+
+    private CityWorldChunkGenerator twinSource(boolean warn) {
         if (twinOf.isEmpty())
             return null;
         net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         net.minecraft.server.level.ServerLevel source = server == null ? null : server.getLevel(twinOf.get());
         if (source != null && source.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator cw && cw != this)
             return cw;
+        if (!warn)
+            return null;
         me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
                 "CityWorld: twin_of {} is not a loaded CityWorld dimension — using this dimension's own style/settings",
                 twinOf.get().identifier());
@@ -1661,7 +1667,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * fails to today's behaviour rather than silently letting villages and mineshafts loose in a world
      * that builds its own.
      */
-    private static final TagKey<StructureSet> ALLOWED_STRUCTURE_SETS = TagKey.create(Registries.STRUCTURE_SET,
+    public static final TagKey<StructureSet> ALLOWED_STRUCTURE_SETS = TagKey.create(Registries.STRUCTURE_SET,
             Identifier.fromNamespaceAndPath("cityworld", "allowed"));
 
     /**
@@ -1697,11 +1703,27 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             if (this.biomeSource instanceof CityWorldEndBiomeSource endBiomes)
                 endBiomes.bindTerrain(endTerrain, vanilla.getBiomeSource());
         }
-        // 26.3's createForNormal takes the origin as well (it does not on the other five lines), so this
-        // keeps THIS branch's signature and master's caching of the state. Neither side alone is right:
-        // --ours would drop the reservation feature silently, --theirs would not compile here.
+        // A twin places what its source places: the Customize screen edits one settings object, the overworld's,
+        // and its Structures page lists the Nether's and the End's sets beside the overworld's.
+        CityWorldChunkGenerator twin = twinSource(false);
+        CityWorldSettingsData.Structures choice = (twin != null ? twin : this).resolvedSettings().structures();
+        // 26.3's createForNormal takes the origin as well (it does not on the other five lines).
         ChunkGeneratorStructureState state = ChunkGeneratorStructureState.createForNormal(
-                randomState, seed, getOrigin(randomState), this.biomeSource, onlyAllowed(lookup));
+                randomState, seed, getOrigin(randomState), this.biomeSource, onlyAllowed(lookup, choice));
+        if (!choice.allow().isEmpty() || !choice.deny().isEmpty()) {
+            // What a server owner needs to see once: the lists were read, and which ids name nothing here
+            // (a set of a mod that is not installed is normal in a shared settings file, and ignored).
+            List<String> absent = Stream.concat(choice.allow().stream(), choice.deny().stream())
+                    .filter(id -> {
+                        Identifier parsed = Identifier.tryParse(id);
+                        return parsed == null
+                                || lookup.get(ResourceKey.create(Registries.STRUCTURE_SET, parsed)).isEmpty();
+                    }).toList();
+            me.daddychurchill.CityWorld.CityWorldMod.LOGGER.info(
+                    "CityWorld: structure settings ({}) allow {} deny {} -> {} structure sets placed{}",
+                    environment.orElse("overworld"), choice.allow(), choice.deny(), state.possibleStructureSets().size(),
+                    absent.isEmpty() ? "" : "; not installed: " + absent);
+        }
         this.structureState = state;
         this.forecast = new StructureForecast(this, state);
         return state;
@@ -1739,14 +1761,18 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * else), but {@code get(ResourceKey)} is filtered too so the view can't answer inconsistently if a
      * future vanilla version starts asking that way instead.
      */
-    private static HolderLookup<StructureSet> onlyAllowed(HolderLookup<StructureSet> all) {
-        HolderSet<StructureSet> allowed = all.get(ALLOWED_STRUCTURE_SETS)
+    public static HolderLookup<StructureSet> onlyAllowed(HolderLookup<StructureSet> all,
+            CityWorldSettingsData.Structures choice) {
+        HolderSet<StructureSet> tagged = all.get(ALLOWED_STRUCTURE_SETS)
                 .<HolderSet<StructureSet>>map(named -> named)
                 .orElseGet(HolderSet::direct); // absent tag -> empty -> no vanilla structures
+        // The world's own allow/deny lists (settings "structures") overrule the tag, set by set.
+        java.util.function.Predicate<Holder.Reference<StructureSet>> allowed = set -> choice
+                .allows(set.key().identifier().toString(), tagged.contains(set));
         return new HolderLookup<>() {
             @Override
             public Stream<Holder.Reference<StructureSet>> listElements() {
-                return all.listElements().filter(allowed::contains);
+                return all.listElements().filter(allowed);
             }
 
             @Override
@@ -1756,7 +1782,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
             @Override
             public Optional<Holder.Reference<StructureSet>> get(ResourceKey<StructureSet> key) {
-                return all.get(key).filter(allowed::contains);
+                return all.get(key).filter(allowed);
             }
 
             @Override

@@ -168,7 +168,8 @@ public final class SettingsExample {
             caves  — the underground dials (cave biomes and structure caverns)
             ============================================================================
             WHICH cave biomes exist is the tag #cityworld:cave_pool, and WHICH vanilla structures
-            generate is #cityworld:allowed. This group is the numbers those two can't express.
+            generate is #cityworld:allowed plus the "structures" group below. This group is the
+            numbers those can't express.
 
             structureCarveHalo    10  How far, horizontally, terrain is cleared past the pieces of a
                                       BURIED structure — an ancient city, in practice. Vanilla carves
@@ -230,6 +231,24 @@ public final class SettingsExample {
                              standing water and spawners in the wall niches. Stations announce as
                              the landmark kind "subway" (off by default, see announcedLandmarks).
             spawners  true   Sewer-bag spawners in the ruined tunnels' niches (APOCALYPSE only).
+
+            ============================================================================
+            structures  — which vanilla and mod structures this world places
+            ============================================================================
+            CityWorld places the structure sets in the tag #cityworld:allowed (strongholds, trial
+            chambers, ancient cities, the Nether's fortresses and bastions, end cities, and several
+            mods' sets). These two lists change that for one world, without a tag datapack — they
+            are what the Structures page of the Customize screen writes:
+
+            allow  []   Structure SET ids to place as well:  ["minecraft:villages"]
+            deny   []   Structure SET ids to stop placing:   ["minecraft:trial_chambers"]
+
+            Ids are structure sets (data/<ns>/worldgen/structure_set/), not single structures:
+            minecraft:villages, minecraft:woodland_mansions, minecraft:pillager_outposts, a mod's
+            own. An id whose mod is not installed is ignored. Allowing a set does not make it
+            appear where none of its biomes exist — vanilla drops those itself. The Nether and the
+            End follow the overworld's lists. Cities keep clear of whatever is placed. The server
+            log says what was read:  "CityWorld: structure settings (overworld) allow [...] ..."
 
             ============================================================================
             shops  — themed retail with villager job blocks (MODERN dressing)
