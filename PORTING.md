@@ -32,13 +32,14 @@ comments, orphaned javadocs re-attached) turned up one real bug, car-park east/w
 north/south edges; and the interchange stair top was fixed from the owner's hand edit in his save (headroom
 over a two-step flight; the shaft's track-side wall is the platform edge again).
 
-## ▶ Resume here — the Structures page and MCA (2026-10-01, unreleased; next release carries both)
+## ▶ Resume here — the Structures page, MCA and the museum deadlock (v5.17.0, 2026-10-01)
 
 **Owner:** *"at the moment people have to datapack to turn them on. Would it be possible in config to have a
 section that shows all available structures for the install (inc from mods) — and let them be toggled — with
 current defaults ticked?"* and, on MCA, *"hold release, we'll drop mca and structures together as then they can
 enable villages easier."* Both are built, self-tested on six lines, and the screen is checked on four real
-clients. **Not pushed, not released** at the time of writing — see CLAUDE.md "Where this is".
+clients. **Released as v5.17.0** (tag `96b0c1be`, CurseForge 9031937–9031942), together with the fix for the
+museum deadlock his 1.20.1 playtest of this very feature found in 5.16.0 (below).
 
 **The structure choice.** `CityWorldSettingsData.Structures(allow, deny)` — the 14th top-level settings group
 (the top codec's cap is 16) — is two lists of structure-SET ids laid over `#cityworld:allowed`:

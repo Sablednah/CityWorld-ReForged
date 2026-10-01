@@ -24,24 +24,22 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-01)
 
-**⚠ UNRELEASED WORK ON EVERY BRANCH, NOT PUSHED (2026-10-01 evening).** After v5.16.0 the owner asked for two
-things and said to **ship them together**: the **MCA fix** (CityWorld's villagers spawn as `STRUCTURE` residents,
-so Minecraft Comes Alive converts them) and the **Structures page** (Customize screen → every installed structure
-set, vanilla's and mods', on/off; stored as settings `structures: {allow, deny}` over `#cityworld:allowed`). Plus,
-on `mc1.20.1` only, the **pack lock config is read at startup by hand** (Forge read it before loading it: silent
-defaults in a shipped jar). Local commits: master `d1007ea4`, `93339994` (+ docs); each branch has its picks. Six
-self-tests PASS, `--compare` agrees, the screen was driven on real clients (Vivo) on 1.21.11, 1.20.1, 26.2 and
-1.21.1, and the dev jars are on the 11 fleet instances (stamps = each branch's head sha) for the owner's playtest.
-The same evening his 1.20.1 playtest found **5.16.0's museum deadlock** (below, "A hang at Preparing spawn
-area"); fixed in `35a52032` + picks, so the next release also fixes a hang in the released 5.16.0. Six self-tests PASS
-with the new `directload` check, the fixed jars are on the fleet, and the owner confirmed 1.20.1 (world creates,
-ticked structures appear). His test jars `allstructures-cityworld-test` and `cataclysm-cityworld-compat` in the
-`1.20.1  Forge` instance are renamed `.jar.disabled` at his request.
-**Next: his word to release** — then push branches, push master, CI, bump (5.17.0: a visible feature), tag,
-release, and add the CURSEFORGE.md "New in" paragraph + update its "Vanilla structures" bullet. PORTING.md
-"▶ Resume here — the Structures page and MCA".
+**v5.17.0 is released** (2026-10-01 night) on all six lines — tag `v5.17.0` (`96b0c1be`), GitHub release with six
+jars, CurseForge files 9031937–9031942, fleet `DEPLOYED-v5.17.0` on all 11 deployable instances (ZARP opts out).
+It is four things: the **Structures page** (Customize screen → every installed structure set, vanilla's and
+mods', on/off; stored as settings `structures: {allow, deny}` over `#cityworld:allowed`; twins follow the
+overworld), the **MCA fix** (villagers spawn as `STRUCTURE` residents, so Minecraft Comes Alive converts them),
+the **museum deadlock fix** (5.16.0 could hang world creation at "Preparing spawn area" — see "A hang at
+Preparing spawn area" below; the self-test's `checkDirectLoad` is the new detector), and on `mc1.20.1` only the
+**pack lock config read at startup by hand** (Forge read it before loading it: silent defaults in a shipped jar).
+Gates: six self-tests PASS and `--compare` agrees on the pre-bump heads, CI green on the bump heads, halt/exit 0
+on all six (detector proved on a synthetic positive), 1.20.1 jar reobfuscated, 26.3 compiled against NeoForge
+26.3.0.40-beta, the screen driven on real clients (Vivo) on 1.21.11, 1.20.1, 26.2 and 1.21.1, and the owner's
+1.20.1 playtest (world creates, ticked structures appear). His test jars `allstructures-cityworld-test` and
+`cataclysm-cityworld-compat` in the `1.20.1  Forge` instance are renamed `.jar.disabled` at his request.
+PORTING.md "▶ Resume here — the Structures page and MCA". Owner to paste CURSEFORGE.md's "New in 5.17.0".
 
-**v5.16.0 is released** (2026-10-01) on all six lines — tag `v5.16.0` (`dbfc155b`), GitHub release with six jars,
+**v5.16.0 was released** (2026-10-01) on all six lines — tag `v5.16.0` (`dbfc155b`), GitHub release with six jars,
 CurseForge files 9028088–9028093, fleet `DEPLOYED-v5.16.0` on all 11 deployable instances (ZARP opts out and
 takes the CurseForge jar). It is the round built from Ed Churchill's own upstream TODO comments — missing roads
 (`oddsOfMissingRoad`, dead since 2012), lane lines, ruined tunnels, office atria, helipads, split-level and modern
