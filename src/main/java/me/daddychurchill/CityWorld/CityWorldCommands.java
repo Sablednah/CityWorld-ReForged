@@ -192,9 +192,10 @@ public final class CityWorldCommands {
         //
         // Vanilla's own /locate structure already reports a position; what this adds is the teleport, and
         // it answers a question vanilla's cannot: our generator filters placements through
-        // #cityworld:allowed, so a structure that is installed but NOT allowed is simply not found here.
-        // That distinguishes "the mod is loaded" from "the tag took", which the /locate autocomplete
-        // cannot — it lists the structure registry either way.
+        // #cityworld:allowed and the world's own "structures" settings, so a structure that is installed
+        // but NOT switched on is simply not found here. That distinguishes "the mod is loaded" from "the
+        // tag (or the Structures page) took", which the /locate autocomplete cannot — it lists the
+        // structure registry either way.
         //
         // "tp" is a literal BEFORE the id for the same reason the schematic search does it: the id is a
         // greedy argument (namespaced ids contain a colon, which StringArgumentType.word() rejects), so a
@@ -256,8 +257,9 @@ public final class CityWorldCommands {
      * and unreproducible, which is the worst kind to go looking for later.
      *
      * <p>The search is analytic, so it finds structures in land that has never been generated — and in a
-     * CityWorld world it only finds what {@code #cityworld:allowed} permits, which makes it a direct test
-     * of whether a compatibility datapack actually took.
+     * CityWorld world it only finds what {@code #cityworld:allowed} and the world's {@code structures}
+     * settings permit, which makes it a direct test of whether a compatibility datapack, or a box ticked
+     * on the Structures page, actually took.
      */
     private static int locateStructure(CommandContext<CommandSourceStack> ctx, boolean teleport)
             throws CommandSyntaxException {
