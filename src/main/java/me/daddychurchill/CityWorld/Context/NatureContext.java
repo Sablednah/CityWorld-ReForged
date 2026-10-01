@@ -215,7 +215,7 @@ public class NatureContext extends UncivilizedContext {
 		h ^= h >>> 31;
 		h *= 0xBF58476D1CE4E5B9L;
 		h ^= h >>> 29;
-		if (Math.floorMod(h, 3) == 0)
+		if (Math.floorMod(h, 3) == 1)
 			return;
 		HeightInfo hill = HeightInfo.getHeightsFaster(generator, (platmap.originX + x) * SupportBlocks.sectionBlockWidth,
 				(platmap.originZ + z) * SupportBlocks.sectionBlockWidth);
