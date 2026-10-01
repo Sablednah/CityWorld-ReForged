@@ -893,13 +893,13 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		StairWell stairLocation = getStairWellLocation(allowRounded, neighborFloors);
 		if (!needStairsUp)
 			stairLocation = StairWell.NONE;
-		// an atrium corner takes the quadrant the stairwell would lean into. The stairs go to the middle of the side the
-		// atrium opens on: that side is joined to the building (no wall inset to fall outside of), and the well's x run
-		// (5..10) misses both voids (0..4, 11..15). The far corner, the first choice, faces the outside walls, and with
-		// their inset the stairs ran up the outside of the building (owner's screenshots, 2026-09-30).
+		// An atrium takes a corner room, and the default stairwell of a 2x2 building's chunk leans into that same corner:
+		// the stairs go to the middle of the chunk instead, clear of the void and its railing whichever corner it takes,
+		// and inside the walls at any inset. (The far corner ran up the outside of an inset building; the middle of the
+		// atrium's side stood in the walkway round the void. Owner's playtests, 2026-09-30 and 10-01.)
 		List<int[]> atria = atriumCorners(neighborFloors);
 		if (!atria.isEmpty() && stairLocation != StairWell.NONE)
-			stairLocation = atria.get(0)[1] == 1 ? StairWell.SOUTH : StairWell.NORTH;
+			stairLocation = StairWell.CENTER;
 
 		// work on the basement stairs first
 		for (int floor = 0; floor < depth; floor++) {
@@ -1078,9 +1078,8 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		claimStairs(chunk, floorHeight, drawStairs ? stairLocation : StairWell.NONE);
 		// and so does an atrium's void, with the railing round it
 		List<int[]> atria = atriumCorners(heights);
-		boolean[] stairCells = claimSnapshot();
-		for (int[] at : atria) // the void, its railing and the gallery beside it
-			claimRect(at[0] == 1 ? 9 : 0, at[1] == 1 ? 9 : 0, at[0] == 1 ? 15 : 6, at[1] == 1 ? 15 : 6);
+		for (int[] at : atria) // the corner room it replaces, walls and all
+			claimRect(at[0] == 1 ? 11 : 0, at[1] == 1 ? 11 : 0, at[0] == 1 ? 15 : 4, at[1] == 1 ? 15 : 4);
 
 		// calculate initial door state
 		DoorStyle drawInteriorDoors = DoorStyle.NONE;
@@ -1159,7 +1158,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		// the atrium is cut after the walls, rooms and stairs of this floor and before the sweep that furnishes and
 		// hangs art, so nothing is left standing in the void or hung on a wall that is about to go
 		for (int[] at : atria)
-			cutAtrium(chunk, at, floor, floorAt, floorHeight, topFloor, stairCells);
+			cutAtrium(chunk, at, floor, floorAt, floorHeight, topFloor, materialWall);
 		if (!atria.isEmpty())
 			clearHalfDoors(chunk, floorAt);
 
@@ -1324,54 +1323,62 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 	}
 
 	/**
-	 * This chunk's quarter of the atrium on one floor: a 5x5 void at its corner (the floor under it cut away above the
-	 * ground floor), a glass railing round its edge, a pool at the foot and a glass skylight at the top.
+	 * This chunk's quarter of the atrium on one floor. A chunk of a big building is laid out as a 4x4 room in each
+	 * corner, walled on the fifth cell in (x or z = 4 and 11), with a hallway between them — so the atrium takes one
+	 * corner room exactly: the room and its walls are cleared but for a pillar at its corner, a glass railing stands
+	 * where the walls were, the 4x4 floor inside is cut away above the ground floor, and the hallway beside it is the
+	 * gallery. A pool lies at the foot (a moss garden over a basement: the pool would sit in the basement's ceiling)
+	 * and a skylight at the top.
 	 */
 	private void cutAtrium(RealBlocks chunk, int[] at, int floor, int floorAt, int floorHeight, boolean topFloor,
-			boolean[] stairCells) {
-		int x1 = at[0] == 1 ? 11 : 0, x2 = x1 + 5, z1 = at[1] == 1 ? 11 : 0, z2 = z1 + 5;
-		int railX = at[0] == 1 ? 10 : 5, railZ = at[1] == 1 ? 10 : 5;
+			Material wallMaterial) {
+		boolean east = at[0] == 1, south = at[1] == 1;
+		int roomX1 = east ? 11 : 0, roomX2 = east ? 15 : 4, roomZ1 = south ? 11 : 0, roomZ2 = south ? 15 : 4;
+		int voidX1 = east ? 12 : 0, voidX2 = east ? 15 : 3, voidZ1 = south ? 12 : 0, voidZ2 = south ? 15 : 3;
+		int railX = east ? 11 : 4, railZ = south ? 11 : 4;
+		chunk.setBlocks(roomX1, roomX2 + 1, floorAt, floorAt + floorHeight, roomZ1, roomZ2 + 1, Material.AIR);
+		// a pillar where the room's corner was, on every floor: what is left of its walls, the doors in them and the
+		// railing all end on it (a door hinged on the railing's glass corner was the last "messy corner")
+		chunk.setBlocks(railX, floorAt, floorAt + floorHeight, railZ, wallMaterial);
 		if (floor == 0) {
-			int px = at[0] == 1 ? 14 : 0, pz = at[1] == 1 ? 14 : 0;
-			chunk.setBlocks(x1, x2, floorAt, floorAt + floorHeight, z1, z2, Material.AIR);
-			chunk.setBlocks(px, px + 2, floorAt - 1, pz, pz + 2, Material.WATER);
-			chunk.setBlock(at[0] == 1 ? 12 : 3, floorAt, at[1] == 1 ? 12 : 3, Material.of(net.minecraft.world.level.block.Blocks.POTTED_FLOWERING_AZALEA));
+			int cornerX = east ? 14 : 0, cornerZ = south ? 14 : 0;
+			if (depth == 0)
+				chunk.setBlocks(cornerX, cornerX + 2, floorAt - 1, cornerZ, cornerZ + 2, Material.WATER);
+			else {
+				chunk.setBlocks(cornerX, cornerX + 2, floorAt - 1, cornerZ, cornerZ + 2,
+						Material.of(net.minecraft.world.level.block.Blocks.MOSS_BLOCK));
+				chunk.setBlock(east ? 14 : 1, floorAt, south ? 14 : 1,
+						Material.of(net.minecraft.world.level.block.Blocks.FLOWERING_AZALEA));
+			}
+			chunk.setBlock(east ? 12 : 3, floorAt, south ? 12 : 3,
+					Material.of(net.minecraft.world.level.block.Blocks.POTTED_FLOWERING_AZALEA));
 		} else {
-			chunk.setBlocks(x1, x2, floorAt - 1, floorAt + floorHeight, z1, z2, Material.AIR);
-			chunk.setBlocks(railX, railX + 1, floorAt, z1, z2, Material.GLASS_PANE);
-			chunk.setBlocks(x1, x2, floorAt, railZ, railZ + 1, Material.GLASS_PANE);
-			chunk.setBlock(railX, floorAt, railZ, Material.GLASS_PANE);
-			chunk.reconnect(Math.min(railX, x1), Math.max(railX, x2 - 1) + 1, floorAt, floorAt + 1,
-					Math.min(railZ, z1), Math.max(railZ, z2 - 1) + 1);
-			// nothing above the railing, and a gallery walked round it: the rooms on this floor ran into the void, and a
-			// room whose only door was in the cut part was sealed off (owner, 2026-09-30); every wall crossing the
-			// gallery is opened, so each room that touched the void opens onto the walk round it. The stairwell's cells
-			// are left alone.
-			int galX = at[0] == 1 ? 9 : 6, galZ = at[1] == 1 ? 9 : 6;
-			int lo = at[1] == 1 ? galZ : 0, hi = at[1] == 1 ? 15 : galZ;
-			for (int z = lo; z <= hi; z++) {
-				clearGallery(chunk, galX, z, floorAt, floorHeight, stairCells);
-				if (z != railZ && (z >= z1 && z < z2))
-					clearGallery(chunk, railX, z, floorAt + 1, floorHeight - 1, stairCells);
-			}
-			lo = at[0] == 1 ? galX : 0;
-			hi = at[0] == 1 ? 15 : galX;
-			for (int x = lo; x <= hi; x++) {
-				clearGallery(chunk, x, galZ, floorAt, floorHeight, stairCells);
-				if (x >= x1 && x < x2)
-					clearGallery(chunk, x, railZ, floorAt + 1, floorHeight - 1, stairCells);
-			}
-			clearGallery(chunk, railX, railZ, floorAt + 1, floorHeight - 1, stairCells);
+			chunk.setBlocks(voidX1, voidX2 + 1, floorAt - 1, floorAt + floorHeight, voidZ1, voidZ2 + 1, Material.AIR);
+			// the railing, each pane told which way to join: reconnecting them joined them to nearby walls as well,
+			// and never across the chunk seam, where the neighbour's panes are not there yet
+			for (int z = voidZ1; z <= voidZ2; z++)
+				chunk.setBlock(railX, floorAt, z, Material.GLASS_PANE, BlockFace.NORTH, BlockFace.SOUTH);
+			for (int x = voidX1; x <= voidX2; x++)
+				chunk.setBlock(x, floorAt, railZ, Material.GLASS_PANE, BlockFace.EAST, BlockFace.WEST);
+			// what is left of the room's walls runs from the railing's corner to the middle of the chunk; where
+			// such a stub is unbroken, a doorway through its middle lets the gallery behind it be reached
+			int midX = east ? 9 : 6, midZ = south ? 9 : 6;
+			if (solidRun(chunk, midX - 1, floorAt, railZ, 1, 0))
+				chunk.setBlocks(midX, floorAt, floorAt + 2, railZ, Material.AIR);
+			if (solidRun(chunk, railX, floorAt, midZ - 1, 0, 1))
+				chunk.setBlocks(railX, floorAt, floorAt + 2, midZ, Material.AIR);
 		}
 		if (topFloor)
-			chunk.setBlocks(x1, x2, floorAt + floorHeight, z1, z2, Material.GLASS);
+			chunk.setBlocks(voidX1, voidX2 + 1, floorAt + floorHeight, voidZ1, voidZ2 + 1, Material.GLASS);
 	}
 
-	/** Clear one gallery column from {@code y} up {@code height} blocks, unless it is part of the stairwell. */
-	private void clearGallery(RealBlocks chunk, int x, int z, int y, int height, boolean[] stairCells) {
-		if (x < 0 || x > 15 || z < 0 || z > 15 || stairCells[x * 16 + z])
-			return;
-		chunk.setBlocks(x, y, y + height, z, Material.AIR);
+	/** Three cells in a row from {@code x, z}, stepping by {@code dx, dz}, solid at foot and head height. */
+	private boolean solidRun(RealBlocks chunk, int x, int y, int z, int dx, int dz) {
+		for (int i = 0; i < 3; i++)
+			if (chunk.isEmpty(x + i * dx, y, z + i * dz) || chunk.isEmpty(x + i * dx, y + 1, z + i * dz)
+					|| chunk.isDoor(x + i * dx, y, z + i * dz))
+				return false;
+		return true;
 	}
 
 	/** After an atrium's cut, any door on this floor left with one half is taken out: a half door is no door. */
