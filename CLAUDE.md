@@ -32,6 +32,8 @@ on `mc1.20.1` only, the **pack lock config is read at startup by hand** (Forge r
 defaults in a shipped jar). Local commits: master `d1007ea4`, `93339994` (+ docs); each branch has its picks. Six
 self-tests PASS, `--compare` agrees, the screen was driven on real clients (Vivo) on 1.21.11, 1.20.1, 26.2 and
 1.21.1, and the dev jars are on the 11 fleet instances (stamps = each branch's head sha) for the owner's playtest.
+The same evening his 1.20.1 playtest found **5.16.0's museum deadlock** (below, "A hang at Preparing spawn
+area"); fixed in `35a52032` + picks, so the next release also fixes a hang in the released 5.16.0.
 **Next: his word to release** — then push branches, push master, CI, bump (5.17.0: a visible feature), tag,
 release, and add the CURSEFORGE.md "New in" paragraph + update its "Vanilla structures" bullet. PORTING.md
 "▶ Resume here — the Structures page and MCA".
@@ -320,6 +322,18 @@ export PATH="$JAVA_HOME/bin:$PATH"
   **stops the server starting at all** (`Unbound values in registry …`). A dangling *feature* reference is
   fatal; a dangling *tag* entry is merely dropped. The self-test caught this on the two branches that have
   no BoP in `run/mods` — which is exactly why every branch gets tested, not one.
+- **⚠ A hang at "Preparing spawn area" is a DEADLOCK until a thread dump says otherwise — and no sweep can
+  reproduce it.** 5.16.0's museum podium called `ItemFrame.setRotation(int)`, which notifies comparators through
+  the frame's level — the real `ServerLevel` — from a generation worker: `hasChunkAt` → `getBlockState` →
+  `getChunk` joins the server thread, which is waiting for that chunk. `hasChunkAt` is true only when the chunk
+  already holds a FULL ticket while it decorates (spawn area, teleport, login, forced chunk); a chunk that
+  decorates as its neighbour's ring answers false, and every probe, sweep and self-test loads chunks one after
+  another, so each had already decorated as a neighbour. The self-test's `checkDirectLoad` (FORCED tickets on a
+  whole museum district at once, via `updateChunkForced` — `setChunkForced` loads synchronously and hangs the
+  harness itself) is the only check that sees this class. **An entity built during decoration holds the real
+  level: read any vanilla method you call on it, and take the overload that does not notify.** To dump the
+  owner's hung game from WSL: `tasklist.exe` for the big `javaw.exe` PID, then
+  `/mnt/c/Users/darre/.gradle/jdks/eclipse_adoptium-21-amd64-windows.2/bin/jstack.exe <pid>`.
 - **A quiet worldgen failure looks like scarcity, and the plan hash does not see it.** `ShapeProvider.populateLots`
   catches every exception and logs `populateLots FAILED`; the platmap then generates as nature. A coin-flip pool
   hook called twice (`garageDoorPool()`) handed `MaterialTags.pick` a null tag, and for half a day every

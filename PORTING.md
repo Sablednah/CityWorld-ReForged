@@ -91,6 +91,37 @@ environment**; a shipped jar gets defaults silently, so the lock never applied o
 start (the throw is unconditional in dev, so no dev client can have run on that line since the lock was
 ported; its earlier client sign-off was the owner's installed jar). *A client check per line is not optional.*
 
+**The museum deadlock (5.16.0, found 2026-10-01 evening in the owner's 1.20.1 playtest; fixed `35a52032`).**
+His new world stopped at "Preparing spawn area: 63%" and he took it for slowness from having every structure on.
+The log had simply stopped; `jstack` on the game (a Windows JDK's `jstack.exe` from
+`C:\Users\darre\.gradle\jdks\…\bin`, run from WSL against the `javaw` PID) showed a `Worker-Main` in
+`Exhibits.podium` → `ItemFrame.setRotation(int)` → `Level.updateNeighbourForOutputSignal` → `getBlockState` →
+`ServerChunkCache.getChunk` (a join on the server thread), and the server thread parked in `getChunk` waiting for
+that chunk. `setRotation(int)` always passes `updateNeighbours = true`; the frame's level is the real `ServerLevel`.
+
+- **Why nothing had caught it.** `updateNeighbourForOutputSignal` first asks `hasChunkAt`, which is true only when
+  the chunk's holder has a ticket at FULL level. A chunk decorating as the *neighbour ring* of another sits one
+  level out and answers false — and every sweep, probe and self-test asks for chunks one after another, so each
+  had decorated as a neighbour before it was asked for (measured: the probe's sweep around a museum completes on
+  the unfixed code; forcing the museum's own chunks hangs). Exploring presumably does the same at the edge of
+  view distance — a week of the owner's flying about on 26.3 never hung. A spawn area, a teleport, a login into
+  new land or a forced chunk tickets the chunk FIRST. 1.20.1's spawn area is 23 chunks square, the likeliest
+  reason it surfaced there; the vanilla code is the same on every line, and 1.21.11 hangs identically under a
+  direct load (the other four were not run unfixed).
+- **The fix:** AT `ItemFrame.setRotation(IZ)V` public (`m_31772_` on 1.20.1), and the podium passes `false`.
+  `setItem(stack, false)` was already used everywhere; `setRotation` was the one call nobody had looked inside.
+- **The check that can see this class of bug:** self-test `checkDirectLoad` puts FORCED tickets on all 100 chunks
+  of a far museum district at once and requires them all to reach FULL. Two traps it paid for:
+  `ServerLevel.setChunkForced` LOADS each chunk synchronously on the server thread, so with the fault present the
+  check's own first call never returned and the harness hung instead of failing — use
+  `getChunkSource().updateChunkForced` (tickets only); and `getChunkNow` answers null off the server thread on
+  1.20.1, so the count is asked ON it, with a timeout (a deadlocked server thread never answers). A/B on the same
+  seed: unfixed `0/100 … Exhibits.podium:82 <- MuseumBuildingLot.drawExhibits:164`, fixed `100/100 in 8.5 s`.
+- **The rule:** an entity built during decoration holds the REAL level. Any method on it that "notifies" —
+  neighbours, comparators, sounds, `setChanged` — reaches the chunk system from a worker. Read the vanilla method
+  before calling it; prefer the overload with the `false`. Signs (`markUpdated`), frames (`setItem`'s sound, now
+  `setRotation`) have each cost one.
+
 **Client checks on Vivo** (display `:2`, throwaway rsynced copies `~/dev/CityWorld-ReForged-ui*`, deleted after;
 a JDK 17 now lives at `~/dev/jdk17-cityworld` there): 1.21.11, 1.20.1, 26.2 and 1.21.1 each driven with
 `xdotool` — title, Create New World, World tab, World Type to CityWorld (five clicks from Default), Customize,
