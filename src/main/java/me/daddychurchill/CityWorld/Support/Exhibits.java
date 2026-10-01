@@ -77,7 +77,9 @@ public final class Exhibits {
 				new BlockPos(chunk.getOriginX() + x, y + 1, chunk.getOriginZ() + z), Direction.UP);
 		frame.setSilent(true);
 		frame.setItem(artifact(odds, 0.8), false);
-		frame.setRotation(odds.getRandomInt(8));
+		// never setRotation(int): it updates comparators through the real level, and a worker asking the real
+		// level for a block of the chunk it is generating waits on the server thread for ever (see the AT)
+		frame.setRotation(odds.getRandomInt(8), false);
 		server.addFreshEntityWithPassengers(frame);
 		return true;
 	}
