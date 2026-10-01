@@ -1,0 +1,27 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:wooden_sword",
+    "minecraft:stone_sword",
+    "minecraft:iron_sword",
+    "minecraft:golden_sword",
+    "minecraft:stone_axe",
+    "minecraft:iron_axe",
+    "minecraft:golden_axe",
+    "minecraft:stone_pickaxe",
+    "minecraft:golden_hoe",
+    "minecraft:bow",
+    "minecraft:crossbow",
+    "minecraft:shield",
+    "minecraft:trident",
+    "minecraft:flint_and_steel",
+    { "id": "minecraft:mace", "required": false },
+    { "id": "minecraft:wooden_spear", "required": false },
+    { "id": "minecraft:stone_spear", "required": false },
+    { "id": "minecraft:copper_spear", "required": false },
+    { "id": "minecraft:iron_spear", "required": false },
+    { "id": "minecraft:golden_spear", "required": false },
+    { "id": "minecraft:copper_sword", "required": false },
+    { "id": "minecraft:copper_axe", "required": false }
+  ]
+}
