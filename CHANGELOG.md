@@ -25,6 +25,12 @@ made when the world is created — it is part of the world's settings.
 
 ### Fixed
 
+- **World creation could hang for ever at "Preparing spawn area" (5.16.0, every version).** A museum exhibit
+  podium turned the item in its frame through a vanilla call that asks the live world about the blocks beside it;
+  from a generation thread, for a chunk that is still generating, that waits on the server thread, which is waiting
+  for the chunk. It only bit where a museum generated straight into a loaded area — the spawn area (largest on
+  1.20.1, which is where it was found), a teleport or a login into new land — not while exploring on foot or by
+  elytra, which is why it escaped testing. A world stuck this way loads normally with this version.
 - **Minecraft Comes Alive turns CityWorld's villagers into its people.** MCA only converts villagers that spawned
   naturally or with a structure, and CityWorld's were marked as chunk generation, so they stayed vanilla. They now
   spawn as residents of a structure, the way a village's villagers do. (On 5.16.0 and earlier, add
