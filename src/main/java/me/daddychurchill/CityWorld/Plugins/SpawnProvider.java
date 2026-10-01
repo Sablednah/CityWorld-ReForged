@@ -64,6 +64,15 @@ import me.daddychurchill.CityWorld.compat.Material;
 public class SpawnProvider extends Provider {
 
     private final static String tagEntities_Goodies = "Entities_For_Goodies";
+    /**
+     * The spawn reason CityWorld's villagers carry: they are the inhabitants of structures, which is what vanilla
+     * calls a village's villagers. It was {@code CHUNK_GENERATION}, and Minecraft Comes Alive converts only
+     * {@code natural} and {@code structure} villagers by default, so ours stayed vanilla beside its people (measured
+     * with MCA 8.1.11 on 26.2: 3 vanilla villagers and no MCA ones; with this, all MCA). The one thing vanilla does
+     * differently for {@code STRUCTURE} is let the villager claim a nearby workstation at once.
+     */
+    private static final MobSpawnType RESIDENT = MobSpawnType.STRUCTURE;
+
     private final AbstractEntityList itemsEntities_Goodies = new BeingList(tagEntities_Goodies, EntityType.VILLAGER,
             EntityType.VILLAGER, EntityType.VILLAGER, EntityType.VILLAGER, EntityType.VILLAGER, EntityType.VILLAGER,
             EntityType.VILLAGER, EntityType.VILLAGER, EntityType.VILLAGER, EntityType.WITCH);
@@ -293,7 +302,7 @@ public class SpawnProvider extends Provider {
             return;
         villager.moveTo(at.getBlockX() + 0.5, at.getBlockY(), at.getBlockZ() + 0.5, 0.0F, 0.0F);
         EventHooks.finalizeMobSpawn(villager, server, server.getCurrentDifficultyAt(villager.blockPosition()),
-                MobSpawnType.CHUNK_GENERATION, null);
+                RESIDENT, null);
         villager.setBaby(child);
         if (surname != null) {
             villager.setCustomName(Component.literal(
@@ -332,7 +341,7 @@ public class SpawnProvider extends Provider {
             return;
         villager.moveTo(at.getBlockX() + 0.5, at.getBlockY(), at.getBlockZ() + 0.5, 0.0F, 0.0F);
         EventHooks.finalizeMobSpawn(villager, server, server.getCurrentDifficultyAt(villager.blockPosition()),
-                MobSpawnType.CHUNK_GENERATION, null);
+                RESIDENT, null);
         employ(server.getLevel(), villager, ResourceLocation.withDefaultNamespace("cleric"));
         if (generator.getSettings().nameVillagers) {
             villager.setCustomName(Component.literal(
@@ -427,6 +436,9 @@ public class SpawnProvider extends Provider {
         if (!(level instanceof ServerLevelAccessor server))
             return;
 
+        // villagers (and their zombies) are residents of what we build; everything else just generated here
+        MobSpawnType reason = entity == EntityType.VILLAGER || entity == EntityType.ZOMBIE_VILLAGER ? RESIDENT
+                : MobSpawnType.CHUNK_GENERATION;
         Entity being = entity.getType().create(server.getLevel());
         if (being == null)
             return;
@@ -445,7 +457,7 @@ public class SpawnProvider extends Provider {
         // WorldGenRegion.addFreshEntity drops it.
         if (being instanceof Mob mob)
             EventHooks.finalizeMobSpawn(mob, server, server.getCurrentDifficultyAt(mob.blockPosition()),
-                    MobSpawnType.CHUNK_GENERATION, null);
+                    reason, null);
 
         being.setDeltaMovement(odds.getRandomVelocity());
         if (KEEP.get() && being instanceof net.minecraft.world.entity.animal.Bucketable kept)
