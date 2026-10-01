@@ -31,6 +31,15 @@ between 2011 and 2018 and never got to.
   and benches beside the paths.
 - **Monuments on the hills overlooking a city**: a torch bearer, an obelisk, a memorial arch, a globe or a great
   sword, in quartz, copper or diorite, on the highest ground beside a town.
+- **The same monuments in town**: the government monument's pedestal carries one of the five in place of the old
+  flat figure, and is six wide so it stands centred.
+- **Museums worth visiting.** Each hall's fossil is now one of four skeletons drawn by hand (a tyrant lizard, a
+  long-necked thunder lizard, a horned face and a mammoth) and neighbouring halls never show the same one; the same
+  skeletons are what lies buried in the rock. Round the hall stand exhibits: an artifact in an item frame on a
+  podium, an armour stand in old armour, or a shelf of relics. Everything on show is real loot, worn most of the
+  way down — swords, axes, shields, bows, tridents, spears and maces where the version has them — and comes from
+  three item tags a pack can add to: `#cityworld:museum/artifacts`, `#cityworld:museum/relics` and
+  `#cityworld:museum/armour`.
 - **Cocoa plantations**: rows of short jungle trees with cocoa pods on their trunks, in jungle farm country and
   now and then elsewhere.
 - **Farmyard wells**: a stone well with a little roof, a path, a haystack and barrels.
