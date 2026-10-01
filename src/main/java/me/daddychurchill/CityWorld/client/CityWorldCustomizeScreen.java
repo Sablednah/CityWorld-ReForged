@@ -29,7 +29,8 @@ import net.minecraft.network.chat.Component;
  * scrollable, headed sections (Features / Terrain / Spawns / Treasures / World). On <em>Done</em> it
  * hands back a {@link Result} — the style and an inline settings object — which the caller bakes into
  * the create-world screen's overworld generator (an inline holder, so the tuned world needs no
- * datapack). The word lists, mob bags and city-radius knobs are <em>not</em> exposed here — they are
+ * datapack). Which vanilla and mod structures the world places has a page of its own
+ * ({@link CityWorldStructuresScreen}). The word lists, mob bags and city-radius knobs are <em>not</em> exposed here — they are
  * datapack-authored (see {@code config/cityworld/settings-example/}); this screen carries whatever the
  * incoming settings held for them through untouched.
  *
