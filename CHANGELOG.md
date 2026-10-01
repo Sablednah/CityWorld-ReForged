@@ -29,7 +29,8 @@ between 2011 and 2018 and never got to.
   glass railings round the roof terraces, often split-level.
 - **Parks**: gazebos over the crossing of the paths, a pond inside some circle-path parks instead of the big tree,
   and benches beside the paths.
-- **A statue on a hill overlooking the city**, in quartz or weathered copper, on rare level hilltops.
+- **Monuments on the hills overlooking a city**: a torch bearer, an obelisk, a memorial arch, a globe or a great
+  sword, in quartz, copper or diorite, on the highest ground beside a town.
 - **Cocoa plantations**: rows of short jungle trees with cocoa pods on their trunks, in jungle farm country and
   now and then elsewhere.
 - **Farmyard wells**: a stone well with a little roof, a path, a haystack and barrels.
