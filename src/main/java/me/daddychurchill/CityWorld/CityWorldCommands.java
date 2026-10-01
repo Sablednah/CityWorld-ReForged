@@ -302,7 +302,8 @@ public final class CityWorldCommands {
             player.sendSystemMessage(Component.literal("Found no " + name + " within "
                     + (LOCATE_STRUCTURE_CHUNKS * 16) + " blocks."
                     + (generator instanceof CityWorldChunkGenerator
-                            ? "  (In a CityWorld world only structures in #cityworld:allowed are placed.)"
+                            ? "  (A CityWorld world places only the structures switched on for it: the Structures"
+                                    + " page of the Customize screen, or \"structures\" in its world settings.)"
                             : "")));
             return 0;
         }
