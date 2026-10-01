@@ -22,7 +22,20 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 | Licence | **GPL-3.0-only** (see below — non-negotiable) |
 | Branch | work happens on `master` (the `neoforge-port` branch was merged into it and deleted) |
 
-## ▶ Where this is, and what's next (2026-09-28)
+## ▶ Where this is, and what's next (2026-10-01)
+
+**v5.16.0 is released** (2026-10-01) on all six lines — tag `v5.16.0` (`dbfc155b`), GitHub release with six jars,
+CurseForge files 9028088–9028093, fleet `DEPLOYED-v5.16.0` on all 11 deployable instances (ZARP opts out and
+takes the CurseForge jar). It is the round built from Ed Churchill's own upstream TODO comments — missing roads
+(`oddsOfMissingRoad`, dead since 2012), lane lines, ruined tunnels, office atria, helipads, split-level and modern
+houses, park gazebos/ponds/benches, cocoa plantations, farmyard wells, climbable bunker towers, monuments on the
+hills and in the civic squares — plus museums (four drawn fossil skeletons, exhibits that are worn loot from three
+item tags), the reserveSite ring slope for ZARP, scattered loot in furniture-mod storage, and 26.3's red shrub and
+shelf mushroom in the overgrowth. Gates: six local self-tests PASS and `--compare` agrees (before the comment
+sweep and bump), CI green on the bump head, halt/exit 0 on all six (detector proved on a synthetic positive),
+1.20.1 jar reobfuscated, 26.3 compiled against NeoForge 26.3.0.39-beta (the FML `ModConfig.Type` rename does not
+touch us: we register only `STARTUP`). PORTING.md "▶ Resume here — Ed's TODOs, museums and monuments" has the
+design of each and what each cost. Parked by the owner: the Astral nexus rooms; the boat (his schematics cover it).
 
 **v5.15.3 is released** (2026-09-29) on all six lines: `reserveSite` levels to `y` (5.15.1/5.15.2 gave `y + 1`;
 old site files load as ground `y + 1`, and Threadwork passes `y - 1` below 5.15.3), mall cafe stair seats face
