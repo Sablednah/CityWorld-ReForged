@@ -7,6 +7,22 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ## Unreleased
 
+### Added
+
+- **Choose your structures in game — no datapack.** The Customize screen has a new **Structures** page listing
+  every structure set the install has, vanilla's and each mod's (grouped by mod), with an on/off each. The ones
+  CityWorld places by default start on; switch on **Villages**, woodland mansions, pillager outposts or a mod's
+  dungeons and the world places them, with the city keeping clear as it does for the rest. Hover a button for
+  the structures in the set and which realm they belong to. Until now this needed a datapack that widened the
+  tag `#cityworld:allowed`.
+- **The same for servers and packs: `structures` in the world settings.** `"structures": {"allow":
+  ["minecraft:villages"], "deny": ["minecraft:trial_chambers"]}` adds to and takes from the tag for that world. Ids
+  are structure *sets*; one whose mod is not installed is ignored; the Nether and the End follow the overworld's
+  lists; and the server log says what was read. The tag still works and is still the default.
+
+Good to know: a structure only appears where its biomes do (Minecraft drops the rest itself), and the choice is
+made when the world is created — it is part of the world's settings.
+
 ### Fixed
 
 - **Minecraft Comes Alive turns CityWorld's villagers into its people.** MCA only converts villagers that spawned
