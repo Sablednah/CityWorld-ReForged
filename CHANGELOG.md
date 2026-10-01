@@ -5,6 +5,15 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Fixed
+
+- **Minecraft Comes Alive turns CityWorld's villagers into its people.** MCA only converts villagers that spawned
+  naturally or with a structure, and CityWorld's were marked as chunk generation, so they stayed vanilla. They now
+  spawn as residents of a structure, the way a village's villagers do. (On 5.16.0 and earlier, add
+  `"chunk_generation"` to `allowedSpawnReasons` in `config/mca.json` for the same result.)
+
 ## 5.16.0
 
 All six Minecraft lines.
