@@ -84,6 +84,7 @@ public final class CityWorldClient {
                 me.daddychurchill.CityWorld.worldgen.CityWorldRealms.hasRuinedNether(context.selectedDimensions()),
                 me.daddychurchill.CityWorld.worldgen.CityWorldRealms.hasCityWorldEnd(context.selectedDimensions()),
                 false,
+                me.daddychurchill.CityWorld.worldgen.StructureChoices.list(context.worldgenLoadContext()),
                 result -> parent.getUiState().updateDimensions(configurator(result))));
         // A modpack lock onto another CityWorld preset (apocalypse, say) still gets a Customize button — only
         // cityworld:city has one otherwise — but with the style picker held on the preset's own style, so
@@ -98,6 +99,7 @@ public final class CityWorldClient {
                         me.daddychurchill.CityWorld.worldgen.CityWorldRealms.hasRuinedNether(context.selectedDimensions()),
                         me.daddychurchill.CityWorld.worldgen.CityWorldRealms.hasCityWorldEnd(context.selectedDimensions()),
                         true,
+                        me.daddychurchill.CityWorld.worldgen.StructureChoices.list(context.worldgenLoadContext()),
                         result -> parent.getUiState().updateDimensions(configurator(result)))));
     }
 
