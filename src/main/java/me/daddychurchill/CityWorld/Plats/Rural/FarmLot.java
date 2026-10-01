@@ -29,7 +29,6 @@ public class FarmLot extends ConnectedLot {
 	}
 
 	// TODO Apple farm?
-	// TODO Cocoa farm?
 	// TODO PPPwPPPPPPwPPP based
 	// wheat/flower/grass/mushroom/netherwart/dead/none/fallow
 	// TODO SPSwSPSSPSwSPS based pumpkin/melon/dead/none/fallow
