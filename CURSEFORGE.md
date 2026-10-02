@@ -13,6 +13,14 @@ screen.
 Battle-tested across **135 worlds and 3.2 million generated chunks** — over **830 km²** of procedurally
 generated city, more ground than New York City covers.
 
+**New in 5.18.0: Farmer's Delight, and shops that sell something.** With **Farmer's Delight** installed (1.20.1
+and 1.21.1) kitchens are built from its cabinets, stove, pots and cutting boards, dining tables are laid with
+roasts and pies, farms gain **rice paddies**, rich soil, compost heaps, crates and straw bales, and half the
+shops hang painted canvas signs. For everyone: **street shops stock their trade** — armour at the armourer,
+arrows at the fletcher, wool at the draper, fourteen trades in all, where every chest used to hold the same
+paper and paintings — and **every shop in a building is a different trade**, instead of a block of six
+fletchers.
+
 **New in 5.17.0: choose your structures in game.** The Customize screen has a new **Structures** page that
 lists every structure the install has — vanilla's and each mod's — with an on/off switch each. Want **villages**
 in your city world, woodland mansions, pillager outposts, a mod's dungeons? Tick them and create the world; the
@@ -34,19 +42,10 @@ a globe, a great sword. And **museums are worth visiting**: hand-drawn fossil sk
 every hall), with exhibits round them — artifacts in frames, armour on stands, shelves of relics — all of it
 real, worn loot, from item tags a pack can add to.
 
-**New in 5.15.0: a subway under the city, and shopping malls on its edge.** Every urban district now
-has a **station** — a ticket hall on the street, switchback stairs down to twin-track platforms — and
-**tunnels** join it to the stations of the districts round it, and on across the countryside to the next
-city: two levels, so the lines never cross, interchanges where they meet, powered track so a minecart
-runs the whole network. Out at the edge of town, rare and big, **shopping malls**: two or three storeys
-round a glass-roofed atrium, built in wings the way real shopping centres sprawl, with escalators, glass
-lifts, a fountain and food kiosks, dozens of named shops — music, fashion, pets, jeweller, art and more —
-each stocked and furnished for its trade with its own loot, and car parks out to the road. And the
-**vault gets worse the deeper you go**: darker, wetter, more spawners — and better loot at the bottom.
-Suggested by a commenter; ruined and dark, as you'd expect, in APOCALYPSE.
-
 **Other recent changes**
 
+- **5.15.0** — a subway under the city (a station in every district, tunnels on two levels, interchanges, minecarts
+  run the line); shopping malls at the edge of town; a vault that gets worse, and richer, with depth.
 - **5.14.0** — rare large caverns; Alex's Caves, Pam's HarvestCraft, Battle Towers and Dungeon Crawl support; a
   loot table on every container; a vault armoury.
 - **5.12.0–5.13.0** — the city plans round every vanilla and modded structure's real footprint, and the ground
