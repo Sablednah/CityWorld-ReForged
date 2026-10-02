@@ -80,6 +80,20 @@ it is built block for block as before. That rule is why `decor/feast` and `decor
 - **Free, via the mod's own tags and biome modifiers:** its wild crops are `#minecraft:small_flowers`, so they
   turn up in flower fields; its wild rice, sandy shrub and wild crops also generate in the wild land (its biome
   modifiers run under CityWorld's wild decoration); its compost-pile pieces come with villages when those are on.
+- **The owner's first look (1.20.1, same day), three things, fixed in `cffd3cba`:** (1) *"the chopping board is
+  a container — so its picking up building items — paintings and the like"*: `ContainerLoot` now gives anything
+  in block tag `#cityworld:loot/food` (every pooled cutting board, and the skillet) ONE item from item tag
+  `#cityworld:kitchen/food`, two in three, instead of the lot's table; the stove and cooking pot joined
+  `loot/never`. Measured: 22 of 31 boards hold one food; the skillet takes nothing through its handler and stays
+  empty. (2) *"the skillet handle is facing away from the front"*: `facingOffset: 180` — its handle points away
+  from `facing` (18 of 18 now read `north` over a `south` stove). (3) *"whole clusters of fletchers — and drapers
+  — in the same block"*: see below.
+- **Shop trades are per chunk now, by position** (`StoreBuildingLot.pickShopType`). The trade used to be rolled
+  once and copied across the connected building in `makeConnected` ("one building = one shop") while `ShopFitter`
+  fitted a counter, keeper, name and sign in EVERY chunk. Now: the district's trades shuffled once per platmap
+  (world seed ^ platmap origin), indexed by `chunkX + 2 * chunkZ`. The old `chunkOdds` roll is still drawn and
+  discarded so the stream after it is unmoved. Measured on the plan (250x250 chunks): 899 store chunks, 831
+  touching pairs, 1 with the same trade (across a platmap boundary, where the shuffles differ).
 - **Not done:** its loot modifiers only target vanilla tables (CityWorld's `_extra` hooks are the seam if
   wanted); rope, safety net and rope fence are unused; baskets are not pooled (open-topped hoppers do not stack).
 

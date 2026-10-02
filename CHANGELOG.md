@@ -31,6 +31,15 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Changed
 
+- **Every shop in a building has its own trade.** A store building's trade was chosen once and shared by the whole
+  building, while each part of it had its own counter, shopkeeper, name and sign — so once stores ran together a
+  block could be six fletchers, and the next one all drapers. Each shop now takes its trade by position from a
+  shuffle of the district's trades, so shops that touch differ. (Shops in existing chunks keep what they were
+  built as; `/cityinfo` and the API report the new trade for land not yet generated.)
+- **Cutting boards and pans are not treasure chests.** Any cutting board (Farmer's Delight's or Refurbished
+  Furniture's) used to be filled from the building's loot table like a chest — a painting on the chopping board.
+  A board now holds one piece of food, two times in three, from the item tag `#cityworld:kitchen/food`; stoves and
+  cooking pots are left empty.
 - **Kitchens with a counter-only furniture mod keep a sink**: a counter run with no sink block in any installed
   mod gets the cauldron the plain kitchen always had, and nothing is stood on the cooker or the fridge.
 
