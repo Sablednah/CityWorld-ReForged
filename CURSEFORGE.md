@@ -230,8 +230,8 @@ you have no such mod.
 
 ### Farms grow your mods' crops
 
-Crops and flowers come from tags too, so **Farmer's Delight** cabbages or a biome mod's wildflowers
-grow in CityWorld's fields. Two-block crops work — Biomes O' Plenty's barley stands full height — and
+Crops and flowers come from tags too, so **Farmer's Delight** cabbages, onions and tomatoes or a biome
+mod's wildflowers grow in CityWorld's fields — and its rice gets flooded paddies of its own. Two-block crops work — Biomes O' Plenty's barley stands full height — and
 a plant that can't survive where it was sown is quietly swapped for one that can, so a field is never
 left bare.
 
@@ -282,6 +282,7 @@ with none installed nothing changes.
 | **Biomes O' Plenty** / **TerraBlender** | Its biomes generate in the overworld, the ruined Nether and the End, with their own ground blocks. |
 | **Alex's Caves** (1.20.1) | Five of its cave biomes join the underground, in its own rock, with its cave structures. |
 | **Pam's HarvestCraft 2** (Crops, Trees) | Its crops grow in the fields and its fruit trees in the orchards, by climate. |
+| **Farmer's Delight** (1.20.1, 1.21.1) | Kitchens built from its cabinets, stove, pots and cutting boards; feasts on dining tables; rice paddies; rich soil, compost, crates and bales on the farms; canvas shop signs. |
 | **L_Ender's Cataclysm**, **Battle Towers**, **Dungeon Crawl** | Their structures are placed, the city keeps clear, and the ground is shaped to fit them. |
 
 **Made to work together:**

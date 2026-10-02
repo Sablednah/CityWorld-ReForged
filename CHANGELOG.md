@@ -5,6 +5,35 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **Farmer's Delight support** (Minecraft 1.20.1 and 1.21.1, where the mod exists). Install it and:
+  - **Kitchens** are built from its cabinets, with its stove, a cooking pot or skillet on the hob, and a cutting
+    board on the worktop — with no other furniture mod needed.
+  - **Dining tables** are laid: a roast chicken, a ham, a shepherd's pie, a stuffed pumpkin, rice rolls or a pie
+    on one table in two. Mall bakeries put its pies on the counter.
+  - **Rice paddies**: flooded fields of rice — mud, standing water, rows of rice with their panicles and open
+    channels between — in place of half the sugar-cane fields and one tilled field in five.
+  - **Farms**: one field in three is tilled in rich soil; a compost heap or a crate of produce stands by the
+    farmer's composter; haystack fields and barn lofts are stacked with straw and rice bales as well as hay;
+    barn stalls keep crates of vegetables.
+  - **Shops and warehouses**: half the shops hang a painted canvas sign (the same colour inside and over the
+    door); greengrocers and mall grocers show crates of produce; warehouse and storeroom stacks include its crates
+    and rice bags; rugs may be canvas or tatami.
+  - Cabbages, onions and tomatoes already grew in the fields. A dead entry for rice (an id the mod never had) is
+    gone — rice has its paddies now.
+
+  All of it is tag pools (`farm/paddy`, `farm/soil`, `farm/compost`, `farm/produce`, `farm/bales`, `decor/feast`,
+  `decor/stove_top`, `fittings/shop_sign`, plus entries in the furniture pools), so a pack can add other mods'
+  blocks the same way; see PALETTES.md. Without such a mod the pools are empty and nothing changes.
+
+### Changed
+
+- **Kitchens with a counter-only furniture mod keep a sink**: a counter run with no sink block in any installed
+  mod gets the cauldron the plain kitchen always had, and nothing is stood on the cooker or the fridge.
+
 ## 5.17.0
 
 All six Minecraft lines. **If you are on 5.16.0, update:** it can hang while creating a world (first item under Fixed).
