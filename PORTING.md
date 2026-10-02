@@ -32,6 +32,57 @@ comments, orphaned javadocs re-attached) turned up one real bug, car-park east/w
 north/south edges; and the interchange stair top was fixed from the owner's hand edit in his save (headroom
 over a two-step flight; the shaft's track-side wall is the platform edge again).
 
+## ▶ Resume here — Farmer's Delight (2026-10-02, unreleased)
+
+**Owner:** *"i added farmers delight to 1.20.1 — have a look in it see what it adds — it mentions decor and
+soil types"*, then, to six proposals, *"all seems simple enough to support a REAAALY common mod — so lets do the
+lot."* Master `112470d1`, `42e2599b`, `1d35d5b2` + picks on every branch. Read from the jars, never a wiki:
+`FarmersDelight-1.20.1-1.3.4` (his instance) and `-1.21.1-1.3.4` (Modrinth) have **identical block lists**; the
+mod exists for those two lines only. **The 1.21.1 jar is in `mc1.21.1/run/mods`** — NeoForge runs Mojang names,
+so a production jar loads in that dev server; the 1.20.1 one is SRG and does not (owner's playtest there).
+
+**Everything is a pool, empty without the mod, and no caller draws odds from an empty pool** — a world without
+it is built block for block as before. That rule is why `decor/feast` and `decor/stove_top` have no vanilla seed.
+
+| Pool | What | Where it is used |
+|---|---|---|
+| `furniture/stove`, `cutting_board`, `cabinet`, **and `counter`** | stove, board, 11 cabinets | `Furniture.kitchen` — its cabinets ARE the counter run, so the mod alone gets real kitchens |
+| `furniture/crate` | six produce crates, rice bag | warehouse / storeroom stacks, workshops |
+| `decor/stove_top` | cooking pot, skillet | on the cooker, two in three (`stoveTop`; only on a sturdy top) |
+| `decor/feast` | five feasts, three pies | `Furniture.dining` (one table in two; the fallback table becomes an upturned oak stair so a dish can stand on it); pies on a mall bakery counter |
+| `decor/rug` | canvas rug, half tatami mat | rugs |
+| `fittings/shop_sign` | 17 hanging canvas signs | `ShopFitter`: half the shops; the wall form by name (`MaterialTags.wallHangingSign`) |
+| `farm/soil` | rich soil farmland | one field in three (`FarmLot.fieldSoil`); onions held on it through 40 s of ticks |
+| `farm/compost`, `farm/produce` | organic compost; crates, rice bag | beside the composter; barn stalls; greengrocer flank; mall grocer display |
+| `farm/bales` | straw bale, rice bale | half the haystack fields and barn loft piles |
+| `farm/paddy` | rice | `FarmLot.paddyField` |
+
+- **The paddy.** Rice (`RiceBlock`) is its own water — `getFluidState` is a water source, no waterlogging — needs
+  `#minecraft:dirt` beneath (mud is in it) and at age 3 holds `rice_panicles` above with `supporting=true`. So the
+  field is taken down one block: mud at `cropY - 2`, rice or water at `cropY - 1` (level with the ground round the
+  field, held in by the field's own border: 120 water cells checked, all `level=0`), panicles at `cropY`. The
+  three needs are read off the block, not named. It replaces half the REED fields and one WHEAT-family field in
+  five — **decided from the connection key (`fieldRoll`), not the chunk's odds**, so every chunk of a field
+  agrees; adding a `CropType` to the climate tables would have reshuffled every farm in every world.
+- **`farmersdelight:rice_crop` never existed** (the block is `rice`): the optional entry in `farm/crops` had been
+  silently dropped since the day it was written. Removed.
+- **`gen_furniture_tags.py` must not be re-run in full.** It rewrites every furniture and decor tag from ONE
+  mods folder, and the 26.2 instance it scans no longer holds every mod the committed files were built from (a
+  run on 2026-10-02: roof pool 0, cabinets 164 from 257). Hand-classified mods go in its `STATIC_MODS` table and
+  are merged with `--static-only`, which only adds. On `mc1.20.1` that script's paths are stale (`tags/block`);
+  the tags there arrive by cherry-pick, which git renames into `tags/blocks/` (new files show as `UA`: `git add`).
+- **Measured on 1.21.1 with the real jar** (seed 8675309, 50x50 chunks loaded at once, 40 s of ticks, exact
+  counts by `scratchpad tally.py`-style palette decode): 53 stoves, 38 pots/skillets, 123 cabinets, 36 cutting
+  boards, 27 feasts and pies, 627 rice + 400 panicles, 98 rich soil farmland (81 onions standing), 132 bales,
+  635 crates and sacks, 3 canvas-signed shops, cabbages/onions/tomatoes in the fields, and no `populateLots
+  FAILED`. It also found the one bug: a three-cell kitchen stood the cutting board on the stove (the topper's
+  candidate cells included the cooker's) — fixed (`appliancesFrom`).
+- **Free, via the mod's own tags and biome modifiers:** its wild crops are `#minecraft:small_flowers`, so they
+  turn up in flower fields; its wild rice, sandy shrub and wild crops also generate in the wild land (its biome
+  modifiers run under CityWorld's wild decoration); its compost-pile pieces come with villages when those are on.
+- **Not done:** its loot modifiers only target vanilla tables (CityWorld's `_extra` hooks are the seam if
+  wanted); rope, safety net and rope fence are unused; baskets are not pooled (open-topped hoppers do not stack).
+
 ## ▶ Resume here — the Structures page, MCA and the museum deadlock (v5.17.0, 2026-10-01)
 
 **Owner:** *"at the moment people have to datapack to turn them on. Would it be possible in config to have a

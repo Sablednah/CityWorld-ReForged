@@ -24,6 +24,14 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-01)
 
+**⚠ UNRELEASED, LOCAL COMMITS ON EVERY BRANCH (2026-10-02): Farmer's Delight support** — kitchens from its
+cabinets/stove/pots/boards, feasts on dining tables, rice paddies, rich soil, compost, crates and bales on farms,
+canvas shop signs. All tag pools, empty (and odds-free) without the mod. Master `112470d1`..`1d35d5b2` + picks;
+not pushed. Measured with the real jar in the `mc1.21.1` dev server (**FD's jar lives in `mc1.21.1/run/mods`**);
+dev jars are on the owner's `1.20.1  Forge` and `1.21.1` instances for his playtest. PORTING.md "▶ Resume here —
+Farmer's Delight". **`scripts/gen_furniture_tags.py` must only be run with `--static-only`** (a full run drops
+pools: the scanned instance no longer has every mod).
+
 **v5.17.0 is released** (2026-10-01 night) on all six lines — tag `v5.17.0` (`96b0c1be`), GitHub release with six
 jars, CurseForge files 9031937–9031942, fleet `DEPLOYED-v5.17.0` on all 11 deployable instances (ZARP opts out).
 It is four things: the **Structures page** (Customize screen → every installed structure set, vanilla's and
