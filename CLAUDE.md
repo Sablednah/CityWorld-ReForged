@@ -22,17 +22,24 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 | Licence | **GPL-3.0-only** (see below — non-negotiable) |
 | Branch | work happens on `master` (the `neoforge-port` branch was merged into it and deleted) |
 
-## ▶ Where this is, and what's next (2026-10-01)
+## ▶ Where this is, and what's next (2026-10-02)
 
-**⚠ UNRELEASED, LOCAL COMMITS ON EVERY BRANCH (2026-10-02): Farmer's Delight support** — kitchens from its
-cabinets/stove/pots/boards, feasts on dining tables, rice paddies, rich soil, compost, crates and bales on farms,
-canvas shop signs. All tag pools, empty (and odds-free) without the mod. Master `112470d1`..`1d35d5b2` + picks;
-not pushed. Measured with the real jar in the `mc1.21.1` dev server (**FD's jar lives in `mc1.21.1/run/mods`**);
-dev jars are on the owner's `1.20.1  Forge` and `1.21.1` instances for his playtest. PORTING.md "▶ Resume here —
-Farmer's Delight". **`scripts/gen_furniture_tags.py` must only be run with `--static-only`** (a full run drops
-pools: the scanned instance no longer has every mod).
+**v5.18.0 is released** (2026-10-02) on all six lines — tag `v5.18.0` (`44bb0d4b`), GitHub release with six jars,
+CurseForge files 9039342–9039349, fleet `DEPLOYED-v5.18.0` on all 11 deployable instances (ZARP opts out). It is:
+**Farmer's Delight support** (kitchens from its cabinets/stove/pots/boards, feasts on dining tables, rice
+paddies, rich soil, compost, crates and bales on farms, canvas shop signs — all tag pools, empty and odds-free
+without the mod; the mod exists for 1.20.1 and 1.21.1 only, and **its 1.21.1 jar lives in `mc1.21.1/run/mods`**,
+so that line's self-test runs with it); **street shops stock their trade** (`chests/shop_<trade>` x14, written
+per loot dialect by `scripts/gen_shop_loot.py` — re-run it on `mc1.20.1` and `mc26.3` after picking a change to
+it); **a trade per shop chunk** (`StoreBuildingLot.pickShopType`, by position; it was one per building); and
+cutting boards hold food instead of the building's loot. Gates: six self-tests PASS and `--compare` agrees on
+the pre-bump heads (0 loot tables failing to parse on every line), CI green on the bump heads, halt/exit 0 on
+all six (synthetic positive first), 1.20.1 jar reobfuscated, 26.3 compiled against NeoForge 26.3.0.41-beta, and
+three owner playtest rounds on 1.20.1. PORTING.md "▶ Resume here — Farmer's Delight". **`scripts/
+gen_furniture_tags.py` must only be run with `--static-only`** (a full run drops pools: the scanned instance no
+longer has every mod). Owner to paste CURSEFORGE.md's "New in 5.18.0".
 
-**v5.17.0 is released** (2026-10-01 night) on all six lines — tag `v5.17.0` (`96b0c1be`), GitHub release with six
+**v5.17.0 was released** (2026-10-01 night) on all six lines — tag `v5.17.0` (`96b0c1be`), GitHub release with six
 jars, CurseForge files 9031937–9031942, fleet `DEPLOYED-v5.17.0` on all 11 deployable instances (ZARP opts out).
 It is four things: the **Structures page** (Customize screen → every installed structure set, vanilla's and
 mods', on/off; stored as settings `structures: {allow, deny}` over `#cityworld:allowed`; twins follow the

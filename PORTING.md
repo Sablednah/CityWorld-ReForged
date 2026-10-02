@@ -32,11 +32,12 @@ comments, orphaned javadocs re-attached) turned up one real bug, car-park east/w
 north/south edges; and the interchange stair top was fixed from the owner's hand edit in his save (headroom
 over a two-step flight; the shaft's track-side wall is the platform edge again).
 
-## ▶ Resume here — Farmer's Delight (2026-10-02, unreleased)
+## ▶ Resume here — Farmer's Delight, shop stock and shop trades (v5.18.0, 2026-10-02)
 
 **Owner:** *"i added farmers delight to 1.20.1 — have a look in it see what it adds — it mentions decor and
 soil types"*, then, to six proposals, *"all seems simple enough to support a REAAALY common mod — so lets do the
-lot."* Master `112470d1`, `42e2599b`, `1d35d5b2` + picks on every branch. Read from the jars, never a wiki:
+lot."* Master `112470d1`, `42e2599b`, `1d35d5b2` + picks on every branch. **Released as v5.18.0** (tag
+`44bb0d4b`, CurseForge 9039342–9039349) with the shop work the same playtest asked for (below). Read from the jars, never a wiki:
 `FarmersDelight-1.20.1-1.3.4` (his instance) and `-1.21.1-1.3.4` (Modrinth) have **identical block lists**; the
 mod exists for those two lines only. **The 1.21.1 jar is in `mc1.21.1/run/mods`** — NeoForge runs Mojang names,
 so a production jar loads in that dev server; the 1.20.1 one is SRG and does not (owner's playtest there).
