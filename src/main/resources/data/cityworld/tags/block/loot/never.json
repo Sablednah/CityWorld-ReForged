@@ -16,6 +16,8 @@
     "minecraft:campfire",
     "minecraft:soul_campfire",
     "minecraft:beacon",
-    "minecraft:enchanting_table"
+    "minecraft:enchanting_table",
+    { "id": "farmersdelight:stove", "required": false },
+    { "id": "farmersdelight:cooking_pot", "required": false }
   ]
 }
