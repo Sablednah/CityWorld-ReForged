@@ -535,8 +535,10 @@ public final class Furniture {
                     stoveTop(chunk, odds, cookerAt, y, z);
             }
             int fridgeAt = cookerAt - 1;
+            int appliancesFrom = cookerAt; // the worktop ends here: nothing is stood on the cooker or the fridge
             Material fridge = FurnitureTags.pick(FurnitureTags.FRIDGE, odds);
             if (fridge != null && x1 + 4 <= fridgeAt && placeFacing(chunk, fridgeAt, y, z, fridge, BlockFace.SOUTH)) {
+                appliancesFrom = fridgeAt;
                 Material freezer = FurnitureTags.pick(FurnitureTags.FREEZER, odds);
                 if (freezer != null && chunk.isEmpty(fridgeAt, y + 1, z))
                     chunk.setBlock(fridgeAt, y + 1, z, freezer,
@@ -570,7 +572,8 @@ public final class Furniture {
                 topper = FurnitureTags.pick(FurnitureTags.CUTTING_BOARD, odds);
             if (topper != null)
                 for (int tx : new int[] { x1 + 2, x1 + 3, mid + 1 })
-                    if (tx != mid && tx <= x2 - 1 && chunk.isEmpty(tx, y + 1, z)
+                    // (a three-cell kitchen put the board on the stove: the cooker's cell is not worktop)
+                    if (tx != mid && tx < appliancesFrom && chunk.isEmpty(tx, y + 1, z)
                             && !chunk.isEmpty(tx, y, z)) {
                         chunk.setBlock(tx, y + 1, z, topper, FurnitureTags.facingFor(topper, BlockFace.SOUTH));
                         break;
