@@ -67,8 +67,9 @@ public final class MaterialTags {
      * however well it tagged them. Vanilla has no "is a crop" tag to borrow — {@code #minecraft:crops}
      * does not exist — so this is ours.
      *
-     * <p>Ships with the four vanilla crops plus a few Farmer's Delight ids marked
-     * {@code "required": false}, which cost nothing while that mod has no build for our versions.
+     * <p>Ships with the four vanilla crops plus Farmer's Delight, Biomes O' Plenty and Pam's ids marked
+     * {@code "required": false}, which cost nothing on an install (or a Minecraft version) without that mod.
+     * Farmer's Delight's rice is not here: it grows in water, and has {@link #FARM_PADDY}.
      */
     public static final TagKey<Block> FARM_CROPS = key("cityworld:farm/crops");
     public static final TagKey<Block> FARM_FLOWERS = key("cityworld:farm/flowers");
