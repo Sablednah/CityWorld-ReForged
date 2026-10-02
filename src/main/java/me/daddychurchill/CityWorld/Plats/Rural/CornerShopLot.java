@@ -44,6 +44,12 @@ public class CornerShopLot extends HouseLot {
         return shopType;
     }
 
+    /** The shop's untabled containers hold its trade's stock; the house's own chests keep what they were given. */
+    @Override
+    public String ownLootTable() {
+        return shopType == null ? null : shopType.stockTable();
+    }
+
     @Override
     public PlatLot newLike(PlatMap platmap, int chunkX, int chunkZ) {
         return new CornerShopLot(platmap, chunkX, chunkZ);

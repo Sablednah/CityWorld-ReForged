@@ -77,7 +77,7 @@ public final class ContainerLoot {
     private static final AtomicInteger DEFERRED = new AtomicInteger(), FILLED = new AtomicInteger(),
             CAPABILITY = new AtomicInteger(), NEVER_TAGGED = new AtomicInteger(), HAS_TABLE = new AtomicInteger(),
             HAS_ITEMS = new AtomicInteger(), NOT_A_CONTAINER = new AtomicInteger(), OWN_TABLE = new AtomicInteger(),
-            SCATTERED = new AtomicInteger();
+            SCATTERED = new AtomicInteger(), RESTOCKED = new AtomicInteger();
 
     /**
      * For the self-test: how many block entities each path has handled since startup. {@code hasTable} is
@@ -88,7 +88,8 @@ public final class ContainerLoot {
         return "deferred=" + DEFERRED.get() + " filled=" + FILLED.get() + " capability=" + CAPABILITY.get()
                 + " scattered=" + SCATTERED.get()
                 + " hasTable=" + HAS_TABLE.get() + " hasItems=" + HAS_ITEMS.get() + " never=" + NEVER_TAGGED.get()
-                + " notAContainer=" + NOT_A_CONTAINER.get() + " lotsWithOwnTable=" + OWN_TABLE.get();
+                + " notAContainer=" + NOT_A_CONTAINER.get() + " lotsWithOwnTable=" + OWN_TABLE.get()
+                + " restocked=" + RESTOCKED.get();
     }
 
     /** The end-of-lot pass: every untouched empty container in this chunk gets the table the lot names for its
@@ -120,14 +121,46 @@ public final class ContainerLoot {
                     OWN_TABLE.incrementAndGet();
                     counted = true;
                 }
+                long seed = odds.getRandomLong();
+                // a store: a chest a room builder already gave the ordinary table becomes stock too
+                if (own != null && lot.ownLootReplacesTabled() && restock(entity, own, seed))
+                    continue;
                 assign(level, pos, entity,
                         own != null ? own : Loot.ref(LootProvider_LootTable.keyFor(loot, lot.lootTierAt(pos.getY()))),
-                        odds.getRandomLong());
+                        seed);
             }
         } catch (Throwable t) {
             // loot must never take a chunk down
             me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn("CityWorld: container loot pass failed at {},{}: {}",
                     chunk.sectionX, chunk.sectionZ, t.toString());
+        }
+    }
+
+    /** Swaps the table of an unopened chest that already has one. False (and nothing done) for anything else. */
+    private static boolean restock(BlockEntity entity, Loot.Ref key, long seed) {
+        BlockState state = entity.getBlockState();
+        if (state.is(NEVER) || state.is(FOOD) || isStation(state) || !Loot.isRandomizable(entity)
+                || !Loot.hasTable(entity))
+            return false;
+        Loot.setTable(entity, key, seed);
+        RESTOCKED.incrementAndGet();
+        return true;
+    }
+
+    /**
+     * As {@link #assignTableAt}, but a chest that already has a table gets this one instead — the barrel beside
+     * a shop counter, placed with the generic shop table, takes its trade's.
+     */
+    public static boolean restockAt(RealBlocks chunk, int x, int y, int z, String table, Odds odds) {
+        try {
+            if (!(chunk.getServerLevel() instanceof WorldGenLevel level))
+                return false;
+            BlockPos pos = new BlockPos(chunk.getOriginX() + x, y, chunk.getOriginZ() + z);
+            BlockEntity entity = level.getBlockEntity(pos);
+            var key = ownTableOrNull(level, table);
+            return entity != null && key != null && restock(entity, key, odds.getRandomLong());
+        } catch (Throwable t) {
+            return false;
         }
     }
 
