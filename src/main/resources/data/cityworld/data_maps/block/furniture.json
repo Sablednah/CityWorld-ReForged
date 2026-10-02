@@ -1643,6 +1643,149 @@
         ]
       }
     },
+    "farmersdelight:acacia_cabinet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "farmersdelight"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "farmersdelight:bamboo_cabinet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "farmersdelight"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "farmersdelight:birch_cabinet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "farmersdelight"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "farmersdelight:cherry_cabinet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "farmersdelight"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "farmersdelight:crimson_cabinet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "farmersdelight"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "farmersdelight:cutting_board": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "farmersdelight"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "farmersdelight:dark_oak_cabinet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "farmersdelight"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "farmersdelight:jungle_cabinet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "farmersdelight"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "farmersdelight:mangrove_cabinet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "farmersdelight"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "farmersdelight:oak_cabinet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "farmersdelight"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "farmersdelight:spruce_cabinet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "farmersdelight"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "farmersdelight:stove": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "farmersdelight"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
+    "farmersdelight:warped_cabinet": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "farmersdelight"
+        }
+      ],
+      "value": {
+        "facingOffset": 0
+      }
+    },
     "mcwbiomesoplenty:dead_bookshelf": {
       "neoforge:conditions": [
         {
