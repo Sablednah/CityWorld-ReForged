@@ -231,7 +231,7 @@ public final class MaterialTags {
      * {@code oak_hanging_sign} → {@code oak_wall_hanging_sign}), or null when there is none.
      */
     public static Material wallHangingSign(Material hanging) {
-        Identifier id = BuiltInRegistries.BLOCK.getKey(hanging.getBlock());
+        var id = BuiltInRegistries.BLOCK.getKey(hanging.getBlock()); // var: the id class is named differently per line
         String path = id.getPath();
         int at = path.lastIndexOf("hanging_");
         if (at < 0)
