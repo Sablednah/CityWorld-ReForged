@@ -72,6 +72,24 @@ public class StoreBuildingLot extends FinishedBuildingLot {
 		return shopType;
 	}
 
+	// A store's containers hold its trade's stock — the counter barrel, the storeroom chests upstairs, a mod's
+	// crates. They used to roll the ordinary building table: an armourer's chests held paper and paintings
+	// (owner, 2026-10-02).
+	@Override
+	public me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation defaultLoot() {
+		return me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation.SHOP;
+	}
+
+	@Override
+	public String ownLootTable() {
+		return shopType == null ? null : shopType.stockTable();
+	}
+
+	@Override
+	public boolean ownLootReplacesTabled() {
+		return true;
+	}
+
 	private ContentStyle pickContentStyle() {
 		switch (chunkOdds.getRandomInt(5)) {
 		case 1:
