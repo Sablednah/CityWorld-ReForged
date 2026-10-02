@@ -45,45 +45,19 @@ each stocked and furnished for its trade with its own loot, and car parks out to
 **vault gets worse the deeper you go**: darker, wetter, more spawners — and better loot at the bottom.
 Suggested by a commenter; ruined and dark, as you'd expect, in APOCALYPSE.
 
-**New in 5.14.0: caverns, loot everywhere, and the mods you asked for.** Rare **large caverns** now
-open astride the deepslate line — shelved, rough, natural, and room enough for a cave biome to be
-something. **Alex's Caves** joins the cave pool (five of its biomes, in its own rock, its own cave
-shapes allowed through), **Pam's HarvestCraft** grows in the fields and the orchards, and **Battle
-Towers** and **Dungeon Crawl** are placed and reserved. **Every container gets a loot table** — pooled
-furniture, modded crates, a schematic's chests — and every table ends in an `_extra` hook a pack can
-own, per schematic too (`chests/schematic/<name>`). The vault **armoury** has weapon racks, armour
-stands and ammunition shelves, all tag-driven so a gun mod adds guns. For modpacks: `lockCustomize`
-makes a locked preset's settings final.
+**Other recent changes**
 
-**New in 5.13.0: the city knows where every structure will be.** CityWorld now makes the same
-placement call Minecraft will make, ahead of any chunk, so it keeps clear exactly a structure's real
-footprint — no more empty fields reserved for a structure that never came, and the city builds right
-up to a village or a Cataclysm prison. The ground under a big modded structure is shaped on every side
-and rises to it as a hill rather than a terraced pyramid; a structure that cuts into a hillside can be
-declared `shave` so the hill slopes down onto it instead of ending in a face. The minute-long stall
-next to a large modded structure is fixed. 5.12.0, released the day before, was the first half of the
-same arc: structures sit in the land rather than on it, never dig moats, and aim at a building's base.
+- **5.14.0** — rare large caverns; Alex's Caves, Pam's HarvestCraft, Battle Towers and Dungeon Crawl support; a
+  loot table on every container; a vault armoury.
+- **5.12.0–5.13.0** — the city plans round every vanilla and modded structure's real footprint, and the ground
+  is shaped to meet it.
+- **5.11.0** — Minecraft 1.20.1, on Forge.
+- **5.10.0–5.10.1** — Macaw's doors, windows, fences, roofs, stairs and lights fit the city out; silos and
+  gasometers; Minecraft 1.21.1 and 26.3 builds.
+- **5.7.0–5.8.0** — JourneyMap draws the city plan over unexplored ground; every street has a name
+  (`/cityinfo`, `/cityfind street`); a two-chunk airship.
 
-**New in 5.11.0: Minecraft 1.20.1, on Forge.** The first CityWorld build that is not NeoForge — asked
-for here in the comments, because 1.20.1 is where a great many mods still live. Nothing is cut down for
-it: every world style, the ruined Nether and End cities, strongholds, interiors, schematics, the
-Customize screen, and the furniture and map mods all work as they do on the newer versions, and a seed
-builds the same city there as everywhere else. The other five versions are unchanged.
-
-**New in 5.10.1: Minecraft 26.3.** A build for the 26.3 line, where campgrounds pitch their tents from
-wool stairs the way 26.3's own abandoned camps do, the new **dappled forest** joins the climate, and
-**poplar** turns up in buildings by itself. The other four versions are unchanged and stay on 5.10.0.
-
-**New in 5.10.0: Macaw's fits the city out** — doors, windows, fences, roofs, staircases and lights from
-the Macaw's mods (see below), pitched roofs on modern houses, silos and gasometers in industry, and a
-**Minecraft 1.21.1** build alongside 1.21.11, 26.1 and 26.2.
-
-**New in 5.8.0: every street has a name you can use** — `/cityinfo` and the map name the road you are
-on, JourneyMap labels the streets of cities you have not reached yet, and `/cityfind street` finds one.
-Plus a proper **two-chunk airship** drifting over the wild.
-
-**New in 5.7.0: JourneyMap support**, see below — the map draws the city plan over ground nobody has
-explored, and names what is planned in any chunk you point at.
+Full details of every release are in the changelog on each file.
 
 ---
 
