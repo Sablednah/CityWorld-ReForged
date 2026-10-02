@@ -37,7 +37,7 @@ the pre-bump heads (0 loot tables failing to parse on every line), CI green on t
 all six (synthetic positive first), 1.20.1 jar reobfuscated, 26.3 compiled against NeoForge 26.3.0.41-beta, and
 three owner playtest rounds on 1.20.1. PORTING.md "▶ Resume here — Farmer's Delight". **`scripts/
 gen_furniture_tags.py` must only be run with `--static-only`** (a full run drops pools: the scanned instance no
-longer has every mod). Owner to paste CURSEFORGE.md's "New in 5.18.0".
+longer has every mod). The owner pasted the 5.18.0 CURSEFORGE.md into the CurseForge page (2026-10-02).
 
 **Open items, none started (2026-10-02) — the owner's playtest is the queue:**
 - **ZARP `checkSite`**: a dry-run "would `reserveSite` work here" API was offered (two seeds got no camp: no
@@ -51,7 +51,8 @@ longer has every mod). Owner to paste CURSEFORGE.md's "New in 5.18.0".
 - **`mc1.20.1`'s copy of `gen_furniture_tags.py` writes to `tags/block/`** (that line uses `tags/blocks/`): its
   tags arrive by cherry-pick. Do not run the script there.
 - The owner's `1.20.1  Forge` instance has two test jars renamed `.jar.disabled` at his request
-  (`allstructures-cityworld-test`, `cataclysm-cityworld-compat`).
+  (`allstructures-cityworld-test`, `cataclysm-cityworld-compat`). **Leave them off** (his word, 2026-10-02) —
+  not an open item, and not something to "restore".
 
 **Tools this arc added to `scripts/`** (each was a scratchpad helper first, and each paid for itself):
 `selftest-one.sh <checkout> <jdk> <port>` (one self-test + kill the leftover server by its cwd; two at a time at
