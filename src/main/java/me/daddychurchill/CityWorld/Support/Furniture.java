@@ -531,7 +531,8 @@ public final class Furniture {
             if (x1 + 3 <= x2 - 1) {
                 Material cooker = stove != null ? stove
                         : modern(generator) ? Material.SMOKER : Material.FURNACE;
-                placeFacing(chunk, cookerAt, y, z, cooker, BlockFace.SOUTH);
+                if (placeFacing(chunk, cookerAt, y, z, cooker, BlockFace.SOUTH))
+                    stoveTop(chunk, odds, cookerAt, y, z);
             }
             int fridgeAt = cookerAt - 1;
             Material fridge = FurnitureTags.pick(FurnitureTags.FRIDGE, odds);
@@ -543,6 +544,12 @@ public final class Furniture {
             }
             int mid = (x1 + x2) / 2;
             for (int cx = x1 + 1; cx <= x2 - 1; cx++) {
+                // no sink in any installed mod (a counter-only one, like Farmer's Delight's cabinets): the run
+                // keeps the cauldron the plain kitchen always had, where the sink would be
+                if (cx == mid && sink == null && cx != x1 + 1 && clearFloor(chunk, cx, y, z)) {
+                    chunk.setCauldron(cx, y, z, odds);
+                    continue;
+                }
                 Material piece = cx == mid && sink != null ? sink : counter;
                 if (cx == x1 + 1 && cabinet != null)
                     piece = cabinet;
@@ -557,6 +564,10 @@ public final class Furniture {
             Material topper = odds.flipCoin() ? FurnitureTags.pick(FurnitureTags.MICROWAVE, odds)
                     : odds.flipCoin() ? FurnitureTags.pick(FurnitureTags.TOASTER, odds)
                             : FurnitureTags.pick(FurnitureTags.CUTTING_BOARD, odds);
+            // the rolled appliance has no mod behind it: take the cutting board if one does (a mod that only
+            // ships a board would otherwise show it in one kitchen in four)
+            if (topper == null)
+                topper = FurnitureTags.pick(FurnitureTags.CUTTING_BOARD, odds);
             if (topper != null)
                 for (int tx : new int[] { x1 + 2, x1 + 3, mid + 1 })
                     if (tx != mid && tx <= x2 - 1 && chunk.isEmpty(tx, y + 1, z)
@@ -573,10 +584,39 @@ public final class Furniture {
                     LootProvider.LootLocation.NIGHTSTAND, Material.BARREL);
         if (clearFloor(chunk, x1 + 2, y, z))
             chunk.setCauldron(x1 + 2, y, z, odds);
-        if (x1 + 3 <= x2 - 1)
-            placeIfClear(chunk, x1 + 3, y, z, modern(generator) ? Material.SMOKER : Material.FURNACE, BlockFace.SOUTH);
+        if (x1 + 3 <= x2 - 1
+                && placeIfClear(chunk, x1 + 3, y, z, modern(generator) ? Material.SMOKER : Material.FURNACE, BlockFace.SOUTH))
+            stoveTop(chunk, odds, x1 + 3, y, z);
         accentRoom(generator, chunk, odds, x1 + 1, y, z1 + 1, x2 - x1 - 1, z2 - z1 - 1);
         wallDecor(generator, chunk, odds, x1, x2, y, z1, z2); // after the accents: a chandelier's chain is a block, a painting is not
+    }
+
+    /**
+     * A pot or a pan on the cooker at {@code (x, y, z)}, two kitchens in three, from {@code decor/stove_top}
+     * (Farmer's Delight's cooking pot and skillet). Only on a cooker with a flat, solid top — a mod's range
+     * with a hob moulded in gets nothing stood on it. An empty pool draws no odds.
+     */
+    private static void stoveTop(RealBlocks chunk, Odds odds, int x, int y, int z) {
+        if (MaterialTags.resolve(FurnitureTags.STOVE_TOP).isEmpty())
+            return;
+        Material pot = FurnitureTags.pick(FurnitureTags.STOVE_TOP, odds);
+        if (pot != null && odds.getRandomInt(3) != 0 && chunk.isEmpty(x, y + 1, z) && chunk.isSturdyTop(x, y, z))
+            chunk.setFurniture(x, y + 1, z, pot, FurnitureTags.facingFor(pot, BlockFace.SOUTH));
+    }
+
+    /**
+     * A dish on the dining table at {@code (x, y, z)} — the table block itself is at {@code y} — one table in
+     * two, from {@code decor/feast} (Farmer's Delight's roasts, pies and salads). False when nothing was put
+     * down. An empty pool draws no odds.
+     */
+    private static boolean feast(RealBlocks chunk, Odds odds, int x, int y, int z) {
+        if (MaterialTags.resolve(FurnitureTags.FEAST).isEmpty() || odds.flipCoin())
+            return false;
+        Material dish = FurnitureTags.pick(FurnitureTags.FEAST, odds);
+        if (dish == null || !chunk.isEmpty(x, y + 1, z) || !chunk.isSturdyTop(x, y, z))
+            return false;
+        chunk.setFurniture(x, y + 1, z, dish, FurnitureTags.facingFor(dish, anyFacing(odds)));
+        return true;
     }
 
     /** A dining table with a chair either side, in the middle of the room. */
@@ -598,6 +638,7 @@ public final class Furniture {
                 chunk.setBlock(cx + 1, y, cz, table);
                 chunk.reconnect(cx + 1, y, cz);
             }
+            feast(chunk, odds, cx, y, cz);
             if (chair != null) {
                 placeFacing(chunk, cx, y, cz - 1, chair, BlockFace.SOUTH);   // north of the table, looking south
                 placeFacing(chunk, cx, y, cz + 1, chair, BlockFace.NORTH);   // south of it, looking north
@@ -612,8 +653,18 @@ public final class Furniture {
             return;
         }
         if (clearFloor(chunk, cx, y, cz)) {
-            chunk.setBlock(cx, y, cz, Material.OAK_FENCE);
-            chunk.setBlock(cx, y + 1, cz, modern(generator) ? Material.SMOOTH_QUARTZ_SLAB : Material.WHITE_CARPET);
+            // with a dish to serve (decor/feast) the table is an upturned stair — a top the dish can stand
+            // on, in the chairs' oak; the post-and-top table is put back if nothing was served after all
+            boolean served = false;
+            if (!MaterialTags.resolve(FurnitureTags.FEAST).isEmpty()) {
+                chunk.setBlock(cx, y, cz, Material.OAK_STAIRS, BlockFace.NORTH,
+                        net.minecraft.world.level.block.state.properties.Half.TOP);
+                served = feast(chunk, odds, cx, y, cz);
+            }
+            if (!served) {
+                chunk.setBlock(cx, y, cz, Material.OAK_FENCE);
+                chunk.setBlock(cx, y + 1, cz, modern(generator) ? Material.SMOOTH_QUARTZ_SLAB : Material.WHITE_CARPET);
+            }
         }
         // a chair's stair FACING is its backrest side, so the sitter faces the opposite way — point the
         // backrests AWAY from the table so the diners face it

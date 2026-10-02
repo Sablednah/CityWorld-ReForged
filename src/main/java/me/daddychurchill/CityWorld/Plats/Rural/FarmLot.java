@@ -239,6 +239,15 @@ public class FarmLot extends ConnectedLot {
 		Material fallowMaterial = generator.shapeProvider.findAtmosphereMaterialAt(generator, cropY - 1);
 		boolean fallowField = fallowMaterial != Material.AIR;
 
+		soil = fieldSoil();
+		// a flooded field of a crop that stands in water (rice), in place of the crop this field would have grown
+		Material paddy = fallowField ? null : paddyCrop(generator);
+		if (paddy != null) {
+			paddyField(chunk, cropY, paddy);
+			finishField(generator, chunk, cropY);
+			return;
+		}
+
 		if (!fallowField)
 			switch (cropType) {
 			case PADDOCK:
@@ -324,7 +333,7 @@ public class FarmLot extends ConnectedLot {
 			case POTATO:
 			case BEETROOT:
 				if (generator.getSettings().includeAbovegroundFluids)
-					plowField(chunk, cropY, Material.FARMLAND, waterMaterial, 2);
+					plowField(chunk, cropY, soil, waterMaterial, 2);
 				else
 					fallowField = true;
 				break;
@@ -571,6 +580,11 @@ public class FarmLot extends ConnectedLot {
 			}
 		}
 
+		finishField(generator, chunk, cropY);
+	}
+
+	/** What every field ends with, whatever grew in it: the farmer's composter, and the decay if the world has it. */
+	private void finishField(CityWorldGenerator generator, RealBlocks chunk, int cropY) {
 		// a composter at the field edge — the farmer's workstation, so a wandering villager can take up
 		// the profession. MODERN job-block dressing, gated with shops; skipped in decayed/nether farms.
 		if (generator.getSettings().includeShops && generator.worldEnvironment != Environment.NETHER
@@ -579,6 +593,109 @@ public class FarmLot extends ConnectedLot {
 
 		if (generator.getSettings().includeDecayedNature)
 			destroyLot(generator, cropY - 3, cropY + 3);
+	}
+
+	/** The tilled soil of this field: farmland, or what {@link #fieldSoil} chose. Set as drawing begins. */
+	private Material soil = Material.FARMLAND;
+
+	/**
+	 * A number in {@code [0, range)} that every chunk of this field agrees on — the chunks of a connected field
+	 * share one connection key — so a decision about the FIELD (its soil, whether it is a paddy) comes out the
+	 * same in all of them. The chunk's own odds would give each chunk of a four-chunk field its own answer.
+	 */
+	private int fieldRoll(int salt, int range) {
+		long h = getConnectedKey() * 0x9E3779B97F4A7C15L + salt * 0xC2B2AE3D27D4EB4FL;
+		h ^= h >>> 29;
+		h *= 0xBF58476D1CE4E5B9L;
+		h ^= h >>> 32;
+		return (int) Math.floorMod(h, (long) range);
+	}
+
+	/**
+	 * Farmland, or for one field in three a soil from {@code #cityworld:farm/soil} (Farmer's Delight's rich soil
+	 * farmland). The pool is empty without such a mod, and then nothing is rolled.
+	 */
+	private Material fieldSoil() {
+		java.util.List<Material> pool = MaterialTags.resolve(MaterialTags.FARM_SOIL);
+		if (pool.isEmpty() || fieldRoll(1, 3) != 0)
+			return Material.FARMLAND;
+		return pool.get(fieldRoll(2, pool.size()));
+	}
+
+	/**
+	 * The paddy crop this field grows instead of its own, or null. Only where the field would have been watered
+	 * anyway — half the sugar-cane fields and one tilled field in five — only with real water (not a dune's sand
+	 * or a snowfield's ice), and only when a mod supplies such a crop ({@code #cityworld:farm/paddy}).
+	 */
+	private Material paddyCrop(CityWorldGenerator generator) {
+		if (waterMaterial != Material.WATER || !generator.getSettings().includeAbovegroundFluids)
+			return null;
+		java.util.List<Material> pool = MaterialTags.resolve(MaterialTags.FARM_PADDY);
+		if (pool.isEmpty())
+			return null;
+		int oneIn;
+		switch (cropType) {
+		case REED:
+			oneIn = 2;
+			break;
+		case WHEAT:
+		case CARROT:
+		case POTATO:
+		case BEETROOT:
+			oneIn = 5;
+			break;
+		default:
+			return null;
+		}
+		return fieldRoll(3, oneIn) == 0 ? pool.get(fieldRoll(4, pool.size())) : null;
+	}
+
+	/**
+	 * A flooded field: the ground is taken down one block to mud, and the cells filled with standing water and
+	 * a crop that grows in it. Farmer's Delight's rice is the crop this was written for, and the three things it
+	 * needs are read off the block rather than named: it IS its own water (no waterlogging to set), it carries
+	 * an integer {@code age}, and at full age it holds up a second block — {@code <id>_panicles}, found by name,
+	 * with {@code supporting} set on the stem beneath. A paddy crop with none of those is simply stood in the
+	 * water at its default state.
+	 *
+	 * <p>The water sits level with the ground round the field, held in by the field's own one-block border, so
+	 * nothing flows. Every fourth row is left open as a channel; a field is ripe (two in three) or freshly
+	 * planted as a whole.
+	 */
+	private void paddyField(SupportBlocks chunk, int cropY, Material crop) {
+		net.minecraft.world.level.block.state.BlockState stem = crop.getBlockState();
+		net.minecraft.world.level.block.Block block = stem.getBlock();
+		var definition = block.getStateDefinition();
+		net.minecraft.world.level.block.state.properties.IntegerProperty age = definition
+				.getProperty("age") instanceof net.minecraft.world.level.block.state.properties.IntegerProperty p ? p : null;
+		net.minecraft.world.level.block.state.properties.BooleanProperty supporting = definition
+				.getProperty("supporting") instanceof net.minecraft.world.level.block.state.properties.BooleanProperty p ? p : null;
+		var id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block);
+		Material head = Material.of(id.getNamespace() + ":" + id.getPath() + "_panicles");
+		if (head == Material.AIR || supporting == null)
+			head = null;
+		int maxAge = age == null ? 0 : age.getPossibleValues().stream().mapToInt(Integer::intValue).max().orElse(0);
+		boolean ripe = fieldRoll(5, 3) != 0;
+
+		for (int x = 1; x < 15; x++)
+			for (int z = 1; z < 15; z++) {
+				chunk.setBlock(x, cropY - 2, z, Material.MUD);
+				chunk.clearBlock(x, cropY, z);
+				int row = directionNorthSouth ? x : z;
+				if (row % 4 == 0 || !chunkOdds.playOdds(Odds.oddsVeryLikely)) {
+					chunk.setBlock(x, cropY - 1, z, Material.WATER);
+					continue;
+				}
+				net.minecraft.world.level.block.state.BlockState state = stem;
+				boolean grown = ripe && head != null && chunkOdds.playOdds(Odds.oddsVeryLikely);
+				if (age != null)
+					state = state.setValue(age, grown ? maxAge : chunkOdds.getRandomInt(Math.max(1, maxAge)));
+				if (supporting != null)
+					state = state.setValue(supporting, grown);
+				chunk.setBlockState(x, cropY - 1, z, state);
+				if (grown)
+					chunk.setBlock(x, cropY, z, head, chunkOdds.getRandomDouble());
+			}
 	}
 
 	/** Drop a composter (and sometimes a hay bale) on a solid field corner — a little farm workstation.
@@ -595,7 +712,7 @@ public class FarmLot extends ConnectedLot {
 			chunk.setBlock(x, cropY, z, Material.COMPOSTER);
 			int hz = z < 8 ? z + 1 : z - 1;
 			if (chunkOdds.flipCoin() && !chunk.isEmpty(x, cropY - 1, hz) && !chunk.isWater(x, cropY - 1, hz))
-				chunk.setBlock(x, cropY, hz, Material.HAY_BLOCK);
+				chunk.setBlock(x, cropY, hz, besideComposter());
 			// a farmhand to work it
 			generator.spawnProvider.spawnWorker(generator, chunk, chunkOdds, x, cropY, z,
 					net.minecraft.resources.Identifier.withDefaultNamespace("farmer"));
@@ -603,13 +720,37 @@ public class FarmLot extends ConnectedLot {
 		}
 	}
 
+	/**
+	 * What stands beside the composter: a hay bale, or — when a mod supplies them — a heap of compost or a crate
+	 * of produce ({@code #cityworld:farm/compost}, {@code farm/produce}). With both pools empty it is the hay
+	 * bale it always was, and no odds are drawn.
+	 */
+	private Material besideComposter() {
+		java.util.List<Material> compost = MaterialTags.resolve(MaterialTags.FARM_COMPOST);
+		java.util.List<Material> produce = MaterialTags.resolve(MaterialTags.FARM_PRODUCE);
+		if (compost.isEmpty() && produce.isEmpty())
+			return Material.HAY_BLOCK;
+		int roll = chunkOdds.getRandomInt(3);
+		if (roll == 0 && !compost.isEmpty())
+			return compost.get(chunkOdds.getRandomInt(compost.size()));
+		if (roll == 1 && !produce.isEmpty())
+			return produce.get(chunkOdds.getRandomInt(produce.size()));
+		return Material.HAY_BLOCK;
+	}
+
 	/** A field of stacked hay bales in rows, with walkways between — a harvested field put up for storage. */
 	private void haystackField(SupportBlocks chunk, int cropY) {
+		// one kind of bale for the whole field: hay, or for half the fields a mod's straw or rice bales
+		// (#cityworld:farm/bales; empty without such a mod, and then nothing is rolled)
+		Material bale = Material.HAY_BLOCK;
+		java.util.List<Material> bales = MaterialTags.resolve(MaterialTags.FARM_BALES);
+		if (!bales.isEmpty() && fieldRoll(6, 2) == 0)
+			bale = bales.get(fieldRoll(7, bales.size()));
 		for (int x = 2; x < 14; x += 2)
 			for (int z = 2; z < 14; z++)
 				if (chunkOdds.playOdds(Odds.oddsVeryLikely)) {
 					int h = 1 + (chunkOdds.playOdds(Odds.oddsUnlikely) ? 1 : 0);
-					chunk.setBlocks(x, cropY, cropY + h, z, Material.HAY_BLOCK);
+					chunk.setBlocks(x, cropY, cropY + h, z, bale);
 				}
 	}
 
@@ -678,7 +819,7 @@ public class FarmLot extends ConnectedLot {
 	 * correctly without being special-cased anywhere.
 	 */
 	private void setGrownCrop(SupportBlocks chunk, int x, int y, int z, Material crop) {
-		chunk.setBlockIfNot(x, y - 1, z, Material.FARMLAND);
+		chunk.setBlockIfNot(x, y - 1, z, soil);
 		placePlant(chunk, x, y, z, crop, true);
 	}
 
