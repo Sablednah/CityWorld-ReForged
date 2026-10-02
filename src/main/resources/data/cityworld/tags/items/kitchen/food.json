@@ -1,0 +1,58 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:bread",
+    "minecraft:apple",
+    "minecraft:carrot",
+    "minecraft:potato",
+    "minecraft:beetroot",
+    "minecraft:beef",
+    "minecraft:porkchop",
+    "minecraft:chicken",
+    "minecraft:mutton",
+    "minecraft:cod",
+    "minecraft:salmon",
+    "minecraft:melon_slice",
+    "minecraft:brown_mushroom",
+    {
+      "id": "farmersdelight:cabbage",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:tomato",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:onion",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:ham",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:salmon_slice",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:cod_slice",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:chicken_cuts",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:mutton_chops",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:wheat_dough",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:pumpkin_slice",
+      "required": false
+    }
+  ]
+}
