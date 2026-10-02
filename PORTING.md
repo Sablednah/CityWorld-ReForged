@@ -94,6 +94,18 @@ it is built block for block as before. That rule is why `decor/feast` and `decor
   (world seed ^ platmap origin), indexed by `chunkX + 2 * chunkZ`. The old `chunkOdds` roll is still drawn and
   discarded so the stream after it is unmoved. Measured on the plan (250x250 chunks): 899 store chunks, 831
   touching pairs, 1 with the same trade (across a platmap boundary, where the shuffles differ).
+- **Street shops stock their trade (same day, `efcd466c`).** Owner: *"i was looking in chests around counter of
+  an armourer — and just found the usual paper, paintings etc 'building' loot."* `ShopFitter`'s barrel rolled one
+  `chests/shop` for all fourteen trades and `StoreBuildingLot` never overrode `defaultLoot`, so the rest of the
+  building rolled BUILDING. Now `chests/shop_<trade>` x14 (`ShopType.stockTable()`), written by
+  **`scripts/gen_shop_loot.py`** in the dialect of the checkout it runs in — standard, 1.20.1 (`loot_tables/`,
+  hook under `name`) or 26.3 (typed entries, `modifier`). **After picking a change to that script, re-run it on
+  `mc1.20.1` and `mc26.3`** (the pick carries master's standard-dialect files; 1.20.1's arrive as `UA` in
+  `loot_tables/`). A store also restocks chests a room builder had already tabled
+  (`PlatLot.ownLootReplacesTabled` → `ContainerLoot.restock`); a corner shop's house keeps its own. Items were
+  checked against each version's vanilla item list (the `assets/minecraft/models/item` / `items` folder of the
+  client-resources jar, with a control) — grepping `Items.java` for the id reads "missing" for every block item.
+  Measured on 1.21.1: ten shop chunks, every container on its trade's table.
 - **Not done:** its loot modifiers only target vanilla tables (CityWorld's `_extra` hooks are the seam if
   wanted); rope, safety net and rope fence are unused; baskets are not pooled (open-topped hoppers do not stack).
 

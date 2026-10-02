@@ -36,6 +36,12 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   block could be six fletchers, and the next one all drapers. Each shop now takes its trade by position from a
   shuffle of the district's trades, so shops that touch differ. (Shops in existing chunks keep what they were
   built as; `/cityinfo` and the API report the new trade for land not yet generated.)
+- **Street shops stock their trade.** A shop's chests and barrels now hold what it sells — armour and iron at the
+  armourer, arrows and bows at the fletcher, meat at the butcher, wool and dyes at the draper, and so on for all
+  fourteen trades — where the barrel by the counter used to roll one generic table and everything else in a store
+  building rolled the ordinary building loot (paper and paintings). One table per trade,
+  `cityworld:chests/shop_<trade>` (`shop_armourer`, `shop_fletcher`, …), each with the usual `_extra` hook for
+  packs. Mall shops already had their own.
 - **Cutting boards are not treasure chests.** Farmer's Delight's cutting board is a container, so it was filled
   from the building's loot table like a chest — a painting on the chopping board. A board (any mod's, if it holds
   items) now gets one piece of food, two times in three, from the item tag `#cityworld:kitchen/food`; stoves,
