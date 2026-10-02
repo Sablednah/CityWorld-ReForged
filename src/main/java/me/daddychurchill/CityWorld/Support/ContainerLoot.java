@@ -64,6 +64,16 @@ public final class ContainerLoot {
     /** Containers that must never be given loot: machines, not storage. */
     public static final TagKey<Block> NEVER = MaterialTags.key("cityworld:loot/never");
 
+    /**
+     * Containers that hold ONE thing being prepared, not storage: a cutting board, a skillet. They get a single
+     * item of food from the item tag {@code #cityworld:kitchen/food} (two in three; the rest stay bare) instead of
+     * the lot's loot table — a house's table put a painting on the chopping board (owner, 2026-10-02).
+     */
+    public static final TagKey<Block> FOOD = MaterialTags.key("cityworld:loot/food");
+    public static final TagKey<net.minecraft.world.item.Item> KITCHEN_FOOD = TagKey.create(
+            net.minecraft.core.registries.Registries.ITEM,
+            NEVER.location().withPath("kitchen/food"));
+
     private static final AtomicInteger DEFERRED = new AtomicInteger(), FILLED = new AtomicInteger(),
             CAPABILITY = new AtomicInteger(), NEVER_TAGGED = new AtomicInteger(), HAS_TABLE = new AtomicInteger(),
             HAS_ITEMS = new AtomicInteger(), NOT_A_CONTAINER = new AtomicInteger(), OWN_TABLE = new AtomicInteger(),
@@ -163,6 +173,8 @@ public final class ContainerLoot {
             NEVER_TAGGED.incrementAndGet();
             return false;
         }
+        if (state.is(FOOD))
+            return serveFood(level, pos, entity, state, seed);
         if (Loot.isRandomizable(entity)) {
             if (Loot.hasTable(entity)) {
                 HAS_TABLE.incrementAndGet();
@@ -192,6 +204,30 @@ public final class ContainerLoot {
         if (!done)
             NOT_A_CONTAINER.incrementAndGet();
         return done;
+    }
+
+    /** One item of {@link #KITCHEN_FOOD} into the first slot of a board or a pan, two times in three. */
+    private static boolean serveFood(WorldGenLevel level, BlockPos pos, BlockEntity entity, BlockState state,
+            long seed) {
+        java.util.Random random = new java.util.Random(seed);
+        if (random.nextInt(3) == 0)
+            return false;
+        List<net.minecraft.world.item.Item> foods = new java.util.ArrayList<>(
+                Armoury.pool(KITCHEN_FOOD, new net.minecraft.world.item.Item[] { net.minecraft.world.item.Items.BREAD }));
+        // by id: a tag's own order is not promised to be the same from one load to the next
+        foods.sort(java.util.Comparator.comparing(
+                item -> net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item).toString()));
+        var stack = new net.minecraft.world.item.ItemStack(foods.get(random.nextInt(foods.size())));
+        if (entity instanceof Container container) {
+            if (!container.isEmpty())
+                return false;
+            container.setItem(0, stack);
+            return true;
+        }
+        Loot.Inventory inventory = Loot.inventory(level, pos, state, entity);
+        if (inventory == null || inventory.size() == 0 || !inventory.isEmpty(0))
+            return false;
+        return inventory.insert(0, stack) > 0; // a pan refuses what cannot be cooked: it stays empty
     }
 
     /** A furniture crafting station is an inventory, not a store. Recognised by id, since every set has one. */

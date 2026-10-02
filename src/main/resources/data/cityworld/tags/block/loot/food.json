@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "#cityworld:furniture/cutting_board",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:skillet",
+      "required": false
+    }
+  ]
+}
