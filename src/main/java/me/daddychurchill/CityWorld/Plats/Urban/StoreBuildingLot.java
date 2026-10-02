@@ -29,8 +29,8 @@ public class StoreBuildingLot extends FinishedBuildingLot {
 
 	private ContentStyle contentStyle;
 
-	// A store is a shop: classify it (scale from the district, trade rolled per building). Decided here
-	// at plan time so it is seed-deterministic and readable without generating blocks (see getShopType).
+	// A store is a shop: classify it (scale from the district, trade by position — see pickShopType). Decided
+	// here at plan time so it is seed-deterministic and readable without generating blocks (see getShopType).
 	private ShopType shopType;
 
 	public StoreBuildingLot(PlatMap platmap, int chunkX, int chunkZ) {
@@ -44,12 +44,27 @@ public class StoreBuildingLot extends FinishedBuildingLot {
 		return me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_STORE_DOOR;
 	}
 
+	/**
+	 * Every chunk of a store is its own shop — it gets its own counter, keeper, name and sign — so every chunk
+	 * gets its own TRADE, and within a district no two that touch are the same. It used to be rolled once per building and copied
+	 * across the connected footprint, and once stores began to run together that made a block of six fletchers,
+	 * then a block of drapers (owner, 2026-10-02).
+	 *
+	 * <p>By position, not by the chunk's odds: the district's trades are shuffled once per platmap, and a chunk
+	 * takes the one at {@code chunkX + 2 * chunkZ} — a step of one east-west and two north-south, so the four
+	 * neighbours and the diagonals all differ (any list of four or more). Neighbouring chunks' first odds rolls
+	 * are correlated, which is how four museum halls in a row came to show the same fossil.
+	 */
 	private ShopType pickShopType(PlatMap platmap) {
 		ShopScale scale = platmap.context != null ? platmap.context.shopScale() : ShopScale.HIGH_STREET;
 		List<ShopTrade> trades = ShopTrade.tradesFor(scale);
 		if (trades.isEmpty())
 			return null;
-		return new ShopType(scale, trades.get(chunkOdds.getRandomInt(trades.size())));
+		chunkOdds.getRandomInt(trades.size()); // the old roll, still drawn: everything after it stays where it was
+		List<ShopTrade> order = new java.util.ArrayList<>(trades);
+		java.util.Collections.shuffle(order, new java.util.Random(platmap.generator.getWorldSeed()
+				^ (platmap.originX * 341873128712L + platmap.originZ * 132897987541L)));
+		return new ShopType(scale, order.get(Math.floorMod(chunkX + 2 * chunkZ, order.size())));
 	}
 
 	@Override
@@ -78,8 +93,7 @@ public class StoreBuildingLot extends FinishedBuildingLot {
 
 			// any other bits
 			contentStyle = relativebuilding.contentStyle;
-			// one building = one shop: share the classification across the connected footprint
-			shopType = relativebuilding.shopType;
+			// the trade is NOT shared: each chunk of the building is a shop of its own (see pickShopType)
 		}
 
 		return result;
