@@ -207,7 +207,11 @@ STATIC_MODS = {
         # facingOffset 0 is the default, and it is written out anyway: the offset here is MEASURED (the stove
         # and the cabinets are `orientable` models and the board's placement faces the player, so `facing`
         # is the front), and an entry is how the self-test tells a measured piece from one nobody looked at.
-        "data": dict([("stove", {"facingOffset": 0}), ("cutting_board", {"facingOffset": 0})]
+        # The skillet is the exception: its handle points AWAY from its `facing`, so stood on a cooker
+        # "facing the room" the handle stuck out of the back into the wall or window behind (owner, in
+        # game, 2026-10-02: "needs a 180 rotation").
+        "data": dict([("stove", {"facingOffset": 0}), ("cutting_board", {"facingOffset": 0}),
+                      ("skillet", {"facingOffset": 180})]
                      + [("%s_cabinet" % w, {"facingOffset": 0}) for w in _FD_WOODS]),
     },
 }
