@@ -18,6 +18,10 @@
       "required": false
     },
     {
+      "id": "farmersdelight:stove",
+      "required": false
+    },
+    {
       "id": "refurbished_furniture:dark_stove",
       "required": false
     },

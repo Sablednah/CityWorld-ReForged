@@ -8,6 +8,12 @@ is far too many to hand-write and exactly regular enough to derive; Fantasy's Fu
 one fixed vocabulary, handled by name.
 
     python3 scripts/gen_furniture_tags.py [mods_dir]
+    python3 scripts/gen_furniture_tags.py --static-only     # merge STATIC_MODS into the files as they are
+
+⚠ A full run REPLACES every file from what the mods folder holds today. The committed files were built
+from a fuller set of mods than any one instance now carries (a run on 2026-10-02 would have dropped the
+whole roof pool and a third of the cabinets), so unless every furniture mod is in that folder, use
+`--static-only`: it adds the hand-classified mods (STATIC_MODS, below) and touches nothing else.
 
 Writes data/cityworld/tags/block/furniture/<role>.json. Every entry is `"required": false`, so the
 tags cost nothing when the mod is absent — the same contract the palettes use.
@@ -42,6 +48,9 @@ import sys
 import zipfile
 from collections import defaultdict
 
+STATIC_ONLY = "--static-only" in sys.argv
+if STATIC_ONLY:
+    sys.argv.remove("--static-only")
 MODS = sys.argv[1] if len(sys.argv) > 1 else \
     "/mnt/c/Users/darre/curseforge/minecraft/Instances/26.2/mods"
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "main", "resources", "data",
@@ -159,6 +168,44 @@ DECOR = {
                      "minecraft:candle", "minecraft:black_candle", "minecraft:soul_lantern"],
     "grim_wall": ["minecraft:cobweb", "minecraft:skeleton_wall_skull", "minecraft:wither_skeleton_wall_skull",
                   "minecraft:soul_wall_torch"],
+    # a dish stood on the dining table, and a pot stood on the cooker. Neither has a vanilla seed ON
+    # PURPOSE: an empty pool draws no odds, so a world without such a mod is built exactly as before.
+    "feast": [],
+    "stove_top": [],
+}
+
+# Mods classified BY HAND rather than scanned from the mods folder: small, irregularly named, and not
+# installed where the scan looks. Farmer's Delight exists for Minecraft 1.20.1 and 1.21.1 only, while the
+# scan reads the 26.2 instance — so its ids are written out here (read from FarmersDelight-1.20.1-1.3.4
+# and -1.21.1-1.3.4, whose block lists are identical) and merged in on every run.
+#   roles: furniture role -> block paths.   decor: decoration pool -> block paths.
+#   data:  block path -> data map value, for anything beyond a plain placement.
+# Its stove and cabinets are `orientable` models (front on `facing`, like a furnace), so they need no
+# facingOffset; the cabinets are full blocks with a door and a worktop, which is what a kitchen counter
+# run is made of, so they join `counter` as well as `cabinet`.
+_FD_WOODS = ["acacia", "bamboo", "birch", "cherry", "crimson", "dark_oak", "jungle", "mangrove", "oak",
+             "spruce", "warped"]
+STATIC_MODS = {
+    "farmersdelight": {
+        "roles": {
+            "stove": ["stove"],
+            "cutting_board": ["cutting_board"],
+            "cabinet": ["%s_cabinet" % w for w in _FD_WOODS],
+            "counter": ["%s_cabinet" % w for w in _FD_WOODS],
+            # stacked goods in warehouses, storerooms and workshops: its produce crates are plain full
+            # blocks that stack. (Its baskets are open-topped hoppers, which do not, so they stay out.)
+            "crate": ["%s_crate" % c for c in ("carrot", "potato", "beetroot", "cabbage", "tomato", "onion")]
+                     + ["rice_bag"],
+        },
+        "decor": {
+            "rug": ["canvas_rug", "half_tatami_mat"],
+            "feast": ["roast_chicken_block", "stuffed_pumpkin_block", "shepherds_pie_block",
+                      "honey_glazed_ham_block", "rice_roll_medley_block", "apple_pie", "chocolate_pie",
+                      "sweet_berry_cheesecake"],
+            "stove_top": ["cooking_pot", "skillet"],
+        },
+        "data": {},
+    },
 }
 
 # Data map entries for vanilla seeds that want something beyond a plain placement: floor skulls
@@ -445,7 +492,59 @@ def index_values(state: dict) -> int:
     return len(values)
 
 
+def _merge_tag(path, ids, keep_order):
+    """Add optional entries to a tag file, creating it when absent. Role files stay sorted by id; decor
+    files keep their order (vanilla seeds first) and gain the new ids at the end."""
+    values = []
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            values = json.load(fh)["values"]
+    have = {v["id"] if isinstance(v, dict) else v for v in values}
+    added = [i for i in ids if i not in have]
+    values += [{"id": i, "required": False} for i in added]
+    if not keep_order:
+        values.sort(key=lambda v: v["id"] if isinstance(v, dict) else v)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump({"replace": False, "values": values}, fh, indent=2)
+        fh.write("\n")
+    return len(added)
+
+
+def merge_static():
+    """`--static-only`: STATIC_MODS into the committed files, nothing rescanned and nothing removed."""
+    decor_dir = os.path.join(ROOT, "tags", "block", "decor")
+    for modid, spec in STATIC_MODS.items():
+        for role, paths in spec.get("roles", {}).items():
+            n = _merge_tag(os.path.join(OUT, f"{role}.json"), [f"{modid}:{p}" for p in paths], False)
+            print(f"  furniture/{role}.json +{n}")
+        for pool, paths in spec.get("decor", {}).items():
+            n = _merge_tag(os.path.join(decor_dir, f"{pool}.json"), [f"{modid}:{p}" for p in paths], True)
+            print(f"  decor/{pool}.json +{n}")
+        data = spec.get("data", {})
+        if data:
+            with open(DATAMAP, encoding="utf-8") as fh:
+                doc = json.load(fh)
+            for path, value in data.items():
+                doc["values"][f"{modid}:{path}"] = {
+                    "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": modid}], "value": value}
+            doc["values"] = dict(sorted(doc["values"].items()))
+            with open(DATAMAP, "w", encoding="utf-8") as fh:
+                json.dump(doc, fh, indent=2)
+                fh.write("\n")
+            print(f"  furniture.json data map +{len(data)}")
+    # every decor pool must exist as a file, or the game logs a missing tag for an empty pool
+    for pool in DECOR:
+        path = os.path.join(decor_dir, f"{pool}.json")
+        if not os.path.exists(path):
+            _merge_tag(path, [], True)
+            print(f"  decor/{pool}.json created empty")
+
+
 def main():
+    if STATIC_ONLY:
+        merge_static()
+        return
     found = defaultdict(list)      # role -> [block ids]
     decor_extra = defaultdict(list)  # pool -> [block ids]
     entries = {}                   # block id -> data map value
@@ -600,6 +699,21 @@ def main():
         entries[bed] = {"facingOffset": 180, "layout": BED_LAYOUT}
     found["shelf"].extend(VANILLA_SHELVES)
     entries.update(VANILLA_DATA)
+
+    # The hand-classified mods (see STATIC_MODS) join after the scan, under the same contract: optional
+    # tag entries, and a mod_loaded condition on any data map entry.
+    for modid, spec in STATIC_MODS.items():
+        count = 0
+        for role, paths in spec.get("roles", {}).items():
+            found[role].extend(f"{modid}:{path}" for path in paths)
+            count += len(paths)
+        for pool, paths in spec.get("decor", {}).items():
+            decor_extra[pool].extend(f"{modid}:{path}" for path in paths)
+            count += len(paths)
+        for path, value in spec.get("data", {}).items():
+            entries[f"{modid}:{path}"] = value
+            conditions[f"{modid}:{path}"] = modid
+        print(f"  {modid}: {count} hand-classified entries")
 
     # The facing/parts/layout data map, covering EVERY oriented role. Offsets are measured per
     # family (see FACING_OFFSET); a block with no facing property gets no entry, and a family with

@@ -118,7 +118,7 @@ public class BarnLot extends IsolatedLot {
 				chunk.setBlocks(4, 5, y1, 12, 14, fence, BlockFace.NORTH, BlockFace.SOUTH);
 
 				// hay & water please
-				chunk.setBlock(2, y1, 2, Material.HAY_BLOCK);
+				chunk.setBlock(2, y1, 2, fodder());
 				chunk.setCauldron(2, y1, 13, chunkOdds);
 
 				// spawn horses
@@ -145,7 +145,7 @@ public class BarnLot extends IsolatedLot {
 				chunk.setBlocks(11, 12, y1, 12, 14, fence, BlockFace.NORTH, BlockFace.SOUTH);
 
 				// hay & water please
-				chunk.setBlock(13, y1, 2, Material.HAY_BLOCK);
+				chunk.setBlock(13, y1, 2, fodder());
 				chunk.setCauldron(13, y1, 13, chunkOdds);
 
 				// spawn horses
@@ -238,7 +238,7 @@ public class BarnLot extends IsolatedLot {
 				chunk.setBlocks(12, 14, y1, 4, 5, fence, BlockFace.EAST, BlockFace.WEST);
 
 				// hay & water please
-				chunk.setBlock(2, y1, 2, Material.HAY_BLOCK);
+				chunk.setBlock(2, y1, 2, fodder());
 				chunk.setCauldron(13, y1, 2, chunkOdds);
 
 				// spawn horses
@@ -263,7 +263,7 @@ public class BarnLot extends IsolatedLot {
 				chunk.setBlocks(12, 14, y1, 11, 12, fence, BlockFace.EAST, BlockFace.WEST);
 
 				// hay & water please
-				chunk.setBlock(2, y1, 13, Material.HAY_BLOCK);
+				chunk.setBlock(2, y1, 13, fodder());
 				chunk.setCauldron(13, y1, 13, chunkOdds);
 
 				// spawn horses
@@ -371,10 +371,28 @@ public class BarnLot extends IsolatedLot {
 	}
 
 	private void hayPile(RealBlocks chunk, int x1, int x2, int y, int z1, int z2) {
-		if (chunkOdds.flipCoin())
+		if (chunkOdds.flipCoin()) {
+			// hay, or for half the piles a mod's straw or rice bales (#cityworld:farm/bales; empty without
+			// such a mod, and then nothing extra is rolled)
+			Material bale = Material.HAY_BLOCK;
+			java.util.List<Material> bales = me.daddychurchill.CityWorld.Support.MaterialTags
+					.resolve(me.daddychurchill.CityWorld.Support.MaterialTags.FARM_BALES);
+			if (!bales.isEmpty() && chunkOdds.flipCoin())
+				bale = bales.get(chunkOdds.getRandomInt(bales.size()));
 			for (int x = x1; x < x2; x++)
 				for (int z = z1; z < z2; z++)
-					chunk.setBlocks(x, y, y + chunkOdds.getRandomInt(3), z, Material.HAY_BLOCK);
+					chunk.setBlocks(x, y, y + chunkOdds.getRandomInt(3), z, bale);
+		}
+	}
+
+	/** The fodder by a stall: a hay bale, or a crate or sack of produce when a mod supplies them
+	 *  (#cityworld:farm/produce; empty without such a mod, and then nothing is rolled). */
+	private Material fodder() {
+		java.util.List<Material> produce = me.daddychurchill.CityWorld.Support.MaterialTags
+				.resolve(me.daddychurchill.CityWorld.Support.MaterialTags.FARM_PRODUCE);
+		if (produce.isEmpty() || chunkOdds.flipCoin())
+			return Material.HAY_BLOCK;
+		return produce.get(chunkOdds.getRandomInt(produce.size()));
 	}
 
 	private void placeChest(CityWorldGenerator generator, RealBlocks chunk, int x, int y, int z, BlockFace towards) {

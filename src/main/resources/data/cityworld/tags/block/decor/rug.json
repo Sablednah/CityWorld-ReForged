@@ -36,6 +36,14 @@
     {
       "id": "fantasyfurniture_royal:carpet",
       "required": false
+    },
+    {
+      "id": "farmersdelight:canvas_rug",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:half_tatami_mat",
+      "required": false
     }
   ]
 }
