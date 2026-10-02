@@ -15,7 +15,8 @@ import me.daddychurchill.CityWorld.api.ShopType;
  * {@link ShopType}, so the shared {@code ShopFitter} pass drops its trade's job block on the ground
  * floor for free — newsagent (lectern), greengrocer (composter), butcher (smoker), fishmonger (barrel)
  * or apothecary (brewing stand). Scale comes from the district ({@code RuralContext} → CORNER_SHOP);
- * the trade is rolled per lot and stays constant for the seed.
+ * the trade is rolled per lot and stays constant for the seed. Its counter barrel and unfilled containers
+ * hold the trade's stock ({@code chests/shop_<trade>}); the house's own chests keep theirs.
  */
 public class CornerShopLot extends HouseLot {
 
