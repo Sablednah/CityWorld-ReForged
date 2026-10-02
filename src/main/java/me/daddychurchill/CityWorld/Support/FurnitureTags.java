@@ -92,6 +92,11 @@ public final class FurnitureTags {
     public static final TagKey<Block> GRIM_FLOOR = decorKey("grim_floor");
     public static final TagKey<Block> GRIM_SURFACE = decorKey("grim_surface");
     public static final TagKey<Block> GRIM_WALL = decorKey("grim_wall");
+    /** A dish stood on a dining table (Farmer's Delight's feasts and pies). Ships with no vanilla seed on
+     *  purpose: an empty pool draws no odds, so a world without such a mod is built exactly as before. */
+    public static final TagKey<Block> FEAST = decorKey("feast");
+    /** What stands on the cooker: a cooking pot, a skillet. No vanilla seed, for the same reason. */
+    public static final TagKey<Block> STOVE_TOP = decorKey("stove_top");
 
     /** Every pool this class declares, gathered once by reflection (the diagnostics sweep does the same). */
     private static final List<TagKey<Block>> ALL_POOLS = allPools();

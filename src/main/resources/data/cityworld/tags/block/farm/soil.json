@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "farmersdelight:rich_soil_farmland",
+      "required": false
+    }
+  ]
+}

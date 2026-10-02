@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "farmersdelight:straw_bale",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:rice_bale",
+      "required": false
+    }
+  ]
+}

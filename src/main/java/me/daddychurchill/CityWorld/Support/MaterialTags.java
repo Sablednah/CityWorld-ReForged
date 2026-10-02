@@ -75,6 +75,28 @@ public final class MaterialTags {
     public static final TagKey<Block> FARM_TALL_FLOWERS = key("cityworld:farm/tall_flowers");
 
     /**
+     * The farm pools a mod fills and vanilla cannot — all five ship with optional entries only (Farmer's
+     * Delight's), so each is EMPTY without such a mod, and every caller checks for that before it draws any
+     * odds: a world without the mod is built block for block as it was.
+     *
+     * <p>{@code soil}: tilled soil a field may be plowed in instead of farmland (rich soil farmland).
+     * {@code compost}: what is heaped beside a farm's composter. {@code produce}: crates and sacks of
+     * harvest, in barns, beside the composter, on a greengrocer's display. {@code bales}: what a haystack
+     * field and a barn loft may be stacked with instead of hay. {@code paddy}: crops that stand IN water
+     * on mud (rice) — a field of them is flooded, see {@code FarmLot.paddyField}.
+     */
+    public static final TagKey<Block> FARM_SOIL = key("cityworld:farm/soil");
+    public static final TagKey<Block> FARM_COMPOST = key("cityworld:farm/compost");
+    public static final TagKey<Block> FARM_PRODUCE = key("cityworld:farm/produce");
+    public static final TagKey<Block> FARM_BALES = key("cityworld:farm/bales");
+    public static final TagKey<Block> FARM_PADDY = key("cityworld:farm/paddy");
+
+    /** Pools that are empty unless a mod fills them — said once at INFO, like a furniture role, not WARNed
+     *  about like a build palette that has lost its contents. */
+    private static final java.util.Set<String> OPTIONAL_POOLS = java.util.Set.of("farm/soil", "farm/compost",
+            "farm/produce", "farm/bales", "farm/paddy", "decor/feast", "decor/stove_top");
+
+    /**
      * Fittings — the joinery a build is finished with: doors, trapdoors, windows, fences, roofs.
      *
      * <p>These exist for Macaw's (doors, trapdoors, windows, fences, roofs — and its Biomes O' Plenty
@@ -128,6 +150,10 @@ public final class MaterialTags {
     /** Stair-shaped sloped roof blocks (Macaw's {@code *_roof}); the house roof pass matches one to the
      *  roof material by name, else picks at random, else uses the vanilla stairs of that material. */
     public static final TagKey<Block> FITTINGS_ROOF = key("cityworld:fittings/roof");
+    /** Ceiling-hung signs a shop may use instead of the oak hanging sign (Farmer's Delight's canvas signs,
+     *  one per dye). The sign on the wall outside is the same block's wall form, found by name
+     *  ({@code red_hanging_canvas_sign} → {@code red_wall_hanging_canvas_sign}). Ships empty. */
+    public static final TagKey<Block> FITTINGS_SHOP_SIGN = key("cityworld:fittings/shop_sign");
 
     /** Stackable street-lamp posts: one block id placed four high, the mod deriving base/middle/top
      *  from the stack ({@code RoadLot.generateLightPost}). Ships empty: the fence-and-glowstone post is
@@ -200,6 +226,30 @@ public final class MaterialTags {
     }
 
     /**
+     * The wall-hung form of a ceiling-hung sign, found by name in the same namespace
+     * ({@code red_hanging_canvas_sign} → {@code red_wall_hanging_canvas_sign}, as vanilla's
+     * {@code oak_hanging_sign} → {@code oak_wall_hanging_sign}), or null when there is none.
+     */
+    public static Material wallHangingSign(Material hanging) {
+        Identifier id = BuiltInRegistries.BLOCK.getKey(hanging.getBlock());
+        String path = id.getPath();
+        int at = path.lastIndexOf("hanging_");
+        if (at < 0)
+            return null;
+        Material wall = Material.of(id.getNamespace() + ":" + path.substring(0, at) + "wall_" + path.substring(at));
+        return wall == Material.AIR ? null : wall;
+    }
+
+    /** {@code base} followed by every block of {@code tag} whose id path passes {@code keep} (null = all). */
+    public static Material[] withPool(Material[] base, TagKey<Block> tag, java.util.function.Predicate<String> keep) {
+        List<Material> all = new ArrayList<>(List.of(base));
+        for (Material material : resolve(tag))
+            if (keep == null || keep.test(BuiltInRegistries.BLOCK.getKey(material.getBlock()).getPath()))
+                all.add(material);
+        return all.toArray(new Material[0]);
+    }
+
+    /**
      * The sibling of a pooled stair tread — {@code oak_compact_stairs} → {@code oak_railing} for
      * {@code "railing"}, or {@code oak_platform}, {@code oak_balcony} — found by name in the tread's namespace, or
      * null when the mod has none. How one pick from {@code fittings/stairs} brings its whole kit.
@@ -242,7 +292,8 @@ public final class MaterialTags {
 
         if (blocks.isEmpty()) {
             String path = tag.location().getPath();
-            if (path.startsWith("furniture/") || path.startsWith("fittings/") || path.startsWith("light/")) {
+            if (path.startsWith("furniture/") || path.startsWith("fittings/") || path.startsWith("light/")
+                    || OPTIONAL_POOLS.contains(path)) {
                 // Expected on any world without a furniture mod: every furniture role is optional and
                 // every caller falls back to the vanilla-block furniture it always built. Not a warning.
                 CityWorldMod.LOGGER.info("CityWorld: no mod supplies #{} — the vanilla fallback will be used for it",
