@@ -376,6 +376,15 @@ public abstract class PlatLot {
 	}
 
 	/**
+	 * Whether this lot's own table also replaces the table of a chest that was placed WITH one — the storeroom
+	 * and closet chests a room builder fills from the ordinary building table. False for most lots (a schematic's
+	 * own chests keep what they were given); true for a store, where everything on the premises is stock.
+	 */
+	public boolean ownLootReplacesTabled() {
+		return false;
+	}
+
+	/**
 	 * The loot tier of a container at world height {@code y} in this lot — 0 everywhere but in a place that
 	 * worsens with depth (the vault: floor {@code k} is tier {@code k}). {@link ContainerLoot} resolves the
 	 * lot default through it, so a pooled desk on the deepest floor rolls that floor's table too.
