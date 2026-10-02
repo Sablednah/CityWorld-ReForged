@@ -1,0 +1,73 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "farmersdelight:hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:white_hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:orange_hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:magenta_hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:light_blue_hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:yellow_hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:lime_hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:pink_hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:gray_hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:light_gray_hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:cyan_hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:purple_hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:blue_hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:brown_hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:green_hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:red_hanging_canvas_sign",
+      "required": false
+    },
+    {
+      "id": "farmersdelight:black_hanging_canvas_sign",
+      "required": false
+    }
+  ]
+}

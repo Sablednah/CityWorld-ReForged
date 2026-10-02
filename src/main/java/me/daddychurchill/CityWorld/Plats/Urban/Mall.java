@@ -1548,10 +1548,17 @@ public final class Mall {
         case HARDWARE -> new Fittings(new Material[] { Material.BARREL, Material.IRON_BLOCK }, new Material[] { Material.LANTERN },
                 Material.SMOOTH_STONE, new Material[] { Material.ANVIL, Material.GRINDSTONE, Material.CAULDRON, Material.IRON_CHAIN },
                 Material.SPRUCE_PLANKS, Material.SMITHING_TABLE, null);
+        // the grocer's displays and the baker's counter also show a mod's produce crates and pies, when
+        // there is one (#cityworld:farm/produce, decor/feast) — the arrays are just longer, no extra odds
         case GROCER -> new Fittings(new Material[] { Material.BARREL, Material.COMPOSTER }, null, Material.HAY_BLOCK,
-                new Material[] { Material.MELON, Material.PUMPKIN }, Material.WHITE_CONCRETE, Material.BARREL, null);
+                me.daddychurchill.CityWorld.Support.MaterialTags.withPool(new Material[] { Material.MELON, Material.PUMPKIN },
+                        me.daddychurchill.CityWorld.Support.MaterialTags.FARM_PRODUCE, null),
+                Material.WHITE_CONCRETE, Material.BARREL, null);
         case BAKERY -> new Fittings(new Material[] { Material.SMOKER, Material.FURNACE, Material.BARREL }, null, Material.SMOOTH_QUARTZ,
-                new Material[] { Material.CAKE }, Material.SMOOTH_QUARTZ, Material.CAKE, null);
+                me.daddychurchill.CityWorld.Support.MaterialTags.withPool(new Material[] { Material.CAKE },
+                        me.daddychurchill.CityWorld.Support.FurnitureTags.FEAST,
+                        path -> path.contains("pie") && !path.contains("shepherd") || path.contains("cake")),
+                Material.SMOOTH_QUARTZ, Material.CAKE, null);
         case CAFE -> new Fittings(new Material[] { Material.BARREL, Material.SPRUCE_PLANKS }, new Material[] { Material.LANTERN },
                 Material.SPRUCE_PLANKS, null, Material.SPRUCE_PLANKS, Material.BREWING_STAND, Mall::cafeTable);
         case BOOKS -> new Fittings(new Material[] { Material.BOOKSHELF, Material.CHISELED_BOOKSHELF }, null, Material.BOOKSHELF,
