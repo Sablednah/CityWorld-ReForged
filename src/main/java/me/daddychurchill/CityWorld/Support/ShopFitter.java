@@ -75,9 +75,12 @@ public final class ShopFitter {
         // storage/wares flanking the counter (both perpendicular sides): a barrel one side, and a
         // decorated pot or a second barrel the other, so it reads as a stocked counter
         int sx = x - facing.getModZ(), sz = z + facing.getModX();
-        if (inChunk(sx, sz) && chunk.isEmpty(sx, y, sz) && solid(chunk, sx, y - 1, sz))
+        if (inChunk(sx, sz) && chunk.isEmpty(sx, y, sz) && solid(chunk, sx, y - 1, sz)) {
             chunk.setChest(generator, sx, y, sz, facing, odds, generator.lootProvider,
                     LootProvider.LootLocation.SHOP, Material.BARREL);
+            // the trade's own stock (chests/shop_<trade>); the generic shop table stays if a pack removed it
+            ContainerLoot.restockAt(chunk, sx, y, sz, shop.stockTable(), odds);
+        }
         int sx2 = x + facing.getModZ(), sz2 = z - facing.getModX();
         if (inChunk(sx2, sz2) && chunk.isEmpty(sx2, y, sz2) && solid(chunk, sx2, y - 1, sz2)) {
             Material ware = odds.flipCoin() ? Material.DECORATED_POT : Material.BARREL;
