@@ -204,7 +204,11 @@ STATIC_MODS = {
                       "sweet_berry_cheesecake"],
             "stove_top": ["cooking_pot", "skillet"],
         },
-        "data": {},
+        # facingOffset 0 is the default, and it is written out anyway: the offset here is MEASURED (the stove
+        # and the cabinets are `orientable` models and the board's placement faces the player, so `facing`
+        # is the front), and an entry is how the self-test tells a measured piece from one nobody looked at.
+        "data": dict([("stove", {"facingOffset": 0}), ("cutting_board", {"facingOffset": 0})]
+                     + [("%s_cabinet" % w, {"facingOffset": 0}) for w in _FD_WOODS]),
     },
 }
 
