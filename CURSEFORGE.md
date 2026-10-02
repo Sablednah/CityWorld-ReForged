@@ -18,8 +18,7 @@ and 1.21.1) kitchens are built from its cabinets, stove, pots and cutting boards
 roasts and pies, farms gain **rice paddies**, rich soil, compost heaps, crates and straw bales, and half the
 shops hang painted canvas signs. For everyone: **street shops stock their trade** — armour at the armourer,
 arrows at the fletcher, wool at the draper, fourteen trades in all, where every chest used to hold the same
-paper and paintings — and **every shop in a building is a different trade**, instead of a block of six
-fletchers.
+paper and paintings — and **neighbouring shops are different trades**, instead of a block of six fletchers.
 
 **New in 5.17.0: choose your structures in game.** The Customize screen has a new **Structures** page that
 lists every structure the install has — vanilla's and each mod's — with an on/off switch each. Want **villages**
