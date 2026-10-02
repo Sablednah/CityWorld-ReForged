@@ -71,8 +71,9 @@ Pick **CityWorld** as your world type and you land in a living city:
 - **Buildings, furnished** — houses through highrises, all fully furnished inside: kitchens, living
   rooms, bedrooms, libraries with chiseled bookshelves, offices, shops with the right job-site block for
   their trade (cartography tables, fletching benches, looms, smokers…) and a hanging sign out front.
-- **Districts** — municipal civic centres, industrial factories/warehouses (with bunkers underneath),
-  farms with animals and crops, and parks with **zoos and glass biodomes**.
+- **Districts** — municipal civic centres, industrial factories and warehouses (with bunkers underneath,
+  batteries of **silos** and the odd **gasometer**), farms with animals and crops, and parks with **zoos
+  and glass biodomes**.
 - **A subway** — a station in every district, stairs down to the platforms, and twin-track tunnels
   between stations near and far, on two levels with interchanges; a minecart runs the line.
 - **Shopping malls** — rare, sprawling, at the edge of town: an atrium with balconies, escalators and
@@ -142,43 +143,38 @@ Vanilla under Customize → Realms):
   `config/cityworld-startup.toml`, and `lockCustomize = true` removes the Customize button for the locked
   preset so every new world gets the preset's settings exactly as the pack ships them.
 
-## Furnished — and furniture mods make it more so
+## Furnished and fitted out — and furniture mods make it more so
 
-**New in 5.5.0:** every building has an interior. Offices and apartment towers, schools and
-courthouses inside the government buildings, museum exhibits, factory control rooms, stocked shops
-and warehouses — lit, labelled (check F3), and furnished down to the basements. Vacant buildings
-hang FOR SALE / TO LET signs and stay dark.
+Every building has an interior. Offices and apartment towers, schools and courthouses inside the
+government buildings, museum exhibits, factory control rooms, stocked shops and warehouses — lit,
+labelled (check F3), and furnished down to the basements. Vacant buildings hang FOR SALE / TO LET signs
+and stay dark. Without any mods, rooms keep a classic vanilla look; each mod below upgrades its own part
+of the city, and nothing changes for the ones you don't have.
 
-Install **Macaw's Furniture**, **MrCrayfish's Refurbished Furniture** or **Fantasy's Furniture** (any
-of its sets — Nordic, Necrolord, Dunmer, Bone — plus the Decorations add-on) and the whole city
-upgrades: real kitchens with fridges and stoves, two-block baths, sofas, desks with computers,
-ceiling fans, two-tall chairs and double beds, stocked shelves, tables cluttered with books, bottles
-and tankards — over a thousand modded pieces, every one facing the right way. **New in 5.6.0:** a
-Fantasy's Furniture set released *after* this version is recognised at startup and furnished on the
-spot, and APOCALYPSE draws on a grim set of skulls, cobwebs and bone piles. Without furniture mods,
-rooms keep a classic vanilla look. Mod authors: adding your own furniture takes two data files in
-your jar — see `PALETTES.md` in the repo.
+**Furniture.** Install **Macaw's Furniture**, **MrCrayfish's Refurbished Furniture** or **Fantasy's
+Furniture** (any of its sets — Nordic, Necrolord, Dunmer, Bone — plus the Decorations add-on) and the rooms
+fill with them: real kitchens with fridges and stoves, two-block baths, sofas, desks with computers,
+ceiling fans, two-tall chairs and double beds, stocked shelves, tables cluttered with books, bottles and
+tankards — over a thousand modded pieces, every one facing the right way. A Fantasy's Furniture set
+released *after* this version is recognised at startup and furnished on the spot, and APOCALYPSE draws on
+a grim set of skulls, cobwebs and bone piles.
 
-### Macaw's fits it out
+**Doors, windows, roofs, fences, stairs and lights.** Install any of **Macaw's Doors, Windows, Fences and
+Walls, Roofs, Stairs, Trapdoors or Lights** (and its Biomes O' Plenty add-on, which joins by itself with
+every BoP wood) and the city is built with them:
 
-**New in 5.10.0.** Install any of **Macaw's Doors, Windows, Fences and Walls, Roofs, Stairs, Trapdoors or
-Lights** (Macaw's Furniture already furnishes the rooms, see above) (and the Biomes O' Plenty add-on, which joins by itself with every BoP wood) and the
-city is built with them. Every house, shop, office and factory picks its street door by what it is for —
-cottage and modern doors on homes, glass shop fronts, metal doors and **garage doors** three to seven high
-on industry — and its interior doors to match. Houses get framed windows joined into runs, a trapdoor
-hatch, and **pitched roofs** in Macaw's roof blocks, matched to the wall wood, with eaves, ridges, valleys
-and gable ends; their stairs become Macaw's compact and terrace treads with railings, landings and balcony
-rails, and office stairwells take the same treads and platforms. Gardens and parks are fenced in picket,
-hedge, ornamental metal and stone walls, paddocks and barn pens in farm fences with a gate, construction
-sites and factory yards in industrial mesh and panelled metal (barbed wire now and then), and every park
-or yard sticks to one fence. Streets are lit by Macaw's lamp posts, park gates by garden lights,
-campgrounds by tiki torches, and interiors by its wall lanterns, sconces, chandeliers, ceiling lights and
-lamps. Without the mods nothing changes — each pool falls back to what CityWorld always built.
+- **Doors** chosen by what a building is for — cottage and modern doors on homes, glass shop fronts, metal
+  doors and **garage doors** three to seven high on industry — with interior doors to match.
+- **Windows and roofs** — framed windows joined into runs, trapdoor hatches, and **pitched roofs** matched
+  to the wall wood, with eaves, ridges, valleys and gable ends.
+- **Stairs** — compact and terrace treads with railings, landings and balcony rails, in houses and office
+  stairwells alike.
+- **Fences** — picket, hedge, ornamental metal and stone walls round gardens and parks, farm fences with a
+  gate round paddocks, industrial mesh and panelled metal round building sites and factory yards.
+- **Lights** — lamp posts on the streets, garden lights at park gates, tiki torches at campgrounds, and
+  wall lanterns, sconces, chandeliers and ceiling lights indoors.
 
-Industry itself grew: **silos** — a metal tank on a red steel frame with a hopper chute, a stepped cone
-roof and a caged spiral stair up to a catwalk on the roof, often in batteries — and rare **gasometers**,
-two or three chunks square, a telescoping gas holder in a lattice frame standing in a water trough, its
-bell at a different height on every one. The old nether-brick silo schematics are gone.
+Mod authors: adding your own furniture takes two data files in your jar — see `PALETTES.md` in the repo.
 
 ## World styles
 
@@ -259,17 +255,45 @@ Minecraft version is in the filename, so there is no guessing which is which.
 
 | Minecraft | Loader | Java | File |
 |---|---|---|---|
-| 1.20.1 | **Forge** 47+ | 17 | `cityworld-5.13.0+mc1.20.1.jar` |
-| 1.21.1 | NeoForge 21.1.251+ | 21 | `cityworld-5.13.0+mc1.21.1.jar` |
-| 1.21.11 | NeoForge 21.11.42+ | 21 | `cityworld-5.13.0+mc1.21.11.jar` |
-| 26.1.2 | NeoForge 26.1.2.95+ | 25 | `cityworld-5.13.0+mc26.1.2.jar` |
-| 26.2 | NeoForge 26.2.0.59+ | 25 | `cityworld-5.13.0+mc26.2.jar` |
-| 26.3 | NeoForge 26.3.0.3+ (beta) | 25 | `cityworld-5.13.0+mc26.3.jar` |
+| 1.20.1 | **Forge** 47+ | 17 | `cityworld-<version>+mc1.20.1.jar` |
+| 1.21.1 | NeoForge 21.1.251+ | 21 | `cityworld-<version>+mc1.21.1.jar` |
+| 1.21.11 | NeoForge 21.11.42+ | 21 | `cityworld-<version>+mc1.21.11.jar` |
+| 26.1.2 | NeoForge 26.1.2.95+ | 25 | `cityworld-<version>+mc26.1.2.jar` |
+| 26.2 | NeoForge 26.2.0.59+ | 25 | `cityworld-<version>+mc26.2.jar` |
+| 26.3 | NeoForge 26.3.0.20+ (beta) | 25 | `cityworld-<version>+mc26.3.jar` |
 
 **A given seed builds the same city on all six.** The layout — terrain, roads, districts, which
 building stands where — is identical across versions; only the materials shift slightly, because newer
 Minecraft versions bring new blocks into the building palettes. Every version is verified automatically
 before release, generating a real world and checking the cities, signs and biomes come out right.
+
+## Works with
+
+Mods CityWorld has been checked against. Everything here is optional: CityWorld needs none of them, and
+with none installed nothing changes.
+
+**Built-in support** — install the mod and CityWorld uses it:
+
+| Mod | What CityWorld does with it |
+|---|---|
+| **JourneyMap** | Draws the city plan over unexplored ground, names streets and landmarks. |
+| **Macaw's Furniture**, **MrCrayfish's Refurbished Furniture**, **Fantasy's Furniture** (all sets, Decorations) | Furnishes every interior with their pieces. |
+| **Macaw's Doors, Windows, Fences and Walls, Roofs, Stairs, Trapdoors, Lights** (and the BoP add-on) | Builds the city's doors, windows, roofs, fences, stairs and lighting from them. |
+| **Biomes O' Plenty** / **TerraBlender** | Its biomes generate in the overworld, the ruined Nether and the End, with their own ground blocks. |
+| **Alex's Caves** (1.20.1) | Five of its cave biomes join the underground, in its own rock, with its cave structures. |
+| **Pam's HarvestCraft 2** (Crops, Trees) | Its crops grow in the fields and its fruit trees in the orchards, by climate. |
+| **L_Ender's Cataclysm**, **Battle Towers**, **Dungeon Crawl** | Their structures are placed, the city keeps clear, and the ground is shaped to fit them. |
+
+**Made to work together:**
+
+| Mod | What was done |
+|---|---|
+| **Minecraft Comes Alive** | CityWorld's villagers become MCA people, keeping their names (5.17.0; no config change needed). |
+
+**Works by design, not tested one by one:** any mod's **structures** can be switched on from the Structures
+page; any **TerraBlender** biome mod's biomes join the world; and any mod that tags its blocks, crops and
+flowers the standard way has them built with and planted. If something you use misbehaves in a CityWorld
+world, say so in the comments.
 
 ## Credits and licence
 
