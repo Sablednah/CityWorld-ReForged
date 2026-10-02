@@ -79,18 +79,39 @@ public final class ShopFitter {
             chunk.setChest(generator, sx, y, sz, facing, odds, generator.lootProvider,
                     LootProvider.LootLocation.SHOP, Material.BARREL);
         int sx2 = x + facing.getModZ(), sz2 = z - facing.getModX();
-        if (inChunk(sx2, sz2) && chunk.isEmpty(sx2, y, sz2) && solid(chunk, sx2, y - 1, sz2))
-            chunk.setBlock(sx2, y, sz2, odds.flipCoin() ? Material.DECORATED_POT : Material.BARREL, facing);
+        if (inChunk(sx2, sz2) && chunk.isEmpty(sx2, y, sz2) && solid(chunk, sx2, y - 1, sz2)) {
+            Material ware = odds.flipCoin() ? Material.DECORATED_POT : Material.BARREL;
+            // a greengrocer shows a crate of produce when a mod supplies them (#cityworld:farm/produce)
+            java.util.List<Material> produce = shop.trade() == me.daddychurchill.CityWorld.api.ShopTrade.GREENGROCER
+                    ? MaterialTags.resolve(MaterialTags.FARM_PRODUCE) : java.util.List.of();
+            if (!produce.isEmpty())
+                chunk.setBlock(sx2, y, sz2, produce.get(odds.getRandomInt(produce.size())));
+            else
+                chunk.setBlock(sx2, y, sz2, ware, facing);
+        }
 
         // the shop's name (one name, used on both signs)
         String[] name = generator.odonymProvider.generateShopName(generator, odds, shop.trade().displayName());
 
+        // The sign board: oak, or — for half the shops, when a mod supplies them — a painted one from
+        // #cityworld:fittings/shop_sign (Farmer's Delight's canvas signs), the same colour inside and out.
+        Material hanging = Material.OAK_HANGING_SIGN, wallHanging = Material.OAK_WALL_HANGING_SIGN;
+        java.util.List<Material> painted = MaterialTags.resolve(MaterialTags.FITTINGS_SHOP_SIGN);
+        if (!painted.isEmpty() && odds.flipCoin()) {
+            Material board = painted.get(odds.getRandomInt(painted.size()));
+            Material onWall = MaterialTags.wallHangingSign(board);
+            if (onWall != null) {
+                hanging = board;
+                wallHanging = onWall;
+            }
+        }
+
         // an interior hanging sign over the counter, hung from the ceiling
         if (chunk.isEmpty(x, y + 1, z) && chunk.isEmpty(x, y + 2, z) && solid(chunk, x, y + 3, z))
-            chunk.setSignPost(x, y + 2, z, Material.OAK_HANGING_SIGN, facing, name);
+            chunk.setSignPost(x, y + 2, z, hanging, facing, name);
 
         // and, if the shop has a front door, a hanging shopfront sign outside above it
-        exteriorSign(chunk, y, name);
+        exteriorSign(chunk, y, wallHanging, name);
     }
 
     /**
@@ -98,7 +119,7 @@ public final class ShopFitter {
      * the street (perimeter doors point away from the building centre), and the sign attaches to the wall
      * above it, facing out. First door that yields a clear spot wins; skips quietly if none does.
      */
-    private static void exteriorSign(RealBlocks chunk, int y, String[] name) {
+    private static void exteriorSign(RealBlocks chunk, int y, Material board, String[] name) {
         for (int x = 0; x < 16; x++)
             for (int z = 0; z < 16; z++) {
                 if (!isDoor(chunk, x, y, z))
@@ -111,7 +132,7 @@ public final class ShopFitter {
                     // so the facing must be across the wall's outward direction: the board then hangs out
                     // over the door like a pub sign. Facing outward left the bar floating in the air and the
                     // board flat against nothing (owner, 2026-09-18: "need rotating 90 deg").
-                    chunk.setWallSign(ox, y + 2, oz, Material.OAK_WALL_HANGING_SIGN,
+                    chunk.setWallSign(ox, y + 2, oz, board,
                             BlockFace.fromDirection(out.toDirection().getClockWise()), name);
                     return;
                 }

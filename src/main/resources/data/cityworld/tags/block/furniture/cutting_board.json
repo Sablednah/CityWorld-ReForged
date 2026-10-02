@@ -2,6 +2,10 @@
   "replace": false,
   "values": [
     {
+      "id": "farmersdelight:cutting_board",
+      "required": false
+    },
+    {
       "id": "refurbished_furniture:acacia_cutting_board",
       "required": false
     },
