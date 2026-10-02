@@ -39,6 +39,28 @@ three owner playtest rounds on 1.20.1. PORTING.md "▶ Resume here — Farmer's 
 gen_furniture_tags.py` must only be run with `--static-only`** (a full run drops pools: the scanned instance no
 longer has every mod). Owner to paste CURSEFORGE.md's "New in 5.18.0".
 
+**Open items, none started (2026-10-02) — the owner's playtest is the queue:**
+- **ZARP `checkSite`**: a dry-run "would `reserveSite` work here" API was offered (two seeds got no camp: no
+  vault within 1500 blocks); the owner has not said yes or no.
+- **Astral nexus / map rooms** (Ed's TODOs): parked by the owner "for another one".
+- **Farmer's Delight leftovers**: its loot modifiers only reach vanilla tables (CityWorld's `_extra` hooks are
+  the seam); rope, safety net, rope fence and baskets unused; skillets stay empty (they refuse an insert through
+  the item handler); mall grocer/bakery produce and pies are coded but no mall fell in the measured area.
+- **`checkDirectLoad` covers one museum district on MODERN.** A wider one-off (40x40 chunks, MODERN and
+  APOCALYPSE, on mc26.2 with its mods) passed on 2026-10-01; widening the permanent check was not done.
+- **`mc1.20.1`'s copy of `gen_furniture_tags.py` writes to `tags/block/`** (that line uses `tags/blocks/`): its
+  tags arrive by cherry-pick. Do not run the script there.
+- The owner's `1.20.1  Forge` instance has two test jars renamed `.jar.disabled` at his request
+  (`allstructures-cityworld-test`, `cataclysm-cityworld-compat`).
+
+**Tools this arc added to `scripts/`** (each was a scratchpad helper first, and each paid for itself):
+`selftest-one.sh <checkout> <jdk> <port>` (one self-test + kill the leftover server by its cwd; two at a time at
+most), `scan_jar.sh <jar>…` (the shutdown/Timings/debug gate — prove it on a positive first; it now errors on a
+jar it cannot open instead of printing zeros), `wideload.sh` + `debug/WideLoad.java` (FORCED tickets on a block of
+chunks at once: the way to reproduce a decoration deadlock and to generate an area for measuring),
+`region_tally.py <region dir> <id prefix>` (exact block counts by palette decode), `gen_shop_loot.py` (the
+per-trade shop tables, in the checkout's loot dialect).
+
 **v5.17.0 was released** (2026-10-01 night) on all six lines — tag `v5.17.0` (`96b0c1be`), GitHub release with six
 jars, CurseForge files 9031937–9031942, fleet `DEPLOYED-v5.17.0` on all 11 deployable instances (ZARP opts out).
 It is four things: the **Structures page** (Customize screen → every installed structure set, vanilla's and
