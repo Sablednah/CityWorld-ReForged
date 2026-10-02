@@ -12,6 +12,15 @@ package me.daddychurchill.CityWorld.api;
 public record ShopType(ShopScale scale, ShopTrade trade) {
 
     /** Shorthand for UI/commands, e.g. "Map seller (High street)". */
+    /**
+     * The id of the loot table this shop's containers roll: {@code cityworld:chests/shop_<trade>}, one per
+     * {@link ShopTrade} ({@code shop_armourer}, {@code shop_fletcher}, …). A pack restocks a trade by replacing
+     * that table, or adds to it through its {@code _extra} hook.
+     */
+    public String stockTable() {
+        return "cityworld:chests/shop_" + trade.name().toLowerCase(java.util.Locale.ROOT);
+    }
+
     public String describe() {
         return trade.displayName() + " (" + scale.displayName() + ")";
     }
