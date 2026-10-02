@@ -3,125 +3,119 @@
   "pools": [
     {
       "rolls": {
+        "type": "minecraft:uniform",
         "min": 2,
         "max": 5
       },
       "entries": [
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:arrow",
           "weight": 12,
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 4,
-                "max": 16
-              }
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 4,
+              "max": 16
             }
-          ]
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:bow",
           "weight": 4
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:crossbow",
           "weight": 2
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:flint",
           "weight": 7,
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 1,
-                "max": 6
-              }
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 6
             }
-          ]
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:feather",
           "weight": 7,
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 1,
-                "max": 6
-              }
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 6
             }
-          ]
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:stick",
           "weight": 7,
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 2,
-                "max": 8
-              }
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 2,
+              "max": 8
             }
-          ]
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:string",
           "weight": 6,
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 1,
-                "max": 4
-              }
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 4
             }
-          ]
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:tripwire_hook",
           "weight": 2,
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 1,
-                "max": 2
-              }
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 2
             }
-          ]
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:target",
           "weight": 2
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:emerald",
           "weight": 4,
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 1,
-                "max": 2
-              }
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 2
             }
-          ]
+          }
         },
         {
-          "type": "empty",
+          "type": "minecraft:empty",
           "weight": 8
         },
         {

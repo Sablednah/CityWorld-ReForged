@@ -3,141 +3,136 @@
   "pools": [
     {
       "rolls": {
+        "type": "minecraft:uniform",
         "min": 2,
         "max": 5
       },
       "entries": [
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:iron_pickaxe",
           "weight": 4
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:iron_axe",
           "weight": 4
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:iron_shovel",
           "weight": 4
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:iron_hoe",
           "weight": 3
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:stone_pickaxe",
           "weight": 4
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:stone_axe",
           "weight": 4
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:shears",
           "weight": 4
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:flint_and_steel",
           "weight": 3
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:bucket",
           "weight": 4
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:lantern",
           "weight": 4,
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 1,
-                "max": 2
-              }
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 2
             }
-          ]
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:iron_bars",
           "weight": 4,
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 2,
-                "max": 8
-              }
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 2,
+              "max": 8
             }
-          ]
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:iron_ingot",
           "weight": 6,
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 1,
-                "max": 4
-              }
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 4
             }
-          ]
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:iron_nugget",
           "weight": 6,
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 3,
-                "max": 9
-              }
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 3,
+              "max": 9
             }
-          ]
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:coal",
           "weight": 5,
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 1,
-                "max": 4
-              }
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 4
             }
-          ]
+          }
         },
         {
-          "type": "item",
+          "type": "minecraft:item",
           "name": "minecraft:emerald",
           "weight": 3,
-          "functions": [
-            {
-              "function": "set_count",
-              "count": {
-                "min": 1,
-                "max": 2
-              }
+          "modifier": {
+            "type": "set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 2
             }
-          ]
+          }
         },
         {
-          "type": "empty",
+          "type": "minecraft:empty",
           "weight": 8
         },
         {
