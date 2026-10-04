@@ -54,12 +54,13 @@ public record CityWorldSettingsData(
         Decay decay,
         Caves caves,
         Subways subways,
-        Structures structures) {
+        Structures structures,
+        Cities cities) {
 
     /** These settings with another structure choice (the Customize screen's Structures page). */
     public CityWorldSettingsData withStructures(Structures chosen) {
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
-                overgrowth, shops, decay, caves, subways, chosen);
+                overgrowth, shops, decay, caves, subways, chosen, cities);
     }
 
     /** 1875000 chunks — the modern world-format radius ceiling (30,000,000 blocks / 16). */
@@ -68,7 +69,7 @@ public record CityWorldSettingsData(
     public static final CityWorldSettingsData DEFAULT = new CityWorldSettingsData(
             Features.DEFAULT, Terrain.DEFAULT, Spawns.DEFAULT, Treasures.DEFAULT, World.DEFAULT, Radius.DEFAULT,
             Naming.DEFAULT, Mobs.DEFAULT, Overgrowth.DEFAULT, Shops.DEFAULT, Decay.DEFAULT, Caves.DEFAULT,
-            Subways.DEFAULT, Structures.DEFAULT);
+            Subways.DEFAULT, Structures.DEFAULT, Cities.DEFAULT);
 
     public static final Codec<CityWorldSettingsData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Features.CODEC.optionalFieldOf("features", Features.DEFAULT).forGetter(CityWorldSettingsData::features),
@@ -84,7 +85,8 @@ public record CityWorldSettingsData(
             Decay.CODEC.optionalFieldOf("decay", Decay.DEFAULT).forGetter(CityWorldSettingsData::decay),
             Caves.CODEC.optionalFieldOf("caves", Caves.DEFAULT).forGetter(CityWorldSettingsData::caves),
             Subways.CODEC.optionalFieldOf("subways", Subways.DEFAULT).forGetter(CityWorldSettingsData::subways),
-            Structures.CODEC.optionalFieldOf("structures", Structures.DEFAULT).forGetter(CityWorldSettingsData::structures)
+            Structures.CODEC.optionalFieldOf("structures", Structures.DEFAULT).forGetter(CityWorldSettingsData::structures),
+            Cities.CODEC.optionalFieldOf("cities", Cities.DEFAULT).forGetter(CityWorldSettingsData::cities)
     ).apply(i, CityWorldSettingsData::new));
 
     // --- what gets built ----------------------------------------------------------------------
@@ -284,6 +286,55 @@ public record CityWorldSettingsData(
                 Codec.BOOL.optionalFieldOf("enabled", true).forGetter(Subways::enabled),
                 Codec.BOOL.optionalFieldOf("spawners", true).forGetter(Subways::spawners)
         ).apply(i, Subways::new));
+    }
+
+    /**
+     * Cities in a vanilla world ({@code vanillaTerrain}): the land is vanilla's throughout and CityWorld builds
+     * only on the patches {@code worldgen.CitySites} picks, one per {@code spacing}-block cell, each
+     * {@code districts} platmaps across give or take {@code districtsVariance}, each on its own level up to
+     * {@code levelRange} blocks above CityWorld's street level (y 64). {@code maxWater} and {@code minNear} are
+     * the dials a candidate patch is judged by: the share of its columns that may be under the sea, and the share
+     * that must already lie within sixteen blocks of its level (datapack-only; no widget).
+     *
+     * <p><b>Baked into the world at creation, like every setting here, and that matters more than usual:</b>
+     * every city is a pure function of the seed and these numbers, so changing them under an existing world moves
+     * or re-levels its cities beneath chunks already generated. Applies to the modern-family and classic styles;
+     * a style that IS a terrain (floating, flooded, dunes, astral, maze, nature, metro) ignores it.
+     */
+    public record Cities(boolean vanillaTerrain, int spacing, int districts, int districtsVariance, int levelRange,
+            double maxWater, double minNear) {
+
+        public static final Cities DEFAULT = new Cities(false, 2048, 3, 1, 40, 0.35, 0.75);
+
+        public static final Codec<Cities> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.BOOL.optionalFieldOf("vanillaTerrain", false).forGetter(Cities::vanillaTerrain),
+                Codec.intRange(1024, 16384).optionalFieldOf("spacing", 2048).forGetter(Cities::spacing),
+                Codec.intRange(1, 8).optionalFieldOf("districts", 3).forGetter(Cities::districts),
+                Codec.intRange(0, 3).optionalFieldOf("districtsVariance", 1).forGetter(Cities::districtsVariance),
+                Codec.intRange(0, 120).optionalFieldOf("levelRange", 40).forGetter(Cities::levelRange),
+                Codec.doubleRange(0.0, 1.0).optionalFieldOf("maxWater", 0.35).forGetter(Cities::maxWater),
+                Codec.doubleRange(0.0, 1.0).optionalFieldOf("minNear", 0.75).forGetter(Cities::minNear)
+        ).apply(i, Cities::new));
+
+        public Cities withVanillaTerrain(boolean v) {
+            return new Cities(v, spacing, districts, districtsVariance, levelRange, maxWater, minNear);
+        }
+
+        public Cities withSpacing(int v) {
+            return new Cities(vanillaTerrain, v, districts, districtsVariance, levelRange, maxWater, minNear);
+        }
+
+        public Cities withDistricts(int v) {
+            return new Cities(vanillaTerrain, spacing, v, districtsVariance, levelRange, maxWater, minNear);
+        }
+
+        public Cities withDistrictsVariance(int v) {
+            return new Cities(vanillaTerrain, spacing, districts, v, levelRange, maxWater, minNear);
+        }
+
+        public Cities withLevelRange(int v) {
+            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, v, maxWater, minNear);
+        }
     }
 
     /**
