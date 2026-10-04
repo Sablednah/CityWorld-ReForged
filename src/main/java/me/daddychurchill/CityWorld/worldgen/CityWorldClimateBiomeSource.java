@@ -180,7 +180,7 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
         BiomeSource handed = vanilla;
         Stream<Holder<Biome>> all = Stream.concat(handed == null ? possible.stream()
-                : Stream.concat(possible.stream(), handed.possibleBiomes().stream()),
+                : Stream.concat(possible.stream(), handed.possibleBiomes().stream().filter(java.util.Objects::nonNull)),
                 Stream.concat(cavePool().biomes(), surfacePools().biomes()));
         TerraBlenderBridge tb = terraBlender();
         if (tb != null)
@@ -220,8 +220,12 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
     @Override
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
         BiomeSource handed = vanilla; // a vanilla-terrain world: the land is vanilla's, so its biomes are too
-        if (handed != null)
-            return handed.getNoiseBiome(x, y, z, vanillaSampler);
+        if (handed != null) {
+            // never null: an uninitialised TerraBlender source answered null and crashed stronghold placement
+            Holder<Biome> fromVanilla = handed.getNoiseBiome(x, y, z, vanillaSampler);
+            if (fromVanilla != null)
+                return fromVanilla;
+        }
         Holder<Biome> biome = CityWorldBiomeLookup.biomeAt(this, x, y, z);
         return biome != null ? biome : b(Biomes.PLAINS);
     }
