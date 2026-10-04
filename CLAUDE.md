@@ -24,7 +24,14 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-02)
 
-**v5.19.0 is released** (2026-10-04) on all six lines — tag `v5.19.0` (`653bff89`), GitHub release with six jars,
+**v5.19.1 is released** (2026-10-05) on all six lines — tag `v5.19.1` (`1853f507`), CurseForge 9064267–9064273: vanilla
+land failed every chunk with TerraBlender (BoP) or Alex's Caves, because both hook vanilla's `MultiNoiseBiomeSource`
+and set it up only for real dimension stems — the inner source answered null. Now `TerraBlenderBridge
+.initializeOverworld` and `ModdedBiomeSources.prepareOverworld` (Alex's Caves: key map, cave biomes, seed) prepare it,
+the handover falls back to CityWorld's biome on a null, and the river test takes null as no river. Neither mod runs
+in the 1.20.1 dev runtime: the owner's instance was the test (both mods' biomes now appear in vanilla land).
+
+**v5.19.0 was released** (2026-10-04) on all six lines — tag `v5.19.0` (`653bff89`), GitHub release with six jars,
 CurseForge files 9061385–9061390, fleet `DEPLOYED-v5.19.0` on 10 (`MobHealth - Forge` was running: rerun
 `scripts/deploy-fleet.sh --version 5.19.0 --only "MobHealth - Forge"`; ZARP opts out). It is: **vanilla land**
 (Customize's Land row, settings group `cities`: cities like villages in a vanilla world, each on its own level,
