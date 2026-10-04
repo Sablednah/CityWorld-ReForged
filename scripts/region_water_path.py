@@ -22,7 +22,7 @@ for x in range(x0, x1 + 1):
             b = at(x, y, z)
         except Exception:
             continue
-        if b and ('water' in b or 'waterlogged=true' in b or 'seagrass' in b or 'kelp' in b):
+        if b and ('ice' in b or 'water' in b or 'waterlogged=true' in b or 'seagrass' in b or 'kelp' in b):
             wet.add((x, z))
 seen, bodies = set(), []
 for start in wet:
