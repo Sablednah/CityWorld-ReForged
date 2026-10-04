@@ -53,7 +53,7 @@ public class CityWorldVanillaBiomeSource extends BiomeSource {
 
     @Override
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
-        return source.possibleBiomes().stream();
+        return source.possibleBiomes().stream().filter(java.util.Objects::nonNull);
     }
 
     /** 26.3: biomes are asked of a resolver; this one ignores the sampler it is handed, as above. */

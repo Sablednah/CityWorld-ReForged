@@ -563,6 +563,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                     this.biomeSource.getClass().getSimpleName());
                     }
                     var built = new net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator(inner, settings);
+                    // As TerraBlender would have done for a vanilla overworld stem (see TerraBlenderBridge.initializeOverworld),
+                    // before anything asks the source for biomes
+                    TerraBlenderBridge.initializeOverworld(registries, registries.lookupOrThrow(Registries.DIMENSION_TYPE)
+                            .getOrThrow(net.minecraft.world.level.dimension.BuiltinDimensionTypes.OVERWORLD), built, levelSeed);
                     LevelHeightAccessor bounds = LevelHeightAccessor.create(settings.value().noiseSettings().minY(),
                             settings.value().noiseSettings().height());
                     vanillaOverworldRandom = random;

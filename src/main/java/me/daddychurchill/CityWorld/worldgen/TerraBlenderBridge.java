@@ -88,6 +88,29 @@ public final class TerraBlenderBridge {
         }
     }
 
+    /**
+     * As {@link #initializeEnd}, for the vanilla overworld generator a vanilla-land world builds inside CityWorld's
+     * ({@code CityWorldChunkGenerator.vanillaOverworld}). TerraBlender mixes into {@code MultiNoiseBiomeSource} and
+     * initialises it only for dimension stems; left uninitialised on 1.20.1 its possible biomes held nulls, and every
+     * chunk of a vanilla-land world with Biomes O' Plenty failed in structure placement (owner, 2026-10-04: a lock-up
+     * on world creation). Initialised, the mod's biomes also appear in vanilla land, as they do in a vanilla world.
+     */
+    public static void initializeOverworld(net.minecraft.core.RegistryAccess registries,
+            Holder<net.minecraft.world.level.dimension.DimensionType> overworldType,
+            net.minecraft.world.level.chunk.ChunkGenerator vanillaOverworld, long seed) {
+        if (!PRESENT)
+            return;
+        try {
+            Class.forName("terrablender.util.LevelUtils").getMethod("initializeBiomes",
+                    net.minecraft.core.RegistryAccess.class, Holder.class, net.minecraft.resources.ResourceKey.class,
+                    net.minecraft.world.level.chunk.ChunkGenerator.class, long.class)
+                    .invoke(null, registries, overworldType, net.minecraft.world.level.dimension.LevelStem.OVERWORLD, vanillaOverworld, seed);
+        } catch (Throwable t) {
+            me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                    "CityWorld: could not initialise TerraBlender for vanilla land — modded overworld biomes will not appear", t);
+        }
+    }
+
     /** Every biome a mod has registered with TerraBlender for the End (highlands, midlands, edge, islands). */
     public static List<net.minecraft.resources.ResourceKey<Biome>> endBiomes() {
         List<net.minecraft.resources.ResourceKey<Biome>> keys = new java.util.ArrayList<>();
