@@ -264,7 +264,50 @@ public final class CityWorldDataMaps {
     }
 
     /** Registered from {@code CityWorldMod} on the mod event bus. */
+    /**
+     * A block CityWorld places swapped for another, everywhere it draws (owner, 2026-10-04, from a player's comment:
+     * iron, gold and copper blocks in buildings are free resources in a survival pack, and the colours were too much
+     * for some). Ships empty; a pack adds entries — the "neutral palette" pack maps the valuable blocks and the bright
+     * colours onto woods, stones, deepslate and terracotta. The replacement keeps every property the two blocks share
+     * (a stair stays a stair facing the same way). {@code realms} limits an entry to some of overworld, nether and end
+     * (all three when absent), so a pack can take netherrack out of overworld walls without touching the ruined
+     * Nether's ground. Applied at the two block seams ({@code InitialBlocks}, {@code compat.Block}); schematics and
+     * vanilla's own features are not CityWorld's to rewrite.
+     */
+    public record Substitute(Block with, List<String> realms) {
+
+        public static final Codec<Substitute> CODEC = RecordCodecBuilder.create(i -> i.group(
+                BuiltInRegistries.BLOCK.byNameCodec().fieldOf("with").forGetter(Substitute::with),
+                Codec.STRING.listOf().optionalFieldOf("realms", List.of()).forGetter(Substitute::realms)
+        ).apply(i, Substitute::new));
+
+        public boolean appliesIn(me.daddychurchill.CityWorld.compat.Environment realm) {
+            if (realms.isEmpty())
+                return true;
+            String name = switch (realm) {
+            case NETHER -> "nether";
+            case THE_END -> "end";
+            default -> "overworld";
+            };
+            return realms.contains(name);
+        }
+    }
+
+    public static final DataMapType<Block, Substitute> SUBSTITUTE = DataMapType
+            .builder(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "substitute"), Registries.BLOCK, Substitute.CODEC)
+            .build();
+
+    /** {@code state} as this world draws it in {@code realm}: the pack's substitute, or itself. */
+    public static net.minecraft.world.level.block.state.BlockState substitute(
+            net.minecraft.world.level.block.state.BlockState state, me.daddychurchill.CityWorld.compat.Environment realm) {
+        Substitute swap = state.getBlock().builtInRegistryHolder().getData(SUBSTITUTE);
+        if (swap == null || !swap.appliesIn(realm))
+            return state;
+        return swap.with().withPropertiesOf(state);
+    }
+
     public static void register(RegisterDataMapTypesEvent event) {
+        event.register(SUBSTITUTE);
         event.register(GROUND);
         event.register(FURNITURE);
         event.register(STRUCTURE_FIT);

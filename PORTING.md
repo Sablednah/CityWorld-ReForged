@@ -146,6 +146,18 @@ all of this: 179 checks, 0 parse failures, 0 block-entity warnings — the share
   the city's level over 12 blocks inland and at its city edges, its water untouched; a river chunk's land eases
   toward the city at city edges (never the water or 3 blocks round it); a bridge chunk is cleared above the
   street (decks ran into hills); a river passing diagonally between two dry chunks keeps the top-row one as river.
+- **Neutral Palette add-on (2026-10-04, from a player's comment: iron/gold/copper blocks are free resources
+  in a survival pack, and Apocalypse is too colourful).** New block data map `cityworld:substitute`
+  (`CityWorldDataMaps.SUBSTITUTE`: `{"with": block, "realms": [overworld|nether|end]}`), applied at both
+  block seams (`InitialBlocks.put`, `compat.Block.setBlockData`) and to schematics through a template
+  processor (`Clipboard.substitutes`; schematics wrote wool straight past the seams). Ships empty. The add-on
+  lives in `packs/neutral-palette/` (data-only jar, `lowcodefml`, both `neoforge.mods.toml` and Forge's
+  `mods.toml`, tags under both `tags/block` and `tags/blocks`; `build.sh`): 157 substitutes plus narrowed
+  `build/*` tags. Measured on the dev seed, 21x21 chunks: copper blocks 87,917 -> 0, coloured concrete and
+  wool ~44k -> 0, prismarine/purpur/netherrack ~45k -> 0. Left on purpose: redstone blocks (they power the
+  subway rails), ores (CLASSIC's own veins go through the seam), vanilla structures (trial-chamber copper).
+  **The swaps need a CityWorld release with the seam (5.19.0); master only so far. NOT yet on the five
+  branches (1.20.1 needs the substitute map added to its own JSON loader), NOT published.**
 - **Banked for the next phase (owner, 2026-10-04): rivers in CityWorld's OWN terrain.** Trace them from the
   mountains: streams that gather, waterfalls where the drop is big, then on down to the sea. Cities on those
   rivers get the same riverside lots as the vanilla mode (quays, moorings, loading quays, natural banks, bridges).
