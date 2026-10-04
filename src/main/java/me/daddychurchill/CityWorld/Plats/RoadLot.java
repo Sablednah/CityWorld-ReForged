@@ -311,7 +311,11 @@ public class RoadLot extends ConnectedLot {
 	 */
 	private void placeBridgeColumn(CityWorldGenerator generator, AbstractBlocks chunk, int x1, int x2, int baseY,
 			int z1, int z2) {
-		if (generator.worldEnvironment != me.daddychurchill.CityWorld.compat.Environment.THE_END) {
+		// CityWorld's own seas report the bed's height, so a pier from the chunk's lowest height reaches it. The
+		// End's void and a vanilla-terrain world's river (reported at the water's surface) do not: there the pier
+		// is sunk to whatever it finds, through air and water.
+		if (generator.worldEnvironment != me.daddychurchill.CityWorld.compat.Environment.THE_END
+				&& !generator.vanillaTerrain) {
 			chunk.setBlocks(x1, x2, blockYs.getMinHeight(), baseY, z1, z2, bridgeEdgeMaterial);
 			return;
 		}
@@ -319,7 +323,7 @@ public class RoadLot extends ConnectedLot {
 			for (int z = z1; z < z2; z++)
 				// from under the deck's own cross beam, down to the bottom of the world
 				for (int y = baseY - 2; y >= generator.worldMinY; y--)
-					if (!chunk.isEmpty(x, y, z)) {
+					if (!chunk.isEmpty(x, y, z) && !chunk.isWaterAt(x, y, z)) {
 						chunk.setBlock(x, y, z, bridgeFootingMaterial);
 						chunk.setBlocks(x, y + 1, baseY, z, bridgeEdgeMaterial);
 						break;

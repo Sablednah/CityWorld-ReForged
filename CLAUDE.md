@@ -24,6 +24,16 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-02)
 
+**IN PROGRESS on master, committed 2026-10-04 (1.21.11 only, not on the branches): the vanilla-land mode** —
+cities like villages in an otherwise vanilla world (a CurseForge comment the owner relayed). Chosen in Customize on
+the CityWorld preset: the **Land** row ("Vanilla, cities apart") with spacing, size, variance and level range
+(settings group `cities`). Rivers run through cities untouched, with `ShorelineLot` quays and natural banks; owner
+still tweaking from screenshots (`/cityfind city tp` finds one; spawn is wherever vanilla puts it). Read
+PORTING.md "▶ Resume here — cities in a vanilla world" first: `worldgen/CitySites` (one city per 2048-block
+cell, 2–4 districts across, one level each within 64..104), `ShapeProvider_Vanilla`, and the lift —
+`InitialBlocks.yShift` + `worldgen/ShiftedRegion` draw every city at street level 64 and raise it at the block
+seam (AT on `WorldGenRegion`'s `cache`/`center`/`generatingStep`). 1.21.11 only; nothing on the branches.
+
 **v5.18.0 is released** (2026-10-02) on all six lines — tag `v5.18.0` (`44bb0d4b`), GitHub release with six jars,
 CurseForge files 9039342–9039349, fleet `DEPLOYED-v5.18.0` on all 11 deployable instances (ZARP opts out). It is:
 **Farmer's Delight support** (kitchens from its cabinets/stove/pots/boards, feasts on dining tables, rice

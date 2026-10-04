@@ -65,6 +65,13 @@ public class PlatMap {
 		platLots = new PlatLot[Width][Width];
 		naturalPlats = 0;
 
+		// A platmap no city reaches (a vanilla-terrain world's wild) is left unplanned: every lot null, which
+		// every reader already takes as wild. Planning it would cost a hundred lots with their cached heights,
+		// and the plan cache keeps every platmap for the life of the world — a /cityfind that searched 9,000
+		// blocks of wild land for a hospital ran a 4 GB client out of heap (owner, 2026-10-03).
+		if (shapeProvider.plansNothingAt(originX, originZ))
+			return;
+
 		// do the deed
 		shapeProvider.populateLots(generator, this);
 
@@ -344,7 +351,8 @@ public class PlatMap {
 			// and none of them call super, so a reservation checked there would be silently ignored by
 			// everything except plain building lots. Every built lot passes through this one line.
 			boolean result = lot.isPlaceableAt(generator, originX + x, originZ + z)
-					&& !generator.isStructureReserved(originX + x, originZ + z);
+					&& !generator.isStructureReserved(originX + x, originZ + z)
+					&& !generator.shapeProvider.refusesLotAt(originX + x, originZ + z);
 			if (result) {
 
 				// clear it please

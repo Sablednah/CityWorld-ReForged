@@ -32,6 +32,133 @@ comments, orphaned javadocs re-attached) turned up one real bug, car-park east/w
 north/south edges; and the interchange stair top was fixed from the owner's hand edit in his save (headroom
 over a two-step flight; the shaft's track-side wall is the platform edge again).
 
+## ▶ Resume here — cities in a vanilla world: the "Vanilla" terrain mode (spike, 2026-10-02 night)
+
+**The ask (a CurseForge comment, relayed by the owner):** *"is there a way to make the cities spawn just like a
+village? like generating small city while the rest of the world is normal?"* Owner's design calls, 2026-10-02
+evening: a little variation in street level is **needed** but within a range ("not too high!"), each city on ONE
+level; big, so spaced "2000 or maybe more" blocks apart; "3x3 districts, maybe +/- 1"; and a terrain *mode* on
+the modern family rather than a fourteenth style, so Apocalypse can have it too. Then bedtime: *"see how far you
+can get and i'll preview in the mornings."* **State: UNCOMMITTED on master** (the whole spike is in the working
+tree, `git status` lists it), built, deployed to `CityWork-ReForged` as `DEPLOYED-1b51af91-vanilla-spike`,
+`scan_jar.sh` 0/0/0. **1.21.11 only** — no branch has it.
+
+**What it is.** `"terrain": "vanilla"` on the generator (new codec field, seventh) and a preset
+`cityworld:vanilla` ("CityWorld: Vanilla (cities in a normal world)", in `#minecraft:normal` so it is in the
+world-type cycle; vanilla Nether and End; no Customize button, none is registered for it). Every chunk is filled by
+a real vanilla overworld generator held inside ours (`vanillaOverworld()`, the End's pattern), biomes by
+vanilla's `multi_noise` source wrapped in `cityworld:vanilla` (`CityWorldVanillaBiomeSource`: the sampler a
+non-noise generator is handed is a dummy, so the wrapper is bound the real one at `createState`). Then:
+- **`worldgen/CitySites`** — one city per 2048-block cell (`CELL`, `-Dcityworld.sites.cell`), a disc 2/3/4
+  districts across (25/50/25%), centre random inside the cell with a margin so disc + wobble + ring never leave it
+  (so a column has at most one city, and only its own cell is ever asked). Three tries per cell, each judged from
+  ~49 samples of vanilla's `getBaseHeight(OCEAN_FLOOR_WG)` on a grid over the disc: refused for water > 35% of
+  columns (was 15%: 11 of 49 cells; at 35%, 20 of 49 on seed 8675309), median ground above `64 + MAX_RISE`
+  (40, `-Dcityworld.sites.maxrise`), or under 75% of columns within 16 of the level. Level = max(64, median).
+  Judging a cell costs ~0.5 s (23 s for 49), once, memoised; it runs on whichever worker first asks (the first
+  chunk of a cell, at STRUCTURE_STARTS). Pure function of seed + raw vanilla noise, so any thread agrees.
+- **The ground.** `shapeCityGround` right after vanilla's fill: every column of a city chunk (centre + four
+  corners inside the disc — the same five columns `HeightInfo` samples, so buildable = levelled) goes to the
+  level; outside, `groundAt` eases vanilla's top to the level with the pad's arithmetic in reverse (6-block
+  apron, taper max(16, rise × 2.5) capped 120, smoothstep). Fill is stone; a cut column is remembered and, after
+  vanilla's surface rules (which skip ground far below the noise's own surface), dressed with the biome's ground
+  (`coverCutGround`, `BiomeSurface`, null = grass on dirt — the first run crashed on that null). Never digs below
+  the level, which is never below 64, so no pit for water.
+- **The plan.** `ShapeProvider_Vanilla` (extends Normal) tells the planner street level (64) for a city chunk and
+  65 for everything else, and never looks at terrain. Districts by distance from the centre
+  (`getContext(platmap)`: the platmap holding the centre is downtown, then a working-town band, then houses and
+  farms) because the nature-share ladder would only measure where the disc cut the platmap grid. Roads kept when
+  isolated, bridge reach 0, subways off, shafts/caves/mines all "no", `applyVanillaTerrain()` turns off mines,
+  subways, bunkers, caves, caverns, lava, ores (vanilla's come through `placeUndergroundOres`), bones, airborne.
+  `VanillaNatureContext`/`VanillaNatureLot`: a nature lot draws nothing, as in the End.
+- **The lift — the hard part, and it is two files.** CityWorld plans and draws at ONE street level (hundreds of
+  `generator.streetLevel` reads), so a city is drawn at 64 and lifted by `level - 64` at the block seam:
+  `InitialBlocks.yShift` (its `at()` is the only place the generation side makes a position) and
+  `worldgen/ShiftedRegion`, a `WorldGenRegion` subclass over the same chunk cache (AT on `cache`, `center`,
+  `generatingStep`) that raises every position and lowers every height, forwarding to the region vanilla made
+  rather than `super` (vanilla's own methods call each other). Block entities, loot, schematics, vanilla tree
+  features and entities (`addFreshEntity` raises the entity) all end at those methods. The planner's ceiling is
+  lowered by `MAX_RISE` so the tallest tower still fits. **Measured** (`scripts/region_heights.py`, new): the
+  y 98 city has villagers at 96..103, signs at 96+, chests from 88 up, and nothing at 64.
+- **Per-chunk routing in the generator** (`fillFromNoise`, `buildSurface`, `applyCarvers`, `createBiomes`,
+  `createStructures`, `applyBiomeDecoration`, `spawnOriginalMobs`, `getSeaLevel` 63, `getBaseHeight/Column`):
+  outside any city's influence everything is vanilla's and no platmap is ever planned; a nature lot inside gets
+  vanilla's surface, carvers, features, structures and animals; a built lot gets CityWorld's surface + build,
+  then vanilla's structure pieces reaching in and its ores. **No structure STARTS inside a city's influence**
+  (disc + ring): vanilla seats them on the raw land, which is about to move. Everything, including underground
+  ones and a stronghold if one falls there — to refine. `StructureReservations` is not built in this mode.
+- **Tools.** `-Dcityworld.probe=survey:sites` (`-Dcityworld.probe.cells=N`): every cell's verdict (site or why
+  each try was refused) and the nearest city's PLAN as a chunk map, no chunk generated. `/cityfind city [tp]`
+  (`CitySites.nearest`, off-thread). F3 line names the cell's city, districts, level and edge distance.
+  `scripts/region_heights.py <world> cx0 cx1 cz0 cz1`: entity and block-entity y histograms.
+
+**Measured on seed 8675309 (dev server, `run/server.properties` level-type `cityworld:vanilla` for the runs,
+restored after):** survey 7×7 cells: 20 cities (6 two-district, 12 three, 2 four), 18 at y 64..71, one 72, one
+96. City at (-656, -3328), 3 districts, y 64, coastal (29% water): 637 city chunks, 562 built (88%), planned in
+3.4 s; 3,024 chunks generated with 0 failures; rendered (`region_render.py`) — flat streets, towers mid, farms at
+the rim, vanilla forest and sea around, the shore filled in. City at (3392, -1408), y 98, on a plateau with
+hills above it: same, and the lift measured as above.
+
+**Also done the same night:** preset `cityworld:vanilla_apocalypse` ("CityWorld: Vanilla Apocalypse (ruined
+cities in a normal world)") — the same file with `"style": "apocalypse"` and the apocalypse settings; 840 chunks
+of the (-656, -3328) city generated under it with 0 failures, rendered ruined and overgrown (11k moss blocks,
+87k mossy cobble in the swept area). Both presets are in the deployed jar. The ordinary self-test (`cityworld:city`, seed 8675309) still PASSES after
+all of this: 179 checks, 0 parse failures, 0 block-entity warnings — the shared paths are gated on the mode.
+
+**Not done / to decide (the morning's list):**
+- **Memory, found by the owner's first play (2026-10-03): `/cityfind lot hosp` searched 9,120 blocks of wild and
+  every platmap on the way was planned and cached forever — 4 GB gone.** Fixed: `ShapeProvider.plansNothingAt`
+  / `CitySites.touches` leave a platmap no city reaches all-null (every reader already takes null as wild); the
+  F3 line now reads only an already-judged cell. Reviewed for the same class afterwards: the JourneyMap overlay
+  and the lot/street/schematic searches were the other wide planners and are covered by the same fix; the cell
+  memo and `cutColumns` are small and bounded; judging runs only on workers and the finder's own thread.
+- **⚠ Every city is a pure function of the seed and the constants in `CitySites`** (cell size, size odds, water
+  and roughness limits, `MAX_RISE`, the wobble). Change any of them and every existing vanilla-terrain world's
+  cities move or change level under chunks already generated. So before release they must become world-settings
+  fields baked into the world at creation (as `Customize` bakes settings), never system properties or
+  code constants that a later version may retune.
+- **Rivers (2026-10-03, two owner rounds).** Settings group `cities` (spacing, districts ± variance, level
+  range, maxWater, minNear; Customize "Land" row; the two stand-alone presets removed; vanilla-ignored options grey
+  out). A river chunk inside the city (river BIOME under 3 of HeightInfo's 5 columns — at 2 the channel ran half
+  again too wide, the biome climbs the banks) is a **channel**: `digChannel` makes it water edge to edge, 4 deep
+  on gravel; the planner reads it as sea, `refusesLotAt` keeps every lot but a road off it (a building lot
+  judged it by height range and stood in the river), bridges run ACROSS the river (`getBridgePolarityAt` from
+  the river biome's spread, not the noise that refused half the crossings) with reach 10 (one hop is 5 —
+  reach 4 bridged nothing) and piers sunk through the water. City ground beside a channel is a
+  **`ShorelineLot`** (planned in `VanillaNatureContext` before buildings): promenade, mooring slip with spruce
+  boardwalk, loading quay with a derrick and cargo, or a green bank left to slope to the water. Museums were
+  empty because `applyVanillaTerrain` forced `includeBones` off, which also gates the museum hall.
+- **Rivers, round three (2026-10-04, after the owner's night look):** channels dropped. The river is vanilla's
+  inside the city too; a chunk is a river chunk when a river biome cell (4x4) is under water at its centre, or
+  borders a wet river cell across a chunk edge (`CitySites.isRiverChunk`, memoised; "most of five columns"
+  filled corner crossings and cut the river, "any river biome" lost half the city to dry banks). Riverside city
+  chunks: 45% `ShorelineLot` (promenade / mooring / loading; the green bank kind went), the rest nature, whose
+  ground eases from a built neighbour over a 12-block apron (the End's rule) so the natural bank shows. Moorings
+  and loading quays face the side with most river, and `dredgeBerths` cuts the bank in front of them out to the
+  water. The ring never touches river chunks and eases to the natural bank near them. Measured with the new
+  `scripts/region_water_path.py`: the water bodies through the test city are identical to the untouched river.
+- **Banked for the next phase (owner, 2026-10-04): rivers in CityWorld's OWN terrain.** Trace them from the
+  mountains: streams that gather, waterfalls where the drop is big, then on down to the sea. Cities on those
+  rivers get the same riverside lots as the vanilla mode (quays, moorings, loading quays, natural banks, bridges).
+  Not started; the vanilla-terrain river work (`ShorelineLot`, `dredgeBerths`, river-aware bridge polarity) is
+  the part to reuse.
+- Next asked for (owner): more waterside lots — moorings, docks, beach pieces where a city meets the coast.
+- The owner's look. Then: settings for cell size / size range / max rise (system properties now), the other five lines (26.3's
+  router names its surface function differently; 1.20.1's `WorldGenRegion` constructor differs; `createTick`
+  overloads and `getUncachedNoiseBiome` may differ per line), self-test coverage, Customize for the preset.
+- TerraBlender/BoP are not bridged for the inner generator (the End has `TerraBlenderBridge.initializeEnd`; the
+  overworld needs the same for a `NoiseBasedChunkGenerator` stem that is not a stem). Alex's Caves mixes into
+  `MultiNoiseBiomeSource`, which IS the wrapped source, so it may just work — unmeasured.
+- Structures: let underground starts through (mineshafts, ancient cities, trial chambers, strongholds) and refuse
+  only surface ones; the ring's blend can still shift ground under a piece from a start outside.
+- Cave-biome decoration under a city is skipped (only ores run); `caveOnlyFeatures` could run there.
+- World spawn is wherever vanilla puts it; a city is up to ~1,500 blocks away. `/cityfind city tp`. Consider
+  spawning at the nearest city.
+- A city on a river/lake fills it in (water ≤ 35% of samples). Bridges over rivers would be the nicer answer.
+- `getUncachedNoiseBiome` and `getBiome` through the shifted region answer for the drawing height, not the real
+  one (cave biomes only; harmless so far). `noCollision`-style checks read chunks directly and are not shifted.
+- A chunk saved between NOISE and SURFACE loses its cut-column note and keeps bare stone on cut slopes.
+
 ## ▶ Resume here — Farmer's Delight, shop stock and shop trades (v5.18.0, 2026-10-02)
 
 **Owner:** *"i added farmers delight to 1.20.1 — have a look in it see what it adds — it mentions decor and

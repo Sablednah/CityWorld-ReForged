@@ -81,7 +81,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     RegistryFileCodec.create(CityWorldRegistries.WORLD_SETTINGS, CityWorldSettingsData.CODEC)
                             .optionalFieldOf("settings").forGetter(g -> g.settings),
                     net.minecraft.world.level.Level.RESOURCE_KEY_CODEC.optionalFieldOf("twin_of").forGetter(g -> g.twinOf),
-                    Codec.STRING.optionalFieldOf("environment").forGetter(g -> g.environment)
+                    Codec.STRING.optionalFieldOf("environment").forGetter(g -> g.environment),
+                    Codec.STRING.optionalFieldOf("terrain").forGetter(g -> g.terrain)
             ).apply(instance, CityWorldChunkGenerator::new));
 
     /**
@@ -181,6 +182,52 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private final Optional<String> environment;
 
+    /**
+     * Whose land this is, straight from the JSON: {@code "vanilla"} for a vanilla world with cities in it — every
+     * chunk filled by a real vanilla overworld generator, and CityWorld building only on the patches
+     * {@link CitySites} picks, each at its own level. Absent means CityWorld's own terrain. Kept raw so the codec
+     * round-trips; resolved once into {@link #vanillaTerrain()}. Overworld only.
+     */
+    private final Optional<String> terrain;
+
+    /** The {@link #terrain} field says vanilla (the way the first presets asked for it). */
+    private final boolean vanillaByField;
+    /** This is the overworld, so the mode may apply at all. */
+    private final boolean overworld;
+    /** {@link #vanillaTerrain()}'s answer, once settled. */
+    private volatile Boolean vanillaTerrain;
+
+    /**
+     * Whether this is a vanilla world with cities in it: the overworld, and either the generator's own
+     * {@code "terrain": "vanilla"} or the world's settings ({@code cities.vanillaTerrain}, what Customize writes
+     * and a server's settings datapack sets). Read through the twin, as the style and settings are.
+     */
+    public boolean vanillaTerrain() {
+        Boolean known = vanillaTerrain;
+        if (known == null) {
+            CityWorldChunkGenerator twin = overworld ? twinSource(false) : null;
+            known = overworld && (vanillaByField
+                    || (twin != null ? twin : this).resolvedSettings().cities().vanillaTerrain());
+            vanillaTerrain = known;
+        }
+        return known;
+    }
+
+    /** The world's cities dials (spacing, size, level range); see {@code CityWorldSettingsData.Cities}. */
+    private CityWorldSettingsData.Cities citiesConfig() {
+        CityWorldChunkGenerator twin = twinSource(false);
+        return (twin != null ? twin : this).resolvedSettings().cities();
+    }
+
+    public boolean isVanillaTerrain() {
+        return vanillaTerrain();
+    }
+
+    /** The raw {@code terrain} field, for code that rebuilds this generator with other settings (Customize). */
+    public Optional<String> terrainField() {
+        return terrain;
+    }
+
     private static me.daddychurchill.CityWorld.compat.Environment parseEnvironment(Optional<String> name) {
         return switch (name.map(n -> n.trim().toLowerCase(java.util.Locale.ROOT)).orElse("")) {
             case "nether", "the_nether" -> me.daddychurchill.CityWorld.compat.Environment.NETHER;
@@ -232,7 +279,17 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             Optional<Holder<CityWorldSettingsData>> settings,
             Optional<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> twinOf,
             Optional<String> environment) {
+        this(biomeSource, decayed, style, settings, twinOf, environment, Optional.empty());
+    }
+
+    public CityWorldChunkGenerator(BiomeSource biomeSource, Optional<Boolean> decayed, Optional<String> style,
+            Optional<Holder<CityWorldSettingsData>> settings,
+            Optional<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> twinOf,
+            Optional<String> environment, Optional<String> terrain) {
         super(biomeSource);
+        this.terrain = terrain;
+        this.vanillaByField = terrain.map(t -> t.trim().equalsIgnoreCase("vanilla")).orElse(false);
+        this.overworld = parseEnvironment(environment) == me.daddychurchill.CityWorld.compat.Environment.NORMAL;
         this.environment = environment;
         this.decayed = decayed;
         this.style = style;
@@ -296,9 +353,16 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     // ZARP's voidlings only turn up afterwards). Applied here as well as in the presets, so an End
                     // created before the presets said so is pristine too. An explicit "decayed" still wins.
                     Optional<Boolean> decay = decayed.isEmpty() && isEnd() ? Optional.of(false) : decayed;
+                    // A vanilla-terrain city is drawn at the usual street level and lifted to its site's own, up
+                    // to the settings' levelRange: the planner is told a ceiling that much lower, so the tallest tower
+                    // still fits under the real one once lifted.
                     local = new CityWorldGenerator(levelSeed, TERRAIN_CEILING, UPSTREAM_SEA_LEVEL,
-                            worldStyle, level.getMinY(), level.getMaxY(), decay, settingsData,
-                            parseEnvironment(environment));
+                            worldStyle, level.getMinY(), level.getMaxY() - (vanillaTerrain() ? citiesConfig().levelRange() : 0),
+                            decay, settingsData, parseEnvironment(environment), vanillaTerrain());
+                    if (vanillaTerrain()) {
+                        vanillaOverworld();
+                        local.citySites = citySites;
+                    }
                     // The biome source answers getNoiseBiome from this context (terrain height + climate),
                     // so hand it over the moment it exists — this is the earliest point it can be had.
                     if (this.biomeSource instanceof CityWorldBiomes cityBiomes)
@@ -314,8 +378,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     // Where vanilla's structures are going, so the planner can leave them room. Built
                     // eagerly: this runs exactly once per world and provably after createState (the seed
                     // check above would have thrown otherwise), so there is nothing to defer.
-                    local.structureReservations = StructureReservations.of(structureState,
-                            StructureReservations.DEFAULT_CLEARANCE, forecast);
+                    // Not in a vanilla-terrain world: no structure starts inside a city's patch there at all
+                    // (see createStructures), so there is nothing to leave room for.
+                    if (!vanillaTerrain())
+                        local.structureReservations = StructureReservations.of(structureState,
+                                StructureReservations.DEFAULT_CLEARANCE, forecast);
                     context = local;
                 }
             }
@@ -415,8 +482,302 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 return filled;
             });
         }
+        // A vanilla world with cities in it: vanilla fills every chunk; inside a city's patch the ground is then
+        // brought to the city's level (and eased back to the hills across the ring around it), and a built lot
+        // draws on top. Everywhere else the chunk is vanilla's and CityWorld is not even asked for a plan.
+        if (vanillaTerrain()) {
+            CityWorldGenerator context = context(chunk);
+            return vanillaOverworld().fillFromNoise(blender, vanillaOverworldRandom, structureManager, chunk)
+                    .thenApply(filled -> {
+                        int chunkX = filled.getPos().getMinBlockX() >> 4, chunkZ = filled.getPos().getMinBlockZ() >> 4;
+                        CitySites.Site site = citySites.influencing(chunkX, chunkZ);
+                        if (site != null) {
+                            shapeCityGround(context, filled, site);
+                            if (isBuiltLot(context, chunkX, chunkZ)) {
+                                InitialBlocks blocks = new InitialBlocks(context, filled, chunkX, chunkZ);
+                                blocks.yShift = citySites.shift(site);
+                                context.getPlatMap(chunkX, chunkZ).generateChunk(blocks, IGNORE_BIOMES);
+                            }
+                        }
+                        return filled;
+                    });
+        }
         buildCity(structureManager, chunk);
         return CompletableFuture.completedFuture(chunk);
+    }
+
+    // --- a vanilla world with cities in it ("terrain": "vanilla") ---------------------------------------
+
+    /** Vanilla's overworld generator for this world, built once; see {@link #vanillaEnd()} for the pattern. */
+    private net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator vanillaOverworld() {
+        var local = vanillaOverworld;
+        if (local == null)
+            synchronized (this) {
+                local = vanillaOverworld;
+                if (local == null) {
+                    var registries = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess();
+                    var settings = registries.lookupOrThrow(Registries.NOISE_SETTINGS)
+                            .getOrThrow(net.minecraft.world.level.levelgen.NoiseGeneratorSettings.OVERWORLD);
+                    RandomState random = RandomState.create(registries,
+                            net.minecraft.world.level.levelgen.NoiseGeneratorSettings.OVERWORLD, levelSeed);
+                    // The preset wraps vanilla's biome source in ours, because the sampler a non-noise generator is
+                    // handed is a dummy that answers zero everywhere; the wrapper asks with this world's real one.
+                    // The first presets wrapped vanilla's source in cityworld:vanilla; a world made from Customize
+                    // or a settings datapack keeps CityWorld's own source, which hands over to vanilla's from here.
+                    BiomeSource inner;
+                    if (this.biomeSource instanceof CityWorldVanillaBiomeSource wrapped) {
+                        wrapped.bind(random.sampler());
+                        inner = wrapped.source();
+                    } else {
+                        inner = net.minecraft.world.level.biome.MultiNoiseBiomeSource.createFromPreset(
+                                registries.lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST).getOrThrow(
+                                        net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists.OVERWORLD));
+                        if (this.biomeSource instanceof VanillaHandover handover)
+                            handover.bindVanilla(inner, random.sampler());
+                        else
+                            me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                                    "CityWorld: vanilla terrain with a {} biome source — structures and features will "
+                                            + "be judged by CityWorld's biomes, not the land's",
+                                    this.biomeSource.getClass().getSimpleName());
+                    }
+                    var built = new net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator(inner, settings);
+                    LevelHeightAccessor bounds = LevelHeightAccessor.create(settings.value().noiseSettings().minY(),
+                            settings.value().noiseSettings().height());
+                    vanillaOverworldRandom = random;
+                    // Vanilla's raw ground, the one thing a site is judged by: the top solid block, water not counted.
+                    BiomeSource land = inner;
+                    net.minecraft.world.level.biome.Climate.Sampler climate = random.sampler();
+                    citySites = new CitySites(levelSeed, UPSTREAM_SEA_LEVEL + 1, settings.value().seaLevel(),
+                            (x, z) -> built.getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, bounds, random) - 1,
+                            (x, z) -> {
+                                var key = land.getNoiseBiome(x >> 2, UPSTREAM_SEA_LEVEL >> 2, z >> 2, climate)
+                                        .unwrapKey().orElse(null);
+                                return key == net.minecraft.world.level.biome.Biomes.RIVER
+                                        || key == net.minecraft.world.level.biome.Biomes.FROZEN_RIVER;
+                            },
+                            citiesConfig());
+                    vanillaOverworld = local = built;
+                }
+            }
+        return local;
+    }
+
+    private volatile net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator vanillaOverworld;
+    /** The overworld noise's own random state — the one MC hands us is a dummy for a non-noise generator. */
+    private volatile RandomState vanillaOverworldRandom;
+    /** Where the cities are; exists exactly when {@link #vanillaOverworld} does. */
+    private volatile CitySites citySites;
+
+    /** The city sites of a vanilla-terrain world (null in any other), for the probe and commands. */
+    public CitySites citySites() {
+        if (vanillaTerrain() && levelSeedKnown
+                && net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer() != null)
+            vanillaOverworld();
+        return citySites;
+    }
+
+    /** Whether the plan puts something built on this chunk. Asks for a plan only inside a city's patch. */
+    private boolean isBuiltLot(CityWorldGenerator context, int chunkX, int chunkZ) {
+        if (!citySites.isCityChunk(chunkX, chunkZ))
+            return false;
+        me.daddychurchill.CityWorld.Plats.PlatLot lot = context.getPlatMap(chunkX, chunkZ).getMapLot(chunkX, chunkZ);
+        return lot != null && lot.style != me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE;
+    }
+
+    /**
+     * Columns of a chunk whose ground {@link #shapeCityGround} LOWERED, kept from the noise stage to the surface
+     * stage. Vanilla's surface rules lay grass and dirt only near where the noise said the surface would be, so a
+     * hillside cut back for a city comes out of them as bare stone; {@link #coverCutGround} dresses those columns.
+     * A chunk saved between the two stages loses its entry and keeps the bare stone — rare, and only cosmetic.
+     */
+    private final java.util.concurrent.ConcurrentHashMap<Long, java.util.BitSet> cutColumns =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * Brings vanilla's ground to the city: flat at the site's level across the patch, eased back to the natural
+     * height across the ring ({@link CitySites#groundAt}). The structure pad run the other way — there the plan
+     * bends to a structure, here the land bends to the plan. Never digs below the city's level, which is never
+     * below the sea, so it cannot open a pit for water to stand in.
+     */
+    private void shapeCityGround(CityWorldGenerator context, ChunkAccess chunk, CitySites.Site site) {
+        ChunkPos pos = chunk.getPos();
+        int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ(), chunkX = minX >> 4, chunkZ = minZ >> 4;
+        boolean cityChunk = citySites.isCityChunk(chunkX, chunkZ);
+        boolean riverChunk = citySites.isRiverChunk(chunkX, chunkZ);
+        // The river is vanilla's, in the city and out of it (owner, 2026-10-04: "a complete navigable river flows
+        // through — and rivers have banks — and in some places are swapped out with docks and moorings"). Nothing
+        // is built on a river chunk but a bridge, and its ground is left alone — except a berth dredged in front of
+        // a mooring or loading quay, so a boat can reach it.
+        if (riverChunk) {
+            if (cityChunk)
+                dredgeBerths(context, chunk);
+            return;
+        }
+        int[] targets = new int[256];
+        int[] tops = new int[256];
+        for (int x = 0; x < 16; x++)
+            for (int z = 0; z < 16; z++)
+                tops[x << 4 | z] = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x, z);
+        if (cityChunk && isBuiltLot(context, chunkX, chunkZ)) {
+            // under something built: flat at the city's level
+            java.util.Arrays.fill(targets, site.level());
+        } else if (cityChunk) {
+            // city ground left to nature (the banks beside the river, mostly): its own ground, eased up to the
+            // city's level only across an apron beside a built neighbour — the End's rule
+            boolean[][] builtBeside = new boolean[3][3];
+            boolean any = false;
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dz = -1; dz <= 1; dz++)
+                    if ((dx != 0 || dz != 0) && citySites.isCityChunk(chunkX + dx, chunkZ + dz)
+                            && !citySites.isRiverChunk(chunkX + dx, chunkZ + dz)
+                            && isBuiltLot(context, chunkX + dx, chunkZ + dz)) {
+                        builtBeside[dx + 1][dz + 1] = true;
+                        any = true;
+                    }
+            if (!any)
+                return;
+            for (int x = 0; x < 16; x++)
+                for (int z = 0; z < 16; z++) {
+                    int top = tops[x << 4 | z];
+                    int nearest = Integer.MAX_VALUE;
+                    for (int dx = -1; dx <= 1; dx++)
+                        for (int dz = -1; dz <= 1; dz++)
+                            if (builtBeside[dx + 1][dz + 1]) {
+                                int gapX = dx < 0 ? x + 1 : dx > 0 ? 16 - x : 0, gapZ = dz < 0 ? z + 1 : dz > 0 ? 16 - z : 0;
+                                nearest = Math.min(nearest, Math.max(gapX, gapZ));
+                            }
+                    double weight = Math.max(0.0, 1.0 - (nearest - 1) / (double) APRON);
+                    double eased = weight * weight * (3.0 - 2.0 * weight);
+                    targets[x << 4 | z] = top + (int) Math.round((site.level() - top) * eased);
+                }
+        } else {
+            // the ring: eased from the city's level back to the hills — but never at the river, which keeps its
+            // natural banks outside the city (owner: "we kind of want the river bit left alone")
+            int[] riverX = new int[RIVER_GRID * RIVER_GRID], riverZ = new int[RIVER_GRID * RIVER_GRID];
+            int riverSamples = 0;
+            for (int gx = 0; gx < RIVER_GRID; gx++)
+                for (int gz = 0; gz < RIVER_GRID; gz++) {
+                    int sx = minX - BANK + gx * RIVER_STEP, sz = minZ - BANK + gz * RIVER_STEP;
+                    if (citySites.isRiverColumn(sx, sz)) {
+                        riverX[riverSamples] = sx;
+                        riverZ[riverSamples] = sz;
+                        riverSamples++;
+                    }
+                }
+            for (int x = 0; x < 16; x++)
+                for (int z = 0; z < 16; z++) {
+                    int top = tops[x << 4 | z];
+                    int target = citySites.groundAt(site, minX + x, minZ + z, top);
+                    if (riverSamples > 0) {
+                        long nearest = Long.MAX_VALUE;
+                        for (int i = 0; i < riverSamples; i++) {
+                            long ddx = minX + x - riverX[i], ddz = minZ + z - riverZ[i];
+                            nearest = Math.min(nearest, ddx * ddx + ddz * ddz);
+                        }
+                        double d = Math.sqrt(nearest);
+                        if (d < BANK) {
+                            double t = d / BANK, eased = t * t * (3.0 - 2.0 * t);
+                            target = top + (int) Math.round((target - top) * eased);
+                        }
+                    }
+                    targets[x << 4 | z] = target;
+                }
+        }
+        BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
+        BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        java.util.BitSet cut = null;
+        for (int x = 0; x < 16; x++)
+            for (int z = 0; z < 16; z++) {
+                int top = tops[x << 4 | z], target = targets[x << 4 | z];
+                if (target > top) {
+                    for (int y = top + 1; y <= target; y++)
+                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), stone);
+                } else if (target < top) {
+                    int sky = Math.max(top, chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z));
+                    for (int y = sky; y > target; y--)
+                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), air);
+                    if (cut == null)
+                        cut = new java.util.BitSet(256);
+                    cut.set(x << 4 | z);
+                }
+            }
+        if (cut != null)
+            cutColumns.put(ChunkPos.asLong(chunkX, chunkZ), cut);
+    }
+
+    /** How far city ground left to nature eases from a built neighbour's level back to its own. */
+    private static final int APRON = 12;
+
+    /**
+     * A river chunk beside a mooring or loading quay: the bank between the quay and the water dredged to the
+     * river's depth, row by row out from the quay until the row meets water (or {@link #BERTH_REACH} blocks), so the
+     * quay's slip opens onto the river and not onto a lawn.
+     */
+    private void dredgeBerths(CityWorldGenerator context, ChunkAccess chunk) {
+        ChunkPos pos = chunk.getPos();
+        int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ(), chunkX = minX >> 4, chunkZ = minZ >> 4;
+        int top = citySites.seaLevel() - 1;
+        int bed = top - me.daddychurchill.CityWorld.Plats.Vanilla.ShorelineLot.BED_DEPTH;
+        BlockState water = net.minecraft.world.level.block.Blocks.WATER.defaultBlockState();
+        BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        BlockState gravel = net.minecraft.world.level.block.Blocks.GRAVEL.defaultBlockState();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        // {neighbour dx, dz, the neighbour's side that faces this chunk}; sides are north, south, west, east
+        int[][] around = { { 0, -1, 1 }, { 0, 1, 0 }, { -1, 0, 3 }, { 1, 0, 2 } };
+        for (int[] a : around) {
+            int nx = chunkX + a[0], nz = chunkZ + a[1];
+            if (!(context.getPlatMap(nx, nz).getMapLot(nx, nz) instanceof me.daddychurchill.CityWorld.Plats.Vanilla.ShorelineLot quay)
+                    || !quay.berthsOn(a[2]))
+                continue;
+            for (int u = 2; u <= 13; u++)
+                for (int v = 0; v < BERTH_REACH; v++) {
+                    // v counts away from the quay's edge, into this chunk
+                    int x = a[0] == 0 ? u : a[0] < 0 ? v : 15 - v;
+                    int z = a[1] == 0 ? u : a[1] < 0 ? v : 15 - v;
+                    int ground = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x, z);
+                    int surface = chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z);
+                    if (surface > ground && ground < top)
+                        break; // reached the river
+                    for (int y = Math.max(surface, ground); y > top; y--)
+                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), air);
+                    for (int y = top; y > bed; y--)
+                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), water);
+                    chunk.setBlockState(cursor.set(minX + x, bed, minZ + z), gravel);
+                }
+        }
+    }
+
+    private static final int BERTH_REACH = 12;
+
+    /** How far from a river its bank climbs to the city's level, and how the river is sampled for it. */
+    private static final int BANK = 16, RIVER_STEP = 4, RIVER_GRID = (16 + 2 * BANK) / RIVER_STEP;
+
+    /** The biome's own ground on the columns {@link #shapeCityGround} cut and vanilla's surface rules left as rock. */
+    private void coverCutGround(ChunkAccess chunk) {
+        ChunkPos pos = chunk.getPos();
+        int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
+        java.util.BitSet cut = cutColumns.remove(ChunkPos.asLong(minX >> 4, minZ >> 4));
+        if (cut == null)
+            return;
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        for (int i = cut.nextSetBit(0); i >= 0; i = cut.nextSetBit(i + 1)) {
+            int x = i >> 4, z = i & 15;
+            int top = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x, z);
+            if (!chunk.getBlockState(cursor.set(minX + x, top, minZ + z)).is(net.minecraft.tags.BlockTags.BASE_STONE_OVERWORLD))
+                continue; // the rules reached it after all
+            Holder<Biome> biome = chunk.getNoiseBiome((minX + x) >> 2, top >> 2, (minZ + z) >> 2);
+            net.minecraft.resources.ResourceKey<Biome> key = biome.unwrapKey().orElse(null);
+            // null from either means "nothing special": grass on dirt, as most of the overworld is
+            Material top1 = me.daddychurchill.CityWorld.Support.BiomeSurface.surface(biome, key);
+            Material under1 = me.daddychurchill.CityWorld.Support.BiomeSurface.subsurface(biome, key);
+            BlockState surface = (top1 != null ? top1 : Material.GRASS_BLOCK).getBlockState();
+            BlockState under = (under1 != null ? under1 : Material.DIRT).getBlockState();
+            chunk.setBlockState(cursor.set(minX + x, top, minZ + z), surface);
+            for (int y = top - 1; y >= top - 3; y--)
+                if (chunk.getBlockState(cursor.set(minX + x, y, minZ + z)).is(net.minecraft.tags.BlockTags.BASE_STONE_OVERWORLD))
+                    chunk.setBlockState(cursor, under);
+        }
     }
 
     /**
@@ -1616,6 +1977,17 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // except in the End's central zone, which vanilla generated and must surface itself.
         if (inEndCentre(chunk) || isEndWild(structureManager, chunk))
             vanillaEnd().buildSurface(region, structureManager, vanillaEndRandom, chunk);
+        // A vanilla-terrain world: vanilla's surface on everything but a built lot, which laid its own
+        // (ShapeProvider_Vanilla.preGenerateChunk) — the rules would turf every stone roof.
+        if (vanillaTerrain()) {
+            int chunkX = chunk.getPos().getMinBlockX() >> 4, chunkZ = chunk.getPos().getMinBlockZ() >> 4;
+            if (citySites.influencing(chunkX, chunkZ) != null && isBuiltLot(context(chunk), chunkX, chunkZ)) {
+                cutColumns.remove(ChunkPos.asLong(chunkX, chunkZ));
+                return;
+            }
+            vanillaOverworld().buildSurface(region, structureManager, vanillaOverworldRandom, chunk);
+            coverCutGround(chunk);
+        }
     }
 
     /**
@@ -1639,6 +2011,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     public void applyCarvers(WorldGenRegion region, long seed, RandomState randomState,
             BiomeManager biomeManager, StructureManager structureManager, ChunkAccess chunk) {
         // No vanilla carvers (caves/ravines) — CityWorld carves its own mines/sewers.
+        // Except in a vanilla-terrain world, where every chunk but a built lot is vanilla's (a ravine through a
+        // street is the one thing vanilla's underground is not allowed to do to a city).
+        if (vanillaTerrain()) {
+            int chunkX = chunk.getPos().getMinBlockX() >> 4, chunkZ = chunk.getPos().getMinBlockZ() >> 4;
+            if (citySites.influencing(chunkX, chunkZ) == null || !isBuiltLot(context(chunk), chunkX, chunkZ))
+                vanillaOverworld().applyCarvers(region, seed, vanillaOverworldRandom, biomeManager, structureManager, chunk);
+        }
     }
 
     /**
@@ -1658,6 +2037,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     public CompletableFuture<ChunkAccess> createBiomes(RandomState randomState, Blender blender,
             StructureManager structureManager, ChunkAccess chunk) {
         context(chunk);
+        if (vanillaTerrain())
+            return vanillaOverworld().createBiomes(vanillaOverworldRandom, blender, structureManager, chunk);
         return super.createBiomes(randomState, blender, structureManager, chunk);
     }
 
@@ -1676,6 +2057,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             StructureManager structureManager, ChunkAccess chunk, StructureTemplateManager templateManager,
             ResourceKey<net.minecraft.world.level.Level> dimension) {
         context(chunk);
+        // In a vanilla-terrain world a city's patch (and the ring its ground blends across) starts no structure:
+        // vanilla would seat a village on the raw land, and the land there is about to be moved. A structure that
+        // starts outside and reaches in still places its pieces. Everything, for now — an underground structure
+        // could be let through, and one stronghold in a ring of them may be lost to a city.
+        if (vanillaTerrain() && citySites.influencing(chunk.getPos().getMinBlockX() >> 4,
+                chunk.getPos().getMinBlockZ() >> 4) != null)
+            return;
         StructureForecast local = forecast;
         if (local != null)
             local.bind();
@@ -1720,8 +2108,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     public ChunkGeneratorStructureState createState(HolderLookup<StructureSet> lookup,
             RandomState randomState, long seed) {
         // Doubles as the one place vanilla tells a ChunkGenerator its world seed — see context().
-        if (this.levelSeedKnown && this.levelSeed != seed)
+        if (this.levelSeedKnown && this.levelSeed != seed) {
             this.vanillaEnd = null; // a different world: its End noise is not this one's
+            this.vanillaOverworld = null; // ...nor its overworld noise, nor its cities
+        }
         this.levelSeed = seed;
         this.levelSeedKnown = true;
         // The End's biomes come from its noise, and structure placement asks for biomes before any chunk exists:
@@ -1736,8 +2126,15 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // and its Structures page lists the Nether's and the End's sets beside the overworld's.
         CityWorldChunkGenerator twin = twinSource(false);
         CityWorldSettingsData.Structures choice = (twin != null ? twin : this).resolvedSettings().structures();
+        // A vanilla-terrain world places vanilla's structures by vanilla's own noise (strongholds search biomes
+        // through the random state), and keeps every structure set its settings do not turn off: the wild is a
+        // normal world. The noise must exist now, not at first chunk — see the End above.
+        boolean vanillaNow = vanillaTerrain() && net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer() != null;
+        if (vanillaNow)
+            vanillaOverworld();
         ChunkGeneratorStructureState state = ChunkGeneratorStructureState.createForNormal(
-                randomState, seed, this.biomeSource, onlyAllowed(lookup, choice));
+                vanillaNow ? vanillaOverworldRandom : randomState, seed, this.biomeSource,
+                onlyAllowed(lookup, choice, vanillaTerrain()));
         if (!choice.allow().isEmpty() || !choice.deny().isEmpty()) {
             // What a server owner needs to see once: the lists were read, and which ids name nothing here
             // (a set of a mod that is not installed is normal in a shared settings file, and ignored).
@@ -1791,12 +2188,18 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     public static HolderLookup<StructureSet> onlyAllowed(HolderLookup<StructureSet> all,
             CityWorldSettingsData.Structures choice) {
+        return onlyAllowed(all, choice, false);
+    }
+
+    /** @param everything every set counts as tagged (a vanilla-terrain world), so only the deny list takes any away */
+    public static HolderLookup<StructureSet> onlyAllowed(HolderLookup<StructureSet> all,
+            CityWorldSettingsData.Structures choice, boolean everything) {
         HolderSet<StructureSet> tagged = all.get(ALLOWED_STRUCTURE_SETS)
                 .<HolderSet<StructureSet>>map(named -> named)
                 .orElseGet(HolderSet::direct); // absent tag -> empty -> no vanilla structures
         // The world's own allow/deny lists (settings "structures") overrule the tag, set by set.
         java.util.function.Predicate<Holder.Reference<StructureSet>> allowed = set -> choice
-                .allows(set.key().identifier().toString(), tagged.contains(set));
+                .allows(set.key().identifier().toString(), everything || tagged.contains(set));
         return new HolderLookup<>() {
             @Override
             public Stream<Holder.Reference<StructureSet>> listElements() {
@@ -1852,6 +2255,28 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         }
         CityWorldGenerator context = context(level);
         ChunkPos pos = chunk.getPos();
+
+        // A vanilla-terrain world: vanilla decorates every chunk but a built lot — trees, lakes, ores, structures —
+        // and a built lot is drawn through a level raised to its city's own height (ShiftedRegion), then given
+        // the two slices of vanilla's pass a city wants: structure pieces reaching in from outside, and ore.
+        if (vanillaTerrain()) {
+            int chunkX = pos.getMinBlockX() >> 4, chunkZ = pos.getMinBlockZ() >> 4;
+            CitySites.Site site = citySites.influencing(chunkX, chunkZ);
+            if (site == null || !isBuiltLot(context, chunkX, chunkZ)) {
+                super.applyBiomeDecoration(level, chunk, structureManager);
+                return;
+            }
+            WorldGenLevel raised = ShiftedRegion.of(level, citySites.shift(site));
+            context.beginDecoration(raised, pos);
+            try {
+                context.getPlatMap(chunkX, chunkZ).generateBlocks(new RealBlocks(context, raised, pos));
+            } finally {
+                context.endDecoration();
+            }
+            placeStructures(level, chunk, structureManager);
+            placeUndergroundOres(level, chunk);
+            return;
+        }
 
         PlatMap platmap = context.getPlatMap(pos.x, pos.z);
 
@@ -2430,6 +2855,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
     @Override
     public void spawnOriginalMobs(WorldGenRegion region) {
+        // The wild of a vanilla-terrain world gets vanilla's animals; a built lot gets what its lot spawns.
+        if (vanillaTerrain()) {
+            int chunkX = region.getCenter().getMinBlockX() >> 4, chunkZ = region.getCenter().getMinBlockZ() >> 4;
+            CityWorldGenerator context = context();
+            if (context == null || citySites.influencing(chunkX, chunkZ) == null || !isBuiltLot(context, chunkX, chunkZ))
+                vanillaOverworld().spawnOriginalMobs(region);
+        }
     }
 
     @Override
@@ -2454,6 +2886,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     @Override
     public int getSeaLevel() {
+        if (vanillaTerrain())
+            return UPSTREAM_SEA_LEVEL; // vanilla's own number, for vanilla's own sea
         return UPSTREAM_SEA_LEVEL + 1;
     }
 
@@ -2481,6 +2915,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // The End's terrain is vanilla's, so vanilla answers for it (end cities ask this for their y >= 60 rule).
         if (isEnd())
             return vanillaEnd().getBaseHeight(x, z, type, level, vanillaEndRandom);
+        // Raw vanilla terrain, city or not: structures are seated by it, and a city's patch starts none.
+        if (vanillaTerrain())
+            return vanillaOverworld().getBaseHeight(x, z, type, level, vanillaOverworldRandom);
         NoiseColumn column = getBaseColumn(x, z, level, randomState);
         Predicate<BlockState> isOpaque = type.isOpaque();
         for (int y = level.getMaxY(); y >= level.getMinY(); y--)
@@ -2502,6 +2939,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     public NoiseColumn getBaseColumn(int x, int z, LevelHeightAccessor level, RandomState randomState) {
         if (isEnd())
             return vanillaEnd().getBaseColumn(x, z, level, vanillaEndRandom);
+        if (vanillaTerrain())
+            return vanillaOverworld().getBaseColumn(x, z, level, vanillaOverworldRandom);
         CityWorldGenerator context = context(level);
         OreProvider ores = context.oreProvider;
         int terrainY = context.shapeProvider.findBlockY(context, x, z);
@@ -2546,6 +2985,17 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 context.shapeProvider.getCollectionName(),
                 context.shapeProvider.findBlockY(context, pos.getX(), pos.getZ()),
                 context.streetLevel, context.seaLevel));
+        CitySites sites = citySites;
+        if (sites != null) {
+            // Only what is already known: this runs on the render thread, and judging a cell costs ~0.5 s.
+            CitySites.Verdict verdict = sites.knownVerdictAt(pos.getX(), pos.getZ());
+            CitySites.Site site = verdict == null ? null : verdict.site();
+            info.add(verdict == null ? "CityWorld: this cell is not judged yet"
+                    : site == null ? "CityWorld: no city in this cell"
+                    : String.format("CityWorld: city at %d, %d — %d districts, streets at y %d, edge %+d blocks",
+                            site.centreX(), site.centreZ(), site.districts(), site.level() + 1,
+                            (int) sites.edgeDistance(site, pos.getX(), pos.getZ())));
+        }
     }
 
     /** The context if it has been built, else null — for diagnostics that must not force creation. */
