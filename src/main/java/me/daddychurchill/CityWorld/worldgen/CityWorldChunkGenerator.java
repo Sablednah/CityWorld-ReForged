@@ -555,6 +555,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     // before anything asks the source for biomes
                     TerraBlenderBridge.initializeOverworld(registries, registries.lookupOrThrow(Registries.DIMENSION_TYPE)
                             .getOrThrow(net.minecraft.world.level.dimension.BuiltinDimensionTypes.OVERWORLD), built, levelSeed);
+                    // ...and as Alex's Caves does for one at server start (see ModdedBiomeSources)
+                    ModdedBiomeSources.prepareOverworld(inner, registries, levelSeed);
                     LevelHeightAccessor bounds = LevelHeightAccessor.create(settings.value().noiseSettings().minY(),
                             settings.value().noiseSettings().height());
                     vanillaOverworldRandom = random;
@@ -564,8 +566,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     citySites = new CitySites(levelSeed, UPSTREAM_SEA_LEVEL + 1, settings.value().seaLevel(),
                             (x, z) -> built.getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, bounds, random) - 1,
                             (x, z) -> {
-                                var key = land.getNoiseBiome(x >> 2, UPSTREAM_SEA_LEVEL >> 2, z >> 2, climate)
-                                        .unwrapKey().orElse(null);
+                                var found = land.getNoiseBiome(x >> 2, UPSTREAM_SEA_LEVEL >> 2, z >> 2, climate);
+                                var key = found == null ? null : found.unwrapKey().orElse(null);
                                 return key == net.minecraft.world.level.biome.Biomes.RIVER
                                         || key == net.minecraft.world.level.biome.Biomes.FROZEN_RIVER;
                             },
