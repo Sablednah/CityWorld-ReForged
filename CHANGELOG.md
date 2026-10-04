@@ -5,6 +5,18 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 5.19.1
+
+All six Minecraft lines.
+
+### Fixed
+
+- **Vanilla land with Biomes O' Plenty (TerraBlender) or Alex's Caves no longer fails to create the world.** Both mods
+  hook vanilla's overworld biome source and set it up only for real dimensions, so the one vanilla land builds inside
+  CityWorld's generator answered with no biome and every chunk failed. Vanilla land now sets it up the way each mod
+  does, so their biomes — BoP's, and Alex's Caves' cave biomes — appear in vanilla-land worlds too, and a missing
+  biome can no longer stop world creation.
+
 ## 5.19.0
 
 All six Minecraft lines.
