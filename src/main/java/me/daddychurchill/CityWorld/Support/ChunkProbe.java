@@ -457,14 +457,14 @@ public final class ChunkProbe {
                 // vanilla source answers; the sampler argument is ignored by it)
                 int river = 0, samples = 0;
                 var source = level.getChunkSource().getGenerator().getBiomeSource();
-                var sampler = level.getChunkSource().randomState().sampler();
+                var sampler = level.getChunkSource().randomState().createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().build());
                 for (int dx = -site.radius(); dx <= site.radius(); dx += 16)
                     for (int dz = -site.radius(); dz <= site.radius(); dz += 16) {
                         if ((long) dx * dx + (long) dz * dz > (long) site.radius() * site.radius())
                             continue;
                         samples++;
-                        var key = source.getNoiseBiome((site.centreX() + dx) >> 2, site.level() >> 2,
-                                (site.centreZ() + dz) >> 2, sampler).unwrapKey().orElse(null);
+                        var key = source.createResolver(sampler).getNoiseBiome((site.centreX() + dx) >> 2, site.level() >> 2,
+                                (site.centreZ() + dz) >> 2).unwrapKey().orElse(null);
                         if (key == net.minecraft.world.level.biome.Biomes.RIVER
                                 || key == net.minecraft.world.level.biome.Biomes.FROZEN_RIVER)
                             river++;

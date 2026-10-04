@@ -45,9 +45,26 @@ public final class ShiftedRegion extends WorldGenRegion {
     private final int shift;
 
     private ShiftedRegion(WorldGenRegion real, int shift) {
-        super(real.getLevel(), real.cache, real.generatingStep, real.center);
+        super(real.getLevel(), holders(real), real.generatingStep, real.center);
         this.real = real;
         this.shift = shift;
+    }
+
+    /**
+     * 26.3: the region maps the chunk-holder cache it was built from into plain chunks and keeps only those, so a
+     * second region over the same chunks rebuilds that cache from the server's own holders — the same ones vanilla
+     * read, for the same square (the region drops anything past its step's dependencies itself).
+     */
+    private static net.minecraft.util.StaticCache2D<net.minecraft.server.level.GenerationChunkHolder> holders(
+            WorldGenRegion real) {
+        var chunks = real.getLevel().getChunkSource().chunkMap;
+        var centre = real.center.getPos();
+        int range = real.generatingStep.directDependencies().size();
+        return net.minecraft.util.StaticCache2D.create(centre.x(), centre.z(), range, (x, z) -> {
+            long key = net.minecraft.world.level.ChunkPos.pack(x, z);
+            var holder = chunks.getUpdatingChunkIfPresent(key);
+            return holder != null ? holder : chunks.getVisibleChunkIfPresent(key);
+        });
     }
 
     /** The level to hand a lot drawn {@code shift} blocks below where it belongs; the level itself when zero. */

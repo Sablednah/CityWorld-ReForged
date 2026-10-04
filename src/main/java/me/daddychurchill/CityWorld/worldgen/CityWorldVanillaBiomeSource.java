@@ -56,9 +56,10 @@ public class CityWorldVanillaBiomeSource extends BiomeSource {
         return source.possibleBiomes().stream();
     }
 
+    /** 26.3: biomes are asked of a resolver; this one ignores the sampler it is handed, as above. */
     @Override
-    public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler handed) {
+    public net.minecraft.world.level.biome.BiomeResolver createResolver(Climate.Sampler handed) {
         Climate.Sampler real = sampler;
-        return source.getNoiseBiome(x, y, z, real != null ? real : handed);
+        return source.createResolver(real != null ? real : handed);
     }
 }

@@ -498,18 +498,24 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // brought to the city's level (and eased back to the hills across the ring around it), and a built lot
         // draws on top. Everywhere else the chunk is vanilla's and CityWorld is not even asked for a plan.
         if (vanillaTerrain()) {
+            // 26.3: vanilla's one terrain step fills, surfaces and carves before CityWorld sees the chunk, so the
+            // ground is shaped afterwards and every column the shaping raised or cut is dressed in its biome's ground
+            // here (the other lines run vanilla's surface pass after the shaping instead). A built lot lays its own.
             CityWorldGenerator context = context(chunk);
-            return vanillaOverworld().fillFromNoise(blender, vanillaOverworldRandom, structureManager, chunk)
+            return vanillaOverworld().buildTerrain(chunk, blender, vanillaOverworldRandom, structureManager,
+                    biomeManager, carverBiomeRegion, possibleBiomes)
                     .thenApply(filled -> {
                         int chunkX = filled.getPos().getMinBlockX() >> 4, chunkZ = filled.getPos().getMinBlockZ() >> 4;
                         CitySites.Site site = citySites.influencing(chunkX, chunkZ);
                         if (site != null) {
                             shapeCityGround(context, filled, site);
                             if (isBuiltLot(context, chunkX, chunkZ)) {
+                                cutColumns.remove(ChunkPos.pack(chunkX, chunkZ));
                                 InitialBlocks blocks = new InitialBlocks(context, filled, chunkX, chunkZ);
                                 blocks.yShift = citySites.shift(site);
                                 context.getPlatMap(chunkX, chunkZ).generateChunk(blocks, IGNORE_BIOMES);
-                            }
+                            } else
+                                coverCutGround(filled);
                         }
                         return filled;
                     });
@@ -530,22 +536,26 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     var registries = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess();
                     var settings = registries.lookupOrThrow(Registries.NOISE_SETTINGS)
                             .getOrThrow(net.minecraft.world.level.levelgen.NoiseGeneratorSettings.OVERWORLD);
-                    RandomState random = RandomState.create(registries,
-                            net.minecraft.world.level.levelgen.NoiseGeneratorSettings.OVERWORLD, levelSeed);
+                    RandomState random = RandomState.create(registries.lookupOrThrow(Registries.NOISE), levelSeed,
+                            settings.value()); // 26.3: see vanillaEnd
+                    // 26.3: a climate sampler belongs to a sampler context, and a caching context is stateful; this one
+                    // is shared by every worker (the biome handover, the river test), so it is built without caches
+                    net.minecraft.world.level.biome.Climate.Sampler shared = random.createClimateSampler(
+                            net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().build());
                     // The preset wraps vanilla's biome source in ours, because the sampler a non-noise generator is
                     // handed is a dummy that answers zero everywhere; the wrapper asks with this world's real one.
                     // The first presets wrapped vanilla's source in cityworld:vanilla; a world made from Customize
                     // or a settings datapack keeps CityWorld's own source, which hands over to vanilla's from here.
                     BiomeSource inner;
                     if (this.biomeSource instanceof CityWorldVanillaBiomeSource wrapped) {
-                        wrapped.bind(random.sampler());
+                        wrapped.bind(shared);
                         inner = wrapped.source();
                     } else {
                         inner = net.minecraft.world.level.biome.MultiNoiseBiomeSource.createFromPreset(
                                 registries.lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST).getOrThrow(
                                         net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists.OVERWORLD));
                         if (this.biomeSource instanceof VanillaHandover handover)
-                            handover.bindVanilla(inner, random.sampler());
+                            handover.bindVanilla(inner, shared);
                         else
                             me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
                                     "CityWorld: vanilla terrain with a {} biome source — structures and features will "
@@ -558,11 +568,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     vanillaOverworldRandom = random;
                     // Vanilla's raw ground, the one thing a site is judged by: the top solid block, water not counted.
                     BiomeSource land = inner;
-                    net.minecraft.world.level.biome.Climate.Sampler climate = random.sampler();
+                    net.minecraft.world.level.biome.Climate.Sampler climate = shared;
                     citySites = new CitySites(levelSeed, UPSTREAM_SEA_LEVEL + 1, settings.value().seaLevel(),
                             (x, z) -> built.getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, bounds, random) - 1,
                             (x, z) -> {
-                                var key = land.getNoiseBiome(x >> 2, UPSTREAM_SEA_LEVEL >> 2, z >> 2, climate)
+                                var key = land.createResolver(climate).getNoiseBiome(x >> 2, UPSTREAM_SEA_LEVEL >> 2, z >> 2)
                                         .unwrapKey().orElse(null);
                                 return key == net.minecraft.world.level.biome.Biomes.RIVER
                                         || key == net.minecraft.world.level.biome.Biomes.FROZEN_RIVER;
@@ -715,6 +725,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 if (target > top) {
                     for (int y = top + 1; y <= target; y++)
                         chunk.setBlockState(cursor.set(minX + x, y, minZ + z), stone);
+                    if (cut == null)
+                        cut = new java.util.BitSet(256);
+                    cut.set(x << 4 | z); // 26.3: raised ground needs dressing too (see buildTerrain)
                 } else if (target < top) {
                     int sky = Math.max(top, chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z));
                     for (int y = sky; y > target; y--)
@@ -725,7 +738,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 }
             }
         if (cut != null)
-            cutColumns.put(ChunkPos.asLong(chunkX, chunkZ), cut);
+            cutColumns.put(ChunkPos.pack(chunkX, chunkZ), cut);
     }
 
     /** How far a bank eases from its natural height at the river's edge to the city's level inland. */
@@ -791,6 +804,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 if (target > top) {
                     for (int y = top + 1; y <= target; y++)
                         chunk.setBlockState(cursor.set(minX + x, y, minZ + z), stone);
+                    if (cut == null)
+                        cut = new java.util.BitSet(256);
+                    cut.set(x << 4 | z); // 26.3: raised ground needs dressing too (see buildTerrain)
                 } else if (target < top) {
                     int sky = Math.max(top, chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z));
                     for (int y = sky; y > target; y--)
@@ -801,7 +817,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 }
             }
         if (cut != null)
-            cutColumns.put(ChunkPos.asLong(chunkX, chunkZ), cut);
+            cutColumns.put(ChunkPos.pack(chunkX, chunkZ), cut);
     }
 
     /** Everything above {@code level} in a chunk's land columns, to air; water and what is under it untouched. */
@@ -872,7 +888,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private void coverCutGround(ChunkAccess chunk) {
         ChunkPos pos = chunk.getPos();
         int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
-        java.util.BitSet cut = cutColumns.remove(ChunkPos.asLong(minX >> 4, minZ >> 4));
+        java.util.BitSet cut = cutColumns.remove(ChunkPos.pack(minX >> 4, minZ >> 4));
         if (cut == null)
             return;
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();

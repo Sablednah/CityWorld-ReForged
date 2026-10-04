@@ -177,7 +177,7 @@ public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
         BiomeSource handed = vanilla; // a vanilla-terrain world: the land is vanilla's, so its biomes are too
         if (handed != null)
-            return handed.getNoiseBiome(x, y, z, vanillaSampler);
+            return handed.createResolver(vanillaSampler).getNoiseBiome(x, y, z); // 26.3: a resolver
         Holder<Biome> biome = CityWorldBiomeLookup.biomeAt(this, x, y, z);
         return biome != null ? biome : low;
     }
