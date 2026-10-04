@@ -713,7 +713,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 }
             }
         if (cut != null)
-            cutColumns.put(ChunkPos.asLong(chunkX, chunkZ), cut);
+            cutColumns.put(ChunkPos.pack(chunkX, chunkZ), cut);
     }
 
     /** How far a bank eases from its natural height at the river's edge to the city's level inland. */
@@ -789,7 +789,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 }
             }
         if (cut != null)
-            cutColumns.put(ChunkPos.asLong(chunkX, chunkZ), cut);
+            cutColumns.put(ChunkPos.pack(chunkX, chunkZ), cut);
     }
 
     /** Everything above {@code level} in a chunk's land columns, to air; water and what is under it untouched. */
@@ -860,7 +860,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private void coverCutGround(ChunkAccess chunk) {
         ChunkPos pos = chunk.getPos();
         int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
-        java.util.BitSet cut = cutColumns.remove(ChunkPos.asLong(minX >> 4, minZ >> 4));
+        java.util.BitSet cut = cutColumns.remove(ChunkPos.pack(minX >> 4, minZ >> 4));
         if (cut == null)
             return;
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
@@ -2079,7 +2079,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         if (vanillaTerrain()) {
             int chunkX = chunk.getPos().getMinBlockX() >> 4, chunkZ = chunk.getPos().getMinBlockZ() >> 4;
             if (citySites.influencing(chunkX, chunkZ) != null && isBuiltLot(context(chunk), chunkX, chunkZ)) {
-                cutColumns.remove(ChunkPos.asLong(chunkX, chunkZ));
+                cutColumns.remove(ChunkPos.pack(chunkX, chunkZ));
                 return;
             }
             vanillaOverworld().buildSurface(region, structureManager, vanillaOverworldRandom, chunk);

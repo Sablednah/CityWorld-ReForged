@@ -242,13 +242,15 @@ public final class Clipboard {
                 ? me.daddychurchill.CityWorld.compat.Environment.NETHER
                 : dimension == net.minecraft.world.level.Level.END ? me.daddychurchill.CityWorld.compat.Environment.THE_END
                         : me.daddychurchill.CityWorld.compat.Environment.NORMAL;
+        // 26.2: StructureProcessor is an interface, with process(...) and a codec in place of getType()
         return new net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessor() {
             @Override
-            public net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo processBlock(
-                    net.minecraft.world.level.LevelReader reader, BlockPos offset, BlockPos pos,
+            public net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo process(
+                    net.minecraft.world.level.LevelReader reader, BlockPos target, BlockPos reference,
                     net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo raw,
                     net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo info,
-                    StructurePlaceSettings settings) {
+                    StructurePlaceSettings settings,
+                    net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate template) {
                 var swapped = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.substitute(info.state(), realm);
                 if (swapped == info.state())
                     return info;
@@ -257,8 +259,8 @@ public final class Clipboard {
             }
 
             @Override
-            protected net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorType<?> getType() {
-                return net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorType.NOP;
+            public com.mojang.serialization.MapCodec<? extends net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessor> codec() {
+                return net.minecraft.world.level.levelgen.structure.templatesystem.NopProcessor.MAP_CODEC;
             }
         };
     }
