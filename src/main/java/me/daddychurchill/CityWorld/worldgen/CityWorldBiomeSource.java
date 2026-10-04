@@ -31,7 +31,16 @@ import net.minecraft.world.level.biome.Climate;
  * generator holds the context) and only reaches back here for {@link #classify} and the palette. This
  * source's own {@link #getNoiseBiome} is a plains fallback for the rare off-chunk query.
  */
-public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes {
+public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes, VanillaHandover {
+
+    private volatile BiomeSource vanilla;
+    private volatile Climate.Sampler vanillaSampler;
+
+    @Override
+    public void bindVanilla(BiomeSource vanilla, Climate.Sampler sampler) {
+        this.vanillaSampler = sampler;
+        this.vanilla = vanilla;
+    }
 
     public static final MapCodec<CityWorldBiomeSource> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             // Not a JSON field — a handle on the biome registry, so the shared cave pool can be resolved
@@ -89,7 +98,11 @@ public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes
      */
     @Override
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
-        return Stream.concat(Stream.of(deepOcean, ocean, beach, low, mid, high, peak, dry),
+        BiomeSource handed = vanilla;
+        Stream<Holder<Biome>> own = Stream.of(deepOcean, ocean, beach, low, mid, high, peak, dry);
+        if (handed != null)
+            own = Stream.concat(own, handed.possibleBiomes().stream());
+        return Stream.concat(own,
                 Stream.concat(cavePool().biomes(), surfacePools().biomes())).distinct();
     }
 
@@ -154,6 +167,9 @@ public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes
      */
     @Override
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
+        BiomeSource handed = vanilla; // a vanilla-terrain world: the land is vanilla's, so its biomes are too
+        if (handed != null)
+            return handed.getNoiseBiome(x, y, z, vanillaSampler);
         Holder<Biome> biome = CityWorldBiomeLookup.biomeAt(this, x, y, z);
         return biome != null ? biome : low;
     }

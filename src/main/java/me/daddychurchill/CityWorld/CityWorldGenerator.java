@@ -146,6 +146,18 @@ public class CityWorldGenerator {
     public final Environment worldEnvironment;
 
     /**
+     * A vanilla world with cities in it: every chunk is vanilla's terrain, and CityWorld builds only on the
+     * patches {@link #citySites} picks, each at its own level. {@code ShapeProvider_Vanilla} is the shaper.
+     */
+    public final boolean vanillaTerrain;
+
+    /**
+     * Where the cities are in a {@link #vanillaTerrain} world — bound by the chunk generator the moment this
+     * context exists, and null in every other world.
+     */
+    public volatile me.daddychurchill.CityWorld.worldgen.CitySites citySites;
+
+    /**
      * Vanilla's End terrain, as the noise answers it — bound by the chunk generator the moment this context
      * exists, and only in the End. {@code ShapeProvider_TheEnd} plans against it; null everywhere else.
      */
@@ -303,6 +315,19 @@ public class CityWorldGenerator {
     public CityWorldGenerator(long worldSeed, int terrainCeiling, int worldSeaLevel, WorldStyle worldStyle,
             int worldMinY, int worldMaxY, java.util.Optional<Boolean> decayOverride,
             me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData settingsData, Environment environment) {
+        this(worldSeed, terrainCeiling, worldSeaLevel, worldStyle, worldMinY, worldMaxY, decayOverride, settingsData,
+                environment, false);
+    }
+
+    /**
+     * @param vanillaTerrain the generator's {@code "terrain": "vanilla"}: the land is vanilla's and cities stand
+     *                       only on the patches {@code worldgen.CitySites} picks. See {@link #vanillaTerrain}.
+     */
+    public CityWorldGenerator(long worldSeed, int terrainCeiling, int worldSeaLevel, WorldStyle worldStyle,
+            int worldMinY, int worldMaxY, java.util.Optional<Boolean> decayOverride,
+            me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData settingsData, Environment environment,
+            boolean vanillaTerrain) {
+        this.vanillaTerrain = vanillaTerrain;
         this.worldEnvironment = environment;
         this.worldSeed = worldSeed;
         this.terrainCeiling = terrainCeiling;
@@ -315,6 +340,8 @@ public class CityWorldGenerator {
             settings.applyNetherRuin();
         if (environment == Environment.THE_END)
             settings.applyEndRealm();
+        if (vanillaTerrain)
+            settings.applyVanillaTerrain();
 
         // The original's initializeWorldInfo, minus the lazy-init dance. Order matters: the
         // providers read the world facts above, and the datums below read the providers.
