@@ -28,8 +28,9 @@ for f in sorted(glob.glob(d + '/r.*.mca')):
                 if not pal:
                     continue
                 data = bs.get('data')
+                name = lambda e: e if isinstance(e, str) else (e.get('Name') or e.get('id') or e.get(''))  # 26.3: {'': id} or {id, properties}
                 if data is None:
-                    counts[pal[0]['Name']] += 4096
+                    counts[name(pal[0])] += 4096
                     continue
                 bits = max(4, (len(pal) - 1).bit_length()); per = 64 // bits; mask = (1 << bits) - 1
                 local = collections.Counter()
@@ -45,7 +46,7 @@ for f in sorted(glob.glob(d + '/r.*.mca')):
                         local[(w >> (k * bits)) & mask] -= 1
                 for v, c in local.items():
                     if v < len(pal):
-                        counts[pal[v]['Name']] += c
+                        counts[name(pal[v])] += c
 for name, c in counts.most_common():
     if not wanted or any(w in name for w in wanted):
         print(f'{c:9d} {name}')

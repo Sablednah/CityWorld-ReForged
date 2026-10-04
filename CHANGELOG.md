@@ -5,6 +5,31 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 5.19.0
+
+All six Minecraft lines.
+
+### Added
+
+- **Cities in a vanilla world.** A new choice at the top of the Customize screen: **Land — Vanilla, cities
+  apart**. The world is vanilla's — its terrain, caves, ores, biomes, villages and animals — with a CityWorld city
+  every so often, like a village, each on its own level and with the ground around it eased into the hills.
+  Works with the Modern, Apocalypse, Classic, Destroyed and Sparse styles. Four dials beside it: **city spacing**
+  (one city per 1024 to 8192 blocks), **city size** (districts across), **size varies by**, and **street level
+  range** (how far above the sea a city may stand; higher ground gets none). Options that vanilla's world decides
+  instead are greyed out while it is on. For servers and packs it is the settings group `cities`.
+  - **Rivers run through the city** as vanilla made them, banks and all, and stay navigable. Roads cross on
+    CityWorld's bridges, built across the river with their piers on the bed. About half the city ground beside a
+    river is a **quay** — a promenade, a mooring with a spruce boardwalk round a slip, or a loading quay with a
+    derrick and cargo — and the rest is the natural bank, easing up to the street.
+  - `/cityfind city [tp]` finds the nearest one; F3 shows the city, its level and how far its edge is.
+- **Block substitutes**, for packs: a block data map, `cityworld:substitute`, swaps any block CityWorld places
+  for another (keeping its shape and facing), in its own buildings and in schematics, optionally only in some of
+  overworld, Nether and End. CityWorld ships it empty.
+- **CityWorld: Neutral Palette**, a separate add-on jar on GitHub that uses it: cities built from natural woods,
+  stones, deepslate and terracotta — no iron, gold, diamond, emerald, lapis or copper blocks to take, no bright
+  wool, concrete or stained glass. For survival packs, and for plainer Apocalypse cities.
+
 ## 5.18.0
 
 All six Minecraft lines.

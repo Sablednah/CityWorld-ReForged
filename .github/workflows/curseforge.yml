@@ -43,6 +43,10 @@ permissions:
 
 jobs:
   upload:
+    # Only CityWorld's own releases (tags v5.19.0 and so on). An add-on's release (neutral-palette-1.0.0) must never
+    # reach the CityWorld project: CurseForge would serve it as the latest CityWorld (owner, 2026-10-04 — the ZARP
+    # pack's skill add-on fell into exactly that).
+    if: startsWith(github.event.release.tag_name || inputs.tag, 'v')
     runs-on: ubuntu-latest
     steps:
       - name: Check the CurseForge token is configured
