@@ -46,9 +46,12 @@ public class CityWorldVanillaBiomeSource extends BiomeSource {
         this.sampler = sampler;
     }
 
+    /** One instance: codec dispatch compares by identity (see CityWorldEndBiomeSource.DISPATCH). */
+    public static final com.mojang.serialization.Codec<CityWorldVanillaBiomeSource> DISPATCH = CODEC.codec();
+
     @Override
-    protected MapCodec<? extends BiomeSource> codec() {
-        return CODEC;
+    protected com.mojang.serialization.Codec<? extends BiomeSource> codec() {
+        return DISPATCH; // 1.20.1's BiomeSource dispatches on a plain Codec
     }
 
     @Override

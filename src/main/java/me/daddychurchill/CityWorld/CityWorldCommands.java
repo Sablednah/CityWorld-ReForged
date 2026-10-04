@@ -634,7 +634,7 @@ public final class CityWorldCommands {
     /** {@code /cityfind city [tp]}: the nearest city of a vanilla-terrain world ("terrain": "vanilla"). */
     private static int findCity(CommandContext<CommandSourceStack> ctx, boolean teleport) throws CommandSyntaxException {
         ServerPlayer player = ctx.getSource().getPlayerOrException();
-        ServerLevel level = player.level();
+        ServerLevel level = player.serverLevel();
         MinecraftServer server = ctx.getSource().getServer();
         if (!(level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator cityGenerator)
                 || cityGenerator.citySites() == null) {
@@ -659,8 +659,8 @@ public final class CityWorldCommands {
                 if (teleport) {
                     level.getChunk(site.centreX() >> 4, site.centreZ() >> 4);
                     int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, site.centreX(), site.centreZ());
-                    player.teleportTo(level, site.centreX() + 0.5, y, site.centreZ() + 0.5, Set.<Relative>of(),
-                            player.getYRot(), player.getXRot(), false);
+                    player.teleportTo(level, site.centreX() + 0.5, y, site.centreZ() + 0.5, Set.<RelativeMovement>of(),
+                            player.getYRot(), player.getXRot());
                     player.sendSystemMessage(Component.literal("Teleported to the nearest city."));
                 }
             });
