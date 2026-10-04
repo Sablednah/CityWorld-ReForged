@@ -52,6 +52,7 @@ public final class CityWorldRegistries {
         BIOME_SOURCES.register("terrain", () -> CityWorldBiomeSource.DISPATCH);   // CLASSIC — elevation only
         BIOME_SOURCES.register("climate", () -> CityWorldClimateBiomeSource.DISPATCH); // MODERN — elevation × climate
         BIOME_SOURCES.register("nether", () -> CityWorldNetherBiomeSource.DISPATCH); // ruined-city Nether — climate × #nether_pool
+        BIOME_SOURCES.register("vanilla", () -> CityWorldVanillaBiomeSource.DISPATCH); // a vanilla-terrain world — another source, asked with the real climate
         BIOME_SOURCES.register("end", () -> CityWorldEndBiomeSource.DISPATCH); // the End — vanilla's biomes (+ TerraBlender's) on vanilla's islands
     }
 

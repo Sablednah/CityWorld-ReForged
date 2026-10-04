@@ -123,6 +123,8 @@ public class CityWorldSettings {
     /** Which vanilla/mod structure sets are added to or taken from {@code #cityworld:allowed}; read by the
      *  chunk generator when it builds the world's structure state, carried here only to round-trip. */
     public CityWorldSettingsData.Structures structures = CityWorldSettingsData.Structures.DEFAULT;
+    /** Cities in a vanilla world and their spacing, size and level range — see {@code CityWorldSettingsData.Cities}. */
+    public CityWorldSettingsData.Cities cities = CityWorldSettingsData.Cities.DEFAULT;
 
     /**
      * Let installed TerraBlender biome mods (Biomes O' Plenty and most others) contribute biomes.
@@ -267,6 +269,26 @@ public class CityWorldSettings {
         includeBones = false;
         includeUndergroundFluids = false;
         includeAbovegroundFluids = false;
+        includeAirborneStructures = false;
+    }
+
+    /**
+     * A vanilla-terrain world ({@code ShapeProvider_Vanilla}): the underground is vanilla's own caves, ores and
+     * aquifers, so everything CityWorld would dig or scatter for itself is off, and so is whatever belongs to
+     * the wild land between cities, which is vanilla's too. Sewers, cisterns and basements are the lots' own and stay.
+     */
+    public void applyVanillaTerrain() {
+        includeMines = false;
+        includeSubways = false;
+        includeBunkers = false;
+        includeCaves = false;
+        windingCaves = false;
+        largeCaverns = false;
+        includeLavaFields = false;
+        includeOres = false;
+        // Not includeBones: it also gates the museums' fossils and exhibits (owner, 2026-10-03: "museums not
+        // getting contents"). The underground bones it otherwise scatters are ShapeProvider_Vanilla's to skip,
+        // and its preGenerateBlocks does.
         includeAirborneStructures = false;
     }
     public boolean includeBasements = true;
@@ -503,7 +525,7 @@ public class CityWorldSettings {
         CityWorldSettingsData.Shops sh = new CityWorldSettingsData.Shops(v, v);
         CityWorldSettingsData.Subways sw = new CityWorldSettingsData.Subways(v, v);
         return new CityWorldSettingsData(f, t2, d.spawns(), d.treasures(), d.world(), d.radius(), d.naming(),
-                d.mobs(), og2, sh, d.decay(), d.caves(), sw, d.structures());
+                d.mobs(), og2, sh, d.decay(), d.caves(), sw, d.structures(), d.cities());
     }
 
     /**
@@ -553,6 +575,7 @@ public class CityWorldSettings {
         capVines = og.capVines();
         caves = data.caves();
         structures = data.structures();
+        cities = data.cities();
         includeShops = data.shops().enabled();
         includeMalls = data.shops().malls();
         includeSubways = data.subways().enabled();
@@ -680,7 +703,7 @@ public class CityWorldSettings {
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
-                overgrowth, shops, decay, caves, subways, structures);
+                overgrowth, shops, decay, caves, subways, structures, cities);
     }
 
     private static List<String> ids(List<EntityType> types) {

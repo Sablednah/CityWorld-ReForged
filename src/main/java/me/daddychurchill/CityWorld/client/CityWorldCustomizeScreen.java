@@ -101,6 +101,9 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private double biomeScale;
     private double moddedBiomeShare;
 
+    /** Cities in a vanilla world and their spacing, size and level range (settings "cities"). */
+    private CityWorldSettingsData.Cities cities;
+
     /** True when a modpack lock fixes the world type: the style picker is shown but greyed out. */
     private final boolean styleLocked;
 
@@ -118,6 +121,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         this.onDone = onDone;
         this.structureEntries = structureEntries;
         this.structures = initial.structures();
+        this.cities = initial.cities();
         this.styleLocked = styleLocked;
         // A pack lock wins over whatever the world carried.
         this.ruinedNether = CityWorldPackConfig.lockedRuinedNether().orElse(ruinedNether);
@@ -237,6 +241,48 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                     .create(Component.translatable("cityworld.lock.style")));
         }
         addRow(stylePicker, null);
+
+        // Cities in a vanilla world: the land is vanilla's, cities are far apart, each on its own level.
+        header(Component.literal("Land"));
+        // The four dials below only mean something on vanilla land; greyed out on CityWorld's own.
+        List<AbstractWidget> cityDials = new ArrayList<>();
+        CycleButton<Boolean> land = cycle("Land", new Boolean[] { false, true }, cities.vanillaTerrain(),
+                v -> Component.literal(v ? "Vanilla, cities apart" : "CityWorld"), v -> {
+                    cities = cities.withVanillaTerrain(v);
+                    for (AbstractWidget dial : cityDials)
+                        dial.active = v;
+                    applyLand();
+                });
+        land.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                "Vanilla, cities apart: a normal vanilla world — its terrain, caves, villages and animals — with a "
+                        + "city every so often, like a village, each on its own level. CityWorld: CityWorld's own "
+                        + "terrain, a world of cities. Only for the Modern, Apocalypse, Classic, Destroyed and Sparse styles.")));
+        CycleButton<Integer> spacing = cycle("City spacing", withValue(SPACING_CHOICES, cities.spacing()), cities.spacing(),
+                v -> Component.literal(v + " blocks"), v -> cities = cities.withSpacing(v));
+        spacing.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                "Vanilla land only: one city at most per this many blocks each way. Fewer where the sea or the "
+                        + "mountains refuse a site.")));
+        addRow(land, spacing);
+        CycleButton<Integer> size = cycle("City size", withValue(DISTRICT_CHOICES, cities.districts()), cities.districts(),
+                v -> Component.literal(v + " x " + v + " districts"), v -> cities = cities.withDistricts(v));
+        size.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                "Vanilla land only: how many districts (160 blocks each) a city is across.")));
+        CycleButton<Integer> vary = cycle("Size varies by", withValue(VARIANCE_CHOICES, cities.districtsVariance()),
+                cities.districtsVariance(), v -> Component.literal(v == 0 ? "nothing" : "up to " + v),
+                v -> cities = cities.withDistrictsVariance(v));
+        vary.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                "Vanilla land only: a city may be this many districts bigger or smaller than the size.")));
+        addRow(size, vary);
+        CycleButton<Integer> rise = cycle("Street level range", withValue(RISE_CHOICES, cities.levelRange()), cities.levelRange(),
+                v -> Component.literal(v == 0 ? "sea level only" : "up to " + v + " above sea"),
+                v -> cities = cities.withLevelRange(v));
+        rise.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                "Vanilla land only: a city stands on the land's own level, up to this far above the sea; higher "
+                        + "ground gets no city. Every city keeps to one level.")));
+        addRow(rise, null);
+        cityDials.addAll(List.of(spacing, size, vary, rise));
+        for (AbstractWidget dial : cityDials)
+            dial.active = cities.vanillaTerrain();
 
         header(Component.literal("Realms"));
         CycleButton<Boolean> nether = cycle("Nether", new Boolean[] { false, true }, ruinedNether,
@@ -370,6 +416,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                     CityWorldCustomizeScreen::shareLabel, v -> moddedBiomeShare = v));
         }
         flush(row);
+        applyLand();
     }
 
     /**
@@ -500,7 +547,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);
         CityWorldSettingsData data = new CityWorldSettingsData(
                 features, terrain, spawns, treasures, world, radius, naming, mobs, overgrowth, shops, decay,
-                caves, subways, structures);
+                caves, subways, structures, cities);
         return new Result(style, data, ruinedNether, cityWorldEnd);
     }
 
@@ -528,7 +575,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                         announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
                         moddedBiomeShare),
                 radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves,
-                defaults.subways(), structures);
+                defaults.subways(), structures, cities);
         this.minecraft.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.ruinedNether, this.cityWorldEnd, this.styleLocked, this.structureEntries, this.onDone));
     }
 
@@ -572,6 +619,22 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
      *  hand-edited value between two choices displays as the nearest one (the same rounding
      *  {@link Chance#nearest} does) and is only overwritten if the player actually turns the dial. */
     private static final Integer[] FLOOR_CHOICES = { 8, 12, 16, 20, 24, 30, 40, 50, 60 };
+
+    private static final Integer[] SPACING_CHOICES = { 1024, 1536, 2048, 3072, 4096, 6144, 8192 };
+    private static final Integer[] DISTRICT_CHOICES = { 1, 2, 3, 4, 5, 6 };
+    private static final Integer[] VARIANCE_CHOICES = { 0, 1, 2 };
+    private static final Integer[] RISE_CHOICES = { 0, 16, 24, 32, 40, 56, 72, 96 };
+
+    /** The choices, with the world's own value among them — a picker that lacks the value rewrites it on save. */
+    private static Integer[] withValue(Integer[] choices, int value) {
+        for (Integer choice : choices)
+            if (choice == value)
+                return choices;
+        Integer[] widened = java.util.Arrays.copyOf(choices, choices.length + 1);
+        widened[choices.length] = value;
+        java.util.Arrays.sort(widened);
+        return widened;
+    }
 
     /**
      * Climate-warmth steps.
@@ -659,8 +722,34 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 .create(0, 0, WIDTH, HEIGHT, Component.literal(label), (b, v) -> setter.accept(v));
     }
 
+    /**
+     * What vanilla land decides for itself, so these do nothing there and are greyed out while Land is
+     * "Vanilla, cities apart": CityWorld's own underground and terrain, the treasure in places that are not built
+     * there, and the dials that shape CityWorld's biomes and wild land. By label, as the style locks are.
+     */
+    private static final java.util.Set<String> VANILLA_LAND_IGNORES = java.util.Set.of("Mines", "Bunkers",
+            "Airborne structures", "Subways", "Caves", "Winding caves", "Large caverns", "Lava fields", "Seas",
+            "Mountains", "Ores", "Underground fluids", "Decayed nature", "Chests in mines", "Spawners in mines",
+            "Chests in bunkers", "Spawners in bunkers", "Spawners in subways", "Chest odds: mines",
+            "Chest odds: bunkers", "Mine alcove odds", "Tree style", "Tree density", "Under-floating fill",
+            "Ruralness", "Wild plants", "Climate warmth", "Biome scale", "Modded biomes", "Modded biome share");
+
+    /** Every option widget by its label, for {@link #applyLand}. */
+    private final java.util.Map<String, AbstractWidget> byLabel = new java.util.HashMap<>();
+
+    /** Grey out what vanilla land ignores, or bring it back; a widget the style locks stays greyed either way. */
+    private void applyLand() {
+        for (var entry : byLabel.entrySet())
+            if (VANILLA_LAND_IGNORES.contains(entry.getKey()))
+                entry.getValue().active = !lockedKeys.contains(entry.getKey()) && !cities.vanillaTerrain();
+    }
+
     /** Buffers widgets two-to-a-row, flushing a full pair to the list. */
     private void pair(List<AbstractWidget> row, AbstractWidget w) {
+        // the label is the button text before ": value"
+        String text = w.getMessage().getString();
+        int colon = text.indexOf(": ");
+        byLabel.put(colon < 0 ? text : text.substring(0, colon), w);
         row.add(w);
         if (row.size() == 2)
             flush(row);

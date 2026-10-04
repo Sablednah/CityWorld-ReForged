@@ -221,6 +221,11 @@ public abstract class SupportBlocks extends AbstractBlocks {
 //		return getActualBlock(x, y, z).isLiquid();
 	}
 
+	@Override
+	public boolean isWaterAt(int x, int y, int z) {
+		return getActualBlock(x, y, z).getBlockData().getFluidState().is(net.minecraft.tags.FluidTags.WATER);
+	}
+
 	public abstract boolean isByWater(int x, int y, int z);
 
 	public final Location getBlockLocation(int x, int y, int z) {

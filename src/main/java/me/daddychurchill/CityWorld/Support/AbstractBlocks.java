@@ -216,6 +216,9 @@ public abstract class AbstractBlocks {
 
 	public abstract boolean isEmpty(int x, int y, int z);
 
+	/** Water (or waterlogged) at a cell. Both seam sides answer; see {@code RoadLot.placeBridgeColumn}. */
+	public abstract boolean isWaterAt(int x, int y, int z);
+
 	protected abstract void setAtmosphereBlock(int x, int y, int z, Material material);
 
 	public abstract void clearBlock(int x, int y, int z);

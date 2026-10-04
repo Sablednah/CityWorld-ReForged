@@ -32,7 +32,16 @@ import net.minecraft.world.level.biome.Climate;
  * the registry via the codec) and the {@link #classify} matrix. Biomes it can't place from terrain —
  * mushroom fields, the cave biomes, deep dark — are left to a future "bio-dome" set-piece.
  */
-public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorldBiomes {
+public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorldBiomes, VanillaHandover {
+
+    private volatile BiomeSource vanilla;
+    private volatile Climate.Sampler vanillaSampler;
+
+    @Override
+    public void bindVanilla(BiomeSource vanilla, Climate.Sampler sampler) {
+        this.vanillaSampler = sampler;
+        this.vanilla = vanilla;
+    }
 
     /**
      * Takes the biome <em>registry lookup</em> as well as the getter. {@code Registry} implements
@@ -169,7 +178,9 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
      */
     @Override
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
-        Stream<Holder<Biome>> all = Stream.concat(possible.stream(),
+        BiomeSource handed = vanilla;
+        Stream<Holder<Biome>> all = Stream.concat(handed == null ? possible.stream()
+                : Stream.concat(possible.stream(), handed.possibleBiomes().stream()),
                 Stream.concat(cavePool().biomes(), surfacePools().biomes()));
         TerraBlenderBridge tb = terraBlender();
         if (tb != null)
@@ -208,6 +219,9 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
      */
     @Override
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
+        BiomeSource handed = vanilla; // a vanilla-terrain world: the land is vanilla's, so its biomes are too
+        if (handed != null)
+            return handed.getNoiseBiome(x, y, z, vanillaSampler);
         Holder<Biome> biome = CityWorldBiomeLookup.biomeAt(this, x, y, z);
         return biome != null ? biome : b(Biomes.PLAINS);
     }

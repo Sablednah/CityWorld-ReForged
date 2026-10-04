@@ -423,6 +423,124 @@ public final class ChunkProbe {
         CityWorldMod.LOGGER.warn("SURVEY end plan: built chunks with little or no land under them: {}", bridges);
     }
 
+    /**
+     * {@code -Dcityworld.probe=survey:sites} on a vanilla-terrain world: every city cell within
+     * {@code -Dcityworld.probe.cells} (default 4) of the origin — the site it holds or why each try was refused —
+     * and the PLAN of the accepted city nearest the origin as a chunk map. No chunk is generated.
+     * {@code 'B'} building, {@code '#'} road, {@code 'o'} anything else planned, {@code ':'} city ground left to
+     * nature, {@code '.'} the blend ring, {@code ' '} untouched vanilla.
+     */
+    private static void surveySites(ServerLevel level) {
+        if (!(level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw)
+                || cw.citySites() == null) {
+            CityWorldMod.LOGGER.warn("SURVEY sites: this dimension is not a vanilla-terrain CityWorld");
+            return;
+        }
+        var sites = cw.citySites();
+        int cells = Integer.getInteger("cityworld.probe.cells", 4);
+        int cell = sites.cell();
+        int accepted = 0, total = 0;
+        java.util.Map<Integer, Integer> bySize = new java.util.TreeMap<>(), byLevel = new java.util.TreeMap<>();
+        me.daddychurchill.CityWorld.worldgen.CitySites.Site nearest = null;
+        long started = System.nanoTime();
+        for (int cz = -cells; cz <= cells; cz++) {
+            StringBuilder row = new StringBuilder();
+            for (int cx = -cells; cx <= cells; cx++) {
+                var verdict = sites.verdictAt(cx * cell + cell / 2, cz * cell + cell / 2);
+                var site = verdict.site();
+                total++;
+                if (site == null) {
+                    row.append(" . ");
+                    CityWorldMod.LOGGER.warn("SITE cell {},{}: none — {}", cx, cz, verdict.refusals());
+                    continue;
+                }
+                accepted++;
+                row.append(' ').append(site.districts()).append(' ');
+                // how much river runs through the disc: biome samples on a 16-block grid (the handed-over
+                // vanilla source answers; the sampler argument is ignored by it)
+                int river = 0, samples = 0;
+                var source = level.getChunkSource().getGenerator().getBiomeSource();
+                var sampler = level.getChunkSource().randomState().sampler();
+                for (int dx = -site.radius(); dx <= site.radius(); dx += 16)
+                    for (int dz = -site.radius(); dz <= site.radius(); dz += 16) {
+                        if ((long) dx * dx + (long) dz * dz > (long) site.radius() * site.radius())
+                            continue;
+                        samples++;
+                        var key = source.getNoiseBiome((site.centreX() + dx) >> 2, site.level() >> 2,
+                                (site.centreZ() + dz) >> 2, sampler).unwrapKey().orElse(null);
+                        if (key == net.minecraft.world.level.biome.Biomes.RIVER
+                                || key == net.minecraft.world.level.biome.Biomes.FROZEN_RIVER)
+                            river++;
+                    }
+                if (river > 0)
+                    CityWorldMod.LOGGER.warn("SITE river: city at {}, {} (chunk {}, {}) has river biome under {} of {} samples",
+                            site.centreX(), site.centreZ(), site.centreX() >> 4, site.centreZ() >> 4, river, samples);
+                bySize.merge(site.districts(), 1, Integer::sum);
+                byLevel.merge(site.level() / 8 * 8, 1, Integer::sum);
+                if (nearest == null || Math.hypot(site.centreX(), site.centreZ()) < Math.hypot(nearest.centreX(), nearest.centreZ()))
+                    nearest = site;
+                CityWorldMod.LOGGER.warn("SITE cell {},{}: city at {}, {} — {} districts, ground y {}, water {}%, near-level {}%{}",
+                        cx, cz, site.centreX(), site.centreZ(), site.districts(), site.level(),
+                        Math.round(site.water() * 100), Math.round(site.near() * 100),
+                        verdict.refusals().isEmpty() ? "" : " (after: " + verdict.refusals() + ")");
+            }
+            CityWorldMod.LOGGER.warn("CELLS {}", row);
+        }
+        CityWorldMod.LOGGER.warn("SURVEY sites: {} of {} cells ({} blocks each) hold a city, judged in {} ms; by districts across {}; by ground level (8s) {}",
+                accepted, total, cell, (System.nanoTime() - started) / 1_000_000, bySize, byLevel);
+        // -Dcityworld.probe.at=x,z: map the city nearest that point instead of the origin's
+        String at = System.getProperty("cityworld.probe.at");
+        if (at != null) {
+            String[] p = at.split(",");
+            nearest = sites.nearest(Integer.parseInt(p[0].trim()), Integer.parseInt(p[1].trim()), 2);
+        }
+        if (nearest == null)
+            return;
+        var context = cw.getContext(level);
+        int span = (nearest.reach() + 32) / 16;
+        int x0 = (nearest.centreX() >> 4) - span, z0 = (nearest.centreZ() >> 4) - span;
+        java.util.Map<String, Integer> lots = new java.util.TreeMap<>(), contexts = new java.util.TreeMap<>();
+        int city = 0, built = 0, rivers = 0;
+        started = System.nanoTime();
+        for (int j = 0; j <= span * 2; j++) {
+            StringBuilder row = new StringBuilder();
+            for (int i = 0; i <= span * 2; i++) {
+                int cx = x0 + i, cz = z0 + j;
+                boolean ground = sites.isCityChunk(cx, cz);
+                if (!ground) {
+                    row.append(sites.influencing(cx, cz) != null
+                            && sites.edgeDistance(nearest, cx * 16 + 8, cz * 16 + 8) < 126 ? '.' : ' ');
+                    continue;
+                }
+                city++;
+                if (sites.isRiverChunk(cx, cz)) {
+                    rivers++;
+                    row.append('~');
+                    continue;
+                }
+                var platmap = context.getPlatMap(cx, cz);
+                var lot = platmap.getMapLot(cx, cz);
+                var style = lot == null ? null : lot.style;
+                boolean nature = style == null || style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE;
+                if (!nature) {
+                    built++;
+                    lots.merge(lot.getClass().getSimpleName(), 1, Integer::sum);
+                }
+                if (Math.floorMod(cx, 10) == 5 && Math.floorMod(cz, 10) == 5)
+                    contexts.merge(String.valueOf(platmap.context == null ? null : platmap.context.getClass().getSimpleName()), 1, Integer::sum);
+                row.append(nature ? ':' : style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.ROAD ? '#'
+                        : style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.STRUCTURE ? 'B' : 'o');
+            }
+            CityWorldMod.LOGGER.warn("PLAN {}", row);
+        }
+        CityWorldMod.LOGGER.warn("SURVEY city at {}, {} (chunk {}, {}): {} districts, ground y {}; {} city chunks, {} built ({}%), planned in {} ms",
+                nearest.centreX(), nearest.centreZ(), nearest.centreX() >> 4, nearest.centreZ() >> 4, nearest.districts(),
+                nearest.level(), city, built, built * 100 / Math.max(1, city), (System.nanoTime() - started) / 1_000_000);
+        CityWorldMod.LOGGER.warn("SURVEY city river chunks ('~'): {} of {}", rivers, city);
+        CityWorldMod.LOGGER.warn("SURVEY city districts (by platmap centre): {}", contexts);
+        CityWorldMod.LOGGER.warn("SURVEY city lots: {}", lots);
+    }
+
     /** {@link HeightInfo}'s five sample columns: the centre, then the four corners. */
     private static int ox(int k) {
         return new int[] { 8, 0, 15, 0, 15 }[k];
@@ -448,6 +566,10 @@ public final class ChunkProbe {
             int cx, cz;
             if (spec.startsWith("survey:end")) {
                 surveyEnd(level);
+                return;
+            }
+            if (spec.startsWith("survey:sites")) {
+                surveySites(level);
                 return;
             }
             if (spec.startsWith("find:biome:")) {

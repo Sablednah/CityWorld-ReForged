@@ -33,9 +33,16 @@ public final class InitialBlocks extends AbstractBlocks {
         this.chunkData = chunk;
     }
 
+    /**
+     * How far above the y it is asked for every block is really read and written. Zero everywhere but a
+     * vanilla-terrain world, where each city stands at its own level while lots draw at the one street level
+     * they have always known; see {@code worldgen.CitySites}. The decoration half is {@code ShiftedRegion}.
+     */
+    public int yShift;
+
     /** Chunk-local (x,z)+world y → world block position for the wrapped chunk. */
     private BlockPos at(int x, int y, int z) {
-        return new BlockPos(getOriginX() + x, y, getOriginZ() + z);
+        return new BlockPos(getOriginX() + x, y + yShift, getOriginZ() + z);
     }
 
     private void put(int x, int y, int z, BlockState state) {
@@ -95,6 +102,11 @@ public final class InitialBlocks extends AbstractBlocks {
     @Override
     public boolean isEmpty(int x, int y, int z) {
         return getState(x, y, z).isAir();
+    }
+
+    @Override
+    public boolean isWaterAt(int x, int y, int z) {
+        return getState(x, y, z).getFluidState().is(net.minecraft.tags.FluidTags.WATER);
     }
 
     @Override

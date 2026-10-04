@@ -154,6 +154,10 @@ public final class CityWorldCommands {
                         .then(Commands.argument("name", StringArgumentType.greedyString())
                                 .suggests(SUGGEST_SCHEMATICS)
                                 .executes(ctx -> findSchematic(ctx, true))))
+                // /cityfind city [tp] — a vanilla-terrain world's cities are a long walk apart
+                .then(Commands.literal("city")
+                        .then(Commands.literal("tp").executes(ctx -> findCity(ctx, true)))
+                        .executes(ctx -> findCity(ctx, false)))
                 .then(Commands.literal("lots")
                         .executes(CityWorldCommands::listLotKinds))
                 .then(Commands.literal("lot")
@@ -622,6 +626,45 @@ public final class CityWorldCommands {
                 }
             });
         }, "cityworld-findlot");
+        t.setDaemon(true);
+        t.start();
+        return 1;
+    }
+
+    /** {@code /cityfind city [tp]}: the nearest city of a vanilla-terrain world ("terrain": "vanilla"). */
+    private static int findCity(CommandContext<CommandSourceStack> ctx, boolean teleport) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        ServerLevel level = player.level();
+        MinecraftServer server = ctx.getSource().getServer();
+        if (!(level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator cityGenerator)
+                || cityGenerator.citySites() == null) {
+            ctx.getSource().sendFailure(Component.literal("This world's cities are everywhere: /cityfind city is "
+                    + "for a CityWorld: Vanilla world, where they are far apart."));
+            return 0;
+        }
+        var sites = cityGenerator.citySites();
+        int playerX = player.getBlockX(), playerZ = player.getBlockZ();
+        ctx.getSource().sendSuccess(() -> Component.literal("Searching for the nearest city..."), false);
+        Thread t = new Thread(() -> {
+            var site = sites.nearest(playerX, playerZ, 6);
+            server.execute(() -> {
+                if (site == null) {
+                    player.sendSystemMessage(Component.literal("Found no city within "
+                            + 6 * sites.cell() + " blocks."));
+                    return;
+                }
+                player.sendSystemMessage(Component.literal("Nearest city at x=" + site.centreX() + " z=" + site.centreZ()
+                        + ", streets at y=" + (site.level() + 1) + "  (" + Math.round(Math.hypot(site.centreX() - playerX,
+                                site.centreZ() - playerZ)) + " blocks away, " + site.districts() + " districts across)"));
+                if (teleport) {
+                    level.getChunk(site.centreX() >> 4, site.centreZ() >> 4);
+                    int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, site.centreX(), site.centreZ());
+                    player.teleportTo(level, site.centreX() + 0.5, y, site.centreZ() + 0.5, Set.<Relative>of(),
+                            player.getYRot(), player.getXRot(), false);
+                    player.sendSystemMessage(Component.literal("Teleported to the nearest city."));
+                }
+            });
+        }, "cityworld-findcity");
         t.setDaemon(true);
         t.start();
         return 1;
