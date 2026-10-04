@@ -51,6 +51,18 @@ public final class Block {
     private final LevelAccessor level;
     private final BlockPos pos;
 
+    /** The realm this block is in, from its level's dimension: overworld unless the level says Nether or End. */
+    private Environment realm() {
+        if (level instanceof net.minecraft.world.level.ServerLevelAccessor server) {
+            var dimension = server.getLevel().dimension();
+            if (dimension == net.minecraft.world.level.Level.NETHER)
+                return Environment.NETHER;
+            if (dimension == net.minecraft.world.level.Level.END)
+                return Environment.THE_END;
+        }
+        return Environment.NORMAL;
+    }
+
     public Block(LevelAccessor level, BlockPos pos) {
         this.level = level;
         this.pos = pos;
@@ -114,6 +126,7 @@ public final class Block {
      * when a player is near enough to be looking at it.
      */
     public void setBlockData(BlockState state, boolean applyPhysics) {
+        state = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.substitute(state, realm());
         me.daddychurchill.CityWorld.Support.ChunkProbe.watch(pos, state);
         level.setBlock(pos, state, applyPhysics ? WITH_PHYSICS : NO_PHYSICS);
 
