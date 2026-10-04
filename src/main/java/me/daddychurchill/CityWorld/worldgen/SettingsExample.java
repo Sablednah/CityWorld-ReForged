@@ -233,6 +233,28 @@ public final class SettingsExample {
             spawners  true   Sewer-bag spawners in the ruined tunnels' niches (APOCALYPSE only).
 
             ============================================================================
+            cities  — cities in a vanilla world (the Customize screen's "Land" option)
+            ============================================================================
+            vanillaTerrain     false  The land is vanilla's throughout — its terrain, caves, ores,
+                                      villages, animals — and CityWorld builds a city only every so
+                                      often, like a village, each on its own level, the ground around
+                                      it eased into the hills. Modern, Apocalypse, Classic, Destroyed
+                                      and Sparse styles; the styles that ARE a terrain ignore it.
+                                      Everything below applies only when this is on.
+            spacing            2048   One city at most per this many blocks each way (1024..16384).
+                                      Fewer where the sea or the mountains refuse a site.
+            districts          3      How many districts (160 blocks each) a city is across (1..8).
+            districtsVariance  1      A city may be this many districts bigger or smaller (0..3).
+            levelRange         40     A city stands on the land's own level, up to this far above
+                                      the sea (y 64); higher ground gets no city (0..120).
+            maxWater           0.35   A site is refused when more than this share of its ground
+                                      is under the sea; what is left under water is filled in.
+            minNear            0.75   ...or when fewer than this share of its columns already lie
+                                      within sixteen blocks of its level (too rough).
+            A city is a pure function of the seed and these numbers: change them under an existing
+            world and its cities move. /cityfind city tp finds the nearest one.
+
+            ============================================================================
             structures  — which vanilla and mod structures this world places
             ============================================================================
             CityWorld places the structure sets in the tag #cityworld:allowed (strongholds, trial

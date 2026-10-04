@@ -198,6 +198,20 @@ public abstract class ShapeProvider extends Provider {
 		if (generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.THE_END)
 			return new ShapeProvider_TheEnd(generator, odds);
 
+		// Vanilla's land with cities on picked patches: any style that builds an ordinary city on ordinary ground.
+		// The styles that ARE a terrain (floating, flooded, dunes, astral, maze, nature, metro) keep their own.
+		if (generator.vanillaTerrain)
+			switch (generator.worldStyle) {
+			case MODERN:
+			case APOCALYPSE:
+			case CLASSIC:
+			case DESTROYED:
+			case SPARSE:
+				return new ShapeProvider_Vanilla(generator, odds);
+			default:
+				break;
+			}
+
 		switch (generator.worldStyle) {
 
 		// NATURE and METRO reshape Normal without dragging in a style-specific Context/Lot tree, so
@@ -410,6 +424,23 @@ public abstract class ShapeProvider extends Provider {
 	 * streets, and so (no streets, no city) no buildings either.
 	 */
 	public boolean keepsIsolatedRoads() {
+		return false;
+	}
+
+	/**
+	 * Whether the platmap at this origin (in chunks) is known to hold nothing of CityWorld's, so it need not be
+	 * planned at all — see {@code PlatMap}'s constructor. False for every terrain of CityWorld's own.
+	 */
+	public boolean plansNothingAt(int originX, int originZ) {
+		return false;
+	}
+
+	/**
+	 * Whether no lot but a road may stand on this chunk, whatever the lot thinks of the ground there — see
+	 * {@code PlatMap.setLot}. A vanilla-terrain city's river channel: a building lot judges a chunk by its range of
+	 * heights, and a channel reported at the water's surface passed that test, so buildings stood in the river.
+	 */
+	public boolean refusesLotAt(int chunkX, int chunkZ) {
 		return false;
 	}
 
