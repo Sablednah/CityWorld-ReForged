@@ -162,10 +162,52 @@ public final class CityWorldDataMaps {
 
     private static volatile Map<ResourceLocation, Facing> FURNITURE_DATA = Map.of();
 
+    /**
+     * A block CityWorld places swapped for another, everywhere it draws (owner, 2026-10-04, from a player's comment:
+     * iron, gold and copper blocks in buildings are free resources in a survival pack, and the colours were too much
+     * for some). Ships empty; a pack adds entries — the "neutral palette" pack maps the valuable blocks and the bright
+     * colours onto woods, stones, deepslate and terracotta. The replacement keeps every property the two blocks share.
+     * {@code realms} limits an entry to some of overworld, nether and end (all three when absent). Mirrors the NeoForge
+     * branches' {@code cityworld:substitute} data map, read from the same JSON by the loader below.
+     */
+    public record Substitute(Block with, List<String> realms) {
+
+        public static final Codec<Substitute> CODEC = RecordCodecBuilder.create(i -> i.group(
+                BuiltInRegistries.BLOCK.byNameCodec().fieldOf("with").forGetter(Substitute::with),
+                Codec.STRING.listOf().optionalFieldOf("realms", List.of()).forGetter(Substitute::realms)
+        ).apply(i, Substitute::new));
+
+        public boolean appliesIn(me.daddychurchill.CityWorld.compat.Environment realm) {
+            if (realms.isEmpty())
+                return true;
+            String name = switch (realm) {
+            case NETHER -> "nether";
+            case THE_END -> "end";
+            default -> "overworld";
+            };
+            return realms.contains(name);
+        }
+    }
+
+    private static volatile Map<ResourceLocation, Substitute> SUBSTITUTE_DATA = Map.of();
+
+    /** {@code state} as this world draws it in {@code realm}: the pack's substitute, or itself. */
+    public static net.minecraft.world.level.block.state.BlockState substitute(
+            net.minecraft.world.level.block.state.BlockState state, me.daddychurchill.CityWorld.compat.Environment realm) {
+        Map<ResourceLocation, Substitute> map = SUBSTITUTE_DATA;
+        if (map.isEmpty())
+            return state;
+        Substitute swap = map.get(BuiltInRegistries.BLOCK.getKey(state.getBlock()));
+        if (swap == null || !swap.appliesIn(realm))
+            return state;
+        return swap.with().withPropertiesOf(state);
+    }
+
     /** Registered from {@code CityWorldMod} on the game event bus. */
     public static void register(AddReloadListenerEvent event) {
         event.addListener(loader("data_maps/worldgen/biome", "ground", Ground.CODEC, m -> GROUND_DATA = m));
         event.addListener(loader("data_maps/block", "furniture", Facing.CODEC, m -> FURNITURE_DATA = m));
+        event.addListener(loader("data_maps/block", "substitute", Substitute.CODEC, m -> SUBSTITUTE_DATA = m));
         event.addListener(loader("data_maps/worldgen/structure", "structure_fit", StructureFit.CODEC,
                 m -> STRUCTURE_FIT_DATA = m));
     }
