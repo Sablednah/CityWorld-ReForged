@@ -518,8 +518,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     var registries = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess();
                     var settings = registries.lookupOrThrow(Registries.NOISE_SETTINGS)
                             .getOrThrow(net.minecraft.world.level.levelgen.NoiseGeneratorSettings.OVERWORLD);
-                    RandomState random = RandomState.create(registries,
-                            net.minecraft.world.level.levelgen.NoiseGeneratorSettings.OVERWORLD, levelSeed);
+                    RandomState random = RandomState.create(settings.value(),
+                            registries.lookupOrThrow(Registries.NOISE), levelSeed); // 1.21.1: see vanillaEnd
                     // The preset wraps vanilla's biome source in ours, because the sampler a non-noise generator is
                     // handed is a dummy that answers zero everywhere; the wrapper asks with this world's real one.
                     // The first presets wrapped vanilla's source in cityworld:vanilla; a world made from Customize
@@ -702,11 +702,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 int top = tops[x << 4 | z], target = targets[x << 4 | z];
                 if (target > top) {
                     for (int y = top + 1; y <= target; y++)
-                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), stone);
+                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), stone, false);
                 } else if (target < top) {
                     int sky = Math.max(top, chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z));
                     for (int y = sky; y > target; y--)
-                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), air);
+                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), air, false);
                     if (cut == null)
                         cut = new java.util.BitSet(256);
                     cut.set(x << 4 | z);
@@ -778,11 +778,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 int target = top + (int) Math.round((site.level() - top) * toCity);
                 if (target > top) {
                     for (int y = top + 1; y <= target; y++)
-                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), stone);
+                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), stone, false);
                 } else if (target < top) {
                     int sky = Math.max(top, chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z));
                     for (int y = sky; y > target; y--)
-                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), air);
+                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), air, false);
                     if (cut == null)
                         cut = new java.util.BitSet(256);
                     cut.set(x << 4 | z);
@@ -804,7 +804,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 for (int y = sky; y > level; y--) {
                     cursor.set(minX + x, y, minZ + z);
                     if (chunk.getBlockState(cursor).getFluidState().isEmpty())
-                        chunk.setBlockState(cursor, air);
+                        chunk.setBlockState(cursor, air, false);
                 }
             }
     }
@@ -843,10 +843,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     if (surface > ground && ground < top)
                         break; // reached the river
                     for (int y = Math.max(surface, ground); y > top; y--)
-                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), air);
+                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), air, false);
                     for (int y = top; y > bed; y--)
-                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), water);
-                    chunk.setBlockState(cursor.set(minX + x, bed, minZ + z), gravel);
+                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), water, false);
+                    chunk.setBlockState(cursor.set(minX + x, bed, minZ + z), gravel, false);
                 }
         }
     }
@@ -876,10 +876,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             Material under1 = me.daddychurchill.CityWorld.Support.BiomeSurface.subsurface(biome, key);
             BlockState surface = (top1 != null ? top1 : Material.GRASS_BLOCK).getBlockState();
             BlockState under = (under1 != null ? under1 : Material.DIRT).getBlockState();
-            chunk.setBlockState(cursor.set(minX + x, top, minZ + z), surface);
+            chunk.setBlockState(cursor.set(minX + x, top, minZ + z), surface, false);
             for (int y = top - 1; y >= top - 3; y--)
                 if (chunk.getBlockState(cursor.set(minX + x, y, minZ + z)).is(net.minecraft.tags.BlockTags.BASE_STONE_OVERWORLD))
-                    chunk.setBlockState(cursor, under);
+                    chunk.setBlockState(cursor, under, false);
         }
     }
 
@@ -2114,7 +2114,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         if (vanillaTerrain()) {
             int chunkX = chunk.getPos().getMinBlockX() >> 4, chunkZ = chunk.getPos().getMinBlockZ() >> 4;
             if (citySites.influencing(chunkX, chunkZ) == null || !isBuiltLot(context(chunk), chunkX, chunkZ))
-                vanillaOverworld().applyCarvers(region, seed, vanillaOverworldRandom, biomeManager, structureManager, chunk);
+                vanillaOverworld().applyCarvers(region, seed, vanillaOverworldRandom, biomeManager, structureManager, chunk, step);
         }
     }
 

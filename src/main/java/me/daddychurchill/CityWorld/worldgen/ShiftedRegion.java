@@ -2,7 +2,7 @@ package me.daddychurchill.CityWorld.worldgen;
 
 import java.util.function.Predicate;
 
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -15,7 +15,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.ticks.ScheduledTick;
 import net.minecraft.world.ticks.TickPriority;
 
 /**
@@ -133,13 +132,24 @@ public final class ShiftedRegion extends WorldGenRegion {
         return real.addFreshEntity(entity);
     }
 
+    // 1.21.1: createTick is private on LevelAccessor; the scheduling calls are what take a position
     @Override
-    public <T> ScheduledTick<T> createTick(BlockPos pos, T type, int delay, TickPriority priority) {
-        return super.createTick(up(pos), type, delay, priority);
+    public void scheduleTick(BlockPos pos, net.minecraft.world.level.block.Block block, int delay, TickPriority priority) {
+        real.scheduleTick(up(pos), block, delay, priority);
     }
 
     @Override
-    public <T> ScheduledTick<T> createTick(BlockPos pos, T type, int delay) {
-        return super.createTick(up(pos), type, delay);
+    public void scheduleTick(BlockPos pos, net.minecraft.world.level.block.Block block, int delay) {
+        real.scheduleTick(up(pos), block, delay);
+    }
+
+    @Override
+    public void scheduleTick(BlockPos pos, net.minecraft.world.level.material.Fluid fluid, int delay, TickPriority priority) {
+        real.scheduleTick(up(pos), fluid, delay, priority);
+    }
+
+    @Override
+    public void scheduleTick(BlockPos pos, net.minecraft.world.level.material.Fluid fluid, int delay) {
+        real.scheduleTick(up(pos), fluid, delay);
     }
 }

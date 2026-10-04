@@ -271,7 +271,7 @@ public final class CityWorldDataMaps {
     }
 
     public static final DataMapType<Block, Substitute> SUBSTITUTE = DataMapType
-            .builder(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "substitute"), Registries.BLOCK, Substitute.CODEC)
+            .builder(ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "substitute"), Registries.BLOCK, Substitute.CODEC)
             .build();
 
     /** {@code state} as this world draws it in {@code realm}: the pack's substitute, or itself. */
