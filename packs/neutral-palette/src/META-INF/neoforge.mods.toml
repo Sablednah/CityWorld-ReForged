@@ -1,0 +1,23 @@
+# CityWorld: Neutral Palette, a data-only add-on (no code). NeoForge 1.20.5 and later read this file.
+modLoader="lowcodefml"
+loaderVersion="[1,)"
+license="GPL-3.0-only"
+issueTrackerURL="https://github.com/Sablednah/CityWorld-ReForged/issues"
+
+[[mods]]
+modId="cityworld_neutral_palette"
+version="1.0.0"
+displayName="CityWorld: Neutral Palette"
+authors="Sablednah"
+description='''
+A datapack for CityWorld: cities built from natural woods, stones, deepslate and terracotta.
+No iron, gold, diamond, emerald, lapis or copper blocks in buildings, no bright wool, concrete or stained glass.
+Needs CityWorld 5.19.0 or later for the block substitutes; the narrowed palettes work on any version.
+'''
+
+[[dependencies.cityworld_neutral_palette]]
+modId="cityworld"
+type="required"
+versionRange="[5.18,)"
+ordering="AFTER"
+side="BOTH"

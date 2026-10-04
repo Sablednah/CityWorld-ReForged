@@ -61,3 +61,4 @@ repo/
 # Local only: it changes constantly, belongs to neither project's history, and kept every build "-dirty".
 /WEBSITE.md
 __pycache__/
+packs/*/build/

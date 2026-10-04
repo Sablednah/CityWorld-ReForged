@@ -154,6 +154,15 @@ widens, so a heavily modded world gets *more variety*, not more wooden houses. F
 their blocks, or to put a mod's blocks somewhere they wouldn't naturally go, a small datapack extends
 any palette directly.
 
+### Plainer cities, and no free iron: the Neutral Palette add-on
+
+For survival packs, or anyone who wants quieter cities: the **CityWorld: Neutral Palette** add-on jar
+builds with natural woods, stones, deepslate and terracotta only. No iron, gold, diamond, emerald, lapis
+or copper blocks in buildings; coloured wool becomes planks, concrete becomes terracotta, stained glass
+becomes clear. It works on every world style, Apocalypse included. Drop it in `mods` beside CityWorld
+(5.19.0 or later). It is a plain datapack inside, so a pack author can change any swap.
+**→ [Download from GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/neutral-palette-1.0.0)**
+
 ### And your biome mod's biomes
 
 Install **Biomes O' Plenty** — or anything else built on **TerraBlender** — and its biomes generate in

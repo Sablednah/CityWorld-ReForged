@@ -177,7 +177,8 @@ public final class Clipboard {
         StructurePlaceSettings settings = new StructurePlaceSettings()
                 .setRotation(rotation)
                 .setMirror(mirror)
-                .setIgnoreEntities(true);
+                .setIgnoreEntities(true)
+                .addProcessor(substitutes(level));
         template.placeInWorld(level, origin, origin, settings, random, Block.UPDATE_CLIENTS);
     }
 
@@ -223,8 +224,43 @@ public final class Clipboard {
                 .setRotation(rotation)
                 .setMirror(mirror)
                 .setIgnoreEntities(true)
-                .setBoundingBox(chunkBox);
+                .setBoundingBox(chunkBox)
+                .addProcessor(substitutes(level));
         template.placeInWorld(level, origin, origin, settings, random, Block.UPDATE_CLIENTS);
+    }
+
+    /**
+     * A schematic's blocks through the pack's block substitutes ({@code CityWorldDataMaps.SUBSTITUTE}), as every
+     * block CityWorld draws itself goes: vanilla's template placement writes straight to the level, so without this
+     * a schematic building kept its wool and iron under the neutral palette (measured 2026-10-04). Block entities
+     * are kept only where the block is unchanged.
+     */
+    private static net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessor substitutes(
+            ServerLevelAccessor level) {
+        var dimension = level.getLevel().dimension();
+        me.daddychurchill.CityWorld.compat.Environment realm = dimension == net.minecraft.world.level.Level.NETHER
+                ? me.daddychurchill.CityWorld.compat.Environment.NETHER
+                : dimension == net.minecraft.world.level.Level.END ? me.daddychurchill.CityWorld.compat.Environment.THE_END
+                        : me.daddychurchill.CityWorld.compat.Environment.NORMAL;
+        return new net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessor() {
+            @Override
+            public net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo processBlock(
+                    net.minecraft.world.level.LevelReader reader, BlockPos offset, BlockPos pos,
+                    net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo raw,
+                    net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo info,
+                    StructurePlaceSettings settings) {
+                var swapped = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.substitute(info.state(), realm);
+                if (swapped == info.state())
+                    return info;
+                return new net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo(
+                        info.pos(), swapped, swapped.getBlock() == info.state().getBlock() ? info.nbt() : null);
+            }
+
+            @Override
+            protected net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorType<?> getType() {
+                return net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorType.NOP;
+            }
+        };
     }
 
     /** The four quarter-turns, indexed by {@code odds.getRandomInt(4)} at placement time. */
