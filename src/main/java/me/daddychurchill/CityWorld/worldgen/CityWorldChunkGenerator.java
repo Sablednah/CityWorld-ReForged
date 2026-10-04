@@ -619,8 +619,14 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // is built on a river chunk but a bridge, and its ground is left alone — except a berth dredged in front of
         // a mooring or loading quay, so a boat can reach it.
         if (riverChunk) {
-            if (cityChunk)
+            if (cityChunk) {
+                // a bridge: the land above its deck cleared, or the deck runs into the bank's hill
+                if (isBuiltLot(context, chunkX, chunkZ))
+                    clearAbove(chunk, site.level());
+                else
+                    easeRiverLand(chunk, site, chunkX, chunkZ);
                 dredgeBerths(context, chunk);
+            }
             return;
         }
         int[] targets = new int[256];
@@ -628,37 +634,41 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         for (int x = 0; x < 16; x++)
             for (int z = 0; z < 16; z++)
                 tops[x << 4 | z] = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x, z);
-        if (cityChunk && isBuiltLot(context, chunkX, chunkZ)) {
-            // under something built: flat at the city's level
-            java.util.Arrays.fill(targets, site.level());
-        } else if (cityChunk) {
-            // city ground left to nature (the banks beside the river, mostly): its own ground, eased up to the
-            // city's level only across an apron beside a built neighbour — the End's rule
-            boolean[][] builtBeside = new boolean[3][3];
-            boolean any = false;
+        boolean[][] riverBeside = new boolean[3][3];
+        boolean bank = false;
+        if (cityChunk && !isBuiltLot(context, chunkX, chunkZ))
             for (int dx = -1; dx <= 1; dx++)
                 for (int dz = -1; dz <= 1; dz++)
-                    if ((dx != 0 || dz != 0) && citySites.isCityChunk(chunkX + dx, chunkZ + dz)
-                            && !citySites.isRiverChunk(chunkX + dx, chunkZ + dz)
-                            && isBuiltLot(context, chunkX + dx, chunkZ + dz)) {
-                        builtBeside[dx + 1][dz + 1] = true;
-                        any = true;
+                    if ((dx != 0 || dz != 0) && citySites.isChannelChunk(chunkX + dx, chunkZ + dz)) {
+                        riverBeside[dx + 1][dz + 1] = true;
+                        bank = true;
                     }
-            if (!any)
-                return;
+        if (cityChunk && !bank) {
+            // the city's ground, built on or not: flat at the city's level. Left unlevelled, a city in hills had
+            // hill-high pillars among its streets and square pits where it built (owner, 2026-10-04).
+            java.util.Arrays.fill(targets, site.level());
+        } else if (cityChunk) {
+            // a river bank left to nature: its natural ground at the river's edge, eased to the city's level over
+            // BANK_EASE blocks inland. Keeping all of it stood a hill-high stone tower among flattened streets
+            // where the bank was a hill (owner, 2026-10-04, "the big chunk").
+            // ...and at its edges with the rest of the city, the city's level, or the bank stands a cliff above it
+            boolean[][] cityBeside = new boolean[3][3];
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dz = -1; dz <= 1; dz++)
+                    cityBeside[dx + 1][dz + 1] = (dx != 0 || dz != 0) && !riverBeside[dx + 1][dz + 1]
+                            && citySites.isCityChunk(chunkX + dx, chunkZ + dz);
             for (int x = 0; x < 16; x++)
                 for (int z = 0; z < 16; z++) {
                     int top = tops[x << 4 | z];
-                    int nearest = Integer.MAX_VALUE;
-                    for (int dx = -1; dx <= 1; dx++)
-                        for (int dz = -1; dz <= 1; dz++)
-                            if (builtBeside[dx + 1][dz + 1]) {
-                                int gapX = dx < 0 ? x + 1 : dx > 0 ? 16 - x : 0, gapZ = dz < 0 ? z + 1 : dz > 0 ? 16 - z : 0;
-                                nearest = Math.min(nearest, Math.max(gapX, gapZ));
-                            }
-                    double weight = Math.max(0.0, 1.0 - (nearest - 1) / (double) APRON);
-                    double eased = weight * weight * (3.0 - 2.0 * weight);
-                    targets[x << 4 | z] = top + (int) Math.round((site.level() - top) * eased);
+                    if (chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) > top) {
+                        targets[x << 4 | z] = top; // the river's own water reaches into the bank: left alone
+                        continue;
+                    }
+                    double t = Math.min(1.0, (edgeDistance(riverBeside, x, z) - 1) / (double) BANK_EASE);
+                    double natural = 1.0 - t * t * (3.0 - 2.0 * t);
+                    double c = Math.min(1.0, (edgeDistance(cityBeside, x, z) - 1) / (double) RIVER_EASE);
+                    natural *= c * c * (3.0 - 2.0 * c);
+                    targets[x << 4 | z] = site.level() + (int) Math.round((top - site.level()) * natural);
                 }
         } else {
             // the ring: eased from the city's level back to the hills — but never at the river, which keeps its
@@ -714,6 +724,99 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             }
         if (cut != null)
             cutColumns.put(ChunkPos.asLong(chunkX, chunkZ), cut);
+    }
+
+    /** How far a bank eases from its natural height at the river's edge to the city's level inland. */
+    private static final int BANK_EASE = 12;
+    /** How far a river chunk's land eases toward the city's level from a city edge, and how much water it keeps clear of. */
+    private static final int RIVER_EASE = 8, WATER_MARGIN = 3;
+
+    /** Blocks from a column to the nearest edge (or corner) this chunk shares with a flagged neighbour; huge if none. */
+    private static int edgeDistance(boolean[][] beside, int x, int z) {
+        int nearest = Integer.MAX_VALUE;
+        for (int dx = -1; dx <= 1; dx++)
+            for (int dz = -1; dz <= 1; dz++)
+                if (beside[dx + 1][dz + 1]) {
+                    int gapX = dx < 0 ? x + 1 : dx > 0 ? 16 - x : 0, gapZ = dz < 0 ? z + 1 : dz > 0 ? 16 - z : 0;
+                    nearest = Math.min(nearest, Math.max(gapX, gapZ));
+                }
+        return nearest;
+    }
+
+    /**
+     * A river chunk's land, where it meets the city: eased toward the city's level near the edge it shares with
+     * city ground, so a hill on the bank is not a sheer wall above the flattened streets (owner, 2026-10-04) — but
+     * never the water, nor the land within {@link #WATER_MARGIN} of it: the river and its own edge stay vanilla's.
+     */
+    private void easeRiverLand(ChunkAccess chunk, CitySites.Site site, int chunkX, int chunkZ) {
+        boolean[][] cityBeside = new boolean[3][3];
+        boolean any = false;
+        for (int dx = -1; dx <= 1; dx++)
+            for (int dz = -1; dz <= 1; dz++)
+                if ((dx != 0 || dz != 0) && citySites.isCityChunk(chunkX + dx, chunkZ + dz)
+                        && !citySites.isRiverChunk(chunkX + dx, chunkZ + dz)) {
+                    cityBeside[dx + 1][dz + 1] = true;
+                    any = true;
+                }
+        if (!any)
+            return;
+        int minX = chunk.getPos().getMinBlockX(), minZ = chunk.getPos().getMinBlockZ();
+        int[] tops = new int[256];
+        boolean[] water = new boolean[256];
+        for (int x = 0; x < 16; x++)
+            for (int z = 0; z < 16; z++) {
+                int ground = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x, z);
+                tops[x << 4 | z] = ground;
+                water[x << 4 | z] = chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) > ground;
+            }
+        BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
+        BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        java.util.BitSet cut = null;
+        for (int x = 0; x < 16; x++)
+            for (int z = 0; z < 16; z++) {
+                if (water[x << 4 | z])
+                    continue;
+                int dWater = WATER_MARGIN + 1;
+                for (int ax = Math.max(0, x - WATER_MARGIN); ax <= Math.min(15, x + WATER_MARGIN); ax++)
+                    for (int az = Math.max(0, z - WATER_MARGIN); az <= Math.min(15, z + WATER_MARGIN); az++)
+                        if (water[ax << 4 | az])
+                            dWater = Math.min(dWater, Math.max(Math.abs(ax - x), Math.abs(az - z)));
+                double t = Math.min(1.0, (edgeDistance(cityBeside, x, z) - 1) / (double) RIVER_EASE);
+                double toCity = (1.0 - t * t * (3.0 - 2.0 * t)) * Math.min(1.0, (dWater - 1) / (double) WATER_MARGIN);
+                int top = tops[x << 4 | z];
+                int target = top + (int) Math.round((site.level() - top) * toCity);
+                if (target > top) {
+                    for (int y = top + 1; y <= target; y++)
+                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), stone);
+                } else if (target < top) {
+                    int sky = Math.max(top, chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z));
+                    for (int y = sky; y > target; y--)
+                        chunk.setBlockState(cursor.set(minX + x, y, minZ + z), air);
+                    if (cut == null)
+                        cut = new java.util.BitSet(256);
+                    cut.set(x << 4 | z);
+                }
+            }
+        if (cut != null)
+            cutColumns.put(ChunkPos.asLong(chunkX, chunkZ), cut);
+    }
+
+    /** Everything above {@code level} in a chunk's land columns, to air; water and what is under it untouched. */
+    private static void clearAbove(ChunkAccess chunk, int level) {
+        ChunkPos pos = chunk.getPos();
+        int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
+        BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        for (int x = 0; x < 16; x++)
+            for (int z = 0; z < 16; z++) {
+                int sky = chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z);
+                for (int y = sky; y > level; y--) {
+                    cursor.set(minX + x, y, minZ + z);
+                    if (chunk.getBlockState(cursor).getFluidState().isEmpty())
+                        chunk.setBlockState(cursor, air);
+                }
+            }
     }
 
     /** How far city ground left to nature eases from a built neighbour's level back to its own. */
