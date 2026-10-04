@@ -24,15 +24,19 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-02)
 
-**IN PROGRESS on master, committed 2026-10-04 (1.21.11 only, not on the branches): the vanilla-land mode** —
-cities like villages in an otherwise vanilla world (a CurseForge comment the owner relayed). Chosen in Customize on
-the CityWorld preset: the **Land** row ("Vanilla, cities apart") with spacing, size, variance and level range
-(settings group `cities`). Rivers run through cities untouched, with `ShorelineLot` quays and natural banks; owner
-still tweaking from screenshots (`/cityfind city tp` finds one; spawn is wherever vanilla puts it). Read
-PORTING.md "▶ Resume here — cities in a vanilla world" first: `worldgen/CitySites` (one city per 2048-block
-cell, 2–4 districts across, one level each within 64..104), `ShapeProvider_Vanilla`, and the lift —
-`InitialBlocks.yShift` + `worldgen/ShiftedRegion` draw every city at street level 64 and raise it at the block
-seam (AT on `WorldGenRegion`'s `cache`/`center`/`generatingStep`). 1.21.11 only; nothing on the branches.
+**v5.19.0 is released** (2026-10-04) on all six lines — tag `v5.19.0` (`653bff89`), GitHub release with six jars,
+CurseForge files 9061385–9061390, fleet `DEPLOYED-v5.19.0` on 10 (`MobHealth - Forge` was running: rerun
+`scripts/deploy-fleet.sh --version 5.19.0 --only "MobHealth - Forge"`; ZARP opts out). It is: **vanilla land**
+(Customize's Land row, settings group `cities`: cities like villages in a vanilla world, each on its own level,
+lifted at the block seam by `InitialBlocks.yShift` + `worldgen/ShiftedRegion`; rivers kept vanilla's and navigable,
+`ShorelineLot` quays and natural banks; owner's playtest on his seed passed) and the **block substitutes** data map
+(`cityworld:substitute`, both seams + schematics). The **Neutral Palette add-on** is its own GitHub release
+(`neutral-palette-1.0.0`, `packs/neutral-palette/`) and **never goes on CurseForge** (CF would serve it as the
+latest CityWorld) — `curseforge.yml` now runs only for `v*` tags, and `gh release edit v5.19.0 --latest` puts
+CityWorld back as GitHub's latest after an add-on release. Gates: six self-tests PASS, `--compare` agrees, a
+vanilla-land city generated on every line (entities lifted on 1.20.1 and 26.3), the add-on measured on 1.21.11,
+1.20.1 and 26.3, CI green, halt/exit 0 on all six after a synthetic positive, 1.20.1 reobfuscated. Per-line drift
+for the port is in PORTING.md. Owner to paste CURSEFORGE.md's "New in 5.19.0".
 
 **v5.18.0 is released** (2026-10-02) on all six lines — tag `v5.18.0` (`44bb0d4b`), GitHub release with six jars,
 CurseForge files 9039342–9039349, fleet `DEPLOYED-v5.18.0` on all 11 deployable instances (ZARP opts out). It is:

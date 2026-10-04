@@ -156,8 +156,18 @@ all of this: 179 checks, 0 parse failures, 0 block-entity warnings — the share
   `build/*` tags. Measured on the dev seed, 21x21 chunks: copper blocks 87,917 -> 0, coloured concrete and
   wool ~44k -> 0, prismarine/purpur/netherrack ~45k -> 0. Left on purpose: redstone blocks (they power the
   subway rails), ores (CLASSIC's own veins go through the seam), vanilla structures (trial-chamber copper).
-  **The swaps need a CityWorld release with the seam (5.19.0); master only so far. NOT yet on the five
-  branches (1.20.1 needs the substitute map added to its own JSON loader), NOT published.**
+  **Released in 5.19.0 (2026-10-04) on all six lines; the add-on is GitHub release `neutral-palette-1.0.0`.**
+- **5.19.0 port drift (2026-10-04), for the next pick of this code:** 1.21.1/1.20.1 — `RandomState.create(settings,
+  noiseGetter, seed)`, `applyCarvers(..., step)`, `setBlockState(pos, state, false)`, `scheduleTick` overrides (the
+  private `createTick` cannot be), `serverLevel()`, seven-argument `teleportTo` with `RelativeMovement`, jetbrains
+  `Nullable`; 1.20.1 also Forge's `ServerLifecycleHooks`, executor-taking `fillFromNoise`/`createBiomes`, codec
+  `DISPATCH` for the vanilla biome source, SRG ATs (`f_9475_` cache, `f_143480_` generatingStatus, `f_143481_`
+  writeRadiusCutoff) and the substitute map on its JSON loader. 26.x — `ChunkPos.pack`, the schematic processor as
+  the `StructureProcessor` interface (`process(...)`, `codec()` -> `NopProcessor.MAP_CODEC`). 26.3 — `buildTerrain`
+  fills, surfaces AND carves first, so `shapeCityGround` runs after it and raised columns are marked for
+  `coverCutGround` too; `ShiftedRegion` rebuilds its holder cache from `chunkMap.getUpdatingChunkIfPresent` (26.3
+  keeps only mapped chunks); biomes via `createResolver(sampler)`; one shared NON-caching `SamplerContext` sampler
+  (a caching one is stateful); `createForNormal` takes the origin.
 - **Banked for the next phase (owner, 2026-10-04): rivers in CityWorld's OWN terrain.** Trace them from the
   mountains: streams that gather, waterfalls where the drop is big, then on down to the sea. Cities on those
   rivers get the same riverside lots as the vanilla mode (quays, moorings, loading quays, natural banks, bridges).
