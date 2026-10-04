@@ -123,6 +123,26 @@ public final class CitySites {
      * Memoised: the planner asks per column, and a wet test is a vanilla height query.
      */
     public boolean isRiverChunk(int chunkX, int chunkZ) {
+        if (isWetChunk(chunkX, chunkZ))
+            return true;
+        // A river passing diagonally between two dry chunks would be cut at the shared corner (water cannot pass a
+        // corner point; owner, 2026-10-04: "one place where there's no way through"). For each 2x2 block this chunk
+        // is in: wet on one diagonal and dry on the other, the dry chunk on the block's top row is kept for the river.
+        for (int ox = -1; ox <= 0; ox++)
+            for (int oz = -1; oz <= 0; oz++) {
+                int x0 = chunkX + ox, z0 = chunkZ + oz;
+                boolean a = isWetChunk(x0, z0), b = isWetChunk(x0 + 1, z0), c = isWetChunk(x0, z0 + 1),
+                        d = isWetChunk(x0 + 1, z0 + 1);
+                if (a && d && !b && !c && chunkX == x0 + 1 && chunkZ == z0)
+                    return true; // the main diagonal: keep the top-right chunk
+                if (b && c && !a && !d && chunkX == x0 && chunkZ == z0)
+                    return true; // the other diagonal: keep the top-left chunk
+            }
+        return false;
+    }
+
+    /** The river's own chunks, before the corner rule of {@link #isRiverChunk}. */
+    private boolean isWetChunk(int chunkX, int chunkZ) {
         long key = ((long) chunkX << 32) ^ (chunkZ & 0xffffffffL);
         Boolean known = riverChunks.get(key);
         if (known != null)

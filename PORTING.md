@@ -137,6 +137,15 @@ all of this: 179 checks, 0 parse failures, 0 block-entity warnings — the share
   and loading quays face the side with most river, and `dredgeBerths` cuts the bank in front of them out to the
   water. The ring never touches river chunks and eases to the natural bank near them. Measured with the new
   `scripts/region_water_path.py`: the water bodies through the test city are identical to the untouched river.
+- **Rivers, round four (2026-10-04, owner's world: seed -3148036531376794442, cities 6+-2 districts, spacing 4096,
+  levelRange 0, snowy hills).** Measured on his seed regenerated headless against his save, with the new
+  scratch checks (straight natural-ground chunk-edge cliffs; chunks 10+ above/below all neighbours; water bodies by
+  `region_water_path.py`): 34 chunk cliffs -> 0-2 (the 2 are a 2-block waterside step), 1 tower -> 0, river bodies
+  intact and joined where the save had them cut. What changed: city chunks left to nature are levelled again unless
+  they are banks (unlevelled, a hill city had towers and pits); a bank is natural at the river's edge easing to
+  the city's level over 12 blocks inland and at its city edges, its water untouched; a river chunk's land eases
+  toward the city at city edges (never the water or 3 blocks round it); a bridge chunk is cleared above the
+  street (decks ran into hills); a river passing diagonally between two dry chunks keeps the top-row one as river.
 - **Banked for the next phase (owner, 2026-10-04): rivers in CityWorld's OWN terrain.** Trace them from the
   mountains: streams that gather, waterfalls where the drop is big, then on down to the sea. Cities on those
   rivers get the same riverside lots as the vanilla mode (quays, moorings, loading quays, natural banks, bridges).
