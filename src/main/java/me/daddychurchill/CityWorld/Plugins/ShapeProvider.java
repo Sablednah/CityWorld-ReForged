@@ -128,6 +128,16 @@ public abstract class ShapeProvider extends Provider {
 		return findBlockY(generator, blockX, blockZ);
 	}
 
+	/** The top of a river's water in this column, or {@code RiverNetwork.NONE}: only CityWorld's own terrain has rivers. */
+	public int riverWaterAt(int blockX, int blockZ) {
+		return me.daddychurchill.CityWorld.worldgen.RiverNetwork.NONE;
+	}
+
+	/** Whether a river crosses this chunk at street level (no higher), so a road over it is a bridge. */
+	public boolean riverCrossesStreetAt(int chunkX, int chunkZ) {
+		return false;
+	}
+
 	public double findPerciseFloodY(CityWorldGenerator generator, int blockX, int blockZ) {
 		return getSeaLevel();
 	}

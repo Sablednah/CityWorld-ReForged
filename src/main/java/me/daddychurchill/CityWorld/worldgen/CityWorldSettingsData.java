@@ -302,9 +302,13 @@ public record CityWorldSettingsData(
      * a style that IS a terrain (floating, flooded, dunes, astral, maze, nature, metro) ignores it.
      */
     public record Cities(boolean vanillaTerrain, int spacing, int districts, int districtsVariance, int levelRange,
-            double maxWater, double minNear) {
+            double maxWater, double minNear, boolean rivers) {
 
-        public static final Cities DEFAULT = new Cities(false, 2048, 3, 1, 40, 0.35, 0.75);
+        /**
+         * {@code rivers} (CityWorld's own terrain, {@code worldgen/RiverNetwork}) defaults OFF so a world saved before
+         * rivers existed never grows one that stops dead at the chunks it already has; the presets turn it on.
+         */
+        public static final Cities DEFAULT = new Cities(false, 2048, 3, 1, 40, 0.35, 0.75, false);
 
         public static final Codec<Cities> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("vanillaTerrain", false).forGetter(Cities::vanillaTerrain),
@@ -313,27 +317,32 @@ public record CityWorldSettingsData(
                 Codec.intRange(0, 3).optionalFieldOf("districtsVariance", 1).forGetter(Cities::districtsVariance),
                 Codec.intRange(0, 120).optionalFieldOf("levelRange", 40).forGetter(Cities::levelRange),
                 Codec.doubleRange(0.0, 1.0).optionalFieldOf("maxWater", 0.35).forGetter(Cities::maxWater),
-                Codec.doubleRange(0.0, 1.0).optionalFieldOf("minNear", 0.75).forGetter(Cities::minNear)
+                Codec.doubleRange(0.0, 1.0).optionalFieldOf("minNear", 0.75).forGetter(Cities::minNear),
+                Codec.BOOL.optionalFieldOf("rivers", false).forGetter(Cities::rivers)
         ).apply(i, Cities::new));
 
         public Cities withVanillaTerrain(boolean v) {
-            return new Cities(v, spacing, districts, districtsVariance, levelRange, maxWater, minNear);
+            return new Cities(v, spacing, districts, districtsVariance, levelRange, maxWater, minNear, rivers);
         }
 
         public Cities withSpacing(int v) {
-            return new Cities(vanillaTerrain, v, districts, districtsVariance, levelRange, maxWater, minNear);
+            return new Cities(vanillaTerrain, v, districts, districtsVariance, levelRange, maxWater, minNear, rivers);
         }
 
         public Cities withDistricts(int v) {
-            return new Cities(vanillaTerrain, spacing, v, districtsVariance, levelRange, maxWater, minNear);
+            return new Cities(vanillaTerrain, spacing, v, districtsVariance, levelRange, maxWater, minNear, rivers);
         }
 
         public Cities withDistrictsVariance(int v) {
-            return new Cities(vanillaTerrain, spacing, districts, v, levelRange, maxWater, minNear);
+            return new Cities(vanillaTerrain, spacing, districts, v, levelRange, maxWater, minNear, rivers);
+        }
+
+        public Cities withRivers(boolean v) {
+            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, levelRange, maxWater, minNear, v);
         }
 
         public Cities withLevelRange(int v) {
-            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, v, maxWater, minNear);
+            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, v, maxWater, minNear, rivers);
         }
     }
 
