@@ -569,7 +569,7 @@ public class CityWorldGenerator {
         int total = 0;
         for (int dx = -1; dx <= 1; dx++)
             for (int dz = -1; dz <= 1; dz++)
-                total += getFarBlockY(x + dx * continentSmooth(), z + dz * continentSmooth());
+                total += getNaturalBlockY(x + dx * continentSmooth(), z + dz * continentSmooth());
         return total / 9;
     }
 
@@ -682,6 +682,11 @@ public class CityWorldGenerator {
     /** The block to fill the atmosphere with at a given Y (air for normal worlds). */
     public Material findAtmosphereMaterialAt(int blockY) {
         return shapeProvider.findAtmosphereMaterialAt(this, blockY);
+    }
+
+    /** The terrain height before rivers carve it: climate sampling, which reaches far and needs no river. */
+    public int getNaturalBlockY(int blockX, int blockZ) {
+        return shapeProvider.findNaturalBlockY(this, blockX, blockZ);
     }
 
     /** The terrain height at a position, without generating anything there. */

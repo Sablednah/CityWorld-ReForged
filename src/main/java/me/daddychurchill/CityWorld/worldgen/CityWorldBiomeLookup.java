@@ -245,7 +245,7 @@ public final class CityWorldBiomeLookup {
             else if (filled[slot] && keys[slot] == key)
                 return column;
 
-            column.terrainY = context.getFarBlockY(blockX, blockZ);
+            column.terrainY = context.getNaturalBlockY(blockX, blockZ); // a river is asked for separately
             column.temperature = context.getTemperature(blockX, blockZ);
             column.humidity = context.getHumidity(blockX, blockZ);
             column.continentalness = context.getContinentalness(blockX, blockZ);
