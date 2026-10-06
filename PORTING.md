@@ -32,6 +32,41 @@ comments, orphaned javadocs re-attached) turned up one real bug, car-park east/w
 north/south edges; and the interchange stair top was fixed from the owner's hand edit in his save (headroom
 over a two-step flight; the shaft's track-side wall is the platform edge again).
 
+## ▶ Resume here — rivers on CityWorld's own land (2026-10-05 → 10-06, unreleased)
+
+Committed on all six lines: master `3322451d` + `1912bf1a`; each branch adds one drift commit. Owner signed off
+the look on 2026-10-06 after nine playtest rounds on seed 5670300453504745606 (his "New World" saves).
+
+**Shape of it** (`worldgen/RiverNetwork`, wired through `ShapeProvider_Normal`):
+- CityWorld land has no ocean: mountain islands in a flat street-level plain with 100–600-block seas. Springs (one
+  candidate per 448-block cell, ground ≥ sea+24) follow drainage off the mountains on a 32-block node grid; on
+  the plain (where drainage is all pits and made 7 km loops) a course takes the cheapest route (Dijkstra in a
+  ±64-node box, plain arrays + array heap) to a sea of ≥256 nodes; smaller ponds are lakes on the way.
+- Width mostly by distance run (×3 faster once on the plain), a little by joining streams; cap 28.
+- Water level set once per drawn curve point from the lowest natural ground sampled across the valley
+  (±(half+6), staggered 4-block grid); hill levels quantised into 5-block falls with plunge pools; a hollow
+  behind each lip; 1 in 4 hollows hide crystals or out-of-place ore, 1 in 40 of those a buried_treasure chest
+  with the Riverbank Kids' note (`Support/HiddenTreasure`, per-branch `compat/WrittenNote`).
+- **The column is built only from continuous pieces**: valley side = MIN over every nearby stretch (rising from
+  its water's edge; under the sea and on beach-height ground, from the channel floor); water floor = MAX over
+  nearby stretches (land falls ≤1/block from any water); then min with natural ground. Earlier rounds combined
+  per-column rules (levees, single-column props, per-stretch picking) and their seams were pillars and fins —
+  measured 35 fins in the river band vs 1 natural; now 0 pillars, 0 spills. Containment and the beach-bar breach
+  must never touch columns below sea level (both once dug or raised the sea's own floor into ridges).
+- A chunk with river water at street level reads SEA in `HeightInfo.riverCheck`, so roads bridge it.
+- Settings `cities.rivers` (default off; modern/apocalypse/default presets on); Customize Land row "Rivers".
+
+**Tools**: `survey:rivers` (network PNG, no chunks), `/cityfind river [tp]`, `-Dcityworld.rivers.off=true` (same
+land, no rivers — the control for any river measurement), `-Dcityworld.rivers.find=<FIND_*>` (force a hollow
+find), and the scratch checks `spill.py` / `pillars.py` / `depth.py` (still water with air beside it not over
+lower water; columns 3+ above neighbours; water depth maps) — worth promoting to `scripts/` if rivers continue.
+
+**Speed**: spawn preparation 62.6 s → 20.6 s (14.3 s with rivers off). Climate sampling reads natural height
+(`findNaturalBlockY`) — it had been building river chunks far away; courses trace in parallel.
+
+**Next (not started)**: city riverside — quays, bridges sized for wide rivers (vanilla land's `ShorelineLot`),
+harbours at mouths; the ruined Nether twin's rivers (owner hasn't chosen lava / dry / none).
+
 ## ▶ Resume here — cities in a vanilla world: the "Vanilla" terrain mode (spike, 2026-10-02 night)
 
 **The ask (a CurseForge comment, relayed by the owner):** *"is there a way to make the cities spawn just like a
