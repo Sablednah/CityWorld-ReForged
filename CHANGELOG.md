@@ -16,6 +16,11 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   biome. Where a river meets the sea its channel is dredged out across the sea floor.
 - **Something behind the waterfalls**, now and then: a hollow behind each fall, and in one in four of those,
   crystals or ore that has no business being there. Very rarely, a chest of buried treasure and a note.
+- **Quays and harbours.** Where a river runs through a city, most of its banks become stone quays at street level —
+  a quay wall down to the riverbed along the water's real edge, a parapet, and promenades with lanterns, moorings
+  with jetties on pilings, or loading quays with a timber derrick and cargo; the rest keep their natural bank.
+  Where a city meets the sea, the same quays follow the shore as a harbour, with longer jetties and now and then a
+  lighthouse.
 - `/cityfind river [tp]`: the nearest river water.
 
 ## 5.19.1
