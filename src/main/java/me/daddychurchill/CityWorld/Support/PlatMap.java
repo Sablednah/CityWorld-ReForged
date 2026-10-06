@@ -352,7 +352,8 @@ public class PlatMap {
 			// everything except plain building lots. Every built lot passes through this one line.
 			boolean result = lot.isPlaceableAt(generator, originX + x, originZ + z)
 					&& !generator.isStructureReserved(originX + x, originZ + z)
-					&& !generator.shapeProvider.refusesLotAt(originX + x, originZ + z);
+					&& (lot instanceof me.daddychurchill.CityWorld.Plats.River.QuaysideLot
+							|| !generator.shapeProvider.refusesLotAt(originX + x, originZ + z));
 			if (result) {
 
 				// clear it please
