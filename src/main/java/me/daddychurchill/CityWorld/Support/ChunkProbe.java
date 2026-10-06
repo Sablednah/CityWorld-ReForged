@@ -541,6 +541,211 @@ public final class ChunkProbe {
         CityWorldMod.LOGGER.warn("SURVEY city lots: {}", lots);
     }
 
+    /**
+     * {@code -Dcityworld.probe=survey:rivers}: the river network of CityWorld's own terrain
+     * ({@code worldgen/RiverNetwork}), drawn over the ground heights as {@code run/rivers-<seed>.png} with its
+     * numbers in the log. {@code -Dcityworld.probe.size} blocks square (default 8192) at
+     * {@code -Dcityworld.probe.px} blocks a pixel (default 8), centred on {@code -Dcityworld.probe.at=x,z}
+     * (default 0,0). No chunk is generated. Map: sea blue, beach sand, flat street-level ground (where cities
+     * go) pale grey, hills green to white; rivers dark blue, width by flow; red dots falls, cyan lakes, black
+     * springs, magenta mouths.
+     */
+    private static void surveyRivers(ServerLevel level) {
+        if (!(level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw)
+                || !(cw.getContext(level).shapeProvider instanceof me.daddychurchill.CityWorld.Plugins.ShapeProvider_Normal shape)) {
+            CityWorldMod.LOGGER.warn("SURVEY rivers: this dimension is not CityWorld's normal terrain");
+            return;
+        }
+        var ctx = cw.getContext(level);
+        int sea = shape.getSeaLevel();
+        var terrain = new me.daddychurchill.CityWorld.worldgen.RiverNetwork.Terrain() {
+            public double drainage(int x, int z) { return shape.drainageAt(x, z); }
+            public double ground(int x, int z) { return shape.naturalY(ctx, x, z); }
+            public int seaLevel() { return sea; }
+        };
+        long seed = level.getSeed();
+        var net = new me.daddychurchill.CityWorld.worldgen.RiverNetwork(seed, terrain);
+        int size = Integer.getInteger("cityworld.probe.size", 8192), px = Integer.getInteger("cityworld.probe.px", 8);
+        String[] at = System.getProperty("cityworld.probe.at", "0,0").split(",");
+        int x0 = Integer.parseInt(at[0].trim()) - size / 2, z0 = Integer.parseInt(at[1].trim()) - size / 2;
+        int margin = 3072, cell = me.daddychurchill.CityWorld.worldgen.RiverNetwork.CELL;
+        int NODE = me.daddychurchill.CityWorld.worldgen.RiverNetwork.NODE;
+        long started = System.nanoTime();
+        java.util.List<me.daddychurchill.CityWorld.worldgen.RiverNetwork.Course> courses = new java.util.ArrayList<>();
+        int cells = 0;
+        for (int cx = Math.floorDiv(x0 - margin, cell); cx <= Math.floorDiv(x0 + size + margin, cell); cx++)
+            for (int cz = Math.floorDiv(z0 - margin, cell); cz <= Math.floorDiv(z0 + size + margin, cell); cz++) {
+                cells++;
+                Long spring = net.spring(cx, cz);
+                if (spring != null)
+                    courses.add(net.trace(spring));
+            }
+        long traced = (System.nanoTime() - started) / 1_000_000;
+        java.util.Map<Long, Integer> flow = new java.util.HashMap<>(), lvl = new java.util.HashMap<>(), gr = new java.util.HashMap<>();
+        java.util.Map<Long, Long> next = new java.util.HashMap<>();
+        java.util.Map<Long, Integer> run = new java.util.HashMap<>();
+        java.util.Set<Long> falls = new java.util.HashSet<>(), lakes = new java.util.HashSet<>();
+        java.util.Map<me.daddychurchill.CityWorld.worldgen.RiverNetwork.End, Integer> ends = new java.util.TreeMap<>();
+        java.util.Map<Integer, Integer> cutHist = new java.util.TreeMap<>(), dropHist = new java.util.TreeMap<>();
+        long totalLen = 0;
+        for (var c : courses) {
+            ends.merge(c.end(), 1, Integer::sum);
+            totalLen += c.nodes().size();
+            for (int k = 0; k < c.nodes().size(); k++) {
+                long n = c.nodes().get(k);
+                flow.merge(n, 1, Integer::sum);
+                run.merge(n, k, Math::max);
+                lvl.merge(n, c.level()[k], Math::max);
+                gr.put(n, c.ground()[k]);
+                if (k + 1 < c.nodes().size()) {
+                    next.putIfAbsent(n, c.nodes().get(k + 1));
+                    int drop = c.level()[k] - c.level()[k + 1];
+                    if (drop >= me.daddychurchill.CityWorld.worldgen.RiverNetwork.FALL)
+                        falls.add(n);
+                }
+                if (c.level()[k] > c.ground()[k] - 1 && c.ground()[k] >= sea)
+                    lakes.add(n);
+            }
+        }
+        for (var e : lvl.entrySet()) {
+            int cut = gr.get(e.getKey()) - 1 - e.getValue();
+            cutHist.merge(cut <= 0 ? 0 : cut <= 3 ? 3 : cut <= 8 ? 8 : cut <= 16 ? 16 : cut <= 32 ? 32 : 99, 1, Integer::sum);
+        }
+        for (var e : next.entrySet()) {
+            int drop = lvl.get(e.getKey()) - lvl.getOrDefault(e.getValue(), lvl.get(e.getKey()));
+            dropHist.merge(drop <= 0 ? 0 : drop <= 1 ? 1 : drop <= 3 ? 3 : drop <= 8 ? 8 : drop <= 16 ? 16 : 99, 1, Integer::sum);
+        }
+        java.util.Map<Integer, Integer> widthHist = new java.util.TreeMap<>(), plainWidth = new java.util.TreeMap<>();
+        for (long n : flow.keySet()) {
+            if (gr.get(n) < sea)
+                continue;
+            int wd = me.daddychurchill.CityWorld.worldgen.RiverNetwork.width(flow.get(n), run.get(n));
+            int bucket = wd <= 3 ? 3 : wd <= 7 ? 7 : wd <= 12 ? 12 : wd <= 16 ? 16 : 20;
+            widthHist.merge(bucket, 1, Integer::sum);
+            if (gr.get(n) == sea + 1)
+                plainWidth.merge(bucket, 1, Integer::sum);
+        }
+        CityWorldMod.LOGGER.warn("SURVEY rivers: width (nodes on land, by up-to blocks) {}; across city ground {}", widthHist, plainWidth);
+        courses.stream().sorted((a, b) -> Long.compare(
+                b.nodes().stream().filter(n -> gr.get(n) == sea + 1).count(), a.nodes().stream().filter(n -> gr.get(n) == sea + 1).count()))
+                .limit(6).forEach(c -> {
+                    long plain = c.nodes().stream().filter(n -> gr.get(n) == sea + 1).count();
+                    long water = c.nodes().stream().filter(n -> gr.get(n) < sea).count();
+                    double[] sp = net.place(c.spring()), en = net.place(c.nodes().get(c.nodes().size() - 1));
+                    CityWorldMod.LOGGER.warn("SURVEY rivers course: spring {},{} -> {},{} {}: {} nodes, {} on city ground, {} in water",
+                            (int) sp[0], (int) sp[1], (int) en[0], (int) en[1], c.end(), c.nodes().size(), plain, water);
+                });
+        java.util.Map<Integer, Integer> flowHist = new java.util.TreeMap<>();
+        for (int f : flow.values())
+            flowHist.merge(f <= 2 ? 2 : f <= 6 ? 6 : f <= 15 ? 15 : 99, 1, Integer::sum);
+        CityWorldMod.LOGGER.warn("SURVEY rivers: seed {}, {} cells, {} springs, traced in {} ms; ends {}; mean course {} nodes",
+                seed, cells, courses.size(), traced, ends, courses.isEmpty() ? 0 : totalLen / courses.size());
+        CityWorldMod.LOGGER.warn("SURVEY rivers: {} river nodes; flow (stream<=2, creek<=6, river<=15, big) {}; falls {}; lake nodes {}",
+                flow.size(), flowHist, falls.size(), lakes.size());
+        CityWorldMod.LOGGER.warn("SURVEY rivers: gorge cut below ground (blocks, upper bound) {}; level drop per node {}", cutHist, dropHist);
+
+        // the picture
+        int w = size / px;
+        var img = new java.awt.image.BufferedImage(w, w, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        int[] groundPx = new int[w * w];
+        int flat = 0, seaPx = 0;
+        for (int pz = 0; pz < w; pz++)
+            for (int pxi = 0; pxi < w; pxi++) {
+                int g = (int) Math.floor(shape.findPerciseY(ctx, x0 + pxi * px + px / 2, z0 + pz * px + px / 2));
+                groundPx[pz * w + pxi] = g;
+                int rgb;
+                if (g < sea) {
+                    int d = Math.min(40, sea - g);
+                    rgb = rgb(40 - d / 2, 90 - d, 200 - d * 2);
+                    seaPx++;
+                } else if (g == sea)
+                    rgb = rgb(220, 205, 150);
+                else if (g == sea + 1) {
+                    rgb = rgb(205, 205, 200);
+                    flat++;
+                } else {
+                    int h = g - sea;
+                    if (h < 30)
+                        rgb = rgb(110 + h * 2, 160 - h, 80);
+                    else if (h < 70)
+                        rgb = rgb(150 - (h - 30), 130 - (h - 30), 90);
+                    else if (h < 110)
+                        rgb = rgb(120 + (h - 70) * 2, 110 + (h - 70) * 2, 100 + (h - 70) * 2);
+                    else
+                        rgb = rgb(245, 245, 250);
+                }
+                img.setRGB(pxi, pz, rgb);
+            }
+        // lakes: pixels near a lake node whose ground sits below its water
+        int reach = 6 * NODE / px;
+        for (long n : lakes) {
+            int cxp = (me.daddychurchill.CityWorld.worldgen.RiverNetwork.ni(n) * NODE - x0) / px;
+            int czp = (me.daddychurchill.CityWorld.worldgen.RiverNetwork.nj(n) * NODE - z0) / px;
+            int water = lvl.get(n);
+            for (int dz = -reach; dz <= reach; dz++)
+                for (int dx = -reach; dx <= reach; dx++) {
+                    int a = cxp + dx, b = czp + dz;
+                    if (a >= 0 && b >= 0 && a < w && b < w && dx * dx + dz * dz <= reach * reach && groundPx[b * w + a] <= water
+                            && groundPx[b * w + a] > sea)
+                        img.setRGB(a, b, rgb(90, 200, 230));
+                }
+        }
+        var g2 = img.createGraphics();
+        g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(new java.awt.Color(20, 50, 190));
+        int onPlain = 0;
+        for (var e : gr.entrySet())
+            if (e.getValue() == sea + 1)
+                onPlain++;
+        CityWorldMod.LOGGER.warn("SURVEY rivers: {} river nodes ({} blocks of river) cross flat street-level ground",
+                onPlain, onPlain * NODE);
+        // each course as its smooth curve, as wide as the flow at that point; nothing drawn across open water
+        for (var c : courses) {
+            var pts = net.curve(c.nodes());
+            int per = pts.size() / Math.max(1, c.nodes().size() - 1); // curve points per node step, about 8
+            for (int k = 0; k + 1 < pts.size(); k++) {
+                double[] p0 = pts.get(k), p1 = pts.get(k + 1);
+                int idx = Math.min(c.nodes().size() - 1, Math.round((float) k / Math.max(1, per)));
+                long n = c.nodes().get(idx);
+                if (gr.get(n) < sea)
+                    continue;
+                float width = me.daddychurchill.CityWorld.worldgen.RiverNetwork.width(flow.get(n), run.get(n));
+                g2.setStroke(new java.awt.BasicStroke(Math.max(1f, width / px), java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
+                g2.drawLine((int) ((p0[0] - x0) / px), (int) ((p0[1] - z0) / px), (int) ((p1[0] - x0) / px), (int) ((p1[1] - z0) / px));
+            }
+        }
+        java.util.function.BiConsumer<Long, java.awt.Color> dot = (n, colour) -> {
+            g2.setColor(colour);
+            double[] p = net.place(n);
+            int a = (int) ((p[0] - x0) / px), b = (int) ((p[1] - z0) / px);
+            g2.fillOval(a - 2, b - 2, 5, 5);
+        };
+        for (long n : falls)
+            dot.accept(n, java.awt.Color.RED);
+        for (var c : courses) {
+            dot.accept(c.spring(), java.awt.Color.BLACK);
+            long last = c.nodes().get(c.nodes().size() - 1);
+            dot.accept(last, c.end() == me.daddychurchill.CityWorld.worldgen.RiverNetwork.End.SEA ? java.awt.Color.MAGENTA
+                    : java.awt.Color.CYAN);
+        }
+        g2.setColor(java.awt.Color.BLACK);
+        g2.drawString("seed " + seed + "  " + size + " blocks, " + px + "/px, centre " + (x0 + size / 2) + "," + (z0 + size / 2), 6, 14);
+        g2.dispose();
+        try {
+            var out = java.nio.file.Path.of("rivers-" + seed + "-" + System.getProperty("cityworld.probe.at", "0,0").replace(',', '_')
+                    + "-" + size + ".png").toAbsolutePath();
+            javax.imageio.ImageIO.write(img, "png", out.toFile());
+            CityWorldMod.LOGGER.warn("SURVEY rivers: map {} ({}% flat street-level ground, {}% sea), drawn in {} ms", out,
+                    flat * 100 / (w * w), seaPx * 100 / (w * w), (System.nanoTime() - started) / 1_000_000);
+        } catch (java.io.IOException e) {
+            CityWorldMod.LOGGER.warn("SURVEY rivers: could not write the map", e);
+        }
+    }
+
+    private static int rgb(int r, int g, int b) {
+        return (Math.max(0, Math.min(255, r)) << 16) | (Math.max(0, Math.min(255, g)) << 8) | Math.max(0, Math.min(255, b));
+    }
+
     /** {@link HeightInfo}'s five sample columns: the centre, then the four corners. */
     private static int ox(int k) {
         return new int[] { 8, 0, 15, 0, 15 }[k];
@@ -566,6 +771,10 @@ public final class ChunkProbe {
             int cx, cz;
             if (spec.startsWith("survey:end")) {
                 surveyEnd(level);
+                return;
+            }
+            if (spec.startsWith("survey:rivers")) {
+                surveyRivers(level);
                 return;
             }
             if (spec.startsWith("survey:sites")) {

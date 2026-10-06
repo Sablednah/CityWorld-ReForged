@@ -63,6 +63,7 @@ public final class Biome {
     public static final Biome JUNGLE = of(Biomes.JUNGLE);
     public static final Biome BEACH = of(Biomes.BEACH);
     public static final Biome OCEAN = of(Biomes.OCEAN);
+    public static final Biome RIVER = of(Biomes.RIVER);
     public static final Biome END_MIDLANDS = of(Biomes.END_MIDLANDS);
 
     // The 1.18 terrain rework deleted every "hills" variant along with SNOWY_MOUNTAINS, so these

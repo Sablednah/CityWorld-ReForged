@@ -39,5 +39,8 @@
       "minecraft:zombie_villager"
     ],
     "append": false
+  },
+  "cities": {
+    "rivers": true
   }
 }

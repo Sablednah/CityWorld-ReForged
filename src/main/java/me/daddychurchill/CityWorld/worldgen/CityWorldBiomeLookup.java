@@ -67,6 +67,12 @@ public final class CityWorldBiomeLookup {
                 return cave;
         }
 
+        // A river (settings cities.rivers): its water and the air over it, from a little below the bed up
+        int river = context.shapeProvider.riverWaterAt(blockX, blockZ);
+        if (river != me.daddychurchill.CityWorld.worldgen.RiverNetwork.NONE && blockY >= column.terrainY - 4
+                && blockY <= river + 16)
+            return source.river(column.temperature);
+
         // Above the waterline, an installed TerraBlender mod may have a biome for this climate. Opt-in,
         // and only for land: oceans, shores and peaks stay CityWorld's, because those are decided by
         // terrain facts we know exactly and a climate lookup would only get wrong.

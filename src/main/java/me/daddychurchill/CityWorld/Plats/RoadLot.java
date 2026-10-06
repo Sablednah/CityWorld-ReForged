@@ -658,6 +658,9 @@ public class RoadLot extends ConnectedLot {
 			// clear a little space
 //			chunk.setLayer(pavementLevel, 4, Material.IRON_BLOCK);
 			chunk.airoutLayer(generator, pavementLevel, 4); // @@@
+			// over a river (CityWorld's own rivers): nothing of its banks left standing on the deck
+			if (generator.shapeProvider.riverCrossesStreetAt(chunk.sectionX, chunk.sectionZ))
+				chunk.airoutLayer(generator, pavementLevel + 4, 12);
 			generateSurface(generator, chunk, false);
 
 			// bridge to the east/west

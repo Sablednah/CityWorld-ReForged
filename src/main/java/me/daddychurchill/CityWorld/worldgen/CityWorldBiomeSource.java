@@ -114,7 +114,7 @@ public class CityWorldBiomeSource extends BiomeSource implements CityWorldBiomes
         if (handed != null)
             own = Stream.concat(own, handed.possibleBiomes().stream().filter(java.util.Objects::nonNull));
         return Stream.concat(own,
-                Stream.concat(cavePool().biomes(), surfacePools().biomes())).distinct();
+                Stream.concat(Stream.concat(cavePool().biomes(), surfacePools().biomes()), riverBiomes())).distinct();
     }
 
     @Override
