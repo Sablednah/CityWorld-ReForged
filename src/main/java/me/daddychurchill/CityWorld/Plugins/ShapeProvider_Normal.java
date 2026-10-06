@@ -373,7 +373,7 @@ public class ShapeProvider_Normal extends ShapeProvider {
 					var rc = riverChunk(blockX, blockZ);
 					int at = RiverNetwork.RiverChunk.index(blockX, blockZ);
 					if (rc.lip()[at])
-						chunk.chunkData.markPosForPostprocessing(new net.minecraft.core.BlockPos(blockX, water, blockZ));
+						chunk.chunkData.markPosForPostProcessing(new net.minecraft.core.BlockPos(blockX, water, blockZ));
 					// the hollow behind a fall
 					if (rc.hollow()[at * 2] != RiverNetwork.NONE)
 						chunk.setBlocks(x, rc.hollow()[at * 2], rc.hollow()[at * 2 + 1] + 1, z, me.daddychurchill.CityWorld.compat.Material.AIR);
