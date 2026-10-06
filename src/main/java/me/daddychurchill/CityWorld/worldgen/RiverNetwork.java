@@ -4,7 +4,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -265,44 +264,53 @@ public final class RiverNetwork {
         int[] parent = new int[side * side];
         java.util.Arrays.fill(best, Double.MAX_VALUE);
         java.util.Arrays.fill(parent, -1);
-        record Q(int at, double cost) {}
-        PriorityQueue<Q> queue = new PriorityQueue<>((a, b) -> Double.compare(a.cost, b.cost));
+        // the box's ground and wobble, looked up once each: the search reads each cell's eight times over, and those
+        // map lookups were nearly all the cost of a new world (225 ms a route)
+        int[] gbox = new int[side * side];
+        float[] wobble = new float[side * side];
+        for (int a = 0; a < side; a++)
+            for (int b = 0; b < side; b++) {
+                long m = node(i0 + a, j0 + b);
+                gbox[a * side + b] = ground(m);
+                wobble[a * side + b] = (float) (0.6 * ((mix(seed * 17 + m) & 0xffff) / 65535.0));
+            }
+        Heap queue = new Heap(side * side);
         int start = ROUTE_RADIUS * side + ROUTE_RADIUS;
         best[start] = 0;
-        queue.add(new Q(start, 0));
+        queue.push(start, 0);
         int pond = -1, found = -1;
-        while (!queue.isEmpty()) {
-            Q q = queue.poll();
-            if (q.cost > best[q.at])
+        while (queue.size > 0) {
+            double qcost = queue.topCost();
+            int qat = queue.pop();
+            if (qcost > best[qat])
                 continue;
-            int qi = q.at / side, qj = q.at % side;
+            int qi = qat / side, qj = qat % side;
             long qn = node(i0 + qi, j0 + qj);
-            if (q.at != start && ground(qn) < sea) {
+            if (qat != start && gbox[qat] < sea) {
                 if (isSea(qn)) {
-                    found = q.at;
+                    found = qat;
                     break;
                 }
                 if (pond < 0 && !passed.contains(qn))
-                    pond = q.at;
+                    pond = qat;
             }
             for (int k = 0; k < 8; k++) {
                 int mi = qi + DI[k], mj = qj + DJ[k];
                 if (mi < 0 || mj < 0 || mi >= side || mj >= side)
                     continue;
-                long m = node(i0 + mi, j0 + mj);
-                int gm = ground(m);
+                int at = mi * side + mj;
+                int gm = gbox[at];
                 double step = (DI[k] != 0 && DJ[k] != 0) ? 1.414 : 1.0;
                 if (gm < sea)
                     step *= 0.4;
                 else if (gm > sea + 1)
                     step += (gm - sea - 1) * 0.35;
-                step += 0.6 * ((mix(seed * 17 + m) & 0xffff) / 65535.0);
-                double c = q.cost + step;
-                int at = mi * side + mj;
+                step += wobble[at];
+                double c = qcost + step;
                 if (c < best[at]) {
                     best[at] = c;
-                    parent[at] = q.at;
-                    queue.add(new Q(at, c));
+                    parent[at] = qat;
+                    queue.push(at, c);
                 }
             }
         }
@@ -313,6 +321,61 @@ public final class RiverNetwork {
         for (int at = goal; at >= 0 && at != start; at = parent[at])
             path.add(0, node(i0 + at / side, j0 + at % side));
         return path;
+    }
+
+    /** A binary min-heap of cell indices by cost, on plain arrays: no object a push (the route search makes ~10^5). */
+    private static final class Heap {
+        int[] at;
+        double[] cost;
+        int size;
+
+        Heap(int capacity) {
+            at = new int[capacity];
+            cost = new double[capacity];
+        }
+
+        void push(int a, double c) {
+            if (size == at.length) {
+                at = java.util.Arrays.copyOf(at, size * 2);
+                cost = java.util.Arrays.copyOf(cost, size * 2);
+            }
+            int i = size++;
+            while (i > 0) {
+                int up = (i - 1) >> 1;
+                if (cost[up] <= c)
+                    break;
+                at[i] = at[up];
+                cost[i] = cost[up];
+                i = up;
+            }
+            at[i] = a;
+            cost[i] = c;
+        }
+
+        double topCost() {
+            return cost[0];
+        }
+
+        int pop() {
+            int top = at[0];
+            int last = at[--size];
+            double lc = cost[size];
+            int i = 0;
+            while (true) {
+                int l = 2 * i + 1;
+                if (l >= size)
+                    break;
+                int r = l + 1, m = r < size && cost[r] < cost[l] ? r : l;
+                if (cost[m] >= lc)
+                    break;
+                at[i] = at[m];
+                cost[i] = cost[m];
+                i = m;
+            }
+            at[i] = last;
+            cost[i] = lc;
+            return top;
+        }
     }
 
     /** The basin that holds water standing at {@code rim} around this node, or null if it is not enclosed. */
@@ -501,8 +564,10 @@ public final class RiverNetwork {
                 double reach = width(1, k, plainAt) * 0.65 + ACROSS;
                 double ux = -tz / tl, uz = tx / tl;
                 double mx = p + 1 < count ? (px[p + 1] - px[p]) / 2 : 0, mz = p + 1 < count ? (pz[p + 1] - pz[p]) / 2 : 0;
+                // every four blocks at the point and every four half-way on, staggered by two: the same coverage
+                // as every two at both, for half the samples (tracing was most of the cost of a new world)
                 for (int half = 0; half <= 1; half++)
-                    for (double o = -reach; o <= reach; o += 2)
+                    for (double o = -reach + half * 2; o <= reach; o += 4)
                         here = Math.min(here, (int) Math.floor(terrain.ground((int) Math.floor(px[p] + half * mx + ux * o),
                                 (int) Math.floor(pz[p] + half * mz + uz * o))));
             }
@@ -660,17 +725,19 @@ public final class RiverNetwork {
     private Region buildRegion(int rx, int rz) {
         int x0 = rx * REGION, z0 = rz * REGION, x1 = x0 + REGION, z1 = z0 + REGION;
         int reach = REACH + FLOW_MARGIN;
-        List<Course> near = new ArrayList<>();
+        List<Long> springs = new ArrayList<>();
         for (int cx = Math.floorDiv(x0 - reach, CELL); cx <= Math.floorDiv(x1 + reach, CELL); cx++)
             for (int cz = Math.floorDiv(z0 - reach, CELL); cz <= Math.floorDiv(z1 + reach, CELL); cz++) {
                 Long spring = spring(cx, cz);
-                if (spring == null)
-                    continue;
-                Course c = course(spring);
-                if (c.maxX() >= x0 - FLOW_MARGIN && c.minX() <= x1 + FLOW_MARGIN && c.maxZ() >= z0 - FLOW_MARGIN
-                        && c.minZ() <= z1 + FLOW_MARGIN)
-                    near.add(c);
+                if (spring != null)
+                    springs.add(spring);
             }
+        // traced side by side: one thread tracing a hundred springs while every other worker waited for it was
+        // most of the time a new world took to prepare (each course is still traced once, see course())
+        List<Course> near = springs.parallelStream().map(this::course)
+                .filter(c -> c.maxX() >= x0 - FLOW_MARGIN && c.minX() <= x1 + FLOW_MARGIN
+                        && c.maxZ() >= z0 - FLOW_MARGIN && c.minZ() <= z1 + FLOW_MARGIN)
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         Map<Long, Integer> flow = new HashMap<>(), lakeLevel = new HashMap<>();
         for (Course c : near) {
             for (long n : new HashSet<>(c.nodes()))
@@ -710,28 +777,23 @@ public final class RiverNetwork {
 
     public static final RiverChunk DRY = new RiverChunk(false, null, null, null, Integer.MAX_VALUE, NONE, null, null, null);
 
-    private final Map<Long, RiverChunk> chunks = new LinkedHashMap<>(256, 0.75f, true) {
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<Long, RiverChunk> eldest) {
-            return size() > 2048;
-        }
-    };
+    /** Every height asked of the terrain comes through here, so no lock: a full map is simply emptied. */
+    private final ConcurrentHashMap<Long, RiverChunk> chunks = new ConcurrentHashMap<>();
 
     public RiverChunk chunk(int chunkX, int chunkZ) {
         long key = node(chunkX, chunkZ);
-        synchronized (chunks) {
-            RiverChunk known = chunks.get(key);
-            if (known != null)
-                return known;
-        }
+        RiverChunk known = chunks.get(key);
+        if (known != null)
+            return known;
         RiverChunk built = build(chunkX, chunkZ);
-        synchronized (chunks) {
-            chunks.put(key, built);
-        }
+        if (chunks.size() > 8192)
+            chunks.clear();
+        chunks.putIfAbsent(key, built);
         return built;
     }
 
-    private record Seg(Course c, int k) {}
+    /** A stretch of a course between two drawn points, with its half-width at each end (worked out once a chunk). */
+    private record Seg(Course c, int k, double h0, double h1) {}
 
     private static final int MARGIN = (int) (MAX_WIDTH * 0.65) + BANK + 4;
 
@@ -745,7 +807,7 @@ public final class RiverNetwork {
                 if (Math.max(ax, bx) < x0 - MARGIN || Math.min(ax, bx) > x1 + MARGIN || Math.max(az, bz) < z0 - MARGIN
                         || Math.min(az, bz) > z1 + MARGIN)
                     continue;
-                segs.add(new Seg(c, k));
+                segs.add(new Seg(c, k, halfAt(r, c, k), halfAt(r, c, k + 1)));
             }
         }
         return segs;
@@ -784,8 +846,7 @@ public final class RiverNetwork {
             int node = sc.pnode()[sp];
             int sw = width(r.flow().getOrDefault(sc.nodes().get(node), 1), node, sc.plainAt());
             // the half-width blends along the stretch rather than jumping from point to point
-            double h0 = halfAt(r, sc, sk), h1 = halfAt(r, sc, sk + 1);
-            double sh = h0 + (h1 - h0) * st;
+            double sh = s.h0() + (s.h1() - s.h0()) * st;
             double out = sd - sh;
             if (out > BANK)
                 continue;

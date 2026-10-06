@@ -124,6 +124,14 @@ public abstract class ShapeProvider extends Provider {
 		return NoiseGenerator.floor(findPerciseY(generator, blockX, blockZ));
 	}
 
+	/**
+	 * The terrain height before anything carves it (CityWorld's own rivers): for climate and biome sampling, which
+	 * look at far-off columns and must not make a river network work out a whole chunk for each one.
+	 */
+	public int findNaturalBlockY(CityWorldGenerator generator, int blockX, int blockZ) {
+		return findBlockY(generator, blockX, blockZ);
+	}
+
 	public int findGroundY(CityWorldGenerator generator, int blockX, int blockZ) {
 		return findBlockY(generator, blockX, blockZ);
 	}
