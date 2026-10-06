@@ -586,6 +586,11 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		return carved != Math.floor(natural) ? carved : natural; // lowered into a channel, or raised into its bank
 	}
 
+	@Override
+	public int findNaturalBlockY(CityWorldGenerator generator, int blockX, int blockZ) {
+		return (int) Math.floor(naturalY(generator, blockX, blockZ));
+	}
+
 	/** The ground before any river: upstream's height function, unchanged. */
 	public double naturalY(CityWorldGenerator generator, int blockX, int blockZ) {
 		double y = 0;
