@@ -676,7 +676,7 @@ public final class CityWorldCommands {
     /** The nearest river water on CityWorld's own land (settings {@code cities.rivers}), within 96 chunks. */
     private static int findRiver(CommandContext<CommandSourceStack> ctx, boolean teleport) throws CommandSyntaxException {
         ServerPlayer player = ctx.getSource().getPlayerOrException();
-        ServerLevel level = player.level();
+        ServerLevel level = player.serverLevel();
         MinecraftServer server = ctx.getSource().getServer();
         if (!(level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator cityGenerator)
                 || cityGenerator.citySites() != null) {
@@ -714,8 +714,8 @@ public final class CityWorldCommands {
                         + at[1] + "  (" + Math.round(Math.hypot(at[0] - player.getX(), at[2] - player.getZ())) + " blocks away)"));
                 if (teleport) {
                     level.getChunk(at[0] >> 4, at[2] >> 4);
-                    player.teleportTo(level, at[0] + 0.5, at[1] + 1, at[2] + 0.5, Set.<Relative>of(),
-                            player.getYRot(), player.getXRot(), false);
+                    player.teleportTo(level, at[0] + 0.5, at[1] + 1, at[2] + 0.5, Set.<RelativeMovement>of(),
+                            player.getYRot(), player.getXRot());
                 }
             });
         }, "cityworld-findriver");
