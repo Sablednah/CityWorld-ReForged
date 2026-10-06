@@ -232,6 +232,17 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	}
 
 	@Override
+	public boolean seaBeneathAt(int chunkX, int chunkZ) {
+		if (rivers == null)
+			return false;
+		for (int x = 0; x < 16; x += 5)
+			for (int z = 0; z < 16; z += 5)
+				if (rivers.naturalAt(chunkX * 16 + x, chunkZ * 16 + z) < seaLevel)
+					return true;
+		return false;
+	}
+
+	@Override
 	public boolean riverCrossesStreetAt(int chunkX, int chunkZ) {
 		if (rivers == null)
 			return false;

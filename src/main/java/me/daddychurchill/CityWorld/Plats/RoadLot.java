@@ -651,8 +651,16 @@ public class RoadLot extends ConnectedLot {
 		// look around
 		SurroundingRoads roads = new SurroundingRoads(platmap, platX, platZ);
 
+		// a city stream under the street (CityWorld's own rivers, at street level, no sea beneath): a flat road on
+		// over it like any other, the water put back under its deck below — upstream's bridge made a humpback over a
+		// chunk dug down to bare ground for a stream across one corner of it
+		boolean culvert = generator.shapeProvider.riverCrossesStreetAt(chunk.sectionX, chunk.sectionZ)
+				&& !generator.shapeProvider.seaBeneathAt(chunk.sectionX, chunk.sectionZ);
+		if (culvert)
+			doSewer = false;
+
 		// what are we making?
-		if (HeightInfo.getHeightsFast(generator, originX, originZ).isSea()) {
+		if (!culvert && HeightInfo.getHeightsFast(generator, originX, originZ).isSea()) {
 			doSewer = false;
 
 			// clear a little space
@@ -1146,6 +1154,17 @@ public class RoadLot extends ConnectedLot {
 				generateEntities(generator, chunk, sidewalkLevel);
 			}
 		}
+
+		// the stream under a flat road: its water back where the paving's base filled it
+		if (culvert)
+			for (int x = 0; x < 16; x++)
+				for (int z = 0; z < 16; z++) {
+					int water = generator.shapeProvider.riverWaterAt(originX + x, originZ + z);
+					if (water == me.daddychurchill.CityWorld.worldgen.RiverNetwork.NONE)
+						continue;
+					int bed = generator.shapeProvider.findBlockY(generator, originX + x, originZ + z);
+					chunk.setBlocks(x, x + 1, bed + 1, Math.min(water, pavementLevel - 1) + 1, z, z + 1, Material.WATER);
+				}
 
 		// sewer?
 		if (doSewer) {
