@@ -98,6 +98,11 @@ public final class RiverNetwork {
         bankNoise = new me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator(seed + 5103);
     }
 
+    /** The ground here before any river. */
+    public double naturalAt(int x, int z) {
+        return terrain.ground(x, z);
+    }
+
     // ---- nodes ----
 
     public static long node(int i, int j) {
