@@ -141,6 +141,11 @@ public abstract class ShapeProvider extends Provider {
 		return me.daddychurchill.CityWorld.worldgen.RiverNetwork.NONE;
 	}
 
+	/** Whether the natural ground in this chunk dips below the sea anywhere: sea, not just a river, under a road. */
+	public boolean seaBeneathAt(int chunkX, int chunkZ) {
+		return false;
+	}
+
 	/** Whether a river crosses this chunk at street level (no higher), so a road over it is a bridge. */
 	public boolean riverCrossesStreetAt(int chunkX, int chunkZ) {
 		return false;
