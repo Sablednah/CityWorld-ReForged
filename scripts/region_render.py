@@ -16,7 +16,8 @@ from region_dump import block_at_fn
 AIR = {'air', 'cave_air', 'void_air'}
 FIXED = {'end_stone': (222, 224, 164), 'obsidian': (30, 20, 50), 'chorus_plant': (150, 100, 150),
          'chorus_flower': (190, 150, 190), 'glass': (180, 220, 235), 'glass_pane': (180, 220, 235),
-         'grass_block': (110, 170, 80), 'stone_slab': (150, 150, 150), 'dirt_path': (150, 120, 70)}
+         'grass_block': (110, 170, 80), 'stone_slab': (150, 150, 150), 'dirt_path': (150, 120, 70),
+         'water': (40, 90, 210), 'sand': (220, 205, 150), 'gravel': (140, 135, 130)}
 
 def colour(name):
     name = name.split('[')[0]
