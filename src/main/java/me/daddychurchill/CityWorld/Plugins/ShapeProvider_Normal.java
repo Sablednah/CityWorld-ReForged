@@ -30,6 +30,7 @@ import me.daddychurchill.CityWorld.compat.BiomeGrid;
 import me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator;
 import me.daddychurchill.CityWorld.worldgen.RiverNetwork;
 import me.daddychurchill.CityWorld.compat.Material;
+import me.daddychurchill.CityWorld.Support.AbstractYs.HeightState;
 import me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator;
 
 public class ShapeProvider_Normal extends ShapeProvider {
@@ -244,9 +245,53 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		return rivers != null && rivers.chunk(chunkX, chunkZ).channel();
 	}
 
+	/** The share of a city's river chunks that become quays; the rest keep their natural bank. */
+	private static final double QUAY_ODDS = 0.65;
+	/** The share of a city's coastal chunks (land and sea both) that become harbour. */
+	private static final double HARBOUR_ODDS = 0.5;
+
+	/**
+	 * A city's waterside, once its lots are planned (CityWorld's own rivers on): a river chunk crossing at street
+	 * level is mostly quay ({@code QuaysideLot}), the rest natural bank; a chunk of the city's coast (land and sea
+	 * both) is often harbour — the same lot with the sea counted as water: a quay wall along the real shore, longer
+	 * jetties, now and then a lighthouse. Not in the wilds: only a platmap a city context planned.
+	 */
 	@Override
 	protected void validateLots(CityWorldGenerator generator, PlatMap platmap) {
-		// nothing to do in this one
+		if (rivers == null || platmap.context == natureContext)
+			return;
+		for (int x = 0; x < PlatMap.Width; x++)
+			for (int z = 0; z < PlatMap.Width; z++) {
+				var lot = platmap.getLot(x, z);
+				if (lot != null && !(lot instanceof me.daddychurchill.CityWorld.Plats.NatureLot))
+					continue;
+				int cx = platmap.originX + x, cz = platmap.originZ + z;
+				Odds odds = getMicroOddsGeneratorAt(cx, cz);
+				if (riverCrossesStreetAt(cx, cz)) {
+					if (odds.playOdds(QUAY_ODDS))
+						platmap.setLot(x, z, new me.daddychurchill.CityWorld.Plats.River.QuaysideLot(platmap, cx, cz, false));
+					continue;
+				}
+				// a coastal chunk, land and sea both in it: the harbour
+				if (!rivers.chunk(cx, cz).channel() && coastAt(generator, cx, cz) && odds.playOdds(HARBOUR_ODDS))
+					platmap.setLot(x, z, new me.daddychurchill.CityWorld.Plats.River.QuaysideLot(platmap, cx, cz, true));
+			}
+	}
+
+	/** Whether this chunk has both land and sea in it: a stretch of coast. */
+	private boolean coastAt(CityWorldGenerator generator, int chunkX, int chunkZ) {
+		int sea = 0, land = 0;
+		for (int x = 0; x < 16; x += 5)
+			for (int z = 0; z < 16; z += 5)
+				if (findBlockY(generator, chunkX * 16 + x, chunkZ * 16 + z) < seaLevel)
+					sea++;
+				else
+					land++;
+		return sea >= 3 && land >= 3;
+	}
+
+	private static HeightState stateAt(CityWorldGenerator generator, int chunkX, int chunkZ) {
+		return me.daddychurchill.CityWorld.Support.HeightInfo.getHeightsFast(generator, chunkX * 16, chunkZ * 16).getState();
 	}
 
 	/** Synchronized: several threads plan platmaps at once — see {@code contextInitialized}. */
