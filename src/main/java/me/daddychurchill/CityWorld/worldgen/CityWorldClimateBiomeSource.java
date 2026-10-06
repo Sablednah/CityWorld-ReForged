@@ -170,7 +170,7 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
         BiomeSource handed = vanilla;
         Stream<Holder<Biome>> all = Stream.concat(handed == null ? possible.stream()
                 : Stream.concat(possible.stream(), handed.possibleBiomes().stream().filter(java.util.Objects::nonNull)),
-                Stream.concat(cavePool().biomes(), surfacePools().biomes()));
+                Stream.concat(Stream.concat(cavePool().biomes(), surfacePools().biomes()), riverBiomes()));
         TerraBlenderBridge tb = terraBlender();
         if (tb != null)
             all = Stream.concat(all, tb.biomes().stream());

@@ -5,6 +5,19 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **Rivers on CityWorld's own land** (Modern, Classic, Apocalypse, Destroyed and Sparse; Customize → Land →
+  **Rivers**; on for new worlds of those presets, off for worlds made before). Springs on the high ground run down
+  the mountains in gullies and five-block waterfalls, then across the plain and through its lakes to the sea,
+  widening as they go and joining as they meet. Roads bridge them; buildings keep off them; the water is river
+  biome. Where a river meets the sea its channel is dredged out across the sea floor.
+- **Something behind the waterfalls**, now and then: a hollow behind each fall, and in one in four of those,
+  crystals or ore that has no business being there. Very rarely, a chest of buried treasure and a note.
+- `/cityfind river [tp]`: the nearest river water.
+
 ## 5.19.1
 
 All six Minecraft lines.

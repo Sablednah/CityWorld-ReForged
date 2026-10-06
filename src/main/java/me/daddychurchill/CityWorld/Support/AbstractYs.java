@@ -74,6 +74,18 @@ public abstract class AbstractYs {
 		}
 	}
 
+	/**
+	 * A river crosses this flat chunk at street level (CityWorld's own rivers, {@code worldgen/RiverNetwork}): it is
+	 * water, whatever its five or nine sample columns saw — a stream between them read as buildable, and the road
+	 * laid over it dammed it. As water, a road bridges it. A river up in the hills leaves its chunk as it was: a
+	 * road there tunnels, as upstream's does, rather than bridging at street level under the hill.
+	 */
+	final void riverCheck(CityWorldGenerator generator, int blockX, int blockZ) {
+		if ((state == HeightState.BUILDING || state == HeightState.LOWLAND) && !generator.vanillaTerrain
+				&& generator.shapeProvider.riverCrossesStreetAt(blockX >> 4, blockZ >> 4))
+			state = HeightState.SEA;
+	}
+
 	final void calcState(CityWorldGenerator generator, int sumHeight, int count) {
 		averageHeight = sumHeight / count;
 		if (maxHeight == 0)

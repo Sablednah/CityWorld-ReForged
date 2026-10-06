@@ -28,6 +28,8 @@ import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.compat.Biome;
 import me.daddychurchill.CityWorld.compat.BiomeGrid;
 import me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator;
+import me.daddychurchill.CityWorld.worldgen.RiverNetwork;
+import me.daddychurchill.CityWorld.compat.Material;
 import me.daddychurchill.CityWorld.compat.noise.SimplexOctaveGenerator;
 
 public class ShapeProvider_Normal extends ShapeProvider {
@@ -186,6 +188,60 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		seaRange = seaLevel - fudgeVerticalScale + seaFlattening;
 		constructMin = seaLevel;
 		constructRange = height - constructMin;
+
+		rivers = riversWanted(generator) ? new RiverNetwork(seed, new RiverNetwork.Terrain() {
+			public double drainage(int x, int z) {
+				return drainageAt(x, z);
+			}
+
+			public double ground(int x, int z) {
+				return naturalY(generator, x, z);
+			}
+
+			public int seaLevel() {
+				return seaLevel;
+			}
+		}) : null;
+	}
+
+	/**
+	 * Rivers (settings {@code cities.rivers}, {@code worldgen/RiverNetwork}): only on this plain terrain itself, not
+	 * on the styles that reshape it (their subclasses), only in the overworld, and only where there is water to run
+	 * to — seas included, above-ground fluids on, nature not decayed (that drains the seas).
+	 * {@code -Dcityworld.rivers.off=true} turns them off for a probe: the same land without them, to compare.
+	 */
+	private boolean riversWanted(CityWorldGenerator generator) {
+		var settings = generator.getSettings();
+		return getClass() == ShapeProvider_Normal.class
+				&& generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.NORMAL
+				&& settings.cities.rivers() && !Boolean.getBoolean("cityworld.rivers.off") && settings.includeSeas && settings.includeAbovegroundFluids
+				&& !settings.includeDecayedNature;
+	}
+
+	private final RiverNetwork rivers;
+
+	private RiverNetwork.RiverChunk riverChunk(int blockX, int blockZ) {
+		return rivers == null ? RiverNetwork.DRY : rivers.chunk(blockX >> 4, blockZ >> 4);
+	}
+
+	@Override
+	public int riverWaterAt(int blockX, int blockZ) {
+		var rc = riverChunk(blockX, blockZ);
+		return rc.any() ? rc.water()[RiverNetwork.RiverChunk.index(blockX, blockZ)] : RiverNetwork.NONE;
+	}
+
+	@Override
+	public boolean riverCrossesStreetAt(int chunkX, int chunkZ) {
+		if (rivers == null)
+			return false;
+		var rc = rivers.chunk(chunkX, chunkZ);
+		return rc.channel() && rc.highestWater() <= getStreetLevel();
+	}
+
+	/** No lot but a road on a chunk a river's water runs through: a building judging the ground would fill it in. */
+	@Override
+	public boolean refusesLotAt(int chunkX, int chunkZ) {
+		return rivers != null && rivers.chunk(chunkX, chunkZ).channel();
 	}
 
 	@Override
@@ -309,6 +365,20 @@ public class ShapeProvider_Normal extends ShapeProvider {
 							generator.streetLevel - 2, ores.subsurfaceMaterial, generator.streetLevel,
 							ores.subsurfaceMaterial, false);
 
+					// a river or its lake: a bed under the water, and a fall's lip marked so it runs when the chunk loads
+				} else if (riverWaterAt(blockX, blockZ) > y) {
+					int water = riverWaterAt(blockX, blockZ);
+					generateStratas(generator, lot, chunk, x, z, ores.substratumMaterial, ores.stratumMaterial, y - 2,
+							ores.fluidSubsurfaceMaterial, y, ores.fluidSurfaceMaterial, water, ores.fluidMaterial, false);
+					var rc = riverChunk(blockX, blockZ);
+					int at = RiverNetwork.RiverChunk.index(blockX, blockZ);
+					if (rc.lip()[at])
+						chunk.chunkData.markPosForPostprocessing(new net.minecraft.core.BlockPos(blockX, water, blockZ));
+					// the hollow behind a fall
+					if (rc.hollow()[at * 2] != RiverNetwork.NONE)
+						chunk.setBlocks(x, rc.hollow()[at * 2], rc.hollow()[at * 2 + 1] + 1, z, me.daddychurchill.CityWorld.compat.Material.AIR);
+					biome = Biome.RIVER;
+
 					// possibly buildable?
 				} else if (y == generator.streetLevel) {
 					generateStratas(generator, lot, chunk, x, z, ores.substratumMaterial, ores.stratumMaterial, y - 3,
@@ -404,6 +474,60 @@ public class ShapeProvider_Normal extends ShapeProvider {
 
 		// put bones in?
 		lot.generateBones(generator, chunk);
+
+		// what a waterfall's hollow hides, now and then (worldgen/RiverNetwork)
+		if (rivers != null) {
+			var rc = rivers.chunk(chunk.sectionX, chunk.sectionZ);
+			if (rc.any())
+				for (int x = 0; x < 16; x++)
+					for (int z = 0; z < 16; z++) {
+						int at = RiverNetwork.RiverChunk.index(x, z);
+						if (rc.finds()[at] != 0)
+							hideBehindFall(generator, chunk, x, z, rc.hollow()[at * 2], rc.hollow()[at * 2 + 1],
+									rc.finds()[at], rc.treasure()[at]);
+					}
+		}
+	}
+
+	/**
+	 * A fall's find: crystals on the hollow's floor; or ore in its walls and roof — iron, copper, gold, now and then
+	 * diamond, rarely ancient debris, all out of place on purpose; or, rarest, a chest of buried treasure with a note
+	 * in it from whoever hid it.
+	 */
+	private void hideBehindFall(CityWorldGenerator generator, RealBlocks chunk, int x, int z, int from, int to, int find,
+			boolean chestHere) {
+		var odds = new me.daddychurchill.CityWorld.Support.Odds(
+				generator.getWorldSeed() ^ ((long) chunk.sectionX << 24) ^ ((long) chunk.sectionZ << 8) ^ (x * 16 + z));
+		switch (find) {
+		case RiverNetwork.FIND_CRYSTALS -> {
+			if (((x + z) & 1) == 0 && chunk.isEmpty(x, from, z))
+				chunk.setBlock(x, from, z, Material.AMETHYST_CLUSTER);
+		}
+		case RiverNetwork.FIND_CHEST -> {
+			// one chest a fall: the hollow's line may cross two columns
+			if (chestHere && chunk.isEmpty(x, from, z) && !chunk.isType(x - 1, from, z, Material.CHEST)
+					&& !chunk.isType(x, from, z - 1, Material.CHEST))
+				me.daddychurchill.CityWorld.Support.HiddenTreasure.place(generator, chunk, x, from, z, odds);
+		}
+		default -> {
+			Material ore = switch (find) {
+			case RiverNetwork.FIND_IRON -> Material.IRON_ORE;
+			case RiverNetwork.FIND_COPPER -> Material.COPPER_ORE;
+			case RiverNetwork.FIND_GOLD -> Material.GOLD_ORE;
+			case RiverNetwork.FIND_DIAMOND -> Material.DIAMOND_ORE;
+			default -> Material.ANCIENT_DEBRIS;
+			};
+			int[][] around = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
+			for (int y = from; y <= to + 1; y++)
+				for (int[] o : around) {
+					int wx = x + o[0], wz = z + o[1];
+					if (wx < 0 || wz < 0 || wx > 15 || wz > 15 || chunk.isEmpty(wx, y, wz) || chunk.isWaterAt(wx, y, wz))
+						continue;
+					if (odds.playOdds(find >= RiverNetwork.FIND_DIAMOND ? 0.25 : 0.5))
+						chunk.setBlock(wx, y, wz, ore);
+				}
+		}
+		}
 	}
 
 	@Override
@@ -454,6 +578,16 @@ public class ShapeProvider_Normal extends ShapeProvider {
 
 	@Override
 	public double findPerciseY(CityWorldGenerator generator, int blockX, int blockZ) {
+		double natural = naturalY(generator, blockX, blockZ);
+		var rc = riverChunk(blockX, blockZ);
+		if (!rc.any())
+			return natural;
+		int carved = rc.ground()[RiverNetwork.RiverChunk.index(blockX, blockZ)];
+		return carved != Math.floor(natural) ? carved : natural; // lowered into a channel, or raised into its bank
+	}
+
+	/** The ground before any river: upstream's height function, unchanged. */
+	public double naturalY(CityWorldGenerator generator, int blockX, int blockZ) {
 		double y = 0;
 
 		// shape the noise
@@ -510,6 +644,23 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		// range validation
 		return Math.min(height - 3, Math.max(y, 3));
 	}
+
+	/**
+	 * Which way water runs here, for {@code worldgen/RiverNetwork}: the land and sea shapes of
+	 * {@link #findPerciseY} without its fine noise and features, so a river follows the land's big shape
+	 * instead of every bump. The land shape leads it off the mountains; on the plain, which
+	 * {@code findPerciseY} clamps flat at street level, the sea shape (lower toward the coast) leads it on.
+	 */
+	public double drainageAt(int blockX, int blockZ) {
+		double land1 = seaLevel + landShape1.noise(blockX, blockZ, landFrequency1, landAmplitude1, true) * landRange
+				- landFlattening;
+		double land2 = seaLevel + landShape2.noise(blockX, blockZ, landFrequency2, landAmplitude2, true)
+				* (landRange / (double) landFactor1to2) - landFlattening;
+		double sea = seaShape.noise(blockX, blockZ, seaFrequency, seaAmplitude, true);
+		return Math.max(Math.max(land1, land2), seaLevel) + DRAINAGE_SEA_TILT * sea * seaRange;
+	}
+
+	private final static double DRAINAGE_SEA_TILT = 0.5;
 
 	// Mines are now RARE but BIG and rambling. A low-frequency "mine field" noise decides where a network
 	// exists at all — few, broad regions (mineRegionThreshold; higher = rarer). Inside a field the
@@ -597,6 +748,9 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	@Override
 	public boolean notACave(CityWorldGenerator generator, int blockX, int blockY, int blockZ) {
 		if (!generator.getSettings().includeCaves)
+			return true;
+		// nothing under a river's chunk may open within eight blocks of its bed: the water would pour in
+		if (rivers != null && blockY >= riverChunk(blockX, blockZ).lowestBed() - 8)
 			return true;
 
 		if (CAVERN_DIAG && CAVERN_CALLS.incrementAndGet() == 1)

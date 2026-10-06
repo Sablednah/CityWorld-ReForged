@@ -158,6 +158,9 @@ public final class CityWorldCommands {
                 .then(Commands.literal("city")
                         .then(Commands.literal("tp").executes(ctx -> findCity(ctx, true)))
                         .executes(ctx -> findCity(ctx, false)))
+                .then(Commands.literal("river")
+                        .then(Commands.literal("tp").executes(ctx -> findRiver(ctx, true)))
+                        .executes(ctx -> findRiver(ctx, false)))
                 .then(Commands.literal("lots")
                         .executes(CityWorldCommands::listLotKinds))
                 .then(Commands.literal("lot")
@@ -665,6 +668,57 @@ public final class CityWorldCommands {
                 }
             });
         }, "cityworld-findcity");
+        t.setDaemon(true);
+        t.start();
+        return 1;
+    }
+
+    /** The nearest river water on CityWorld's own land (settings {@code cities.rivers}), within 96 chunks. */
+    private static int findRiver(CommandContext<CommandSourceStack> ctx, boolean teleport) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        ServerLevel level = player.level();
+        MinecraftServer server = ctx.getSource().getServer();
+        if (!(level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator cityGenerator)
+                || cityGenerator.citySites() != null) {
+            ctx.getSource().sendFailure(Component.literal("/cityfind river is for CityWorld's own land, with Rivers on."));
+            return 0;
+        }
+        var shape = cityGenerator.getContext(level).shapeProvider;
+        int px = player.getBlockX() >> 4, pz = player.getBlockZ() >> 4;
+        ctx.getSource().sendSuccess(() -> Component.literal("Searching for the nearest river..."), false);
+        Thread t = new Thread(() -> {
+            int[] found = null;
+            search:
+            for (int r = 0; r <= 96; r++)
+                for (int dx = -r; dx <= r; dx++)
+                    for (int dz = -r; dz <= r; dz++) {
+                        if (Math.max(Math.abs(dx), Math.abs(dz)) != r || !shape.refusesLotAt(px + dx, pz + dz))
+                            continue;
+                        for (int x = 0; x < 16 && found == null; x++)
+                            for (int z = 0; z < 16 && found == null; z++) {
+                                int bx = ((px + dx) << 4) + x, bz = ((pz + dz) << 4) + z;
+                                int water = shape.riverWaterAt(bx, bz);
+                                if (water != me.daddychurchill.CityWorld.worldgen.RiverNetwork.NONE)
+                                    found = new int[] { bx, water, bz };
+                            }
+                        if (found != null)
+                            break search;
+                    }
+            int[] at = found;
+            server.execute(() -> {
+                if (at == null) {
+                    player.sendSystemMessage(Component.literal("Found no river within 1536 blocks (is Rivers on?)."));
+                    return;
+                }
+                player.sendSystemMessage(Component.literal("Nearest river at x=" + at[0] + " z=" + at[2] + ", water at y="
+                        + at[1] + "  (" + Math.round(Math.hypot(at[0] - player.getX(), at[2] - player.getZ())) + " blocks away)"));
+                if (teleport) {
+                    level.getChunk(at[0] >> 4, at[2] >> 4);
+                    player.teleportTo(level, at[0] + 0.5, at[1] + 1, at[2] + 0.5, Set.<Relative>of(),
+                            player.getYRot(), player.getXRot(), false);
+                }
+            });
+        }, "cityworld-findriver");
         t.setDaemon(true);
         t.start();
         return 1;

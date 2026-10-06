@@ -26,6 +26,17 @@ public interface CityWorldBiomes {
     Holder<Biome> classify(CityWorldGenerator generator, int terrainY, double temperature, double humidity,
             boolean decayedNature);
 
+    /** A river's biome (settings {@code cities.rivers}): frozen where the climate is coldest, as the oceans are. */
+    default Holder<Biome> river(double temperature) {
+        return biomeRegistry().getOrThrow(temperature < 0.2
+                ? net.minecraft.world.level.biome.Biomes.FROZEN_RIVER : net.minecraft.world.level.biome.Biomes.RIVER);
+    }
+
+    /** The river biomes, for a source's possible biomes. */
+    default java.util.stream.Stream<Holder<Biome>> riverBiomes() {
+        return java.util.stream.Stream.of(river(1), river(0));
+    }
+
     /**
      * The registry handle the source resolves biomes through.
      *
