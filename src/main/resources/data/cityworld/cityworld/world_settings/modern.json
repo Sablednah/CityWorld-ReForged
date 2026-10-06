@@ -17,5 +17,8 @@
   },
   "shops": {
     "enabled": true
+  },
+  "cities": {
+    "rivers": true
   }
 }
