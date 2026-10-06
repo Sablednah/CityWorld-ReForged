@@ -279,7 +279,14 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         rise.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
                 "Vanilla land only: a city stands on the land's own level, up to this far above the sea; higher "
                         + "ground gets no city. Every city keeps to one level.")));
-        addRow(rise, null);
+        CycleButton<Boolean> rivers = cycle("Rivers", new Boolean[] { false, true }, cities.rivers(),
+                v -> Component.literal(v ? "On" : "Off"), v -> cities = cities.withRivers(v));
+        rivers.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                "CityWorld land only: streams from the mountains, down falls and through lakes, across the "
+                        + "plain and its cities to the sea, widening as they go. Roads bridge them. Vanilla land "
+                        + "keeps vanilla's own rivers.")));
+        addRow(rise, rivers);
+        byLabel.put("Rivers", rivers); // greyed on vanilla land by applyLand, like the other options it ignores
         cityDials.addAll(List.of(spacing, size, vary, rise));
         for (AbstractWidget dial : cityDials)
             dial.active = cities.vanillaTerrain();
@@ -645,7 +652,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
             "Mountains", "Ores", "Underground fluids", "Decayed nature", "Chests in mines", "Spawners in mines",
             "Chests in bunkers", "Spawners in bunkers", "Spawners in subways", "Chest odds: mines",
             "Chest odds: bunkers", "Mine alcove odds", "Tree style", "Tree density", "Under-floating fill",
-            "Ruralness", "Wild plants", "Climate warmth", "Biome scale", "Modded biomes", "Modded biome share");
+            "Ruralness", "Wild plants", "Climate warmth", "Biome scale", "Modded biomes", "Modded biome share",
+            "Rivers");
 
     /** Every option widget by its label, for {@link #applyLand}. */
     private final java.util.Map<String, AbstractWidget> byLabel = new java.util.HashMap<>();

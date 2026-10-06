@@ -24,6 +24,7 @@ public final class HeightInfo extends AbstractYs {
 		sumHeight += heights.add(generator, blockX + 15, blockZ + 15);
 
 		heights.calcState(generator, sumHeight, 5);
+		heights.riverCheck(generator, blockX, blockZ);
 		return heights;
 	}
 
@@ -45,6 +46,7 @@ public final class HeightInfo extends AbstractYs {
 		sumHeight += heights.add(generator, blockX + 8, blockZ + 15);
 
 		heights.calcState(generator, sumHeight, 9);
+		heights.riverCheck(generator, blockX, blockZ);
 		return heights;
 	}
 
