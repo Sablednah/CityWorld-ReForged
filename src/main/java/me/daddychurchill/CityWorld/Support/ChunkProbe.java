@@ -742,6 +742,44 @@ public final class ChunkProbe {
     }
 
     /**
+     * {@code -Dcityworld.probe=survey:harbour}: every river mouth within {@code -Dcityworld.probe.size} blocks
+     * (default 6000), with the district its platmap was planned as (a harbour district is industrial) and its nature.
+     */
+    private static void surveyHarbour(ServerLevel level) {
+        if (!(level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw)
+                || !(cw.getContext(level).shapeProvider instanceof me.daddychurchill.CityWorld.Plugins.ShapeProvider_Normal shape)
+                || shape.rivers() == null) {
+            CityWorldMod.LOGGER.warn("SURVEY harbour: this dimension has no rivers");
+            return;
+        }
+        var ctx = cw.getContext(level);
+        var net = shape.rivers();
+        int size = Integer.getInteger("cityworld.probe.size", 6000), cell = me.daddychurchill.CityWorld.worldgen.RiverNetwork.CELL;
+        java.util.Set<Long> seen = new java.util.HashSet<>();
+        java.util.Map<String, Integer> byContext = new java.util.TreeMap<>();
+        for (int cx = -size / cell; cx <= size / cell; cx++)
+            for (int cz = -size / cell; cz <= size / cell; cz++) {
+                Long spring = net.spring(cx, cz);
+                if (spring == null)
+                    continue;
+                var c = net.course(spring);
+                if (c.end() != me.daddychurchill.CityWorld.worldgen.RiverNetwork.End.SEA)
+                    continue;
+                double[] m = net.place(c.nodes().get(c.nodes().size() - 1));
+                int chunkX = (int) Math.floor(m[0]) >> 4, chunkZ = (int) Math.floor(m[1]) >> 4;
+                var pm = ctx.getPlatMap(chunkX, chunkZ);
+                if (!seen.add(((long) pm.originX << 32) ^ (pm.originZ & 0xffffffffL)))
+                    continue;
+                String name = pm.context == null ? "none" : pm.context.getClass().getSimpleName();
+                byContext.merge(name, 1, Integer::sum);
+                CityWorldMod.LOGGER.warn("SURVEY harbour: mouth at {} {} — platmap {},{} is {} (nature {}%) — /tp {} 90 {}",
+                        (int) m[0], (int) m[1], pm.originX, pm.originZ, name, Math.round(pm.getNaturePercent() * 100),
+                        (int) m[0], (int) m[1]);
+            }
+        CityWorldMod.LOGGER.warn("SURVEY harbour: mouth platmaps by district {}", byContext);
+    }
+
+    /**
      * {@code -Dcityworld.probe=survey:treasure}: the falls within {@code -Dcityworld.probe.size} blocks (default 6000)
      * of the origin whose hollow hides the chest of buried treasure, with the chest's block — and how many falls
      * hide anything at all. Reads the network only; no chunk is generated.
@@ -824,6 +862,10 @@ public final class ChunkProbe {
             int cx, cz;
             if (spec.startsWith("survey:end")) {
                 surveyEnd(level);
+                return;
+            }
+            if (spec.startsWith("survey:harbour")) {
+                surveyHarbour(level);
                 return;
             }
             if (spec.startsWith("survey:treasure")) {
