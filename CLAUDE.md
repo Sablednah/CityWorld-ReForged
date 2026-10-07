@@ -24,6 +24,14 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-02)
 
+**v6.0.0 is released** (2026-10-07) on all six lines — tag `v6.0.0` (`5dad4495`), CurseForge 9092756–9092761:
+rivers on CityWorld's own land (falls, hollows and finds), the waterside by district on both lands (quays, slips,
+loading quays, harbours, beaches, lighthouses, rustic jetties), harbour districts, vanilla-land bridge and quay
+fixes. Major version on the owner's call: cities in vanilla Minecraft plus rivers is a new way to play, and
+5.19 vanilla-land worlds lay out new chunks differently. Gates: six self-tests PASS and `--compare` agrees on the
+pre-bump heads, CI green on the bump heads, halt/exit 0 on all six (synthetic positive first), 1.20.1 reobfuscated.
+Sample add-on `all-vanilla-structures-1.0.0` is its own GitHub release. Owner to paste CURSEFORGE.md's "New in 6.0.0".
+
 **Rivers on CityWorld's own land are committed on all six lines (2026-10-06), unreleased** — owner signed off
 the look; PORTING.md "▶ Resume here — rivers on CityWorld's own land" has the design, the traps (per-column
 rules make pillars; never touch columns below sea level) and the tools. Quays, harbours, lighthouses, city
