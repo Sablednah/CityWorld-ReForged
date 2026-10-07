@@ -654,7 +654,10 @@ public class RoadLot extends ConnectedLot {
 		// a city stream under the street (CityWorld's own rivers, at street level, no sea beneath): a flat road on
 		// over it like any other, the water put back under its deck below — upstream's bridge made a humpback over a
 		// chunk dug down to bare ground for a stream across one corner of it
+		// (a river covering most of the chunk is water the road bridges, as upstream's sea: owner, 2026-10-07, a road
+		// running beside a wide river bridged the few blocks of it under one edge, and met nothing on the far side)
 		boolean culvert = generator.shapeProvider.riverCrossesStreetAt(chunk.sectionX, chunk.sectionZ)
+				&& !generator.shapeProvider.riverMostlyAt(chunk.sectionX, chunk.sectionZ)
 				&& !generator.shapeProvider.seaBeneathAt(chunk.sectionX, chunk.sectionZ);
 		if (culvert)
 			doSewer = false;

@@ -123,13 +123,32 @@ public class ShapeProvider_Vanilla extends ShapeProvider_Normal {
 		return settings.includeFarms ? farmContext : neighborhoodContext;
 	}
 
-	/** No streets, no city: a platmap whose roads were all reclaimed keeps no buildings either. */
+	/**
+	 * No streets, no city: a platmap whose roads were all reclaimed keeps no buildings either. Otherwise its riverside
+	 * — every city chunk beside the river, kept from the buildings by {@code VanillaNatureContext} — becomes what
+	 * {@code Plats.River.Waterside} chooses for its district, as on CityWorld's own land.
+	 */
 	@Override
 	protected void validateLots(CityWorldGenerator generator, PlatMap platmap) {
-		for (int x = 0; x < PlatMap.Width; x++)
-			for (int z = 0; z < PlatMap.Width; z++)
-				if (platmap.isExistingRoad(x, z))
-					return;
+		boolean streets = false;
+		for (int x = 0; x < PlatMap.Width && !streets; x++)
+			for (int z = 0; z < PlatMap.Width && !streets; z++)
+				streets = platmap.isExistingRoad(x, z);
+		if (streets) {
+			for (int x = 0; x < PlatMap.Width; x++)
+				for (int z = 0; z < PlatMap.Width; z++) {
+					int cx = platmap.originX + x, cz = platmap.originZ + z;
+					if (!(platmap.getLot(x, z) instanceof me.daddychurchill.CityWorld.Plats.NatureLot)
+							|| !me.daddychurchill.CityWorld.Plats.Vanilla.ShorelineLot.belongsAt(generator.citySites, cx, cz))
+						continue;
+					var district = cityBeside(platmap, x, z) ? platmap.context : natureContext;
+					var kind = me.daddychurchill.CityWorld.Plats.River.Waterside.choose(district, false,
+							getMicroOddsGeneratorAt(cx, cz));
+					if (kind != me.daddychurchill.CityWorld.Plats.River.Waterside.Kind.NATURAL)
+						platmap.setLot(x, z, new me.daddychurchill.CityWorld.Plats.Vanilla.ShorelineLot(platmap, cx, cz, kind));
+				}
+			return;
+		}
 		for (int x = 0; x < PlatMap.Width; x++)
 			for (int z = 0; z < PlatMap.Width; z++)
 				if (!platmap.isEmptyLot(x, z) && !platmap.isNaturalLot(x, z))
