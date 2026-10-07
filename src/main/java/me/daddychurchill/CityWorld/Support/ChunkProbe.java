@@ -916,8 +916,8 @@ public final class ChunkProbe {
                 for (int pz = 0; pz < w; pz++)
                     for (int pxi = 0; pxi < w; pxi++) {
                         int x = x0 + pxi * px + px / 2, z = z0 + pz * px + px / 2;
-                        writer.write(x + "," + z + "," + ground[pz * w + pxi] + "," + String.format("%.3f", temp[pz * w + pxi]) + ","
-                                + String.format("%.3f", ctx.getHumidity(x, z)) + "," + biomeName(grid[pz * w + pxi]) + "\n");
+                        writer.write(x + "," + z + "," + ground[pz * w + pxi] + "," + String.format("%.6f", temp[pz * w + pxi]) + ","
+                                + String.format("%.6f", ctx.getHumidity(x, z)) + "," + biomeName(grid[pz * w + pxi]) + "\n");
                     }
             }
             CityWorldMod.LOGGER.warn("SURVEY biomes: grid {}", cout);

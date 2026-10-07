@@ -299,7 +299,7 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
             return hill(temp, humid, decayedNature);
         if (aboveSea <= range * HIGHLAND_PCT / 100)
             return highland(temp, humid, decayedNature);
-        return peak(temp);
+        return peak(temp, humid);
     }
 
     // temperature buckets
@@ -357,20 +357,29 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
         return dry(h) ? b(Biomes.BADLANDS) : wet(h) ? b(Biomes.BAMBOO_JUNGLE) : b(Biomes.WOODED_BADLANDS); // hot
     }
 
+    /**
+     * The highland row follows vanilla's own tables ({@code OverworldBiomeBuilder}): the windswept hills and
+     * forest, the grove and the snowy slopes belong to the frozen, cold and temperate climates only, and a
+     * warm or hot mountain carries its plateau biomes — savanna, forest, jungle — up to stony peaks or
+     * badlands. Until 6.1.0 the warm row was windswept hills and forest, which vanilla snows above about
+     * y 120 by its height rule, so a sparse jungle at y 126 climbed straight into snow-capped spruce at
+     * y 147: the "cold next to tropical with no transition" a player reported. Measured on that seed with
+     * {@code survey:biomes} and {@code scripts/biome_matrix_sim.py}: 1,207 snow-to-hot borders became 126.
+     */
     private Holder<Biome> highland(double t, double h, boolean decayed) {
         if (decayed) return b(Biomes.ERODED_BADLANDS);
-        if (cold(t)) return wet(h) ? b(Biomes.OLD_GROWTH_SPRUCE_TAIGA) : b(Biomes.OLD_GROWTH_PINE_TAIGA);
+        if (cold(t)) return dry(h) ? (h < 0.2 ? b(Biomes.WINDSWEPT_GRAVELLY_HILLS) : b(Biomes.WINDSWEPT_HILLS))
+                : wet(h) ? b(Biomes.OLD_GROWTH_SPRUCE_TAIGA) : b(Biomes.OLD_GROWTH_PINE_TAIGA);
         if (temperate(t)) return dry(h) ? b(Biomes.WINDSWEPT_FOREST) : wet(h) ? b(Biomes.OLD_GROWTH_BIRCH_FOREST)
                 : b(Biomes.GROVE);
-        if (warm(t)) return dry(h) ? (h < 0.2 ? b(Biomes.WINDSWEPT_GRAVELLY_HILLS) : b(Biomes.WINDSWEPT_HILLS))
-                : b(Biomes.WINDSWEPT_FOREST);
-        return dry(h) ? b(Biomes.ERODED_BADLANDS) : b(Biomes.WINDSWEPT_SAVANNA); // hot
+        if (warm(t)) return dry(h) ? b(Biomes.WINDSWEPT_SAVANNA) : wet(h) ? b(Biomes.SPARSE_JUNGLE) : b(Biomes.FOREST);
+        return dry(h) ? b(Biomes.ERODED_BADLANDS) : wet(h) ? b(Biomes.JUNGLE) : b(Biomes.WINDSWEPT_SAVANNA); // hot
     }
 
-    private Holder<Biome> peak(double t) {
-        if (t < 0.3) return b(Biomes.FROZEN_PEAKS);
-        if (temperate(t)) return b(Biomes.JAGGED_PEAKS);
-        if (warm(t)) return b(Biomes.SNOWY_SLOPES);
+    /** Vanilla's peaks: frozen and jagged (and the snowy slopes) for cold and temperate, stony above warm ground. */
+    private Holder<Biome> peak(double t, double h) {
+        if (cold(t)) return b(Biomes.FROZEN_PEAKS);
+        if (temperate(t)) return wet(h) ? b(Biomes.SNOWY_SLOPES) : b(Biomes.JAGGED_PEAKS);
         return b(Biomes.STONY_PEAKS);
     }
 }
