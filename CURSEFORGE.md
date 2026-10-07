@@ -13,6 +13,18 @@ screen.
 Battle-tested across **135 worlds and 3.2 million generated chunks** — over **830 km²** of procedurally
 generated city, more ground than New York City covers.
 
+**New in 6.0.0: rivers, and the city meets the water.** CityWorld's own land now has **rivers**: springs high in
+the mountains run down in gullies and **waterfalls**, through lakes and across the plain to the sea, widening as
+they go and joining as they meet. Where they cross a city the **waterside follows the district** — stone **quays**
+with promenades, jetties, slips and loading cranes downtown and in industry, a **harbour district** where a river
+reaches the sea, **city beaches** and **lighthouses** on the coast, and the natural bank with an old plank jetty
+out in the suburbs and farms — on CityWorld land and vanilla land alike. Streets bridge the rivers or cross small
+streams flat. And look behind the falls: some hide crystals, ore that has no business being there, or, very
+rarely, a chest someone left there long ago. (Rivers are on for new worlds; Customize → Land → Rivers. Vanilla-land
+worlds from 5.19 are best started fresh.) For modpack makers there is a sample datapack that turns on every
+vanilla structure, one file to copy and edit:
+[All Vanilla Structures](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/all-vanilla-structures-1.0.0).
+
 **New in 5.19.0: cities in a vanilla world.** Pick **Land — Vanilla, cities apart** in Customize and the world
 is vanilla's — terrain, caves, biomes, villages — with a CityWorld city every so often, like a village, each on
 its own level and eased into the hills around it. Choose the spacing, the size and how high a city may stand.
@@ -27,17 +39,11 @@ shops hang painted canvas signs. For everyone: **street shops stock their trade*
 arrows at the fletcher, wool at the draper, fourteen trades in all, where every chest used to hold the same
 paper and paintings — and **neighbouring shops are different trades**, instead of a block of six fletchers.
 
-**New in 5.17.0: choose your structures in game.** The Customize screen has a new **Structures** page that
-lists every structure the install has — vanilla's and each mod's — with an on/off switch each. Want **villages**
-in your city world, woodland mansions, pillager outposts, a mod's dungeons? Tick them and create the world; the
-city keeps clear of them, as it does for the structures CityWorld places by default. No datapack needed (servers
-and packs get the same thing as two lists in the world settings). **Minecraft Comes Alive** now turns
-CityWorld's villagers into its own people out of the box. And two fixes worth updating for: **5.16.0 could hang
-at "Preparing spawn area"** when a museum generated inside the spawn area, and on 1.20.1 the modpack world-type
-lock now actually applies.
-
 **Other recent changes**
 
+- **5.17.0** — choose your structures in game: a Structures page in Customize switches every vanilla and modded
+  structure set on or off (villages, mansions, a mod's dungeons); Minecraft Comes Alive turns CityWorld's villagers
+  into its people; a fix for worlds hanging at "Preparing spawn area".
 - **5.16.0** — the features Ed Churchill meant to build: roads that go missing, lane lines, ruined tunnels, atria,
   helipads, split-level and modern houses, park gazebos and ponds, monuments, and museums with fossils and exhibits.
 - **5.15.0** — a subway under the city (a station in every district, tunnels on two levels, interchanges, minecarts

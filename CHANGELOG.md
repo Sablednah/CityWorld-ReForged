@@ -5,7 +5,17 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
-## Unreleased
+## 6.0.0
+
+All six Minecraft lines. **Cities in a vanilla world, and rivers through them**: 5.19 brought vanilla land, cities
+like villages in an ordinary Minecraft world; 6.0 gives CityWorld's own land rivers from the mountains to the sea,
+and a waterside to both — quays, harbours, beaches, jetties, chosen by the district the water runs through.
+
+### Compatibility
+
+- **Vanilla-land worlds made on 5.19 lay out new chunks differently** (shoreline quays, crossroads by the river, malls
+  away from it): where old land meets new there can be seams. Start those worlds fresh for the best result.
+- **CityWorld-land worlds made before 6.0 are unchanged**: rivers are off for any world saved without them.
 
 ### Added
 
@@ -29,6 +39,18 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   district there is a harbour (industrial). Quays never pave over the sea or a swamp, follow a smoothed shoreline
   (no rings of wall round specks of sand), and keep clear of malls.
 - `/cityfind river [tp]`: the nearest river water.
+
+### Fixed
+
+- **Vanilla land:** roads stopped dead at a river where a crossroads fell on its bank; they bridge it now. Quays no
+  longer stand a chunk or two from the water with a pool dredged in front of them: they face the water only where it
+  actually reaches the bank.
+- **Frozen rivers and seas** no longer thaw in chunk squares at every quay: quays take ice and snow as the land
+  around them does.
+- **Behind the waterfalls:** the hollow reaches back from the fall, roofed, floored and walled with mossy cobble
+  (nothing to fall in), and open to its fall instead of walled off.
+- **World creation with rivers is three times faster** than it first was (about 20 s on a test seed, 14 s without).
+
 
 ## 5.19.1
 
