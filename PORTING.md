@@ -64,8 +64,22 @@ lower water; columns 3+ above neighbours; water depth maps) — worth promoting 
 **Speed**: spawn preparation 62.6 s → 20.6 s (14.3 s with rivers off). Climate sampling reads natural height
 (`findNaturalBlockY`) — it had been building river chunks far away; courses trace in parallel.
 
-**Next (not started)**: city riverside — quays, bridges sized for wide rivers (vanilla land's `ShorelineLot`),
-harbours at mouths; the ruined Nether twin's rivers (owner hasn't chosen lava / dry / none).
+**Waterside (2026-10-07 overnight, on all six lines):** `Plats/River/QuaysideLot` on a city's river chunk follows
+the water's real edge column by column (`riverWaterAt`, across chunk edges): paved quay at street level, quay
+wall to the bed, coping and parapet; promenade / mooring (jetties on pilings) / loading (derrick, cargo). With
+`coast` the sea's water counts too, so on a city's coastal chunk (land and sea both) the wall follows the shore:
+a harbour with 10-block jetties and a 15% lighthouse, or a beach (boardwalk, umbrellas, lifeguard tower). Planned
+in `ShapeProvider_Normal.validateLots` (65% of street-level river chunks, 50% of coastal chunks, city contexts
+only); `PlatMap.setLot` lets a QuaysideLot onto a river chunk. Traps: a STRUCTURE lot gets a foundation pad unless
+`generatesNaturalStrata()` — it filled the sea in to the street; a lot on whole sea chunks put its wall along a
+chunk edge out in the water (dropped). Roads over a street-level river with no sea beneath are flat (`RoadLot`
+`culvert`), the river's water put back under the deck. Probe aids: `find:QuaysideLot`,
+`-Dcityworld.rivers.quay=BEACH|MOORING|LOADING|PROMENADE`. On the owner's seed: river quays at chunk (10, −4), a
+flat crossing at (196, −60), a coast with a lighthouse around (246, 394).
+
+**Next (not started)**: the ruined Nether twin's rivers (owner hasn't chosen lava / dry / none); vanilla land's
+coasts could take the coastal quayside too (its cities are lifted, so it needs the lift-aware drawing
+ShorelineLot has).
 
 ## ▶ Resume here — cities in a vanilla world: the "Vanilla" terrain mode (spike, 2026-10-02 night)
 

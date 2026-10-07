@@ -26,7 +26,8 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 **Rivers on CityWorld's own land are committed on all six lines (2026-10-06), unreleased** — owner signed off
 the look; PORTING.md "▶ Resume here — rivers on CityWorld's own land" has the design, the traps (per-column
-rules make pillars; never touch columns below sea level) and the tools. Next: city quays/bridges, then a release.
+rules make pillars; never touch columns below sea level) and the tools. Quays, harbours, lighthouses, city
+beaches and flat street crossings followed overnight (2026-10-07), also on all six lines; owner to walk them.
 
 **v5.19.1 is released** (2026-10-05) on all six lines — tag `v5.19.1` (`1853f507`), CurseForge 9064267–9064273: vanilla
 land failed every chunk with TerraBlender (BoP) or Alex's Caves, because both hook vanilla's `MultiNoiseBiomeSource`
