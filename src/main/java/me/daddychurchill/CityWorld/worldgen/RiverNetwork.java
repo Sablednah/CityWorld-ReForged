@@ -910,11 +910,16 @@ public final class RiverNetwork {
                 groundY = Math.min(groundY, bed);
                 if (!underSea) {
                     water = level;
-                    int below = c.plevel()[k + 1];
-                    if (t < 0.5 && t > 0.1 && level - below >= HOLLOW_DROP && bed - 2 > below + 1) {
+                    // the hollow behind a fall: every column standing at this level within about four blocks of the
+                    // fall's face (the face is half way along the stretch where the level next drops), cut from the
+                    // pool below's surface up to one block under this bed; that block and the bed are mossy cobble
+                    // (ShapeProvider_Normal), so nothing falls in. The fall hashes by its point, so all its columns
+                    // agree on what it hides.
+                    int below = p + 1 < c.plevel().length ? c.plevel()[p + 1] : level;
+                    if (level - below >= HOLLOW_DROP && groundY - 2 > below + 1) {
                         hollowFrom = below + 1;
-                        hollowTo = bed - 3;
-                        find = findFor(mix(seed ^ c.spring() * 31 + k));
+                        hollowTo = groundY - 2;
+                        find = findFor(mix(seed ^ c.spring() * 31 + p));
                         // where in the hollow the chest stands is settled per chunk (build): a test on this column's
                         // place in the stream missed every column of both chest falls on the owner's seed
                     }
@@ -1010,7 +1015,9 @@ public final class RiverNetwork {
                 groundY[x * 16 + z] = g;
                 water[x * 16 + z] = w;
             }
-        // a hollow stays below every riverbed beside it, or the water beside it would pour in
+        // no water beside a hollow stands above its floor, or it would pour in: the hollow is cut no higher than such
+        // a neighbour's bed. The pool the fall drops into stands below the floor and leaves it open — before, every
+        // wet neighbour capped it, the pool below included, and walled the hollow off from its own fall.
         for (int x = 0; x < 16; x++)
             for (int z = 0; z < 16; z++) {
                 int i = (x * 16 + z) * 2;
@@ -1018,7 +1025,7 @@ public final class RiverNetwork {
                     continue;
                 for (int[] o : around) {
                     int at = (x + 1 + o[0]) * R + z + 1 + o[1];
-                    if (w18[at] != NONE)
+                    if (w18[at] != NONE && w18[at] >= hollow[i])
                         hollow[i + 1] = Math.min(hollow[i + 1], g18[at] - 1);
                 }
                 if (hollow[i + 1] < hollow[i]) {
