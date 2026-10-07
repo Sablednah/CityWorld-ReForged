@@ -743,6 +743,197 @@ public final class ChunkProbe {
     }
 
     /**
+     * {@code -Dcityworld.probe=survey:biomes}: the surface biome map, asked of the biome source itself (so
+     * every rule — climate matrix, rivers, pools — is in the answer), drawn as {@code run/biomes-<seed>.png} at
+     * {@code -Dcityworld.probe.px} blocks a pixel (default 16, a chunk) over {@code -Dcityworld.probe.size}
+     * blocks square (default 4096) centred on {@code -Dcityworld.probe.at}. No chunk is generated. The log gets
+     * the census, the distribution of how far the temperature field takes to cross from cold to hot (the width
+     * of a climate transition), and every <b>hard seam</b>: two neighbouring pixels whose biomes are snowy
+     * (vanilla base temperature below 0.2) and hot (above 0.9), listed by pair with a {@code /tp} point each.
+     * Started by the comment "cold biomes and tropical biomes can appear right next to each other".
+     */
+    private static void surveyBiomes(MinecraftServer server, ServerLevel level) {
+        if (!(level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw)) {
+            CityWorldMod.LOGGER.warn("SURVEY biomes: this dimension is not CityWorld's");
+            return;
+        }
+        // bind the context (see findBiome): a source asked before any chunk exists answers one biome everywhere
+        server.submit(() -> level.getChunk(0, 0, ChunkStatus.FULL, true)).join();
+        var ctx = cw.getContext(level);
+        var source = level.getChunkSource().getGenerator().getBiomeSource();
+        var sampler = level.getChunkSource().randomState().sampler();
+        long seed = level.getSeed();
+        int size = Integer.getInteger("cityworld.probe.size", 4096), px = Integer.getInteger("cityworld.probe.px", 16);
+        String[] at = System.getProperty("cityworld.probe.at", "0,0").split(",");
+        int x0 = Integer.parseInt(at[0].trim()) - size / 2, z0 = Integer.parseInt(at[1].trim()) - size / 2;
+        int w = size / px;
+        long started = System.nanoTime();
+        @SuppressWarnings("unchecked")
+        net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome>[] grid = new net.minecraft.core.Holder[w * w];
+        int[] ground = new int[w * w];
+        double[] temp = new double[w * w];
+        java.util.Map<String, Integer> census = new java.util.TreeMap<>();
+        for (int pz = 0; pz < w; pz++)
+            for (int pxi = 0; pxi < w; pxi++) {
+                int x = x0 + pxi * px + px / 2, z = z0 + pz * px + px / 2;
+                int g = ctx.getNaturalBlockY(x, z);
+                ground[pz * w + pxi] = g;
+                temp[pz * w + pxi] = ctx.getTemperature(x, z);
+                var b = source.getNoiseBiome(net.minecraft.core.QuartPos.fromBlock(x), net.minecraft.core.QuartPos.fromBlock(g + 8),
+                        net.minecraft.core.QuartPos.fromBlock(z), sampler);
+                grid[pz * w + pxi] = b;
+                census.merge(biomeName(b), 1, Integer::sum);
+            }
+        long sampled = (System.nanoTime() - started) / 1_000_000;
+        java.util.List<java.util.Map.Entry<String, Integer>> top = new java.util.ArrayList<>(census.entrySet());
+        top.sort((a, b) -> b.getValue() - a.getValue());
+        StringBuilder cs = new StringBuilder();
+        for (var e : top)
+            cs.append(e.getKey().replace("minecraft:", "")).append(' ').append(e.getValue() * 1000 / (w * w) / 10.0).append("% ");
+        CityWorldMod.LOGGER.warn("SURVEY biomes: seed {}, {} blocks at {}/px ({} pixels) sampled in {} ms; census {}", seed, size, px,
+                w * w, sampled, cs);
+
+        // how wide a climate transition is: along every row and column, the run of pixels between the temperature
+        // field leaving the cold band (< 0.35) and entering the hot band (>= 0.8), or back; in blocks
+        java.util.Map<Integer, Integer> crossHist = new java.util.TreeMap<>();
+        for (int pass = 0; pass < 2; pass++)
+            for (int a = 0; a < w; a++) {
+                int sinceCold = -1, sinceHot = -1;
+                for (int b = 0; b < w; b++) {
+                    double t = pass == 0 ? temp[a * w + b] : temp[b * w + a];
+                    if (t < 0.35) {
+                        if (sinceHot >= 0)
+                            crossHist.merge(Math.min(2000, (b - sinceHot) * px / 100 * 100), 1, Integer::sum);
+                        sinceHot = -1;
+                        sinceCold = b;
+                    } else if (t >= 0.8) {
+                        if (sinceCold >= 0)
+                            crossHist.merge(Math.min(2000, (b - sinceCold) * px / 100 * 100), 1, Integer::sum);
+                        sinceCold = -1;
+                        sinceHot = b;
+                    }
+                }
+            }
+        CityWorldMod.LOGGER.warn("SURVEY biomes: cold-to-hot crossings of the temperature field by width (blocks, 100s, 2000 = more) {}",
+                crossHist);
+
+        // hard seams: a snowy biome touching a hot one
+        java.util.Map<String, Integer> seams = new java.util.TreeMap<>();
+        java.util.Map<String, String> example = new java.util.HashMap<>();
+        java.util.Map<Integer, Integer> climb = new java.util.TreeMap<>(); // the ground step across the seam
+        int seamPixels = 0;
+        for (int pz = 0; pz < w; pz++)
+            for (int pxi = 0; pxi < w; pxi++) {
+                var here = grid[pz * w + pxi];
+                float th = here.value().getBaseTemperature();
+                for (int d = 0; d < 2; d++) {
+                    int qx = pxi + (d == 0 ? 1 : 0), qz = pz + (d == 0 ? 0 : 1);
+                    if (qx >= w || qz >= w)
+                        continue;
+                    var there = grid[qz * w + qx];
+                    float tt = there.value().getBaseTemperature();
+                    boolean hard = (th < 0.2f && tt > 0.9f) || (tt < 0.2f && th > 0.9f);
+                    if (!hard)
+                        continue;
+                    seamPixels++;
+                    String pair = th < tt ? biomeName(here) + " | " + biomeName(there) : biomeName(there) + " | " + biomeName(here);
+                    seams.merge(pair, 1, Integer::sum);
+                    int x = x0 + pxi * px + px / 2, z = z0 + pz * px + px / 2;
+                    int rise = Math.abs(ground[pz * w + pxi] - ground[qz * w + qx]);
+                    climb.merge(Math.min(60, rise / 10 * 10), 1, Integer::sum);
+                    example.putIfAbsent(pair, "/tp " + x + " " + (ground[pz * w + pxi] + 2) + " " + z + " (ground " + ground[pz * w + pxi]
+                            + " vs " + ground[qz * w + qx] + ", temp " + String.format("%.2f", temp[pz * w + pxi]) + " vs "
+                            + String.format("%.2f", temp[qz * w + qx]) + ")");
+                }
+            }
+        CityWorldMod.LOGGER.warn("SURVEY biomes: {} hard seams (snowy touching hot, {}-block pixels); ground step across them (blocks, 10s) {}",
+                seamPixels, px, climb);
+        java.util.List<java.util.Map.Entry<String, Integer>> pairs = new java.util.ArrayList<>(seams.entrySet());
+        pairs.sort((a, b) -> b.getValue() - a.getValue());
+        for (var e : pairs)
+            CityWorldMod.LOGGER.warn("SURVEY biomes:   {} x{}  e.g. {}", e.getKey().replace("minecraft:", ""), e.getValue(), example.get(e.getKey()));
+
+        // the picture: a stable colour per biome, keyed on vanilla's own temperature so cold reads blue-white and
+        // hot reads red-yellow, with the name hashed into the hue's neighbourhood; sea darkened
+        var img = new java.awt.image.BufferedImage(w, w, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        for (int pz = 0; pz < w; pz++)
+            for (int pxi = 0; pxi < w; pxi++) {
+                var b = grid[pz * w + pxi];
+                String name = biomeName(b);
+                float t = Math.max(0f, Math.min(1.2f, b.value().getBaseTemperature()));
+                float hue = 0.66f - t * 0.55f + ((name.hashCode() & 0xff) / 255f - 0.5f) * 0.08f; // blue (cold) -> red (hot)
+                boolean water = name.contains("ocean") || name.contains("river");
+                float sat = water ? 0.5f : 0.85f, bri = water ? 0.55f : 0.95f;
+                img.setRGB(pxi, pz, java.awt.Color.HSBtoRGB(hue, sat, bri));
+            }
+        for (int pz = 0; pz < w; pz++) // seams in black
+            for (int pxi = 0; pxi < w; pxi++) {
+                float th = grid[pz * w + pxi].value().getBaseTemperature();
+                for (int d = 0; d < 2; d++) {
+                    int qx = pxi + (d == 0 ? 1 : 0), qz = pz + (d == 0 ? 0 : 1);
+                    if (qx >= w || qz >= w)
+                        continue;
+                    float tt = grid[qz * w + qx].value().getBaseTemperature();
+                    if ((th < 0.2f && tt > 0.9f) || (tt < 0.2f && th > 0.9f)) {
+                        img.setRGB(pxi, pz, 0);
+                        img.setRGB(qx, qz, 0);
+                    }
+                }
+            }
+        var g2 = img.createGraphics();
+        g2.setColor(java.awt.Color.BLACK);
+        g2.drawString("seed " + seed + "  " + size + " blocks, " + px + "/px, centre " + (x0 + size / 2) + "," + (z0 + size / 2), 6, 14);
+        g2.dispose();
+        try {
+            var out = java.nio.file.Path.of("biomes-" + seed + "-" + System.getProperty("cityworld.probe.at", "0,0").replace(',', '_')
+                    + "-" + size + ".png").toAbsolutePath();
+            javax.imageio.ImageIO.write(img, "png", out.toFile());
+            CityWorldMod.LOGGER.warn("SURVEY biomes: map {}, drawn in {} ms", out, (System.nanoTime() - started) / 1_000_000);
+            // the temperature field itself, banded as the matrix buckets it (cold / temperate / warm / hot), with
+            // the land tiers as brightness and sea darkened — the climate map behind the biome map
+            var tm = new java.awt.image.BufferedImage(w, w, java.awt.image.BufferedImage.TYPE_INT_RGB);
+            int sea = ctx.seaLevel, range = Math.max(1, ctx.landRange);
+            for (int pz = 0; pz < w; pz++)
+                for (int pxi = 0; pxi < w; pxi++) {
+                    double t = temp[pz * w + pxi];
+                    int g = ground[pz * w + pxi];
+                    float hue = t < 0.35 ? 0.62f : t < 0.6 ? 0.38f : t < 0.8 ? 0.13f : 0.0f;
+                    int above = g - sea;
+                    float bri = g < sea ? 0.45f : above <= range * 15 / 100 ? 0.95f : above <= range * 45 / 100 ? 0.8f
+                            : above <= range * 72 / 100 ? 0.65f : 0.5f;
+                    tm.setRGB(pxi, pz, java.awt.Color.HSBtoRGB(hue, g < sea ? 0.35f : 0.75f, bri));
+                }
+            var t2 = tm.createGraphics();
+            t2.setColor(java.awt.Color.BLACK);
+            t2.drawString("temperature bands: blue cold <0.35, green temperate, yellow warm, red hot >=0.8; darker = higher land / sea", 6, 14);
+            t2.dispose();
+            var tout = java.nio.file.Path.of("temp-" + seed + "-" + System.getProperty("cityworld.probe.at", "0,0").replace(',', '_')
+                    + "-" + size + ".png").toAbsolutePath();
+            javax.imageio.ImageIO.write(tm, "png", tout.toFile());
+            CityWorldMod.LOGGER.warn("SURVEY biomes: temperature map {}", tout);
+            // and the grid itself, one line a pixel: x,z,ground,temperature,humidity,biome — for scripts/biome_seams.py
+            var cout = java.nio.file.Path.of("biomes-" + seed + "-" + System.getProperty("cityworld.probe.at", "0,0").replace(',', '_')
+                    + "-" + size + ".csv").toAbsolutePath();
+            try (var writer = java.nio.file.Files.newBufferedWriter(cout)) {
+                writer.write("x,z,ground,temperature,humidity,biome\n");
+                for (int pz = 0; pz < w; pz++)
+                    for (int pxi = 0; pxi < w; pxi++) {
+                        int x = x0 + pxi * px + px / 2, z = z0 + pz * px + px / 2;
+                        writer.write(x + "," + z + "," + ground[pz * w + pxi] + "," + String.format("%.3f", temp[pz * w + pxi]) + ","
+                                + String.format("%.3f", ctx.getHumidity(x, z)) + "," + biomeName(grid[pz * w + pxi]) + "\n");
+                    }
+            }
+            CityWorldMod.LOGGER.warn("SURVEY biomes: grid {}", cout);
+        } catch (java.io.IOException e) {
+            CityWorldMod.LOGGER.warn("SURVEY biomes: could not write the map", e);
+        }
+    }
+
+    private static String biomeName(net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> b) {
+        return b.unwrapKey().map(k -> k.identifier().toString()).orElse("?");
+    }
+
+    /**
      * {@code -Dcityworld.probe=survey:harbour}: every river mouth within {@code -Dcityworld.probe.size} blocks
      * (default 6000), with the district its platmap was planned as (a harbour district is industrial) and its nature.
      */
@@ -875,6 +1066,10 @@ public final class ChunkProbe {
             }
             if (spec.startsWith("survey:rivers")) {
                 surveyRivers(level);
+                return;
+            }
+            if (spec.startsWith("survey:biomes")) {
+                surveyBiomes(server, level);
                 return;
             }
             if (spec.startsWith("survey:sites")) {
