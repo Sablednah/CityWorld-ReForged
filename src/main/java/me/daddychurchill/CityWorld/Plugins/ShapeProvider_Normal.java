@@ -500,9 +500,15 @@ public class ShapeProvider_Normal extends ShapeProvider {
 					int at = RiverNetwork.RiverChunk.index(blockX, blockZ);
 					if (rc.lip()[at])
 						chunk.chunkData.markPosForPostProcessing(new net.minecraft.core.BlockPos(blockX, water, blockZ));
-					// the hollow behind a fall
-					if (rc.hollow()[at * 2] != RiverNetwork.NONE)
-						chunk.setBlocks(x, rc.hollow()[at * 2], rc.hollow()[at * 2 + 1] + 1, z, me.daddychurchill.CityWorld.compat.Material.AIR);
+					// the hollow behind a fall: open under a roof of mossy cobble (the bed above it is sand and gravel,
+					// which would fall in), on a mossy floor; and the lip the water pours over is mossy cobble too
+					if (rc.hollow()[at * 2] != RiverNetwork.NONE) {
+						int from = rc.hollow()[at * 2], to = rc.hollow()[at * 2 + 1];
+						chunk.setBlocks(x, to + 1, y + 1, z, Material.MOSSY_COBBLESTONE);
+						chunk.setBlocks(x, from - 1, from, z, Material.MOSSY_COBBLESTONE);
+						chunk.setBlocks(x, from, to + 1, z, Material.AIR);
+					} else if (rc.lip()[at])
+						chunk.setBlocks(x, y, y + 1, z, Material.MOSSY_COBBLESTONE);
 					biome = Biome.RIVER;
 
 					// possibly buildable?
@@ -583,6 +589,29 @@ public class ShapeProvider_Normal extends ShapeProvider {
 					biome = Biome.DESERT;
 				biomes.setBiome(x, z, remapBiome(generator, lot, biome));
 			}
+		}
+
+		// damp walls round each fall's hollow: the solid beside it, mossy cobble
+		if (rivers != null) {
+			var rc = rivers.chunk(chunk.sectionX, chunk.sectionZ);
+			if (rc.any())
+				for (int x = 0; x < chunk.width; x++)
+					for (int z = 0; z < chunk.width; z++) {
+						int at = RiverNetwork.RiverChunk.index(x, z);
+						int from = rc.hollow()[at * 2];
+						if (from == RiverNetwork.NONE)
+							continue;
+						int to = rc.hollow()[at * 2 + 1];
+						for (int[] o : new int[][] { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) {
+							int nx = x + o[0], nz = z + o[1];
+							if (nx < 0 || nz < 0 || nx >= chunk.width || nz >= chunk.width
+									|| rc.hollow()[RiverNetwork.RiverChunk.index(nx, nz) * 2] != RiverNetwork.NONE)
+								continue;
+							for (int yy = from; yy <= to; yy++)
+								if (!chunk.isEmpty(nx, yy, nz) && !chunk.isType(nx, yy, nz, Material.WATER))
+									chunk.setBlock(nx, yy, nz, Material.MOSSY_COBBLESTONE);
+						}
+					}
 		}
 	}
 
