@@ -739,6 +739,60 @@ public final class ChunkProbe {
         }
     }
 
+    /**
+     * {@code -Dcityworld.probe=survey:treasure}: the falls within {@code -Dcityworld.probe.size} blocks (default 6000)
+     * of the origin whose hollow hides the chest of buried treasure, with the chest's block — and how many falls
+     * hide anything at all. Reads the network only; no chunk is generated.
+     */
+    private static void surveyTreasure(ServerLevel level) {
+        if (!(level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw)
+                || !(cw.getContext(level).shapeProvider instanceof me.daddychurchill.CityWorld.Plugins.ShapeProvider_Normal shape)
+                || shape.rivers() == null) {
+            CityWorldMod.LOGGER.warn("SURVEY treasure: this dimension has no rivers");
+            return;
+        }
+        var net = shape.rivers();
+        int size = Integer.getInteger("cityworld.probe.size", 6000), cell = me.daddychurchill.CityWorld.worldgen.RiverNetwork.CELL;
+        java.util.Set<Long> seen = new java.util.HashSet<>();
+        java.util.Map<Integer, Integer> finds = new java.util.TreeMap<>();
+        int chests = 0, falls = 0;
+        for (int cx = -size / cell; cx <= size / cell; cx++)
+            for (int cz = -size / cell; cz <= size / cell; cz++) {
+                Long spring = net.spring(cx, cz);
+                if (spring == null)
+                    continue;
+                var c = net.course(spring);
+                for (int p = 0; p + 1 < c.plevel().length; p++) {
+                    if (c.plevel()[p] - c.plevel()[p + 1] < 4)
+                        continue;
+                    int chunkX = (int) Math.floor(c.px()[p]) >> 4, chunkZ = (int) Math.floor(c.pz()[p]) >> 4;
+                    for (int a = -1; a <= 1; a++)
+                        for (int b = -1; b <= 1; b++) {
+                            if (!seen.add(((long) (chunkX + a) << 32) ^ ((chunkZ + b) & 0xffffffffL)))
+                                continue;
+                            var rc = net.chunk(chunkX + a, chunkZ + b);
+                            if (!rc.any())
+                                continue;
+                            boolean any = false;
+                            for (int i = 0; i < 256; i++) {
+                                if (rc.finds()[i] != 0 && !any) {
+                                    any = true;
+                                    falls++;
+                                    finds.merge((int) rc.finds()[i], 1, Integer::sum);
+                                }
+                                if (rc.treasure()[i]) {
+                                    chests++;
+                                    int x = ((chunkX + a) << 4) + (i >> 4), z = ((chunkZ + b) << 4) + (i & 15);
+                                    CityWorldMod.LOGGER.warn("SURVEY treasure: chest at {} {} {} (water above at {}) — /tp {} {} {}",
+                                            x, rc.hollow()[i * 2], z, rc.water()[i], x, rc.water()[i] + 2, z);
+                                }
+                            }
+                        }
+                }
+            }
+        CityWorldMod.LOGGER.warn("SURVEY treasure: {} chests; {} hollow chunks hiding something, by find {}", chests, falls, finds);
+    }
+
     private static int rgb(int r, int g, int b) {
         return (Math.max(0, Math.min(255, r)) << 16) | (Math.max(0, Math.min(255, g)) << 8) | Math.max(0, Math.min(255, b));
     }
@@ -768,6 +822,10 @@ public final class ChunkProbe {
             int cx, cz;
             if (spec.startsWith("survey:end")) {
                 surveyEnd(level);
+                return;
+            }
+            if (spec.startsWith("survey:treasure")) {
+                surveyTreasure(level);
                 return;
             }
             if (spec.startsWith("survey:rivers")) {
