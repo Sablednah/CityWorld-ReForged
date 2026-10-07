@@ -517,6 +517,10 @@ public final class Mall {
                 if (generator.isStructureReserved(platmap.originX + x, platmap.originZ + z)
                         || !platmap.isLevellableLots(x, z, 1, 1, MAX_RISE))
                     return false;
+                // never across a river (CityWorld's own): the chunk refuses the mall's lot, stays wild, and a quay
+                // was planned into the middle of the mall (owner, 2026-10-07: "it totally wrecked a mall")
+                if (generator.shapeProvider.refusesLotAt(platmap.originX + x, platmap.originZ + z))
+                    return false;
             }
         return count == n; // no two wings overlap
     }
