@@ -22,7 +22,24 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 | Licence | **GPL-3.0-only** (see below — non-negotiable) |
 | Branch | work happens on `master` (the `neoforge-port` branch was merged into it and deleted) |
 
-## ▶ Where this is, and what's next (2026-10-02)
+## ▶ Where this is, and what's next (2026-10-07)
+
+**▶ Resume here (2026-10-07, after the 6.0.0 release).** Nothing is in flight; every line is committed and
+pushed (`master` plus the five branches at their 6.0.0 bump; master has two docs commits on top). Open items:
+- **Owner to paste** CURSEFORGE.md's "New in 6.0.0" section and the recounted promo line (455 worlds, 7.6M chunks,
+  1,900 km²; `scripts/count_worlds.py`) into the CurseForge description.
+- **Better biome blending** — the owner's to-do, not scoped (PORTING.md, rivers section).
+- **The ruined Nether twin's rivers** — owner hasn't chosen lava / dry ravines / none; it has none today.
+- **Vanilla land's coasts** could take the coastal quays/beaches (needs the lift-aware drawing ShorelineLot has);
+  vanilla moorings draw as the slip (a jetty would stand in the river's own chunk).
+- **The self-test does not cover vanilla land or rivers.** Verify them by probe on a seed: vanilla land by setting
+  `cities.vanillaTerrain: true` in `world_settings/modern.json` for the run (revert after), rivers with the river
+  checks below and `-Dcityworld.rivers.off=true` as the control.
+- Tools from this arc: probes `survey:rivers`, `survey:treasure`, `survey:harbour`, `find:QuaysideLot`,
+  `find:ShorelineLot`; `-Dcityworld.rivers.quay=<KIND>`, `-Dcityworld.rivers.find=<FIND_*>`; `/cityfind river [tp]`;
+  `scripts/river_{spill,pillars,depth,hollows}.py` (region checks), `scripts/count_worlds.py` (promo stat).
+- The owner's test seeds: CityWorld land 5670300453504745606 (his mountain, the falls, both mouths), vanilla land
+  1688298913692546204 (the bridge at x 704–751 z −1000; quays at 661,−824 and 712,−1095).
 
 **v6.0.0 is released** (2026-10-07) on all six lines — tag `v6.0.0` (`5dad4495`), CurseForge 9092756–9092761:
 rivers on CityWorld's own land (falls, hollows and finds), the waterside by district on both lands (quays, slips,
