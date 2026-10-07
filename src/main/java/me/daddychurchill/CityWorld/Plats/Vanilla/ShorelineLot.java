@@ -64,13 +64,15 @@ public class ShorelineLot extends IsolatedLot {
 		trulyIsolated = false;
 		CitySites sites = platmap.generator.citySites;
 		if (sites != null) {
-			water[0] = sites.isChannelChunk(chunkX, chunkZ - 1);
-			water[1] = sites.isChannelChunk(chunkX, chunkZ + 1);
-			water[2] = sites.isChannelChunk(chunkX - 1, chunkZ);
-			water[3] = sites.isChannelChunk(chunkX + 1, chunkZ);
+			// a side faces water only where the water itself comes to it, not just the river's biome
+			water[0] = sites.isChannelChunk(chunkX, chunkZ - 1) && sites.waterAtEdge(chunkX, chunkZ, 0);
+			water[1] = sites.isChannelChunk(chunkX, chunkZ + 1) && sites.waterAtEdge(chunkX, chunkZ, 1);
+			water[2] = sites.isChannelChunk(chunkX - 1, chunkZ) && sites.waterAtEdge(chunkX, chunkZ, 2);
+			water[3] = sites.isChannelChunk(chunkX + 1, chunkZ) && sites.waterAtEdge(chunkX, chunkZ, 3);
 		}
 		this.shared = shared;
-		kind = of(shared);
+		// no water at any edge: the bank is left as it is (a quay there faced dry land, and its berth was a pool)
+		kind = water[0] || water[1] || water[2] || water[3] ? of(shared) : Kind.RUSTIC;
 		// the slip and the loading edge face the side with the most river beyond it
 		int best = -1, most = 0;
 		if (sites != null)
