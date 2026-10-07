@@ -98,6 +98,19 @@ public final class RiverNetwork {
         bankNoise = new me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator(seed + 5103);
     }
 
+    /** Whether a river reaches the sea inside this square (x0, z0, side blocks): a harbour district's mark. */
+    public boolean mouthWithin(int x0, int z0, int side) {
+        Region r = region(Math.floorDiv(x0 + side / 2, REGION), Math.floorDiv(z0 + side / 2, REGION));
+        for (Course c : r.courses()) {
+            if (c.end() != End.SEA)
+                continue;
+            double[] m = place(c.nodes().get(c.nodes().size() - 1));
+            if (m[0] >= x0 && m[0] < x0 + side && m[1] >= z0 && m[1] < z0 + side)
+                return true;
+        }
+        return false;
+    }
+
     /** The ground here before any river. */
     public double naturalAt(int x, int z) {
         return terrain.ground(x, z);

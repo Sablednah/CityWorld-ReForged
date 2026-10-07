@@ -34,15 +34,31 @@ import me.daddychurchill.CityWorld.worldgen.CitySites;
  */
 public class ShorelineLot extends IsolatedLot {
 
-	public enum Kind {
-		PROMENADE, MOORING, LOADING
+	/**
+	 * The shared waterside kinds ({@code Plats.River.Waterside}), as this lot can draw them on a whole-chunk bank:
+	 * moorings are drawn as the slip (a jetty would stand in the channel chunk, which is the river's), a beach as the
+	 * promenade.
+	 */
+	private enum Kind {
+		PROMENADE, MOORING, LOADING, RUSTIC
+	}
+
+	private static Kind of(me.daddychurchill.CityWorld.Plats.River.Waterside.Kind shared) {
+		return switch (shared) {
+		case MOORING, SLIP -> Kind.MOORING;
+		case LOADING -> Kind.LOADING;
+		case RUSTIC, NATURAL -> Kind.RUSTIC;
+		default -> Kind.PROMENADE;
+		};
 	}
 
 	/** {north, south, west, east}: whether that neighbour is river channel. */
 	private final boolean[] water = new boolean[4];
 	private final Kind kind;
 
-	public ShorelineLot(PlatMap platmap, int chunkX, int chunkZ) {
+	private final me.daddychurchill.CityWorld.Plats.River.Waterside.Kind shared;
+
+	public ShorelineLot(PlatMap platmap, int chunkX, int chunkZ, me.daddychurchill.CityWorld.Plats.River.Waterside.Kind shared) {
 		super(platmap, chunkX, chunkZ);
 		style = LotStyle.STRUCTURE;
 		trulyIsolated = false;
@@ -53,8 +69,8 @@ public class ShorelineLot extends IsolatedLot {
 			water[2] = sites.isChannelChunk(chunkX - 1, chunkZ);
 			water[3] = sites.isChannelChunk(chunkX + 1, chunkZ);
 		}
-		double roll = chunkOdds.getRandomDouble();
-		kind = roll < 0.34 ? Kind.PROMENADE : roll < 0.70 ? Kind.MOORING : Kind.LOADING;
+		this.shared = shared;
+		kind = of(shared);
 		// the slip and the loading edge face the side with the most river beyond it
 		int best = -1, most = 0;
 		if (sites != null)
@@ -88,7 +104,7 @@ public class ShorelineLot extends IsolatedLot {
 
 	@Override
 	public PlatLot newLike(PlatMap platmap, int chunkX, int chunkZ) {
-		return new ShorelineLot(platmap, chunkX, chunkZ);
+		return new ShorelineLot(platmap, chunkX, chunkZ, shared);
 	}
 
 	@Override
@@ -103,7 +119,7 @@ public class ShorelineLot extends IsolatedLot {
 
 	@Override
 	public boolean allowsWildDecoration() {
-		return false;
+		return kind == Kind.RUSTIC;
 	}
 
 	/** How deep the channel is kept, and so how far down the quay wall goes. */
@@ -152,6 +168,8 @@ public class ShorelineLot extends IsolatedLot {
 	@Override
 	protected void generateActualChunk(CityWorldGenerator generator, PlatMap platmap, InitialBlocks chunk,
 			BiomeGrid biomes, DataContext context, int platX, int platZ) {
+		if (kind == Kind.RUSTIC)
+			return; // the natural bank, as the land made it
 		int deck = generator.streetLevel + 1; // the quay's walking surface
 		int top = waterTop(generator), bed = top - BED_DEPTH;
 
@@ -219,6 +237,11 @@ public class ShorelineLot extends IsolatedLot {
 	@Override
 	protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
 			DataContext context, int platX, int platZ) {
+		if (kind == Kind.RUSTIC) {
+			me.daddychurchill.CityWorld.Plats.River.Waterside.rusticJetty(chunk, waterTop(generator), generator.streetLevel,
+					getChunkX() * 341873128712L ^ getChunkZ() * 132897987541L);
+			return;
+		}
 		int deck = generator.streetLevel + 1;
 		int side = mainSide();
 		Material lantern = Material.of(net.minecraft.world.level.block.Blocks.LANTERN);
