@@ -1,0 +1,85 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "minecraft:villages",
+      "required": false
+    },
+    {
+      "id": "minecraft:desert_pyramids",
+      "required": false
+    },
+    {
+      "id": "minecraft:igloos",
+      "required": false
+    },
+    {
+      "id": "minecraft:jungle_temples",
+      "required": false
+    },
+    {
+      "id": "minecraft:swamp_huts",
+      "required": false
+    },
+    {
+      "id": "minecraft:pillager_outposts",
+      "required": false
+    },
+    {
+      "id": "minecraft:ocean_monuments",
+      "required": false
+    },
+    {
+      "id": "minecraft:woodland_mansions",
+      "required": false
+    },
+    {
+      "id": "minecraft:buried_treasures",
+      "required": false
+    },
+    {
+      "id": "minecraft:mineshafts",
+      "required": false
+    },
+    {
+      "id": "minecraft:ruined_portals",
+      "required": false
+    },
+    {
+      "id": "minecraft:shipwrecks",
+      "required": false
+    },
+    {
+      "id": "minecraft:ocean_ruins",
+      "required": false
+    },
+    {
+      "id": "minecraft:trail_ruins",
+      "required": false
+    },
+    {
+      "id": "minecraft:trial_chambers",
+      "required": false
+    },
+    {
+      "id": "minecraft:ancient_cities",
+      "required": false
+    },
+    {
+      "id": "minecraft:strongholds",
+      "required": false
+    },
+    {
+      "id": "minecraft:nether_complexes",
+      "required": false
+    },
+    {
+      "id": "minecraft:nether_fossils",
+      "required": false
+    },
+    {
+      "id": "minecraft:end_cities",
+      "required": false
+    }
+  ]
+}

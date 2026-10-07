@@ -1,0 +1,22 @@
+# CityWorld: All Vanilla Structures, a data-only add-on (no code). NeoForge 1.20.5 and later reads this file.
+modLoader="lowcodefml"
+loaderVersion="[1,)"
+license="GPL-3.0-only"
+issueTrackerURL="https://github.com/Sablednah/CityWorld-ReForged/issues"
+
+[[mods]]
+modId="cityworld_all_vanilla_structures"
+version="1.0.0"
+displayName="CityWorld: All Vanilla Structures"
+authors="Sablednah"
+description='''
+A sample datapack for CityWorld: allows every vanilla structure set (villages, temples, outposts, mansions,
+monuments, shipwrecks, ruins and the rest) in CityWorld worlds. One tag file - copy it to make your own.
+'''
+
+[[dependencies.cityworld_all_vanilla_structures]]
+modId="cityworld"
+type="required"
+versionRange="[5.17,)"
+ordering="AFTER"
+side="BOTH"

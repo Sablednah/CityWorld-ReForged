@@ -1,0 +1,12 @@
+{
+  "pack": {
+    "description": "CityWorld: All Vanilla Structures - every vanilla structure set allowed in CityWorld worlds",
+    "pack_format": 15,
+    "supported_formats": [
+      15,
+      999
+    ],
+    "min_format": 15,
+    "max_format": 999
+  }
+}
