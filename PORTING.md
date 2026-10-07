@@ -32,6 +32,35 @@ comments, orphaned javadocs re-attached) turned up one real bug, car-park east/w
 north/south edges; and the interchange stair top was fixed from the owner's hand edit in his save (headroom
 over a two-step flight; the shaft's track-side wall is the platform edge again).
 
+## ▶ Resume here — biome seams: warm mountains were snow-capped (2026-10-07 night, unreleased)
+
+A player's comment: "biome transitions are very abrupt: cold biomes and tropical biomes can appear right next to
+each other with no transition at all". Measured on their seed 2884287148936112549 (MODERN, 8192 blocks square at
+a chunk a pixel) with a new probe, `-Dcityworld.probe=survey:biomes`: the temperature field is smooth (every
+cold region sits inside temperate, then warm, then hot; a cold-to-hot crossing is 300–600 blocks wide, snowy
+lowland never within 176 blocks of hot lowland). **The seams were the matrix's elevation tiers**: warm-wet hills
+were sparse jungle and warm highland was windswept forest, which vanilla's height rule snows above about y 120
+(`Biome.getHeightAdjustedTemperature`: 0.2 − (y − 80) × 0.00125 < 0.15), so a jungle at y 126 climbed into
+snow-capped spruce at y 147 across one tier line. 1,567 such borders on that seed, plus savanna plateau against
+windswept hills.
+
+**The fix is in `CityWorldClimateBiomeSource.highland`/`peak` only**, following vanilla's `OverworldBiomeBuilder`
+(read from the sources jar: windswept hills/forest exist for temperature indices 0–2 only; warm slopes take the
+plateau row; warm peaks are stony, hot peaks badlands): warm highland → windswept savanna / forest / sparse
+jungle (dry / normal / wet); hot highland → eroded badlands / windswept savanna / jungle; cold dry highland →
+windswept (gravelly) hills, so those two keep a home; peaks → frozen (cold), jagged or snowy slopes (temperate,
+by humidity), stony (warm and hot). Lowland and hills untouched, so cities' surroundings do not move.
+
+**The loop that found and tested it, all without a client:** `survey:biomes` (biome map, temperature-band map,
+grid CSV at 6 decimals — 3 decimals disagreed with the Java at 650 band-edge pixels), `scripts/biome_seams.py`
+(borders by vanilla-temperature class, the pairs with `/tp` points, snowy-to-hot distances),
+`scripts/biome_matrix_sim.py` (a Python copy of the matrix re-run over the CSV's climate; `current` must match
+the probe pixel for pixel as the control, then candidates score in seconds), `scripts/biome_map_render.py`
+(the before/after sheet with map colours, hill-shade, climate map, zoom and legend). Result on that seed:
+snow-to-hot borders 1,207 → 126 (the rest are windswept forest against windswept savanna at the temperate/warm
+line, which vanilla also allows), patches 8,688 → 8,595 of the same mean size, windswept forest 2.9% → 0.8%,
+forest/jungle/sparse jungle gain it. Not cherry-picked to the branches yet; the owner wanted the maps first.
+
 ## ▶ Resume here — rivers on CityWorld's own land (2026-10-05 → 10-06, unreleased)
 
 Committed on all six lines: master `3322451d` + `1912bf1a`; each branch adds one drift commit. Owner signed off

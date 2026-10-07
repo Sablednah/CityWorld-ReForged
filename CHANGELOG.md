@@ -5,6 +5,18 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 6.1.0 (unreleased)
+
+### Changed
+
+- **Warm mountains are no longer snow-capped.** The Modern biome matrix gave every warm highland the windswept
+  hills and forest, which Minecraft snows above about y 120, so a jungle or savanna climbed straight into snowy
+  spruce with no transition (a player's report). Following vanilla's own tables, the windswept hills and forest
+  now belong to the cold and temperate climates only; a warm mountain carries windswept savanna, forest and
+  sparse jungle up to stony peaks, a hot one eroded badlands, windswept savanna and jungle. Measured on the
+  reported seed over 8 km square: snow-to-hot borders fell from 1,207 to 126, biome sizes unchanged. Only new
+  chunks are affected; on an existing world the highlands of unexplored warm mountains change biome.
+
 ## 6.0.0
 
 All six Minecraft lines. **Cities in a vanilla world, and rivers through them**: 5.19 brought vanilla land, cities
