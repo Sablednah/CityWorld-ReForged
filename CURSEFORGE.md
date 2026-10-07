@@ -10,8 +10,8 @@ build) of the classic Bukkit/Spigot plugin
 Minecraft — same generator brain, same GPL-3 license, now a world type you can pick from the create-world
 screen.
 
-Battle-tested across **135 worlds and 3.2 million generated chunks** — over **830 km²** of procedurally
-generated city, more ground than New York City covers.
+Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
+generated city, more ground than all of Greater London and two and a half New Yorks.
 
 **New in 6.0.0: rivers, and the city meets the water.** CityWorld's own land now has **rivers**: springs high in
 the mountains run down in gullies and **waterfalls**, through lakes and across the plain to the sea, widening as

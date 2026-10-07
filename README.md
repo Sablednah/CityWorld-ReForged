@@ -29,8 +29,8 @@ wild between them — with mines and sewers below, loot in the chests, and villa
 the streets. **And, from 5.9.0, a Nether and an End of its own:** a ruined 1:1 twin of your city in the
 Nether, and cities on the flat tops of vanilla's End islands.
 
-Battle-tested across 135 worlds and 3.2 million generated chunks — over 830 km² of procedurally
-generated city, more ground than New York City covers.
+Battle-tested across 455 worlds and 7.6 million generated chunks — over 1,900 km² of procedurally
+generated city, more ground than all of Greater London and two and a half New Yorks.
 
 ![Skyline](screengrabs/skyline.jpg)
 
