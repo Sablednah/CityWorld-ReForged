@@ -902,7 +902,8 @@ public final class RiverNetwork {
                         hollowFrom = below + 1;
                         hollowTo = bed - 3;
                         find = findFor(mix(seed ^ c.spring() * 31 + k));
-                        treasure = find == FIND_CHEST && t <= 0.3 && Math.abs(d - edge) < 0.75;
+                        // where in the hollow the chest stands is settled per chunk (build): a test on this column's
+                        // place in the stream missed every column of both chest falls on the owner's seed
                     }
                 }
             }
@@ -1012,6 +1013,14 @@ public final class RiverNetwork {
                     finds[x * 16 + z] = 0;
                     treasure[x * 16 + z] = false;
                 }
+            }
+        // a chest-hiding hollow: the chest in the first of its columns (one a chunk)
+        for (int i = 0; i < 256; i++)
+            treasure[i] = false;
+        for (int i = 0; i < 256; i++)
+            if (finds[i] == FIND_CHEST && hollow[i * 2] != NONE) {
+                treasure[i] = true;
+                break;
             }
         // a bar of low beach between a river at sea level and the open water it is meeting is breached, so they
         // join (the course can run along a shore and leave one); a few passes for a bar a few blocks wide
