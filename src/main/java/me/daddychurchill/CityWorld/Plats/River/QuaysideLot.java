@@ -386,6 +386,12 @@ public class QuaysideLot extends IsolatedLot {
 	@Override
 	protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
 			DataContext context, int platX, int platZ) {
+		dress(generator, chunk);
+		if (!allowsWildDecoration())
+			me.daddychurchill.CityWorld.Plats.River.Waterside.freeze(chunk, generator.streetLevel + TOWER + 8, generator.seaLevel - 40);
+	}
+
+	private void dress(CityWorldGenerator generator, RealBlocks chunk) {
 		int deck = generator.streetLevel;
 		Material lantern = Material.of(net.minecraft.world.level.block.Blocks.LANTERN);
 		Odds odds = chunkOdds;
