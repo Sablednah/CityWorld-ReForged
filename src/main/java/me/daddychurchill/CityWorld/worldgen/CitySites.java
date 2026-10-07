@@ -179,6 +179,26 @@ public final class CitySites {
         return heights.top(blockX, blockZ) < seaLevel - 1;
     }
 
+    /**
+     * Whether the river's water itself reaches this chunk's edge on {@code side} (0 north, 1 south, 2 west, 3 east):
+     * along at least half of the edge, water within four blocks into the next chunk. A chunk of river biome can be
+     * dry bank for two chunks before the water (owner, 2026-10-07: quays and their berths "2 chunks away from water").
+     */
+    public boolean waterAtEdge(int chunkX, int chunkZ, int side) {
+        int reached = 0;
+        for (int u = 1; u < 16; u += 2) {
+            for (int d = 1; d <= 4; d++) {
+                int x = chunkX * 16 + (side == 2 ? -d : side == 3 ? 15 + d : u);
+                int z = chunkZ * 16 + (side == 0 ? -d : side == 1 ? 15 + d : u);
+                if (wet(x, z)) {
+                    reached++;
+                    break;
+                }
+            }
+        }
+        return reached >= 4;
+    }
+
     /** How much of a chunk is river: biome cells of sixteen, for picking which way a quay faces. */
     public int riverCells(int chunkX, int chunkZ) {
         int count = 0, x0 = chunkX * 16, z0 = chunkZ * 16;
