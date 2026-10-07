@@ -221,6 +221,11 @@ public class ShapeProvider_Normal extends ShapeProvider {
 
 	private final RiverNetwork rivers;
 
+	/** The river network, or null when this world has no rivers (the probe's {@code survey:treasure}). */
+	public RiverNetwork rivers() {
+		return rivers;
+	}
+
 	private RiverNetwork.RiverChunk riverChunk(int blockX, int blockZ) {
 		return rivers == null ? RiverNetwork.DRY : rivers.chunk(blockX >> 4, blockZ >> 4);
 	}
