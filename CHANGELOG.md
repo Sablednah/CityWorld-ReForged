@@ -20,7 +20,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   a quay wall down to the riverbed along the water's real edge, a parapet, and promenades with lanterns, moorings
   with jetties on pilings, or loading quays with a timber derrick and cargo; the rest keep their natural bank.
   Where a city meets the sea, the same quays follow the shore as a harbour, with longer jetties and now and then a
-  lighthouse.
+  lighthouse — or the sand is left as a city beach, with a boardwalk, striped umbrellas and a lifeguard tower.
+- **Streets cross city streams flat**, the water running on under the road, instead of on a humpback bridge.
 - `/cityfind river [tp]`: the nearest river water.
 
 ## 5.19.1
