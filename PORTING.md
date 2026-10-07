@@ -77,6 +77,9 @@ chunk edge out in the water (dropped). Roads over a street-level river with no s
 `-Dcityworld.rivers.quay=BEACH|MOORING|LOADING|PROMENADE`. On the owner's seed: river quays at chunk (10, −4), a
 flat crossing at (196, −60), a coast with a lighthouse around (246, 394).
 
+**To do (owner, 2026-10-07): better biome blending** — biomes change abruptly at their edges today; work out
+where (climate cells, river and coast biomes, cave patches) and blend them. Not started; not yet scoped with him.
+
 **Next (not started)**: the ruined Nether twin's rivers (owner hasn't chosen lava / dry / none); vanilla land's
 coasts could take the coastal quayside too (its cities are lifted, so it needs the lift-aware drawing
 ShorelineLot has).
