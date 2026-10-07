@@ -21,7 +21,13 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   with jetties on pilings, or loading quays with a timber derrick and cargo; the rest keep their natural bank.
   Where a city meets the sea, the same quays follow the shore as a harbour, with longer jetties and now and then a
   lighthouse — or the sand is left as a city beach, with a boardwalk, striped umbrellas and a lifeguard tower.
-- **Streets cross city streams flat**, the water running on under the road, instead of on a humpback bridge.
+- **Streets cross city streams flat**, the water running on under the road; a road bridges a river only where it
+  covers most of the chunk.
+- **The waterside follows the district**, on CityWorld land and vanilla land alike: quays where the city is built up
+  (mostly loading quays in industrial districts), the natural bank — now and then a rustic plank jetty — where it is
+  housing, farms or outland, or where no city actually stands by the water. Where a river reaches the sea, the
+  district there is a harbour (industrial). Quays never pave over the sea or a swamp, follow a smoothed shoreline
+  (no rings of wall round specks of sand), and keep clear of malls.
 - `/cityfind river [tp]`: the nearest river water.
 
 ## 5.19.1

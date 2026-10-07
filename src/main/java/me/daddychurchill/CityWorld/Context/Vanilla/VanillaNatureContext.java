@@ -20,9 +20,6 @@ import me.daddychurchill.CityWorld.Support.SupportBlocks;
  */
 public class VanillaNatureContext extends NatureContext {
 
-	/** The share of riverside city chunks that are quays; the rest are the natural bank. */
-	private static final double QUAY_ODDS = 0.45;
-
 	public VanillaNatureContext(CityWorldGenerator generator) {
 		super(generator);
 	}
@@ -40,18 +37,16 @@ public class VanillaNatureContext extends NatureContext {
 						&& !HeightInfo.isBuildableAt(generator, (platmap.originX + x) * SupportBlocks.sectionBlockWidth,
 								(platmap.originZ + z) * SupportBlocks.sectionBlockWidth))
 					platmap.recycleLot(x, z);
-		// The city backs away from its river: every chunk of city ground beside it is planned before any building —
-		// about half a quay (promenade, mooring, loading quay), the rest left to nature so the natural bank shows
-		// and eases up to the street. A road may still take either.
+		// The city backs away from its river: every chunk of city ground beside it is kept from the buildings here,
+		// and once the district is known it becomes what Plats.River.Waterside chooses — a quay where the city is
+		// built up, the natural bank (now and then a rustic jetty) where it is rural (ShapeProvider_Vanilla.validateLots).
+		// A road may still take it.
 		for (int x = 0; x < PlatMap.Width; x++)
 			for (int z = 0; z < PlatMap.Width; z++) {
 				int chunkX = platmap.originX + x, chunkZ = platmap.originZ + z;
 				if (platmap.getLot(x, z) != null || !ShorelineLot.belongsAt(generator.citySites, chunkX, chunkZ))
 					continue;
-				if (generator.shapeProvider.getMicroOddsGeneratorAt(chunkX, chunkZ).playOdds(QUAY_ODDS))
-					platmap.setLot(x, z, new ShorelineLot(platmap, chunkX, chunkZ));
-				else
-					platmap.recycleLot(x, z);
+				platmap.recycleLot(x, z); // kept for the waterside, chosen once the district is known (validateLots)
 			}
 	}
 }

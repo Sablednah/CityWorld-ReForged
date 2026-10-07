@@ -237,6 +237,20 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	}
 
 	@Override
+	public boolean riverMostlyAt(int chunkX, int chunkZ) {
+		if (rivers == null)
+			return false;
+		var rc = rivers.chunk(chunkX, chunkZ);
+		if (!rc.channel() || rc.highestWater() > getStreetLevel())
+			return false;
+		int wet = 0;
+		for (int w : rc.water())
+			if (w != RiverNetwork.NONE)
+				wet++;
+		return wet >= 128;
+	}
+
+	@Override
 	public boolean seaBeneathAt(int chunkX, int chunkZ) {
 		if (rivers == null)
 			return false;
@@ -261,16 +275,11 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		return rivers != null && rivers.chunk(chunkX, chunkZ).channel();
 	}
 
-	/** The share of a city's river chunks that become quays; the rest keep their natural bank. */
-	private static final double QUAY_ODDS = 0.65;
-	/** The share of a city's coastal chunks (land and sea both) that become harbour. */
-	private static final double HARBOUR_ODDS = 0.5;
-
 	/**
-	 * A city's waterside, once its lots are planned (CityWorld's own rivers on): a river chunk crossing at street
-	 * level is mostly quay ({@code QuaysideLot}), the rest natural bank; a chunk of the city's coast (land and sea
-	 * both) is often harbour — the same lot with the sea counted as water: a quay wall along the real shore, longer
-	 * jetties, now and then a lighthouse. Not in the wilds: only a platmap a city context planned.
+	 * A city's waterside, once its lots are planned (CityWorld's own rivers on): each river chunk crossing it at street
+	 * level, and each chunk of its coast (land and sea both), becomes what {@code Plats.River.Waterside} chooses for
+	 * its district — quays where the city is built up, the natural bank (now and then a rustic jetty) where it is
+	 * rural. Never beside a mall (its wings span chunks a quay would cut through).
 	 */
 	@Override
 	protected void validateLots(CityWorldGenerator generator, PlatMap platmap) {
@@ -281,17 +290,59 @@ public class ShapeProvider_Normal extends ShapeProvider {
 				var lot = platmap.getLot(x, z);
 				if (lot != null && !(lot instanceof me.daddychurchill.CityWorld.Plats.NatureLot))
 					continue;
+				if (besideMall(platmap, x, z))
+					continue;
 				int cx = platmap.originX + x, cz = platmap.originZ + z;
-				Odds odds = getMicroOddsGeneratorAt(cx, cz);
-				if (riverCrossesStreetAt(cx, cz)) {
-					if (odds.playOdds(QUAY_ODDS))
-						platmap.setLot(x, z, new me.daddychurchill.CityWorld.Plats.River.QuaysideLot(platmap, cx, cz, false));
+				boolean river = riverCrossesStreetAt(cx, cz), coast = coastAt(generator, cx, cz);
+				if (!river && !coast)
+					continue;
+				// built only where the city really is beside it: a district planned as city but with nothing placed by
+				// the water (owner, 2026-10-07: quays on the far bank of a swamp with no city there) is treated as rural
+				var district = cityBeside(platmap, x, z) ? platmap.context : natureContext;
+				var kind = me.daddychurchill.CityWorld.Plats.River.Waterside.choose(district, coast,
+						getMicroOddsGeneratorAt(cx, cz));
+				if (kind != me.daddychurchill.CityWorld.Plats.River.Waterside.Kind.NATURAL)
+					platmap.setLot(x, z, new me.daddychurchill.CityWorld.Plats.River.QuaysideLot(platmap, cx, cz, coast, kind));
+			}
+	}
+
+	/**
+	 * Whether a built lot (a building or a street) stands next to this chunk on its platmap — or, across the
+	 * platmap's edge, flat street-level ground (a neighbouring platmap is never planned from inside this one: that
+	 * was the stall of 2026-09-24).
+	 */
+	public static boolean cityBeside(PlatMap platmap, int x, int z) {
+		for (int a = -1; a <= 1; a++)
+			for (int b = -1; b <= 1; b++) {
+				int nx = x + a, nz = z + b;
+				if (a == 0 && b == 0)
+					continue;
+				if (nx < 0 || nz < 0 || nx >= PlatMap.Width || nz >= PlatMap.Width) {
+					if (me.daddychurchill.CityWorld.Support.HeightInfo.isBuildableAt(platmap.generator,
+							(platmap.originX + nx) * 16, (platmap.originZ + nz) * 16))
+						return true;
 					continue;
 				}
-				// a coastal chunk, land and sea both in it: the harbour
-				if (!rivers.chunk(cx, cz).channel() && coastAt(generator, cx, cz) && odds.playOdds(HARBOUR_ODDS))
-					platmap.setLot(x, z, new me.daddychurchill.CityWorld.Plats.River.QuaysideLot(platmap, cx, cz, true));
+				var lot = platmap.getLot(nx, nz);
+				if (lot != null && !(lot instanceof me.daddychurchill.CityWorld.Plats.NatureLot)
+						&& !(lot instanceof me.daddychurchill.CityWorld.Plats.River.QuaysideLot))
+					return true;
 			}
+		return false;
+	}
+
+	private static boolean besideMall(PlatMap platmap, int x, int z) {
+		for (int a = -1; a <= 1; a++)
+			for (int b = -1; b <= 1; b++) {
+				int nx = x + a, nz = z + b;
+				if (nx < 0 || nz < 0 || nx >= PlatMap.Width || nz >= PlatMap.Width)
+					continue;
+				var lot = platmap.getLot(nx, nz);
+				if (lot instanceof me.daddychurchill.CityWorld.Plats.Urban.MallLot
+						|| lot instanceof me.daddychurchill.CityWorld.Plats.Urban.ParkingLot)
+					return true;
+			}
+		return false;
 	}
 
 	/** Whether this chunk has both land and sea in it: a stretch of coast. */
@@ -358,6 +409,12 @@ public class ShapeProvider_Normal extends ShapeProvider {
 
 		// how natural is this platmap?
 		double nature = platmap.getNaturePercent();
+
+		// where a river comes out to the sea, a harbour district: the industrial quarter, its waterside loading
+		// quays and moorings (owner, 2026-10-07). Not downtown, not the wilds.
+		if (rivers != null && nature >= 0.05 && nature < 0.75 && platmap.generator.getSettings().includeIndustrialSectors
+				&& rivers.mouthWithin(platmap.originX * 16, platmap.originZ * 16, PlatMap.Width * 16))
+			return industrialContext;
 		if (nature == 0.0) {
 			if (platmap.getOddsGenerator().playOdds(oddsOfCentralPark))
 				return parkContext;
