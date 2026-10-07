@@ -27,13 +27,16 @@ import me.daddychurchill.CityWorld.worldgen.RiverNetwork;
  *
  * <p><b>The coast</b> is the same lot with the sea's water counted too ({@code coast}): a city's chunk where the
  * land meets the sea gets its quay wall along the real shore, longer jetties out over the sea (mostly moorings and
- * loading quays — a harbour), and now and then a lighthouse on the quay. A harbour lot that built on whole sea
+ * loading quays — a harbour), and now and then a lighthouse on the quay; or a city <b>beach</b>, its sand left as
+ * it is, with a boardwalk where the street meets it, striped umbrellas and towels, and a lifeguard tower. A harbour lot that built on whole sea
  * chunks put its quay wall along a chunk edge out in the water, with nothing reaching the beach (2026-10-07).
  */
 public class QuaysideLot extends IsolatedLot {
 
 	public enum Kind {
-		PROMENADE, MOORING, LOADING
+		PROMENADE, MOORING, LOADING,
+		/** The coast only: the sand left as it is, a boardwalk where the street meets it, umbrellas, a lifeguard tower. */
+		BEACH
 	}
 
 	private final Kind kind;
@@ -45,9 +48,11 @@ public class QuaysideLot extends IsolatedLot {
 		trulyIsolated = false;
 		this.coast = coast;
 		double roll = chunkOdds.getRandomDouble();
-		kind = coast ? (roll < 0.15 ? Kind.PROMENADE : roll < 0.7 ? Kind.MOORING : Kind.LOADING)
+		Kind chosen = coast ? (roll < 0.1 ? Kind.PROMENADE : roll < 0.45 ? Kind.MOORING : roll < 0.7 ? Kind.LOADING : Kind.BEACH)
 				: (roll < 0.4 ? Kind.PROMENADE : roll < 0.75 ? Kind.MOORING : Kind.LOADING);
-		lighthouse = coast && chunkOdds.playOdds(0.15);
+		String forced = System.getProperty("cityworld.rivers.quay"); // a probe's way to see a kind it would rarely meet
+		kind = forced != null && (coast || !forced.equals("BEACH")) ? Kind.valueOf(forced) : chosen;
+		lighthouse = coast && kind != Kind.BEACH && chunkOdds.playOdds(0.15);
 	}
 
 	@Override
@@ -136,10 +141,97 @@ public class QuaysideLot extends IsolatedLot {
 
 	private static final int TOWER = 12;
 
+	/** Whether a column beside this one (in the chunk) is beach: sand at the sea's level. */
+	private boolean besideSand(CityWorldGenerator generator, int x, int z) {
+		for (int a = -1; a <= 1; a++)
+			for (int b = -1; b <= 1; b++) {
+				int nx = x + a, nz = z + b;
+				if (nx >= 0 && nz >= 0 && nx < 16 && nz < 16 && blockYs.getBlockY(nx, nz) == generator.seaLevel)
+					return true;
+			}
+		return false;
+	}
+
+	/** A beach column: dry sand at the sea's level, at least two blocks from the water. */
+	private boolean sand(CityWorldGenerator generator, int x, int z) {
+		if (x < 1 || z < 1 || x > 14 || z > 14 || blockYs.getBlockY(x, z) != generator.seaLevel)
+			return false;
+		for (int a = -2; a <= 2; a++)
+			for (int b = -2; b <= 2; b++)
+				if (wet(generator, x + a, z + b))
+					return false;
+		return true;
+	}
+
+	private static final Material[][] STRIPES = { { Material.RED_WOOL, Material.WHITE_WOOL },
+			{ Material.BLUE_WOOL, Material.WHITE_WOOL }, { Material.YELLOW_WOOL, Material.ORANGE_WOOL },
+			{ Material.LIME_WOOL, Material.WHITE_WOOL } };
+	private static final Material[] TOWELS = { Material.RED_CARPET, Material.BLUE_CARPET, Material.YELLOW_CARPET,
+			Material.LIGHT_BLUE_CARPET, Material.PINK_CARPET };
+
+	private void dressBeach(CityWorldGenerator generator, RealBlocks chunk) {
+		int floor = generator.seaLevel;
+		// a lifeguard tower: four legs, a platform, a rail, a red roof; on the first sand near the water that fits
+		boolean tower = false;
+		for (int x = 2; x <= 12 && !tower; x++)
+			for (int z = 2; z <= 12 && !tower; z++) {
+				boolean fits = true, nearWater = false;
+				for (int a = 0; a <= 2 && fits; a++)
+					for (int b = 0; b <= 2 && fits; b++)
+						fits = blockYs.getBlockY(x + a, z + b) == floor && !wet(generator, x + a, z + b);
+				for (int a = -2; a <= 4 && fits && !nearWater; a++)
+					for (int b = -2; b <= 4 && !nearWater; b++)
+						nearWater = wet(generator, x + a, z + b);
+				if (!fits || !nearWater)
+					continue;
+				tower = true;
+				for (int[] leg : new int[][] { { 0, 0 }, { 2, 0 }, { 0, 2 }, { 2, 2 } })
+					chunk.setBlocks(x + leg[0], x + leg[0] + 1, floor + 1, floor + 4, z + leg[1], z + leg[1] + 1,
+							Material.SPRUCE_LOG);
+				chunk.setBlocks(x, x + 3, floor + 4, floor + 5, z, z + 3, Material.SPRUCE_PLANKS);
+				for (int a = 0; a <= 2; a++)
+					for (int b = 0; b <= 2; b++)
+						if (a != 1 || b != 1)
+							chunk.setBlock(x + a, floor + 5, z + b, Material.SPRUCE_FENCE);
+				chunk.setBlocks(x, x + 3, floor + 7, floor + 8, z, z + 3, Material.RED_WOOL);
+				for (int[] post : new int[][] { { 0, 0 }, { 2, 0 }, { 0, 2 }, { 2, 2 } })
+					chunk.setBlock(x + post[0], floor + 6, z + post[1], Material.SPRUCE_FENCE);
+			}
+		// umbrellas with towels, here and there on the sand
+		for (int x = 1; x <= 14; x++)
+			for (int z = 1; z <= 14; z++) {
+				if (!sand(generator, x, z) || !chunk.isEmpty(x, floor + 1, z))
+					continue;
+				long h = (getChunkX() * 73856093L) ^ (getChunkZ() * 19349663L) ^ (x * 83492791L + z);
+				h = (h ^ (h >>> 29)) * 0xBF58476D1CE4E5B9L;
+				if (Math.floorMod(h >>> 9, 23) != 0)
+					continue;
+				Material[] stripe = STRIPES[(int) Math.floorMod(h >>> 20, (long) STRIPES.length)];
+				chunk.setBlocks(x, x + 1, floor + 1, floor + 3, z, z + 1, Material.SPRUCE_FENCE);
+				for (int a = -1; a <= 1; a++)
+					for (int b = -1; b <= 1; b++) {
+						int ux = x + a, uz = z + b;
+						if (ux >= 0 && uz >= 0 && ux < 16 && uz < 16 && chunk.isEmpty(ux, floor + 3, uz))
+							chunk.setBlock(ux, floor + 3, uz, stripe[(a + b + 2) % 2]);
+					}
+				int tx = x + 1;
+				if (tx < 16 && chunk.isEmpty(tx, floor + 1, z) && blockYs.getBlockY(tx, z) == floor)
+					chunk.setBlock(tx, floor + 1, z, TOWELS[(int) Math.floorMod(h >>> 30, (long) TOWELS.length)]);
+			}
+	}
+
 	@Override
 	protected void generateActualChunk(CityWorldGenerator generator, PlatMap platmap, InitialBlocks chunk,
 			BiomeGrid biomes, DataContext context, int platX, int platZ) {
 		int deck = generator.streetLevel;
+		if (kind == Kind.BEACH) {
+			// a boardwalk along the top of the sand, where the street-level ground meets the beach
+			for (int x = 0; x < 16; x++)
+				for (int z = 0; z < 16; z++)
+					if (blockYs.getBlockY(x, z) == deck && besideSand(generator, x, z))
+						chunk.setBlock(x, deck, z, Material.SPRUCE_PLANKS);
+			return;
+		}
 		for (int x = 0; x < 16; x++)
 			for (int z = 0; z < 16; z++) {
 				if (!quay(generator, x, z))
@@ -186,6 +278,10 @@ public class QuaysideLot extends IsolatedLot {
 		int deck = generator.streetLevel;
 		Material lantern = Material.of(net.minecraft.world.level.block.Blocks.LANTERN);
 		Odds odds = chunkOdds;
+		if (kind == Kind.BEACH) {
+			dressBeach(generator, chunk);
+			return;
+		}
 		// the lighthouse's lamp room: glass round the light
 		int[] light = lighthouseAt(generator);
 		if (light != null)
