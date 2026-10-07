@@ -237,6 +237,12 @@ public class ShorelineLot extends IsolatedLot {
 	@Override
 	protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
 			DataContext context, int platX, int platZ) {
+		dress(generator, chunk);
+		if (!allowsWildDecoration())
+			me.daddychurchill.CityWorld.Plats.River.Waterside.freeze(chunk, generator.streetLevel + 10, generator.seaLevel - 40);
+	}
+
+	private void dress(CityWorldGenerator generator, RealBlocks chunk) {
 		if (kind == Kind.RUSTIC) {
 			me.daddychurchill.CityWorld.Plats.River.Waterside.rusticJetty(chunk, waterTop(generator), generator.streetLevel,
 					getChunkX() * 341873128712L ^ getChunkZ() * 132897987541L);

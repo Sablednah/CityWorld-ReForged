@@ -115,6 +115,25 @@ public final class Waterside {
 	}
 
 	/**
+	 * What vanilla's top-layer freeze would have done here, for a quay its decoration does not reach (owner,
+	 * 2026-10-07: frozen rivers thawed in square chunks at every quay): in a biome cold enough to snow, the water's
+	 * surface turns to ice and the paving takes a layer of snow. Columns scanned down from {@code from} to {@code to}.
+	 */
+	public static void freeze(me.daddychurchill.CityWorld.Support.RealBlocks chunk, int from, int to) {
+		for (int x = 0; x < 16; x++)
+			for (int z = 0; z < 16; z++) {
+				int y = top(chunk, x, z, from, to);
+				if (y < 0 || !chunk.coldEnoughToSnow(x, y + 1, z))
+					continue;
+				if (chunk.isWaterAt(x, y, z))
+					chunk.setBlock(x, y, z, Material.ICE);
+				else if (chunk.isOfTypes(x, y, z, Material.SMOOTH_STONE, Material.STONE_BRICKS, Material.CHISELED_STONE_BRICKS,
+						Material.SPRUCE_PLANKS, Material.OAK_PLANKS, Material.SAND, Material.STONE))
+					chunk.setBlock(x, y + 1, z, Material.SNOW);
+			}
+	}
+
+	/**
 	 * A quay's timber jetty from an edge column ({@code x, z}) out over the water ({@code dx, dz}), its planks at the
 	 * deck, up to {@code most} long within the chunk while {@code wet} holds; pilings to the floor at its end, and a
 	 * bollard there. Returns how long it came out (0: no room).
