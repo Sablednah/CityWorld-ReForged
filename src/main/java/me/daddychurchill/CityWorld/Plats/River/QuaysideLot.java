@@ -4,6 +4,7 @@ import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Context.DataContext;
 import me.daddychurchill.CityWorld.Plats.IsolatedLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
+import me.daddychurchill.CityWorld.Plats.River.Waterside.Kind;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
 import me.daddychurchill.CityWorld.Support.Odds;
@@ -14,50 +15,42 @@ import me.daddychurchill.CityWorld.compat.Material;
 import me.daddychurchill.CityWorld.worldgen.RiverNetwork;
 
 /**
- * Where a river runs through a city on CityWorld's own land ({@code worldgen/RiverNetwork}): the chunk the water
- * crosses. The river itself is left exactly as the network drew it; the dry bank in the chunk becomes the city's
- * edge — a paved quay at street level, a stone quay wall wherever it meets the water, a parapet along it — in one
- * of three kinds, as vanilla land's {@code ShorelineLot}: a <b>promenade</b> (lanterns on the parapet), a
- * <b>mooring</b> (short jetties on pilings out over the water, bollards at their ends) and a <b>loading quay</b>
- * (a timber derrick over the water, cargo on the quay). About a third of a city's river chunks get no lot at all
- * and keep their natural bank ({@code ShapeProvider_Normal.validateLots}).
+ * Where a city on CityWorld's own land ({@code worldgen/RiverNetwork}) meets water: a river chunk crossing it at
+ * street level, or a chunk of its coast. What it becomes is {@link Waterside#choose}, by district — quays in
+ * built-up districts, the natural bank (now and then a rustic jetty) in rural ones — and the water itself is left as
+ * the terrain made it.
  *
- * <p>Unlike vanilla land, the water here is a free curve through the chunk, not a whole chunk: which columns are
- * water, and which dry columns touch it, is asked of the network column by column, across the chunk's edges too.
+ * <p>The water is a free shape through the chunk, so the lot works from a <b>mask</b> of the chunk and a two-block
+ * ring around it: <i>wet</i> is river water, or any ground below the sea (the sea, a pond, a swamp — counted always:
+ * a quay that only knew the river paved over the sea and the swamps beside it, and read the line where river water
+ * meets sea water as a shore); <i>land</i> is a dry column low enough to pave, smoothed by majority over 5x5 so a
+ * speck of sand in the water or a puddle on the bank does not grow its own ring of quay wall (owner, 2026-10-07:
+ * "very scraggly rings of loose blocks"). The quay is the land; its wall stands wherever land meets water.
  *
- * <p><b>The coast</b> is the same lot with the sea's water counted too ({@code coast}): a city's chunk where the
- * land meets the sea gets its quay wall along the real shore, longer jetties out over the sea (mostly moorings and
- * loading quays — a harbour), and now and then a lighthouse on the quay; or a city <b>beach</b>, its sand left as
- * it is, with a boardwalk where the street meets it, striped umbrellas and towels, and a lifeguard tower. A harbour lot that built on whole sea
- * chunks put its quay wall along a chunk edge out in the water, with nothing reaching the beach (2026-10-07).
+ * <p>Kinds as {@link Waterside.Kind}: a promenade (lanterns), moorings (jetties out over the water, ten long on the
+ * coast), a slip cut into the quay (from vanilla land's shoreline lot), a loading quay (derrick, cargo), a city beach
+ * (the coast: boardwalk, umbrellas, a lifeguard tower), or a rustic jetty on the natural bank. On the coast now and
+ * then a lighthouse stands on the quay.
  */
 public class QuaysideLot extends IsolatedLot {
-
-	public enum Kind {
-		PROMENADE, MOORING, LOADING,
-		/** The coast only: the sand left as it is, a boardwalk where the street meets it, umbrellas, a lifeguard tower. */
-		BEACH
-	}
 
 	private final Kind kind;
 	private final boolean coast, lighthouse;
 
-	public QuaysideLot(PlatMap platmap, int chunkX, int chunkZ, boolean coast) {
+	public QuaysideLot(PlatMap platmap, int chunkX, int chunkZ, boolean coast, Kind chosen) {
 		super(platmap, chunkX, chunkZ);
 		style = LotStyle.STRUCTURE;
 		trulyIsolated = false;
 		this.coast = coast;
-		double roll = chunkOdds.getRandomDouble();
-		Kind chosen = coast ? (roll < 0.1 ? Kind.PROMENADE : roll < 0.45 ? Kind.MOORING : roll < 0.7 ? Kind.LOADING : Kind.BEACH)
-				: (roll < 0.4 ? Kind.PROMENADE : roll < 0.75 ? Kind.MOORING : Kind.LOADING);
 		String forced = System.getProperty("cityworld.rivers.quay"); // a probe's way to see a kind it would rarely meet
 		kind = forced != null && (coast || !forced.equals("BEACH")) ? Kind.valueOf(forced) : chosen;
-		lighthouse = coast && kind != Kind.BEACH && chunkOdds.playOdds(0.15);
+		lighthouse = coast && (kind == Kind.PROMENADE || kind == Kind.MOORING || kind == Kind.LOADING)
+				&& chunkOdds.playOdds(0.15);
 	}
 
 	@Override
 	public PlatLot newLike(PlatMap platmap, int chunkX, int chunkZ) {
-		return new QuaysideLot(platmap, chunkX, chunkZ, coast);
+		return new QuaysideLot(platmap, chunkX, chunkZ, coast, kind);
 	}
 
 	/** A river chunk refuses ordinary lots; this one is made for it. */
@@ -78,7 +71,7 @@ public class QuaysideLot extends IsolatedLot {
 
 	@Override
 	public boolean allowsWildDecoration() {
-		return false;
+		return kind == Kind.RUSTIC || kind == Kind.NATURAL;
 	}
 
 	/** The terrain's own ground and water stay under it: no foundation pad (that filled the water in to the street). */
@@ -89,18 +82,70 @@ public class QuaysideLot extends IsolatedLot {
 
 	private static final int[][] AROUND = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
 
-	private boolean wet(CityWorldGenerator generator, int x, int z) {
-		int wx = getChunkX() * 16 + x, wz = getChunkZ() * 16 + z;
-		if (generator.shapeProvider.riverWaterAt(wx, wz) != RiverNetwork.NONE)
-			return true;
-		if (!coast)
-			return false;
-		int ground = x >= 0 && x < 16 && z >= 0 && z < 16 ? blockYs.getBlockY(x, z)
-				: generator.shapeProvider.findBlockY(generator, wx, wz);
-		return ground < generator.seaLevel;
+	// ---- the mask: the chunk and a ring of two around it ----
+
+	private static final int RING = 2, SIDE = 16 + 2 * RING;
+	private boolean[] wetMask, landMask;
+	private int[] waterMask;
+
+	private int at(int x, int z) {
+		return (x + RING) * SIDE + (z + RING);
 	}
 
-	/** The water beside a dry column ({dx, dz}), or null when it has none. */
+	private synchronized void mask(CityWorldGenerator generator) {
+		if (landMask != null)
+			return;
+		// raw ground and water over a ring of four (the 5x5 majority needs two more beyond the mask's own two)
+		final int R = RING + 2, W = 16 + 2 * R;
+		int[] water = new int[W * W];
+		boolean[] wet = new boolean[W * W], low = new boolean[W * W];
+		for (int a = 0; a < W; a++)
+			for (int b = 0; b < W; b++) {
+				int x = a - R, z = b - R, wx = getChunkX() * 16 + x, wz = getChunkZ() * 16 + z;
+				int g = x >= 0 && x < 16 && z >= 0 && z < 16 ? blockYs.getBlockY(x, z)
+						: generator.shapeProvider.findBlockY(generator, wx, wz);
+				int river = generator.shapeProvider.riverWaterAt(wx, wz);
+				water[a * W + b] = river != RiverNetwork.NONE ? river
+						: g < generator.seaLevel ? generator.seaLevel : RiverNetwork.NONE;
+				wet[a * W + b] = water[a * W + b] != RiverNetwork.NONE;
+				low[a * W + b] = !wet[a * W + b] && g <= generator.streetLevel + 2;
+			}
+		boolean[] wetM = new boolean[SIDE * SIDE], landM = new boolean[SIDE * SIDE];
+		int[] waterM = new int[SIDE * SIDE];
+		for (int x = -RING; x < 16 + RING; x++)
+			for (int z = -RING; z < 16 + RING; z++) {
+				int a = x + R, b = z + R, count = 0;
+				for (int i = -2; i <= 2; i++)
+					for (int j = -2; j <= 2; j++)
+						if (low[(a + i) * W + b + j])
+							count++;
+				boolean high = !wet[a * W + b] && !low[a * W + b];
+				landM[at(x, z)] = !high && count >= 13;
+				wetM[at(x, z)] = wet[a * W + b] && !landM[at(x, z)];
+				waterM[at(x, z)] = water[a * W + b];
+			}
+		wetMask = wetM;
+		waterMask = waterM;
+		landMask = landM;
+	}
+
+	private boolean inMask(int x, int z) {
+		return x >= -RING && z >= -RING && x < 16 + RING && z < 16 + RING;
+	}
+
+	/** Water that stays water (not a puddle the quay fills): the quay's wall faces it. */
+	private boolean wet(CityWorldGenerator generator, int x, int z) {
+		mask(generator);
+		return inMask(x, z) && wetMask[at(x, z)];
+	}
+
+	/** Whether this column is quay: low land, smoothed (a puddle in it is filled; a speck of sand off it is not). */
+	private boolean quay(CityWorldGenerator generator, int x, int z) {
+		mask(generator);
+		return inMask(x, z) && landMask[at(x, z)];
+	}
+
+	/** The water beside a quay column ({dx, dz}), or null when it has none. */
 	private int[] waterBeside(CityWorldGenerator generator, int x, int z) {
 		for (int[] o : AROUND)
 			if (wet(generator, x + o[0], z + o[1]))
@@ -108,9 +153,10 @@ public class QuaysideLot extends IsolatedLot {
 		return null;
 	}
 
-	/** Whether this dry column is low enough to be quay: banks up in the hills are left as they are. */
-	private boolean quay(CityWorldGenerator generator, int x, int z) {
-		return !wet(generator, x, z) && blockYs.getBlockY(x, z) <= generator.streetLevel + 2;
+	private int waterTop(CityWorldGenerator generator, int x, int z) {
+		mask(generator);
+		int w = inMask(x, z) ? waterMask[at(x, z)] : RiverNetwork.NONE;
+		return w == RiverNetwork.NONE ? generator.seaLevel : w;
 	}
 
 	/** Where a jetty or the derrick stands: a few edge columns, spread out, chosen by position (both passes agree). */
@@ -118,6 +164,66 @@ public class QuaysideLot extends IsolatedLot {
 		long h = (getChunkX() * 341873128712L) ^ (getChunkZ() * 132897987541L) ^ (x * 31 + z);
 		h = (h ^ (h >>> 29)) * 0xBF58476D1CE4E5B9L;
 		return Math.floorMod(h >>> 7, 19) == 0 && x >= 2 && x <= 13 && z >= 2 && z <= 13;
+	}
+
+	// ---- the slip ----
+
+	private static final int SLIP_DEEP = 5, SLIP_HALF = 1;
+
+	/** The slip's mouth: a wall column facing water, with room behind it for the slip and its boardwalks; or null. */
+	private int[] slipAt(CityWorldGenerator generator) {
+		if (kind != Kind.SLIP)
+			return null;
+		for (int x = 0; x < 16; x++)
+			for (int z = 0; z < 16; z++) {
+				if (!quay(generator, x, z))
+					continue;
+				int[] w = waterBeside(generator, x, z);
+				if (w == null)
+					continue;
+				int ix = -w[0], iz = -w[1], lx = iz, lz = ix; // into the land, and across
+				boolean fits = true;
+				for (int d = 0; d <= SLIP_DEEP + 3 && fits; d++)
+					for (int l = -SLIP_HALF - 1; l <= SLIP_HALF + 1 && fits; l++) {
+						int cx = x + ix * d + lx * l, cz = z + iz * d + lz * l;
+						fits = cx >= 0 && cz >= 0 && cx < 16 && cz < 16 && quay(generator, cx, cz);
+					}
+				if (fits)
+					return new int[] { x, z, ix, iz, lx, lz };
+			}
+		return null;
+	}
+
+	/** Cuts the slip: water in from the mouth, a boardwalk on both sides at the waterline, steps up at its head. */
+	private void drawSlip(CityWorldGenerator generator, InitialBlocks chunk, int[] slip, int deck) {
+		int x = slip[0], z = slip[1], ix = slip[2], iz = slip[3], lx = slip[4], lz = slip[5];
+		int top = waterTop(generator, x - ix, z - iz), bed = top - 4, walk = top + 1;
+		for (int d = 0; d < SLIP_DEEP; d++)
+			for (int l = -SLIP_HALF - 1; l <= SLIP_HALF + 1; l++) {
+				int cx = x + ix * d + lx * l, cz = z + iz * d + lz * l;
+				chunk.clearBlocks(cx, cx + 1, bed, deck + 3, cz, cz + 1);
+				chunk.setBlocks(cx, cx + 1, bed - 2, bed, cz, cz + 1, Material.STONE_BRICKS);
+				if (Math.abs(l) <= SLIP_HALF)
+					chunk.setBlocks(cx, cx + 1, bed, top + 1, cz, cz + 1, Material.WATER);
+				else {
+					chunk.setBlocks(cx, cx + 1, bed, walk, cz, cz + 1, Material.STONE_BRICKS);
+					chunk.setBlock(cx, walk, cz, Material.SPRUCE_PLANKS);
+				}
+			}
+		// the head: a boardwalk across, steps from it up to the deck
+		for (int l = -SLIP_HALF - 1; l <= SLIP_HALF + 1; l++) {
+			int cx = x + ix * SLIP_DEEP + lx * l, cz = z + iz * SLIP_DEEP + lz * l;
+			chunk.clearBlocks(cx, cx + 1, walk + 1, deck + 3, cz, cz + 1);
+			chunk.setBlocks(cx, cx + 1, bed, walk, cz, cz + 1, Material.STONE_BRICKS);
+			chunk.setBlock(cx, walk, cz, Material.SPRUCE_PLANKS);
+		}
+		for (int i = 1; walk + i <= deck; i++) {
+			int cx = x + ix * (SLIP_DEEP + i), cz = z + iz * (SLIP_DEEP + i);
+			if (cx < 0 || cz < 0 || cx > 15 || cz > 15)
+				break;
+			chunk.clearBlocks(cx, cx + 1, walk + i + 1, deck + 3, cz, cz + 1);
+			chunk.setBlocks(cx, cx + 1, bed, walk + i + 1, cz, cz + 1, Material.STONE_BRICKS);
+		}
 	}
 
 	/** Where the lighthouse stands, {x, z} of its middle, or null: on the quay, all nine of its columns dry, near the sea. */
@@ -224,6 +330,8 @@ public class QuaysideLot extends IsolatedLot {
 	protected void generateActualChunk(CityWorldGenerator generator, PlatMap platmap, InitialBlocks chunk,
 			BiomeGrid biomes, DataContext context, int platX, int platZ) {
 		int deck = generator.streetLevel;
+		if (kind == Kind.RUSTIC || kind == Kind.NATURAL)
+			return; // the natural bank, as the terrain made it
 		if (kind == Kind.BEACH) {
 			// a boardwalk along the top of the sand, where the street-level ground meets the beach
 			for (int x = 0; x < 16; x++)
@@ -244,7 +352,7 @@ public class QuaysideLot extends IsolatedLot {
 					// leaves the quay from here
 					chunk.setBlocks(x, x + 1, Math.min(ground, generator.seaLevel) - 3, deck, z, z + 1, Material.STONE_BRICKS);
 					chunk.setBlocks(x, x + 1, deck, deck + 1, z, z + 1, Material.CHISELED_STONE_BRICKS);
-					if (!(kind != Kind.PROMENADE && feature(generator, x, z)))
+					if (!((kind == Kind.MOORING || kind == Kind.LOADING) && feature(generator, x, z)))
 						chunk.setBlocks(x, x + 1, deck + 1, deck + 2, z, z + 1, Material.STONE_BRICKS);
 				} else {
 					// the quay itself: firm ground up to a paved deck
@@ -253,6 +361,9 @@ public class QuaysideLot extends IsolatedLot {
 					chunk.setBlocks(x, x + 1, deck, deck + 1, z, z + 1, Material.SMOOTH_STONE);
 				}
 			}
+		int[] slip = slipAt(generator);
+		if (slip != null)
+			drawSlip(generator, chunk, slip, deck);
 		// a lighthouse on the quay: white and red bands, a roof, a door
 		int[] light = lighthouseAt(generator);
 		if (light != null) {
@@ -282,6 +393,13 @@ public class QuaysideLot extends IsolatedLot {
 			dressBeach(generator, chunk);
 			return;
 		}
+		if (kind == Kind.RUSTIC) {
+			Waterside.rusticJetty(chunk, generator.seaLevel, generator.streetLevel,
+					getChunkX() * 341873128712L ^ getChunkZ() * 132897987541L);
+			return;
+		}
+		if (kind == Kind.NATURAL)
+			return;
 		// the lighthouse's lamp room: glass round the light
 		int[] light = lighthouseAt(generator);
 		if (light != null)
@@ -312,21 +430,8 @@ public class QuaysideLot extends IsolatedLot {
 				int dx = water[0], dz = water[1];
 				if (kind == Kind.MOORING) {
 					// a jetty: planks out over the water at the deck, pilings at its end, a bollard
-					int len = 0;
-					for (int i = 1; i <= (coast ? 10 : 4); i++) {
-						int jx = x + dx * i, jz = z + dz * i;
-						if (jx < 0 || jz < 0 || jx > 15 || jz > 15 || !wet(generator, jx, jz))
-							break;
-						chunk.setBlock(jx, deck, jz, Material.SPRUCE_PLANKS);
-						len = i;
-					}
-					if (len > 0) {
-						int ex = x + dx * len, ez = z + dz * len;
-						for (int y = generator.seaLevel - 6; y < deck; y++)
-							if (chunk.isWaterAt(ex, y, ez) || chunk.isEmpty(ex, y, ez))
-								chunk.setBlock(ex, y, ez, Material.SPRUCE_LOG);
-						chunk.setBlock(ex, deck + 1, ez, Material.SPRUCE_FENCE);
-					}
+					Waterside.jetty(chunk, x, z, dx, dz, deck, coast ? 10 : 4, generator.seaLevel - 6,
+							(jx, jz) -> wet(generator, jx, jz));
 				} else if (kind == Kind.LOADING) {
 					// a timber derrick at the edge, its arm out over the water
 					chunk.setBlocks(x, x + 1, deck + 1, deck + 7, z, z + 1, Material.SPRUCE_LOG);
