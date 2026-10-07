@@ -288,7 +288,7 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		for (int x = 0; x < PlatMap.Width; x++)
 			for (int z = 0; z < PlatMap.Width; z++) {
 				var lot = platmap.getLot(x, z);
-				if (lot != null && !(lot instanceof me.daddychurchill.CityWorld.Plats.NatureLot))
+				if (lot != null && !isWild(lot))
 					continue;
 				if (besideMall(platmap, x, z))
 					continue;
@@ -311,6 +311,14 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	 * platmap's edge, flat street-level ground (a neighbouring platmap is never planned from inside this one: that
 	 * was the stall of 2026-09-24).
 	 */
+	/**
+	 * A lot the waterside may replace: wild ground of any land (vanilla land's nature lot is not a {@code NatureLot};
+	 * testing the class instead of the style placed no shoreline on vanilla land at all, 2026-10-07).
+	 */
+	public static boolean isWild(me.daddychurchill.CityWorld.Plats.PlatLot lot) {
+		return lot != null && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE;
+	}
+
 	public static boolean cityBeside(PlatMap platmap, int x, int z) {
 		for (int a = -1; a <= 1; a++)
 			for (int b = -1; b <= 1; b++) {
@@ -324,8 +332,8 @@ public class ShapeProvider_Normal extends ShapeProvider {
 					continue;
 				}
 				var lot = platmap.getLot(nx, nz);
-				if (lot != null && !(lot instanceof me.daddychurchill.CityWorld.Plats.NatureLot)
-						&& !(lot instanceof me.daddychurchill.CityWorld.Plats.River.QuaysideLot))
+				if (lot != null && !isWild(lot) && !(lot instanceof me.daddychurchill.CityWorld.Plats.River.QuaysideLot)
+						&& !(lot instanceof me.daddychurchill.CityWorld.Plats.Vanilla.ShorelineLot))
 					return true;
 			}
 		return false;

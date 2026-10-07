@@ -29,6 +29,11 @@ public class VanillaNatureContext extends NatureContext {
 		return new VanillaNatureLot(platmap, platmap.originX + x, platmap.originZ + z);
 	}
 
+	private static boolean crossroads(int i) {
+		return i == me.daddychurchill.CityWorld.Plats.RoadLot.PlatMapRoadInset - 1
+				|| i == PlatMap.Width - me.daddychurchill.CityWorld.Plats.RoadLot.PlatMapRoadInset;
+	}
+
 	@Override
 	public void populateMap(CityWorldGenerator generator, PlatMap platmap) {
 		for (int x = 0; x < PlatMap.Width; x++)
@@ -45,6 +50,10 @@ public class VanillaNatureContext extends NatureContext {
 			for (int z = 0; z < PlatMap.Width; z++) {
 				int chunkX = platmap.originX + x, chunkZ = platmap.originZ + z;
 				if (platmap.getLot(x, z) != null || !ShorelineLot.belongsAt(generator.citySites, chunkX, chunkZ))
+					continue;
+				// a crossroads is only placed on an empty chunk: a bank kept back from it left the road to stop at the
+				// river with no bridge (owner, 2026-10-07, 26.3). The roads decide the four crossroads first.
+				if (crossroads(x) && crossroads(z))
 					continue;
 				platmap.recycleLot(x, z); // kept for the waterside, chosen once the district is known (validateLots)
 			}

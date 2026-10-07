@@ -138,7 +138,7 @@ public class ShapeProvider_Vanilla extends ShapeProvider_Normal {
 			for (int x = 0; x < PlatMap.Width; x++)
 				for (int z = 0; z < PlatMap.Width; z++) {
 					int cx = platmap.originX + x, cz = platmap.originZ + z;
-					if (!(platmap.getLot(x, z) instanceof me.daddychurchill.CityWorld.Plats.NatureLot)
+					if (!isWild(platmap.getLot(x, z))
 							|| !me.daddychurchill.CityWorld.Plats.Vanilla.ShorelineLot.belongsAt(generator.citySites, cx, cz))
 						continue;
 					var district = cityBeside(platmap, x, z) ? platmap.context : natureContext;
@@ -194,8 +194,8 @@ public class ShapeProvider_Vanilla extends ShapeProvider_Normal {
 		CitySites sites = sites(generator);
 		int x0 = (int) blockX, z0 = (int) blockZ, n = 0;
 		double sumX = 0, sumZ = 0, sumXX = 0, sumZZ = 0;
-		for (int dx = -RIVER_LOOK; dx <= RIVER_LOOK; dx += 16)
-			for (int dz = -RIVER_LOOK; dz <= RIVER_LOOK; dz += 16)
+		for (int dx = -RIVER_LOOK; dx <= RIVER_LOOK; dx += 32)
+			for (int dz = -RIVER_LOOK; dz <= RIVER_LOOK; dz += 32)
 				if (sites.isRiverColumn(x0 + dx, z0 + dz)) {
 					n++;
 					sumX += dx;
@@ -209,7 +209,12 @@ public class ShapeProvider_Vanilla extends ShapeProvider_Normal {
 		return varX >= varZ;
 	}
 
-	private static final int RIVER_LOOK = 96;
+	/**
+	 * How far round a spot the river is looked for. A bridge is planned only if the banks it lands on, five chunks
+	 * either side of the river, report the same way as the river; at 96 a landing that far from a narrow river saw
+	 * none, fell back to noise, disagreed, and the road stopped at the water (owner, 2026-10-07, 26.3).
+	 */
+	private static final int RIVER_LOOK = 192;
 
 	@Override
 	public boolean supportsSubways() {
