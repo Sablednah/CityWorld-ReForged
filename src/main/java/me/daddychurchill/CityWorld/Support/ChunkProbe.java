@@ -930,7 +930,7 @@ public final class ChunkProbe {
     }
 
     private static String biomeName(net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> b) {
-        return b.unwrapKey().map(k -> k.identifier().toString()).orElse("?");
+        return b.unwrapKey().map(k -> k.location().toString()).orElse("?");
     }
 
     /**
