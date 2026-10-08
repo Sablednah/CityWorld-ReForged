@@ -26,9 +26,7 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 **▶ Resume here (2026-10-08, after the 6.1.0 release).** Nothing is in flight; every line is committed and
 pushed (`master` plus the five branches at their 6.1.0 bump). Open items:
-- **Owner to paste** CURSEFORGE.md's "New in 6.1.0" headline (5.18.0's was folded into "Other recent changes")
-  and the recounted promo line (455 worlds, 7.6M chunks, 1,900 km²; `scripts/count_worlds.py`) into the
-  CurseForge description.
+- The CurseForge description is up to date through 6.1.0 (owner pasted it 2026-10-08, promo line included).
 - **Better biome blending** — the owner's to-do, not scoped (PORTING.md, rivers section).
 - **The ruined Nether twin's rivers** — owner hasn't chosen lava / dry ravines / none; it has none today.
 - **Vanilla land's coasts** could take the coastal quays/beaches (needs the lift-aware drawing ShorelineLot has);
@@ -69,7 +67,7 @@ loading quays, harbours, beaches, lighthouses, rustic jetties), harbour district
 fixes. Major version on the owner's call: cities in vanilla Minecraft plus rivers is a new way to play, and
 5.19 vanilla-land worlds lay out new chunks differently. Gates: six self-tests PASS and `--compare` agrees on the
 pre-bump heads, CI green on the bump heads, halt/exit 0 on all six (synthetic positive first), 1.20.1 reobfuscated.
-Sample add-on `all-vanilla-structures-1.0.0` is its own GitHub release. Owner to paste CURSEFORGE.md's "New in 6.0.0".
+Sample add-on `all-vanilla-structures-1.0.0` is its own GitHub release.
 
 **Rivers on CityWorld's own land are committed on all six lines (2026-10-06), unreleased** — owner signed off
 the look; PORTING.md "▶ Resume here — rivers on CityWorld's own land" has the design, the traps (per-column
