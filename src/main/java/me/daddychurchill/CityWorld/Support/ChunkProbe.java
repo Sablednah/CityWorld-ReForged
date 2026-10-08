@@ -758,7 +758,8 @@ public final class ChunkProbe {
         server.submit(() -> level.getChunk(0, 0, ChunkStatus.FULL, true)).join();
         var ctx = cw.getContext(level);
         var source = level.getChunkSource().getGenerator().getBiomeSource();
-        var sampler = level.getChunkSource().randomState().sampler();
+        var sampler = level.getChunkSource().randomState().createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().build());
+        var resolver = source.createResolver(sampler); // 26.3: the source answers through a resolver
         long seed = level.getSeed();
         int size = Integer.getInteger("cityworld.probe.size", 4096), px = Integer.getInteger("cityworld.probe.px", 16);
         String[] at = System.getProperty("cityworld.probe.at", "0,0").split(",");
@@ -776,8 +777,8 @@ public final class ChunkProbe {
                 int g = ctx.getNaturalBlockY(x, z);
                 ground[pz * w + pxi] = g;
                 temp[pz * w + pxi] = ctx.getTemperature(x, z);
-                var b = source.getNoiseBiome(net.minecraft.core.QuartPos.fromBlock(x), net.minecraft.core.QuartPos.fromBlock(g + 8),
-                        net.minecraft.core.QuartPos.fromBlock(z), sampler);
+                var b = resolver.getNoiseBiome(net.minecraft.core.QuartPos.fromBlock(x), net.minecraft.core.QuartPos.fromBlock(g + 8),
+                        net.minecraft.core.QuartPos.fromBlock(z));
                 grid[pz * w + pxi] = b;
                 census.merge(biomeName(b), 1, Integer::sum);
             }
