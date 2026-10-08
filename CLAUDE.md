@@ -95,7 +95,7 @@ latest CityWorld) — `curseforge.yml` now runs only for `v*` tags, and `gh rele
 CityWorld back as GitHub's latest after an add-on release. Gates: six self-tests PASS, `--compare` agrees, a
 vanilla-land city generated on every line (entities lifted on 1.20.1 and 26.3), the add-on measured on 1.21.11,
 1.20.1 and 26.3, CI green, halt/exit 0 on all six after a synthetic positive, 1.20.1 reobfuscated. Per-line drift
-for the port is in PORTING.md. Owner to paste CURSEFORGE.md's "New in 5.19.0".
+for the port is in PORTING.md.
 
 **v5.18.0 is released** (2026-10-02) on all six lines — tag `v5.18.0` (`44bb0d4b`), GitHub release with six jars,
 CurseForge files 9039342–9039349, fleet `DEPLOYED-v5.18.0` on all 11 deployable instances (ZARP opts out). It is:
@@ -148,7 +148,7 @@ on all six (detector proved on a synthetic positive), 1.20.1 jar reobfuscated, 2
 26.3.0.40-beta, the screen driven on real clients (Vivo) on 1.21.11, 1.20.1, 26.2 and 1.21.1, and the owner's
 1.20.1 playtest (world creates, ticked structures appear). His test jars `allstructures-cityworld-test` and
 `cataclysm-cityworld-compat` in the `1.20.1  Forge` instance are renamed `.jar.disabled` at his request.
-PORTING.md "▶ Resume here — the Structures page and MCA". Owner to paste CURSEFORGE.md's "New in 5.17.0".
+PORTING.md "▶ Resume here — the Structures page and MCA".
 
 **v5.16.0 was released** (2026-10-01) on all six lines — tag `v5.16.0` (`dbfc155b`), GitHub release with six jars,
 CurseForge files 9028088–9028093, fleet `DEPLOYED-v5.16.0` on all 11 deployable instances (ZARP opts out and
