@@ -32,6 +32,14 @@ comments, orphaned javadocs re-attached) turned up one real bug, car-park east/w
 north/south edges; and the interchange stair top was fixed from the owner's hand edit in his save (headroom
 over a two-step flight; the shaft's track-side wall is the platform edge again).
 
+## ▶ Released: v6.1.1 (2026-10-08 evening): 26.3 only, built on NeoForge 26.3.0.58-beta
+
+Users asked for .58. `mc26.3` `02166746` sets `neo_version=26.3.0.58-beta` (range still `[26.3.0.20-beta,26.4)`),
+bump `28e49aac`; compiles clean, self-test PASS on .58. The first self-test run died before the harness ran:
+**JourneyMap 6.0.8 for 26.3 fails to construct on .58** — `NoSuchFieldError: ModConfig$Type.SERVER` (FML 12 dropped
+it; CityWorld only registers `STARTUP`, as noted at 5.16.0). The dev jar in `run/mods` was set aside for the run and
+put back after. Tag at a master docs commit (the 5.15.2 pattern), CI dispatched by hand, one jar on the release.
+
 ## ▶ Released: v6.1.0 (2026-10-08) — biome seams: warm mountains were snow-capped
 
 Tag `v6.1.0` at the master bump `af9d1f1d`; CurseForge files 9100379–9100385 (1.20.1 Forge → 26.3); GitHub release
