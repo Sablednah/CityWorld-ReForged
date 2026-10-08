@@ -22,12 +22,13 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 | Licence | **GPL-3.0-only** (see below — non-negotiable) |
 | Branch | work happens on `master` (the `neoforge-port` branch was merged into it and deleted) |
 
-## ▶ Where this is, and what's next (2026-10-07)
+## ▶ Where this is, and what's next (2026-10-08)
 
-**▶ Resume here (2026-10-07, after the 6.0.0 release).** Nothing is in flight; every line is committed and
-pushed (`master` plus the five branches at their 6.0.0 bump; master has two docs commits on top). Open items:
-- **Owner to paste** CURSEFORGE.md's "New in 6.0.0" section and the recounted promo line (455 worlds, 7.6M chunks,
-  1,900 km²; `scripts/count_worlds.py`) into the CurseForge description.
+**▶ Resume here (2026-10-08, after the 6.1.0 release).** Nothing is in flight; every line is committed and
+pushed (`master` plus the five branches at their 6.1.0 bump). Open items:
+- **Owner to paste** CURSEFORGE.md's "New in 6.1.0" headline (5.18.0's was folded into "Other recent changes")
+  and the recounted promo line (455 worlds, 7.6M chunks, 1,900 km²; `scripts/count_worlds.py`) into the
+  CurseForge description.
 - **Better biome blending** — the owner's to-do, not scoped (PORTING.md, rivers section).
 - **The ruined Nether twin's rivers** — owner hasn't chosen lava / dry ravines / none; it has none today.
 - **Vanilla land's coasts** could take the coastal quays/beaches (needs the lift-aware drawing ShorelineLot has);
@@ -41,7 +42,22 @@ pushed (`master` plus the five branches at their 6.0.0 bump; master has two docs
 - The owner's test seeds: CityWorld land 5670300453504745606 (his mountain, the falls, both mouths), vanilla land
   1688298913692546204 (the bridge at x 704–751 z −1000; quays at 661,−824 and 712,−1095).
 
-**v6.0.0 is released** (2026-10-07) on all six lines — tag `v6.0.0` (`5dad4495`), CurseForge 9092756–9092761:
+**v6.1.0 is released** (2026-10-08) on all six lines — tag `v6.1.0` (`af9d1f1d`), CurseForge 9100379–9100385, fleet
+`DEPLOYED-v6.1.0` on 11: **warm mountains are no longer snow-capped.** A player's "cold next to tropical with no
+transition" was the biome matrix, not the climate noise: warm highland was windswept hills/forest, which vanilla
+snows above ~y 120, directly above sparse jungle and savanna plateau hills. `CityWorldClimateBiomeSource.highland`/
+`peak` now follow vanilla's `OverworldBiomeBuilder` (windswept for cold/temperate only; warm → windswept savanna /
+forest / sparse jungle; hot → eroded badlands / windswept savanna / jungle; peaks stony above warm). Measured on seed
+2884287148936112549 over 8 km: snow-to-hot borders 1,207 → 126, patch sizes unchanged, 3.3% of chunks change.
+Owner tested in game ("much better"). **The offline loop:** `-Dcityworld.probe=survey:biomes` (biome + temperature
+maps, grid CSV), `scripts/biome_seams.py`, `scripts/biome_matrix_sim.py` (a Python copy of the matrix scored over
+the CSV; its `current` must match the probe pixel for pixel, then the Java must match `candidate` the same way),
+`scripts/biome_map_render.py` (the before/after sheet). ⚠ `selftest.sh --compare` reads only master's
+`build/selftest/*.json`: copy each worktree's fresh report in first, or it compares yesterday's. Gates: six
+self-tests PASS and `--compare` on fresh reports, CI 37810746511 green, halt/exit 0 on all six (synthetic positive
+read 2), 1.20.1 reobfuscated (62 SRG names), 26.3 compiles against NeoForge 26.3.0.57-beta (ships on .33).
+
+**v6.0.0 was released** (2026-10-07) on all six lines — tag `v6.0.0` (`5dad4495`), CurseForge 9092756–9092761:
 rivers on CityWorld's own land (falls, hollows and finds), the waterside by district on both lands (quays, slips,
 loading quays, harbours, beaches, lighthouses, rustic jetties), harbour districts, vanilla-land bridge and quay
 fixes. Major version on the owner's call: cities in vanilla Minecraft plus rivers is a new way to play, and

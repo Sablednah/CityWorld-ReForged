@@ -32,7 +32,15 @@ comments, orphaned javadocs re-attached) turned up one real bug, car-park east/w
 north/south edges; and the interchange stair top was fixed from the owner's hand edit in his save (headroom
 over a two-step flight; the shaft's track-side wall is the platform edge again).
 
-## ▶ Resume here — biome seams: warm mountains were snow-capped (2026-10-07 night, unreleased)
+## ▶ Released: v6.1.0 (2026-10-08) — biome seams: warm mountains were snow-capped
+
+Tag `v6.1.0` at the master bump `af9d1f1d`; CurseForge files 9100379–9100385 (1.20.1 Forge → 26.3); GitHub release
+with six jars; fleet `DEPLOYED-v6.1.0` on 11 (ZARP opts out). Same recipe: picks `3ea716e2` + `ee17a00c` to the five
+branches (docs conflicts `--ours`; drift: `k.location()` on 1.20.1/1.21.1, 26.3's `createClimateSampler` +
+`createResolver` for the probe), six self-tests PASS two at a time, `--compare` on FRESH reports (the first run read
+master's stale copies and still said OK — copy the worktrees' reports into `build/selftest/` first), CI
+37810746511 green, halt/exit 0 after the synthetic positive read 2, 1.20.1 reobfuscated, 26.3 compiled against
+26.3.0.57-beta. The owner tested the 1.21.11 jar in game on the reported seed before the rollout ("much better").
 
 A player's comment: "biome transitions are very abrupt: cold biomes and tropical biomes can appear right next to
 each other with no transition at all". Measured on their seed 2884287148936112549 (MODERN, 8192 blocks square at
