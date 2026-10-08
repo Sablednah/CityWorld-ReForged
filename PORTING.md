@@ -32,7 +32,7 @@ comments, orphaned javadocs re-attached) turned up one real bug, car-park east/w
 north/south edges; and the interchange stair top was fixed from the owner's hand edit in his save (headroom
 over a two-step flight; the shaft's track-side wall is the platform edge again).
 
-## ▶ Released: v6.1.1 (2026-10-08 evening): 26.3 only, built on NeoForge 26.3.0.58-beta
+## ▶ Released: v6.1.1 (2026-10-08 evening): 26.3 only, built on NeoForge 26.3.0.58-beta — tag at `b952aaa0`, CurseForge 9101834, CI 37837389747
 
 Users asked for .58. `mc26.3` `02166746` sets `neo_version=26.3.0.58-beta` (range still `[26.3.0.20-beta,26.4)`),
 bump `28e49aac`; compiles clean, self-test PASS on .58. The first self-test run died before the harness ran:

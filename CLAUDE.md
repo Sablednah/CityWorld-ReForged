@@ -42,7 +42,7 @@ pushed (`master` plus the five branches at their 6.1.0 bump). Open items:
 - The owner's test seeds: CityWorld land 5670300453504745606 (his mountain, the falls, both mouths), vanilla land
   1688298913692546204 (the bridge at x 704–751 z −1000; quays at 661,−824 and 712,−1095).
 
-**v6.1.1 is released for 26.3 only** (2026-10-08 evening): the owner's users asked for NeoForge 26.3.0.58; the 26.3
+**v6.1.1 is released for 26.3 only** (2026-10-08 evening, tag `v6.1.1` at `b952aaa0`, CurseForge 9101834, `26.3` instance `DEPLOYED-v6.1.1`): the owner's users asked for NeoForge 26.3.0.58; the 26.3
 line now builds on .58-beta (`02166746`, bump `28e49aac`), range unchanged `[26.3.0.20-beta,26.4)`, self-test PASS on
 .58. ⚠ **JourneyMap 6.0.8 for 26.3 does not load on .58** (FML 12 removed `ModConfig.Type.SERVER`; CityWorld
 registers only STARTUP) — the dev `run/mods` copy had to be set aside for the self-test, and users on .58 will hit
