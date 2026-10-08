@@ -13,6 +13,13 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+**New in 6.1.0: no more snow over the jungle.** A player noticed cold and tropical biomes side by side with no
+transition. The climate itself was never the problem — it was the mountains: every warm highland was windswept
+hills and forest, which Minecraft snows above a certain height, so a jungle or savanna climbed straight into
+snow-capped spruce. Warm mountains now carry **savanna, forest and jungle up to stony peaks**, the way vanilla
+lays them out, and the windswept hills keep to the cold and temperate country. Biome sizes are unchanged; only
+newly generated highlands differ.
+
 **New in 6.0.0: rivers, and the city meets the water.** CityWorld's own land now has **rivers**: springs high in
 the mountains run down in gullies and **waterfalls**, through lakes and across the plain to the sea, widening as
 they go and joining as they meet. Where they cross a city the **waterside follows the district** — stone **quays**
@@ -32,15 +39,10 @@ its own level and eased into the hills around it. Choose the spacing, the size a
 docks** along their banks. And for survival packs: the **Neutral Palette** add-on builds cities without iron,
 gold or copper blocks, from natural woods, stones and terracotta ([GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/neutral-palette-1.0.0)).
 
-**New in 5.18.0: Farmer's Delight, and shops that sell something.** With **Farmer's Delight** installed (1.20.1
-and 1.21.1) kitchens are built from its cabinets, stove, pots and cutting boards, dining tables are laid with
-roasts and pies, farms gain **rice paddies**, rich soil, compost heaps, crates and straw bales, and half the
-shops hang painted canvas signs. For everyone: **street shops stock their trade** — armour at the armourer,
-arrows at the fletcher, wool at the draper, fourteen trades in all, where every chest used to hold the same
-paper and paintings — and **neighbouring shops are different trades**, instead of a block of six fletchers.
-
 **Other recent changes**
 
+- **5.18.0** — Farmer's Delight kitchens, feasts and rice paddies (1.20.1 and 1.21.1); street shops stock their
+  trade, fourteen trades in all, and neighbouring shops differ.
 - **5.17.0** — choose your structures in game: a Structures page in Customize switches every vanilla and modded
   structure set on or off (villages, mansions, a mod's dungeons); Minecraft Comes Alive turns CityWorld's villagers
   into its people; a fix for worlds hanging at "Preparing spawn area".
