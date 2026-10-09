@@ -5,6 +5,19 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Fixed
+
+- **"Working lights" off now puts out every light CityWorld draws.** It only ever reached the streetlights, road
+  tunnel lights and crane tips (upstream's 1.14 behaviour); every interior lantern, pool light, mod light and
+  schematic lamp went on burning. Now, in a world with it off, glowstone, sea lanterns and froglights become
+  unpowered redstone lamps, lanterns become the chain they hung from, torches burnt-out redstone torches, end rods
+  lightning rods and jack o'lanterns carved pumpkins; anything with a `lit` state (candles, campfires, copper bulbs,
+  most of Macaw's Lights) is placed unlit. Natural light (lava, glow lichen, amethyst) and decay fires are untouched.
+  FLOODED, SAND DUNES and SNOW DUNES ship with it off, so their new chunks are now dark.
+- A pack can say what any block becomes with a new block data map, `cityworld:unlit` (`with`, `properties`).
+
 ## 6.1.1
 
 Minecraft 26.3 only; the other lines stay on 6.1.0.

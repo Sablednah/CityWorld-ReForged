@@ -126,7 +126,7 @@ public final class SettingsExample {
             includeFires              true   Lit campfires/fire pits, and burning demolition debris.
             includeAbovegroundFluids  true   Surface water/lava placement.
             includeUndergroundFluids  true   Underground water/lava placement.
-            includeWorkingLights      true   Lit lamps/lights in builds. Off = a darker world.
+            includeWorkingLights      true   Lights burn. Off puts out every light CityWorld draws (cityworld:unlit data map).
             includeDecayedRoads       false  Break roads up with rubble.
             includeDecayedBuildings   false  Chew ruin-holes into buildings — the "apocalypse" switch.
             includeDecayedNature      false  Drain the seas + desert the world (whole-world ruin mood).
