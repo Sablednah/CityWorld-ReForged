@@ -274,9 +274,80 @@ public final class CityWorldDataMaps {
             .builder(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "substitute"), Registries.BLOCK, Substitute.CODEC)
             .build();
 
+    /**
+     * What a light becomes in a world with {@code includeWorkingLights} off (owner, 2026-10-09: the setting only ever
+     * reached Ed's streetlights and tunnel glowstone, while every interior lantern, pool light and schematic lamp kept
+     * burning). {@code with} replaces the block, keeping the properties the two share; {@code properties} then sets
+     * named properties by their string value. Either may be absent. Ships the vanilla lights that have no off state
+     * (glowstone to an unpowered redstone lamp, a lantern to the chain it would hang from, a torch to a burnt-out
+     * redstone torch); anything with a {@code lit} property needs no entry, because {@link #substitute} puts out
+     * every lit block in such a world — candles, campfires, copper bulbs and most of Macaw's lights.
+     */
+    public record Unlit(Optional<Block> with, Map<String, String> properties) {
+
+        public static final Codec<Unlit> CODEC = RecordCodecBuilder.create(i -> i.group(
+                BuiltInRegistries.BLOCK.byNameCodec().optionalFieldOf("with").forGetter(Unlit::with),
+                Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("properties", Map.of())
+                        .forGetter(Unlit::properties)
+        ).apply(i, Unlit::new));
+    }
+
+    public static final DataMapType<Block, Unlit> UNLIT = DataMapType
+            .builder(Identifier.fromNamespaceAndPath(CityWorldMod.MODID, "unlit"), Registries.BLOCK, Unlit.CODEC)
+            .build();
+
+    /** {@code state} with its light put out: the pack's {@link #UNLIT} entry, then any {@code lit} property false. */
+    public static net.minecraft.world.level.block.state.BlockState unlit(
+            net.minecraft.world.level.block.state.BlockState state) {
+        Unlit off = state.getBlock().builtInRegistryHolder().getData(UNLIT);
+        if (off != null) {
+            if (off.with().isPresent())
+                state = off.with().get().withPropertiesOf(state);
+            for (var entry : off.properties().entrySet())
+                state = withNamed(state, entry.getKey(), entry.getValue());
+        }
+        return withNamed(state, "lit", "false");
+    }
+
+    private static net.minecraft.world.level.block.state.BlockState withNamed(
+            net.minecraft.world.level.block.state.BlockState state, String name, String value) {
+        var property = state.getBlock().getStateDefinition().getProperty(name);
+        return property == null ? state : withParsed(state, property, value);
+    }
+
+    private static <T extends Comparable<T>> net.minecraft.world.level.block.state.BlockState withParsed(
+            net.minecraft.world.level.block.state.BlockState state,
+            net.minecraft.world.level.block.state.properties.Property<T> property, String value) {
+        return property.getValue(value).map(v -> state.setValue(property, v)).orElse(state);
+    }
+
+    /**
+     * Whether the world {@code level} belongs to keeps its lights burning — its {@code includeWorkingLights}, or
+     * true for a level CityWorld does not generate. Reads the generator's cached context, never a chunk, so it is
+     * safe from a decoration worker.
+     */
+    public static boolean lightsOn(net.minecraft.world.level.LevelAccessor level) {
+        if (level instanceof net.minecraft.world.level.ServerLevelAccessor server) {
+            var serverLevel = server.getLevel();
+            if (serverLevel.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator city)
+                return city.getContext(serverLevel).getSettings().includeWorkingLights;
+        }
+        return true;
+    }
+
     /** {@code state} as this world draws it in {@code realm}: the pack's substitute, or itself. */
     public static net.minecraft.world.level.block.state.BlockState substitute(
             net.minecraft.world.level.block.state.BlockState state, me.daddychurchill.CityWorld.compat.Environment realm) {
+        return substitute(state, realm, true);
+    }
+
+    /** As {@link #substitute(net.minecraft.world.level.block.state.BlockState, me.daddychurchill.CityWorld.compat.Environment)},
+     *  with every light put out first when {@code lightsOn} is false ({@link #unlit}). */
+    public static net.minecraft.world.level.block.state.BlockState substitute(
+            net.minecraft.world.level.block.state.BlockState state, me.daddychurchill.CityWorld.compat.Environment realm,
+            boolean lightsOn) {
+        if (!lightsOn)
+            state = unlit(state);
         Substitute swap = state.getBlock().builtInRegistryHolder().getData(SUBSTITUTE);
         if (swap == null || !swap.appliesIn(realm))
             return state;
@@ -285,6 +356,7 @@ public final class CityWorldDataMaps {
 
     public static void register(RegisterDataMapTypesEvent event) {
         event.register(SUBSTITUTE);
+        event.register(UNLIT);
         event.register(GROUND);
         event.register(FURNITURE);
         event.register(STRUCTURE_FIT);
