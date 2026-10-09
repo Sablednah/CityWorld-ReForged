@@ -230,7 +230,8 @@ public final class Clipboard {
     }
 
     /**
-     * A schematic's blocks through the pack's block substitutes ({@code CityWorldDataMaps.SUBSTITUTE}), as every
+     * A schematic's blocks through the pack's block substitutes ({@code CityWorldDataMaps.SUBSTITUTE}) and, in a world
+     * with its working lights off, {@code CityWorldDataMaps.UNLIT}, as every
      * block CityWorld draws itself goes: vanilla's template placement writes straight to the level, so without this
      * a schematic building kept its wool and iron under the neutral palette (measured 2026-10-04). Block entities
      * are kept only where the block is unchanged.
@@ -242,6 +243,7 @@ public final class Clipboard {
                 ? me.daddychurchill.CityWorld.compat.Environment.NETHER
                 : dimension == net.minecraft.world.level.Level.END ? me.daddychurchill.CityWorld.compat.Environment.THE_END
                         : me.daddychurchill.CityWorld.compat.Environment.NORMAL;
+        boolean lightsOn = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.lightsOn(level);
         return new net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessor() {
             @Override
             public net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo processBlock(
@@ -249,7 +251,7 @@ public final class Clipboard {
                     net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo raw,
                     net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo info,
                     StructurePlaceSettings settings) {
-                var swapped = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.substitute(info.state(), realm);
+                var swapped = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.substitute(info.state(), realm, lightsOn);
                 if (swapped == info.state())
                     return info;
                 return new net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo(
