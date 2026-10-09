@@ -126,7 +126,8 @@ public final class Block {
      * when a player is near enough to be looking at it.
      */
     public void setBlockData(BlockState state, boolean applyPhysics) {
-        state = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.substitute(state, realm());
+        state = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.substitute(state, realm(),
+                me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.lightsOn(level));
         me.daddychurchill.CityWorld.Support.ChunkProbe.watch(pos, state);
         level.setBlock(pos, state, applyPhysics ? WITH_PHYSICS : NO_PHYSICS);
 
