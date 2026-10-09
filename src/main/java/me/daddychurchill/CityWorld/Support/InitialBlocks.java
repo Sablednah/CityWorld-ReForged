@@ -28,9 +28,13 @@ public final class InitialBlocks extends AbstractBlocks {
     /** Which realm this chunk is in, for the pack's block substitutes ({@code CityWorldDataMaps.SUBSTITUTE}). */
     private final me.daddychurchill.CityWorld.compat.Environment realm;
 
+    /** The world's {@code includeWorkingLights}: off puts out every light this chunk draws ({@code CityWorldDataMaps.UNLIT}). */
+    private final boolean lightsOn;
+
     public InitialBlocks(CityWorldGenerator aGenerator, ChunkAccess chunk, int sectionX, int sectionZ) {
         super(aGenerator);
         this.realm = aGenerator.worldEnvironment;
+        this.lightsOn = aGenerator.getSettings().includeWorkingLights;
 
         this.sectionX = sectionX;
         this.sectionZ = sectionZ;
@@ -50,7 +54,7 @@ public final class InitialBlocks extends AbstractBlocks {
     }
 
     private void put(int x, int y, int z, BlockState state) {
-        state = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.substitute(state, realm);
+        state = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.substitute(state, realm, lightsOn);
         BlockPos pos = at(x, y, z);
         ChunkProbe.watch(pos, state);
         chunkData.setBlockState(pos, state, false);
