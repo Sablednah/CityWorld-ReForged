@@ -1,0 +1,74 @@
+{
+  "replace": false,
+  "values": {
+    "minecraft:glowstone": {
+      "with": "minecraft:redstone_lamp"
+    },
+    "minecraft:sea_lantern": {
+      "with": "minecraft:redstone_lamp"
+    },
+    "minecraft:ochre_froglight": {
+      "with": "minecraft:redstone_lamp"
+    },
+    "minecraft:verdant_froglight": {
+      "with": "minecraft:redstone_lamp"
+    },
+    "minecraft:pearlescent_froglight": {
+      "with": "minecraft:redstone_lamp"
+    },
+    "minecraft:jack_o_lantern": {
+      "with": "minecraft:carved_pumpkin"
+    },
+    "minecraft:end_rod": {
+      "with": "minecraft:lightning_rod"
+    },
+    "minecraft:torch": {
+      "with": "minecraft:redstone_torch"
+    },
+    "minecraft:soul_torch": {
+      "with": "minecraft:redstone_torch"
+    },
+    "minecraft:copper_torch": {
+      "with": "minecraft:redstone_torch"
+    },
+    "minecraft:wall_torch": {
+      "with": "minecraft:redstone_wall_torch"
+    },
+    "minecraft:soul_wall_torch": {
+      "with": "minecraft:redstone_wall_torch"
+    },
+    "minecraft:copper_wall_torch": {
+      "with": "minecraft:redstone_wall_torch"
+    },
+    "minecraft:lantern": {
+      "with": "minecraft:iron_chain"
+    },
+    "minecraft:soul_lantern": {
+      "with": "minecraft:iron_chain"
+    },
+    "minecraft:copper_lantern": {
+      "with": "minecraft:copper_chain"
+    },
+    "minecraft:exposed_copper_lantern": {
+      "with": "minecraft:exposed_copper_chain"
+    },
+    "minecraft:weathered_copper_lantern": {
+      "with": "minecraft:weathered_copper_chain"
+    },
+    "minecraft:oxidized_copper_lantern": {
+      "with": "minecraft:oxidized_copper_chain"
+    },
+    "minecraft:waxed_copper_lantern": {
+      "with": "minecraft:waxed_copper_chain"
+    },
+    "minecraft:waxed_exposed_copper_lantern": {
+      "with": "minecraft:waxed_exposed_copper_chain"
+    },
+    "minecraft:waxed_weathered_copper_lantern": {
+      "with": "minecraft:waxed_weathered_copper_chain"
+    },
+    "minecraft:waxed_oxidized_copper_lantern": {
+      "with": "minecraft:waxed_oxidized_copper_chain"
+    }
+  }
+}

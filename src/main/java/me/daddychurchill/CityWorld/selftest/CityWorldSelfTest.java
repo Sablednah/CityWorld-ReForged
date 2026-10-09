@@ -482,6 +482,25 @@ public final class CityWorldSelfTest {
                         + "empty means the whole tag file was discarded");
         }
 
+        // A world with its working lights off puts them out at the block seams. The shipped unlit map must
+        // load (a misnamed block in it drops the whole file, and every lantern goes on burning), and a block
+        // with a lit property must go out with no entry at all.
+        {
+            var dark = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.unlit(
+                    net.minecraft.world.level.block.Blocks.GLOWSTONE.defaultBlockState());
+            var lantern = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.unlit(
+                    net.minecraft.world.level.block.Blocks.LANTERN.defaultBlockState());
+            var candle = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.unlit(
+                    net.minecraft.world.level.block.Blocks.CANDLE.defaultBlockState()
+                            .setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT, true));
+            report.put("unlit", net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(dark.getBlock()) + " / "
+                    + net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(lantern.getBlock())
+                    + " / candle emits " + candle.getLightEmission());
+            if (dark.getLightEmission() != 0 || lantern.getLightEmission() != 0 || candle.getLightEmission() != 0)
+                fail("lights-off still emits light (glowstone -> " + dark + ", lantern -> " + lantern + ", candle -> "
+                        + candle + ") — data map cityworld:unlit did not load, or the lit rule did not apply");
+        }
+
         // The fittings pools. The vanilla-seeded ones (doors, trapdoor, fence) can never legitimately be
         // empty — same trap as the decor pools; the mod-only ones (window, roof, street_lamp) are empty
         // on a bare server and full where Macaw's is installed (the mc26.2 dev mods folder), so their
