@@ -804,7 +804,7 @@ public final class Material {
     public static final Material YELLOW_TERRACOTTA = of(Blocks.DYED_TERRACOTTA.pick(DyeColor.YELLOW));
     public static final Material YELLOW_WOOL = of(Blocks.WOOL.pick(DyeColor.YELLOW));
 
-    // ---- Modern extras (144) — blocks the 1.14 vocabulary never had -------------
+    // ---- Modern extras (145) — blocks the 1.14 vocabulary never had -------------
     public static final Material AMETHYST_CLUSTER = of(Blocks.AMETHYST_CLUSTER); // P12 interior: sparkle accent
     public static final Material ANCIENT_DEBRIS = of(Blocks.ANCIENT_DEBRIS); // P9: rare prize in the deepest mines (the reason they dug so far)
     public static final Material ANVIL = of(Blocks.ANVIL); // P9 mine prop: miners' camp
@@ -895,6 +895,7 @@ public final class Material {
     public static final Material OAK_WALL_HANGING_SIGN = of(Blocks.OAK_WALL_HANGING_SIGN); // P12 shop: exterior shopfront sign above the door
     public static final Material OPEN_EYEBLOSSOM = of(Blocks.OPEN_EYEBLOSSOM); // P13 biodome: pale garden flower
     public static final Material ORANGE_CANDLE = of(Blocks.DYED_CANDLE.pick(DyeColor.ORANGE)); // P14 interior: candle accent (warm colour)
+    public static final Material OXIDIZED_COPPER_BULB = of(Blocks.COPPER_BULB.weathering().oxidized()); // vault: the dim working light (lit, light 4), low enough for spawners
     public static final Material OXIDIZED_COPPER_CHEST = of(Blocks.COPPER_CHEST.weathering().oxidized()); // P9 copper mine: loot chest (oxidized, deepest)
     public static final Material OXIDIZED_COPPER_GRATE = of(Blocks.COPPER_GRATE.weathering().oxidized()); // P9 copper mine: cage/machinery grate (oxidized, deepest)
     public static final Material OXIDIZED_CUT_COPPER = of(Blocks.CUT_COPPER.weathering().oxidized()); // P12 MODERN build stone

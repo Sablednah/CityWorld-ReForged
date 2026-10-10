@@ -23,18 +23,20 @@ public class RoadThroughVaultLot extends RoadLot {
     private final int bottomOfVault;
     private final int topOfVault;
     private final boolean entrance;
+    private final int levels;
 
     public RoadThroughVaultLot(PlatMap platmap, int chunkX, int chunkZ, long globalconnectionkey,
             boolean roundaboutPart, VaultLot originalLot, boolean entrance) {
         super(platmap, chunkX, chunkZ, globalconnectionkey, roundaboutPart);
         this.bottomOfVault = originalLot.bottomOfBunker;
+        this.levels = originalLot.levels;
         this.topOfVault = originalLot.topOfBunker;
         this.entrance = entrance;
     }
 
     @Override
     public boolean isValidStrataY(CityWorldGenerator generator, int blockX, int blockY, int blockZ) {
-        return VaultLot.vaultIsValidStrataY(blockY, bottomOfVault, topOfVault, false);
+        return VaultLot.vaultIsValidStrataY(blockY, bottomOfVault, topOfVault, false, levels);
     }
 
     @Override
@@ -44,7 +46,7 @@ public class RoadThroughVaultLot extends RoadLot {
 
     @Override
     public int getBottomY(CityWorldGenerator generator) {
-        return VaultLot.levelFloor(bottomOfVault, VaultLot.NUM_LEVELS - 1) - 1; // cover the deepest level
+        return VaultLot.levelFloor(bottomOfVault, levels - 1) - 1; // cover the deepest level
     }
 
     @Override
@@ -59,7 +61,7 @@ public class RoadThroughVaultLot extends RoadLot {
 
     @Override
     public int lootTierAt(int y) {
-        return VaultLot.tierForY(bottomOfVault, y);
+        return VaultLot.tierForY(bottomOfVault, y, levels);
     }
 
     @Override
@@ -81,7 +83,7 @@ public class RoadThroughVaultLot extends RoadLot {
         // the vault has its own power: its lights burn (and fail floor by floor) whatever includeWorkingLights says
         me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.ownPower(() -> {
             VaultLot.generateVaultHall(generator, chunkOdds, chunk, bottomOfVault, topOfVault, walls, oX, oZ);
-            VaultLot.generateLowerLevels(generator, chunkOdds, chunk, bottomOfVault, walls, oX, oZ, false, getChunkX(),
+            VaultLot.generateLowerLevels(generator, chunkOdds, chunk, bottomOfVault, levels, walls, oX, oZ, false, getChunkX(),
                     getChunkZ());
             tunnelBranch(generator, chunk); // the road-tunnel entry (routed through a vestibule + door)
         });
