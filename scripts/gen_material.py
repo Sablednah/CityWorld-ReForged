@@ -253,6 +253,7 @@ EXTRAS = {
     "CANDLE_CAKE": "P14 interior: lit-cake accent on a table",
     "LIGHTNING_ROD": "P14 rooftop: lightning rod on MODERN building roofs",
     "COPPER_BULB": "P12 interior: warm modern light source",
+    "OXIDIZED_COPPER_BULB": "vault: the dim working light (lit, light 4), low enough for spawners",
     "CHISELED_COPPER": "P12 interior: decorative modern wall/counter block",
     "CHISELED_TUFF": "P12 interior: decorative modern stone block",
     "AMETHYST_CLUSTER": "P12 interior: sparkle accent",
