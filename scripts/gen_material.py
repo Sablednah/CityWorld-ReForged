@@ -158,10 +158,12 @@ FALLBACKS = {
     # Older lines: 1.20.1 still calls short grass GRASS, and the potted azalea keeps its BUSH suffix.
     "SHORT_GRASS": "GRASS", "POTTED_AZALEA": "POTTED_AZALEA_BUSH",
     # The 1.21 copper/tuff decorative set, absent before it. The grates keep their weathering stage,
-    # which is the whole reason they are used, and the bulb stands in as the light it is used as.
+    # which is the whole reason they are used, and the bulb stands in as the light it is used as. The vault's
+    # dim working light (an oxidized bulb, light 4) must stay dim enough for spawners: magma (3) is the one
+    # full block this old that glows that little; a lit redstone lamp would be 15.
     "COPPER_GRATE": "COPPER_BLOCK", "EXPOSED_COPPER_GRATE": "EXPOSED_COPPER",
     "WEATHERED_COPPER_GRATE": "WEATHERED_COPPER", "OXIDIZED_COPPER_GRATE": "OXIDIZED_COPPER",
-    "COPPER_BULB": "REDSTONE_LAMP", "CHISELED_COPPER": "CUT_COPPER", "CHISELED_TUFF": "TUFF",
+    "COPPER_BULB": "REDSTONE_LAMP", "OXIDIZED_COPPER_BULB": "MAGMA_BLOCK", "CHISELED_COPPER": "CUT_COPPER", "CHISELED_TUFF": "TUFF",
     "RESIN_BRICKS": "BRICKS", "CREAKING_HEART": "OAK_LOG", "OPEN_EYEBLOSSOM": "POPPY",
     "PALE_OAK_LOG": "OAK_LOG", "PALE_OAK_WOOD": "OAK_WOOD", "PALE_OAK_LEAVES": "OAK_LEAVES",
     "PALE_OAK_PLANKS": "OAK_PLANKS", "PALE_OAK_STAIRS": "OAK_STAIRS", "PALE_OAK_SLAB": "OAK_SLAB",
@@ -279,6 +281,7 @@ EXTRAS = {
     "CANDLE_CAKE": "P14 interior: lit-cake accent on a table",
     "LIGHTNING_ROD": "P14 rooftop: lightning rod on MODERN building roofs",
     "COPPER_BULB": "P12 interior: warm modern light source",
+    "OXIDIZED_COPPER_BULB": "vault: the dim working light (lit, light 4), low enough for spawners",
     "CHISELED_COPPER": "P12 interior: decorative modern wall/counter block",
     "CHISELED_TUFF": "P12 interior: decorative modern stone block",
     "AMETHYST_CLUSTER": "P12 interior: sparkle accent",
