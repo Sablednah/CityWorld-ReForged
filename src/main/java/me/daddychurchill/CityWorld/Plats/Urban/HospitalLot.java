@@ -2,6 +2,7 @@ package me.daddychurchill.CityWorld.Plats.Urban;
 
 import me.daddychurchill.CityWorld.compat.BiomeGrid;
 import me.daddychurchill.CityWorld.compat.BlockFace;
+import me.daddychurchill.CityWorld.compat.Loot;
 import me.daddychurchill.CityWorld.compat.Material;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
@@ -9,6 +10,7 @@ import me.daddychurchill.CityWorld.Context.DataContext;
 import me.daddychurchill.CityWorld.Plats.IsolatedLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Plugins.LootProvider;
+import me.daddychurchill.CityWorld.Plugins.LootProvider_LootTable;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
 import me.daddychurchill.CityWorld.Support.PlatMap;
@@ -19,6 +21,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * One chunk-slice of a HOSPITAL building — the big multi-chunk sprawling general hospital (wings around
@@ -430,23 +438,14 @@ public class HospitalLot extends IsolatedLot {
         return rx >= 1 && rx < sizeX * 16 - 1 && rz >= 1 && rz < sizeZ * 16 - 1 && !isSolid(wx, wz);
     }
 
-    /** A medicine chest — a few Potions of Healing and some "Bandage" paper. Uses the region-level block
-     *  entity ({@code getActualBlock().getState()}, how signs/spawners are written during worldgen) — the
-     *  underlying ServerLevel can't see a block just set in the generation region yet.
-     *
-     *  <p><b>⚠ The chest is placed with NO loot table, and the table applied last — 1.20.1 only.</b>
-     *  This version's {@code RandomizableContainerBlockEntity.setItem} calls {@code unpackLootTable},
-     *  whose guard is {@code this.lootTable != null && this.level.getServer() != null}: it dereferences
-     *  a level it never null-checks. A block entity handed back over a {@code ProtoChunk} during
-     *  worldgen has no level, so writing an item into a chest that already carried a table threw an
-     *  NPE and killed the chunk ("Exception generating new chunk", crash 2026-09-21). 1.21 moved the
-     *  method to {@code RandomizableContainer} and added {@code level != null}, which is why the
-     *  character-identical code on every other branch cannot crash. Applying the table afterwards is a
-     *  plain field write that never touches the level (see {@code LootProvider_LootTable}), so the
-     *  finished chest is identical to the other branches' — table plus the hand-placed flourish. */
+    /** A medicine chest — a few Potions of Healing and some "Bandage" paper, with the hospital table rolled in around
+     *  them. Rolled now and left with no table, like the river's hidden chests: a chest still carrying an unrolled
+     *  table saves no items, so the medicine vanished on the first save, and Lootr, which swaps every tabled chest
+     *  for its own, spilled it on the floor (owner, 2026-10-10). Uses the region-level block entity
+     *  ({@code getActualBlock().getState()}) — the underlying ServerLevel can't see a block just set in the
+     *  generation region yet. */
     private void medicineChest(CityWorldGenerator generator, RealBlocks chunk, int x, int y, int z) {
-        chunk.setChest(generator, x, y, z, BlockFace.SOUTH, chunkOdds, generator.lootProvider,
-                LootProvider.LootLocation.EMPTY);
+        chunk.setBlock(x, y, z, Material.CHEST, BlockFace.SOUTH);
         if (!(chunk.getActualBlock(x, y, z).getState() instanceof ChestBlockEntity chest))
             return;
         for (int s = 0; s < 3; s++) {
@@ -457,8 +456,22 @@ public class HospitalLot extends IsolatedLot {
         ItemStack bandage = new ItemStack(Items.PAPER, 4);
         bandage.setHoverName(Component.literal("Bandage"));
         chest.setItem(6, bandage);
-        generator.lootProvider.setLoot(generator, chunkOdds, LootProvider.LootLocation.HOSPITAL,
-                chunk.getActualBlock(x, y, z));
+        if (!(chunk.getServerLevel() instanceof WorldGenLevel level))
+            return;
+        LootTable table = Loot.table(level, Loot.ref(LootProvider_LootTable.keyFor(LootProvider.LootLocation.HOSPITAL, 0)));
+        if (table == null)
+            return;
+        var params = new LootParams.Builder(level.getLevel())
+                .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(chest.getBlockPos()))
+                .create(LootContextParamSets.CHEST);
+        for (var stack : Loot.roll(table, params, chunkOdds.getRandomLong()))
+            for (int tries = 0; tries < 8; tries++) {
+                int slot = chunkOdds.getRandomInt(chest.getContainerSize());
+                if (chest.getItem(slot).isEmpty()) {
+                    chest.setItem(slot, stack);
+                    break;
+                }
+            }
     }
 
     /** A grand double door on the south face at ground level, with a green cross and the name over it. */
