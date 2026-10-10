@@ -13,6 +13,13 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+**New in 6.2.0: the lights go out, and the vault goes deeper.** Switch **Working lights** off in Customize and the
+city really goes dark now — every lantern, lamp, torch and candle CityWorld places, and most mods' lights, is placed
+burnt out (before, only the streetlights went out). The ruined city's **vault keeps its own power**, and is now
+**four to eight levels deep**: bright on the entry level, then dimmer and more worn floor by floor, with more of
+its rooms overrun — by the sixth level the lights are mostly dead, and the bottom floor is dark, wrecked and full
+of spawners.
+
 **New in 6.1.0: no more snow over the jungle.** A player noticed cold and tropical biomes side by side with no
 transition. The climate itself was never the problem — it was the mountains: every warm highland was windswept
 hills and forest, which Minecraft snows above a certain height, so a jungle or savanna climbed straight into
@@ -32,15 +39,11 @@ worlds from 5.19 are best started fresh.) For modpack makers there is a sample d
 vanilla structure, one file to copy and edit:
 [All Vanilla Structures](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/all-vanilla-structures-1.0.0).
 
-**New in 5.19.0: cities in a vanilla world.** Pick **Land — Vanilla, cities apart** in Customize and the world
-is vanilla's — terrain, caves, biomes, villages — with a CityWorld city every so often, like a village, each on
-its own level and eased into the hills around it. Choose the spacing, the size and how high a city may stand.
-**Rivers run through the city** untouched and navigable, crossed by bridges, with **quays, moorings and loading
-docks** along their banks. And for survival packs: the **Neutral Palette** add-on builds cities without iron,
-gold or copper blocks, from natural woods, stones and terracotta ([GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/neutral-palette-1.0.0)).
-
 **Other recent changes**
 
+- **5.19.0** — cities in a vanilla world: pick Land — Vanilla, cities apart in Customize for vanilla terrain with a
+  CityWorld city every so often, rivers running through it with quays and bridges; and the Neutral Palette add-on
+  ([GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/neutral-palette-1.0.0)).
 - **5.18.0** — Farmer's Delight kitchens, feasts and rice paddies (1.20.1 and 1.21.1); street shops stock their
   trade, fourteen trades in all, and neighbouring shops differ.
 - **5.17.0** — choose your structures in game: a Structures page in Customize switches every vanilla and modded
