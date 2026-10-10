@@ -2226,6 +2226,10 @@ public final class CityWorldSelfTest {
         CityWorldGenerator plan = new CityWorldGenerator(PLAN_SEED, 256, 63, WorldStyle.APOCALYPSE, -64, 320,
                 java.util.Optional.empty(), me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.DEFAULT);
         int vaults = 0, entrances = 0, outside = 0;
+        // levels per vault (one entry per entrance, so per vault): 4 to 8, rolled per vault — every vault the same
+        // depth would mean the roll is not reaching it, and a split vault (chunks disagreeing) would draw half-levels
+        java.util.TreeMap<Integer, Integer> depths = new java.util.TreeMap<>();
+        int split = 0;
         for (int px = -6; px <= 5; px++)
             for (int pz = -6; pz <= 5; pz++) {
                 PlatMap pm = plan.getPlatMap(px * PlatMap.Width, pz * PlatMap.Width);
@@ -2234,10 +2238,14 @@ public final class CityWorldSelfTest {
                     for (int z = 0; z < PlatMap.Width; z++)
                         if (pm.getLot(x, z) instanceof me.daddychurchill.CityWorld.Plats.Nature.VaultLot vault) {
                             vaults++;
-                            if (vault.isEntrance())
+                            if (vault.isEntrance()) {
                                 entrances++;
+                                depths.merge(vault.getLevels(), 1, Integer::sum);
+                            }
                             if (!region)
                                 outside++;
+                            if (levelsOfEntrance(pm) >= 0 && vault.getLevels() != levelsOfEntrance(pm))
+                                split++;
                         }
             }
         report.put("vault.lots", Integer.toString(vaults));
@@ -2246,6 +2254,20 @@ public final class CityWorldSelfTest {
             fail("APOCALYPSE planned no vault (or no vault entrance) over 144 platmaps, so the region check proves nothing");
         if (outside > 0)
             fail(outside + " vault lots lie outside a vault region — CityWorldAPI.findVaultEntrances would never find them");
+        report.put("vault.levels", depths.toString());
+        if (!depths.isEmpty() && (depths.firstKey() < 4 || depths.lastKey() > 8 || depths.size() == 1 && entrances > 4))
+            fail("vault depths " + depths + " — expected a spread of 4 to 8 levels in the overworld");
+        if (split > 0)
+            fail(split + " vault chunks disagree with their platmap's entrance on the number of levels");
+    }
+
+    /** The level count of the vault entrance in {@code pm}, or -1 when it has none. */
+    private static int levelsOfEntrance(PlatMap pm) {
+        for (int x = 0; x < PlatMap.Width; x++)
+            for (int z = 0; z < PlatMap.Width; z++)
+                if (pm.getLot(x, z) instanceof me.daddychurchill.CityWorld.Plats.Nature.VaultLot vault && vault.isEntrance())
+                    return vault.getLevels();
+        return -1;
     }
 
     /**
