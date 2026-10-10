@@ -68,9 +68,12 @@ public class VaultLot extends BunkerLot {
     static final Material FLOOR = Material.LIGHT_GRAY_CONCRETE;
     static final Material CEIL = Material.GRAY_CONCRETE;
     static final Material PILLAR = Material.IRON_BLOCK;
-    /** A working vault light: an oxidized copper bulb, set lit ({@link #light}). Light 4 — a glow on the ceiling
+    /** A vault light still at full power: a sea lantern. The entry level is all of them; they thin out floor by
+     *  floor ({@link #brightPercent}) and none are left from the sixth level down. */
+    static final Material BRIGHT_LIGHT = Material.SEA_LANTERN;
+    /** A failing vault light: an oxidized copper bulb, set lit ({@link #light}). Light 4 — a glow on the ceiling
      *  that is gone before it reaches the floor 5 below, so it never stops a spawner (a spawner's zombie needs
-     *  block light 0 where it appears, and a sea lantern there shut off every spawner in the room). */
+     *  block light 0 where it appears, and a sea lantern there shuts off every spawner in the room). */
     static final Material LIGHT = Material.OXIDIZED_COPPER_BULB;
     /** A dead one: a redstone lamp, unpowered. */
     static final Material DEAD_LIGHT = Material.REDSTONE_LAMP;
@@ -392,13 +395,35 @@ public class VaultLot extends BunkerLot {
         furnishRoom(generator, odds, chunk, floorY, 10, 14, 10, 14, oX + 16, oZ + 16, depth); // SE -> (oX+16, oZ+16)
 
         dressLevel(chunk, floorY, ceilY, oX, oZ, depth);
-        haunt(generator, odds, chunk, floorY, oX, oZ, depth);
+        haunt(generator, odds, chunk, floorY, ceilY, oX, oZ, depth);
     }
 
-    /** How many of ten lights are out on floor {@code depth}: none on the entry level, two more each floor down,
-     *  all of them from the sixth level on. */
-    static int deadLightsInTen(int depth) {
-        return Math.min(10, 2 * depth);
+    private static final int[] BRIGHT_PERCENT = { 100, 70, 40, 20, 8 };
+    private static final int[] DEAD_PERCENT = { 0, 0, 10, 30, 50, 70, 85, 93 };
+
+    /** Of a hundred lights on floor {@code depth}, how many still burn at full power: all on the entry level, then
+     *  fewer each floor down, none from the sixth level. */
+    static int brightPercent(int depth) {
+        return depth < BRIGHT_PERCENT.length ? BRIGHT_PERCENT[depth] : 0;
+    }
+
+    /** Of a hundred lights on floor {@code depth}, how many are out: none on the first two levels, then more each
+     *  floor down — most by the sixth level, over nine in ten on the eighth. The rest glow dim ({@link #LIGHT}). */
+    static int deadPercent(int depth) {
+        return DEAD_PERCENT[Math.min(depth, DEAD_PERCENT.length - 1)];
+    }
+
+    static final int BRIGHT = 0, DIM = 1, DEAD = 2;
+
+    /** Whether the light at world column ({@code wx}, {@code wz}) on floor {@code depth} is bright, dim or dead —
+     *  deterministic, mixed so neighbouring fittings don't fall in stripes. */
+    static int lightKind(int wx, int wz, int depth, int salt) {
+        int h = wx * 374761393 + wz * 668265263 + depth * 972897521 + salt * 1103515245;
+        h = (h ^ (h >>> 13)) * 1274126177;
+        int roll = Math.floorMod(h ^ (h >>> 16), 100);
+        if (roll < deadPercent(depth))
+            return DEAD;
+        return roll >= 100 - brightPercent(depth) ? BRIGHT : DIM;
     }
 
     /** How many of ten wear points are worn on floor {@code depth}: the same climb, from none to all. */
@@ -412,13 +437,16 @@ public class VaultLot extends BunkerLot {
         return Math.min(100, 15 * depth);
     }
 
-    /** A ceiling light that glows on the entry level and, floor by floor, is more often dead: an unpowered
-     *  redstone lamp (the fitting still there, the power gone), or on the lower floors smashed out entirely. */
+    /** A ceiling light: bright on the entry level and, floor by floor, more often dim ({@link #lightKind}) and
+     *  then dead — an unpowered redstone lamp (the fitting still there, the power gone), or on the lower floors
+     *  smashed out entirely. */
     private static void lightAt(SupportBlocks chunk, int x, int ceilY, int z, int depth, int oX, int oZ) {
-        int roll = Math.floorMod((oX + x) * 7 + (oZ + z) * 13 + depth * 31, 10);
-        if (roll >= deadLightsInTen(depth))
+        int kind = lightKind(oX + x, oZ + z, depth, 1);
+        if (kind == BRIGHT)
+            chunk.setBlock(x, ceilY, z, BRIGHT_LIGHT);
+        else if (kind == DIM)
             light(chunk, x, ceilY, z);
-        else if (depth >= 2 && (roll & 1) == 1)
+        else if (depth >= 2 && ((oX + x + oZ + z) & 1) == 1)
             chunk.setBlock(x, ceilY, z, CEIL); // smashed: nothing left in the socket
         else
             chunk.setBlock(x, ceilY, z, DEAD_LIGHT);
@@ -427,10 +455,11 @@ public class VaultLot extends BunkerLot {
     /**
      * Spawners in the rooms, more of them the deeper you go: none on the entry level, then fifteen points more
      * of the rooms each floor down ({@link #spawnerPercent}). Zombies, with skeletons joining from the fourth floor. Out in the
-     * open (the vault reads as overrun, not booby-trapped), on a floor cell the furniture left free.
+     * open (the vault reads as overrun, not booby-trapped), on a floor cell the furniture left free. A room that
+     * gets one has its own ceiling light dimmed if it was still bright, so the spawner can work.
      * Gated on {@code spawnersInBunkers} like the bunkers this lot grew from.
      */
-    static void haunt(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int floorY, int oX, int oZ, int depth) {
+    static void haunt(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int floorY, int ceilY, int oX, int oZ, int depth) {
         int d = depth;
         if (d == 0 || !generator.getSettings().spawnersInBunkers)
             return;
@@ -447,6 +476,9 @@ public class VaultLot extends BunkerLot {
                     { room[0] + 2, room[3] - 2 }, { room[1] - 2, room[2] + 2 } })
                 if (chunk.isEmpty(c[0], fy, c[1]) && chunk.isEmpty(c[0], fy + 1, c[1]) && !chunk.isEmpty(c[0], fy - 1, c[1])) {
                     generator.spawnProvider.setSpawner(generator, chunk, odds, c[0], fy, c[1], mob, true);
+                    int lx = room[0] + 2, lz = room[2] + 2; // the room's own ceiling light (see generateLevel)
+                    if (chunk.isType(lx, ceilY, lz, BRIGHT_LIGHT))
+                        light(chunk, lx, ceilY, lz);
                     break;
                 }
         }
@@ -471,18 +503,16 @@ public class VaultLot extends BunkerLot {
                 wear(chunk, floorY, ceilY, c[0], c[1], oX, oZ, depth);
     }
 
-    /** A corridor lantern on its chain on the entry level, which never has a spawner; below it a lantern would
-     *  light the corridor too brightly for the rooms' spawners, so a working fitting is a dim bulb up against the
-     *  ceiling and a dead one, more often the deeper the floor, just the chain its lantern hung from. */
+    /** A corridor lantern on its chain while it still has full power ({@link #lightKind}, as the ceiling lights);
+     *  a failing one is a dim bulb up against the ceiling, and a dead one just the chain its lantern hung from. */
     private static void hangLantern(SupportBlocks chunk, int x, int ceilY, int z, int depth, int oX, int oZ) {
         if (!chunk.isEmpty(x, ceilY - 1, z) || !chunk.isEmpty(x, ceilY - 2, z))
             return; // only where the corridor is actually open below the ceiling
-        boolean working = Math.floorMod((oX + x) * 11 + (oZ + z) * 5 + depth * 17, 10) >= deadLightsInTen(depth);
-        if (depth == 0) {
+        int kind = lightKind(oX + x, oZ + z, depth, 2);
+        if (kind == BRIGHT) {
             chunk.setBlock(x, ceilY - 1, z, Material.IRON_CHAIN);
-            if (working)
-                chunk.setHangingLantern(x, ceilY - 2, z, Material.LANTERN);
-        } else if (working)
+            chunk.setHangingLantern(x, ceilY - 2, z, Material.LANTERN);
+        } else if (kind == DIM)
             light(chunk, x, ceilY - 1, z);
         else
             chunk.setBlock(x, ceilY - 1, z, Material.IRON_CHAIN);
@@ -714,20 +744,24 @@ public class VaultLot extends BunkerLot {
     private static void hydroponics(SupportBlocks chunk, int floorY, int x1, int x2, int z1, int z2, int depth) {
         Material crop = CROPS[Math.floorMod(x1 * 3 + z1 * 5 + floorY, CROPS.length)]; // varied by bay + level
         int ceilY = floorY + 6;
-        // a bay's grow-lights fail together, as often as the floor's ceiling lights; a dead bay's crops are gone
-        // (they need light 8 or more to stand, so under a dead lamp they would only pop off when it ticks)
-        boolean working = Math.floorMod((chunk.getOriginX() + x1) * 7 + (chunk.getOriginZ() + z1) * 13 + depth * 31,
-                10) >= deadLightsInTen(depth);
+        // a bay's grow-lights fail together, as the floor's ceiling lights do; only a bay still at full power keeps
+        // its crops (they need light 8 or more to stand, so under a dim or dead light they would only pop off when
+        // it ticks)
+        int kind = lightKind(chunk.getOriginX() + x1, chunk.getOriginZ() + z1, depth, 3);
+        boolean working = kind == BRIGHT;
         for (int x = x1; x <= x2; x++)
             for (int z = z1; z <= z2; z++) {
                 boolean water = ((x - x1) & 1) == 1; // alternating water channels
                 chunk.setBlock(x, floorY, z, water ? Material.WATER : Material.FARMLAND);
                 if (working && !water && chunk.isEmpty(x, floorY + 1, z))
                     chunk.setBlock(x, floorY + 1, z, crop, 1.0); // fully grown
-                // grow-lights in the ceiling so the crops get enough light and don't pop off — bright ones: crops
-                // need light 8, which a vault light (4) cannot give
-                if ((x - x1) % 2 == 0 && (z - z1) % 2 == 0)
-                    chunk.setBlock(x, ceilY, z, working ? Material.SEA_LANTERN : DEAD_LIGHT);
+                // grow-lights in the ceiling so the crops get enough light and do not pop off
+                if ((x - x1) % 2 == 0 && (z - z1) % 2 == 0) {
+                    if (kind == DIM)
+                        light(chunk, x, ceilY, z);
+                    else
+                        chunk.setBlock(x, ceilY, z, working ? BRIGHT_LIGHT : DEAD_LIGHT);
+                }
             }
     }
 
@@ -794,7 +828,7 @@ public class VaultLot extends BunkerLot {
         chunk.setBlocks(14, 15, ceilY - 1, ceilY, 1, 15, Material.CUT_COPPER);
         for (int x = 3; x < 15; x += 4)
             for (int z = 3; z < 15; z += 4)
-                light(chunk, x, ceilY, z); // lit ceiling grid
+                chunk.setBlock(x, ceilY, z, BRIGHT_LIGHT); // lit ceiling grid
         for (int[] p : new int[][] { { 3, 3 }, { 12, 3 }, { 3, 12 }, { 12, 12 } })
             chunk.setHangingLantern(p[0], ceilY - 2, p[1], Material.LANTERN);
         chunk.setBlocks(1, 15, floorY, floorY + 1, 1, 2, Material.GRAY_CONCRETE); // floor accent border
@@ -968,7 +1002,7 @@ public class VaultLot extends BunkerLot {
         // entry door from the lobby (depth=4 divider) + exit door to the interior (depth=0 perimeter wall)
         doorAt(chunk, side, 13, floorY, 4);
         doorAt(chunk, side, 13, floorY, 0);
-        light(chunk, mapX(side, 13, 2), roomTop, mapZ(side, 13, 2)); // a light inside the booth
+        setAt(chunk, side, 13, roomTop, 2, BRIGHT_LIGHT); // a light inside the booth
     }
 
     // --- wall-plane / booth coordinate mappers -------------------------------------------------

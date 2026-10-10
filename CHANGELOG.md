@@ -10,14 +10,14 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 ### Changed
 
 - **Vaults are four to eight levels deep** (rolled per vault; fewer where the world's floor is near, as in the ruined
-  Nether), and **get worse faster**: two more lights in ten out and two more wear points in ten worn per level, from
-  none on the entry level to all of them from the sixth; spawners in no room on the entry level, then 15% more of the
-  rooms per level, every room on the eighth. Floors below the third roll the third floor's loot.
-- **Vault lights are dim enough for spawners.** A spawner's mob needs no block light where it appears, and the old
-  sea lanterns and corridor lanterns shut off the spawners around them. Working ceiling lights are now lit oxidized
-  copper bulbs (a faint glow, gone before it reaches the floor), dead ones unpowered redstone lamps; corridor
-  lanterns stay on the entry level only (it has no spawners), and below it a working one is a dim bulb and a dead one
-  the bare chain.
+  Nether), and **get worse faster**: two more wear points in ten worn per level, from none on the entry level to all
+  of them from the sixth; spawners in no room on the entry level, then 15% more of the rooms per level, every room on
+  the eighth. Floors below the third roll the third floor's loot.
+- **Vault lights fade floor by floor.** The entry level is lit at full power; below it the sea lanterns and corridor
+  lanterns give way to dim lit oxidized copper bulbs (a faint glow, gone before it reaches the floor, so spawners
+  work under them), and then to dead ones (unpowered redstone lamps, smashed fittings, bare chains). The sixth level
+  has no full-power light left and is mostly dark; on the eighth over nine lights in ten are out. A room with a
+  spawner never keeps a full-power light, and a hydroponics bay keeps its crops only while its grow lights do.
 
 ### Fixed
 
