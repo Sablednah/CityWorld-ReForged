@@ -5,6 +5,16 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Fixed
+
+- **Hospital medicine chests keep their medicine, and Lootr no longer spills it on the floor.** The chest carried a
+  loot table and its Potions of Healing and "Bandage" paper at once. Minecraft saves no items for a chest whose
+  table has not been rolled, so the medicine was lost at the first save; and Lootr, which swaps every chest with a
+  table for its own, dropped the potions and paper around the chest. The chest is now filled when it generates,
+  medicine and hospital loot together, with no table. Only new chunks.
+
 ## 6.2.0
 
 ### Changed
