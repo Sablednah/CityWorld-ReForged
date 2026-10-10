@@ -321,12 +321,37 @@ public final class CityWorldDataMaps {
         return property.getValue(value).map(v -> state.setValue(property, v)).orElse(state);
     }
 
+    /** Set while a lot with its own power draws; see {@link #ownPower}. */
+    private static final ThreadLocal<Boolean> OWN_POWER = ThreadLocal.withInitial(() -> false);
+
+    /**
+     * Draw with the world's lights left burning, whatever {@code includeWorkingLights} says: for a place with its own
+     * power (owner, 2026-10-10: "their generator still works" — the vault, which darkens floor by floor by itself).
+     * Scoped to this thread, and a chunk is drawn on one thread, so it never reaches a neighbour.
+     */
+    public static void ownPower(Runnable draw) {
+        boolean was = OWN_POWER.get();
+        OWN_POWER.set(true);
+        try {
+            draw.run();
+        } finally {
+            OWN_POWER.set(was);
+        }
+    }
+
+    /** Whether the drawing on this thread is inside {@link #ownPower}. */
+    public static boolean hasOwnPower() {
+        return OWN_POWER.get();
+    }
+
     /**
      * Whether the world {@code level} belongs to keeps its lights burning — its {@code includeWorkingLights}, or
      * true for a level CityWorld does not generate. Reads the generator's cached context, never a chunk, so it is
      * safe from a decoration worker.
      */
     public static boolean lightsOn(net.minecraft.world.level.LevelAccessor level) {
+        if (OWN_POWER.get())
+            return true;
         if (level instanceof net.minecraft.world.level.ServerLevelAccessor server) {
             var serverLevel = server.getLevel();
             if (serverLevel.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator city)
