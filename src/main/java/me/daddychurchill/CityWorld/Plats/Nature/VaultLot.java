@@ -129,6 +129,11 @@ public class VaultLot extends BunkerLot {
     @Override
     protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
             DataContext context, int platX, int platZ) {
+        // the vault has its own power: its lights burn (and fail floor by floor) whatever includeWorkingLights says
+        me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.ownPower(() -> drawVault(generator, platmap, chunk, platX, platZ));
+    }
+
+    private void drawVault(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk, int platX, int platZ) {
         boolean[] walls = wallFlags(platmap, platX, platZ);
         int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
         if (entrance) {

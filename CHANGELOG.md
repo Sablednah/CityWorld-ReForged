@@ -16,6 +16,7 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   lightning rods and jack o'lanterns carved pumpkins; anything with a `lit` state (candles, campfires, copper bulbs,
   most of Macaw's Lights) is placed unlit. Natural light (lava, glow lichen, amethyst) and decay fires are untouched.
   FLOODED, SAND DUNES and SNOW DUNES ship with it off, so their new chunks are now dark.
+  The APOCALYPSE vault keeps its lights either way: it has its own power, and still darkens floor by floor.
 - A pack can say what any block becomes with a new block data map, `cityworld:unlit` (`with`, `properties`).
 
 ## 6.1.1
