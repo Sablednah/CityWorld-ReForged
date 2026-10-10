@@ -7,6 +7,18 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ## Unreleased
 
+### Changed
+
+- **Vaults are four to eight levels deep** (rolled per vault; fewer where the world's floor is near, as in the ruined
+  Nether), and **get worse faster**: two more lights in ten out and two more wear points in ten worn per level, from
+  none on the entry level to all of them from the sixth; spawners in no room on the entry level, then 15% more of the
+  rooms per level, every room on the eighth. Floors below the third roll the third floor's loot.
+- **Vault lights are dim enough for spawners.** A spawner's mob needs no block light where it appears, and the old
+  sea lanterns and corridor lanterns shut off the spawners around them. Working ceiling lights are now lit oxidized
+  copper bulbs (a faint glow, gone before it reaches the floor), dead ones unpowered redstone lamps; corridor
+  lanterns stay on the entry level only (it has no spawners), and below it a working one is a dim bulb and a dead one
+  the bare chain.
+
 ### Fixed
 
 - **"Working lights" off now puts out every light CityWorld draws.** It only ever reached the streetlights, road
