@@ -426,7 +426,8 @@ public class VaultLot extends BunkerLot {
         return roll >= 100 - brightPercent(depth) ? BRIGHT : DIM;
     }
 
-    /** How many of ten wear points are worn on floor {@code depth}: the same climb, from none to all. */
+    /** How many of ten wear points are worn on floor {@code depth}: none on the entry level, two more each floor
+     *  down, all of them from the sixth level on. */
     static int wornInTen(int depth) {
         return Math.min(10, 2 * depth);
     }
