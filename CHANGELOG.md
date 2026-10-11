@@ -7,6 +7,16 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ## Unreleased
 
+### Added
+
+- **Radio towers have a hut you can walk into.** The hut on the platform is now a hollow room — three high, windows
+  in three walls, a door beside the ladder, a lantern overhead, the antennas standing on its roof — with the
+  operator's chair at a table (from the furniture pools, so a furniture mod's own stand there; a stair and a
+  fence-post table without one) and a chest of spares in the corner. The chest has its own loot table,
+  `cityworld:chests/radio_tower` — copper ingots, redstone, repeaters, comparators, redstone torches, levers,
+  observers and the like — with the usual `radio_tower_extra` hook, and it is the only container on that table:
+  one per tower, even in a decayed world, so a pack can hang a guaranteed find on it.
+
 ### Fixed
 
 - **Hospital medicine chests keep their medicine, and Lootr no longer spills it on the floor.** The chest carried a
