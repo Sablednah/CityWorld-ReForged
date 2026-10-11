@@ -8,7 +8,9 @@ import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Context.DataContext;
 import me.daddychurchill.CityWorld.Plats.ConstructLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
+import me.daddychurchill.CityWorld.Plugins.LootProvider;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
+import me.daddychurchill.CityWorld.Support.FurnitureTags;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
@@ -41,6 +43,11 @@ public class RadioTowerLot extends ConstructLot {
 	private final static Material baseMaterial = Material.CLAY;
 	private final static Material antennaMaterial = Material.IRON_BARS;
 
+	/** The operator's hut: walls one in from the platform edge (a ledge to walk round, where the ladder comes
+	 *  up), a 4x4 room three high inside, roof on top, and the antennas standing on the roof. */
+	private final static int hutInset = 1;
+	private final static int hutHeight = 3;
+
 	@Override
 	public int getBottomY(CityWorldGenerator generator) {
 		return blockYs.getMaxHeight() + 2;
@@ -48,7 +55,7 @@ public class RadioTowerLot extends ConstructLot {
 
 	@Override
 	public int getTopY(CityWorldGenerator generator, AbstractCachedYs blockYs, int x, int z) {
-		return getBottomY(generator) + heightTallest;
+		return getBottomY(generator) + hutHeight + 1 + heightTallest + 2;
 	}
 
 	@Override
@@ -82,13 +89,16 @@ public class RadioTowerLot extends ConstructLot {
 //		if (minHeight > generator.evergreenLevel)
 //			generator.oreProvider.sprinkleSnow(generator, chunk, chunkOdds, originX, originX + platformWidth, platformY, originZ, originZ + platformWidth);
 //
-		// building
-		chunk.setBlocks(originX + 2, originX + platformWidth - 2, platformY, platformY + 2, originZ + 2,
-				originZ + platformWidth - 2, wallMaterial);
-		chunk.airoutBlocks(generator, originX + 3, originX + platformWidth - 3, platformY, platformY + 2,
-				originZ + 3, originZ + platformWidth - 3, true);
-		chunk.setBlocks(originX + 2, originX + platformWidth - 2, platformY + 2, platformY + 3, originZ + 2,
-				originZ + platformWidth - 2, platformMaterial);
+		// building: the operator's hut, hollow, with a window in three of its walls
+		int hx1 = originX + hutInset, hx2 = originX + platformWidth - hutInset; // walls at hx1 and hx2 - 1
+		int hz1 = originZ + hutInset, hz2 = originZ + platformWidth - hutInset;
+		chunk.setBlocks(hx1, hx2, platformY, platformY + hutHeight, hz1, hz2, wallMaterial);
+		chunk.airoutBlocks(generator, hx1 + 1, hx2 - 1, platformY, platformY + hutHeight, hz1 + 1, hz2 - 1, true);
+		chunk.setBlocks(hx1, hx2, platformY + hutHeight, platformY + hutHeight + 1, hz1, hz2, platformMaterial);
+		int mid = originZ + platformWidth / 2 - 1, midX = originX + platformWidth / 2 - 1;
+		chunk.setBlocks(midX, midX + 2, platformY + 1, platformY + 2, hz1, hz1 + 1, Material.GLASS); // north
+		chunk.setBlocks(midX, midX + 2, platformY + 1, platformY + 2, hz2 - 1, hz2, Material.GLASS); // south
+		chunk.setBlocks(hx2 - 1, hx2, platformY + 1, platformY + 2, mid, mid + 2, Material.GLASS); // east
 	}
 
 	@Override
@@ -106,32 +116,61 @@ public class RadioTowerLot extends ConstructLot {
 		// place snow
 		generateSurface(generator, chunk, false);
 
-		// blow it all up?
+		int hx1 = originX + hutInset, hx2 = originX + platformWidth - hutInset;
+		int hz1 = originZ + hutInset, hz2 = originZ + platformWidth - hutInset;
+		int roofY = platformY + hutHeight + 1;
+
+		// blow it all up? First, so the way in and the room's chest are always there afterwards: the chest is the
+		// tower's one guaranteed find (a pack's quest can hang on it)
 		if (generator.getSettings().includeDecayedBuildings) {
 			int x1 = chunk.getBlockX(originX);
 			int z1 = chunk.getBlockZ(originZ);
-			generator.destroyWithin(x1, x1 + platformWidth, blockYs.getAverageHeight(), platformY + 3, z1,
+			generator.destroyWithin(x1, x1 + platformWidth, blockYs.getAverageHeight(), roofY, z1,
 					z1 + platformWidth);
-
-			// place a door but only if everything is "normal"
-		} else {
-			chunk.setDoor(originX + 2, platformY, originZ + 3, Material.BIRCH_DOOR, BlockFace.WEST_NORTH_WEST);
-
-			// place the ladder
-			int ladderBase = platformY - 2;
-			while (chunk.isEmpty(originX, ladderBase, originZ + 4)) {
-				ladderBase--;
-			}
-			chunk.setLadder(originX, ladderBase, platformY, originZ + 4, BlockFace.WEST); // fixed
-			chunk.airoutBlock(generator, originX, platformY, originZ + 4);
-
-			// place antennas
-			generateAntenna(generator, chunk, context, originX + 1, platformY, originZ + 1, false);
-			generateAntenna(generator, chunk, context, originX + 1, platformY, originZ + platformWidth - 3, false);
-			generateAntenna(generator, chunk, context, originX + platformWidth - 3, platformY, originZ + 1, false);
-			generateAntenna(generator, chunk, context, originX + platformWidth - 3, platformY,
-					originZ + platformWidth - 3, true);
 		}
+
+		// the way in: the ladder up the west side of the base, and a door in the hut's west wall beside it
+		int ladderBase = platformY - 2;
+		while (chunk.isEmpty(originX, ladderBase, originZ + 4)) {
+			ladderBase--;
+		}
+		chunk.setLadder(originX, ladderBase, platformY, originZ + 4, BlockFace.WEST); // fixed
+		chunk.airoutBlock(generator, originX, platformY, originZ + 4);
+		chunk.setDoor(hx1, platformY, originZ + 3, Material.BIRCH_DOOR, BlockFace.WEST_NORTH_WEST); // the ladder holds the wall beside it
+
+		// inside: the operator's chair beside a table against the north wall, a chest of spares in the far corner,
+		// and a lantern overhead (the door's cell, just inside, stays clear)
+		furnish(generator, chunk, hx1 + 1, hx2 - 2, platformY, hz1 + 1, hz2 - 2);
+
+		// place antennas, on the roof
+		generateAntenna(generator, chunk, context, hx1, roofY, hz1, false);
+		generateAntenna(generator, chunk, context, hx1, roofY, hz2 - 2, false);
+		generateAntenna(generator, chunk, context, hx2 - 2, roofY, hz1, false);
+		generateAntenna(generator, chunk, context, hx2 - 2, roofY, hz2 - 2, true);
+	}
+
+	/** The room's furniture, inside x {@code x1..x2}, z {@code z1..z2} (inclusive) on floor {@code y}. The chair
+	 *  and table come from the furniture pools ({@code #cityworld:furniture/chair}, {@code .../table}), so a
+	 *  furniture mod's own can stand there; without one, a stair and a fence-post table. */
+	private void furnish(CityWorldGenerator generator, RealBlocks chunk, int x1, int x2, int y, int z1, int z2) {
+		int tableX = x1 + 2, chairX = x1 + 1; // chair to the west of the table, facing it
+		Material table = FurnitureTags.pick(FurnitureTags.TABLE, chunkOdds);
+		if (table == null || !chunk.setFurniture(tableX, y, z1, table, FurnitureTags.facingFor(table, BlockFace.SOUTH))) {
+			chunk.setBlock(tableX, y, z1, Material.OAK_FENCE);
+			chunk.setBlock(tableX, y + 1, z1, Material.OAK_PRESSURE_PLATE);
+		}
+		if (chunk.isEmpty(chairX, y, z1)) {
+			Material chair = FurnitureTags.pick(FurnitureTags.CHAIR, chunkOdds);
+			if (chair != null)
+				chunk.setBlock(chairX, y, z1, chair, FurnitureTags.facingFor(chair, BlockFace.EAST));
+			else
+				chunk.setBlock(chairX, y, z1, Material.OAK_STAIRS, BlockFace.WEST);
+		}
+		// the only container on the radio tower's table: a pack adding guaranteed loot to it (ZARP's quest) gets one
+		// haul per tower, so the lot keeps the ordinary default for anything else that holds things
+		chunk.setChest(generator, x2, y, z2, BlockFace.WEST, chunkOdds, generator.lootProvider,
+				LootProvider.LootLocation.RADIO_TOWER);
+		chunk.setHangingLantern(x1 + 1, y + hutHeight - 1, z1 + 2, Material.LANTERN);
 	}
 
 	private void generateAntenna(CityWorldGenerator generator, RealBlocks chunk, DataContext context, int x, int y,
