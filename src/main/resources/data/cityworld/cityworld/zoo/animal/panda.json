@@ -1,0 +1,10 @@
+{
+  "entity": "minecraft:panda",
+  "name": "Pandas",
+  "weight": 1,
+  "count": {
+    "min": 2,
+    "max": 3
+  },
+  "habitat": "cityworld:bamboo_grove"
+}

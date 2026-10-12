@@ -184,6 +184,31 @@ public class SpawnProvider extends Provider {
         }
     }
 
+    /** How a zoo resident is spawned (see {@link #spawnZooAnimals}); null for everything else. */
+    private record ZooSpawn(boolean finalizeSpawn, float babyChance) {
+    }
+
+    /**
+     * A zoo pen's residents: {@code count} of {@code entity} around (x, z), a {@code babyChance} of each being a
+     * baby, and {@code finalizeSpawn} false to skip the mob's spawn setup (a modded mob whose setup reads the world
+     * is not safe on a worldgen thread). Like every animal, none in a decayed world, and each one subject to the
+     * world's {@code spawnAnimals} odds.
+     */
+    public final void spawnZooAnimals(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y,
+            int z, EntityType entity, int count, float babyChance, boolean finalizeSpawn, boolean ignoreFlood) {
+        if (generator.getSettings().includeDecayedBuildings || entity == null)
+            return;
+        ZooSpawn zoo = new ZooSpawn(finalizeSpawn, babyChance);
+        int[][] around = { { 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 1 }, { -1, 0 }, { 0, -1 }, { -1, -1 }, { 1, -1 },
+                { -1, 1 }, { 2, 0 }, { 0, 2 }, { -2, 0 } };
+        for (int i = 0; i < count; i++) {
+            int[] d = around[i % around.length];
+            int ax = x + d[0], az = z + d[1];
+            if (odds.playOdds(generator.getSettings().spawnAnimals) && blocks.insideXYZ(ax, y, az))
+                spawnEntity(generator, blocks, odds, ax, y, az, entity, ignoreFlood, true, null, zoo);
+        }
+    }
+
     private void spawnAnimal(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
             EntityType entity, boolean ignoreFlood) {
         if (odds.playOdds(generator.getSettings().spawnAnimals) && blocks.insideXYZ(x, y, z))
@@ -393,6 +418,11 @@ public class SpawnProvider extends Provider {
     /** As above, but if {@code workerProfession} is set the villager is employed into that trade. */
     private void spawnEntity(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
             EntityType entity, boolean ignoreFlood, boolean ensureSpace, ResourceLocation workerProfession) {
+        spawnEntity(generator, blocks, odds, x, y, z, entity, ignoreFlood, ensureSpace, workerProfession, null);
+    }
+
+    private void spawnEntity(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
+            EntityType entity, boolean ignoreFlood, boolean ensureSpace, ResourceLocation workerProfession, ZooSpawn zoo) {
         if (!blocks.insideXYZ(x, y, z) || entity == null)
             return;
 
@@ -425,13 +455,13 @@ public class SpawnProvider extends Provider {
             if (ensureSpace)
                 blocks.clearBlocks(x, y, y + 2, z);
 
-            placeEntity(generator, odds, at, entity, workerProfession);
+            placeEntity(generator, odds, at, entity, workerProfession, zoo);
         }
     }
 
     /** The three-step vanilla worldgen spawn — see this class's notes. */
     private void placeEntity(CityWorldGenerator generator, Odds odds, Location at, EntityType entity,
-            ResourceLocation workerProfession) {
+            ResourceLocation workerProfession, ZooSpawn zoo) {
         LevelAccessor level = at.getLevel();
         if (!(level instanceof ServerLevelAccessor server))
             return;
@@ -455,9 +485,17 @@ public class SpawnProvider extends Provider {
         // their say on our mobs. It must follow snapTo, since the event reports the mob's position.
         // A cancelled spawn needs no handling on our side — Forge marks the mob and
         // WorldGenRegion.addFreshEntity drops it.
-        if (being instanceof Mob mob)
+        if (being instanceof Mob mob && (zoo == null || zoo.finalizeSpawn()))
             EventHooks.finalizeMobSpawn(mob, server, server.getCurrentDifficultyAt(mob.blockPosition()),
                     reason, null);
+        // a zoo's young, after the spawn setup (which may roll its own baby); and a zoo animal stays put
+        if (zoo != null) {
+            if (being instanceof net.minecraft.world.entity.AgeableMob young && zoo.babyChance() > 0
+                    && odds.getRandomDouble() < zoo.babyChance())
+                young.setBaby(true);
+            if (being instanceof Mob kept)
+                kept.setPersistenceRequired();
+        }
 
         being.setDeltaMovement(odds.getRandomVelocity());
         if (KEEP.get() && being instanceof net.minecraft.world.entity.animal.Bucketable kept)

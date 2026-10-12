@@ -2,7 +2,6 @@ package me.daddychurchill.CityWorld.Plats.Urban;
 
 import me.daddychurchill.CityWorld.compat.BiomeGrid;
 import me.daddychurchill.CityWorld.compat.BlockFace;
-import me.daddychurchill.CityWorld.compat.EntityType;
 import me.daddychurchill.CityWorld.compat.Material;
 
 import me.daddychurchill.CityWorld.CityWorldGenerator;
@@ -11,45 +10,26 @@ import me.daddychurchill.CityWorld.Plats.IsolatedLot;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
-import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
+import me.daddychurchill.CityWorld.Support.ZooEnclosure;
+import me.daddychurchill.CityWorld.worldgen.ZooCatalog;
 
 /**
- * A single zoo enclosure: a fenced pen of themed ground with a matching animal and a name sign. One of a
- * handful of themes is rolled per lot (pandas in bamboo, camels in the desert, a frog pool, …). Placed
- * rarely as a one-off (like the barn/fish-pond), so a run of them reads as a little zoo. This is CityWorld's
- * home for the animals that don't turn up in the farms and fields.
+ * A single zoo enclosure: a fenced pen of habitat with its animals and a name sign. The resident is a weighted
+ * pick from the zoo catalog ({@link ZooCatalog}: {@code data/<ns>/cityworld/zoo/animal} and {@code .../habitat}),
+ * which ships CityWorld's ten (pandas in bamboo, camels in the desert, a frog pool, ...) and takes any a pack or
+ * a zoo mod adds. Placed rarely as a one-off (like the barn/fish-pond), so a run of them reads as a little zoo.
+ * This is CityWorld's home for the animals that don't turn up in the farms and fields.
  */
 public class ZooLot extends IsolatedLot {
 
-    private enum Theme {
-        PANDA("Pandas", EntityType.PANDA),
-        CAMEL("Camels", EntityType.CAMEL),
-        FROG("Frogs", EntityType.FROG),
-        POLAR("Polar Bears", EntityType.POLAR_BEAR),
-        FOX("Foxes", EntityType.FOX),
-        GOAT("Goats", EntityType.GOAT),
-        PARROT("Parrots", EntityType.PARROT),
-        BEE("Bees", EntityType.BEE),
-        AXOLOTL("Axolotls", EntityType.AXOLOTL),
-        TURTLE("Turtles", EntityType.TURTLE);
-
-        final String name;
-        final EntityType animal;
-
-        Theme(String name, EntityType animal) {
-            this.name = name;
-            this.animal = animal;
-        }
-    }
-
-    private final Theme theme;
+    private final ZooCatalog.Entry resident;
 
     public ZooLot(PlatMap platmap, int chunkX, int chunkZ) {
         super(platmap, chunkX, chunkZ);
         style = LotStyle.STRUCTURE;
-        theme = Theme.values()[chunkOdds.getRandomInt(Theme.values().length)];
+        resident = ZooCatalog.pick(chunkOdds, false);
     }
 
     @Override
@@ -59,6 +39,12 @@ public class ZooLot extends IsolatedLot {
 
     @Override
     public boolean allowsWildDecoration() {
+        return false;
+    }
+
+    /** The habitat is the pen's ground: the biome-ground pass would turn a jungle pen's grass to snow. */
+    @Override
+    protected boolean wantsBiomeGround() {
         return false;
     }
 
@@ -84,126 +70,34 @@ public class ZooLot extends IsolatedLot {
     protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
             DataContext context, int platX, int platZ) {
         int y = generator.streetLevel;
-        generator.reportLocation("zoo", "Zoo: " + theme.name, chunk);
+        String name = resident.animal().name();
+        ZooCatalog.Habitat habitat = resident.habitat();
+        generator.reportLocation("zoo", "Zoo: " + name, chunk);
 
-        // themed ground across the pen interior
-        chunk.setLayer(y, groundFor(theme));
+        // the habitat's ground across the lot
+        chunk.setLayer(y, ZooCatalog.Habitat.block(habitat.ground(), Material.GRASS_BLOCK));
 
-        // a low fence pen (inset 2) with a gate on the south side — connected fences (not loose posts)
+        // a pen (inset 2) with a gate on the south side — connected fences (not loose posts), higher for a
+        // tall animal
         int oX = chunk.getOriginX(), oZ = chunk.getOriginZ();
-        me.daddychurchill.CityWorld.Support.ZooEnclosure.fencePerimeter(chunk, oX + 2, oX + 13, oZ + 2, oZ + 13,
-                y + 1, y + 2);
-        chunk.setGate(7, y + 1, 13, Material.OAK_FENCE_GATE, BlockFace.SOUTH, false);
+        int penX1 = oX + 2, penX2 = oX + 13, penZ1 = oZ + 2, penZ2 = oZ + 13;
+        ZooEnclosure.fencePerimeter(chunk, penX1, penX2, penZ1, penZ2, y + 1, y + ZooEnclosure.fenceHeight(resident),
+                ZooCatalog.Habitat.block(habitat.fence(), Material.OAK_FENCE));
+        chunk.setGate(7, y + 1, 13, ZooCatalog.Habitat.block(habitat.gate(), Material.OAK_FENCE_GATE), BlockFace.SOUTH,
+                false);
 
-        // theme features + a pool where the animal wants water
-        boolean pool = theme == Theme.FROG || theme == Theme.AXOLOTL || theme == Theme.TURTLE
-                || theme == Theme.POLAR;
-        if (pool)
-            digPool(chunk, y);
-        addFeatures(generator, chunk, odds(), y);
+        // pool, rocks, trees and plants
+        ZooEnclosure.furnish(chunk, habitat, penX1, penX2, penZ1, penZ2, y, 3, chunkOdds);
+        if (generator.getSettings().includeDecayedBuildings)
+            ZooEnclosure.breakOpen(chunk, penX1, penX2, penZ1, penZ2, y + 1, y + ZooEnclosure.fenceHeight(resident));
 
         // a name sign on a post at the pen's front-left corner — a plain standing signpost
         chunk.setBlock(3, y + 1, 2, Material.OAK_FENCE);
-        chunk.setSignPost(3, y + 2, 2, Material.OAK_SIGN, BlockFace.SOUTH, new String[] { "The Zoo", theme.name });
+        chunk.setSignPost(3, y + 2, 2, Material.OAK_SIGN, BlockFace.SOUTH, new String[] { "The Zoo", name });
 
         // and the residents
-        stock(generator, chunk, y);
-    }
-
-    private Odds odds() {
-        return chunkOdds;
-    }
-
-    private static Material groundFor(Theme t) {
-        return switch (t) {
-        case PANDA, PARROT -> Material.GRASS_BLOCK;
-        case CAMEL, TURTLE -> Material.SAND;
-        case FROG -> Material.MUD;
-        case POLAR -> Material.SNOW_BLOCK;
-        case FOX -> Material.PODZOL;
-        case GOAT -> Material.STONE_BRICKS;
-        case BEE -> Material.GRASS_BLOCK;
-        case AXOLOTL -> Material.MOSS_BLOCK;
-        };
-    }
-
-    /** A shallow water pool in the pen centre for the water-loving animals. */
-    private void digPool(RealBlocks chunk, int y) {
-        chunk.setBlocks(5, 11, y - 1, y + 1, 5, 11, Material.WATER);
-        if (theme == Theme.POLAR) {
-            chunk.setBlock(5, y, 5, Material.PACKED_ICE);
-            chunk.setBlock(10, y, 10, Material.PACKED_ICE);
-        }
-    }
-
-    private void addFeatures(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int y) {
-        switch (theme) {
-        case PANDA -> {
-            for (int i = 0; i < 10; i++)
-                bamboo(chunk, odds, 3 + odds.getRandomInt(9), y, 3 + odds.getRandomInt(9));
-            smallTree(chunk, 5, y, 9, Material.JUNGLE_LOG, Material.JUNGLE_LEAVES);
-        }
-        case CAMEL -> {
-            for (int i = 0; i < 5; i++)
-                cactus(chunk, odds, 3 + odds.getRandomInt(9), y, 3 + odds.getRandomInt(9));
-            chunk.setBlock(6, y + 1, 6, Material.DEAD_BUSH);
-        }
-        case FROG -> {
-            chunk.setBlock(6, y + 1, 6, Material.LILY_PAD);
-            chunk.setBlock(9, y + 1, 8, Material.LILY_PAD);
-            chunk.setBlocks(4, y + 1, y + 3, 4, Material.MANGROVE_ROOTS);
-        }
-        case AXOLOTL -> {
-            chunk.setBlock(6, y, 6, Material.POINTED_DRIPSTONE);
-            chunk.setBlock(9, y - 1, 9, Material.DRIPSTONE_BLOCK);
-        }
-        case TURTLE -> chunk.setBlock(4, y + 1, 4, Material.SUGAR_CANE);
-        case FOX -> {
-            smallTree(chunk, 5, y, 5, Material.SPRUCE_LOG, Material.SPRUCE_LEAVES);
-            smallTree(chunk, 10, y, 9, Material.SPRUCE_LOG, Material.SPRUCE_LEAVES);
-        }
-        case PARROT -> smallTree(chunk, 7, y, 7, Material.JUNGLE_LOG, Material.JUNGLE_LEAVES);
-        case GOAT -> {
-            chunk.setBlocks(6, 9, y + 1, y + 3, 6, 9, Material.STONE_BRICKS); // a little crag to climb
-        }
-        case BEE -> {
-            smallTree(chunk, 7, y, 7, Material.OAK_LOG, Material.OAK_LEAVES);
-            // nestle the hive in the canopy edge (a leaf spot), not buried in the trunk — the persistent
-            // leaves around it keep the canopy from rotting
-            chunk.setBlock(8, y + 4, 7, Material.BEE_NEST);
-            chunk.setBlock(4, y + 1, 5, Material.DANDELION);
-            chunk.setBlock(10, y + 1, 6, Material.POPPY);
-        }
-        case POLAR -> {
-        }
-        }
-    }
-
-    private void bamboo(RealBlocks chunk, Odds odds, int x, int y, int z) {
-        if (!chunk.isEmpty(x, y + 1, z))
-            return;
-        int h = 2 + odds.getRandomInt(3);
-        chunk.setBlocks(x, y + 1, y + 1 + h, z, Material.BAMBOO);
-    }
-
-    private void cactus(RealBlocks chunk, Odds odds, int x, int y, int z) {
-        if (!chunk.isEmpty(x, y + 1, z))
-            return;
-        chunk.setBlocks(x, y + 1, y + 2 + odds.getRandomInt(2), z, Material.CACTUS);
-    }
-
-    private void smallTree(RealBlocks chunk, int x, int y, int z, Material log, Material leaves) {
-        chunk.setBlocks(x, y + 1, y + 4, z, log);
-        // PERSISTENT leaves so the small canopy never rots (it's often too far from the short trunk)
-        for (int lx = x - 1; lx < x + 2; lx++)
-            for (int ly = y + 4; ly < y + 6; ly++)
-                for (int lz = z - 1; lz < z + 2; lz++)
-                    chunk.setLeaves(lx, ly, lz, leaves);
-        chunk.setLeaves(x, y + 6, z, leaves);
-    }
-
-    private void stock(CityWorldGenerator generator, RealBlocks chunk, int y) {
-        generator.spawnProvider.spawnAnimals(generator, chunk, chunkOdds, 7, y + 1, 7, theme.animal);
-        generator.spawnProvider.spawnAnimals(generator, chunk, chunkOdds, 9, y + 1, 8, theme.animal);
+        generator.spawnProvider.spawnZooAnimals(generator, chunk, chunkOdds, 7, y + 1, 7, resident.entity(),
+                resident.animal().count().roll(chunkOdds), resident.animal().babyChance(),
+                resident.animal().finalizeSpawn(), false);
     }
 }

@@ -1,0 +1,10 @@
+{
+  "ground": "minecraft:sand",
+  "water": "pool",
+  "scatter": [
+    {
+      "block": "minecraft:gravel",
+      "chance": 0.05
+    }
+  ]
+}
