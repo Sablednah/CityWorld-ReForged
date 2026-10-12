@@ -40,6 +40,18 @@ pushed (`master` plus the five branches at their 6.1.0 bump). Open items:
 - The owner's test seeds: CityWorld land 5670300453504745606 (his mountain, the falls, both mouths), vanilla land
   1688298913692546204 (the bridge at x 704–751 z −1000; quays at 661,−824 and 712,−1095).
 
+**v6.3.0 is released** (2026-10-12) on all six lines — tag `v6.3.0` (`1b243627`), CurseForge 9146620–9146626, fleet
+`DEPLOYED-v6.3.0` on 11 (ZARP has a hand-copied pre-release test jar of the same code, `915a2f5b`, and its 6.0.0 jar in
+`LegendQuest ZARP/cityworld-released-backup/`): **radio towers have a hut you can walk into** (`RadioTowerLot`: 4x4
+room three high, door by the ladder, pooled chair + table, lantern, one chest on `cityworld:chests/radio_tower` + the
+`_extra` hook — the ONLY container on that table, and decay runs before the fit-out, because ZARP's quest "The
+Signal" adds guaranteed loot to it by an `add_table` loot modifier), and **hospital medicine chests keep their
+medicine** — a chest with a loot table AND real items saves no items in vanilla, and Lootr's swap
+(`setBlock` flag 2) spills them (153 potions + 51 paper on one hospital's floors, 0 after). Gates: six self-tests
+PASS on the code heads, CI green on the bump heads, halt/exit 0 after a synthetic positive, 1.20.1 reobfuscated
+(489 SRG methods). **NeoForge 26.3 left beta at 26.3.0.76**; the 26.3 line compiles against it (ships on .58-beta,
+range `[26.3.0.20-beta,26.4)` admits it).
+
 **v6.2.0 is released** (2026-10-10) on all six lines — tag `v6.2.0` (`87005e1f`), CurseForge 9123060–9123068, fleet
 `DEPLOYED-v6.2.0` on 11: **Working lights off puts out every light CityWorld draws** (all three block seams —
 `InitialBlocks.put`, `compat/Block.setBlockData`, schematics — run `CityWorldDataMaps.substitute` with lights off:
