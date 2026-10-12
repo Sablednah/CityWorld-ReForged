@@ -1,0 +1,22 @@
+{
+  "ground": "minecraft:podzol",
+  "scatter": [
+    {
+      "block": "minecraft:coarse_dirt",
+      "chance": 0.1
+    }
+  ],
+  "trees": [
+    {
+      "log": "minecraft:spruce_log",
+      "leaves": "minecraft:spruce_leaves",
+      "count": 2
+    }
+  ],
+  "plants": [
+    {
+      "block": "minecraft:sweet_berry_bush",
+      "count": 2
+    }
+  ]
+}

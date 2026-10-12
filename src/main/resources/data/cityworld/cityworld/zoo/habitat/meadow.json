@@ -1,0 +1,25 @@
+{
+  "ground": "minecraft:grass_block",
+  "trees": [
+    {
+      "log": "minecraft:oak_log",
+      "leaves": "minecraft:oak_leaves",
+      "count": 1,
+      "hive": "minecraft:bee_nest"
+    }
+  ],
+  "plants": [
+    {
+      "block": "minecraft:dandelion",
+      "count": 2
+    },
+    {
+      "block": "minecraft:poppy",
+      "count": 2
+    },
+    {
+      "block": "minecraft:cornflower",
+      "count": 1
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "entity": "minecraft:polar_bear",
+  "name": "Polar Bears",
+  "weight": 1,
+  "count": {
+    "min": 1,
+    "max": 2
+  },
+  "habitat": "cityworld:arctic"
+}
