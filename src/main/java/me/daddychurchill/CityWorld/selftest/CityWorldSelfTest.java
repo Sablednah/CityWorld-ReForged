@@ -212,6 +212,7 @@ public final class CityWorldSelfTest {
             checkAirships(server);
             checkAirshipHeadings();
             checkVaultRegions();
+            checkZooCatalog();
             checkReservedSite(server); // last: it changes the plan (far from everything else checked)
             checkDirectLoad(server); // truly last: if it finds a deadlock the server thread never answers again
         } catch (Throwable t) {
@@ -2227,6 +2228,41 @@ public final class CityWorldSelfTest {
      * 90 s -> 15 s difference). That is only sound while every planned vault lies in one, so plan an APOCALYPSE
      * disc in full and check it — a vault outside a region would be a vault the API can never find.
      */
+    /**
+     * The zoo catalog ({@code cityworld:zoo/animal} + {@code .../habitat}) loaded CityWorld's ten residents, and every
+     * block a habitat names exists — a typo there would otherwise draw the fallback (grass, an oak fence) quietly.
+     */
+    private void checkZooCatalog() {
+        var entries = me.daddychurchill.CityWorld.worldgen.ZooCatalog.entries();
+        report.put("zoo.animals", String.valueOf(entries.size()));
+        java.util.Set<String> ids = new java.util.TreeSet<>();
+        for (var e : entries)
+            ids.add(e.id());
+        for (String want : List.of("panda", "camel", "frog", "polar_bear", "fox", "goat", "parrot", "bee", "axolotl",
+                "turtle"))
+            if (!ids.contains("cityworld:" + want))
+                fail("zoo catalog: cityworld:" + want + " not loaded (" + ids + ")");
+        List<String> unknown = new ArrayList<>();
+        for (var e : entries) {
+            var h = e.habitat();
+            List<String> blocks = new ArrayList<>(List.of(h.ground(), h.fence(), h.gate()));
+            h.scatter().forEach(x -> blocks.add(x.block()));
+            h.plants().forEach(x -> blocks.add(x.block()));
+            h.rocks().forEach(x -> blocks.add(x.block()));
+            h.poolBlocks().forEach(x -> blocks.add(x.block()));
+            h.trees().forEach(t -> {
+                blocks.add(t.log());
+                blocks.add(t.leaves());
+                t.hive().ifPresent(blocks::add);
+            });
+            for (String b : blocks)
+                if (me.daddychurchill.CityWorld.worldgen.ZooCatalog.Habitat.block(b, null) == null)
+                    unknown.add(e.id() + ":" + b);
+        }
+        if (!unknown.isEmpty())
+            fail("zoo habitats name unknown blocks: " + unknown);
+    }
+
     private void checkVaultRegions() {
         CityWorldGenerator plan = new CityWorldGenerator(PLAN_SEED, 256, 63, WorldStyle.APOCALYPSE, -64, 320,
                 java.util.Optional.empty(), me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.DEFAULT);

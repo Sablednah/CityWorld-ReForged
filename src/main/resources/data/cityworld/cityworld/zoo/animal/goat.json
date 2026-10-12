@@ -1,0 +1,10 @@
+{
+  "entity": "minecraft:goat",
+  "name": "Goats",
+  "weight": 1,
+  "count": {
+    "min": 2,
+    "max": 4
+  },
+  "habitat": "cityworld:crag"
+}

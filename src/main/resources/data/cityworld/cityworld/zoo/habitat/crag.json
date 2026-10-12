@@ -1,0 +1,19 @@
+{
+  "ground": "minecraft:stone_bricks",
+  "scatter": [
+    {
+      "block": "minecraft:cobblestone",
+      "chance": 0.15
+    }
+  ],
+  "rocks": [
+    {
+      "block": "minecraft:stone_bricks",
+      "count": 1,
+      "height": {
+        "min": 2,
+        "max": 3
+      }
+    }
+  ]
+}

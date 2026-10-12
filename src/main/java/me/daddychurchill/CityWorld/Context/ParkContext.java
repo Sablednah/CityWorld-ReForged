@@ -97,14 +97,14 @@ public class ParkContext extends UrbanContext {
 	 *  its own slice of the shared structure (the {@code ClipboardLot} pattern). */
 	private void claim(PlatMap platmap, int px, int pz, int sx, int sz, int kind, Odds odds) {
 		int biome = odds.getRandomInt(BigBiodomeLot.BIOMES);
-		int theme = odds.getRandomInt(BigZooLot.THEMES);
+		String animal = me.daddychurchill.CityWorld.worldgen.ZooCatalog.pick(odds, true).id();
 		boolean sunken = odds.flipCoin();
 		for (int x = 0; x < sx; x++)
 			for (int z = 0; z < sz; z++) {
 				int cx = platmap.originX + px + x, cz = platmap.originZ + pz + z;
 				PlatLot lot = switch (kind) {
 				case 0 -> new BigBiodomeLot(platmap, cx, cz, sx, sz, x, z, biome);
-				case 1 -> new BigZooLot(platmap, cx, cz, sx, sz, x, z, theme, sunken);
+				case 1 -> new BigZooLot(platmap, cx, cz, sx, sz, x, z, animal, sunken);
 				case 2 -> new BiodomeLot(platmap, cx, cz);
 				default -> new ZooLot(platmap, cx, cz);
 				};

@@ -1,0 +1,17 @@
+{
+  "ground": "minecraft:moss_block",
+  "water": "pool",
+  "pool_blocks": [
+    {
+      "block": "minecraft:dripstone_block",
+      "count": 2,
+      "surface": true
+    }
+  ],
+  "plants": [
+    {
+      "block": "minecraft:moss_carpet",
+      "count": 3
+    }
+  ]
+}
