@@ -1,0 +1,17 @@
+{
+  "ground": "minecraft:sand",
+  "plants": [
+    {
+      "block": "minecraft:cactus",
+      "count": 5,
+      "height": {
+        "min": 1,
+        "max": 2
+      }
+    },
+    {
+      "block": "minecraft:dead_bush",
+      "count": 2
+    }
+  ]
+}

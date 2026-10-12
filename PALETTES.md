@@ -322,6 +322,69 @@ Palettes that are a **deliberate look** rather than "all of a family" are not ta
 to be extended: the muted greyscale of unfinished buildings, the pale civic palette of government
 offices, and the ordered road and maze lists.
 
+### Zoos
+
+What lives in CityWorld's zoos is data too — two **datapack registries**, so a pack or a zoo mod can add animals
+(any mod's mobs, or vanilla's) and their enclosures without touching CityWorld. A zoo pen picks its resident by
+weight from every animal registered; CityWorld's own ten (pandas, camels, frogs, polar bears, foxes, goats,
+parrots, bees, axolotls, turtles) are ordinary entries in `data/cityworld/cityworld/zoo/`.
+
+**An animal** — `data/<namespace>/cityworld/zoo/animal/<name>.json`:
+
+```json
+{
+  "entity": "examplezoo:giraffe",
+  "name": "Giraffes",
+  "weight": 2,
+  "count": { "min": 2, "max": 4 },
+  "baby_chance": 0.25,
+  "size": "tall",
+  "habitat": "examplezoo:savanna",
+  "requires_mod": "examplezoo",
+  "finalize": true
+}
+```
+
+| Field | Default | Meaning |
+|---|---|---|
+| `entity` | — | the mob's id |
+| `name` | — | the name on the pen's sign |
+| `weight` | `1` | how often it is picked against the others; `0` removes it |
+| `count` | `2`–`4` | how many in a pen |
+| `baby_chance` | `0` | the chance each one is a baby |
+| `size` | `small` | `small` fits any pen; `large` only a big multi-chunk one; `tall` any pen, with a four-high fence |
+| `habitat` | — | the id of a habitat (below) |
+| `requires_mod` | — | skip this animal unless that mod is installed |
+| `finalize` | `true` | `false` skips the mob's spawn setup — for a modded mob that reads the world while it is set up, which is not safe while a world is generating |
+
+An animal whose entity is not registered, whose `requires_mod` is missing or whose habitat does not exist is
+skipped quietly, so a pack can carry entries for mods that may not be installed. To take one of CityWorld's own
+out, ship the same file (`data/cityworld/cityworld/zoo/animal/panda.json`) with `"weight": 0`. Zoo animals never
+despawn. In a decayed world (APOCALYPSE) the pens are broken open and empty: the animals are long gone.
+
+**A habitat** — `data/<namespace>/cityworld/zoo/habitat/<name>.json`:
+
+```json
+{
+  "ground": "minecraft:coarse_dirt",
+  "scatter": [ { "block": "minecraft:grass_block", "chance": 0.3 } ],
+  "water": "pool",
+  "pool_blocks": [ { "block": "minecraft:lily_pad", "count": 2 } ],
+  "plants": [ { "block": "minecraft:short_grass", "count": 6 },
+              { "block": "minecraft:sugar_cane", "count": 1, "height": { "min": 1, "max": 3 } } ],
+  "trees": [ { "log": "minecraft:acacia_log", "leaves": "minecraft:acacia_leaves", "count": 1 } ],
+  "rocks": [ { "block": "minecraft:granite", "count": 1, "height": { "min": 1, "max": 2 } } ],
+  "fence": "minecraft:dark_oak_fence",
+  "gate": "minecraft:dark_oak_fence_gate"
+}
+```
+
+`ground` covers the pen and `scatter` replaces it here and there; `water` is `none` or a `pool` in the middle,
+with `pool_blocks` floating on it (`"surface": true` puts one *in* the water's top, like ice); `plants` stand on the
+dry floor as a column `height` high; `trees` are short trees with an optional `hive` in the leaves; `rocks` are 3×3
+crags to climb. Counts are per pen, or per chunk of a big pen. `fence` must be something that joins up like a
+fence — a fence, iron bars, a glass pane. The sign, the gate's place and the pen's shape are CityWorld's.
+
 ## Writing a compatibility pack
 
 A pack is just tag files. To add a mod's wood to every wooden thing CityWorld builds, create:

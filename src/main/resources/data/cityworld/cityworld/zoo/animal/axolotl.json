@@ -1,0 +1,10 @@
+{
+  "entity": "minecraft:axolotl",
+  "name": "Axolotls",
+  "weight": 1,
+  "count": {
+    "min": 2,
+    "max": 4
+  },
+  "habitat": "cityworld:cave_pool"
+}
