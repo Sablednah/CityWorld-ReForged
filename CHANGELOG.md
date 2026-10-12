@@ -5,6 +5,24 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **Zoos are data.** Which animals live in CityWorld's zoos, and the habitat each pen gets, now come from two
+  datapack registries — `cityworld:zoo/animal` (the mob, its sign name, weight, how many, a baby chance, a pen size
+  — `small`, `large` for the big multi-chunk pens, `tall` with a four-high fence — its habitat, an optional
+  `requires_mod`) and `cityworld:zoo/habitat` (ground and scatter, a pool, plants, trees with a hive, rocks to
+  climb, the fence and gate). A pack or a zoo mod adds any mob, vanilla or modded; an entry whose mod or mob is not
+  installed is skipped quietly; `"weight": 0` takes one of CityWorld's out. CityWorld's ten residents ship as data,
+  so default zoos hold the same animals (a given zoo may hold a different one than before). Formats in
+  PALETTES.md.
+
+### Changed
+
+- Zoo pens keep their habitat's ground in cold and sandy biomes (a bamboo pen in an ice-spikes biome was snow), zoo
+  animals no longer despawn, and in a decayed world the pens are broken open.
+
 ## 6.3.0
 
 ### Added
