@@ -13,6 +13,12 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+**New in 6.3.0: a radio tower you can walk into.** The hut on every radio tower is now a room — a door beside the
+ladder, windows, a lantern, the operator's chair at a table (your furniture mod's own, if you have one) and a chest
+of spares: copper, redstone, repeaters, comparators and the like, from its own loot table, one per tower even in a
+ruined world. And hospital medicine chests keep their Potions of Healing and bandages now — with Lootr installed
+they used to spill them across the floor.
+
 **New in 6.2.0: the lights go out, and the vault goes deeper.** Switch **Working lights** off in Customize and the
 city really goes dark now — every lantern, lamp, torch and candle CityWorld places, and most mods' lights, is placed
 burnt out (before, only the streetlights went out). The ruined city's **vault keeps its own power**, and is now
@@ -27,20 +33,11 @@ snow-capped spruce. Warm mountains now carry **savanna, forest and jungle up to 
 lays them out, and the windswept hills keep to the cold and temperate country. Biome sizes are unchanged; only
 newly generated highlands differ.
 
-**New in 6.0.0: rivers, and the city meets the water.** CityWorld's own land now has **rivers**: springs high in
-the mountains run down in gullies and **waterfalls**, through lakes and across the plain to the sea, widening as
-they go and joining as they meet. Where they cross a city the **waterside follows the district** — stone **quays**
-with promenades, jetties, slips and loading cranes downtown and in industry, a **harbour district** where a river
-reaches the sea, **city beaches** and **lighthouses** on the coast, and the natural bank with an old plank jetty
-out in the suburbs and farms — on CityWorld land and vanilla land alike. Streets bridge the rivers or cross small
-streams flat. And look behind the falls: some hide crystals, ore that has no business being there, or, very
-rarely, a chest someone left there long ago. (Rivers are on for new worlds; Customize → Land → Rivers. Vanilla-land
-worlds from 5.19 are best started fresh.) For modpack makers there is a sample datapack that turns on every
-vanilla structure, one file to copy and edit:
-[All Vanilla Structures](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/all-vanilla-structures-1.0.0).
-
 **Other recent changes**
 
+- **6.0.0** — rivers on CityWorld's own land, with waterfalls and hidden finds behind them; the waterside follows the
+  district (quays, slips, harbours, beaches, lighthouses); the [All Vanilla Structures](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/all-vanilla-structures-1.0.0)
+  sample datapack.
 - **5.19.0** — cities in a vanilla world: pick Land — Vanilla, cities apart in Customize for vanilla terrain with a
   CityWorld city every so often, rivers running through it with quays and bridges; and the Neutral Palette add-on
   ([GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/neutral-palette-1.0.0)).
