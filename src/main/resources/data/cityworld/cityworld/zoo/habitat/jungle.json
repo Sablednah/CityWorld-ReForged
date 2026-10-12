@@ -1,0 +1,16 @@
+{
+  "ground": "minecraft:grass_block",
+  "trees": [
+    {
+      "log": "minecraft:jungle_log",
+      "leaves": "minecraft:jungle_leaves",
+      "count": 1
+    }
+  ],
+  "plants": [
+    {
+      "block": "minecraft:fern",
+      "count": 3
+    }
+  ]
+}
