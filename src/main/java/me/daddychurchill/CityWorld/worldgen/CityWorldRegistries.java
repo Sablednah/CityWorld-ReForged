@@ -67,5 +67,8 @@ public final class CityWorldRegistries {
         // Unsynced (no network codec): the settings only drive server-side worldgen, so a client need
         // not carry them — and the mod itself is required on both sides for the custom generator.
         event.dataPackRegistry(WORLD_SETTINGS, CityWorldSettingsData.CODEC);
+        // what lives in the zoos (ZooCatalog) — server-side worldgen data too
+        event.dataPackRegistry(ZooCatalog.ANIMALS, ZooCatalog.Animal.CODEC);
+        event.dataPackRegistry(ZooCatalog.HABITATS, ZooCatalog.Habitat.CODEC);
     }
 }

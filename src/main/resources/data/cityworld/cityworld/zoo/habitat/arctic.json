@@ -1,0 +1,11 @@
+{
+  "ground": "minecraft:snow_block",
+  "water": "pool",
+  "pool_blocks": [
+    {
+      "block": "minecraft:packed_ice",
+      "count": 3,
+      "surface": true
+    }
+  ]
+}

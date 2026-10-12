@@ -1,0 +1,26 @@
+{
+  "ground": "minecraft:grass_block",
+  "scatter": [
+    {
+      "block": "minecraft:podzol",
+      "chance": 0.08
+    }
+  ],
+  "plants": [
+    {
+      "block": "minecraft:bamboo",
+      "count": 10,
+      "height": {
+        "min": 2,
+        "max": 4
+      }
+    }
+  ],
+  "trees": [
+    {
+      "log": "minecraft:jungle_log",
+      "leaves": "minecraft:jungle_leaves",
+      "count": 1
+    }
+  ]
+}
