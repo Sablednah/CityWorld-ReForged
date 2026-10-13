@@ -23,6 +23,12 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 - Zoo pens keep their habitat's ground in cold and sandy biomes (a bamboo pen in an ice-spikes biome was snow), zoo
   animals no longer despawn, and in a decayed world the pens are broken open.
 
+### Fixed
+
+- **Creating a world could hang at "Preparing spawn area"** (since 6.0.0, now and then). A worker waiting for
+  another's river plan picked up a neighbouring chunk meanwhile, and that chunk needed the plan the worker was
+  itself building, so it waited on itself. Waiting threads now just wait.
+
 ## 6.3.0
 
 ### Added
