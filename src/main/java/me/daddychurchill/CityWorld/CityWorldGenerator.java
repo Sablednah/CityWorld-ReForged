@@ -727,7 +727,7 @@ public class CityWorldGenerator {
         java.util.concurrent.CompletableFuture<PlatMap> mine = new java.util.concurrent.CompletableFuture<>();
         java.util.concurrent.CompletableFuture<PlatMap> claimed = platmaps.putIfAbsent(platkey, mine);
         if (claimed != null)
-            return claimed.join();
+            return me.daddychurchill.CityWorld.worldgen.Waiting.join(claimed); // never join() here: see Waiting
         try {
             PlatMap built = new PlatMap(this, shapeProvider, platX, platZ);
             mine.complete(built);

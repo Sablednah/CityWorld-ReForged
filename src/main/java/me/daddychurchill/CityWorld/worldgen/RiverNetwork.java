@@ -445,7 +445,7 @@ public final class RiverNetwork {
                 return mine.join();
             }
         }
-        return known.join();
+        return Waiting.join(known); // never join() here: see Waiting
     }
 
     public Course trace(long spring) {
