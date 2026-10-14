@@ -13,6 +13,12 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+**New in 6.4.0: zoos for any animal, and a fix for worlds hanging.** Which animals live in CityWorld's zoos, and
+the habitat each pen gets, now come from datapacks: a pack or a zoo mod can add any mob, vanilla or modded, with its
+own ground, pool, plants, trees and rocks to climb, and a fence tall enough for a giraffe. Zoo animals no longer
+despawn, and pens keep their habitat's ground in snowy and sandy biomes. And creating a world could, now and then,
+hang at "Preparing spawn area" since 6.0.0 — fixed.
+
 **New in 6.3.0: a radio tower you can walk into.** The hut on every radio tower is now a room — a door beside the
 ladder, windows, a lantern, the operator's chair at a table (your furniture mod's own, if you have one) and a chest
 of spares: copper, redstone, repeaters, comparators and the like, from its own loot table, one per tower even in a
@@ -26,15 +32,10 @@ burnt out (before, only the streetlights went out). The ruined city's **vault ke
 its rooms overrun — by the sixth level the lights are mostly dead, and the bottom floor is dark, wrecked and full
 of spawners.
 
-**New in 6.1.0: no more snow over the jungle.** A player noticed cold and tropical biomes side by side with no
-transition. The climate itself was never the problem — it was the mountains: every warm highland was windswept
-hills and forest, which Minecraft snows above a certain height, so a jungle or savanna climbed straight into
-snow-capped spruce. Warm mountains now carry **savanna, forest and jungle up to stony peaks**, the way vanilla
-lays them out, and the windswept hills keep to the cold and temperate country. Biome sizes are unchanged; only
-newly generated highlands differ.
-
 **Other recent changes**
 
+- **6.1.0** — no more snow over the jungle: warm mountains carry savanna, forest and jungle up to stony peaks, the
+  way vanilla lays them out.
 - **6.0.0** — rivers on CityWorld's own land, with waterfalls and hidden finds behind them; the waterside follows the
   district (quays, slips, harbours, beaches, lighthouses); the [All Vanilla Structures](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/all-vanilla-structures-1.0.0)
   sample datapack.
