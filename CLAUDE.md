@@ -40,6 +40,18 @@ pushed (`master` plus the five branches at their 6.1.0 bump). Open items:
 - The owner's test seeds: CityWorld land 5670300453504745606 (his mountain, the falls, both mouths), vanilla land
   1688298913692546204 (the bridge at x 704–751 z −1000; quays at 661,−824 and 712,−1095).
 
+**v6.4.0 is released** (2026-10-15) on all six lines — tag `v6.4.0` (`e6c6686b`), CurseForge 9184970–9184975, fleet
+`DEPLOYED-v6.4.0` on 11 (ZARP opts out): **zoos are data** (`worldgen/ZooCatalog`: datapack registries
+`cityworld:zoo/animal` + `cityworld:zoo/habitat`, bound at level load, sorted by id; the ten residents ship as data;
+format in PALETTES.md "Zoos") — the consumer is the owner's **CityWorld-Zoo** mod (`../CityWorld-Zoo`, mod id
+`cityworld_zoo`, its own Claude session "zoo": message it if the schema moves) — and **a world-creation hang fixed**:
+`CompletableFuture.join()` on a ForkJoin worker runs other queued tasks, so a worker building a river region ran a
+neighbour chunk's biome task that waited for that same region (the owner's 26.2 world, jstack at "Preparing spawn
+area", since 6.0.0). **Every build-once wait goes through `worldgen/Waiting.join`** (parks via `managedBlock`) —
+never a bare `join()` in worldgen. The dev server never hit the race in four fresh worlds; a standalone one-worker
+demo deadlocks with `join()` every time and never with `Waiting.join`. Gates: six self-tests PASS, CI green on the
+bump heads, halt/exit 0 after a synthetic positive, 1.20.1 reobfuscated.
+
 **v6.3.0 is released** (2026-10-12) on all six lines — tag `v6.3.0` (`1b243627`), CurseForge 9146620–9146626, fleet
 `DEPLOYED-v6.3.0` on 11 (ZARP has a hand-copied pre-release test jar of the same code, `915a2f5b`, and its 6.0.0 jar in
 `LegendQuest ZARP/cityworld-released-backup/`): **radio towers have a hut you can walk into** (`RadioTowerLot`: 4x4
