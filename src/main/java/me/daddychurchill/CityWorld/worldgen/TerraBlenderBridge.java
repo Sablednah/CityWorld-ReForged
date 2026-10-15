@@ -127,6 +127,9 @@ public final class TerraBlenderBridge {
                         keys.add(typed);
                     }
                 }
+        } catch (ClassNotFoundException e) {
+            // a TerraBlender with no End API (1.20.1's 3.0.1) has no End biomes to add; this runs for every End biome
+            // source built, so a stack trace here was 840 lines of noise in a 1.20.1 log
         } catch (Throwable t) {
             me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn("CityWorld: could not read TerraBlender's End biomes", t);
         }
