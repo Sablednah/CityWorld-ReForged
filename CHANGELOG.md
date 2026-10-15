@@ -5,6 +5,17 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 6.4.1
+
+Minecraft 1.20.1 only; the other lines stay on 6.4.0.
+
+### Fixed
+
+- **No more TerraBlender noise in the log.** With TerraBlender installed (Biomes O' Plenty), every world load logged
+  CityWorld failing to find TerraBlender's End biome registry, with a stack trace each time — 840 lines in one log.
+  TerraBlender for 1.20.1 has no End biomes, so there is nothing to read and nothing was wrong; CityWorld now says
+  nothing.
+
 ## 6.4.0
 
 ### Added
