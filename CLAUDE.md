@@ -22,11 +22,22 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 | Licence | **GPL-3.0-only** (see below — non-negotiable) |
 | Branch | work happens on `master` (the `neoforge-port` branch was merged into it and deleted) |
 
-## ▶ Where this is, and what's next (2026-10-08)
+## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-10-08, after the 6.1.0 release).** Nothing is in flight; every line is committed and
-pushed (`master` plus the five branches at their 6.1.0 bump). Open items:
-- The CurseForge description is up to date through 6.1.0 (owner pasted it 2026-10-08, promo line included).
+**▶ Resume here (2026-10-15, after the 6.4.0 and 6.4.1 releases).** Nothing is in flight. Every checkout is clean and
+pushed: `master`, and the five branches one commit past their 6.4.0 bump (`mc1.20.1` is at its 6.4.1 bump). Open items:
+- **Unreleased on five lines:** the TerraBlender End-API log quieting (`1da2a5ad`). It shipped on 1.20.1 as 6.4.1 and
+  goes out with the others' next release. Only 1.20.1's TerraBlender lacks that API, so the other lines see no change.
+- **The owner should paste `CURSEFORGE.md` into the CurseForge page.** It has the 6.4.0 headline, with 6.1.0 folded
+  into "Other recent changes".
+- **Confirm 6.4.1 in the `1.20.1  Forge` instance log:** no "could not read TerraBlender's End biomes" lines. The dev
+  1.20.1 runtime has no TerraBlender to show it.
+- **The owner's 26.2 world-creation hang is fixed in 6.4.0** (`worldgen/Waiting`). It was a race the dev server never
+  reproduced, so if a world creation hangs again, take a jstack before anything else.
+- **The Zoo mod** (`../CityWorld-Zoo`, its own session "zoo") builds against 6.4.0's `ZooCatalog`. Message that session
+  if the zoo schema moves.
+- **ZARP** still holds the hand-copied 6.3.0 test jar. The owner or ZARP's session swaps in a released jar; the fleet
+  deploy skips it (`.sablecraft-no-deploy`).
 - **Better biome blending** — the owner's to-do, not scoped (PORTING.md, rivers section).
 - **The ruined Nether twin's rivers** — owner hasn't chosen lava / dry ravines / none; it has none today.
 - **Vanilla land's coasts** could take the coastal quays/beaches (needs the lift-aware drawing ShorelineLot has);
