@@ -40,6 +40,12 @@ pushed (`master` plus the five branches at their 6.1.0 bump). Open items:
 - The owner's test seeds: CityWorld land 5670300453504745606 (his mountain, the falls, both mouths), vanilla land
   1688298913692546204 (the bridge at x 704–751 z −1000; quays at 661,−824 and 712,−1095).
 
+**v6.4.1 is released for 1.20.1 only** (2026-10-15, tag `v6.4.1` at the master docs commit `7041988b`, bump
+`aa250e4b`, CurseForge 9193319, `1.20.1  Forge` instance `DEPLOYED-v6.4.1`): TerraBlender for 1.20.1 (3.0.1) has no
+`EndBiomeRegistry`, and `TerraBlenderBridge.endBiomes` logged a stack trace for every End biome source built (840
+lines in one log) — a `ClassNotFoundException` there is now silent. The fix (`1da2a5ad`) is on every branch and
+pushed; the other lines ship it with their next release.
+
 **v6.4.0 is released** (2026-10-15) on all six lines — tag `v6.4.0` (`e6c6686b`), CurseForge 9184970–9184975, fleet
 `DEPLOYED-v6.4.0` on 11 (ZARP opts out): **zoos are data** (`worldgen/ZooCatalog`: datapack registries
 `cityworld:zoo/animal` + `cityworld:zoo/habitat`, bound at level load, sorted by id; the ten residents ship as data;
