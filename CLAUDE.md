@@ -24,12 +24,13 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-10-15, after the 6.4.0 and 6.4.1 releases).** Nothing is in flight. Every checkout is clean and
-pushed: `master`, and the five branches one commit past their 6.4.0 bump (`mc1.20.1` is at its 6.4.1 bump). Open items:
-- **Unreleased on five lines:** the TerraBlender End-API log quieting (`1da2a5ad`). It shipped on 1.20.1 as 6.4.1 and
-  goes out with the others' next release. Only 1.20.1's TerraBlender lacks that API, so the other lines see no change.
-- **The owner should paste `CURSEFORGE.md` into the CurseForge page.** It has the 6.4.0 headline, with 6.1.0 folded
-  into "Other recent changes".
+**▶ Resume here (2026-10-16, after the 6.5.0 release).** Nothing is in flight. Every checkout is clean and pushed:
+`master` and the five branches at their 6.5.0 bump. Open items:
+- **ZARP takes 6.5.0 itself.** Its instance skips the fleet (`.sablecraft-no-deploy`) and still runs a hand-copied
+  6.3.0 test jar. Its Winchester fit-out ships in Threadwork 3d2bd37 (`zarp:schematic_fitout/winchester`) and was
+  proved on the 26.2 dev server with GBG, Phoenix and `configuration` loaded.
+- **The owner should paste `CURSEFORGE.md` into the CurseForge page.** It has the 6.5.0 and 6.4.0 headlines, with
+  6.2.0 and 6.1.0 folded into "Other recent changes".
 - **Confirm 6.4.1 in the `1.20.1  Forge` instance log:** no "could not read TerraBlender's End biomes" lines. The dev
   1.20.1 runtime has no TerraBlender to show it.
 - **The owner's 26.2 world-creation hang is fixed in 6.4.0** (`worldgen/Waiting`). It was a race the dev server never
@@ -50,6 +51,17 @@ pushed: `master`, and the five branches one commit past their 6.4.0 bump (`mc1.2
   `scripts/river_{spill,pillars,depth,hollows}.py` (region checks), `scripts/count_worlds.py` (promo stat).
 - The owner's test seeds: CityWorld land 5670300453504745606 (his mountain, the falls, both mouths), vanilla land
   1688298913692546204 (the bridge at x 704–751 z −1000; quays at 661,−824 and 712,−1095).
+
+**v6.5.0 is released** (2026-10-16) on all six lines — tag `v6.5.0` (`c47698ab`), CurseForge 9206957–9206962, fleet
+`DEPLOYED-v6.5.0` on 11 (ZARP opts out): **schematic fit-outs** (`worldgen/SchematicFitOuts`, registry
+`cityworld:schematic_fitout`; PALETTES.md "Schematic fit-outs"). Block swaps (`/setblock` syntax) go through a paste
+processor keyed on the processor's stored `raw.pos()`, so vanilla turns them with the building. Item frames (`/give`
+syntax) are hung by `Clipboard.hangFrames` after decay, only where the cell is clear and the wall stands. Probe
+`find:schematic:<name>`; self-test `checkFitOuts`, whose sample item string differs per line. Per-line drift: 26.x
+`ItemParser.parse` → `ItemInput`; 26.2+ processor is an interface (`process(…, template)` + `codec()`); 26.3
+`worldRegistry`; 1.20.1 `parseForItem` → NBT, and its processor override ships as SRG `m_7382_` (checked). It also
+carries the TerraBlender quieting to the other five lines. Gates: six self-tests PASS, CI green on the bump heads,
+halt/exit 0 after a synthetic positive, 1.20.1 reobfuscated.
 
 **v6.4.1 is released for 1.20.1 only** (2026-10-15, tag `v6.4.1` at the master docs commit `7041988b`, bump
 `aa250e4b`, CurseForge 9193319, `1.20.1  Forge` instance `DEPLOYED-v6.4.1`): TerraBlender for 1.20.1 (3.0.1) has no
