@@ -93,6 +93,186 @@ public final class CityWorldAPI {
         return out;
     }
 
+    /**
+     * Up to {@code limit} lots for which {@code match} holds, nearest first, within {@code maxBlocks} of {@code from}:
+     * the search by anything a {@link LotInfo} says (a schematic by name, a district, an interior). Plan only, like
+     * {@link #findLots(ServerLevel, BlockPos, String, int, int)}; it builds a {@code LotInfo} per lot looked at, so
+     * give it a sensible budget, and call it off the server thread.
+     */
+    public static List<LotInfo> findLots(ServerLevel level, BlockPos from, java.util.function.Predicate<LotInfo> match,
+            int maxBlocks, int limit, long budgetMillis) {
+        CityWorldGenerator context = contextFor(level);
+        if (context == null || match == null)
+            return List.of();
+        List<LotInfo> out = new ArrayList<>();
+        for (PlatLot lot : searchLots(context, from, maxBlocks, limit, budgetMillis, null,
+                (PlatLot lot) -> lotInfo(context, level.dimension(), lot.getChunkX(), lot.getChunkZ()).map(match::test).orElse(false)))
+            lotInfo(context, level.dimension(), lot.getChunkX(), lot.getChunkZ()).ifPresent(out::add);
+        return out;
+    }
+
+    // --- finding by kind: a compass's menu ----------------------------------------------------------
+
+    /** A kind of lot worth walking to, and the lot classes that are it. */
+    private record Place(String key, String title, java.util.Set<String> lots) {
+    }
+
+    private static final List<Place> PLACES = List.of(
+            new Place("hospital", "Hospital", java.util.Set.of("HospitalLot")),
+            new Place("mall", "Shopping mall", java.util.Set.of("MallLot")),
+            new Place("museum", "Museum", java.util.Set.of("MuseumBuildingLot")),
+            new Place("library", "Library", java.util.Set.of("LibraryBuildingLot")),
+            new Place("civic", "Civic building", java.util.Set.of("GovernmentBuildingLot")),
+            new Place("monument", "Monument", java.util.Set.of("GovernmentMonumentLot", "HillStatueLot")),
+            new Place("subway", "Subway station", java.util.Set.of("SubwayStationLot")),
+            new Place("zoo", "Zoo", java.util.Set.of("ZooLot", "BigZooLot")),
+            new Place("biodome", "Biodome", java.util.Set.of("BiodomeLot", "BigBiodomeLot")),
+            new Place("park", "Park", java.util.Set.of("ParkLot", "FloodedParkLot", "SandDunesParkLot", "SnowDunesParkLot")),
+            new Place("parking", "Car park", java.util.Set.of("ParkingLot")),
+            new Place("factory", "Factory", java.util.Set.of("FactoryBuildingLot")),
+            new Place("warehouse", "Warehouse", java.util.Set.of("WarehouseBuildingLot")),
+            new Place("silo", "Silos", java.util.Set.of("SiloLot")),
+            new Place("gasometer", "Gasometer", java.util.Set.of("GasometerLot")),
+            new Place("unfinished", "Unfinished building", java.util.Set.of("UnfinishedBuildingLot",
+                    "FloodedUnfinishedBuildingLot", "SandDunesUnfinishedBuildingLot", "SnowDunesUnfinishedBuildingLot")),
+            new Place("radio_tower", "Radio tower", java.util.Set.of("RadioTowerLot")),
+            new Place("water_tower", "Water tower", java.util.Set.of("WaterTowerLot")),
+            new Place("vault", "Vault entrance", java.util.Set.of()), // the entrance hut only: see placeMatches
+            new Place("bunker", "Bunker", java.util.Set.of("BunkerLot", "RoadThroughBunkerLot")),
+            new Place("mine", "Mine entrance", java.util.Set.of("MineEntranceLot")),
+            new Place("campground", "Campground", java.util.Set.of("CampgroundLot")),
+            new Place("castle", "Old castle", java.util.Set.of("OldCastleLot")),
+            new Place("oil_platform", "Oil platform", java.util.Set.of("OilPlatformLot")),
+            new Place("airship", "Airship", java.util.Set.of("AirshipLot")),
+            new Place("balloon", "Hot-air balloon", java.util.Set.of("HotairBalloonLot")),
+            new Place("saucer", "Flying saucer", java.util.Set.of("FlyingSaucerLot")),
+            new Place("farm", "Farm", java.util.Set.of("FarmLot", "FloodedFarmLot", "SandDunesFarmLot", "SnowDunesFarmLot")),
+            new Place("barn", "Barn", java.util.Set.of("BarnLot")),
+            new Place("well", "Farmyard well", java.util.Set.of("FarmyardWellLot")),
+            new Place("fish_pond", "Fish pond", java.util.Set.of("FishPondLot")),
+            new Place("quayside", "Quayside", java.util.Set.of("QuaysideLot", "ShorelineLot")));
+
+    /** The districts worth naming, by the family their buildings come from. */
+    private static final java.util.Map<me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily, String> DISTRICTS;
+    static {
+        var f = new java.util.EnumMap<me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily, String>(
+                me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.class);
+        f.put(me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.HIGHRISE, "High-rise district");
+        f.put(me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.MIDRISE, "Mid-rise district");
+        f.put(me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.LOWRISE, "Low-rise district");
+        f.put(me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.MUNICIPAL, "Civic district");
+        f.put(me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.INDUSTRIAL, "Industrial district");
+        f.put(me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.NEIGHBORHOOD, "Neighbourhood");
+        f.put(me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.CONSTRUCTION, "Construction site");
+        f.put(me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.PARK, "Parkland");
+        f.put(me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.ROUNDABOUT, "Roundabout");
+        f.put(me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.FARM, "Farmland");
+        f.put(me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.OUTLAND, "Outland works");
+        DISTRICTS = java.util.Collections.unmodifiableMap(f);
+    }
+
+    /**
+     * Everything {@link #find} can look for in this level, grouped and titled for a player: the nearest city, kinds
+     * of place, shops by trade, districts, and every schematic building CityWorld has loaded (by its {@code Title}).
+     * A kind this world's style never plans is still listed; a search for it simply finds nothing. Empty off a
+     * non-CityWorld level.
+     */
+    public static List<Findable> findables(ServerLevel level) {
+        if (contextFor(level) == null)
+            return List.of();
+        List<Findable> out = new ArrayList<>();
+        out.add(new Findable("city", "city", "Nearest city"));
+        for (Place p : PLACES)
+            out.add(new Findable("place:" + p.key(), "place", p.title()));
+        for (ShopTrade t : ShopTrade.values())
+            out.add(new Findable("shop:" + t.name().toLowerCase(Locale.ROOT), "shop", t.displayName()));
+        DISTRICTS.forEach((family, title) -> out.add(
+                new Findable("district:" + family.name().toLowerCase(Locale.ROOT), "district", title)));
+        for (String name : me.daddychurchill.CityWorld.Clipboard.SchematicLibrary.names()) {
+            var clip = me.daddychurchill.CityWorld.Clipboard.SchematicLibrary.get(name);
+            out.add(new Findable("building:" + name.toLowerCase(Locale.ROOT), "building", clip == null ? name : clip.title));
+        }
+        return out;
+    }
+
+    /**
+     * Up to {@code limit} of the {@link Findable} with this {@code id}, nearest first, within {@code maxBlocks} of
+     * {@code from}. A multi-chunk place answers with its nearest chunk; {@code city} answers with the centre of the
+     * nearest city ({@link #nearestCity}). Plan only: nothing is generated. A search can plan many platmaps, so call
+     * it off the server thread (as {@code /cityfind} does) with a budget. Empty off a non-CityWorld level, for an
+     * unknown id, or on a miss.
+     */
+    public static List<LotInfo> find(ServerLevel level, BlockPos from, String id, int maxBlocks, int limit,
+            long budgetMillis) {
+        CityWorldGenerator context = contextFor(level);
+        if (context == null || id == null)
+            return List.of();
+        String key = id.trim().toLowerCase(Locale.ROOT);
+        java.util.function.BiPredicate<PlatMap, PlatLot> wanted = null;
+        if (key.equals("city")) {
+            return nearestCity(level, from, maxBlocks)
+                    .flatMap(c -> lotInfo(context, level.dimension(), c.getX() >> 4, c.getZ() >> 4))
+                    .map(List::of).orElse(List.of());
+        } else if (key.startsWith("place:")) {
+            String k = key.substring(6);
+            for (Place p : PLACES)
+                if (p.key().equals(k))
+                    wanted = (pm, lot) -> placeMatches(p, lot);
+        } else if (key.startsWith("shop:")) {
+            for (ShopTrade t : ShopTrade.values())
+                if (t.name().equalsIgnoreCase(key.substring(5)))
+                    wanted = (pm, lot) -> lot.getShopType() != null && lot.getShopType().trade() == t;
+        } else if (key.startsWith("district:")) {
+            for (var family : DISTRICTS.keySet())
+                if (family.name().equalsIgnoreCase(key.substring(9)))
+                    wanted = (pm, lot) -> pm.context.getSchematicFamily() == family;
+        } else if (key.startsWith("building:")) {
+            String name = key.substring(9);
+            wanted = (pm, lot) -> lot instanceof ClipboardLot clip && clip.getClip().name.equalsIgnoreCase(name);
+        }
+        if (wanted == null)
+            return List.of();
+        List<LotInfo> out = new ArrayList<>();
+        for (PlatLot lot : searchLots(context, from, maxBlocks, limit, budgetMillis, null, wanted))
+            lotInfo(context, level.dimension(), lot.getChunkX(), lot.getChunkZ()).ifPresent(out::add);
+        return out;
+    }
+
+    private static boolean placeMatches(Place p, PlatLot lot) {
+        if (p.key().equals("vault"))
+            return lot instanceof VaultLot vault && vault.isEntrance();
+        return p.lots().contains(lot.getClass().getSimpleName());
+    }
+
+    /**
+     * The middle of the nearest city, at street level, within {@code maxBlocks}. In a vanilla-land world that is the
+     * nearest city site; on CityWorld's own land, where city is everywhere it is not wild, it is the nearest chunk of
+     * a built-up district (anything but nature and farmland). Plan only; call it off the server thread.
+     */
+    public static Optional<BlockPos> nearestCity(ServerLevel level, BlockPos from, int maxBlocks) {
+        if (!(level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator generator))
+            return Optional.empty();
+        CityWorldGenerator context = generator.getContext(level);
+        if (context == null)
+            return Optional.empty();
+        var sites = generator.citySites();
+        if (sites != null) {
+            var site = sites.nearest(from.getX(), from.getZ(), Math.max(1, maxBlocks / sites.cell() + 1));
+            if (site == null || Math.hypot(site.centreX() - from.getX(), site.centreZ() - from.getZ()) > maxBlocks)
+                return Optional.empty();
+            return Optional.of(new BlockPos(site.centreX(), site.level() + 1, site.centreZ()));
+        }
+        var families = java.util.EnumSet.complementOf(java.util.EnumSet.of(
+                me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.NATURE,
+                me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.FARM,
+                me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.OUTLAND,
+                me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.ASTRAL));
+        List<PlatLot> hit = searchLots(context, from, maxBlocks, 1, FIND_BUDGET_MS, null,
+                (pm, lot) -> families.contains(pm.context.getSchematicFamily()) && !(lot instanceof me.daddychurchill.CityWorld.Plats.NatureLot));
+        return hit.isEmpty() ? Optional.empty()
+                : Optional.of(new BlockPos(hit.get(0).getChunkX() * 16 + 8, context.streetLevel + 1, hit.get(0).getChunkZ() * 16 + 8));
+    }
+
     // --- vaults ---------------------------------------------------------------------------------
 
     /**
@@ -235,6 +415,13 @@ public final class CityWorldAPI {
     private static List<PlatLot> searchLots(CityWorldGenerator context, BlockPos from, int maxBlocks, int limit,
             long budgetMillis, java.util.function.BiPredicate<Integer, Integer> platmapMayHold,
             java.util.function.Predicate<PlatLot> wanted) {
+        return searchLots(context, from, maxBlocks, limit, budgetMillis, platmapMayHold, (pm, lot) -> wanted.test(lot));
+    }
+
+    /** {@link #searchLots} for a test that also needs the lot's platmap (its district). */
+    private static List<PlatLot> searchLots(CityWorldGenerator context, BlockPos from, int maxBlocks, int limit,
+            long budgetMillis, java.util.function.BiPredicate<Integer, Integer> platmapMayHold,
+            java.util.function.BiPredicate<PlatMap, PlatLot> wanted) {
         if (limit <= 0 || maxBlocks < 0)
             return List.of();
         int px = from.getX() >> 4, pz = from.getZ() >> 4;
@@ -256,7 +443,7 @@ public final class CityWorldAPI {
                     for (int x = 0; x < PlatMap.Width; x++)
                         for (int z = 0; z < PlatMap.Width; z++) {
                             PlatLot lot = pm.getLot(x, z);
-                            if (lot != null && distance(lot, from) <= maxBlocks && wanted.test(lot))
+                            if (lot != null && distance(lot, from) <= maxBlocks && wanted.test(pm, lot))
                                 hits.add(lot);
                         }
                 }
