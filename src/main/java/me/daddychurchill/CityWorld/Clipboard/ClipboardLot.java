@@ -173,6 +173,9 @@ public class ClipboardLot extends IsolatedLot {
 			int depth = surfaceLevel(generator) - clip.groundLevelY;
 			destroyLot(generator, depth, depth + clip.sizeY);
 		}
+
+		// a pack's item frames (cityworld:schematic_fitout), after decay so they hang only on what still stands
+		clip.hangFrames(level, nwX, surfaceLevel(generator), nwZ, chunk.getOriginX(), chunk.getOriginZ(), rotation, mirror);
 	}
 
 	/**
