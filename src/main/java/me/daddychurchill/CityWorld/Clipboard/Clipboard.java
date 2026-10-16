@@ -178,7 +178,8 @@ public final class Clipboard {
                 .setRotation(rotation)
                 .setMirror(mirror)
                 .setIgnoreEntities(true)
-                .addProcessor(substitutes(level));
+                .addProcessor(substitutes(level))
+                .addProcessor(fitOut());
         template.placeInWorld(level, origin, origin, settings, random, Block.UPDATE_CLIENTS);
     }
 
@@ -225,7 +226,8 @@ public final class Clipboard {
                 .setMirror(mirror)
                 .setIgnoreEntities(true)
                 .setBoundingBox(chunkBox)
-                .addProcessor(substitutes(level));
+                .addProcessor(substitutes(level))
+                .addProcessor(fitOut());
         template.placeInWorld(level, origin, origin, settings, random, Block.UPDATE_CLIENTS);
     }
 
@@ -265,6 +267,63 @@ public final class Clipboard {
                 return net.minecraft.world.level.levelgen.structure.templatesystem.NopProcessor.MAP_CODEC;
             }
         };
+    }
+
+    /**
+     * A pack's block swaps for this building ({@code cityworld:schematic_fitout}): the block stored at a fit-out
+     * position becomes the pack's. Placement turns it with the rest of the building, since the processor sees the
+     * stored position and state; the stored block's own data (a dispenser's contents) goes with it.
+     */
+    private net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessor fitOut() {
+        var swaps = me.daddychurchill.CityWorld.worldgen.SchematicFitOuts.forSchematic(name).blocks();
+        return new net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessor() {
+            @Override
+            public net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo process(
+                    net.minecraft.world.level.LevelReader reader, BlockPos target, BlockPos reference,
+                    net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo raw,
+                    net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo info,
+                    StructurePlaceSettings settings,
+                    net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate template) {
+                var swapped = swaps.isEmpty() ? null : swaps.get(raw.pos());
+                return swapped == null ? info
+                        : new net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo(
+                                info.pos(), swapped, null);
+            }
+
+            @Override
+            public com.mojang.serialization.MapCodec<? extends net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessor> codec() {
+                return net.minecraft.world.level.levelgen.structure.templatesystem.NopProcessor.MAP_CODEC;
+            }
+        };
+    }
+
+    /**
+     * Hang a pack's item frames on this building ({@code cityworld:schematic_fitout}), for the part in one chunk:
+     * same origin and turn as {@link #pasteChunk}. Run after decay, so a frame goes up only where its cell is still
+     * clear and the wall behind it still stands.
+     */
+    public void hangFrames(ServerLevelAccessor level, int nwX, int groundY, int nwZ,
+            int chunkMinX, int chunkMinZ, Rotation rotation, Mirror mirror) {
+        var frames = me.daddychurchill.CityWorld.worldgen.SchematicFitOuts.forSchematic(name).frames();
+        if (frames.isEmpty())
+            return;
+        BlockPos origin = template.getZeroPositionWithTransform(new BlockPos(nwX, groundY - groundLevelY, nwZ), mirror, rotation);
+        StructurePlaceSettings settings = new StructurePlaceSettings().setRotation(rotation).setMirror(mirror);
+        for (var f : frames) {
+            BlockPos at = StructureTemplate.calculateRelativePosition(settings, f.pos()).offset(origin);
+            if (at.getX() < chunkMinX || at.getX() > chunkMinX + 15 || at.getZ() < chunkMinZ || at.getZ() > chunkMinZ + 15)
+                continue;
+            net.minecraft.core.Direction out = rotation.rotate(mirror.mirror(f.facing()));
+            BlockPos wall = at.relative(out.getOpposite());
+            if (!level.getBlockState(at).canBeReplaced() || !level.getBlockState(wall).isFaceSturdy(level, wall, out))
+                continue;
+            var frame = f.glow()
+                    ? new net.minecraft.world.entity.decoration.GlowItemFrame(level.getLevel(), at, out)
+                    : new net.minecraft.world.entity.decoration.ItemFrame(level.getLevel(), at, out);
+            frame.setSilent(true);
+            frame.setItem(f.item().copy(), false); // false: no neighbour update through the real level (a deadlock)
+            level.addFreshEntityWithPassengers(frame);
+        }
     }
 
     /** The four quarter-turns, indexed by {@code odds.getRandomInt(4)} at placement time. */
