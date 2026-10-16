@@ -29,6 +29,11 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 - **ZARP takes 6.5.0 itself.** Its instance skips the fleet (`.sablecraft-no-deploy`) and runs the 6.4.0 release;
   the owner updates it through the CurseForge app so the file stays tracked. Its Winchester fit-out ships in Threadwork 3d2bd37 (`zarp:schematic_fitout/winchester`) and was
   proved on the 26.2 dev server with GBG, Phoenix and `configuration` loaded.
+- **Unreleased on all six lines (committed, NOT pushed):** the find-anything API for the CityWorld Compass
+  companion mod (`22e71719` on master): `CityWorldAPI.findables` / `find` / `findLots(Predicate<LotInfo>)` /
+  `nearestCity`, plus the self-test `checkFindables` (92 findables, PASS on all six). The compass mod itself is a
+  separate project: brief and art in `../CityWorld-Compass/` (BRIEF.md, art/; the owner chose the stepped skyline
+  `skyline_b`). It needs CityWorld 6.6.0.
 - **The owner should paste `CURSEFORGE.md` into the CurseForge page.** It has the 6.5.0 and 6.4.0 headlines, with
   6.2.0 and 6.1.0 folded into "Other recent changes".
 - **Confirm 6.4.1 in the `1.20.1  Forge` instance log:** no "could not read TerraBlender's End biomes" lines. The dev
