@@ -213,6 +213,7 @@ public final class CityWorldSelfTest {
             checkAirshipHeadings();
             checkVaultRegions();
             checkZooCatalog();
+            checkFitOuts(server);
             checkReservedSite(server); // last: it changes the plan (far from everything else checked)
             checkDirectLoad(server); // truly last: if it finds a deadlock the server thread never answers again
         } catch (Throwable t) {
@@ -2227,6 +2228,52 @@ public final class CityWorldSelfTest {
      * The zoo catalog ({@code cityworld:zoo/animal} + {@code .../habitat}) loaded CityWorld's ten residents, and every
      * block a habitat names exists — a typo there would otherwise draw the fallback (grass, an oak fence) quietly.
      */
+    /**
+     * Schematic fit-outs: the registry is there, and a sample file goes through the codec and both parsers (block
+     * state and item, whose syntax differs between Minecraft lines) to the states and stack it names.
+     */
+    private void checkFitOuts(net.minecraft.server.MinecraftServer server) {
+        var access = server.registryAccess();
+        try {
+            access.lookupOrThrow(me.daddychurchill.CityWorld.worldgen.SchematicFitOuts.FIT_OUTS);
+        } catch (RuntimeException e) {
+            fail("fit-outs: registry missing: " + e);
+            return;
+        }
+        report.put("fitout.schematics", String.valueOf(me.daddychurchill.CityWorld.worldgen.SchematicFitOuts.count()));
+        String json = """
+                {"schematic": "winchester",
+                 "blocks": [{"pos": [5, 11, 10], "block": "minecraft:lectern[facing=east]"},
+                            {"pos": [5, 12, 10], "block": "minecraft:air"},
+                            {"pos": [1, 1, 1], "block": "minecraft:stone", "requires_mod": "no_such_mod"}],
+                 "frames": [{"pos": [2, 14, 6], "facing": "east", "item": "%s"},
+                            {"pos": [2, 14, 7], "facing": "east", "item": "minecraft:no_such_item"}]}
+                """.formatted(SAMPLE_FRAME_ITEM.replace("\"", "\\\""));
+        var parsed = me.daddychurchill.CityWorld.worldgen.SchematicFitOuts.FitOut.CODEC
+                .parse(com.mojang.serialization.JsonOps.INSTANCE, com.google.gson.JsonParser.parseString(json))
+                .result().orElse(null);
+        if (parsed == null) {
+            fail("fit-outs: the sample file does not decode");
+            return;
+        }
+        List<String> problems = new ArrayList<>();
+        var r = me.daddychurchill.CityWorld.worldgen.SchematicFitOuts.resolve(access, parsed, problems);
+        var lectern = r.blocks().get(new net.minecraft.core.BlockPos(5, 11, 10));
+        if (lectern == null || !lectern.is(net.minecraft.world.level.block.Blocks.LECTERN)
+                || lectern.getValue(net.minecraft.world.level.block.LecternBlock.FACING) != net.minecraft.core.Direction.EAST)
+            fail("fit-outs: the lectern line resolved to " + lectern);
+        if (r.blocks().size() != 2 || !r.blocks().get(new net.minecraft.core.BlockPos(5, 12, 10)).isAir())
+            fail("fit-outs: expected the lectern and the air line only, got " + r.blocks());
+        if (r.frames().size() != 1 || !r.frames().get(0).item().is(net.minecraft.world.item.Items.DIAMOND_SWORD)
+                || !r.frames().get(0).item().getHoverName().getString().contains("Ed wins the bet"))
+            fail("fit-outs: expected one named diamond sword, got " + r.frames());
+        if (problems.size() != 1 || !problems.get(0).contains("no_such_item"))
+            fail("fit-outs: expected one problem (the unknown item), got " + problems);
+    }
+
+    /** A named sword in this line's {@code /give} syntax. */
+    private static final String SAMPLE_FRAME_ITEM = "minecraft:diamond_sword[minecraft:custom_name='Ed wins the bet']";
+
     private void checkZooCatalog() {
         var entries = me.daddychurchill.CityWorld.worldgen.ZooCatalog.entries();
         report.put("zoo.animals", String.valueOf(entries.size()));

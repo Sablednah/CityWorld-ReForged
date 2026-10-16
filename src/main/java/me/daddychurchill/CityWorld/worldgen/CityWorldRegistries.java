@@ -69,5 +69,7 @@ public final class CityWorldRegistries {
         // what lives in the zoos (ZooCatalog) — server-side worldgen data too
         event.worldRegistry(ZooCatalog.ANIMALS, ZooCatalog.Animal.CODEC);
         event.worldRegistry(ZooCatalog.HABITATS, ZooCatalog.Habitat.CODEC);
+        // a pack's block swaps and item frames for a schematic building (SchematicFitOuts)
+        event.worldRegistry(SchematicFitOuts.FIT_OUTS, SchematicFitOuts.FitOut.CODEC);
     }
 }
