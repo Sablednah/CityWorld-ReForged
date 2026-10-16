@@ -5,6 +5,18 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **Find-anything API, for a city compass.** `CityWorldAPI.findables(level)` lists what can be searched for in a
+  world, each with an id and a title: the nearest city, kinds of place (hospital, mall, museum, subway station, radio
+  tower, zoo, vault entrance, ...), shops by trade, districts, and every schematic building by its title.
+  `CityWorldAPI.find(level, from, id, maxBlocks, limit, budgetMillis)` finds the nearest of one;
+  `findLots(level, from, Predicate<LotInfo>, ...)` searches by anything a lot's `LotInfo` says; `nearestCity` gives
+  the middle of the nearest city. All of it reads the plan, so nothing is generated. This is what the CityWorld
+  Compass companion mod builds on.
+
 ## 6.5.0
 
 ### Added
