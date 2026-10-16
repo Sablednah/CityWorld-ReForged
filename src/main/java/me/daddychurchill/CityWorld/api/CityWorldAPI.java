@@ -432,21 +432,27 @@ public final class CityWorldAPI {
         List<PlatLot> hits = new ArrayList<>();
         int filledRing = -1;
         for (int r = 0; r <= maxRings; r++) {
+            // plan the ring's platmaps side by side first (planning is nearly all of a search's time, and
+            // getPlatMap is built for concurrent callers), then read them in ring order as before
+            List<int[]> ring = new ArrayList<>();
             for (int dx = -r; dx <= r; dx++)
                 for (int dz = -r; dz <= r; dz++) {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != r)
                         continue;
                     int ox = pmX0 + dx * PlatMap.Width, oz = pmZ0 + dz * PlatMap.Width;
-                    if (platmapMayHold != null && !platmapMayHold.test(ox, oz))
-                        continue;
-                    PlatMap pm = context.getPlatMap(ox, oz);
-                    for (int x = 0; x < PlatMap.Width; x++)
-                        for (int z = 0; z < PlatMap.Width; z++) {
-                            PlatLot lot = pm.getLot(x, z);
-                            if (lot != null && distance(lot, from) <= maxBlocks && wanted.test(pm, lot))
-                                hits.add(lot);
-                        }
+                    if (platmapMayHold == null || platmapMayHold.test(ox, oz))
+                        ring.add(new int[] { ox, oz });
                 }
+            planAll(context, ring, deadline);
+            for (int[] at : ring) {
+                PlatMap pm = context.getPlatMap(at[0], at[1]);
+                for (int x = 0; x < PlatMap.Width; x++)
+                    for (int z = 0; z < PlatMap.Width; z++) {
+                        PlatLot lot = pm.getLot(x, z);
+                        if (lot != null && distance(lot, from) <= maxBlocks && wanted.test(pm, lot))
+                            hits.add(lot);
+                    }
+            }
             if (hits.size() >= limit && filledRing < 0)
                 filledRing = r;
             if (filledRing >= 0 && r >= filledRing + 1)
@@ -456,6 +462,36 @@ public final class CityWorldAPI {
         }
         hits.sort(java.util.Comparator.comparingDouble(lot -> distance(lot, from)));
         return hits.size() > limit ? List.copyOf(hits.subList(0, limit)) : hits;
+    }
+
+    /** Searches plan platmaps on these, a few at a time; daemon threads, so they never hold a server open. */
+    private static final java.util.concurrent.ExecutorService PLANNERS = java.util.concurrent.Executors.newFixedThreadPool(
+            Math.max(2, Math.min(4, Runtime.getRuntime().availableProcessors() / 2)), r -> {
+                Thread t = new Thread(r, "cityworld-find-planner");
+                t.setDaemon(true);
+                return t;
+            });
+
+    /**
+     * Plan every platmap at these origins side by side, and wait for them (never past the deadline: a platmap still
+     * planning then is planned again, or joined, by the caller's own {@code getPlatMap}). Planning is nearly all of a
+     * search's time, and {@code getPlatMap} builds each platmap once however many threads ask.
+     */
+    private static void planAll(CityWorldGenerator context, List<int[]> origins, long deadline) {
+        if (origins.size() < 2)
+            return;
+        List<java.util.concurrent.Future<?>> jobs = new ArrayList<>();
+        for (int[] at : origins)
+            jobs.add(PLANNERS.submit(() -> context.getPlatMap(at[0], at[1])));
+        for (var job : jobs)
+            try {
+                job.get(Math.max(0, deadline - System.nanoTime()), java.util.concurrent.TimeUnit.NANOSECONDS);
+            } catch (java.util.concurrent.TimeoutException | java.util.concurrent.ExecutionException e) {
+                return; // out of time, or a plan failed: the caller's getPlatMap answers (or throws) as before
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
     }
 
     private static double distance(PlatLot lot, BlockPos from) {
