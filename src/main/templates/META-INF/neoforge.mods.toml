@@ -18,12 +18,11 @@ displayURL="${mod_homepage}"
 #   iconFile   — the small square beside the name in the list (26.2+ only; without it the row is
 #                the only one in the list with no icon at all).
 #   bannerFile — the wide image in the info panel (26.2+), rendered at its own aspect ratio.
-#   logoFile   — what 1.21.x and 26.1 show in the info panel, and what 26.2 falls back to if
-#                bannerFile is missing. Kept so older versions still show artwork.
+#   logoFile   — what 1.21.x and 26.1 show in the info panel. NOT on this line: 26.2+ NeoForge calls it
+#                deprecated and stops at a "Warning while loading mods" screen when it is present.
 # Older loaders simply ignore the two keys they don't know.
 iconFile="cityworld.png"
 bannerFile="cityworld-banner.png"
-logoFile="cityworld.png"
 logoBlur=false
 iconBlur=false
 
