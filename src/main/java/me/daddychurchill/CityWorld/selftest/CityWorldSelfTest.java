@@ -214,6 +214,7 @@ public final class CityWorldSelfTest {
             checkVaultRegions();
             checkZooCatalog();
             checkFitOuts(server);
+            checkFindables(server);
             checkReservedSite(server); // last: it changes the plan (far from everything else checked)
             checkDirectLoad(server); // truly last: if it finds a deadlock the server thread never answers again
         } catch (Throwable t) {
@@ -2289,6 +2290,37 @@ public final class CityWorldSelfTest {
 
     /** A named sword in this line's {@code /give} syntax. */
     private static final String SAMPLE_FRAME_ITEM = "minecraft:diamond_sword{display:{Name:'\"Ed wins the bet\"'}}";
+
+    /**
+     * The compass API: the menu lists every group with unique ids, and a search by id answers with the kind it asked
+     * for (a subway station, a high-rise district lot, the nearest city), from the plan alone.
+     */
+    private void checkFindables(net.minecraft.server.MinecraftServer server) {
+        var level = server.overworld();
+        var all = me.daddychurchill.CityWorld.api.CityWorldAPI.findables(level);
+        report.put("findables", String.valueOf(all.size()));
+        java.util.Set<String> ids = new java.util.HashSet<>(), groups = new java.util.TreeSet<>();
+        for (var f : all) {
+            if (!ids.add(f.id()))
+                fail("findables: duplicate id " + f.id());
+            groups.add(f.group());
+        }
+        if (!groups.equals(new java.util.TreeSet<>(List.of("building", "city", "district", "place", "shop"))))
+            fail("findables: groups " + groups);
+        var from = net.minecraft.core.BlockPos.ZERO;
+        var station = me.daddychurchill.CityWorld.api.CityWorldAPI.find(level, from, "place:subway", 3000, 1, 60_000);
+        if (station.isEmpty() || !station.get(0).lotClass().equals("SubwayStationLot"))
+            fail("findables: place:subway found " + station);
+        var highrise = me.daddychurchill.CityWorld.api.CityWorldAPI.find(level, from, "district:highrise", 3000, 1, 60_000);
+        if (highrise.isEmpty() || highrise.get(0).contextFamily() != me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.HIGHRISE)
+            fail("findables: district:highrise found " + highrise);
+        var city = me.daddychurchill.CityWorld.api.CityWorldAPI.find(level, from, "city", 3000, 1, 60_000);
+        if (city.isEmpty())
+            fail("findables: no nearest city within 3000 blocks");
+        if (!me.daddychurchill.CityWorld.api.CityWorldAPI.find(level, from, "place:no_such_place", 3000, 1, 60_000).isEmpty())
+            fail("findables: an unknown id found something");
+        report.put("findables.subway", station.isEmpty() ? "none" : station.get(0).chunk().toString());
+    }
 
     private void checkZooCatalog() {
         var entries = me.daddychurchill.CityWorld.worldgen.ZooCatalog.entries();
