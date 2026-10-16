@@ -216,7 +216,10 @@ public final class ChunkProbe {
                     for (int x = 0; x < width; x++)
                         for (int z = 0; z < width; z++) {
                             var lot = platmap.getLot(x, z);
-                            if (lot != null && lot.getClass().getSimpleName().equals(lotClass))
+                            if (lot != null && (lot.getClass().getSimpleName().equals(lotClass)
+                                    || lotClass.startsWith("schematic:") // find:schematic:winchester — a placed schematic by name
+                                            && lot instanceof me.daddychurchill.CityWorld.Clipboard.ClipboardLot clip
+                                            && clip.getClip().name.equalsIgnoreCase(lotClass.substring(10))))
                                 return new int[] { platmap.originX + x, platmap.originZ + z };
                         }
                 }

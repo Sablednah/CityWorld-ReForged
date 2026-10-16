@@ -56,6 +56,7 @@ public final class CityWorldServerEvents {
         if (event.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
             me.daddychurchill.CityWorld.worldgen.ReservedSites.bind(level);
             me.daddychurchill.CityWorld.worldgen.ZooCatalog.bind(level.registryAccess());
+            me.daddychurchill.CityWorld.worldgen.SchematicFitOuts.bind(level.registryAccess());
         }
     }
 
