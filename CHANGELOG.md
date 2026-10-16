@@ -5,6 +5,15 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **Schematic fit-outs.** A datapack can swap blocks in a schematic building and hang item frames in it, without
+  shipping a new schematic: `cityworld:schematic_fitout`, one file per building, with block states in `/setblock`
+  syntax and frame items in `/give` syntax, each line optionally needing a mod. The changes turn with the building
+  and work in the ruined twin; frames go up only where decay left the wall standing. Format in PALETTES.md.
+
 ## 6.4.1
 
 Minecraft 1.20.1 only; the other lines stay on 6.4.0.

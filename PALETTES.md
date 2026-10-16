@@ -385,6 +385,42 @@ dry floor as a column `height` high; `trees` are short trees with an optional `h
 crags to climb. Counts are per pen, or per chunk of a big pen. `fence` must be something that joins up like a
 fence — a fence, iron bars, a glass pane. The sign, the gate's place and the pen's shape are CityWorld's.
 
+### Schematic fit-outs
+
+A pack can change what is inside a schematic building without shipping a new schematic: swap blocks and hang item
+frames. Each file is `data/<ns>/cityworld/schematic_fitout/<name>.json` and names the `schematic` it fits out — the
+file name without its extension, so `winchester` covers every family's copy. This is ZARP's Winchester, with
+Phoenix's slot machine in place of the fruit machine and a loaded shotgun over the bar:
+
+```json
+{
+  "schematic": "winchester",
+  "blocks": [
+    { "pos": [5, 11, 10], "block": "phoenix:phoenix[facing=east]", "requires_mod": "phoenix" },
+    { "pos": [5, 12, 10], "block": "minecraft:air",                 "requires_mod": "phoenix" }
+  ],
+  "frames": [
+    { "pos": [2, 14, 6], "facing": "east", "item": "gbg:shotgun[...]", "requires_mod": "gbg" }
+  ]
+}
+```
+
+Positions are in the schematic's own coordinates, the way it is stored (x, y up from its bottom layer, z), and so
+are facings: CityWorld turns the building to fit its lot and turns the fit-out with it.
+
+- **`blocks`** — `block` is a block state in `/setblock` syntax. It replaces whatever the schematic places at
+  `pos`, before decay, so a ruined building's slot machine can be broken like the rest of it. A block two tall in
+  its model but one block in the world (Phoenix's slot machine) takes one line for its cell and an air line for the
+  cell above. A schematic saved without air (`KeepAir: false`) places nothing at an air cell, so a line there does
+  nothing.
+- **`frames`** — an item frame (`"glow": true` for a glow frame) in the cell at `pos`, hung on the wall behind it,
+  `facing` into the room. `item` is in `/give` syntax for the Minecraft version, so item data such as a gun's
+  ammunition is written the way `/give` takes it — components (`id[...]`) from 1.20.5 on, NBT (`id{...}`) on 1.20.1.
+  Frames go up after decay, and only where the cell is still clear and the wall still stands.
+- **`requires_mod`** on the file or on any line skips it when that mod is not installed. A block or item that
+  does not parse is skipped and named once in the log. Files apply in id order; for a cell two files both swap, the
+  later file wins.
+
 ## Writing a compatibility pack
 
 A pack is just tag files. To add a mod's wood to every wooden thing CityWorld builds, create:
