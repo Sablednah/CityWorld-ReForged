@@ -13,6 +13,11 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+**New in 6.5.0: fit out a building from a datapack.** A pack can now change what is inside any of CityWorld's
+schematic buildings without replacing the schematic: swap blocks (a mod's slot machine for the pub's fruit
+machine) and hang item frames holding anything (a loaded shotgun over the bar). The changes turn with the building,
+work in the ruined twin, and skip themselves when the mod they need is not installed.
+
 **New in 6.4.0: zoos for any animal, and a fix for worlds hanging.** Which animals live in CityWorld's zoos, and
 the habitat each pen gets, now come from datapacks: a pack or a zoo mod can add any mob, vanilla or modded, with its
 own ground, pool, plants, trees and rocks to climb, and a fence tall enough for a giraffe. Zoo animals no longer
@@ -25,15 +30,10 @@ of spares: copper, redstone, repeaters, comparators and the like, from its own l
 ruined world. And hospital medicine chests keep their Potions of Healing and bandages now — with Lootr installed
 they used to spill them across the floor.
 
-**New in 6.2.0: the lights go out, and the vault goes deeper.** Switch **Working lights** off in Customize and the
-city really goes dark now — every lantern, lamp, torch and candle CityWorld places, and most mods' lights, is placed
-burnt out (before, only the streetlights went out). The ruined city's **vault keeps its own power**, and is now
-**four to eight levels deep**: bright on the entry level, then dimmer and more worn floor by floor, with more of
-its rooms overrun — by the sixth level the lights are mostly dead, and the bottom floor is dark, wrecked and full
-of spawners.
-
 **Other recent changes**
 
+- **6.2.0** — Working lights off really puts the city's lights out; the ruined city's vault keeps its own power and
+  goes four to eight levels deep, darker and more overrun floor by floor.
 - **6.1.0** — no more snow over the jungle: warm mountains carry savanna, forest and jungle up to stony peaks, the
   way vanilla lays them out.
 - **6.0.0** — rivers on CityWorld's own land, with waterfalls and hidden finds behind them; the waterside follows the

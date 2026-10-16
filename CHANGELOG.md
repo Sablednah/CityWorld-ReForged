@@ -5,7 +5,7 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
-## Unreleased
+## 6.5.0
 
 ### Added
 
@@ -13,6 +13,11 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   shipping a new schematic: `cityworld:schematic_fitout`, one file per building, with block states in `/setblock`
   syntax and frame items in `/give` syntax, each line optionally needing a mod. The changes turn with the building
   and work in the ruined twin; frames go up only where decay left the wall standing. Format in PALETTES.md.
+
+### Fixed
+
+- The TerraBlender End-biome lookup no longer logs a stack trace when TerraBlender has no End API (1.20.1 only
+  ever hit it; 6.4.1 fixed it there).
 
 ## 6.4.1
 
