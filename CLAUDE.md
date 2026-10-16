@@ -26,8 +26,8 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 **▶ Resume here (2026-10-16, after the 6.5.0 release).** Nothing is in flight. Every checkout is clean and pushed:
 `master` and the five branches at their 6.5.0 bump. Open items:
-- **ZARP takes 6.5.0 itself.** Its instance skips the fleet (`.sablecraft-no-deploy`) and still runs a hand-copied
-  6.3.0 test jar. Its Winchester fit-out ships in Threadwork 3d2bd37 (`zarp:schematic_fitout/winchester`) and was
+- **ZARP takes 6.5.0 itself.** Its instance skips the fleet (`.sablecraft-no-deploy`) and runs the 6.4.0 release;
+  the owner updates it through the CurseForge app so the file stays tracked. Its Winchester fit-out ships in Threadwork 3d2bd37 (`zarp:schematic_fitout/winchester`) and was
   proved on the 26.2 dev server with GBG, Phoenix and `configuration` loaded.
 - **The owner should paste `CURSEFORGE.md` into the CurseForge page.** It has the 6.5.0 and 6.4.0 headlines, with
   6.2.0 and 6.1.0 folded into "Other recent changes".
