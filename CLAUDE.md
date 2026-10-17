@@ -24,16 +24,21 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-10-16, after the 6.5.0 release).** Nothing is in flight. Every checkout is clean and pushed:
-`master` and the five branches at their 6.5.0 bump. Open items:
+**▶ Resume here (2026-10-18).** 6.5.0 is the latest release. Every checkout is clean; master and the five branches are
+ahead of origin with the unreleased 6.6.0 work below (NOT pushed). Open items:
 - **ZARP takes 6.5.0 itself.** Its instance skips the fleet (`.sablecraft-no-deploy`) and runs the 6.4.0 release;
   the owner updates it through the CurseForge app so the file stays tracked. Its Winchester fit-out ships in Threadwork 3d2bd37 (`zarp:schematic_fitout/winchester`) and was
   proved on the 26.2 dev server with GBG, Phoenix and `configuration` loaded.
-- **Unreleased on all six lines (committed, NOT pushed):** the find-anything API for the CityWorld Compass
-  companion mod (`22e71719` on master): `CityWorldAPI.findables` / `find` / `findLots(Predicate<LotInfo>)` /
-  `nearestCity`, plus the self-test `checkFindables` (92 findables, PASS on all six). The compass mod itself is a
-  separate project: brief and art in `../CityWorld-Compass/` (BRIEF.md, art/; the owner chose the stepped skyline
-  `skyline_b`). It needs CityWorld 6.6.0.
+- **Unreleased on all six lines (committed, NOT pushed), for 6.6.0:** the find-anything API (`CityWorldAPI.findables`
+  / `find` / `findLots(Predicate<LotInfo>)` / `nearestCity`, self-test `checkFindables`); the search planning a ring of
+  platmaps on a small pool (`planAll`, ~3x faster); the deep-vault loot fix (`LootProvider_LootTable.keyFor` clamps to
+  `VaultLot.DEEPEST_LOOT_TIER`; self-test `checkVaultLootTiers`, proved failing without the clamp); and on mc26.2/mc26.3
+  only, `logoFile` dropped (26.2+ NeoForge stopped at a warning screen). Master self-test PASS; the five branches
+  compile but have not been self-tested since the vault fix — that is the 6.6.0 release gate.
+- **CityWorld Compass is built** (`../CityWorld-Compass`, its own CLAUDE.md; worktrees in `../CityWorld-Compass-worktrees`):
+  six lines, all self-tests PASS against the dev CityWorld jars, owner playtested it on 26.2 ("it all worked"). The owner
+  is making its CurseForge project and GitHub repo. **Release order: CityWorld 6.6.0 first, then the compass**
+  (`cityworld_version_range=[6.6.0,)`).
 - **The owner should paste `CURSEFORGE.md` into the CurseForge page.** It has the 6.5.0 and 6.4.0 headlines, with
   6.2.0 and 6.1.0 folded into "Other recent changes".
 - **Confirm 6.4.1 in the `1.20.1  Forge` instance log:** no "could not read TerraBlender's End biomes" lines. The dev
