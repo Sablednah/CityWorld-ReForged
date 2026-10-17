@@ -73,6 +73,9 @@ public final class LootProvider_LootTable extends LootProvider {
      */
     public static ResourceKey<LootTable> keyFor(LootLocation lootLocation, int tier) {
         String name = "chests/" + lootLocation.name().toLowerCase(Locale.ROOT);
+        // never past the deepest tier shipped: vaults go to eight levels (6.2.0) and a level-7 footlocker named
+        // vault_quarters_floor7, which does not exist, so the chest was empty and Lootr said so in chat
+        tier = Math.min(tier, me.daddychurchill.CityWorld.Plats.Nature.VaultLot.DEEPEST_LOOT_TIER);
         if (tier > 0)
             name += "_floor" + tier;
         return ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.fromNamespaceAndPath("cityworld", name));
