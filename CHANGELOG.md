@@ -16,6 +16,16 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   `findLots(level, from, Predicate<LotInfo>, ...)` searches by anything a lot's `LotInfo` says; `nearestCity` gives
   the middle of the nearest city. All of it reads the plan, so nothing is generated. This is what the CityWorld
   Compass companion mod builds on.
+- Searches by kind plan a whole ring of the city at once on a few threads, about three times faster for something
+  rare and far away.
+
+### Fixed
+
+- **Deep vault floors had empty footlockers, desks and lockers.** Since vaults went four to eight levels deep in 6.2.0,
+  containers below level 3 named a loot table that does not exist (Lootr says so in chat). They now roll the
+  deepest floor's tables.
+- On Minecraft 26.2 and 26.3, NeoForge no longer stops at a "Warning while loading mods" screen over CityWorld's old
+  `logoFile` setting.
 
 ## 6.5.0
 
