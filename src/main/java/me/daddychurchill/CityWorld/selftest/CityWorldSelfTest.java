@@ -215,6 +215,7 @@ public final class CityWorldSelfTest {
             checkZooCatalog();
             checkFitOuts(server);
             checkFindables(server);
+            checkVaultLootTiers(server);
             checkReservedSite(server); // last: it changes the plan (far from everything else checked)
             checkDirectLoad(server); // truly last: if it finds a deadlock the server thread never answers again
         } catch (Throwable t) {
@@ -2309,6 +2310,25 @@ public final class CityWorldSelfTest {
         if (!me.daddychurchill.CityWorld.api.CityWorldAPI.find(level, from, "place:no_such_place", 3000, 1, 60_000).isEmpty())
             fail("findables: an unknown id found something");
         report.put("findables.subway", station.isEmpty() ? "none" : station.get(0).chunk().toString());
+    }
+
+    /**
+     * Every table a vault container can name exists, on every level a vault can have: a level-7 footlocker once named
+     * vault_quarters_floor7, past the deepest table shipped, and stayed empty.
+     */
+    private void checkVaultLootTiers(net.minecraft.server.MinecraftServer server) {
+        List<String> missing = new ArrayList<>();
+        for (var loc : me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation.values()) {
+            if (!loc.name().startsWith("VAULT"))
+                continue;
+            for (int tier = 0; tier <= 8; tier++) {
+                var key = me.daddychurchill.CityWorld.Plugins.LootProvider_LootTable.keyFor(loc, tier);
+                if (server.reloadableRegistries().getLootTable(key) == net.minecraft.world.level.storage.loot.LootTable.EMPTY)
+                    missing.add(key.identifier().toString());
+            }
+        }
+        if (!missing.isEmpty())
+            fail("vault loot tables missing: " + new java.util.TreeSet<>(missing));
     }
 
     private void checkZooCatalog() {
