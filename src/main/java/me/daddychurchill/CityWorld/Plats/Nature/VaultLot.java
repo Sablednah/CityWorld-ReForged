@@ -48,7 +48,7 @@ public class VaultLot extends BunkerLot {
 	}
 
 	/** The deepest loot tier shipped ({@code chests/vault_*_floor3}); floors below it roll that tier. */
-	static final int DEEPEST_LOOT_TIER = 3;
+	public static final int DEEPEST_LOOT_TIER = 3;
 
 	/** The loot tier of world height {@code y} inside this vault's bands: 0 for the entry level (and for
 	 *  anything outside a band), {@code k} for the {@code k}th level down, never past {@link #DEEPEST_LOOT_TIER}. */
