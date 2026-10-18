@@ -24,23 +24,14 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-10-18).** 6.5.0 is the latest release. Every checkout is clean; master and the five branches are
-ahead of origin with the unreleased 6.6.0 work below (NOT pushed). Open items:
+**▶ Resume here (2026-10-18, after the 6.6.0 release).** Every checkout is clean and pushed. Open items:
 - **ZARP takes 6.5.0 itself.** Its instance skips the fleet (`.sablecraft-no-deploy`) and runs the 6.4.0 release;
   the owner updates it through the CurseForge app so the file stays tracked. Its Winchester fit-out ships in Threadwork 3d2bd37 (`zarp:schematic_fitout/winchester`) and was
   proved on the 26.2 dev server with GBG, Phoenix and `configuration` loaded.
-- **Unreleased on all six lines (committed, NOT pushed), for 6.6.0:** the find-anything API (`CityWorldAPI.findables`
-  / `find` / `findLots(Predicate<LotInfo>)` / `nearestCity`, self-test `checkFindables`); the search planning a ring of
-  platmaps on a small pool (`planAll`, ~3x faster); the deep-vault loot fix (`LootProvider_LootTable.keyFor` clamps to
-  `VaultLot.DEEPEST_LOOT_TIER`; self-test `checkVaultLootTiers`, proved failing without the clamp); and on mc26.2/mc26.3
-  only, `logoFile` dropped (26.2+ NeoForge stopped at a warning screen). Master self-test PASS; the five branches
-  compile but have not been self-tested since the vault fix — that is the 6.6.0 release gate.
-- **CityWorld Compass is built** (`../CityWorld-Compass`, its own CLAUDE.md; worktrees in `../CityWorld-Compass-worktrees`):
-  six lines, all self-tests PASS against the dev CityWorld jars, owner playtested it on 26.2 ("it all worked"). The owner
-  is making its CurseForge project and GitHub repo. **Release order: CityWorld 6.6.0 first, then the compass**
-  (`cityworld_version_range=[6.6.0,)`).
-- **The owner should paste `CURSEFORGE.md` into the CurseForge page.** It has the 6.5.0 and 6.4.0 headlines, with
-  6.2.0 and 6.1.0 folded into "Other recent changes".
+- **CityWorld Compass** (`../CityWorld-Compass`, https://github.com/Sablednah/CityWorld-Compass, CurseForge project
+  1752214; its own CLAUDE.md) is releasing as 1.0.0 right after 6.6.0, built against the released 6.6.0 jars.
+- **The owner should paste `CURSEFORGE.md` into the CurseForge page.** It has the 6.6.0, 6.5.0 and 6.4.0 headlines;
+  6.3.0 is folded into "Other recent changes". Once the compass is live, its CurseForge link can go in the 6.6.0 line.
 - **Confirm 6.4.1 in the `1.20.1  Forge` instance log:** no "could not read TerraBlender's End biomes" lines. The dev
   1.20.1 runtime has no TerraBlender to show it.
 - **The owner's 26.2 world-creation hang is fixed in 6.4.0** (`worldgen/Waiting`). It was a race the dev server never
@@ -61,6 +52,18 @@ ahead of origin with the unreleased 6.6.0 work below (NOT pushed). Open items:
   `scripts/river_{spill,pillars,depth,hollows}.py` (region checks), `scripts/count_worlds.py` (promo stat).
 - The owner's test seeds: CityWorld land 5670300453504745606 (his mountain, the falls, both mouths), vanilla land
   1688298913692546204 (the bridge at x 704–751 z −1000; quays at 661,−824 and 712,−1095).
+
+**v6.6.0 is released** (2026-10-18) on all six lines — tag `v6.6.0` (`394e84df`), CurseForge 9240305–9240312, fleet
+`DEPLOYED-v6.6.0` on 11 (ZARP opts out): **the find-anything API** (`CityWorldAPI.findables` → `Findable(id, group,
+title)`: city, 33 places, 14 shop trades, 11 districts, every schematic by Title; `find(level, from, id, radius, limit,
+budget)`; `findLots(…, Predicate<LotInfo>, …)`; `nearestCity`) for the CityWorld Compass, with each search ring's
+platmaps planned side by side (`planAll`, a 2–4 thread daemon pool; hospital at ~1000 blocks 9.1 s → 2.9 s), and
+**deep vault loot**: containers below level 3 had named `vault_<room>_floor4..7`, which do not exist (empty chests,
+Lootr chat spam, ZARP's report). `keyFor` clamps to `DEEPEST_LOOT_TIER`, and `VaultLot.lootTier(k, levels)` spreads the
+levels over the four tiers, entry included (owner's spec: 8 levels = entry, entry, 1, 1, 2, 2, 3, 3). Also 26.2/26.3
+drop `logoFile` (NeoForge 26.2+ stopped at a warning screen for it). Self-test `checkFindables`,
+`checkVaultLootTiers` (proved failing without the clamp). Gates: six self-tests PASS, CI green on the bump heads,
+halt/exit 0 after a synthetic positive, 1.20.1 reobfuscated.
 
 **v6.5.0 is released** (2026-10-16) on all six lines — tag `v6.5.0` (`c47698ab`), CurseForge 9206957–9206962, fleet
 `DEPLOYED-v6.5.0` on 11 (ZARP opts out): **schematic fit-outs** (`worldgen/SchematicFitOuts`, registry
