@@ -22,8 +22,9 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 ### Fixed
 
 - **Deep vault floors had empty footlockers, desks and lockers.** Since vaults went four to eight levels deep in 6.2.0,
-  containers below level 3 named a loot table that does not exist (Lootr says so in chat). They now roll the
-  deepest floor's tables.
+  containers below level 3 named a loot table that does not exist (Lootr says so in chat). Now the loot gets better
+  evenly down the whole vault: its levels split into the entry tables and the three deeper tiers, so an eight-level
+  vault runs entry, entry, 1, 1, 2, 2, 3, 3, and the bottom floor always has the best.
 - On Minecraft 26.2 and 26.3, NeoForge no longer stops at a "Warning while loading mods" screen over CityWorld's old
   `logoFile` setting.
 
