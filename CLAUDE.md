@@ -28,6 +28,9 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 - **ZARP takes 6.5.0 itself.** Its instance skips the fleet (`.sablecraft-no-deploy`) and runs the 6.4.0 release;
   the owner updates it through the CurseForge app so the file stays tracked. Its Winchester fit-out ships in Threadwork 3d2bd37 (`zarp:schematic_fitout/winchester`) and was
   proved on the 26.2 dev server with GBG, Phoenix and `configuration` loaded.
+- **JourneyMap 6.0.10 for 26.3 works on NeoForge 26.3.0.58** (it needs .45+; checked 2026-10-18: CityWorld's map plugin
+  initialises, self-test PASS). It replaced 6.0.8 in `mc26.3/run/mods`, so 26.3 self-tests no longer set JourneyMap aside.
+  The owner's `26.3` instance still has 6.0.10 renamed `.jar.disabled`; it can go back on.
 - **CityWorld Compass** (`../CityWorld-Compass`, https://github.com/Sablednah/CityWorld-Compass, CurseForge project
   1752214; its own CLAUDE.md) is releasing as 1.0.0 right after 6.6.0, built against the released 6.6.0 jars.
 - **The owner should paste `CURSEFORGE.md` into the CurseForge page.** It has the 6.6.0, 6.5.0 and 6.4.0 headlines;
