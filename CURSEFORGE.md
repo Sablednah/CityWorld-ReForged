@@ -15,7 +15,7 @@ generated city, more ground than all of Greater London and two and a half New Yo
 
 **New in 6.6.0: find anything, and deep vaults worth the climb down.** CityWorld can now answer "where is the
 nearest hospital, mall, subway station, bookshop or Winchester?" from its city plan, without generating a thing, which
-is what the coming CityWorld Compass companion mod is
+is what the new [CityWorld Urban Compass](https://www.curseforge.com/minecraft/mc-mods/cityworld-urban-compass) companion mod is
 built on. And deep vault floors had empty chests since vaults went eight levels deep: now the loot gets better evenly
 all the way down, and the bottom floor always has the best.
 
