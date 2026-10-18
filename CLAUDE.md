@@ -31,8 +31,9 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 - **JourneyMap 6.0.10 for 26.3 works on NeoForge 26.3.0.58** (it needs .45+; checked 2026-10-18: CityWorld's map plugin
   initialises, self-test PASS). It replaced 6.0.8 in `mc26.3/run/mods`, so 26.3 self-tests no longer set JourneyMap aside.
   The owner's `26.3` instance still has 6.0.10 renamed `.jar.disabled`; it can go back on.
-- **CityWorld Compass** (`../CityWorld-Compass`, https://github.com/Sablednah/CityWorld-Compass, CurseForge project
-  1752214; its own CLAUDE.md) is releasing as 1.0.0 right after 6.6.0, built against the released 6.6.0 jars.
+- **CityWorld Compass 1.0.0 is released** (2026-10-18; `../CityWorld-Compass`, https://github.com/Sablednah/CityWorld-Compass,
+  CurseForge project 1752214, files 9240462–9240467; its own CLAUDE.md). It requires CityWorld `[6.6.0,)` and uses only
+  `CityWorldAPI.findables`/`find`/`vaultEntrance`: change those with care, and message nobody — this session owns both.
 - **The owner should paste `CURSEFORGE.md` into the CurseForge page.** It has the 6.6.0, 6.5.0 and 6.4.0 headlines;
   6.3.0 is folded into "Other recent changes". Once the compass is live, its CurseForge link can go in the 6.6.0 line.
 - **Confirm 6.4.1 in the `1.20.1  Forge` instance log:** no "could not read TerraBlender's End biomes" lines. The dev
