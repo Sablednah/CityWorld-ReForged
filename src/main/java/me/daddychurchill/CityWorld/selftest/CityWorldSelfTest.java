@@ -2341,6 +2341,25 @@ public final class CityWorldSelfTest {
         }
         if (!missing.isEmpty())
             fail("vault loot tables missing: " + new java.util.TreeSet<>(missing));
+        // the levels spread over the tiers, entry tier included: the owner's eight-level example, and every depth
+        // from the entry tables down to tier 3 without a step back
+        java.util.function.IntFunction<List<Integer>> tiers = levels -> {
+            List<Integer> t = new ArrayList<>();
+            for (int k = 0; k < levels; k++)
+                t.add(me.daddychurchill.CityWorld.Plats.Nature.VaultLot.lootTier(k, levels));
+            return t;
+        };
+        if (!tiers.apply(8).equals(List.of(0, 0, 1, 1, 2, 2, 3, 3)) || !tiers.apply(4).equals(List.of(0, 1, 2, 3)))
+            fail("vault loot tiers: 8 levels " + tiers.apply(8) + ", 4 levels " + tiers.apply(4));
+        for (int levels = 4; levels <= 8; levels++) {
+            List<Integer> t = tiers.apply(levels);
+            for (int k = 1; k < levels; k++)
+                if (t.get(k) < t.get(k - 1))
+                    fail("vault loot tiers step back at " + levels + " levels: " + t);
+            if (t.get(0) != 0 || t.get(levels - 1) != 3)
+                fail("vault loot tiers at " + levels + " levels: " + t);
+        }
+        report.put("vault.lootTiers", tiers.apply(6) + " / " + tiers.apply(8));
     }
 
     private void checkZooCatalog() {
