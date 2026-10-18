@@ -13,6 +13,12 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+**New in 6.6.0: find anything, and deep vaults worth the climb down.** CityWorld can now answer "where is the
+nearest hospital, mall, subway station, bookshop or Winchester?" from its city plan, without generating a thing, which
+is what the coming CityWorld Compass companion mod is
+built on. And deep vault floors had empty chests since vaults went eight levels deep: now the loot gets better evenly
+all the way down, and the bottom floor always has the best.
+
 **New in 6.5.0: fit out a building from a datapack.** A pack can now change what is inside any of CityWorld's
 schematic buildings without replacing the schematic: swap blocks (a mod's slot machine for the pub's fruit
 machine) and hang item frames holding anything (a loaded shotgun over the bar). The changes turn with the building,
@@ -24,14 +30,10 @@ own ground, pool, plants, trees and rocks to climb, and a fence tall enough for 
 despawn, and pens keep their habitat's ground in snowy and sandy biomes. And creating a world could, now and then,
 hang at "Preparing spawn area" since 6.0.0 — fixed.
 
-**New in 6.3.0: a radio tower you can walk into.** The hut on every radio tower is now a room — a door beside the
-ladder, windows, a lantern, the operator's chair at a table (your furniture mod's own, if you have one) and a chest
-of spares: copper, redstone, repeaters, comparators and the like, from its own loot table, one per tower even in a
-ruined world. And hospital medicine chests keep their Potions of Healing and bandages now — with Lootr installed
-they used to spill them across the floor.
-
 **Other recent changes**
 
+- **6.3.0** — radio towers have a hut you can walk into (a chair, a table and a chest of spares); hospital medicine
+  chests keep their potions with Lootr installed.
 - **6.2.0** — Working lights off really puts the city's lights out; the ruined city's vault keeps its own power and
   goes four to eight levels deep, darker and more overrun floor by floor.
 - **6.1.0** — no more snow over the jungle: warm mountains carry savanna, forest and jungle up to stony peaks, the
