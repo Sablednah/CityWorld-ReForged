@@ -47,15 +47,24 @@ public class VaultLot extends BunkerLot {
 		return tierForY(bottomOfBunker, y, levels);
 	}
 
-	/** The deepest loot tier shipped ({@code chests/vault_*_floor3}); floors below it roll that tier. */
+	/** The deepest loot tier shipped ({@code chests/vault_*_floor3}). */
 	public static final int DEEPEST_LOOT_TIER = 3;
 
-	/** The loot tier of world height {@code y} inside this vault's bands: 0 for the entry level (and for
-	 *  anything outside a band), {@code k} for the {@code k}th level down, never past {@link #DEEPEST_LOOT_TIER}. */
+	/**
+	 * The loot tier of level {@code k} (0 = the entry level) in a vault {@code levels} deep: the levels split evenly into
+	 * the four tiers, entry tier included, so the entry level is always the plain tables and the bottom level always
+	 * tier 3 however deep the vault (owner, 2026-10-18: eight levels are entry, entry, 1, 1, 2, 2, 3, 3; four are
+	 * entry, 1, 2, 3).
+	 */
+	public static int lootTier(int k, int levels) {
+		return Math.min(DEEPEST_LOOT_TIER, k * (DEEPEST_LOOT_TIER + 1) / Math.max(1, levels));
+	}
+
+	/** The loot tier of world height {@code y} inside this vault's bands ({@link #lootTier}); 0 outside every band. */
 	static int tierForY(int bottom, int y, int levels) {
 		for (int k = 1; k < levels; k++)
 			if (y >= levelFloor(bottom, k) && y <= levelFloor(bottom, k) + 6)
-				return Math.min(k, DEEPEST_LOOT_TIER);
+				return lootTier(k, levels);
 		return 0;
 	}
 
@@ -187,7 +196,8 @@ public class VaultLot extends BunkerLot {
     static void generateLowerLevels(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int bottom, int levels,
             boolean[] walls, int oX, int oZ, boolean entrance, int chunkX, int chunkZ) {
         for (int k = 1; k < levels; k++)
-            generateLevel(generator, odds, chunk, levelFloor(bottom, k), levelFloor(bottom, k) + 6, walls, oX, oZ, k);
+            generateLevel(generator, odds, chunk, levelFloor(bottom, k), levelFloor(bottom, k) + 6, walls, oX, oZ, k,
+                    lootTier(k, levels));
         for (int k = 0; k < levels - 1; k++)
             if (!(entrance && k == 0) && Math.floorMod(chunkX * 7 + chunkZ * 13 + k * 29, 3) == 0)
                 stairwellDown(chunk, levelFloor(bottom, k), levelFloor(bottom, k + 1));
@@ -318,7 +328,7 @@ public class VaultLot extends BunkerLot {
 
     /** The vault interior of one chunk: the corridor-and-rooms level. */
     static void generateVaultHall(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int bottom, int top, boolean[] wall, int oX, int oZ) {
-        generateLevel(generator, odds, chunk, floorY(bottom), ceilingY(bottom, top), wall, oX, oZ, 0);
+        generateLevel(generator, odds, chunk, floorY(bottom), ceilingY(bottom, top), wall, oX, oZ, 0, 0);
     }
 
     /**
@@ -331,10 +341,11 @@ public class VaultLot extends BunkerLot {
      *
      * <p>{@code depth} is the floor index (0 = the entry level, {@link #levels}-1 the deepest) and the
      * vault worsens with it: more lights out, more wear, spawners in the rooms, and richer loot tiers —
-     * see {@link #lightAt}, {@link #dressLevel}, {@link #haunt} and {@link #lootTierAt}.
+     * see {@link #lightAt}, {@link #dressLevel} and {@link #haunt}. Its containers roll loot tier {@code tier}
+     * ({@link #lootTier}): the vault's depth spread over the tiers, not the floor index itself.
      */
     static void generateLevel(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int floorY, int ceilY, boolean[] wall, int oX, int oZ,
-            int depth) {
+            int depth, int tier) {
         chunk.setLayer(floorY, FLOOR);
         chunk.setLayer(ceilY, CEIL);
         chunk.setBlocks(0, 16, floorY + 1, ceilY, 0, 16, Material.AIR); // clear
@@ -389,10 +400,10 @@ public class VaultLot extends BunkerLot {
 
         // furnish each quadrant — the room TYPE is keyed to the chunk-corner it belongs to, so all four
         // quadrants of a room merged across chunk boundaries agree and it reads as one coherent room
-        furnishRoom(generator, odds, chunk, floorY, 1, 5, 1, 5, oX, oZ, depth); // NW quadrant -> corner (oX, oZ)
-        furnishRoom(generator, odds, chunk, floorY, 10, 14, 1, 5, oX + 16, oZ, depth); // NE -> (oX+16, oZ)
-        furnishRoom(generator, odds, chunk, floorY, 1, 5, 10, 14, oX, oZ + 16, depth); // SW -> (oX, oZ+16)
-        furnishRoom(generator, odds, chunk, floorY, 10, 14, 10, 14, oX + 16, oZ + 16, depth); // SE -> (oX+16, oZ+16)
+        furnishRoom(generator, odds, chunk, floorY, 1, 5, 1, 5, oX, oZ, depth, tier); // NW quadrant -> corner (oX, oZ)
+        furnishRoom(generator, odds, chunk, floorY, 10, 14, 1, 5, oX + 16, oZ, depth, tier); // NE -> (oX+16, oZ)
+        furnishRoom(generator, odds, chunk, floorY, 1, 5, 10, 14, oX, oZ + 16, depth, tier); // SW -> (oX, oZ+16)
+        furnishRoom(generator, odds, chunk, floorY, 10, 14, 10, 14, oX + 16, oZ + 16, depth, tier); // SE -> (oX+16, oZ+16)
 
         dressLevel(chunk, floorY, ceilY, oX, oZ, depth);
         haunt(generator, odds, chunk, floorY, ceilY, oX, oZ, depth);
@@ -584,16 +595,16 @@ public class VaultLot extends BunkerLot {
      * hydroponics or mess. Everything is guarded with empty-cell checks so nothing lands in a wall/doorway.
      */
     static void furnishRoom(CityWorldGenerator generator, Odds odds, SupportBlocks chunk, int floorY, int x1, int x2, int z1, int z2, int cornerX,
-            int cornerZ, int depth) {
+            int cornerZ, int depth, int tier) {
         int fy = floorY + 1; // furniture stands on the floor
         // corners are multiples of 16, so hashing them raw is always even (types 7/9 never hit); divide to a
         // chunk index first so every type can occur. Mix in floorY so the type varies by level (each level
         // isn't a copy of the one above) — still coherent since a merged room lives within one level.
         switch (Math.floorMod((cornerX / 16) * 13 + (cornerZ / 16) * 7 + floorY, 10)) {
-        case 0, 1, 2, 3 -> livingQuarters(generator, odds, chunk, fy, x1, x2, z1, z2, depth);
-        case 4, 5 -> office(generator, odds, chunk, fy, x1, x2, z1, z2, depth);
+        case 0, 1, 2, 3 -> livingQuarters(generator, odds, chunk, fy, x1, x2, z1, z2, tier);
+        case 4, 5 -> office(generator, odds, chunk, fy, x1, x2, z1, z2, tier);
         case 6 -> lab(generator, odds, chunk, fy, x1, x2, z1, z2);
-        case 7 -> armoury(generator, odds, chunk, fy, x1, x2, z1, z2, depth);
+        case 7 -> armoury(generator, odds, chunk, fy, x1, x2, z1, z2, tier);
         case 8 -> hydroponics(chunk, floorY, x1, x2, z1, z2, depth);
         default -> messHall(generator, odds, chunk, fy, x1, x2, z1, z2); // 9
         }
