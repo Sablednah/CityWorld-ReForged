@@ -30,7 +30,7 @@ import net.minecraft.network.chat.Component;
  * hands back a {@link Result} — the style and an inline settings object — which the caller bakes into
  * the create-world screen's overworld generator (an inline holder, so the tuned world needs no
  * datapack). Which vanilla and mod structures the world places has a page of its own
- * ({@link CityWorldStructuresScreen}). The word lists, mob bags and city-radius knobs are <em>not</em> exposed here — they are
+ * ({@link CityWorldStructuresScreen}), and so do saved presets ({@link CityWorldPresetsScreen}). The word lists, mob bags and city-radius knobs are <em>not</em> exposed here — they are
  * datapack-authored (see {@code config/cityworld/settings-example/}); this screen carries whatever the
  * incoming settings held for them through untouched.
  *
@@ -59,6 +59,11 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private final CityWorldSettingsData.Structures structures;
     /** Every structure set the install has, for that page; empty when the registries could not be read. */
     private final List<me.daddychurchill.CityWorld.worldgen.StructureChoices.Entry> structureEntries;
+    /**
+     * Each style's settings as its world preset ships them (CityWorld's or a pack's replacement) — what a style
+     * change loads, so it matches picking that world type. A style missing here falls back to the compiled defaults.
+     */
+    private final java.util.Map<WorldStyle, CityWorldSettingsData> styleBases;
 
     // Working state — mutated live by the widgets, read back in buildResult().
     private WorldStyle style;
@@ -116,10 +121,11 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     public CityWorldCustomizeScreen(Screen parent, WorldStyle initialStyle, CityWorldSettingsData initial,
             boolean ruinedNether, boolean cityWorldEnd, boolean styleLocked,
             List<me.daddychurchill.CityWorld.worldgen.StructureChoices.Entry> structureEntries,
-            Consumer<Result> onDone) {
+            java.util.Map<WorldStyle, CityWorldSettingsData> styleBases, Consumer<Result> onDone) {
         super(parent, Minecraft.getInstance().options, TITLE);
         this.onDone = onDone;
         this.structureEntries = structureEntries;
+        this.styleBases = styleBases;
         this.structures = initial.structures();
         this.cities = initial.cities();
         this.styleLocked = styleLocked;
@@ -438,9 +444,22 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, b -> {
             this.onDone.accept(buildResult());
             this.onClose();
-        }).bounds(this.width / 2 - 155, this.height - 32, WIDTH, HEIGHT).build());
+        }).bounds(this.width / 2 - 158, this.height - 32, 100, HEIGHT).build());
+        addRenderableWidget(Button.builder(Component.literal("Presets"), b -> this.minecraft.setScreen(
+                new CityWorldPresetsScreen(this.lastScreen, buildResult(), this::fromPreset)))
+                .bounds(this.width / 2 - 50, this.height - 32, 100, HEIGHT).build());
         addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, b -> this.onClose())
-                .bounds(this.width / 2 + 5, this.height - 32, WIDTH, HEIGHT).build());
+                .bounds(this.width / 2 + 58, this.height - 32, 100, HEIGHT).build());
+    }
+
+    /**
+     * This screen around a saved preset (or, from the Presets page's Back, around what it held) — a fresh screen
+     * for the reason {@link #onStyleChanged} gives. A modpack's style lock keeps its style; its realm locks win
+     * in the constructor.
+     */
+    private Screen fromPreset(Result preset) {
+        return new CityWorldCustomizeScreen(this.lastScreen, styleLocked ? style : preset.style(), preset.settings(),
+                preset.ruinedNether(), preset.cityWorldEnd(), this.styleLocked, this.structureEntries, this.styleBases, this.onDone);
     }
 
     @Override
@@ -568,22 +587,32 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         // Reopen the screen fresh for the new style rather than rebuilding in place: OptionsSubScreen keeps
         // its scrolling list in a layout that rebuildWidgets() doesn't clear, so an in-place rebuild stacked
         // a ghost list behind the options and jammed the style cycle on a stale button. A fresh screen loads
-        // the new style's defaults and recomputes the locks cleanly.
-        // The reset is for the EDITABLE options; the groups this screen has no widgets for (radius,
-        // naming, mobs, the announce list, the cave dials) came from the player's preset and must
-        // survive the cycle — resetting them silently discarded a datapack's custom city radius or
-        // mob lists.
-        CityWorldSettingsData defaults = me.daddychurchill.CityWorld.CityWorldSettings.styleDefaults(newStyle);
-        CityWorldSettingsData.World world = defaults.world();
-        CityWorldSettingsData carried = new CityWorldSettingsData(defaults.features(), defaults.terrain(),
-                defaults.spawns(), defaults.treasures(),
-                new CityWorldSettingsData.World(world.treeStyle(), world.spawnTrees(), world.subSurfaceStyle(),
-                        world.ruralnessLevel(), world.maxBuildingFloors(), world.broadcastSpecialPlaces(),
-                        announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
-                        moddedBiomeShare),
-                radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves,
-                defaults.subways(), structures, cities);
-        this.minecraft.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.ruinedNether, this.cityWorldEnd, this.styleLocked, this.structureEntries, this.onDone));
+        // the new style's settings and recomputes the locks cleanly.
+        // Those settings are the style's own world preset entry, whole: a datapack's custom radius or mob lists
+        // live there too. Only when no preset is known for the style (the registries could not be read) does it
+        // fall back to the compiled defaults, and then the groups this screen has no widgets for (radius,
+        // naming, mobs, the announce list, the cave dials) are carried from the current preset instead, because
+        // resetting them silently discarded a datapack's custom city radius or mob lists.
+        CityWorldSettingsData base = styleBases.get(newStyle);
+        CityWorldSettingsData carried;
+        if (base != null) {
+            // What that world type gives — its preset's settings, as the style makes them — keeping only what is
+            // not the style's to say: the structure choices and the land (vanilla or CityWorld's, and its dials).
+            carried = me.daddychurchill.CityWorld.CityWorldSettings.styleSettings(newStyle, base)
+                    .withStructures(structures).withCities(cities);
+        } else {
+            CityWorldSettingsData defaults = me.daddychurchill.CityWorld.CityWorldSettings.styleDefaults(newStyle);
+            CityWorldSettingsData.World world = defaults.world();
+            carried = new CityWorldSettingsData(defaults.features(), defaults.terrain(),
+                    defaults.spawns(), defaults.treasures(),
+                    new CityWorldSettingsData.World(world.treeStyle(), world.spawnTrees(), world.subSurfaceStyle(),
+                            world.ruralnessLevel(), world.maxBuildingFloors(), world.broadcastSpecialPlaces(),
+                            announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
+                            moddedBiomeShare),
+                    radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves,
+                    defaults.subways(), structures, cities);
+        }
+        this.minecraft.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.ruinedNether, this.cityWorldEnd, this.styleLocked, this.structureEntries, this.styleBases, this.onDone));
     }
 
     /**
@@ -592,7 +621,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
      */
     private Screen reopened(CityWorldSettingsData.Structures chosen) {
         return new CityWorldCustomizeScreen(this.lastScreen, style, buildResult().settings().withStructures(chosen),
-                this.ruinedNether, this.cityWorldEnd, this.styleLocked, this.structureEntries, this.onDone);
+                this.ruinedNether, this.cityWorldEnd, this.styleLocked, this.structureEntries, this.styleBases, this.onDone);
     }
 
     // ---- widget helpers ----------------------------------------------------------------------

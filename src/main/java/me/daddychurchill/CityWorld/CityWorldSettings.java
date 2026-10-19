@@ -454,7 +454,22 @@ public class CityWorldSettings {
             // biome mod extends — so on the styles built around modern Minecraft, hand it over.
             s.wildDecoration = CityWorldSettingsData.WildDecoration.VANILLA;
         }
+        // A ruin has no power and nobody flying: a player's suggestion, defaults only (unlike DESTROYED,
+        // which forces the airships off). The vault keeps its own power either way.
+        if (style == WorldStyle.APOCALYPSE) {
+            s.includeAirborneStructures = false;
+            s.includeWorkingLights = false;
+        }
         return s.toData();
+    }
+
+    /**
+     * A world preset's own settings as that style makes them — what a world of that type gets, with whatever the
+     * style forces applied. The Customize screen loads this when the style changes, so switching to Apocalypse there
+     * gives the same options as picking the Apocalypse world type.
+     */
+    public static CityWorldSettingsData styleSettings(WorldStyle style, CityWorldSettingsData data) {
+        return new CityWorldSettings(style, java.util.Optional.empty(), data).toData();
     }
 
     /**

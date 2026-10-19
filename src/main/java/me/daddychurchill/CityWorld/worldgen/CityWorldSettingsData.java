@@ -63,6 +63,12 @@ public record CityWorldSettingsData(
                 overgrowth, shops, decay, caves, subways, chosen, cities);
     }
 
+    /** These settings with another land choice (the Customize screen keeps it across a style change). */
+    public CityWorldSettingsData withCities(Cities chosen) {
+        return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
+                overgrowth, shops, decay, caves, subways, structures, chosen);
+    }
+
     /** 1875000 chunks — the modern world-format radius ceiling (30,000,000 blocks / 16). */
     public static final int MAX_RADIUS = 30000000 / 16;
 
