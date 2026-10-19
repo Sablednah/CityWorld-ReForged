@@ -1,8 +1,10 @@
 {
   "features": {
-    "includeSchematics": true
+    "includeSchematics": true,
+    "includeAirborneStructures": false
   },
   "terrain": {
+    "includeWorkingLights": false,
     "windingCaves": true,
     "largeCaverns": true
   },
