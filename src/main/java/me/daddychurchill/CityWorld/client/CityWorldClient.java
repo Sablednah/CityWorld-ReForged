@@ -86,6 +86,7 @@ public final class CityWorldClient {
                 me.daddychurchill.CityWorld.worldgen.CityWorldRealms.hasCityWorldEnd(context.selectedDimensions()),
                 false,
                 me.daddychurchill.CityWorld.worldgen.StructureChoices.list(context.worldgenLoadContext()),
+                styleBases(context),
                 result -> parent.getUiState().updateDimensions(configurator(result))));
         // A modpack lock onto another CityWorld preset (apocalypse, say) still gets a Customize button — only
         // cityworld:city has one otherwise — but with the style picker held on the preset's own style, so
@@ -101,6 +102,7 @@ public final class CityWorldClient {
                         me.daddychurchill.CityWorld.worldgen.CityWorldRealms.hasCityWorldEnd(context.selectedDimensions()),
                         true,
                         me.daddychurchill.CityWorld.worldgen.StructureChoices.list(context.worldgenLoadContext()),
+                        styleBases(context),
                         result -> parent.getUiState().updateDimensions(configurator(result)))));
     }
 
@@ -109,6 +111,27 @@ public final class CityWorldClient {
         if (context.selectedDimensions().overworld() instanceof CityWorldChunkGenerator cw)
             return cw.resolvedStyle();
         return WorldStyle.CLASSIC;
+    }
+
+    /**
+     * Each style's settings as its CityWorld world preset carries them — {@code cityworld:apocalypse} for
+     * Apocalypse, {@code cityworld:default} for Classic and the rest, or whatever a pack replaced them with — so a
+     * style change in Customize gives what picking that world type would. Read once, when the screen opens.
+     */
+    private static java.util.Map<WorldStyle, CityWorldSettingsData> styleBases(WorldCreationContext context) {
+        java.util.Map<WorldStyle, CityWorldSettingsData> bases = new java.util.EnumMap<>(WorldStyle.class);
+        try {
+            context.worldgenLoadContext().lookupOrThrow(Registries.WORLD_PRESET).listElements()
+                    .filter(preset -> preset.key().location().getNamespace().equals(CityWorldMod.MODID))
+                    .sorted(java.util.Comparator.comparing(preset -> preset.key().location().toString()))
+                    .forEach(preset -> {
+                        if (preset.value().createWorldDimensions().overworld() instanceof CityWorldChunkGenerator cw)
+                            bases.putIfAbsent(cw.resolvedStyle(), cw.resolvedSettings());
+                    });
+        } catch (RuntimeException e) {
+            CityWorldMod.LOGGER.warn("CityWorld: could not read the world presets for Customize: {}", e.toString());
+        }
+        return bases;
     }
 
     /** Reads the settings off the selected generator so the screen opens on the current values. */

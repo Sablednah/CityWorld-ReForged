@@ -39,6 +39,8 @@ public class CityWorldStructuresScreen extends OptionsSubScreen {
     private final Function<CityWorldSettingsData.Structures, Screen> back;
     /** Set id → whether this world places it; mutated live by the buttons. */
     private final Map<String, Boolean> placed = new LinkedHashMap<>();
+    /** Set id → its button, so All on / All off can show what they set. */
+    private final Map<String, CycleButton<Boolean>> buttons = new LinkedHashMap<>();
 
     public CityWorldStructuresScreen(Screen parent, List<StructureChoices.Entry> entries,
             CityWorldSettingsData.Structures initial, Function<CityWorldSettingsData.Structures, Screen> back) {
@@ -52,7 +54,11 @@ public class CityWorldStructuresScreen extends OptionsSubScreen {
 
     @Override
     protected void addOptions() {
+        buttons.clear();
         List<AbstractWidget> row = new ArrayList<>();
+        row.add(Button.builder(Component.literal("All on"), b -> setAll(true)).width(WIDTH).build());
+        row.add(Button.builder(Component.literal("All off"), b -> setAll(false)).width(WIDTH).build());
+        flush(row);
         String group = null;
         for (StructureChoices.Entry entry : entries) {
             if (!entry.group().equals(group)) {
@@ -66,11 +72,22 @@ public class CityWorldStructuresScreen extends OptionsSubScreen {
                     .create(0, 0, WIDTH, HEIGHT, Component.literal(entry.label()),
                             (b, on) -> placed.put(entry.id(), on));
             button.setTooltip(Tooltip.create(Component.literal(describe(entry))));
+            buttons.put(entry.id(), button);
             row.add(button);
             if (row.size() == 2)
                 flush(row);
         }
         flush(row);
+    }
+
+    /** Every set on, or every set off — a mod's whole catalogue in one click instead of a hundred. */
+    private void setAll(boolean on) {
+        for (StructureChoices.Entry entry : entries) {
+            placed.put(entry.id(), on);
+            CycleButton<Boolean> button = buttons.get(entry.id());
+            if (button != null)
+                button.setValue(on);
+        }
     }
 
     private void flush(List<AbstractWidget> row) {
