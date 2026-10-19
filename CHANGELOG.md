@@ -5,6 +5,29 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **Presets on the Customize screen.** A Presets button saves everything the screen holds (style, Nether and End,
+  every setting, and the structure choices) under a name, and loads or deletes saved presets. Each one is a JSON file
+  in `config/cityworld/presets/`, so a preset can be copied to another install, or into a pack. A modpack that locks
+  the style keeps its style when a preset loads.
+- **All on / All off on the Structures page,** for an install whose mods add dozens of structure sets.
+
+### Changed
+
+- **Apocalypse starts with airborne structures and working lights off** (a player's suggestion: a ruin has no power
+  and nobody flying). Both are defaults only, not locked: switch either back on in Customize. The vault keeps its own
+  power as before.
+
+### Fixed
+
+- **Changing the style in Customize now gives what that world type gives.** It used to reset to CityWorld's built-in
+  defaults, so switching to Apocalypse there turned schematics off and dropped the 40-floor cap and the Apocalypse
+  mobs that picking the Apocalypse world type has. It now loads the style's own world preset settings (or a pack's
+  replacement for them), keeping your structure choices and land.
+
 ## 6.6.0
 
 ### Added
