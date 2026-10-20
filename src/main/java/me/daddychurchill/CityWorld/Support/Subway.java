@@ -236,8 +236,13 @@ public final class Subway {
         return null;
     }
 
-    /** Link validity, memoised: {@code (a, b, axis)} -> whether the route stays in rock and clear of bunkers. */
-    private static final java.util.concurrent.ConcurrentHashMap<String, Boolean> LINKS = new java.util.concurrent.ConcurrentHashMap<>();
+    /**
+     * Link validity, memoised per world: {@code (a, b, axis)} -> whether the route stays in rock and clear of
+     * bunkers. Weak keys, so a closed world's answers go with its generator; it was one static map keyed by an
+     * identity hash, which grew with every world opened and could hand a later world an earlier one's answers.
+     */
+    private static final java.util.Map<CityWorldGenerator, java.util.concurrent.ConcurrentHashMap<String, Boolean>> LINKS =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
 
     /**
      * Whether the line from station {@code a} to station {@code b} ({@code ew}: a west of b; else a north
@@ -247,8 +252,10 @@ public final class Subway {
      * the two stations; memoised, and filled outside the map (never compute a plan inside a map lock).
      */
     private static boolean linkOk(CityWorldGenerator generator, int[] a, int[] b, boolean ew) {
-        String key = a[0] + "," + a[1] + (ew ? "e" : "s") + b[0] + "," + b[1] + "@" + System.identityHashCode(generator);
-        Boolean known = LINKS.get(key);
+        java.util.concurrent.ConcurrentHashMap<String, Boolean> links =
+                LINKS.computeIfAbsent(generator, g -> new java.util.concurrent.ConcurrentHashMap<>());
+        String key = a[0] + "," + a[1] + (ew ? "e" : "s") + b[0] + "," + b[1];
+        Boolean known = links.get(key);
         if (known != null)
             return known;
         int top = (ew ? ewFloor(generator) : nsFloor(generator)) + HEIGHT + 4;
@@ -263,7 +270,7 @@ public final class Subway {
                 break;
             }
         }
-        LINKS.put(key, ok);
+        links.put(key, ok);
         return ok;
     }
 

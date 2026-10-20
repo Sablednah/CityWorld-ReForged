@@ -192,20 +192,24 @@ public class BunkerLot extends ConnectedLot {
 		}
 	}
 
-	private static BunkerMaterials materials;
+	/**
+	 * Each world's bunker blocks, chosen once from its own seed. This was one static, chosen by whichever chunk
+	 * drew first and then used by every world opened in that game session — every dimension, any style.
+	 * Weak keys: a closed world's entry goes with its generator.
+	 */
+	private static final java.util.Map<CityWorldGenerator, BunkerMaterials> MATERIALS =
+			java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
 
-	private static void loadMaterials(CityWorldGenerator generator, Odds odds) {
-		// make sure we know what we are making
-		if (materials == null)
-			materials = new BunkerMaterials(generator, odds);
+	private static BunkerMaterials materialsFor(CityWorldGenerator generator) {
+		return MATERIALS.computeIfAbsent(generator,
+				g -> new BunkerMaterials(g, new Odds(g.getWorldSeed() ^ 0x42554E4B4552L))); // "BUNKER"
 	}
 
 	static int generateBunker(CityWorldGenerator generator, PlatMap platmap, SupportBlocks chunk, Odds odds,
 			DataContext context, int platX, int platZ, AbstractCachedYs blockYs, int bottomOfBunker, int topOfBunker,
 			BunkerType buildingType) {
 
-		// make sure we know what we using to make things
-		loadMaterials(generator, odds);
+		BunkerMaterials materials = materialsFor(generator);
 
 		// precalculate
 		int yBottom = bottomOfBunker;// calcSegmentOrigin(generator.sidewalkLevel) - bunkerBelowStreet;
@@ -339,8 +343,7 @@ public class BunkerLot extends ConnectedLot {
 		int surfaceY = blockYs.getMaxYWithin(6, 10, 6, 10);
 		int topY = surfaceY + DataContext.FloorHeight + 1;
 
-		// make sure we know what we using to make things
-		loadMaterials(generator, odds);
+		BunkerMaterials materials = materialsFor(generator);
 
 		// walls
 		chunk.setBlocks(5, 11, y1, topY, 5, 11, Material.TERRACOTTA);
@@ -392,8 +395,7 @@ public class BunkerLot extends ConnectedLot {
 	private static int generateSaucerBunker(CityWorldGenerator generator, DataContext context, SupportBlocks chunk,
 			Odds odds, int y1, int y2, int topOfBunker, AbstractCachedYs blockYs) {
 
-		// make sure we know what we using to make things
-		loadMaterials(generator, odds);
+		BunkerMaterials materials = materialsFor(generator);
 
 		// walls
 		chunk.setCircle(8, 8, 5, topOfBunker, blockYs.getMaxHeight() + 1, Material.AIR, true);
@@ -426,8 +428,7 @@ public class BunkerLot extends ConnectedLot {
 
 	public static int generateGrowingBunker(CityWorldGenerator generator, DataContext context, SupportBlocks chunk,
 			Odds odds, int y1, int y2) {
-		// make sure we know what we using to make things
-		loadMaterials(generator, odds);
+		BunkerMaterials materials = materialsFor(generator);
 
 		int x1 = 4;
 		int x2 = x1 + 8;
@@ -471,8 +472,7 @@ public class BunkerLot extends ConnectedLot {
 
 	public static int generateFlooredBunker(CityWorldGenerator generator, DataContext context, SupportBlocks chunk,
 			Odds odds, int y1, int y2) {
-		// make sure we know what we using to make things
-		loadMaterials(generator, odds);
+		BunkerMaterials materials = materialsFor(generator);
 
 		int x1 = 4;
 		int x2 = x1 + 8;
@@ -517,8 +517,7 @@ public class BunkerLot extends ConnectedLot {
 
 	public static int generateRecallBunker(CityWorldGenerator generator, DataContext context, SupportBlocks chunk,
 			Odds odds, int y1, int y2) {
-		// make sure we know what we using to make things
-		loadMaterials(generator, odds);
+		BunkerMaterials materials = materialsFor(generator);
 
 		int buildingWidth = 10;
 		int x1 = (chunk.width - buildingWidth) / 2;
@@ -578,8 +577,7 @@ public class BunkerLot extends ConnectedLot {
 
 	public static int generateBallsyBunker(CityWorldGenerator generator, DataContext context, SupportBlocks chunk,
 			Odds odds, int y1, int y2) {
-		// make sure we know what we using to make things
-		loadMaterials(generator, odds);
+		BunkerMaterials materials = materialsFor(generator);
 
 		int x1 = 2;
 		int x2 = x1 + 12;
@@ -629,8 +627,7 @@ public class BunkerLot extends ConnectedLot {
 
 	public static int generateQuadBunker(CityWorldGenerator generator, DataContext context, SupportBlocks chunk,
 			Odds odds, int y1, int y2) {
-		// make sure we know what we using to make things
-		loadMaterials(generator, odds);
+		BunkerMaterials materials = materialsFor(generator);
 
 		int x1 = 2;
 		int x2 = x1 + 12;
@@ -772,8 +769,7 @@ public class BunkerLot extends ConnectedLot {
 
 	public static int generateTankBunker(CityWorldGenerator generator, DataContext context, SupportBlocks chunk,
 			Odds odds, int y1, int y2) {
-		// make sure we know what we using to make things
-		loadMaterials(generator, odds);
+		BunkerMaterials materials = materialsFor(generator);
 
 		int x1 = 4;
 		int x2 = x1 + 8;
@@ -820,8 +816,7 @@ public class BunkerLot extends ConnectedLot {
 
 	public static int generatePyramidBunker(CityWorldGenerator generator, DataContext context, SupportBlocks chunk,
 			Odds odds, int y1, int y2) {
-		// make sure we know what we using to make things
-		loadMaterials(generator, odds);
+		BunkerMaterials materials = materialsFor(generator);
 
 		int x1 = 2;
 		int x2 = x1 + 12;
@@ -889,8 +884,7 @@ public class BunkerLot extends ConnectedLot {
 
 	private static int generateRoadTunnel(CityWorldGenerator generator, DataContext context, SupportBlocks chunk,
 			Odds odds, int y1, int y2) {
-		// make sure we know what we using to make things
-		loadMaterials(generator, odds);
+		BunkerMaterials materials = materialsFor(generator);
 
 		int underStreetY = generator.streetLevel - 3;
 		int streetY = generator.streetLevel;
