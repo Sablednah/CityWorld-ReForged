@@ -27,6 +27,15 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   defaults, so switching to Apocalypse there turned schematics off and dropped the 40-floor cap and the Apocalypse
   mobs that picking the Apocalypse world type has. It now loads the style's own world preset settings (or a pack's
   replacement for them), keeping your structure choices and land.
+- **Trees on bridges no longer float half a block above the deck.** A small reclaim tree growing on a slab road
+  (a bridge deck) now has its trunk in the slab's place, one log longer, instead of standing on top of it.
+- **Nothing carries over into the next world opened in the same game.** Found by an audit after a pack hit this
+  class of bug:
+  - Bunker blocks were chosen once per game session, by whichever bunker was generated first, then used in every
+    world opened afterwards, whatever its style. Each world now chooses its own, from its seed.
+  - The subway's route memo was shared by every world opened; each world now has its own.
+  - The map's city-plan setting (on/off, how much it keeps) now resets on logout, as intended, and when the server
+    stops; JourneyMap sends it again in the next world.
 
 ## 6.6.0
 
