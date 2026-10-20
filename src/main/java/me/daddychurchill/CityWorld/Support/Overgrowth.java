@@ -440,6 +440,15 @@ public final class Overgrowth {
         if (below.isAir() || !below.getFluidState().isEmpty())
             return;
         int trunk = 1 + odds.getRandomInt(2); // 1..2 logs
+        // A bridge deck is bottom slabs: a trunk standing on one leaves half a block of air under it, so the
+        // trunk starts in the slab's place instead, one log longer so the tree stands as tall above the deck
+        // (owner, a ZARP bridge).
+        if (below.getBlock() instanceof net.minecraft.world.level.block.SlabBlock
+                && below.getValue(BlockStateProperties.SLAB_TYPE)
+                        == net.minecraft.world.level.block.state.properties.SlabType.BOTTOM) {
+            surfaceY--;
+            trunk++;
+        }
         for (int dy = 0; dy < trunk; dy++)
             level.setBlock(new BlockPos(wx, surfaceY + dy, wz), Blocks.OAK_LOG.defaultBlockState(), Block.UPDATE_CLIENTS);
         int topY = surfaceY + trunk;
