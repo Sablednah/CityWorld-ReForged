@@ -131,6 +131,21 @@ public final class MapMarkers {
         PLAN_BUDGET.put(player, Math.clamp(overlays, MIN_PLAN_BUDGET, MAX_PLAN_BUDGET));
     }
 
+    /**
+     * Forget a player's plan choices — on logout, as {@link #PLAN_OFF} says; their map mod sends them again when
+     * it next starts mapping. With a null player, forget everyone's: the server is stopping, and in single
+     * player the same UUID walks straight into the next world, which must not inherit this one's choices.
+     */
+    public static void forgetCityPlan(@org.jetbrains.annotations.Nullable UUID player) {
+        if (player == null) {
+            PLAN_OFF.clear();
+            PLAN_BUDGET.clear();
+        } else {
+            PLAN_OFF.remove(player);
+            PLAN_BUDGET.remove(player);
+        }
+    }
+
     /** True when some installed map mod can draw the plan (so {@code /citymap} has something to say). */
     public static boolean cityPlanAvailable() {
         for (Listener listener : LISTENERS)
