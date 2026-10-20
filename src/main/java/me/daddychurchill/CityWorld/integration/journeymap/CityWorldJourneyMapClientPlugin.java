@@ -223,6 +223,10 @@ public class CityWorldJourneyMapClientPlugin implements IClientPlugin {
             hovered = Long.MIN_VALUE;
             CityPlanHud.clearHover();
             CityPlanClient.forget();
+            // The server forgets our choices when we leave, so the next world starts from its defaults: say
+            // them again there if ours differ.
+            lastSent = true;
+            lastSentKeep = MapMarkers.DEFAULT_PLAN_BUDGET;
             return;
         }
         syncIfChanged();

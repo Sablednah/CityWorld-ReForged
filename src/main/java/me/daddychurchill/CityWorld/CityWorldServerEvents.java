@@ -60,6 +60,18 @@ public final class CityWorldServerEvents {
         }
     }
 
+    /** A player's map-plan choices last for their session only (their map mod sends them again on joining). */
+    @SubscribeEvent
+    public static void onLoggedOut(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+        MapMarkers.forgetCityPlan(event.getEntity().getUUID());
+    }
+
+    /** Nothing per-player outlives its server: single player opens the next world in the same game. */
+    @SubscribeEvent
+    public static void onServerStopped(net.neoforged.neoforge.event.server.ServerStoppedEvent event) {
+        MapMarkers.forgetCityPlan(null);
+    }
+
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         if (!MapMarkers.hasListeners())
