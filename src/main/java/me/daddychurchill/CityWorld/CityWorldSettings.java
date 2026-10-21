@@ -199,6 +199,10 @@ public class CityWorldSettings {
     public double spawnVagrants = Odds.oddsSomewhatUnlikely;
     public boolean nameVillagers = true;
     public boolean showVillagersNames = true;
+    /** Vanilla's generation-time animals, by biome, in the wild (non-built chunks) of an overworld. */
+    public boolean wildAnimals = true;
+    /** The same in a city's open ground (streets, parks, plazas: never a roof), so animals can take a ruin back. */
+    public boolean cityAnimals = false;
     public boolean includeBuildingInteriors = true;
     public boolean includeHouses = true;
     /** Buried bunkers under the midlands and highlands, planned by NatureContext. */
@@ -608,6 +612,8 @@ public class CityWorldSettings {
         spawnVagrants = s.spawnVagrants();
         nameVillagers = s.nameVillagers();
         showVillagersNames = s.showVillagersNames();
+        wildAnimals = s.wildAnimals();
+        cityAnimals = s.cityAnimals();
 
         CityWorldSettingsData.Treasures r = data.treasures();
         treasuresInMines = r.treasuresInMines();
@@ -693,7 +699,8 @@ public class CityWorldSettings {
                 includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, oddsOfPristineBuilding,
                 windingCaves, largeCaverns);
         CityWorldSettingsData.Spawns spawns = new CityWorldSettingsData.Spawns(
-                spawnBeings, spawnBaddies, spawnAnimals, spawnVagrants, nameVillagers, showVillagersNames);
+                spawnBeings, spawnBaddies, spawnAnimals, spawnVagrants, nameVillagers, showVillagersNames,
+                wildAnimals, cityAnimals);
         CityWorldSettingsData.Treasures treasures = new CityWorldSettingsData.Treasures(
                 treasuresInMines, spawnersInMines, treasuresInBunkers, spawnersInBunkers, treasuresInSewers,
                 spawnersInSewers, treasuresInBuildings, oddsOfTreasureInMines, oddsOfTreasureInBunkers,
