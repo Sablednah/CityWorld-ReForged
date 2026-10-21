@@ -13,6 +13,13 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+**New in 6.7.0: save your settings as presets.** The Customize screen has a Presets button: save everything it
+holds (style, Nether and End, every setting, which structures generate) under a name, and load it for the next world.
+The Structures page gains All on / All off, and changing the style inside Customize now gives exactly what picking that
+world type would. Apocalypse now starts with airborne structures and working lights off (both can be switched back on).
+Also: trees on bridges no longer float above the deck, and nothing carries over into a second world opened without
+restarting the game.
+
 **New in 6.6.0: find anything, and deep vaults worth the climb down.** CityWorld can now answer "where is the
 nearest hospital, mall, subway station, bookshop or Winchester?" from its city plan, without generating a thing, which
 is what the new [CityWorld Urban Compass](https://www.curseforge.com/minecraft/mc-mods/cityworld-urban-compass) companion mod is
@@ -24,14 +31,10 @@ schematic buildings without replacing the schematic: swap blocks (a mod's slot m
 machine) and hang item frames holding anything (a loaded shotgun over the bar). The changes turn with the building,
 work in the ruined twin, and skip themselves when the mod they need is not installed.
 
-**New in 6.4.0: zoos for any animal, and a fix for worlds hanging.** Which animals live in CityWorld's zoos, and
-the habitat each pen gets, now come from datapacks: a pack or a zoo mod can add any mob, vanilla or modded, with its
-own ground, pool, plants, trees and rocks to climb, and a fence tall enough for a giraffe. Zoo animals no longer
-despawn, and pens keep their habitat's ground in snowy and sandy biomes. And creating a world could, now and then,
-hang at "Preparing spawn area" since 6.0.0 — fixed.
-
 **Other recent changes**
 
+- **6.4.0** — zoos for any animal: which animals live in CityWorld's zoos, and each pen's habitat, come from
+  datapacks; and creating a world could now and then hang at "Preparing spawn area" — fixed.
 - **6.3.0** — radio towers have a hut you can walk into (a chair, a table and a chest of spares); hospital medicine
   chests keep their potions with Lootr installed.
 - **6.2.0** — Working lights off really puts the city's lights out; the ruined city's vault keeps its own power and
@@ -208,7 +211,8 @@ Thirteen selectable styles, each its own world type (`cityworld:<style>`) or a c
 CityWorld has around 100 tunable settings — which features generate, spawn/treasure odds, terrain
 toggles, city radius, decay intensity, even the villager-name and mob lists. Because settings are
 per-world, they ship as a **datapack**, not a global config: edit them by hand, or use the in-game
-**Customize** screen and export what you like with `/cityexport`.
+**Customize** screen and export what you like with `/cityexport`. Customize can also save its settings as named
+presets (in `config/cityworld/presets/`) to reuse in your next world.
 
 **→ Full settings reference, example datapacks, and guides (villages and other vanilla structures,
 a gentler apocalypse, sparse cities, custom villager names, taller skyscrapers, and more): [sablecraft.co.uk/cityworld-reforged](https://sablecraft.co.uk/cityworld-reforged/)**
