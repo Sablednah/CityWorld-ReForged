@@ -77,9 +77,31 @@ public final class EndTerrain {
         };
         DensityFunction whole = random.router().finalDensity().mapAll(visitor);
         DensityFunction erosion = random.router().erosion().mapAll(visitor), zero = DensityFunctions.zero();
-        return new Functions(interpolated[0] != null ? interpolated[0] : whole, erosion,
-                new net.minecraft.world.level.biome.Climate.Sampler(zero, zero, zero, erosion, zero, zero,
-                        java.util.List.of()));
+        net.minecraft.world.level.biome.Climate.Sampler sampler = new net.minecraft.world.level.biome.Climate.Sampler(
+                zero, zero, zero, erosion, zero, zero, java.util.List.of());
+        carryFabricSeed(random.sampler(), sampler);
+        return new Functions(interpolated[0] != null ? interpolated[0] : whole, erosion, sampler);
+    }
+
+    /**
+     * Fabric's biome API (here through Forgified Fabric API) replaces {@code TheEndBiomeSource}'s outer-island pick
+     * with its own, which reads a seed it hangs on every sampler a {@link RandomState} makes. This sampler is built
+     * by hand, so it had none, and the first outer-island biome threw ("seed not set"): the game froze heading for
+     * the outer islands (a player's report, 1.21.1). Give it the seed vanilla's own sampler carries. By name, so
+     * nothing here depends on Fabric; without it the methods are not there and this does nothing.
+     */
+    private static void carryFabricSeed(net.minecraft.world.level.biome.Climate.Sampler from,
+            net.minecraft.world.level.biome.Climate.Sampler to) {
+        try {
+            java.lang.reflect.Method get = from.getClass().getMethod("fabric_getSeed");
+            java.lang.reflect.Method set = to.getClass().getMethod("fabric_setSeed", long.class);
+            set.invoke(to, get.invoke(from));
+        } catch (NoSuchMethodException absent) {
+            // no Fabric biome API installed
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                    "CityWorld: could not give the End's biome sampler Fabric's seed: {}", e.toString());
+        }
     }
 
     /**

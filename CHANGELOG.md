@@ -18,6 +18,13 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 Both follow the Animals odds (Never turns them off), the overworld only. Vanilla land keeps its own animals under the
 same two switches.
 
+### Fixed
+
+- **The End froze with Forgified Fabric API** (and a mod adding End biomes through it), heading for the outer islands.
+  Fabric's End-biome picker needs a seed it attaches to vanilla's samplers; CityWorld's End built its own sampler
+  without one, so the first outer-island biome threw ("MultiNoiseSampler doesn't have a seed set"). The seed is now
+  carried over. Reproduced and confirmed fixed on 1.21.1 with Forgified Fabric API 0.116.15+2.3.6.
+
 ## 6.7.0
 
 ### Added
