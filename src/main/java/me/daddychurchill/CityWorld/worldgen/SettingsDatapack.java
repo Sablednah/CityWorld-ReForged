@@ -126,6 +126,8 @@ public final class SettingsDatapack {
         spawns.addProperty("spawnVagrants", s.spawnVagrants());
         spawns.addProperty("nameVillagers", s.nameVillagers());
         spawns.addProperty("showVillagersNames", s.showVillagersNames());
+        spawns.addProperty("wildAnimals", s.wildAnimals());
+        spawns.addProperty("cityAnimals", s.cityAnimals());
         root.add("spawns", spawns);
 
         CityWorldSettingsData.Treasures r = d.treasures();

@@ -463,10 +463,13 @@ public record CityWorldSettingsData(
             double spawnAnimals,
             double spawnVagrants,
             boolean nameVillagers,
-            boolean showVillagersNames) {
+            boolean showVillagersNames,
+            boolean wildAnimals,
+            boolean cityAnimals) {
 
         public static final Spawns DEFAULT = new Spawns(
-                Odds.oddsLikely, Odds.oddsPrettyUnlikely, Odds.oddsVeryLikely, Odds.oddsSomewhatUnlikely, true, true);
+                Odds.oddsLikely, Odds.oddsPrettyUnlikely, Odds.oddsVeryLikely, Odds.oddsSomewhatUnlikely, true, true,
+                true, false);
 
         public static final Codec<Spawns> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.DOUBLE.optionalFieldOf("spawnBeings", Odds.oddsLikely).forGetter(Spawns::spawnBeings),
@@ -474,7 +477,11 @@ public record CityWorldSettingsData(
                 Codec.DOUBLE.optionalFieldOf("spawnAnimals", Odds.oddsVeryLikely).forGetter(Spawns::spawnAnimals),
                 Codec.DOUBLE.optionalFieldOf("spawnVagrants", Odds.oddsSomewhatUnlikely).forGetter(Spawns::spawnVagrants),
                 Codec.BOOL.optionalFieldOf("nameVillagers", true).forGetter(Spawns::nameVillagers),
-                Codec.BOOL.optionalFieldOf("showVillagersNames", true).forGetter(Spawns::showVillagersNames)
+                Codec.BOOL.optionalFieldOf("showVillagersNames", true).forGetter(Spawns::showVillagersNames),
+                // vanilla's own animals at generation, by biome: in the wild (non-built chunks), and in the open
+                // ground of a city (streets, parks, plazas; never on a roof)
+                Codec.BOOL.optionalFieldOf("wildAnimals", true).forGetter(Spawns::wildAnimals),
+                Codec.BOOL.optionalFieldOf("cityAnimals", false).forGetter(Spawns::cityAnimals)
         ).apply(i, Spawns::new));
     }
 
