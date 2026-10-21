@@ -24,7 +24,7 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-10-18, after the 6.6.0 release).** Every checkout is clean and pushed. Open items:
+**▶ Resume here (2026-10-21, after the 6.7.0 release).** Every checkout is clean and pushed. Open items:
 - **ZARP takes 6.5.0 itself.** Its instance skips the fleet (`.sablecraft-no-deploy`) and runs the 6.4.0 release;
   the owner updates it through the CurseForge app so the file stays tracked. Its Winchester fit-out ships in Threadwork 3d2bd37 (`zarp:schematic_fitout/winchester`) and was
   proved on the 26.2 dev server with GBG, Phoenix and `configuration` loaded.
@@ -34,8 +34,8 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 - **CityWorld Compass 1.0.0 is released** (2026-10-18; `../CityWorld-Compass`, https://github.com/Sablednah/CityWorld-Compass,
   CurseForge project 1752214 https://www.curseforge.com/minecraft/mc-mods/cityworld-urban-compass, files 9240462–9240467; its own CLAUDE.md). It requires CityWorld `[6.6.0,)` and uses only
   `CityWorldAPI.findables`/`find`/`vaultEntrance`: change those with care, and message nobody — this session owns both.
-- **The owner should paste `CURSEFORGE.md` into the CurseForge page.** It has the 6.6.0, 6.5.0 and 6.4.0 headlines;
-  6.3.0 is folded into "Other recent changes". The 6.6.0 line links the compass's CurseForge page.
+- **The owner should paste `CURSEFORGE.md` into the CurseForge page.** It has the 6.7.0, 6.6.0 and 6.5.0 headlines;
+  6.4.0 is folded into "Other recent changes". The 6.6.0 line links the compass's CurseForge page.
 - **Confirm 6.4.1 in the `1.20.1  Forge` instance log:** no "could not read TerraBlender's End biomes" lines. The dev
   1.20.1 runtime has no TerraBlender to show it.
 - **The owner's 26.2 world-creation hang is fixed in 6.4.0** (`worldgen/Waiting`). It was a race the dev server never
@@ -56,6 +56,21 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   `scripts/river_{spill,pillars,depth,hollows}.py` (region checks), `scripts/count_worlds.py` (promo stat).
 - The owner's test seeds: CityWorld land 5670300453504745606 (his mountain, the falls, both mouths), vanilla land
   1688298913692546204 (the bridge at x 704–751 z −1000; quays at 661,−824 and 712,−1095).
+
+**v6.7.0 is released** (2026-10-21) on all six lines — tag `v6.7.0` (`ce041437`), CurseForge 9279847–9279854, fleet
+`DEPLOYED-v6.7.0` on 11 (ZARP opts out; it holds the pre-release test jar `cityworld-6.6.0-test-c988b3c7+mc26.2.jar`,
+the CurseForge 6.6.0 jar in `cityworld-released-backup/` — the owner updates it through the CurseForge app):
+**Customize presets** (`client/CityWorldPresets` + `CityWorldPresetsScreen`, `config/cityworld/presets/<name>.json`:
+style, realms, the settings in datapack form; a pack's style lock keeps its style), **All on / All off** on the
+Structures page, **a style change in Customize loads that style's world-preset settings** (`CityWorldClient.styleBases`
+reads every `cityworld:` world preset; `CityWorldSettings.styleSettings` applies the style), **Apocalypse defaults
+airborne structures and working lights off** (soft: `styleDefaults` + `world_settings/apocalypse.json`), **road trees on
+a slab deck replace the slab** (owner's ZARP bridge), and **nothing carries into the next world in the same game**
+(audit after ZARP's Threadwork bug: bunker materials and the subway link memo were statics, now weak per-generator maps
+from the seed; the map-plan choice resets on logout/server stop). Gates: six self-tests PASS, CI green on the bump heads,
+halt/exit 0 after a synthetic positive, 1.20.1 reobfuscated; presets/All on/style switch driven on Vivo clients (26.2,
+1.20.1). The Compass got matching hardening (search frees the player in the worker; pushed, unreleased: a "busy forever"
+bug was suspected but a Vivo world-A/world-B test could not produce it).
 
 **v6.6.0 is released** (2026-10-18) on all six lines — tag `v6.6.0` (`394e84df`), CurseForge 9240305–9240312, fleet
 `DEPLOYED-v6.6.0` on 11 (ZARP opts out): **the find-anything API** (`CityWorldAPI.findables` → `Findable(id, group,
