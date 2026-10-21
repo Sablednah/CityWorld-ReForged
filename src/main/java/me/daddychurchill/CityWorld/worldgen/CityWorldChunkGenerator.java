@@ -2964,13 +2964,67 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
     @Override
     public void spawnOriginalMobs(WorldGenRegion region) {
-        // The wild of a vanilla-terrain world gets vanilla's animals; a built lot gets what its lot spawns.
+        // Vanilla's own animals, by biome, as a vanilla chunk gets them when its land is made: in the wild unless
+        // spawns.wildAnimals is off, and in a city's open ground when spawns.cityAnimals is on. A built lot otherwise
+        // gets only what the lot spawns. The overworld only: the twins keep their own rules.
+        if (parseEnvironment(environment) != me.daddychurchill.CityWorld.compat.Environment.NORMAL)
+            return;
+        CityWorldGenerator context = context();
+        if (context == null)
+            return;
+        me.daddychurchill.CityWorld.CityWorldSettings settings = context.getSettings();
+        if (settings.spawnAnimals <= 0)
+            return; // Animals: Never
+        int chunkX = region.getCenter().getMinBlockX() >> 4, chunkZ = region.getCenter().getMinBlockZ() >> 4;
         if (vanillaTerrain()) {
-            int chunkX = region.getCenter().getMinBlockX() >> 4, chunkZ = region.getCenter().getMinBlockZ() >> 4;
-            CityWorldGenerator context = context();
-            if (context == null || citySites.influencing(chunkX, chunkZ) == null || !isBuiltLot(context, chunkX, chunkZ))
+            CitySites.Site site = citySites.influencing(chunkX, chunkZ);
+            boolean built = site != null && isBuiltLot(context, chunkX, chunkZ);
+            if (built ? settings.cityAnimals && openGround(region, context.streetLevel + citySites.shift(site))
+                    : settings.wildAnimals)
                 vanillaOverworld().spawnOriginalMobs(region);
+            return;
         }
+        me.daddychurchill.CityWorld.Plats.PlatLot lot = context.getPlatMap(chunkX, chunkZ).getMapLot(chunkX, chunkZ);
+        boolean built = lot != null && lot.style != me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE;
+        if (built ? settings.cityAnimals && openGround(region, context.streetLevel) : settings.wildAnimals)
+            spawnBiomeAnimals(region);
+    }
+
+    /**
+     * Whether vanilla's animals may come to a city chunk: none of it is ground an animal could stand on above the
+     * street. Vanilla puts each animal on the top block of its column, and an animal needs {@code
+     * #animals_spawnable_on} (grass) under it, so a street lamp, a bare roof or the ruin's moss takes none; a roof
+     * garden would, and keeps the chunk out. In practice the animals come to parks, gardens and verges.
+     */
+    private static boolean openGround(WorldGenRegion region, int streetY) {
+        int minX = region.getCenter().getMinBlockX(), minZ = region.getCenter().getMinBlockZ();
+        for (int x = 0; x < 16; x++)
+            for (int z = 0; z < 16; z++) {
+                int top = region.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, minX + x, minZ + z);
+                if (top <= streetY + 4)
+                    continue;
+                BlockState under = region.getBlockState(new BlockPos(minX + x, top - 1, minZ + z));
+                if (under.is(net.minecraft.tags.BlockTags.ANIMALS_SPAWNABLE_ON))
+                    return false;
+            }
+        return true;
+    }
+
+    /**
+     * Vanilla's generation-time animals for this chunk on CityWorld's own land: the same call
+     * {@code NoiseBasedChunkGenerator.spawnOriginalMobs} makes, with the biome at the chunk's ground (CityWorld's
+     * biomes are real, so a biome mod's herds come too). Not through {@link #vanillaOverworld()}, which would hand
+     * this world's biome source over to vanilla's.
+     */
+    private static void spawnBiomeAnimals(WorldGenRegion region) {
+        int minX = region.getCenter().getMinBlockX(), minZ = region.getCenter().getMinBlockZ();
+        int groundY = region.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, minX + 8, minZ + 8);
+        Holder<Biome> biome = region.getBiome(new BlockPos(minX + 8, groundY, minZ + 8));
+        net.minecraft.world.level.levelgen.WorldgenRandom random = new net.minecraft.world.level.levelgen.WorldgenRandom(
+                new net.minecraft.world.level.levelgen.LegacyRandomSource(
+                        net.minecraft.world.level.levelgen.RandomSupport.generateUniqueSeed()));
+        random.setDecorationSeed(region.getSeed(), minX, minZ);
+        net.minecraft.world.level.NaturalSpawner.spawnMobsForChunkGeneration(region, biome, region.getCenter(), random);
     }
 
     @Override

@@ -85,7 +85,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private double buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad;
     // spawns
     private Chance spawnBeings, spawnBaddies, spawnAnimals, spawnVagrants;
-    private boolean nameVillagers, showVillagersNames;
+    private boolean nameVillagers, showVillagersNames, wildAnimals, cityAnimals;
     // treasures
     private boolean treasuresInMines, spawnersInMines, treasuresInBunkers, spawnersInBunkers, treasuresInSewers,
             spawnersInSewers, treasuresInBuildings;
@@ -206,6 +206,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         spawnVagrants = Chance.nearest(s.spawnVagrants());
         nameVillagers = s.nameVillagers();
         showVillagersNames = s.showVillagersNames();
+        wildAnimals = s.wildAnimals();
+        cityAnimals = s.cityAnimals();
 
         CityWorldSettingsData.Treasures r = data.treasures();
         treasuresInMines = r.treasuresInMines();
@@ -387,6 +389,10 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, chance("Wanderers", spawnVagrants, v -> spawnVagrants = v)); // key stays spawnVagrants
         pair(row, onOff("Name villagers", nameVillagers, v -> nameVillagers = v));
         pair(row, onOff("Show villager names", showVillagersNames, v -> showVillagersNames = v));
+        pair(row, tip(onOff("Wild animals", wildAnimals, v -> wildAnimals = v),
+                "Herds by biome in the wild, the way a vanilla world gets them when its land is made"));
+        pair(row, tip(onOff("Animals in cities", cityAnimals, v -> cityAnimals = v),
+                "The same herds in a city's open ground: streets, parks and squares, never a roof. Let the animals take the ruins back"));
         flush(row);
 
         this.list.addHeader(Component.literal("Treasures"));
@@ -467,7 +473,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 windingCaves, largeCaverns);
         CityWorldSettingsData.Spawns spawns = new CityWorldSettingsData.Spawns(
                 spawnBeings.value, spawnBaddies.value, spawnAnimals.value, spawnVagrants.value, nameVillagers,
-                showVillagersNames);
+                showVillagersNames, wildAnimals, cityAnimals);
         CityWorldSettingsData.Treasures treasures = new CityWorldSettingsData.Treasures(
                 treasuresInMines, spawnersInMines, treasuresInBunkers, spawnersInBunkers, treasuresInSewers,
                 spawnersInSewers, treasuresInBuildings, oddsOfTreasureInMines.value, oddsOfTreasureInBunkers.value,
@@ -550,6 +556,13 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 .create(0, 0, WIDTH, HEIGHT, Component.literal(label), (b, v) -> setter.accept(v));
         greyIfLocked(button, label);
         return button;
+    }
+
+    /** A tooltip on a widget the style does not lock (a locked one keeps its "Locked by" tooltip). */
+    private static AbstractWidget tip(AbstractWidget w, String text) {
+        if (w.active)
+            w.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(text)));
+        return w;
     }
 
     /** Disable + tooltip a widget whose setting the current world style locks, so it reads as "you can't

@@ -5,6 +5,19 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Added
+
+- **Animals in the wild on CityWorld's land.** Vanilla gives every chunk its biome's herds as the land is made;
+  CityWorld's own land never did, so its wild had almost no animals (and none from biome mods, like a deer mod's).
+  Wild chunks now get vanilla's herds by biome, on by default (`spawns.wildAnimals`, "Wild animals" in Customize).
+- **Animals in cities**, off by default (`spawns.cityAnimals`, "Animals in cities"): the same herds in a city's open
+  ground, never on a roof. Vanilla's animals need grass, so in practice they come to parks and gardens.
+
+Both follow the Animals odds (Never turns them off), the overworld only. Vanilla land keeps its own animals under the
+same two switches.
+
 ## 6.7.0
 
 ### Added
