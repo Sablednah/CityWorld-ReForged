@@ -13,6 +13,11 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+**New in 6.8.0: animals in the wild.** CityWorld's own land now gets vanilla's herds as it is made, by biome, the way a
+vanilla world does: sheep on the plains, wolves in the woods, and any animals a biome mod adds. A new switch lets them
+into the cities too (parks and gardens), so the ruins can go back to nature. Also fixed: with Forgified Fabric API and
+a mod adding End biomes, the End froze on the way to the outer islands.
+
 **New in 6.7.0: save your settings as presets.** The Customize screen has a Presets button: save everything it
 holds (style, Nether and End, every setting, which structures generate) under a name, and load it for the next world.
 The Structures page gains All on / All off, and changing the style inside Customize now gives exactly what picking that
@@ -26,13 +31,10 @@ is what the new [CityWorld Urban Compass](https://www.curseforge.com/minecraft/m
 built on. And deep vault floors had empty chests since vaults went eight levels deep: now the loot gets better evenly
 all the way down, and the bottom floor always has the best.
 
-**New in 6.5.0: fit out a building from a datapack.** A pack can now change what is inside any of CityWorld's
-schematic buildings without replacing the schematic: swap blocks (a mod's slot machine for the pub's fruit
-machine) and hang item frames holding anything (a loaded shotgun over the bar). The changes turn with the building,
-work in the ruined twin, and skip themselves when the mod they need is not installed.
-
 **Other recent changes**
 
+- **6.5.0** — fit out a building from a datapack: swap blocks and hang item frames in any schematic building
+  without replacing it.
 - **6.4.0** — zoos for any animal: which animals live in CityWorld's zoos, and each pen's habitat, come from
   datapacks; and creating a world could now and then hang at "Preparing spawn area" — fixed.
 - **6.3.0** — radio towers have a hut you can walk into (a chair, a table and a chest of spares); hospital medicine
