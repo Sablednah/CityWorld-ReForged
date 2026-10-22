@@ -24,7 +24,7 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-10-21, after the 6.7.0 release).** Every checkout is clean and pushed. Open items:
+**▶ Resume here (2026-10-22, after the 6.8.0 release).** Every checkout is clean and pushed. Open items:
 - **ZARP takes 6.5.0 itself.** Its instance skips the fleet (`.sablecraft-no-deploy`) and runs the 6.4.0 release;
   the owner updates it through the CurseForge app so the file stays tracked. Its Winchester fit-out ships in Threadwork 3d2bd37 (`zarp:schematic_fitout/winchester`) and was
   proved on the 26.2 dev server with GBG, Phoenix and `configuration` loaded.
@@ -34,8 +34,8 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 - **CityWorld Compass 1.0.0 is released** (2026-10-18; `../CityWorld-Compass`, https://github.com/Sablednah/CityWorld-Compass,
   CurseForge project 1752214 https://www.curseforge.com/minecraft/mc-mods/cityworld-urban-compass, files 9240462–9240467; its own CLAUDE.md). It requires CityWorld `[6.6.0,)` and uses only
   `CityWorldAPI.findables`/`find`/`vaultEntrance`: change those with care, and message nobody — this session owns both.
-- **The owner should paste `CURSEFORGE.md` into the CurseForge page.** It has the 6.7.0, 6.6.0 and 6.5.0 headlines;
-  6.4.0 is folded into "Other recent changes". The 6.6.0 line links the compass's CurseForge page.
+- **The owner should paste `CURSEFORGE.md` into the CurseForge page.** It has the 6.8.0, 6.7.0 and 6.6.0 headlines;
+  6.5.0 and 6.4.0 are folded into "Other recent changes". The 6.6.0 line links the compass's CurseForge page.
 - **Confirm 6.4.1 in the `1.20.1  Forge` instance log:** no "could not read TerraBlender's End biomes" lines. The dev
   1.20.1 runtime has no TerraBlender to show it.
 - **The owner's 26.2 world-creation hang is fixed in 6.4.0** (`worldgen/Waiting`). It was a race the dev server never
@@ -56,6 +56,20 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   `scripts/river_{spill,pillars,depth,hollows}.py` (region checks), `scripts/count_worlds.py` (promo stat).
 - The owner's test seeds: CityWorld land 5670300453504745606 (his mountain, the falls, both mouths), vanilla land
   1688298913692546204 (the bridge at x 704–751 z −1000; quays at 661,−824 and 712,−1095).
+
+**v6.8.0 is released** (2026-10-22) on all six lines — tag `v6.8.0` (`1c61b819`), CurseForge 9285277–9285282, fleet
+`DEPLOYED-v6.8.0` on 11 (ZARP opts out; it holds the test jar `cityworld-6.7.0-test-f432d5be+mc26.2.jar`, owner
+tested animals there and updates it via the CurseForge app): **vanilla's generation-time animals on CityWorld land**
+(`spawnOriginalMobs`: `spawns.wildAnimals` default on for non-built chunks, `spawns.cityAnimals` default off for built
+chunks with no grass column > street+4; NaturalSpawner called directly, NEVER via `vanillaOverworld()` on CityWorld land
+— that hands the biome source to vanilla; 26.3's spawner takes a BlockPos; measured 4 → 171 animals on a Nature+decayed
+seed; city animals are sparse because vanilla animals need grass) and **the End froze with Forgified Fabric API** plus a
+mod adding End biomes through it: `EndTerrain` built its Climate.Sampler by hand, and Fabric's TheEndBiomeSource pick
+needs the seed its mixin hangs on RandomState samplers ("MultiNoiseSampler doesn't have a seed set"); `carryFabricSeed`
+copies it by method name (reproduced on 1.21.1 + FFAPI 0.116.15+2.3.6 on NeoForge 21.1.264 with a reflective test
+highlands biome + an End probe at chunk 100,0: 3 errors → 0). FFAPI alone registers no End biomes, so it does NOT
+reproduce without one. 26.3 uses `createClimateSampler` and is unaffected. Gates: six self-tests PASS, CI green, halt/exit
+0 after a synthetic positive, 1.20.1 reobfuscated.
 
 **v6.7.0 is released** (2026-10-21) on all six lines — tag `v6.7.0` (`ce041437`), CurseForge 9279847–9279854, fleet
 `DEPLOYED-v6.7.0` on 11 (ZARP opts out; it holds the pre-release test jar `cityworld-6.6.0-test-c988b3c7+mc26.2.jar`,
