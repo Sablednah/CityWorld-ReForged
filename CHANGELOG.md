@@ -5,6 +5,17 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Fixed
+
+- **The city before the fall had the ruin's lights out.** A twin world (the `/cityworld` city) plans the same city as
+  the world it mirrors, street for street, and took all of that world's settings with it, so an Apocalypse world's
+  "working lights off" darkened the pristine city too. A twin that names a settings entry of its own now takes from it
+  what describes the world's state rather than its layout: working lights, overgrowth and the spawners' mobs. The same
+  goes for the Nether and the End: they follow the overworld unless their generator in the world preset names a
+  `settings` entry of its own (e.g. an End with its lights on in an Apocalypse world).
+
 ## 6.8.0
 
 ### Added

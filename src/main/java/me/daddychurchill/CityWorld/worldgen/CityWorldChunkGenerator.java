@@ -345,7 +345,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     CityWorldChunkGenerator twin = twinSource();
                     if (twin != null) {
                         worldStyle = twin.resolvedStyle();
-                        settingsData = twin.resolvedSettings();
+                        // ...but the world's state (lights, overgrowth, spawner mobs) is the twin's own, when its
+                        // dimension names a settings entry of its own: the city before the fall has its lights on.
+                        settingsData = settings.isPresent()
+                                ? twin.resolvedSettings().withStateOf(settingsData)
+                                : twin.resolvedSettings();
                         twinResolved = true;
                     }
                     // The End is never ruined, whatever it mirrors: the dragon kept everyone away until it was
