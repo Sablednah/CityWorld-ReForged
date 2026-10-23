@@ -63,6 +63,23 @@ public record CityWorldSettingsData(
                 overgrowth, shops, decay, caves, subways, chosen, cities);
     }
 
+    /**
+     * A twin's settings: its source's (so both plan the same city, street for street, names and all) with the parts
+     * that describe the world's state, not its layout, taken from the twin's own entry: whether the lights work, the
+     * overgrowth, and which mobs the spawners hold. ZARP's pre-apocalypse city read the ruin's lights-off (owner,
+     * 2026-10-22). None of these feeds the plan: lights pick a block, the others decorate a drawn chunk.
+     */
+    public CityWorldSettingsData withStateOf(CityWorldSettingsData own) {
+        Terrain t = terrain;
+        Terrain lit = new Terrain(t.includeCaves(), t.includeLavaFields(), t.includeSeas(), t.includeMountains(),
+                t.includeOres(), t.includeBones(), t.includeFires(), t.includeAbovegroundFluids(),
+                t.includeUndergroundFluids(), own.terrain().includeWorkingLights(), t.includeDecayedRoads(),
+                t.includeDecayedBuildings(), t.includeDecayedNature(), t.oddsOfPristineBuilding(), t.windingCaves(),
+                t.largeCaverns());
+        return new CityWorldSettingsData(features, lit, spawns, treasures, world, radius, naming, own.mobs(),
+                own.overgrowth(), shops, decay, caves, subways, structures, cities);
+    }
+
     /** These settings with another land choice (the Customize screen keeps it across a style change). */
     public CityWorldSettingsData withCities(Cities chosen) {
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
