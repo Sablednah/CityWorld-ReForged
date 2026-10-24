@@ -33,6 +33,8 @@ all the way down, and the bottom floor always has the best.
 
 **Other recent changes**
 
+- **6.8.1** — the city before the fall (the `/cityworld` twin) keeps its own lights, overgrowth and spawner mobs
+  instead of taking the ruined world's; the Nether and End can be given their own the same way.
 - **6.5.0** — fit out a building from a datapack: swap blocks and hang item frames in any schematic building
   without replacing it.
 - **6.4.0** — zoos for any animal: which animals live in CityWorld's zoos, and each pen's habitat, come from
