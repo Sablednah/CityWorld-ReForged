@@ -5,6 +5,21 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 6.8.2
+
+### Fixed
+
+- **The End generated nothing with C2ME.** C2ME compiles vanilla's terrain functions to speed them up; CityWorld's End
+  reads vanilla's island heights through those functions and put a cache of its own into them, which C2ME's compiled
+  code could not take (`ClassCastException ... IFastCacheLike`), so no End chunk got past its biomes. CityWorld now
+  asks C2ME for the vanilla functions it keeps behind its compiled ones. Reproduced and confirmed fixed on 1.21.1 with
+  C2ME 0.4.0-alpha.0.123; every line's self-test passes with its C2ME installed (26.3 was not affected). C2ME
+  generated CityWorld's land about two and a half times faster in our test (a 30x30-chunk block on 26.2: 71-76 s
+  without, 24-32 s with), with no change to what is built.
+- **One furniture block could leave the rest of its chunk without loot.** Refurbished Furniture's cutting board
+  throws when given food during generation; that stopped the loot pass for every container after it in the chunk.
+  Each container is now filled on its own.
+
 ## 6.8.1
 
 ### Fixed

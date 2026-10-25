@@ -33,6 +33,9 @@ all the way down, and the bottom floor always has the best.
 
 **Other recent changes**
 
+- **6.8.2** — works with C2ME: the End generated nothing with it installed (fixed), and C2ME made CityWorld's land
+  generate about two and a half times faster in our test. Also, one furniture mod's cutting board could leave the
+  rest of its chunk's containers empty.
 - **6.8.1** — the city before the fall (the `/cityworld` twin) keeps its own lights, overgrowth and spawner mobs
   instead of taking the ruined world's; the Nether and End can be given their own the same way.
 - **6.5.0** — fit out a building from a datapack: swap blocks and hang item frames in any schematic building
