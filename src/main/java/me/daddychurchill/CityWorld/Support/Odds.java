@@ -73,6 +73,15 @@ public final class Odds {
 		return random.nextLong();
 	}
 
+	/**
+	 * A child stream seeded from one draw of this one. Give it to anything whose number of draws depends on what
+	 * is already in the world (a cell a neighbour's tree may have filled first): however many it takes, this
+	 * stream moves on by exactly one, so the choices after it stay the seed's.
+	 */
+	public Odds fork() {
+		return new Odds(random.nextLong());
+	}
+
 	public int getRandomInt() {
 		return random.nextInt();
 	}

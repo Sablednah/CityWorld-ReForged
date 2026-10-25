@@ -455,6 +455,9 @@ public class StructureOnGroundProvider extends Provider {
 			boolean modern) {
 
 		Trees trees = new Trees(odds);
+		// the roof block is picked after the rooms are drawn; its dice are set aside now so nothing the rooms
+		// found in the world can change it
+		Odds roofOdds = odds.fork();
 		// The fittings, one pick per house so the rooms match: a trapdoor for the attic hatch, a front
 		// door, an interior door, a window for the bands the walls leave, and a fence for the railings
 		// round a missing upper room. Each pool falls back to what the house was always built with.
@@ -775,7 +778,7 @@ public class StructureOnGroundProvider extends Provider {
 		// every house: an eave, not a ledge.
 		Material gableWall = matRoof;
 		if (makeAttic && generator.isModernStyle())
-			gableWall = slopeRoof(generator, chunk, odds, matRoof, roofBottom, roofBottom + roofHeight + 1,
+			gableWall = slopeRoof(generator, chunk, roofOdds, matRoof, roofBottom, roofBottom + roofHeight + 1,
 					styleRoof == HouseRoofStyle.NORTHSOUTH, styleRoof == HouseRoofStyle.WESTEAST);
 
 		if (makeAttic) {
@@ -1092,8 +1095,9 @@ public class StructureOnGroundProvider extends Provider {
 				room.DrawCeiling(chunk, context, floor, floors, x, z, roomOffsetX, roomOffsetZ, baseY, matCeiling);
 			}
 
-			// now the inner bits
-			room.DrawStyle(generator, chunk, context, odds, floor, floors, x, z, roomOffsetX, roomOffsetZ, baseY);
+			// now the inner bits, on their own dice: furniture draws once per free cell, and a cell a neighbour's
+			// decoration filled first would otherwise shift every choice the house makes after it (Odds.fork)
+			room.DrawStyle(generator, chunk, context, odds.fork(), floor, floors, x, z, roomOffsetX, roomOffsetZ, baseY);
 		}
 	}
 

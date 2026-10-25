@@ -160,6 +160,28 @@ public abstract class PlatLot {
 		chunkOdds = platmap.getChunkOddsGenerator(chunkX, chunkZ);
 	}
 
+	/**
+	 * A decoration pass's own dice, from the chunk's seed and the pass's number. Each pass after the lot's own
+	 * drawing starts from here rather than carrying on the lot's stream: a pass that draws once per empty cell
+	 * draws a different number of times when a neighbour's decoration filled a cell first (the order chunks
+	 * decorate in is timing), and on one shared stream every pass after it then rolled differently — the same
+	 * seed built different houses run to run (ZARP's report, 2026-10-25).
+	 */
+	private void phaseDice(PlatMap platmap, int chunkX, int chunkZ, long phase) {
+		chunkOdds = new Odds(platmap.getChunkOddsGenerator(chunkX, chunkZ).getRandomLong() ^ (phase * 0x9E3779B97F4A7C15L));
+	}
+
+	/** Runs {@code drawing} on a fork of the lot's dice (see {@link Odds#fork}), then carries on one draw later. */
+	protected void withForkedDice(Runnable drawing) {
+		Odds saved = chunkOdds;
+		chunkOdds = saved.fork();
+		try {
+			drawing.run();
+		} finally {
+			chunkOdds = saved;
+		}
+	}
+
 	protected int getSidewalkLevel(CityWorldGenerator generator) {
 		int result = generator.streetLevel;
 		if (inACity)
@@ -278,18 +300,21 @@ public abstract class PlatLot {
 		// banded badlands, mycelium isles, snowy plains) — so a house yard or farm edge in a desert reads
 		// sandy instead of a green island. Guarded to grass/dirt, so it never touches builds, farmland,
 		// roads or swamp pools. Roads opt out (they keep their own snow blend).
+		phaseDice(platmap, chunk.sectionX, chunk.sectionZ, 1);
 		if (generator.isModernStyle() && wantsBiomeGround())
 			applyBiomeGround(generator, chunk);
 
 		// MODERN: crown the tall buildings with a rooftop lightning rod (highrises only — it self-limits
 		// to roofs well above street, the skyline that actually takes the strikes). Before overgrowth, so
 		// the rod is part of the building and the greenery creeps around it rather than under it.
+		phaseDice(platmap, chunk.sectionX, chunk.sectionZ, 2);
 		if (generator.isModernStyle() && style == LotStyle.STRUCTURE)
 			me.daddychurchill.CityWorld.Support.Furniture.rooftopLightningRod(generator, chunk, chunkOdds);
 
 		// Overgrowth: let nature reclaim built things — moss, vines, leaf litter, small trees. Runs
 		// here, AFTER the lot's own decoration and any decay above, so the greenery isn't itself
 		// decayed. Buildings/roads/roundabouts/schematics only (nature lots grow their own cover).
+		phaseDice(platmap, chunk.sectionX, chunk.sectionZ, 3);
 		if (generator.getSettings().includeOvergrowth
 				&& (style == LotStyle.STRUCTURE || style == LotStyle.ROAD || style == LotStyle.ROUNDABOUT))
 			me.daddychurchill.CityWorld.Support.Overgrowth.apply(generator, this, chunk, chunkOdds);
@@ -300,6 +325,7 @@ public abstract class PlatLot {
 		// everything), on the already-carved caves.
 		// Overworld only: moss, cave vines, dripleaf and spore blossoms were growing in the End (measured
 		// 2026-09-16), and nothing lush belongs in the Nether either.
+		phaseDice(platmap, chunk.sectionX, chunk.sectionZ, 4);
 		if (generator.isModernStyle() && generator.getSettings().includeCaves
 				&& generator.worldEnvironment == me.daddychurchill.CityWorld.compat.Environment.NORMAL)
 			me.daddychurchill.CityWorld.Support.LushCaves.apply(generator, this, chunk, chunkOdds);
@@ -317,6 +343,7 @@ public abstract class PlatLot {
 		// edge (a flat wall where it cuts across a cave tunnel) reads as a natural basalt-lined pocket instead.
 		// Lava belongs in the overworld and the Nether; the End has none, so its basalt lining has no business
 		// there (measured: 708 basalt blocks in a 9-chunk End sample, 2026-09-16).
+		phaseDice(platmap, chunk.sectionX, chunk.sectionZ, 5);
 		if (generator.getSettings().includeLavaFields
 				&& generator.worldEnvironment != me.daddychurchill.CityWorld.compat.Environment.THE_END)
 			me.daddychurchill.CityWorld.Support.LavaLakes.apply(generator, this, chunk, chunkOdds);
@@ -324,28 +351,34 @@ public abstract class PlatLot {
 		// Apocalypse: hide zombie spawners in the ruins' cellars — some buried in a sealed pocket UNDER
 		// the basement floor so they can't be seen. Building lots only (they have the cellars); sewers and
 		// caves get their own zombie spawners through the enabled spawner bags.
+		phaseDice(platmap, chunk.sectionX, chunk.sectionZ, 6);
 		if (generator.isApocalypseStyle() && style == LotStyle.STRUCTURE)
 			me.daddychurchill.CityWorld.Support.ApocalypseSpawners.apply(generator, this, chunk, chunkOdds);
 
 		// Shops: a classified shop gets its trade's villager job block dropped on the ground floor, so a
 		// store reads as its trade. MODERN dressing (gated); runs after the interior is drawn so the
 		// counter lands in open floor. getShopType() is only non-null for shop lots.
+		phaseDice(platmap, chunk.sectionX, chunk.sectionZ, 7);
 		if (generator.getSettings().includeShops && getShopType() != null)
 			me.daddychurchill.CityWorld.Support.ShopFitter.apply(generator, this, chunk, chunkOdds);
 
 		// The subway: the tunnel or hall running under this chunk, if the plan puts one here. The station lot
 		// draws its own (its stairs cut through the hall), every other city lot gets it here, after its own
 		// decoration and before the container pass so the halls' chests take a table. See Support/Subway.
+		phaseDice(platmap, chunk.sectionX, chunk.sectionZ, 8);
 		if (!(this instanceof me.daddychurchill.CityWorld.Plats.Urban.SubwayStationLot)
 				&& me.daddychurchill.CityWorld.Support.Subway.drawsIn(generator, this))
 			me.daddychurchill.CityWorld.Support.Subway.generate(generator, this, chunk, chunkOdds);
 
 		// polish things off
+		phaseDice(platmap, chunk.sectionX, chunk.sectionZ, 9);
 		generator.shapeProvider.postGenerateBlocks(generator, this, chunk, blockYs);
 
 		// Last of all: every container this lot left without a table gets its default one — pooled storage
 		// furniture, a schematic's chests, a modded crate. See ContainerLoot.
+		phaseDice(platmap, chunk.sectionX, chunk.sectionZ, 10);
 		me.daddychurchill.CityWorld.Support.ContainerLoot.apply(generator, this, chunk, chunkOdds);
+		phaseDice(platmap, chunk.sectionX, chunk.sectionZ, 11); // what a subclass draws after this
 	}
 
 	/**
@@ -635,8 +668,11 @@ public abstract class PlatLot {
 		// it in game, 2026-09-21, standing at y 54 = level 48 + 6).
 		if (generator.getSettings().includeMines)
 			for (int y = lowestMineSegment; y <= (blockYs.getMinHeight() / 16 - 1) * 16; y += 16) {
-				if (isShaftableLevel(generator, y) && !me.daddychurchill.CityWorld.Support.Subway.blocksMines(generator, this, y))
-					generateVerticalMineLevel(generator, chunk, y);
+				if (isShaftableLevel(generator, y) && !me.daddychurchill.CityWorld.Support.Subway.blocksMines(generator, this, y)) {
+					// each level on its own dice: its dressing rolls per open cell it finds (withForkedDice)
+					int level = y;
+					withForkedDice(() -> generateVerticalMineLevel(generator, chunk, level));
+				}
 			}
 	}
 
@@ -740,8 +776,8 @@ public abstract class PlatLot {
 			generateMineCeiling(chunk, 6, 10, y1 + 3, 0, 6);
 			generateMineCeiling(chunk, 6, 10, y1 + 3, 10, 16);
 
-			generateMineAlcove(generator, chunk, 4, y1, 2, 4, 2);
-			generateMineAlcove(generator, chunk, 10, y1, 2, 11, 3);
+			withForkedDice(() -> generateMineAlcove(generator, chunk, 4, y1, 2, 4, 2));
+			withForkedDice(() -> generateMineAlcove(generator, chunk, 10, y1, 2, 11, 3));
 
 			pathFound = true;
 		}
@@ -749,8 +785,8 @@ public abstract class PlatLot {
 			generateMineCeiling(chunk, 0, 6, y1 + 3, 6, 10);
 			generateMineCeiling(chunk, 10, 16, y1 + 3, 6, 10);
 
-			generateMineAlcove(generator, chunk, 2, y1, 4, 2, 4);
-			generateMineAlcove(generator, chunk, 2, y1, 10, 3, 11);
+			withForkedDice(() -> generateMineAlcove(generator, chunk, 2, y1, 4, 2, 4));
+			withForkedDice(() -> generateMineAlcove(generator, chunk, 2, y1, 10, 3, 11));
 
 			pathFound = true;
 		}
@@ -759,11 +795,12 @@ public abstract class PlatLot {
 		if (pathFound)
 			generateMineCeiling(chunk, 6, 10, y1 + 3, 6, 10);
 
-		// vanilla-style dressing: minecart rails down the corridors, cobwebs and the odd torch
-		dressMineCorridors(generator, chunk, y);
+		// vanilla-style dressing: minecart rails down the corridors, cobwebs and the odd torch. Each step on its
+		// own dice (withForkedDice): they roll per open cell, and the cells are what neighbours may fill first.
+		withForkedDice(() -> dressMineCorridors(generator, chunk, y));
 
 		// the occasional copper lift shaft at a crossing (placed last so its frame wins any overlap)
-		generateMineLift(generator, chunk, y);
+		withForkedDice(() -> generateMineLift(generator, chunk, y));
 	}
 
 	// Dress the carved corridors like a vanilla mineshaft: a rail line down the centre (with occasional
@@ -812,7 +849,7 @@ public abstract class PlatLot {
 
 		// overgrown worlds: dripstone reclaiming the abandoned shaft (stalactites/stalagmites/clumps)
 		if (generator.getSettings().includeOvergrowth)
-			me.daddychurchill.CityWorld.Support.Overgrowth.dripstoneMine(chunk, floorY, chunkOdds);
+			withForkedDice(() -> me.daddychurchill.CityWorld.Support.Overgrowth.dripstoneMine(chunk, floorY, chunkOdds));
 
 		// copper-age shoring: cut-copper support frames with a dangling chain cable, patinated by depth
 		dressCopperSupports(chunk, floorY, ns, we);
@@ -822,10 +859,10 @@ public abstract class PlatLot {
 		weatherAndLichen(chunk, floorY, ns, we);
 
 		// the odd cave-spider nest right in the corridor — more the deeper you go
-		maybeCaveSpiderNest(generator, chunk, floorY, railY, ns, we);
+		withForkedDice(() -> maybeCaveSpiderNest(generator, chunk, floorY, railY, ns, we));
 
 		// miners' camp clutter — furnaces, stonecutters and the like on the ledge opposite the track
-		scatterMineProps(generator, chunk, floorY, ns, we);
+		withForkedDice(() -> scatterMineProps(generator, chunk, floorY, ns, we));
 
 		// lanterns hung from the corridor ceiling so the drift isn't pitch black
 		scatterMineLanterns(chunk, floorY, ns, we);
@@ -1296,8 +1333,11 @@ public abstract class PlatLot {
 	protected void generateMineCeiling(SupportBlocks chunk, int x1, int x2, int y, int z1, int z2) {
 		for (int x = x1; x < x2; x++) {
 			for (int z = z1; z < z2; z++) {
+				// the coin is tossed for every cell, used or not: a draw only where the cell is open would let one
+				// cell a neighbour's decoration filled first reshuffle the rest of the ceiling
+				boolean slab = chunkOdds.flipCoin();
 				if (!chunk.isEmpty(x, y + 1, z) && chunk.isEmpty(x, y, z))
-					if (chunkOdds.flipCoin())
+					if (slab)
 						chunk.setBlock(x, y, z, Material.COBBLESTONE_SLAB, SlabType.TOP);
 					else
 						chunk.setBlock(x, y, z, Material.COBBLESTONE);
@@ -1308,8 +1348,9 @@ public abstract class PlatLot {
 	protected void generateMineFloor(SupportBlocks chunk, int x1, int x2, int y, int z1, int z2) {
 		for (int x = x1; x < x2; x++) {
 			for (int z = z1; z < z2; z++) {
+				boolean slab = chunkOdds.flipCoin(); // for every cell, as in generateMineCeiling
 				if (!chunk.isEmpty(x, y, z))
-					if (chunkOdds.flipCoin())
+					if (slab)
 						chunk.setBlock(x, y, z, Material.COBBLESTONE_SLAB, SlabType.BOTTOM);
 					else
 						chunk.setBlock(x, y, z, Material.COBBLESTONE);
@@ -1456,7 +1497,7 @@ public abstract class PlatLot {
 
 		// shape the world
 		if (generator.getSettings().includeOres || generator.getSettings().includeUndergroundFluids)
-			generator.oreProvider.sprinkleOres(generator, this, chunk, blockYs, chunkOdds);
+			withForkedDice(() -> generator.oreProvider.sprinkleOres(generator, this, chunk, blockYs, chunkOdds));
 	}
 
 	// TODO move this logic to SurroundingLots, add to it the ability to produce

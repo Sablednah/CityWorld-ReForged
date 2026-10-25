@@ -119,15 +119,17 @@ public final class SchematicLibrary {
         if (root == null || !Files.isDirectory(root))
             return;
         int found = 0;
+        // sorted: a directory lists in whatever order its file system keeps, and the index order is the order
+        // schematics get their turn in a platmap, so two machines could otherwise build different cities
         try (DirectoryStream<Path> families = Files.newDirectoryStream(root)) {
-            for (Path famDir : families) {
+            for (Path famDir : sorted(families)) {
                 if (!Files.isDirectory(famDir))
                     continue;
                 SchematicFamily family = familyOf(famDir.getFileName().toString());
                 if (family == null)
                     continue;
                 try (DirectoryStream<Path> files = Files.newDirectoryStream(famDir)) {
-                    for (Path f : files) {
+                    for (Path f : sorted(files)) {
                         if (!Files.isRegularFile(f))
                             continue;
                         String file = f.getFileName().toString();
@@ -145,6 +147,13 @@ public final class SchematicLibrary {
         }
         if (found > 0)
             CityWorldMod.LOGGER.info("SchematicLibrary: +{} custom schematics from {}", found, root);
+    }
+
+    private static List<Path> sorted(DirectoryStream<Path> stream) {
+        List<Path> paths = new ArrayList<>();
+        stream.forEach(paths::add);
+        paths.sort(java.util.Comparator.comparing(p -> p.getFileName().toString()));
+        return paths;
     }
 
     private static Path externalRoot() {
