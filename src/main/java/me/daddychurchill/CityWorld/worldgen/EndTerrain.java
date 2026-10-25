@@ -75,12 +75,49 @@ public final class EndTerrain {
                 return new ColumnMemo(function);
             return function;
         };
+        visitor = seeThroughCompiled(visitor);
         DensityFunction whole = random.router().finalDensity().mapAll(visitor);
         DensityFunction erosion = random.router().erosion().mapAll(visitor), zero = DensityFunctions.zero();
         net.minecraft.world.level.biome.Climate.Sampler sampler = new net.minecraft.world.level.biome.Climate.Sampler(
                 zero, zero, zero, erosion, zero, zero, java.util.List.of());
         carryFabricSeed(random.sampler(), sampler);
         return new Functions(interpolated[0] != null ? interpolated[0] : whole, erosion, sampler);
+    }
+
+    private static final String C2ME_BLENDING_VISITOR = "com.ishland.c2me.opts.dfc.common.ducks.IBlendingAwareVisitor";
+
+    /**
+     * C2ME compiles the router's density functions to bytecode, and a compiled function's {@code mapAll} rebuilds
+     * its compiled form with the visited nodes as arguments — it casts each cache node to its own cache type, so a
+     * {@link ColumnMemo} put there threw {@code ClassCastException} and no End chunk got its biomes (a player's
+     * report, 1.21.1). C2ME keeps the vanilla tree behind every compiled function and maps that instead for a
+     * visitor that says it is blending-aware, so this visitor says so and sees the tree it was written for. By name,
+     * so nothing here depends on C2ME; without it the visitor is returned as it is.
+     */
+    private static DensityFunction.Visitor seeThroughCompiled(DensityFunction.Visitor visitor) {
+        Class<?> blendingAware;
+        try {
+            blendingAware = Class.forName(C2ME_BLENDING_VISITOR, false, DensityFunction.class.getClassLoader());
+        } catch (ClassNotFoundException | LinkageError absent) {
+            return visitor; // no C2ME
+        }
+        try {
+            return (DensityFunction.Visitor) java.lang.reflect.Proxy.newProxyInstance(blendingAware.getClassLoader(),
+                    new Class<?>[] { DensityFunction.Visitor.class, blendingAware }, (proxy, method, args) -> {
+                        switch (method.getName()) {
+                            case "apply": return visitor.apply((DensityFunction) args[0]);
+                            case "c2me$isBlendingEnabled": return true;
+                            case "hashCode": return System.identityHashCode(proxy);
+                            case "equals": return proxy == args[0];
+                            case "toString": return "CityWorld EndTerrain visitor";
+                            default: return java.lang.reflect.InvocationHandler.invokeDefault(proxy, method, args);
+                        }
+                    });
+        } catch (RuntimeException e) {
+            me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                    "CityWorld: could not see through C2ME's compiled End terrain: {}", e.toString());
+            return visitor;
+        }
     }
 
     /**
