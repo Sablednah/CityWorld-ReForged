@@ -24,7 +24,7 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-10-22, after the 6.8.0 release).** Every checkout is clean and pushed. Open items:
+**▶ Resume here (2026-10-25, after the 6.8.1 release).** Every checkout is clean and pushed. Open items:
 - **ZARP takes 6.5.0 itself.** Its instance skips the fleet (`.sablecraft-no-deploy`) and runs the 6.4.0 release;
   the owner updates it through the CurseForge app so the file stays tracked. Its Winchester fit-out ships in Threadwork 3d2bd37 (`zarp:schematic_fitout/winchester`) and was
   proved on the 26.2 dev server with GBG, Phoenix and `configuration` loaded.
@@ -56,6 +56,16 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   `scripts/river_{spill,pillars,depth,hollows}.py` (region checks), `scripts/count_worlds.py` (promo stat).
 - The owner's test seeds: CityWorld land 5670300453504745606 (his mountain, the falls, both mouths), vanilla land
   1688298913692546204 (the bridge at x 704–751 z −1000; quays at 661,−824 and 712,−1095).
+
+**v6.8.1 is released** (2026-10-25) on all six lines — tag `v6.8.1` (`d3fe5434`), CurseForge 9316111–9316116, fleet
+`DEPLOYED-v6.8.1` on 11 (ZARP opts out; it holds `cityworld-6.8.0-test-a2ee521f+mc26.2.jar`, CurseForge 6.8.0 in
+`cityworld-released-backup/`): **twins take their state from their own settings entry** — a twin plans with its
+source's settings (street for street, names and all) but a dimension that names a `settings` entry now takes working
+lights, overgrowth and the mobs lists from it (`CityWorldSettingsData.withStateOf`). ZARP's pre-apocalypse
+`cityworld:city` (→ `cityworld:modern`) had the ruin's lights off. Presets' Nether and End name no entry, so they follow
+the overworld (owner: right), and a pack can give them one. Probe of `cityworld:city` under an Apocalypse overworld:
+0 lit / 51 lamps → 174 lit. Gates: six self-tests PASS, CI green, halt/exit 0 after a synthetic positive, 1.20.1
+reobfuscated.
 
 **v6.8.0 is released** (2026-10-22) on all six lines — tag `v6.8.0` (`1c61b819`), CurseForge 9285277–9285282, fleet
 `DEPLOYED-v6.8.0` on 11 (ZARP opts out; it holds the test jar `cityworld-6.7.0-test-f432d5be+mc26.2.jar`, owner
