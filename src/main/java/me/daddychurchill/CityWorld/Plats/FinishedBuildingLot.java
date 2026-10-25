@@ -1822,8 +1822,9 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		if (!generator.getSettings().includeBuildingInteriors)
 			return;
 
-		drawInteriorRoomsGrid(generator, chunk, context, drawNarrowInteriors, rooms, floor, y1, height, insetNS,
-				insetWE, allowRounded, materialWall, materialGlass, stairsLocation, heights);
+		// on their own dice: the grid and its furniture read the floor as they go (see PlatLot.withForkedDice)
+		withForkedDice(() -> drawInteriorRoomsGrid(generator, chunk, context, drawNarrowInteriors, rooms, floor, y1,
+				height, insetNS, insetWE, allowRounded, materialWall, materialGlass, stairsLocation, heights));
 	}
 
 	/**
@@ -1834,6 +1835,14 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 	 * with an "allergy to stairs").
 	 */
 	protected void sweepBareFloor(CityWorldGenerator generator, RealBlocks chunk, RoomProvider rooms, int floor,
+			int y1, int height, int insetNS, int insetWE, Material materialWall, Material materialGlass,
+			Surroundings heights) {
+		// on its own dice: it rolls once per bare cell it finds (see PlatLot.withForkedDice)
+		withForkedDice(() -> sweepBareFloorNow(generator, chunk, rooms, floor, y1, height, insetNS, insetWE,
+				materialWall, materialGlass, heights));
+	}
+
+	private void sweepBareFloorNow(CityWorldGenerator generator, RealBlocks chunk, RoomProvider rooms, int floor,
 			int y1, int height, int insetNS, int insetWE, Material materialWall, Material materialGlass,
 			Surroundings heights) {
 		if (!generator.getSettings().includeBuildingInteriors)
