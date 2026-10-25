@@ -122,12 +122,19 @@ public final class ContainerLoot {
                     counted = true;
                 }
                 long seed = odds.getRandomLong();
-                // a store: a chest a room builder already gave the ordinary table becomes stock too
-                if (own != null && lot.ownLootReplacesTabled() && restock(entity, own, seed))
-                    continue;
-                assign(level, pos, entity,
-                        own != null ? own : Loot.ref(LootProvider_LootTable.keyFor(loot, lot.lootTierAt(pos.getY()))),
-                        seed);
+                try {
+                    // a store: a chest a room builder already gave the ordinary table becomes stock too
+                    if (own != null && lot.ownLootReplacesTabled() && restock(entity, own, seed))
+                        continue;
+                    assign(level, pos, entity,
+                            own != null ? own : Loot.ref(LootProvider_LootTable.keyFor(loot, lot.lootTierAt(pos.getY()))),
+                            seed);
+                } catch (RuntimeException e) {
+                    // One container's own code must not cost the rest of the chunk its loot: Refurbished's cutting
+                    // board takes the item, then may read its level, which is null during generation (NPE).
+                    me.daddychurchill.CityWorld.CityWorldMod.LOGGER.debug("CityWorld: loot for {} at {} failed: {}",
+                            entity.getType(), pos, e.toString());
+                }
             }
         } catch (Throwable t) {
             // loot must never take a chunk down
