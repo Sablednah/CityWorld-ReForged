@@ -24,15 +24,16 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-10-25, after the 6.8.1 release).** Every checkout is clean and pushed. Open items:
+**▶ Resume here (2026-10-25, after the 6.8.2 release).** Every checkout is clean and pushed. Open items:
 - **ZARP** runs the test jar `cityworld-6.8.0-test-a2ee521f+mc26.2.jar` (the CurseForge 6.8.0 jar and older ones sit in
   `LegendQuest ZARP/cityworld-released-backup/`). The owner moves it to the CurseForge 6.8.1 in the app, then deletes the
   test jar and the backup folder. Its instance skips the fleet (`.sablecraft-no-deploy`). Test jars in ZARP are the
   owner's call; ZARP's own session (Remote Control, another machine) owns Threadwork/the pack — pass pack-side bugs
   to it rather than editing its repo. Its world_settings set `spawns.wildAnimals` and `spawns.cityAnimals` true.
 - **The owner posts the reply to F4L70** (CurseForge comment, 1.21.1 End freeze with Forgified Fabric API — fixed 6.8.0).
-- **The owner should paste `CURSEFORGE.md` into the CurseForge page** (6.8.0, 6.7.0, 6.6.0 headlines; 6.8.1 heads
-  "Other recent changes").
+- **The owner should paste `CURSEFORGE.md` into the CurseForge page** (6.8.0, 6.7.0, 6.6.0 headlines; 6.8.2 and 6.8.1
+  head "Other recent changes").
+- **The owner posts the C2ME reply** to the same player (6.8.2 fixes the End with C2ME).
 - **CityWorld Compass**: a hardening commit (search frees the player in the worker + on logout/server stop) is pushed on
   all six branches, unreleased — ship it with the Compass's next real change as 1.0.1.
 - **JourneyMap 6.0.10 for 26.3 works on NeoForge 26.3.0.58** (it needs .45+; checked 2026-10-18: CityWorld's map plugin
@@ -59,6 +60,20 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   `scripts/river_{spill,pillars,depth,hollows}.py` (region checks), `scripts/count_worlds.py` (promo stat).
 - The owner's test seeds: CityWorld land 5670300453504745606 (their mountain, the falls, both mouths), vanilla land
   1688298913692546204 (the bridge at x 704–751 z −1000; quays at 661,−824 and 712,−1095).
+
+**v6.8.2 is released** (2026-10-25) on all six lines — tag `v6.8.2` (`608e7768`), CurseForge 9324321–9324326:
+**C2ME compatibility.** The End generated nothing with C2ME (a player's 1.21.1 report, mclo.gs Ao9ZkhN): C2ME's DFC
+compiles the router's density functions, and a compiled function's `mapAll` casts each visited cache node to its own
+`IFastCacheLike`, so `EndTerrain`'s `ColumnMemo` threw `ClassCastException` at the biome stage. `EndTerrain
+.seeThroughCompiled` wraps the visitor in a Proxy that also implements C2ME's `IBlendingAwareVisitor` (by name), and C2ME
+then maps the vanilla tree it keeps behind each compiled function; the proxy matches the visitor method by SIGNATURE,
+since 1.20.1's runtime name is SRG. 26.3's End (unbaked router + `createClimateSampler`) was unaffected. Also: the loot
+pass is caught per container (Refurbished's cutting board NPEs in `setItem` with a null level and emptied the rest of
+its chunk). Measured on 26.2 (WideLoad 30x30): 71–76 s without C2ME, 24–32 s with; the block diff with/without is the
+same size and kind as two runs without (vanilla decoration noise). Every line's self-test passes with its own C2ME in
+`run/mods` (none exists for Forge 1.20.1; jars are on Modrinth `c2me-neoforge`, removed from dev mods afterwards). The
+ZARP session is to trial C2ME on 26.2 (owner's call). The C2ME OpenCL module only replaces vanilla's noise/biome stages
+(nothing for CityWorld land), is experimental and needs Java 25: not pursued.
 
 **v6.8.1 is released** (2026-10-25) on all six lines — tag `v6.8.1` (`d3fe5434`), CurseForge 9316111–9316116, fleet
 `DEPLOYED-v6.8.1` on 11 (ZARP opts out; it holds `cityworld-6.8.0-test-a2ee521f+mc26.2.jar`, CurseForge 6.8.0 in
