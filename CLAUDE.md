@@ -25,25 +25,28 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 ## ▶ Where this is, and what's next (2026-10-15)
 
 **▶ Resume here (2026-10-25, after the 6.8.1 release).** Every checkout is clean and pushed. Open items:
-- **ZARP takes 6.5.0 itself.** Its instance skips the fleet (`.sablecraft-no-deploy`) and runs the 6.4.0 release;
-  the owner updates it through the CurseForge app so the file stays tracked. Its Winchester fit-out ships in Threadwork 3d2bd37 (`zarp:schematic_fitout/winchester`) and was
-  proved on the 26.2 dev server with GBG, Phoenix and `configuration` loaded.
+- **ZARP** runs the test jar `cityworld-6.8.0-test-a2ee521f+mc26.2.jar` (the CurseForge 6.8.0 jar and older ones sit in
+  `LegendQuest ZARP/cityworld-released-backup/`). The owner moves it to the CurseForge 6.8.1 in the app, then deletes the
+  test jar and the backup folder. Its instance skips the fleet (`.sablecraft-no-deploy`). Test jars in ZARP are the
+  owner's call; ZARP's own session (Remote Control, another machine) owns Threadwork/the pack — pass pack-side bugs
+  to it rather than editing its repo. Its world_settings set `spawns.wildAnimals` and `spawns.cityAnimals` true.
+- **The owner posts the reply to F4L70** (CurseForge comment, 1.21.1 End freeze with Forgified Fabric API — fixed 6.8.0).
+- **The owner should paste `CURSEFORGE.md` into the CurseForge page** (6.8.0, 6.7.0, 6.6.0 headlines; 6.8.1 heads
+  "Other recent changes").
+- **CityWorld Compass**: a hardening commit (search frees the player in the worker + on logout/server stop) is pushed on
+  all six branches, unreleased — ship it with the Compass's next real change as 1.0.1.
 - **JourneyMap 6.0.10 for 26.3 works on NeoForge 26.3.0.58** (it needs .45+; checked 2026-10-18: CityWorld's map plugin
   initialises, self-test PASS). It replaced 6.0.8 in `mc26.3/run/mods`, so 26.3 self-tests no longer set JourneyMap aside.
   The owner's `26.3` instance still has 6.0.10 renamed `.jar.disabled`; it can go back on.
 - **CityWorld Compass 1.0.0 is released** (2026-10-18; `../CityWorld-Compass`, https://github.com/Sablednah/CityWorld-Compass,
   CurseForge project 1752214 https://www.curseforge.com/minecraft/mc-mods/cityworld-urban-compass, files 9240462–9240467; its own CLAUDE.md). It requires CityWorld `[6.6.0,)` and uses only
   `CityWorldAPI.findables`/`find`/`vaultEntrance`: change those with care, and message nobody — this session owns both.
-- **The owner should paste `CURSEFORGE.md` into the CurseForge page.** It has the 6.8.0, 6.7.0 and 6.6.0 headlines;
-  6.5.0 and 6.4.0 are folded into "Other recent changes". The 6.6.0 line links the compass's CurseForge page.
 - **Confirm 6.4.1 in the `1.20.1  Forge` instance log:** no "could not read TerraBlender's End biomes" lines. The dev
   1.20.1 runtime has no TerraBlender to show it.
 - **The owner's 26.2 world-creation hang is fixed in 6.4.0** (`worldgen/Waiting`). It was a race the dev server never
   reproduced, so if a world creation hangs again, take a jstack before anything else.
 - **The Zoo mod** (`../CityWorld-Zoo`, its own session "zoo") builds against 6.4.0's `ZooCatalog`. Message that session
   if the zoo schema moves.
-- **ZARP** still holds the hand-copied 6.3.0 test jar. The owner or ZARP's session swaps in a released jar; the fleet
-  deploy skips it (`.sablecraft-no-deploy`).
 - **Better biome blending** — the owner's to-do, not scoped (PORTING.md, rivers section).
 - **The ruined Nether twin's rivers** — owner hasn't chosen lava / dry ravines / none; it has none today.
 - **Vanilla land's coasts** could take the coastal quays/beaches (needs the lift-aware drawing ShorelineLot has);
@@ -54,7 +57,7 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 - Tools from this arc: probes `survey:rivers`, `survey:treasure`, `survey:harbour`, `find:QuaysideLot`,
   `find:ShorelineLot`; `-Dcityworld.rivers.quay=<KIND>`, `-Dcityworld.rivers.find=<FIND_*>`; `/cityfind river [tp]`;
   `scripts/river_{spill,pillars,depth,hollows}.py` (region checks), `scripts/count_worlds.py` (promo stat).
-- The owner's test seeds: CityWorld land 5670300453504745606 (his mountain, the falls, both mouths), vanilla land
+- The owner's test seeds: CityWorld land 5670300453504745606 (their mountain, the falls, both mouths), vanilla land
   1688298913692546204 (the bridge at x 704–751 z −1000; quays at 661,−824 and 712,−1095).
 
 **v6.8.1 is released** (2026-10-25) on all six lines — tag `v6.8.1` (`d3fe5434`), CurseForge 9316111–9316116, fleet
