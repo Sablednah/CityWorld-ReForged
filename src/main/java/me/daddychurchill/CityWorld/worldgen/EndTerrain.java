@@ -104,8 +104,12 @@ public final class EndTerrain {
         try {
             return (DensityFunction.Visitor) java.lang.reflect.Proxy.newProxyInstance(blendingAware.getClassLoader(),
                     new Class<?>[] { DensityFunction.Visitor.class, blendingAware }, (proxy, method, args) -> {
+                        // the visitor's own method by its signature: on 1.20.1 Forge it is named m_..._ at runtime
+                        if (method.getDeclaringClass() == DensityFunction.Visitor.class
+                                && method.getParameterCount() == 1
+                                && method.getParameterTypes()[0] == DensityFunction.class)
+                            return visitor.apply((DensityFunction) args[0]);
                         switch (method.getName()) {
-                            case "apply": return visitor.apply((DensityFunction) args[0]);
                             case "c2me$isBlendingEnabled": return true;
                             case "hashCode": return System.identityHashCode(proxy);
                             case "equals": return proxy == args[0];
