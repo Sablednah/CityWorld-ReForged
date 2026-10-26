@@ -34,8 +34,9 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 - **The owner should paste `CURSEFORGE.md` into the CurseForge page** (6.8.0, 6.7.0, 6.6.0 headlines; 6.8.2 and 6.8.1
   head "Other recent changes").
 - **The owner posts the C2ME reply** to the same player (6.8.2 fixes the End with C2ME).
-- **ZARP can re-run its same-seed check on 6.9.0** (its two plain runs built different vaults; 6.9.0 should make them
-  match apart from single contested cells). ZARP takes CurseForge jars through the app; the owner moves it.
+- **6.9.0 confirmed on the full ZARP pack** (ZARP session, 2026-10-26: seed 20261025, apocalypse, C2ME on): the vault
+  swaps are gone, ~20 man-made blocks differ (single contested cells), 900 chunks in ~27 s with C2ME. The owner moves
+  ZARP to 6.9.0 through the app.
 - **CityWorld Compass**: a hardening commit (search frees the player in the worker + on logout/server stop) is pushed on
   all six branches, unreleased — ship it with the Compass's next real change as 1.0.1.
 - **JourneyMap 6.0.10 for 26.3 works on NeoForge 26.3.0.58** (it needs .45+; checked 2026-10-18: CityWorld's map plugin
