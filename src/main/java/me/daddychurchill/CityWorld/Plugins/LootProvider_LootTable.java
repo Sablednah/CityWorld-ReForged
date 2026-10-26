@@ -57,7 +57,27 @@ public final class LootProvider_LootTable extends LootProvider {
         if (!(entity instanceof RandomizableContainerBlockEntity container))
             return;
 
-        container.setLootTable(keyFor(lootLocation, tier), odds.getRandomLong());
+        container.setLootTable(keyFor(generator, lootLocation, tier), odds.getRandomLong());
+    }
+
+    /** The everyday tables a MODERN or ruined APOCALYPSE world rolls in its own version (see {@link #keyFor(CityWorldGenerator, LootLocation, int)}). */
+    private static final java.util.Set<LootLocation> STYLED =
+            java.util.EnumSet.of(LootLocation.BUILDING, LootLocation.NIGHTSTAND, LootLocation.FOOD);
+
+    /**
+     * As {@link #keyFor(LootLocation, int)}, in this world's style: a MODERN world (and an APOCALYPSE world's pristine
+     * twin) rolls {@code chests/modern/<name>} for the everyday tables, a ruined APOCALYPSE world
+     * {@code chests/apocalypse/<name>}. Every other style, and every other table, is the shared one, which is
+     * upstream's (every item at one weight). The style tables end in the shared {@code <name>_extra} hook, so a pack
+     * filling it reaches every style; written by {@code scripts/gen_style_loot.py}.
+     */
+    public static ResourceLocation keyFor(CityWorldGenerator generator, LootLocation lootLocation, int tier) {
+        if (tier == 0 && generator != null && STYLED.contains(lootLocation)) {
+            String style = generator.isApocalypseStyle() ? "apocalypse" : generator.isModernStyle() ? "modern" : null;
+            if (style != null)
+                return new ResourceLocation("cityworld", "chests/" + style + "/" + lootLocation.name().toLowerCase(Locale.ROOT));
+        }
+        return keyFor(lootLocation, tier);
     }
 
     // 1.20.1 keys a loot table by ResourceLocation; the ResourceKey<LootTable> form arrived with 1.21.
