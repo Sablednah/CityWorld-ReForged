@@ -34,6 +34,14 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 - **The owner should paste `CURSEFORGE.md` into the CurseForge page** (6.8.0, 6.7.0, 6.6.0 headlines; 6.8.2 and 6.8.1
   head "Other recent changes").
 - **The owner posts the C2ME reply** to the same player (6.8.2 fixes the End with C2ME).
+- **Same seed, same buildings — committed on all six lines (2026-10-26), unreleased.** ZARP found same-seed runs built
+  different cities. Cause: a lot decorated from ONE random stream, and many steps roll only for a cell they find free;
+  a neighbour chunk's decoration (timing) filling one cell re-rolled everything after it (traced: `Furniture.tableLamp`
+  -> roof picked at draw 169 vs 181). Fix: `Odds.fork()`, `PlatLot.phaseDice` (each pass after the lot's own drawing on
+  its own seeded stream), `withForkedDice` around rooms, interiors, ores, mine levels and steps; overgrowth and lush
+  caves fork per column/try. **Rule: a roll that only happens when a cell is free goes on a fork, or is rolled
+  unconditionally.** Measured CityWorld-placed differences between two same-seed runs: ZARP's seed 1964 -> 97. Changes
+  every new chunk's details vs 6.8.2 (plans unchanged). Next: release as 6.9.0 when the owner says.
 - **CityWorld Compass**: a hardening commit (search frees the player in the worker + on logout/server stop) is pushed on
   all six branches, unreleased — ship it with the Compass's next real change as 1.0.1.
 - **JourneyMap 6.0.10 for 26.3 works on NeoForge 26.3.0.58** (it needs .45+; checked 2026-10-18: CityWorld's map plugin
