@@ -663,6 +663,14 @@ export PATH="$JAVA_HOME/bin:$PATH"
   (2) a "wall" for art/sconces/shelves is `isWallBacking` (full cube, sturdy, not glass, not pooled),
   checked behind EVERY cell of a wide piece, and blocks go before entities (a painting is invisible to
   `isEmpty`, so a chandelier chain went through one).
+- **⚠ Every release updates the wiki: `scripts/gen-wiki.sh --push`** (owner, 2026-10-26: *"fold 'update the wiki'
+  into the rollout process"*). The wiki is GENERATED from `CURSEFORGE-CONFIGURATION.md`, `CURSEFORGE-COMMANDS.md`,
+  `PALETTES.md`, `LOOT.md` and `NODES.md`. It had gone a month and fifteen releases stale, with no loot page and
+  none of 5.19–6.8's settings, when a user was about to be pointed at it. So the release recipe is: user-facing
+  changes go into those docs in the release's docs commit (a new setting -> its row in CURSEFORGE-CONFIGURATION.md;
+  a new or changed loot table -> LOOT.md, and `scripts/gen_style_loot.py`/`gen_shop_loot.py` if generated), then
+  after the tag `scripts/gen-wiki.sh` (dry run: read the diff) and `--push`, and tell the website session (WEBSITE.md)
+  what changed. A release with "nothing to publish" from gen-wiki is fine; a release that added a setting is not.
 - **Fleet deploy: `scripts/deploy-fleet.sh`** (`--dry-run` first). Twelve CurseForge instances carry a
   CityWorld jar — five on 1.21.11 (`CityWork-ReForged`, `MobHealth - Forge`, `Neoforge 1.21.11 - sci
   fi/wasteland`, `Standards`), `26.1.2`, three on 26.2 (`26.2`, `26.2.test`, `BoP+Cityworld`), `26.3`, `1.21.1`

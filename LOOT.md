@@ -12,7 +12,9 @@ what they hold, and lists every table.
 > reach those.
 
 > **On the "junk".** The everyday tables are deliberately ordinary. Most places in a city are homes, offices and
-> shops, and a drawer in an office holds string, torches, a clock or some bread, as in the original CityWorld.
+> shops, and a drawer in an office holds paper, candles, a clock or some bread. Since 6.10.0, Modern and
+> Apocalypse worlds have their own everyday tables (see below), and about one container in twelve also holds
+> something worth having: an emerald, a diamond, an enchanted book. Classic worlds keep the original CityWorld's.
 > The good stuff is in the places you go looking for it: the Apocalypse vault (better the deeper you go, best on
 > the bottom floor), bunkers, mines, the hospital and the radio tower hut. Shops and mall stores hold their trade's
 > stock (a butcher has meat, a bookshop has books). If your pack wants richer cities, the `_extra` hooks below are
@@ -57,7 +59,9 @@ expects. 26.3 changed the loot format, so compare with a vanilla table from the 
 ### 2. Replace a whole table
 
 Put a file at the same path as CityWorld's (for example `data/cityworld/loot_table/chests/hospital.json`) and
-yours is used instead. That gives full control, but you take over the whole table, including keeping its
+yours is used instead. For `building`, `nightstand` and `food`, a Modern world reads `chests/modern/<name>` and a
+ruined Apocalypse world `chests/apocalypse/<name>`, so replace the one your world uses (the `_extra` hooks are
+shared, so method 1 needs no such care). That gives full control, but you take over the whole table, including keeping its
 `_extra` reference if you want packs layered on top of yours to keep working.
 
 ### 3. A loot modifier, or your pack's loot tool
@@ -94,11 +98,18 @@ All ids are `cityworld:chests/<name>`. "Hook" is whether `<name>_extra` exists f
 
 ### Buildings, homes and shops
 
+`building`, `nightstand` and `food` come in three versions. A **Modern** world (and an Apocalypse world's pristine
+`/cityworld` twin) rolls `chests/modern/<name>`: an office's paper, books and candles, a kitchen's bread and
+fruit. A ruined **Apocalypse** world rolls `chests/apocalypse/<name>`: scrap, string, bone, arrows, spoiled food.
+Every other style rolls the shared `chests/<name>`, the original CityWorld's. Each version has a second pool, one
+roll that is nearly always nothing and about one time in twelve a find, and all three end in the same
+`<name>_extra` hook.
+
 | Table | Where | Hook |
 |---|---|---|
-| `building` | The default for a building's containers: closets, storerooms, and furniture-mod storage in houses, offices and apartments | yes |
-| `nightstand` | Bedside drawers, and the chests and barrels furnished rooms keep against a wall | yes |
-| `food` | Kitchenettes, and the vault's food barrels | yes |
+| `building` (+ `modern/building`, `apocalypse/building`) | The default for a building's containers: closets, storerooms, and furniture-mod storage in houses, offices and apartments | yes |
+| `nightstand` (+ `modern/`, `apocalypse/`) | Bedside drawers, and the chests and barrels furnished rooms keep against a wall | yes |
+| `food` (+ `modern/`, `apocalypse/`) | Kitchenettes, and the vault's food barrels | yes (shared) |
 | `shop` | A shop's stock when the shop has no trade of its own | yes |
 | `shop_apothecary` · `shop_armourer` · `shop_bookshop` · `shop_builders_merchant` · `shop_butcher` · `shop_cartographer` · `shop_cobbler` · `shop_draper` · `shop_fishmonger` · `shop_fletcher` · `shop_greengrocer` · `shop_newsagent` · `shop_toolsmith` · `shop_weaponsmith` | Street shops, by trade: their counters, shelves and storerooms | yes |
 | `mall_art` · `mall_bakery` · `mall_books` · `mall_cafe` · `mall_department` · `mall_electronics` · `mall_fashion` · `mall_florist` · `mall_food` · `mall_furniture` · `mall_gifts` · `mall_grocer` · `mall_hardware` · `mall_jeweller` · `mall_music` · `mall_pets` · `mall_pharmacy` · `mall_sports` · `mall_toys` | Shopping-mall stores, by kind | yes |
