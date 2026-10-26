@@ -216,6 +216,7 @@ public final class CityWorldSelfTest {
             checkFitOuts(server);
             checkFindables(server);
             checkVaultLootTiers(server);
+            checkStyleLootTables(server);
             checkReservedSite(server); // last: it changes the plan (far from everything else checked)
             checkDirectLoad(server); // truly last: if it finds a deadlock the server thread never answers again
         } catch (Throwable t) {
@@ -2305,6 +2306,24 @@ public final class CityWorldSelfTest {
         if (!me.daddychurchill.CityWorld.api.CityWorldAPI.find(level, from, "place:no_such_place", 3000, 1, 60_000).isEmpty())
             fail("findables: an unknown id found something");
         report.put("findables.subway", station.isEmpty() ? "none" : station.get(0).chunk().toString());
+    }
+
+    /**
+     * The everyday tables a MODERN and a ruined APOCALYPSE world roll in their own versions exist and parse (in this
+     * line's loot dialect: a table in the wrong one loads as EMPTY), and the shared ones are still there for CLASSIC.
+     */
+    private void checkStyleLootTables(net.minecraft.server.MinecraftServer server) {
+        List<String> missing = new ArrayList<>();
+        for (String name : List.of("building", "nightstand", "food"))
+            for (String path : List.of("chests/modern/" + name, "chests/apocalypse/" + name, "chests/" + name)) {
+                var key = net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE,
+                        net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", path));
+                if (server.reloadableRegistries().getLootTable(key) == net.minecraft.world.level.storage.loot.LootTable.EMPTY)
+                    missing.add(path);
+            }
+        if (!missing.isEmpty())
+            fail("style loot tables missing or unparsed: " + missing);
+        report.put("loot.styleTables", String.valueOf(9 - missing.size()));
     }
 
     /**
