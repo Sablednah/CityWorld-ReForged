@@ -5,6 +5,23 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 6.9.0
+
+### Changed
+
+- **The same seed builds the same city, every time.** Two worlds made from one seed could come out with different
+  houses: another roof, another wall, other furniture, other overgrowth and mine dressing. A chunk decorated from one
+  run of random numbers, and many steps roll only for a cell they find free (a lamp on a clear floor, a slab on solid
+  ground); a neighbouring chunk's decoration, which lands before or after depending on timing, could fill one such
+  cell, and every choice after it rolled differently. Each part of a chunk's decoration (a room's furniture, a roof, a
+  mine level, each column of overgrowth and lush caves) now rolls on its own numbers from the seed, so a cell taken
+  by a neighbour changes only that cell. Measured on two runs of the same seed and area: CityWorld blocks differing
+  1,964 before, 97 after (single cells two things want at once, vanilla's own limit). Found by the LegendQuest: ZARP
+  modpack. **New chunks of an existing world will differ in detail from what 6.8 would have built there** (house
+  materials, furniture, overgrowth); street plans and city layout are unchanged.
+- Custom schematics in `config/cityworld/schematics` are read in name order, so two machines take them in the same
+  order.
+
 ## 6.8.2
 
 ### Fixed

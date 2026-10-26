@@ -13,6 +13,12 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+**New in 6.9.0: the same seed builds the same city.** Two worlds made from one seed could come out with different houses,
+because a neighbouring chunk's decoration arriving a moment earlier or later could re-roll everything a chunk drew after
+it. Each part of a chunk's decoration now rolls on its own numbers from the seed, so a seed you share is the city
+your friends get. New chunks in an existing world will differ in detail (house materials, furniture, overgrowth) from
+what 6.8 would have built; street plans are unchanged.
+
 **New in 6.8.0: animals in the wild.** CityWorld's own land now gets vanilla's herds as it is made, by biome, the way a
 vanilla world does: sheep on the plains, wolves in the woods, and any animals a biome mod adds. A new switch lets them
 into the cities too (parks and gardens), so the ruins can go back to nature. Also fixed: with Forgified Fabric API and
@@ -25,12 +31,6 @@ world type would. Apocalypse now starts with airborne structures and working lig
 Also: trees on bridges no longer float above the deck, and nothing carries over into a second world opened without
 restarting the game.
 
-**New in 6.6.0: find anything, and deep vaults worth the climb down.** CityWorld can now answer "where is the
-nearest hospital, mall, subway station, bookshop or Winchester?" from its city plan, without generating a thing, which
-is what the new [CityWorld Urban Compass](https://www.curseforge.com/minecraft/mc-mods/cityworld-urban-compass) companion mod is
-built on. And deep vault floors had empty chests since vaults went eight levels deep: now the loot gets better evenly
-all the way down, and the bottom floor always has the best.
-
 **Other recent changes**
 
 - **6.8.2** — works with C2ME: the End generated nothing with it installed (fixed), and C2ME made CityWorld's land
@@ -38,6 +38,9 @@ all the way down, and the bottom floor always has the best.
   rest of its chunk's containers empty.
 - **6.8.1** — the city before the fall (the `/cityworld` twin) keeps its own lights, overgrowth and spawner mobs
   instead of taking the ruined world's; the Nether and End can be given their own the same way.
+- **6.6.0** — find anything: CityWorld can answer "where is the nearest hospital, mall or Winchester?" from its plan
+  (the [CityWorld Urban Compass](https://www.curseforge.com/minecraft/mc-mods/cityworld-urban-compass) is built on it),
+  and deep vault floors have the best loot.
 - **6.5.0** — fit out a building from a datapack: swap blocks and hang item frames in any schematic building
   without replacing it.
 - **6.4.0** — zoos for any animal: which animals live in CityWorld's zoos, and each pen's habitat, come from
