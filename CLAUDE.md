@@ -24,7 +24,7 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-10-25, after the 6.8.2 release).** Every checkout is clean and pushed. Open items:
+**▶ Resume here (2026-10-26, after the 6.9.0 release).** Every checkout is clean and pushed. Open items:
 - **ZARP** runs the test jar `cityworld-6.8.0-test-a2ee521f+mc26.2.jar` (the CurseForge 6.8.0 jar and older ones sit in
   `LegendQuest ZARP/cityworld-released-backup/`). The owner moves it to the CurseForge 6.8.1 in the app, then deletes the
   test jar and the backup folder. Its instance skips the fleet (`.sablecraft-no-deploy`). Test jars in ZARP are the
@@ -34,14 +34,8 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 - **The owner should paste `CURSEFORGE.md` into the CurseForge page** (6.8.0, 6.7.0, 6.6.0 headlines; 6.8.2 and 6.8.1
   head "Other recent changes").
 - **The owner posts the C2ME reply** to the same player (6.8.2 fixes the End with C2ME).
-- **Same seed, same buildings — committed on all six lines (2026-10-26), unreleased.** ZARP found same-seed runs built
-  different cities. Cause: a lot decorated from ONE random stream, and many steps roll only for a cell they find free;
-  a neighbour chunk's decoration (timing) filling one cell re-rolled everything after it (traced: `Furniture.tableLamp`
-  -> roof picked at draw 169 vs 181). Fix: `Odds.fork()`, `PlatLot.phaseDice` (each pass after the lot's own drawing on
-  its own seeded stream), `withForkedDice` around rooms, interiors, ores, mine levels and steps; overgrowth and lush
-  caves fork per column/try. **Rule: a roll that only happens when a cell is free goes on a fork, or is rolled
-  unconditionally.** Measured CityWorld-placed differences between two same-seed runs: ZARP's seed 1964 -> 97. Changes
-  every new chunk's details vs 6.8.2 (plans unchanged). Next: release as 6.9.0 when the owner says.
+- **ZARP can re-run its same-seed check on 6.9.0** (its two plain runs built different vaults; 6.9.0 should make them
+  match apart from single contested cells). ZARP takes CurseForge jars through the app; the owner moves it.
 - **CityWorld Compass**: a hardening commit (search frees the player in the worker + on logout/server stop) is pushed on
   all six branches, unreleased — ship it with the Compass's next real change as 1.0.1.
 - **JourneyMap 6.0.10 for 26.3 works on NeoForge 26.3.0.58** (it needs .45+; checked 2026-10-18: CityWorld's map plugin
@@ -68,6 +62,21 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   `scripts/river_{spill,pillars,depth,hollows}.py` (region checks), `scripts/count_worlds.py` (promo stat).
 - The owner's test seeds: CityWorld land 5670300453504745606 (their mountain, the falls, both mouths), vanilla land
   1688298913692546204 (the bridge at x 704–751 z −1000; quays at 661,−824 and 712,−1095).
+
+**v6.9.0 is released** (2026-10-26) on all six lines — tag `v6.9.0` (`5d1fc61e`), CurseForge 9331893–9331907, fleet
+`DEPLOYED-v6.9.0` on 11 (ZARP opts out): **the same seed builds the same city.** ZARP found two same-seed runs built
+different cities. A lot decorated from ONE random stream, and many steps roll only for a cell they find free; a
+neighbour chunk's decoration (timing) filling one such cell re-rolled everything after it (traced with a temporary
+counting Random + per-draw stacks: `Furniture.tableLamp` -> `clearFloor`, then the roof picked at draw 169 vs 181).
+Fix: `Odds.fork()` (child seeded from ONE parent draw), `PlatLot.phaseDice` (each pass after the lot's own drawing
+on its own seeded stream), `withForkedDice` around house rooms, office interiors and the bare-floor sweep, the ore
+pass, each mine level and each of its steps; the house roof pick is forked before the rooms; mine slab coins are
+tossed for every cell; Overgrowth forks per column/nook/wall/sapling/dripstone try, LushCaves per column;
+SchematicLibrary sorts the custom folder. **Rule: a roll that only happens when a cell is free goes on a fork, or is
+rolled unconditionally.** Measured as CityWorld-placed blocks differing between two same-seed runs: ZARP's seed
+(apocalypse, 26x26) 1964 -> 97, dev seed (modern, 30x30) 5047 -> 2546; the rest is single contested cells and mod
+decoration. New chunks differ in detail from 6.8.x on the same seed; plans are unchanged (`--compare` agrees). Gates:
+six self-tests PASS, CI green on the bump heads, halt/exit 0 after a synthetic positive, 1.20.1 reobfuscated.
 
 **v6.8.2 is released** (2026-10-25) on all six lines — tag `v6.8.2` (`608e7768`), CurseForge 9324321–9324326:
 **C2ME compatibility.** The End generated nothing with C2ME (a player's 1.21.1 report, mclo.gs Ao9ZkhN): C2ME's DFC
