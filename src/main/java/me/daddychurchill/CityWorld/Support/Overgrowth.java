@@ -49,8 +49,12 @@ public final class Overgrowth {
 
         // 1) tops — moss/leaf-litter/plants creeping over every exposed built surface (roofs, floors,
         //    road, the ground around a build), plus the odd mossy-brick swap for age.
+        // Every column, nook try, wall try and sapling try rolls on its own fork (Odds.fork): what each finds
+        // (the surface height, a wall) depends on what neighbouring chunks have decorated so far, and on one
+        // stream a single difference reshuffled the rest of the chunk's growth from run to run.
         for (int x = 0; x < real.width; x++)
             for (int z = 0; z < real.width; z++) {
+                Odds cell = odds.fork();
                 int wx = oX + x, wz = oZ + z;
                 int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, wx, wz);
                 if (surfaceY - 1 < floor)
@@ -61,7 +65,7 @@ public final class Overgrowth {
                     continue;
                 // Weather some stone/brick/cobble surfaces to mossy first — this DOES apply to the slab,
                 // stair and wall shapes (they keep their form), which is the point.
-                if (odds.playOdds(0.16))
+                if (cell.playOdds(0.16))
                     mossySwap(level, topPos, top);
                 // Plants, though, only sit on a full flat top. Moss/leaf-litter dropped onto a half-slab,
                 // fence post or stairs float a notch above and read wrong — a sturdy-up-face test skips
@@ -71,15 +75,16 @@ public final class Overgrowth {
                 BlockPos onTop = new BlockPos(wx, surfaceY, wz);
                 // roads carry only a light dusting (mostly thin leaf litter) so the streets stay readable;
                 // buildings/ground get the fuller creep. Scaled by intensity (capped so it never fully tiles).
-                if (level.getBlockState(onTop).isAir() && odds.playOdds(Math.min(0.85, (road ? 0.12 : 0.24) * intensity)))
-                    placeTopPlant(level, onTop, road, odds);
+                if (level.getBlockState(onTop).isAir() && cell.playOdds(Math.min(0.85, (road ? 0.12 : 0.24) * intensity)))
+                    placeTopPlant(level, onTop, road, cell);
             }
 
         // 2a) interior nooks — the bit that already read well: from a column's top scan DOWN to the first
         //     air cell against a wall (a courtyard, a gap between rooms) and tuck a short vine there.
         int nookTries = (int) Math.ceil((road ? 4 : 24) * intensity);
         for (int i = 0; i < nookTries; i++) {
-            int x = odds.getRandomInt(real.width), z = odds.getRandomInt(real.width);
+            Odds nook = odds.fork();
+            int x = nook.getRandomInt(real.width), z = nook.getRandomInt(real.width);
             int wx = oX + x, wz = oZ + z;
             int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, wx, wz);
             for (int y = surfaceY - 1; y > floor && y > surfaceY - 24; y--) {
@@ -88,7 +93,7 @@ public final class Overgrowth {
                 Direction dir = wallDir(level, wx, y, wz);
                 if (dir == null)
                     continue;
-                hangVineString(level, wx, y, wz, dir, 1 + odds.getRandomInt(3), odds, false); // nooks: no cap
+                hangVineString(level, wx, y, wz, dir, 1 + nook.getRandomInt(3), nook, false); // nooks: no cap
                 break;
             }
         }
@@ -102,7 +107,8 @@ public final class Overgrowth {
         int wallTries = (int) Math.ceil((road ? 40 : 30) * intensity);
         int ceilingY = generator.streetLevel + 200; // above the tallest building; the scan breaks at a roof
         for (int i = 0; i < wallTries; i++) {
-            int x = odds.getRandomInt(real.width), z = odds.getRandomInt(real.width);
+            Odds wall = odds.fork();
+            int x = wall.getRandomInt(real.width), z = wall.getRandomInt(real.width);
             int wx = oX + x, wz = oZ + z;
             int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, wx, wz);
             // quick reject: no wall beside the column just above ground -> open space, don't scan the sky
@@ -125,17 +131,19 @@ public final class Overgrowth {
                 // curtain. (Intensity drives how MANY strings, above, not how long each one is.) The string
                 // then dangles down until the wall runs out (a window/ledge stops it early).
                 int wallH = Math.max(4, topY - generator.streetLevel);
-                int len = wallH / 4 + odds.getRandomInt(wallH - wallH / 4 + 1);
-                hangVineString(level, wx, topY, wz, topDir, len, odds, capVines);
+                int len = wallH / 4 + wall.getRandomInt(wallH - wallH / 4 + 1);
+                hangVineString(level, wx, topY, wz, topDir, len, wall, capVines);
             }
         }
 
         // 3) roads — the occasional sapling breaking through the tarmac into a small reclaim tree (more
         //    chances at higher intensity).
         int treeTries = road ? (int) Math.ceil(intensity) : 0;
-        for (int i = 0; i < treeTries; i++)
-            if (odds.playOdds(0.18))
-                placeSmallTree(level, oX, oZ, floor, real.width, odds);
+        for (int i = 0; i < treeTries; i++) {
+            Odds tree = odds.fork();
+            if (tree.playOdds(0.18))
+                placeSmallTree(level, oX, oZ, floor, real.width, tree);
+        }
 
         // 4) basements — dripstone reclaiming a building's cellars, the same as the mine shafts. Buildings
         //    only (roads have no rooms below); scans the below-street air for a room ceiling/floor.
@@ -148,7 +156,8 @@ public final class Overgrowth {
             int street, Odds odds) {
         int bottom = real.minY + 1;
         for (int i = 0; i < 22; i++) {
-            int wx = oX + odds.getRandomInt(real.width), wz = oZ + odds.getRandomInt(real.width);
+            Odds drip = odds.fork(); // each try on its own fork, as in apply
+            int wx = oX + drip.getRandomInt(real.width), wz = oZ + drip.getRandomInt(real.width);
             for (int y = street - 2; y > bottom + 1; y--) {
                 if (!level.getBlockState(new BlockPos(wx, y, wz)).isAir())
                     continue;
@@ -157,12 +166,12 @@ public final class Overgrowth {
                 // waterlogged in setDrip, so a stalactite dipping into the cistern still reads right.)
                 boolean ceiling = solidRoof(level, wx, y + 1, wz);
                 boolean floorBelow = solidRoof(level, wx, y - 1, wz);
-                if (ceiling && odds.flipCoin()) {
-                    growDripstone(level, wx, y, wz, Direction.DOWN, odds);
+                if (ceiling && drip.flipCoin()) {
+                    growDripstone(level, wx, y, wz, Direction.DOWN, drip);
                     break;
                 }
                 if (floorBelow) {
-                    growDripstone(level, wx, y, wz, Direction.UP, odds);
+                    growDripstone(level, wx, y, wz, Direction.UP, drip);
                     break;
                 }
             }
@@ -185,16 +194,18 @@ public final class Overgrowth {
         int oX = real.getOriginX(), oZ = real.getOriginZ(), ceilY = floorY + 3;
         int count = 3 + odds.getRandomInt(5);
         for (int i = 0; i < count; i++) {
-            int x = odds.getRandomInt(1, 15), z = odds.getRandomInt(1, 15);
-            if (odds.flipCoin()) {
+            Odds drip = odds.fork(); // each try on its own fork: what it finds depends on the neighbours
+            int x = drip.getRandomInt(1, 15), z = drip.getRandomInt(1, 15);
+            if (drip.flipCoin()) {
                 if (solidRoof(level, oX + x, ceilY, oZ + z) && real.isEmpty(x, ceilY - 1, z))
-                    growDripstone(level, oX + x, ceilY - 1, oZ + z, Direction.DOWN, odds); // stalactite
+                    growDripstone(level, oX + x, ceilY - 1, oZ + z, Direction.DOWN, drip); // stalactite
             } else if (solidRoof(level, oX + x, floorY, oZ + z) && real.isEmpty(x, floorY + 1, z))
-                growDripstone(level, oX + x, floorY + 1, oZ + z, Direction.UP, odds); // stalagmite (real floor)
+                growDripstone(level, oX + x, floorY + 1, oZ + z, Direction.UP, drip); // stalagmite (real floor)
         }
         for (int i = 0; i < 2; i++) { // a couple of dripstone-block clumps in the ceiling (never in water)
             int x = odds.getRandomInt(1, 15), z = odds.getRandomInt(1, 15);
-            if (solidRoof(level, oX + x, ceilY, oZ + z) && odds.playOdds(0.4))
+            boolean clump = odds.playOdds(0.4); // rolled whatever the ceiling holds
+            if (solidRoof(level, oX + x, ceilY, oZ + z) && clump)
                 level.setBlock(new BlockPos(oX + x, ceilY, oZ + z), Material.DRIPSTONE_BLOCK.getBlockState(),
                         Block.UPDATE_CLIENTS);
         }

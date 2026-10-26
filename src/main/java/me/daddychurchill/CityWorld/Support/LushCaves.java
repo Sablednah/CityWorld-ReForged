@@ -44,7 +44,9 @@ public final class LushCaves {
                 if (!lushRegion(generator, wx, wz))
                     continue;
                 anyLush = true;
-                decorateColumn(generator, real, level, x, z, wx, wz, top, bottom, odds);
+                // each column on its own fork (Odds.fork): it rolls per open cell it finds, and vanilla's own
+                // lush-cave features from the neighbouring chunks may have filled some of them first
+                decorateColumn(generator, real, level, x, z, wx, wz, top, bottom, odds.fork());
             }
 
         // the surface tell — an azalea on rooted dirt above a lush cave, on a nature lot
