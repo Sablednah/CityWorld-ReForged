@@ -56,6 +56,8 @@ emit CURSEFORGE-COMMANDS.md      "Commands" \
     "> Every command and what it is for. Source: \`CURSEFORGE-COMMANDS.md\`."
 emit PALETTES.md                 "Building-Palettes" \
     "> Which blocks build the cities, and how to add your own mod's. Source: \`PALETTES.md\`."
+emit LOOT.md                     "Loot-Tables" \
+    "> What CityWorld's chests hold, how to change it, and every table. Source: \`LOOT.md\`."
 emit NODES.md                    "Permission-Nodes" \
     "> Permission nodes for servers. Source: \`NODES.md\`."
 
@@ -78,6 +80,8 @@ MinecraftForge on 1.20.1.
     vanilla structures so it can own the chunk; one small datapack turns them back on.
   - [Your other mods' blocks and biomes](Configuring-CityWorld#full-settings-reference)
 - **[Building Palettes](Building-Palettes)** — which blocks build the cities, and how to add your own.
+- **[Loot Tables](Loot-Tables)** — what the cities' chests hold, how a modpack adds its own items, and every
+  table CityWorld uses.
 - **[Commands](Commands)** — including `/cwlocate`, which is the quickest way to tell whether a
   datapack change actually took effect.
 - **[Permission Nodes](Permission-Nodes)** — for servers.
@@ -86,7 +90,6 @@ MinecraftForge on 1.20.1.
 
 - [Changelog](https://github.com/Sablednah/CityWorld-ReForged/blob/master/CHANGELOG.md)
 - [CurseForge](https://www.curseforge.com/minecraft/mc-mods/cityworld-reforged) ·
-  [Modrinth](https://modrinth.com/mod/cityworld-reforged) ·
   [sablecraft.co.uk](https://sablecraft.co.uk/cityworld-reforged/)
 
 > Settings and terrain changes only affect **newly generated chunks** — existing chunks never

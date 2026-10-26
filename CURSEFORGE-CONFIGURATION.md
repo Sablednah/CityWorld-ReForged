@@ -13,7 +13,10 @@ style presets like `cityworld:apocalypse`) and go. Nothing below is required.
 **2. The Customize screen (single-player, easiest).** On the create-world screen, choose CityWorld as
 the world type and hit **Customize**. Every setting is there with a widget, grouped the same way as
 below. Locked settings for your chosen style (e.g. APOCALYPSE forcing decay on) grey out with a tooltip
-explaining why, so it's always clear what you can and can't change.
+explaining why, so it's always clear what you can and can't change. **Presets** saves everything Customize
+holds (style, Nether and End, every setting, which structures generate) under a name, in
+`config/cityworld/presets/<name>.json`, and loads it for the next world. The structures page has **All on** /
+**All off**.
 
 **3. Hand-edit a datapack (servers, or version-controlled configs).** On first run, a full example is
 written to:
@@ -190,6 +193,18 @@ means the choice has not taken — which distinguishes a settings or datapack pr
 look-alike outcomes and the two silent failures, and remember **nothing retro-fits into chunks that
 already exist** — test in a new world or in land you have never visited.
 
+## For modpacks: locking the create-world screen
+
+`config/cityworld-startup.toml` (per instance, read on the client's create-world screen; a server uses `level-type`
+in `server.properties` instead):
+
+| Key | Default | What it does |
+|---|---|---|
+| `lockedWorldPreset` | `""` | Locks every new single-player world to a world type, e.g. `"cityworld:apocalypse"`. The World Type button greys out and Customize keeps the preset's style. Empty = no lock. |
+| `ruinedNether` | `""` | `"cityworld"` (the ruined-city Nether) or `"vanilla"` locks the Nether choice. Empty = the player chooses. |
+| `cityworldEnd` | `""` | `"cityworld"` (cities on the End's outer islands) or `"vanilla"` locks the End choice. Empty = the player chooses. |
+| `lockCustomize` | `false` | With `lockedWorldPreset` set: removes the Customize button, so every new world gets the preset's own `world_settings` entry unchanged. That makes a pack's replacement of that entry authoritative. |
+
 ## Full settings reference
 
 ### `features` — what the planner is allowed to build
@@ -219,6 +234,7 @@ already exist** — test in a new world or in land you have never visited.
 |---|---|---|
 | `includeCaves` | `true` | Carve caves. |
 | `windingCaves` | `false`* | Winding "noodle" cave tunnels that wander and branch (vanilla-like) instead of the classic noise blobs. *On by default for MODERN/APOCALYPSE; a free toggle for any style. Needs `includeCaves`. Never style-locked. |
+| `largeCaverns` | `false`* | Huge open caverns deep underground (y −52 to 26), with ledges and shelves. *On in the MODERN and APOCALYPSE world presets. |
 | `includeLavaFields` | `true` | Underground lava fields (basalt-lined pools in MODERN/APOCALYPSE). |
 | `includeSeas` | `true` | Oceans/lakes. Off = a dry, land-only world. |
 | `includeMountains` | `true` | Mountainous terrain. Off = flatter. |
@@ -346,6 +362,22 @@ lists. Cities keep clear of whatever is placed.
 | `enabled` | `true` | A station in every urban district — a ticket hall beside a road, switchback stairs down to twin-track platforms 24 blocks under the street — and tunnels to the first station along its row or column up to six districts away, so lines cross the countryside between city clusters. East-west lines run on the upper level, north-south lines eight blocks lower, so lines never junction; a station on both is an interchange with stairs between its halls, and one with a single line each way joins them in a sloped loop instead of two dead ends. Lit, ringed in brick, powered rails so a cart runs the line. Stations announce as the landmark kind `subway` (off by default). |
 | `spawners` | `true` | In a ruined (APOCALYPSE) world, sewer-mob spawners in niches in the tunnel walls. |
 
+### `cities` — cities in a vanilla world, and rivers
+
+| Setting | Default | What it does |
+|---|---|---|
+| `vanillaTerrain` | `false` | **Land: vanilla** in Customize. The land is vanilla's throughout (its biomes, mountains, rivers and structures), and CityWorld builds cities on it like villages: one per `spacing`-block cell, each on its own level, with quays and natural banks where a river runs through. Modern-family and Classic styles; a style that is its own terrain (floating, flooded, dunes, astral, maze, nature, metro) ignores it. |
+| `spacing` | `2048` | Blocks between cities in a vanilla world (one city per cell this wide). `1024`–`16384`. |
+| `districts` | `3` | How many districts across a vanilla-world city is. `1`–`8`. |
+| `districtsVariance` | `1` | How much each city's size varies from `districts`, plus or minus. `0`–`3`. |
+| `levelRange` | `40` | How far above CityWorld's street level (y 64) a vanilla-world city may stand, to sit on the land around it. `0`–`120`. |
+| `maxWater` | `0.35` | The share of a candidate site that may be under the sea. Datapack only. |
+| `minNear` | `0.75` | The share of a candidate site that must already lie within sixteen blocks of the city's level. Datapack only. |
+| `rivers` | `false`* | Rivers on CityWorld's own land: springs in the hills, waterfalls, rivers widening to the sea, bridges where roads cross, and the waterside by district (quays, slips, harbours, beaches, lighthouses). *On in the world presets; off in a world saved before rivers existed, so an old world never grows a river that stops at the chunks it already has. |
+
+> Every city in a vanilla world is worked out from the seed and these numbers, so **change them only before
+> the world is made**: changed under an existing world, cities move or change level under chunks already built.
+
 ### `spawns` — who turns up, and how often (odds `0.0`–`1.0`)
 
 | Setting | Default | What it does |
@@ -356,6 +388,8 @@ lists. Cities keep clear of whatever is placed.
 | `spawnVagrants` | `0.2` | **Wanderers** in Customize: strays out of town, on wild land and dirt roads. Hostile on a Baddies roll, or always in a ruined world. (The key keeps its old name.) |
 | `nameVillagers` | `true` | Give villagers generated names (see `naming`). |
 | `showVillagersNames` | `true` | Show those names as floating nametags. |
+| `wildAnimals` | `true` | **Wild animals**: vanilla's herds for each biome as the wild land is made (sheep on the plains, wolves in the woods, any animals a biome mod adds), the way a vanilla world gets them. Overworld only. |
+| `cityAnimals` | `false` | **Animals in cities**: the same herds in a city's open ground, never on a roof. Vanilla's animals need grass, so in practice they come to parks and gardens. |
 
 ### `treasures` — chests and spawners
 
@@ -367,6 +401,10 @@ lists. Cities keep clear of whatever is placed.
 | `treasuresInBuildings` | `true` | Loot chests in buildings. |
 | `oddsOfTreasureInMines/Bunkers/Sewers/Buildings` | `0.5` | Chance a given spot gets a chest. |
 | `oddsOfAlcoveInMines` | `0.5` | Chance a mine tunnel opens into a side alcove. |
+
+These control CityWorld's dedicated loot chests (closets, storerooms and kitchenettes in buildings, and the
+treasure chests underground). What any container holds, and how a modpack adds its own items, is on
+**[Loot Tables](Loot-Tables)**.
 
 ### `world` — trees, ground cover, floating subsurface, ruralness
 
