@@ -209,6 +209,7 @@ A few common asks, as complete `default.json` files.
 | `treasuresInBuildings` | `true` | Loot chests in buildings. |
 | `oddsOfTreasureInMines/Bunkers/Sewers/Buildings` | `0.5` | Chance a given spot gets a chest. |
 | `oddsOfAlcoveInMines` | `0.5` | Chance a mine tunnel opens into a side alcove. |
+| `oddsOfFinds` | `0.077` (1 in 13) | **Finds in drawers**: the chance an everyday container (a building's closet or furniture, a nightstand, a kitchen store) in a Modern or Apocalypse world also holds something worth having: an emerald, a diamond, an enchanted book. `0` for none, `1` for every one. See [Loot Tables](Loot-Tables). |
 
 ### `world` — trees, ground cover, floating subsurface, ruralness
 
