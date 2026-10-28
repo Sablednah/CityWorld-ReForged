@@ -516,11 +516,15 @@ public record CityWorldSettingsData(
             double oddsOfTreasureInBunkers,
             double oddsOfTreasureInSewers,
             double oddsOfTreasureInBuildings,
-            double oddsOfAlcoveInMines) {
+            double oddsOfAlcoveInMines,
+            // how often a MODERN or APOCALYPSE world's everyday container (building, nightstand, kitchen) also holds a
+            // find: it rolls chests/<style>/<name>_find instead of chests/<style>/<name> (LootProvider_LootTable)
+            double oddsOfFinds) {
 
         public static final Treasures DEFAULT = new Treasures(
                 true, true, true, true, true, true, true,
-                Odds.oddsLikely, Odds.oddsLikely, Odds.oddsLikely, Odds.oddsLikely, Odds.oddsLikely);
+                Odds.oddsLikely, Odds.oddsLikely, Odds.oddsLikely, Odds.oddsLikely, Odds.oddsLikely,
+                Odds.oddsVeryUnlikely);
 
         public static final Codec<Treasures> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("treasuresInMines", true).forGetter(Treasures::treasuresInMines),
@@ -534,7 +538,8 @@ public record CityWorldSettingsData(
                 Codec.DOUBLE.optionalFieldOf("oddsOfTreasureInBunkers", Odds.oddsLikely).forGetter(Treasures::oddsOfTreasureInBunkers),
                 Codec.DOUBLE.optionalFieldOf("oddsOfTreasureInSewers", Odds.oddsLikely).forGetter(Treasures::oddsOfTreasureInSewers),
                 Codec.DOUBLE.optionalFieldOf("oddsOfTreasureInBuildings", Odds.oddsLikely).forGetter(Treasures::oddsOfTreasureInBuildings),
-                Codec.DOUBLE.optionalFieldOf("oddsOfAlcoveInMines", Odds.oddsLikely).forGetter(Treasures::oddsOfAlcoveInMines)
+                Codec.DOUBLE.optionalFieldOf("oddsOfAlcoveInMines", Odds.oddsLikely).forGetter(Treasures::oddsOfAlcoveInMines),
+                Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfFinds", Odds.oddsVeryUnlikely).forGetter(Treasures::oddsOfFinds)
         ).apply(i, Treasures::new));
     }
 
