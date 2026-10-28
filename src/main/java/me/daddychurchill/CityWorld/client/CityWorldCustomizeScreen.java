@@ -90,7 +90,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private boolean treasuresInMines, spawnersInMines, treasuresInBunkers, spawnersInBunkers, treasuresInSewers,
             spawnersInSewers, treasuresInBuildings;
     private Chance oddsOfTreasureInMines, oddsOfTreasureInBunkers, oddsOfTreasureInSewers,
-            oddsOfTreasureInBuildings, oddsOfAlcoveInMines;
+            oddsOfTreasureInBuildings, oddsOfAlcoveInMines, oddsOfFinds;
     // world
     private TreeStyle treeStyle;
     private Chance spawnTrees;
@@ -222,6 +222,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         oddsOfTreasureInSewers = Chance.nearest(r.oddsOfTreasureInSewers());
         oddsOfTreasureInBuildings = Chance.nearest(r.oddsOfTreasureInBuildings());
         oddsOfAlcoveInMines = Chance.nearest(r.oddsOfAlcoveInMines());
+        oddsOfFinds = Chance.nearest(r.oddsOfFinds());
 
         CityWorldSettingsData.World w = data.world();
         treeStyle = w.treeStyle();
@@ -409,6 +410,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, chance("Chest odds: sewers", oddsOfTreasureInSewers, v -> oddsOfTreasureInSewers = v));
         pair(row, chance("Chest odds: buildings", oddsOfTreasureInBuildings, v -> oddsOfTreasureInBuildings = v));
         pair(row, chance("Mine alcove odds", oddsOfAlcoveInMines, v -> oddsOfAlcoveInMines = v));
+        pair(row, chance("Finds in drawers", oddsOfFinds, v -> oddsOfFinds = v));
         flush(row);
 
         header(Component.literal("World"));
@@ -477,7 +479,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData.Treasures treasures = new CityWorldSettingsData.Treasures(
                 treasuresInMines, spawnersInMines, treasuresInBunkers, spawnersInBunkers, treasuresInSewers,
                 spawnersInSewers, treasuresInBuildings, oddsOfTreasureInMines.value, oddsOfTreasureInBunkers.value,
-                oddsOfTreasureInSewers.value, oddsOfTreasureInBuildings.value, oddsOfAlcoveInMines.value);
+                oddsOfTreasureInSewers.value, oddsOfTreasureInBuildings.value, oddsOfAlcoveInMines.value,
+                oddsOfFinds.value);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
                 treeStyle, spawnTrees.value, subSurfaceStyle, ruralnessLevel.value, maxBuildingFloors,
                 broadcastSpecialPlaces, announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
@@ -752,6 +755,9 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private enum Chance {
         NEVER("Never", 0.0),
         VERY_RARE("Very rare", 1.0 / 21.0),
+        // CityWorld's "very unlikely" — the default for finds in drawers (oddsOfFinds), which must be a rung or
+        // the picker would round it to Rare and save that (the picker writes its rung back)
+        OCCASIONAL("Occasional", 1.0 / 13.0),
         RARE("Rare", 1.0 / 8.0),
         UNLIKELY("Unlikely", 1.0 / 5.0),
         SOMETIMES("Sometimes", 1.0 / 3.0),

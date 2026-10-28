@@ -617,6 +617,13 @@ public class VaultLot extends BunkerLot {
         chairAt(chunk, tx - 1, fy, tz, BlockFace.WEST);
         chairAt(chunk, tx + 1, fy, tz, BlockFace.EAST);
         putLoot(generator, odds, chunk, x2, fy, z1, Material.BARREL, LootProvider.LootLocation.FOOD); // kitchen store
+        // stocked from before the fall: the vault kept its power and its seals, so its store is a modern kitchen's,
+        // even in a ruined world (owner, 2026-10-27)
+        if (chunk instanceof me.daddychurchill.CityWorld.Support.RealBlocks real)
+            me.daddychurchill.CityWorld.Support.ContainerLoot.restockAt(real, x2, fy, z1,
+                    me.daddychurchill.CityWorld.Plugins.LootProvider_LootTable.styled("modern",
+                            LootProvider.LootLocation.FOOD, odds.getRandomLong(), generator.getSettings().oddsOfFinds)
+                            .identifier().toString(), odds);
         put(chunk, x2, fy, z2, Material.CAULDRON); // a pot
     }
 
