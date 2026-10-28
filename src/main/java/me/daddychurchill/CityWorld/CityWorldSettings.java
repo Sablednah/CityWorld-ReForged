@@ -63,6 +63,7 @@ public class CityWorldSettings {
     public boolean spawnersInBunkers = true;
     public double oddsOfTreasureInBunkers = Odds.oddsLikely;
     public double oddsOfAlcoveInMines = Odds.oddsLikely;
+    public double oddsOfFinds = Odds.oddsVeryUnlikely;
     public boolean includeSewers = true;
     public boolean treasuresInSewers = true;
     public boolean spawnersInSewers = true;
@@ -628,6 +629,7 @@ public class CityWorldSettings {
         oddsOfTreasureInSewers = r.oddsOfTreasureInSewers();
         oddsOfTreasureInBuildings = r.oddsOfTreasureInBuildings();
         oddsOfAlcoveInMines = r.oddsOfAlcoveInMines();
+        oddsOfFinds = r.oddsOfFinds();
 
         CityWorldSettingsData.World w = data.world();
         useModdedBiomes = w.useModdedBiomes();
@@ -704,7 +706,7 @@ public class CityWorldSettings {
         CityWorldSettingsData.Treasures treasures = new CityWorldSettingsData.Treasures(
                 treasuresInMines, spawnersInMines, treasuresInBunkers, spawnersInBunkers, treasuresInSewers,
                 spawnersInSewers, treasuresInBuildings, oddsOfTreasureInMines, oddsOfTreasureInBunkers,
-                oddsOfTreasureInSewers, oddsOfTreasureInBuildings, oddsOfAlcoveInMines);
+                oddsOfTreasureInSewers, oddsOfTreasureInBuildings, oddsOfAlcoveInMines, oddsOfFinds);
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
                 treeStyle, spawnTrees, subSurfaceStyle, ruralnessLevel, maxBuildingFloors, broadcastSpecialPlaces,
                 java.util.List.copyOf(announcedLandmarks), useModdedBiomes, wildDecoration, climateWarmth, biomeScale,

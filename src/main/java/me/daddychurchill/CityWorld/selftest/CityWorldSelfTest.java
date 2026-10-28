@@ -2331,7 +2331,8 @@ public final class CityWorldSelfTest {
     private void checkStyleLootTables(net.minecraft.server.MinecraftServer server) {
         List<String> missing = new ArrayList<>();
         for (String name : List.of("building", "nightstand", "food"))
-            for (String path : List.of("chests/modern/" + name, "chests/apocalypse/" + name, "chests/" + name)) {
+            for (String path : List.of("chests/modern/" + name, "chests/apocalypse/" + name, "chests/" + name,
+                    "chests/modern/" + name + "_find", "chests/apocalypse/" + name + "_find")) {
                 var key = new net.minecraft.resources.ResourceLocation("cityworld", path);
                 if (server.getLootData().getElement(new net.minecraft.world.level.storage.loot.LootDataId<>(
                         net.minecraft.world.level.storage.loot.LootDataType.TABLE, key)) == null)
@@ -2339,7 +2340,7 @@ public final class CityWorldSelfTest {
             }
         if (!missing.isEmpty())
             fail("style loot tables missing or unparsed: " + missing);
-        report.put("loot.styleTables", String.valueOf(9 - missing.size()));
+        report.put("loot.styleTables", String.valueOf(15 - missing.size()));
     }
 
     /**

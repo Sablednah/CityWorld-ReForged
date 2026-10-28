@@ -127,7 +127,7 @@ public final class ContainerLoot {
                     if (own != null && lot.ownLootReplacesTabled() && restock(entity, own, seed))
                         continue;
                     assign(level, pos, entity,
-                            own != null ? own : Loot.ref(LootProvider_LootTable.keyFor(generator, loot, lot.lootTierAt(pos.getY()))),
+                            own != null ? own : Loot.ref(LootProvider_LootTable.keyFor(generator, loot, lot.lootTierAt(pos.getY()), seed)),
                             seed);
                 } catch (RuntimeException e) {
                     // One container's own code must not cost the rest of the chunk its loot: Refurbished's cutting

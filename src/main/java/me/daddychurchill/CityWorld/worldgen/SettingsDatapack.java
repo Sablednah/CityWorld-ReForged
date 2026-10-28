@@ -145,6 +145,7 @@ public final class SettingsDatapack {
         treasures.addProperty("oddsOfTreasureInSewers", r.oddsOfTreasureInSewers());
         treasures.addProperty("oddsOfTreasureInBuildings", r.oddsOfTreasureInBuildings());
         treasures.addProperty("oddsOfAlcoveInMines", r.oddsOfAlcoveInMines());
+        treasures.addProperty("oddsOfFinds", r.oddsOfFinds());
         root.add("treasures", treasures);
 
         CityWorldSettingsData.World w = d.world();

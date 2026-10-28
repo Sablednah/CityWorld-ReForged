@@ -6,14 +6,16 @@
 The shared tables (chests/building, nightstand, food) are upstream CityWorld's: every item at the same weight, so a
 drawer was as likely to hold rotten flesh or a white banner as a book. A MODERN world rolls chests/modern/<name>
 instead and a ruined APOCALYPSE world chests/apocalypse/<name> (LootProvider_LootTable.keyFor); CLASSIC and every
-other style keep the shared ones. Each table has two pools:
+other style keep the shared ones. Each style ships two tables:
 
-    everyday   what a drawer in that world holds, weighted to read right (paper and books in an office; scrap,
-               string and bone in a ruin), ending in the SHARED <name>_extra hook, so a pack that fills
-               chests/building_extra reaches every style
-    find       one roll that is nearly always nothing: about one container in twelve holds something worth having
-               (an emerald, a diamond, an enchanted book). Ordinary on purpose; the vault, bunkers and mines are
-               where the good loot is.
+    <name>        what a drawer in that world holds, weighted to read right (paper and books in an office; scrap,
+                  string and bone in a ruin), ending in the SHARED <name>_extra hook, so a pack that fills
+                  chests/building_extra reaches every style
+    <name>_find   <name>, plus one find: something worth having (an emerald, a diamond, an enchanted book)
+
+Which one a container gets is decided when it is placed, by the world setting treasures.oddsOfFinds (default 1 in
+13, CityWorld's "very unlikely"; a loot table cannot read a setting, so the roll is made at generation from the
+container's own seed). Ordinary on purpose: the vault, bunkers and mines are where the good loot is.
 
 Generated for the same reason as gen_shop_loot.py, and in the same three dialects (read off the checkout):
 
@@ -72,8 +74,7 @@ EVERYDAY = {
     },
 }
 
-# the one roll for something worth having: 16 in 200, about one container in twelve
-FIND_EMPTY = 184
+# the find in a <name>_find table, by weight (how often it holds anything is the oddsOfFinds setting)
 FINDS = {
     "modern": {
         "building": [("emerald", 3, 1, 3), ("iron_ingot", 3, 1, 3), ("gold_ingot", 2, 1, 2),
@@ -140,10 +141,15 @@ def table(style, name, kind):
     entries = [entry(s, kind) for s in everyday]
     entries.append({"type": "minecraft:loot_table", "name" if kind == "1.20.1" else "value":
                     "cityworld:chests/%s_extra" % name, "weight": 15})
-    finds = [entry(("empty", FIND_EMPTY, 1, 1), kind)] + [entry(s, kind) for s in FINDS[style][name]]
+    return {"type": "minecraft:chest", "pools": [{"rolls": rolls(low, high, kind), "entries": entries}]}
+
+
+def find_table(style, name, kind):
+    everyday = {"type": "minecraft:loot_table", "name" if kind == "1.20.1" else "value":
+                "cityworld:chests/%s/%s" % (style, name)}
     return {"type": "minecraft:chest",
-            "pools": [{"rolls": rolls(low, high, kind), "entries": entries},
-                      {"rolls": 1, "entries": finds}]}
+            "pools": [{"rolls": 1, "entries": [everyday]},
+                      {"rolls": 1, "entries": [entry(s, kind) for s in FINDS[style][name]]}]}
 
 
 def main():
@@ -153,11 +159,11 @@ def main():
     for style in EVERYDAY:
         os.makedirs(os.path.join(base, style), exist_ok=True)
         for name in EVERYDAY[style]:
-            assert sum(s[1] for s in FINDS[style][name]) == 200 - FIND_EMPTY, (style, name)
-            with open(os.path.join(base, style, name + ".json"), "w", encoding="utf-8") as fh:
-                json.dump(table(style, name, kind), fh, indent=2)
-                fh.write("\n")
-            count += 1
+            for file, body in ((name, table(style, name, kind)), (name + "_find", find_table(style, name, kind))):
+                with open(os.path.join(base, style, file + ".json"), "w", encoding="utf-8") as fh:
+                    json.dump(body, fh, indent=2)
+                    fh.write("\n")
+                count += 1
     print("wrote %d style tables in the %s dialect to %s" % (count, kind, base))
 
 
