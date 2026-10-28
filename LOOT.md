@@ -13,8 +13,9 @@ what they hold, and lists every table.
 
 > **On the "junk".** The everyday tables are deliberately ordinary. Most places in a city are homes, offices and
 > shops, and a drawer in an office holds paper, candles, a clock or some bread. Since 6.10.0, Modern and
-> Apocalypse worlds have their own everyday tables (see below), and about one container in twelve also holds
-> something worth having: an emerald, a diamond, an enchanted book. Classic worlds keep the original CityWorld's.
+> Apocalypse worlds have their own everyday tables (see below), and about one container in thirteen also holds
+> something worth having: an emerald, a diamond, an enchanted book. How often is the world setting
+> `treasures.oddsOfFinds` ("Finds in drawers" in Customize). Classic worlds keep the original CityWorld's.
 > The good stuff is in the places you go looking for it: the Apocalypse vault (better the deeper you go, best on
 > the bottom floor), bunkers, mines, the hospital and the radio tower hut. Shops and mall stores hold their trade's
 > stock (a butcher has meat, a bookshop has books). If your pack wants richer cities, the `_extra` hooks below are
@@ -101,9 +102,10 @@ All ids are `cityworld:chests/<name>`. "Hook" is whether `<name>_extra` exists f
 `building`, `nightstand` and `food` come in three versions. A **Modern** world (and an Apocalypse world's pristine
 `/cityworld` twin) rolls `chests/modern/<name>`: an office's paper, books and candles, a kitchen's bread and
 fruit. A ruined **Apocalypse** world rolls `chests/apocalypse/<name>`: scrap, string, bone, arrows, spoiled food.
-Every other style rolls the shared `chests/<name>`, the original CityWorld's. Each version has a second pool, one
-roll that is nearly always nothing and about one time in twelve a find, and all three end in the same
-`<name>_extra` hook.
+Every other style rolls the shared `chests/<name>`, the original CityWorld's. A share of the Modern and Apocalypse
+containers, set by `treasures.oddsOfFinds` (default 1 in 13), roll `chests/<style>/<name>_find` instead: the same
+table plus one find (an emerald, iron, a diamond, an enchanted book...). All of them end in the same `<name>_extra`
+hook. The vault's mess-hall store is the Modern `food` table in every world: the vault kept its seals.
 
 | Table | Where | Hook |
 |---|---|---|

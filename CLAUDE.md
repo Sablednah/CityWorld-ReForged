@@ -34,6 +34,12 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 - **The owner should paste `CURSEFORGE.md` into the CurseForge page** (6.8.0, 6.7.0, 6.6.0 headlines; 6.8.2 and 6.8.1
   head "Other recent changes").
 - **The owner posts the C2ME reply** to the same player (6.8.2 fixes the End with C2ME).
+- **TODO (owner, 2026-10-27): make (almost) every constant a setting.** *"Any time we pick a number - any constant
+  - should be configurable - we're just picking the default ... only where it would break or be unworkable we keep
+  things fixed."* A standing to-do, not started: sweep the gameplay constants (odds, rates, counts, sizes, depths,
+  heights) into world settings with today's value as the default, a CURSEFORGE-CONFIGURATION.md row each, and a
+  Customize widget whose picker contains the default. Mind the 16-field codec cap (new groups, not squeezed ones).
+  The first one is `treasures.oddsOfFinds` (6.10.0). New features add their numbers as settings from the start.
 - **6.9.0 confirmed on the full ZARP pack** (ZARP session, 2026-10-26: seed 20261025, apocalypse, C2ME on): the vault
   swaps are gone, ~20 man-made blocks differ (single contested cells), 900 chunks in ~27 s with C2ME. The owner moves
   ZARP to 6.9.0 through the app.

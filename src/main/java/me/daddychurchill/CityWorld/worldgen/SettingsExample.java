@@ -314,6 +314,8 @@ public final class SettingsExample {
             oddsOfTreasureInSewers    0.5    Chance a given sewer spot gets a chest.
             oddsOfTreasureInBuildings 0.5    Chance a given building spot gets a chest.
             oddsOfAlcoveInMines       0.5    Chance a mine tunnel opens into a side alcove.
+            oddsOfFinds               0.077  Chance an everyday container (building, nightstand, kitchen) in a
+                                             MODERN or APOCALYPSE world also holds a find (1 in 13).
 
             ============================================================================
             world  — trees, ground cover, floating subsurface, ruralness

@@ -52,7 +52,8 @@
     "oddsOfTreasureInBunkers": 0.5,
     "oddsOfTreasureInSewers": 0.5,
     "oddsOfTreasureInBuildings": 0.5,
-    "oddsOfAlcoveInMines": 0.5
+    "oddsOfAlcoveInMines": 0.5,
+    "oddsOfFinds": 0.07692307692307693
   },
   "world": {
     "treeStyle": "NORMAL",

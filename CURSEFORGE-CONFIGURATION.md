@@ -401,6 +401,7 @@ lists. Cities keep clear of whatever is placed.
 | `treasuresInBuildings` | `true` | Loot chests in buildings. |
 | `oddsOfTreasureInMines/Bunkers/Sewers/Buildings` | `0.5` | Chance a given spot gets a chest. |
 | `oddsOfAlcoveInMines` | `0.5` | Chance a mine tunnel opens into a side alcove. |
+| `oddsOfFinds` | `0.077` (1 in 13) | **Finds in drawers**: the chance an everyday container (a building's closet or furniture, a nightstand, a kitchen store) in a Modern or Apocalypse world also holds something worth having: an emerald, a diamond, an enchanted book. `0` for none, `1` for every one. See [Loot Tables](Loot-Tables). |
 
 These control CityWorld's dedicated loot chests (closets, storerooms and kitchenettes in buildings, and the
 treasure chests underground). What any container holds, and how a modpack adds its own items, is on
