@@ -57,7 +57,8 @@ public final class LootProvider_LootTable extends LootProvider {
         if (!(entity instanceof RandomizableContainer container))
             return;
 
-        container.setLootTable(keyFor(generator, lootLocation, tier), odds.getRandomLong());
+        long seed = odds.getRandomLong();
+        container.setLootTable(keyFor(generator, lootLocation, tier, seed), seed);
     }
 
     /** The everyday tables a MODERN or ruined APOCALYPSE world rolls in its own version (see {@link #keyFor(CityWorldGenerator, LootLocation, int)}). */
@@ -67,18 +68,27 @@ public final class LootProvider_LootTable extends LootProvider {
     /**
      * As {@link #keyFor(LootLocation, int)}, in this world's style: a MODERN world (and an APOCALYPSE world's pristine
      * twin) rolls {@code chests/modern/<name>} for the everyday tables, a ruined APOCALYPSE world
-     * {@code chests/apocalypse/<name>}. Every other style, and every other table, is the shared one, which is
-     * upstream's (every item at one weight). The style tables end in the shared {@code <name>_extra} hook, so a pack
-     * filling it reaches every style; written by {@code scripts/gen_style_loot.py}.
+     * {@code chests/apocalypse/<name>}, and one container in {@code 1 / oddsOfFinds} (decided here, from the
+     * container's own loot {@code seed}: a loot table cannot read a world setting) the {@code <name>_find} version,
+     * which adds a find. Every other style, and every other table, is the shared one, upstream's. The style tables end
+     * in the shared {@code <name>_extra} hook, so a pack filling it reaches every style; written by
+     * {@code scripts/gen_style_loot.py}.
      */
-    public static ResourceKey<LootTable> keyFor(CityWorldGenerator generator, LootLocation lootLocation, int tier) {
+    public static ResourceKey<LootTable> keyFor(CityWorldGenerator generator, LootLocation lootLocation, int tier,
+            long seed) {
         if (tier == 0 && generator != null && STYLED.contains(lootLocation)) {
             String style = generator.isApocalypseStyle() ? "apocalypse" : generator.isModernStyle() ? "modern" : null;
             if (style != null)
-                return ResourceKey.create(Registries.LOOT_TABLE, Identifier.fromNamespaceAndPath("cityworld",
-                        "chests/" + style + "/" + lootLocation.name().toLowerCase(Locale.ROOT)));
+                return styled(style, lootLocation, seed, generator.getSettings().oddsOfFinds);
         }
         return keyFor(lootLocation, tier);
+    }
+
+    /** {@code chests/<style>/<name>}, or its {@code _find} version for one container in {@code 1 / findOdds}. */
+    public static ResourceKey<LootTable> styled(String style, LootLocation lootLocation, long seed, double findOdds) {
+        boolean find = new java.util.Random(seed ^ 0x46494E44L).nextDouble() < findOdds; // "FIND"
+        return ResourceKey.create(Registries.LOOT_TABLE, Identifier.fromNamespaceAndPath("cityworld",
+                "chests/" + style + "/" + lootLocation.name().toLowerCase(Locale.ROOT) + (find ? "_find" : "")));
     }
 
     /** The table a location names: {@code cityworld:chests/<lowercase name>}. */
