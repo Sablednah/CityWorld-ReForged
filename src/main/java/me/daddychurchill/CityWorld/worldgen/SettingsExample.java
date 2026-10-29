@@ -287,6 +287,11 @@ public final class SettingsExample {
                                L, T, U, Z or cross, up to eight chunks each way), dozens of named
                                shops each with its own loot table (chests/mall_<kind>), car parks
                                out to the road. Announced as the landmark kind "mall".
+            oddsOfAtmInCivic  0.333  Chance each ground-floor chunk of a city hall or courthouse has a cash
+                                     machine against an inside wall, from #cityworld:fittings/atm (a mod's:
+                                     Modernlife's ATM is listed). None of these without such a mod.
+            oddsOfAtmInShops  0.125  The same, per ground-floor chunk of a shop.
+            oddsOfAtmInMalls  0.2    The same, per chunk of a shopping mall's ground floor.
 
             ============================================================================
             spawns  — who turns up, and how often   (odds 0.0 .. 1.0)

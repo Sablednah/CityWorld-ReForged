@@ -85,6 +85,9 @@ public class MallLot extends IsolatedLot {
     protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
             DataContext context, int platX, int platZ) {
         mall.draw(generator, chunk, chunkOdds);
+        // now and then a cash machine against a ground-floor wall, when a mod supplies one (Support/Atms)
+        me.daddychurchill.CityWorld.Support.Atms.place(generator, chunk, chunkOdds,
+                generator.getSettings().oddsOfAtmInMalls, mall.floorY(0) + 1, (x, z) -> false); // floorY is the tiles
         if (origin)
             generator.reportLocation("mall", mall.name, chunk, 1, 1);
         if (buildingsDecay(generator))
