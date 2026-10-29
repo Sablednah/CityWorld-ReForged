@@ -14,13 +14,17 @@ import net.minecraft.world.level.storage.ServerLevelData;
 /**
  * Room for Modernlife's bank (CurseForge 1623799, 1.20.1). Modernlife does not generate the bank as a structure: when
  * a new player picks an economy difficulty, it pastes {@code modernlife:bank} (29 x 19 x 25) on the first flat land it
- * finds within 32 blocks of them, ten blocks back from that spot, with full block updates, over whatever is there. In a
- * CityWorld world that was a shop, its item frames and their weapons dropping to the floor (owner, 2026-10-29).
+ * finds near them, with full block updates, over whatever is there. In a CityWorld world that was a shop, its item
+ * frames and their weapons dropping to the floor (owner, 2026-10-29).
  *
- * <p>So on a new world with Modernlife installed, the spawn goes in the middle of an open, level plaza
- * ({@link CityWorldAPI#reserveSite}) at street level round chunk 0,0, {@code shops.bankPlazaRadius} chunks out; the
- * player arrives on it, and the bank's flat-land search succeeds on the spot. Recognised by its ATM block, not only its
- * mod id: Modern Life (with a space) uses the same id {@code modernlife} and builds no bank.
+ * <p>So on a new world with Modernlife installed, the spawn goes on a paved town square
+ * ({@link CityWorldAPI#reservePlaza}) at street level round chunk 0,0, {@code shops.bankPlazaRadius} chunks out, and
+ * the bank lands on the square. Where exactly is Modernlife's arithmetic, read from its jar (2026-10-29): it tries the
+ * offsets (+8, +8) first and on flat land that passes at once, then builds ten blocks back from there, so the bank's
+ * corner is the player's position minus two; vanilla scatters a new player up to ten blocks from the spawn. The
+ * bank therefore covers spawn x - 12 .. x + 36, z - 12 .. z + 32, and a spawn at (-4, -2) puts that inside a one-chunk
+ * square's -16 .. 31 (one block over at the very edge, into a ring at the same height). Recognised by its ATM block,
+ * not only its mod id: Modern Life (with a space) uses the same id {@code modernlife} and builds no bank.
  */
 public final class ModernlifeBank {
 
@@ -38,13 +42,14 @@ public final class ModernlifeBank {
         if (radius <= 0)
             return false;
         int y = context.streetLevel;
-        var result = CityWorldAPI.reserveSite(level, new ChunkPos(0, 0), radius, y);
+        var result = CityWorldAPI.reservePlaza(level, new ChunkPos(0, 0), radius, y);
         if (result != me.daddychurchill.CityWorld.api.SiteResult.RESERVED) {
-            CityWorldMod.LOGGER.info("CityWorld: no plaza for Modernlife's bank at spawn ({})", result);
+            CityWorldMod.LOGGER.info("CityWorld: no square for Modernlife's bank at spawn ({})", result);
             return false;
         }
-        settings.setSpawn(new BlockPos(8, Math.max(y, context.seaLevel + 1) + 1, 8), 0.0f);
-        CityWorldMod.LOGGER.info("CityWorld: an open plaza round the spawn ({} chunks) for Modernlife's bank", radius);
+        int ground = Math.max(y, context.seaLevel + 1);
+        settings.setSpawn(new BlockPos(-4, ground + 1, -2), 0.0f); // see the class note for the -4, -2
+        CityWorldMod.LOGGER.info("CityWorld: a paved square round the spawn ({} chunks) for Modernlife's bank", radius);
         return true;
     }
 }

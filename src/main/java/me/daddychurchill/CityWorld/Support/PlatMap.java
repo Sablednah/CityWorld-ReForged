@@ -324,7 +324,7 @@ public class PlatMap {
 	// while the buildings politely stepped around it.
 	public void paveLot(int x, int z, boolean roundaboutPart) {
 		if (generator.getSettings().inRoadRange(originX + x, originZ + z)
-				&& !generator.isStructureReserved(originX + x, originZ + z)
+				&& !generator.isReservedFromRoads(originX + x, originZ + z)
 				&& (platLots[x][z] == null || roundaboutPart || platLots[x][z].style != LotStyle.ROAD)) {
 
 			// remember the old one

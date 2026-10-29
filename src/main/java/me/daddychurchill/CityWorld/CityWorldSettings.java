@@ -186,7 +186,7 @@ public class CityWorldSettings {
     public double oddsOfAtmInCivic = Odds.oddsSomewhatLikely;
     public double oddsOfAtmInShops = Odds.oddsUnlikely;
     public double oddsOfAtmInMalls = Odds.oddsSomewhatUnlikely;
-    public int bankPlazaRadius = 2;
+    public int bankPlazaRadius = 1;
 
     /**
      * The subway: a station lot in every urban platmap and twin-track tunnels to the first station each

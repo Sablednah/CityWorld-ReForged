@@ -434,7 +434,7 @@ public record CityWorldSettingsData(
             double oddsOfAtmInMalls, int bankPlazaRadius) {
 
         public static final Shops DEFAULT = new Shops(false, true, Odds.oddsSomewhatLikely, Odds.oddsUnlikely,
-                Odds.oddsSomewhatUnlikely, 2);
+                Odds.oddsSomewhatUnlikely, 1);
 
         public static final Codec<Shops> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Shops::enabled),
@@ -444,9 +444,10 @@ public record CityWorldSettingsData(
                 Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfAtmInCivic", Odds.oddsSomewhatLikely).forGetter(Shops::oddsOfAtmInCivic),
                 Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfAtmInShops", Odds.oddsUnlikely).forGetter(Shops::oddsOfAtmInShops),
                 Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfAtmInMalls", Odds.oddsSomewhatUnlikely).forGetter(Shops::oddsOfAtmInMalls),
-                // with Modernlife: an open plaza this many chunks round the world spawn for the bank it builds next to
-                // a new player (Support/ModernlifeBank); 0 = none
-                Codec.intRange(0, 8).optionalFieldOf("bankPlazaRadius", 2).forGetter(Shops::bankPlazaRadius)
+                // with Modernlife: a paved square this many chunks round the world spawn for the bank it builds next to
+                // a new player (Support/ModernlifeBank); 1 is 48 blocks, which its 29x25 bank fits with the spawn
+                // scatter; 0 = none
+                Codec.intRange(0, 8).optionalFieldOf("bankPlazaRadius", 1).forGetter(Shops::bankPlazaRadius)
         ).apply(i, Shops::new));
     }
 

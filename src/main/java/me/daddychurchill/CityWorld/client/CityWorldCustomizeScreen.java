@@ -99,7 +99,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private Chance ruralnessLevel;
     private int maxBuildingFloors;
     private int bankPlazaRadius;
-    /** Chunks round the spawn; must hold the default (2), or the picker would save its nearest rung instead. */
+    /** Chunks round the spawn; must hold the default (1), or the picker would save its nearest rung instead. */
     private static final Integer[] PLAZA_CHOICES = { 0, 1, 2, 3, 4 };
     private boolean broadcastSpecialPlaces;
     private java.util.List<String> announcedLandmarks; // server-owner config: carried through, no widget
