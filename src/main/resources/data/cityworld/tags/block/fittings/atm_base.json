@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:smooth_stone",
+    "minecraft:polished_andesite",
+    "minecraft:light_gray_concrete",
+    "minecraft:gray_concrete"
+  ]
+}

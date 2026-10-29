@@ -154,6 +154,8 @@ public final class MaterialTags {
     /** Cash machines, set against an inside wall on the ground floor of a city hall or courthouse, screen to the
      *  room, at the odds {@code shops.oddsOfAtmInCivic} (Modernlife's ATM ships in it, optional). Empty = none. */
     public static final TagKey<Block> FITTINGS_ATM = key("cityworld:fittings/atm");
+    /** What an ATM stands on (its model is a counter-top height); shipped with vanilla stone, smooth stone if emptied. */
+    public static final TagKey<Block> FITTINGS_ATM_BASE = key("cityworld:fittings/atm_base");
     /** Ceiling-hung signs a shop may use instead of the oak hanging sign (Farmer's Delight's canvas signs,
      *  one per dye). The sign on the wall outside is the same block's wall form, found by name
      *  ({@code red_hanging_canvas_sign} → {@code red_wall_hanging_canvas_sign}). Ships empty. */
