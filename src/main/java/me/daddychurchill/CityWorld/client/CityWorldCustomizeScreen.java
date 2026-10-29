@@ -98,6 +98,9 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private SubSurfaceStyle subSurfaceStyle;
     private Chance ruralnessLevel;
     private int maxBuildingFloors;
+    private int bankPlazaRadius;
+    /** Chunks round the spawn; must hold the default (2), or the picker would save its nearest rung instead. */
+    private static final Integer[] PLAZA_CHOICES = { 0, 1, 2, 3, 4 };
     private boolean broadcastSpecialPlaces;
     private java.util.List<String> announcedLandmarks; // server-owner config: carried through, no widget
     /** Shown only when TerraBlender is installed; otherwise carried through untouched. */
@@ -195,6 +198,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         oddsOfAtmInCivic = Chance.nearest(data.shops().oddsOfAtmInCivic());
         oddsOfAtmInShops = Chance.nearest(data.shops().oddsOfAtmInShops());
         oddsOfAtmInMalls = Chance.nearest(data.shops().oddsOfAtmInMalls());
+        bankPlazaRadius = data.shops().bankPlazaRadius();
         includeSubways = data.subways().enabled();
         spawnersInSubways = data.subways().spawners();
         CityWorldSettingsData.Decay dk = data.decay();
@@ -368,6 +372,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, chance("ATMs: civic", oddsOfAtmInCivic, v -> oddsOfAtmInCivic = v));
         pair(row, chance("ATMs: shops", oddsOfAtmInShops, v -> oddsOfAtmInShops = v));
         pair(row, chance("ATMs: malls", oddsOfAtmInMalls, v -> oddsOfAtmInMalls = v));
+        pair(row, cycle("Bank plaza (Modernlife)", PLAZA_CHOICES, bankPlazaRadius,
+                v -> Component.literal(v == 0 ? "Off" : v + " chunks"), v -> bankPlazaRadius = v));
         flush(row);
 
         header(Component.literal("Terrain"));
@@ -585,7 +591,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops, includeMalls, oddsOfAtmInCivic.value,
-                oddsOfAtmInShops.value, oddsOfAtmInMalls.value);
+                oddsOfAtmInShops.value, oddsOfAtmInMalls.value, bankPlazaRadius);
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);

@@ -292,6 +292,9 @@ public final class SettingsExample {
                                      Modernlife's ATM is listed). None of these without such a mod.
             oddsOfAtmInShops  0.125  The same, per ground-floor chunk of a shop.
             oddsOfAtmInMalls  0.2    The same, per chunk of a shopping mall's ground floor.
+            bankPlazaRadius   2      With Modernlife installed: an open, level plaza this many chunks round the
+                                     world spawn, where Modernlife builds its bank next to a new player (it
+                                     otherwise stamps the bank over whatever the city put there). 0 = none.
 
             ============================================================================
             spawns  — who turns up, and how often   (odds 0.0 .. 1.0)

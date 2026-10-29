@@ -51,6 +51,14 @@ public final class CityWorldServerEvents {
 
     /** Bind any reserved sites (CityWorldAPI.reserveSite) and the zoo catalog to a level as it loads, before it
      *  plans a chunk. */
+    /** A new world's spawn: with Modernlife, an open plaza there for its bank (Support/ModernlifeBank). */
+    @SubscribeEvent
+    public static void onCreateSpawn(net.minecraftforge.event.level.LevelEvent.CreateSpawnPosition event) {
+        if (event.getLevel() instanceof net.minecraft.server.level.ServerLevel level
+                && me.daddychurchill.CityWorld.Support.ModernlifeBank.reservePlaza(level, event.getSettings()))
+            event.setCanceled(true);
+    }
+
     @SubscribeEvent
     public static void onLevelLoad(net.minecraftforge.event.level.LevelEvent.Load event) {
         if (event.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {

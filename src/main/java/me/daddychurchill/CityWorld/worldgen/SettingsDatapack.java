@@ -113,6 +113,7 @@ public final class SettingsDatapack {
         shopsJson.addProperty("oddsOfAtmInCivic", shops.oddsOfAtmInCivic());
         shopsJson.addProperty("oddsOfAtmInShops", shops.oddsOfAtmInShops());
         shopsJson.addProperty("oddsOfAtmInMalls", shops.oddsOfAtmInMalls());
+        shopsJson.addProperty("bankPlazaRadius", shops.bankPlazaRadius());
         root.add("shops", shopsJson);
 
         CityWorldSettingsData.Decay dk = d.decay();
