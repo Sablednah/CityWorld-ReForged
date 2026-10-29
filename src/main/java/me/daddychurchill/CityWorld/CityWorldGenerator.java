@@ -189,6 +189,24 @@ public class CityWorldGenerator {
      */
     public volatile me.daddychurchill.CityWorld.worldgen.ReservedSites reservedSites;
 
+    /**
+     * As {@link #isStructureReserved}, for a road: a PAVED site's blend ring lets the city's roads reach the square
+     * (its ground is the street's), where a bare site's ring, like a structure's, keeps them out.
+     */
+    public boolean isReservedFromRoads(int chunkX, int chunkZ) {
+        me.daddychurchill.CityWorld.worldgen.ReservedSites sites = reservedSites;
+        if (sites != null && sites.isReservedFromRoads(chunkX, chunkZ))
+            return true;
+        me.daddychurchill.CityWorld.worldgen.StructureReservations local = structureReservations;
+        return local != null && local.isReserved(chunkX, chunkZ);
+    }
+
+    /** The paved site whose core holds this chunk (a town square, {@code Plats/PlazaLot}), or null. */
+    public me.daddychurchill.CityWorld.worldgen.ReservedSites.Site pavedSiteAt(int chunkX, int chunkZ) {
+        me.daddychurchill.CityWorld.worldgen.ReservedSites sites = reservedSites;
+        return sites == null ? null : sites.pavedCoreAt(chunkX, chunkZ);
+    }
+
     /** True inside a reserved site's levelled core: no vanilla wild decoration, no swamp pools. */
     public boolean isSiteCore(int chunkX, int chunkZ) {
         me.daddychurchill.CityWorld.worldgen.ReservedSites sites = reservedSites;
