@@ -434,7 +434,7 @@ public record CityWorldSettingsData(
             double oddsOfAtmInMalls, int bankPlazaRadius) {
 
         public static final Shops DEFAULT = new Shops(false, true, Odds.oddsSomewhatLikely, Odds.oddsUnlikely,
-                Odds.oddsSomewhatUnlikely, 1);
+                Odds.oddsSomewhatUnlikely, 2);
 
         public static final Codec<Shops> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Shops::enabled),
@@ -445,9 +445,11 @@ public record CityWorldSettingsData(
                 Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfAtmInShops", Odds.oddsUnlikely).forGetter(Shops::oddsOfAtmInShops),
                 Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfAtmInMalls", Odds.oddsSomewhatUnlikely).forGetter(Shops::oddsOfAtmInMalls),
                 // with Modernlife: a paved square this many chunks round the world spawn for the bank it builds next to
-                // a new player (Support/ModernlifeBank); 1 is 48 blocks, which its 29x25 bank fits with the spawn
-                // scatter; 0 = none
-                Codec.intRange(0, 8).optionalFieldOf("bankPlazaRadius", 1).forGetter(Shops::bankPlazaRadius)
+                // a new player (Support/ModernlifeBank). 2 (80 blocks) is the smallest at which Modernlife's own
+                // flat-land check passes first time: it samples the heights at the four corners of a 29x25 footprint
+                // from the player's position, and with the spawn scatter those reach 43 blocks out; at 1 they fell
+                // on the street lamps of the road in the ring and the bank walked 24 blocks south (2026-10-29). 0 = none
+                Codec.intRange(0, 8).optionalFieldOf("bankPlazaRadius", 2).forGetter(Shops::bankPlazaRadius)
         ).apply(i, Shops::new));
     }
 

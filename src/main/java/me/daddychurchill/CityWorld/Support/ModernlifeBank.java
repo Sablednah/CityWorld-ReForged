@@ -22,8 +22,12 @@ import net.minecraft.world.level.storage.ServerLevelData;
  * the bank lands on the square. Where exactly is Modernlife's arithmetic, read from its jar (2026-10-29): it tries the
  * offsets (+8, +8) first and on flat land that passes at once, then builds ten blocks back from there, so the bank's
  * corner is the player's position minus two; vanilla scatters a new player up to ten blocks from the spawn. The
- * bank therefore covers spawn x - 12 .. x + 36, z - 12 .. z + 32, and a spawn at (-4, -2) puts that inside a one-chunk
- * square's -16 .. 31 (one block over at the very edge, into a ring at the same height). Recognised by its ATM block,
+ * bank therefore covers spawn x - 12 .. x + 36, z - 12 .. z + 32, centred on a spawn at (-4, -2). The flat-land check
+ * samples the heights at the four corners of the 29 x 25 it is about to try, (+8, +8) from the player and 29 further,
+ * so those reach 43 blocks out: the square has to be two chunks out (80 blocks) for them all to land on it. At one
+ * chunk a corner fell on the road beside the square, whose street lamps are four high, and Modernlife stepped on
+ * in eights until the check passed, 24 blocks south, with a third of the bank on the beach (2026-10-29). Recognised
+ * by its ATM block,
  * not only its mod id: Modern Life (with a space) uses the same id {@code modernlife} and builds no bank.
  */
 public final class ModernlifeBank {
