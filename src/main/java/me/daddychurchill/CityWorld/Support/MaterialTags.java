@@ -151,6 +151,9 @@ public final class MaterialTags {
     /** Stair-shaped sloped roof blocks (Macaw's {@code *_roof}); the house roof pass matches one to the
      *  roof material by name, else picks at random, else uses the vanilla stairs of that material. */
     public static final TagKey<Block> FITTINGS_ROOF = key("cityworld:fittings/roof");
+    /** Cash machines, set against an inside wall on the ground floor of a city hall or courthouse, screen to the
+     *  room, at the odds {@code shops.oddsOfAtmInCivic} (Modernlife's ATM ships in it, optional). Empty = none. */
+    public static final TagKey<Block> FITTINGS_ATM = key("cityworld:fittings/atm");
     /** Ceiling-hung signs a shop may use instead of the oak hanging sign (Farmer's Delight's canvas signs,
      *  one per dye). The sign on the wall outside is the same block's wall form, found by name
      *  ({@code red_hanging_canvas_sign} → {@code red_wall_hanging_canvas_sign}). Ships empty. */
