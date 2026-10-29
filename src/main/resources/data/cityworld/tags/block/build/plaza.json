@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:smooth_stone",
+    "minecraft:polished_andesite",
+    "minecraft:polished_diorite",
+    "minecraft:stone_bricks",
+    "minecraft:light_gray_concrete",
+    "minecraft:cut_sandstone"
+  ]
+}
