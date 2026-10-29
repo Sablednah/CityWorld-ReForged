@@ -34,6 +34,21 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 - **The owner should paste `CURSEFORGE.md` into the CurseForge page** (6.8.0, 6.7.0, 6.6.0 headlines; 6.8.2 and 6.8.1
   head "Other recent changes").
 - **The owner posts the C2ME reply** to the same player (6.8.2 fixes the End with C2ME).
+- **6.10.0 is built on every line, release in progress (2026-10-29/30).** Four things: (1) **Modern/Apocalypse everyday
+  loot** — `chests/modern|apocalypse/{building,nightstand,food}` + `_find` twins, chosen at placement by
+  `treasures.oddsOfFinds` (1/13, "Finds in drawers"; `LootProvider_LootTable.keyFor(generator, loc, tier, seed)`),
+  written per loot dialect by `scripts/gen_style_loot.py` (RUN IT in each checkout after a change; 26.3 differs); the
+  vault mess hall takes `modern/food` everywhere. Owner: "loot is looking good". (2) **ATMs** — `Support/Atms` from
+  `#cityworld:fittings/atm` (+ `atm_base`) in civic/shop/mall at `shops.oddsOfAtmIn*`; the rules (base block, indoors,
+  3-high wall) came from the owner's 1.20.1 look with Modernlife. (3) **Paved reserved sites** —
+  `CityWorldAPI.reservePlaza`, `Plats/PlazaLot`, `Site.margin/paved`, roads cross a paved ring
+  (`isReservedFromRoads`); self-test `api.reservePlaza`. (4) **1.20.1 only:** `Support/ModernlifeBank` reserves an
+  80-block square at spawn (`shops.bankPlazaRadius` 2) on `LevelEvent.CreateSpawnPosition` when `modernlife:atm`
+  exists; Modernlife's bank lands two blocks from the player, so the square must hold its flat-land check's corners
+  (43 blocks out) — radius 1 put a corner on a road's lamp post and the bank walked 24 blocks (overhead shots).
+  **Modernlife (no space, CF 1623799, 1.20.1 Forge, needs Architectury + Automobility) ≠ Modern Life (space,
+  Modrinth `modern-life`, furniture, owner's to-do); both are mod id `modernlife`.** The owner's `1.20.1  Forge`
+  instance carries `modernlife-1.1.1-forge.jar` and `automobility-0.4.2+1.20.1-forge.jar` for this test.
 - **TODO (owner, 2026-10-27): make (almost) every constant a setting.** *"Any time we pick a number - any constant
   - should be configurable - we're just picking the default ... only where it would break or be unworkable we keep
   things fixed."* A standing to-do, not started: sweep the gameplay constants (odds, rates, counts, sizes, depths,
