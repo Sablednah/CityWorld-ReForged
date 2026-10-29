@@ -90,7 +90,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private boolean treasuresInMines, spawnersInMines, treasuresInBunkers, spawnersInBunkers, treasuresInSewers,
             spawnersInSewers, treasuresInBuildings;
     private Chance oddsOfTreasureInMines, oddsOfTreasureInBunkers, oddsOfTreasureInSewers,
-            oddsOfTreasureInBuildings, oddsOfAlcoveInMines, oddsOfFinds;
+            oddsOfTreasureInBuildings, oddsOfAlcoveInMines, oddsOfFinds, oddsOfAtmInCivic, oddsOfAtmInShops,
+            oddsOfAtmInMalls;
     // world
     private TreeStyle treeStyle;
     private Chance spawnTrees;
@@ -191,6 +192,9 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         capVines = og.capVines();
         includeShops = data.shops().enabled();
         includeMalls = data.shops().malls();
+        oddsOfAtmInCivic = Chance.nearest(data.shops().oddsOfAtmInCivic());
+        oddsOfAtmInShops = Chance.nearest(data.shops().oddsOfAtmInShops());
+        oddsOfAtmInMalls = Chance.nearest(data.shops().oddsOfAtmInMalls());
         includeSubways = data.subways().enabled();
         spawnersInSubways = data.subways().spawners();
         CityWorldSettingsData.Decay dk = data.decay();
@@ -360,6 +364,10 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, onOff("Named roads", includeNamedRoads, v -> includeNamedRoads = v));
         pair(row, onOff("Subways", includeSubways, v -> includeSubways = v));
         pair(row, onOff("Malls", includeMalls, v -> includeMalls = v));
+        // cash machines, when a mod supplies #cityworld:fittings/atm (Modernlife)
+        pair(row, chance("ATMs: civic", oddsOfAtmInCivic, v -> oddsOfAtmInCivic = v));
+        pair(row, chance("ATMs: shops", oddsOfAtmInShops, v -> oddsOfAtmInShops = v));
+        pair(row, chance("ATMs: malls", oddsOfAtmInMalls, v -> oddsOfAtmInMalls = v));
         flush(row);
 
         this.list.addHeader(Component.literal("Terrain"));
@@ -487,7 +495,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 moddedBiomeShare);
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
-        CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops, includeMalls);
+        CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops, includeMalls, oddsOfAtmInCivic.value,
+                oddsOfAtmInShops.value, oddsOfAtmInMalls.value);
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);
