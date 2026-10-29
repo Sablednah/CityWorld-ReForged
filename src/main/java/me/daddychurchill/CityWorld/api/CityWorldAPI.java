@@ -347,6 +347,21 @@ public final class CityWorldAPI {
      * moves a vault entrance in the platmaps it touches is rolled back. Per level: a twin dimension plans its own.
      */
     public static SiteResult reserveSite(ServerLevel level, ChunkPos centre, int radiusChunks, int y) {
+        return reserve(level, centre, radiusChunks, y, ReservedSites.MARGIN, false);
+    }
+
+    /**
+     * As {@link #reserveSite}, paved: the core is a town square at {@code y} (paving, street lamps, benches and
+     * planters, {@code Plats/PlazaLot}) rather than bare ground, its blend ring is ONE chunk (a square sits at street
+     * level, so there is little to blend), and the city's roads may run through that ring up to the kerb. For a mod
+     * that builds something civic beside the spawn: Modernlife's bank ({@code Support/ModernlifeBank}).
+     */
+    public static SiteResult reservePlaza(ServerLevel level, ChunkPos centre, int radiusChunks, int y) {
+        return reserve(level, centre, radiusChunks, y, 1, true);
+    }
+
+    private static SiteResult reserve(ServerLevel level, ChunkPos centre, int radiusChunks, int y, int margin,
+            boolean paved) {
         CityWorldGenerator context = contextFor(level);
         ReservedSites sites = context == null ? null : ReservedSites.bind(level);
         if (sites == null)
@@ -354,8 +369,8 @@ public final class CityWorldAPI {
         if (radiusChunks < 0 || radiusChunks > MAX_SITE_RADIUS || y < level.getMinY() || y >= level.getMaxY())
             return SiteResult.INVALID;
         ReservedSites.Site site = new ReservedSites.Site(centre.x(), centre.z(), radiusChunks,
-                Math.max(y, context.seaLevel + 1));
-        int reach = radiusChunks + ReservedSites.MARGIN;
+                Math.max(y, context.seaLevel + 1), margin, paved);
+        int reach = radiusChunks + margin;
         try {
             for (int cx = centre.x() - reach; cx <= centre.x() + reach; cx++)
                 for (int cz = centre.z() - reach; cz <= centre.z() + reach; cz++) {

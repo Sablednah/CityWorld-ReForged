@@ -1496,7 +1496,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             me.daddychurchill.CityWorld.Support.AbstractCachedYs ys = lot == null ? null : lot.getCachedYs();
             if (ys == null || ys.isSiteLevelled())
                 return;
-            int maxTaper = ReservedSites.MARGIN * 16;
+            int maxTaper = site.margin() * 16;
             int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
             for (int x = 0; x < 16; x++)
                 for (int z = 0; z < 16; z++) {
