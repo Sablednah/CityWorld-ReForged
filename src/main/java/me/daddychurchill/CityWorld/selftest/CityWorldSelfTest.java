@@ -2485,6 +2485,26 @@ public final class CityWorldSelfTest {
         if (!Files.isRegularFile(server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
                 .resolve("data").resolve("cityworld_sites.json")))
             fail("a reserved site was not saved with the world");
+        // a PAVED site (6.10): its core a town square, its ring one chunk that keeps buildings out and lets roads in
+        ChunkPos square = new ChunkPos(3000, 3030);
+        var paved = me.daddychurchill.CityWorld.api.CityWorldAPI.reservePlaza(level, square, 1, y);
+        report.put("api.reservePlaza", paved.toString());
+        if (paved != me.daddychurchill.CityWorld.api.SiteResult.RESERVED)
+            fail("CityWorldAPI.reservePlaza at " + square + " answered " + paved);
+        else {
+            if (!(plan.getPlatMap(square.x(), square.z()).getMapLot(square.x(), square.z())
+                    instanceof me.daddychurchill.CityWorld.Plats.PlazaLot))
+                fail("a paved site's core is not a PlazaLot");
+            if (!plan.isStructureReserved(square.x() + 2, square.z()) || plan.isStructureReserved(square.x() + 3, square.z())
+                    || plan.isReservedFromRoads(square.x() + 2, square.z()) || !plan.isReservedFromRoads(square.x() + 1, square.z()))
+                fail("a paved site's one-chunk ring should keep buildings out and let roads through");
+            LevelChunk sq = server.submit(() -> level.getChunk(square.x(), square.z())).join();
+            var top = sq.getBlockState(new BlockPos(square.getMinBlockX() + 8, y, square.getMinBlockZ() + 8));
+            if (top.isAir() || top.is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)
+                    || top.is(net.minecraft.world.level.block.Blocks.DIRT))
+                fail("a paved site's core is not paved at its level: " + top);
+            report.put("api.reservePlaza.paving", top.getBlock().toString());
+        }
         int flat = 0, total = 0, cluttered = 0;
         Map<Integer, Integer> off = new TreeMap<>();
         for (int cx = centre.x() - 1; cx <= centre.x() + 1; cx++)

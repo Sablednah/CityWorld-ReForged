@@ -34,17 +34,26 @@ import me.daddychurchill.CityWorld.CityWorldMod;
  */
 public final class ReservedSites {
 
-    /** Chunks of blend ring around a site's core, reserved with it. */
+    /** Chunks of blend ring around a bare site's core, reserved with it (a paved site's is one: {@link Site#margin}). */
     public static final int MARGIN = 2;
 
-    /** The core square: chunks within {@code radius} (Chebyshev) of the centre, levelled so {@code y} is its top solid block. */
-    public record Site(int centreX, int centreZ, int radius, int y) {
+    /**
+     * The core square: chunks within {@code radius} (Chebyshev) of the centre, levelled so {@code y} is its top solid
+     * block. {@code margin} chunks of blend ring round it are reserved too; a {@code paved} site's core is a town
+     * square ({@code Plats/PlazaLot}) and the city's roads may cross its ring.
+     */
+    public record Site(int centreX, int centreZ, int radius, int y, int margin, boolean paved) {
+        /** A bare site, as every site was before 6.10: the standard ring, open ground. */
+        public Site(int centreX, int centreZ, int radius, int y) {
+            this(centreX, centreZ, radius, y, MARGIN, false);
+        }
+
         public boolean inCore(int chunkX, int chunkZ) {
             return Math.max(Math.abs(chunkX - centreX), Math.abs(chunkZ - centreZ)) <= radius;
         }
 
         public boolean inReservation(int chunkX, int chunkZ) {
-            return Math.max(Math.abs(chunkX - centreX), Math.abs(chunkZ - centreZ)) <= radius + MARGIN;
+            return Math.max(Math.abs(chunkX - centreX), Math.abs(chunkZ - centreZ)) <= radius + margin;
         }
 
         /** Block bounds of the core, inclusive. */
@@ -104,6 +113,22 @@ public final class ReservedSites {
         return false;
     }
 
+    /** Reserved against a ROAD: everything a site reserves, except a paved site's ring, which roads may cross. */
+    public boolean isReservedFromRoads(int chunkX, int chunkZ) {
+        for (Site site : sites)
+            if (site.inReservation(chunkX, chunkZ) && (!site.paved() || site.inCore(chunkX, chunkZ)))
+                return true;
+        return false;
+    }
+
+    /** The paved site whose core holds this chunk, or null. */
+    public Site pavedCoreAt(int chunkX, int chunkZ) {
+        for (Site site : sites)
+            if (site.paved() && site.inCore(chunkX, chunkZ))
+                return site;
+        return null;
+    }
+
     /** Add a site and write the file. Idempotent: the same site twice is kept once. */
     public synchronized void add(Site site) {
         if (!sites.contains(site))
@@ -159,8 +184,10 @@ public final class ReservedSites {
                     // versions levelled one block higher: read it as y + 1 so an existing world keeps the pad
                     // its generated chunks already have (the plan must not change under them).
                     int ground = o.has("ground") ? o.get("ground").getAsInt() : o.get("y").getAsInt() + 1;
+                    // a file from before 6.10 has neither "margin" nor "paved": a bare site with the standard ring
                     loaded.sites.add(new Site(o.get("x").getAsInt(), o.get("z").getAsInt(),
-                            o.get("radius").getAsInt(), ground));
+                            o.get("radius").getAsInt(), ground, o.has("margin") ? o.get("margin").getAsInt() : MARGIN,
+                            o.has("paved") && o.get("paved").getAsBoolean()));
                 }
             if (!loaded.sites.isEmpty())
                 CityWorldMod.LOGGER.info("CityWorld: {} reserved site(s) in {}: {}", loaded.sites.size(), dimension,
@@ -188,6 +215,8 @@ public final class ReservedSites {
                 o.addProperty("z", site.centreZ());
                 o.addProperty("radius", site.radius());
                 o.addProperty("ground", site.y());
+                o.addProperty("margin", site.margin());
+                o.addProperty("paved", site.paved());
                 list.add(o);
             }
             root.add(dimension, list);
