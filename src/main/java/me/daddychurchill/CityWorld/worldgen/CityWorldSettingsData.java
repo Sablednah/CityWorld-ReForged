@@ -430,13 +430,20 @@ public record CityWorldSettingsData(
      * {@code /cityinfo}) is always computed — this only governs the block placement. {@code malls}:
      * shopping malls at the edge of town (modern-family only; on by default, independent of the rest).
      */
-    public record Shops(boolean enabled, boolean malls) {
+    public record Shops(boolean enabled, boolean malls, double oddsOfAtmInCivic, double oddsOfAtmInShops,
+            double oddsOfAtmInMalls) {
 
-        public static final Shops DEFAULT = new Shops(false, true);
+        public static final Shops DEFAULT = new Shops(false, true, Odds.oddsSomewhatLikely, Odds.oddsUnlikely,
+                Odds.oddsSomewhatUnlikely);
 
         public static final Codec<Shops> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Shops::enabled),
-                Codec.BOOL.optionalFieldOf("malls", true).forGetter(Shops::malls)
+                Codec.BOOL.optionalFieldOf("malls", true).forGetter(Shops::malls),
+                // an ATM from #cityworld:fittings/atm (a mod's), per ground-floor chunk: of a city hall or courthouse,
+                // of a shop, of a mall (Support/Atms)
+                Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfAtmInCivic", Odds.oddsSomewhatLikely).forGetter(Shops::oddsOfAtmInCivic),
+                Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfAtmInShops", Odds.oddsUnlikely).forGetter(Shops::oddsOfAtmInShops),
+                Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfAtmInMalls", Odds.oddsSomewhatUnlikely).forGetter(Shops::oddsOfAtmInMalls)
         ).apply(i, Shops::new));
     }
 

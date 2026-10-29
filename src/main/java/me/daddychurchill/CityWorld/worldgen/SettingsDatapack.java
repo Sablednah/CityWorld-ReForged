@@ -108,6 +108,10 @@ public final class SettingsDatapack {
         CityWorldSettingsData.Shops shops = d.shops();
         JsonObject shopsJson = new JsonObject();
         shopsJson.addProperty("enabled", shops.enabled());
+        shopsJson.addProperty("malls", shops.malls()); // was never exported: /cityexport dropped a malls-off world's choice
+        shopsJson.addProperty("oddsOfAtmInCivic", shops.oddsOfAtmInCivic());
+        shopsJson.addProperty("oddsOfAtmInShops", shops.oddsOfAtmInShops());
+        shopsJson.addProperty("oddsOfAtmInMalls", shops.oddsOfAtmInMalls());
         root.add("shops", shopsJson);
 
         CityWorldSettingsData.Decay dk = d.decay();
