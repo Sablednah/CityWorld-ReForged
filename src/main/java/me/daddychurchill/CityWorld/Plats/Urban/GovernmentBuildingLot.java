@@ -181,6 +181,10 @@ public class GovernmentBuildingLot extends FinishedBuildingLot {
 			super.drawInteriorParts(generator, blocks, context, rooms, floor, floorAt + higher, floorHeight, insetNS,
 					insetWE, allowRounded, materialWall, materialGlass, stairLocation, materialStair, materialStairWall,
 					materialPlatform, drawStairWall, drawStairs, topFloor, singleFloor, heights);
+			// a cash machine in a city hall's or courthouse's ground floor, when a mod supplies one (Support/Atms)
+			if (floor == 0 && civicRooms != contentsSchool)
+				me.daddychurchill.CityWorld.Support.Atms.place(generator, blocks, chunkOdds,
+						generator.getSettings().oddsOfAtmInCivic, floorAt + higher, (x, z) -> isStairClaimed(x, z));
 		}
 	}
 

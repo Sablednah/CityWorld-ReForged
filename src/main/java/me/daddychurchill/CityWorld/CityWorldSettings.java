@@ -183,6 +183,9 @@ public class CityWorldSettings {
 
     /** Shopping malls: rare, big, at the edge of town with car parks round them (MODERN-family only; see Plats/Urban/Mall). */
     public boolean includeMalls = true;
+    public double oddsOfAtmInCivic = Odds.oddsSomewhatLikely;
+    public double oddsOfAtmInShops = Odds.oddsUnlikely;
+    public double oddsOfAtmInMalls = Odds.oddsSomewhatUnlikely;
 
     /**
      * The subway: a station lot in every urban platmap and twin-track tunnels to the first station each
@@ -542,7 +545,8 @@ public class CityWorldSettings {
                 t.oddsOfPristineBuilding(), v, v);
         CityWorldSettingsData.Overgrowth og = d.overgrowth();
         CityWorldSettingsData.Overgrowth og2 = new CityWorldSettingsData.Overgrowth(v, og.intensity(), v);
-        CityWorldSettingsData.Shops sh = new CityWorldSettingsData.Shops(v, v);
+        CityWorldSettingsData.Shops sh = new CityWorldSettingsData.Shops(v, v, d.shops().oddsOfAtmInCivic(),
+                d.shops().oddsOfAtmInShops(), d.shops().oddsOfAtmInMalls());
         CityWorldSettingsData.Subways sw = new CityWorldSettingsData.Subways(v, v);
         return new CityWorldSettingsData(f, t2, d.spawns(), d.treasures(), d.world(), d.radius(), d.naming(),
                 d.mobs(), og2, sh, d.decay(), d.caves(), sw, d.structures(), d.cities());
@@ -598,6 +602,9 @@ public class CityWorldSettings {
         cities = data.cities();
         includeShops = data.shops().enabled();
         includeMalls = data.shops().malls();
+        oddsOfAtmInCivic = data.shops().oddsOfAtmInCivic();
+        oddsOfAtmInShops = data.shops().oddsOfAtmInShops();
+        oddsOfAtmInMalls = data.shops().oddsOfAtmInMalls();
         includeSubways = data.subways().enabled();
         spawnersInSubways = data.subways().spawners();
         CityWorldSettingsData.Decay dk = data.decay();
@@ -722,7 +729,8 @@ public class CityWorldSettings {
                 ids(mobSewers), ids(mobMine), ids(mobBunker), ids(mobWaterPit), ids(mobLavaPit), mobsAppend);
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
-        CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops, includeMalls);
+        CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops, includeMalls, oddsOfAtmInCivic,
+                oddsOfAtmInShops, oddsOfAtmInMalls);
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);

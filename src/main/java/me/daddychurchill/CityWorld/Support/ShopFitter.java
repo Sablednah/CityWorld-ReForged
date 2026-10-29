@@ -115,6 +115,10 @@ public final class ShopFitter {
 
         // and, if the shop has a front door, a hanging shopfront sign outside above it
         exteriorSign(chunk, y, wallHanging, name);
+
+        // now and then a cash machine, when a mod supplies one (Support/Atms)
+        Atms.place(generator, chunk, odds, generator.getSettings().oddsOfAtmInShops,
+                (ax, az) -> floorY(chunk, ax, az, generator.streetLevel), (ax, az) -> false);
     }
 
     /**
