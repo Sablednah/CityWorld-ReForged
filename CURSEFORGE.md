@@ -13,6 +13,12 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+**New in 6.10.0: loot that fits the world, and cash machines.** A Modern office drawer now holds paper, books and a
+clock; a ruin's holds scrap, string and spoiled food; and about one container in thirteen holds something worth
+having (a setting, "Finds in drawers"). With Modernlife installed, its ATMs stand in city halls, shops and malls, and
+on 1.20.1 its bank gets a paved town square at spawn instead of landing on a shop. The wiki's new Loot Tables page
+shows how to add your own items to any of it.
+
 **New in 6.9.0: the same seed builds the same city.** Two worlds made from one seed could come out with different houses,
 because a neighbouring chunk's decoration arriving a moment earlier or later could re-roll everything a chunk drew after
 it. Each part of a chunk's decoration now rolls on its own numbers from the seed, so a seed you share is the city
@@ -24,15 +30,10 @@ vanilla world does: sheep on the plains, wolves in the woods, and any animals a 
 into the cities too (parks and gardens), so the ruins can go back to nature. Also fixed: with Forgified Fabric API and
 a mod adding End biomes, the End froze on the way to the outer islands.
 
-**New in 6.7.0: save your settings as presets.** The Customize screen has a Presets button: save everything it
-holds (style, Nether and End, every setting, which structures generate) under a name, and load it for the next world.
-The Structures page gains All on / All off, and changing the style inside Customize now gives exactly what picking that
-world type would. Apocalypse now starts with airborne structures and working lights off (both can be switched back on).
-Also: trees on bridges no longer float above the deck, and nothing carries over into a second world opened without
-restarting the game.
-
 **Other recent changes**
 
+- **6.7.0** — save your Customize settings as presets and load them for the next world; All on / All off on the
+  Structures page; a style change in Customize gives exactly what picking that world type would.
 - **6.8.2** — works with C2ME: the End generated nothing with it installed (fixed), and C2ME made CityWorld's land
   generate about two and a half times faster in our test. Also, one furniture mod's cutting board could leave the
   rest of its chunk's containers empty.

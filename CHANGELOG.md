@@ -5,6 +5,31 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 6.10.0
+
+### Added
+
+- **Everyday loot that fits the world.** Modern and Apocalypse worlds have their own tables for a building's closets
+  and storage, nightstands and kitchen stores: an office drawer holds paper, books, candles and a clock; a ruin's holds
+  scrap, string, bone, arrows and spoiled food. Classic and the other styles keep the original CityWorld's tables.
+  About one such container in thirteen also holds a find (an emerald, iron, a diamond, an enchanted book): the chance
+  is the new setting `treasures.oddsOfFinds` ("Finds in drawers" in Customize), `0` for none. The vault's mess hall
+  is stocked from before the fall, whatever the world. Every table still ends in its `_extra` hook, so a pack that
+  fills `chests/building_extra` reaches every style. The wiki's new [Loot Tables](https://github.com/Sablednah/CityWorld-ReForged/wiki/Loot-Tables)
+  page explains how, and lists every table.
+- **Cash machines**, when a mod supplies one (Modernlife's ATM is listed in `#cityworld:fittings/atm`): on a pedestal
+  against an inside wall of a city hall or courthouse, a shop, or a mall, screen to the room, at the odds
+  `shops.oddsOfAtmInCivic` / `InShops` / `InMalls` (1 in 3, 1 in 8, 1 in 5). None without such a mod.
+- **A town square another mod can build on.** `CityWorldAPI.reservePlaza` reserves a site whose core is a paved
+  square (paving in a pattern, a kerb, street lamps, benches, planters) instead of bare ground, with a one-chunk
+  ring the city's roads run through up to the kerb. On **1.20.1 only**, with Modernlife installed, a new world's
+  spawn sits on such a square two chunks out (`shops.bankPlazaRadius`, 80 blocks), so the bank Modernlife builds
+  beside a new player lands on the square instead of over a shop and its contents.
+
+### Fixed
+
+- `/cityexport` never wrote the malls on/off choice; it does now.
+
 ## 6.9.0
 
 ### Changed
