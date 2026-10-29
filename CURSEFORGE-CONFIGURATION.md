@@ -342,6 +342,7 @@ Cave biomes bring their own mobs. The deep dark carries none at all, plus warden
 | `oddsOfAtmInCivic` | `0.333` (1 in 3) | **ATMs: civic**: the chance each ground-floor chunk of a city hall or courthouse has a cash machine against an inside wall, from `#cityworld:fittings/atm`. Only when a mod supplies one ([Modernlife](https://www.curseforge.com/minecraft/mc-mods/modernlife)'s ATM is listed); none otherwise. |
 | `oddsOfAtmInShops` | `0.125` (1 in 8) | **ATMs: shops**: the same, per ground-floor chunk of a shop. |
 | `oddsOfAtmInMalls` | `0.2` (1 in 5) | **ATMs: malls**: the same, per chunk of a shopping mall's ground floor. |
+| `bankPlazaRadius` | `2` | **Bank plaza (Modernlife)**, *1.20.1 only, the one version Modernlife ships for*: with Modernlife installed, a new world's spawn sits on a paved town square this many chunks out (2 = 80 blocks: paving, street lamps, benches, planters) so the bank Modernlife builds beside a new player lands on the square instead of on top of a shop. 2 is the smallest at which Modernlife's own flat-land check passes where the player lands. The city's roads run up to its kerb. `0` for none. Decided when the world is created. |
 
 ### `structures` — which vanilla and mod structures this world places
 
