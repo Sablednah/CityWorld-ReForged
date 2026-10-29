@@ -339,6 +339,9 @@ Cave biomes bring their own mobs. The deep dark carries none at all, plus warden
 |---|---|---|
 | `enabled` | `false` | Villager job-site blocks so a store/farm reads as its trade (cartography table = map seller, fletching table = fletcher, smoker = butcher, ...), a composter at farm edges, and a rare fish-pond farm. The shop classification itself is always computed for `/cityinfo`; this only governs block placement. |
 | `malls` | `true` | Shopping malls (MODERN and APOCALYPSE): rare, at the edge of town, two or three storeys round a glass-roofed atrium, built in wings — a bar, L, T, U, Z or cross, up to eight chunks each way — with dozens of named shops, each with its own loot table (`chests/mall_<kind>`, each ending in an `_extra` hook), and car parks out to the road. Announced as the landmark kind `mall`. Independent of `enabled`. |
+| `oddsOfAtmInCivic` | `0.333` (1 in 3) | **ATMs: civic**: the chance each ground-floor chunk of a city hall or courthouse has a cash machine against an inside wall, from `#cityworld:fittings/atm`. Only when a mod supplies one ([Modernlife](https://www.curseforge.com/minecraft/mc-mods/modernlife)'s ATM is listed); none otherwise. |
+| `oddsOfAtmInShops` | `0.125` (1 in 8) | **ATMs: shops**: the same, per ground-floor chunk of a shop. |
+| `oddsOfAtmInMalls` | `0.2` (1 in 5) | **ATMs: malls**: the same, per chunk of a shopping mall's ground floor. |
 
 ### `structures` — which vanilla and mod structures this world places
 

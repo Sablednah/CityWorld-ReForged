@@ -40,6 +40,11 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   heights) into world settings with today's value as the default, a CURSEFORGE-CONFIGURATION.md row each, and a
   Customize widget whose picker contains the default. Mind the 16-field codec cap (new groups, not squeezed ones).
   The first one is `treasures.oddsOfFinds` (6.10.0). New features add their numbers as settings from the start.
+- **Furniture compat to look at: Modern Life (WITH a space, Modrinth `modern-life`, mod id `modernlife`, 1.20.1
+  Forge + 1.21.1 NeoForge)** has a lot of good furniture (owner, 2026-10-29). Not the same mod as **Modernlife**
+  (no space, CurseForge 1623799, by Radinsaeb12, 1.20.1 only: the economy mod whose `modernlife:atm` 6.10 places).
+  ⚠ Both use mod id `modernlife`, so a pack can't install both, and a tag entry under `modernlife:` must name a
+  block only one of them has (`atm` is Modernlife's alone).
 - **6.9.0 confirmed on the full ZARP pack** (ZARP session, 2026-10-26: seed 20261025, apocalypse, C2ME on): the vault
   swaps are gone, ~20 man-made blocks differ (single contested cells), 900 chunks in ~27 s with C2ME. The owner moves
   ZARP to 6.9.0 through the app.
