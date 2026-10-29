@@ -193,6 +193,9 @@ public abstract class ShapeProvider extends Provider {
 	}
 
 	public PlatLot createNaturalLot(CityWorldGenerator generator, PlatMap platmap, int x, int z) {
+		// the core of a site reserved as a paved square is a town square, whatever the land round it
+		if (generator.pavedSiteAt(platmap.originX + x, platmap.originZ + z) != null)
+			return new me.daddychurchill.CityWorld.Plats.PlazaLot(platmap, platmap.originX + x, platmap.originZ + z);
 		return natureContext.createNaturalLot(generator, platmap, x, z);
 	}
 
