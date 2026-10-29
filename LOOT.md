@@ -53,8 +53,14 @@ CityWorld's own contents. A CityWorld update that changes its tables won't clash
 ```
 
 The `_extra` table is rolled as **one entry** among the parent table's (weight 15 in `building`), so each roll has
-a chance of landing on your hook; within it, your own pools and weights apply. That form works on every Minecraft
-version CityWorld supports. If you set counts or other functions, write them the way your Minecraft version
+a chance of landing on your hook; within it, your own pools and weights apply. **Expect it in only some chests:**
+measured on 1.20.1, `building` reaches its hook in about one chest in five (380 of 2,000 rolls), so a few empty-
+looking chests do not mean the datapack failed. To check that it loaded, roll the hook itself:
+`/loot give @s loot cityworld:chests/building_extra`. More `rolls` in your `_extra` table give more items in the chests
+that reach it, not more chests. To put your items in every chest, replace the parent table (method 2) or use a loot
+modifier (method 3).
+
+The example above works on every Minecraft version CityWorld supports. If you set counts or other functions, write them the way your Minecraft version
 expects. 26.3 changed the loot format, so compare with a vanilla table from the same version.
 
 ### 2. Replace a whole table
