@@ -2318,7 +2318,7 @@ public final class CityWorldSelfTest {
             for (String path : List.of("chests/modern/" + name, "chests/apocalypse/" + name, "chests/" + name,
                     "chests/modern/" + name + "_find", "chests/apocalypse/" + name + "_find")) {
                 var key = net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE,
-                        net.minecraft.resources.Identifier.fromNamespaceAndPath("cityworld", path));
+                        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("cityworld", path));
                 if (server.reloadableRegistries().getLootTable(key) == net.minecraft.world.level.storage.loot.LootTable.EMPTY)
                     missing.add(path);
             }

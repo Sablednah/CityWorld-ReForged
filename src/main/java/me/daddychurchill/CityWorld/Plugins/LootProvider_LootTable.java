@@ -87,7 +87,7 @@ public final class LootProvider_LootTable extends LootProvider {
     /** {@code chests/<style>/<name>}, or its {@code _find} version for one container in {@code 1 / findOdds}. */
     public static ResourceKey<LootTable> styled(String style, LootLocation lootLocation, long seed, double findOdds) {
         boolean find = new java.util.Random(seed ^ 0x46494E44L).nextDouble() < findOdds; // "FIND"
-        return ResourceKey.create(Registries.LOOT_TABLE, Identifier.fromNamespaceAndPath("cityworld",
+        return ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.fromNamespaceAndPath("cityworld",
                 "chests/" + style + "/" + lootLocation.name().toLowerCase(Locale.ROOT) + (find ? "_find" : "")));
     }
 

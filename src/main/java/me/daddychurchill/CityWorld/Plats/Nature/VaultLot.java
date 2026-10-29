@@ -623,7 +623,7 @@ public class VaultLot extends BunkerLot {
             me.daddychurchill.CityWorld.Support.ContainerLoot.restockAt(real, x2, fy, z1,
                     me.daddychurchill.CityWorld.Plugins.LootProvider_LootTable.styled("modern",
                             LootProvider.LootLocation.FOOD, odds.getRandomLong(), generator.getSettings().oddsOfFinds)
-                            .identifier().toString(), odds);
+                            .location().toString(), odds);
         put(chunk, x2, fy, z2, Material.CAULDRON); // a pot
     }
 
