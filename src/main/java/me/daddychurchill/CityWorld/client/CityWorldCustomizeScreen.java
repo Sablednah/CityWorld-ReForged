@@ -56,7 +56,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     /** The underground dials (carve halo, cave patch shaping) — datapack-only, no widget here. */
     private final CityWorldSettingsData.Caves caves;
     /** Which vanilla and mod structures the world places — edited on its own page ({@link CityWorldStructuresScreen}). */
-    private final CityWorldSettingsData.Structures structures;
+    private CityWorldSettingsData.Structures structures;
     /** Every structure set the install has, for that page; empty when the registries could not be read. */
     private final List<me.daddychurchill.CityWorld.worldgen.StructureChoices.Entry> structureEntries;
     /**
@@ -106,6 +106,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private double climateWarmth;
     private double biomeScale;
     private double moddedBiomeShare;
+    private final String packPreset; // a pack's knob, not a player's: carried through unchanged
 
     /** Cities in a vanilla world and their spacing, size and level range (settings "cities"). */
     private CityWorldSettingsData.Cities cities;
@@ -145,6 +146,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         this.climateWarmth = initial.world().climateWarmth();
         this.biomeScale = initial.world().biomeScale();
         this.moddedBiomeShare = initial.world().moddedBiomeShare();
+        this.packPreset = initial.world().packPreset();
 
         loadFrom(initial);
     }
@@ -343,6 +345,9 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                     "Which vanilla and mod structures this world places: villages, mansions, a mod's dungeons. "
                             + "CityWorld keeps its cities clear of them.")));
             addRow(pick, null);
+            // every placed set kept to the wild: a pond structure cut a city in two (a player, 2026-10-29)
+            addRow(onOff("Structures: only in the wild", structures.wildernessOnly(), v -> structures = new CityWorldSettingsData.Structures(
+                    structures.allow(), structures.deny(), v)), null);
         }
 
         this.list.addHeader(Component.literal("Features"));
@@ -492,7 +497,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
                 treeStyle, spawnTrees.value, subSurfaceStyle, ruralnessLevel.value, maxBuildingFloors,
                 broadcastSpecialPlaces, announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
-                moddedBiomeShare);
+                moddedBiomeShare, packPreset);
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops, includeMalls, oddsOfAtmInCivic.value,
@@ -537,7 +542,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                     new CityWorldSettingsData.World(world.treeStyle(), world.spawnTrees(), world.subSurfaceStyle(),
                             world.ruralnessLevel(), world.maxBuildingFloors(), world.broadcastSpecialPlaces(),
                             announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
-                            moddedBiomeShare),
+                            moddedBiomeShare, packPreset),
                     radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves,
                     defaults.subways(), structures, cities);
         }

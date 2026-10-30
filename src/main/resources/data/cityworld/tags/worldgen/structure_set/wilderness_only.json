@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "arboria:lake_very_common", "required": false },
+    { "id": "arboria:lake_common",      "required": false },
+    { "id": "arboria:lake_normal",      "required": false },
+    { "id": "arboria:lake_uncommon",    "required": false },
+    { "id": "arboria:lake_lava",        "required": false }
+  ]
+}
