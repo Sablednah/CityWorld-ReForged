@@ -380,13 +380,16 @@ public record CityWorldSettingsData(
      * names no installed structure set is ignored (the mod is not installed), and allowing a set does not make it
      * appear where none of its biomes exist: vanilla drops those itself.
      */
-    public record Structures(java.util.List<String> allow, java.util.List<String> deny) {
+    public record Structures(java.util.List<String> allow, java.util.List<String> deny, boolean wildernessOnly) {
 
-        public static final Structures DEFAULT = new Structures(java.util.List.of(), java.util.List.of());
+        public static final Structures DEFAULT = new Structures(java.util.List.of(), java.util.List.of(), false);
 
         public static final Codec<Structures> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.listOf().optionalFieldOf("allow", java.util.List.of()).forGetter(Structures::allow),
-                Codec.STRING.listOf().optionalFieldOf("deny", java.util.List.of()).forGetter(Structures::deny)
+                Codec.STRING.listOf().optionalFieldOf("deny", java.util.List.of()).forGetter(Structures::deny),
+                // every placed set keeps to the wild: never started where the city would build (a set-by-set
+                // version is the tag #cityworld:wilderness_only); see CityWorldChunkGenerator.createStructures
+                Codec.BOOL.optionalFieldOf("wildernessOnly", false).forGetter(Structures::wildernessOnly)
         ).apply(i, Structures::new));
 
         /**
@@ -411,7 +414,7 @@ public record CityWorldSettingsData(
             });
             java.util.Collections.sort(allowed);
             java.util.Collections.sort(denied);
-            return new Structures(java.util.List.copyOf(allowed), java.util.List.copyOf(denied));
+            return new Structures(java.util.List.copyOf(allowed), java.util.List.copyOf(denied), wildernessOnly);
         }
 
         /** Whether a set is placed: {@code inTag} is the tag's answer, which these lists overrule. */
@@ -590,7 +593,8 @@ public record CityWorldSettingsData(
             WildDecoration wildDecoration,
             double climateWarmth,
             double biomeScale,
-            double moddedBiomeShare) {
+            double moddedBiomeShare,
+            String packPreset) {
 
         /**
          * How far the temperature field leans warm, {@code 0.0} (unchanged) to about {@code 0.5}.
@@ -644,9 +648,18 @@ public record CityWorldSettingsData(
         public static final java.util.List<String> DEFAULT_ANNOUNCED = java.util.List.of(
                 "airship", "saucer", "vault", "zoo", "biodome", "hospital", "schematic", "mall");
 
+        /**
+         * The world preset CityWorld reads the pack's overworld from (see {@code worldgen/PresetBiomes}). Vanilla
+         * land takes its noise settings and biome source from it; CityWorld's land offers the foreign biomes it
+         * declares through {@code moddedBiomeShare}, exactly as TerraBlender's. Datapack biome mods (Terralith,
+         * Grand Terrain) rewrite {@code minecraft:normal}; a pack that wants another preset's land names it here.
+         * Blank reads no preset: vanilla's registry entries, as every world before 6.11.
+         */
+        public static final String DEFAULT_PACK_PRESET = "minecraft:normal";
+
         public static final World DEFAULT = new World(TreeStyle.NORMAL, Odds.oddsLikely, SubSurfaceStyle.LAND, 0.0,
                 DEFAULT_MAX_BUILDING_FLOORS, false, DEFAULT_ANNOUNCED, true, WildDecoration.BOTH,
-                DEFAULT_CLIMATE_WARMTH, DEFAULT_BIOME_SCALE, DEFAULT_MODDED_SHARE);
+                DEFAULT_CLIMATE_WARMTH, DEFAULT_BIOME_SCALE, DEFAULT_MODDED_SHARE, DEFAULT_PACK_PRESET);
 
         private static final Codec<TreeStyle> TREE_STYLE_CODEC = Codec.STRING.xmap(
                 s -> parseEnum(TreeStyle.class, s, TreeStyle.NORMAL), TreeStyle::name);
@@ -671,7 +684,8 @@ public record CityWorldSettingsData(
                         .forGetter(World::climateWarmth),
                 Codec.DOUBLE.optionalFieldOf("biomeScale", DEFAULT_BIOME_SCALE).forGetter(World::biomeScale),
                 Codec.DOUBLE.optionalFieldOf("moddedBiomeShare", DEFAULT_MODDED_SHARE)
-                        .forGetter(World::moddedBiomeShare)
+                        .forGetter(World::moddedBiomeShare),
+                Codec.STRING.optionalFieldOf("packPreset", DEFAULT_PACK_PRESET).forGetter(World::packPreset)
         ).apply(i, World::new));
     }
 

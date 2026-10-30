@@ -178,6 +178,8 @@ public class CityWorldGenerator {
         me.daddychurchill.CityWorld.worldgen.ReservedSites sites = reservedSites;
         if (sites != null && sites.isReserved(chunkX, chunkZ))
             return true;
+        if (DRY_PLAN.get())
+            return false; // see isWildernessAt
         me.daddychurchill.CityWorld.worldgen.StructureReservations local = structureReservations;
         return local != null && local.isReserved(chunkX, chunkZ);
     }
@@ -197,6 +199,8 @@ public class CityWorldGenerator {
         me.daddychurchill.CityWorld.worldgen.ReservedSites sites = reservedSites;
         if (sites != null && sites.isReservedFromRoads(chunkX, chunkZ))
             return true;
+        if (DRY_PLAN.get())
+            return false; // see isWildernessAt
         me.daddychurchill.CityWorld.worldgen.StructureReservations local = structureReservations;
         return local != null && local.isReserved(chunkX, chunkZ);
     }
@@ -205,6 +209,46 @@ public class CityWorldGenerator {
     public me.daddychurchill.CityWorld.worldgen.ReservedSites.Site pavedSiteAt(int chunkX, int chunkZ) {
         me.daddychurchill.CityWorld.worldgen.ReservedSites sites = reservedSites;
         return sites == null ? null : sites.pavedCoreAt(chunkX, chunkZ);
+    }
+
+    /**
+     * Set on a thread while it plans a DRY platmap for {@link #isWildernessAt}: the structure reservations are not
+     * consulted (they ask the structure forecast, which asks this, which would plan again — the cycle this cuts).
+     * Reserved sites (another mod's camp or square) are consulted as ever: they ask nothing.
+     */
+    private static final ThreadLocal<Boolean> DRY_PLAN = ThreadLocal.withInitial(() -> false);
+    private final java.util.concurrent.ConcurrentHashMap<Long, Boolean> wildPlatmaps = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * Whether the platmap holding this chunk is wild land — planned as {@code NatureContext} — judged by a DRY plan of
+     * it with the structure reservations switched off. The structure forecast asks this before it computes a start
+     * for a set kept to the wild, and the plan asks the forecast for its reservations, so the real plan cannot be
+     * read here; the dry plan is the same planner with that one input removed. A reservation can only make a chunk
+     * natural (a refused lot stays nature), so the real plan is at least as natural as the dry one: dry-wild means
+     * real-wild. The reverse — dry-built, real-wild — drops a structure from land that turned out wild, which is
+     * the cheap side of the error. The terrain alone was NOT a usable estimate: the nature pass turns unbuildable
+     * chunks into bunkers, isolated shacks and special places and the ladder counts after it, so a mountain full of
+     * bunkers plans as lowrise (17 of 472 platmaps on the self-test seed). One dry plan per platmap, memoised.
+     */
+    public boolean isWildernessAt(int chunkX, int chunkZ) {
+        int originX = calcOrigin(chunkX);
+        int originZ = calcOrigin(chunkZ);
+        long key = ((long) originX << 32) ^ (originZ & 0xFFFFFFFFL);
+        Boolean known = wildPlatmaps.get(key);
+        if (known != null)
+            return known;
+        if (DRY_PLAN.get()) // re-entered from inside a dry plan: something still reached the forecast; be lenient
+            return true;
+        boolean wild;
+        DRY_PLAN.set(true);
+        try {
+            PlatMap dry = new PlatMap(this, shapeProvider, originX, originZ);
+            wild = dry.context == null || dry.context instanceof me.daddychurchill.CityWorld.Context.NatureContext;
+        } finally {
+            DRY_PLAN.set(false);
+        }
+        wildPlatmaps.putIfAbsent(key, wild);
+        return wild;
     }
 
     /** True inside a reserved site's levelled core: no vanilla wild decoration, no swamp pools. */
