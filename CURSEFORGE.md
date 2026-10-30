@@ -13,6 +13,14 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+**New in 6.11.0: your biome mods, in the city too.** Biomes O' Plenty, Oh The Biomes We've Gone, Nyctophobia,
+VanillaBackport's pale garden — every TerraBlender mod now reaches CityWorld's own land on 1.21.1 and 1.20.1 as well
+(it never had: a silent bug since those versions shipped). Datapack biome mods — Terralith, Dreamwoods with Grand
+Terrain — reach both lands too, and Regions Unexplored reaches vanilla land. Mod biomes come in proper patches, not
+slivers, rivers through a snowy mod biome freeze, and a new switch — "Structures: only in the wild", or the tag
+`#cityworld:wilderness_only` set by set — keeps a mod's structures out of the streets (Arboria's lakes ship tagged:
+each one used to cut a city in two).
+
 **New in 6.10.0: loot that fits the world, and cash machines.** A Modern office drawer now holds paper, books and a
 clock; a ruin's holds scrap, string and spoiled food; and about one container in thirteen holds something worth
 having (a setting, "Finds in drawers"). With Modernlife installed, its ATMs stand in city halls, shops and malls, and
@@ -25,13 +33,10 @@ it. Each part of a chunk's decoration now rolls on its own numbers from the seed
 your friends get. New chunks in an existing world will differ in detail (house materials, furniture, overgrowth) from
 what 6.8 would have built; street plans are unchanged.
 
-**New in 6.8.0: animals in the wild.** CityWorld's own land now gets vanilla's herds as it is made, by biome, the way a
-vanilla world does: sheep on the plains, wolves in the woods, and any animals a biome mod adds. A new switch lets them
-into the cities too (parks and gardens), so the ruins can go back to nature. Also fixed: with Forgified Fabric API and
-a mod adding End biomes, the End froze on the way to the outer islands.
-
 **Other recent changes**
 
+- **6.8.0** — animals in the wild: CityWorld's own land gets vanilla's herds as it is made, by biome, and a switch
+  lets them into the cities too; with Forgified Fabric API and a mod adding End biomes, the End no longer freezes.
 - **6.7.0** — save your Customize settings as presets and load them for the next world; All on / All off on the
   Structures page; a style change in Customize gives exactly what picking that world type would.
 - **6.8.2** — works with C2ME: the End generated nothing with it installed (fixed), and C2ME made CityWorld's land
@@ -248,11 +253,17 @@ becomes clear. It works on every world style, Apocalypse included. Drop it in `m
 
 ### And your biome mod's biomes
 
-Install **Biomes O' Plenty** — or anything else built on **TerraBlender** — and its biomes generate in
-your CityWorld world. Not a handful of them: with BoP installed, **all 59 of its overworld biomes**
-appear, over about a third of the ground, with CityWorld still naming the rest. Its cave biomes go
-underground where they belong, and biomes whose look is their *ground* — gravel beaches, volcanic
-plains, salt wastes — get their real blocks rather than a grass stand-in.
+Install **Biomes O' Plenty** — or anything else built on **TerraBlender** (Oh The Biomes We've Gone, Nyctophobia,
+VanillaBackport…) — and its biomes generate in your CityWorld world, on every version. Not a handful of them: with
+BoP installed, **all 59 of its overworld biomes** appear, over about a third of the ground, with CityWorld still
+naming the rest. Its cave biomes go underground where they belong, and biomes whose look is their *ground* — gravel
+beaches, volcanic plains, salt wastes — get their real blocks rather than a grass stand-in.
+
+Datapack biome mods that rewrite the vanilla world preset — **Terralith**, **Dreamwoods** with Grand Terrain — reach
+CityWorld's land the same way and give vanilla land their terrain too (`world.packPreset`). **Regions Unexplored**
+and the other Lithostitched mods reach vanilla land. Mod biomes arrive in proper patches (`world.moddedBiomeGrain`),
+and a mod's structures can be kept to the wild: "Structures: only in the wild" in Customize, or a datapack's
+`#cityworld:wilderness_only` tag, set by set.
 
 On by default, because installing a biome mod is itself the request. `world.moddedBiomeShare` sets how
 much ground a mod may own, `world.useModdedBiomes` turns it off entirely, and both cost nothing when
