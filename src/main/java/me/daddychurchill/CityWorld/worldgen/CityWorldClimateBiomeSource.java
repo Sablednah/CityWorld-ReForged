@@ -110,13 +110,52 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
         if (!bridgeHarvested)
             synchronized (this) {
                 if (!bridgeHarvested) {
-                    bridge = (biomeLookup instanceof net.minecraft.core.Registry<?> registry)
-                            ? TerraBlenderBridge.harvest((net.minecraft.core.Registry<Biome>) registry, biomes)
-                            : null;
+                    // ⚠ Per-version: on 1.21.11 and 26.x Registry implements HolderLookup.RegistryLookup, so the
+                    // codec's lookup IS the frozen registry. On 1.21.1 and 1.20.1 it is MappedRegistry's separate
+                    // lookup object, and this instanceof is false — which was the WHOLE bridge silently off on those
+                    // two lines from the day they shipped (a player's biome mods "not working", 2026-10-29). The
+                    // server's registry access is the fallback; before a server exists the answer is "not yet", not
+                    // "never", so nothing is memoised.
+                    @SuppressWarnings("unchecked")
+                    net.minecraft.core.Registry<Biome> registry = biomeLookup instanceof net.minecraft.core.Registry<?> r
+                            ? (net.minecraft.core.Registry<Biome>) r : serverBiomeRegistry();
+                    if (registry == null)
+                        return null;
+                    bridge = TerraBlenderBridge.harvest(registry, biomes, presetPoints);
                     bridgeHarvested = true;
                 }
             }
         return bridge;
+    }
+
+    private static net.minecraft.core.@org.jetbrains.annotations.Nullable Registry<Biome> serverBiomeRegistry() {
+        var server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
+        return server == null ? null : server.registryAccess().registryOrThrow(Registries.BIOME);
+    }
+
+    /** The pack's own overworld climate points ({@link PresetBiomes}), for CityWorld's land. May be empty. */
+    private volatile List<com.mojang.datafixers.util.Pair<Climate.ParameterPoint, Holder<Biome>>> presetPoints = List.of();
+
+    /** How many of the pack preset's points name a foreign biome (diagnostics: the self-test reports it). */
+    public long foreignPresetPoints() {
+        return presetPoints.stream().filter(p -> PresetBiomes.isForeign(p.getSecond())).count();
+    }
+
+    /**
+     * Offers the pack's world-preset biomes to the bridge. Must come before the first {@link #terraBlender()}
+     * — the chunk generator calls it at {@code createState}, ahead of vanilla's {@code possibleBiomes()} memo;
+     * a later offer is logged and ignored rather than half-applied.
+     */
+    public void offerPreset(List<com.mojang.datafixers.util.Pair<Climate.ParameterPoint, Holder<Biome>>> points) {
+        synchronized (this) {
+            if (bridgeHarvested) {
+                if (!points.isEmpty() && !points.equals(presetPoints))
+                    me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                            "CityWorld: the pack's preset biomes arrived after the biome bridge was built; ignored");
+                return;
+            }
+            presetPoints = List.copyOf(points);
+        }
     }
 
     private volatile SurfaceRegions.@org.jetbrains.annotations.Nullable Pools surfacePools;

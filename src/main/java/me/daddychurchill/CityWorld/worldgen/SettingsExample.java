@@ -264,6 +264,11 @@ public final class SettingsExample {
 
             allow  []   Structure SET ids to place as well:  ["minecraft:villages"]
             deny   []   Structure SET ids to stop placing:   ["minecraft:trial_chambers"]
+            wildernessOnly  false  Keep every placed set to the wild: no structure starts in a platmap the
+                                   city plans to build (any district, farms and outland included);
+                                   strongholds are never touched. A pond structure
+                                   (Arboria's) otherwise cuts a city in two. Set by set, a datapack tags
+                                   #cityworld:wilderness_only (structure sets); Arboria's lakes ship in it.
 
             Ids are structure sets (data/<ns>/worldgen/structure_set/), not single structures:
             minecraft:villages, minecraft:woodland_mansions, minecraft:pillager_outposts, a mod's

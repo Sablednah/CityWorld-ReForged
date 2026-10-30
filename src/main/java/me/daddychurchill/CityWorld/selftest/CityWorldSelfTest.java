@@ -819,6 +819,31 @@ public final class CityWorldSelfTest {
                 }
             }
             String key = "plan." + style;
+            // The wilderness verdict the structure filter judges by (CityWorldGenerator.isWildernessAt: a DRY plan
+            // with the structure reservations off) against the real plan. Reservations only add nature, so dry-wild
+            // must mean real NatureContext — anything else would stand a wilderness-only structure in the city.
+            // (The terrain alone was tried first and put 17 of 472 platmaps in LOWRISE: bunkers on a mountain.)
+            if (gen.shapeProvider instanceof me.daddychurchill.CityWorld.Plugins.ShapeProvider_Normal) {
+                int dryWild = 0, planWild = 0;
+                Map<String, Integer> wrong = new TreeMap<>();
+                for (int cx = -PLAN_RADIUS; cx <= PLAN_RADIUS; cx += PlatMap.Width)
+                    for (int cz = -PLAN_RADIUS; cz <= PLAN_RADIUS; cz += PlatMap.Width) {
+                        boolean dry = gen.isWildernessAt(cx, cz);
+                        var context = gen.getPlatMap(cx, cz).context;
+                        boolean plan = context instanceof me.daddychurchill.CityWorld.Context.NatureContext;
+                        if (dry)
+                            dryWild++;
+                        if (plan)
+                            planWild++;
+                        if (dry && !plan)
+                            wrong.merge(context.getClass().getSimpleName(), 1, Integer::sum);
+                    }
+                report.put(key + ".wild.dry", Integer.toString(dryWild));
+                report.put(key + ".wild.plan", Integer.toString(planWild));
+                if (!wrong.isEmpty())
+                    fail(style + ": platmap(s) wild by the dry plan but built in the real one — "
+                            + "a wilderness-only structure would stand in the city: " + wrong);
+            }
             report.put(key + ".platmaps", Integer.toString(platmaps));
             report.put(key + ".contexts", contexts.toString());
             report.put(key + ".lots", lots.toString());
@@ -1190,6 +1215,8 @@ public final class CityWorldSelfTest {
                 me.daddychurchill.CityWorld.worldgen.TerraBlenderBridge.present()));
         if (!(source instanceof me.daddychurchill.CityWorld.worldgen.CityWorldClimateBiomeSource climate))
             return;
+        // the pack preset's foreign points (Terralith, Grand Terrain): 0 in the dev runtime, which has neither
+        report.put("biome.preset.foreignPoints", Long.toString(climate.foreignPresetPoints()));
         var bridge = climate.terraBlender();
         if (bridge == null) {
             report.put("terraBlender.harvested", "0");
