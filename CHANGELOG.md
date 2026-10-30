@@ -35,6 +35,11 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   36% to 4% (Nyctophobia), median patch 4 → 28 chunks, total coverage unchanged. `1` restores the old look.
 - **A river freezes by the biome on its banks**, not by CityWorld's temperature number: a snowy Dreamwoods grove
   had an open river through it.
+- **A quay on frozen water freezes.** The rustic and natural quay kinds left their own top-layer freeze to vanilla's
+  decoration, which never runs on a structure lot: open squares of water beside a frozen ocean.
+- **1.21.1 and 1.20.1: the Customize Style button no longer ping-pongs.** After one style change the reopened
+  screen's button sat on the first entry whatever it showed — one click swallowed, then Apocalypse ↔ Classic
+  forever. Those two lines' button builder wants its values before its initial value.
 - **Lithostitched mods (Regions Unexplored) on vanilla land.** Lithostitched patches surface rules and wraps the biome
   source of every vanilla noise generator at server start and skipped CityWorld's; vanilla land's generator now goes
   through the same two passes. Measured with Regions Unexplored on 1.21.1: 0 → 14.5% of vanilla-land columns. Its
