@@ -35,9 +35,15 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   `structures.wildernessOnly` + `#cityworld:wilderness_only` (Arboria's lakes ship in it) judged by
   `CityWorldGenerator.isWildernessAt` (terrain only) in both `StructureForecast` and `createStructures`, self-test
   `plan.<style>.wild.*` + `biome.preset.foreignPoints`. **Test bed:** `../CityWorld-ReForged-worktrees/exp-1.21.1`
-  (scratch worktree of mc1.21.1 with the mods in `run/mods`; `scratchpad/tools/modprobe.sh`). ⚠ The 6.11 work is
-  UNCOMMITTED on master so the 6.10.0 bump can be committed on 6.10 code: `git stash -u` before the bump, pop after.
-  Not measured: Nyctophobia's trees on wild land (mechanism proven by pale oaks); RU on vanilla land (probe queued).
+  (scratch worktree of mc1.21.1 with the mods in `run/mods`; `scratchpad/tools/modprobe.sh`). Committed on master as
+  `DRAFT: biome mods on both lands…` (`f4e272c0`, CI 40991339527 green incl. same-seed) and cherry-picked, compiling,
+  onto all five branches (26.3: no `surfaceRule()` accessor, reflective; 1.20.1: Forge `ModList`, `isFor`, no
+  `RegistrationInfo`). Branch self-tests were running at ~02:30; push the branches once they pass, then it is a
+  6.11.0 release when the owner says so (CURSEFORGE.md headline + wiki + WEBSITE.md still to write). Measured on 1.21.1
+  (`PORTING.md`): Nyctophobia 0 → 2.8% of columns, pale oak 0 → 1,229 logs, Dreamwoods 0 → 39.8% (CityWorld land) /
+  18.9% (vanilla), Regions Unexplored 0 → 14.5% (vanilla), Arboria lakes 1 of 6 removed from a built platmap (6 of 6
+  with every platmap forced built). Not measured: Nyctophobia's trees on wild land (its haunted forest was found inside
+  a city); the dry-plan rule in game.
 - **v6.10.0 is released** (2026-10-30 01:12) on all six lines — tag `v6.10.0` at the bump `ae5104a0`, CurseForge
   9367760–9367765, fleet `DEPLOYED-v6.10.0` on 12 (ZARP opts out), wiki regenerated and pushed. Gates: six self-tests
   PASS + `--compare`, CI 40982728581 green, halt/exit 0 after the synthetic positive, 1.20.1 SRG names present.
