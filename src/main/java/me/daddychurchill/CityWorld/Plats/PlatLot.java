@@ -145,6 +145,19 @@ public abstract class PlatLot {
 		return true;
 	}
 
+	/**
+	 * Whether vanilla's biome decoration will run on this lot's chunk — THE gate the chunk generator uses
+	 * ({@code CityWorldChunkGenerator.applyBiomeDecoration}): a MODERN-family world with the wild handed to vanilla, a
+	 * NATURE lot that allows it, outside a reserved site's core. A lot that does its own stand-in for a vanilla
+	 * feature (the quay's top-layer freeze) asks THIS, not {@link #allowsWildDecoration} alone: a STRUCTURE lot is
+	 * never decorated by vanilla whatever it allows, and a rustic quay on a frozen ocean sat in open water for it
+	 * (owner, 2026-10-30).
+	 */
+	public boolean vanillaDecoratesHere(CityWorldGenerator generator) {
+		return generator.isModernStyle() && generator.getSettings().vanillaDecoratesWild() && style == LotStyle.NATURE
+				&& allowsWildDecoration() && !generator.isSiteCore(chunkX, chunkZ);
+	}
+
 	public PlatLot validateLot(PlatMap platmap, int platX, int platZ) {
 		return null; // assume that we don't do anything
 	}
