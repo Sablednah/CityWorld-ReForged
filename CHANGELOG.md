@@ -5,6 +5,40 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 6.11.0 (unreleased)
+
+### Fixed
+
+- **Biome mods on CityWorld's land, on 1.21.1 and 1.20.1.** The TerraBlender bridge (Biomes O' Plenty, Nyctophobia,
+  VanillaBackport, Regions Unexplored, Oh The Biomes We've Gone…) was silently off on those two lines from the day
+  they shipped: it needed the frozen biome registry, and on 1.21.1/1.20.1 the biome source's codec hands a wrapper
+  that is not one. The server's registry is the fallback. Measured on 1.21.1 with Nyctophobia + VanillaBackport:
+  0 modded biome columns of 140,625 sampled → Nyctophobia 2.8%, and 1,229 pale oak logs where there were none.
+  1.21.11 and 26.x were never affected.
+- **TerraBlender's `deferred_placeholder` is never a biome to place.** A region's "vanilla's biome goes here" marker;
+  it took 15.5% of the columns the moment the bridge worked on 1.21.1.
+- **A backport's vanilla-named biome counts as a mod's.** "Modded" meant "not `minecraft:`", so VanillaBackport's
+  `minecraft:pale_garden` could never stand on CityWorld land. A biome is now foreign when vanilla itself does not
+  define it, whatever its namespace.
+
+### Added
+
+- **Datapack biome mods — Terralith, Dreamwoods' Grand Terrain — reach both lands.** They rewrite the
+  `minecraft:normal` world preset and write their biomes inline in it, nowhere else, so CityWorld never saw them.
+  `world.packPreset` (default `minecraft:normal`) names the preset CityWorld reads the pack's overworld from:
+  **vanilla land** takes its terrain noise and biome source from it, and **CityWorld's land** offers the foreign
+  biomes it declares through `moddedBiomeShare`, exactly as TerraBlender's. Measured with Dreamwoods + Grand
+  Terrain on 1.21.1: 0 → 18.9% of vanilla-land columns and 0 → 39.8% of CityWorld-land columns, trees included.
+- **Lithostitched mods (Regions Unexplored) on vanilla land.** Lithostitched patches surface rules and wraps the biome
+  source of every vanilla noise generator at server start and skipped CityWorld's; vanilla land's generator now goes
+  through the same two passes. Measured with Regions Unexplored on 1.21.1: 0 → 14.5% of vanilla-land columns. Its
+  biomes are density layouts, not climate points, so CityWorld's own land cannot offer them.
+- **Structures only in the wild.** `structures.wildernessOnly` (Customize: "Structures: only in the wild") keeps
+  every placed structure set out of any platmap the city plans to build (judged by a dry plan without structure
+  reservations, so the planner and vanilla's placement agree and nothing reserves a hole for a structure that is
+  then removed; strongholds are never touched); set by set, a datapack tags `#cityworld:wilderness_only` (structure sets). Arboria's
+  lake sets ship in it: its ponds are structures, and each one cut a city in two.
+
 ## 6.10.0
 
 ### Added

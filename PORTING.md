@@ -77,6 +77,74 @@ snow-to-hot borders 1,207 → 126 (the rest are windswept forest against windswe
 line, which vanilla also allows), patches 8,688 → 8,595 of the same mean size, windswept forest 2.9% → 0.8%,
 forest/jungle/sparse jungle gain it. Not cherry-picked to the branches yet; the owner wanted the maps first.
 
+## ▶ Resume here — biome mods on both lands, structures only in the wild (6.11, 2026-10-30 overnight)
+
+**The report** (a CurseForge commenter trying biome mods with CityWorld, all on 1.21.1): Arboria's structures cut
+cities in two; Dreamwoods + Grand Terrain biomes never appear; VanillaBackport's pale garden has no pale oaks;
+Nyctophobia's webbed trees are missing. The owner asked for all of them to work on CityWorld land AND vanilla
+land, for "structures only in wilderness" globally and per structure, and for "other TerraBlender mods" to be
+pre-empted. Everything below is measured in `../CityWorld-ReForged-worktrees/exp-1.21.1` (a scratch worktree of
+`mc1.21.1` with TerraBlender, Nyctophobia, VanillaBackport + Platform, Dreamwoods, Grand Terrain in `run/mods`;
+`scratchpad/tools/modprobe.sh <checkout> <label> <probe> <tally prefixes> [datapack]` runs a `find:biome:` probe
+in a fresh world and tallies the region by block prefix; the vanilla-land datapack is `scratchpad/biomemods/vanillaland`).
+
+**There are three roads into vanilla's overworld, and CityWorld's own land saw one — and only on four lines.**
+1. **TerraBlender regions** (BoP, BWG, Nyctophobia, VanillaBackport's overlay). `TerraBlenderBridge` harvests them,
+   but `CityWorldClimateBiomeSource.terraBlender()` built it only when the codec's `retrieveRegistryLookup` was
+   `instanceof Registry`. **On 1.21.1 and 1.20.1 it never is** (`MappedRegistry.asLookup()` is a separate object
+   there; on 1.21.11/26.x `Registry extends HolderLookup.RegistryLookup`). So the bridge was silently null on those
+   two lines since they shipped — 0 modded columns of 140,625 with two TerraBlender mods installed. Fix: fall back
+   to the server's registry (`registryOrThrow` on 1.20.1/1.21.1, `lookupOrThrow` elsewhere) and never memoise a
+   "no server yet" null. After: Nyctophobia 2.8% of columns, haunted forest found.
+2. **Datapack world presets** (Terralith, Dreamwoods' Grand Terrain). They rewrite `minecraft:normal` and write
+   their biomes INLINE in its overworld `MultiNoiseBiomeSource`, never into the `minecraft:overworld` parameter
+   list CityWorld read for vanilla land (so vanilla land had Grand Terrain's terrain and none of its biomes).
+   `worldgen/PresetBiomes` reads the preset named by **`world.packPreset`** (default `minecraft:normal`): vanilla
+   land takes its noise settings + biome source from it; CityWorld's land gets its foreign points through the bridge
+   (same `moddedBiomeShare` mechanics). Points come back through `BiomeSource.CODEC` → JSON, not a private field
+   (1.20.1 production is SRG-named). After: Dreamwoods 39.8% of CityWorld-land columns, its trees in the tally.
+3. **Lithostitched** (Regions Unexplored; Terralith's modifiers). It walks the level-stem registry at server start,
+   patches each `NoiseBasedChunkGenerator`'s surface rules and WRAPS its biome source in an `InjectorBiomeSource`
+   (density-function layouts, not climate points). CityWorld's stem is skipped. `worldgen/LithostitchedBridge`
+   hands vanilla land's generator to the same two passes through a one-stem `MappedRegistry` and reads the source
+   back (`vanillaOverworld()` now builds, runs both bridges, THEN binds the handover). After: Regions Unexplored
+   14.5% of vanilla-land columns (0 before). CityWorld's own land cannot take these (nothing to harvest) — logged once.
+
+**Two rules that fell out:** "modded" is `PresetBiomes.isForeign` = not a vanilla `Biomes` constant (the namespace
+test called VanillaBackport's `minecraft:pale_garden` vanilla → never placed; after: 1,229 pale oak logs), and
+`terrablender:deferred_placeholder` — a region's "vanilla here" marker, a real registry entry — is never foreign and
+never listed (it was 15.5% of the columns the moment the bridge worked). Pale oaks growing also proves a foreign
+biome's own features run in CityWorld's wild pass, so Nyctophobia's trees do too (its haunted forest was found
+inside a city, 17 columns — not measured on wild land).
+
+**Structures only in the wild.** `structures.wildernessOnly` (Customize: "Structures: only in the wild") and the
+tag `#cityworld:wilderness_only` (structure sets; Arboria's five lake sets ship in it, optional). Applied in BOTH
+places a start is born — `StructureForecast.compute` skips the set, `createStructures` sets the start back to
+`INVALID_START` after vanilla placed it — judged by `CityWorldGenerator.isWildernessAt`: a DRY plan of the platmap
+(`new PlatMap` with a thread-local that makes `isStructureReserved` ignore the structure reservations, the one
+input that asks the forecast — the cycle this cuts; reserved sites still count). Reservations only ever ADD nature,
+so dry-wild ⇒ real `NatureContext`; dry-built-but-real-wild drops a structure from wild land, the cheap error. The
+dry plan is thrown away (one boolean memoised per platmap). ⚠ The TERRAIN alone was tried first and is NOT a usable
+proxy: the nature pass turns unbuildable chunks into bunkers, shacks and special places before the ladder counts,
+so a mountain full of bunkers plans as LOWRISE — 37 of 472 self-test platmaps disagreed, 17 of them urban. The
+self-test (`plan.<style>.wild.{dry,plan}`) fails on any dry-wild platmap the real plan builds. Concentric-ring sets
+(strongholds) are never filtered: `/locate` and the eyes of ender answer from the ring layout whether or not the
+start exists. **Measured** on exp-1.21.1 with Arboria installed as the datapack it is (its jar has no mods.toml) and
+its five sets allowed: a 9x9-chunk sweep around a located lake bore 6 tagged starts; the normal run removed 1 (a
+built platmap) and kept 5 in the wild, and with every platmap forced built (`-Dcityworld.debug.allBuilt`, exp only)
+it removed all 6 — the detector proved on a positive. ⚠ `LOGGER.debug` lines do NOT reach the dev server's
+`latest.log` (an earlier "0 kept" was the detector being blind): measure with INFO lines, then take them out.
+
+**Lithostitched trap (cost one probe run):** its surface-rule pass edits the registry's `NoiseGeneratorSettings` object
+IN PLACE, and a server builds two vanilla-land generators from the same holder — applied twice, the merged rule
+nests inside a reference to itself and every chunk dies with `StackOverflowError` in `SurfaceRules.apply` (487 in
+one log). `LithostitchedBridge` runs that pass once per settings object (weak identity set) and never over a rule
+that is already a `TransientMergedRule`; the injector pass is per generator and runs every time.
+
+**Not done / open:** a `CityWorldVanillaBiomeSource` world made before 6.11 keeps its registry-list source (fine).
+Lithostitched on CityWorld land. Nyctophobia's trees not seen on wild land (mechanism proven by pale oaks). The
+census shares above are one seed, radius 3000.
+
 ## ▶ Resume here — rivers on CityWorld's own land (2026-10-05 → 10-06, unreleased)
 
 Committed on all six lines: master `3322451d` + `1912bf1a`; each branch adds one drift commit. Owner signed off

@@ -24,7 +24,25 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-10-26, after the 6.9.0 release).** Every checkout is clean and pushed. Open items:
+**▶ Resume here (2026-10-30, overnight: 6.10.0 release in flight, 6.11 biome-mod work on master).**
+- **6.11 (DRAFT, master working tree, unreleased — the owner's overnight ask, from a CurseForge commenter's biome-mod
+  report).** PORTING.md "▶ Resume here — biome mods on both lands" has the design and every measurement. The headline:
+  **TerraBlender biomes never reached CityWorld's own land on 1.21.1 and 1.20.1** (`terraBlender()` needed the codec's
+  lookup to be `instanceof Registry`, which it is only on 1.21.11/26.x; the server's registry is now the fallback —
+  `registryOrThrow` on 1.20.1/1.21.1, `lookupOrThrow` elsewhere). Plus: `PresetBiomes.isForeign` (not a vanilla
+  `Biomes` constant; pale garden now places), `terrablender:deferred_placeholder` excluded, `world.packPreset`
+  (Terralith / Grand Terrain inline biomes on both lands), `LithostitchedBridge` (Regions Unexplored on vanilla land),
+  `structures.wildernessOnly` + `#cityworld:wilderness_only` (Arboria's lakes ship in it) judged by
+  `CityWorldGenerator.isWildernessAt` (terrain only) in both `StructureForecast` and `createStructures`, self-test
+  `plan.<style>.wild.*` + `biome.preset.foreignPoints`. **Test bed:** `../CityWorld-ReForged-worktrees/exp-1.21.1`
+  (scratch worktree of mc1.21.1 with the mods in `run/mods`; `scratchpad/tools/modprobe.sh`). ⚠ The 6.11 work is
+  UNCOMMITTED on master so the 6.10.0 bump can be committed on 6.10 code: `git stash -u` before the bump, pop after.
+  Not measured: Nyctophobia's trees on wild land (mechanism proven by pale oaks); RU on vanilla land (probe queued).
+- **v6.10.0 is released** (2026-10-30 01:12) on all six lines — tag `v6.10.0` at the bump `ae5104a0`, CurseForge
+  9367760–9367765, fleet `DEPLOYED-v6.10.0` on 12 (ZARP opts out), wiki regenerated and pushed. Gates: six self-tests
+  PASS + `--compare`, CI 40982728581 green, halt/exit 0 after the synthetic positive, 1.20.1 SRG names present.
+  **The owner pastes `CURSEFORGE.md`** (6.10.0 headline) into the CurseForge page.
+- Open items:
 - **ZARP** runs the test jar `cityworld-6.8.0-test-a2ee521f+mc26.2.jar` (the CurseForge 6.8.0 jar and older ones sit in
   `LegendQuest ZARP/cityworld-released-backup/`). The owner moves it to the CurseForge 6.8.1 in the app, then deletes the
   test jar and the backup folder. Its instance skips the fleet (`.sablecraft-no-deploy`). Test jars in ZARP are the
