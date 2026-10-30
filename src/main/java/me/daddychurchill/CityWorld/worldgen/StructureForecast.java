@@ -228,6 +228,10 @@ public final class StructureForecast {
                 continue;
             if (!placement.isStructureChunk(state, chunkX, chunkZ))
                 continue;
+            // a set kept to the wild never starts where the city would build, so it reserves nothing there either
+            // (CityWorldChunkGenerator.createStructures takes the real start back out the same way)
+            if (generator.keepsOutOfCities(set) && !generator.isWildernessAt(b.height(), chunkX, chunkZ))
+                continue;
             // vanilla: a set is skipped when one of its structures already started here (from an earlier set)
             boolean already = false;
             for (StructureSet.StructureSelectionEntry e : set.value().structures())
