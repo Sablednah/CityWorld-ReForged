@@ -172,15 +172,22 @@ public final class CityWorldBiomeLookup {
         TerraBlenderBridge bridge = climate.terraBlender();
         if (bridge == null)
             return null;
-        float temperature = (float) (column.temperature * 2.0 - 1.0);
-        float humidity = (float) (column.humidity * 2.0 - 1.0);
-        float continentalness = (float) column.continentalness;
-        float erosion = (float) context.getErosion(blockX, blockZ);
-        float weirdness = (float) context.getWeirdness(blockX, blockZ);
-        // Surface lookup: vanilla's depth is ~0 at the surface and grows downward, and this path only
-        // runs above sea level, so a surface point is the honest query.
-        Holder<Biome> hit = bridge.find(Climate.target(temperature, humidity, continentalness, erosion,
-                0.0F, weirdness));
+        // The decision is made for a CELL, not a column (world.moddedBiomeGrain, 64 blocks): the climate is read at
+        // the cell's centre, nudged by a low-frequency warp so the edges are not a grid. Per column, a foreign
+        // biome's narrow climate box is the nearest point for a few blocks at its edges and the regional share's
+        // lookup tessellates a mod's many close points into slivers — "haunted forests a few blocks across, inside
+        // the city" (owner, 2026-10-30; measured: 36% of patches two chunks or less). A cell is the smallest patch;
+        // neighbouring cells that agree make the big ones. Grain 1 is the old every-column-for-itself.
+        int grain = Math.max(1, context.getSettings().moddedBiomeGrain);
+        int qx = blockX, qz = blockZ;
+        if (grain > 1) {
+            int wx = (int) Math.round(context.getWeirdness(blockX, blockZ) * grain * 0.5);
+            int wz = (int) Math.round(context.getErosion(blockX, blockZ) * grain * 0.5);
+            qx = Math.floorDiv(blockX + wx, grain) * grain + grain / 2;
+            qz = Math.floorDiv(blockZ + wz, grain) * grain + grain / 2;
+            column = COLUMNS.get().at(context, qx, qz);
+        }
+        Holder<Biome> hit = directHit(bridge, context, column, qx, qz);
         if (hit == null)
             return null;
 
@@ -199,10 +206,28 @@ public final class CityWorldBiomeLookup {
         // asked again with vanilla's points removed. The share is regional (see getModdedShare), so this
         // hands a mod whole areas rather than sprinkling it through CityWorld's own ground.
         double share = context.getSettings().moddedBiomeShare;
-        if (share <= 0.0 || context.getModdedShare(blockX, blockZ) >= share)
+        if (share <= 0.0 || context.getModdedShare(qx, qz) >= share)
             return null;
-        return bridge.findModded(Climate.target(temperature, humidity, continentalness, erosion,
-                0.0F, weirdness));
+        return bridge.findModded(target(context, column, qx, qz));
+    }
+
+    /**
+     * The bridge's nearest biome for this column's climate — vanilla's or a mod's. Surface lookup: vanilla's
+     * depth is ~0 at the surface and grows downward, and this path only runs above sea level, so a surface
+     * point is the honest query. Temperature and humidity are CityWorld's {@code 0..1}; vanilla's are {@code -1..1}.
+     */
+    private static @Nullable Holder<Biome> directHit(TerraBlenderBridge bridge, CityWorldGenerator context,
+            Column column, int blockX, int blockZ) {
+        return bridge.find(target(context, column, blockX, blockZ));
+    }
+
+    private static Climate.TargetPoint target(CityWorldGenerator context, Column column, int blockX, int blockZ) {
+        float temperature = (float) (column.temperature * 2.0 - 1.0);
+        float humidity = (float) (column.humidity * 2.0 - 1.0);
+        float continentalness = (float) column.continentalness;
+        float erosion = (float) context.getErosion(blockX, blockZ);
+        float weirdness = (float) context.getWeirdness(blockX, blockZ);
+        return Climate.target(temperature, humidity, continentalness, erosion, 0.0F, weirdness);
     }
 
     // --- the per-column cache -------------------------------------------------------------------
