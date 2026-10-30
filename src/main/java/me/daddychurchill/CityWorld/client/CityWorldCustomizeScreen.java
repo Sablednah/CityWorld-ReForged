@@ -792,7 +792,10 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
 
     private static <T> CycleButton<T> cycle(String label, T[] values, T init,
             java.util.function.Function<T, Component> render, Consumer<T> setter) {
-        return CycleButton.<T>builder(render).withInitialValue(init).withValues(values)
+        // ⚠ withValues BEFORE withInitialValue: this line's builder resolves the initial index against the value list
+        // the moment it is given, so the old order left every reopened Customize screen's Style button on index 0
+        // whatever it showed — one swallowed click, then Apocalypse/Classic ping-pong (owner, 2026-10-30, on 1.21.1)
+        return CycleButton.<T>builder(render).withValues(values).withInitialValue(init)
                 .create(0, 0, WIDTH, HEIGHT, Component.literal(label), (b, v) -> setter.accept(v));
     }
 
