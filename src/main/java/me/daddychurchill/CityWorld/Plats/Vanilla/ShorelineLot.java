@@ -240,7 +240,7 @@ public class ShorelineLot extends IsolatedLot {
 	protected void generateActualBlocks(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk,
 			DataContext context, int platX, int platZ) {
 		dress(generator, chunk);
-		if (!allowsWildDecoration())
+		if (!vanillaDecoratesHere(generator)) // which, for a STRUCTURE lot, is always: vanilla never reaches it
 			me.daddychurchill.CityWorld.Plats.River.Waterside.freeze(chunk, generator.streetLevel + 10, generator.seaLevel - 40);
 	}
 
