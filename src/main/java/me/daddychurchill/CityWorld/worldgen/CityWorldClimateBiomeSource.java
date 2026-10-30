@@ -123,29 +123,51 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
         if (!bridgeHarvested)
             synchronized (this) {
                 if (!bridgeHarvested) {
+                    // ⚠ Per-version: on 1.21.11 and 26.x Registry implements HolderLookup.RegistryLookup, so the
+                    // codec's lookup IS the frozen registry. On 1.21.1 and 1.20.1 it is MappedRegistry's separate
+                    // lookup object, and this instanceof is false — which was the WHOLE bridge silently off on those
+                    // two lines from the day they shipped (a player's biome mods "not working", 2026-10-29). The
+                    // server's registry access is the fallback; before a server exists the answer is "not yet", not
+                    // "never", so nothing is memoised.
                     net.minecraft.core.Registry<Biome> registry = biomeLookup instanceof net.minecraft.core.Registry<Biome> r
                             ? r : serverBiomeRegistry();
-                    if (registry != null) {
-                        bridge = TerraBlenderBridge.harvest(registry, biomes);
-                        bridgeHarvested = true;
-                    }
-                    // No registry to harvest from yet (26.3 decode, no server up): answer "none" for
-                    // now and try again on the next ask, rather than settling for nothing for good.
+                    if (registry == null)
+                        return null;
+                    bridge = TerraBlenderBridge.harvest(registry, biomes, presetPoints);
+                    bridgeHarvested = true;
                 }
             }
         return bridge;
     }
 
-    /**
-     * The running server's frozen biome registry, or null before there is one. 26.3 hands the codec a
-     * getter rather than the registry (see {@link #CODEC}); by the time anything asks
-     * {@code possibleBiomes()} the server exists and its registry is the same frozen one.
-     */
     private static net.minecraft.core.@org.jspecify.annotations.Nullable Registry<Biome> serverBiomeRegistry() {
         var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
-        if (server == null)
-            return null;
-        return server.registryAccess().lookupOrThrow(Registries.BIOME);
+        return server == null ? null : server.registryAccess().lookupOrThrow(Registries.BIOME);
+    }
+
+    /** The pack's own overworld climate points ({@link PresetBiomes}), for CityWorld's land. May be empty. */
+    private volatile List<com.mojang.datafixers.util.Pair<Climate.ParameterPoint, Holder<Biome>>> presetPoints = List.of();
+
+    /** How many of the pack preset's points name a foreign biome (diagnostics: the self-test reports it). */
+    public long foreignPresetPoints() {
+        return presetPoints.stream().filter(p -> PresetBiomes.isForeign(p.getSecond())).count();
+    }
+
+    /**
+     * Offers the pack's world-preset biomes to the bridge. Must come before the first {@link #terraBlender()}
+     * — the chunk generator calls it at {@code createState}, ahead of vanilla's {@code possibleBiomes()} memo;
+     * a later offer is logged and ignored rather than half-applied.
+     */
+    public void offerPreset(List<com.mojang.datafixers.util.Pair<Climate.ParameterPoint, Holder<Biome>>> points) {
+        synchronized (this) {
+            if (bridgeHarvested) {
+                if (!points.isEmpty() && !points.equals(presetPoints))
+                    me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                            "CityWorld: the pack's preset biomes arrived after the biome bridge was built; ignored");
+                return;
+            }
+            presetPoints = List.copyOf(points);
+        }
     }
 
     private volatile SurfaceRegions.@org.jspecify.annotations.Nullable Pools surfacePools;

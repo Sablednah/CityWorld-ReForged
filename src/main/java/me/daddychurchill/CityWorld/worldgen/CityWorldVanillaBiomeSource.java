@@ -30,6 +30,8 @@ public class CityWorldVanillaBiomeSource extends BiomeSource {
             .apply(i, CityWorldVanillaBiomeSource::new));
 
     private final BiomeSource source;
+    /** The source answering: the preset's, or the one the chunk generator binds from the pack's world preset. */
+    private volatile BiomeSource delegate;
     private volatile Climate.Sampler sampler;
 
     public CityWorldVanillaBiomeSource(BiomeSource source) {
@@ -43,7 +45,27 @@ public class CityWorldVanillaBiomeSource extends BiomeSource {
 
     /** This world's real climate; rebinding is allowed (a client makes one generator per world it opens). */
     public void bind(Climate.Sampler sampler) {
+        bind(source, sampler);
+    }
+
+    /** As above, answering from {@code delegate} — the pack's own overworld source — instead of the preset's. */
+    public void bind(BiomeSource delegate, Climate.Sampler sampler) {
+        this.delegate = delegate;
         this.sampler = sampler;
+    }
+
+    private BiomeSource answering() {
+        BiomeSource bound = delegate;
+        return bound != null ? bound : source;
+    }
+
+    /**
+     * Never memoised here: the delegate is bound when the chunk generator first builds vanilla's generator, which is
+     * at {@code createState} but may follow an earlier ask, and the delegate's own set is memoised already.
+     */
+    @Override
+    public java.util.Set<Holder<Biome>> possibleBiomes() {
+        return answering().possibleBiomes();
     }
 
     @Override
@@ -53,13 +75,13 @@ public class CityWorldVanillaBiomeSource extends BiomeSource {
 
     @Override
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
-        return source.possibleBiomes().stream().filter(java.util.Objects::nonNull);
+        return answering().possibleBiomes().stream().filter(java.util.Objects::nonNull);
     }
 
     /** 26.3: biomes are asked of a resolver; this one ignores the sampler it is handed, as above. */
     @Override
     public net.minecraft.world.level.biome.BiomeResolver createResolver(Climate.Sampler handed) {
         Climate.Sampler real = sampler;
-        return source.createResolver(real != null ? real : handed);
+        return answering().createResolver(real != null ? real : handed);
     }
 }

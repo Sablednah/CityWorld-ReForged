@@ -538,8 +538,25 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 local = vanillaOverworld;
                 if (local == null) {
                     var registries = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess();
-                    var settings = registries.lookupOrThrow(Registries.NOISE_SETTINGS)
+                    Holder<net.minecraft.world.level.levelgen.NoiseGeneratorSettings> settings = registries
+                            .lookupOrThrow(Registries.NOISE_SETTINGS)
                             .getOrThrow(net.minecraft.world.level.levelgen.NoiseGeneratorSettings.OVERWORLD);
+                    // The land the pack gave vanilla: its world preset's overworld generator carries the noise settings
+                    // and the biome source the pack put there (PresetBiomes has the why). Blank keeps the registry
+                    // entries, as every vanilla-land world before 6.11.
+                    BiomeSource packSource = null;
+                    String presetId = resolvedSettings().world().packPreset();
+                    var packOverworld = PresetBiomes.overworldOf(registries, presetId);
+                    if (packOverworld.isPresent()) {
+                        settings = packOverworld.get().generatorSettings();
+                        packSource = packOverworld.get().getBiomeSource();
+                        me.daddychurchill.CityWorld.CityWorldMod.LOGGER.info(
+                                "CityWorld: vanilla land follows world preset {}: noise settings {}, {} with {} biomes",
+                                presetId, settings.unwrapKey().map(k -> k.identifier().toString()).orElse("inline"),
+                                packSource.getClass().getSimpleName(), packSource.possibleBiomes().size());
+                    } else if (presetId != null && !presetId.isBlank())
+                        me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                                "CityWorld: world preset {} has no noise overworld; vanilla land uses vanilla's own", presetId);
                     RandomState random = RandomState.create(registries.lookupOrThrow(Registries.NOISE), levelSeed,
                             settings.value()); // 26.3: see vanillaEnd
                     // 26.3: a climate sampler belongs to a sampler context, and a caching context is stateful; this one
@@ -550,27 +567,31 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     // handed is a dummy that answers zero everywhere; the wrapper asks with this world's real one.
                     // The first presets wrapped vanilla's source in cityworld:vanilla; a world made from Customize
                     // or a settings datapack keeps CityWorld's own source, which hands over to vanilla's from here.
-                    BiomeSource inner;
-                    if (this.biomeSource instanceof CityWorldVanillaBiomeSource wrapped) {
-                        wrapped.bind(shared);
-                        inner = wrapped.source();
-                    } else {
-                        inner = net.minecraft.world.level.biome.MultiNoiseBiomeSource.createFromPreset(
-                                registries.lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST).getOrThrow(
-                                        net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists.OVERWORLD));
-                        if (this.biomeSource instanceof VanillaHandover handover)
-                            handover.bindVanilla(inner, shared);
-                        else
-                            me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
-                                    "CityWorld: vanilla terrain with a {} biome source — structures and features will "
-                                            + "be judged by CityWorld's biomes, not the land's",
-                                    this.biomeSource.getClass().getSimpleName());
-                    }
+                    BiomeSource inner = packSource != null ? packSource
+                            : this.biomeSource instanceof CityWorldVanillaBiomeSource wrapped ? wrapped.source()
+                            : net.minecraft.world.level.biome.MultiNoiseBiomeSource.createFromPreset(
+                                    registries.lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST).getOrThrow(
+                                            net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists.OVERWORLD));
                     var built = new net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator(inner, settings);
                     // As TerraBlender would have done for a vanilla overworld stem (see TerraBlenderBridge.initializeOverworld),
-                    // before anything asks the source for biomes
-                    TerraBlenderBridge.initializeOverworld(registries, registries.lookupOrThrow(Registries.DIMENSION_TYPE)
-                            .getOrThrow(net.minecraft.world.level.dimension.BuiltinDimensionTypes.OVERWORLD), built, levelSeed);
+                    // before anything asks the source for biomes...
+                    Holder<net.minecraft.world.level.dimension.DimensionType> overworldType = registries
+                            .lookupOrThrow(Registries.DIMENSION_TYPE)
+                            .getOrThrow(net.minecraft.world.level.dimension.BuiltinDimensionTypes.OVERWORLD);
+                    TerraBlenderBridge.initializeOverworld(registries, overworldType, built, levelSeed);
+                    // ...and as Lithostitched (Regions Unexplored) would have: it may WRAP the source, so the source is
+                    // read back from the generator before anything binds to it
+                    LithostitchedBridge.initializeOverworld(registries, overworldType, built, levelSeed);
+                    inner = built.getBiomeSource();
+                    if (this.biomeSource instanceof CityWorldVanillaBiomeSource wrapped)
+                        wrapped.bind(inner, shared);
+                    else if (this.biomeSource instanceof VanillaHandover handover)
+                        handover.bindVanilla(inner, shared);
+                    else
+                        me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                                "CityWorld: vanilla terrain with a {} biome source — structures and features will "
+                                        + "be judged by CityWorld's biomes, not the land's",
+                                this.biomeSource.getClass().getSimpleName());
                     // ...and as Alex's Caves does for one at server start (see ModdedBiomeSources)
                     ModdedBiomeSources.prepareOverworld(inner, registries, levelSeed);
                     LevelHeightAccessor bounds = LevelHeightAccessor.create(settings.value().noiseSettings().minY(),
@@ -2153,6 +2174,47 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         if (local != null)
             local.bind();
         super.createStructures(registryAccess, structureState, structureManager, chunk, templateManager, dimension);
+        // A set kept to the wild (settings structures.wildernessOnly, or #cityworld:wilderness_only) is taken back out
+        // of a chunk the city would build: Arboria's ponds are structures, and every one of them cut a city in two
+        // (a player's report, 2026-10-29). Done after vanilla's placement, with its own public setter, so the start
+        // is INVALID where the planner's forecast (StructureForecast.compute) never offered it either, and neither
+        // reserves nor builds. The plan's "would build" is judged from the terrain alone (CityWorldGenerator
+        // .isWildernessAt), since the plan itself asks the forecast.
+        if (!wildernessOnlyStructures.isEmpty()) {
+            boolean wild = isWildernessAt(chunk, chunk.getPos().x(), chunk.getPos().z());
+            for (var start : java.util.List.copyOf(chunk.getAllStarts().entrySet()))
+                if (start.getValue().isValid() && wildernessOnlyStructures.contains(start.getKey())) {
+                    if (wild) { // the measurement's control: a tagged start born where it may stay
+                        me.daddychurchill.CityWorld.CityWorldMod.LOGGER.debug("CityWorld: {} stays, the wild at chunk {}",
+                                start.getKey().getClass().getSimpleName(), chunk.getPos());
+                        continue;
+                    }
+                    chunk.setStartForStructure(start.getKey(),
+                            net.minecraft.world.level.levelgen.structure.StructureStart.INVALID_START);
+                    me.daddychurchill.CityWorld.CityWorldMod.LOGGER.debug("CityWorld: kept {} out of the city at chunk {}",
+                            start.getKey().getClass().getSimpleName(), chunk.getPos());
+                }
+        }
+    }
+
+    /** Structure sets kept to the wild, set by set; {@code structures.wildernessOnly} keeps every placed set there. */
+    public static final TagKey<StructureSet> WILDERNESS_ONLY_STRUCTURE_SETS = TagKey.create(Registries.STRUCTURE_SET,
+            Identifier.fromNamespaceAndPath("cityworld", "wilderness_only"));
+    private volatile boolean wildernessOnlyAll;
+    private volatile java.util.Set<ResourceKey<StructureSet>> wildernessOnlySets = java.util.Set.of();
+    private volatile java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> wildernessOnlyStructures = java.util.Set.of();
+
+    /** Whether this set may only start in the wild (the forecast asks before it computes a start). */
+    public boolean keepsOutOfCities(Holder<StructureSet> set) {
+        return wildernessOnlyAll || set.unwrapKey().map(wildernessOnlySets::contains).orElse(false);
+    }
+
+    /** Whether the land at this chunk is wild to the planner. On vanilla land everything outside a city site is (and
+     *  a site starts no structure at all, above). */
+    public boolean isWildernessAt(LevelHeightAccessor level, int chunkX, int chunkZ) {
+        if (vanillaTerrain())
+            return true;
+        return context(level).isWildernessAt(chunkX, chunkZ);
     }
 
     /**
@@ -2217,10 +2279,39 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         boolean vanillaNow = vanillaTerrain() && net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer() != null;
         if (vanillaNow)
             vanillaOverworld();
+        // The pack's overworld biomes for CityWorld's own land, offered before possibleBiomes() memoises (createForNormal
+        // asks it): Terralith's and Grand Terrain's biomes live inline in the minecraft:normal preset, nowhere else.
+        if (!vanillaTerrain() && this.biomeSource instanceof CityWorldClimateBiomeSource climate
+                && net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer() != null)
+            climate.offerPreset(PresetBiomes.points(
+                    net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(),
+                    resolvedSettings().world().packPreset()));
         ChunkGeneratorStructureState state = ChunkGeneratorStructureState.createForNormal(
                 vanillaNow ? vanillaOverworldRandom : randomState, seed,
                 getOrigin(vanillaNow ? vanillaOverworldRandom : randomState), this.biomeSource,
                 onlyAllowed(lookup, choice, vanillaTerrain()));
+        // which of the placed sets keep to the wild (see createStructures): all of them, or the tag's
+        {
+            HolderSet<StructureSet> tagged = lookup.get(WILDERNESS_ONLY_STRUCTURE_SETS)
+                    .<HolderSet<StructureSet>>map(named -> named).orElseGet(HolderSet::direct);
+            java.util.Set<ResourceKey<StructureSet>> keys = new java.util.HashSet<>();
+            java.util.Set<net.minecraft.world.level.levelgen.structure.Structure> kept = new java.util.HashSet<>();
+            for (Holder<StructureSet> set : state.possibleStructureSets())
+                // never a concentric-ring set (strongholds): vanilla's /locate and the eyes of ender answer from the
+                // ring layout whether or not the start exists, so removing one would send a player to nothing
+                if ((choice.wildernessOnly() || tagged.contains(set)) && !(set.value().placement()
+                        instanceof net.minecraft.world.level.levelgen.structure.placement.ConcentricRingsStructurePlacement)) {
+                    set.unwrapKey().ifPresent(keys::add);
+                    for (StructureSet.StructureSelectionEntry e : set.value().structures())
+                        kept.add(e.structure().value());
+                }
+            wildernessOnlyAll = choice.wildernessOnly();
+            wildernessOnlySets = java.util.Set.copyOf(keys);
+            wildernessOnlyStructures = java.util.Set.copyOf(kept);
+            if (!kept.isEmpty())
+                me.daddychurchill.CityWorld.CityWorldMod.LOGGER.info("CityWorld: {} structure set(s) keep to the wild{}",
+                        keys.size(), choice.wildernessOnly() ? " (structures.wildernessOnly)" : " (#cityworld:wilderness_only)");
+        }
         if (!choice.allow().isEmpty() || !choice.deny().isEmpty()) {
             // What a server owner needs to see once: the lists were read, and which ids name nothing here
             // (a set of a mod that is not installed is normal in a shared settings file, and ignored).
