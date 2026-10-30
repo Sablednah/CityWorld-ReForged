@@ -32,6 +32,17 @@ public interface CityWorldBiomes {
                 ? net.minecraft.world.level.biome.Biomes.FROZEN_RIVER : net.minecraft.world.level.biome.Biomes.RIVER);
     }
 
+    /**
+     * A river's biome where it runs through THIS land biome: frozen when the bank's biome is cold enough to snow
+     * (vanilla's own threshold, {@code getBaseTemperature() < 0.15}). The climate number alone put an open river
+     * through a snowy Dreamwoods grove the modded share had placed on its banks (owner, 2026-10-30): the bank
+     * biome is what the player sees, so it decides.
+     */
+    default Holder<Biome> river(Holder<Biome> bank) {
+        return biomeRegistry().getOrThrow(bank.value().getBaseTemperature() < 0.15F
+                ? net.minecraft.world.level.biome.Biomes.FROZEN_RIVER : net.minecraft.world.level.biome.Biomes.RIVER);
+    }
+
     /** The river biomes, for a source's possible biomes. */
     default java.util.stream.Stream<Holder<Biome>> riverBiomes() {
         return java.util.stream.Stream.of(river(1), river(0));

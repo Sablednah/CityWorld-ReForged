@@ -71,8 +71,15 @@ public final class CityWorldBiomeLookup {
         int river = context.shapeProvider.riverWaterAt(blockX, blockZ);
         if (river != me.daddychurchill.CityWorld.worldgen.RiverNetwork.NONE && blockY >= column.terrainY - 4
                 && blockY <= river + 16)
-            return source.river(column.temperature);
+            // frozen or open by the biome its banks would have, judged just above the water (land, not sea bed)
+            return source.river(landBiomeAt(source, context, column, blockX, Math.max(river, context.seaLevel) + 1, blockZ));
 
+        return landBiomeAt(source, context, column, blockX, blockY, blockZ);
+    }
+
+    /** The column's biome at this height with no river running through it: a pool patch, a mod's, or the matrix's. */
+    private static Holder<Biome> landBiomeAt(CityWorldBiomes source, CityWorldGenerator context, Column column,
+            int blockX, int blockY, int blockZ) {
         // Above the waterline, an installed TerraBlender mod may have a biome for this climate. Opt-in,
         // and only for land: oceans, shores and peaks stay CityWorld's, because those are decided by
         // terrain facts we know exactly and a climate lookup would only get wrong.
