@@ -169,8 +169,42 @@ public final class TerraBlenderBridge {
      * {@link Registry} because that is what {@code Region.addBiomes} takes.
      */
     public static @Nullable TerraBlenderBridge harvest(Registry<Biome> biomeRegistry, HolderGetter<Biome> biomes) {
-        if (!PRESENT)
+        return harvest(biomeRegistry, biomes, List.of());
+    }
+
+    /**
+     * As above, with the pack's own world-preset points ({@link PresetBiomes}) alongside TerraBlender's — the
+     * one list every foreign biome is looked up in, however its mod reached vanilla. Without TerraBlender the
+     * preset points alone make the bridge.
+     */
+    public static @Nullable TerraBlenderBridge harvest(Registry<Biome> biomeRegistry, HolderGetter<Biome> biomes,
+            List<Pair<Climate.ParameterPoint, Holder<Biome>>> extra) {
+        List<Pair<Climate.ParameterPoint, Holder<Biome>>> collected = new ArrayList<>();
+        if (PRESENT)
+            collected.addAll(regionPoints(biomeRegistry, biomes));
+        // The preset's points join only when they bring a foreign biome: vanilla's own preset is every vanilla
+        // point, and a bridge made of those alone would gate the surface pools (pointFor) in a world no mod
+        // touched — a plan change for everyone, for nothing.
+        if (extra.stream().anyMatch(p -> isModded(p.getSecond())))
+            collected.addAll(extra);
+        // a region's placeholder ("vanilla's biome here") is not a biome to place: out before anything lists it
+        collected.removeIf(p -> p.getSecond().unwrapKey().map(PresetBiomes::isPlaceholder).orElse(false));
+        if (collected.isEmpty())
             return null;
+        java.util.LinkedHashSet<Holder<Biome>> distinct = new java.util.LinkedHashSet<>();
+        for (Pair<Climate.ParameterPoint, Holder<Biome>> p : collected)
+            distinct.add(p.getSecond());
+        // The foreign-only view, for the reserved share — see findModded.
+        List<Pair<Climate.ParameterPoint, Holder<Biome>>> mods = collected.stream()
+                .filter(p -> isModded(p.getSecond())).toList();
+        return new TerraBlenderBridge(new Climate.ParameterList<>(collected),
+                mods.isEmpty() ? null : new Climate.ParameterList<>(mods), List.copyOf(distinct),
+                List.copyOf(collected));
+    }
+
+    /** Every (point, biome) every TerraBlender overworld region declares; empty on any surprise. */
+    private static List<Pair<Climate.ParameterPoint, Holder<Biome>>> regionPoints(Registry<Biome> biomeRegistry,
+            HolderGetter<Biome> biomes) {
         try {
             Class<?> regionsClass = Class.forName(REGIONS);
             @SuppressWarnings("unchecked")
@@ -180,15 +214,14 @@ public final class TerraBlenderBridge {
                 if ("OVERWORLD".equals(((Enum<?>) constant).name()))
                     overworld = constant;
             if (overworld == null)
-                return null;
+                return List.of();
 
             Method get = regionsClass.getMethod("get", regionTypeClass);
             Object regionList = get.invoke(null, overworld);
             if (!(regionList instanceof List<?> regions) || regions.isEmpty())
-                return null;
+                return List.of();
 
             List<Pair<Climate.ParameterPoint, Holder<Biome>>> collected = new ArrayList<>();
-            java.util.LinkedHashSet<Holder<Biome>> distinct = new java.util.LinkedHashSet<>();
 
             for (Object region : regions) {
                 Method addBiomes = region.getClass().getMethod("addBiomes", Registry.class,
@@ -205,11 +238,7 @@ public final class TerraBlenderBridge {
                         return;
                     @SuppressWarnings("unchecked")
                     ResourceKey<Biome> biomeKey = (ResourceKey<Biome>) key;
-                    biomes.get(biomeKey).ifPresent(holder -> {
-                        Holder<Biome> h = holder;
-                        collected.add(Pair.of(point, h));
-                        distinct.add(h);
-                    });
+                    biomes.get(biomeKey).ifPresent(holder -> collected.add(Pair.of(point, holder)));
                 };
                 try {
                     addBiomes.invoke(region, biomeRegistry, sink);
@@ -218,17 +247,10 @@ public final class TerraBlenderBridge {
                 }
             }
 
-            if (collected.isEmpty())
-                return null;
-            // The modded-only view, for the reserved share — see findModded.
-            List<Pair<Climate.ParameterPoint, Holder<Biome>>> mods = collected.stream()
-                    .filter(p -> isModded(p.getSecond())).toList();
-            return new TerraBlenderBridge(new Climate.ParameterList<>(collected),
-                    mods.isEmpty() ? null : new Climate.ParameterList<>(mods), List.copyOf(distinct),
-                    List.copyOf(collected));
+            return collected;
         } catch (Throwable t) {
-            // Any surprise at all — API moved, mod half-loaded — means no bridge, not a broken world.
-            return null;
+            // Any surprise at all — API moved, mod half-loaded — means no regions, not a broken world.
+            return List.of();
         }
     }
 
@@ -288,6 +310,6 @@ public final class TerraBlenderBridge {
 
     /** Whether a biome came from a mod rather than {@code minecraft:}. */
     public static boolean isModded(Holder<Biome> biome) {
-        return biome.unwrapKey().map(k -> !k.location().toString().startsWith("minecraft:")).orElse(false);
+        return PresetBiomes.isForeign(biome);
     }
 }
