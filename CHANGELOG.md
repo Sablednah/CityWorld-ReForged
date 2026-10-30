@@ -29,6 +29,12 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   **vanilla land** takes its terrain noise and biome source from it, and **CityWorld's land** offers the foreign
   biomes it declares through `moddedBiomeShare`, exactly as TerraBlender's. Measured with Dreamwoods + Grand
   Terrain on 1.21.1: 0 → 18.9% of vanilla-land columns and 0 → 39.8% of CityWorld-land columns, trees included.
+- **A mod's biome comes in patches, not slivers.** It is decided per cell (`world.moddedBiomeGrain`, 64 blocks, at
+  a warped centre so edges are not a grid) instead of per column, where a narrow climate box won for a few blocks
+  at its edges. Measured over 4 km on 1.21.1: patches of two chunks or less fell from 38% to 4% (Dreamwoods) and
+  36% to 4% (Nyctophobia), median patch 4 → 28 chunks, total coverage unchanged. `1` restores the old look.
+- **A river freezes by the biome on its banks**, not by CityWorld's temperature number: a snowy Dreamwoods grove
+  had an open river through it.
 - **Lithostitched mods (Regions Unexplored) on vanilla land.** Lithostitched patches surface rules and wraps the biome
   source of every vanilla noise generator at server start and skipped CityWorld's; vanilla land's generator now goes
   through the same two passes. Measured with Regions Unexplored on 1.21.1: 0 → 14.5% of vanilla-land columns. Its

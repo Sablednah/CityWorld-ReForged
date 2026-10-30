@@ -135,6 +135,16 @@ built platmap) and kept 5 in the wild, and with every platmap forced built (`-Dc
 it removed all 6 — the detector proved on a positive. ⚠ `LOGGER.debug` lines do NOT reach the dev server's
 `latest.log` (an earlier "0 kept" was the detector being blind): measure with INFO lines, then take them out.
 
+**Patch size (owner's first look, 2026-10-30 afternoon):** haunted forests were "a few blocks across, inside the
+city". Per-column foreign lookups sliver: a direct win at the edge of a narrow climate box, and the share's
+`findModded` tessellating a mod's many close points. Fix: the foreign decision is made per CELL
+(`world.moddedBiomeGrain` 64, climate read at the cell's centre warped by weirdness/erosion × grain/2, for both the
+direct and the share lookup). `scratchpad/tools/patch_sizes.py` over `survey:biomes` CSVs (4 km, a chunk a pixel):
+patches ≤ 2 chunks 38% → 4% (Dreamwoods), 36% → 4% (Nyctophobia), medians 6 → 20 and 4 → 28 chunks, coverage 47.1% →
+46.5%. A first attempt (direct win must also win at the cell centre, share untouched) moved Dreamwoods only — the
+share path was the Nyctophobia sliver maker. Rivers: frozen by the bank biome's `getBaseTemperature() < 0.15`,
+not CityWorld's climate number (an open river through a snowy Dreamwoods grove).
+
 **Lithostitched trap (cost one probe run):** its surface-rule pass edits the registry's `NoiseGeneratorSettings` object
 IN PLACE, and a server builds two vanilla-land generators from the same holder — applied twice, the merged rule
 nests inside a reference to itself and every chunk dies with `StackOverflowError` in `SurfaceRules.apply` (487 in
