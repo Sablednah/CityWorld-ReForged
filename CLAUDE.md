@@ -25,25 +25,21 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 ## ▶ Where this is, and what's next (2026-10-15)
 
 **▶ Resume here (2026-10-30, overnight: 6.10.0 release in flight, 6.11 biome-mod work on master).**
-- **6.11 (DRAFT, master working tree, unreleased — the owner's overnight ask, from a CurseForge commenter's biome-mod
-  report).** PORTING.md "▶ Resume here — biome mods on both lands" has the design and every measurement. The headline:
-  **TerraBlender biomes never reached CityWorld's own land on 1.21.1 and 1.20.1** (`terraBlender()` needed the codec's
-  lookup to be `instanceof Registry`, which it is only on 1.21.11/26.x; the server's registry is now the fallback —
-  `registryOrThrow` on 1.20.1/1.21.1, `lookupOrThrow` elsewhere). Plus: `PresetBiomes.isForeign` (not a vanilla
-  `Biomes` constant; pale garden now places), `terrablender:deferred_placeholder` excluded, `world.packPreset`
-  (Terralith / Grand Terrain inline biomes on both lands), `LithostitchedBridge` (Regions Unexplored on vanilla land),
-  `structures.wildernessOnly` + `#cityworld:wilderness_only` (Arboria's lakes ship in it) judged by
-  `CityWorldGenerator.isWildernessAt` (terrain only) in both `StructureForecast` and `createStructures`, self-test
-  `plan.<style>.wild.*` + `biome.preset.foreignPoints`. **Test bed:** `../CityWorld-ReForged-worktrees/exp-1.21.1`
-  (scratch worktree of mc1.21.1 with the mods in `run/mods`; `scratchpad/tools/modprobe.sh`). Committed on master as
-  `DRAFT: biome mods on both lands…` (`f4e272c0`, CI 40991339527 green incl. same-seed) and cherry-picked, compiling,
-  onto all five branches (26.3: no `surfaceRule()` accessor, reflective; 1.20.1: Forge `ModList`, `isFor`, no
-  `RegistrationInfo`). Branch self-tests were running at ~02:30; push the branches once they pass, then it is a
-  6.11.0 release when the owner says so (CURSEFORGE.md headline + wiki + WEBSITE.md still to write). Measured on 1.21.1
-  (`PORTING.md`): Nyctophobia 0 → 2.8% of columns, pale oak 0 → 1,229 logs, Dreamwoods 0 → 39.8% (CityWorld land) /
-  18.9% (vanilla), Regions Unexplored 0 → 14.5% (vanilla), Arboria lakes 1 of 6 removed from a built platmap (6 of 6
-  with every platmap forced built). Not measured: Nyctophobia's trees on wild land (its haunted forest was found inside
-  a city); the dry-plan rule in game.
+- **v6.11.0 is released** (2026-10-30 evening) on all six lines — tag `v6.11.0` at the bump `7411f2b4`, CurseForge
+  9377104–9377109, fleet `DEPLOYED-v6.11.0` (ZARP opts out), wiki pushed: **your biome mods, in the city too.**
+  PORTING.md "▶ Resume here — biome mods on both lands" has every measurement. (1) TerraBlender biomes never reached
+  CityWorld's own land on 1.21.1/1.20.1 (`instanceof Registry` false there; server-registry fallback). (2) foreign =
+  not a vanilla `Biomes` constant (pale garden places); `terrablender:deferred_placeholder` excluded. (3)
+  `world.packPreset` (Terralith, Grand Terrain inline biomes, both lands). (4) `LithostitchedBridge` (Regions
+  Unexplored, vanilla land; surface-rule pass once per settings object). (5) `world.moddedBiomeGrain` 64: the foreign
+  decision per warped cell — patches ≤2 chunks 38%→4%. (6) rivers freeze by the bank biome; quays freeze whenever
+  vanilla won't decorate them (`PlatLot.vanillaDecoratesHere`, the one gate). (7) `structures.wildernessOnly` +
+  `#cityworld:wilderness_only` judged by a DRY plan without structure reservations (terrain share is NOT a proxy:
+  bunkers on a mountain plan as lowrise); strongholds never filtered. (8) 1.21.1/1.20.1 only: CycleButton
+  `withValues` before `withInitialValue` (Style button ping-ponged). Test bed `../CityWorld-ReForged-worktrees/exp-1.21.1`
+  (mods in `run/mods`, `scratchpad/tools/modprobe.sh`, `patch_sizes.py`). Gates: six self-tests PASS + `--compare`,
+  CI 41126015138 green, halt/exit 0 after the positive, 1.20.1 SRG names. Owner playtested CityWorld and vanilla land.
+  Not measured: the dry-plan rule in game. **The owner pastes `CURSEFORGE.md`** (6.11.0 headline).
 - **v6.10.0 is released** (2026-10-30 01:12) on all six lines — tag `v6.10.0` at the bump `ae5104a0`, CurseForge
   9367760–9367765, fleet `DEPLOYED-v6.10.0` on 12 (ZARP opts out), wiki regenerated and pushed. Gates: six self-tests
   PASS + `--compare`, CI 40982728581 green, halt/exit 0 after the synthetic positive, 1.20.1 SRG names present.
