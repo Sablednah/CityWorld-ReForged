@@ -58,6 +58,8 @@ emit PALETTES.md                 "Building-Palettes" \
     "> Which blocks build the cities, and how to add your own mod's. Source: \`PALETTES.md\`."
 emit LOOT.md                     "Loot-Tables" \
     "> What CityWorld's chests hold, how to change it, and every table. Source: \`LOOT.md\`."
+emit BIOMES.md                   "Biome-Mods" \
+    "> Biome mods and biome datapacks with CityWorld: what works where, and the datapack recipes. Source: \`BIOMES.md\`."
 emit NODES.md                    "Permission-Nodes" \
     "> Permission nodes for servers. Source: \`NODES.md\`."
 
@@ -82,6 +84,9 @@ MinecraftForge on 1.20.1.
 - **[Building Palettes](Building-Palettes)** — which blocks build the cities, and how to add your own.
 - **[Loot Tables](Loot-Tables)** — what the cities' chests hold, how a modpack adds its own items, and every
   table CityWorld uses.
+- **[Biome Mods](Biome-Mods)** — Biomes O' Plenty, Terralith, Regions Unexplored and friends: which kinds work on
+  which land, the settings that steer them, and the datapack recipes (structures only in the wild, forcing a biome,
+  giving it its ground).
 - **[Commands](Commands)** — including `/cwlocate`, which is the quickest way to tell whether a
   datapack change actually took effect.
 - **[Permission Nodes](Permission-Nodes)** — for servers.

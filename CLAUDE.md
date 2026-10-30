@@ -711,7 +711,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
   `isEmpty`, so a chandelier chain went through one).
 - **⚠ Every release updates the wiki: `scripts/gen-wiki.sh --push`** (owner, 2026-10-26: *"fold 'update the wiki'
   into the rollout process"*). The wiki is GENERATED from `CURSEFORGE-CONFIGURATION.md`, `CURSEFORGE-COMMANDS.md`,
-  `PALETTES.md`, `LOOT.md` and `NODES.md`. It had gone a month and fifteen releases stale, with no loot page and
+  `PALETTES.md`, `LOOT.md`, `BIOMES.md` (biome mods and biome datapacks, 6.11) and `NODES.md`. It had gone a month and fifteen releases stale, with no loot page and
   none of 5.19–6.8's settings, when a user was about to be pointed at it. So the release recipe is: user-facing
   changes go into those docs in the release's docs commit (a new setting -> its row in CURSEFORGE-CONFIGURATION.md;
   a new or changed loot table -> LOOT.md, and `scripts/gen_style_loot.py`/`gen_shop_loot.py` if generated), then
