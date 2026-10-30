@@ -600,7 +600,8 @@ public record CityWorldSettingsData(
             double climateWarmth,
             double biomeScale,
             double moddedBiomeShare,
-            String packPreset) {
+            String packPreset,
+            int moddedBiomeGrain) {
 
         /**
          * How far the temperature field leans warm, {@code 0.0} (unchanged) to about {@code 0.5}.
@@ -663,9 +664,18 @@ public record CityWorldSettingsData(
          */
         public static final String DEFAULT_PACK_PRESET = "minecraft:normal";
 
+        /**
+         * The cell, in blocks, a mod's biome is decided for: the climate is read at the cell's (warped) centre and
+         * the answer stands for the whole cell. Per column, a foreign biome's narrow climate box wins for a few
+         * blocks at its edges, and the regional share tessellates a mod's close points into slivers — haunted
+         * forests "a few blocks across, inside the city" (owner, 2026-10-30; 36% of patches two chunks or less).
+         * 1 = every column for itself (the 6.10 behaviour).
+         */
+        public static final int DEFAULT_MODDED_GRAIN = 64;
+
         public static final World DEFAULT = new World(TreeStyle.NORMAL, Odds.oddsLikely, SubSurfaceStyle.LAND, 0.0,
                 DEFAULT_MAX_BUILDING_FLOORS, false, DEFAULT_ANNOUNCED, true, WildDecoration.BOTH,
-                DEFAULT_CLIMATE_WARMTH, DEFAULT_BIOME_SCALE, DEFAULT_MODDED_SHARE, DEFAULT_PACK_PRESET);
+                DEFAULT_CLIMATE_WARMTH, DEFAULT_BIOME_SCALE, DEFAULT_MODDED_SHARE, DEFAULT_PACK_PRESET, DEFAULT_MODDED_GRAIN);
 
         private static final Codec<TreeStyle> TREE_STYLE_CODEC = Codec.STRING.xmap(
                 s -> parseEnum(TreeStyle.class, s, TreeStyle.NORMAL), TreeStyle::name);
@@ -691,7 +701,8 @@ public record CityWorldSettingsData(
                 Codec.DOUBLE.optionalFieldOf("biomeScale", DEFAULT_BIOME_SCALE).forGetter(World::biomeScale),
                 Codec.DOUBLE.optionalFieldOf("moddedBiomeShare", DEFAULT_MODDED_SHARE)
                         .forGetter(World::moddedBiomeShare),
-                Codec.STRING.optionalFieldOf("packPreset", DEFAULT_PACK_PRESET).forGetter(World::packPreset)
+                Codec.STRING.optionalFieldOf("packPreset", DEFAULT_PACK_PRESET).forGetter(World::packPreset),
+                Codec.INT.optionalFieldOf("moddedBiomeGrain", DEFAULT_MODDED_GRAIN).forGetter(World::moddedBiomeGrain)
         ).apply(i, World::new));
     }
 

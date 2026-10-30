@@ -162,6 +162,8 @@ public class CityWorldSettings {
     public double moddedBiomeShare = CityWorldSettingsData.World.DEFAULT_MODDED_SHARE;
     /** The world preset the pack's overworld is read from; see {@code World.DEFAULT_PACK_PRESET}. */
     public String packPreset = CityWorldSettingsData.World.DEFAULT_PACK_PRESET;
+    /** Cell a mod's biome must also win at the centre of; see {@code World.DEFAULT_MODDED_GRAIN}. */
+    public int moddedBiomeGrain = CityWorldSettingsData.World.DEFAULT_MODDED_GRAIN;
 
     /** Whether vanilla's biome features run on wild land. */
     public boolean vanillaDecoratesWild() {
@@ -649,6 +651,7 @@ public class CityWorldSettings {
         biomeScale = w.biomeScale();
         moddedBiomeShare = w.moddedBiomeShare();
         packPreset = w.packPreset();
+        moddedBiomeGrain = w.moddedBiomeGrain();
         treeStyle = w.treeStyle();
         spawnTrees = w.spawnTrees();
         subSurfaceStyle = w.subSurfaceStyle();
@@ -722,7 +725,7 @@ public class CityWorldSettings {
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
                 treeStyle, spawnTrees, subSurfaceStyle, ruralnessLevel, maxBuildingFloors, broadcastSpecialPlaces,
                 java.util.List.copyOf(announcedLandmarks), useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
-                moddedBiomeShare, packPreset);
+                moddedBiomeShare, packPreset, moddedBiomeGrain);
         CityWorldSettingsData.Radius radius = new CityWorldSettingsData.Radius(
                 centerPointOfChunkRadiusX, centerPointOfChunkRadiusZ, constructChunkRadius, roadChunkRadius,
                 cityChunkRadius, buildOutsideRadius, minInbetweenChunkDistanceOfCities);

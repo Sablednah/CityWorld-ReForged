@@ -110,6 +110,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private double biomeScale;
     private double moddedBiomeShare;
     private final String packPreset; // a pack's knob, not a player's: carried through unchanged
+    private final int moddedBiomeGrain; // likewise
 
     /** Cities in a vanilla world and their spacing, size and level range (settings "cities"). */
     private CityWorldSettingsData.Cities cities;
@@ -150,6 +151,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         this.biomeScale = initial.world().biomeScale();
         this.moddedBiomeShare = initial.world().moddedBiomeShare();
         this.packPreset = initial.world().packPreset();
+        this.moddedBiomeGrain = initial.world().moddedBiomeGrain();
 
         loadFrom(initial);
     }
@@ -592,7 +594,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData.World world = new CityWorldSettingsData.World(
                 treeStyle, spawnTrees.value, subSurfaceStyle, ruralnessLevel.value, maxBuildingFloors,
                 broadcastSpecialPlaces, announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
-                moddedBiomeShare, packPreset);
+                moddedBiomeShare, packPreset, moddedBiomeGrain);
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops, includeMalls, oddsOfAtmInCivic.value,
@@ -637,7 +639,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                     new CityWorldSettingsData.World(world.treeStyle(), world.spawnTrees(), world.subSurfaceStyle(),
                             world.ruralnessLevel(), world.maxBuildingFloors(), world.broadcastSpecialPlaces(),
                             announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
-                            moddedBiomeShare, packPreset),
+                            moddedBiomeShare, packPreset, moddedBiomeGrain),
                     radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves,
                     defaults.subways(), structures, cities);
         }
