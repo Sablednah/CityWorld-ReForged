@@ -2480,10 +2480,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
         me.daddychurchill.CityWorld.Plats.PlatLot lot = platmap.getMapLot(pos.x(), pos.z());
         // In the End the wild is vanilla's outright — its islands, so its chorus plants too — whatever the style.
-        boolean wild = (isEnd() || context.isModernStyle() && context.getSettings().vanillaDecoratesWild())
-                && lot != null && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE
-                && lot.allowsWildDecoration()
-                && !context.isSiteCore(pos.x(), pos.z()); // a reserved site is bare level ground for its owner to build on
+        // (the same gate a lot asks through PlatLot.vanillaDecoratesHere, plus the End)
+        boolean wild = lot != null && (lot.vanillaDecoratesHere(context)
+                || isEnd() && lot.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE
+                        && lot.allowsWildDecoration() && !context.isSiteCore(pos.x(), pos.z())); // a reserved site is bare level ground for its owner
 
         if (wild) {
             // The full vanilla pass: biome-appropriate trees, flowers, coral, sugar cane — and the
