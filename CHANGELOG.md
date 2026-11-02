@@ -41,6 +41,9 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   piece per world (the first ask of a cold cross is unchanged at ~3 s on the dev seed, the next platmap's 0.75 s
   instead of another 3). The F3 readout and `/cityfind street` suggestions no longer plan on the render or server
   thread; a schematic that fails to load is parsed once, not on every findables list.
+- **`getBaseHeight` answers from the shaper's height** instead of building a 384-block column to scan back down;
+  the river-chunk cache evicts far chunks instead of clearing. Vanilla asks this on the server thread for `/locate`,
+  explorer maps and dolphins. The self-test proves the answer still matches the column, both heightmap kinds.
 
 ## 6.11.0
 
