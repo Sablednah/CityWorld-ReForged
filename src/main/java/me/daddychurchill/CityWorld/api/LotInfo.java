@@ -31,7 +31,11 @@ import org.jspecify.annotations.Nullable;
  * @param streetLevel   the world's street level: the height of the road surface. Everything underground is laid
  *                      out below it (sewers 3-9 under a road, the subway's levels, then the mines), so depth below
  *                      this is how to tell what a player is in where no lot says so
- * @param subway        true if a subway station or line is under this chunk (see {@link CityWorldAPI#subwayAt})
+ * @param subway        true if this lot IS a subway station. Since 6.12 this no longer says whether a LINE runs
+ *                      under the chunk: a line is a function of the stations up to six platmaps away, so answering
+ *                      planned every neighbouring platmap (and forecast their structures) for a plain "what lot is
+ *                      here" — a 55 s stall when a mod probed a 640-block radius (ZARP, 2026-11-02). Ask
+ *                      {@link CityWorldAPI#subwayAt} for the lines; it says what it costs.
  */
 public record LotInfo(
         ResourceKey<Level> dimension,
