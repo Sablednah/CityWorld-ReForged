@@ -77,6 +77,48 @@ snow-to-hot borders 1,207 → 126 (the rest are windswept forest against windswe
 line, which vanilla also allows), patches 8,688 → 8,595 of the same mean size, windswept forest 2.9% → 0.8%,
 forest/jungle/sparse jungle gain it. Not cherry-picked to the branches yet; the owner wanted the maps first.
 
+## ▶ Backlog — server-thread heavy work (ZARP's audit, 2026-11-02; owner asked for it)
+
+The ZARP session audited CityWorld + its companions for work that lands on the server thread. Done the same day:
+`lotAt` no longer plans six platmaps each way for its subway flag (6.12), and the non-blocking queries
+`lotAtIfPlanned` / `lotAtAsync` / `subwayAtIfPlanned` (`CityWorldGenerator.peekPlatMap` / `planPlatMapAsync`) exist
+for callers like ZombieMod's spawn rules. The rest, by the audit's ranking, not started:
+
+- **HIGH** `lotAt`/`getFullInfo`/`shopAt`/`vaultEntrance` plan a whole platmap synchronously (forecast over ~50x50
+  chunks, jigsaw ~80 ms a start, `isWildernessAt` dry plans, vanilla land's `CitySites.siteAt` ~0.5 s per unjudged
+  cell). Idea: WARN once with the caller's stack when a cold platmap is planned on the server thread; a budget.
+- **HIGH** `findLot(s)`/`find`/`findVaultEntrances`/`nearestCity` are javadoc'd server-thread safe but can block up to
+  `FIND_BUDGET_MS` (120 s) on PLANNERS; `findVaultEntrances` has no budget; vanilla land's `nearestCity` →
+  `sites.nearest` has none (~40 s for 81 cells). Clamp on the server thread or answer from planned platmaps; async
+  variants; fix the javadoc.
+- **HIGH** `subwayAt`/`isSubway` plan up to 24 platmaps plus `linkOk` routes; memoise `firstStation` per (platmap,
+  direction); answer from planned platmaps on the server thread.
+- **MED-HIGH** every city lot's decoration calls `Subway.generate` → `Subway.at` (PlatLot ~383), so the first chunk of
+  a cold city plans a 13-platmap cross, and a server thread waiting on that chunk (teleport, login, another mod's
+  getChunk) waits for all of it; our own post-find teleports do `getChunk` then `getHeight` (CityWorldCommands).
+  Warm with an async ticket.
+- **MED** unbounded caches: platmap futures, `StructureForecast.memo` (full starts), `StructureReservations.memo`
+  (boxed Long→Boolean per chunk, ~1.4 M entries / 120 MB after a big /cityfind), `RiverNetwork.courses`,
+  `Subway.LINKS` → LRU/soft values, bbox/step only, a bitset per platmap.
+- **MED** caches that `clear()` when full (RiverNetwork ~159/738/807, CitySites ~171) make every thread rebuild, and
+  the rebuild can land on the server thread via `getBaseHeight` → `riverChunk` → region build on the common pool
+  (/locate, explorer maps, dolphins). LRU and a dedicated pool.
+- **MED** `findables()` parses every schematic on the caller's thread inside `computeIfAbsent`'s bin lock; failed
+  loads not cached; the Compass calls it twice per seek on the server thread.
+- **MED** hover lookups (`CityWorldNetwork` ~39-88): no permission, distance clamp, dedupe or queue bound — any
+  client can make the server plan far platmaps.
+- **MED** too many planner pools (PLANNERS, Compass WORKERS, overlay PLANNER, lot-info, a raw Thread per /cityfind)
+  and the server thread can join their plans → one shared bounded low-priority pool.
+- **MED** `reserveSite`/`reservePlaza` plan up to 9 platmaps twice — document as world-creation only.
+- **MED** `isWildernessAt` dry plans and `StructureForecast.startsAt` have no build-once guard: racing threads
+  duplicate jigsaw assembly.
+- **LOW** the F3 debug entry calls `lotAt` on the client render thread every frame in singleplayer
+  (`CityWorldDebugEntry` ~53); `SUGGEST_STREETS` per keystroke.
+- Fine as is: the overlay tick, hover planning off-thread, /cityfind off-thread, landmark chat via execute, the Zoo mod.
+
+**The structural fix behind most of it:** plans are not saved, so every restart starts cold and the first asker
+pays. Persisting platmap plans (or at least the forecast's reservations) per world is the arc this backlog points at.
+
 ## ▶ Resume here — biome mods on both lands, structures only in the wild (6.11, 2026-10-30 overnight)
 
 **The report** (a CurseForge commenter trying biome mods with CityWorld, all on 1.21.1): Arboria's structures cut

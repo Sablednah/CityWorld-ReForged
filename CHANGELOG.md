@@ -15,6 +15,14 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   for a plain "what lot is here". A mod probing a 640-block radius stalled a server for 55 seconds (ZARP). Both
   calls are documented as safe off the server thread.
 
+### Added
+
+- **Non-blocking plan queries** for mods that ask often on the server thread: `CityWorldAPI.lotAtIfPlanned`
+  (the lot if its platmap is already planned, else empty — never plans, never waits), `lotAtAsync` (plans on a
+  low-priority daemon thread and completes there), `subwayAtIfPlanned`, and underneath them
+  `CityWorldGenerator.peekPlatMap` / `planPlatMapAsync`. A spawn rule that called `lotAt` four times per zombie was
+  planning cold platmaps on the server thread after every restart (plans are not saved).
+
 ## 6.11.0
 
 ### Fixed
