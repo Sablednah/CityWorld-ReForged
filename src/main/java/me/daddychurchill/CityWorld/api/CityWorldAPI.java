@@ -54,6 +54,35 @@ public final class CityWorldAPI {
     }
 
     /**
+     * {@link #lotAt} that never plans and never waits: the lot if its platmap is already planned (generated,
+     * or asked for before), else empty — planned or not, it returns at once. For callers that run often on the
+     * server thread (a spawn rule, a tick), where {@link #lotAt}'s first plan of a cold platmap is a stall (ZARP,
+     * 2026-11-02). Empty does NOT mean "not a city": it means "not known yet"; {@link #lotAtAsync} warms it.
+     */
+    public static Optional<LotInfo> lotAtIfPlanned(ServerLevel level, BlockPos pos) {
+        CityWorldGenerator context = contextFor(level);
+        if (context == null)
+            return Optional.empty();
+        int cx = pos.getX() >> 4, cz = pos.getZ() >> 4;
+        PlatMap planned = context.peekPlatMap(cx, cz);
+        return planned == null ? Optional.empty() : lotInfo(context, level.dimension(), planned, cx, cz);
+    }
+
+    /**
+     * {@link #lotAt} on a planner thread: completes with the lot once its platmap is planned (at once if it
+     * already is). The future completes OFF the server thread; hop back before touching the level. Pair with
+     * {@link #lotAtIfPlanned}: ask this for what you will want soon, read that when you need it.
+     */
+    public static java.util.concurrent.CompletableFuture<Optional<LotInfo>> lotAtAsync(ServerLevel level, BlockPos pos) {
+        CityWorldGenerator context = contextFor(level);
+        if (context == null)
+            return java.util.concurrent.CompletableFuture.completedFuture(Optional.empty());
+        int cx = pos.getX() >> 4, cz = pos.getZ() >> 4;
+        ResourceKey<Level> dim = level.dimension();
+        return context.planPlatMapAsync(cx, cz).thenApply(platmap -> lotInfo(context, dim, platmap, cx, cz));
+    }
+
+    /**
      * The plan as a {@code Map<String,String>} with the keys the original Bukkit
      * {@code CityWorldAPI.getFullInfo} used — {@code context}, {@code contextclass}, {@code lot},
      * {@code lotclass}, {@code at}, and {@code schematic} (only when this lot is a schematic) — plus two
@@ -562,6 +591,22 @@ public final class CityWorldAPI {
         }
     }
 
+    /**
+     * {@link #subwayAt} that never plans and never waits: empty unless every platmap the answer can depend on —
+     * this one and the ones within the subway's reach along its row and column — is already planned.
+     */
+    public static Optional<SubwayInfo> subwayAtIfPlanned(ServerLevel level, BlockPos pos) {
+        CityWorldGenerator context = contextFor(level);
+        if (context == null)
+            return Optional.empty();
+        int cx = pos.getX() >> 4, cz = pos.getZ() >> 4;
+        int reach = me.daddychurchill.CityWorld.Support.Subway.reach();
+        for (int k = -reach; k <= reach; k++)
+            if (context.peekPlatMap(cx + k * PlatMap.Width, cz) == null || context.peekPlatMap(cx, cz + k * PlatMap.Width) == null)
+                return Optional.empty();
+        return subwayAt(level, pos);
+    }
+
     private static CityWorldGenerator contextFor(ServerLevel level) {
         if (level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator cityGenerator)
             return cityGenerator.getContext(level);
@@ -570,7 +615,14 @@ public final class CityWorldAPI {
 
     private static Optional<LotInfo> lotInfo(CityWorldGenerator context, ResourceKey<Level> dim, int cx, int cz) {
         try {
-            PlatMap platmap = context.getPlatMap(cx, cz);
+            return lotInfo(context, dim, context.getPlatMap(cx, cz), cx, cz);
+        } catch (RuntimeException e) {
+            return Optional.empty(); // never let a lookup throw into a caller
+        }
+    }
+
+    private static Optional<LotInfo> lotInfo(CityWorldGenerator context, ResourceKey<Level> dim, PlatMap platmap, int cx, int cz) {
+        try {
             PlatLot lot = platmap.getMapLot(cx, cz);
             String schematic = lot instanceof ClipboardLot clip ? clip.getClip().name : null;
             return Optional.of(new LotInfo(

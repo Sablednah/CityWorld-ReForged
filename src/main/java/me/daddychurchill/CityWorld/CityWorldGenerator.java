@@ -770,6 +770,42 @@ public class CityWorldGenerator {
     private final ConcurrentHashMap<Long, java.util.concurrent.CompletableFuture<PlatMap>> platmaps =
             new ConcurrentHashMap<>();
 
+    /**
+     * The platmap holding this chunk ONLY if it is already planned — never plans, never waits. Null while nobody has
+     * asked for it, while another thread is still planning it, or if its plan failed. For a caller that cannot
+     * afford to plan on its thread: a mod's spawn rule on the server thread, which asked {@link #getPlatMap} four
+     * times per zombie and planned cold platmaps on every one (the ZARP audit, 2026-11-02). Plans are not saved, so
+     * after a restart nothing is planned until something generates or asks — pair this with
+     * {@link #planPlatMapAsync} to warm what the caller will want next.
+     */
+    public PlatMap peekPlatMap(int chunkX, int chunkZ) {
+        Long platkey = ((long) calcOrigin(chunkX) * (long) Integer.MAX_VALUE + (long) calcOrigin(chunkZ));
+        java.util.concurrent.CompletableFuture<PlatMap> f = platmaps.get(platkey);
+        return f != null && f.isDone() && !f.isCompletedExceptionally() ? f.getNow(null) : null;
+    }
+
+    /**
+     * Plans the platmap holding this chunk on a planner thread (or returns the plan in flight / already made):
+     * the non-blocking way to warm a platmap for {@link #peekPlatMap}. The future completes on a daemon thread;
+     * hop back to the server thread before touching the level.
+     */
+    public java.util.concurrent.CompletableFuture<PlatMap> planPlatMapAsync(int chunkX, int chunkZ) {
+        Long platkey = ((long) calcOrigin(chunkX) * (long) Integer.MAX_VALUE + (long) calcOrigin(chunkZ));
+        java.util.concurrent.CompletableFuture<PlatMap> f = platmaps.get(platkey);
+        if (f != null)
+            return f;
+        return java.util.concurrent.CompletableFuture.supplyAsync(() -> getPlatMap(chunkX, chunkZ), ASYNC_PLANNER);
+    }
+
+    /** One low-priority daemon thread for {@link #planPlatMapAsync}: a warm-up, not a race with the workers. */
+    private static final java.util.concurrent.ExecutorService ASYNC_PLANNER = java.util.concurrent.Executors
+            .newSingleThreadExecutor(r -> {
+                Thread t = new Thread(r, "cityworld-async-planner");
+                t.setDaemon(true);
+                t.setPriority(Thread.MIN_PRIORITY);
+                return t;
+            });
+
     public PlatMap getPlatMap(int chunkX, int chunkZ) {
 
         // find the origin for the plat
