@@ -85,7 +85,23 @@ pattern of PALETTES.md: `#cityworld:fittings/path` (full paving blocks; vanilla 
 park and garden walkways, campground trails, cemetery/allotment paths, farm tracks — cheap. `#cityworld:fittings/
 footbridge` (+ stair/pier) where a park path meets water, campground rope bridges, rope or log bridges between
 surviving buildings in the flooded/ruined contexts — involved: directional blocks with connection states, so a
-drawn feature, not a palette pick. Owner's call on whether and when.
+drawn feature, not a palette pick. **Owner's call (2026-11-02): both, after 6.12.0** — paths first ("seem to work
+well"); bridges too, since a Macaw's player goes all in, with his ideas: **skybridges between the upper floors of
+neighbouring skyscrapers** and **bridges across ravines in the wild** ("no idea if that can work well, and quickly").
+
+Read from the 1.21.1 jars (`scratchpad/macaws/`; `mcw-bridges-3.1.2`, `mcw-mcwpaths-1.1.1`; mod ids `mcwbridges`,
+`mcwpaths`): Paths has 316 blocks — stateless full pavings per stone (`<stone>_{basket_weave,clover,diamond,dumble,
+honeycomb,square}_paving`, `<stone>_{flagstone,running_bond,crystal_floor,windmill_weave}` + `_slab`/`_stairs`), and
+`facing`-only `<stone>_*_path` / `<wood>_planks_path` path blocks — pool material. Bridges has 146: `<wood>_log_bridge
+_middle` and `<stone>_bridge` with `connection` = base | middle_ns | middle_ew | corner_nw/ne/se/sw… (11 states; Macaw's
+sets it from neighbours on placement, so worldgen must set it explicitly — a straight span is `middle_ns`/`middle_ew`
+per block), `rope_<wood>_bridge` (facing + connection, 48 states, has `middle_end_n/s`), `*_bridge_stair`
+(facing + base/left/right/double), stateless `*_bridge_pier`, `balustrade_<stone>_bridge` rails, `bridge_lantern`/
+`bridge_torch`, `*_rail_bridge` (facing + powered). Design sketch: skybridge = two adjacent tower lots (HighriseContext,
+both ≥ N floors, no road between) share a floor; each chunk draws its half of the span from the plan (both lots'
+floor heights are plan facts), forked dice per pair; wild ravine = a NatureLot whose HeightInfo shows a narrow deep
+V (measure how often with a probe before promising); park/campground water crossings = `Waterside`-style, where a
+path meets a river or pond.
 
 ## ▶ Backlog — server-thread heavy work (ZARP's audit, 2026-11-02; owner asked for it)
 
