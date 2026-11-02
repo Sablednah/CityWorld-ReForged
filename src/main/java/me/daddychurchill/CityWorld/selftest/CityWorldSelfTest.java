@@ -1405,6 +1405,45 @@ public final class CityWorldSelfTest {
      * {@code maxY}, which a reloaded TERRAIN_MATCHING piece rebuilds without the growth the
      * assembler gave it (measured 2026-09-23, PORTING.md "PLAN (2026-09-23 night)").
      */
+    /**
+     * {@code getBaseHeight} answers from the shaper's height directly (6.12: the full-column scan cost ~760 µs a
+     * call, on the server thread for /locate); this proves it still says what the column says, for both kinds of
+     * heightmap, over a spread of columns that includes flooded ones.
+     */
+    private void checkBaseHeight(MinecraftServer server) {
+        ServerLevel level = level(server);
+        if (!(level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator cw))
+            return;
+        var random = level.getChunkSource().randomState();
+        int checked = 0, wrong = 0, flooded = 0;
+        for (int i = 0; i < 400; i++) {
+            int x = (i % 20) * 97 - 1000, z = (i / 20) * 113 - 1100;
+            for (var type : new net.minecraft.world.level.levelgen.Heightmap.Types[] {
+                    net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG,
+                    net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG }) {
+                var column = cw.getBaseColumn(x, z, level, random);
+                var isOpaque = type.isOpaque();
+                int scanned = level.getMinBuildHeight();
+                for (int y = (level.getMaxBuildHeight() - 1); y >= level.getMinBuildHeight(); y--)
+                    if (isOpaque.test(column.getBlock(y))) {
+                        scanned = y + 1;
+                        break;
+                    }
+                int fast = cw.getBaseHeight(x, z, type, level, random);
+                checked++;
+                if (fast != scanned)
+                    wrong++;
+            }
+            if (cw.getBaseHeight(x, z, net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, level, random)
+                    != cw.getBaseHeight(x, z, net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG, level, random))
+                flooded++;
+        }
+        report.put("baseHeight.checked", Integer.toString(checked));
+        report.put("baseHeight.floodedColumns", Integer.toString(flooded));
+        if (wrong > 0)
+            fail("getBaseHeight disagrees with its own column scan at " + wrong + " of " + checked + " asks");
+    }
+
     private void checkForecast(MinecraftServer server, ChunkGeneratorStructureState state) {
         ServerLevel level = server.overworld();
         if (!(level.getChunkSource().getGenerator()
@@ -1565,6 +1604,7 @@ public final class CityWorldSelfTest {
         // first placement of this call sat past "if (trials == null) return", so it silently never ran
         // there while the report still read PASS (2026-09-24).
         checkForecast(server, state);
+        checkBaseHeight(server);
 
         // --- seeding: the stronghold rings ---------------------------------------------------------
         Holder<StructureSet> strongholds = sets.get("minecraft:strongholds");

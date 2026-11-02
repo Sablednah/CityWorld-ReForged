@@ -3185,12 +3185,17 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // Raw vanilla terrain, city or not: structures are seated by it, and a city's patch starts none.
         if (vanillaTerrain())
             return vanillaOverworld().getBaseHeight(x, z, type, level, vanillaOverworldRandom);
-        NoiseColumn column = getBaseColumn(x, z, level, randomState);
-        Predicate<BlockState> isOpaque = type.isOpaque();
-        for (int y = (level.getMaxBuildHeight() - 1); y >= level.getMinBuildHeight(); y--)
-            if (isOpaque.test(column.getBlock(y)))
-                return y + 1;
-        return level.getMinBuildHeight();
+        // The height straight from the shaper, by the same rules getBaseColumn fills its column with: the top
+        // solid block is the terrain's surface, and a flooded column is water up to sea level, which a heightmap
+        // that counts fluid (WORLD_SURFACE) sees and one that does not (OCEAN_FLOOR) does not. Building the whole
+        // 384-block column to scan it back down cost ~760 µs a call (a stratum noise sample per block) — and
+        // vanilla asks this on the server thread for /locate, explorer maps and dolphins (measured 2026-11-02).
+        CityWorldGenerator context = context(level);
+        int terrainY = context.shapeProvider.findBlockY(context, x, z);
+        boolean flooded = terrainY < context.seaLevel && context.getSettings().includeAbovegroundFluids;
+        boolean countsFluid = type.isOpaque().test(net.minecraft.world.level.block.Blocks.WATER.defaultBlockState());
+        int top = flooded && countsFluid ? Math.max(terrainY, context.seaLevel) : terrainY;
+        return Math.max(level.getMinBuildHeight(), Math.min(top, (level.getMaxBuildHeight() - 1))) + 1;
     }
 
     /**
