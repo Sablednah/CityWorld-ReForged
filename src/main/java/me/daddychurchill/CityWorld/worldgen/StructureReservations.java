@@ -188,14 +188,40 @@ public final class StructureReservations {
      * maths per candidate. 121 per query at the default clearance, 625 at the 12 an acropolis declares,
      * and planning asks the same coordinates from THREE sites (PlatLot, setLot, paveLot).
      */
-    private final java.util.concurrent.ConcurrentHashMap<Long, Boolean> memo =
-            new java.util.concurrent.ConcurrentHashMap<>();
+    /**
+     * One byte per chunk (0 unknown, 1 no, 2 yes), in a 100-byte block per platmap, instead of a boxed
+     * {@code Long -> Boolean} entry per chunk: a wide {@code /cityfind} had grown that to ~1.4 M entries and
+     * ~120 MB (the ZARP audit, 2026-11-02). Racing writers write the same byte — the answer is a pure function —
+     * so the block needs no lock.
+     */
+    private final java.util.concurrent.ConcurrentHashMap<Long, byte[]> memo = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static final int W = me.daddychurchill.CityWorld.Support.PlatMap.Width;
+
+    private static long blockKey(int chunkX, int chunkZ) {
+        return net.minecraft.world.level.ChunkPos.pack(Math.floorDiv(chunkX, W), Math.floorDiv(chunkZ, W));
+    }
+
+    private static int blockIndex(int chunkX, int chunkZ) {
+        return Math.floorMod(chunkX, W) * W + Math.floorMod(chunkZ, W);
+    }
+
+    /** How many chunks have a memoised answer (diagnostics). */
+    public int memoSize() {
+        int n = 0;
+        for (byte[] block : memo.values())
+            for (byte b : block)
+                if (b != 0)
+                    n++;
+        return n;
+    }
 
     public boolean isReserved(int chunkX, int chunkZ) {
-        long key = net.minecraft.world.level.ChunkPos.pack(chunkX, chunkZ);
-        Boolean got = memo.get(key);
-        if (got != null)
-            return got;
+        long key = blockKey(chunkX, chunkZ);
+        int index = blockIndex(chunkX, chunkZ);
+        byte[] block = memo.get(key);
+        if (block != null && block[index] != 0)
+            return block[index] == 2;
         // Computed OUTSIDE the map's lock: a forecast may assemble a jigsaw, and a long mapping
         // function inside computeIfAbsent is exactly what froze the server on 2026-09-23.
         // Memoise only an answer that cannot change: a forecast that has not bound to its level yet
@@ -210,8 +236,14 @@ public final class StructureReservations {
         }
         if (!cacheable)
             return answer;
-        Boolean winner = memo.putIfAbsent(key, answer);
-        return winner != null ? winner : answer;
+        if (block == null) {
+            byte[] fresh = new byte[W * W];
+            block = memo.putIfAbsent(key, fresh);
+            if (block == null)
+                block = fresh;
+        }
+        block[index] = (byte) (answer ? 2 : 1);
+        return answer;
     }
 
     /** Whether the exact footprint path is in use (the probe reports it). */

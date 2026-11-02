@@ -230,15 +230,50 @@ public final class Subway {
         return REACH;
     }
 
+    /** No station within reach (memo value; a memo cannot hold null). */
+    private static final int[] NO_STATION = new int[0];
+
+    /** {@code (platmap origin, direction) -> first station}, per world (weak keys, as {@link #LINKS}). */
+    private static final java.util.Map<CityWorldGenerator, java.util.concurrent.ConcurrentHashMap<Long, int[]>> FIRST =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+    /** {@code chunk -> what it carries}, per world: {@link #at} is asked for every city chunk's decoration and by
+     *  the API, and each ask walked up to six platmaps each way (the ZARP audit, 2026-11-02). */
+    private static final java.util.Map<CityWorldGenerator, java.util.concurrent.ConcurrentHashMap<Long, Piece>> PIECES =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+    /** Drop this world's station and piece memos: a platmap was re-planned (a reserved site), so they may be stale. */
+    public static void forget(CityWorldGenerator generator) {
+        var first = FIRST.get(generator);
+        if (first != null)
+            first.clear();
+        var pieces = PIECES.get(generator);
+        if (pieces != null)
+            pieces.clear();
+        var links = LINKS.get(generator);
+        if (links != null)
+            links.clear();
+    }
+
     /** The first station east (dir 0), south (1), west (2) or north (3) of platmap {@code p}, within REACH. */
     private static int[] firstStation(CityWorldGenerator generator, PlatMap p, int dir) {
+        java.util.concurrent.ConcurrentHashMap<Long, int[]> memo = FIRST.computeIfAbsent(generator,
+                g -> new java.util.concurrent.ConcurrentHashMap<>());
+        long key = (((long) p.originX << 34) ^ ((p.originZ & 0xFFFFFFFFL) << 2)) | dir;
+        int[] known = memo.get(key);
+        if (known != null)
+            return known == NO_STATION ? null : known;
         int dx = dir == 0 ? 1 : dir == 2 ? -1 : 0, dz = dir == 1 ? 1 : dir == 3 ? -1 : 0;
+        int[] found = NO_STATION;
         for (int k = 1; k <= REACH; k++) {
             int[] st = stationNear(generator, p.originX + dx * k * PlatMap.Width, p.originZ + dz * k * PlatMap.Width);
-            if (st != null)
-                return st;
+            if (st != null) {
+                found = st;
+                break;
+            }
         }
-        return null;
+        memo.putIfAbsent(key, found); // computed outside the map's lock: it plans platmaps
+        return found == NO_STATION ? null : found;
     }
 
     /**
@@ -326,6 +361,18 @@ public final class Subway {
     public static Piece at(CityWorldGenerator generator, int chunkX, int chunkZ) {
         if (!planned(generator))
             return Piece.NONE;
+        java.util.concurrent.ConcurrentHashMap<Long, Piece> memo = PIECES.computeIfAbsent(generator,
+                g -> new java.util.concurrent.ConcurrentHashMap<>());
+        long key = net.minecraft.world.level.ChunkPos.pack(chunkX, chunkZ);
+        Piece known = memo.get(key);
+        if (known != null)
+            return known;
+        Piece piece = compute(generator, chunkX, chunkZ);
+        memo.putIfAbsent(key, piece); // computed outside the map's lock: it plans platmaps
+        return piece;
+    }
+
+    private static Piece compute(CityWorldGenerator generator, int chunkX, int chunkZ) {
         PlatMap p = generator.getPlatMap(chunkX, chunkZ);
         int[] own = stationOf(p);
         int ew = 0, ns = 0;
