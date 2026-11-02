@@ -13,6 +13,14 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+**New in 6.12.0: a lighter server.** A pass over everything that could stall the server thread, prompted by a
+55-second freeze in a modpack whose quest mod asked CityWorld about hundreds of chunks at once: asking "what is
+planned here" no longer plans the whole subway neighbourhood, mods get non-blocking ways to ask (`lotAtIfPlanned`,
+`lotAtAsync`), every background planner shares one small low-priority pool, map hovers are bounded, the plan caches
+take a tenth of the memory, no two threads assemble the same structure twice, and `/locate` and explorer maps get
+their height answers without building a whole column. A mod that still plans on the server thread is named in the
+log once, so a stall can be traced to its source.
+
 **New in 6.11.0: your biome mods, in the city too.** Biomes O' Plenty, Oh The Biomes We've Gone, Nyctophobia,
 VanillaBackport's pale garden — every TerraBlender mod now reaches CityWorld's own land on 1.21.1 and 1.20.1 as well
 (it never had: a silent bug since those versions shipped). Datapack biome mods — Terralith, Dreamwoods with Grand
@@ -27,14 +35,10 @@ having (a setting, "Finds in drawers"). With Modernlife installed, its ATMs stan
 on 1.20.1 its bank gets a paved town square at spawn instead of landing on a shop. The wiki's new Loot Tables page
 shows how to add your own items to any of it.
 
-**New in 6.9.0: the same seed builds the same city.** Two worlds made from one seed could come out with different houses,
-because a neighbouring chunk's decoration arriving a moment earlier or later could re-roll everything a chunk drew after
-it. Each part of a chunk's decoration now rolls on its own numbers from the seed, so a seed you share is the city
-your friends get. New chunks in an existing world will differ in detail (house materials, furniture, overgrowth) from
-what 6.8 would have built; street plans are unchanged.
-
 **Other recent changes**
 
+- **6.9.0** — the same seed builds the same city: each part of a chunk's decoration rolls on its own numbers from
+  the seed, so a seed you share is the city your friends get.
 - **6.8.0** — animals in the wild: CityWorld's own land gets vanilla's herds as it is made, by biome, and a switch
   lets them into the cities too; with Forgified Fabric API and a mod adding End biomes, the End no longer freezes.
 - **6.7.0** — save your Customize settings as presets and load them for the next world; All on / All off on the
