@@ -103,6 +103,21 @@ floor heights are plan facts), forked dice per pair; wild ravine = a NatureLot w
 V (measure how often with a probe before promising); park/campground water crossings = `Waterside`-style, where a
 path meets a river or pond.
 
+**Macaw's Roads and Streets 1.0.0** (`mcwroads`, CurseForge-only; read from ZARP's `mcw-roads-1.0.0-mc26.2neoforge.jar`,
+owner: "a no-brainer", and "lots of signs we might be able to use"): 217 blocks. Road surface = `asphalt` plus ~35
+marking variants as full blocks (`asphalt_center_line`, `_broken_center_line`, `_double_center_line`, `_half_center
+_line`, `_shoulder_line` + inner/outer corners, `_crosswalk`/`_crosswalk_side(_flipped)`, `_left/right/straight_*
+_arrow`, `_diagonal_line`, `_zig_zag_line`, `_manhole`, yellow twins, `bicycle_lane`, `speed_bump`), kerbs
+(`sidewalk_step`: facing + stair-like shape, and `_with_roadsign`), `*_reflector_guide_post` (white/red/yellow/blue/
+dotted), `roadsign_rod`/`portable_roadsign_rod`, and **103 signs** (facing only): stop, give way, speed limits 10–120,
+turn/curve/junction warnings, roundabout, dead end, residential zone, schools, hospital/police/petrol/toilet/snack
+bar/tourist information, city_1..5_sign (town-name boards), roadworks, tunnel, motorway/expressway. Design sketch:
+a `#cityworld:fittings/road_surface` pool (asphalt) with marking twins chosen by RoadLot's existing lane-line logic
+(centre/broken/double by road kind, crosswalks at intersections, arrows at turn lanes, manholes over sewers), kerbs
+from `sidewalk_step` at the pavement edge, signs on rods at intersections by context (stop/give way at minor-major,
+speed limit per district, dead end where a road ends, hospital/police/petrol beside those lots, city boards on the
+roads into town, roundabout at roundabouts) — all vanilla-fallback-free pools (empty without the mod).
+
 ## ▶ Backlog — server-thread heavy work (ZARP's audit, 2026-11-02; owner asked for it)
 
 The ZARP session audited CityWorld + its companions for work that lands on the server thread. **Measure with
