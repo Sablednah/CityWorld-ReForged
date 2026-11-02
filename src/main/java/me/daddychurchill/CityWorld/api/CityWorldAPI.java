@@ -32,8 +32,14 @@ import net.minecraft.world.level.Level;
  * <p>Two ways in: {@link #lotAt} returns a typed {@link LotInfo}; {@link #getFullInfo} returns the
  * stringly-typed {@code Map} shape the original Bukkit API returned, for continuity. Shops have their
  * own focused facade in {@link CityWorldShops}. Everything fails soft — a non-CityWorld level yields an
- * empty result rather than throwing. Call on the server thread (the underlying plan is deterministic
- * and safe to read).
+ * empty result rather than throwing.
+ *
+ * <p><b>Threads and cost.</b> Everything here reads the city PLAN, never the level's blocks, and the plan is
+ * built once per platmap under a build-once future that worker threads already share — so these calls are safe
+ * off the server thread, and a mod that probes many positions should make them there. The cost is the first plan
+ * of each platmap touched (a few ms, plus the structure forecast for the sets the world allows — a village set's
+ * jigsaw assembly is the expensive part); the second ask about the same platmap is a map lookup. {@link #lotAt}
+ * plans only the platmap holding the position; {@link #subwayAt} may plan up to six each way.
  */
 public final class CityWorldAPI {
 
@@ -531,6 +537,10 @@ public final class CityWorldAPI {
      * What the subway has under the chunk holding {@code pos}: a station, a line on either level, and where
      * those levels are (so {@link SubwayInfo#contains} tells whether a height is inside a tunnel). Empty off a
      * non-CityWorld level; a {@link SubwayInfo} with nothing in it where the subway does not run.
+     *
+     * <p><b>Cost:</b> a line is a function of the nearest stations up to six platmaps away in each direction, so
+     * this plans those platmaps (and forecasts their structures) the first time it is asked about land nobody has
+     * generated; every later ask is a map lookup. {@link #lotAt} deliberately does not pay this.
      */
     public static Optional<SubwayInfo> subwayAt(ServerLevel level, BlockPos pos) {
         CityWorldGenerator context = contextFor(level);
@@ -576,8 +586,8 @@ public final class CityWorldAPI {
                     lot.getShopType(),
                     lot.getInteriorDescription(context, platmap, cx - platmap.originX, cz - platmap.originZ),
                     context.streetLevel,
-                    me.daddychurchill.CityWorld.Support.Subway.drawsIn(context, lot)
-                            && me.daddychurchill.CityWorld.Support.Subway.at(context, cx, cz).any()));
+                    // the station only: a line's answer plans up to six platmaps each way (see LotInfo.subway)
+                    lot instanceof me.daddychurchill.CityWorld.Plats.Urban.SubwayStationLot));
         } catch (RuntimeException e) {
             return Optional.empty(); // never let a lookup throw into a caller
         }
