@@ -77,6 +77,16 @@ snow-to-hot borders 1,207 → 126 (the rest are windswept forest against windswe
 line, which vanilla also allows), patches 8,688 → 8,595 of the same mean size, windswept forest 2.9% → 0.8%,
 forest/jungle/sparse jungle gain it. Not cherry-picked to the branches yet; the owner wanted the maps first.
 
+## ▶ Backlog — Macaw's Paths and Bridges pools (ZARP's ask, 2026-11-02; not scoped)
+
+ZARP is adding Macaw's Bridges 3.1.2 and Macaw's Paths and Pavings 1.1.1 (26.2). Today only `#cityworld:build/plaza`
+takes paving (and only for reserved squares — a datapack may extend that tag freely). Proposed, in the fittings
+pattern of PALETTES.md: `#cityworld:fittings/path` (full paving blocks; vanilla fallback = today's path material) for
+park and garden walkways, campground trails, cemetery/allotment paths, farm tracks — cheap. `#cityworld:fittings/
+footbridge` (+ stair/pier) where a park path meets water, campground rope bridges, rope or log bridges between
+surviving buildings in the flooded/ruined contexts — involved: directional blocks with connection states, so a
+drawn feature, not a palette pick. Owner's call on whether and when.
+
 ## ▶ Backlog — server-thread heavy work (ZARP's audit, 2026-11-02; owner asked for it)
 
 The ZARP session audited CityWorld + its companions for work that lands on the server thread. **Measure with
