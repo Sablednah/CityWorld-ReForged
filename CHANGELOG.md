@@ -17,11 +17,30 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Added
 
+- **One planning pool.** `/cityfind`, the find API, the map overlay, hover lookups and `lotAtAsync` all plan on one
+  bounded, lowest-priority daemon pool (`Support/Planners`) instead of five pools and a raw thread per command.
+- **Hover lookups are bounded**: a map hover further than 96 chunks from the player is dropped, and one is in
+  flight per player at a time.
+- **The API says what it costs, and tells on a slow caller.** The find family is documented as blocking (call it
+  off the server thread, except at world creation); `findVaultEntrances` and `nearestCity` take a budget; a plan made
+  on the server thread through the API that takes over 100 ms is logged once per calling class, naming it.
 - **Non-blocking plan queries** for mods that ask often on the server thread: `CityWorldAPI.lotAtIfPlanned`
   (the lot if its platmap is already planned, else empty — never plans, never waits), `lotAtAsync` (plans on a
   low-priority daemon thread and completes there), `subwayAtIfPlanned`, and underneath them
   `CityWorldGenerator.peekPlatMap` / `planPlatMapAsync`. A spawn rule that called `lotAt` four times per zombie was
   planning cold platmaps on the server thread after every restart (plans are not saved).
+
+### Fixed
+
+- **Memory and duplicate work in the plan caches.** The structure-reservation memo keeps a byte per chunk in
+  100-byte blocks instead of a boxed entry per chunk (a wide `/cityfind` had grown it to ~1.4 M entries / 120 MB);
+  vanilla land's river-chunk memo the same, and it is never wiped wholesale; the river terrain tiles evict far
+  tiles instead of clearing (a clear made every thread rebuild at once, sometimes on the server thread via
+  `getBaseHeight`); the structure forecast and the wilderness dry plan are built once per origin however many
+  threads race (two used to assemble the same jigsaw); the subway memoises its station search and each chunk's
+  piece per world (the first ask of a cold cross is unchanged at ~3 s on the dev seed, the next platmap's 0.75 s
+  instead of another 3). The F3 readout and `/cityfind street` suggestions no longer plan on the render or server
+  thread; a schematic that fails to load is parsed once, not on every findables list.
 
 ## 6.11.0
 

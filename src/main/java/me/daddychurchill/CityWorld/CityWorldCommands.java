@@ -93,7 +93,10 @@ public final class CityWorldCommands {
         if (player == null || !(player.level().getChunkSource().getGenerator() instanceof CityWorldChunkGenerator city))
             return builder.buildFuture();
         CityWorldGenerator context = city.getContext(player.level());
-        PlatMap pm = context.getPlatMap(player.blockPosition().getX() >> 4, player.blockPosition().getZ() >> 4);
+        // a suggestion runs per keystroke on the server thread: answer from the plan if it exists, never make one
+        PlatMap pm = context.peekPlatMap(player.blockPosition().getX() >> 4, player.blockPosition().getZ() >> 4);
+        if (pm == null)
+            return builder.buildFuture();
         java.util.Set<String> names = new java.util.TreeSet<>();
         for (int x = 0; x < PlatMap.Width; x++)
             for (int z = 0; z < PlatMap.Width; z++)
@@ -492,7 +495,7 @@ public final class CityWorldCommands {
         // Planning is off-thread (a wide sweep can plan hundreds of platmaps — too slow for the server
         // thread's tick watchdog). getPlatMap is deterministic and thread-safe, so this is safe; the
         // result is delivered back on the server thread via server.execute.
-        Thread t = new Thread(() -> {
+        me.daddychurchill.CityWorld.Support.Planners.run(() -> {
             int[] reachedRing = { 0 };
             Found best = search(context, query, pos.x, pos.z, playerX, playerZ, reachedRing);
             server.execute(() -> {
@@ -514,9 +517,7 @@ public final class CityWorldCommands {
                     player.sendSystemMessage(Component.literal("Teleported to the nearest '" + best.name() + "'."));
                 }
             });
-        }, "cityworld-find");
-        t.setDaemon(true);
-        t.start();
+        });
         return 1;
     }
 
@@ -606,7 +607,7 @@ public final class CityWorldCommands {
 
         ctx.getSource().sendSuccess(() -> Component.literal("Searching for a '" + kind + "' lot..."), false);
 
-        Thread t = new Thread(() -> {
+        me.daddychurchill.CityWorld.Support.Planners.run(() -> {
             int[] reachedRing = { 0 };
             Found best = searchLot(context, kind, pos.x, pos.z, playerX, playerZ, reachedRing);
             server.execute(() -> {
@@ -628,9 +629,7 @@ public final class CityWorldCommands {
                     player.sendSystemMessage(Component.literal("Teleported to the nearest " + best.name() + "."));
                 }
             });
-        }, "cityworld-findlot");
-        t.setDaemon(true);
-        t.start();
+        });
         return 1;
     }
 
@@ -648,7 +647,7 @@ public final class CityWorldCommands {
         var sites = cityGenerator.citySites();
         int playerX = player.getBlockX(), playerZ = player.getBlockZ();
         ctx.getSource().sendSuccess(() -> Component.literal("Searching for the nearest city..."), false);
-        Thread t = new Thread(() -> {
+        me.daddychurchill.CityWorld.Support.Planners.run(() -> {
             var site = sites.nearest(playerX, playerZ, 6);
             server.execute(() -> {
                 if (site == null) {
@@ -667,9 +666,7 @@ public final class CityWorldCommands {
                     player.sendSystemMessage(Component.literal("Teleported to the nearest city."));
                 }
             });
-        }, "cityworld-findcity");
-        t.setDaemon(true);
-        t.start();
+        });
         return 1;
     }
 
@@ -686,7 +683,7 @@ public final class CityWorldCommands {
         var shape = cityGenerator.getContext(level).shapeProvider;
         int px = player.getBlockX() >> 4, pz = player.getBlockZ() >> 4;
         ctx.getSource().sendSuccess(() -> Component.literal("Searching for the nearest river..."), false);
-        Thread t = new Thread(() -> {
+        me.daddychurchill.CityWorld.Support.Planners.run(() -> {
             int[] found = null;
             search:
             for (int r = 0; r <= 96; r++)
@@ -718,9 +715,7 @@ public final class CityWorldCommands {
                             player.getYRot(), player.getXRot(), false);
                 }
             });
-        }, "cityworld-findriver");
-        t.setDaemon(true);
-        t.start();
+        });
         return 1;
     }
 
@@ -808,7 +803,7 @@ public final class CityWorldCommands {
         ctx.getSource().sendSuccess(() -> Component.literal("Searching for a street matching '" + query + "'..."),
                 false);
 
-        Thread t = new Thread(() -> {
+        me.daddychurchill.CityWorld.Support.Planners.run(() -> {
             int[] reachedRing = { 0 };
             Found best = searchPlatMaps(context, chunkX, chunkZ, reachedRing,
                     pm -> scanPlatMapForStreet(context, pm, query, playerX, playerZ));
@@ -829,9 +824,7 @@ public final class CityWorldCommands {
                     player.sendSystemMessage(Component.literal("Teleported to " + best.name() + "."));
                 }
             });
-        }, "cityworld-findstreet");
-        t.setDaemon(true);
-        t.start();
+        });
         return 1;
     }
 
@@ -908,7 +901,7 @@ public final class CityWorldCommands {
 
         // The classify is pure and deterministic (terrain height + climate noise), so scan off the server
         // thread like /cityfind; deliver the result back on the server thread.
-        Thread t = new Thread(() -> {
+        me.daddychurchill.CityWorld.Support.Planners.run(() -> {
             Found best = searchBiome(context, classifier, query, decayed, pos.x, pos.z, playerX, playerZ);
             server.execute(() -> {
                 if (best == null) {
@@ -928,9 +921,7 @@ public final class CityWorldCommands {
                     player.sendSystemMessage(Component.literal("Teleported to the nearest '" + best.name() + "'."));
                 }
             });
-        }, "cityworld-locate");
-        t.setDaemon(true);
-        t.start();
+        });
         return 1;
     }
 
