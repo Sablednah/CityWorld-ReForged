@@ -41,6 +41,10 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   piece per world (the first ask of a cold cross is unchanged at ~3 s on the dev seed, the next platmap's 0.75 s
   instead of another 3). The F3 readout and `/cityfind street` suggestions no longer plan on the render or server
   thread; a schematic that fails to load is parsed once, not on every findables list.
+- **Loot fits the container it lands in.** A furniture mod's drawer or cabinet (6–9 slots) was filled from tables
+  sized for a 27-slot chest with vanilla's fill, which logged "Tried to over-fill a container" for each one (151 in
+  one ZARP session) and dropped the rest. The fill is now sized to the container — same roll, same scatter, same-item
+  stacks merged first — and the overflow is counted (`overfilled` in the self-test's loot summary), not logged.
 - **`getBaseHeight` answers from the shaper's height** instead of building a 384-block column to scan back down;
   the river-chunk cache evicts far chunks instead of clearing. Vanilla asks this on the server thread for `/locate`,
   explorer maps and dolphins. The self-test proves the answer still matches the column, both heightmap kinds.
