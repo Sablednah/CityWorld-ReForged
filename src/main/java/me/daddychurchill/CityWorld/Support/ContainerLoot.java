@@ -77,7 +77,7 @@ public final class ContainerLoot {
     private static final AtomicInteger DEFERRED = new AtomicInteger(), FILLED = new AtomicInteger(),
             CAPABILITY = new AtomicInteger(), NEVER_TAGGED = new AtomicInteger(), HAS_TABLE = new AtomicInteger(),
             HAS_ITEMS = new AtomicInteger(), NOT_A_CONTAINER = new AtomicInteger(), OWN_TABLE = new AtomicInteger(),
-            SCATTERED = new AtomicInteger(), RESTOCKED = new AtomicInteger();
+            SCATTERED = new AtomicInteger(), RESTOCKED = new AtomicInteger(), OVERFILLED = new AtomicInteger();
 
     /**
      * For the self-test: how many block entities each path has handled since startup. {@code hasTable} is
@@ -89,7 +89,7 @@ public final class ContainerLoot {
                 + " scattered=" + SCATTERED.get()
                 + " hasTable=" + HAS_TABLE.get() + " hasItems=" + HAS_ITEMS.get() + " never=" + NEVER_TAGGED.get()
                 + " notAContainer=" + NOT_A_CONTAINER.get() + " lotsWithOwnTable=" + OWN_TABLE.get()
-                + " restocked=" + RESTOCKED.get();
+                + " restocked=" + RESTOCKED.get() + " overfilled=" + OVERFILLED.get();
     }
 
     /** The end-of-lot pass: every untouched empty container in this chunk gets the table the lot names for its
@@ -236,7 +236,7 @@ public final class ContainerLoot {
             LootTable table = Loot.table(level, key);
             if (table == null)
                 return false;
-            table.fill(container, params(level, pos), seed);
+            fillSized(container, table, params(level, pos), seed);
             FILLED.incrementAndGet();
             return true;
         }
@@ -244,6 +244,73 @@ public final class ContainerLoot {
         if (!done)
             NOT_A_CONTAINER.incrementAndGet();
         return done;
+    }
+
+    /**
+     * Vanilla's {@code LootTable.fill}, sized to the container: the same roll and the same scatter over the empty
+     * slots, but same-item stacks are merged first and what still does not fit is counted ({@code overfilled}) and
+     * dropped quietly. The building/nightstand/food tables are sized for a 27-slot chest; a furniture mod's drawer
+     * or cabinet has 6–9, and vanilla's fill logged "Tried to over-fill a container" for every one — 151 lines in
+     * one ZARP session, whose loot modifiers add stacks to the same tables (2026-11-02).
+     */
+    private static void fillSized(Container container, LootTable table, net.minecraft.world.level.storage.loot.LootParams params,
+            long seed) {
+        java.util.List<net.minecraft.world.item.ItemStack> rolled = new java.util.ArrayList<>(Loot.roll(table, params, seed));
+        // merge: a second stack of the same item joins the first while it fits
+        java.util.List<net.minecraft.world.item.ItemStack> merged = new java.util.ArrayList<>();
+        for (var stack : rolled) {
+            if (stack.isEmpty())
+                continue;
+            boolean joined = false;
+            for (var have : merged)
+                if (net.minecraft.world.item.ItemStack.isSameItemSameTags(have, stack)
+                        && have.getCount() + stack.getCount() <= have.getMaxStackSize()) {
+                    have.grow(stack.getCount());
+                    joined = true;
+                    break;
+                }
+            if (!joined)
+                merged.add(stack.copy());
+        }
+        java.util.List<Integer> empty = new java.util.ArrayList<>();
+        for (int i = 0; i < container.getContainerSize(); i++)
+            if (container.getItem(i).isEmpty())
+                empty.add(i);
+        java.util.Random random = new java.util.Random(seed);
+        java.util.Collections.shuffle(empty, random);
+        // vanilla spreads stacks over the empty slots by splitting the big ones; keep that look while there is room
+        if (merged.size() < empty.size())
+            merged = split(merged, empty.size(), random);
+        int placed = 0;
+        for (var stack : merged) {
+            if (placed >= empty.size())
+                break;
+            container.setItem(empty.get(placed++), stack);
+        }
+        if (merged.size() > empty.size())
+            OVERFILLED.incrementAndGet();
+    }
+
+    /** Vanilla's shuffleAndSplitItems, in short: split the splittable stacks until the slots are used or nothing splits. */
+    private static java.util.List<net.minecraft.world.item.ItemStack> split(java.util.List<net.minecraft.world.item.ItemStack> stacks,
+            int slots, java.util.Random random) {
+        java.util.List<net.minecraft.world.item.ItemStack> out = new java.util.ArrayList<>(stacks);
+        int guard = 0;
+        while (out.size() < slots && guard++ < 64) {
+            net.minecraft.world.item.ItemStack biggest = null;
+            for (var s : out)
+                if (s.getCount() > 1 && (biggest == null || s.getCount() > biggest.getCount()))
+                    biggest = s;
+            if (biggest == null)
+                break;
+            int half = 1 + random.nextInt(biggest.getCount() / 2 + 1);
+            var part = biggest.split(Math.min(half, biggest.getCount() - 1));
+            if (part.isEmpty())
+                break;
+            out.add(part);
+        }
+        java.util.Collections.shuffle(out, random);
+        return out;
     }
 
     /** One item of {@link #KITCHEN_FOOD} into the first slot of a board or a pan, two times in three. */
@@ -320,6 +387,7 @@ public final class ContainerLoot {
         var stacks = Loot.roll(table, params(level, pos), seed);
         java.util.Collections.shuffle(empty, new java.util.Random(seed));
         int inserted = 0, used = 0, highest = -1;
+        boolean overflow = false;
         for (var stack : stacks) {
             if (stack.isEmpty())
                 continue;
@@ -335,10 +403,14 @@ public final class ContainerLoot {
                     inserted += in;
                 }
             }
+            if (!left.isEmpty())
+                overflow = true; // the table rolled more than this inventory holds: dropped quietly, counted
         }
         CAPABILITY.incrementAndGet();
         if (highest >= used) // not just the first slots, in order: the self-test's proof that loot is scattered
             SCATTERED.incrementAndGet();
+        if (overflow)
+            OVERFILLED.incrementAndGet();
         return inserted > 0 || stacks.isEmpty();
     }
 }
