@@ -5,6 +5,16 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 6.12.0 (unreleased)
+
+### Changed
+
+- **`CityWorldAPI.lotAt` is cheap again.** Its `subway` flag now means "this lot is a subway station"; whether a
+  line runs under the chunk is `subwayAt`'s answer, because a line depends on the stations up to six platmaps away
+  and finding them planned every one of those platmaps — and forecast their structures, village jigsaws included —
+  for a plain "what lot is here". A mod probing a 640-block radius stalled a server for 55 seconds (ZARP). Both
+  calls are documented as safe off the server thread.
+
 ## 6.11.0
 
 ### Fixed
