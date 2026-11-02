@@ -25,6 +25,15 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 ## ▶ Where this is, and what's next (2026-10-15)
 
 **▶ Resume here (2026-10-30, overnight: 6.10.0 release in flight, 6.11 biome-mod work on master).**
+- **6.12 draft in progress (2026-11-02, usage limit hit mid-arc).** On master and all five branches, compiled, pushed,
+  NOT yet self-tested on the branches: `lotAt` subway-flag fix, non-blocking `lotAtIfPlanned`/`lotAtAsync`/
+  `subwayAtIfPlanned`, ZARP's server-thread audit batch one (`Support/Planners` pool, bounded hovers, honest find
+  javadoc + budgets + a >100 ms server-thread WARN, byte-block memos, far-evicting river caches, build-once forecast
+  and dry plan, subway memos, F3/suggestions never plan), `getBaseHeight` from the shaper's height (+ self-test
+  `checkBaseHeight`), the bank schematic titled "Bank". **Next:** run the five branch self-tests two at a time
+  (master's was running when the session ended — check `build/selftest/1.21.11.json` for `baseHeight.checked` and
+  PASS), `--compare`, then release 6.12.0 (CURSEFORGE.md headline, wiki, ZARP back to the CF jar). Measurements
+  and the remaining backlog: PORTING.md "▶ Backlog — server-thread heavy work"; tool `scripts/plantiming.sh`.
 - **v6.11.0 is released** (2026-10-30 evening) on all six lines — tag `v6.11.0` at the bump `7411f2b4`, CurseForge
   9377104–9377109, fleet `DEPLOYED-v6.11.0` (ZARP opts out), wiki pushed: **your biome mods, in the city too.**
   PORTING.md "▶ Resume here — biome mods on both lands" has every measurement. (1) TerraBlender biomes never reached
