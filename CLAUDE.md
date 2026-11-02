@@ -45,9 +45,11 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   PASS + `--compare`, CI 40982728581 green, halt/exit 0 after the synthetic positive, 1.20.1 SRG names present.
   **The owner pastes `CURSEFORGE.md`** (6.10.0 headline) into the CurseForge page.
 - Open items:
-- **ZARP** runs the test jar `cityworld-6.8.0-test-a2ee521f+mc26.2.jar` (the CurseForge 6.8.0 jar and older ones sit in
-  `LegendQuest ZARP/cityworld-released-backup/`). The owner moves it to the CurseForge 6.8.1 in the app, then deletes the
-  test jar and the backup folder. Its instance skips the fleet (`.sablecraft-no-deploy`). Test jars in ZARP are the
+- **ZARP** runs the test jar `cityworld-6.11.0-test-c32a2cfe+mc26.2.jar` (2026-11-02: 6.11.0 + the lotAt fix + the
+  non-blocking plan API + the bank title; the CurseForge 6.11.0 jar sits in `LegendQuest ZARP/cityworld-released-backup/`).
+  The owner moves it to the CurseForge 6.12.0 in the app when that ships, then deletes the test jar and the backup
+  folder. ZARP's rule (its CLAUDE.md, 2026-11-01): test jars are welcome there until the pack goes live — game closed,
+  the app's jar moved to the backup folder, build identifiable by name — but the owner still says the word here. Its instance skips the fleet (`.sablecraft-no-deploy`). Test jars in ZARP are the
   owner's call; ZARP's own session (Remote Control, another machine) owns Threadwork/the pack — pass pack-side bugs
   to it rather than editing its repo. Its world_settings set `spawns.wildAnimals` and `spawns.cityAnimals` true.
 - **The owner posts the reply to F4L70** (CurseForge comment, 1.21.1 End freeze with Forgified Fabric API — fixed 6.8.0).
