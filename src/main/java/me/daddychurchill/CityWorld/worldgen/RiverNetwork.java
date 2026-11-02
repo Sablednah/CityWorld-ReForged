@@ -807,8 +807,9 @@ public final class RiverNetwork {
         if (known != null)
             return known;
         RiverChunk built = build(chunkX, chunkZ);
+        // over the cap, drop the far chunks, never all of them (a clear() made every thread rebuild at once)
         if (chunks.size() > 8192)
-            chunks.clear();
+            chunks.keySet().removeIf(k -> Math.max(Math.abs(ni(k) - chunkX), Math.abs(nj(k) - chunkZ)) > 96);
         chunks.putIfAbsent(key, built);
         return built;
     }
