@@ -143,10 +143,11 @@ public final class CitySites {
 
     /** The river's own chunks, before the corner rule of {@link #isRiverChunk}. */
     private boolean isWetChunk(int chunkX, int chunkZ) {
-        long key = ((long) chunkX << 32) ^ (chunkZ & 0xffffffffL);
-        Boolean known = riverChunks.get(key);
-        if (known != null)
-            return known;
+        long key = ((long) Math.floorDiv(chunkX, 10) << 32) ^ (Math.floorDiv(chunkZ, 10) & 0xffffffffL);
+        int index = Math.floorMod(chunkX, 10) * 10 + Math.floorMod(chunkZ, 10);
+        byte[] block = riverChunks.get(key);
+        if (block != null && block[index] != 0)
+            return block[index] == 2;
         boolean river = false;
         int x0 = chunkX * 16 + 2, z0 = chunkZ * 16 + 2;
         for (int i = 0; i < 4 && !river; i++)
@@ -168,9 +169,15 @@ public final class CitySites {
                         river = rivers.river(nx, nz) && wet(nx, nz);
                     }
             }
-        if (riverChunks.size() > 200_000)
-            riverChunks.clear();
-        riverChunks.put(key, river);
+        // a byte per chunk in a 10x10 block, never cleared: the clear() at 200,000 entries made every thread
+        // rebuild at once, and the rebuild could land on the server thread (the ZARP audit, 2026-11-02)
+        if (block == null) {
+            byte[] fresh = new byte[100];
+            block = riverChunks.putIfAbsent(key, fresh);
+            if (block == null)
+                block = fresh;
+        }
+        block[index] = (byte) (river ? 2 : 1);
         return river;
     }
 
@@ -209,7 +216,7 @@ public final class CitySites {
         return count;
     }
 
-    private final ConcurrentHashMap<Long, Boolean> riverChunks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, byte[]> riverChunks = new ConcurrentHashMap<>();
 
     /** A river chunk inside the city itself: the planner lets nothing but a bridge stand on it. */
     public boolean isChannelChunk(int chunkX, int chunkZ) {
@@ -259,6 +266,11 @@ public final class CitySites {
      * time a cell is asked about (each is judged from vanilla's heights); call it off the server thread.
      */
     public Site nearest(int blockX, int blockZ, int rings) {
+        return nearest(blockX, blockZ, rings, Long.MAX_VALUE);
+    }
+
+    /** {@link #nearest(int, int, int)} that stops judging new cells past {@code deadlineNanos} (the best so far). */
+    public Site nearest(int blockX, int blockZ, int rings, long deadlineNanos) {
         Site best = null;
         double bestDistance = Double.MAX_VALUE;
         int cellX = Math.floorDiv(blockX, config.spacing()), cellZ = Math.floorDiv(blockZ, config.spacing());
@@ -279,6 +291,8 @@ public final class CitySites {
             // a nearer one can still lie one ring further out, but not two
             if (best != null && bestDistance <= ring * (double) config.spacing())
                 break;
+            if (System.nanoTime() > deadlineNanos)
+                break; // out of budget: the best so far, which may be none
         }
         return best;
     }

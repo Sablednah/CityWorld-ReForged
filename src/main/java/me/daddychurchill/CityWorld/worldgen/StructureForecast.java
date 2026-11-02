@@ -76,7 +76,12 @@ public final class StructureForecast {
     private volatile boolean warnedUnbound;
 
     /** Origin chunk -> the starts that fire there (every set, so a candidate is computed once). */
-    private final ConcurrentHashMap<Long, List<StructureStart>> memo = new ConcurrentHashMap<>();
+    /**
+     * Build-once per origin: the first asker computes, later askers join its future, so two threads racing to one
+     * origin no longer both assemble the jigsaw (the ZARP audit, 2026-11-02). The compute runs OUTSIDE the map's
+     * lock, as before — a jigsaw assembly inside computeIfAbsent was the 2026-09-23 stall.
+     */
+    private final ConcurrentHashMap<Long, java.util.concurrent.CompletableFuture<List<StructureStart>>> memo = new ConcurrentHashMap<>();
 
     public StructureForecast(CityWorldChunkGenerator generator, ChunkGeneratorStructureState state) {
         this.generator = generator;
@@ -120,9 +125,10 @@ public final class StructureForecast {
     /** The starts whose origin is this chunk: what {@code createStructures} will store there. Never throws. */
     public List<StructureStart> startsAt(int chunkX, int chunkZ) {
         long key = ChunkPos.pack(chunkX, chunkZ);
-        List<StructureStart> got = memo.get(key);
-        if (got != null)
-            return got;
+        java.util.concurrent.CompletableFuture<List<StructureStart>> mine = new java.util.concurrent.CompletableFuture<>();
+        java.util.concurrent.CompletableFuture<List<StructureStart>> claimed = memo.putIfAbsent(key, mine);
+        if (claimed != null)
+            return Waiting.join(claimed); // never a bare join(): a ForkJoin worker would run other tasks meanwhile
         List<StructureStart> computed;
         try {
             computed = compute(chunkX, chunkZ);
@@ -131,10 +137,8 @@ public final class StructureForecast {
                 me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn("FORECAST FAILED at chunk {},{}", chunkX, chunkZ, t);
             computed = List.of();
         }
-        // Two threads may race to the same origin; both compute the same thing, and everyone keeps the
-        // winner's instances so identity-based dedupe downstream sees one start, not two.
-        List<StructureStart> winner = memo.putIfAbsent(key, computed);
-        return winner != null ? winner : computed;
+        mine.complete(computed);
+        return computed;
     }
 
     /**
