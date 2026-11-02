@@ -46,7 +46,23 @@ public class CityWorldDebugEntry {
 
             // The lot/context/shop/schematic readout comes from the shared introspection API, so F3 and
             // /cityinfo never disagree; the level datums below still come straight off the generator.
-            LotInfo info = CityWorldAPI.lotAt(level, pos).orElse(null);
+            // Never plan on the render thread: the planned answer, remembered per chunk (F3 is drawn every
+            // frame), and a cold chunk is warmed on the planner pool and reads "planning..." until it is.
+            LotInfo info;
+            long chunkKey = net.minecraft.world.level.ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4);
+            if (chunkKey == lastChunkKey && lastInfo != null)
+                info = lastInfo;
+            else {
+                info = CityWorldAPI.lotAtIfPlanned(level, pos).orElse(null);
+                if (info == null && chunkKey != warmingKey) {
+                    warmingKey = chunkKey;
+                    CityWorldAPI.lotAtAsync(level, pos);
+                }
+                lastChunkKey = chunkKey;
+                lastInfo = info;
+            }
+            if (info == null)
+                displayer.accept("[CityWorld] " + BUILD_STAMP + "  (planning...)");
             if (info != null) {
                 displayer.accept("[CityWorld] " + BUILD_STAMP);
                 displayer.accept(String.format("[CityWorld] %s  %s (%s)  nature %.0f%%",
@@ -80,6 +96,10 @@ public class CityWorldDebugEntry {
      *  from uncommitted work, and the jar's timestamp says nothing about either. The mtime is kept
      *  alongside it, since it is still the thing that changes when a file is copied. */
     private static final String BUILD_STAMP = buildStamp();
+
+    // the F3 readout is drawn every frame: remember the last chunk's answer, and which chunk is being warmed
+    private long lastChunkKey = Long.MIN_VALUE, warmingKey = Long.MIN_VALUE;
+    private LotInfo lastInfo;
 
     private static String buildStamp() {
         String stamp = me.daddychurchill.CityWorld.BuildInfo.describe();

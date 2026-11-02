@@ -217,7 +217,8 @@ public class CityWorldGenerator {
      * Reserved sites (another mod's camp or square) are consulted as ever: they ask nothing.
      */
     private static final ThreadLocal<Boolean> DRY_PLAN = ThreadLocal.withInitial(() -> false);
-    private final java.util.concurrent.ConcurrentHashMap<Long, Boolean> wildPlatmaps = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.concurrent.ConcurrentHashMap<Long, java.util.concurrent.CompletableFuture<Boolean>> wildPlatmaps =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
      * Whether the platmap holding this chunk is wild land — planned as {@code NatureContext} — judged by a DRY plan of
@@ -234,20 +235,26 @@ public class CityWorldGenerator {
         int originX = calcOrigin(chunkX);
         int originZ = calcOrigin(chunkZ);
         long key = ((long) originX << 32) ^ (originZ & 0xFFFFFFFFL);
-        Boolean known = wildPlatmaps.get(key);
-        if (known != null)
-            return known;
         if (DRY_PLAN.get()) // re-entered from inside a dry plan: something still reached the forecast; be lenient
             return true;
-        boolean wild;
+        // build once: a second thread asking meanwhile joins the first's dry plan instead of making its own
+        java.util.concurrent.CompletableFuture<Boolean> mine = new java.util.concurrent.CompletableFuture<>();
+        java.util.concurrent.CompletableFuture<Boolean> claimed = wildPlatmaps.putIfAbsent(key, mine);
+        if (claimed != null)
+            return me.daddychurchill.CityWorld.worldgen.Waiting.join(claimed);
+        boolean wild = true;
         DRY_PLAN.set(true);
         try {
             PlatMap dry = new PlatMap(this, shapeProvider, originX, originZ);
             wild = dry.context == null || dry.context instanceof me.daddychurchill.CityWorld.Context.NatureContext;
+        } catch (RuntimeException e) {
+            wildPlatmaps.remove(key, mine); // let the next asker try again rather than joining a failure forever
+            mine.completeExceptionally(e);
+            throw e;
         } finally {
             DRY_PLAN.set(false);
         }
-        wildPlatmaps.putIfAbsent(key, wild);
+        mine.complete(wild);
         return wild;
     }
 
@@ -794,17 +801,9 @@ public class CityWorldGenerator {
         java.util.concurrent.CompletableFuture<PlatMap> f = platmaps.get(platkey);
         if (f != null)
             return f;
-        return java.util.concurrent.CompletableFuture.supplyAsync(() -> getPlatMap(chunkX, chunkZ), ASYNC_PLANNER);
+        return java.util.concurrent.CompletableFuture.supplyAsync(() -> getPlatMap(chunkX, chunkZ),
+                me.daddychurchill.CityWorld.Support.Planners.POOL);
     }
-
-    /** One low-priority daemon thread for {@link #planPlatMapAsync}: a warm-up, not a race with the workers. */
-    private static final java.util.concurrent.ExecutorService ASYNC_PLANNER = java.util.concurrent.Executors
-            .newSingleThreadExecutor(r -> {
-                Thread t = new Thread(r, "cityworld-async-planner");
-                t.setDaemon(true);
-                t.setPriority(Thread.MIN_PRIORITY);
-                return t;
-            });
 
     public PlatMap getPlatMap(int chunkX, int chunkZ) {
 
@@ -856,6 +855,9 @@ public class CityWorldGenerator {
         int platX = calcOrigin(chunkX);
         int platZ = calcOrigin(chunkZ);
         platmaps.remove((long) platX * (long) Integer.MAX_VALUE + (long) platZ);
+        // what was memoised FROM that plan goes with it
+        wildPlatmaps.remove(((long) platX << 32) ^ (platZ & 0xFFFFFFFFL));
+        me.daddychurchill.CityWorld.Support.Subway.forget(this);
     }
 
     /** How many platmaps have been planned — diagnostics only. */
