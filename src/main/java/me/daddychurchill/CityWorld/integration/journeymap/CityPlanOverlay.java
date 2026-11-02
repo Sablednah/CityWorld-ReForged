@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import journeymap.api.v2.client.util.UIState;
 import journeymap.api.v2.server.IServerAPI;
@@ -96,11 +95,7 @@ final class CityPlanOverlay {
      * deterministic and cached, so serialising the work means the second player through a city pays
      * almost nothing, while a dozen parallel sweeps would each pay full price.
      */
-    private static final ExecutorService PLANNER = Executors.newSingleThreadExecutor(r -> {
-        Thread thread = new Thread(r, "cityworld-plan-overlay");
-        thread.setDaemon(true);
-        return thread;
-    });
+    private static final ExecutorService PLANNER = me.daddychurchill.CityWorld.Support.Planners.POOL;
 
     private final IServerAPI api;
 
