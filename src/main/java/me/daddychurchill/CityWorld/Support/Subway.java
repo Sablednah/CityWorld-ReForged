@@ -225,6 +225,11 @@ public final class Subway {
      */
     static final int REACH = Integer.getInteger("cityworld.subway.reach", 6);
 
+    /** How many platmaps a line may reach from its station each way (the API asks, to know what a query touches). */
+    public static int reach() {
+        return REACH;
+    }
+
     /** The first station east (dir 0), south (1), west (2) or north (3) of platmap {@code p}, within REACH. */
     private static int[] firstStation(CityWorldGenerator generator, PlatMap p, int dir) {
         int dx = dir == 0 ? 1 : dir == 2 ? -1 : 0, dz = dir == 1 ? 1 : dir == 3 ? -1 : 0;
