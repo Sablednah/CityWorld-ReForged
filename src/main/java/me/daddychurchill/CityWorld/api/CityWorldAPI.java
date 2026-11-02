@@ -39,7 +39,12 @@ import net.minecraft.world.level.Level;
  * off the server thread, and a mod that probes many positions should make them there. The cost is the first plan
  * of each platmap touched (a few ms, plus the structure forecast for the sets the world allows — a village set's
  * jigsaw assembly is the expensive part); the second ask about the same platmap is a map lookup. {@link #lotAt}
- * plans only the platmap holding the position; {@link #subwayAt} may plan up to six each way.
+ * plans only the platmap holding the position; {@link #subwayAt} may plan up to six each way. The find family
+ * ({@link #findLot}, {@link #findLots}, {@link #find}, {@link #findVaultEntrances}, {@link #nearestCity}) plans
+ * rings of platmaps and BLOCKS the caller up to its budget ({@link #FIND_BUDGET_MS} unless given): call it off the
+ * server thread, except at world creation, where there is no tick to hold. A plan of a cold platmap on the server
+ * thread through this API that takes longer than {@link #SLOW_ON_SERVER_THREAD_MS} is logged once per caller, so
+ * a stall can be traced to the mod that asked (ZARP's 55 s, 2026-11-02).
  */
 public final class CityWorldAPI {
 
@@ -98,11 +103,44 @@ public final class CityWorldAPI {
     /** How long a find may plan before it gives up — the same wall-clock budget {@code /cityfind} uses. */
     public static final long FIND_BUDGET_MS = 120_000;
 
+    /** A plan on the server thread slower than this is logged once per caller (see the class note). */
+    public static final long SLOW_ON_SERVER_THREAD_MS = 100;
+
+    private static final java.util.Set<String> WARNED_CALLERS = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /** True on the server thread of a running server (false with no server, as in a client's world-creation screen). */
+    private static boolean onServerThread() {
+        var server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
+        return server != null && server.isSameThread();
+    }
+
+    /**
+     * Logs once per calling class when a plan made on the server thread through this API took longer than
+     * {@link #SLOW_ON_SERVER_THREAD_MS}: the stack's first frame outside CityWorld names the mod to talk to.
+     */
+    private static void warnIfSlowOnServerThread(long startedNanos, String what) {
+        long ms = (System.nanoTime() - startedNanos) / 1_000_000L;
+        if (ms < SLOW_ON_SERVER_THREAD_MS || !onServerThread())
+            return;
+        String caller = "?";
+        for (StackTraceElement e : Thread.currentThread().getStackTrace())
+            if (!e.getClassName().startsWith("me.daddychurchill.CityWorld") && !e.getClassName().startsWith("java.")) {
+                caller = e.getClassName() + "." + e.getMethodName();
+                break;
+            }
+        if (WARNED_CALLERS.add(caller))
+            me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn(
+                    "CityWorld: {} planned on the SERVER THREAD for {} ms (first time, from {}). The plan is built once per "
+                            + "platmap, but a cold one costs this; call off the server thread, or use lotAtIfPlanned/lotAtAsync.",
+                    what, ms, caller);
+    }
+
     /**
      * The nearest lot whose type matches {@code kind}, within {@code maxBlocks} of {@code from} — the same match
      * as {@code /cityfind lot <kind>}: a case-free substring of the lot's class name ("vault", "saucer", "zoo").
-     * Plan only, so it answers for land that has never generated; safe on the server thread, including during
-     * world creation. Empty off a non-CityWorld level or on a miss.
+     * Plan only, so it answers for land that has never generated. It blocks the caller while it plans (up to
+     * {@link #FIND_BUDGET_MS}): call it off the server thread, except at world creation. Empty off a non-CityWorld
+     * level or on a miss.
      */
     public static Optional<LotInfo> findLot(ServerLevel level, BlockPos from, String kind, int maxBlocks) {
         List<LotInfo> found = findLots(level, from, kind, maxBlocks, 1);
@@ -285,6 +323,11 @@ public final class CityWorldAPI {
      * a built-up district (anything but nature and farmland). Plan only; call it off the server thread.
      */
     public static Optional<BlockPos> nearestCity(ServerLevel level, BlockPos from, int maxBlocks) {
+        return nearestCity(level, from, maxBlocks, FIND_BUDGET_MS);
+    }
+
+    /** {@link #nearestCity(ServerLevel, BlockPos, int)} with a wall-clock budget of its own. */
+    public static Optional<BlockPos> nearestCity(ServerLevel level, BlockPos from, int maxBlocks, long budgetMillis) {
         if (!(level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator generator))
             return Optional.empty();
         CityWorldGenerator context = generator.getContext(level);
@@ -292,7 +335,10 @@ public final class CityWorldAPI {
             return Optional.empty();
         var sites = generator.citySites();
         if (sites != null) {
-            var site = sites.nearest(from.getX(), from.getZ(), Math.max(1, maxBlocks / sites.cell() + 1));
+            long started = System.nanoTime();
+            var site = sites.nearest(from.getX(), from.getZ(), Math.max(1, maxBlocks / sites.cell() + 1),
+                    started + budgetMillis * 1_000_000L);
+            warnIfSlowOnServerThread(started, "nearestCity");
             if (site == null || Math.hypot(site.centreX() - from.getX(), site.centreZ() - from.getZ()) > maxBlocks)
                 return Optional.empty();
             return Optional.of(new BlockPos(site.centreX(), site.level() + 1, site.centreZ()));
@@ -302,7 +348,7 @@ public final class CityWorldAPI {
                 me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.FARM,
                 me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.OUTLAND,
                 me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.ASTRAL));
-        List<PlatLot> hit = searchLots(context, from, maxBlocks, 1, FIND_BUDGET_MS, null,
+        List<PlatLot> hit = searchLots(context, from, maxBlocks, 1, budgetMillis, null,
                 (pm, lot) -> families.contains(pm.context.getSchematicFamily()) && !(lot instanceof me.daddychurchill.CityWorld.Plats.NatureLot));
         return hit.isEmpty() ? Optional.empty()
                 : Optional.of(new BlockPos(hit.get(0).getChunkX() * 16 + 8, context.streetLevel + 1, hit.get(0).getChunkZ() * 16 + 8));
@@ -315,6 +361,12 @@ public final class CityWorldAPI {
      * block a player stands on outside the surface hut's door (see {@link #vaultEntrance}). Plan only.
      */
     public static List<BlockPos> findVaultEntrances(ServerLevel level, BlockPos from, int maxBlocks, int limit) {
+        return findVaultEntrances(level, from, maxBlocks, limit, FIND_BUDGET_MS);
+    }
+
+    /** {@link #findVaultEntrances(ServerLevel, BlockPos, int, int)} with a wall-clock budget of its own. */
+    public static List<BlockPos> findVaultEntrances(ServerLevel level, BlockPos from, int maxBlocks, int limit,
+            long budgetMillis) {
         CityWorldGenerator context = contextFor(level);
         if (context == null)
             return List.of();
@@ -323,7 +375,7 @@ public final class CityWorldAPI {
             return List.of(); // vaults are an APOCALYPSE bunker; nothing else plans one
         // Only a vault region can hold one, and that is a hash of the platmap's position — so the search
         // plans ~1 platmap in 12 instead of all of them (5 entrances out to 2,500 blocks: 90 s -> seconds).
-        for (PlatLot lot : searchLots(context, from, maxBlocks, limit, FIND_BUDGET_MS,
+        for (PlatLot lot : searchLots(context, from, maxBlocks, limit, budgetMillis,
                 (ox, oz) -> me.daddychurchill.CityWorld.Context.NatureContext.isVaultRegion(context, ox, oz),
                 lot -> lot instanceof VaultLot vault && vault.isEntrance()))
             doorstep((VaultLot) lot).ifPresent(out::add);
@@ -374,8 +426,9 @@ public final class CityWorldAPI {
      * {@code y} at or under sea level is raised to {@code seaLevel + 1} (below it CityWorld floods the column).
      *
      * <p><b>Call it before any of those chunks generate</b> — from {@code LevelEvent.CreateSpawnPosition} on a new
-     * world is the intended place. It re-plans the platmaps it touches, and one whose chunks already exist would no
-     * longer match them. The site is saved with the world ({@code data/cityworld_sites.json}) and is in place again
+     * world is the intended place, and the only one: it plans up to nine platmaps twice (once to check the vaults,
+     * once for real), seconds of work that belong at world creation, not in a tick. It re-plans the platmaps it
+     * touches, and one whose chunks already exist would no longer match them. The site is saved with the world ({@code data/cityworld_sites.json}) and is in place again
      * before anything plans after a restart. Calling it again with the same arguments changes nothing.
      *
      * <p>It never costs a vault: a site whose reservation covers any vault chunk is refused, and one whose re-plan
@@ -511,16 +564,12 @@ public final class CityWorldAPI {
                 break;
         }
         hits.sort(java.util.Comparator.comparingDouble(lot -> distance(lot, from)));
+        warnIfSlowOnServerThread(deadline - budgetMillis * 1_000_000L, "a find");
         return hits.size() > limit ? List.copyOf(hits.subList(0, limit)) : hits;
     }
 
-    /** Searches plan platmaps on these, a few at a time; daemon threads, so they never hold a server open. */
-    private static final java.util.concurrent.ExecutorService PLANNERS = java.util.concurrent.Executors.newFixedThreadPool(
-            Math.max(2, Math.min(4, Runtime.getRuntime().availableProcessors() / 2)), r -> {
-                Thread t = new Thread(r, "cityworld-find-planner");
-                t.setDaemon(true);
-                return t;
-            });
+    /** Searches plan platmaps on the shared pool, a few at a time (see {@link me.daddychurchill.CityWorld.Support.Planners}). */
+    private static final java.util.concurrent.ExecutorService PLANNERS = me.daddychurchill.CityWorld.Support.Planners.POOL;
 
     /**
      * Plan every platmap at these origins side by side, and wait for them (never past the deadline: a platmap still
@@ -615,7 +664,10 @@ public final class CityWorldAPI {
 
     private static Optional<LotInfo> lotInfo(CityWorldGenerator context, ResourceKey<Level> dim, int cx, int cz) {
         try {
-            return lotInfo(context, dim, context.getPlatMap(cx, cz), cx, cz);
+            long started = System.nanoTime();
+            PlatMap platmap = context.getPlatMap(cx, cz);
+            warnIfSlowOnServerThread(started, "lotAt");
+            return lotInfo(context, dim, platmap, cx, cz);
         } catch (RuntimeException e) {
             return Optional.empty(); // never let a lookup throw into a caller
         }

@@ -3,7 +3,6 @@ package me.daddychurchill.CityWorld.network;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 import me.daddychurchill.CityWorld.CityWorldMod;
@@ -34,16 +33,19 @@ public final class CityWorldNetwork {
     private CityWorldNetwork() {}
 
     /**
-     * Answers hover questions off the server thread. Planning an unvisited platmap is tens to
-     * hundreds of milliseconds (measured), and a player sweeping the mouse across the map would
-     * otherwise drag the tick along with it. One thread, because planned platmaps are cached and
-     * shared — a second question about the same area is nearly free.
+     * Answers hover questions off the server thread, on the shared planning pool. Planning an unvisited
+     * platmap is tens to hundreds of milliseconds (measured), and a player sweeping the mouse across the
+     * map would otherwise drag the tick along with it. Planned platmaps are cached and shared, so a second
+     * question about the same area is nearly free.
+     *
+     * <p>Two limits, because any client with the mod can send these and each one may plan a platmap on
+     * the pool (the ZARP audit, 2026-11-02): a request further than {@link #HOVER_REACH_CHUNKS} from the
+     * player is dropped, and one request per player is in flight at a time — a sweep's later hovers are
+     * dropped rather than queued, and the client asks again when the mouse rests.
      */
-    private static final ExecutorService LOOKUP = Executors.newSingleThreadExecutor(r -> {
-        Thread thread = new Thread(r, "cityworld-lot-info");
-        thread.setDaemon(true);
-        return thread;
-    });
+    private static final ExecutorService LOOKUP = me.daddychurchill.CityWorld.Support.Planners.POOL;
+    private static final int HOVER_REACH_CHUNKS = 96;
+    private static final java.util.Set<java.util.UUID> HOVER_IN_FLIGHT = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     private static final String VERSION = "1";
 
@@ -89,6 +91,11 @@ public final class CityWorldNetwork {
             ServerPlayer player = context.getSender();
             if (player == null)
                 return;
+            if (Math.abs(payload.chunkX() - (player.blockPosition().getX() >> 4)) > HOVER_REACH_CHUNKS
+                    || Math.abs(payload.chunkZ() - (player.blockPosition().getZ() >> 4)) > HOVER_REACH_CHUNKS)
+                return; // too far to be a map hover: dropped, no answer
+            if (!HOVER_IN_FLIGHT.add(player.getUUID()))
+                return; // one at a time per player; the client asks again when the mouse rests
             ServerLevel level = player.serverLevel();
             LOOKUP.execute(() -> {
                 String summary;
@@ -98,6 +105,8 @@ public final class CityWorldNetwork {
                     CityWorldMod.LOGGER.debug("Lot info lookup failed at {}, {}", payload.chunkX(),
                             payload.chunkZ(), t);
                     summary = "";
+                } finally {
+                    HOVER_IN_FLIGHT.remove(player.getUUID());
                 }
                 final String answer = summary;
                 level.getServer().execute(() -> CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),

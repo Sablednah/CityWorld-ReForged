@@ -56,6 +56,27 @@ public final class SchematicLibrary {
     private static volatile List<Entry> index;
     private static final Map<String, Clipboard> cache = new ConcurrentHashMap<>();
 
+    /** Entries whose load failed, so a bad file is parsed once, not on every ask (the findables list asks for all). */
+    private static final java.util.Set<String> failed = ConcurrentHashMap.newKeySet();
+
+    /** The cached clipboard, loaded on first ask OUTSIDE the map's lock (a parse inside computeIfAbsent held the
+     *  bin while every other asker waited); a failed load is remembered as a miss. */
+    private static Clipboard cached(Entry e) {
+        String key = cacheKey(e);
+        Clipboard clip = cache.get(key);
+        if (clip != null)
+            return clip;
+        if (failed.contains(key))
+            return null;
+        clip = load(e);
+        if (clip == null) {
+            failed.add(key);
+            return null;
+        }
+        Clipboard winner = cache.putIfAbsent(key, clip);
+        return winner != null ? winner : clip;
+    }
+
     private static List<Entry> index() {
         List<Entry> local = index;
         if (local == null) {
@@ -271,7 +292,7 @@ public final class SchematicLibrary {
     public static Clipboard get(String name) {
         for (Entry e : index())
             if (e.name.equalsIgnoreCase(name))
-                return cache.computeIfAbsent(cacheKey(e), k -> load(e));
+                return cached(e);
         return null;
     }
 
@@ -280,7 +301,7 @@ public final class SchematicLibrary {
         List<Clipboard> out = new ArrayList<>();
         for (Entry e : index())
             if (e.family == family) {
-                Clipboard clip = cache.computeIfAbsent(cacheKey(e), k -> load(e));
+                Clipboard clip = cached(e);
                 if (clip != null)
                     out.add(clip);
             }

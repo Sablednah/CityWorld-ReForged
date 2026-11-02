@@ -155,9 +155,12 @@ public final class RiverNetwork {
         long key = node(ti, tj);
         Tile t = tiles.get(key);
         if (t == null) {
-            // built outside the map's locks (a slow compute inside computeIfAbsent stalls unrelated threads)
+            // built outside the map's locks (a slow compute inside computeIfAbsent stalls unrelated threads).
+            // Over the cap, drop the tiles far from the one wanted — never all of them: a clear() made every
+            // thread rebuild its tiles at once, and the rebuild could land on the server thread through
+            // getBaseHeight (/locate, explorer maps, dolphins) — the ZARP audit, 2026-11-02.
             if (tiles.size() > 4096)
-                tiles.clear();
+                tiles.keySet().removeIf(k -> Math.max(Math.abs(ni(k) - ti), Math.abs(nj(k) - tj)) > 24);
             Tile built = new Tile(ti, tj);
             t = tiles.putIfAbsent(key, built);
             if (t == null)
