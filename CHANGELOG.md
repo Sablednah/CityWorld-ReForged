@@ -16,19 +16,23 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   as before.
 - **Macaw's Roads and Streets.** One surface pick per world from `#cityworld:fittings/road` dresses every city
   street: asphalt with the mod's dashed centre line, a manhole on one stretch in three, zebra crossings on every
-  junction arm, kerbs along each pavement edge, and signs on the mod's rods — STOP at a T, DEAD END, a speed limit
-  (30 in rural districts, 50 in town) on one straight in four, and the town's name board where a road leaves for the
-  wild. The pieces are found from the surface's id by name, so a pack can point the tag at another road mod's
-  surface and get whatever that mod names the same way.
+  junction arm, kerbs along each pavement edge, and signs on the mod's rods, each on the driver's side of the
+  traffic it is for — STOP at a T, DEAD END, a pair of speed limits back to back where a road crosses from town
+  (50) to country (30) and repeats in the slower zone, and the town's name board where a road leaves for the wild.
+  The pieces are found from the surface's id by name, so a pack can point the tag at another road mod's surface
+  and get whatever that mod names the same way.
 - **Macaw's Bridges.** Skybridges in a ruined city: survivors' ways between the upper floors of two neighbouring
   towers of different buildings, a doorway cut into each wall — a two-wide solid deck (`#cityworld:fittings/
-  skybridge`: iron, glass, stone brick, deepslate, blackstone, prismarine) or, as often, a one-wide rope bridge;
-  Apocalypse has them by default, a working city does not. Rope bridges in the wild, from a ridge crest across a
-  valley at least eight deep to the far side, up to 48 blocks long through as many chunks as it takes, the lower
-  end built up with a bank of its own ground (`#cityworld:fittings/rope_bridge`, one per wood). New settings
-  group `bridges`: `skybridges`, `oddsOfSkybridge` (1 in 3), `skybridgeMinFloors` (6), `wildBridges`,
-  `wildBridgeDepth` (8), `wildBridgeStep` (3), `wildBridgeSpan` (48), `oddsOfWildBridge` (1 in 3); Customize
-  toggles "Skybridges" and "Wild rope bridges". Nothing is drawn without a bridge mod.
+  skybridge`: iron, glass, stone brick, deepslate, blackstone, prismarine) or, as often, a one-wide rope bridge —
+  and now and then a rope bridge across a street, never more than one per district. Apocalypse has them by
+  default, a working city does not. Rope bridges in the wild, from a ridge crest across a valley at least eight
+  deep to where the far side comes back up to the deck, up to 48 blocks long through as many chunks as it takes:
+  at most one in a region 32 chunks square, half the regions (`#cityworld:fittings/rope_bridge`, one per wood).
+- New settings group `roads`: `driveOnLeft` (UK/US, Customize "Drive on"), `speedLimitUrban` (50),
+  `speedLimitRural` (30), `oddsOfSpeedRepeat` (1 in 8), `skybridges`, `oddsOfSkybridge` (1 in 3),
+  `skybridgeMinFloors` (6), `oddsOfStreetRope` (1 in 3), `wildBridges`, `wildBridgeDepth` (8), `wildBridgeSpan`
+  (48), `wildBridgeRegion` (32), `oddsOfWildBridge` (1 in 2); Customize toggles "Skybridges" and "Wild rope
+  bridges". Nothing is drawn without the mods.
 - `Material.withProperty(name, value)` sets a mod block's own state by name (a bridge's `connection`, a kerb's
   `shape`); pool pieces with such states are placed through `setBlockState`.
 

@@ -367,20 +367,25 @@ lists. Cities keep clear of whatever is placed.
 | `enabled` | `true` | A station in every urban district — a ticket hall beside a road, switchback stairs down to twin-track platforms 24 blocks under the street — and tunnels to the first station along its row or column up to six districts away, so lines cross the countryside between city clusters. East-west lines run on the upper level, north-south lines eight blocks lower, so lines never junction; a station on both is an interchange with stairs between its halls, and one with a single line each way joins them in a sloped loop instead of two dead ends. Lit, ringed in brick, powered rails so a cart runs the line. Stations announce as the landmark kind `subway` (off by default). |
 | `spawners` | `true` | In a ruined (APOCALYPSE) world, sewer-mob spawners in niches in the tunnel walls. |
 
-### `bridges` — a bridge mod's bridges (Macaw's Bridges; nothing without one)
+### `roads` — road signs and bridges (Macaw's Roads and Streets, Macaw's Bridges; nothing without them)
 
-Every pool here is empty unless a bridge mod fills it (`#cityworld:fittings/skybridge`, `#cityworld:fittings/rope_bridge`), so without one these settings change nothing.
+Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fittings/road`, `#cityworld:fittings/skybridge`, `#cityworld:fittings/rope_bridge`), so without them these settings change nothing.
 
 | Setting | Default | What it does |
 |---|---|---|
-| `skybridges` | `false` (Apocalypse `true`) | **Skybridges** in Customize. A deck between an upper floor of two neighbouring towers of different buildings, with a doorway cut into each wall: survivors' ways about a ruined city, so Apocalypse has them by default and a working city does not. As often a one-wide rope bridge as a two-wide solid deck, each from its own pool (`#cityworld:fittings/skybridge`, `#cityworld:fittings/rope_bridge`). |
+| `driveOnLeft` | `false` | **Drive on** in Customize. The side of the road traffic keeps to: `false` the right (the US, most of the world), `true` the left (the UK). Every road sign stands on the driver's side of the traffic it is for and faces it. |
+| `speedLimitUrban` | `50` | A town's speed limit, on the mod's signs (10 to 120 in tens; another number rounds to the nearest). |
+| `speedLimitRural` | `30` | The limit in a district that is mostly nature: neighbourhoods, farms, the outskirts. Where a road crosses from one limit to another the signs come in a pair, back to back across the road: the new limit for the traffic going in, the old one for the traffic coming out. Where a road leaves a town for the wild, the town's name board and its "leaving" face, then a chunk in, the limit and its end. |
+| `oddsOfSpeedRepeat` | `0.125` (1 in 8) | The chance a straight stretch in the slower zone repeats its limit, as a pair. |
+| `skybridges` | `false` (Apocalypse `true`) | **Skybridges** in Customize. A deck between an upper floor of two neighbouring towers of different buildings, with a doorway cut into each wall: survivors' ways about a ruined city, so Apocalypse has them by default and a working city does not. As often a one-wide rope bridge as a two-wide solid deck, each from its own pool (`#cityworld:fittings/skybridge`, `#cityworld:fittings/rope_bridge`). Each half runs from its chunk edge until it meets the building. |
 | `oddsOfSkybridge` | `0.333` (1 in 3) | The chance each qualifying pair of towers gets a deck. |
 | `skybridgeMinFloors` | `6` | Both towers must have at least this many floors; the deck lands on the highest floor they share, never the second floor or lower. |
-| `wildBridges` | `true` | **Wild rope bridges** in Customize. A one-wide rope bridge from a ridge crest in the wild across the valley to the far side, where nothing between stands as high as the deck: the kind of span you see from the next hill. It can run through several chunks; each draws its own part from the terrain alone. The lower end gets a bank of its own ground up to the deck. |
-| `wildBridgeDepth` | `8` | How far the valley floor must lie below both ends for a rope bridge to be worth building. |
-| `wildBridgeStep` | `3` | How much higher one end may be than the other (the lower end is built up to the deck). |
+| `oddsOfStreetRope` | `0.333` (1 in 3) | With skybridges on, the chance a district gets one rope bridge across a street, between two towers that face each other over a road. Never more than one per district. |
+| `wildBridges` | `true` | **Wild rope bridges** in Customize. A one-wide rope bridge from a ridge crest in the wild across a valley to where the far side's ground comes back up to the deck, so it always lands on the hill and needs no support. A find, not a fixture: see `wildBridgeRegion`. |
+| `wildBridgeDepth` | `8` | How far the valley floor must lie below the crest for a rope bridge to be worth building. |
 | `wildBridgeSpan` | `48` | The longest bridge, in blocks; a valley wider than this gets none. The shortest is a chunk. |
-| `oddsOfWildBridge` | `0.33` | The share of valleys that qualify which get a bridge (1 in 3). A bridge is a find, not a fixture: at 1 in 2 a 400-block square of hills had four, so the default aims at one to three. |
+| `wildBridgeRegion` | `32` | The size of a bridge region, in chunks square. A region has at most one wild rope bridge: its seed picks one chunk row or column through it, and the bridge is the first span along that line. |
+| `oddsOfWildBridge` | `0.5` | The chance a region has its bridge (1 in 2). At the defaults a mountain range shows one, maybe two. |
 
 ### `cities` — cities in a vanilla world, and rivers
 
