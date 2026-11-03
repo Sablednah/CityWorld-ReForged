@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "mcwpaths:gravel_path_block",
+      "required": false
+    },
+    {
+      "id": "mcwpaths:dirt_path_block",
+      "required": false
+    },
+    {
+      "id": "mcwpaths:podzol_path_block",
+      "required": false
+    },
+    {
+      "id": "mcwpaths:sand_path_block",
+      "required": false
+    }
+  ]
+}

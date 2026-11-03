@@ -367,6 +367,18 @@ lists. Cities keep clear of whatever is placed.
 | `enabled` | `true` | A station in every urban district — a ticket hall beside a road, switchback stairs down to twin-track platforms 24 blocks under the street — and tunnels to the first station along its row or column up to six districts away, so lines cross the countryside between city clusters. East-west lines run on the upper level, north-south lines eight blocks lower, so lines never junction; a station on both is an interchange with stairs between its halls, and one with a single line each way joins them in a sloped loop instead of two dead ends. Lit, ringed in brick, powered rails so a cart runs the line. Stations announce as the landmark kind `subway` (off by default). |
 | `spawners` | `true` | In a ruined (APOCALYPSE) world, sewer-mob spawners in niches in the tunnel walls. |
 
+### `bridges` — a bridge mod's bridges (Macaw's Bridges; nothing without one)
+
+Every pool here is empty unless a bridge mod fills it (`#cityworld:fittings/skybridge`, `#cityworld:fittings/rope_bridge`), so without one these settings change nothing.
+
+| Setting | Default | What it does |
+|---|---|---|
+| `skybridges` | `true` | **Skybridges** in Customize. A deck between an upper floor of two neighbouring towers that belong to different buildings, with a doorway cut into each wall where it lands. Both towers need a floor at the same height. |
+| `oddsOfSkybridge` | `0.333` (1 in 3) | The chance each qualifying pair of towers gets a deck. |
+| `skybridgeMinFloors` | `6` | Both towers must have at least this many floors; the deck lands on the highest floor they share, never the second floor or lower. |
+| `wildBridges` | `true` | **Wild rope bridges** in Customize. A one-wide rope bridge across a ravine in a wild chunk: where the ground along the chunk's middle row drops between two ends of about the same height, and nothing between stands as high as the deck. |
+| `wildBridgeDepth` | `6` | How far the ground must drop under the span for a rope bridge to be worth building. |
+
 ### `cities` — cities in a vanilla world, and rivers
 
 | Setting | Default | What it does |

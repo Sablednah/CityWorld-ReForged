@@ -5,6 +5,31 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 6.13.0 (unreleased)
+
+### Added
+
+- **Macaw's Paths and Pavings.** Park walkways take a paving from `#cityworld:fittings/path` (one per park: the
+  flagstone, running bond, crystal floor, windmill weave and six paving patterns of each stone, 120 blocks), and
+  country tracks — the strip between fields, the farmyard's path to the well — take `#cityworld:fittings/track`
+  (its gravel, dirt, podzol and sand path blocks). Both pools are empty without the mod and the grass path is drawn
+  as before.
+- **Macaw's Roads and Streets.** One surface pick per world from `#cityworld:fittings/road` dresses every city
+  street: asphalt with the mod's dashed centre line, a manhole on one stretch in three, zebra crossings on every
+  junction arm, kerbs along each pavement edge, and signs on the mod's rods — STOP at a T, DEAD END, a speed limit
+  (30 in rural districts, 50 in town) on one straight in four, and the town's name board where a road leaves for the
+  wild. The pieces are found from the surface's id by name, so a pack can point the tag at another road mod's
+  surface and get whatever that mod names the same way.
+- **Macaw's Bridges.** Skybridges: a two-wide deck between an upper floor of two neighbouring towers that belong
+  to different buildings, with a doorway cut into each wall (`#cityworld:fittings/skybridge`: iron, glass, stone
+  brick, deepslate, blackstone, prismarine). Rope bridges across ravines in the wild, one wide, where the ground
+  along a chunk's middle row drops six or more between two ends of a height (`#cityworld:fittings/rope_bridge`,
+  one per wood). New settings group `bridges`: `skybridges`, `oddsOfSkybridge` (1 in 3), `skybridgeMinFloors`
+  (6), `wildBridges`, `wildBridgeDepth` (6); Customize toggles "Skybridges" and "Wild rope bridges". Nothing is
+  drawn without a bridge mod.
+- `Material.withProperty(name, value)` sets a mod block's own state by name (a bridge's `connection`, a kerb's
+  `shape`); pool pieces with such states are placed through `setBlockState`.
+
 ## 6.12.0
 
 ### Changed

@@ -1,0 +1,33 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "mcwbridges:iron_bridge",
+      "required": false
+    },
+    {
+      "id": "mcwbridges:glass_bridge",
+      "required": false
+    },
+    {
+      "id": "mcwbridges:stone_brick_bridge",
+      "required": false
+    },
+    {
+      "id": "mcwbridges:deepslate_brick_bridge",
+      "required": false
+    },
+    {
+      "id": "mcwbridges:deepslate_tile_bridge",
+      "required": false
+    },
+    {
+      "id": "mcwbridges:blackstone_bridge",
+      "required": false
+    },
+    {
+      "id": "mcwbridges:prismarine_bricks_bridge",
+      "required": false
+    }
+  ]
+}

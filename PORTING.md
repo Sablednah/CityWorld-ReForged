@@ -79,6 +79,11 @@ forest/jungle/sparse jungle gain it. Not cherry-picked to the branches yet; the 
 
 ## ▶ Backlog — Macaw's Paths and Bridges pools (ZARP's ask, 2026-11-02; not scoped)
 
+**Built 2026-11-03 (6.13 draft; unreleased, unmeasured when written).** Pools `fittings/{path,track,road,skybridge,
+rope_bridge}`, `Support/RoadKit` (surface pick → pieces by name), RoadLot markings/crosswalks/kerbs/signs,
+`FinishedBuildingLot.drawSkybridges`, `NatureLot.drawRopeBridge`, settings group `bridges`. CLAUDE.md's resume note
+and memory `cityworld-macaws-paths-roads-bridges` carry the design; the inventory below is what it was built from.
+
 ZARP is adding Macaw's Bridges 3.1.2 and Macaw's Paths and Pavings 1.1.1 (26.2). Today only `#cityworld:build/plaza`
 takes paving (and only for reserved squares — a datapack may extend that tag freely). Proposed, in the fittings
 pattern of PALETTES.md: `#cityworld:fittings/path` (full paving blocks; vanilla fallback = today's path material) for
