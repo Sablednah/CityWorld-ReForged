@@ -1011,9 +1011,6 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			aboveFloorHeight = otherFloorHeight;
 		}
 
-		// a deck to the tower next door, from a bridge mod's pool (nothing without one)
-		drawSkybridges(generator, platmap, chunk, platX, platZ);
-
 		// happy place?
 		if (!buildingsDecay(generator)) {
 
@@ -1054,6 +1051,10 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			}
 			destroyLot(generator, y1, y2);
 		}
+
+		// a deck to the tower next door, from a bridge mod's pool (nothing without one): survivors' work, so it
+		// goes in AFTER the ruin's decay, from whatever wall still stands, and the collapse never takes it
+		drawSkybridges(generator, platmap, chunk, platX, platZ);
 	}
 
 	protected void drawInteriorParts(CityWorldGenerator generator, RealBlocks chunk, DataContext context,
