@@ -2853,6 +2853,85 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			skybridge(generator, chunk, platmap.getLot(platX, platZ - 1), BlockFace.NORTH, chunkX, chunkZ - 1);
 		if (platZ < PlatMap.Width - 1)
 			skybridge(generator, chunk, platmap.getLot(platX, platZ + 1), BlockFace.SOUTH, chunkX, chunkZ);
+		StreetRope rope = streetRope(generator, platmap);
+		if (rope != null) // this tower's half, if the platmap's one rope across a street starts or ends here
+			for (BlockFace toward : rope.alongX ? new BlockFace[] { BlockFace.EAST, BlockFace.WEST }
+					: new BlockFace[] { BlockFace.SOUTH, BlockFace.NORTH })
+				if (platX + toward.getModX() == rope.platX && platZ + toward.getModZ() == rope.platZ)
+					drawDeck(chunk, toward, rope.deckY, rope.rope, true);
+	}
+
+	/**
+	 * The one rope bridge across a street a platmap may have: from an upper floor of one tower over a road chunk to
+	 * the same floor of another building's tower on the far side (the road chunk {@code platX, platZ}). Every pair
+	 * of towers of at least {@code roads.skybridgeMinFloors} with a road chunk between them and a floor in common is a
+	 * candidate, and the platmap rolls {@code roads.oddsOfStreetRope} once and takes one of them by its seed — the
+	 * owner: "rarely a rope once crossing a street would be ok, like one per region max". The towers and the road
+	 * chunk each ask, and each gets the same answer from the plan alone.
+	 */
+	record StreetRope(int platX, int platZ, boolean alongX, int deckY, Material rope) {
+	}
+
+	static StreetRope streetRope(CityWorldGenerator generator, PlatMap platmap) {
+		me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
+		if (!settings.includeSkybridges)
+			return null;
+		Odds dice = new Odds(generator.getWorldSeed() ^ ((long) platmap.originX << 32) ^ (platmap.originZ & 0xffffffffL)
+				^ 0x5354524545544cL);
+		if (!dice.playOdds(settings.oddsOfStreetRope))
+			return null;
+		java.util.List<int[]> found = new java.util.ArrayList<>(); // platX, platZ, alongX, floorAt
+		for (int x = 0; x < PlatMap.Width; x++)
+			for (int z = 0; z < PlatMap.Width; z++) {
+				if (!(platmap.getLot(x, z) instanceof RoadLot))
+					continue;
+				for (int axis = 0; axis < 2; axis++) {
+					int dx = axis == 0 ? 1 : 0, dz = 1 - dx;
+					if (x - dx < 0 || z - dz < 0 || x + dx >= PlatMap.Width || z + dz >= PlatMap.Width)
+						continue;
+					if (platmap.getLot(x - dx, z - dz) instanceof FinishedBuildingLot a
+							&& platmap.getLot(x + dx, z + dz) instanceof FinishedBuildingLot b
+							&& a.getConnectedKey() != b.getConnectedKey()
+							&& a.height >= settings.skybridgeMinFloors && b.height >= settings.skybridgeMinFloors) {
+						int floorAt = sharedFloor(generator, a, b);
+						if (floorAt >= 0)
+							found.add(new int[] { x, z, axis == 0 ? 1 : 0, floorAt });
+					}
+				}
+			}
+		if (found.isEmpty())
+			return null;
+		int[] pick = found.get(dice.getRandomInt(found.size()));
+		Material rope = MaterialTags.pick(MaterialTags.FITTINGS_ROPE_BRIDGE, dice, null);
+		return rope == null ? null : new StreetRope(pick[0], pick[1], pick[2] == 1, pick[3], rope);
+	}
+
+	/** The road chunk's part of the platmap's rope across a street, if it is this chunk: rope the whole way over. */
+	static void drawStreetRope(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk, int platX, int platZ) {
+		StreetRope rope = streetRope(generator, platmap);
+		if (rope == null || rope.platX != platX || rope.platZ != platZ)
+			return;
+		net.minecraft.world.level.block.state.BlockState facing = rope.rope.withFacing(rope.alongX ? BlockFace.EAST : BlockFace.SOUTH);
+		net.minecraft.world.level.block.state.BlockState middle = Material.withProperty(facing, "connection",
+				rope.alongX ? "middle_ns" : "middle_ew");
+		for (int i = 0; i < 16; i++) {
+			int x = rope.alongX ? i : 7, z = rope.alongX ? 7 : i;
+			chunk.setBlockState(x, rope.deckY, z, middle);
+			chunk.setBlocks(x, x + 1, rope.deckY + 1, rope.deckY + 3, z, z + 1, Material.AIR);
+		}
+	}
+
+	/**
+	 * The highest rise both towers have a floor at, below either roof and above the second floor, as a block y, or -1
+	 * — read the same way from either side, so the two halves meet (upper floors sit at streetLevel + 2 + rise).
+	 */
+	private static int sharedFloor(CityWorldGenerator generator, FinishedBuildingLot a, FinishedBuildingLot b) {
+		int top = Math.min(a.otherFloorHeight * (a.height - 1), b.otherFloorHeight * (b.height - 1));
+		int bottom = 2 * Math.max(a.otherFloorHeight, b.otherFloorHeight);
+		for (int rise = top; rise >= bottom; rise--)
+			if (rise % a.otherFloorHeight == 0 && rise % b.otherFloorHeight == 0)
+				return generator.streetLevel + rise + 2;
+		return -1;
 	}
 
 	private void skybridge(CityWorldGenerator generator, RealBlocks chunk, PlatLot neighbour, BlockFace toward,
@@ -2874,37 +2953,34 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		if (deck == null || !pair.playOdds(settings.oddsOfSkybridge))
 			return;
 
-		// the highest rise both towers have a floor at, below either roof and above the second floor — read the
-		// same way from either side, so the two halves meet (upper floors sit at streetLevel + 2 + rise)
-		int floorAt = -1;
-		int top = Math.min(otherFloorHeight * (height - 1), other.otherFloorHeight * (other.height - 1));
-		int bottom = 2 * Math.max(otherFloorHeight, other.otherFloorHeight);
-		for (int rise = top; rise >= bottom && floorAt < 0; rise--)
-			if (rise % otherFloorHeight == 0 && rise % other.otherFloorHeight == 0)
-				floorAt = generator.streetLevel + rise + 2;
-		if (floorAt < 0)
-			return;
-		int deckY = floorAt; // the mod's decks are a low plate in their block: level with the floor, a step of a quarter
+		int floorAt = sharedFloor(generator, this, other);
+		if (floorAt >= 0)
+			drawDeck(chunk, toward, floorAt, deck, ropes);
+	}
 
-		// our wall at that floor, from the chunk edge inward: three solid cells stacked (wall, wall, ceiling), so a
-		// ledge or balcony rail outside the wall is passed over; the deck runs from just outside the wall to the edge
-		int lo = 7, hi = 8; // the deck's two rows across
+	/**
+	 * This chunk's half of a bridge leaving toward {@code toward} at floor {@code floorAt}: from the chunk edge
+	 * inward, the deck runs on until it meets a block at that floor — the wall, a setback's wall, whatever the ruin
+	 * left standing — and the doorway is cut there. It never gives up: a half that found no wall where it looked for
+	 * one left the other half ending in mid-air (owner, 2026-11-03); nothing in the whole row, and it stops at the
+	 * chunk's middle. A solid deck is two rows of side pieces, rails on the outside of each; a rope bridge one row,
+	 * its end piece at the wall named by the way the bridge continues and its middles by their rails (the mod's
+	 * names, read from its models: middle_ns walks east-west). The mod's decks are a low plate in their block, so the
+	 * deck is level with the floor: a step of a quarter.
+	 */
+	private static void drawDeck(RealBlocks chunk, BlockFace toward, int floorAt, Material deck, boolean ropes) {
+		boolean alongX = toward == BlockFace.EAST || toward == BlockFace.WEST;
+		int lo = 7, hi = ropes ? 7 : 8; // the deck's rows across
 		int edge = toward == BlockFace.EAST || toward == BlockFace.SOUTH ? 15 : 0;
 		int step = edge == 15 ? -1 : 1;
-		int wall = -1;
-		for (int i = edge; (step > 0 ? i <= 7 : i >= 8) && wall < 0; i += step) {
+		int wall = edge == 15 ? 7 : 8;
+		for (int i = edge; i >= 0 && i <= 15; i += step) {
 			int x = alongX ? i : lo, z = alongX ? lo : i;
-			if (!chunk.isEmpty(x, floorAt, z) && !chunk.isEmpty(x, floorAt + 1, z) && !chunk.isEmpty(x, floorAt + 2, z))
+			if (!chunk.isEmpty(x, floorAt, z) || !chunk.isEmpty(x, floorAt + 1, z)) {
 				wall = i;
+				break;
+			}
 		}
-		if (wall < 0)
-			return;
-
-		// the doorway, then the deck, headroom cleared: a solid deck's two rows of side pieces, rails on the outside
-		// of each row; a rope bridge's one row, its end piece at the wall named by the way the bridge continues and
-		// its middles by their rails (the mod's names, read from its models: middle_ns walks east-west)
-		if (ropes)
-			hi = lo;
 		net.minecraft.world.level.block.state.BlockState facing = deck.withFacing(alongX ? BlockFace.EAST : BlockFace.SOUTH);
 		String ropeEnd = toward == BlockFace.EAST ? "middle_end_e" : toward == BlockFace.WEST ? "middle_end_w"
 				: toward == BlockFace.SOUTH ? "middle_end_s" : "middle_end_n";
@@ -2916,9 +2992,9 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			for (int i = wall - step; i != edge - step; i -= step) { // outward: from just past the wall to the edge
 				int x = alongX ? i : j, z = alongX ? j : i;
 				String piece = !ropes ? side : i == wall - step ? ropeEnd : ropeMiddle;
-				chunk.setBlockState(x, deckY, z, ropes ? Material.withProperty(facing, "connection", piece)
+				chunk.setBlockState(x, floorAt, z, ropes ? Material.withProperty(facing, "connection", piece)
 						: deck.withProperty("connection", piece));
-				chunk.setBlocks(x, x + 1, deckY + 1, deckY + 3, z, z + 1, Material.AIR);
+				chunk.setBlocks(x, x + 1, floorAt + 1, floorAt + 3, z, z + 1, Material.AIR);
 			}
 		}
 	}

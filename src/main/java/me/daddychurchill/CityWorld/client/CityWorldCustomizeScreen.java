@@ -57,7 +57,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private final CityWorldSettingsData.Caves caves;
     /** Which vanilla and mod structures the world places — edited on its own page ({@link CityWorldStructuresScreen}). */
     private CityWorldSettingsData.Structures structures;
-    private CityWorldSettingsData.Bridges bridges;
+    private CityWorldSettingsData.Roads roads;
     /** Every structure set the install has, for that page; empty when the registries could not be read. */
     private final List<me.daddychurchill.CityWorld.worldgen.StructureChoices.Entry> structureEntries;
     /**
@@ -202,7 +202,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         oddsOfAtmInMalls = Chance.nearest(data.shops().oddsOfAtmInMalls());
         includeSubways = data.subways().enabled();
         spawnersInSubways = data.subways().spawners();
-        this.bridges = data.bridges();
+        this.roads = data.roads();
         CityWorldSettingsData.Decay dk = data.decay();
         buildingDecayIntensity = dk.buildingIntensity();
         roadDecayIntensity = dk.roadIntensity();
@@ -421,11 +421,11 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, onOff("Chests in sewers", treasuresInSewers, v -> treasuresInSewers = v));
         pair(row, onOff("Spawners in sewers", spawnersInSewers, v -> spawnersInSewers = v));
         pair(row, onOff("Spawners in subways", spawnersInSubways, v -> spawnersInSubways = v));
-        // a bridge mod's bridges (Macaw's): nothing is drawn without one, so the toggles cost nothing then
-        pair(row, onOff("Skybridges", bridges.skybridges(), v -> bridges = new CityWorldSettingsData.Bridges(v,
-                bridges.oddsOfSkybridge(), bridges.skybridgeMinFloors(), bridges.wildBridges(), bridges.wildBridgeDepth(), bridges.wildBridgeStep(), bridges.wildBridgeSpan(), bridges.oddsOfWildBridge())));
-        pair(row, onOff("Wild rope bridges", bridges.wildBridges(), v -> bridges = new CityWorldSettingsData.Bridges(
-                bridges.skybridges(), bridges.oddsOfSkybridge(), bridges.skybridgeMinFloors(), v, bridges.wildBridgeDepth(), bridges.wildBridgeStep(), bridges.wildBridgeSpan(), bridges.oddsOfWildBridge())));
+        // road furniture and bridges (Macaw's): nothing is drawn without the mods, so the toggles cost nothing then
+        pair(row, onOff("Skybridges", roads.skybridges(), v -> roads = roads.withSkybridges(v)));
+        pair(row, onOff("Wild rope bridges", roads.wildBridges(), v -> roads = roads.withWildBridges(v)));
+        pair(row, cycle("Drive on", new Boolean[] { false, true }, roads.driveOnLeft(),
+                v -> Component.literal(v ? "the left (UK)" : "the right (US)"), v -> roads = roads.withDriveOnLeft(v)));
         pair(row, onOff("Chests in buildings", treasuresInBuildings, v -> treasuresInBuildings = v));
         pair(row, chance("Chest odds: mines", oddsOfTreasureInMines, v -> oddsOfTreasureInMines = v));
         pair(row, chance("Chest odds: bunkers", oddsOfTreasureInBunkers, v -> oddsOfTreasureInBunkers = v));
@@ -516,7 +516,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);
         CityWorldSettingsData data = new CityWorldSettingsData(
                 features, terrain, spawns, treasures, world, radius, naming, mobs, overgrowth, shops, decay,
-                caves, subways, structures, cities, bridges);
+                caves, subways, structures, cities, roads);
         return new Result(style, data, ruinedNether, cityWorldEnd);
     }
 
@@ -553,7 +553,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                             announcedLandmarks, useModdedBiomes, wildDecoration, climateWarmth, biomeScale,
                             moddedBiomeShare, packPreset, moddedBiomeGrain),
                     radius, naming, mobs, defaults.overgrowth(), defaults.shops(), defaults.decay(), caves,
-                    defaults.subways(), structures, cities, bridges);
+                    defaults.subways(), structures, cities, roads);
         }
         // 26.2 moved screen switching from Minecraft onto its Gui (Minecraft.setScreen is gone).
         this.minecraft.gui.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.ruinedNether, this.cityWorldEnd, this.styleLocked, this.structureEntries, this.styleBases, this.onDone));

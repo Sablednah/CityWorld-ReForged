@@ -56,12 +56,12 @@ public record CityWorldSettingsData(
         Subways subways,
         Structures structures,
         Cities cities,
-        Bridges bridges) {
+        Roads roads) {
 
     /** These settings with another structure choice (the Customize screen's Structures page). */
     public CityWorldSettingsData withStructures(Structures chosen) {
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
-                overgrowth, shops, decay, caves, subways, chosen, cities, bridges);
+                overgrowth, shops, decay, caves, subways, chosen, cities, roads);
     }
 
     /**
@@ -78,13 +78,13 @@ public record CityWorldSettingsData(
                 t.includeDecayedBuildings(), t.includeDecayedNature(), t.oddsOfPristineBuilding(), t.windingCaves(),
                 t.largeCaverns());
         return new CityWorldSettingsData(features, lit, spawns, treasures, world, radius, naming, own.mobs(),
-                own.overgrowth(), shops, decay, caves, subways, structures, cities, bridges);
+                own.overgrowth(), shops, decay, caves, subways, structures, cities, roads);
     }
 
     /** These settings with another land choice (the Customize screen keeps it across a style change). */
     public CityWorldSettingsData withCities(Cities chosen) {
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
-                overgrowth, shops, decay, caves, subways, structures, chosen, bridges);
+                overgrowth, shops, decay, caves, subways, structures, chosen, roads);
     }
 
     /** 1875000 chunks — the modern world-format radius ceiling (30,000,000 blocks / 16). */
@@ -93,7 +93,7 @@ public record CityWorldSettingsData(
     public static final CityWorldSettingsData DEFAULT = new CityWorldSettingsData(
             Features.DEFAULT, Terrain.DEFAULT, Spawns.DEFAULT, Treasures.DEFAULT, World.DEFAULT, Radius.DEFAULT,
             Naming.DEFAULT, Mobs.DEFAULT, Overgrowth.DEFAULT, Shops.DEFAULT, Decay.DEFAULT, Caves.DEFAULT,
-            Subways.DEFAULT, Structures.DEFAULT, Cities.DEFAULT, Bridges.DEFAULT);
+            Subways.DEFAULT, Structures.DEFAULT, Cities.DEFAULT, Roads.DEFAULT);
 
     public static final Codec<CityWorldSettingsData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Features.CODEC.optionalFieldOf("features", Features.DEFAULT).forGetter(CityWorldSettingsData::features),
@@ -112,7 +112,7 @@ public record CityWorldSettingsData(
             Structures.CODEC.optionalFieldOf("structures", Structures.DEFAULT).forGetter(CityWorldSettingsData::structures),
             Cities.CODEC.optionalFieldOf("cities", Cities.DEFAULT).forGetter(CityWorldSettingsData::cities),
             // ⚠ sixteen fields: the top-level codec is at RecordCodecBuilder's cap — the next group nests
-            Bridges.CODEC.optionalFieldOf("bridges", Bridges.DEFAULT).forGetter(CityWorldSettingsData::bridges)
+            Roads.CODEC.optionalFieldOf("roads", Roads.DEFAULT).forGetter(CityWorldSettingsData::roads)
     ).apply(i, CityWorldSettingsData::new));
 
     // --- what gets built ----------------------------------------------------------------------
@@ -315,29 +315,54 @@ public record CityWorldSettingsData(
     }
 
     /**
-     * The bridges a bridge mod lets CityWorld build (Macaw's Bridges; every pool empty without one, and then nothing
-     * is drawn): {@code skybridges} between the upper floors of two neighbouring towers of at least
-     * {@code skybridgeMinFloors}, one pair in {@code oddsOfSkybridge} — survivors' ways about a ruined city, so on
-     * by default for Apocalypse only (a soft style default), and rope ones there as often as solid; {@code wildBridges}, a rope bridge from a ridge
-     * crest in the wild across a valley at least {@code wildBridgeDepth} deep to the far side, up to
-     * {@code wildBridgeSpan} long, the far side within {@code wildBridgeStep} of the crest, one valley in
+     * Road furniture and bridges (Macaw's Roads and Streets, Macaw's Bridges; every pool empty without them, and then
+     * nothing is drawn). {@code driveOnLeft}: the side traffic keeps to, which puts every road sign on the driver's
+     * side — false the right (most of the world, the US), true the left (the UK). {@code speedLimitUrban} /
+     * {@code speedLimitRural}: a built platmap's limit and a country one's (in tens, 10–120: the signs the mod has),
+     * signed in a pair, back to back across the road, where the limit changes, and repeated as a pair on one
+     * straight stretch in {@code oddsOfSpeedRepeat}. {@code skybridges} between the upper floors of two neighbouring
+     * towers of at least {@code skybridgeMinFloors}, one pair in {@code oddsOfSkybridge} — survivors' ways about a
+     * ruined city, so on by default for Apocalypse only (a soft style default), and rope ones there as often as
+     * solid, and one platmap in {@code oddsOfStreetRope} has a rope bridge across a street between two of them;
+     * {@code wildBridges}, a rope bridge from a ridge crest in the wild across a valley at least
+     * {@code wildBridgeDepth} deep to where the far side's ground meets the deck, up to {@code wildBridgeSpan} long:
+     * at most one per region of {@code wildBridgeRegion} chunks square, and a region has one in
      * {@code oddsOfWildBridge}.
      */
-    public record Bridges(boolean skybridges, double oddsOfSkybridge, int skybridgeMinFloors, boolean wildBridges,
-            int wildBridgeDepth, int wildBridgeStep, int wildBridgeSpan, double oddsOfWildBridge) {
+    public record Roads(boolean driveOnLeft, int speedLimitUrban, int speedLimitRural, double oddsOfSpeedRepeat,
+            boolean skybridges, double oddsOfSkybridge, int skybridgeMinFloors, double oddsOfStreetRope, boolean wildBridges,
+            int wildBridgeDepth, int wildBridgeSpan, double oddsOfWildBridge, int wildBridgeRegion) {
 
-        public static final Bridges DEFAULT = new Bridges(false, Odds.oddsSomewhatLikely, 6, true, 8, 3, 48, Odds.oddsSomewhatLikely);
+        public static final Roads DEFAULT = new Roads(false, 50, 30, Odds.oddsUnlikely,
+                false, Odds.oddsSomewhatLikely, 6, Odds.oddsSomewhatLikely, true, 8, 48, Odds.oddsLikely, 32);
 
-        public static final Codec<Bridges> CODEC = RecordCodecBuilder.create(i -> i.group(
-                Codec.BOOL.optionalFieldOf("skybridges", false).forGetter(Bridges::skybridges),
-                Codec.DOUBLE.optionalFieldOf("oddsOfSkybridge", Odds.oddsSomewhatLikely).forGetter(Bridges::oddsOfSkybridge),
-                Codec.INT.optionalFieldOf("skybridgeMinFloors", 6).forGetter(Bridges::skybridgeMinFloors),
-                Codec.BOOL.optionalFieldOf("wildBridges", true).forGetter(Bridges::wildBridges),
-                Codec.INT.optionalFieldOf("wildBridgeDepth", 8).forGetter(Bridges::wildBridgeDepth),
-                Codec.INT.optionalFieldOf("wildBridgeStep", 3).forGetter(Bridges::wildBridgeStep),
-                Codec.INT.optionalFieldOf("wildBridgeSpan", 48).forGetter(Bridges::wildBridgeSpan),
-                Codec.DOUBLE.optionalFieldOf("oddsOfWildBridge", Odds.oddsSomewhatLikely).forGetter(Bridges::oddsOfWildBridge)
-        ).apply(i, Bridges::new));
+        public static final Codec<Roads> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.BOOL.optionalFieldOf("driveOnLeft", false).forGetter(Roads::driveOnLeft),
+                Codec.INT.optionalFieldOf("speedLimitUrban", 50).forGetter(Roads::speedLimitUrban),
+                Codec.INT.optionalFieldOf("speedLimitRural", 30).forGetter(Roads::speedLimitRural),
+                Codec.DOUBLE.optionalFieldOf("oddsOfSpeedRepeat", Odds.oddsUnlikely).forGetter(Roads::oddsOfSpeedRepeat),
+                Codec.BOOL.optionalFieldOf("skybridges", false).forGetter(Roads::skybridges),
+                Codec.DOUBLE.optionalFieldOf("oddsOfSkybridge", Odds.oddsSomewhatLikely).forGetter(Roads::oddsOfSkybridge),
+                Codec.INT.optionalFieldOf("skybridgeMinFloors", 6).forGetter(Roads::skybridgeMinFloors),
+                Codec.DOUBLE.optionalFieldOf("oddsOfStreetRope", Odds.oddsSomewhatLikely).forGetter(Roads::oddsOfStreetRope),
+                Codec.BOOL.optionalFieldOf("wildBridges", true).forGetter(Roads::wildBridges),
+                Codec.INT.optionalFieldOf("wildBridgeDepth", 8).forGetter(Roads::wildBridgeDepth),
+                Codec.INT.optionalFieldOf("wildBridgeSpan", 48).forGetter(Roads::wildBridgeSpan),
+                Codec.DOUBLE.optionalFieldOf("oddsOfWildBridge", Odds.oddsLikely).forGetter(Roads::oddsOfWildBridge),
+                Codec.INT.optionalFieldOf("wildBridgeRegion", 32).forGetter(Roads::wildBridgeRegion)
+        ).apply(i, Roads::new));
+
+        public Roads withDriveOnLeft(boolean v) {
+            return new Roads(v, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion);
+        }
+
+        public Roads withSkybridges(boolean v) {
+            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, v, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion);
+        }
+
+        public Roads withWildBridges(boolean v) {
+            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, v, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion);
+        }
     }
 
     /**
