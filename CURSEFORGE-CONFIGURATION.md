@@ -376,8 +376,9 @@ Every pool here is empty unless a bridge mod fills it (`#cityworld:fittings/skyb
 | `skybridges` | `true` | **Skybridges** in Customize. A deck between an upper floor of two neighbouring towers that belong to different buildings, with a doorway cut into each wall where it lands. Both towers need a floor at the same height. |
 | `oddsOfSkybridge` | `0.333` (1 in 3) | The chance each qualifying pair of towers gets a deck. |
 | `skybridgeMinFloors` | `6` | Both towers must have at least this many floors; the deck lands on the highest floor they share, never the second floor or lower. |
-| `wildBridges` | `true` | **Wild rope bridges** in Customize. A one-wide rope bridge across a ravine in a wild chunk: where the ground along the chunk's middle row drops between two ends of about the same height, and nothing between stands as high as the deck. |
-| `wildBridgeDepth` | `6` | How far the ground must drop under the span for a rope bridge to be worth building. |
+| `wildBridges` | `true` | **Wild rope bridges** in Customize. A one-wide rope bridge across a dip in a wild chunk: where the ground along the chunk's middle row drops between two ends of about the same height, and nothing between stands as high as the deck. The lower end gets an abutment of its own ground up to the deck. |
+| `wildBridgeDepth` | `4` | How far the ground must drop under the span for a rope bridge to be worth building. CityWorld's land is gently shaped: at `6` a 625-chunk wild sweep had no span at all, at `4` about one chunk in forty has one. |
+| `wildBridgeStep` | `3` | How much higher one end may be than the other (the lower end is built up to the deck). At `1` spans are a handful per thousand chunks. |
 
 ### `cities` — cities in a vanilla world, and rivers
 
