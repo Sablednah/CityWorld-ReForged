@@ -136,6 +136,12 @@ no NeoForge range), so no production bed is needed. `scripts/probe.sh "-Dcitywor
   `middle_ns` … `middle_end_w`. Both were the other way round ("rails not lining up"; an end anchored to nothing).
   The lower end's abutment was a 1×1 column of ground up to three high ("links to a pillar?"): now a 3-wide, 2-long
   bank. The skybridge pieces (`side_n` = rail on the north edge) were right.
+  (5) Macaw's Paths is TWO kinds of block in one pool: the `*_paving` patterns are plates HALF A PIXEL thick
+  (`models/block/square.json`, `clover.json`: y 0–0.5) and flagstone / running bond / crystal floor / windmill
+  weave are `cube_all`. `ParkLot` put every pick in the ground cell, so a paving path was a trench with a tile at
+  the bottom ("too low ... meant to be a thin cover like carpet"; the weave paths "ARE blocks and are ok"). Now
+  the pick's own collision shape decides: empty or under half a block high → laid over the ground at `surfaceY`,
+  otherwise it replaces the ground block as the grass path does. `fittings/track` (path BLOCKS) is unchanged.
 
 ZARP is adding Macaw's Bridges 3.1.2 and Macaw's Paths and Pavings 1.1.1 (26.2). Today only `#cityworld:build/plaza`
 takes paving (and only for reserved squares — a datapack may extend that tag freely). Proposed, in the fittings
