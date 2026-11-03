@@ -321,16 +321,17 @@ public record CityWorldSettingsData(
      * ravine in a wild chunk whose ground drops at least {@code wildBridgeDepth} between two high sides.
      */
     public record Bridges(boolean skybridges, double oddsOfSkybridge, int skybridgeMinFloors, boolean wildBridges,
-            int wildBridgeDepth) {
+            int wildBridgeDepth, int wildBridgeStep) {
 
-        public static final Bridges DEFAULT = new Bridges(true, Odds.oddsSomewhatLikely, 6, true, 6);
+        public static final Bridges DEFAULT = new Bridges(true, Odds.oddsSomewhatLikely, 6, true, 4, 3);
 
         public static final Codec<Bridges> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("skybridges", true).forGetter(Bridges::skybridges),
                 Codec.DOUBLE.optionalFieldOf("oddsOfSkybridge", Odds.oddsSomewhatLikely).forGetter(Bridges::oddsOfSkybridge),
                 Codec.INT.optionalFieldOf("skybridgeMinFloors", 6).forGetter(Bridges::skybridgeMinFloors),
                 Codec.BOOL.optionalFieldOf("wildBridges", true).forGetter(Bridges::wildBridges),
-                Codec.INT.optionalFieldOf("wildBridgeDepth", 6).forGetter(Bridges::wildBridgeDepth)
+                Codec.INT.optionalFieldOf("wildBridgeDepth", 4).forGetter(Bridges::wildBridgeDepth),
+                Codec.INT.optionalFieldOf("wildBridgeStep", 3).forGetter(Bridges::wildBridgeStep)
         ).apply(i, Bridges::new));
     }
 
