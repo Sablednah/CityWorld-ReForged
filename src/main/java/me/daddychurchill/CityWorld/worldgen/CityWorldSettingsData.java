@@ -55,12 +55,13 @@ public record CityWorldSettingsData(
         Caves caves,
         Subways subways,
         Structures structures,
-        Cities cities) {
+        Cities cities,
+        Bridges bridges) {
 
     /** These settings with another structure choice (the Customize screen's Structures page). */
     public CityWorldSettingsData withStructures(Structures chosen) {
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
-                overgrowth, shops, decay, caves, subways, chosen, cities);
+                overgrowth, shops, decay, caves, subways, chosen, cities, bridges);
     }
 
     /**
@@ -77,13 +78,13 @@ public record CityWorldSettingsData(
                 t.includeDecayedBuildings(), t.includeDecayedNature(), t.oddsOfPristineBuilding(), t.windingCaves(),
                 t.largeCaverns());
         return new CityWorldSettingsData(features, lit, spawns, treasures, world, radius, naming, own.mobs(),
-                own.overgrowth(), shops, decay, caves, subways, structures, cities);
+                own.overgrowth(), shops, decay, caves, subways, structures, cities, bridges);
     }
 
     /** These settings with another land choice (the Customize screen keeps it across a style change). */
     public CityWorldSettingsData withCities(Cities chosen) {
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
-                overgrowth, shops, decay, caves, subways, structures, chosen);
+                overgrowth, shops, decay, caves, subways, structures, chosen, bridges);
     }
 
     /** 1875000 chunks — the modern world-format radius ceiling (30,000,000 blocks / 16). */
@@ -92,7 +93,7 @@ public record CityWorldSettingsData(
     public static final CityWorldSettingsData DEFAULT = new CityWorldSettingsData(
             Features.DEFAULT, Terrain.DEFAULT, Spawns.DEFAULT, Treasures.DEFAULT, World.DEFAULT, Radius.DEFAULT,
             Naming.DEFAULT, Mobs.DEFAULT, Overgrowth.DEFAULT, Shops.DEFAULT, Decay.DEFAULT, Caves.DEFAULT,
-            Subways.DEFAULT, Structures.DEFAULT, Cities.DEFAULT);
+            Subways.DEFAULT, Structures.DEFAULT, Cities.DEFAULT, Bridges.DEFAULT);
 
     public static final Codec<CityWorldSettingsData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Features.CODEC.optionalFieldOf("features", Features.DEFAULT).forGetter(CityWorldSettingsData::features),
@@ -109,7 +110,9 @@ public record CityWorldSettingsData(
             Caves.CODEC.optionalFieldOf("caves", Caves.DEFAULT).forGetter(CityWorldSettingsData::caves),
             Subways.CODEC.optionalFieldOf("subways", Subways.DEFAULT).forGetter(CityWorldSettingsData::subways),
             Structures.CODEC.optionalFieldOf("structures", Structures.DEFAULT).forGetter(CityWorldSettingsData::structures),
-            Cities.CODEC.optionalFieldOf("cities", Cities.DEFAULT).forGetter(CityWorldSettingsData::cities)
+            Cities.CODEC.optionalFieldOf("cities", Cities.DEFAULT).forGetter(CityWorldSettingsData::cities),
+            // ⚠ sixteen fields: the top-level codec is at RecordCodecBuilder's cap — the next group nests
+            Bridges.CODEC.optionalFieldOf("bridges", Bridges.DEFAULT).forGetter(CityWorldSettingsData::bridges)
     ).apply(i, CityWorldSettingsData::new));
 
     // --- what gets built ----------------------------------------------------------------------
@@ -309,6 +312,26 @@ public record CityWorldSettingsData(
                 Codec.BOOL.optionalFieldOf("enabled", true).forGetter(Subways::enabled),
                 Codec.BOOL.optionalFieldOf("spawners", true).forGetter(Subways::spawners)
         ).apply(i, Subways::new));
+    }
+
+    /**
+     * The bridges a bridge mod lets CityWorld build (Macaw's Bridges; every pool empty without one, and then nothing
+     * is drawn): {@code skybridges} between the upper floors of two neighbouring towers of at least
+     * {@code skybridgeMinFloors}, one pair in {@code oddsOfSkybridge}; {@code wildBridges}, a rope bridge across a
+     * ravine in a wild chunk whose ground drops at least {@code wildBridgeDepth} between two high sides.
+     */
+    public record Bridges(boolean skybridges, double oddsOfSkybridge, int skybridgeMinFloors, boolean wildBridges,
+            int wildBridgeDepth) {
+
+        public static final Bridges DEFAULT = new Bridges(true, Odds.oddsSomewhatLikely, 6, true, 6);
+
+        public static final Codec<Bridges> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.BOOL.optionalFieldOf("skybridges", true).forGetter(Bridges::skybridges),
+                Codec.DOUBLE.optionalFieldOf("oddsOfSkybridge", Odds.oddsSomewhatLikely).forGetter(Bridges::oddsOfSkybridge),
+                Codec.INT.optionalFieldOf("skybridgeMinFloors", 6).forGetter(Bridges::skybridgeMinFloors),
+                Codec.BOOL.optionalFieldOf("wildBridges", true).forGetter(Bridges::wildBridges),
+                Codec.INT.optionalFieldOf("wildBridgeDepth", 6).forGetter(Bridges::wildBridgeDepth)
+        ).apply(i, Bridges::new));
     }
 
     /**

@@ -179,7 +179,9 @@ public class FarmLot extends ConnectedLot {
 		chunk.setLayer(generator.streetLevel - 1, 2, generator.oreProvider.surfaceMaterial);
 
 		// in-between bits bits
-		Material dividerMaterial = Material.GRASS_PATH;
+		// the track between fields: Macaw's Paths' gravel or dirt track when installed (#cityworld:fittings/track)
+		Material dividerMaterial = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_TRACK, chunkOdds.fork(), Material.GRASS_PATH);
 		if (generator.worldEnvironment == Environment.NETHER) {
 			dividerMaterial = Material.SOUL_SAND;
 		}

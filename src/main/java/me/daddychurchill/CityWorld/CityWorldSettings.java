@@ -199,6 +199,10 @@ public class CityWorldSettings {
      * tunnels.
      */
     public boolean includeSubways = true;
+    /** A bridge mod's bridges — see {@code CityWorldSettingsData.Bridges}; the pools are empty without one. */
+    public boolean includeSkybridges = true, includeWildBridges = true;
+    public double oddsOfSkybridge = Odds.oddsSomewhatLikely;
+    public int skybridgeMinFloors = 6, wildBridgeDepth = 6;
     public boolean spawnersInSubways = true;
 
     /** Who turns up, and how often. {@code SpawnProvider} branches on all of these. */
@@ -554,7 +558,7 @@ public class CityWorldSettings {
                 d.shops().oddsOfAtmInShops(), d.shops().oddsOfAtmInMalls(), d.shops().bankPlazaRadius());
         CityWorldSettingsData.Subways sw = new CityWorldSettingsData.Subways(v, v);
         return new CityWorldSettingsData(f, t2, d.spawns(), d.treasures(), d.world(), d.radius(), d.naming(),
-                d.mobs(), og2, sh, d.decay(), d.caves(), sw, d.structures(), d.cities());
+                d.mobs(), og2, sh, d.decay(), d.caves(), sw, d.structures(), d.cities(), d.bridges());
     }
 
     /**
@@ -613,6 +617,11 @@ public class CityWorldSettings {
         bankPlazaRadius = data.shops().bankPlazaRadius();
         includeSubways = data.subways().enabled();
         spawnersInSubways = data.subways().spawners();
+        includeSkybridges = data.bridges().skybridges();
+        oddsOfSkybridge = data.bridges().oddsOfSkybridge();
+        skybridgeMinFloors = data.bridges().skybridgeMinFloors();
+        includeWildBridges = data.bridges().wildBridges();
+        wildBridgeDepth = data.bridges().wildBridgeDepth();
         CityWorldSettingsData.Decay dk = data.decay();
         buildingDecayIntensity = dk.buildingIntensity();
         roadDecayIntensity = dk.roadIntensity();
@@ -742,8 +751,10 @@ public class CityWorldSettings {
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);
+        CityWorldSettingsData.Bridges bridges = new CityWorldSettingsData.Bridges(includeSkybridges, oddsOfSkybridge,
+                skybridgeMinFloors, includeWildBridges, wildBridgeDepth);
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
-                overgrowth, shops, decay, caves, subways, structures, cities);
+                overgrowth, shops, decay, caves, subways, structures, cities, bridges);
     }
 
     private static List<String> ids(List<EntityType> types) {
