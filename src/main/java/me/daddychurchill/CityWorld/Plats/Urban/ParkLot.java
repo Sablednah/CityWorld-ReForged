@@ -614,15 +614,22 @@ public class ParkLot extends ConnectedLot {
 			break;
 		}
 
-		// draw center bits
+		// draw center bits. Macaw's Paths has both kinds: its `*_paving` patterns are plates half a pixel thick, a
+		// cover laid OVER the ground like a carpet (in the ground cell they read as a trench); its flagstone, running
+		// bond, crystal floor and windmill weave are full blocks, the ground itself, like the grass path. Told apart
+		// by the block's own shape, so a pack's pool needs no sorting.
+		net.minecraft.world.phys.shapes.VoxelShape pathShape = pathMaterial.getBlockState().getCollisionShape(
+				net.minecraft.world.level.EmptyBlockGetter.INSTANCE, net.minecraft.core.BlockPos.ZERO);
+		boolean cover = pathShape.isEmpty() || pathShape.max(net.minecraft.core.Direction.Axis.Y) < 0.5;
+		int pathY = cover ? surfaceY : surfaceY - 1;
 		switch (centerStyle) {
 		case CIRCLE_PATH:
-			chunk.setBlocks(7, 9, surfaceY - 1, surfaceY, 0, 3, pathMaterial);
-			chunk.setBlocks(7, 9, surfaceY - 1, surfaceY, 13, 16, pathMaterial);
-			chunk.setBlocks(0, 3, surfaceY - 1, surfaceY, 7, 9, pathMaterial);
-			chunk.setBlocks(13, 16, surfaceY - 1, surfaceY, 7, 9, pathMaterial);
-			chunk.setCircle(8, 8, 4, surfaceY - 1, pathMaterial, false);
-			chunk.setCircle(8, 8, 3, surfaceY - 1, pathMaterial, false);
+			chunk.setBlocks(7, 9, pathY, pathY + 1, 0, 3, pathMaterial);
+			chunk.setBlocks(7, 9, pathY, pathY + 1, 13, 16, pathMaterial);
+			chunk.setBlocks(0, 3, pathY, pathY + 1, 7, 9, pathMaterial);
+			chunk.setBlocks(13, 16, pathY, pathY + 1, 7, 9, pathMaterial);
+			chunk.setCircle(8, 8, 4, pathY, pathMaterial, false);
+			chunk.setCircle(8, 8, 3, pathY, pathMaterial, false);
 			break;
 		case LABYRINTH_MAZE:
 		case CIRCLE_MAZE:
@@ -632,10 +639,10 @@ public class ParkLot extends ConnectedLot {
 		case CROSS_PATH:
 		case WATER_TOWER:
 		default:
-			chunk.setBlocks(7, 9, surfaceY - 1, surfaceY, 0, 8, pathMaterial);
-			chunk.setBlocks(7, 9, surfaceY - 1, surfaceY, 8, 16, pathMaterial);
-			chunk.setBlocks(0, 8, surfaceY - 1, surfaceY, 7, 9, pathMaterial);
-			chunk.setBlocks(8, 16, surfaceY - 1, surfaceY, 7, 9, pathMaterial);
+			chunk.setBlocks(7, 9, pathY, pathY + 1, 0, 8, pathMaterial);
+			chunk.setBlocks(7, 9, pathY, pathY + 1, 8, 16, pathMaterial);
+			chunk.setBlocks(0, 8, pathY, pathY + 1, 7, 9, pathMaterial);
+			chunk.setBlocks(8, 16, pathY, pathY + 1, 7, 9, pathMaterial);
 			break;
 		}
 //		int surfaceY = generator.streetLevel + 1;
