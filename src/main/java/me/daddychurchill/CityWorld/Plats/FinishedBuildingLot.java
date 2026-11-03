@@ -2882,7 +2882,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		int edge = toward == BlockFace.EAST || toward == BlockFace.SOUTH ? 15 : 0;
 		int step = edge == 15 ? -1 : 1;
 		int wall = -1;
-		for (int i = edge; i != 8 - step && wall < 0; i += step)
+		for (int i = edge; (step > 0 ? i <= 7 : i >= 8) && wall < 0; i += step)
 			if (!chunk.isEmpty(alongX ? i : lo, floorAt, alongX ? lo : i))
 				wall = i;
 		if (wall < 0)
@@ -2893,7 +2893,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			int wx = alongX ? wall : j, wz = alongX ? j : wall;
 			chunk.setBlocks(wx, wx + 1, floorAt, floorAt + 2, wz, wz + 1, Material.AIR);
 			String side = alongX ? (j == lo ? "side_n" : "side_s") : (j == lo ? "side_w" : "side_e");
-			for (int i = wall + step; i != edge + step; i += step)
+			for (int i = wall - step; i != edge - step; i -= step) // outward: from just past the wall to the edge
 				chunk.setBlockState(alongX ? i : j, deckY, alongX ? j : i, deck.withProperty("connection", side));
 		}
 	}
