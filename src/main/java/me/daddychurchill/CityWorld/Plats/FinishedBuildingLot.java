@@ -2866,35 +2866,42 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		if (deck == null || !pair.playOdds(settings.oddsOfSkybridge))
 			return;
 
-		// the highest floor both towers have at one height, below either roof and above the second floor
+		// the highest rise both towers have a floor at, below either roof and above the second floor — read the
+		// same way from either side, so the two halves meet (upper floors sit at streetLevel + 2 + rise)
 		int floorAt = -1;
-		for (int k = Math.min(height, other.height) - 1; k >= 2 && floorAt < 0; k--) {
-			int rise = otherFloorHeight * k;
-			if (rise % other.otherFloorHeight == 0 && rise / other.otherFloorHeight < other.height)
+		int top = Math.min(otherFloorHeight * (height - 1), other.otherFloorHeight * (other.height - 1));
+		int bottom = 2 * Math.max(otherFloorHeight, other.otherFloorHeight);
+		for (int rise = top; rise >= bottom && floorAt < 0; rise--)
+			if (rise % otherFloorHeight == 0 && rise % other.otherFloorHeight == 0)
 				floorAt = generator.streetLevel + rise + 2;
-		}
 		if (floorAt < 0)
 			return;
 		int deckY = floorAt - 1;
 
-		// our wall at that floor, from the chunk edge inward; the deck runs from just outside it to the edge
+		// our wall at that floor, from the chunk edge inward: three solid cells stacked (wall, wall, ceiling), so a
+		// ledge or balcony rail outside the wall is passed over; the deck runs from just outside the wall to the edge
 		int lo = 7, hi = 8; // the deck's two rows across
 		int edge = toward == BlockFace.EAST || toward == BlockFace.SOUTH ? 15 : 0;
 		int step = edge == 15 ? -1 : 1;
 		int wall = -1;
-		for (int i = edge; (step > 0 ? i <= 7 : i >= 8) && wall < 0; i += step)
-			if (!chunk.isEmpty(alongX ? i : lo, floorAt, alongX ? lo : i))
+		for (int i = edge; (step > 0 ? i <= 7 : i >= 8) && wall < 0; i += step) {
+			int x = alongX ? i : lo, z = alongX ? lo : i;
+			if (!chunk.isEmpty(x, floorAt, z) && !chunk.isEmpty(x, floorAt + 1, z) && !chunk.isEmpty(x, floorAt + 2, z))
 				wall = i;
+		}
 		if (wall < 0)
 			return;
 
-		// the doorway, then the deck: the mod's side pieces, rails on the outside of each row
+		// the doorway, then the deck: the mod's side pieces, rails on the outside of each row, headroom cleared
 		for (int j = lo; j <= hi; j++) {
 			int wx = alongX ? wall : j, wz = alongX ? j : wall;
 			chunk.setBlocks(wx, wx + 1, floorAt, floorAt + 2, wz, wz + 1, Material.AIR);
 			String side = alongX ? (j == lo ? "side_n" : "side_s") : (j == lo ? "side_w" : "side_e");
-			for (int i = wall - step; i != edge - step; i -= step) // outward: from just past the wall to the edge
-				chunk.setBlockState(alongX ? i : j, deckY, alongX ? j : i, deck.withProperty("connection", side));
+			for (int i = wall - step; i != edge - step; i -= step) { // outward: from just past the wall to the edge
+				int x = alongX ? i : j, z = alongX ? j : i;
+				chunk.setBlockState(x, deckY, z, deck.withProperty("connection", side));
+				chunk.setBlocks(x, x + 1, floorAt, floorAt + 2, z, z + 1, Material.AIR);
+			}
 		}
 	}
 }
