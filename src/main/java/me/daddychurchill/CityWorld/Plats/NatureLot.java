@@ -203,7 +203,7 @@ public class NatureLot extends IsolatedLot {
 			if (!crest(y, s, generator.seaLevel))
 				continue;
 			int e = spanEnd(y, s, depth, step, span, generator.seaLevel);
-			if (e < o)
+			if (e == NO_SPAN || e < o)
 				continue; // no bridge from this crest, or one that ends before this chunk
 			Odds dice = new Odds(generator.getWorldSeed() ^ ((long) s << 21) ^ ((long) row << 1) ^ (alongX ? 1L : 0L));
 			if (!dice.playOdds(settings.oddsOfWildBridge))
@@ -247,20 +247,26 @@ public class NatureLot extends IsolatedLot {
 		return true;
 	}
 
-	/** The far end of a span from crest {@code s}, or -1: the first far column within {@code step} of the crest, a valley at least {@code depth} below both between, nothing between above the deck. */
+	/**
+	 * No span. Never -1: a block coordinate is negative west and north of the origin, and a -1 sentinel there passed
+	 * the "ends before this chunk" test, drew bogus spans ending at block -1 and read past the height cache.
+	 */
+	private static final int NO_SPAN = Integer.MIN_VALUE;
+
+	/** The far end of a span from crest {@code s}, or {@link #NO_SPAN}: the first far column within {@code step} of the crest, a valley at least {@code depth} below both between, nothing between above the deck. */
 	private static int spanEnd(java.util.function.IntUnaryOperator y, int s, int depth, int step, int span, int sea) {
 		int h0 = y.applyAsInt(s), low = h0, high = h0;
 		for (int e = s + 1; e <= s + span; e++) {
 			int he = y.applyAsInt(e);
 			if (he > h0 + step)
-				return -1; // a wall higher than any deck could be
+				return NO_SPAN; // a wall higher than any deck could be
 			if (e - s >= LEAST_SPAN && Math.abs(he - h0) <= step && he > sea && Math.min(h0, he) - low >= depth
 					&& high <= Math.max(h0, he))
 				return e;
 			low = Math.min(low, he);
 			high = Math.max(high, he);
 		}
-		return -1;
+		return NO_SPAN;
 	}
 
 	/** This chunk's blocks of the span {@code s..e}: deck pieces, the banks under a low end, the headroom. */
