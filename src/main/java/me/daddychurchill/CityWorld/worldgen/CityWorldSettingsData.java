@@ -326,7 +326,7 @@ public record CityWorldSettingsData(
     public record Bridges(boolean skybridges, double oddsOfSkybridge, int skybridgeMinFloors, boolean wildBridges,
             int wildBridgeDepth, int wildBridgeStep, int wildBridgeSpan, double oddsOfWildBridge) {
 
-        public static final Bridges DEFAULT = new Bridges(false, Odds.oddsSomewhatLikely, 6, true, 8, 3, 48, 0.5);
+        public static final Bridges DEFAULT = new Bridges(false, Odds.oddsSomewhatLikely, 6, true, 8, 3, 48, Odds.oddsSomewhatLikely);
 
         public static final Codec<Bridges> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("skybridges", false).forGetter(Bridges::skybridges),
@@ -336,7 +336,7 @@ public record CityWorldSettingsData(
                 Codec.INT.optionalFieldOf("wildBridgeDepth", 8).forGetter(Bridges::wildBridgeDepth),
                 Codec.INT.optionalFieldOf("wildBridgeStep", 3).forGetter(Bridges::wildBridgeStep),
                 Codec.INT.optionalFieldOf("wildBridgeSpan", 48).forGetter(Bridges::wildBridgeSpan),
-                Codec.DOUBLE.optionalFieldOf("oddsOfWildBridge", 0.5).forGetter(Bridges::oddsOfWildBridge)
+                Codec.DOUBLE.optionalFieldOf("oddsOfWildBridge", Odds.oddsSomewhatLikely).forGetter(Bridges::oddsOfWildBridge)
         ).apply(i, Bridges::new));
     }
 

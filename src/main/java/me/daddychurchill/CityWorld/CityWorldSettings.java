@@ -203,7 +203,7 @@ public class CityWorldSettings {
     public boolean includeSkybridges = false, includeWildBridges = true; // skybridges: Apocalypse soft default (styleDefaults)
     public double oddsOfSkybridge = Odds.oddsSomewhatLikely;
     public int skybridgeMinFloors = 6, wildBridgeDepth = 8, wildBridgeStep = 3, wildBridgeSpan = 48;
-    public double oddsOfWildBridge = 0.5;
+    public double oddsOfWildBridge = Odds.oddsSomewhatLikely;
     public boolean spawnersInSubways = true;
 
     /** Who turns up, and how often. {@code SpawnProvider} branches on all of these. */
