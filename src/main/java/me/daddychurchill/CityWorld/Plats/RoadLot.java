@@ -89,7 +89,12 @@ public class RoadLot extends ConnectedLot {
 
 		pavementIsClay = pavementMat == Material.WHITE_TERRACOTTA;
 		dirtroadIsClay = dirtroadMat == Material.WHITE_TERRACOTTA;
+		// a road mod's dressing (Macaw's Roads): one surface pick per world, its markings, kerb and signs by name
+		kit = me.daddychurchill.CityWorld.Support.RoadKit.forWorld(platmap.generator);
 	}
+
+	/** The road mod's kit for this world (surface, markings, kerb, signs), or null without one. */
+	private final me.daddychurchill.CityWorld.Support.RoadKit kit;
 
 	@Override
 	public PlatLot newLike(PlatMap platmap, int chunkX, int chunkZ) {
@@ -898,6 +903,9 @@ public class RoadLot extends ConnectedLot {
 			if (!roads.toSouth())
 				paveSidewalk(generator, chunk, sidewalkWidth, chunk.width - sidewalkWidth, sidewalkLevel,
 						chunk.width - sidewalkWidth, chunk.width, doingTunnel);
+			// the road mod's kerb along every sidewalk edge that meets the road
+			if (kit != null && kit.kerb != null && inACity && !doingTunnel)
+				drawKerbs(chunk, roads, sidewalkLevel);
 
 			// crosswalks?
 			if (inACity) {
@@ -1048,11 +1056,24 @@ public class RoadLot extends ConnectedLot {
 				// off so it runs on unbroken from chunk to chunk; junctions keep their crosswalks instead. After the second
 				// paving of the crosswalk arms just above, which would wipe the dashes at each end
 				if (roads.toNorth() && roads.toSouth() && !roads.toWest() && !roads.toEast()) {
-					for (int z = 0; z < chunk.width; z += 4)
-						chunk.setBlocks(7, 9, pavementLevel, z, z + 2, linesMat);
+					if (kit != null && kit.brokenLine != null) {
+						// the mod's own dashed line, one column, its dashes along the road; a manhole on some stretches
+						for (int z = 0; z < chunk.width; z++)
+							chunk.setBlockState(7, pavementLevel, z, kit.brokenLine.withFacing(BlockFace.NORTH));
+						if (kit.manhole != null && chunkOdds.playOdds(0.33))
+							chunk.setBlock(10, pavementLevel, 8, kit.manhole);
+					} else
+						for (int z = 0; z < chunk.width; z += 4)
+							chunk.setBlocks(7, 9, pavementLevel, z, z + 2, linesMat);
 				} else if (roads.toWest() && roads.toEast() && !roads.toNorth() && !roads.toSouth()) {
-					for (int x = 0; x < chunk.width; x += 4)
-						chunk.setBlocks(x, x + 2, pavementLevel, 7, 9, linesMat);
+					if (kit != null && kit.brokenLine != null) {
+						for (int x = 0; x < chunk.width; x++)
+							chunk.setBlockState(x, pavementLevel, 7, kit.brokenLine.withFacing(BlockFace.EAST));
+						if (kit.manhole != null && chunkOdds.playOdds(0.33))
+							chunk.setBlock(8, pavementLevel, 10, kit.manhole);
+					} else
+						for (int x = 0; x < chunk.width; x += 4)
+							chunk.setBlocks(x, x + 2, pavementLevel, 7, 9, linesMat);
 				}
 			}
 
@@ -1152,6 +1173,10 @@ public class RoadLot extends ConnectedLot {
 									chunk.width - sidewalkWidth);
 					}
 				}
+
+				// the road mod's signs: stop at a T, dead end, a speed limit on a straight, the town's board at its edge
+				if (inACity && kit != null)
+					generateRoadSigns(generator, chunk, platmap, platX, platZ, roads, sidewalkLevel);
 
 				// half as likely in the middle of the road
 				generateEntities(generator, chunk, sidewalkLevel);
@@ -1585,7 +1610,9 @@ public class RoadLot extends ConnectedLot {
 	private void paveRoadArea(CityWorldGenerator generator, SupportBlocks chunk, int x1, int x2, int y, int z1,
 			int z2, boolean doingFolage, boolean doingTunnel) {
 		if (inACity)
-			if (pavementIsClay)
+			if (kit != null)
+				chunk.setBlocks(x1, x2, y, z1, z2, kit.surface);
+			else if (pavementIsClay)
 				chunk.setBlocks(x1, x2, y, z1, z2, pavementClay);
 			else
 				chunk.setBlocks(x1, x2, y, z1, z2, pavementMat);
@@ -1678,6 +1705,12 @@ public class RoadLot extends ConnectedLot {
 		paveRoadArea(generator, chunk, x1, x2, y, z1, z2, !inACity, doingTunnel);
 		if (inACity) {
 			if (crosswalk) {
+				if (kit != null && kit.crosswalk != null) {
+					for (int x = x1; x < x2; x++)
+						for (int z = z1; z < z2; z++)
+							chunk.setBlockState(x, y, z, kit.crosswalk.withFacing(BlockFace.NORTH));
+					return;
+				}
 				chunk.setBlocks(x1 + 1, x1 + 2, y, z1, z2, linesMat);
 				chunk.setBlocks(x1 + 3, x1 + 4, y, z1, z2, linesMat);
 				chunk.setBlocks(x2 - 2, x2 - 1, y, z1, z2, linesMat);
@@ -1695,6 +1728,12 @@ public class RoadLot extends ConnectedLot {
 		paveRoadArea(generator, chunk, x1, x2, y, z1, z2, !inACity, doingTunnel);
 		if (inACity) {
 			if (crosswalk) {
+				if (kit != null && kit.crosswalk != null) { // the mod's zebra, the whole arm, its stripes along the road
+					for (int x = x1; x < x2; x++)
+						for (int z = z1; z < z2; z++)
+							chunk.setBlockState(x, y, z, kit.crosswalk.withFacing(BlockFace.EAST));
+					return;
+				}
 				chunk.setBlocks(x1, x2, y, z1 + 1, z1 + 2, linesMat);
 				chunk.setBlocks(x1, x2, y, z1 + 3, z1 + 4, linesMat);
 				chunk.setBlocks(x1, x2, y, z2 - 2, z2 - 1, linesMat);
@@ -1907,6 +1946,123 @@ public class RoadLot extends ConnectedLot {
 		if (runs[0] && runs[1])
 			return getStreetName(generator, true) + " & " + getStreetName(generator, false);
 		return getStreetName(generator, runs[0]);
+	}
+
+	/**
+	 * Kerbs from the road kit ({@code sidewalk_step}: facing the road, stair-like shapes): the inner edge of every
+	 * sidewalk strip and corner square, replacing the sidewalk block there. The convex corner of a corner square
+	 * takes the outer shape.
+	 */
+	private void drawKerbs(RealBlocks chunk, SurroundingRoads roads, int y) {
+		int in = sidewalkWidth - 1, out = chunk.width - sidewalkWidth;
+		// corner squares: two inner edges each, always
+		for (int i = 0; i < sidewalkWidth; i++) {
+			kerb(chunk, in, y, i, BlockFace.EAST, i == in ? "outer_left" : "straight");
+			kerb(chunk, i, y, in, BlockFace.SOUTH, i == in ? "outer_right" : "straight");
+			kerb(chunk, out, y, i, BlockFace.WEST, i == in ? "outer_right" : "straight");
+			kerb(chunk, out - i, y, in, BlockFace.SOUTH, out - i == out ? "outer_left" : "straight");
+			kerb(chunk, in, y, out + i, BlockFace.EAST, out + i == out ? "outer_right" : "straight");
+			kerb(chunk, i, y, out, BlockFace.NORTH, i == in ? "outer_left" : "straight");
+			kerb(chunk, out, y, out + i, BlockFace.WEST, out + i == out ? "outer_left" : "straight");
+			kerb(chunk, out - i, y, out, BlockFace.NORTH, out - i == out ? "outer_right" : "straight");
+		}
+		// the strips along a side with no road: a straight kerb facing the road
+		if (!roads.toWest())
+			for (int z = sidewalkWidth; z < out; z++)
+				kerb(chunk, in, y, z, BlockFace.EAST, "straight");
+		if (!roads.toEast())
+			for (int z = sidewalkWidth; z < out; z++)
+				kerb(chunk, out, y, z, BlockFace.WEST, "straight");
+		if (!roads.toNorth())
+			for (int x = sidewalkWidth; x < out; x++)
+				kerb(chunk, x, y, in, BlockFace.SOUTH, "straight");
+		if (!roads.toSouth())
+			for (int x = sidewalkWidth; x < out; x++)
+				kerb(chunk, x, y, out, BlockFace.NORTH, "straight");
+	}
+
+	private void kerb(RealBlocks chunk, int x, int y, int z, BlockFace facing, String shape) {
+		chunk.setBlockState(x, y, z, Material.withProperty(kit.kerb.withFacing(facing), "shape", shape));
+	}
+
+	/**
+	 * The road kit's signs, each on its own rod in the middle of a sidewalk corner (the street-name posts hold the
+	 * inner cells of the NW and SE corners): STOP at a T facing the stem, DEAD END at a road's last chunk facing the
+	 * way in, a speed limit on one straight stretch in four (30 in rural districts, 50 in urban ones) on the right of
+	 * the nearer lane's traffic, and where a road leaves a built platmap for the wild the town's name board facing
+	 * the traffic coming in, with its {@code end} twin (the mod's "leaving" face) for the traffic going out.
+	 */
+	private void generateRoadSigns(CityWorldGenerator generator, RealBlocks chunk, PlatMap platmap, int platX, int platZ,
+			SurroundingRoads roads, int sidewalkLevel) {
+		int in = 1, out = chunk.width - 2;
+		int n = roads.getNeighborCount();
+		if (n == 3) {
+			Material stop = kit.sign("stop");
+			if (!roads.toEast())
+				placeRoadSign(chunk, stop, in, sidewalkLevel, out, BlockFace.WEST, false);
+			else if (!roads.toWest())
+				placeRoadSign(chunk, stop, out, sidewalkLevel, in, BlockFace.EAST, false);
+			else if (!roads.toSouth())
+				placeRoadSign(chunk, stop, out, sidewalkLevel, in, BlockFace.NORTH, false);
+			else
+				placeRoadSign(chunk, stop, in, sidewalkLevel, out, BlockFace.SOUTH, false);
+		} else if (n == 1) {
+			Material end = kit.sign("dead_end");
+			if (roads.toWest())
+				placeRoadSign(chunk, end, in, sidewalkLevel, out, BlockFace.WEST, false);
+			else if (roads.toEast())
+				placeRoadSign(chunk, end, out, sidewalkLevel, in, BlockFace.EAST, false);
+			else if (roads.toNorth())
+				placeRoadSign(chunk, end, out, sidewalkLevel, in, BlockFace.NORTH, false);
+			else
+				placeRoadSign(chunk, end, in, sidewalkLevel, out, BlockFace.SOUTH, false);
+		} else if (n == 2 && (roads.toNorth() && roads.toSouth() || roads.toWest() && roads.toEast())) {
+			if (chunkOdds.playOdds(0.25)) {
+				boolean rural = platmap.getNaturePercent() >= 0.40; // neighbourhoods, farms, outland (the ladder's bands)
+				Material limit = kit.sign(rural ? "speedlimit_30" : "speedlimit_50");
+				if (roads.toNorth())
+					placeRoadSign(chunk, limit, out, sidewalkLevel, out, BlockFace.SOUTH, false); // east side: northbound
+				else
+					placeRoadSign(chunk, limit, in, sidewalkLevel, in, BlockFace.EAST, false); // north side: westbound
+			}
+		}
+		// the town's board where this road leaves the platmap for a wild one: entering on the right of the traffic
+		// coming in, its "leaving" face on the right of the traffic going out
+		if (!(platmap.context instanceof me.daddychurchill.CityWorld.Context.NatureContext)) {
+			Material board = kit.sign("city_" + (1 + chunkOdds.getRandomInt(5)) + "_sign");
+			if (platX == 0 && roads.toWest() && wildPlatmap(generator, chunkX - 1, chunkZ)) {
+				placeRoadSign(chunk, board, in, sidewalkLevel, out, BlockFace.WEST, false);
+				placeRoadSign(chunk, board, in, sidewalkLevel, in, BlockFace.EAST, true);
+			} else if (platX == PlatMap.Width - 1 && roads.toEast() && wildPlatmap(generator, chunkX + 1, chunkZ)) {
+				placeRoadSign(chunk, board, out, sidewalkLevel, in, BlockFace.EAST, false);
+				placeRoadSign(chunk, board, out, sidewalkLevel, out, BlockFace.WEST, true);
+			} else if (platZ == 0 && roads.toNorth() && wildPlatmap(generator, chunkX, chunkZ - 1)) {
+				placeRoadSign(chunk, board, out, sidewalkLevel, in, BlockFace.NORTH, false);
+				placeRoadSign(chunk, board, in, sidewalkLevel, in, BlockFace.SOUTH, true);
+			} else if (platZ == PlatMap.Width - 1 && roads.toSouth() && wildPlatmap(generator, chunkX, chunkZ + 1)) {
+				placeRoadSign(chunk, board, in, sidewalkLevel, out, BlockFace.SOUTH, false);
+				placeRoadSign(chunk, board, out, sidewalkLevel, out, BlockFace.NORTH, true);
+			}
+		}
+	}
+
+	/** Whether the platmap holding that chunk is wild — the dry plan, which builds no platmap (read at drawing time). */
+	private static boolean wildPlatmap(CityWorldGenerator generator, int chunkX, int chunkZ) {
+		return generator.isWildernessAt(chunkX, chunkZ);
+	}
+
+	/**
+	 * A sign on a two-block rod at a sidewalk cell, if the cell is free; nothing without the sign. {@code end} is the
+	 * mod's second face of a two-faced sign (the end of a limit, leaving a town) where the sign has one.
+	 */
+	private void placeRoadSign(RealBlocks chunk, Material sign, int x, int y, int z, BlockFace facing, boolean end) {
+		if (sign == null || !chunk.isEmpty(x, y + 1, z) || !chunk.isEmpty(x, y + 2, z) || !chunk.isEmpty(x, y + 3, z))
+			return;
+		chunk.setBlocks(x, y + 1, y + 3, z, kit.rod != null ? kit.rod : Material.SPRUCE_FENCE);
+		net.minecraft.world.level.block.state.BlockState state = sign.withFacing(facing);
+		if (end)
+			state = Material.withProperty(state, "end", "true");
+		chunk.setBlockState(x, y + 3, z, state);
 	}
 
 	private final static double oddsOfDecayedSign = Odds.oddsExtremelyLikely;

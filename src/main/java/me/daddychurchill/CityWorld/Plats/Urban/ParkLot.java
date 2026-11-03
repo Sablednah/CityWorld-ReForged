@@ -18,6 +18,7 @@ import me.daddychurchill.CityWorld.Support.HeightInfo;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
 import me.daddychurchill.CityWorld.Support.MazeArray;
 import me.daddychurchill.CityWorld.Support.MazeArray.MazeBit;
+import me.daddychurchill.CityWorld.Support.MaterialTags;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
@@ -46,7 +47,8 @@ public class ParkLot extends ConnectedLot {
 	}
 	private final static Material columnMaterial = Material.SMOOTH_STONE;
 	private final static Material grassMaterial = Material.GRASS_BLOCK;
-	private final static Material pathMaterial = Material.GRASS_PATH;
+	/** The walkway's paving: one pick per park from {@code #cityworld:fittings/path} (Macaw's Paths), the grass path otherwise. */
+	private final Material pathMaterial;
 	private final static Material stepMaterial = Material.STONE_SLAB;
 	private final static Material ledgeMaterial = Material.CLAY;
 
@@ -74,6 +76,7 @@ public class ParkLot extends ConnectedLot {
 		// pick a style
 		centerStyle = getRandomCenterStyle();
 		waterDepth = depth;
+		pathMaterial = MaterialTags.pick(MaterialTags.FITTINGS_PATH, chunkOdds.fork(), Material.GRASS_PATH);
 
 		zone = platmap.generator.isModernStyle()
 				? ClimateZone.at(platmap.generator, chunkX, chunkZ) : null;

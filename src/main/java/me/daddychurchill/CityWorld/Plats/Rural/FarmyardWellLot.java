@@ -58,13 +58,15 @@ public class FarmyardWellLot extends IsolatedLot {
 			DataContext context, int platX, int platZ) {
 		int y = generator.streetLevel;
 
-		// the path across the yard, under the well's approach
+		// the path across the yard, under the well's approach (a Macaw's track when installed)
 		boolean alongX = chunkOdds.flipCoin();
+		Material track = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_TRACK, chunkOdds.fork(), Material.GRASS_PATH);
 		for (int i = 0; i < 16; i++)
 			if (alongX)
-				chunk.setBlock(i, y, 7, Material.GRASS_PATH);
+				chunk.setBlock(i, y, 7, track);
 			else
-				chunk.setBlock(7, y, i, Material.GRASS_PATH);
+				chunk.setBlock(7, y, i, track);
 
 		// the well: a cobblestone ring two high round a water shaft
 		chunk.setBlocks(6, 9, y - 6, y + 2, 6, 9, Material.COBBLESTONE);
