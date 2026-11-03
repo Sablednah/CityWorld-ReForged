@@ -2831,12 +2831,14 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 
 
 	/**
-	 * Skybridges (Macaw's Bridges, {@code #cityworld:fittings/skybridge}): a deck between an upper floor of this tower
-	 * and one of a different building next door, where both have at least {@code bridges.skybridgeMinFloors} floors
-	 * and a floor at the same height. Each chunk draws its own half, from its wall to the chunk edge, and the pair
-	 * decides everything from ONE seed (the western or northern chunk's), so both halves agree on the floor, the deck
-	 * and whether there is a bridge at all; a doorway is cut where the deck meets the wall. Pairs within the platmap
-	 * only (a platmap's edge chunks are roads in any case). Empty pool: nothing drawn, no odds rolled.
+	 * Skybridges (Macaw's Bridges): a deck between an upper floor of this tower and one of a different building next
+	 * door, where both have at least {@code bridges.skybridgeMinFloors} floors and a floor at the same height —
+	 * survivors' ways about a ruined city, so Apocalypse's by default. A two-wide solid deck from
+	 * {@code #cityworld:fittings/skybridge} or, as often, a one-wide rope bridge from
+	 * {@code #cityworld:fittings/rope_bridge}. Each chunk draws its own half, from its wall to the chunk edge, and the
+	 * pair decides everything from ONE seed (the western or northern chunk's), so both halves agree on the floor, the
+	 * kind, the deck and whether there is a bridge at all; a doorway is cut where the deck meets the wall. Pairs
+	 * within the platmap only (a platmap's edge chunks are roads in any case). Empty pools: nothing drawn.
 	 */
 	private void drawSkybridges(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk, int platX, int platZ) {
 		me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
@@ -2862,7 +2864,12 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		boolean alongX = toward == BlockFace.EAST || toward == BlockFace.WEST;
 		long pairKey = ((long) pairX << 32) ^ (pairZ & 0xffffffffL) ^ (alongX ? 0x534B5942524447L : 0x4E535F4252444745L);
 		Odds pair = new Odds(generator.getWorldSeed() ^ pairKey);
-		Material deck = MaterialTags.pick(MaterialTags.FITTINGS_SKYBRIDGE, pair, null);
+		boolean ropes = pair.flipCoin();
+		Material deck = MaterialTags.pick(ropes ? MaterialTags.FITTINGS_ROPE_BRIDGE : MaterialTags.FITTINGS_SKYBRIDGE, pair, null);
+		if (deck == null) { // the other kind, if the pool for this one is empty
+			ropes = !ropes;
+			deck = MaterialTags.pick(ropes ? MaterialTags.FITTINGS_ROPE_BRIDGE : MaterialTags.FITTINGS_SKYBRIDGE, pair, null);
+		}
 		if (deck == null || !pair.playOdds(settings.oddsOfSkybridge))
 			return;
 
@@ -2876,7 +2883,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 				floorAt = generator.streetLevel + rise + 2;
 		if (floorAt < 0)
 			return;
-		int deckY = floorAt - 1;
+		int deckY = floorAt; // the mod's decks are a low plate in their block: level with the floor, a step of a quarter
 
 		// our wall at that floor, from the chunk edge inward: three solid cells stacked (wall, wall, ceiling), so a
 		// ledge or balcony rail outside the wall is passed over; the deck runs from just outside the wall to the edge
@@ -2892,15 +2899,25 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		if (wall < 0)
 			return;
 
-		// the doorway, then the deck: the mod's side pieces, rails on the outside of each row, headroom cleared
+		// the doorway, then the deck, headroom cleared: a solid deck's two rows of side pieces, rails on the outside
+		// of each row; a rope bridge's one row, its end piece at the wall named by the way the bridge continues and
+		// its middles by their rails (the mod's names, read from its models: middle_ns walks east-west)
+		if (ropes)
+			hi = lo;
+		net.minecraft.world.level.block.state.BlockState facing = deck.withFacing(alongX ? BlockFace.EAST : BlockFace.SOUTH);
+		String ropeEnd = toward == BlockFace.EAST ? "middle_end_e" : toward == BlockFace.WEST ? "middle_end_w"
+				: toward == BlockFace.SOUTH ? "middle_end_s" : "middle_end_n";
+		String ropeMiddle = alongX ? "middle_ns" : "middle_ew";
 		for (int j = lo; j <= hi; j++) {
 			int wx = alongX ? wall : j, wz = alongX ? j : wall;
-			chunk.setBlocks(wx, wx + 1, floorAt, floorAt + 2, wz, wz + 1, Material.AIR);
+			chunk.setBlocks(wx, wx + 1, floorAt, floorAt + 3, wz, wz + 1, Material.AIR);
 			String side = alongX ? (j == lo ? "side_n" : "side_s") : (j == lo ? "side_w" : "side_e");
 			for (int i = wall - step; i != edge - step; i -= step) { // outward: from just past the wall to the edge
 				int x = alongX ? i : j, z = alongX ? j : i;
-				chunk.setBlockState(x, deckY, z, deck.withProperty("connection", side));
-				chunk.setBlocks(x, x + 1, floorAt, floorAt + 2, z, z + 1, Material.AIR);
+				String piece = !ropes ? side : i == wall - step ? ropeEnd : ropeMiddle;
+				chunk.setBlockState(x, deckY, z, ropes ? Material.withProperty(facing, "connection", piece)
+						: deck.withProperty("connection", piece));
+				chunk.setBlocks(x, x + 1, deckY + 1, deckY + 3, z, z + 1, Material.AIR);
 			}
 		}
 	}
