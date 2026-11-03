@@ -178,6 +178,20 @@ public final class Material {
         return state;
     }
 
+    /**
+     * This block's default state with a property set by its serialized name and value — a mod block's own states
+     * (Macaw's bridges' {@code connection=middle_ns}, a path block's {@code flattened}) that no vanilla property
+     * names. Unknown name or value: the state unchanged.
+     */
+    public BlockState withProperty(String name, String value) {
+        return defaultState == null ? null : withNamedValue(defaultState, name, value);
+    }
+
+    /** As {@link #withProperty} on a state already derived (facing first, then a connection). */
+    public static BlockState withProperty(BlockState state, String name, String value) {
+        return state == null ? null : withNamedValue(state, name, value);
+    }
+
     /** Set a property by its serialized name and value; the state unchanged if either is unknown. */
     private static BlockState withNamedValue(BlockState state, String name, String value) {
         for (Property<?> property : state.getProperties()) {

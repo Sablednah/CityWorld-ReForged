@@ -10,6 +10,7 @@ import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.compat.Material;
+import me.daddychurchill.CityWorld.compat.BlockFace;
 
 public class NatureLot extends IsolatedLot {
 
@@ -74,6 +75,9 @@ public class NatureLot extends IsolatedLot {
 		if (generator.isModernStyle() && !generator.isSiteCore(getChunkX(), getChunkZ())
 				&& chunk.isSwampBiome(8, getBlockY(8, 8), 8))
 			generateSwampSurface(generator, chunk);
+
+		// a rope bridge over a ravine, from a bridge mod's pool (nothing without one)
+		drawRopeBridge(generator, chunk);
 
 		generateEntities(generator, chunk);
 	}
@@ -154,4 +158,46 @@ public class NatureLot extends IsolatedLot {
 		}
 	}
 
+
+	/**
+	 * A rope bridge (Macaw's Bridges, {@code #cityworld:fittings/rope_bridge}) across a ravine: where the ground
+	 * along the chunk's middle row drops at least {@code bridges.wildBridgeDepth} between two ends of a height, with
+	 * nothing between standing as high as the deck. One block wide, anchored at the chunk's edges, so it reads from
+	 * the plan's heights alone (the same on every run). Empty pool: nothing drawn.
+	 */
+	private void drawRopeBridge(CityWorldGenerator generator, RealBlocks chunk) {
+		me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
+		if (!settings.includeWildBridges || structureReserved)
+			return;
+		int depth = settings.wildBridgeDepth, sea = generator.seaLevel;
+		boolean alongX = ravine(i -> getBlockY(i, 7), depth, sea);
+		if (!alongX && !ravine(i -> getBlockY(7, i), depth, sea))
+			return;
+		Material rope = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_ROPE_BRIDGE, chunkOdds, null);
+		if (rope == null)
+			return;
+		int deckY = Math.max(alongX ? getBlockY(0, 7) : getBlockY(7, 0), alongX ? getBlockY(15, 7) : getBlockY(7, 15)) + 1;
+		net.minecraft.world.level.block.state.BlockState facing = rope.withFacing(alongX ? BlockFace.EAST : BlockFace.SOUTH);
+		for (int i = 0; i < 16; i++) {
+			String piece = i == 0 ? (alongX ? "middle_end_w" : "middle_end_n")
+					: i == 15 ? (alongX ? "middle_end_e" : "middle_end_s") : (alongX ? "middle_ew" : "middle_ns");
+			chunk.setBlockState(alongX ? i : 7, deckY, alongX ? 7 : i, Material.withProperty(facing, "connection", piece));
+		}
+	}
+
+	/** Two ends within a block of each other and above the sea, every column between no higher, the lowest by {@code depth}. */
+	private static boolean ravine(java.util.function.IntUnaryOperator y, int depth, int sea) {
+		int a = y.applyAsInt(0), b = y.applyAsInt(15);
+		if (Math.abs(a - b) > 1 || Math.min(a, b) <= sea)
+			return false;
+		int deck = Math.max(a, b), low = deck;
+		for (int i = 1; i < 15; i++) {
+			int h = y.applyAsInt(i);
+			if (h > deck)
+				return false;
+			low = Math.min(low, h);
+		}
+		return deck - low >= depth;
+	}
 }
