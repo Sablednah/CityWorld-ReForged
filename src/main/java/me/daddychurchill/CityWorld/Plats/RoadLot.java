@@ -904,7 +904,8 @@ public class RoadLot extends ConnectedLot {
 				paveSidewalk(generator, chunk, sidewalkWidth, chunk.width - sidewalkWidth, sidewalkLevel,
 						chunk.width - sidewalkWidth, chunk.width, doingTunnel);
 			// the road mod's kerb along every sidewalk edge that meets the road
-			if (kit != null && kit.kerb != null && inACity && !doingTunnel)
+			if (kit != null && kit.kerb != null && inACity && !doingTunnel && !roundaboutRoad
+					&& sidewalkLevel == pavementLevel + 1)
 				drawKerbs(chunk, roads, sidewalkLevel);
 
 			// crosswalks?
@@ -1051,15 +1052,16 @@ public class RoadLot extends ConnectedLot {
 			generateWECrosswalk(generator, chunk, chunk.width - sidewalkWidth, chunk.width, pavementLevel,
 					sidewalkWidth, chunk.width - sidewalkWidth, crosswalkEast, doingTunnel);
 
-			if (inACity) {
+			if (inACity && !roundaboutRoad) {
 				// lines on the road (Ed's TODO since 2011): a dashed centre line down a straight stretch, two on and two
 				// off so it runs on unbroken from chunk to chunk; junctions keep their crosswalks instead. After the second
 				// paving of the crosswalk arms just above, which would wipe the dashes at each end
 				if (roads.toNorth() && roads.toSouth() && !roads.toWest() && !roads.toEast()) {
 					if (kit != null && kit.brokenLine != null) {
-						// the mod's own dashed line, one column, its dashes along the road; a manhole on some stretches
+						// the mod's edge-dashed line in column 7, its stripe on the column's east edge (facing south turns
+						// the texture's west-edge stripe to the east), so it lies on the road's centre line between 7 and 8
 						for (int z = 0; z < chunk.width; z++)
-							chunk.setBlockState(7, pavementLevel, z, kit.brokenLine.withFacing(BlockFace.NORTH));
+							chunk.setBlockState(7, pavementLevel, z, kit.brokenLine.withFacing(BlockFace.SOUTH));
 						if (kit.manhole != null && chunkOdds.playOdds(0.33))
 							chunk.setBlock(10, pavementLevel, 8, kit.manhole);
 					} else
@@ -1067,8 +1069,8 @@ public class RoadLot extends ConnectedLot {
 							chunk.setBlocks(7, 9, pavementLevel, z, z + 2, linesMat);
 				} else if (roads.toWest() && roads.toEast() && !roads.toNorth() && !roads.toSouth()) {
 					if (kit != null && kit.brokenLine != null) {
-						for (int x = 0; x < chunk.width; x++)
-							chunk.setBlockState(x, pavementLevel, 7, kit.brokenLine.withFacing(BlockFace.EAST));
+						for (int x = 0; x < chunk.width; x++) // stripe on row 7's south edge: the centre line
+							chunk.setBlockState(x, pavementLevel, 7, kit.brokenLine.withFacing(BlockFace.WEST));
 						if (kit.manhole != null && chunkOdds.playOdds(0.33))
 							chunk.setBlock(8, pavementLevel, 10, kit.manhole);
 					} else
@@ -1949,40 +1951,45 @@ public class RoadLot extends ConnectedLot {
 	}
 
 	/**
-	 * Kerbs from the road kit ({@code sidewalk_step}: facing the road, stair-like shapes): the inner edge of every
-	 * sidewalk strip and corner square, replacing the sidewalk block there. The convex corner of a corner square
-	 * takes the outer shape.
+	 * Kerbs from the road kit ({@code sidewalk_step}: a thin stone lip on the half of its block that faces the
+	 * sidewalk). It goes on the ROAD cell at the foot of the sidewalk, at the sidewalk's level (the air over the
+	 * road's surface), facing the sidewalk — never in the sidewalk itself, which it would replace with a near-empty
+	 * block and leave a trench around every chunk. Along every sidewalk edge that meets the road: the corner
+	 * squares' two inner edges and the strips along a side with no road; the convex corner cell is left bare.
 	 */
 	private void drawKerbs(RealBlocks chunk, SurroundingRoads roads, int y) {
-		int in = sidewalkWidth - 1, out = chunk.width - sidewalkWidth;
-		// corner squares: two inner edges each, always
+		int in = sidewalkWidth, out = chunk.width - sidewalkWidth - 1; // the road cells beside the sidewalk
+		// corner squares: the road cells along their two inner edges
 		for (int i = 0; i < sidewalkWidth; i++) {
-			kerb(chunk, in, y, i, BlockFace.EAST, i == in ? "outer_left" : "straight");
-			kerb(chunk, i, y, in, BlockFace.SOUTH, i == in ? "outer_right" : "straight");
-			kerb(chunk, out, y, i, BlockFace.WEST, i == in ? "outer_right" : "straight");
-			kerb(chunk, out - i, y, in, BlockFace.SOUTH, out - i == out ? "outer_left" : "straight");
-			kerb(chunk, in, y, out + i, BlockFace.EAST, out + i == out ? "outer_right" : "straight");
-			kerb(chunk, i, y, out, BlockFace.NORTH, i == in ? "outer_left" : "straight");
-			kerb(chunk, out, y, out + i, BlockFace.WEST, out + i == out ? "outer_left" : "straight");
-			kerb(chunk, out - i, y, out, BlockFace.NORTH, out - i == out ? "outer_right" : "straight");
+			kerb(chunk, in, y, i, BlockFace.WEST);
+			kerb(chunk, i, y, in, BlockFace.NORTH);
+			kerb(chunk, out, y, i, BlockFace.EAST);
+			kerb(chunk, chunk.width - 1 - i, y, in, BlockFace.NORTH);
+			kerb(chunk, in, y, chunk.width - 1 - i, BlockFace.WEST);
+			kerb(chunk, i, y, out, BlockFace.SOUTH);
+			kerb(chunk, out, y, chunk.width - 1 - i, BlockFace.EAST);
+			kerb(chunk, chunk.width - 1 - i, y, out, BlockFace.SOUTH);
 		}
-		// the strips along a side with no road: a straight kerb facing the road
+		// the strips along a side with no road
 		if (!roads.toWest())
-			for (int z = sidewalkWidth; z < out; z++)
-				kerb(chunk, in, y, z, BlockFace.EAST, "straight");
+			for (int z = sidewalkWidth; z < chunk.width - sidewalkWidth; z++)
+				kerb(chunk, in, y, z, BlockFace.WEST);
 		if (!roads.toEast())
-			for (int z = sidewalkWidth; z < out; z++)
-				kerb(chunk, out, y, z, BlockFace.WEST, "straight");
+			for (int z = sidewalkWidth; z < chunk.width - sidewalkWidth; z++)
+				kerb(chunk, out, y, z, BlockFace.EAST);
 		if (!roads.toNorth())
-			for (int x = sidewalkWidth; x < out; x++)
-				kerb(chunk, x, y, in, BlockFace.SOUTH, "straight");
+			for (int x = sidewalkWidth; x < chunk.width - sidewalkWidth; x++)
+				kerb(chunk, x, y, in, BlockFace.NORTH);
 		if (!roads.toSouth())
-			for (int x = sidewalkWidth; x < out; x++)
-				kerb(chunk, x, y, out, BlockFace.NORTH, "straight");
+			for (int x = sidewalkWidth; x < chunk.width - sidewalkWidth; x++)
+				kerb(chunk, x, y, out, BlockFace.SOUTH);
 	}
 
-	private void kerb(RealBlocks chunk, int x, int y, int z, BlockFace facing, String shape) {
-		chunk.setBlockState(x, y, z, Material.withProperty(kit.kerb.withFacing(facing), "shape", shape));
+	/** The lip on a free road cell whose neighbour toward {@code sidewalk} stands at this level. */
+	private void kerb(RealBlocks chunk, int x, int y, int z, BlockFace sidewalk) {
+		int sx = x + sidewalk.getModX(), sz = z + sidewalk.getModZ();
+		if (chunk.isEmpty(x, y, z) && !chunk.isEmpty(x, y - 1, z) && !chunk.isEmpty(sx, y, sz))
+			chunk.setBlockState(x, y, z, Material.withProperty(kit.kerb.withFacing(sidewalk), "shape", "straight"));
 	}
 
 	/**
