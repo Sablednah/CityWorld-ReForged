@@ -1180,6 +1180,10 @@ public class RoadLot extends ConnectedLot {
 				if (inACity && kit != null)
 					generateRoadSigns(generator, chunk, platmap, platX, platZ, roads, sidewalkLevel);
 
+				// a rope bridge between two towers across this street, if the platmap's one is here (Apocalypse)
+				if (inACity)
+					FinishedBuildingLot.drawStreetRope(generator, platmap, chunk, platX, platZ);
+
 				// half as likely in the middle of the road
 				generateEntities(generator, chunk, sidewalkLevel);
 			}
@@ -1994,63 +1998,102 @@ public class RoadLot extends ConnectedLot {
 
 	/**
 	 * The road kit's signs, each on its own rod in the middle of a sidewalk corner (the street-name posts hold the
-	 * inner cells of the NW and SE corners): STOP at a T facing the stem, DEAD END at a road's last chunk facing the
-	 * way in, a speed limit on one straight stretch in four (30 in rural districts, 50 in urban ones) on the right of
-	 * the nearer lane's traffic, and where a road leaves a built platmap for the wild the town's name board facing
-	 * the traffic coming in, with its {@code end} twin (the mod's "leaving" face) for the traffic going out.
+	 * inner cells of the NW and SE corners), every one on the driver's side of the traffic it is for
+	 * ({@code roads.driveOnLeft}) and facing it: STOP for the stem's traffic at a T, DEAD END for the traffic coming
+	 * into a road's last chunk, and the speed limit where it changes — a platmap's limit is
+	 * {@code roads.speedLimitRural} where it is mostly nature (neighbourhoods, farms, outland), else
+	 * {@code roads.speedLimitUrban}. Where a straight road crosses into a platmap with another limit, a pair back to
+	 * back across the road at the line: the new limit for the traffic going in, the old for the traffic coming out
+	 * (drawn by the western or northern chunk, so once). Where it leaves for the wild, the town's name board and its
+	 * "leaving" face at the line, and a chunk-width in from them this platmap's limit and its end-of-limit face. On
+	 * one straight stretch in {@code roads.oddsOfSpeedRepeat}, a repeat pair.
 	 */
 	private void generateRoadSigns(CityWorldGenerator generator, RealBlocks chunk, PlatMap platmap, int platX, int platZ,
 			SurroundingRoads roads, int sidewalkLevel) {
-		int in = 1, out = chunk.width - 2;
+		me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
+		boolean left = settings.driveOnLeft;
+		int y = sidewalkLevel;
 		int n = roads.getNeighborCount();
-		if (n == 3) {
-			Material stop = kit.sign("stop");
-			if (!roads.toEast())
-				placeRoadSign(chunk, stop, in, sidewalkLevel, out, BlockFace.WEST, false);
-			else if (!roads.toWest())
-				placeRoadSign(chunk, stop, out, sidewalkLevel, in, BlockFace.EAST, false);
-			else if (!roads.toSouth())
-				placeRoadSign(chunk, stop, out, sidewalkLevel, in, BlockFace.NORTH, false);
-			else
-				placeRoadSign(chunk, stop, in, sidewalkLevel, out, BlockFace.SOUTH, false);
-		} else if (n == 1) {
-			Material end = kit.sign("dead_end");
-			if (roads.toWest())
-				placeRoadSign(chunk, end, in, sidewalkLevel, out, BlockFace.WEST, false);
-			else if (roads.toEast())
-				placeRoadSign(chunk, end, out, sidewalkLevel, in, BlockFace.EAST, false);
-			else if (roads.toNorth())
-				placeRoadSign(chunk, end, out, sidewalkLevel, in, BlockFace.NORTH, false);
-			else
-				placeRoadSign(chunk, end, in, sidewalkLevel, out, BlockFace.SOUTH, false);
-		} else if (n == 2 && (roads.toNorth() && roads.toSouth() || roads.toWest() && roads.toEast())) {
-			if (chunkOdds.playOdds(0.25)) {
-				boolean rural = platmap.getNaturePercent() >= 0.40; // neighbourhoods, farms, outland (the ladder's bands)
-				Material limit = kit.sign(rural ? "speedlimit_30" : "speedlimit_50");
-				if (roads.toNorth())
-					placeRoadSign(chunk, limit, out, sidewalkLevel, out, BlockFace.SOUTH, false); // east side: northbound
-				else
-					placeRoadSign(chunk, limit, in, sidewalkLevel, in, BlockFace.EAST, false); // north side: westbound
-			}
+		boolean straight = n == 2 && (roads.toNorth() && roads.toSouth() || roads.toWest() && roads.toEast());
+		if (n == 3) { // the traffic on the stem travels toward the missing arm
+			BlockFace travel = !roads.toEast() ? BlockFace.EAST : !roads.toWest() ? BlockFace.WEST
+					: !roads.toSouth() ? BlockFace.SOUTH : BlockFace.NORTH;
+			signFor(chunk, kit.sign("stop"), travel, true, y, false, left);
+		} else if (n == 1) { // the traffic comes in from the one road
+			BlockFace from = roads.toWest() ? BlockFace.WEST : roads.toEast() ? BlockFace.EAST
+					: roads.toNorth() ? BlockFace.NORTH : BlockFace.SOUTH;
+			signFor(chunk, kit.sign("dead_end"), from.getOppositeFace(), true, y, false, left);
 		}
-		// the town's board where this road leaves the platmap for a wild one: entering on the right of the traffic
-		// coming in, its "leaving" face on the right of the traffic going out
-		if (!(platmap.context instanceof me.daddychurchill.CityWorld.Context.NatureContext)) {
-			Material board = kit.sign("city_" + (1 + chunkOdds.getRandomInt(5)) + "_sign");
-			if (platX == 0 && roads.toWest() && wildPlatmap(generator, chunkX - 1, chunkZ)) {
-				placeRoadSign(chunk, board, in, sidewalkLevel, out, BlockFace.WEST, false);
-				placeRoadSign(chunk, board, in, sidewalkLevel, in, BlockFace.EAST, true);
-			} else if (platX == PlatMap.Width - 1 && roads.toEast() && wildPlatmap(generator, chunkX + 1, chunkZ)) {
-				placeRoadSign(chunk, board, out, sidewalkLevel, in, BlockFace.EAST, false);
-				placeRoadSign(chunk, board, out, sidewalkLevel, out, BlockFace.WEST, true);
-			} else if (platZ == 0 && roads.toNorth() && wildPlatmap(generator, chunkX, chunkZ - 1)) {
-				placeRoadSign(chunk, board, out, sidewalkLevel, in, BlockFace.NORTH, false);
-				placeRoadSign(chunk, board, in, sidewalkLevel, in, BlockFace.SOUTH, true);
-			} else if (platZ == PlatMap.Width - 1 && roads.toSouth() && wildPlatmap(generator, chunkX, chunkZ + 1)) {
-				placeRoadSign(chunk, board, in, sidewalkLevel, out, BlockFace.SOUTH, false);
-				placeRoadSign(chunk, board, out, sidewalkLevel, out, BlockFace.NORTH, true);
+
+		// where this road crosses the platmap's edge, and what lies across it
+		BlockFace across = platX == 0 && roads.toWest() ? BlockFace.WEST
+				: platX == PlatMap.Width - 1 && roads.toEast() ? BlockFace.EAST
+				: platZ == 0 && roads.toNorth() ? BlockFace.NORTH
+				: platZ == PlatMap.Width - 1 && roads.toSouth() ? BlockFace.SOUTH : null;
+		boolean built = !(platmap.context instanceof me.daddychurchill.CityWorld.Context.NatureContext);
+		Material here = speedSign(settings, platmap);
+		if (across != null && built) {
+			int nx = chunkX + across.getModX(), nz = chunkZ + across.getModZ();
+			BlockFace out = across, in = across.getOppositeFace();
+			if (wildPlatmap(generator, nx, nz)) {
+				// the town's board at the line, then a chunk-width in, the limit and its end
+				Material board = kit.sign("city_" + (1 + chunkOdds.getRandomInt(5)) + "_sign");
+				signFor(chunk, board, in, true, y, false, left);
+				signFor(chunk, board, out, false, y, true, left);
+				if (straight) {
+					signFor(chunk, here, in, false, y, false, left);
+					signFor(chunk, here, out, true, y, true, left);
+				}
+			} else if (straight && (across == BlockFace.EAST || across == BlockFace.SOUTH)) {
+				Material there = speedSign(settings, generator.getPlatMap(nx, nz));
+				if (!java.util.Objects.equals(there, here)) { // a pair back to back at the line
+					signFor(chunk, there, out, false, y, false, left);
+					signFor(chunk, here, in, true, y, false, left);
+				}
 			}
+		} else if (straight && built && here != null
+				&& here.equals(kit.sign("speedlimit_" + Math.min(rounded(settings.speedLimitUrban), rounded(settings.speedLimitRural))))
+				&& chunkOdds.playOdds(settings.oddsOfSpeedRepeat)) { // repeats in the slower zones only (owner)
+			BlockFace one = roads.toNorth() ? BlockFace.NORTH : BlockFace.WEST; // a repeat pair at one end
+			signFor(chunk, here, one, true, y, false, left);
+			signFor(chunk, here, one.getOppositeFace(), false, y, false, left);
 		}
+	}
+
+	/** A platmap's speed-limit sign: rural where it is mostly nature (the context ladder's bands), urban otherwise. */
+	private Material speedSign(me.daddychurchill.CityWorld.CityWorldSettings settings, PlatMap platmap) {
+		int limit = platmap.getNaturePercent() >= 0.40 ? settings.speedLimitRural : settings.speedLimitUrban;
+		return kit.sign("speedlimit_" + rounded(limit));
+	}
+
+	/** A limit as the mod has a sign for it: 10 to 120 in tens. */
+	private static int rounded(int limit) {
+		return Math.max(10, Math.min(120, Math.round(limit / 10f) * 10));
+	}
+
+	/**
+	 * A sign for the traffic travelling {@code travel}, facing it, on its driver's side of the road (the right, or the
+	 * left with {@code left}), at the end of this chunk where that traffic comes in ({@code entering}) or goes out.
+	 * An unrotated Macaw's sign shows its face to the north (its model's north face carries the picture), so a sign
+	 * faces the way it is read from: against the traffic.
+	 */
+	private void signFor(RealBlocks chunk, Material sign, BlockFace travel, boolean entering, int y, boolean end,
+			boolean left) {
+		int in = 1, out = chunk.width - 2;
+		boolean positive = travel == BlockFace.EAST || travel == BlockFace.SOUTH;
+		int along = entering == positive ? in : out; // coming in at its back edge, going out at its front
+		BlockFace side = rightOf(travel);
+		if (left)
+			side = side.getOppositeFace();
+		int beside = side == BlockFace.EAST || side == BlockFace.SOUTH ? out : in;
+		boolean alongX = travel == BlockFace.EAST || travel == BlockFace.WEST;
+		placeRoadSign(chunk, sign, alongX ? along : beside, y, alongX ? beside : along, travel.getOppositeFace(), end);
+	}
+
+	/** The right-hand side of the traffic travelling {@code travel} (seen from above: north up, east right). */
+	private static BlockFace rightOf(BlockFace travel) {
+		return travel == BlockFace.NORTH ? BlockFace.EAST : travel == BlockFace.EAST ? BlockFace.SOUTH
+				: travel == BlockFace.SOUTH ? BlockFace.WEST : BlockFace.NORTH;
 	}
 
 	/** Whether the platmap holding that chunk is wild — the dry plan, which builds no platmap (read at drawing time). */
@@ -2059,13 +2102,17 @@ public class RoadLot extends ConnectedLot {
 	}
 
 	/**
-	 * A sign on a two-block rod at a sidewalk cell, if the cell is free; nothing without the sign. {@code end} is the
-	 * mod's second face of a two-faced sign (the end of a limit, leaving a town) where the sign has one.
+	 * A sign on a rod at a sidewalk cell, if the cell is free; nothing without the sign. {@code end} is the mod's
+	 * second face of a two-faced sign (the end of a limit, leaving a town). On a slab or anything else short of a
+	 * full top, the rod replaces it, so the post stands on the ground instead of floating half a block up; over a
+	 * hole (decay), no sign.
 	 */
 	private void placeRoadSign(RealBlocks chunk, Material sign, int x, int y, int z, BlockFace facing, boolean end) {
-		if (sign == null || !chunk.isEmpty(x, y + 1, z) || !chunk.isEmpty(x, y + 2, z) || !chunk.isEmpty(x, y + 3, z))
+		if (sign == null || !chunk.isEmpty(x, y + 1, z) || !chunk.isEmpty(x, y + 2, z) || !chunk.isEmpty(x, y + 3, z)
+				|| chunk.isEmpty(x, y, z))
 			return;
-		chunk.setBlocks(x, y + 1, y + 3, z, kit.rod != null ? kit.rod : Material.SPRUCE_FENCE);
+		int base = chunk.isSturdyTop(x, y, z) ? y + 1 : y;
+		chunk.setBlocks(x, base, y + 3, z, kit.rod != null ? kit.rod : Material.SPRUCE_FENCE);
 		net.minecraft.world.level.block.state.BlockState state = sign.withFacing(facing);
 		if (end)
 			state = Material.withProperty(state, "end", "true");

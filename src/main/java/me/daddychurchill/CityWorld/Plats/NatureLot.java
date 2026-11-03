@@ -160,61 +160,68 @@ public class NatureLot extends IsolatedLot {
 
 
 	/**
-	 * Rope bridges (Macaw's Bridges, {@code #cityworld:fittings/rope_bridge}) across a valley: from a ridge crest on
-	 * this chunk's middle row (or column) — or one up to {@code bridges.wildBridgeSpan} back along it — to the first
-	 * column at least a chunk on whose ground stands within {@code bridges.wildBridgeStep} of the crest, with the
-	 * valley between at least {@code bridges.wildBridgeDepth} below both ends and nothing between standing as high as
-	 * the deck. Read from the PLAN alone — each column's ground as the lot planned there will draw it — so every
-	 * chunk the span crosses finds the same bridge and draws its own blocks of it; one valley in
-	 * {@code bridges.oddsOfWildBridge} gets one, decided from the crest's own seed, which also picks the wood. Every
-	 * chunk the span and its crest test touch must be plain wild land that draws this pass (a {@code NatureLot}
-	 * exactly, not reserved for a structure): anywhere else reads as a wall, so a bridge never runs into a city
-	 * or stops dead at a lot that would not draw its part. (The natural terrain is not the plan: a city levels its
-	 * nature lots, and a bridge read from {@code getFarBlockY} stood on flat ground at spawn.) The lower end is
-	 * built up to the deck with a bank of its own ground, and the headroom over the deck is cleared. Empty pool:
+	 * Rope bridges (Macaw's Bridges, {@code #cityworld:fittings/rope_bridge}): a find, not a fixture — at most one in a
+	 * region of {@code roads.wildBridgeRegion} chunks square, and one region in {@code roads.oddsOfWildBridge} has
+	 * one. The region's seed picks its one line (a chunk row or column, through the chunks' middle), and the bridge
+	 * is the FIRST span along that line: from a ridge crest, the deck one block above it, across a valley at least
+	 * {@code roads.wildBridgeDepth} below, to the first column where the ground comes back up to the deck, so it
+	 * always lands on the far side and never needs a support (the owner: "if it had carried on two more blocks it
+	 * would have reached the mountain"). No longer than {@code roads.wildBridgeSpan}, no shorter than a chunk; a far
+	 * side more than a step above the deck is a cliff and gets none. The search reads the natural terrain, which is
+	 * the same for every chunk on the line, so they all find the same span; each then checks the span against the
+	 * PLAN it will draw (a city levels its nature lots) — every column of it, and of its crest test, on plain wild
+	 * land (a {@code NatureLot} exactly, unreserved) with the same heights — and draws its own part. Empty pool:
 	 * nothing drawn.
 	 */
 	private void drawRopeBridge(CityWorldGenerator generator, RealBlocks chunk) {
 		me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
 		if (!settings.includeWildBridges || !takesRopeBridge(this))
 			return;
-		drawRopeBridges(generator, chunk, settings, true);
-		drawRopeBridges(generator, chunk, settings, false);
+		int region = Math.max(4, settings.wildBridgeRegion);
+		int rx = Math.floorDiv(chunkX, region), rz = Math.floorDiv(chunkZ, region);
+		Odds dice = new Odds(generator.getWorldSeed() ^ (rx * 0x9E3779B97F4A7C15L) ^ (rz * 0xC2B2AE3D27D4EB4FL) ^ 0x524F5045L);
+		if (!dice.playOdds(settings.oddsOfWildBridge))
+			return;
+		boolean alongX = dice.flipCoin();
+		int line = dice.getRandomInt(region); // the region's one chunk row (along x) or column (along z)
+		if (alongX ? chunkZ != rz * region + line : chunkX != rx * region + line)
+			return;
+		Material rope = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_ROPE_BRIDGE, dice, null);
+		if (rope == null)
+			return;
+
+		int row = (alongX ? chunkZ : chunkX) * 16 + 7; // the line's fixed coordinate
+		int first = (alongX ? rx : rz) * region * 16, last = first + region * 16 - 1; // the line, in blocks
+		int depth = settings.wildBridgeDepth, span = Math.max(LEAST_SPAN, settings.wildBridgeSpan), sea = generator.seaLevel;
+		int lo = first - CREST_REACH;
+		int[] natural = new int[last + span + CREST_REACH + 2 - lo];
+		java.util.Arrays.fill(natural, Integer.MIN_VALUE);
+		java.util.function.IntUnaryOperator nat = i -> {
+			int k = i - lo;
+			if (natural[k] == Integer.MIN_VALUE)
+				natural[k] = alongX ? generator.getFarBlockY(i, row) : generator.getFarBlockY(row, i);
+			return natural[k];
+		};
+		int s = NO_SPAN, e = NO_SPAN;
+		for (int c = first; c <= last - LEAST_SPAN && s == NO_SPAN; c++)
+			if (crest(nat, c, sea)) {
+				int far = spanEnd(nat, c, depth, span);
+				if (far != NO_SPAN && far <= last) { // within the region, so every chunk it crosses is on this line
+					s = c;
+					e = far;
+				}
+			}
+		int o = (alongX ? chunkX : chunkZ) << 4;
+		if (s == NO_SPAN || e < o || s > o + 15)
+			return;
+		java.util.function.IntUnaryOperator plan = i -> alongX ? plannedGround(generator, i, row) : plannedGround(generator, row, i);
+		if (!crest(plan, s, sea) || spanEnd(plan, s, depth, span) != e)
+			return; // the plan draws something else here: no bridge, in every chunk alike
+		drawSpan(chunk, alongX, s, e, plan.applyAsInt(s) + 1, rope);
 	}
 
 	private static final int CREST_REACH = 8, LEAST_SPAN = 16;
-
-	private void drawRopeBridges(CityWorldGenerator generator, RealBlocks chunk,
-			me.daddychurchill.CityWorld.CityWorldSettings settings, boolean alongX) {
-		int row = alongX ? (chunkZ << 4) + 7 : (chunkX << 4) + 7; // the world coordinate of the fixed axis
-		int o = alongX ? (chunkX << 4) : (chunkZ << 4); // this chunk's start along the run
-		int depth = settings.wildBridgeDepth, step = settings.wildBridgeStep, span = Math.max(LEAST_SPAN, settings.wildBridgeSpan);
-		// the row's heights, read once each: a crest test looks 8 either way and a span up to wildBridgeSpan on
-		int first = o - span - CREST_REACH;
-		int[] heights = new int[span + 16 + span + 2 * CREST_REACH];
-		java.util.Arrays.fill(heights, Integer.MIN_VALUE);
-		java.util.function.IntUnaryOperator y = i -> {
-			int k = i - first;
-			if (heights[k] == Integer.MIN_VALUE)
-				heights[k] = alongX ? plannedGround(generator, i, row) : plannedGround(generator, row, i);
-			return heights[k];
-		};
-		for (int s = o - span; s <= o + 15; s++) {
-			if (!crest(y, s, generator.seaLevel))
-				continue;
-			int e = spanEnd(y, s, depth, step, span, generator.seaLevel);
-			if (e == NO_SPAN || e < o)
-				continue; // no bridge from this crest, or one that ends before this chunk
-			Odds dice = new Odds(generator.getWorldSeed() ^ ((long) s << 21) ^ ((long) row << 1) ^ (alongX ? 1L : 0L));
-			if (!dice.playOdds(settings.oddsOfWildBridge))
-				continue;
-			Material rope = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
-					me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_ROPE_BRIDGE, dice, null);
-			if (rope == null)
-				return;
-			drawSpan(generator, chunk, alongX, s, e, y.applyAsInt(s), y.applyAsInt(e), rope);
-		}
-	}
 
 	/** Plain wild land, unreserved: the only lot that draws this pass and stands on its own planned ground. */
 	private static boolean takesRopeBridge(PlatLot lot) {
@@ -253,51 +260,35 @@ public class NatureLot extends IsolatedLot {
 	 */
 	private static final int NO_SPAN = Integer.MIN_VALUE;
 
-	/** The far end of a span from crest {@code s}, or {@link #NO_SPAN}: the first far column within {@code step} of the crest, a valley at least {@code depth} below both between, nothing between above the deck. */
-	private static int spanEnd(java.util.function.IntUnaryOperator y, int s, int depth, int step, int span, int sea) {
-		int h0 = y.applyAsInt(s), low = h0, high = h0;
+	/**
+	 * The far end of a span from crest {@code s} (the deck one above it), or {@link #NO_SPAN}: the first column where
+	 * the ground comes back up to the deck's foot, at least a chunk on, past a valley at least {@code depth} below the
+	 * crest. That column may stand one above the crest (its top block becomes the bridge's end); any higher is a cliff.
+	 */
+	private static int spanEnd(java.util.function.IntUnaryOperator y, int s, int depth, int span) {
+		int h0 = y.applyAsInt(s), low = h0;
 		for (int e = s + 1; e <= s + span; e++) {
 			int he = y.applyAsInt(e);
-			if (he > h0 + step)
-				return NO_SPAN; // a wall higher than any deck could be
-			if (e - s >= LEAST_SPAN && Math.abs(he - h0) <= step && he > sea && Math.min(h0, he) - low >= depth
-					&& high <= Math.max(h0, he))
-				return e;
+			if (he >= h0)
+				return e - s >= LEAST_SPAN && h0 - low >= depth && he <= h0 + 1 ? e : NO_SPAN;
 			low = Math.min(low, he);
-			high = Math.max(high, he);
 		}
 		return NO_SPAN;
 	}
 
-	/** This chunk's blocks of the span {@code s..e}: deck pieces, the banks under a low end, the headroom. */
-	private void drawSpan(CityWorldGenerator generator, RealBlocks chunk, boolean alongX, int s, int e, int hs, int he,
-			Material rope) {
-		int o = alongX ? (chunkX << 4) : (chunkZ << 4);
-		int deckY = Math.max(hs, he) + 1;
+	/** This chunk's blocks of the span {@code s..e} at {@code deckY}: the mod's pieces, the headroom over them. */
+	private void drawSpan(RealBlocks chunk, boolean alongX, int s, int e, int deckY, Material rope) {
+		int o = (alongX ? chunkX : chunkZ) << 4;
 		net.minecraft.world.level.block.state.BlockState facing = rope.withFacing(alongX ? BlockFace.EAST : BlockFace.SOUTH);
 		// the mod names a piece by where its rails are (middle_ns = rails north and south = walking east-west) and an
 		// end by the way the bridge continues from it (middle_end_e = the west end), read from its models
 		String middle = alongX ? "middle_ns" : "middle_ew";
 		String startPiece = alongX ? "middle_end_e" : "middle_end_s", endPiece = alongX ? "middle_end_w" : "middle_end_n";
 		for (int i = Math.max(s, o); i <= Math.min(e, o + 15); i++) {
-			int x = alongX ? i - (chunkX << 4) : 7, z = alongX ? 7 : i - (chunkZ << 4);
+			int x = alongX ? i - o : 7, z = alongX ? 7 : i - o;
 			String piece = i == s ? startPiece : i == e ? endPiece : middle;
 			chunk.setBlockState(x, deckY, z, Material.withProperty(facing, "connection", piece));
 			chunk.setBlocks(x, deckY + 1, deckY + 3, z, Material.AIR);
-		}
-		// the lower end's bank: three wide and two long, of each cell's own ground, up to the deck
-		int lowEnd = hs < he ? s : he < hs ? e : -1;
-		if (lowEnd >= 0 && Math.min(hs, he) < deckY - 1) {
-			int near = lowEnd == s ? s : e - 1;
-			for (int i = near; i <= near + 1; i++)
-				for (int j = 6; j <= 8; j++) {
-					int x = alongX ? i - (chunkX << 4) : j, z = alongX ? j : i - (chunkZ << 4);
-					if (x < 0 || x > 15 || z < 0 || z > 15)
-						continue;
-					int ground = getBlockY(x, z);
-					if (ground < deckY - 1)
-						chunk.setBlocks(x, ground + 1, deckY, z, chunk.getActualBlock(x, ground, z).getType());
-				}
 		}
 	}
 }
