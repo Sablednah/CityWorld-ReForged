@@ -79,10 +79,41 @@ forest/jungle/sparse jungle gain it. Not cherry-picked to the branches yet; the 
 
 ## ▶ Backlog — Macaw's Paths and Bridges pools (ZARP's ask, 2026-11-02; not scoped)
 
-**Built 2026-11-03 (6.13 draft; unreleased, unmeasured when written).** Pools `fittings/{path,track,road,skybridge,
+**Built 2026-11-03 (6.13 draft; unreleased).** Pools `fittings/{path,track,road,skybridge,
 rope_bridge}`, `Support/RoadKit` (surface pick → pieces by name), RoadLot markings/crosswalks/kerbs/signs,
 `FinishedBuildingLot.drawSkybridges`, `NatureLot.drawRopeBridge`, settings group `bridges`. CLAUDE.md's resume note
 and memory `cityworld-macaws-paths-roads-bridges` carry the design; the inventory below is what it was built from.
+
+**Measured 2026-11-03 (morning), dev mc26.2 server (NeoForge 26.2.0.59) with ZARP's three jars in `run/mods`** —
+`mcw-paths-1.1.1`, `mcw-roads-1.0.0`, `mcw-bridges-3.1.2` for 26.2, copied from `/mnt/d/minecraft/Instances/LegendQuest
+ZARP/mods`. ⚠ Two other "Macaw's" 26.2 jars that had been in the scratchpad were NOT ZARP's builds (different md5) and
+failed to load with "Block id not set" on .59 AND on a production .93 server; the real jars load on .59 (they declare
+no NeoForge range), so no production bed is needed. `scripts/probe.sh "-Dcityworld.probe=0,0 -Dcityworld.probe.radius=10
+-Dcityworld.diagnostics=true"` then `scripts/region_tally.py run/world/dimensions/minecraft/overworld/region mcwroads`
+(26.x keeps the overworld under `dimensions/minecraft/overworld/region`; `run/world/region` does not exist there).
+- All five pools populated (120 / 4 / 1 / 7 / 8 blocks). Seed 8675309, 441 chunks around spawn: asphalt 19,171, dashed
+  centre line 896, crosswalk 714, kerb `sidewalk_step` 2,252, manhole 13, rod 40 (20 signs: stop 4, dead end 1, limit
+  30 ×2, limit 50 ×13; no town board — the sweep never reached a built platmap's edge). Paths: six pavings in parks
+  (two kinds, 60 each), tracks 759 (dirt 258, podzol 211, gravel 198, sand 92).
+- **Skybridges: three in 441 chunks** (iron, glass, deepslate; 6–8 deck blocks each: the deck is two rows from each
+  tower's wall to the chunk edge, so a tower whose wall sits one block in gives a one-cell half). Two bugs found by
+  the probe, both fixed: (1) the deck loop stepped INWARD from the wall and never met its end — 128,119 "Detected
+  setBlock in a far chunk" errors at one y, z running away one block per write (a runaway loop on a worker, not a
+  crash); (2) the floor was picked from one tower's storey height (asymmetric: the two halves could choose different
+  floors) and the wall scan stopped at a one-block ledge outside the wall, so the doorway cut the ledge and the deck
+  stopped a cell short. Now the highest rise both towers have a floor at (symmetric), a wall = three stacked solid
+  cells, headroom over the deck cleared. Verified by dumping the cells: deck from the chunk edge to a doorway cut
+  through the real wall on both sides.
+- **Rope bridges: with level ends (±1) and a six-block drop, ZERO in 625 wild chunks** (probe at 40,40 radius 12;
+  the heightmap of every full chunk's middle row and column was scored offline: the only two qualifying rows were a
+  building's pit). CityWorld's land is gently shaped. With `wildBridgeStep` 3 (the lower end built up to the deck
+  with its own ground) and `wildBridgeDepth` 4: **14 rope bridges in 625 chunks**, seven woods, one per ~45 chunks;
+  sections show a 16-long deck over a 5–6 block dip with a 3-block grass abutment at the low end. The offline scorer
+  (`ravines2.py`, scratchpad; reads `MOTION_BLOCKING_NO_LEAVES` of chunks with Status `minecraft:full` only — a
+  probe's ring of half-generated neighbours is NOT decorated and must not be counted) gives the grid: wild, ends≤1:
+  depth≥6 2 rows, depth≥4 5; ends≤3: depth≥6 8, depth≥4 16; ends≤4: depth≥4 25 (of 1,252 rows, buildings included).
+- The `facing` of a north-south rope bridge reads `north` although it was set SOUTH (the mod's property admits
+  what it admits; the pieces are symmetric along the axis). Macaw's bridge piece semantics are still unseen in game.
 
 ZARP is adding Macaw's Bridges 3.1.2 and Macaw's Paths and Pavings 1.1.1 (26.2). Today only `#cityworld:build/plaza`
 takes paving (and only for reserved squares — a datapack may extend that tag freely). Proposed, in the fittings

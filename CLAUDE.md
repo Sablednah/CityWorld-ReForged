@@ -38,22 +38,33 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   `scripts/plantiming.sh`. **The owner pastes `CURSEFORGE.md`** (6.12.0 headline) and moves ZARP from the test jar
   `cityworld-6.11.0-test-c32a2cfe+mc26.2.jar` to the CurseForge 6.12.0 in the app (then deletes the test jar and
   `cityworld-released-backup/`).
-- **6.13 draft: Macaw's Paths and Pavings, Roads and Streets, Bridges** (owner, 2026-11-02 bedtime: "amaze me with
-  paths, roads and rope bridges in the morning"). On master: pools `fittings/{path,track,road,skybridge,rope_bridge}`
-  (empty without the mods; every lot draws what it drew before), `Support/RoadKit` (ONE surface pick per world from
-  `#cityworld:fittings/road`, every other piece — dashed line, zebra, manhole, kerb `sidewalk_step`, `roadsign_rod`,
-  signs — found from the surface's id BY NAME, so a pack can point the tag at another road mod), RoadLot markings/
-  crosswalks/kerbs/signs (STOP at a T, DEAD END, speed limit 30/50 by `getNaturePercent`, town board + its `end=true`
-  "leaving" face where a road leaves for the wild by the dry plan), skybridges between neighbouring towers of
-  different buildings (`FinishedBuildingLot.drawSkybridges`: pair decides from ONE seed; highest shared floor ≥ 2;
-  wall found by scanning at `floorAt`; doorway cut; deck `connection=side_*` rows), rope bridges over ravines in the
-  wild (`NatureLot.drawRopeBridge`: middle row, ends level and above sea, drop ≥ `wildBridgeDepth`), settings group
-  `bridges` (**the top-level settings codec is now at the 16-field cap**), Customize toggles, PALETTES rows,
-  CURSEFORGE-CONFIGURATION section. Memory `cityworld-macaws-paths-roads-bridges.md`. **Not yet measured:** run
-  `scratchpad/tools/modprobe.sh` on mc26.2 with the three Macaw's 26.2 jars (`scratchpad/macaws/`), tally
-  `mcwpaths,mcwroads,mcwbridges`; then cherry-pick to six lines (1.20.1: `tags/blocks/`), a test jar + the three
-  Macaw's jars into the owner's `26.2.test` instance, CHANGELOG "6.13.0 (unreleased)" (text drafted in
-  `scratchpad/macaws/changelog-6.13.md`).
+- **6.13 draft: Macaw's Paths and Pavings, Roads and Streets, Bridges — built, measured, on all six lines
+  (2026-11-03 morning), unreleased.** Owner (2026-11-02 bedtime): "amaze me with paths, roads and rope bridges in
+  the morning". Pools `fittings/{path,track,road,skybridge,rope_bridge}` (empty without the mods; every lot draws
+  what it drew before), `Support/RoadKit` (ONE surface pick per world from `#cityworld:fittings/road`, every other
+  piece — dashed line, zebra, manhole, kerb `sidewalk_step`, `roadsign_rod`, signs — found from the surface's id BY
+  NAME, so a pack can point the tag at another road mod), RoadLot markings/crosswalks/kerbs/signs (STOP at a T, DEAD
+  END, speed limit 30/50 by `getNaturePercent`, town board + its `end=true` "leaving" face where a road leaves for
+  the wild by the dry plan), skybridges between neighbouring towers of different buildings
+  (`FinishedBuildingLot.drawSkybridges`: pair decides from ONE seed; highest rise both have a floor at; wall = three
+  stacked solid cells at `floorAt`; doorway cut; deck `connection=side_*` rows), rope bridges over dips in the wild
+  (`NatureLot.drawRopeBridge`: middle row, ends within `wildBridgeStep` 3 and above sea, drop ≥ `wildBridgeDepth`
+  4, the low end built up with its own ground), settings group `bridges` (**the top-level settings codec is now at
+  the 16-field cap**), Customize toggles, PALETTES rows, CURSEFORGE-CONFIGURATION section, CHANGELOG "6.13.0
+  (unreleased)". Memory `cityworld-macaws-paths-roads-bridges.md`; measurements in PORTING.md "Backlog — Macaw's
+  Paths and Bridges pools" ("Measured 2026-11-03"): roads 19k asphalt / 896 lines / 714 zebra / 2,252 kerbs / 20
+  signs in 441 chunks; 3 skybridges there; rope bridges 0 → 14 in 625 wild chunks after the step/depth change. The
+  probe found a runaway skybridge deck loop (128k far-chunk setBlock errors) and an asymmetric floor pick: both
+  fixed and picked to the five lines. **Test bed:** the dev mc26.2 server with ZARP's three jars in `run/mods`
+  (they load on NeoForge .59; the scratchpad's earlier "Macaw's" jars were not ZARP's builds and did not load —
+  check md5 against `LegendQuest ZARP/mods` before blaming the loader). 26.x region files live under
+  `run/world/dimensions/minecraft/overworld/region`. Next: the owner's look in `26.2.test` (test jar
+  `cityworld-6.12.0-test-<sha>+mc26.2.jar` + the three Macaw's jars staged there), then the six-line release recipe
+  for 6.13.0 (self-tests, `--compare`, bump, CI, scan_jar on the positive, SRG, tag, CF, fleet, wiki, WEBSITE.md).
+- **Instances moved (2026-11-03): `/mnt/d/minecraft/Instances`** (Windows `D:\minecraft`). `deploy.sh`,
+  `scripts/deploy-fleet.sh`, `count_worlds.py`, `gen_furniture_tags.py` re-pointed (`0211132d`); the old C: path
+  holds only stale non-CityWorld packs. WSL ran out of memory at 02:56 and 2026-11-03 ~09:30: one JVM at a time
+  (a probe server plus builds in other checkouts is fine; never two servers plus a production bed).
 - **v6.11.0 is released** (2026-10-30 evening) on all six lines — tag `v6.11.0` at the bump `7411f2b4`, CurseForge
   9377104–9377109, fleet `DEPLOYED-v6.11.0` (ZARP opts out), wiki pushed: **your biome mods, in the city too.**
   PORTING.md "▶ Resume here — biome mods on both lands" has every measurement. (1) TerraBlender biomes never reached

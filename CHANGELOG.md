@@ -22,11 +22,12 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   surface and get whatever that mod names the same way.
 - **Macaw's Bridges.** Skybridges: a two-wide deck between an upper floor of two neighbouring towers that belong
   to different buildings, with a doorway cut into each wall (`#cityworld:fittings/skybridge`: iron, glass, stone
-  brick, deepslate, blackstone, prismarine). Rope bridges across ravines in the wild, one wide, where the ground
-  along a chunk's middle row drops six or more between two ends of a height (`#cityworld:fittings/rope_bridge`,
-  one per wood). New settings group `bridges`: `skybridges`, `oddsOfSkybridge` (1 in 3), `skybridgeMinFloors`
-  (6), `wildBridges`, `wildBridgeDepth` (6); Customize toggles "Skybridges" and "Wild rope bridges". Nothing is
-  drawn without a bridge mod.
+  brick, deepslate, blackstone, prismarine). Rope bridges across dips in the wild, one wide, where the ground
+  along a chunk's middle row drops four or more between two ends within three of each other, the lower end built
+  up with its own ground (`#cityworld:fittings/rope_bridge`, one per wood). New settings group `bridges`:
+  `skybridges`, `oddsOfSkybridge` (1 in 3), `skybridgeMinFloors` (6), `wildBridges`, `wildBridgeDepth` (4),
+  `wildBridgeStep` (3); Customize toggles "Skybridges" and "Wild rope bridges". Nothing is drawn without a bridge
+  mod.
 - `Material.withProperty(name, value)` sets a mod block's own state by name (a bridge's `connection`, a kerb's
   `shape`); pool pieces with such states are placed through `setBlockState`.
 
