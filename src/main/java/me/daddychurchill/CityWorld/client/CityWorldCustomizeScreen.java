@@ -429,9 +429,9 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, onOff("Spawners in subways", spawnersInSubways, v -> spawnersInSubways = v));
         // a bridge mod's bridges (Macaw's): nothing is drawn without one, so the toggles cost nothing then
         pair(row, onOff("Skybridges", bridges.skybridges(), v -> bridges = new CityWorldSettingsData.Bridges(v,
-                bridges.oddsOfSkybridge(), bridges.skybridgeMinFloors(), bridges.wildBridges(), bridges.wildBridgeDepth(), bridges.wildBridgeStep())));
+                bridges.oddsOfSkybridge(), bridges.skybridgeMinFloors(), bridges.wildBridges(), bridges.wildBridgeDepth(), bridges.wildBridgeStep(), bridges.wildBridgeSpan(), bridges.oddsOfWildBridge())));
         pair(row, onOff("Wild rope bridges", bridges.wildBridges(), v -> bridges = new CityWorldSettingsData.Bridges(
-                bridges.skybridges(), bridges.oddsOfSkybridge(), bridges.skybridgeMinFloors(), v, bridges.wildBridgeDepth(), bridges.wildBridgeStep())));
+                bridges.skybridges(), bridges.oddsOfSkybridge(), bridges.skybridgeMinFloors(), v, bridges.wildBridgeDepth(), bridges.wildBridgeStep(), bridges.wildBridgeSpan(), bridges.oddsOfWildBridge())));
         pair(row, onOff("Chests in buildings", treasuresInBuildings, v -> treasuresInBuildings = v));
         pair(row, chance("Chest odds: mines", oddsOfTreasureInMines, v -> oddsOfTreasureInMines = v));
         pair(row, chance("Chest odds: bunkers", oddsOfTreasureInBunkers, v -> oddsOfTreasureInBunkers = v));
