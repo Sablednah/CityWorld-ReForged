@@ -160,61 +160,113 @@ public class NatureLot extends IsolatedLot {
 
 
 	/**
-	 * A rope bridge (Macaw's Bridges, {@code #cityworld:fittings/rope_bridge}) across a dip: where the ground along
-	 * the chunk's middle row drops at least {@code bridges.wildBridgeDepth} between two ends within
-	 * {@code bridges.wildBridgeStep} of each other, with nothing between standing as high as the deck. One block
-	 * wide, anchored at the chunk's edges, so it reads from the plan's heights alone (the same on every run); the
-	 * lower end is built up to the deck with its own ground, and the headroom over the deck is cleared. Empty pool:
-	 * nothing drawn.
+	 * Rope bridges (Macaw's Bridges, {@code #cityworld:fittings/rope_bridge}) across a valley: from a ridge crest on
+	 * this chunk's middle row (or column) — or one up to {@code bridges.wildBridgeSpan} back along it — to the first
+	 * column at least a chunk on whose ground stands within {@code bridges.wildBridgeStep} of the crest, with the
+	 * valley between at least {@code bridges.wildBridgeDepth} below both ends and nothing between standing as high as
+	 * the deck. Read from the natural terrain alone ({@link CityWorldGenerator#getFarBlockY}), so every chunk the span
+	 * crosses finds the same bridge and draws its own blocks of it; one valley in {@code bridges.oddsOfWildBridge}
+	 * gets one, decided from the crest's own seed, which also picks the wood. The lower end is built up to the deck
+	 * with a bank of its own ground, and the headroom over the deck is cleared. Empty pool: nothing drawn.
 	 */
 	private void drawRopeBridge(CityWorldGenerator generator, RealBlocks chunk) {
 		me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
 		if (!settings.includeWildBridges || structureReserved)
 			return;
-		int depth = settings.wildBridgeDepth, step = settings.wildBridgeStep, sea = generator.seaLevel;
-		boolean alongX = ravine(i -> getBlockY(i, 7), depth, step, sea);
-		if (!alongX && !ravine(i -> getBlockY(7, i), depth, step, sea))
-			return;
-		Material rope = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
-				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_ROPE_BRIDGE, chunkOdds, null);
-		if (rope == null)
-			return;
-		int a = alongX ? getBlockY(0, 7) : getBlockY(7, 0), b = alongX ? getBlockY(15, 7) : getBlockY(7, 15);
-		int deckY = Math.max(a, b) + 1;
+		drawRopeBridges(generator, chunk, settings, true);
+		drawRopeBridges(generator, chunk, settings, false);
+	}
+
+	private static final int CREST_REACH = 8, LEAST_SPAN = 16;
+
+	private void drawRopeBridges(CityWorldGenerator generator, RealBlocks chunk,
+			me.daddychurchill.CityWorld.CityWorldSettings settings, boolean alongX) {
+		int row = alongX ? (chunkZ << 4) + 7 : (chunkX << 4) + 7; // the world coordinate of the fixed axis
+		int o = alongX ? (chunkX << 4) : (chunkZ << 4); // this chunk's start along the run
+		int depth = settings.wildBridgeDepth, step = settings.wildBridgeStep, span = Math.max(LEAST_SPAN, settings.wildBridgeSpan);
+		// the row's heights, read once each: a crest test looks 8 either way and a span up to wildBridgeSpan on
+		int first = o - span - CREST_REACH;
+		int[] heights = new int[span + 16 + span + 2 * CREST_REACH];
+		java.util.Arrays.fill(heights, Integer.MIN_VALUE);
+		java.util.function.IntUnaryOperator y = i -> {
+			int k = i - first;
+			if (heights[k] == Integer.MIN_VALUE)
+				heights[k] = alongX ? generator.getFarBlockY(i, row) : generator.getFarBlockY(row, i);
+			return heights[k];
+		};
+		for (int s = o - span; s <= o + 15; s++) {
+			if (!crest(y, s, generator.seaLevel))
+				continue;
+			int e = spanEnd(y, s, depth, step, span, generator.seaLevel);
+			if (e < o)
+				continue; // no bridge from this crest, or one that ends before this chunk
+			Odds dice = new Odds(generator.getWorldSeed() ^ ((long) s << 21) ^ ((long) row << 1) ^ (alongX ? 1L : 0L));
+			if (!dice.playOdds(settings.oddsOfWildBridge))
+				continue;
+			Material rope = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
+					me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_ROPE_BRIDGE, dice, null);
+			if (rope == null)
+				return;
+			drawSpan(generator, chunk, alongX, s, e, y.applyAsInt(s), y.applyAsInt(e), rope);
+		}
+	}
+
+	/** A column at least as high as every column within reach of it, and above its eastern (southern) neighbour. */
+	private static boolean crest(java.util.function.IntUnaryOperator y, int s, int sea) {
+		int h = y.applyAsInt(s);
+		if (h <= sea || y.applyAsInt(s + 1) >= h)
+			return false;
+		for (int d = 1; d <= CREST_REACH; d++)
+			if (y.applyAsInt(s - d) > h || y.applyAsInt(s + d) > h)
+				return false;
+		return true;
+	}
+
+	/** The far end of a span from crest {@code s}, or -1: the first far column within {@code step} of the crest, a valley at least {@code depth} below both between, nothing between above the deck. */
+	private static int spanEnd(java.util.function.IntUnaryOperator y, int s, int depth, int step, int span, int sea) {
+		int h0 = y.applyAsInt(s), low = h0, high = h0;
+		for (int e = s + 1; e <= s + span; e++) {
+			int he = y.applyAsInt(e);
+			if (he > h0 + step)
+				return -1; // a wall higher than any deck could be
+			if (e - s >= LEAST_SPAN && Math.abs(he - h0) <= step && he > sea && Math.min(h0, he) - low >= depth
+					&& high <= Math.max(h0, he))
+				return e;
+			low = Math.min(low, he);
+			high = Math.max(high, he);
+		}
+		return -1;
+	}
+
+	/** This chunk's blocks of the span {@code s..e}: deck pieces, the banks under a low end, the headroom. */
+	private void drawSpan(CityWorldGenerator generator, RealBlocks chunk, boolean alongX, int s, int e, int hs, int he,
+			Material rope) {
+		int o = alongX ? (chunkX << 4) : (chunkZ << 4);
+		int deckY = Math.max(hs, he) + 1;
 		net.minecraft.world.level.block.state.BlockState facing = rope.withFacing(alongX ? BlockFace.EAST : BlockFace.SOUTH);
 		// the mod names a piece by where its rails are (middle_ns = rails north and south = walking east-west) and an
 		// end by the way the bridge continues from it (middle_end_e = the west end), read from its models
 		String middle = alongX ? "middle_ns" : "middle_ew";
-		for (int i = 0; i < 16; i++) {
-			int x = alongX ? i : 7, z = alongX ? 7 : i;
-			if (i == 0 || i == 15) { // the lower end's abutment: a bank of its own ground, three wide and two long
-				int ground = i == 0 ? a : b;
-				if (ground < deckY - 1) {
-					Material bank = chunk.getActualBlock(x, ground, z).getType();
-					int near = i == 0 ? 0 : 14;
-					chunk.setBlocks(alongX ? near : 6, alongX ? near + 2 : 9, ground + 1, deckY, alongX ? 6 : near,
-							alongX ? 9 : near + 2, bank);
-				}
-			}
-			String piece = i == 0 ? (alongX ? "middle_end_e" : "middle_end_s")
-					: i == 15 ? (alongX ? "middle_end_w" : "middle_end_n") : middle;
+		String startPiece = alongX ? "middle_end_e" : "middle_end_s", endPiece = alongX ? "middle_end_w" : "middle_end_n";
+		for (int i = Math.max(s, o); i <= Math.min(e, o + 15); i++) {
+			int x = alongX ? i - (chunkX << 4) : 7, z = alongX ? 7 : i - (chunkZ << 4);
+			String piece = i == s ? startPiece : i == e ? endPiece : middle;
 			chunk.setBlockState(x, deckY, z, Material.withProperty(facing, "connection", piece));
 			chunk.setBlocks(x, deckY + 1, deckY + 3, z, Material.AIR);
 		}
-	}
-
-	/** Two ends within {@code step} of each other and above the sea, every column between no higher, the lowest by {@code depth}. */
-	private static boolean ravine(java.util.function.IntUnaryOperator y, int depth, int step, int sea) {
-		int a = y.applyAsInt(0), b = y.applyAsInt(15);
-		if (Math.abs(a - b) > step || Math.min(a, b) <= sea)
-			return false;
-		int deck = Math.max(a, b), low = deck;
-		for (int i = 1; i < 15; i++) {
-			int h = y.applyAsInt(i);
-			if (h > deck)
-				return false;
-			low = Math.min(low, h);
+		// the lower end's bank: three wide and two long, of each cell's own ground, up to the deck
+		int lowEnd = hs < he ? s : he < hs ? e : -1;
+		if (lowEnd >= 0 && Math.min(hs, he) < deckY - 1) {
+			int near = lowEnd == s ? s : e - 1;
+			for (int i = near; i <= near + 1; i++)
+				for (int j = 6; j <= 8; j++) {
+					int x = alongX ? i - (chunkX << 4) : j, z = alongX ? j : i - (chunkZ << 4);
+					if (x < 0 || x > 15 || z < 0 || z > 15)
+						continue;
+					int ground = getBlockY(x, z);
+					if (ground < deckY - 1)
+						chunk.setBlocks(x, ground + 1, deckY, z, chunk.getActualBlock(x, ground, z).getType());
+				}
 		}
-		return deck - low >= depth;
 	}
 }

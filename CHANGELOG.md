@@ -20,14 +20,15 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   (30 in rural districts, 50 in town) on one straight in four, and the town's name board where a road leaves for the
   wild. The pieces are found from the surface's id by name, so a pack can point the tag at another road mod's
   surface and get whatever that mod names the same way.
-- **Macaw's Bridges.** Skybridges: a two-wide deck between an upper floor of two neighbouring towers that belong
-  to different buildings, with a doorway cut into each wall (`#cityworld:fittings/skybridge`: iron, glass, stone
-  brick, deepslate, blackstone, prismarine). Rope bridges across dips in the wild, one wide, where the ground
-  along a chunk's middle row drops four or more between two ends within three of each other, the lower end built
-  up with its own ground (`#cityworld:fittings/rope_bridge`, one per wood). New settings group `bridges`:
-  `skybridges`, `oddsOfSkybridge` (1 in 3), `skybridgeMinFloors` (6), `wildBridges`, `wildBridgeDepth` (4),
-  `wildBridgeStep` (3); Customize toggles "Skybridges" and "Wild rope bridges". Nothing is drawn without a bridge
-  mod.
+- **Macaw's Bridges.** Skybridges in a ruined city: survivors' ways between the upper floors of two neighbouring
+  towers of different buildings, a doorway cut into each wall — a two-wide solid deck (`#cityworld:fittings/
+  skybridge`: iron, glass, stone brick, deepslate, blackstone, prismarine) or, as often, a one-wide rope bridge;
+  Apocalypse has them by default, a working city does not. Rope bridges in the wild, from a ridge crest across a
+  valley at least eight deep to the far side, up to 48 blocks long through as many chunks as it takes, the lower
+  end built up with a bank of its own ground (`#cityworld:fittings/rope_bridge`, one per wood). New settings
+  group `bridges`: `skybridges`, `oddsOfSkybridge` (1 in 3), `skybridgeMinFloors` (6), `wildBridges`,
+  `wildBridgeDepth` (8), `wildBridgeStep` (3), `wildBridgeSpan` (48), `oddsOfWildBridge` (1 in 2); Customize
+  toggles "Skybridges" and "Wild rope bridges". Nothing is drawn without a bridge mod.
 - `Material.withProperty(name, value)` sets a mod block's own state by name (a bridge's `connection`, a kerb's
   `shape`); pool pieces with such states are placed through `setBlockState`.
 

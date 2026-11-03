@@ -373,12 +373,14 @@ Every pool here is empty unless a bridge mod fills it (`#cityworld:fittings/skyb
 
 | Setting | Default | What it does |
 |---|---|---|
-| `skybridges` | `true` | **Skybridges** in Customize. A deck between an upper floor of two neighbouring towers that belong to different buildings, with a doorway cut into each wall where it lands. Both towers need a floor at the same height. |
+| `skybridges` | `false` (Apocalypse `true`) | **Skybridges** in Customize. A deck between an upper floor of two neighbouring towers of different buildings, with a doorway cut into each wall: survivors' ways about a ruined city, so Apocalypse has them by default and a working city does not. As often a one-wide rope bridge as a two-wide solid deck, each from its own pool (`#cityworld:fittings/skybridge`, `#cityworld:fittings/rope_bridge`). |
 | `oddsOfSkybridge` | `0.333` (1 in 3) | The chance each qualifying pair of towers gets a deck. |
 | `skybridgeMinFloors` | `6` | Both towers must have at least this many floors; the deck lands on the highest floor they share, never the second floor or lower. |
-| `wildBridges` | `true` | **Wild rope bridges** in Customize. A one-wide rope bridge across a dip in a wild chunk: where the ground along the chunk's middle row drops between two ends of about the same height, and nothing between stands as high as the deck. The lower end gets an abutment of its own ground up to the deck. |
-| `wildBridgeDepth` | `4` | How far the ground must drop under the span for a rope bridge to be worth building. CityWorld's land is gently shaped: at `6` a 625-chunk wild sweep had no span at all, at `4` about one chunk in forty has one. |
-| `wildBridgeStep` | `3` | How much higher one end may be than the other (the lower end is built up to the deck). At `1` spans are a handful per thousand chunks. |
+| `wildBridges` | `true` | **Wild rope bridges** in Customize. A one-wide rope bridge from a ridge crest in the wild across the valley to the far side, where nothing between stands as high as the deck: the kind of span you see from the next hill. It can run through several chunks; each draws its own part from the terrain alone. The lower end gets a bank of its own ground up to the deck. |
+| `wildBridgeDepth` | `8` | How far the valley floor must lie below both ends for a rope bridge to be worth building. |
+| `wildBridgeStep` | `3` | How much higher one end may be than the other (the lower end is built up to the deck). |
+| `wildBridgeSpan` | `48` | The longest bridge, in blocks; a valley wider than this gets none. The shortest is a chunk. |
+| `oddsOfWildBridge` | `0.5` | The share of valleys that qualify which get a bridge (1 in 2). CityWorld's land is gently shaped, so a bridge is a find, not a fixture: a few per hill range. |
 
 ### `cities` — cities in a vanilla world, and rivers
 

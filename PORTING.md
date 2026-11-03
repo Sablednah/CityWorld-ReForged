@@ -112,8 +112,30 @@ no NeoForge range), so no production bed is needed. `scripts/probe.sh "-Dcitywor
   (`ravines2.py`, scratchpad; reads `MOTION_BLOCKING_NO_LEAVES` of chunks with Status `minecraft:full` only — a
   probe's ring of half-generated neighbours is NOT decorated and must not be counted) gives the grid: wild, ends≤1:
   depth≥6 2 rows, depth≥4 5; ends≤3: depth≥6 8, depth≥4 16; ends≤4: depth≥4 25 (of 1,252 rows, buildings included).
-- The `facing` of a north-south rope bridge reads `north` although it was set SOUTH (the mod's property admits
-  what it admits; the pieces are symmetric along the axis). Macaw's bridge piece semantics are still unseen in game.
+- **The owner's look (2026-11-03 evening, `26.2.test`, nine screenshots) — four things the tallies could not see,
+  each settled by reading the mod's own files, not by guessing again:**
+  (1) `asphalt_broken_center_line`'s texture is a SOLID stripe at pixels 3–6 from one edge (per-column brightness
+  of the 16×16 PNG: 79 79 80 184 185 185 184 80 …), so a one-column line on CityWorld's twelve-wide road (columns
+  2–13, centre at the 7|8 boundary) sat 0.6–0.8 blocks off centre — "on the right-hand side". `asphalt_broken_line`
+  is a 4-px DASHED stripe on the block's edge (columns 0–3, rows 4–7 and 12–15): laid in column 7 with that edge
+  turned to the 7|8 boundary (facing SOUTH on a north-south road, WEST on an east-west one; blockstate y rotation is
+  clockwise from above, confirmed by where the old stripe landed) it lies within 0.25 of the centre. `center_line`
+  / `half_center_line` are centred IN the block (0.5 off). `RoadKit.brokenLine` is now `<surface>_broken_line`.
+  (2) `sidewalk_step` is a 1/16-thick stone-brick plate on the half of its block that faces its `facing` — a lip
+  for the ROAD cell at the sidewalk's foot. Placed in the sidewalk's edge cell it replaced a full block with a
+  near-empty one: a trench outlining every chunk ("the sidewalk is going into the road"). Now on the road cell
+  beside the sidewalk, at the sidewalk's level, facing it, only where that cell is air over road and the sidewalk
+  cell is solid, only when the sidewalk stands one above the road; convex corner cells left bare.
+  (3) Roundabout chunks (`roundaboutRoad`) see roads on two sides and drew a centre line down the ring: no line
+  and no kerbs there.
+  (4) Macaw's rope bridge pieces are named by their RAILS and by where the bridge CONTINUES, not by the run:
+  `rope/parent/middle` has rails along z at x 1 and 14 and planks spanning x → the unrotated model (blockstate
+  `middle_ew`) walks NORTH-SOUTH; `middle_ns` (y 90) walks east-west. `middle_end` has its anchor posts at z 13–16
+  (south) with the rope strips coming from the north: `middle_end_n` is the SOUTH end piece ("continues north"),
+  so a north-south bridge is `middle_end_s` … `middle_ew` … `middle_end_n`, an east-west one `middle_end_e` …
+  `middle_ns` … `middle_end_w`. Both were the other way round ("rails not lining up"; an end anchored to nothing).
+  The lower end's abutment was a 1×1 column of ground up to three high ("links to a pillar?"): now a 3-wide, 2-long
+  bank. The skybridge pieces (`side_n` = rail on the north edge) were right.
 
 ZARP is adding Macaw's Bridges 3.1.2 and Macaw's Paths and Pavings 1.1.1 (26.2). Today only `#cityworld:build/plaza`
 takes paving (and only for reserved squares — a datapack may extend that tag freely). Proposed, in the fittings
