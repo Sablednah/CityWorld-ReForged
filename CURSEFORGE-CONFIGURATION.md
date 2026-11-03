@@ -384,7 +384,7 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 | `wildBridges` | `true` | **Wild rope bridges** in Customize. A one-wide rope bridge from a ridge crest in the wild across a valley to where the far side's ground comes back up to the deck, so it always lands on the hill and needs no support. A find, not a fixture: see `wildBridgeRegion`. |
 | `wildBridgeDepth` | `8` | How far the valley floor must lie below the crest for a rope bridge to be worth building. |
 | `wildBridgeSpan` | `48` | The longest bridge, in blocks; a valley wider than this gets none. The shortest is a chunk. |
-| `wildBridgeRegion` | `32` | The size of a bridge region, in chunks square. A region has at most one wild rope bridge: its seed picks one chunk row or column through it, and the bridge is the first span along that line. |
+| `wildBridgeRegion` | `32` | The size of a bridge region, in chunks square. A region has at most one wild rope bridge, wholly inside it: its seed orders its chunk rows and columns, and the bridge is the first span along the first of them that has one. |
 | `oddsOfWildBridge` | `0.5` | The chance a region has its bridge (1 in 2). At the defaults a mountain range shows one, maybe two. |
 
 ### `cities` — cities in a vanilla world, and rivers

@@ -162,16 +162,15 @@ public class NatureLot extends IsolatedLot {
 	/**
 	 * Rope bridges (Macaw's Bridges, {@code #cityworld:fittings/rope_bridge}): a find, not a fixture — at most one in a
 	 * region of {@code roads.wildBridgeRegion} chunks square, and one region in {@code roads.oddsOfWildBridge} has
-	 * one. The region's seed picks its one line (a chunk row or column, through the chunks' middle), and the bridge
-	 * is the FIRST span along that line: from a ridge crest, the deck one block above it, across a valley at least
-	 * {@code roads.wildBridgeDepth} below, to the first column where the ground comes back up to the deck, so it
-	 * always lands on the far side and never needs a support (the owner: "if it had carried on two more blocks it
-	 * would have reached the mountain"). No longer than {@code roads.wildBridgeSpan}, no shorter than a chunk; a far
-	 * side more than a step above the deck is a cliff and gets none. The search reads the natural terrain, which is
-	 * the same for every chunk on the line, so they all find the same span; each then checks the span against the
-	 * PLAN it will draw (a city levels its nature lots) — every column of it, and of its crest test, on plain wild
-	 * land (a {@code NatureLot} exactly, unreserved) with the same heights — and draws its own part. Empty pool:
-	 * nothing drawn.
+	 * one. The region's seed orders its lines (chunk rows, then columns, or the other way about, each through the
+	 * chunks' middle), and the bridge is the first span along the first line that has one: from a ridge crest, the
+	 * deck one block above it, across a valley at least {@code roads.wildBridgeDepth} below, to the first column where
+	 * the ground comes back up to the deck, so it lands on the far side and never needs a support (the owner: "if it
+	 * had carried on two more blocks it would have reached the mountain"). At least a chunk and at most
+	 * {@code roads.wildBridgeSpan} long, wholly inside the region. The search reads the natural terrain, the same from
+	 * any chunk, once per region (memo); each chunk on the span then checks it against the PLAN it will draw (a city
+	 * levels its nature lots) — every column of it and its crest test on plain wild land (a {@code NatureLot}
+	 * exactly, unreserved) with the same heights — and draws its own part. Empty pool: nothing drawn.
 	 */
 	private void drawRopeBridge(CityWorldGenerator generator, RealBlocks chunk) {
 		me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
@@ -179,46 +178,94 @@ public class NatureLot extends IsolatedLot {
 			return;
 		int region = Math.max(4, settings.wildBridgeRegion);
 		int rx = Math.floorDiv(chunkX, region), rz = Math.floorDiv(chunkZ, region);
-		Odds dice = new Odds(generator.getWorldSeed() ^ (rx * 0x9E3779B97F4A7C15L) ^ (rz * 0xC2B2AE3D27D4EB4FL) ^ 0x524F5045L);
-		if (!dice.playOdds(settings.oddsOfWildBridge))
+		int[] found = regionBridge(generator, settings, region, rx, rz);
+		if (found == NO_REGION_BRIDGE)
 			return;
-		boolean alongX = dice.flipCoin();
-		int line = dice.getRandomInt(region); // the region's one chunk row (along x) or column (along z)
-		if (alongX ? chunkZ != rz * region + line : chunkX != rx * region + line)
+		boolean alongX = found[0] == 1;
+		int row = found[1], s = found[2], e = found[3];
+		int o = (alongX ? chunkX : chunkZ) << 4;
+		if ((alongX ? chunkZ : chunkX) != row >> 4 || e < o || s > o + 15)
 			return;
 		Material rope = me.daddychurchill.CityWorld.Support.MaterialTags.pick(
-				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_ROPE_BRIDGE, dice, null);
+				me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_ROPE_BRIDGE,
+				new Odds(regionSeed(generator, rx, rz) ^ 0x524F5045L), null);
 		if (rope == null)
 			return;
+		java.util.function.IntUnaryOperator plan = i -> alongX ? plannedGround(generator, i, row) : plannedGround(generator, row, i);
+		if (!crest(plan, s, generator.seaLevel) || spanEnd(plan, s, settings.wildBridgeDepth, settings.wildBridgeSpan) != e)
+			return; // the plan draws something else here: no bridge, in every chunk alike
+		drawSpan(chunk, alongX, s, e, plan.applyAsInt(s) + 1, rope);
+	}
 
-		int row = (alongX ? chunkZ : chunkX) * 16 + 7; // the line's fixed coordinate
-		int first = (alongX ? rx : rz) * region * 16, last = first + region * 16 - 1; // the line, in blocks
-		int depth = settings.wildBridgeDepth, span = Math.max(LEAST_SPAN, settings.wildBridgeSpan), sea = generator.seaLevel;
-		int lo = first - CREST_REACH;
-		int[] natural = new int[last + span + CREST_REACH + 2 - lo];
+	private static long regionSeed(CityWorldGenerator generator, int rx, int rz) {
+		return generator.getWorldSeed() ^ (rx * 0x9E3779B97F4A7C15L) ^ (rz * 0xC2B2AE3D27D4EB4FL);
+	}
+
+	/** A region with no rope bridge (memo value; a memo cannot hold null). */
+	private static final int[] NO_REGION_BRIDGE = new int[0];
+
+	/** {@code region -> {alongX, line's fixed block coordinate, start, end}}, per world (weak keys). */
+	private static final java.util.Map<CityWorldGenerator, java.util.concurrent.ConcurrentHashMap<Long, int[]>> REGION_BRIDGES =
+			java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+	/** The region's one span, from the natural terrain: worked out once (outside any map lock) and remembered. */
+	private static int[] regionBridge(CityWorldGenerator generator, me.daddychurchill.CityWorld.CityWorldSettings settings,
+			int region, int rx, int rz) {
+		java.util.concurrent.ConcurrentHashMap<Long, int[]> memo = REGION_BRIDGES.computeIfAbsent(generator,
+				g -> new java.util.concurrent.ConcurrentHashMap<>());
+		long key = ((long) rx << 32) ^ (rz & 0xffffffffL);
+		int[] known = memo.get(key);
+		if (known != null)
+			return known;
+		int[] found = NO_REGION_BRIDGE;
+		Odds dice = new Odds(regionSeed(generator, rx, rz));
+		if (dice.playOdds(settings.oddsOfWildBridge)) {
+			int[] order = new int[region];
+			for (int k = 0; k < region; k++)
+				order[k] = k;
+			for (int k = region - 1; k > 0; k--) { // the region's own order of its lines
+				int m = dice.getRandomInt(k + 1), t = order[k];
+				order[k] = order[m];
+				order[m] = t;
+			}
+			boolean firstAlongX = dice.flipCoin();
+			search: for (int pass = 0; pass < 2; pass++) {
+				boolean alongX = pass == 0 ? firstAlongX : !firstAlongX;
+				for (int line : order) {
+					int row = ((alongX ? rz : rx) * region + line) * 16 + 7;
+					int[] span = firstSpan(generator, settings, alongX, row, (alongX ? rx : rz) * region * 16, region * 16);
+					if (span != null) {
+						found = new int[] { alongX ? 1 : 0, row, span[0], span[1] };
+						break search;
+					}
+				}
+			}
+		}
+		int[] raced = memo.putIfAbsent(key, found);
+		return raced != null ? raced : found;
+	}
+
+	/** The first span along a line of the natural terrain that lies wholly within {@code first..first+length-1}. */
+	private static int[] firstSpan(CityWorldGenerator generator, me.daddychurchill.CityWorld.CityWorldSettings settings,
+			boolean alongX, int row, int first, int length) {
+		int last = first + length - 1, lo = first - CREST_REACH;
+		int[] natural = new int[length + 2 * CREST_REACH + 2];
 		java.util.Arrays.fill(natural, Integer.MIN_VALUE);
 		java.util.function.IntUnaryOperator nat = i -> {
+			if (i < lo || i - lo >= natural.length)
+				return NO_BRIDGE; // beyond the region: a wall, so a span never leaves it
 			int k = i - lo;
 			if (natural[k] == Integer.MIN_VALUE)
 				natural[k] = alongX ? generator.getFarBlockY(i, row) : generator.getFarBlockY(row, i);
 			return natural[k];
 		};
-		int s = NO_SPAN, e = NO_SPAN;
-		for (int c = first; c <= last - LEAST_SPAN && s == NO_SPAN; c++)
-			if (crest(nat, c, sea)) {
-				int far = spanEnd(nat, c, depth, span);
-				if (far != NO_SPAN && far <= last) { // within the region, so every chunk it crosses is on this line
-					s = c;
-					e = far;
-				}
+		for (int c = first; c <= last - LEAST_SPAN; c++)
+			if (crest(nat, c, generator.seaLevel)) {
+				int far = spanEnd(nat, c, settings.wildBridgeDepth, settings.wildBridgeSpan);
+				if (far != NO_SPAN && far <= last)
+					return new int[] { c, far };
 			}
-		int o = (alongX ? chunkX : chunkZ) << 4;
-		if (s == NO_SPAN || e < o || s > o + 15)
-			return;
-		java.util.function.IntUnaryOperator plan = i -> alongX ? plannedGround(generator, i, row) : plannedGround(generator, row, i);
-		if (!crest(plan, s, sea) || spanEnd(plan, s, depth, span) != e)
-			return; // the plan draws something else here: no bridge, in every chunk alike
-		drawSpan(chunk, alongX, s, e, plan.applyAsInt(s) + 1, rope);
+		return null;
 	}
 
 	private static final int CREST_REACH = 8, LEAST_SPAN = 16;
@@ -263,14 +310,15 @@ public class NatureLot extends IsolatedLot {
 	/**
 	 * The far end of a span from crest {@code s} (the deck one above it), or {@link #NO_SPAN}: the first column where
 	 * the ground comes back up to the deck's foot, at least a chunk on, past a valley at least {@code depth} below the
-	 * crest. That column may stand one above the crest (its top block becomes the bridge's end); any higher is a cliff.
+	 * crest. That column may stand up to two above the crest: its top blocks give way to the bridge's end and its
+	 * headroom, a notch into the hillside a step up from the deck at most; any higher is a cliff.
 	 */
 	private static int spanEnd(java.util.function.IntUnaryOperator y, int s, int depth, int span) {
 		int h0 = y.applyAsInt(s), low = h0;
 		for (int e = s + 1; e <= s + span; e++) {
 			int he = y.applyAsInt(e);
 			if (he >= h0)
-				return e - s >= LEAST_SPAN && h0 - low >= depth && he <= h0 + 1 ? e : NO_SPAN;
+				return e - s >= LEAST_SPAN && h0 - low >= depth && he <= h0 + 2 ? e : NO_SPAN;
 			low = Math.min(low, he);
 		}
 		return NO_SPAN;
