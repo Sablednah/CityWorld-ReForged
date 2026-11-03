@@ -12,7 +12,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 /**
  * A road's dressing from a road mod, derived from ONE pool pick: the surface block in {@code #cityworld:fittings/road}
  * (Macaw's Roads and Streets ships {@code mcwroads:asphalt}), and from its id the matching pieces by name —
- * {@code <surface>_broken_center_line}, {@code <surface>_crosswalk}, {@code <surface>_manhole}, the namespace's
+ * {@code <surface>_broken_line}, {@code <surface>_crosswalk}, {@code <surface>_manhole}, the namespace's
  * {@code sidewalk_step} kerb, {@code roadsign_rod}, and any sign by name ({@code stop}, {@code dead_end},
  * {@code speedlimit_30}, {@code city_1_sign}…). One pick per world, so every street matches; null without the mod,
  * and every lot then draws what it drew before.
@@ -29,7 +29,9 @@ public final class RoadKit {
     private RoadKit(Material surface, String id) {
         this.surface = surface;
         this.namespace = id.substring(0, id.indexOf(':'));
-        this.brokenLine = piece(id + "_broken_center_line");
+        // the edge-dashed line, not the "center" one: that stripe sits 3-6 px from one edge of its block, and a
+        // one-column line on a twelve-wide road can only sit on the centre when the stripe hugs the column's edge
+        this.brokenLine = piece(id + "_broken_line");
         this.crosswalk = piece(id + "_crosswalk");
         this.manhole = piece(id + "_manhole");
         this.kerb = piece(namespace + ":sidewalk_step");
