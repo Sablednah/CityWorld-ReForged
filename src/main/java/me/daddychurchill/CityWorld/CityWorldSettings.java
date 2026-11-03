@@ -199,11 +199,14 @@ public class CityWorldSettings {
      * tunnels.
      */
     public boolean includeSubways = true;
-    /** A bridge mod's bridges — see {@code CityWorldSettingsData.Bridges}; the pools are empty without one. */
+    /** Road furniture and bridges — see {@code CityWorldSettingsData.Roads}; the pools are empty without the mods. */
+    public boolean driveOnLeft = false;
+    public int speedLimitUrban = 50, speedLimitRural = 30, wildBridgeRegion = 32;
+    public double oddsOfSpeedRepeat = Odds.oddsUnlikely, oddsOfStreetRope = Odds.oddsSomewhatLikely;
     public boolean includeSkybridges = false, includeWildBridges = true; // skybridges: Apocalypse soft default (styleDefaults)
     public double oddsOfSkybridge = Odds.oddsSomewhatLikely;
-    public int skybridgeMinFloors = 6, wildBridgeDepth = 8, wildBridgeStep = 3, wildBridgeSpan = 48;
-    public double oddsOfWildBridge = Odds.oddsSomewhatLikely;
+    public int skybridgeMinFloors = 6, wildBridgeDepth = 8, wildBridgeSpan = 48;
+    public double oddsOfWildBridge = Odds.oddsLikely;
     public boolean spawnersInSubways = true;
 
     /** Who turns up, and how often. {@code SpawnProvider} branches on all of these. */
@@ -561,7 +564,7 @@ public class CityWorldSettings {
                 d.shops().oddsOfAtmInShops(), d.shops().oddsOfAtmInMalls(), d.shops().bankPlazaRadius());
         CityWorldSettingsData.Subways sw = new CityWorldSettingsData.Subways(v, v);
         return new CityWorldSettingsData(f, t2, d.spawns(), d.treasures(), d.world(), d.radius(), d.naming(),
-                d.mobs(), og2, sh, d.decay(), d.caves(), sw, d.structures(), d.cities(), d.bridges());
+                d.mobs(), og2, sh, d.decay(), d.caves(), sw, d.structures(), d.cities(), d.roads());
     }
 
     /**
@@ -620,14 +623,19 @@ public class CityWorldSettings {
         bankPlazaRadius = data.shops().bankPlazaRadius();
         includeSubways = data.subways().enabled();
         spawnersInSubways = data.subways().spawners();
-        includeSkybridges = data.bridges().skybridges();
-        oddsOfSkybridge = data.bridges().oddsOfSkybridge();
-        skybridgeMinFloors = data.bridges().skybridgeMinFloors();
-        includeWildBridges = data.bridges().wildBridges();
-        wildBridgeDepth = data.bridges().wildBridgeDepth();
-        wildBridgeStep = data.bridges().wildBridgeStep();
-        wildBridgeSpan = data.bridges().wildBridgeSpan();
-        oddsOfWildBridge = data.bridges().oddsOfWildBridge();
+        driveOnLeft = data.roads().driveOnLeft();
+        speedLimitUrban = data.roads().speedLimitUrban();
+        speedLimitRural = data.roads().speedLimitRural();
+        oddsOfSpeedRepeat = data.roads().oddsOfSpeedRepeat();
+        wildBridgeRegion = data.roads().wildBridgeRegion();
+        oddsOfStreetRope = data.roads().oddsOfStreetRope();
+        includeSkybridges = data.roads().skybridges();
+        oddsOfSkybridge = data.roads().oddsOfSkybridge();
+        skybridgeMinFloors = data.roads().skybridgeMinFloors();
+        includeWildBridges = data.roads().wildBridges();
+        wildBridgeDepth = data.roads().wildBridgeDepth();
+        wildBridgeSpan = data.roads().wildBridgeSpan();
+        oddsOfWildBridge = data.roads().oddsOfWildBridge();
         CityWorldSettingsData.Decay dk = data.decay();
         buildingDecayIntensity = dk.buildingIntensity();
         roadDecayIntensity = dk.roadIntensity();
@@ -757,10 +765,11 @@ public class CityWorldSettings {
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);
-        CityWorldSettingsData.Bridges bridges = new CityWorldSettingsData.Bridges(includeSkybridges, oddsOfSkybridge,
-                skybridgeMinFloors, includeWildBridges, wildBridgeDepth, wildBridgeStep, wildBridgeSpan, oddsOfWildBridge);
+        CityWorldSettingsData.Roads roads = new CityWorldSettingsData.Roads(driveOnLeft, speedLimitUrban, speedLimitRural,
+                oddsOfSpeedRepeat, includeSkybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, includeWildBridges,
+                wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion);
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
-                overgrowth, shops, decay, caves, subways, structures, cities, bridges);
+                overgrowth, shops, decay, caves, subways, structures, cities, roads);
     }
 
     private static List<String> ids(List<EntityType> types) {
