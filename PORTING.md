@@ -142,6 +142,20 @@ no NeoForge range), so no production bed is needed. `scripts/probe.sh "-Dcitywor
   the bottom ("too low ... meant to be a thin cover like carpet"; the weave paths "ARE blocks and are ok"). Now
   the pick's own collision shape decides: empty or under half a block high → laid over the ground at `surfaceY`,
   otherwise it replaces the ground block as the grass path does. `fittings/track` (path BLOCKS) is unchanged.
+  The park's paving is one pick per PLATMAP (a fork of `platmap.getOddsGenerator()`), the fence's scope: the
+  owner asked that "where the fence is the same, the path is the same too" (it was per chunk).
+  (6) Wild rope bridges after the owner's "0–2 per mountain range" became valley spans (crest → far side, depth 8,
+  ≤ 48 long, multi-chunk, odds 1/2). The first cut read `getFarBlockY`, the NATURAL terrain, and a probe found
+  what that costs: a city levels its nature lots, so one "bridge" stood on flat ground at spawn, and two stopped
+  dead at a chunk edge because the next chunk was not a lot that draws the pass. **A multi-chunk feature must be
+  read from the plan the chunks will draw (`getPlatMap(cx,cz).getMapLot(...)` + the lot's own `getBlockY`), and
+  every chunk it crosses must be a lot that draws it** — anything else reads as a wall (`NO_BRIDGE`). Only
+  `NatureLot` exactly runs the pass (Flooded/Maze/Dunes override `generateActualBlocks` without super; the plaza
+  must not take one). `scratchpad/tools/bridge_list.py` lists each span with its end pieces, the drop under each
+  end, and whether its chunks are full — a span ending in a middle piece in full chunks is this bug.
+  (7) Skybridges (Apocalypse-only now): an Apocalypse probe of 441 chunks found NONE: the pass ran before the
+  ruin's decay (`destroyLot` applies at once through the decoration WorldBlocks), which took the decks. Survivors'
+  work goes in after the collapse, from whatever wall still stands.
 
 ZARP is adding Macaw's Bridges 3.1.2 and Macaw's Paths and Pavings 1.1.1 (26.2). Today only `#cityworld:build/plaza`
 takes paving (and only for reserved squares — a datapack may extend that tag freely). Proposed, in the fittings

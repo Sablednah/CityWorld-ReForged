@@ -61,6 +61,24 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   `run/world/dimensions/minecraft/overworld/region`. Next: the owner's look in `26.2.test` (test jar
   `cityworld-6.12.0-test-<sha>+mc26.2.jar` + the three Macaw's jars staged there), then the six-line release recipe
   for 6.13.0 (self-tests, `--compare`, bump, CI, scan_jar on the positive, SRG, tag, CF, fleet, wiki, WEBSITE.md).
+  **The owner's look (2026-11-03 evening) and what it changed** (PORTING.md "The owner's look"): the mod's
+  `broken_center_line` texture is a solid stripe 3–6 px from one EDGE (a one-column line never centres on the
+  12-wide road) → `broken_line` in column 7, stripe turned to the 7|8 edge; `sidewalk_step` is a 1/16 lip for the
+  ROAD cell at the sidewalk's foot (in the sidewalk cell it trenched every chunk); roundabout chunks get no line or
+  kerb; Macaw's rope pieces are named by RAILS and by where the bridge CONTINUES (`middle_ew` walks north-south,
+  `middle_end_n` is the south end) — **read a mod block's model/texture before placing it by state name.** Then
+  three calls: *"more rope bridges to pillars ... too common - would want 0-2 per mountain range"* → a wild rope
+  bridge is a VALLEY SPAN read from the terrain alone (`NatureLot.drawRopeBridges`: ridge crest on the middle
+  row, far side within `wildBridgeStep` at least a chunk on, valley ≥ `wildBridgeDepth` 8 below both, up to
+  `wildBridgeSpan` 48 through as many chunks as it takes, each chunk drawing its part, `oddsOfWildBridge` 1/2,
+  a 3×2 bank under the low end); *"bridges between skyscrapers - should be apocalypse only. survivors make
+  connections to get about the city. So they can be rope ones as well. But not in regular modern"* →
+  `skybridges` default false, Apocalypse soft default true (`styleDefaults` + `apocalypse.json` `bridges`),
+  a coin per pair picks rope (one wide, `fittings/rope_bridge`) or solid deck, deck level with the floor.
+  Zebra crossings and signs: fine. Bridges settings record is 8 fields. Then: park pavings are plates OR blocks
+  (decided by collision shape: plate on the ground, block in it), one paving per platmap like the fence; a wild
+  span reads the PLAN of each chunk it crosses (not `getFarBlockY`, which a city's levelling makes wrong) and every
+  crossed chunk must be a plain `NatureLot`; skybridges are drawn after the ruin's decay (before, decay ate all).
 - **Instances moved (2026-11-03): `/mnt/d/minecraft/Instances`** (Windows `D:\minecraft`). `deploy.sh`,
   `scripts/deploy-fleet.sh`, `count_worlds.py`, `gen_furniture_tags.py` re-pointed (`0211132d`); the old C: path
   holds only stale non-CityWorld packs. WSL ran out of memory at 02:56 and 2026-11-03 ~09:30: one JVM at a time
