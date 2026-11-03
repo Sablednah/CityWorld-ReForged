@@ -24,16 +24,36 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-10-30, overnight: 6.10.0 release in flight, 6.11 biome-mod work on master).**
-- **6.12 draft in progress (2026-11-02, usage limit hit mid-arc).** On master and all five branches, compiled, pushed,
-  NOT yet self-tested on the branches: `lotAt` subway-flag fix, non-blocking `lotAtIfPlanned`/`lotAtAsync`/
-  `subwayAtIfPlanned`, ZARP's server-thread audit batch one (`Support/Planners` pool, bounded hovers, honest find
-  javadoc + budgets + a >100 ms server-thread WARN, byte-block memos, far-evicting river caches, build-once forecast
-  and dry plan, subway memos, F3/suggestions never plan), `getBaseHeight` from the shaper's height (+ self-test
-  `checkBaseHeight`), the bank schematic titled "Bank". **Next:** run the five branch self-tests two at a time
-  (master's was running when the session ended — check `build/selftest/1.21.11.json` for `baseHeight.checked` and
-  PASS), `--compare`, then release 6.12.0 (CURSEFORGE.md headline, wiki, ZARP back to the CF jar). Measurements
-  and the remaining backlog: PORTING.md "▶ Backlog — server-thread heavy work"; tool `scripts/plantiming.sh`.
+**▶ Resume here (2026-11-03, early morning: 6.12.0 released, Macaw's Paths/Roads/Bridges draft on master).**
+- **v6.12.0 is released** (2026-11-03 ~01:20) on all six lines — tag `v6.12.0` at the master bump `4cc16142`,
+  CurseForge 9413582–9413587, fleet `DEPLOYED-v6.12.0` on 12 (ZARP opts out), wiki unchanged (no new settings):
+  **a lighter server.** `lotAt`'s `subway` flag means "is a station" (the old meaning planned six platmaps each way:
+  ZARP's 55 s stall); `lotAtIfPlanned`/`lotAtAsync`/`subwayAtIfPlanned`; one `Support/Planners` pool; bounded hovers;
+  find family documented BLOCKING with budgets and a >100 ms server-thread WARN once per caller; byte-block memos;
+  far-evicting river caches; build-once forecasts and dry plans; subway memos per world; F3/suggestions never plan;
+  `getBaseHeight` from the shaper (+ `checkBaseHeight`); generation-time loot sized to its container
+  (`ContainerLoot.fillSized`, 35 → 0 over-fill warnings); the bank schematic titled "Bank". Gates: six self-tests
+  PASS with the sized fill + `--compare` agrees, CI 41559487150 green, halt/exit 0 after the positive, 1.20.1 SRG
+  names (70). Measurements and the remaining backlog: PORTING.md "▶ Backlog — server-thread heavy work";
+  `scripts/plantiming.sh`. **The owner pastes `CURSEFORGE.md`** (6.12.0 headline) and moves ZARP from the test jar
+  `cityworld-6.11.0-test-c32a2cfe+mc26.2.jar` to the CurseForge 6.12.0 in the app (then deletes the test jar and
+  `cityworld-released-backup/`).
+- **6.13 draft: Macaw's Paths and Pavings, Roads and Streets, Bridges** (owner, 2026-11-02 bedtime: "amaze me with
+  paths, roads and rope bridges in the morning"). On master: pools `fittings/{path,track,road,skybridge,rope_bridge}`
+  (empty without the mods; every lot draws what it drew before), `Support/RoadKit` (ONE surface pick per world from
+  `#cityworld:fittings/road`, every other piece — dashed line, zebra, manhole, kerb `sidewalk_step`, `roadsign_rod`,
+  signs — found from the surface's id BY NAME, so a pack can point the tag at another road mod), RoadLot markings/
+  crosswalks/kerbs/signs (STOP at a T, DEAD END, speed limit 30/50 by `getNaturePercent`, town board + its `end=true`
+  "leaving" face where a road leaves for the wild by the dry plan), skybridges between neighbouring towers of
+  different buildings (`FinishedBuildingLot.drawSkybridges`: pair decides from ONE seed; highest shared floor ≥ 2;
+  wall found by scanning at `floorAt`; doorway cut; deck `connection=side_*` rows), rope bridges over ravines in the
+  wild (`NatureLot.drawRopeBridge`: middle row, ends level and above sea, drop ≥ `wildBridgeDepth`), settings group
+  `bridges` (**the top-level settings codec is now at the 16-field cap**), Customize toggles, PALETTES rows,
+  CURSEFORGE-CONFIGURATION section. Memory `cityworld-macaws-paths-roads-bridges.md`. **Not yet measured:** run
+  `scratchpad/tools/modprobe.sh` on mc26.2 with the three Macaw's 26.2 jars (`scratchpad/macaws/`), tally
+  `mcwpaths,mcwroads,mcwbridges`; then cherry-pick to six lines (1.20.1: `tags/blocks/`), a test jar + the three
+  Macaw's jars into the owner's `26.2.test` instance, CHANGELOG "6.13.0 (unreleased)" (text drafted in
+  `scratchpad/macaws/changelog-6.13.md`).
 - **v6.11.0 is released** (2026-10-30 evening) on all six lines — tag `v6.11.0` at the bump `7411f2b4`, CurseForge
   9377104–9377109, fleet `DEPLOYED-v6.11.0` (ZARP opts out), wiki pushed: **your biome mods, in the city too.**
   PORTING.md "▶ Resume here — biome mods on both lands" has every measurement. (1) TerraBlender biomes never reached
