@@ -199,7 +199,7 @@ public class CityWorldSettings {
      */
     public boolean includeSubways = true;
     /** A bridge mod's bridges — see {@code CityWorldSettingsData.Bridges}; the pools are empty without one. */
-    public boolean includeSkybridges = true, includeWildBridges = true;
+    public boolean includeSkybridges = false, includeWildBridges = true; // skybridges: Apocalypse soft default (styleDefaults)
     public double oddsOfSkybridge = Odds.oddsSomewhatLikely;
     public int skybridgeMinFloors = 6, wildBridgeDepth = 8, wildBridgeStep = 3, wildBridgeSpan = 48;
     public double oddsOfWildBridge = 0.5;
