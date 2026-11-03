@@ -156,6 +156,13 @@ no NeoForge range), so no production bed is needed. `scripts/probe.sh "-Dcitywor
   (7) Skybridges (Apocalypse-only now): an Apocalypse probe of 441 chunks found NONE: the pass ran before the
   ruin's decay (`destroyLot` applies at once through the decoration WorldBlocks), which took the decks. Survivors'
   work goes in after the collapse, from whatever wall still stands.
+  (8) **A -1 "none" sentinel is a real coordinate west/north of the origin.** `spanEnd` answered -1 for no span and
+  the caller's "ends before this chunk" test (`e < o`) passed it for every chunk at negative coordinates: bogus
+  spans ending at block -1 (the 11-long one at spawn) and, where -1 lay beyond the row cache, an
+  ArrayIndexOutOfBounds that failed the chunk's decoration and stalled the probe for 30 minutes (its server then
+  held the port and the next three probes failed to bind; `probe.sh` now stops a leftover server by its cwd).
+  Found by a 30-line random-terrain harness of the scan (`scratchpad/harness/Span.java`), not by the probes,
+  which mostly sweep positive chunks. Use `Integer.MIN_VALUE` (`NO_SPAN`) for "none" in any coordinate search.
 
 ZARP is adding Macaw's Bridges 3.1.2 and Macaw's Paths and Pavings 1.1.1 (26.2). Today only `#cityworld:build/plaza`
 takes paving (and only for reserved squares — a datapack may extend that tag freely). Proposed, in the fittings
