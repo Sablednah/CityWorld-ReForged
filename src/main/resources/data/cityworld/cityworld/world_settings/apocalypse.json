@@ -44,5 +44,8 @@
   },
   "cities": {
     "rivers": true
+  },
+  "bridges": {
+    "skybridges": true
   }
 }

@@ -317,21 +317,26 @@ public record CityWorldSettingsData(
     /**
      * The bridges a bridge mod lets CityWorld build (Macaw's Bridges; every pool empty without one, and then nothing
      * is drawn): {@code skybridges} between the upper floors of two neighbouring towers of at least
-     * {@code skybridgeMinFloors}, one pair in {@code oddsOfSkybridge}; {@code wildBridges}, a rope bridge across a
-     * ravine in a wild chunk whose ground drops at least {@code wildBridgeDepth} between two high sides.
+     * {@code skybridgeMinFloors}, one pair in {@code oddsOfSkybridge} — survivors' ways about a ruined city, so on
+     * by default for Apocalypse only (a soft style default), and rope ones there as often as solid; {@code wildBridges}, a rope bridge from a ridge
+     * crest in the wild across a valley at least {@code wildBridgeDepth} deep to the far side, up to
+     * {@code wildBridgeSpan} long, the far side within {@code wildBridgeStep} of the crest, one valley in
+     * {@code oddsOfWildBridge}.
      */
     public record Bridges(boolean skybridges, double oddsOfSkybridge, int skybridgeMinFloors, boolean wildBridges,
-            int wildBridgeDepth, int wildBridgeStep) {
+            int wildBridgeDepth, int wildBridgeStep, int wildBridgeSpan, double oddsOfWildBridge) {
 
-        public static final Bridges DEFAULT = new Bridges(true, Odds.oddsSomewhatLikely, 6, true, 4, 3);
+        public static final Bridges DEFAULT = new Bridges(false, Odds.oddsSomewhatLikely, 6, true, 8, 3, 48, 0.5);
 
         public static final Codec<Bridges> CODEC = RecordCodecBuilder.create(i -> i.group(
-                Codec.BOOL.optionalFieldOf("skybridges", true).forGetter(Bridges::skybridges),
+                Codec.BOOL.optionalFieldOf("skybridges", false).forGetter(Bridges::skybridges),
                 Codec.DOUBLE.optionalFieldOf("oddsOfSkybridge", Odds.oddsSomewhatLikely).forGetter(Bridges::oddsOfSkybridge),
                 Codec.INT.optionalFieldOf("skybridgeMinFloors", 6).forGetter(Bridges::skybridgeMinFloors),
                 Codec.BOOL.optionalFieldOf("wildBridges", true).forGetter(Bridges::wildBridges),
-                Codec.INT.optionalFieldOf("wildBridgeDepth", 4).forGetter(Bridges::wildBridgeDepth),
-                Codec.INT.optionalFieldOf("wildBridgeStep", 3).forGetter(Bridges::wildBridgeStep)
+                Codec.INT.optionalFieldOf("wildBridgeDepth", 8).forGetter(Bridges::wildBridgeDepth),
+                Codec.INT.optionalFieldOf("wildBridgeStep", 3).forGetter(Bridges::wildBridgeStep),
+                Codec.INT.optionalFieldOf("wildBridgeSpan", 48).forGetter(Bridges::wildBridgeSpan),
+                Codec.DOUBLE.optionalFieldOf("oddsOfWildBridge", 0.5).forGetter(Bridges::oddsOfWildBridge)
         ).apply(i, Bridges::new));
     }
 
