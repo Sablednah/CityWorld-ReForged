@@ -155,6 +155,16 @@ public final class MaterialTags {
     public static final TagKey<Block> FITTINGS_ROOF = key("cityworld:fittings/roof");
     /** Cash machines, set against an inside wall on the ground floor of a city hall or courthouse, screen to the
      *  room, at the odds {@code shops.oddsOfAtmInCivic} (Modernlife's ATM ships in it, optional). Empty = none. */
+    /** A paved walkway (parks and gardens): Macaw's Paths' pavings; empty without it, the grass path otherwise. */
+    public static final TagKey<Block> FITTINGS_PATH = key("cityworld:fittings/path");
+    /** A country track (farm dividers, the farmyard, campground trails): Macaw's Paths' gravel/dirt path blocks. */
+    public static final TagKey<Block> FITTINGS_TRACK = key("cityworld:fittings/track");
+    /** A road mod's surface (Macaw's Roads' asphalt): the kit the streets are dressed from, see {@code Support/RoadKit}. */
+    public static final TagKey<Block> FITTINGS_ROAD = key("cityworld:fittings/road");
+    /** A skybridge's deck between two towers (Macaw's iron, glass and stone bridges; the mod sets its rails by connection state). */
+    public static final TagKey<Block> FITTINGS_SKYBRIDGE = key("cityworld:fittings/skybridge");
+    /** A rope bridge across a ravine in the wild (Macaw's rope bridges, one per wood). */
+    public static final TagKey<Block> FITTINGS_ROPE_BRIDGE = key("cityworld:fittings/rope_bridge");
     public static final TagKey<Block> FITTINGS_ATM = key("cityworld:fittings/atm");
     /** What an ATM stands on (its model is a counter-top height); shipped with vanilla stone, smooth stone if emptied. */
     public static final TagKey<Block> FITTINGS_ATM_BASE = key("cityworld:fittings/atm_base");

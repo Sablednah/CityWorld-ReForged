@@ -1011,6 +1011,9 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 			aboveFloorHeight = otherFloorHeight;
 		}
 
+		// a deck to the tower next door, from a bridge mod's pool (nothing without one)
+		drawSkybridges(generator, platmap, chunk, platX, platZ);
+
 		// happy place?
 		if (!buildingsDecay(generator)) {
 
@@ -2826,4 +2829,72 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		return interiorStyle;
 	}
 
+
+	/**
+	 * Skybridges (Macaw's Bridges, {@code #cityworld:fittings/skybridge}): a deck between an upper floor of this tower
+	 * and one of a different building next door, where both have at least {@code bridges.skybridgeMinFloors} floors
+	 * and a floor at the same height. Each chunk draws its own half, from its wall to the chunk edge, and the pair
+	 * decides everything from ONE seed (the western or northern chunk's), so both halves agree on the floor, the deck
+	 * and whether there is a bridge at all; a doorway is cut where the deck meets the wall. Pairs within the platmap
+	 * only (a platmap's edge chunks are roads in any case). Empty pool: nothing drawn, no odds rolled.
+	 */
+	private void drawSkybridges(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk, int platX, int platZ) {
+		me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
+		if (!settings.includeSkybridges || height < settings.skybridgeMinFloors)
+			return;
+		if (platX > 0)
+			skybridge(generator, chunk, platmap.getLot(platX - 1, platZ), BlockFace.WEST, chunkX - 1, chunkZ);
+		if (platX < PlatMap.Width - 1)
+			skybridge(generator, chunk, platmap.getLot(platX + 1, platZ), BlockFace.EAST, chunkX, chunkZ);
+		if (platZ > 0)
+			skybridge(generator, chunk, platmap.getLot(platX, platZ - 1), BlockFace.NORTH, chunkX, chunkZ - 1);
+		if (platZ < PlatMap.Width - 1)
+			skybridge(generator, chunk, platmap.getLot(platX, platZ + 1), BlockFace.SOUTH, chunkX, chunkZ);
+	}
+
+	private void skybridge(CityWorldGenerator generator, RealBlocks chunk, PlatLot neighbour, BlockFace toward,
+			int pairX, int pairZ) {
+		if (!(neighbour instanceof FinishedBuildingLot other) || other.getConnectedKey() == getConnectedKey())
+			return;
+		me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
+		if (other.height < settings.skybridgeMinFloors)
+			return;
+		boolean alongX = toward == BlockFace.EAST || toward == BlockFace.WEST;
+		long pairKey = ((long) pairX << 32) ^ (pairZ & 0xffffffffL) ^ (alongX ? 0x534B5942524447L : 0x4E535F4252444745L);
+		Odds pair = new Odds(generator.getWorldSeed() ^ pairKey);
+		Material deck = MaterialTags.pick(MaterialTags.FITTINGS_SKYBRIDGE, pair, null);
+		if (deck == null || !pair.playOdds(settings.oddsOfSkybridge))
+			return;
+
+		// the highest floor both towers have at one height, below either roof and above the second floor
+		int floorAt = -1;
+		for (int k = Math.min(height, other.height) - 1; k >= 2 && floorAt < 0; k--) {
+			int rise = otherFloorHeight * k;
+			if (rise % other.otherFloorHeight == 0 && rise / other.otherFloorHeight < other.height)
+				floorAt = generator.streetLevel + rise + 2;
+		}
+		if (floorAt < 0)
+			return;
+		int deckY = floorAt - 1;
+
+		// our wall at that floor, from the chunk edge inward; the deck runs from just outside it to the edge
+		int lo = 7, hi = 8; // the deck's two rows across
+		int edge = toward == BlockFace.EAST || toward == BlockFace.SOUTH ? 15 : 0;
+		int step = edge == 15 ? -1 : 1;
+		int wall = -1;
+		for (int i = edge; i != 8 - step && wall < 0; i += step)
+			if (!chunk.isEmpty(alongX ? i : lo, floorAt, alongX ? lo : i))
+				wall = i;
+		if (wall < 0)
+			return;
+
+		// the doorway, then the deck: the mod's side pieces, rails on the outside of each row
+		for (int j = lo; j <= hi; j++) {
+			int wx = alongX ? wall : j, wz = alongX ? j : wall;
+			chunk.setBlocks(wx, wx + 1, floorAt, floorAt + 2, wz, wz + 1, Material.AIR);
+			String side = alongX ? (j == lo ? "side_n" : "side_s") : (j == lo ? "side_w" : "side_e");
+			for (int i = wall + step; i != edge + step; i += step)
+				chunk.setBlockState(alongX ? i : j, deckY, alongX ? j : i, deck.withProperty("connection", side));
+		}
+	}
 }

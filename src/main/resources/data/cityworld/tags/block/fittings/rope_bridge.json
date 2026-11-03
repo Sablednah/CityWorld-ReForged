@@ -1,0 +1,37 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "mcwbridges:rope_oak_bridge",
+      "required": false
+    },
+    {
+      "id": "mcwbridges:rope_spruce_bridge",
+      "required": false
+    },
+    {
+      "id": "mcwbridges:rope_birch_bridge",
+      "required": false
+    },
+    {
+      "id": "mcwbridges:rope_jungle_bridge",
+      "required": false
+    },
+    {
+      "id": "mcwbridges:rope_acacia_bridge",
+      "required": false
+    },
+    {
+      "id": "mcwbridges:rope_dark_oak_bridge",
+      "required": false
+    },
+    {
+      "id": "mcwbridges:rope_mangrove_bridge",
+      "required": false
+    },
+    {
+      "id": "mcwbridges:rope_cherry_bridge",
+      "required": false
+    }
+  ]
+}
