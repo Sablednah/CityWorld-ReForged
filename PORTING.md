@@ -4696,7 +4696,7 @@ tree is cheap now and cheap later; guessing wrong about the mechanism is not.
 
 
 Deploying: `./deploy.sh` targets the `CityWork-ReForged` instance;
-`CITYWORLD_INSTANCE="/mnt/c/Users/darre/curseforge/minecraft/Instances/MobHealth - Forge" ./deploy.sh`
+`CITYWORLD_INSTANCE="/mnt/d/minecraft/Instances/MobHealth - Forge" ./deploy.sh`
 targets the second test instance (where LegendQuest/ZombieMod test reacting to city locations). Both
 fail with "Permission denied" if that instance's Minecraft is open — close it and rerun.
 

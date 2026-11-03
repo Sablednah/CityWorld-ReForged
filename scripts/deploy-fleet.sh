@@ -22,7 +22,7 @@
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-INSTANCES="${CITYWORLD_INSTANCES:-/mnt/c/Users/darre/curseforge/minecraft/Instances}"
+INSTANCES="${CITYWORLD_INSTANCES:-/mnt/d/minecraft/Instances}"
 WORKTREES="${CITYWORLD_WORKTREES:-$ROOT/../CityWorld-ReForged-worktrees}"
 
 WANT_VERSION=""; DO_BUILD=0; DRY=0; ONLY=""; STAMP_OVERRIDE=""

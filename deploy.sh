@@ -13,7 +13,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 # Target NeoForge instance (a NeoForge 1.21.11 CurseForge instance).
 # Override with CITYWORLD_INSTANCE=/path/to/instance ./deploy.sh
-INSTANCE="${CITYWORLD_INSTANCE:-/mnt/c/Users/darre/curseforge/minecraft/Instances/CityWork-ReForged}"
+INSTANCE="${CITYWORLD_INSTANCE:-/mnt/d/minecraft/Instances/CityWork-ReForged}"
 MODS="$INSTANCE/mods"
 
 # Family convention (Chronicler, Cast, CityWorld): an instance whose ROOT holds .sablecraft-no-deploy is

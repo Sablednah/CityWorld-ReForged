@@ -2,7 +2,7 @@
 """The promo stat: CityWorld saves across every CurseForge instance, and their generated chunks (region headers,
 every dimension). A save counts if its world settings name cityworld. 2026-10-07: 455 worlds, 7.6M chunks, 1,945 km2."""
 import os, gzip, struct, glob, sys
-base='/mnt/c/Users/darre/curseforge/minecraft/Instances'
+base='/mnt/d/minecraft/Instances'
 worlds=0; chunks=0; skipped=0; per={}
 def is_cityworld(save):
     for f in [os.path.join(save,'level.dat'), os.path.join(save,'data','minecraft','world_gen_settings.dat')]:

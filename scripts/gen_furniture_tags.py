@@ -52,7 +52,7 @@ STATIC_ONLY = "--static-only" in sys.argv
 if STATIC_ONLY:
     sys.argv.remove("--static-only")
 MODS = sys.argv[1] if len(sys.argv) > 1 else \
-    "/mnt/c/Users/darre/curseforge/minecraft/Instances/26.2/mods"
+    "/mnt/d/minecraft/Instances/26.2/mods"
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "main", "resources", "data",
                     "cityworld")
 OUT = os.path.join(ROOT, "tags", "block", "furniture")
