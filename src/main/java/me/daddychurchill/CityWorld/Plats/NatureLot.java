@@ -164,14 +164,19 @@ public class NatureLot extends IsolatedLot {
 	 * this chunk's middle row (or column) — or one up to {@code bridges.wildBridgeSpan} back along it — to the first
 	 * column at least a chunk on whose ground stands within {@code bridges.wildBridgeStep} of the crest, with the
 	 * valley between at least {@code bridges.wildBridgeDepth} below both ends and nothing between standing as high as
-	 * the deck. Read from the natural terrain alone ({@link CityWorldGenerator#getFarBlockY}), so every chunk the span
-	 * crosses finds the same bridge and draws its own blocks of it; one valley in {@code bridges.oddsOfWildBridge}
-	 * gets one, decided from the crest's own seed, which also picks the wood. The lower end is built up to the deck
-	 * with a bank of its own ground, and the headroom over the deck is cleared. Empty pool: nothing drawn.
+	 * the deck. Read from the PLAN alone — each column's ground as the lot planned there will draw it — so every
+	 * chunk the span crosses finds the same bridge and draws its own blocks of it; one valley in
+	 * {@code bridges.oddsOfWildBridge} gets one, decided from the crest's own seed, which also picks the wood. Every
+	 * chunk the span and its crest test touch must be plain wild land that draws this pass (a {@code NatureLot}
+	 * exactly, not reserved for a structure): anywhere else reads as a wall, so a bridge never runs into a city
+	 * or stops dead at a lot that would not draw its part. (The natural terrain is not the plan: a city levels its
+	 * nature lots, and a bridge read from {@code getFarBlockY} stood on flat ground at spawn.) The lower end is
+	 * built up to the deck with a bank of its own ground, and the headroom over the deck is cleared. Empty pool:
+	 * nothing drawn.
 	 */
 	private void drawRopeBridge(CityWorldGenerator generator, RealBlocks chunk) {
 		me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
-		if (!settings.includeWildBridges || structureReserved)
+		if (!settings.includeWildBridges || !takesRopeBridge(this))
 			return;
 		drawRopeBridges(generator, chunk, settings, true);
 		drawRopeBridges(generator, chunk, settings, false);
@@ -191,7 +196,7 @@ public class NatureLot extends IsolatedLot {
 		java.util.function.IntUnaryOperator y = i -> {
 			int k = i - first;
 			if (heights[k] == Integer.MIN_VALUE)
-				heights[k] = alongX ? generator.getFarBlockY(i, row) : generator.getFarBlockY(row, i);
+				heights[k] = alongX ? plannedGround(generator, i, row) : plannedGround(generator, row, i);
 			return heights[k];
 		};
 		for (int s = o - span; s <= o + 15; s++) {
@@ -211,10 +216,30 @@ public class NatureLot extends IsolatedLot {
 		}
 	}
 
+	/** Plain wild land, unreserved: the only lot that draws this pass and stands on its own planned ground. */
+	private static boolean takesRopeBridge(PlatLot lot) {
+		return lot != null && lot.getClass() == NatureLot.class && !lot.structureReserved;
+	}
+
+	/** A wall no deck clears: a column on any lot that does not take rope bridges. */
+	private static final int NO_BRIDGE = 10_000;
+
+	/** The ground the plan will draw in a column, or {@link #NO_BRIDGE} off wild land. */
+	private static int plannedGround(CityWorldGenerator generator, int blockX, int blockZ) {
+		int cx = blockX >> 4, cz = blockZ >> 4;
+		PlatLot lot;
+		try {
+			lot = generator.getPlatMap(cx, cz).getMapLot(cx, cz);
+		} catch (IndexOutOfBoundsException e) {
+			return NO_BRIDGE;
+		}
+		return takesRopeBridge(lot) ? ((NatureLot) lot).getBlockY(blockX & 15, blockZ & 15) : NO_BRIDGE;
+	}
+
 	/** A column at least as high as every column within reach of it, and above its eastern (southern) neighbour. */
 	private static boolean crest(java.util.function.IntUnaryOperator y, int s, int sea) {
 		int h = y.applyAsInt(s);
-		if (h <= sea || y.applyAsInt(s + 1) >= h)
+		if (h <= sea || h >= NO_BRIDGE || y.applyAsInt(s + 1) >= h)
 			return false;
 		for (int d = 1; d <= CREST_REACH; d++)
 			if (y.applyAsInt(s - d) > h || y.applyAsInt(s + d) > h)
