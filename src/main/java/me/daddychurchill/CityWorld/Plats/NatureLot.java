@@ -182,15 +182,22 @@ public class NatureLot extends IsolatedLot {
 		int a = alongX ? getBlockY(0, 7) : getBlockY(7, 0), b = alongX ? getBlockY(15, 7) : getBlockY(7, 15);
 		int deckY = Math.max(a, b) + 1;
 		net.minecraft.world.level.block.state.BlockState facing = rope.withFacing(alongX ? BlockFace.EAST : BlockFace.SOUTH);
+		// the mod names a piece by where its rails are (middle_ns = rails north and south = walking east-west) and an
+		// end by the way the bridge continues from it (middle_end_e = the west end), read from its models
+		String middle = alongX ? "middle_ns" : "middle_ew";
 		for (int i = 0; i < 16; i++) {
 			int x = alongX ? i : 7, z = alongX ? 7 : i;
-			if (i == 0 || i == 15) { // the lower end's abutment: its own ground, up to the deck
+			if (i == 0 || i == 15) { // the lower end's abutment: a bank of its own ground, three wide and two long
 				int ground = i == 0 ? a : b;
-				if (ground < deckY - 1)
-					chunk.setBlocks(x, ground + 1, deckY, z, chunk.getActualBlock(x, ground, z).getType());
+				if (ground < deckY - 1) {
+					Material bank = chunk.getActualBlock(x, ground, z).getType();
+					int near = i == 0 ? 0 : 14;
+					chunk.setBlocks(alongX ? near : 6, alongX ? near + 2 : 9, ground + 1, deckY, alongX ? 6 : near,
+							alongX ? 9 : near + 2, bank);
+				}
 			}
-			String piece = i == 0 ? (alongX ? "middle_end_w" : "middle_end_n")
-					: i == 15 ? (alongX ? "middle_end_e" : "middle_end_s") : (alongX ? "middle_ew" : "middle_ns");
+			String piece = i == 0 ? (alongX ? "middle_end_e" : "middle_end_s")
+					: i == 15 ? (alongX ? "middle_end_w" : "middle_end_n") : middle;
 			chunk.setBlockState(x, deckY, z, Material.withProperty(facing, "connection", piece));
 			chunk.setBlocks(x, deckY + 1, deckY + 3, z, Material.AIR);
 		}
