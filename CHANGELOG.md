@@ -27,7 +27,7 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   valley at least eight deep to the far side, up to 48 blocks long through as many chunks as it takes, the lower
   end built up with a bank of its own ground (`#cityworld:fittings/rope_bridge`, one per wood). New settings
   group `bridges`: `skybridges`, `oddsOfSkybridge` (1 in 3), `skybridgeMinFloors` (6), `wildBridges`,
-  `wildBridgeDepth` (8), `wildBridgeStep` (3), `wildBridgeSpan` (48), `oddsOfWildBridge` (1 in 2); Customize
+  `wildBridgeDepth` (8), `wildBridgeStep` (3), `wildBridgeSpan` (48), `oddsOfWildBridge` (1 in 3); Customize
   toggles "Skybridges" and "Wild rope bridges". Nothing is drawn without a bridge mod.
 - `Material.withProperty(name, value)` sets a mod block's own state by name (a bridge's `connection`, a kerb's
   `shape`); pool pieces with such states are placed through `setBlockState`.

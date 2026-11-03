@@ -380,7 +380,7 @@ Every pool here is empty unless a bridge mod fills it (`#cityworld:fittings/skyb
 | `wildBridgeDepth` | `8` | How far the valley floor must lie below both ends for a rope bridge to be worth building. |
 | `wildBridgeStep` | `3` | How much higher one end may be than the other (the lower end is built up to the deck). |
 | `wildBridgeSpan` | `48` | The longest bridge, in blocks; a valley wider than this gets none. The shortest is a chunk. |
-| `oddsOfWildBridge` | `0.5` | The share of valleys that qualify which get a bridge (1 in 2). CityWorld's land is gently shaped, so a bridge is a find, not a fixture: a few per hill range. |
+| `oddsOfWildBridge` | `0.33` | The share of valleys that qualify which get a bridge (1 in 3). A bridge is a find, not a fixture: at 1 in 2 a 400-block square of hills had four, so the default aims at one to three. |
 
 ### `cities` — cities in a vanilla world, and rivers
 
