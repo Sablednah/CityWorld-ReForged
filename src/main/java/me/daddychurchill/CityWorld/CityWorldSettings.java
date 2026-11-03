@@ -202,7 +202,7 @@ public class CityWorldSettings {
     /** A bridge mod's bridges — see {@code CityWorldSettingsData.Bridges}; the pools are empty without one. */
     public boolean includeSkybridges = true, includeWildBridges = true;
     public double oddsOfSkybridge = Odds.oddsSomewhatLikely;
-    public int skybridgeMinFloors = 6, wildBridgeDepth = 6;
+    public int skybridgeMinFloors = 6, wildBridgeDepth = 4, wildBridgeStep = 3;
     public boolean spawnersInSubways = true;
 
     /** Who turns up, and how often. {@code SpawnProvider} branches on all of these. */
@@ -622,6 +622,7 @@ public class CityWorldSettings {
         skybridgeMinFloors = data.bridges().skybridgeMinFloors();
         includeWildBridges = data.bridges().wildBridges();
         wildBridgeDepth = data.bridges().wildBridgeDepth();
+        wildBridgeStep = data.bridges().wildBridgeStep();
         CityWorldSettingsData.Decay dk = data.decay();
         buildingDecayIntensity = dk.buildingIntensity();
         roadDecayIntensity = dk.roadIntensity();
@@ -752,7 +753,7 @@ public class CityWorldSettings {
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);
         CityWorldSettingsData.Bridges bridges = new CityWorldSettingsData.Bridges(includeSkybridges, oddsOfSkybridge,
-                skybridgeMinFloors, includeWildBridges, wildBridgeDepth);
+                skybridgeMinFloors, includeWildBridges, wildBridgeDepth, wildBridgeStep);
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
                 overgrowth, shops, decay, caves, subways, structures, cities, bridges);
     }
