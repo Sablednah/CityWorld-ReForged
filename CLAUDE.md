@@ -88,6 +88,9 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   block (a flush wall takes the first piece in its doorway); one rope across a street per platmap at most
   (Apocalypse). Probed on 26.2: 11 city signs all on the right, pairs at limit lines; wild spans land on ground
   both ends. **`scripts/probe.sh` runs in the checkout it lives in: call the worktree's own copy.**
+  **Owner signed the batch off (2026-11-04 afternoon):** "skybridges join nicely. wild bridges are rare - and
+  dont need banks - working well - paths cover if thin or block properly - road all a-ok. i think that batch is
+  done." (after the doorway fix: cut through to the room, deck every doorway cell). Next: the 6.13.0 release.
 - **Instances moved (2026-11-03): `/mnt/d/minecraft/Instances`** (Windows `D:\minecraft`). `deploy.sh`,
   `scripts/deploy-fleet.sh`, `count_worlds.py`, `gen_furniture_tags.py` re-pointed (`0211132d`); the old C: path
   holds only stale non-CityWorld packs. WSL ran out of memory at 02:56 and 2026-11-03 ~09:30: one JVM at a time
