@@ -2985,13 +2985,16 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		String ropeEnd = toward == BlockFace.EAST ? "middle_end_e" : toward == BlockFace.WEST ? "middle_end_w"
 				: toward == BlockFace.SOUTH ? "middle_end_s" : "middle_end_n";
 		String ropeMiddle = alongX ? "middle_ns" : "middle_ew";
+		// a wall standing on the chunk edge leaves no cell outside it here: the deck's first piece then goes in the
+		// doorway itself, so a rope bridge still starts with its end piece (a street rope began mid-air otherwise)
+		int start = wall == edge ? wall : wall - step;
 		for (int j = lo; j <= hi; j++) {
 			int wx = alongX ? wall : j, wz = alongX ? j : wall;
 			chunk.setBlocks(wx, wx + 1, floorAt, floorAt + 3, wz, wz + 1, Material.AIR);
 			String side = alongX ? (j == lo ? "side_n" : "side_s") : (j == lo ? "side_w" : "side_e");
-			for (int i = wall - step; i != edge - step; i -= step) { // outward: from just past the wall to the edge
+			for (int i = start; i != edge - step; i -= step) { // outward: from the first cell to the edge
 				int x = alongX ? i : j, z = alongX ? j : i;
-				String piece = !ropes ? side : i == wall - step ? ropeEnd : ropeMiddle;
+				String piece = !ropes ? side : i == start ? ropeEnd : ropeMiddle;
 				chunk.setBlockState(x, floorAt, z, ropes ? Material.withProperty(facing, "connection", piece)
 						: deck.withProperty("connection", piece));
 				chunk.setBlocks(x, x + 1, floorAt + 1, floorAt + 3, z, z + 1, Material.AIR);
