@@ -186,6 +186,13 @@ no NeoForge range), so no production bed is needed. `scripts/probe.sh "-Dcitywor
   by seed and takes the first span on the first line with one, memoised per region and world (the search reads
   `getFarBlockY`, identical from any chunk; the plan check stays per chunk). And **`scripts/probe.sh` probes the
   checkout it lives in**: run the worktree's own copy, or it runs master's server (no Macaw's) for eight minutes.
+  Measured after (26.2, seed 8675309): the region search found a span in every region that rolled one (2 of 7 near
+  spawn); a span crossing a city chunk is now skipped for the region's next candidate instead of leaving it bare.
+  City probe (441 chunks): 11 signs — 4 STOP, 6 limits as back-to-back 30/50 pairs, 1 DEAD END — every one on the
+  traffic's right, every rod on a full block (`scratchpad/tools/sign_list.py`). Apocalypse probe: two solid
+  skybridges, one wild span (49 long, both ends on ground); with `oddsOfStreetRope` forced to 1 a street rope 182
+  up began with a middle piece where the north tower was flush with its chunk edge — the first piece now goes in
+  the doorway cell, and the re-probe shows end pieces at both ends.
 
 ZARP is adding Macaw's Bridges 3.1.2 and Macaw's Paths and Pavings 1.1.1 (26.2). Today only `#cityworld:build/plaza`
 takes paving (and only for reserved squares — a datapack may extend that tag freely). Proposed, in the fittings
