@@ -13,6 +13,15 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+**New in 6.13.0: Macaw's paths, roads and bridges.** With **Macaw's Roads and Streets**, every city street is
+asphalt with a dashed centre line, zebra crossings at junctions, kerbs, manholes and road signs: STOP at a T, DEAD
+END, speed limits in pairs where town (50) meets country (30), and the town's name where a road leaves for the wild.
+The signs stand on the side traffic drives on, and a setting picks the UK or the US. **Macaw's Paths and Pavings**
+paves the parks (one paving per district, laid like a carpet or set in as a block, as the piece needs) and the country
+tracks. **Macaw's Bridges** strings a rare rope bridge across a mountain valley, about one per range, landing on the
+far hillside; and in a ruined city, survivors' bridges join the upper floors of neighbouring towers, solid decks or
+rope, now and then across a street. Without the mods, everything looks as it did.
+
 **New in 6.12.0: a lighter server.** A pass over everything that could stall the server thread, prompted by a
 55-second freeze in a modpack whose quest mod asked CityWorld about hundreds of chunks at once: asking "what is
 planned here" no longer plans the whole subway neighbourhood, mods get non-blocking ways to ask (`lotAtIfPlanned`,
@@ -29,14 +38,10 @@ slivers, rivers through a snowy mod biome freeze, and a new switch — "Structur
 `#cityworld:wilderness_only` set by set — keeps a mod's structures out of the streets (Arboria's lakes ship tagged:
 each one used to cut a city in two).
 
-**New in 6.10.0: loot that fits the world, and cash machines.** A Modern office drawer now holds paper, books and a
-clock; a ruin's holds scrap, string and spoiled food; and about one container in thirteen holds something worth
-having (a setting, "Finds in drawers"). With Modernlife installed, its ATMs stand in city halls, shops and malls, and
-on 1.20.1 its bank gets a paved town square at spawn instead of landing on a shop. The wiki's new Loot Tables page
-shows how to add your own items to any of it.
-
 **Other recent changes**
 
+- **6.10.0** — loot that fits the world: a Modern drawer holds paper and a clock, a ruin's scrap and spoiled food,
+  one container in thirteen something worth having; with Modernlife, ATMs in city halls, shops and malls.
 - **6.9.0** — the same seed builds the same city: each part of a chunk's decoration rolls on its own numbers from
   the seed, so a seed you share is the city your friends get.
 - **6.8.0** — animals in the wild: CityWorld's own land gets vanilla's herds as it is made, by biome, and a switch
@@ -203,6 +208,10 @@ every BoP wood) and the city is built with them:
 - **Lights** — lamp posts on the streets, garden lights at park gates, tiki torches at campgrounds, and
   wall lanterns, sconces, chandeliers and ceiling lights indoors.
 
+**Roads, paths and bridges.** **Macaw's Roads and Streets** surfaces every street (centre lines, zebra crossings,
+kerbs, manholes, signs on the driving side), **Macaw's Paths and Pavings** paves parks and farm tracks, and **Macaw's
+Bridges** builds rope bridges over mountain valleys and, in a ruined city, bridges between the towers.
+
 Mod authors: adding your own furniture takes two data files in your jar — see `PALETTES.md` in the repo.
 
 ## World styles
@@ -324,6 +333,7 @@ with none installed nothing changes.
 | **JourneyMap** | Draws the city plan over unexplored ground, names streets and landmarks. |
 | **Macaw's Furniture**, **MrCrayfish's Refurbished Furniture**, **Fantasy's Furniture** (all sets, Decorations) | Furnishes every interior with their pieces. |
 | **Macaw's Doors, Windows, Fences and Walls, Roofs, Stairs, Trapdoors, Lights** (and the BoP add-on) | Builds the city's doors, windows, roofs, fences, stairs and lighting from them. |
+| **Macaw's Roads and Streets, Paths and Pavings, Bridges** | Street surfaces, markings and road signs; park and farm paths; rope bridges in the wild and between ruined towers. |
 | **Biomes O' Plenty** / **TerraBlender** | Its biomes generate in the overworld, the ruined Nether and the End, with their own ground blocks. |
 | **Alex's Caves** (1.20.1) | Five of its cave biomes join the underground, in its own rock, with its cave structures. |
 | **Pam's HarvestCraft 2** (Crops, Trees) | Its crops grow in the fields and its fruit trees in the orchards, by climate. |
