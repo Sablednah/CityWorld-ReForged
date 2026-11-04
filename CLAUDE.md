@@ -79,6 +79,15 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   (decided by collision shape: plate on the ground, block in it), one paving per platmap like the fence; a wild
   span reads the PLAN of each chunk it crosses (not `getFarBlockY`, which a city's levelling makes wrong) and every
   crossed chunk must be a plain `NatureLot`; skybridges are drawn after the ruin's decay (before, decay ate all).
+  **The late look (22:36–22:52) and what it changed** (PORTING.md item 9): settings group `bridges` → **`roads`**
+  (`driveOnLeft` + Customize "Drive on", `speedLimitUrban` 50 / `speedLimitRural` 30, `oddsOfSpeedRepeat`,
+  `oddsOfStreetRope`, `wildBridgeRegion` 32; `wildBridgeStep` gone); signs via `RoadLot.signFor` on the driver's
+  side facing their traffic, limit changes as back-to-back pairs, repeats in the slower zone, a post on a slab
+  replaces it; wild bridges at most ONE per 32-chunk region (first span the plan agrees with, memoised per region),
+  deck one above the crest running until the far ground meets it, no bank; skybridge halves run until they meet a
+  block (a flush wall takes the first piece in its doorway); one rope across a street per platmap at most
+  (Apocalypse). Probed on 26.2: 11 city signs all on the right, pairs at limit lines; wild spans land on ground
+  both ends. **`scripts/probe.sh` runs in the checkout it lives in: call the worktree's own copy.**
 - **Instances moved (2026-11-03): `/mnt/d/minecraft/Instances`** (Windows `D:\minecraft`). `deploy.sh`,
   `scripts/deploy-fleet.sh`, `count_worlds.py`, `gen_furniture_tags.py` re-pointed (`0211132d`); the old C: path
   holds only stale non-CityWorld packs. WSL ran out of memory at 02:56 and 2026-11-03 ~09:30: one JVM at a time
