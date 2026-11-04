@@ -2985,16 +2985,23 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		String ropeEnd = toward == BlockFace.EAST ? "middle_end_e" : toward == BlockFace.WEST ? "middle_end_w"
 				: toward == BlockFace.SOUTH ? "middle_end_s" : "middle_end_n";
 		String ropeMiddle = alongX ? "middle_ns" : "middle_ew";
-		// a wall standing on the chunk edge leaves no cell outside it here: the deck's first piece then goes in the
-		// doorway itself, so a rope bridge still starts with its end piece (a street rope began mid-air otherwise)
-		int start = wall == edge ? wall : wall - step;
+		// the doorway goes on through every solid cell behind the first — a shutter or sill hung outside the wall, then
+		// the wall itself — up to three deep, to the room. Each doorway cell gets a deck piece too: the first block
+		// met is often outside the floor's edge, so clearing it alone left a hole down beside the deck (owner,
+		// 2026-11-04: "clearing out at the end of the bridge but not checking under it"), and the real wall stood
+		// on in the way
+		int inner = wall;
+		while (inner + step >= 0 && inner + step <= 15 && Math.abs(inner + step - wall) < 3) {
+			int x = alongX ? inner + step : lo, z = alongX ? lo : inner + step;
+			if (chunk.isEmpty(x, floorAt, z) && chunk.isEmpty(x, floorAt + 1, z))
+				break;
+			inner += step;
+		}
 		for (int j = lo; j <= hi; j++) {
-			int wx = alongX ? wall : j, wz = alongX ? j : wall;
-			chunk.setBlocks(wx, wx + 1, floorAt, floorAt + 3, wz, wz + 1, Material.AIR);
 			String side = alongX ? (j == lo ? "side_n" : "side_s") : (j == lo ? "side_w" : "side_e");
-			for (int i = start; i != edge - step; i -= step) { // outward: from the first cell to the edge
+			for (int i = inner; i != edge - step; i -= step) { // outward: from the doorway's inner cell to the edge
 				int x = alongX ? i : j, z = alongX ? j : i;
-				String piece = !ropes ? side : i == start ? ropeEnd : ropeMiddle;
+				String piece = !ropes ? side : i == inner ? ropeEnd : ropeMiddle;
 				chunk.setBlockState(x, floorAt, z, ropes ? Material.withProperty(facing, "connection", piece)
 						: deck.withProperty("connection", piece));
 				chunk.setBlocks(x, x + 1, floorAt + 1, floorAt + 3, z, z + 1, Material.AIR);
