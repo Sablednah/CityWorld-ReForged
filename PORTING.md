@@ -193,6 +193,14 @@ no NeoForge range), so no production bed is needed. `scripts/probe.sh "-Dcitywor
   skybridges, one wild span (49 long, both ends on ground); with `oddsOfStreetRope` forced to 1 a street rope 182
   up began with a middle piece where the north tower was flush with its chunk edge — the first piece now goes in
   the doorway cell, and the re-probe shows end pieces at both ends.
+  (10) **The owner's look, 2026-11-04 (five screenshots): a hole beside every solid skybridge where it met its
+  building.** Read from his save (`New World (28)`, seed 8285781734467126163, Apocalypse): the first block the deck
+  met at the floor was a Macaw's Windows shutter hung OUTSIDE the wall; the doorway was cut there — a cell with no
+  floor under it — and the real wall (tuff at walk level, a window strip above) stood on a cell further in. The
+  doorway now runs through every solid cell behind the first, up to three deep, and every doorway cell gets a deck
+  piece. A probe of his seed at the same chunk (the dev 26.2 mods include Macaw's Windows, so the building is
+  identical) shows the deck running through both doorway cells to the room's floor. **To reproduce an owner's
+  building, read the seed from `data/minecraft/world_gen_settings.dat` (26.x keeps it there, not in level.dat).**
 
 ZARP is adding Macaw's Bridges 3.1.2 and Macaw's Paths and Pavings 1.1.1 (26.2). Today only `#cityworld:build/plaza`
 takes paving (and only for reserved squares — a datapack may extend that tag freely). Proposed, in the fittings
