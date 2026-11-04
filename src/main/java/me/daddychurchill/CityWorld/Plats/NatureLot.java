@@ -167,10 +167,11 @@ public class NatureLot extends IsolatedLot {
 	 * deck one block above it, across a valley at least {@code roads.wildBridgeDepth} below, to the first column where
 	 * the ground comes back up to the deck, so it lands on the far side and never needs a support (the owner: "if it
 	 * had carried on two more blocks it would have reached the mountain"). At least a chunk and at most
-	 * {@code roads.wildBridgeSpan} long, wholly inside the region. The search reads the natural terrain, the same from
-	 * any chunk, once per region (memo); each chunk on the span then checks it against the PLAN it will draw (a city
-	 * levels its nature lots) — every column of it and its crest test on plain wild land (a {@code NatureLot}
-	 * exactly, unreserved) with the same heights — and draws its own part. Empty pool: nothing drawn.
+	 * {@code roads.wildBridgeSpan} long, wholly inside the region. The search finds candidates in the natural terrain
+	 * and keeps the first the PLAN agrees with (a city levels its nature lots): every column of it and its crest test
+	 * on plain wild land (a {@code NatureLot} exactly, unreserved) with the same heights. It runs once per region
+	 * (memo) and gives the same answer from any chunk, since the plan is a pure function of the seed; each chunk on
+	 * the span checks it once more and draws its own part. Empty pool: nothing drawn.
 	 */
 	private void drawRopeBridge(CityWorldGenerator generator, RealBlocks chunk) {
 		me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
@@ -259,10 +260,14 @@ public class NatureLot extends IsolatedLot {
 				natural[k] = alongX ? generator.getFarBlockY(i, row) : generator.getFarBlockY(row, i);
 			return natural[k];
 		};
+		java.util.function.IntUnaryOperator plan = i -> alongX ? plannedGround(generator, i, row) : plannedGround(generator, row, i);
 		for (int c = first; c <= last - LEAST_SPAN; c++)
 			if (crest(nat, c, generator.seaLevel)) {
 				int far = spanEnd(nat, c, settings.wildBridgeDepth, settings.wildBridgeSpan);
-				if (far != NO_SPAN && far <= last)
+				// the natural terrain finds it cheaply; the plan (only the platmaps under it) must agree, or a city
+				// levelled the ground there and the next candidate is tried
+				if (far != NO_SPAN && far <= last && crest(plan, c, generator.seaLevel)
+						&& spanEnd(plan, c, settings.wildBridgeDepth, settings.wildBridgeSpan) == far)
 					return new int[] { c, far };
 			}
 		return null;

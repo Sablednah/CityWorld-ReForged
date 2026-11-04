@@ -163,6 +163,29 @@ no NeoForge range), so no production bed is needed. `scripts/probe.sh "-Dcitywor
   held the port and the next three probes failed to bind; `probe.sh` now stops a leftover server by its cwd).
   Found by a 30-line random-terrain harness of the scan (`scratchpad/harness/Span.java`), not by the probes,
   which mostly sweep positive chunks. Use `Integer.MIN_VALUE` (`NO_SPAN`) for "none" in any coordinate search.
+  (9) **The owner's late look (22:36–22:52), six screenshots, and what each changed.** Two signs faced each other
+  and the north-south STOP/DEAD END/board sat on the wrong side: every sign now goes through one helper
+  (`RoadLot.signFor`: the traffic's direction of travel, entering or leaving the chunk, the driver's side by the
+  new `roads.driveOnLeft`, facing against the traffic — an unrotated Macaw's sign shows its picture to the north).
+  Posts on a slab floated half a block: the rod now replaces a not-sturdy top. "Entering a 30 means the other way
+  is entering a 50": limits are signed as a pair back to back at a platmap line where they differ (drawn by the
+  east/south chunk only), and at a town's edge the board, then a chunk in the limit and its end face; repeats only
+  in the slower zone ("ok in the lower speed zones"). "Seven bridges in one screenshot — one, maybe two in that
+  whole range": at most one wild bridge per region of `wildBridgeRegion` 32 chunks, odds 1/2. "If it had carried
+  on two more blocks it would have reached the mountain" (twice) and "supports should match biome surface" (a
+  grass-and-dirt bank in a badlands): the bank is GONE — the deck is one above the crest and runs to where the far
+  ground comes back up to it (≤ 2 above: a one-step notch), so nothing needs a support. Skybridge halves stopped
+  short when no three-high wall stood where they looked, leaving the other half in mid-air: each half now runs in
+  from the chunk edge until it meets any block at the floor. "Rarely a rope crossing a street, one per region
+  max": `FinishedBuildingLot.streetRope`, one per platmap at most (`oddsOfStreetRope` 1/3), between two towers of
+  different buildings across a road chunk, Apocalypse (with skybridges). The settings group `bridges` became
+  `roads` (unreleased, so no migration). **The first region rule picked ONE line per region and drew nothing in
+  1,681 chunks**: replaying the region dice in Python (`scratchpad/tools/jrandom.py`, `region_dice.py` — a
+  java.util.Random replica) showed both picked lines crossed no valley, while an offline scan of the saved
+  heightmaps (`scratchpad/tools/span_scan.py`) found a span on 38 of 82 lines. A region now orders all its lines
+  by seed and takes the first span on the first line with one, memoised per region and world (the search reads
+  `getFarBlockY`, identical from any chunk; the plan check stays per chunk). And **`scripts/probe.sh` probes the
+  checkout it lives in**: run the worktree's own copy, or it runs master's server (no Macaw's) for eight minutes.
 
 ZARP is adding Macaw's Bridges 3.1.2 and Macaw's Paths and Pavings 1.1.1 (26.2). Today only `#cityworld:build/plaza`
 takes paving (and only for reserved squares — a datapack may extend that tag freely). Proposed, in the fittings
