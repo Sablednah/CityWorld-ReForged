@@ -255,7 +255,7 @@ public final class Clipboard {
                     net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo info,
                     StructurePlaceSettings settings,
                     net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate template) {
-                var swapped = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.substitute(info.state(), realm, lightsOn);
+                var swapped = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.substitute(info.state(), info.pos(), realm, lightsOn);
                 if (swapped == info.state())
                     return info;
                 return new net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo(
