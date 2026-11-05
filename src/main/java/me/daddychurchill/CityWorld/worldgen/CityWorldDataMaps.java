@@ -248,15 +248,74 @@ public final class CityWorldDataMaps {
      * colours onto woods, stones, deepslate and terracotta. The replacement keeps every property the two blocks share
      * (a stair stays a stair facing the same way). {@code realms} limits an entry to some of overworld, nether and end
      * (all three when absent), so a pack can take netherrack out of overworld walls without touching the ruined
-     * Nether's ground. Applied at the two block seams ({@code InitialBlocks}, {@code compat.Block}); schematics and
-     * vanilla's own features are not CityWorld's to rewrite.
+     * Nether's ground. Applied at the two block seams ({@code InitialBlocks}, {@code compat.Block}) and to schematics
+     * (a placement processor in {@code Clipboard}); vanilla's own features are not CityWorld's to rewrite.
+     *
+     * <p><b>A weighted mix</b> (6.14, a player's ask on GitHub issue #5): {@code with} may be a list of
+     * {@code {"block": id, "weight": n}}, and each placed block takes one of them, picked by its world position — so
+     * the same seed always builds the same mix, and a wall reads as a speckled blend rather than one swap. Three
+     * shapes are accepted, so the shorthand a player reaches for first works too:
+     * <pre>
+     *   "minecraft:stone_bricks": { "with": "chipped:etched_stone_bricks", "realms": ["overworld"] }
+     *   "minecraft:stone_bricks": "chipped:etched_stone_bricks"
+     *   "minecraft:yellow_concrete": [ { "block": "minecraft:yellow_concrete", "weight": 50 },
+     *                                  { "block": "chipped:smooth_yellow_concrete", "weight": 30 } ]
+     * </pre>
+     * {@code with} in the object form takes either a block id or such a list. A weight defaults to 1.
      */
-    public record Substitute(Block with, List<String> realms) {
+    public record Substitute(List<Weighted> with, List<String> realms) {
 
-        public static final Codec<Substitute> CODEC = RecordCodecBuilder.create(i -> i.group(
-                BuiltInRegistries.BLOCK.byNameCodec().fieldOf("with").forGetter(Substitute::with),
+        /** One choice in a weighted substitute. */
+        public record Weighted(Block block, int weight) {
+            public static final Codec<Weighted> CODEC = RecordCodecBuilder.create(i -> i.group(
+                    BuiltInRegistries.BLOCK.byNameCodec().fieldOf("block").forGetter(Weighted::block),
+                    Codec.intRange(1, 1_000_000).optionalFieldOf("weight", 1).forGetter(Weighted::weight)
+            ).apply(i, Weighted::new));
+        }
+
+        /** A block id, or a non-empty weighted list. */
+        private static final Codec<List<Weighted>> CHOICES = Codec.either(BuiltInRegistries.BLOCK.byNameCodec(),
+                        Weighted.CODEC.listOf().validate(l -> l.isEmpty()
+                                ? com.mojang.serialization.DataResult.error(() -> "an empty substitute list")
+                                : com.mojang.serialization.DataResult.success(l)))
+                .xmap(e -> e.map(b -> List.of(new Weighted(b, 1)), l -> l),
+                        l -> l.size() == 1 && l.get(0).weight() == 1
+                                ? com.mojang.datafixers.util.Either.left(l.get(0).block())
+                                : com.mojang.datafixers.util.Either.right(l));
+
+        private static final Codec<Substitute> FULL = RecordCodecBuilder.create(i -> i.group(
+                CHOICES.fieldOf("with").forGetter(Substitute::with),
                 Codec.STRING.listOf().optionalFieldOf("realms", List.of()).forGetter(Substitute::realms)
         ).apply(i, Substitute::new));
+
+        /** The object form, or the bare shorthand (a block id or a weighted list) for every realm. */
+        public static final Codec<Substitute> CODEC = Codec.either(FULL, CHOICES)
+                .xmap(e -> e.map(f -> f, l -> new Substitute(l, List.of())),
+                        com.mojang.datafixers.util.Either::left);
+
+        /** The replacement for a block at {@code pos} (null: the first choice). */
+        public Block pick(net.minecraft.core.BlockPos pos) {
+            if (with.size() == 1 || pos == null)
+                return with.get(0).block();
+            int total = 0;
+            for (Weighted w : with)
+                total += w.weight();
+            int roll = Math.floorMod(mix(pos.getX(), pos.getY(), pos.getZ()), total);
+            for (Weighted w : with) {
+                roll -= w.weight();
+                if (roll < 0)
+                    return w.block();
+            }
+            return with.get(with.size() - 1).block();
+        }
+
+        /** A well-spread hash of a position (SplitMix64's finaliser over the packed coordinates). */
+        private static int mix(int x, int y, int z) {
+            long h = x * 0x9E3779B97F4A7C15L ^ y * 0xC2B2AE3D27D4EB4FL ^ z * 0x165667B19E3779F9L;
+            h = (h ^ (h >>> 30)) * 0xBF58476D1CE4E5B9L;
+            h = (h ^ (h >>> 27)) * 0x94D049BB133111EBL;
+            return (int) (h ^ (h >>> 31));
+        }
 
         public boolean appliesIn(me.daddychurchill.CityWorld.compat.Environment realm) {
             if (realms.isEmpty())
@@ -360,23 +419,20 @@ public final class CityWorldDataMaps {
         return true;
     }
 
-    /** {@code state} as this world draws it in {@code realm}: the pack's substitute, or itself. */
+    /**
+     * {@code state} as this world draws it at {@code pos} in {@code realm}: the pack's substitute (a weighted one picked
+     * by {@code pos}), or itself — with every light put out first when {@code lightsOn} is false ({@link #unlit}).
+     */
     public static net.minecraft.world.level.block.state.BlockState substitute(
-            net.minecraft.world.level.block.state.BlockState state, me.daddychurchill.CityWorld.compat.Environment realm) {
-        return substitute(state, realm, true);
-    }
-
-    /** As {@link #substitute(net.minecraft.world.level.block.state.BlockState, me.daddychurchill.CityWorld.compat.Environment)},
-     *  with every light put out first when {@code lightsOn} is false ({@link #unlit}). */
-    public static net.minecraft.world.level.block.state.BlockState substitute(
-            net.minecraft.world.level.block.state.BlockState state, me.daddychurchill.CityWorld.compat.Environment realm,
-            boolean lightsOn) {
+            net.minecraft.world.level.block.state.BlockState state, net.minecraft.core.BlockPos pos,
+            me.daddychurchill.CityWorld.compat.Environment realm, boolean lightsOn) {
         if (!lightsOn)
             state = unlit(state);
         Substitute swap = state.getBlock().builtInRegistryHolder().getData(SUBSTITUTE);
         if (swap == null || !swap.appliesIn(realm))
             return state;
-        return swap.with().withPropertiesOf(state);
+        Block with = swap.pick(pos);
+        return with == state.getBlock() ? state : with.withPropertiesOf(state);
     }
 
     public static void register(RegisterDataMapTypesEvent event) {

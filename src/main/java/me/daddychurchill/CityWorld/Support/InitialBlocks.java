@@ -54,9 +54,9 @@ public final class InitialBlocks extends AbstractBlocks {
     }
 
     private void put(int x, int y, int z, BlockState state) {
-        state = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.substitute(state, realm,
-                lightsOn || me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.hasOwnPower());
         BlockPos pos = at(x, y, z);
+        state = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.substitute(state, pos, realm,
+                lightsOn || me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.hasOwnPower());
         ChunkProbe.watch(pos, state);
         chunkData.setBlockState(pos, state);
     }

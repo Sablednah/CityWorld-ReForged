@@ -195,6 +195,7 @@ public final class CityWorldSelfTest {
             checkBuildStamp();
             checkPermissionNodes();
             checkSettingsExport(server);
+            checkWeightedSubstitutes();
             checkBiomeGroundTags(server);
             checkPlanning();
             checkPristineTwin();
@@ -626,6 +627,67 @@ public final class CityWorldSelfTest {
         for (String entry : List.of("modern", "apocalypse", "default"))
             if (!java.nio.file.Files.exists(example.resolve(entry + ".json")))
                 fail("the settings example has no " + entry + ".json (" + example + ")");
+    }
+
+    /**
+     * The three shapes a {@code cityworld:substitute} value may take (6.14, GitHub issue #5): the object form, a bare
+     * block id, and a bare weighted list — the last exactly as the player wrote it. A weighted pick must follow the
+     * weights, be the same for the same position, and vary from block to block.
+     */
+    private void checkWeightedSubstitutes() {
+        var codec = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.Substitute.CODEC;
+        java.util.function.Function<String, me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.Substitute> parse =
+                text -> codec.parse(com.mojang.serialization.JsonOps.INSTANCE,
+                        com.google.gson.JsonParser.parseString(text)).result().orElse(null);
+        var object = parse.apply("{\"with\": \"minecraft:gold_block\", \"realms\": [\"overworld\"]}");
+        var bare = parse.apply("\"minecraft:gold_block\"");
+        var list = parse.apply("[{\"block\": \"minecraft:yellow_concrete\", \"weight\": 50},"
+                + " {\"block\": \"minecraft:yellow_terracotta\", \"weight\": 30},"
+                + " {\"block\": \"minecraft:yellow_wool\", \"weight\": 20}]");
+        var objectList = parse.apply("{\"with\": [{\"block\": \"minecraft:stone\"},"
+                + " {\"block\": \"minecraft:andesite\", \"weight\": 3}]}");
+        var empty = parse.apply("[]");
+        if (object == null || object.with().size() != 1 || !object.realms().equals(List.of("overworld")))
+            fail("substitute: the object form did not decode");
+        if (bare == null || bare.with().size() != 1 || !bare.realms().isEmpty())
+            fail("substitute: a bare block id did not decode");
+        if (list == null || list.with().size() != 3)
+            fail("substitute: a bare weighted list did not decode");
+        if (objectList == null || objectList.with().size() != 2 || objectList.with().get(0).weight() != 1)
+            fail("substitute: a weighted list under 'with' did not decode (or a weight did not default to 1)");
+        if (empty != null)
+            fail("substitute: an empty list was accepted");
+        if (list == null)
+            return;
+
+        java.util.Map<net.minecraft.world.level.block.Block, Integer> counts = new java.util.HashMap<>();
+        int n = 0, differs = 0;
+        net.minecraft.world.level.block.Block previous = null;
+        for (int x = -50; x < 50; x++)
+            for (int y = 60; y < 70; y++)
+                for (int z = 0; z < 10; z++) {
+                    var pos = new net.minecraft.core.BlockPos(x * 7, y, z * 13);
+                    var picked = list.pick(pos);
+                    if (picked != list.pick(new net.minecraft.core.BlockPos(x * 7, y, z * 13)))
+                        fail("substitute: the same position picked two different blocks");
+                    counts.merge(picked, 1, Integer::sum);
+                    if (previous != null && picked != previous)
+                        differs++;
+                    previous = picked;
+                    n++;
+                }
+        int[] want = { 50, 30, 20 };
+        StringBuilder shares = new StringBuilder();
+        for (int i = 0; i < 3; i++) {
+            var block = list.with().get(i).block();
+            double share = 100.0 * counts.getOrDefault(block, 0) / n;
+            shares.append(i == 0 ? "" : "/").append(String.format(java.util.Locale.ROOT, "%.1f", share));
+            if (Math.abs(share - want[i]) > 3)
+                fail("substitute: " + block + " took " + share + "% of " + n + " picks, its weight asks " + want[i] + "%");
+        }
+        report.put("substitute.weightedShares", shares + " of " + n + " (asked 50/30/20)");
+        if (differs < n / 3)
+            fail("substitute: neighbouring blocks rarely differ (" + differs + " changes in " + n + ")");
     }
 
     private void checkPermissionNodes() {
