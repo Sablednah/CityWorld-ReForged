@@ -63,6 +63,11 @@ public class GovernmentBuildingLot extends FinishedBuildingLot {
 				.getRandomMaterial(chunkOdds, Material.WHITE_WOOL);
 		columnMaterial = platmap.generator.materialProvider.itemsSelectMaterial_GovernmentWalls
 				.getRandomMaterial(chunkOdds, Mapper.getColumnFor(wallMaterial));
+		applyPalettes(platmap, me.daddychurchill.CityWorld.Support.Palettes.Part.GOVERNMENT_WALL,
+				me.daddychurchill.CityWorld.Support.Palettes.Part.GOVERNMENT_FOUNDATION,
+				me.daddychurchill.CityWorld.Support.Palettes.Part.GOVERNMENT_FLOOR,
+				me.daddychurchill.CityWorld.Support.Palettes.Part.GOVERNMENT_ROOF,
+				me.daddychurchill.CityWorld.Support.Palettes.Part.GOVERNMENT_COLUMN);
 		foundationSteps = Mapper.getStairsFor(foundationMaterial);
 	}
 
