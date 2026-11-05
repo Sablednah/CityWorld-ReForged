@@ -257,6 +257,25 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     }
 
     /**
+     * Where this world's settings really come from, for {@code /cityexport}: the style, and the
+     * {@code world_settings} entry as {@code namespace:path} — null when the settings are inline (a
+     * Customize-made world) or absent. A twin answers for the dimension it copies, since that is whose
+     * settings it plans with.
+     */
+    public CityWorldGenerator.WorldStyle effectiveStyle() {
+        CityWorldChunkGenerator source = twinSource(false);
+        return source != null ? source.effectiveStyle() : resolvedStyle();
+    }
+
+    /** See {@link #effectiveStyle()}. */
+    public String effectiveSettingsEntry() {
+        CityWorldChunkGenerator source = twinSource(false);
+        if (source != null)
+            return source.effectiveSettingsEntry();
+        return settings.flatMap(Holder::unwrapKey).map(k -> k.identifier().toString()).orElse(null);
+    }
+
+    /**
      * The settings this generator carries, resolved to a value — for the single-player Customize
      * screen, which reads them off the currently-selected generator to seed its controls. Absent
      * holder → {@link CityWorldSettingsData#DEFAULT}.

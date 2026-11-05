@@ -1,441 +1,120 @@
 package me.daddychurchill.CityWorld.worldgen;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
+
+import me.daddychurchill.CityWorld.BuildInfo;
 import me.daddychurchill.CityWorld.CityWorldMod;
 
 import net.neoforged.fml.loading.FMLPaths;
 
 /**
- * Drops a copy-and-edit settings example on first run, next to the schematics drop-in folder:
- * {@code config/cityworld/settings-example/}. It holds a complete, valid world datapack whose
- * {@code default.json} spells out every knob at its default, plus {@code settings-reference.txt}
- * explaining what each does and the sensible range. A server op copies the folder into
- * {@code <world>/datapacks/} and edits — the "download the defaults and see everything that can
- * change" ask (P7).
+ * Drops a copy-and-edit settings example next to the schematics drop-in folder:
+ * {@code config/cityworld/settings-example/}. It is a complete, valid world datapack holding the three
+ * settings entries CityWorld ships — {@code modern} (the City preset and the {@code /cityworld} dimension),
+ * {@code apocalypse}, and {@code default} (every other preset) — each written out with every field, plus a
+ * short {@code README.txt}. A server op copies the folder into {@code <world>/datapacks/}, keeps the file
+ * for their world type and edits it.
  *
  * <p>Deliberately <em>not</em> a datapack the game auto-loads: it sits under {@code config/}, so it is
- * inert until copied into a world. Written only if absent, so a hand-edited copy is never clobbered.
+ * inert until copied into a world.
+ *
+ * <p><b>Rewritten whenever the build changes</b> (a {@code .written-by} stamp holds {@link BuildInfo#version()}).
+ * It used to be written once and never again, so an install kept the example — and a 400-line hand-written
+ * reference — from whichever version it first ran, while every release added settings to neither. The
+ * descriptions now live in one place, the wiki page generated from {@code CURSEFORGE-CONFIGURATION.md}; the
+ * README says so and says to copy the folder rather than edit it here.
  */
 public final class SettingsExample {
 
     private SettingsExample() {}
 
+    private static final String[] ENTRIES = { SettingsDatapack.MODERN_ENTRY, SettingsDatapack.APOCALYPSE_ENTRY,
+            SettingsDatapack.DEFAULT_ENTRY };
+
     private static Path folder() {
         return FMLPaths.CONFIGDIR.get().resolve(CityWorldMod.MODID).resolve("settings-example");
     }
 
-    /** Create the example pack + reference on first run. Best-effort: a failure only logs. */
+    /** Write (or refresh) the example pack. Best-effort: a failure only logs. */
     public static void ensureExampleFolder() {
         try {
             Path root = folder();
-            if (Files.exists(root))
+            Path stamp = root.resolve(".written-by");
+            String version = BuildInfo.version();
+            if (Files.exists(stamp) && Files.readString(stamp).strip().equals(version))
                 return;
-            SettingsDatapack.writePack(root, SettingsDatapack.DEFAULT_ENTRY, CityWorldSettingsData.DEFAULT,
+            SettingsDatapack.writePack(root, SettingsDatapack.DEFAULT_ENTRY, shipped(SettingsDatapack.DEFAULT_ENTRY),
                     "CityWorld settings example — copy into <world>/datapacks and edit");
-            Files.writeString(root.resolve("settings-reference.txt"), REFERENCE);
+            for (String entry : ENTRIES)
+                SettingsDatapack.writeEntry(root, CityWorldMod.MODID, entry, shipped(entry));
+            Files.deleteIfExists(root.resolve("settings-reference.txt")); // the old hand-kept copy, long stale
+            Files.writeString(root.resolve("README.txt"), README);
+            Files.writeString(stamp, version + "\n");
             CityWorldMod.LOGGER.info("CityWorld: wrote settings example to {}", root);
         } catch (IOException | RuntimeException e) {
             CityWorldMod.LOGGER.warn("CityWorld: could not write settings example", e);
         }
     }
 
-    // Kept in-code (not a resource) so it ships in the jar with no extra packaging, mirroring
-    // SchematicLibrary's README. Wraps at ~100 cols to read well in a plain editor.
-    private static final String REFERENCE = """
-            CityWorld — per-world settings reference
-            ========================================
+    /** One of the entries in this jar, decoded through the generator's own codec (so absent fields read as
+     *  the defaults the game would give them). The compiled default if the file cannot be read. */
+    private static CityWorldSettingsData shipped(String entry) {
+        String path = "/data/" + CityWorldMod.MODID + "/" + CityWorldMod.MODID + "/world_settings/" + entry + ".json";
+        try (InputStream in = SettingsExample.class.getResourceAsStream(path)) {
+            if (in == null)
+                return CityWorldSettingsData.DEFAULT;
+            var json = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+            return CityWorldSettingsData.CODEC.parse(JsonOps.INSTANCE, json).result()
+                    .orElse(CityWorldSettingsData.DEFAULT);
+        } catch (IOException | RuntimeException e) {
+            CityWorldMod.LOGGER.warn("CityWorld: could not read the shipped settings entry {}", entry, e);
+            return CityWorldSettingsData.DEFAULT;
+        }
+    }
 
-            HOW THIS WORKS
-            --------------
-            CityWorld's settings are per-WORLD, delivered as a datapack (NeoForge's own config is
-            per-instance, which can't say "this world crazy, that world plain"). This folder is a
-            ready-to-use example pack:
+    private static final String README = """
+            CityWorld — world settings example
+            ==================================
 
-              settings-example/
-                pack.mcmeta
-                data/cityworld/cityworld/world_settings/default.json
-                settings-reference.txt   (this file)
+            This folder is rewritten whenever CityWorld updates. Copy it; don't edit it here.
 
-            To use it:
-              1. Copy the whole folder into your world:  <world>/datapacks/my-cityworld-settings/
-              2. Edit default.json.
-              3. Start (or /reload — but see "WHEN CHANGES APPLY") the world.
+            Every setting, what it does and its range:
+              https://github.com/Sablednah/CityWorld-ReForged/wiki/Configuring-CityWorld
+            New to datapacks:
+              https://github.com/Sablednah/CityWorld-ReForged/wiki/Beginners-Guide-to-Datapacks
 
-            "default.json" is named to override the built-in cityworld:default, which every CityWorld
-            world preset and the /cityworld dimension reference. So editing it changes that world. To
-            keep several named profiles instead, rename the file (e.g. ruined.json) and point a
-            dimension's generator at it with  "settings": "cityworld:ruined".
+            WHICH FILE
+            ----------
+            data/cityworld/cityworld/world_settings/ holds the settings CityWorld ships, every field written out.
+            Each world type reads one of them:
 
-            Every field is OPTIONAL: list only what you want to change; anything omitted keeps its
-            default. A file of just {} is a stock world.
+              modern.json       the CityWorld world type (Modern), and the /cityworld dimension
+              apocalypse.json   CityWorld: Apocalypse
+              default.json      every other CityWorld world type (Classic, Metro, Sparse, Nature, ...)
 
-            WHEN CHANGES APPLY
-            ------------------
-            Settings are read when the world LOADS, and only NEW chunks are affected — existing chunks
-            never regenerate. Spawn odds, names, treasure odds and decay bite as you explore into fresh
-            land; terrain-shaping knobs (seas, mountains, caves, radius) want a brand-new world to be
-            seen properly. Tip: trial settings in single-player via the Customize button, then export
-            the world you like with  /cityexport <name>  to get a matching datapack.
+            TO USE IT
+            ---------
+              1. Copy this whole folder into your world:  <world>/datapacks/my-cityworld-settings/
+                 (a server: world/datapacks/, next to level.dat)
+              2. Keep the file for your world type, delete the other two, and edit it.
+              3. Create the world with the pack in place — or restart the world (or the server) after adding it.
+                 /reload does not apply world settings.
 
-            VALUE TYPES
-            -----------
-            true/false      a toggle.
-            0.0 .. 1.0      an "odds" chance (0 = never, 0.5 = half the time, 1.0 = always).
-            whole number    a count or a chunk distance (16 blocks per chunk).
-            "NAME"          a named choice; the allowed names are listed with each such setting.
+            Only NEW chunks change: land already generated never regenerates.
 
-            ============================================================================
-            features  — what the planner is allowed to build
-            ============================================================================
-            includeRoads              true   Road network. Off = no streets (and no sewers).
-            includeRoundabouts        true   Roundabouts at some intersections.
-            includeSewers             true   Sewers beneath the roads.
-            includeCisterns           true   Water cisterns under some buildings.
-            includeBasements          true   Building basements.
-            includeMines              true   Abandoned mine networks underground.
-            includeBunkers            true   Buried bunkers under midlands/highlands and factories.
-            includeBuildings          true   Buildings at all. Off = roads/nature only.
-            includeHouses             true   Houses in neighborhoods (a subset of buildings).
-            includeFarms              true   Farm districts.
-            includeMunicipalities     true   Civic district (town halls, libraries, museums, ...).
-            includeIndustrialSectors  true   Factories, warehouses, storage yards.
-            includeAirborneStructures true   Balloons/blimps over the fields.
-            includeBuildingInteriors  true   Furnish building interiors. Off = empty shells (faster).
-            includeSchematics         false  Drop the bundled classic building schematics into cities.
-            includeNamedRoads         true   Street-name signs.
+            Your file REPLACES the shipped entry; it does not merge with it. A field you delete takes the
+            built-in default from the wiki page, not this file's value — so edit values rather than removing
+            lines.
 
-            ============================================================================
-            terrain  — the land, its fluids, and decay
-            ============================================================================
-            includeCaves              true   Carve caves.
-            windingCaves              false  Winding "noodle" cave tunnels that wander + branch (vanilla-
-                                             like) instead of the classic noise blobs. On by default for
-                                             MODERN/APOCALYPSE; a free toggle for any style (needs
-                                             includeCaves). Never style-locked.
-            largeCaverns              false  Rare, large caverns astride the deepslate line (about y -50 to
-                                             +25), shelved and rough inside rather than a blob. On by
-                                             default for MODERN/APOCALYPSE; a free toggle for any style.
-            includeLavaFields         true   Underground lava fields.
-            includeSeas               true   Oceans/lakes. Off = a dry, land-only world.
-            includeMountains          true   Mountainous terrain. Off = flatter.
-            includeOres               true   Ore deposits in the strata.
-            includeBones              true   Fossils/bone deposits.
-            includeFires              true   Lit campfires/fire pits, and burning demolition debris.
-            includeAbovegroundFluids  true   Surface water/lava placement.
-            includeUndergroundFluids  true   Underground water/lava placement.
-            includeWorkingLights      true   Lights burn. Off puts out every light CityWorld draws (cityworld:unlit data map).
-            includeDecayedRoads       false  Break roads up with rubble.
-            includeDecayedBuildings   false  Chew ruin-holes into buildings — the "apocalypse" switch.
-            includeDecayedNature      false  Drain the seas + desert the world (whole-world ruin mood).
-                                             Leave false for ruins on a normal wet, green world.
-            oddsOfPristineBuilding    0.0001 When decay is on, the chance a building/schematic is spared
-                                             and stays intact (a rare find in a ruined world). 0.0001 =
-                                             0.01%. A schematic's .yml can override this per-building
-                                             with  PristineChance: <0..1>  (and Decayable: false means
-                                             never decays). Range 0.0 .. 1.0.
-
-            ============================================================================
-            overgrowth  — nature reclaiming the built world (runs after decay)
-            ============================================================================
-            enabled     false  Drape buildings/roads in moss, vines, leaf litter, azalea and small
-                               reclaim trees, + dripstone in mines and basements. Works with or
-                               without decay.
-            intensity   1.0    Density x-multiplier: 1.0 = default, 2-3 = heavy (more/denser vines
-                               and plants). Vine-string length varies 1/4..full of each wall on its own.
-            capVines    false  Finish each outer wall-vine string with a glow lichen so live vine
-                               growth can't lengthen it over time (and it reads as a lit tip).
-
-            ============================================================================
-            decay  — fine control of demolition (pairs with the includeDecayed* toggles above)
-            ============================================================================
-            buildingIntensity   1.0   How ruined a decayed BUILDING is — scales the number AND size of
-                                      the collapse holes. 1.0 = default, below 1 = light weathering,
-                                      above 1 = heavy rubble. (APOCALYPSE uses 0.5, DESTROYED 1.1.)
-                                      NB: much above ~1.3 shreds buildings past recognition.
-            roadIntensity       1.0   The same, for decayed ROADS. (APOCALYPSE 0.4, DESTROYED 1.1.)
-            oddsOfDecayFire     0.20  Fraction of collapse rubble that catches fire (netherrack + fire).
-                                      Only bites when includeFires AND includeDecayedFires are BOTH on,
-                                      so campfire-only worlds and APOCALYPSE stay unburnt. DESTROYED 0.07
-                                      (scattered wrecks; even 0.2+ becomes a carpet of flame).
-            oddsOfPristineRoad  0.0   Chance a road chunk is spared and stays intact — the road version
-                                      of oddsOfPristineBuilding, so a ruined grid keeps stretches you can
-                                      walk. Range 0.0 .. 1.0. (APOCALYPSE uses 0.3.)
-
-            ============================================================================
-            caves  — the underground dials (cave biomes and structure caverns)
-            ============================================================================
-            WHICH cave biomes exist is the tag #cityworld:cave_pool, and WHICH vanilla structures
-            generate is #cityworld:allowed plus the "structures" group below. This group is the
-            numbers those can't express.
-
-            structureCarveHalo    10  How far, horizontally, terrain is cleared past the pieces of a
-                                      BURIED structure — an ancient city, in practice. Vanilla carves
-                                      these with a density function CityWorld has no equivalent of, so
-                                      this stands in for it. Too small and the city reads as a row of
-                                      boxes instead of one cavern; larger gives a roomier hall.
-                                      BURIED ONLY. Something standing in the open gets no halo: around
-                                      Cataclysm's acropolis, whose pillars sit against a hillside, 10
-                                      blocks of halo chewed into the hill and read as a chunk error.
-            structureCarveHaloUp   6  The same, upward. Deliberately smaller — headroom, not a
-                                      chimney. Nothing is EVER carved below a piece: vanilla's beard
-                                      adds material there to hold the structure up, and digging it
-                                      out leaves the city hanging over a void. A structure that stands
-                                      rather than sits buried is limited further, to above
-                                      max(natural ground, sea level), so a carve can neither open a pit
-                                      nor drain the water out of an ocean.
-            surfaceMargin          8  How far below the terrain surface a cave patch begins, so a
-                                      patch can't bleed into surface grass/foliage colour on a
-                                      hillside.
-            patches               []  Per-biome patch shaping. EMPTY MEANS THE BUILT-IN DEFAULTS;
-                                      listing any entry replaces the lot, in the order given — and
-                                      order matters, because the first entry whose cell matches owns
-                                      the whole column (one cave type per column, never stacked). So
-                                      list the rarest and deepest first. A biome still has to be in
-                                      #cityworld:cave_pool to appear at all; this only shapes it —
-                                      which is also how you give a MODDED cave biome real geometry
-                                      instead of the fallback it gets from the tag alone.
-
-                                      Each entry: biome (required), cell, percent, minY, maxY.
-                                        cell     patch grid size in blocks — bigger means bigger,
-                                                 further-apart patches
-                                        percent  roughly what share of cells are this type, of 100
-                                        minY/maxY  the depth band the patch applies in
-
-                                      The built-in defaults, if you want to start from them:
-                                        deep_dark        cell 176  percent 4  minY -64  maxY -24
-                                        sulfur_caves     cell 112  percent 5  minY -64  maxY  -8
-                                        lush_caves       cell  80  percent 5  minY -40  maxY  40
-                                        dripstone_caves  cell  96  percent 6  minY -60  maxY  20
-
-                                      deep_dark's band stops at -24 for a reason: that is where
-                                      vanilla's ancient city generates (a real one spans -64..-10).
-                                      Raise its maxY and you advertise the biome above the depth
-                                      anything can use it. It is also what keeps ancient cities
-                                      clear of CityWorld's own cisterns (y 49) and sewers (y 57-62).
-
-            ============================================================================
-            subways  — a metro under the city (MODERN and APOCALYPSE; forced off elsewhere)
-            ============================================================================
-            enabled   true   A station in every urban district (a ticket hall beside a road, two
-                             switchback stairs down to twin-track platforms 24 blocks under the
-                             street), and tunnels to the first station each way along its row and
-                             column, up to six districts off, across the countryside between cities:
-                             east-west lines on the upper level, north-south lines eight blocks
-                             lower, so lines never junction and a station both lines call at is an
-                             interchange with stairs between its two halls (with one line each way,
-                             a sloped loop joins its two ends). The tunnels are arched, tiled white,
-                             lit, and boosted with powered rails, so a cart runs the line; a ruined world has dark lamps, gaps in the track,
-                             standing water and spawners in the wall niches. Stations announce as
-                             the landmark kind "subway" (off by default, see announcedLandmarks).
-            spawners  true   Sewer-bag spawners in the ruined tunnels' niches (APOCALYPSE only).
-
-            ============================================================================
-            cities  — cities in a vanilla world (the Customize screen's "Land" option)
-            ============================================================================
-            vanillaTerrain     false  The land is vanilla's throughout — its terrain, caves, ores,
-                                      villages, animals — and CityWorld builds a city only every so
-                                      often, like a village, each on its own level, the ground around
-                                      it eased into the hills. Modern, Apocalypse, Classic, Destroyed
-                                      and Sparse styles; the styles that ARE a terrain ignore it.
-                                      Everything below applies only when this is on.
-            spacing            2048   One city at most per this many blocks each way (1024..16384).
-                                      Fewer where the sea or the mountains refuse a site.
-            districts          3      How many districts (160 blocks each) a city is across (1..8).
-            districtsVariance  1      A city may be this many districts bigger or smaller (0..3).
-            levelRange         40     A city stands on the land's own level, up to this far above
-                                      the sea (y 64); higher ground gets no city (0..120).
-            maxWater           0.35   A site is refused when more than this share of its ground
-                                      is under the sea; what is left under water is filled in.
-            minNear            0.75   ...or when fewer than this share of its columns already lie
-                                      within sixteen blocks of its level (too rough).
-            A city is a pure function of the seed and these numbers: change them under an existing
-            world and its cities move. /cityfind city tp finds the nearest one.
-
-            ============================================================================
-            structures  — which vanilla and mod structures this world places
-            ============================================================================
-            CityWorld places the structure sets in the tag #cityworld:allowed (strongholds, trial
-            chambers, ancient cities, the Nether's fortresses and bastions, end cities, and several
-            mods' sets). These two lists change that for one world, without a tag datapack — they
-            are what the Structures page of the Customize screen writes:
-
-            allow  []   Structure SET ids to place as well:  ["minecraft:villages"]
-            deny   []   Structure SET ids to stop placing:   ["minecraft:trial_chambers"]
-            wildernessOnly  false  Keep every placed set to the wild: no structure starts in a platmap the
-                                   city plans to build (any district, farms and outland included);
-                                   strongholds are never touched. A pond structure
-                                   (Arboria's) otherwise cuts a city in two. Set by set, a datapack tags
-                                   #cityworld:wilderness_only (structure sets); Arboria's lakes ship in it.
-
-            Ids are structure sets (data/<ns>/worldgen/structure_set/), not single structures:
-            minecraft:villages, minecraft:woodland_mansions, minecraft:pillager_outposts, a mod's
-            own. An id whose mod is not installed is ignored. Allowing a set does not make it
-            appear where none of its biomes exist — vanilla drops those itself. The Nether and the
-            End follow the overworld's lists. Cities keep clear of whatever is placed. The server
-            log says what was read:  "CityWorld: structure settings (overworld) allow [...] ..."
-
-            ============================================================================
-            shops  — themed retail with villager job blocks (MODERN dressing)
-            ============================================================================
-            enabled     false  Villager job-site blocks so a store/farm reads as its trade and a
-                               villager can claim the profession: a job block on each high-street
-                               shop and rural corner shop (cartography table = map seller, fletching
-                               table = fletcher, smoker = butcher, ...), a composter at farm edges,
-                               and a rare fish-pond farm (barrel + fish). The shop classification
-                               itself (see /cityinfo and the api package) is always computed; this
-                               only governs the block placement.
-            malls       true   Shopping malls (MODERN and APOCALYPSE): rare, at the edge of town, two
-                               or three storeys round a glass-roofed atrium, built in wings (a bar,
-                               L, T, U, Z or cross, up to eight chunks each way), dozens of named
-                               shops each with its own loot table (chests/mall_<kind>), car parks
-                               out to the road. Announced as the landmark kind "mall".
-            oddsOfAtmInCivic  0.333  Chance each ground-floor chunk of a city hall or courthouse has a cash
-                                     machine against an inside wall, from #cityworld:fittings/atm (a mod's:
-                                     Modernlife's ATM is listed). None of these without such a mod.
-            oddsOfAtmInShops  0.125  The same, per ground-floor chunk of a shop.
-            oddsOfAtmInMalls  0.2    The same, per chunk of a shopping mall's ground floor.
-
-            ============================================================================
-            spawns  — who turns up, and how often   (odds 0.0 .. 1.0)
-            ============================================================================
-            spawnBeings         0.5      Villagers/witches appearing in populated spots.
-            spawnBaddies        0.0476   Hostile mobs at the surface. Raise for a rougher world.
-            spawnAnimals        0.6667   Farm/wild animals.
-            spawnVagrants       0.2      "Wanderers" in Customize: strays out of town, on wild land and
-                                     dirt roads. Hostile on a Baddies roll, or always in a ruined world.
-            nameVillagers       true     Give villagers generated names (see [naming]).
-            showVillagersNames  true     Show those names as floating nametags.
-
-            ============================================================================
-            treasures  — chests and spawners   (flags true/false, odds 0.0 .. 1.0)
-            ============================================================================
-            treasuresInMines          true   Loot chests in mines.
-            spawnersInMines           true   Mob spawners in mines.
-            treasuresInBunkers        true   Loot chests in bunkers.
-            spawnersInBunkers         true   Mob spawners in bunkers.
-            treasuresInSewers         true   Loot chests in sewers.
-            spawnersInSewers          true   Mob spawners in sewers.
-            treasuresInBuildings      true   Loot chests in buildings.
-            oddsOfTreasureInMines     0.5    Chance a given mine spot gets a chest.
-            oddsOfTreasureInBunkers   0.5    Chance a given bunker spot gets a chest.
-            oddsOfTreasureInSewers    0.5    Chance a given sewer spot gets a chest.
-            oddsOfTreasureInBuildings 0.5    Chance a given building spot gets a chest.
-            oddsOfAlcoveInMines       0.5    Chance a mine tunnel opens into a side alcove.
-            oddsOfFinds               0.077  Chance an everyday container (building, nightstand, kitchen) in a
-                                             MODERN or APOCALYPSE world also holds a find (1 in 13).
-
-            ============================================================================
-            world  — trees, ground cover, floating subsurface, ruralness
-            ============================================================================
-            treeStyle        "NORMAL"   Tree family. One of: NORMAL, SPOOKY, CRYSTAL.
-            spawnTrees       0.5        How densely trees grow (odds 0.0 .. 1.0).
-            subSurfaceStyle  "LAND"     What fills space under a FLOATING world's land. One of:
-                                        NONE, LAND, CLOUD, LAVA. Only the FLOATING style reads this.
-            ruralnessLevel   0.0        Skews the world more rural (more nature, fewer cities).
-                                        0.0 = normal; up toward 1.0 = increasingly rural.
-            maxBuildingFloors 20        Tallest a building may rise, in floors (4 blocks each) above
-                                        street level. 20 = the classic 1.8 look (~24 blocks over a
-                                        3-storey base); the MODERN style ships taller. The build Y
-                                        ceiling follows this, clamped to the world's ceiling (319), so
-                                        very high values give skyscrapers that use the full headroom.
-                                        Sensible range 8..60.
-            broadcastSpecialPlaces false  Announce landmarks in chat as they generate ("Vault 42
-                                        generated near x, z"), to the players in the world it
-                                        happened in. Off by default — chunks generate wherever
-                                        anyone explores. The same events are always written to the
-                                        log at debug level either way.
-            announcedLandmarks [...]    Which landmark kinds may chat-announce (needs the toggle
-                                        above on). Default: ["airship", "saucer", "vault", "zoo",
-                                        "biodome", "hospital", "schematic", "mall"] — the rares;
-                                        "schematic" covers builds whose .yml sets
-                                        BroadcastLocation: true. Other known kinds a server can add:
-                                        castle, oilplatform, radiotower, bunker, museum,
-                                        mineentrance, campground, shack, balloon, fishpond,
-                                        subway.
-
-            ============================================================================
-            radius  — where cities may appear   (distances in CHUNKS; 16 blocks each)
-            ============================================================================
-            Leave these at their defaults for "cities everywhere". They let you confine cities to a
-            region — the SPARSE world style uses them. The default 1875000 is effectively "no limit"
-            (the world border in chunks).
-            centerPointOfChunkRadiusX          0         Centre the radius here (X, in chunks).
-            centerPointOfChunkRadiusZ          0         Centre the radius here (Z, in chunks).
-            constructChunkRadius               1875000   Max distance for quarries/gravel constructs.
-            roadChunkRadius                    1875000   Max distance for the road network.
-            cityChunkRadius                    1875000   Max distance for cities/buildings/farms.
-            buildOutsideRadius                 false     true = build the ring OUTSIDE the radius
-                                                         instead of the disc inside it.
-            minInbetweenChunkDistanceOfCities  0         >0 tiles cities on a grid this many chunks
-                                                         apart (SPARSE uses 100).
-
-            ============================================================================
-            naming  — your own villager & street names   (lists of text)
-            ============================================================================
-            Each list is EMPTY by default, which means "keep CityWorld's built-in hundreds". List your
-            own to REPLACE a list entirely. Names are still assembled by the same generator, so even a
-            short custom list yields varied streets. Example — make every villager a "<given> <sur>":
-
-              "naming": {
-                "villagerGivenNames": ["Ada", "Bob", "Cleo"],
-                "villagerSurnames":   ["Vance", "Okafor"]
-              }
-
-            Set "append": true to ADD your names to the built-in lists instead of replacing them —
-            handy for sprinkling a few friends' names in among the stock ones:
-
-              "naming": {
-                "append": true,
-                "villagerGivenNames": ["Sablednah", "Darren"]
-              }
-
-            villagerGivenNames   Given names for villagers.
-            villagerSurnames     Surnames for villagers.
-            streetTerms          Cardinal/central words: [declaration, N, Main, S, W, Central, E].
-            streetPrefixes       Optional street prefixes ("Old", "New", "Fort", ...).
-            streetStarts         Start syllables of invented street names ("Elm", "Oak", ...).
-            streetEnds           End syllables ("wood", "ville", "field", ...).
-            streetSuffixes       Road types ("Street", "Avenue", "Boulevard", ...).
-            fossilPrefixes       Start of museum fossil names ("Tyranno", "Dino", ...).
-            fossilSuffixes       End of fossil names ("saurus", "raptor", ...).
-            professionNames      Occupational surnames for EMPLOYED villagers (shop/farm workers), as
-                                 "profession:Surname" entries — e.g. "fisherman:Angler", "fletcher:Bowman".
-                                 A worker becomes "<given name> <surname for its trade>". Professions you
-                                 don't list keep the built-in pool; with "append": true yours are added to
-                                 it. Profession ids: farmer, fisherman, fletcher, cartographer, mason,
-                                 armorer, weaponsmith, toolsmith, butcher, leatherworker, cleric, shepherd,
-                                 librarian.
-
-            ============================================================================
-            mobs  — your own creature lists   (lists of entity ids, WEIGHTED BY REPETITION)
-            ============================================================================
-            Each list is EMPTY by default = "keep the built-in bag". List entity ids to REPLACE a bag.
-            Repetition is weight: listing minecraft:chicken six times and minecraft:wolf once means
-            "mostly chickens". Unknown ids are logged and skipped, not guessed. Example:
-
-              "mobs": {
-                "sewers": ["minecraft:zombie", "minecraft:zombie", "minecraft:cave_spider"]
-              }
-
-            Set "append": true to ADD your entries to the built-in bags instead of replacing them:
-
-              "mobs": {
-                "append": true,
-                "sewers": ["minecraft:cave_spider", "minecraft:cave_spider"]
-              }
-
-            goodies      Friendly beings in populated spots (villagers, ...).
-            baddies      Surface hostiles.
-            animals      Farm/wild animals.
-            seaAnimals   Fish and sea life.
-            vagrants     The "Wanderers": strays out of town (see spawnVagrants).
-            sewers       What lurks in the sewers.
-            mine         What lurks in the mines.
-            bunker       What is sealed in the bunkers.
-            waterPit     What is dropped in water pits/cisterns.
-            lavaPit      What is dropped in lava pits.
+            A world made with the Customize screen keeps its settings inside the world, so a settings pack never
+            changes it. To move such a world's settings to a server, run /cityexport <name> in it.
             """;
 }
