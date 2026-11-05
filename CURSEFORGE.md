@@ -13,6 +13,14 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+**New in 6.14.0: choose the blocks, part by part.** A datapack can now say what each part of the city is made of:
+office walls, roofs, columns and windows, house walls and roofs, shacks, sheds, factories, the road surface, its lines
+and the pavement, 28 parts in all, each a block tag, and each can be set for one world style only. Leave a part
+alone and it builds as it always did. Block substitutes take a weighted mix too (half plain concrete, a third smooth,
+a fifth tiles), and the simple forms people reach for first now work. The wiki's
+[beginner's guide to datapacks](https://github.com/Sablednah/CityWorld-ReForged/wiki/Beginners-Guide-to-Datapacks)
+walks through both.
+
 **New in 6.13.0: Macaw's paths, roads and bridges.** With **Macaw's Roads and Streets**, every city street is
 asphalt with a dashed centre line, zebra crossings at junctions, kerbs, manholes and road signs: STOP at a T, DEAD
 END, speed limits in pairs where town (50) meets country (30), and the town's name where a road leaves for the wild.
@@ -30,16 +38,11 @@ take a tenth of the memory, no two threads assemble the same structure twice, an
 their height answers without building a whole column. A mod that still plans on the server thread is named in the
 log once, so a stall can be traced to its source.
 
-**New in 6.11.0: your biome mods, in the city too.** Biomes O' Plenty, Oh The Biomes We've Gone, Nyctophobia,
-VanillaBackport's pale garden — every TerraBlender mod now reaches CityWorld's own land on 1.21.1 and 1.20.1 as well
-(it never had: a silent bug since those versions shipped). Datapack biome mods — Terralith, Dreamwoods with Grand
-Terrain — reach both lands too, and Regions Unexplored reaches vanilla land. Mod biomes come in proper patches, not
-slivers, rivers through a snowy mod biome freeze, and a new switch — "Structures: only in the wild", or the tag
-`#cityworld:wilderness_only` set by set — keeps a mod's structures out of the streets (Arboria's lakes ship tagged:
-each one used to cut a city in two).
-
 **Other recent changes**
 
+- **6.11.0** — your biome mods, in the city too: every TerraBlender mod reaches CityWorld's own land on 1.21.1 and
+  1.20.1, datapack biome mods (Terralith, Grand Terrain) reach both lands, mod biomes come in proper patches, and
+  "Structures: only in the wild" keeps a mod's structures out of the streets.
 - **6.13.1** — `/cityexport` writes the settings file your world type actually reads, with every setting in it, and
   the example settings pack in `config/cityworld/settings-example/` stays current. New on the wiki: a
   [beginner's guide to datapacks](https://github.com/Sablednah/CityWorld-ReForged/wiki/Beginners-Guide-to-Datapacks).
@@ -256,7 +259,8 @@ normal way — planks in `#minecraft:planks`, stone in `#c:stones` — starts ap
 moment you install it, with no patch and no compatibility pack. The odds stay put as the palette
 widens, so a heavily modded world gets *more variety*, not more wooden houses. For mods that don't tag
 their blocks, or to put a mod's blocks somewhere they wouldn't naturally go, a small datapack extends
-any palette directly.
+any palette directly, sets the blocks for one part of a building (house roofs, office walls, the road),
+or swaps a block everywhere for one or a weighted mix of others.
 
 ### Plainer cities, and no free iron: the Neutral Palette add-on
 
