@@ -24,7 +24,19 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-11-05 evening): v6.13.1 is released — settings export fixed; next weighted substitutes.**
+**▶ Resume here (2026-11-05 night): v6.14.0 is released — weighted substitutes and per-part palettes.**
+- **v6.14.0 is released** (2026-11-05) on all six lines — tag `v6.14.0` at the master bump `e530b67e` (branch bumps
+  a212e950/7a845b1e/b89dca58/e09a15b4/2e46605c), CurseForge 9465296–9465302, fleet `DEPLOYED-v6.14.0` on 11 (ZARP
+  opts out), wiki pushed (+ new page **Custom-Schematics** from `SCHEMATICS.md`). From GitHub issue #5:
+  `cityworld:substitute` takes a weighted list and bare shorthand (pick by position hash, `withPropertiesOf`);
+  `Support/Palettes`: 28 parts, tags `cityworld:palette/<part>` and `palette/<style>/<part>` (style wins), shipped
+  EMPTY so an untouched world makes no extra rolls; a filled `street/surface` sets aside RoadKit. Self-test
+  `checkWeightedSubstitutes` + `checkPalettesShipEmpty` (proved failing with a shipped tag). Gates: six self-tests
+  PASS + `--compare`, CI 42125568437, scan 0 after the positive, 1.20.1 SRG 1,591. Follow-up posted on #5. Issue #6
+  (Cobblemon centres/gyms) is the owner's reply: custom schematics, now documented. **The owner pastes
+  `CURSEFORGE.md`** (6.14.0 headline; 6.11.0 moved to Other recent changes). Future styles (cyberpunk/neon,
+  Rapture) are to be built on the palette parts — not started, owner's call.
+- **v6.13.1 is released** (earlier the same day) — settings export fixed.
 - **v6.13.1 is released** (2026-11-05) on all six lines — tag `v6.13.1` at the master bump `c096c9f6`, CurseForge
   9455909–9455918, fleet `DEPLOYED-v6.13.1` on 11 (ZARP opts out), wiki pushed. From GitHub issue #5 (a player's
   Chipped pack did nothing): `/cityexport` now writes the entry the world reads (`modern` for the City preset and
