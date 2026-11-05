@@ -21,6 +21,9 @@ stone palette built on `#c:stones` — so a mod's bricks go into a palette by ha
 >
 > **On 1.20.1 every `tags/block/` path on this page is `tags/blocks/`** (and `tags/item/` is `tags/items/`).
 
+To choose the blocks for one **part** of a building — office walls, house roofs, the road surface — use a
+[per-part palette](#per-part-palettes-from-614) (from 6.14).
+
 A compatibility pack is for the other cases:
 
 - the mod doesn't tag its blocks, so nothing knows they're planks
@@ -45,6 +48,67 @@ start appearing in that palette, in chunks generated after the next restart.
 | `cityworld:build/chemicals` | what industrial tanks and silos hold when fluids are enabled | concrete powders, water, lava, slime — plus 18 Mekanism fluids (brine, acids, lithium, uranium hexafluoride…) verified against Mekanism-1.21.1-10.7.19.85 and marked optional; add your own mod's fluid blocks the same way |
 | `cityworld:build/modern_stones` | the decorative stone palette used by the MODERN and APOCALYPSE styles | 32 curated blocks (8 of them Minecraft 26.2+) |
 | `cityworld:build/end_stones` | blended into every building, house, government and factory pool **in the CityWorld End only** — about one pick in three | purpur block and pillar, end stone bricks, obsidian, amethyst |
+
+### Per-part palettes (from 6.14)
+
+The palettes above are by **kind of block** — planks, wool, concrete — and each one feeds many parts of many
+buildings. A **per-part palette** says which blocks one *part* is made of, and only that part: office walls,
+house roofs, the road surface. They all **ship empty**, and an empty one changes nothing. Fill one and that part
+is drawn from your blocks alone; every other choice in the building — its shape, floors, windows, furniture —
+stays exactly as the seed would have made it.
+
+| Tag | The part |
+|---|---|
+| `cityworld:palette/building/wall` | office blocks, shops, libraries, museums and warehouses: the outside walls (inner walls follow them) |
+| `cityworld:palette/building/foundation` | their foundations and basements |
+| `cityworld:palette/building/floor` | the floor and ceiling slabs between their storeys |
+| `cityworld:palette/building/roof` | their roofs |
+| `cityworld:palette/building/column` | their corner columns and trim |
+| `cityworld:palette/building/window` | their windows (a pane or pane-like block is drawn thin, a full block fills the opening) |
+| `cityworld:palette/government/wall`, `…/foundation`, `…/floor`, `…/roof`, `…/column` | city halls and other civic buildings (windows follow `building/window`) |
+| `cityworld:palette/house/wall`, `…/floor`, `…/ceiling`, `…/roof`, `…/window` | houses, the modern houses among them (`house/window` reaches shacks too) |
+| `cityworld:palette/shack/wall`, `…/floor`, `…/roof` | rural shacks and cabins |
+| `cityworld:palette/shed/wall`, `…/roof` | garden and farm sheds |
+| `cityworld:palette/factory/wall`, `…/office`, `…/support`, `…/smokestack` | a factory hall's inner walls, its office block, its supports and its chimney |
+| `cityworld:palette/street/surface` | paved roads — **one pick for the whole world**, so every road matches. Filling it also sets aside a road mod's asphalt and markings (Macaw's Roads); to keep those, point `#cityworld:fittings/road` instead |
+| `cityworld:palette/street/lines` | the lines painted on them (one pick per world) |
+| `cityworld:palette/street/sidewalk` | pavements (one pick per world); placed as given, and the default is a **slab**, so a full block raises the pavement half a step |
+
+Stairs, slabs and doors that CityWorld derives from a building's wall follow a replaced wall where the block has
+them. Walls and floors that would fall (sand, gravel, concrete powder) are still drawn as smooth stone, as before.
+
+**One style only.** Put the same path under the style's name and it applies only to that style:
+`cityworld:palette/apocalypse/building/wall` is read for Apocalypse worlds, and wins over
+`cityworld:palette/building/wall` there. The style names are the ones in the Customize screen, lowercase:
+`modern`, `apocalypse`, `classic`, `destroyed`, `astral`, `maze`, `floating`, `flooded`, `sanddunes`, `snowdunes`,
+`nature`, `metro`, `sparse`.
+
+An example — Apocalypse office blocks in mossy and cracked bricks, Chipped's where installed, and asphalt-dark
+roads in every style:
+
+`data/cityworld/tags/block/palette/apocalypse/building/wall.json`
+```json
+{
+  "values": [
+    "minecraft:mossy_stone_bricks",
+    "minecraft:cracked_stone_bricks",
+    { "id": "chipped:etched_stone_bricks", "required": false }
+  ]
+}
+```
+
+`data/cityworld/tags/block/palette/street/surface.json`
+```json
+{ "values": ["minecraft:blackstone"] }
+```
+
+How it picks: once per building chunk for buildings (a building's chunks then agree, as they always have), once
+per house, shack or shed, once per world for streets — each pick on dice seeded from the world seed, the part and
+the place, so the same seed builds the same city. A tag has no weights; to make one block more common than
+another in a part, add a weighted [substitute](#block-substitutes) on top.
+
+**Not covered yet:** malls, hospitals, the subway, the vault, bunkers, mines and the smaller industrial lots
+(warehouses, silos, gasometers) keep their own fixed looks. Block substitutes reach all of those.
 
 ### Biome pools
 

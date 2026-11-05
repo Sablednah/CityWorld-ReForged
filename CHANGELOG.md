@@ -16,6 +16,12 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 - **Substitute shorthand.** An entry with no `realms` may be written as just the block id
   (`"minecraft:iron_block": "minecraft:smooth_stone"`) or just the weighted list — the shapes people tried first.
   The `{ "with": … }` object still works and is still needed for `realms`.
+- **Per-part palettes.** A block tag for each part of a building or street — `cityworld:palette/building/wall`,
+  `…/building/roof`, `…/house/wall`, `…/house/roof`, `…/street/surface` and 23 more — so a pack can say which
+  blocks office walls, house roofs or the roads are made of, and nothing else. All ship empty and an empty one
+  changes nothing; a filled one picks on its own dice, so the rest of each building is exactly what the seed made.
+  `cityworld:palette/<style>/<part>` applies to one style only (e.g. `palette/apocalypse/building/wall`) and wins
+  there. From GitHub issue #5.
 
 ## 6.13.1
 

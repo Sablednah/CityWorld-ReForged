@@ -144,6 +144,14 @@ limited to some realms with `"realms": ["overworld"]` (or `"nether"`, `"end"`). 
 `substitute.json` is read, so keep all your swaps in one file. Details on
 [Building Palettes](Building-Palettes#block-substitutes).
 
+### Per-part palettes: "office walls from these blocks, house roofs from those"
+
+From 6.14, each part of a building or street has a tag of its own, shipped empty: fill
+`data/cityworld/tags/block/palette/building/wall.json` and office blocks' walls come only from your blocks, while
+everything else about them stays as it was. Put the path under a style's name
+(`palette/apocalypse/building/wall.json`) to change one style only. The full list of parts is on
+[Building Palettes](Building-Palettes#per-part-palettes-from-614).
+
 ### Everything else
 
 | To change… | Read |
