@@ -91,9 +91,9 @@ To empty a kind of container completely, replace its table with an empty one (`"
 
 ### Schematic buildings
 
-A pasted schematic's containers take `cityworld:chests/schematic/<name>` when such a table exists (lower-case
-name, spaces as underscores), or the table named by its `.yml` sidecar's `Loot:` key; otherwise the default for
-where it stands. So a datapack can give one building its own loot without editing the schematic.
+A pasted schematic's containers take the table named by its `.yml` sidecar's `Loot:` key if it has one; otherwise
+`cityworld:chests/schematic/<name>` when such a table exists (the name lower-cased, spaces as underscores, anything
+but letters, digits, `_`, `.` and `-` dropped); otherwise the default for where it stands. So a datapack can give one building its own loot without editing the schematic.
 
 ### Lootr
 
@@ -137,9 +137,10 @@ hook. The vault's mess-hall store is the Modern `food` table in every world: the
 
 ### The Apocalypse vault
 
-The vault is four to eight levels deep, and its loot gets better floor by floor. Each room kind has a table, and a
-deeper floor's table is that room's table **plus** a depth bonus, `vault_floor1` to `vault_floor3` (the bottom
-floor always gets `vault_floor3`).
+The vault is four to eight levels deep (fewer where the world's floor is close), and its loot gets better floor by
+floor. Each room kind has a table, and a deeper floor's table is that room's table **plus** a depth bonus,
+`vault_floor1` to `vault_floor3`, spread over the levels (in a vault of four or more levels the bottom floor gets
+`vault_floor3`).
 
 | Table | Where | Hook |
 |---|---|---|

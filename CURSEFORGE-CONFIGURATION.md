@@ -10,49 +10,75 @@ dimensions on the same server — can each have their own city.
 **1. Just play — the defaults are tuned already.** Pick a world type (`cityworld:city`, or one of the
 style presets like `cityworld:apocalypse`) and go. Nothing below is required.
 
-**2. The Customize screen (single-player, easiest).** On the create-world screen, choose CityWorld as
-the world type and hit **Customize**. Every setting is there with a widget, grouped the same way as
-below. Locked settings for your chosen style (e.g. APOCALYPSE forcing decay on) grey out with a tooltip
-explaining why, so it's always clear what you can and can't change. **Presets** saves everything Customize
-holds (style, Nether and End, every setting, which structures generate) under a name, in
-`config/cityworld/presets/<name>.json`, and loads it for the next world. The structures page has **All on** /
-**All off**.
+**2. The Customize screen (single-player, easiest).** On the create-world screen, choose **CityWorld**
+as the world type and press **Customize**; the style (Modern, Apocalypse, Classic …) is picked inside it.
+The everyday settings are there with a widget, grouped the same way as below; the rarer ones (radius,
+naming, mob lists, caves, decay detail, landmark announcements, the biome-mod fine print) are datapack-only.
+Settings your style forces (Apocalypse always decays, for example) grey out with a tooltip saying why.
+**Presets** saves everything Customize holds (style, Nether and End, every setting, which structures
+generate) under a name, in `config/cityworld/presets/<name>.json`, and loads it for the next world. The
+structures page has **All on** / **All off**.
 
-**3. Hand-edit a datapack (servers, or version-controlled configs).** On first run, a full example is
-written to:
+⚠ **A world made with Customize keeps its settings inside the world** (in `level.dat`). That is what lets
+it need no datapack — and it means a settings datapack added later never changes that world.
 
-```
-config/cityworld/settings-example/
-├── pack.mcmeta
-├── data/cityworld/cityworld/world_settings/default.json
-└── settings-reference.txt        ← everything below, as plain text
-```
+**3. A datapack (servers, modpacks, or settings Customize doesn't show).** World settings are datapack
+files at `data/cityworld/cityworld/world_settings/<entry>.json`. Each world type reads one entry, and your
+file must have **that entry's name**:
 
-Copy that whole folder into `<world>/datapacks/`, edit `default.json`, and start (or `/reload`) the
-world. Every field is optional — list only what you want to change; anything you omit keeps its
-default. A file of just `{}` is a stock world.
+| World type | Reads entry | Your file |
+|---|---|---|
+| CityWorld (the Modern city), and the `/cityworld` dimension | `cityworld:modern` | `modern.json` |
+| CityWorld: Apocalypse | `cityworld:apocalypse` | `apocalypse.json` |
+| Every other CityWorld world type (Classic, Metro, Sparse, Nature, Destroyed, Flooded …) | `cityworld:default` | `default.json` |
 
-> **Tip:** the fastest workflow is to shape a world you like in single-player via Customize, then run
-> `/cityexport <name>` to bottle its exact settings into a datapack you can hand to a server.
+**Your file replaces the shipped entry — it does not merge with it.** Any field you leave out takes the
+built-in default from the reference below, *not* the style's: a `modern.json` holding only one setting
+loses Modern's taller buildings, schematics, shops and rivers. So start from the shipped file and change
+what you need. The shipped entries are in the mod jar (a jar is a zip) at the same path, and on
+[GitHub](https://github.com/Sablednah/CityWorld-ReForged/tree/master/src/main/resources/data/cityworld/cityworld/world_settings).
+
+On first run CityWorld also writes an example pack to `config/cityworld/settings-example/` (`pack.mcmeta`,
+`data/cityworld/cityworld/world_settings/default.json` and a plain-text `settings-reference.txt`). It is
+written once and never updated, so after a CityWorld update delete the folder to get a fresh one — and
+this page is the more complete reference: the example does not list every group (`caves`, `subways`,
+`structures`, `cities` and `roads` are missing from it).
+
+Put the pack in the world's `datapacks/` folder **before the world is first created**, or restart the
+world after adding it. New to datapacks? See the [Beginner's guide to datapacks](Beginners-Guide-to-Datapacks).
+
+> **Tip:** to move a world you like from single-player to a server, shape it with Customize, then run
+> `/cityexport <name>` — see [Commands](Commands#cityexport-name) for what it writes and the one rename it
+> needs for a Modern or Apocalypse world. The export does not yet carry the `caves`, `subways`,
+> `structures`, `cities` or `roads` groups, nor the biome-mod settings in `world`; copy those in by hand.
 
 ### When changes apply
 
-Settings are read when the world **loads**, and only affect **new chunks** — existing chunks never
+Settings are read when the world **starts** — restart the server, or quit to the title screen and reopen
+the world. `/reload` does not apply them. And only **new chunks** change: existing chunks never
 regenerate. Spawn odds, names, treasure odds and decay bite as you explore into fresh land;
-terrain-shaping knobs (seas, mountains, caves, radius) want a brand-new world to be seen properly.
+terrain-shaping settings (seas, mountains, caves, radius, rivers) want a brand-new world to be seen
+properly.
+
+### Your style forces some values
+
+A few styles hold settings fixed whatever a datapack says. **Apocalypse** always decays roads and
+buildings (building intensity `0.5`, road `0.4`, a pristine road in three), never decays nature, has no
+burning debris, runs overgrowth at `3.0`, raises surface hostiles to 1 in 3 and puts spawners in mines,
+sewers and bunkers. **Destroyed** decays at `1.1` with fire odds `0.07`. **Sparse** sets the city radii
+and the city grid itself. Customize greys these out; in a datapack they are simply overridden.
 
 ### Naming several profiles
 
-`default.json` overrides the built-in `cityworld:default`, which every CityWorld world preset and the
-`/cityworld` dimension reference — so editing it changes that world. To keep several named profiles
-instead, rename the file (e.g. `ruined.json`) and point a dimension's generator at it with
-`"settings": "cityworld:ruined"`.
+To keep several profiles, give your file a new name (e.g. `ruined.json`) and point a dimension's generator
+at it with `"settings": "cityworld:ruined"`.
 
 ---
 
 ## Recipes
 
-A few common asks, as complete `default.json` files.
+A few common asks. Each shows only the part to change: put these keys into your copy of the world type's
+settings file (see the table above), leaving the rest of it as shipped.
 
 **A gentler apocalypse — ruined buildings and roads, but no fire, on a normal green world:**
 
@@ -72,12 +98,16 @@ A few common asks, as complete `default.json` files.
 }
 ```
 
-**Cities far apart, tiled on a grid (SPARSE-style), in a normal-style world:**
+**Cities far apart, tiled on a grid (SPARSE-style), in a normal-style world** — the grid needs the radii
+too, or every chunk is still in range of a city:
 
 ```json
 {
   "radius": {
-    "minInbetweenChunkDistanceOfCities": 100
+    "minInbetweenChunkDistanceOfCities": 100,
+    "cityChunkRadius": 50,
+    "roadChunkRadius": 150,
+    "constructChunkRadius": 150
   }
 }
 ```
@@ -160,14 +190,22 @@ files, in the world's own datapack folder:
 }
 ```
 
-`pack.mcmeta` — `pack_format` must match your Minecraft version (**15** on 1.20.1; use your version's
-data-pack format otherwise):
+`pack.mcmeta` — the simplest one that works on every Minecraft version CityWorld supports:
 
 ```json
-{ "pack": { "description": "Villages in CityWorld", "pack_format": 15 } }
+{
+  "pack": {
+    "description": "Villages in CityWorld",
+    "pack_format": 15,
+    "supported_formats": [15, 999],
+    "min_format": 15,
+    "max_format": 999
+  }
+}
 ```
 
-Then `/reload`, or just start the world with it in place.
+Then create the world with it in place (or restart the world). `/reload` is not enough: the list is read
+once, when the world starts.
 
 **`"replace": false` is the one thing not to get wrong.** With `true` your file *replaces* CityWorld's
 list instead of adding to it, which drops `minecraft:strongholds` — and no stronghold means no End
@@ -188,7 +226,8 @@ footprint.
 **Telling whether it worked:** `/cwlocate structure minecraft:village_plains` (add `tp` to teleport
 there). In a CityWorld world that command only finds what is switched on for that world, so "not found"
 means the choice has not taken — which distinguishes a settings or datapack problem from an unlucky seed.
-(A server also logs what it read: `CityWorld: structure settings (overworld) allow [...] deny [...]`.) See
+(When the `structures` settings name anything, the server log also says what it read: `CityWorld: structure
+settings (overworld) allow [...] deny [...] -> N structure sets placed`.) See
 [`caves`](#caves--the-underground-cave-biomes-and-structure-caverns) below for the three
 look-alike outcomes and the two silent failures, and remember **nothing retro-fits into chunks that
 already exist** — test in a new world or in land you have never visited.
@@ -223,9 +262,9 @@ in `server.properties` instead):
 | `includeFarms` | `true` | Farm districts. |
 | `includeMunicipalities` | `true` | Civic district (town halls, libraries, museums, ...). |
 | `includeIndustrialSectors` | `true` | Factories, warehouses, storage yards. |
-| `includeAirborneStructures` | `true` | Balloons/blimps over the fields. |
+| `includeAirborneStructures` | `true` | Balloons/blimps over the fields. Off in the Apocalypse preset. |
 | `includeBuildingInteriors` | `true` | Furnish building interiors. Off = empty shells (faster). |
-| `includeSchematics` | `false` | Drop the bundled classic building schematics into cities. |
+| `includeSchematics` | `false` | Drop the bundled classic building schematics into cities. On in the Modern and Apocalypse presets. |
 | `includeNamedRoads` | `true` | Street-name signs. |
 
 ### `terrain` — the land, its fluids, and decay
@@ -261,10 +300,10 @@ in `server.properties` instead):
 
 | Setting | Default | What it does |
 |---|---|---|
-| `buildingIntensity` | `1.0` | How ruined a decayed **building** is — scales both the number and size of collapse holes. Below 1 = light weathering, above 1 = heavy rubble (much above ~1.3 shreds buildings past recognition). APOCALYPSE uses `0.5`, DESTROYED `1.1`. |
-| `roadIntensity` | `1.0` | The same, for decayed **roads**. APOCALYPSE `0.4`, DESTROYED `1.1`. |
-| `oddsOfDecayFire` | `0.20` | Fraction of collapse rubble that catches fire. Only bites when `includeFires` **and** `includeDecayedFires` are both on. DESTROYED uses `0.07` — even 0.2+ reads as a carpet of flame. |
-| `oddsOfPristineRoad` | `0.0` | Chance a road chunk is spared and stays intact, so a ruined grid keeps walkable stretches. APOCALYPSE uses `0.3`. |
+| `buildingIntensity` | `1.0` | How ruined a decayed **building** is — scales both the number and size of collapse holes. Below 1 = light weathering, above 1 = heavy rubble (much above ~1.3 shreds buildings past recognition). APOCALYPSE forces `0.5`, DESTROYED `1.1`. |
+| `roadIntensity` | `1.0` | The same, for decayed **roads**. APOCALYPSE forces `0.4`, DESTROYED `1.1`. |
+| `oddsOfDecayFire` | `0.20` | Fraction of collapse rubble that catches fire. Only bites when `includeFires` is on and the style keeps burning debris (APOCALYPSE never does). DESTROYED forces `0.07` — even 0.2+ reads as a carpet of flame. |
+| `oddsOfPristineRoad` | `0.0` | Chance a road chunk is spared and stays intact, so a ruined grid keeps walkable stretches. APOCALYPSE forces `0.3`. |
 
 ### `caves` — the underground: cave biomes and structure caverns
 
@@ -272,8 +311,8 @@ Two things here are **datapack tags, not settings**, because they are lists of i
 
 | Tag | What it decides |
 |---|---|
-| `#cityworld:allowed` (structure sets) | Which vanilla structures generate. Ships as strongholds, trial chambers and ancient cities. Add another mod's structure set here and it will generate; **an absent or empty tag means none**, so a stripped datapack falls back to CityWorld-only worldgen rather than letting villages loose. |
-| `#cityworld:cave_pool` (biomes) | Which cave biomes the underground draws from. Ships as deep dark, lush, dripstone, and sulfur caves (Minecraft 26.2+, marked optional so it is simply absent on older versions). Add a modded cave biome here and it will appear. |
+| `#cityworld:allowed` (structure sets) | Which vanilla and mod structures generate. Ships as strongholds, trial chambers, ancient cities, Nether fortresses and bastions, and End cities, plus optional entries for Cataclysm, Dungeon Crawl, Battle Towers and Alex's Caves (used only when those mods are installed). Add another mod's structure set here and it will generate; **an absent or empty tag means none**, so a stripped datapack falls back to CityWorld-only worldgen rather than letting villages loose. |
+| `#cityworld:cave_pool` (biomes) | Which cave biomes the underground draws from. Ships as deep dark, lush, dripstone, and sulfur caves (Minecraft 26.2+, marked optional so it is simply absent on older versions), plus optional Biomes O' Plenty and Alex's Caves cave biomes. Add a modded cave biome here and it will appear. |
 
 > **Adding another mod's structures — and telling whether it worked.**
 >
@@ -440,16 +479,16 @@ treasure chests underground). What any container holds, and how a modpack adds i
 | `spawnTrees` | `0.5` | How densely trees grow. |
 | `subSurfaceStyle` | `"LAND"` | What fills space under a FLOATING world's land: `NONE`, `LAND`, `CLOUD`, `LAVA`. Only the FLOATING style reads this. |
 | `ruralnessLevel` | `0.0` | Skews the world more rural (more nature, fewer cities) — up toward `1.0`. |
-| `maxBuildingFloors` | `20` | Tallest a building may rise, in floors (4 blocks each) above street level. 20 = the classic 1.8 look; MODERN ships taller. Sensible range 8–60. Also on the Customize screen. |
+| `maxBuildingFloors` | `20` | Tallest a building may rise, in floors (4 blocks each) above street level. 20 = the classic 1.8 look; the Modern and Apocalypse presets ship `40`. Sensible range 8–60. Also on the Customize screen. |
 | `broadcastSpecialPlaces` | `false` | Announce landmarks in chat as they generate ("Vault 42 generated near 1520, -340"), to the players in the world it happened in. Off by default — chunks generate wherever anyone explores. The same events always go to the debug log regardless. Schematics join in only if their `.yml` also sets `BroadcastLocation: true`. |
-| `announcedLandmarks` | the rares | Which landmark kinds may chat-announce (with the toggle above on). Default `["airship","saucer","vault","zoo","biodome","hospital","schematic","mall"]`; a server can add `castle`, `oilplatform`, `radiotower`, `bunker`, `museum`, `mineentrance`, `campground`, `shack`, `balloon`, `fishpond`, `subway` — or trim the list down. **With JourneyMap installed this list also decides which landmarks get a map waypoint**, and that happens whether or not chat announces are on. |
+| `announcedLandmarks` | the rares | Which landmark kinds may chat-announce (with the toggle above on). Default `["airship","saucer","vault","zoo","biodome","hospital","schematic","mall"]`; a server can add `castle`, `oilplatform`, `radiotower`, `bunker`, `museum`, `mineentrance`, `campground`, `shack`, `balloon`, `fishpond`, `vaultroad`, `hospitaldept`, `subway` — or trim the list down. **With JourneyMap installed this list also decides which landmarks get a map waypoint**, and that happens whether or not chat announces are on. |
 
 #### Modded biomes
 
 | Setting | Default | What it does |
 |---|---|---|
-| `wildDecoration` | `BOTH` | Who decorates **wild (nature) land** in MODERN/APOCALYPSE. `BOTH` runs CityWorld's cover *and* vanilla's biome features — the default, and the densest. `CITYWORLD` skips vanilla's, leaving CityWorld's own cover alone. `VANILLA` skips CityWorld's entirely, so vanilla — **and any biome mod you have installed** — is the sole decorator; note that also drops CityWorld's cactus and its MODERN blue-ice peaks, which get vanilla's snow instead. City, road and structure land is always CityWorld's alone, whatever this is set to. |
-| `climateWarmth` | `0.25` | Leans the temperature field warm. `0.0` is the raw field; higher values shift the average up without narrowing the range (0 stays 0, 1 stays 1), so you keep frozen peaks and deserts but see more warm ground between them. The default lifts the mean by about 17%, which is there because worlds read persistently cold. |
+| `wildDecoration` | `BOTH` (`VANILLA` in the Modern and Apocalypse presets) | **Wild plants** in Customize: who decorates **wild (nature) land** in MODERN/APOCALYPSE. `BOTH` runs CityWorld's cover *and* vanilla's biome features — the default, and the densest. `CITYWORLD` skips vanilla's, leaving CityWorld's own cover alone. `VANILLA` skips CityWorld's entirely, so vanilla — **and any biome mod you have installed** — is the sole decorator; note that also drops CityWorld's cactus and its MODERN blue-ice peaks, which get vanilla's snow instead. City, road and structure land is always CityWorld's alone, whatever this is set to. |
+| `climateWarmth` | `0.25` | Leans the temperature field warm. `0.0` is the raw field; higher values shift the average up without narrowing the range (0 stays 0, 1 stays 1), so you keep frozen peaks and deserts but see more warm ground between them. The default lifts the mean by about 14%, which is there because worlds read persistently cold. |
 | `useModdedBiomes` | `true` | Let installed biome mods (Biomes O' Plenty and anything else built on **TerraBlender**) contribute biomes to the world. On by default, because installing a biome mod is itself the request — set it `false` to keep CityWorld's own biome selection. Does nothing at all if you have no such mod. Oceans, shores and peaks always stay CityWorld's, since those follow the terrain exactly. |
 | `moddedBiomeShare` | `0.35` | How much contested ground a biome mod may own outright. A modded biome is normally picked only where it beats every vanilla biome in the climate lookup, and many mod biomes overlap CityWorld's climate on every axis yet never quite win — measured with Biomes O' Plenty, 25 of them. On this share of the map the lookup runs with vanilla's biomes removed, so those compete only with each other. The share is regional, not scattered, so a mod gets areas you can walk across. `0.0` means "only where they outright win"; `1.0` hands every contested column to the mod. Needs `useModdedBiomes`. |
 | `packPreset` | `"minecraft:normal"` | The world preset CityWorld reads the pack's overworld from. **Vanilla land** (`cities.vanillaTerrain`) takes its terrain noise and biome source from it; **CityWorld's land** offers the foreign biomes it declares through `moddedBiomeShare`, exactly as TerraBlender's. Datapack biome mods — Terralith, Dreamwoods' Grand Terrain — rewrite `minecraft:normal` and write their biomes inline in it, nowhere else, so with this they just work; a pack that gives vanilla another preset names it here. Blank reads no preset (vanilla's registry entries, as before 6.11). |
@@ -487,7 +526,7 @@ add `"append": true` to **add** to it instead:
 | List | What it's for |
 |---|---|
 | `villagerGivenNames` / `villagerSurnames` | Villager names. |
-| `streetTerms` | Cardinal/central words (`declaration`, `N`, `Main`, `S`, `W`, `Central`, `E`). |
+| `streetTerms` | The direction and centre words, **by position**: the first entry is ignored, then North, Main, South, West, Central, East. Give all seven to change them; `append` has no effect on this list. |
 | `streetPrefixes` | Optional street prefixes (`Old`, `New`, `Fort`, ...). |
 | `streetStarts` / `streetEnds` | Invented street name syllables (`Elm` + `wood`, `Oak` + `ville`, ...). |
 | `streetSuffixes` | Road types (`Street`, `Avenue`, `Boulevard`, ...). |
@@ -512,6 +551,6 @@ Each list is empty by default (= keep the built-in bag). List entity ids to **re
 
 ---
 
-*This page mirrors `settings-reference.txt`, generated alongside the example datapack on first run —
-if the two ever disagree, the file in your `config/` folder is the authority for the version you're
-running.*
+*`settings-reference.txt` in `config/cityworld/settings-example/` is written once, on first run, and is
+not updated afterwards; where it and this page disagree, this page is checked against the current
+version.*

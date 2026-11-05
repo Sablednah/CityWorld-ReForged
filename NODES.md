@@ -1,9 +1,9 @@
 # Permission nodes
 
-**Status: accurate as of 5.3.2, and hand-written** — like Factions' `NODES.md` and unlike Standards',
+**Hand-written, checked against the code for 6.13.0** — like Factions' `NODES.md` and unlike Standards',
 which is generated because it has 72 nodes to generate from. Five is a table you can read.
 
-CityWorld asks NeoForge's `PermissionAPI` for every one of these, so they work with LuckPerms, with
+CityWorld asks the loader's `PermissionAPI` (NeoForge's, or Forge's on 1.20.1) for every one of these, so they work with LuckPerms, with
 Standards' own handler (`/rank`), or with nothing installed at all — in which case the **Default**
 column is the whole answer.
 
@@ -16,9 +16,9 @@ column is the whole answer.
 
 | Node | Default | What it allows |
 |---|---|---|
-| `cityworld.info` | `everyone` | `/cityinfo` — read the plan under your feet: world style, context, lot, nature percentage, and the name of the schematic you are standing in. Reads only. |
+| `cityworld.info` | `everyone` | `/cityinfo` — read the plan under your feet: district, lot, its name or street, shop, schematic, roads and nature percentage. Also `/citymap` (`on`, `off`, `keep`) — the city plan on JourneyMap. Reads only. |
 | `cityworld.teleport` | `ops` | `/cityworld` and `/cityworld leave` — jump in and out of the `cityworld:city` dimension. |
-| `cityworld.find` | `ops` | `/cityfind`, `/cityfind lot`, `/cityfind lots`, `/cityfind street` and `/cwlocate` — search for a landmark, a lot kind, a street or a biome. **Includes the `tp` forms**, so this grants travelling to what was found. |
+| `cityworld.find` | `ops` | `/cityfind`, `/cityfind lot`, `/cityfind lots`, `/cityfind street`, `/cityfind city`, `/cityfind river`, `/cwlocate` and `/cwlocate structure` — search for a landmark, a lot kind, a street, a city, a river, a biome or a structure. **Includes the `tp` forms**, so this grants travelling to what was found. |
 | `cityworld.schematic` | `ops` | `/cityschem list` and `/cityschem <name>` — list and paste schematics. **Writes blocks into the world.** |
 | `cityworld.export` | `ops` | `/cityexport [name]` — write this world's settings out as a datapack JSON. **Writes a file to the server.** |
 

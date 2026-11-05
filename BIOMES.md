@@ -107,7 +107,8 @@ CityWorld never runs surface rules. The data map `data_maps/worldgen/biome/groun
 { "values": { "biomesoplenty:volcanic_plains": { "surface": "biomesoplenty:black_sand", "subsurface": "biomesoplenty:black_sandstone" } } }
 ```
 
-Details and the shipped entries are in [Building Palettes](Building-Palettes).
+Details, and the `cityworld:ground/<kind>` biome tags that cover the common cases without a data map, are in
+[Building Palettes](Building-Palettes#biome-ground).
 
 ### Point CityWorld at a different world preset
 

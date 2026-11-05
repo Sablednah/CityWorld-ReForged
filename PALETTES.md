@@ -10,9 +10,16 @@ This is also how a *"CityWorld × some other mod"* compatibility pack works.
 
 Most of the time you don't need to do anything.
 
-CityWorld's palettes are built on top of the ordinary vanilla and NeoForge common tags — so a mod
-that tags its blocks the way mods are supposed to (its planks in `#minecraft:planks`, its stone in
-`#c:stones`) **already shows up in CityWorld cities the moment you install it.** No pack required.
+CityWorld's palettes are built on top of the ordinary vanilla and common tags — so a mod that tags its
+blocks the way mods are supposed to **already shows up in CityWorld cities the moment you install it**:
+its planks (`#minecraft:planks`), wool and terracotta, and on NeoForge its concrete and glazed terracotta
+(`#c:concretes`, `#c:glazed_terracottas`). No pack required. **Stone never joins by itself** — there is no
+stone palette built on `#c:stones` — so a mod's bricks go into a palette by hand (see below).
+
+> New to datapacks? Start with the [Beginner's guide to datapacks](Beginners-Guide-to-Datapacks): where a
+> pack goes, the folder names per Minecraft version, and a first pack that proves yours is being read.
+>
+> **On 1.20.1 every `tags/block/` path on this page is `tags/blocks/`** (and `tags/item/` is `tags/items/`).
 
 A compatibility pack is for the other cases:
 
@@ -23,8 +30,8 @@ A compatibility pack is for the other cases:
 
 ## The palettes
 
-Each of these is a block tag CityWorld resolves when a world is created. Add to one and the blocks
-you add start appearing in that palette.
+Each of these is a block tag CityWorld reads when the world starts. Add to one and the blocks you add
+start appearing in that palette, in chunks generated after the next restart.
 
 | Tag | Used for | Ships as |
 |---|---|---|
@@ -41,15 +48,18 @@ you add start appearing in that palette.
 
 ### Biome pools
 
-Three biome tags decide which biomes CityWorld places by a route other than climate. All ship with
-Biomes O' Plenty ids marked optional, so they cost nothing without it — and any biome mod can be added
-the same way.
+These biome tags decide which biomes CityWorld places by a route other than its own climate lookup. They
+ship with Biomes O' Plenty ids marked optional, so they cost nothing without it — and any biome mod can be
+added the same way.
 
 | Tag | What it does |
 |---|---|
 | `cityworld:cave_pool` | Biomes placed **underground**, as patches, with their own decoration. |
 | `cityworld:surface_pool` | Biomes given a share of surface cells **outright**, for biomes the climate lookup would never choose. |
 | `cityworld:shore_pool` | Beach variants that may **stand in for CityWorld's own beach** where the terrain says shore. |
+| `cityworld:ocean_pool` | Ocean variants that may stand in for CityWorld's own ocean and deep ocean. Ships empty (BoP adds no overworld oceans). |
+| `cityworld:nether_pool` | The biomes of the ruined-city Nether. Ships as `#minecraft:is_nether` and `#c:is_nether`, so a mod's Nether biomes join by themselves. |
+| `cityworld:ground/<kind>` | Which biomes get which ground: `gravel`, `sand`, `red_sand`, `stone`, `podzol`, `coarse_dirt`, `terracotta`, `basalt`, `mud`. Checked before the built-in answers. For any other block, use the `ground` data map ([below](#biome-ground)). |
 
 The surface and shore pools exist because some biomes cannot win a climate lookup at all: they overlap
 CityWorld's climate on every axis and still never sit nearest, so no amount of widening or
@@ -102,7 +112,8 @@ colours randomised per placement.
 #### Mod authors: supporting CityWorld from your side
 
 **You do not need us to add your mod.** Ship these two files in your own jar and CityWorld picks your
-furniture up the moment both mods are installed. Neither file does anything without CityWorld, so
+furniture up the moment both mods are installed. (On **1.20.1** ship only the tag: there a data-map file
+in your jar would replace CityWorld's whole `furniture` map — see [Data maps](#data-maps-swapping-blocks-unlit-lights-biome-ground).) Neither file does anything without CityWorld, so
 there is no dependency and no harm in shipping them always.
 
 **1. Say what your blocks are.** `data/cityworld/tags/block/furniture/chair.json` in *your* jar:
@@ -245,9 +256,9 @@ therefore normal, not a fault.
 | `cityworld:light/street_lamp` | the lamp posts along every street | **empty** — Macaw's street lamps when installed; the fence-and-glowstone post otherwise |
 | `cityworld:fittings/path` | the walkways of a park (the cross and ring paths, the maze approaches): one paving per platmap, like the fence, so connected park chunks share it. A thin one (Macaw's `*_paving` plates, half a pixel) is laid OVER the ground like a carpet, a full block (its flagstone, weave, bond, crystal floor) IS the ground: told apart by the block's collision shape, so mix them freely | **empty** — Macaw's Paths and Pavings' stone pavings (flagstone, running bond, crystal floor, windmill weave and the six `*_paving` patterns of each stone, 120 blocks) when installed; the grass path otherwise |
 | `cityworld:fittings/track` | a country track: the strip between fields, the farmyard's path to the well | **empty** — Macaw's Paths' gravel, dirt, podzol and sand path blocks when installed; the grass path otherwise |
-| `cityworld:fittings/road` | the surface of every city street, **one pick per world**; from its id the mod's matching pieces are found by name — `<surface>_broken_center_line` (the dashed lane line), `<surface>_crosswalk` (the zebra on every junction arm), `<surface>_manhole` (one stretch in three), the namespace's `sidewalk_step` (kerbs along every pavement edge) and `roadsign_rod` + signs (`stop` at a T, `dead_end`, `speedlimit_30`/`_50` on one straight in four, `city_1..5_sign` where a road leaves town). A missing piece is simply not drawn | **empty** — Macaw's Roads and Streets' `asphalt` when installed; the style's own pavement, quartz lines and fence-post signs otherwise |
-| `cityworld:fittings/skybridge` | a two-wide deck between an upper floor of two neighbouring towers of different buildings (both at least `bridges.skybridgeMinFloors` floors, a floor at the same height), one pair in `bridges.oddsOfSkybridge`, a doorway cut where it meets each wall | **empty** — Macaw's Bridges' iron, glass, stone brick, deepslate, blackstone and prismarine bridges when installed; nothing otherwise |
-| `cityworld:fittings/rope_bridge` | a one-wide rope bridge across a ravine in the wild: where the chunk's middle row drops `bridges.wildBridgeDepth` or more between two ends of a height | **empty** — Macaw's Bridges' rope bridges, one per wood, when installed; nothing otherwise |
+| `cityworld:fittings/road` | the surface of every city street, **one pick per world**; from its id the mod's matching pieces are found by name — `<surface>_broken_line` (the dashed centre line), `<surface>_crosswalk` (the zebra on every junction arm), `<surface>_manhole` (one stretch in three), the namespace's `sidewalk_step` (kerbs along every pavement edge) and `roadsign_rod` + signs, each on the driver's side of its traffic (`roads.driveOnLeft`): `stop` at a T, `dead_end`, a pair of speed limits back to back where town (`roads.speedLimitUrban`, 50) meets country (`roads.speedLimitRural`, 30) with repeats in the slower zone (`roads.oddsOfSpeedRepeat`), and `city_1..5_sign` where a road leaves town. A missing piece is simply not drawn | **empty** — Macaw's Roads and Streets' `asphalt` when installed; the style's own pavement, quartz lines and fence-post signs otherwise |
+| `cityworld:fittings/skybridge` | with `roads.skybridges` on (the Apocalypse default): a two-wide deck between an upper floor of two neighbouring towers of different buildings (both at least `roads.skybridgeMinFloors` floors, a floor at the same height), one pair in `roads.oddsOfSkybridge`, a doorway cut where it meets each wall; half the pairs get a rope bridge instead | **empty** — Macaw's Bridges' iron, glass, stone brick, deepslate, blackstone and prismarine bridges when installed; nothing otherwise |
+| `cityworld:fittings/rope_bridge` | a one-wide rope bridge: in the wild, from a ridge across a valley at least `roads.wildBridgeDepth` (8) deep to where the far side meets the deck, up to `roads.wildBridgeSpan` (48) long, at most one per `roads.wildBridgeRegion` (32-chunk) region, half the regions (`roads.oddsOfWildBridge`); and the rope skybridges, and the rare rope across a street (`roads.oddsOfStreetRope`, one per district at most) | **empty** — Macaw's Bridges' rope bridges, one per wood, when installed; nothing otherwise |
 | `cityworld:light/tiki` | two-tall torches flanking a campground's fire | **empty** — Macaw's tiki torches when installed; nothing otherwise |
 | `cityworld:light/garden` | a light on the inner post of each park entrance | **empty** — Macaw's garden lights when installed; nothing otherwise |
 
@@ -428,11 +439,69 @@ are facings: CityWorld turns the building to fit its lot and turns the fit-out w
   does not parse is skipped and named once in the log. Files apply in id order; for a cell two files both swap, the
   later file wins.
 
+## Data maps: swapping blocks, unlit lights, biome ground
+
+Tags say *which* blocks belong to a pool. **Data maps** attach a value to a block or biome instead. Three
+are for packs; the furniture one is described under [Furniture](#furniture).
+
+> **On 1.20.1 only one pack's copy of each data-map file is read** — the one highest in the pack order —
+> and `"replace"` and `remove` are ignored. A pack shipping `furniture.json`, `ground.json` or `unlit.json`
+> there replaces CityWorld's whole map rather than adding to it. Keep all your swaps in one file. The
+> NeoForge lines merge every pack's file as usual.
+
+### Block substitutes
+
+`data/cityworld/data_maps/block/substitute.json` (the same path on every version) swaps one block for
+another **everywhere CityWorld places it** — its generated buildings, roads and decoration, and its
+schematics. CityWorld ships it empty; the
+[Neutral Palette](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/neutral-palette-1.0.0)
+add-on is a complete example.
+
+```json
+{
+  "replace": false,
+  "values": {
+    "minecraft:iron_block": { "with": "minecraft:smooth_stone" },
+    "minecraft:cut_copper_stairs": { "with": "minecraft:polished_granite_stairs" },
+    "minecraft:netherrack": { "with": "minecraft:granite", "realms": ["overworld"] }
+  }
+}
+```
+
+- **`with`** — the block to place instead. Every state property the two blocks share is kept, so stairs
+  swapped for stairs keep their facing, half and shape.
+- **`realms`** (optional) — any of `overworld`, `nether`, `end`; absent means all three. The `cityworld:city`
+  dimension counts as overworld. A misspelt realm silently matches nothing.
+- Matching is by block, never by state, and it is one pass: A→B plus B→C does not turn A into C.
+- It does **not** touch vanilla's own features and structures, or the overgrowth and lush-cave passes.
+- It is read as each block is placed, so `/reload` reaches new chunks.
+- A block from another mod should carry a condition, so the file still loads without it:
+  `"examplemod:thing": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "examplemod" }], "value": { "with": "examplemod:other" } }`.
+
+### Unlit lights
+
+`data/cityworld/data_maps/block/unlit.json` decides what a light becomes when the world's **Working lights**
+setting is off (`features.includeWorkingLights: false` — the Apocalypse default). An entry may give `with`
+(another block) and/or `properties` (`{"name": "value"}`); afterwards any `lit` property is set false.
+CityWorld ships torches → redstone torches, lanterns → chains, glowstone, sea lanterns and froglights →
+redstone lamps. The vault is exempt: it keeps its own power.
+
+### Biome ground
+
+CityWorld never runs biome surface rules. A biome's top block comes from the `cityworld:ground/<kind>` biome
+tags (above), then from the data map `data/cityworld/data_maps/worldgen/biome/ground.json`:
+
+```json
+{ "values": { "biomesoplenty:volcanic_plains": { "surface": "biomesoplenty:black_sand", "subsurface": "biomesoplenty:black_sandstone" } } }
+```
+
+`subsurface` is optional. See [Biome Mods](Biome-Mods) for when you need it.
+
 ## Writing a compatibility pack
 
 A pack is just tag files. To add a mod's wood to every wooden thing CityWorld builds, create:
 
-`data/cityworld/tags/block/build/planks.json`
+`data/cityworld/tags/block/build/planks.json` (on 1.20.1: `tags/blocks/build/planks.json`)
 
 ```json
 {
@@ -473,29 +542,34 @@ the sulfur from the MODERN stone palette:
 }
 ```
 
-`values` still has to be present, even when empty. This is a NeoForge extension — it does nothing on
-other loaders, where the only options are add or wholesale replace.
+`values` still has to be present, even when empty. `remove` works on every CityWorld line (NeoForge, and
+Forge on 1.20.1); removing a block that isn't there is ignored.
 
-Drop the pack in the world's `datapacks/` folder, or in `config/openloader/data/` if you use
-OpenLoader, and **create a new world** — palettes are resolved once, when a world is first
-generated.
+Drop the pack in the world's `datapacks/` folder, or in `config/openloader/data/` if you use OpenLoader.
+The building palettes are read when the world starts: restart the world (or the server) and **new**
+chunks use them — `/reload` is not enough for these, though the fittings, furniture and decoration pools
+and the data maps do follow it. Chunks already generated never change, so a fresh world gives the
+cleanest look.
 
 ## How weighting works, and why your blocks might feel rare
 
 A palette isn't a flat list. Each tag occupies a fixed number of **slots**, and that number doesn't
 change when the tag grows.
 
-House walls, for example, give planks 6 slots out of 53. That was six slots when there were six wood
-types in the game and it's still six now that there are twelve — so wooden houses are exactly as
-common as they always were, and *which* wood gets used is what widened.
+Classic house walls, for example, give planks 6 slots out of 53. That was six slots when there were six
+wood types in the game and it's still six now that there are twelve — so wooden houses are exactly as
+common as they always were, and *which* wood gets used is what widened. In the Modern and Apocalypse
+styles, plain stone is swapped for `cityworld:build/modern_stones`, which takes 24 slots (76 in all) and
+already holds about 30 blocks; the CityWorld End blends in `build/end_stones` on top.
 
 The practical consequence: adding ten modded wood types to `cityworld:build/planks` does **not** make
 wooden buildings ten times more likely. It splits the existing wooden share across more woods. That's
 deliberate — it stops a heavily modded world from turning every city into a timber yard — but it does
 mean that in a pack with lots of wood, any one specific plank becomes uncommon.
 
-If you want a mod's blocks to be genuinely prominent, add them to a palette with fewer competitors
-(`cityworld:build/modern_stones` has 32) rather than to the biggest one.
+**If you want a block to be genuinely prominent, don't add it to a palette — substitute it** for a
+block CityWorld already uses a lot ([Block substitutes](#block-substitutes)). Or replace a small palette
+outright (`"replace": true`) with just the blocks you want, accepting that you lose the rest.
 
 ## Determinism
 
