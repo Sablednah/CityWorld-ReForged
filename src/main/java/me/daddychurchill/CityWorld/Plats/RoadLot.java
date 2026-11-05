@@ -78,10 +78,12 @@ public class RoadLot extends ConnectedLot {
 		if (blockYs.getMaxHeight() > topOfRoad + tunnelHeight)
 			topOfRoad += tunnelHeight;
 
-		pavementMat = platmap.generator.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(0,
-				Material.WHITE_TERRACOTTA);
-		linesMat = platmap.generator.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(1,
-				Material.QUARTZ_BLOCK);
+		// a pack's street palettes override these: one pick for the whole world, so every road matches
+		// (Support/Palettes)
+		pavementMat = me.daddychurchill.CityWorld.Support.Palettes.pick(platmap.generator, me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_SURFACE, 0, 0,
+				platmap.generator.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(0, Material.WHITE_TERRACOTTA));
+		linesMat = me.daddychurchill.CityWorld.Support.Palettes.pick(platmap.generator, me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_LINES, 0, 0,
+				platmap.generator.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(1, Material.QUARTZ_BLOCK));
 		// paved sidewalk is 2, read in PlatLot
 		dirtroadMat = platmap.generator.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(3,
 				Material.GRASS_PATH);
@@ -90,7 +92,12 @@ public class RoadLot extends ConnectedLot {
 		pavementIsClay = pavementMat == Material.WHITE_TERRACOTTA;
 		dirtroadIsClay = dirtroadMat == Material.WHITE_TERRACOTTA;
 		// a road mod's dressing (Macaw's Roads): one surface pick per world, its markings, kerb and signs by name
-		kit = me.daddychurchill.CityWorld.Support.RoadKit.forWorld(platmap.generator);
+		// a pack's street/surface palette is its own choice of road, over a road mod's kit (whose markings are
+		// found from its own surface and would not fit another block)
+		kit = me.daddychurchill.CityWorld.Support.Palettes.poolFor(platmap.generator,
+				me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_SURFACE).isEmpty()
+						? me.daddychurchill.CityWorld.Support.RoadKit.forWorld(platmap.generator)
+						: null;
 	}
 
 	/** The road mod's kit for this world (surface, markings, kerb, signs), or null without one. */

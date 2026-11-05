@@ -219,6 +219,14 @@ public class FactoryBuildingLot extends IndustrialBuildingLot {
 					.itemsSelectMaterial_FactoryInsides.getRandomMaterial(chunkOdds, Material.CLAY), chunkOdds);
 			Material smokestackMat = generator.materialProvider.deOre(generator.materialProvider
 					.itemsSelectMaterial_FactoryInsides.getRandomMaterial(chunkOdds, Material.CLAY), chunkOdds);
+			wallMat = me.daddychurchill.CityWorld.Support.Palettes.pick(generator,
+					me.daddychurchill.CityWorld.Support.Palettes.Part.FACTORY_WALL, chunkX, chunkZ, wallMat);
+			officeMat = me.daddychurchill.CityWorld.Support.Palettes.pick(generator,
+					me.daddychurchill.CityWorld.Support.Palettes.Part.FACTORY_OFFICE, chunkX, chunkZ, officeMat);
+			supportMat = me.daddychurchill.CityWorld.Support.Palettes.pick(generator,
+					me.daddychurchill.CityWorld.Support.Palettes.Part.FACTORY_SUPPORT, chunkX, chunkZ, supportMat);
+			smokestackMat = me.daddychurchill.CityWorld.Support.Palettes.pick(generator,
+					me.daddychurchill.CityWorld.Support.Palettes.Part.FACTORY_SMOKESTACK, chunkX, chunkZ, smokestackMat);
 			Material fluidMat = generator.materialProvider.itemsSelectMaterial_FactoryTanks.getRandomMaterial(chunkOdds,
 					Material.WATER);
 			// With fluids enabled, tanks hold CHEMICALS — the #cityworld:build/chemicals palette
