@@ -189,7 +189,7 @@ generates schematics itself. Names are the schematic **file names**, case insens
 
 Your own schematics go in `config/cityworld/schematics/<Family>/` — the family folder (`Highrise`,
 `Lowrise`, `Park`, `Neighborhood` …) decides which districts may use the building — and appear in the list
-after a restart.
+after a restart. [Custom Schematics](Custom-Schematics) has every folder, the sidecar keys and a worked example.
 
 ## `/cityexport [name]`
 

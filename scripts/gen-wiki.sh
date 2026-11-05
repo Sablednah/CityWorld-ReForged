@@ -58,6 +58,8 @@ emit CURSEFORGE-COMMANDS.md      "Commands" \
     "> Every command and what it is for. Source: \`CURSEFORGE-COMMANDS.md\`."
 emit PALETTES.md                 "Building-Palettes" \
     "> Which blocks build the cities, and how to add your own mod's. Source: \`PALETTES.md\`."
+emit SCHEMATICS.md               "Custom-Schematics" \
+    "> Add your own buildings to the cities: the folders, the sidecar, and a worked example. Source: \`SCHEMATICS.md\`."
 emit LOOT.md                     "Loot-Tables" \
     "> What CityWorld's chests hold, how to change it, and every table. Source: \`LOOT.md\`."
 emit BIOMES.md                   "Biome-Mods" \
@@ -91,6 +93,8 @@ MinecraftForge on 1.20.1.
   - [Your other mods' blocks and biomes](Configuring-CityWorld#full-settings-reference)
 - **[Building Palettes](Building-Palettes)** — which blocks build the cities, how to add your own, and how to
   swap one block for another everywhere (block substitutes).
+- **[Custom Schematics](Custom-Schematics)** — add your own buildings: build it, save it, drop it in the folder for
+  the district it belongs in (the folder names, the sidecar's odds and depth, a worked example, loot).
 - **[Loot Tables](Loot-Tables)** — what the cities' chests hold, how a modpack adds its own items, and every
   table CityWorld uses.
 - **[Biome Mods](Biome-Mods)** — Biomes O' Plenty, Terralith, Regions Unexplored and friends: which kinds work on
