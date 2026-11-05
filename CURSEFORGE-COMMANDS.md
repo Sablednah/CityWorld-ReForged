@@ -198,14 +198,19 @@ screen, or a datapack — into a ready-to-use datapack:
 
 ```
 /cityexport my-server-config
-> Exported this world's settings to config/cityworld/exports/my-server-config
-  — copy that folder into <world>/datapacks/ to use it.
+> Exported this world's settings to config/cityworld/exports/my-server-config as cityworld:modern. Copy that
+  folder into <world>/datapacks/ of a world of type cityworld:city (server: level-type=cityworld:city),
+  before the world is created or then restart it.
 ```
 
 The name is folded to lowercase letters, digits, `-` and `_`. This is the easy way to move a world you
-like from single-player to a server: shape it with Customize, export it, hand the folder over.
+like from single-player to a server: shape it with Customize, export it, hand the folder over, and set the
+server's `level-type` to the world type the message names.
 
-⚠ The pack writes the settings entry named `default`, which the Classic-family presets read. **The City
-(Modern) preset reads `modern` and Apocalypse reads `apocalypse`**: for those, rename
-`data/cityworld/cityworld/world_settings/default.json` in the exported folder to `modern.json` or
-`apocalypse.json`. See [Configuring CityWorld](Configuring-CityWorld#three-ways-to-set-them).
+The pack is written to the settings entry that world type reads — `modern` for CityWorld (Modern),
+`apocalypse` for Apocalypse, `default` for the other styles — with every setting spelled out.
+
+⚠ **Before 6.13.1** the export always wrote `default.json` and left out the `caves`, `subways`,
+`structures`, `cities` and `roads` groups. With a pack exported by 6.13.0 or earlier, rename
+`data/cityworld/cityworld/world_settings/default.json` to `modern.json` (CityWorld) or `apocalypse.json`
+(Apocalypse), and re-add those groups by hand — or simply export again on 6.13.1.

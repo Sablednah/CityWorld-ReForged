@@ -5,6 +5,21 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 6.13.1 (unreleased)
+
+### Fixed
+
+- **`/cityexport` wrote a pack a Modern or Apocalypse world never read.** It always wrote the `cityworld:default`
+  settings entry, but the CityWorld (Modern) world type and the `/cityworld` dimension read `cityworld:modern`,
+  and Apocalypse reads `cityworld:apocalypse`. It now writes the entry the world reads (a Customize-made world:
+  the one its style's world type reads) and says which `level-type` the pack is for.
+- **`/cityexport` lost settings.** The `caves`, `subways`, `structures`, `cities` and `roads` groups and seven
+  `world` settings (the biome-mod ones and `wildDecoration`) were never written, so an exported world lost its
+  rivers, structure choices, vanilla land and road settings. Every group is written now.
+- **The settings example was written once and never updated**, with a hand-kept reference that had fallen out of
+  date. `config/cityworld/settings-example/` is now rewritten when CityWorld updates and holds the three shipped
+  entries — `modern.json`, `apocalypse.json`, `default.json` — in full, with a README pointing at the wiki.
+
 ## 6.13.0
 
 ### Added

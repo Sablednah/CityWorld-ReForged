@@ -38,19 +38,20 @@ loses Modern's taller buildings, schematics, shops and rivers. So start from the
 what you need. The shipped entries are in the mod jar (a jar is a zip) at the same path, and on
 [GitHub](https://github.com/Sablednah/CityWorld-ReForged/tree/master/src/main/resources/data/cityworld/cityworld/world_settings).
 
-On first run CityWorld also writes an example pack to `config/cityworld/settings-example/` (`pack.mcmeta`,
-`data/cityworld/cityworld/world_settings/default.json` and a plain-text `settings-reference.txt`). It is
-written once and never updated, so after a CityWorld update delete the folder to get a fresh one — and
-this page is the more complete reference: the example does not list every group (`caves`, `subways`,
-`structures`, `cities` and `roads` are missing from it).
+CityWorld also writes an example pack to `config/cityworld/settings-example/`: the three shipped entries
+(`modern.json`, `apocalypse.json`, `default.json`) with every setting spelled out, and a `README.txt`. Copy
+the folder into your world, keep the file for your world type, and edit it. From 6.13.1 the folder is
+rewritten whenever CityWorld updates, so copy it rather than editing it in place. (6.13.0 and earlier wrote it
+once, with only `default.json` and a `settings-reference.txt` that had fallen out of date — delete an old
+folder to get the new one.)
 
 Put the pack in the world's `datapacks/` folder **before the world is first created**, or restart the
 world after adding it. New to datapacks? See the [Beginner's guide to datapacks](Beginners-Guide-to-Datapacks).
 
 > **Tip:** to move a world you like from single-player to a server, shape it with Customize, then run
-> `/cityexport <name>` — see [Commands](Commands#cityexport-name) for what it writes and the one rename it
-> needs for a Modern or Apocalypse world. The export does not yet carry the `caves`, `subways`,
-> `structures`, `cities` or `roads` groups, nor the biome-mod settings in `world`; copy those in by hand.
+> `/cityexport <name>`: it writes every setting into the entry the world type reads and tells you which
+> `level-type` to give the server. See [Commands](Commands#cityexport-name) — including what to do with a
+> pack exported before 6.13.1.
 
 ### When changes apply
 
@@ -551,6 +552,5 @@ Each list is empty by default (= keep the built-in bag). List entity ids to **re
 
 ---
 
-*`settings-reference.txt` in `config/cityworld/settings-example/` is written once, on first run, and is
-not updated afterwards; where it and this page disagree, this page is checked against the current
-version.*
+*This page is the reference for every setting; the example pack in `config/cityworld/settings-example/`
+holds the values, and its README points here.*
