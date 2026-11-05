@@ -33,6 +33,10 @@ public final class SettingsDatapack {
 
     /** The registry entry a bundled/overriding pack uses so a {@code cityworld:default} world picks it up. */
     public static final String DEFAULT_ENTRY = "default";
+    /** The entry the City (Modern) world preset and the {@code /cityworld} dimension read. */
+    public static final String MODERN_ENTRY = "modern";
+    /** The entry the Apocalypse world preset reads. */
+    public static final String APOCALYPSE_ENTRY = "apocalypse";
 
     private static final com.google.gson.Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -163,6 +167,13 @@ public final class SettingsDatapack {
         for (String kind : w.announcedLandmarks())
             announced.add(kind);
         world.add("announcedLandmarks", announced);
+        world.addProperty("useModdedBiomes", w.useModdedBiomes());
+        world.addProperty("wildDecoration", w.wildDecoration().name());
+        world.addProperty("climateWarmth", w.climateWarmth());
+        world.addProperty("biomeScale", w.biomeScale());
+        world.addProperty("moddedBiomeShare", w.moddedBiomeShare());
+        world.addProperty("packPreset", w.packPreset());
+        world.addProperty("moddedBiomeGrain", w.moddedBiomeGrain());
         root.add("world", world);
 
         CityWorldSettingsData.Radius rad = d.radius();
@@ -206,7 +217,118 @@ public final class SettingsDatapack {
         mobs.addProperty("append", m.append());
         root.add("mobs", mobs);
 
+        CityWorldSettingsData.Caves cv = d.caves();
+        JsonObject caves = new JsonObject();
+        caves.addProperty("structureCarveHalo", cv.structureCarveHalo());
+        caves.addProperty("structureCarveHaloUp", cv.structureCarveHaloUp());
+        caves.addProperty("surfaceMargin", cv.surfaceMargin());
+        // an empty list means "the built-in patches"; a list replaces them, so it is only written when set
+        root.add("caves", caves);
+
+        CityWorldSettingsData.Subways sw = d.subways();
+        JsonObject subways = new JsonObject();
+        subways.addProperty("enabled", sw.enabled());
+        subways.addProperty("spawners", sw.spawners());
+        root.add("subways", subways);
+
+        CityWorldSettingsData.Structures st = d.structures();
+        JsonObject structures = new JsonObject();
+        structures.add("allow", arr(st.allow()));
+        structures.add("deny", arr(st.deny()));
+        structures.addProperty("wildernessOnly", st.wildernessOnly());
+        root.add("structures", structures);
+
+        CityWorldSettingsData.Cities c = d.cities();
+        JsonObject cities = new JsonObject();
+        cities.addProperty("vanillaTerrain", c.vanillaTerrain());
+        cities.addProperty("spacing", c.spacing());
+        cities.addProperty("districts", c.districts());
+        cities.addProperty("districtsVariance", c.districtsVariance());
+        cities.addProperty("levelRange", c.levelRange());
+        cities.addProperty("maxWater", c.maxWater());
+        cities.addProperty("minNear", c.minNear());
+        cities.addProperty("rivers", c.rivers());
+        root.add("cities", cities);
+
+        CityWorldSettingsData.Roads rd = d.roads();
+        JsonObject roads = new JsonObject();
+        roads.addProperty("driveOnLeft", rd.driveOnLeft());
+        roads.addProperty("speedLimitUrban", rd.speedLimitUrban());
+        roads.addProperty("speedLimitRural", rd.speedLimitRural());
+        roads.addProperty("oddsOfSpeedRepeat", rd.oddsOfSpeedRepeat());
+        roads.addProperty("skybridges", rd.skybridges());
+        roads.addProperty("oddsOfSkybridge", rd.oddsOfSkybridge());
+        roads.addProperty("skybridgeMinFloors", rd.skybridgeMinFloors());
+        roads.addProperty("oddsOfStreetRope", rd.oddsOfStreetRope());
+        roads.addProperty("wildBridges", rd.wildBridges());
+        roads.addProperty("wildBridgeDepth", rd.wildBridgeDepth());
+        roads.addProperty("wildBridgeSpan", rd.wildBridgeSpan());
+        roads.addProperty("oddsOfWildBridge", rd.oddsOfWildBridge());
+        roads.addProperty("wildBridgeRegion", rd.wildBridgeRegion());
+        root.add("roads", roads);
+
+        // The codec's own encoding goes over the top. It is sparse (a field at its default is left out, and
+        // decodes back to that same default), so it can never lose a value — which makes it the guarantee:
+        // a field added to the codec and forgotten above is still exported whenever it differs from its
+        // default. Before this, /cityexport silently dropped five whole groups (rivers, structure choices,
+        // vanilla land, roads, caves) and seven world fields.
+        JsonElement exact = CityWorldSettingsData.CODEC.encodeStart(JsonOps.INSTANCE, d)
+                .getOrThrow(msg -> new IllegalStateException("CityWorld: failed to encode settings — " + msg));
+        overlay(root, exact.getAsJsonObject());
         return GSON.toJson(root);
+    }
+
+    /** Copies every member of {@code from} into {@code into}, recursing into objects both have. */
+    private static void overlay(JsonObject into, JsonObject from) {
+        for (var e : from.entrySet()) {
+            JsonElement mine = into.get(e.getKey());
+            if (mine != null && mine.isJsonObject() && e.getValue().isJsonObject())
+                overlay(mine.getAsJsonObject(), e.getValue().getAsJsonObject());
+            else
+                into.add(e.getKey(), e.getValue().deepCopy());
+        }
+    }
+
+    /**
+     * Where an exported world's settings go: the {@code world_settings} entry a server's world must read
+     * them from, and the world type ({@code level-type}) that reads that entry.
+     *
+     * @param namespace the entry's namespace (a datapack folder name under {@code data/})
+     * @param entry     the entry's name, and so the file name ({@code <entry>.json})
+     * @param worldType the world preset that reads it, or null when only a dimension naming it does
+     */
+    public record Target(String namespace, String entry, String worldType) {
+        public String id() {
+            return namespace + ":" + entry;
+        }
+    }
+
+    /**
+     * The entry a world's settings belong in. A world whose generator names a registry entry (every world
+     * preset does) exports to that entry; a Customize-made world carries its settings inline, so it exports
+     * to the entry its style's preset reads — {@code modern} for the City preset, {@code apocalypse} for
+     * Apocalypse, {@code default} for every other style. Exporting everything to {@code default}, as before
+     * 6.13.1, gave a pack that a Modern or Apocalypse world never read.
+     *
+     * @param named the entry the generator names, as {@code namespace:path}; null for inline settings
+     */
+    public static Target targetFor(String named, me.daddychurchill.CityWorld.CityWorldGenerator.WorldStyle style) {
+        String preset = switch (style) {
+            case MODERN -> "cityworld:city";
+            default -> "cityworld:" + style.name().toLowerCase(java.util.Locale.ROOT);
+        };
+        String byStyle = switch (style) {
+            case MODERN -> MODERN_ENTRY;
+            case APOCALYPSE -> APOCALYPSE_ENTRY;
+            default -> DEFAULT_ENTRY;
+        };
+        if (named == null)
+            return new Target(CityWorldMod.MODID, byStyle, preset);
+        int colon = named.indexOf(':');
+        String namespace = colon < 0 ? "minecraft" : named.substring(0, colon);
+        String entry = colon < 0 ? named : named.substring(colon + 1);
+        boolean shipped = CityWorldMod.MODID.equals(namespace) && entry.equals(byStyle);
+        return new Target(namespace, entry, shipped ? preset : null);
     }
 
     private static JsonArray arr(List<String> items) {
@@ -240,12 +362,26 @@ public final class SettingsDatapack {
      */
     public static Path writePack(Path packRoot, String entry, CityWorldSettingsData data, String description)
             throws IOException {
+        return writePack(packRoot, CityWorldMod.MODID, entry, data, description);
+    }
+
+    /** As {@link #writePack(Path, String, CityWorldSettingsData, String)}, for an entry in any namespace. */
+    public static Path writePack(Path packRoot, String namespace, String entry, CityWorldSettingsData data,
+            String description) throws IOException {
         Files.createDirectories(packRoot);
         Files.writeString(packRoot.resolve("pack.mcmeta"), packMeta(description));
-        Path settings = packRoot.resolve("data").resolve(CityWorldMod.MODID).resolve(CityWorldMod.MODID)
+        writeEntry(packRoot, namespace, entry, data);
+        return packRoot;
+    }
+
+    /** Writes one settings entry into an existing pack: {@code data/<namespace>/cityworld/world_settings/<entry>.json}. */
+    public static Path writeEntry(Path packRoot, String namespace, String entry, CityWorldSettingsData data)
+            throws IOException {
+        Path settings = packRoot.resolve("data").resolve(namespace).resolve(CityWorldMod.MODID)
                 .resolve("world_settings");
         Files.createDirectories(settings);
-        Files.writeString(settings.resolve(entry + ".json"), toFullJson(data));
-        return packRoot;
+        Path file = settings.resolve(entry + ".json");
+        Files.writeString(file, toFullJson(data));
+        return file;
     }
 }
