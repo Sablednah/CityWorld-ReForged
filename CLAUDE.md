@@ -24,7 +24,19 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-11-05): v6.13.0 is released — Macaw's paths, roads and bridges.**
+**▶ Resume here (2026-11-05 evening): v6.13.1 is released — settings export fixed; next weighted substitutes.**
+- **v6.13.1 is released** (2026-11-05) on all six lines — tag `v6.13.1` at the master bump `c096c9f6`, CurseForge
+  9455909–9455918, fleet `DEPLOYED-v6.13.1` on 11 (ZARP opts out), wiki pushed. From GitHub issue #5 (a player's
+  Chipped pack did nothing): `/cityexport` now writes the entry the world reads (`modern` for the City preset and
+  `/cityworld`, `apocalypse`, `default` for the rest; Customize's inline settings go to their style's entry) with
+  every group (it dropped caves/subways/structures/cities/roads + 7 world fields), the codec's encoding overlaid so
+  nothing can be lost; `config/cityworld/settings-example/` is rewritten per build with the three shipped entries in
+  full + a README (the 400-line hand-kept reference is gone). Self-test `checkSettingsExport` (proved failing with
+  the export sabotaged). Same day: the wiki was audited against the code (three agents) and corrected, and gained
+  `DATAPACKS.md` → **Beginners-Guide-to-Datapacks**. Gates: six self-tests PASS + `--compare`, CI 42064039771,
+  scan 0 after the positive, 1.20.1 SRG 1,591. **Next (owner's go): weighted substitutes (6.14), then per-part
+  palettes** — memory `cityworld-per-part-palettes-and-future-styles.md`. The owner pastes `CURSEFORGE.md`.
+- **v6.13.0 is released** (2026-11-05) — Macaw's paths, roads and bridges.
 - **v6.13.0 is released** (2026-11-05) on all six lines — tag `v6.13.0` at the master bump `c422d9cf`, CurseForge
   9446389–9446396, fleet `DEPLOYED-v6.13.0` on 11 (ZARP opts out), wiki pushed (settings group `roads`). Gates: six
   self-tests PASS + `--compare`, CI 41937328041 green on the bump heads, scan 0 after the positive, 1.20.1 SRG 1,591.
