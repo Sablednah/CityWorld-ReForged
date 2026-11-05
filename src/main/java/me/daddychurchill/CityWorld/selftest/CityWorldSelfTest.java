@@ -194,6 +194,7 @@ public final class CityWorldSelfTest {
             checkGeneratorInstalled(server);
             checkBuildStamp();
             checkPermissionNodes();
+            checkSettingsExport(server);
             checkBiomeGroundTags(server);
             checkPlanning();
             checkPristineTwin();
@@ -562,6 +563,71 @@ public final class CityWorldSelfTest {
      * kept working through the fallback path. That is a bug that hides from exactly the person most
      * likely to test it.
      */
+    /**
+     * {@code /cityexport} and the settings example write what the world really reads.
+     *
+     * <p>Before 6.13.1 the export always wrote the {@code default} entry, which neither the City preset
+     * ({@code modern}) nor Apocalypse reads, and its hand-rolled JSON left out five whole groups and seven
+     * {@code world} fields — an exported world lost its rivers, structure choices, vanilla land and roads.
+     * This proves, for every shipped entry and for a value with every group off its default, that the
+     * written JSON decodes back to the same settings; that the overworld's export lands on the entry the
+     * overworld reads; and that the example folder holds all three entries.
+     */
+    private void checkSettingsExport(MinecraftServer server) {
+        var codec = me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.CODEC;
+        var registry = server.registryAccess().lookupOrThrow(
+                me.daddychurchill.CityWorld.worldgen.CityWorldRegistries.WORLD_SETTINGS);
+        java.util.List<me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData> samples = new ArrayList<>();
+        registry.listElements().forEach(h -> samples.add(h.value()));
+        var base = me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.DEFAULT;
+        samples.add(new me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData(base.features(), base.terrain(),
+                base.spawns(), base.treasures(), base.world(), base.radius(), base.naming(), base.mobs(),
+                base.overgrowth(), base.shops(), base.decay(),
+                new me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Caves(12, 4, 9, List.of(
+                        new me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.CavePatch(
+                                "minecraft:lush_caves", 64, 7, -40, 10))),
+                new me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Subways(false, false),
+                new me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Structures(
+                        List.of("minecraft:villages"), List.of("minecraft:mineshafts"), true),
+                new me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Cities(true, 4096, 4, 2, 30, 0.2, 0.5, true),
+                base.roads().withDriveOnLeft(true).withSkybridges(true)));
+        int checked = 0;
+        for (var data : samples) {
+            String json = me.daddychurchill.CityWorld.worldgen.SettingsDatapack.toFullJson(data);
+            var tree = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+            var back = codec.parse(com.mojang.serialization.JsonOps.INSTANCE, tree).result().orElse(null);
+            if (!data.equals(back))
+                fail("settings export does not round-trip: wrote " + json.length() + " chars, read back "
+                        + (back == null ? "nothing (decode failed)" : "different settings"));
+            for (String group : List.of("features", "terrain", "spawns", "treasures", "world", "radius", "naming",
+                    "mobs", "overgrowth", "shops", "decay", "caves", "subways", "structures", "cities", "roads"))
+                if (!tree.has(group))
+                    fail("settings export leaves out the '" + group + "' group");
+            checked++;
+        }
+        report.put("settingsExport.roundTrips", Integer.toString(checked));
+
+        var gen = server.overworld().getChunkSource().getGenerator();
+        if (gen instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw) {
+            String reads = cw.effectiveSettingsEntry();
+            var target = me.daddychurchill.CityWorld.worldgen.SettingsDatapack.targetFor(reads, cw.effectiveStyle());
+            report.put("settingsExport.overworld", reads + " -> " + target.id() + " for " + target.worldType());
+            if (reads != null && !reads.equals(target.id()))
+                fail("/cityexport would write " + target.id() + " but the overworld reads " + reads);
+        }
+        var inline = me.daddychurchill.CityWorld.worldgen.SettingsDatapack.targetFor(null,
+                me.daddychurchill.CityWorld.CityWorldGenerator.WorldStyle.MODERN);
+        if (!"cityworld:modern".equals(inline.id()) || !"cityworld:city".equals(inline.worldType()))
+            fail("a Customize-made Modern world would export to " + inline.id() + " for " + inline.worldType());
+
+        java.nio.file.Path example = net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get()
+                .resolve("cityworld").resolve("settings-example").resolve("data").resolve("cityworld")
+                .resolve("cityworld").resolve("world_settings");
+        for (String entry : List.of("modern", "apocalypse", "default"))
+            if (!java.nio.file.Files.exists(example.resolve(entry + ".json")))
+                fail("the settings example has no " + entry + ".json (" + example + ")");
+    }
+
     private void checkPermissionNodes() {
         var registered = net.minecraftforge.server.permission.PermissionAPI.getRegisteredNodes();
         var ours = List.of(
