@@ -990,8 +990,9 @@ public final class CityWorldCommands {
      * Bottles the current world's <em>effective</em> settings into a ready-to-use datapack under
      * {@code config/cityworld/exports/<name>/}. The intended flow: trial a world in single-player
      * (Customize screen / a world style), then export it here to get a datapack to drop on a server.
-     * Writes the entry as {@code default.json}, so dropping the pack into any CityWorld world (whose
-     * presets reference {@code cityworld:default}) applies these settings.
+     * Writes the entry the world reads ({@link me.daddychurchill.CityWorld.worldgen.SettingsDatapack#targetFor}): {@code modern} for the City
+     * preset and the {@code /cityworld} dimension, {@code apocalypse} for Apocalypse, {@code default} for the
+     * rest, or whatever entry a dimension names — and says which world type that pack is for.
      */
     private static int exportSettings(CommandContext<CommandSourceStack> ctx, String rawName)
             throws CommandSyntaxException {
@@ -1011,19 +1012,27 @@ public final class CityWorldCommands {
                 cityGenerator.getContext(level).getSettings().toData();
         java.nio.file.Path root = net.neoforged.fml.loading.FMLPaths.CONFIGDIR.get()
                 .resolve(CityWorldMod.MODID).resolve("exports").resolve(name);
+        // the entry this world reads (or, for Customize's inline settings, the one its style's preset reads):
+        // a pack written to any other entry is one the world never looks at
+        me.daddychurchill.CityWorld.worldgen.SettingsDatapack.Target target =
+                me.daddychurchill.CityWorld.worldgen.SettingsDatapack.targetFor(
+                        cityGenerator.effectiveSettingsEntry(), cityGenerator.effectiveStyle());
         try {
-            me.daddychurchill.CityWorld.worldgen.SettingsDatapack.writePack(root,
-                    me.daddychurchill.CityWorld.worldgen.SettingsDatapack.DEFAULT_ENTRY, data,
-                    "CityWorld settings exported from " + level.dimension().location());
+            me.daddychurchill.CityWorld.worldgen.SettingsDatapack.writePack(root, target.namespace(), target.entry(),
+                    data, "CityWorld settings exported from " + level.dimension().location());
         } catch (java.io.IOException | RuntimeException e) {
             ctx.getSource().sendFailure(Component.literal("Export failed: " + e.getMessage()));
             return 0;
         }
 
         final String shown = name;
+        final String forWorld = target.worldType() != null
+                ? "a world of type " + target.worldType() + " (server: level-type=" + target.worldType() + ")"
+                : "a world whose generator names \"settings\": \"" + target.id() + "\"";
         ctx.getSource().sendSuccess(() -> Component.literal(
-                "Exported this world's settings to config/cityworld/exports/" + shown
-                        + " — copy that folder into <world>/datapacks/ to use it."), true);
+                "Exported this world's settings to config/cityworld/exports/" + shown + " as " + target.id()
+                        + ". Copy that folder into <world>/datapacks/ of " + forWorld
+                        + ", before the world is created or then restart it."), true);
         return 1;
     }
 
