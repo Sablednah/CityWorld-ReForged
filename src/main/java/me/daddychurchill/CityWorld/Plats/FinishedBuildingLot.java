@@ -26,6 +26,7 @@ import me.daddychurchill.CityWorld.Support.MaterialTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import me.daddychurchill.CityWorld.Support.Odds;
+import me.daddychurchill.CityWorld.Support.Palettes;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
 import me.daddychurchill.CityWorld.Support.SurroundingFloors;
@@ -158,6 +159,7 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 
 		// calculate the defaults
 		calculateOptions(context);
+		glassMaterial = Palettes.pick(platmap.generator, Palettes.Part.BUILDING_WINDOW, chunkX, chunkZ, glassMaterial);
 
 		wallsWE = new OutsideWEWallFactory(chunkOdds, buildingsDecay(platmap.generator));
 		wallsNS = new OutsideNSWallFactory(wallsWE);
@@ -190,6 +192,23 @@ public abstract class FinishedBuildingLot extends BuildingLot {
 		columnMaterial = mp.deOre(
 				mp.itemsSelectMaterial_BuildingWalls.getRandomMaterial(chunkOdds, Mapper.getColumnFor(wallMaterial)),
 				chunkOdds);
+		applyPalettes(platmap, Palettes.Part.BUILDING_WALL, Palettes.Part.BUILDING_FOUNDATION,
+				Palettes.Part.BUILDING_FLOOR, Palettes.Part.BUILDING_ROOF, Palettes.Part.BUILDING_COLUMN);
+	}
+
+	/**
+	 * A pack's per-part palettes over the materials just rolled (Support/Palettes): each part it fills replaces that
+	 * material, on dice of its own, so nothing else in the building moves. Before {@code calculateOptions}, so the
+	 * stairs and doors derived from the wall follow a replaced wall.
+	 */
+	protected void applyPalettes(PlatMap platmap, Palettes.Part wall, Palettes.Part foundation, Palettes.Part floor,
+			Palettes.Part roof, Palettes.Part column) {
+		var generator = platmap.generator;
+		wallMaterial = Palettes.pick(generator, wall, chunkX, chunkZ, wallMaterial);
+		foundationMaterial = Palettes.pick(generator, foundation, chunkX, chunkZ, foundationMaterial);
+		ceilingMaterial = Palettes.pick(generator, floor, chunkX, chunkZ, ceilingMaterial);
+		roofMaterial = Palettes.pick(generator, roof, chunkX, chunkZ, roofMaterial);
+		columnMaterial = Palettes.pick(generator, column, chunkX, chunkZ, columnMaterial);
 	}
 
 	protected void calculateOptions(DataContext context) {

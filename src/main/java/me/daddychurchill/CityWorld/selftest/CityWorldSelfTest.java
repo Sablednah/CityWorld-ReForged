@@ -196,6 +196,7 @@ public final class CityWorldSelfTest {
             checkPermissionNodes();
             checkSettingsExport(server);
             checkWeightedSubstitutes();
+            checkPalettesShipEmpty();
             checkBiomeGroundTags(server);
             checkPlanning();
             checkPristineTwin();
@@ -688,6 +689,27 @@ public final class CityWorldSelfTest {
         report.put("substitute.weightedShares", shares + " of " + n + " (asked 50/30/20)");
         if (differs < n / 3)
             fail("substitute: neighbouring blocks rarely differ (" + differs + " changes in " + n + ")");
+    }
+
+    /**
+     * Per-part palettes (Support/Palettes) ship EMPTY in every style: a filled one replaces what the seed would have
+     * built, so a tag file that slipped into the jar would silently change every world's look. And an empty part must
+     * hand the caller's block back unchanged.
+     */
+    private void checkPalettesShipEmpty() {
+        int checked = 0;
+        for (WorldStyle style : WorldStyle.values()) {
+            CityWorldGenerator gen = new CityWorldGenerator(PLAN_SEED, 256, 63, style, -64, 320);
+            for (var part : me.daddychurchill.CityWorld.Support.Palettes.Part.values()) {
+                if (!me.daddychurchill.CityWorld.Support.Palettes.poolFor(gen, part).isEmpty())
+                    fail("palette " + part.path + " is not empty in " + style + " — per-part palettes must ship empty");
+                if (me.daddychurchill.CityWorld.Support.Palettes.pick(gen, part, 3, -7, me.daddychurchill.CityWorld.compat.Material.MOSSY_COBBLESTONE)
+                        != me.daddychurchill.CityWorld.compat.Material.MOSSY_COBBLESTONE)
+                    fail("an empty palette " + part.path + " changed the block it was given");
+                checked++;
+            }
+        }
+        report.put("palettes.checked", checked + " (all empty)");
     }
 
     private void checkPermissionNodes() {
