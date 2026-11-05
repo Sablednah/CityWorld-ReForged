@@ -40,6 +40,9 @@ each one used to cut a city in two).
 
 **Other recent changes**
 
+- **6.13.1** — `/cityexport` writes the settings file your world type actually reads, with every setting in it, and
+  the example settings pack in `config/cityworld/settings-example/` stays current. New on the wiki: a
+  [beginner's guide to datapacks](https://github.com/Sablednah/CityWorld-ReForged/wiki/Beginners-Guide-to-Datapacks).
 - **6.10.0** — loot that fits the world: a Modern drawer holds paper and a clock, a ruin's scrap and spoiled food,
   one container in thirteen something worth having; with Modernlife, ATMs in city halls, shops and malls.
 - **6.9.0** — the same seed builds the same city: each part of a chunk's decoration rolls on its own numbers from
