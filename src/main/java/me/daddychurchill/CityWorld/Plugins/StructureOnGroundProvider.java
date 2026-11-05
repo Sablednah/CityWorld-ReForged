@@ -57,6 +57,8 @@ public class StructureOnGroundProvider extends Provider {
 				generator.materialProvider.itemsSelectMaterial_ShedWalls.getRandomMaterial(odds, Material.COBBLESTONE), odds);
 		Material roofMat = generator.materialProvider.deOre(
 				generator.materialProvider.itemsSelectMaterial_ShedRoofs.getRandomMaterial(odds, Material.COBBLESTONE), odds);
+		wallMat = palette(generator, chunk, PART.SHED_WALL, wallMat);
+		roofMat = palette(generator, chunk, PART.SHED_ROOF, roofMat);
 
 		chunk.setWalls(x1, x2, y1, y2, z1, z2, wallMat);
 		chunk.setBlocks(x1 + 1, x2 - 1, y2, z1 + 1, z2 - 1, roofMat);
@@ -377,6 +379,9 @@ public class StructureOnGroundProvider extends Provider {
 				generator.materialProvider.itemsSelectMaterial_ShackWalls.getRandomMaterial(odds, Material.COBBLESTONE), odds);
 		Material matRoof = generator.materialProvider.deOre(
 				generator.materialProvider.itemsSelectMaterial_ShackRoofs.getRandomMaterial(odds, Material.COBBLESTONE), odds);
+		matWall = palette(generator, chunk, PART.SHACK_WALL, matWall);
+		matFloor = palette(generator, chunk, PART.SHACK_FLOOR, matFloor);
+		matRoof = palette(generator, chunk, PART.SHACK_ROOF, matRoof);
 		Material matCeiling = matRoof;
 		HouseRoofStyle styleRoof = pickRoofStyle(odds);
 		int floors = 1;
@@ -406,6 +411,10 @@ public class StructureOnGroundProvider extends Provider {
 				generator.materialProvider.itemsSelectMaterial_HouseCeilings.getRandomMaterial(odds, Material.COBBLESTONE), odds);
 		Material matRoof = generator.materialProvider.deOre(
 				generator.materialProvider.itemsSelectMaterial_HouseRoofs.getRandomMaterial(odds, Material.COBBLESTONE), odds);
+		matWall = palette(generator, chunk, PART.HOUSE_WALL, matWall);
+		matFloor = palette(generator, chunk, PART.HOUSE_FLOOR, matFloor);
+		matCeiling = palette(generator, chunk, PART.HOUSE_CEILING, matCeiling);
+		matRoof = palette(generator, chunk, PART.HOUSE_ROOF, matRoof);
 		HouseRoofStyle styleRoof = pickRoofStyle(odds);
 		int floors = odds.getRandomInt(maxFloors) + 1;
 
@@ -438,8 +447,12 @@ public class StructureOnGroundProvider extends Provider {
 		Material matWall = MODERN_WALLS[odds.getRandomInt(MODERN_WALLS.length)];
 		Material matFloor = MODERN_FLOORS[odds.getRandomInt(MODERN_FLOORS.length)];
 		Material matRoof = MODERN_ROOFS[odds.getRandomInt(MODERN_ROOFS.length)];
+		matWall = palette(generator, chunk, PART.HOUSE_WALL, matWall);
+		matFloor = palette(generator, chunk, PART.HOUSE_FLOOR, matFloor);
+		matRoof = palette(generator, chunk, PART.HOUSE_ROOF, matRoof);
+		Material matCeiling = palette(generator, chunk, PART.HOUSE_CEILING, Material.WHITE_CONCRETE);
 		int floors = odds.getRandomInt(maxFloors) + 1;
-		generateColonial(generator, chunk, context, odds, baseY, matFloor, matWall, Material.WHITE_CONCRETE, matRoof,
+		generateColonial(generator, chunk, context, odds, baseY, matFloor, matWall, matCeiling, matRoof,
 				floors, MinSize, maxRoomWidth, HouseRoofStyle.FLAT, true, odds.flipCoin(), true);
 		return floors;
 	}
@@ -470,6 +483,7 @@ public class StructureOnGroundProvider extends Provider {
 			matWindow = materialGlass; // the rolls after this are the ones a colonial house would make)
 			matFence = Material.GLASS_PANE;
 		}
+		matWindow = palette(generator, chunk, PART.HOUSE_WINDOW, matWindow);
 		Material matStairs = MaterialTags.pick(MaterialTags.FITTINGS_STAIRS, odds, null);
 		// drawn only when there is a pooled stair to style: a draw here on a vanilla world would shift
 		// every later choice the house makes (measured: the rooms moved)
@@ -1731,5 +1745,25 @@ public class StructureOnGroundProvider extends Provider {
 			chunk.setCircle(x + 4, x + 4, 3, y3 + 1, y3 + 4 + odds.getRandomInt(2),
 					generator.oreProvider.fluidFluidMaterial, true);
 		}
+	}
+
+	private static final class PART {
+		static final me.daddychurchill.CityWorld.Support.Palettes.Part SHED_WALL = me.daddychurchill.CityWorld.Support.Palettes.Part.SHED_WALL,
+				SHED_ROOF = me.daddychurchill.CityWorld.Support.Palettes.Part.SHED_ROOF,
+				SHACK_WALL = me.daddychurchill.CityWorld.Support.Palettes.Part.SHACK_WALL,
+				SHACK_FLOOR = me.daddychurchill.CityWorld.Support.Palettes.Part.SHACK_FLOOR,
+				SHACK_ROOF = me.daddychurchill.CityWorld.Support.Palettes.Part.SHACK_ROOF,
+				HOUSE_WALL = me.daddychurchill.CityWorld.Support.Palettes.Part.HOUSE_WALL,
+				HOUSE_FLOOR = me.daddychurchill.CityWorld.Support.Palettes.Part.HOUSE_FLOOR,
+				HOUSE_CEILING = me.daddychurchill.CityWorld.Support.Palettes.Part.HOUSE_CEILING,
+				HOUSE_ROOF = me.daddychurchill.CityWorld.Support.Palettes.Part.HOUSE_ROOF,
+				HOUSE_WINDOW = me.daddychurchill.CityWorld.Support.Palettes.Part.HOUSE_WINDOW;
+	}
+
+	/** A pack's per-part palette over a material just rolled, picked by this chunk (Support/Palettes). */
+	private static Material palette(CityWorldGenerator generator, RealBlocks chunk,
+			me.daddychurchill.CityWorld.Support.Palettes.Part part, Material current) {
+		return me.daddychurchill.CityWorld.Support.Palettes.pick(generator, part, chunk.getOriginX() >> 4,
+				chunk.getOriginZ() >> 4, current);
 	}
 }

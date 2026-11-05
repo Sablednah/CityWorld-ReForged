@@ -310,7 +310,9 @@ public final class MaterialTags {
 
         if (blocks.isEmpty()) {
             String path = tag.location().getPath();
-            if (path.startsWith("furniture/") || path.startsWith("fittings/") || path.startsWith("light/")
+            if (path.startsWith("palette/")) {
+                // per-part palettes ship empty and mean "keep what CityWorld picks": nothing to say
+            } else if (path.startsWith("furniture/") || path.startsWith("fittings/") || path.startsWith("light/")
                     || OPTIONAL_POOLS.contains(path)) {
                 // Expected on any world without a furniture mod: every furniture role is optional and
                 // every caller falls back to the vanilla-block furniture it always built. Not a warning.
