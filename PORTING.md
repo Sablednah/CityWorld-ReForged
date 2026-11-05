@@ -77,9 +77,11 @@ snow-to-hot borders 1,207 → 126 (the rest are windswept forest against windswe
 line, which vanilla also allows), patches 8,688 → 8,595 of the same mean size, windswept forest 2.9% → 0.8%,
 forest/jungle/sparse jungle gain it. Not cherry-picked to the branches yet; the owner wanted the maps first.
 
-## ▶ Backlog — Macaw's Paths and Bridges pools (ZARP's ask, 2026-11-02; not scoped)
+## ▶ Released: v6.13.0 (2026-11-05) — Macaw's Paths and Pavings, Roads and Streets, Bridges (ZARP's ask, 2026-11-02)
 
-**Built 2026-11-03 (6.13 draft; unreleased).** Pools `fittings/{path,track,road,skybridge,
+**Released 2026-11-05** on all six lines: tag `v6.13.0` at the master bump `c422d9cf`, CurseForge 9446389–9446396 (run 41939675463), fleet `DEPLOYED-v6.13.0` on 11 (ZARP opts out), wiki pushed (the `roads` group, 13 settings). Gates: six self-tests PASS + `--compare` on the pre-bump heads, CI 41937328041 green on the bump heads, scan_jar 0/0/0 on all six after a synthetic positive read 2/1/2, 1.20.1 `build/libs` 1,591 SRG names (devlibs 0). The owner signed the batch off 2026-11-04 afternoon.
+
+**Built 2026-11-03 (6.13 draft).** Pools `fittings/{path,track,road,skybridge,
 rope_bridge}`, `Support/RoadKit` (surface pick → pieces by name), RoadLot markings/crosswalks/kerbs/signs,
 `FinishedBuildingLot.drawSkybridges`, `NatureLot.drawRopeBridge`, settings group `bridges`. CLAUDE.md's resume note
 and memory `cityworld-macaws-paths-roads-bridges` carry the design; the inventory below is what it was built from.

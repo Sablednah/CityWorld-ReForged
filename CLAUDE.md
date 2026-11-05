@@ -24,7 +24,12 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-11-03, early morning: 6.12.0 released, Macaw's Paths/Roads/Bridges draft on master).**
+**▶ Resume here (2026-11-05): v6.13.0 is released — Macaw's paths, roads and bridges.**
+- **v6.13.0 is released** (2026-11-05) on all six lines — tag `v6.13.0` at the master bump `c422d9cf`, CurseForge
+  9446389–9446396, fleet `DEPLOYED-v6.13.0` on 11 (ZARP opts out), wiki pushed (settings group `roads`). Gates: six
+  self-tests PASS + `--compare`, CI 41937328041 green on the bump heads, scan 0 after the positive, 1.20.1 SRG 1,591.
+  **The owner pastes `CURSEFORGE.md`** (6.13.0 headline). The 26.2.test instance now runs the release jar (the test
+  jar is in `26.2.test/cityworld-old-test/`). Next: nothing queued — the owner's playtest is the queue.
 - **v6.12.0 is released** (2026-11-03 ~01:20) on all six lines — tag `v6.12.0` at the master bump `4cc16142`,
   CurseForge 9413582–9413587, fleet `DEPLOYED-v6.12.0` on 12 (ZARP opts out), wiki unchanged (no new settings):
   **a lighter server.** `lotAt`'s `subway` flag means "is a station" (the old meaning planned six platmaps each way:
@@ -90,7 +95,7 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   both ends. **`scripts/probe.sh` runs in the checkout it lives in: call the worktree's own copy.**
   **Owner signed the batch off (2026-11-04 afternoon):** "skybridges join nicely. wild bridges are rare - and
   dont need banks - working well - paths cover if thin or block properly - road all a-ok. i think that batch is
-  done." (after the doorway fix: cut through to the room, deck every doorway cell). Next: the 6.13.0 release.
+  done." (after the doorway fix: cut through to the room, deck every doorway cell). Released as 6.13.0 (2026-11-05).
 - **Instances moved (2026-11-03): `/mnt/d/minecraft/Instances`** (Windows `D:\minecraft`). `deploy.sh`,
   `scripts/deploy-fleet.sh`, `count_worlds.py`, `gen_furniture_tags.py` re-pointed (`0211132d`); the old C: path
   holds only stale non-CityWorld packs. WSL ran out of memory at 02:56 and 2026-11-03 ~09:30: one JVM at a time
