@@ -470,6 +470,22 @@ add-on is a complete example.
 
 - **`with`** — the block to place instead. Every state property the two blocks share is kept, so stairs
   swapped for stairs keep their facing, half and shape.
+- **A mix** (from 6.14) — `with` may instead be a list of `{"block": …, "weight": …}`, and each block
+  CityWorld places picks one of them, weighted. The pick is fixed by the block's position, so the same seed
+  always builds the same mix. A weight defaults to 1; the list must not be empty. To keep some of the
+  original, list the original block too:
+
+  ```json
+  "minecraft:yellow_concrete": { "with": [
+    { "block": "minecraft:yellow_concrete", "weight": 50 },
+    { "block": "chipped:smooth_yellow_concrete", "weight": 30 },
+    { "block": "chipped:yellow_concrete_tiles", "weight": 20 }
+  ] }
+  ```
+
+- **Shorthand** (from 6.14) — when an entry needs no `realms`, the value may be just the block id
+  (`"minecraft:iron_block": "minecraft:smooth_stone"`) or just the weighted list. 6.13 and earlier accept
+  only the `{ "with": … }` object; an entry they cannot read is skipped.
 - **`realms`** (optional) — any of `overworld`, `nether`, `end`; absent means all three. The `cityworld:city`
   dimension counts as overworld. A misspelt realm silently matches nothing.
 - Matching is by block, never by state, and it is one pass: A→B plus B→C does not turn A into C.

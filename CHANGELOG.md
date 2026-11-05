@@ -5,6 +5,18 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 6.14.0 (unreleased)
+
+### Added
+
+- **Weighted block substitutes.** A `cityworld:substitute` entry's `with` may now be a list of
+  `{"block": …, "weight": …}`, and each block CityWorld places takes one of them — so a pack can turn plain stone
+  bricks into a blend of three Chipped variants rather than swap one block for one. The pick is fixed by the
+  block's position: the same seed builds the same mix. From GitHub issue #5.
+- **Substitute shorthand.** An entry with no `realms` may be written as just the block id
+  (`"minecraft:iron_block": "minecraft:smooth_stone"`) or just the weighted list — the shapes people tried first.
+  The `{ "with": … }` object still works and is still needed for `realms`.
+
 ## 6.13.1
 
 ### Fixed

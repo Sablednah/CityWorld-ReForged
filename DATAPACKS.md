@@ -126,8 +126,21 @@ buildings *and* schematics — keeping the block's shape and facing where the ne
 }
 ```
 
-This is usually what people mean by "make the city use my blocks". An entry can be limited to some
-realms with `"realms": ["overworld"]` (or `"nether"`, `"end"`). On **1.20.1** only one pack's
+This is usually what people mean by "make the city use my blocks". **Each value is an object with a
+`with` key** — on 6.13 and earlier a bare id or a list is not understood and that entry does nothing.
+From 6.14, `with` can also be a weighted mix, so a wall comes out speckled rather than all one block
+(list the original block too, if you want to keep some of it):
+
+```json
+"minecraft:yellow_concrete": { "with": [
+  { "block": "minecraft:yellow_concrete", "weight": 50 },
+  { "block": "chipped:smooth_yellow_concrete", "weight": 30 },
+  { "block": "chipped:yellow_concrete_tiles", "weight": 20 }
+] }
+```
+
+From 6.14 you may also write just `"minecraft:stone_bricks": "chipped:etched_stone_bricks"`. An entry can be
+limited to some realms with `"realms": ["overworld"]` (or `"nether"`, `"end"`). On **1.20.1** only one pack's
 `substitute.json` is read, so keep all your swaps in one file. Details on
 [Building Palettes](Building-Palettes#block-substitutes).
 
