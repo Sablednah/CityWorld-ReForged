@@ -202,10 +202,18 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     }
 
     /** The settings with the 7.0 oceans stamp folded in: no stamp, no oceans, whatever the settings say. */
+    private static final java.util.concurrent.atomic.AtomicBoolean UNSTAMPED_SAID = new java.util.concurrent.atomic.AtomicBoolean();
+
     private CityWorldSettingsData stampOceans(CityWorldSettingsData data) {
         var c = data.cities();
-        if (c.oceans().enabled() && !oceansStamped())
+        if (c.oceans().enabled() && !oceansStamped()) {
+            // said once, because a pack that ships its own copy of a 6.x world preset makes 7.0 worlds without it
+            if (UNSTAMPED_SAID.compareAndSet(false, true))
+                me.daddychurchill.CityWorld.CityWorldMod.LOGGER.info("CityWorld: this world's generator has no "
+                        + "\"made_with\": {} — a world made before 7.0 (or from a world preset that lacks it), so it gets no "
+                        + "deep oceans or highways", MADE_WITH);
             return data.withCities(c.withOceans(c.oceans().withEnabled(false)));
+        }
         return data;
     }
 
