@@ -182,6 +182,8 @@ public final class CityWorldClient {
         // settings, needing no datapack. RegistryFileCodec encodes a direct holder inline into level.dat.
         Optional<Holder<CityWorldSettingsData>> settingsField =
                 Optional.of(Holder.direct(result.settings()));
-        return new CityWorldChunkGenerator(biomeSource, Optional.empty(), styleField, settingsField);
+        // A world made here is a 7.0 world: stamp it, so the deep oceans its settings ask for are allowed.
+        return new CityWorldChunkGenerator(biomeSource, Optional.empty(), styleField, settingsField,
+                Optional.empty(), Optional.empty(), Optional.empty(), Optional.of(true));
     }
 }
