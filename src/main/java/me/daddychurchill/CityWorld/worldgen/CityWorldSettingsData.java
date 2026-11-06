@@ -379,17 +379,19 @@ public record CityWorldSettingsData(
      * a style that IS a terrain (floating, flooded, dunes, astral, maze, nature, metro) ignores it.
      */
     public record Cities(boolean vanillaTerrain, int spacing, int districts, int districtsVariance, int levelRange,
-            double maxWater, double minNear, boolean rivers, Oceans oceans) {
+            double maxWater, double minNear, boolean rivers, Oceans oceans, Highways highways) {
 
         /**
          * {@code rivers} (CityWorld's own terrain, {@code worldgen/RiverNetwork}) defaults OFF so a world saved before
          * rivers existed never grows one that stops dead at the chunks it already has; the presets turn it on.
          */
-        public static final Cities DEFAULT = new Cities(false, 2048, 3, 1, 40, 0.35, 0.75, false, Oceans.DEFAULT);
+        public static final Cities DEFAULT = new Cities(false, 2048, 3, 1, 40, 0.35, 0.75, false, Oceans.DEFAULT,
+                Highways.DEFAULT);
 
         public Cities(boolean vanillaTerrain, int spacing, int districts, int districtsVariance, int levelRange,
                 double maxWater, double minNear, boolean rivers) {
-            this(vanillaTerrain, spacing, districts, districtsVariance, levelRange, maxWater, minNear, rivers, Oceans.DEFAULT);
+            this(vanillaTerrain, spacing, districts, districtsVariance, levelRange, maxWater, minNear, rivers, Oceans.DEFAULT,
+                    Highways.DEFAULT);
         }
 
         public static final Codec<Cities> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -401,35 +403,40 @@ public record CityWorldSettingsData(
                 Codec.doubleRange(0.0, 1.0).optionalFieldOf("maxWater", 0.35).forGetter(Cities::maxWater),
                 Codec.doubleRange(0.0, 1.0).optionalFieldOf("minNear", 0.75).forGetter(Cities::minNear),
                 Codec.BOOL.optionalFieldOf("rivers", false).forGetter(Cities::rivers),
-                Oceans.CODEC.optionalFieldOf("oceans", Oceans.DEFAULT).forGetter(Cities::oceans)
+                Oceans.CODEC.optionalFieldOf("oceans", Oceans.DEFAULT).forGetter(Cities::oceans),
+                Highways.CODEC.optionalFieldOf("highways", Highways.DEFAULT).forGetter(Cities::highways)
         ).apply(i, Cities::new));
 
         public Cities withVanillaTerrain(boolean v) {
-            return new Cities(v, spacing, districts, districtsVariance, levelRange, maxWater, minNear, rivers, oceans);
+            return new Cities(v, spacing, districts, districtsVariance, levelRange, maxWater, minNear, rivers, oceans, highways);
         }
 
         public Cities withSpacing(int v) {
-            return new Cities(vanillaTerrain, v, districts, districtsVariance, levelRange, maxWater, minNear, rivers, oceans);
+            return new Cities(vanillaTerrain, v, districts, districtsVariance, levelRange, maxWater, minNear, rivers, oceans, highways);
         }
 
         public Cities withDistricts(int v) {
-            return new Cities(vanillaTerrain, spacing, v, districtsVariance, levelRange, maxWater, minNear, rivers, oceans);
+            return new Cities(vanillaTerrain, spacing, v, districtsVariance, levelRange, maxWater, minNear, rivers, oceans, highways);
         }
 
         public Cities withDistrictsVariance(int v) {
-            return new Cities(vanillaTerrain, spacing, districts, v, levelRange, maxWater, minNear, rivers, oceans);
+            return new Cities(vanillaTerrain, spacing, districts, v, levelRange, maxWater, minNear, rivers, oceans, highways);
         }
 
         public Cities withRivers(boolean v) {
-            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, levelRange, maxWater, minNear, v, oceans);
+            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, levelRange, maxWater, minNear, v, oceans, highways);
         }
 
         public Cities withLevelRange(int v) {
-            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, v, maxWater, minNear, rivers, oceans);
+            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, v, maxWater, minNear, rivers, oceans, highways);
+        }
+
+        public Cities withHighways(Highways v) {
+            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, levelRange, maxWater, minNear, rivers, oceans, v);
         }
 
         public Cities withOceans(Oceans v) {
-            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, levelRange, maxWater, minNear, rivers, v);
+            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, levelRange, maxWater, minNear, rivers, v, highways);
         }
     }
 
@@ -448,6 +455,31 @@ public record CityWorldSettingsData(
      * @param depth  how far below sea level the deep floor lies
      * @param shelf  how much of the mask the slope down to the floor takes: bigger is a gentler, wider shelf
      */
+    /**
+     * Highways between the cities of a vanilla-land world (7.0, {@code worldgen/Highways}): each city to its neighbour
+     * east and south, on a road {@code width} blocks wide that climbs no steeper than {@code grade}, cut through higher
+     * ground and banked up on lower to {@code fillMax} deep, bridged over water ({@code clearance} above the sea) and
+     * deeper drops. Like the oceans, off in any world made before 7.0 whatever this says (the generator's
+     * {@code made_with} stamp).
+     */
+    public record Highways(boolean enabled, int width, double grade, int fillMax, int clearance) {
+
+        public static final Highways DEFAULT = new Highways(true, 9, 0.1, 8, 5);
+        public static final Highways OFF = DEFAULT.withEnabled(false);
+
+        public static final Codec<Highways> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.BOOL.optionalFieldOf("enabled", true).forGetter(Highways::enabled),
+                Codec.intRange(3, 15).optionalFieldOf("width", 9).forGetter(Highways::width),
+                Codec.doubleRange(0.02, 0.5).optionalFieldOf("grade", 0.1).forGetter(Highways::grade),
+                Codec.intRange(0, 32).optionalFieldOf("fillMax", 8).forGetter(Highways::fillMax),
+                Codec.intRange(1, 32).optionalFieldOf("clearance", 5).forGetter(Highways::clearance)
+        ).apply(i, Highways::new));
+
+        public Highways withEnabled(boolean v) {
+            return new Highways(v, width, grade, fillMax, clearance);
+        }
+    }
+
     public record Oceans(boolean enabled, int size, double rarity, int depth, double shelf) {
 
         public static final Oceans DEFAULT = new Oceans(true, 6000, 0.5, 30, 0.1);
