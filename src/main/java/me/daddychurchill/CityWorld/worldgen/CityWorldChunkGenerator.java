@@ -554,6 +554,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                 context.getPlatMap(chunkX, chunkZ).generateChunk(blocks, IGNORE_BIOMES);
                             }
                         }
+                        if (highways != null && !citySites.isCityChunk(chunkX, chunkZ))
+                            drawHighways(context, filled);
                         return filled;
                     });
         }
@@ -637,6 +639,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                         || key == net.minecraft.world.level.biome.Biomes.FROZEN_RIVER;
                             },
                             citiesConfig());
+                    highways = Highways.enabled() ? new Highways(citySites) : null;
                     vanillaOverworld = local = built;
                 }
             }
@@ -648,6 +651,109 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private volatile RandomState vanillaOverworldRandom;
     /** Where the cities are; exists exactly when {@link #vanillaOverworld} does. */
     private volatile CitySites citySites;
+
+    /** The highways between the cities of a vanilla-terrain world, when they are on; else null. */
+    private volatile Highways highways;
+
+    /** The highways of a vanilla-terrain world (null in any other, or with them off), for the probe. */
+    public Highways highways() {
+        citySites();
+        return highways;
+    }
+
+    /**
+     * Draws the highways through a chunk of vanilla land, after the city's own ground: the deck at its planned y,
+     * cut through what stands higher and banked up on what lies lower (with 1:1 slopes either side, dressed with
+     * the biome's ground like a city cut), or a bridge with railings and pillars over water and deep drops.
+     */
+    private void drawHighways(CityWorldGenerator context, ChunkAccess chunk) {
+        ChunkPos pos = chunk.getPos();
+        int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
+        int reach = Highways.HALF_WIDTH + Highways.SIDE + 2;
+        var links = highways.linksTouching(minX - reach, minZ - reach, minX + 15 + reach, minZ + 15 + reach);
+        if (links.isEmpty())
+            return;
+        BlockState pavement = context.materialProvider.itemsMaterialListFor_Roads
+                .getNthMaterial(0, Material.WHITE_TERRACOTTA).getBlockState();
+        BlockState lines = context.materialProvider.itemsMaterialListFor_Roads
+                .getNthMaterial(1, Material.QUARTZ_BLOCK).getBlockState();
+        BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
+        BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        BlockState edge = net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState();
+        BlockState rail = net.minecraft.world.level.block.Blocks.STONE_BRICK_WALL.defaultBlockState();
+        BlockState pier = net.minecraft.world.level.block.Blocks.STONE_BRICKS.defaultBlockState();
+        int floor = chunk.getMinY(), ceiling = chunk.getMaxY();
+        double half = Highways.HALF_WIDTH + 0.5;
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        java.util.BitSet cut = null;
+        for (int x = 0; x < 16; x++)
+            for (int z = 0; z < 16; z++) {
+                var near = Highways.nearest(links, minX + x + 0.5, minZ + z + 0.5, Highways.HALF_WIDTH + Highways.SIDE + 1);
+                if (near == null)
+                    continue;
+                int bx = minX + x, bz = minZ + z;
+                int top = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x, z);
+                int sky = Math.max(top, chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z));
+                int deck = Math.max(floor + 2, Math.min(ceiling - 8, near.deck()));
+                boolean bridge = near.kind() == Highways.Kind.BRIDGE;
+                double d = near.distance();
+                if (d <= half + 1) {
+                    // the deck and its headroom; on a bridge the outer row is its kerb and railing
+                    for (int y = Math.max(sky, deck + 6); y > deck; y--)
+                        chunk.setBlockState(cursor.set(bx, y, bz), air);
+                    boolean kerb = d > half;
+                    if (kerb && !bridge)
+                        chunk.setBlockState(cursor.set(bx, deck, bz), edge);
+                    else if (kerb) {
+                        chunk.setBlockState(cursor.set(bx, deck, bz), edge);
+                        chunk.setBlockState(cursor.set(bx, deck + 1, bz), rail);
+                    } else {
+                        boolean dash = d < 0.75 && ((int) (near.along() / 4)) % 2 == 0;
+                        chunk.setBlockState(cursor.set(bx, deck, bz), dash ? lines : pavement);
+                    }
+                    if (!bridge) {
+                        // banked up to the deck where the ground is lower (water too)
+                        for (int y = top + 1; y < deck; y++)
+                            chunk.setBlockState(cursor.set(bx, y, bz), stone);
+                    } else {
+                        chunk.setBlockState(cursor.set(bx, deck - 1, bz), edge);
+                        // piers every sixteen blocks, under each side of the deck, down to the ground or sea bed
+                        double m = near.along() % 16;
+                        if ((m < 1.0 || m > 15.0) && d > Highways.HALF_WIDTH - 1.5 && d <= half)
+                            for (int y = deck - 2; y > top && y > floor; y--)
+                                chunk.setBlockState(cursor.set(bx, y, bz), pier);
+                    }
+                    continue;
+                }
+                if (bridge)
+                    continue;
+                // the slopes beside a road on the ground: 1:1 down to it through higher ground, up to it from lower
+                double e = d - (half + 1);
+                int cutTo = deck + (int) Math.ceil(e);
+                int bankTo = deck - (int) Math.ceil(e);
+                if (top > cutTo) {
+                    for (int y = sky; y > cutTo; y--)
+                        chunk.setBlockState(cursor.set(bx, y, bz), air);
+                    if (cut == null)
+                        cut = new java.util.BitSet(256);
+                    cut.set(x << 4 | z);
+                } else if (top < bankTo && bankTo - top <= Highways.FILL_MAX + Highways.SIDE) {
+                    for (int y = top + 1; y <= bankTo; y++)
+                        chunk.setBlockState(cursor.set(bx, y, bz), stone);
+                    if (cut == null)
+                        cut = new java.util.BitSet(256);
+                    cut.set(x << 4 | z);
+                }
+            }
+        if (cut != null) {
+            java.util.BitSet bits = cut;
+            cutColumns.merge(ChunkPos.asLong(minX >> 4, minZ >> 4), bits, (old, add) -> {
+                java.util.BitSet both = (java.util.BitSet) old.clone();
+                both.or(add);
+                return both;
+            });
+        }
+    }
 
     /** The city sites of a vanilla-terrain world (null in any other), for the probe and commands. */
     public CitySites citySites() {
