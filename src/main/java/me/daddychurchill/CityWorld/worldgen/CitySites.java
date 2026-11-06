@@ -101,6 +101,16 @@ public final class CitySites {
         this.wobble = new SimplexNoiseGenerator(seed + 7411);
     }
 
+    /** Vanilla's raw ground, as the sites are judged by it (slow: about a millisecond a column). */
+    public Heights heights() {
+        return heights;
+    }
+
+    /** The seed the sites were picked from. */
+    public long seed() {
+        return seed;
+    }
+
     /** Vanilla's sea level: the first y that is not water. */
     public int seaLevel() {
         return seaLevel;
