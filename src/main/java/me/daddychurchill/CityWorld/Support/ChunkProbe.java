@@ -430,6 +430,46 @@ public final class ChunkProbe {
      * {@code 'B'} building, {@code '#'} road, {@code 'o'} anything else planned, {@code ':'} city ground left to
      * nature, {@code '.'} the blend ring, {@code ' '} untouched vanilla.
      */
+    /** The highways out of the cells around the origin ({@code -Dcityworld.probe.cells}, default 2 each way). */
+    private static java.util.List<me.daddychurchill.CityWorld.worldgen.Highways.Link> highwayLinks(ServerLevel level) {
+        if (!(level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw)
+                || cw.highways() == null)
+            throw new IllegalStateException("no highways: a vanilla-terrain CityWorld with -Dcityworld.highways=true");
+        int cells = Integer.getInteger("cityworld.probe.cells", 2);
+        return cw.highways().linksOfCells(-cells, -cells, cells - 1, cells - 1);
+    }
+
+    /**
+     * {@code -Dcityworld.probe=survey:highways}: every highway out of the cells around the origin, planned and not
+     * drawn — each one's ends, length, deck range, steepest 16-block climb, share on bridges and planning time, a
+     * {@code /tp} to its middle, and a profile line (deck y against the ground under it every 64 blocks).
+     */
+    private static void surveyHighways(ServerLevel level) {
+        long started = System.nanoTime();
+        var links = highwayLinks(level);
+        int i = 0;
+        for (var link : links) {
+            int n = link.x().length, lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE, bridge = 0, steepest = 0;
+            for (int k = 0; k < n; k++) {
+                lo = Math.min(lo, link.y()[k]);
+                hi = Math.max(hi, link.y()[k]);
+                if (link.kind()[k] == me.daddychurchill.CityWorld.worldgen.Highways.Kind.BRIDGE)
+                    bridge++;
+                if (k >= 8)
+                    steepest = Math.max(steepest, Math.abs(link.y()[k] - link.y()[k - 8]));
+            }
+            int mid = n / 2;
+            StringBuilder profile = new StringBuilder();
+            for (int k = 0; k < n; k += 32)
+                profile.append(link.y()[k]).append(link.kind()[k] == me.daddychurchill.CityWorld.worldgen.Highways.Kind.BRIDGE ? "b " : " ");
+            CityWorldMod.LOGGER.warn("SURVEY highway {}: ({},{}) y{} -> ({},{}) y{}; {} blocks; deck y{}..{}; steepest {} in 16; "
+                    + "bridge {}%; planned in {} ms; middle /tp {} {} {}; profile {}", i++, link.a().centreX(), link.a().centreZ(),
+                    link.a().level(), link.b().centreX(), link.b().centreZ(), link.b().level(), link.length(), lo, hi, steepest,
+                    bridge * 100 / n, link.planMs(), (int) link.x()[mid], link.y()[mid] + 2, (int) link.z()[mid], profile);
+        }
+        CityWorldMod.LOGGER.warn("SURVEY highways: {} links in {} ms", links.size(), (System.nanoTime() - started) / 1_000_000);
+    }
+
     private static void surveySites(ServerLevel level) {
         if (!(level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw)
                 || cw.citySites() == null) {
@@ -1077,6 +1117,10 @@ public final class ChunkProbe {
                 surveySites(level);
                 return;
             }
+            if (spec.startsWith("survey:highways")) {
+                surveyHighways(level);
+                return;
+            }
             if (spec.startsWith("find:biome:")) {
                 String id = spec.substring("find:biome:".length());
                 int[] found = findBiome(server, level, id);
@@ -1086,6 +1130,21 @@ public final class ChunkProbe {
                 cx = found[0];
                 cz = found[1];
                 CityWorldMod.LOGGER.warn("PROBE: nearest {} is chunk {}, {}", id, cx, cz);
+            } else if (spec.startsWith("find:highway")) {
+                // -Dcityworld.probe=find:highway[:n] — the middle of the n-th highway out of the cells around the origin
+                var links = highwayLinks(level);
+                // find:highway:n:start — its first gate instead of its middle
+                String[] parts = spec.split(":");
+                int n = parts.length > 2 ? Integer.parseInt(parts[2]) : 0;
+                if (links.isEmpty() || n >= links.size())
+                    throw new IllegalStateException("no highway " + n + " (there are " + links.size() + ")");
+                var link = links.get(n);
+                int mid = parts.length > 3 && parts[3].equals("start") ? 0 : link.x().length / 2;
+                CityWorldMod.LOGGER.warn("PROBE: highway {} sample {} at {}, {} deck y{}", n, mid, (int) link.x()[mid],
+                        (int) link.z()[mid], link.y()[mid]);
+                cx = Math.floorDiv((int) link.x()[mid], 16);
+                cz = Math.floorDiv((int) link.z()[mid], 16);
+                CityWorldMod.LOGGER.warn("PROBE: highway {} middle is chunk {}, {}", n, cx, cz);
             } else if (spec.startsWith("find:structure:")) {
                 // -Dcityworld.probe=find:structure:minecraft:bastion_remnant — the nearest start of that structure
                 // in the probed dimension, with where its pieces sit against the city's street level.
