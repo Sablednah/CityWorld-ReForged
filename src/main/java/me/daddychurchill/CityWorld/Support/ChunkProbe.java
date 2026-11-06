@@ -434,7 +434,7 @@ public final class ChunkProbe {
     private static java.util.List<me.daddychurchill.CityWorld.worldgen.Highways.Link> highwayLinks(ServerLevel level) {
         if (!(level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw)
                 || cw.highways() == null)
-            throw new IllegalStateException("no highways: a vanilla-terrain CityWorld with -Dcityworld.highways=true");
+            throw new IllegalStateException("no highways: a vanilla-terrain CityWorld made with 7.0, highways on");
         int cells = Integer.getInteger("cityworld.probe.cells", 2);
         return cw.highways().linksOfCells(-cells, -cells, cells - 1, cells - 1);
     }
