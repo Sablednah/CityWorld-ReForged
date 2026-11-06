@@ -798,7 +798,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             }
         if (cut != null) {
             java.util.BitSet bits = cut;
-            cutColumns.merge(ChunkPos.asLong(minX >> 4, minZ >> 4), bits, (old, add) -> {
+            cutColumns.merge(ChunkPos.pack(minX >> 4, minZ >> 4), bits, (old, add) -> {
                 java.util.BitSet both = (java.util.BitSet) old.clone();
                 both.or(add);
                 return both;
