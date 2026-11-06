@@ -459,6 +459,9 @@ public final class ChunkProbe {
                     steepest = Math.max(steepest, Math.abs(link.y()[k] - link.y()[k - 8]));
             }
             int mid = n / 2;
+            int[] err = level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator g
+                    ? g.highways().roughError(link, 24) : new int[] { -1, -1 };
+            CityWorldMod.LOGGER.warn("SURVEY highway {}: rough ground off by {} on average, {} at worst (24 points)", i, err[0], err[1]);
             StringBuilder profile = new StringBuilder();
             for (int k = 0; k < n; k += 32)
                 profile.append(link.y()[k]).append(link.kind()[k] == me.daddychurchill.CityWorld.worldgen.Highways.Kind.BRIDGE ? "b " : " ");
@@ -467,7 +470,8 @@ public final class ChunkProbe {
                     link.a().level(), link.b().centreX(), link.b().centreZ(), link.b().level(), link.length(), lo, hi, steepest,
                     bridge * 100 / n, link.planMs(), (int) link.x()[mid], link.y()[mid] + 2, (int) link.z()[mid], profile);
         }
-        CityWorldMod.LOGGER.warn("SURVEY highways: {} links in {} ms", links.size(), (System.nanoTime() - started) / 1_000_000);
+        CityWorldMod.LOGGER.warn("SURVEY highways: {} links in {} ms; rough ground bias {}", links.size(), (System.nanoTime() - started) / 1_000_000,
+                ((me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator) level.getChunkSource().getGenerator()).highways().biasForSurvey());
     }
 
     private static void surveySites(ServerLevel level) {
