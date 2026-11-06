@@ -204,7 +204,15 @@ public class ThingProvider extends Provider {
 	/** A fossil buried in the rock under {@code blockYs}: one of the {@link me.daddychurchill.CityWorld.Support.Fossils}. */
 	public void generateBones(CityWorldGenerator generator, PlatLot lot, SupportBlocks chunk, AbstractCachedYs blockYs,
 			Odds odds) {
-		int y = odds.calcRandomRange(10, blockYs.getMinHeight() - 20);
+		// Between y 10 and 20 under the lowest ground, as upstream had it (its worlds began at y 0). A 7.0 ocean floor
+		// sits near y 30, which left that range empty and threw "bound must be positive" -- a crashed chunk the moment
+		// a player dived. Only then is the floor the world's own; every other chunk draws exactly as it always did.
+		int top = blockYs.getMinHeight() - 20, bottom = 10;
+		if (top < bottom)
+			bottom = generator.worldMinY + 10;
+		if (top < bottom)
+			return;
+		int y = odds.calcRandomRange(bottom, top);
 		me.daddychurchill.CityWorld.Support.Fossils.draw(chunk, odds, y);
 	}
 }
