@@ -9,6 +9,14 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Added
 
+- **Highways between the cities of a vanilla world.** Each city gets a road to its neighbours east and south,
+  leaving along one of its own streets at its own level. The road winds round hills and along valleys, never
+  climbing steeper than one in ten. It is cut through higher ground with sloped sides and banked up over dips, and it
+  crosses rivers and gorges on bridges with railings and piers and goes under ridges in lit tunnels. Its surface is
+  the city's street, Macaw's asphalt included. Vanilla's ravines pass under a highway, not through it. Settings
+  `cities.highways` (`enabled`, `width`, `grade`, `fillMax`, `clearance`, `tunnel`) and **Highways** in Customize.
+  From a player's request for Highways & Byways support (GitHub issue #3); CityWorld builds its own, because that
+  mod's roads join vanilla structures rather than cities.
 - **Deep oceans on CityWorld's own land.** Now and then the land runs down a shelf into a wide ocean thirty
   blocks deep, with vanilla's ocean biomes (deep, cold, frozen, lukewarm, warm) and what lives in them: ocean
   monuments, ocean ruins, shipwrecks and buried treasure, and the sea structures of mods that ask for ocean biomes
@@ -16,8 +24,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   About 6% of the land at the default, oceans 1–5 km across; cities keep off them. The ruined Nether twin has a lava
   sea in the same place. Modern, Apocalypse, Classic and Sparse. Settings `cities.oceans` (`enabled`, `size`,
   `rarity`, `depth`, `shelf`), and **Oceans** / **Ocean share** in Customize. **A world made before 7.0 never has
-  them**: the world presets now mark a new world as made with oceans, and a world without that mark keeps the
-  land it always had. The Structures page shows the ocean structures as on when oceans are, and switching one off
+  them**: the world presets and Customize now stamp a new world `"made_with": 7`, and a world without that stamp
+  keeps the land it always had (highways too). The Structures page shows the ocean structures as on when oceans are, and switching one off
   there still wins.
 
 ## 6.14.0

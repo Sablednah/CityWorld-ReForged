@@ -439,7 +439,7 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 | `wildBridgeRegion` | `32` | The size of a bridge region, in chunks square. A region has at most one wild rope bridge, wholly inside it: its seed orders its chunk rows and columns, and the bridge is the first span along the first of them that has one. |
 | `oddsOfWildBridge` | `0.5` | The chance a region has its bridge (1 in 2). At the defaults a mountain range shows one, maybe two. |
 
-### `cities` — cities in a vanilla world, rivers and oceans
+### `cities` — cities in a vanilla world, highways, rivers and oceans
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -451,7 +451,23 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 | `maxWater` | `0.35` | The share of a candidate site that may be under the sea. Datapack only. |
 | `minNear` | `0.75` | The share of a candidate site that must already lie within sixteen blocks of the city's level. Datapack only. |
 | `rivers` | `false`* | Rivers on CityWorld's own land: springs in the hills, waterfalls, rivers widening to the sea, bridges where roads cross, and the waterside by district (quays, slips, harbours, beaches, lighthouses). *On in the world presets; off in a world saved before rivers existed, so an old world never grows a river that stops at the chunks it already has. |
+| `highways` | see below | Roads between the cities of a vanilla world (7.0). **Highways** in Customize. |
 | `oceans` | see below | Deep oceans on CityWorld's own land (7.0). **Oceans** and **Ocean share** in Customize. |
+
+`highways` is a group of its own:
+
+```json
+"cities": { "highways": { "enabled": true, "width": 9, "grade": 0.1, "fillMax": 8, "clearance": 5, "tunnel": 12 } }
+```
+
+| Setting | Default | What it does |
+|---|---|---|
+| `enabled` | `true`* | **Vanilla land only.** A road from each city to its neighbour east and south. It leaves each city along one of the city's own streets, at the city's level, then winds round hills and along valleys rather than over them, and climbs no steeper than `grade`. Where the ground is higher it is cut through, where lower it is banked up, over water and deep drops it is a bridge (railings, piers), and under a ridge a tunnel (lit). Its surface is the city's street: a road mod's asphalt (Macaw's Roads) where the city has it. *On for a world made with 7.0 or later; **a world made before 7.0 never has them**, so explored land never meets a road cut off at its edge. A city with no neighbour in a cell gets no road that way. |
+| `width` | `9` | The road's width in blocks, plus a kerb each side. `3`–`15`. |
+| `grade` | `0.1` | The steepest climb: blocks up per block along (`0.1` is one in ten). The steps are half slabs where the surface has a slab. `0.02`–`0.5`. |
+| `fillMax` | `8` | The deepest a road is banked up on the ground; deeper than this it is a bridge. `0`–`32`. |
+| `clearance` | `5` | How high a bridge deck stands above the sea when it crosses water. `1`–`32`. |
+| `tunnel` | `12` | How far the ground must stand above the road for a tunnel; less is a cut with sloped sides. `8`–`128`. |
 
 `oceans` is a group of its own:
 
@@ -461,7 +477,7 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 
 | Setting | Default | What it does |
 |---|---|---|
-| `enabled` | `true`* | Now and then the land runs down into a wide, deep ocean, with vanilla's ocean biomes (deep, cold, frozen, lukewarm, warm), and the structures that live there: ocean monuments, ocean ruins, shipwrecks and buried treasure, and any mod's that ask for ocean biomes (Cataclysm's Sunken City and Acropolis, Battle Towers' ocean tower). Cities keep off it. In the ruined Nether twin it is a lava sea. *On for a world made with 7.0 or later; **a world made before 7.0 never has them**, whatever this says, so explored land never meets an ocean cut off at its edge. Modern, Apocalypse, Classic and Sparse, with seas on; Destroyed (decayed nature) and the styles that are their own terrain ignore it, and vanilla land has vanilla's oceans. |
+| `enabled` | `true`* | Now and then the land runs down into a wide, deep ocean, with vanilla's ocean biomes (deep, cold, frozen, lukewarm, warm), and the structures that live there: ocean monuments, ocean ruins, shipwrecks and buried treasure, and any mod's that ask for ocean biomes (Cataclysm's Sunken City and Acropolis, Battle Towers' ocean tower). Cities keep off it. In the ruined Nether twin it is a lava sea. *On for a world made with 7.0 or later (the world's generator carries `"made_with": 7`); **a world made before 7.0 never has them**, whatever this says, so explored land never meets an ocean cut off at its edge. Modern, Apocalypse, Classic and Sparse, with seas on; Destroyed (decayed nature) and the styles that are their own terrain ignore it, and vanilla land has vanilla's oceans. |
 | `size` | `6000` | How broad the ocean pattern is, in blocks: larger means fewer, bigger oceans. `1024`–`32768`. |
 | `rarity` | `0.5` | How much of the land stays land: higher is rarer. **Ocean share** in Customize: `0.62` about 2%, `0.56` about 4%, `0.5` about 6%, `0.44` about 9%, `0.38` about 13% (measured over 80 km on three seeds; it varies by seed). At the default an ocean is about 1–5 km across. `0`–`0.95`. |
 | `depth` | `30` | How far below sea level the ocean floor lies (vanilla's deep oceans are about this deep). `8`–`56`. |
