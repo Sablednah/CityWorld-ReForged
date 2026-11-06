@@ -642,6 +642,48 @@ public final class ChunkProbe {
      * go) pale grey, hills green to white; rivers dark blue, width by flow; red dots falls, cyan lakes, black
      * springs, magenta mouths.
      */
+    /**
+     * {@code -Dcityworld.probe=find:chasm}: where Alex's Caves' abyssal chasm would open on this seed (its cell grid
+     * and the deep-ocean test, read without the mod), nearest the origin first, with a {@code /tp} to each cell's
+     * deepest column. Radius {@code -Dcityworld.probe.radius} in blocks (default 6000).
+     */
+    private static void findChasm(ServerLevel level) {
+        if (!(level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw)) {
+            CityWorldMod.LOGGER.warn("FIND chasm: this dimension is not CityWorld's");
+            return;
+        }
+        var ctx = cw.getContext(level);
+        long seed = ctx.getWorldSeed();
+        int radius = Integer.getInteger("cityworld.probe.radius", 6000), cell = 256, found = 0;
+        java.util.List<int[]> cells = new java.util.ArrayList<>();
+        for (int cx = Math.floorDiv(-radius, cell); cx <= Math.floorDiv(radius, cell); cx++)
+            for (int cz = Math.floorDiv(-radius, cell); cz <= Math.floorDiv(radius, cell); cz++) {
+                if (!me.daddychurchill.CityWorld.worldgen.CaveRegions.inCellOf("alexscaves:abyssal_chasm", seed, cx * cell, cz * cell))
+                    continue;
+                int deep = 0, bestY = Integer.MAX_VALUE, bestX = 0, bestZ = 0;
+                for (int x = cx * cell; x < cx * cell + cell; x += 16)
+                    for (int z = cz * cell; z < cz * cell + cell; z += 16) {
+                        int y = ctx.getNaturalBlockY(x, z);
+                        if (!me.daddychurchill.CityWorld.worldgen.CaveRegions.underDeepOcean(ctx, y))
+                            continue;
+                        deep++;
+                        if (y < bestY) {
+                            bestY = y;
+                            bestX = x;
+                            bestZ = z;
+                        }
+                    }
+                if (deep > 0)
+                    cells.add(new int[] { bestX, bestZ, bestY, deep * 100 / 256 });
+            }
+        cells.sort(java.util.Comparator.comparingLong(c -> (long) c[0] * c[0] + (long) c[1] * c[1]));
+        for (int[] c : cells)
+            if (found++ < 12)
+                CityWorldMod.LOGGER.warn("FIND chasm: cell {}% under deep ocean, floor y{} — /tp {} {} {}", c[3], c[2], c[0],
+                        ctx.seaLevel + 2, c[1]);
+        CityWorldMod.LOGGER.warn("FIND chasm: {} chasm cells under deep ocean within {} blocks", cells.size(), radius);
+    }
+
     private static void surveyRivers(ServerLevel level) {
         if (!(level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw)
                 || !(cw.getContext(level).shapeProvider instanceof me.daddychurchill.CityWorld.Plugins.ShapeProvider_Normal shape)) {
@@ -1166,6 +1208,10 @@ public final class ChunkProbe {
             }
             if (spec.startsWith("survey:sites")) {
                 surveySites(level);
+                return;
+            }
+            if (spec.startsWith("find:chasm")) {
+                findChasm(level);
                 return;
             }
             if (spec.startsWith("survey:highways")) {
