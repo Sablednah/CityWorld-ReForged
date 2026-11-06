@@ -36,7 +36,9 @@
     { "id": "alexscaves:gingerbread_town",    "required": false },
     { "id": "alexscaves:licowitch_tower",     "required": false },
     { "id": "alexscaves:soda_bottle",         "required": false },
-    { "id": "alexscaves:underground_cabin",   "required": false }
+    { "id": "alexscaves:underground_cabin",   "required": false },
+    { "id": "alexscaves:ocean_trench",        "required": false },
+    { "id": "alexscaves:abyssal_ruins",       "required": false }
   ],
   "_comment": "trial_chambers is 1.21+, so on this line it MUST be optional: one unknown required entry discards the entire tag, which silently removes strongholds too."
 }

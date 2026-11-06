@@ -62,7 +62,8 @@ public final class CityWorldBiomeLookup {
         // Underground and inside a cave patch? Then the patch's biome wins over the surface's. The
         // margin keeps a patch from bleeding into surface grass and foliage colour on a hillside.
         if (blockY < column.terrainY - context.getSettings().caves.surfaceMargin()) {
-            Holder<Biome> cave = source.cavePool().at(context.getWorldSeed(), blockX, blockY, blockZ);
+            Holder<Biome> cave = source.cavePool().at(context.getWorldSeed(), blockX, blockY, blockZ,
+                    CaveRegions.underDeepOcean(context, column.terrainY));
             if (cave != null)
                 return cave;
         }
