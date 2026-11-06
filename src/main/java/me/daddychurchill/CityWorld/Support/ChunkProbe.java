@@ -456,7 +456,7 @@ public final class ChunkProbe {
             for (int k = 0; k < link.x().length; k++)
                 for (int ox = -1; ox <= 1; ox++)
                     for (int oz = -1; oz <= 1; oz++)
-                        chunks.add(net.minecraft.world.level.ChunkPos.asLong(Math.floorDiv((int) Math.floor(link.x()[k]) + ox * edge, 16),
+                        chunks.add(net.minecraft.world.level.ChunkPos.pack(Math.floorDiv((int) Math.floor(link.x()[k]) + ox * edge, 16),
                                 Math.floorDiv((int) Math.floor(link.z()[k]) + oz * edge, 16)));
             for (long c : chunks) {
                 int minX = net.minecraft.world.level.ChunkPos.getX(c) * 16, minZ = net.minecraft.world.level.ChunkPos.getZ(c) * 16;
