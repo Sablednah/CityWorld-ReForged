@@ -723,7 +723,7 @@ public final class CityWorldSelfTest {
         int presets = 0, stamped = 0;
         var presetReg = server.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.WORLD_PRESET);
         for (var ref : presetReg.listElements().toList()) {
-            if (!ref.key().identifier().getNamespace().equals(CityWorldMod.MODID))
+            if (!ref.key().location().getNamespace().equals(CityWorldMod.MODID))
                 continue;
             var stem = ref.value().createWorldDimensions().get(net.minecraft.world.level.dimension.LevelStem.OVERWORLD);
             if (stem.isEmpty() || !(stem.get().generator()
@@ -733,7 +733,7 @@ public final class CityWorldSelfTest {
             if (cw.oceansStamped())
                 stamped++;
             else
-                fail("world preset " + ref.key().identifier() + " does not stamp a new world with oceans");
+                fail("world preset " + ref.key().location() + " does not stamp a new world with oceans");
         }
         if (presets == 0)
             fail("no CityWorld world preset found to check for the oceans stamp");
@@ -749,7 +749,7 @@ public final class CityWorldSelfTest {
             if (!cw.oceansStamped())
                 fail("the self-test world, made from the city preset, is not stamped with oceans");
             boolean monuments = overworld.getChunkSource().getGeneratorState().possibleStructureSets().stream()
-                    .anyMatch(h -> h.unwrapKey().map(k -> k.identifier().toString().equals("minecraft:ocean_monuments"))
+                    .anyMatch(h -> h.unwrapKey().map(k -> k.location().toString().equals("minecraft:ocean_monuments"))
                             .orElse(false));
             if (!monuments)
                 fail("a world with deep oceans does not place ocean monuments");
