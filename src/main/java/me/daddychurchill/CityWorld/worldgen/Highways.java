@@ -63,7 +63,8 @@ public final class Highways {
 
     private final CitySites sites;
     private final int seaLevel;
-    private final ConcurrentHashMap<Long, java.util.Optional<Link>> links = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, java.util.concurrent.CompletableFuture<java.util.Optional<Link>>> links =
+            new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Long, Integer> grid = new ConcurrentHashMap<>();
 
     /** A cheap estimate of the ground, for the route search only (vanilla's preliminary surface level). */
@@ -150,9 +151,10 @@ public final class Highways {
     public List<Link> linksTouching(int x0, int z0, int x1, int z1) {
         List<Link> found = new ArrayList<>();
         int cell = sites.cell();
-        int cx0 = Math.floorDiv(x0, cell) - 1, cx1 = Math.floorDiv(x1, cell) + 1;
-        int cz0 = Math.floorDiv(z0, cell) - 1, cz1 = Math.floorDiv(z1, cell) + 1;
-        int pad = OFFSETS * OFFSET + halfWidth + SIDE + RUN_OUT;
+        // two cells west and north: a link runs east or south, and one from two cells back can reach in here (a site
+        // is only `margin` from its cell's edge, less than the pad below)
+        int cx0 = Math.floorDiv(x0, cell) - 2, cx1 = Math.floorDiv(x1, cell) + 1;
+        int cz0 = Math.floorDiv(z0, cell) - 2, cz1 = Math.floorDiv(z1, cell) + 1;
         for (int cx = cx0; cx <= cx1; cx++)
             for (int cz = cz0; cz <= cz1; cz++) {
                 CitySites.Site here = sites.siteAt(cx * cell, cz * cell);
@@ -163,6 +165,11 @@ public final class Highways {
                     CitySites.Site there = sites.siteAt(nx * cell, nz * cell);
                     if (there == null)
                         continue;
+                    // the route swings up to OFFSETS offsets off the line between the GATES, and a gate stands up to
+                    // 0.6 of the radius across from its centre, snapped to a road line (up to three chunks more); a
+                    // box from the centres alone left a chunk asking nothing and a road ending at its edge
+                    int pad = OFFSETS * OFFSET + halfWidth + SIDE + RUN_OUT + 64
+                            + (int) Math.ceil(0.6 * Math.max(here.radius(), there.radius()));
                     int bx0 = Math.min(here.centreX(), there.centreX()) - pad, bx1 = Math.max(here.centreX(), there.centreX()) + pad;
                     int bz0 = Math.min(here.centreZ(), there.centreZ()) - pad, bz1 = Math.max(here.centreZ(), there.centreZ()) + pad;
                     if (x1 < bx0 || x0 > bx1 || z1 < bz0 || z0 > bz1)
@@ -198,19 +205,23 @@ public final class Highways {
 
     private Link link(int cx, int cz, int dir, CitySites.Site here, CitySites.Site there) {
         long key = ((long) cx << 33) ^ ((long) cz << 1) ^ dir;
-        var known = links.get(key);
+        // one thread plans a link and the rest wait for it (every chunk along a new road asks at once); planned outside
+        // any map lock, waited through Waiting.join (never a bare join on a worker)
+        var mine = new java.util.concurrent.CompletableFuture<java.util.Optional<Link>>();
+        var known = links.putIfAbsent(key, mine);
         if (known != null)
-            return known.orElse(null);
-        // outside any map lock: planning reads hundreds of vanilla heights, and any thread gets the same answer
-        Link planned;
+            return Waiting.join(known).orElse(null);
         try {
-            planned = plan(here, there);
+            Link planned = plan(here, there);
+            mine.complete(java.util.Optional.ofNullable(planned));
+            return planned;
         } catch (RuntimeException e) {
+            // not remembered: a one-off failure must not leave this session's chunks roadless and a restart's paved
             me.daddychurchill.CityWorld.CityWorldMod.LOGGER.warn("CityWorld: highway {},{} dir {} FAILED", cx, cz, dir, e);
-            planned = null;
+            links.remove(key, mine);
+            mine.complete(java.util.Optional.empty());
+            return null;
         }
-        var raced = links.putIfAbsent(key, java.util.Optional.ofNullable(planned));
-        return raced != null ? raced.orElse(null) : planned;
     }
 
     // --- planning -------------------------------------------------------------------------------------------
