@@ -76,6 +76,9 @@ public final class CaveRegions {
      * shares with a later one. Biomes in the tag but not named here are appended in tag order.
      */
     private static final List<String> ORDER = List.of(
+            // Alex's Caves' abyssal chasm first: it can only ever own a column under a 7.0 deep ocean (see
+            // DEEP_OCEAN_ONLY), and there it should win -- it is what those oceans were built to host.
+            "alexscaves:abyssal_chasm",
             "minecraft:deep_dark", "minecraft:sulfur_caves", "minecraft:lush_caves", "minecraft:dripstone_caves",
             // Biomes O' Plenty's four underground biomes. Named here, and in the shipped cave_pool tag
             // with "required": false, so they cost nothing when BoP is absent — the same trick that lets
@@ -84,9 +87,7 @@ public final class CaveRegions {
             "biomesoplenty:glowing_grotto", "biomesoplenty:crystalline_chasm",
             "biomesoplenty:spider_nest",
             // Alex's Caves' five land biomes (1.20.1 only, where the mod exists), after everything else
-            // so a vanilla or BoP type wins a shared cell. Its abyssal chasm is deliberately NOT here: it
-            // is an ocean-floor biome, and its trench structure carves down from the sea bed -- under dry
-            // land that would be a pit open to the sky.
+            // so a vanilla or BoP type wins a shared cell.
             "alexscaves:magnetic_caves", "alexscaves:primordial_caves", "alexscaves:toxic_caves",
             "alexscaves:forlorn_hollows", "alexscaves:candy_cavity");
 
@@ -130,7 +131,27 @@ public final class CaveRegions {
             Map.entry("alexscaves:primordial_caves", new int[] { 224, 2, -64, 40 }),
             Map.entry("alexscaves:toxic_caves", new int[] { 160, 2, -64, 40 }),
             Map.entry("alexscaves:forlorn_hollows", new int[] { 192, 2, -64, 40 }),
-            Map.entry("alexscaves:candy_cavity", new int[] { 160, 1, -64, 40 }));
+            Map.entry("alexscaves:candy_cavity", new int[] { 160, 1, -64, 40 }),
+            // The abyssal chasm, under deep ocean only. Its trench (a raw_generation structure gated on the
+            // biome at y -16, which it needs 16 above and below and 32 each way) cuts from the sea bed down
+            // to bedrock and lays its own abyssmarine walls, so the band runs from bedrock to just under a
+            // 7.0 ocean floor (~y 33), and no rock is painted. Cells as wide as its 150-block trench radius;
+            // common within a basin, because the basins themselves are rare.
+            Map.entry("alexscaves:abyssal_chasm", new int[] { 256, 30, -64, 30 }));
+
+    /**
+     * Cave biomes that may only own a column under a deep ocean -- the {@code classify} deep row, in a world with
+     * 7.0's oceans. Alex's Caves' abyssal chasm is an ocean-floor trench: under land it would be a pit open to the
+     * sky, and in a world without the oceans it would cut into seas whose old chunks have none. Everywhere else its
+     * cell is passed over, so the next type can own the column as it always did.
+     */
+    private static final java.util.Set<String> DEEP_OCEAN_ONLY = java.util.Set.of("alexscaves:abyssal_chasm");
+
+    /** Whether a column counts as deep ocean for {@link #DEEP_OCEAN_ONLY}: the deep row, with 7.0's oceans. */
+    public static boolean underDeepOcean(me.daddychurchill.CityWorld.CityWorldGenerator g, int terrainY) {
+        return terrainY < g.deepseaLevel
+                && g.shapeProvider instanceof me.daddychurchill.CityWorld.Plugins.ShapeProvider_Normal n && n.hasOceans();
+    }
 
     /** What an unrecognised (modded, datapack-added) cave biome gets: a mid-depth, modest patch. */
     private static final int[] DEFAULT_GEOMETRY = { 96, 5, -60, 20 };
@@ -213,7 +234,12 @@ public final class CaveRegions {
     }
 
     /** One resolved entry: a biome that exists here, plus how its patches are shaped. */
-    private record Patch(Holder<Biome> biome, int cell, int percent, int minY, int maxY, long salt) {
+    private record Patch(Holder<Biome> biome, int cell, int percent, int minY, int maxY, long salt, boolean deepOceanOnly) {
+
+        /** Whether this patch's cell may own a column at all, given whether the column is deep ocean. */
+        boolean allowedIn(boolean deepOcean) {
+            return deepOcean || !deepOceanOnly;
+        }
     }
 
     /**
@@ -261,7 +287,7 @@ public final class CaveRegions {
                 for (CityWorldSettingsData.CavePatch o : overrides)
                     members.stream().filter(h -> o.biome().equals(idOf(h))).findFirst()
                             .ifPresent(h -> built.add(new Patch(h, o.cell(), o.percent(), o.minY(), o.maxY(),
-                                    saltFor(idOf(h)))));
+                                    saltFor(idOf(h)), DEEP_OCEAN_ONLY.contains(idOf(h)))));
                 return List.copyOf(built);
             }
             // Named order first, so the rare/deep ones win a shared cell...
@@ -292,8 +318,8 @@ public final class CaveRegions {
          * <p>Takes the same "first matching cell owns the column" path as {@link #at}, so the paint can
          * never disagree with the biome.
          */
-        public @Nullable String wallRockAt(long worldSeed, int blockX, int blockY, int blockZ) {
-            List<WallBand> bands = wallBandsAt(worldSeed, blockX, blockY, blockZ);
+        public @Nullable String wallRockAt(long worldSeed, int blockX, int blockY, int blockZ, boolean deepOcean) {
+            List<WallBand> bands = wallBandsAt(worldSeed, blockX, blockY, blockZ, deepOcean);
             if (bands == null)
                 return null;
             double n = noise(worldSeed).noise(blockX * WALL_NOISE_SCALE, blockY * WALL_NOISE_SCALE,
@@ -305,9 +331,9 @@ public final class CaveRegions {
         }
 
         /** The bands for this column's cave type, or {@code null} if it has none / this Y is outside it. */
-        private @Nullable List<WallBand> wallBandsAt(long worldSeed, int blockX, int blockY, int blockZ) {
+        private @Nullable List<WallBand> wallBandsAt(long worldSeed, int blockX, int blockY, int blockZ, boolean deepOcean) {
             for (Patch patch : patches) {
-                if (!inCell(worldSeed, patch, blockX, blockZ))
+                if (!patch.allowedIn(deepOcean) || !inCell(worldSeed, patch, blockX, blockZ))
                     continue;
                 if (blockY < patch.minY() || blockY > patch.maxY())
                     return null;
@@ -317,9 +343,9 @@ public final class CaveRegions {
         }
 
         /** Whether this column's cave type paints its rock solid (see {@link CaveRegions#SOLID_ROCK}). */
-        public boolean paintsSolid(long worldSeed, int blockX, int blockZ) {
+        public boolean paintsSolid(long worldSeed, int blockX, int blockZ, boolean deepOcean) {
             for (Patch patch : patches) {
-                if (!inCell(worldSeed, patch, blockX, blockZ))
+                if (!patch.allowedIn(deepOcean) || !inCell(worldSeed, patch, blockX, blockZ))
                     continue;
                 return SOLID_ROCK.contains(idOf(patch.biome()));
             }
@@ -327,9 +353,9 @@ public final class CaveRegions {
         }
 
         /** Whether this column paints its walls at all — lets a caller skip the whole column cheaply. */
-        public boolean paintsWalls(long worldSeed, int blockX, int blockZ) {
+        public boolean paintsWalls(long worldSeed, int blockX, int blockZ, boolean deepOcean) {
             for (Patch patch : patches) {
-                if (!inCell(worldSeed, patch, blockX, blockZ))
+                if (!patch.allowedIn(deepOcean) || !inCell(worldSeed, patch, blockX, blockZ))
                     continue;
                 return hasWallRock(idOf(patch.biome()));
             }
@@ -358,9 +384,9 @@ public final class CaveRegions {
          * The cave biome at a block position, or {@code null} for "not in a patch — keep the surface
          * biome". Pure and seed-deterministic, so it is safe on any worldgen worker.
          */
-        public @Nullable Holder<Biome> at(long worldSeed, int blockX, int blockY, int blockZ) {
+        public @Nullable Holder<Biome> at(long worldSeed, int blockX, int blockY, int blockZ, boolean deepOcean) {
             for (Patch patch : patches) {
-                if (!inCell(worldSeed, patch, blockX, blockZ))
+                if (!patch.allowedIn(deepOcean) || !inCell(worldSeed, patch, blockX, blockZ))
                     continue;
                 // The first matching CELL owns the whole column; its Y band then decides whether this
                 // particular point is inside the patch or back to the surface biome. Deliberately NOT
@@ -399,7 +425,7 @@ public final class CaveRegions {
         int[] g = GEOMETRY.get(biomeId);
         if (g == null)
             return false;
-        return inCell(worldSeed, new Patch(null, g[0], g[1], g[2], g[3], biomeId.hashCode() * 0x9E3779B97F4A7C15L),
+        return inCell(worldSeed, new Patch(null, g[0], g[1], g[2], g[3], biomeId.hashCode() * 0x9E3779B97F4A7C15L, false),
                 blockX, blockZ);
     }
 
@@ -410,7 +436,7 @@ public final class CaveRegions {
     private static Patch patch(Holder<Biome> biome) {
         String id = idOf(biome);
         int[] g = GEOMETRY.getOrDefault(id, DEFAULT_GEOMETRY);
-        return new Patch(biome, g[0], g[1], g[2], g[3], saltFor(id));
+        return new Patch(biome, g[0], g[1], g[2], g[3], saltFor(id), DEEP_OCEAN_ONLY.contains(id));
     }
 
     /**

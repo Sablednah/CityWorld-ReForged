@@ -3051,13 +3051,15 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 for (int dz = 0; dz < 16; dz++) {
                     int x = originX + dx, z = originZ + dz;
                     // Cheap reject: the column's cave type is fixed, so one question answers the column.
-                    if (!pool.paintsWalls(seed, x, z))
+                    // (the same deep-ocean answer the biome lookup gives, so paint and biome agree on the owner)
+                    boolean deepOcean = CaveRegions.underDeepOcean(context, context.getNaturalBlockY(x, z));
+                    if (!pool.paintsWalls(seed, x, z, deepOcean))
                         continue;
                     // Alex's Caves' rock is the whole column (its surface rules replace every stone in the
                     // biome), vanilla's sulfur is a lining; see CaveRegions.SOLID_ROCK.
-                    boolean solid = pool.paintsSolid(seed, x, z);
+                    boolean solid = pool.paintsSolid(seed, x, z, deepOcean);
                     for (int y = bottom; y <= top; y++) {
-                        String rockId = pool.wallRockAt(seed, x, y, z);
+                        String rockId = pool.wallRockAt(seed, x, y, z, deepOcean);
                         if (rockId == null)
                             continue;
                         cursor.set(x, y, z);
