@@ -35,6 +35,8 @@ public final class Highways {
     static final int RUN_OUT = 40;
     /** Samples either side the ground is averaged over before the grade is applied. */
     static final int SMOOTH = 12;
+    /** The shortest tunnel, in blocks. */
+    static final int MIN_TUNNEL = 16;
     /** How far the cut and bank slopes reach past the deck's kerb. */
     public static final int SIDE = 14;
     /** Grid the route search reads heights on. */
@@ -42,13 +44,13 @@ public final class Highways {
     /** Every this many samples the ground under the centreline is read exactly; between, it is interpolated. */
     static final int EXACT = 4;
 
-    public enum Kind { GROUND, BRIDGE }
+    public enum Kind { GROUND, BRIDGE, TUNNEL }
 
     /**
      * One highway: the centreline as samples ({@code x}, {@code z}, deck {@code y}, {@link Kind}), and the box
      * (in blocks, the slopes included) it can change anything in.
      */
-    public record Link(CitySites.Site a, CitySites.Site b, double[] x, double[] z, int[] y, Kind[] kind,
+    public record Link(CitySites.Site a, CitySites.Site b, double[] x, double[] z, int[] y, double[] h, Kind[] kind,
             int minX, int minZ, int maxX, int maxZ, long planMs) {
         public int length() {
             return (x.length - 1) * STEP;
@@ -72,7 +74,7 @@ public final class Highways {
      *              route search reads on its grid; or {@code sites.heights()} where a line has none (exact, slow)
      */
     /** The settings, unpacked: half the deck's width (it is 2 * this + 1 wide), the grade, the bank, the clearance. */
-    private final int halfWidth, fillMax, clearance;
+    private final int halfWidth, fillMax, clearance, tunnel;
     private final double grade;
 
     public Highways(CitySites sites, CitySites.Heights rough, CityWorldSettingsData.Highways settings) {
@@ -83,6 +85,7 @@ public final class Highways {
         this.grade = settings.grade();
         this.fillMax = settings.fillMax();
         this.clearance = settings.clearance();
+        this.tunnel = settings.tunnel();
     }
 
     /** Half the deck's width: the deck is {@code 2 * halfWidth() + 1} blocks wide, plus a kerb each side. */
@@ -335,7 +338,8 @@ public final class Highways {
         for (int i = 0; i < n; i++) {
             if (i % EXACT != 0 && i != n - 1)
                 continue;
-            int top = sites.heights().top((int) Math.floor(xs[i]), (int) Math.floor(zs[i]));
+            int top = shaped((int) Math.floor(xs[i]), (int) Math.floor(zs[i]), sites.heights().top((int) Math.floor(xs[i]),
+                    (int) Math.floor(zs[i])));
             wet[i] = top < seaLevel - 1;
             ground[i] = wet[i] ? seaLevel + clearance : top;
             if (last >= 0)
@@ -378,9 +382,11 @@ public final class Highways {
             ys[i] = (int) Math.round(deck[i]);
 
         // the kind of each sample, then runs shorter than a few samples merged into their neighbours
-        boolean[] over = new boolean[n];
-        for (int i = 0; i < n; i++)
+        boolean[] over = new boolean[n], under = new boolean[n];
+        for (int i = 0; i < n; i++) {
             over[i] = wet[i] || ys[i] - ground[i] > fillMax;
+            under[i] = !wet[i] && ground[i] - ys[i] > tunnel;
+        }
         // a bridge reaches onto its banks: widened from the raw answer, never from its own output (which ran the
         // first bridge on to the end of the road)
         Kind[] kind = new Kind[n];
@@ -388,7 +394,21 @@ public final class Highways {
             boolean bridge = false;
             for (int j = Math.max(0, i - 3); j <= Math.min(n - 1, i + 3) && !bridge; j++)
                 bridge = over[j];
-            kind[i] = bridge ? Kind.BRIDGE : Kind.GROUND;
+            kind[i] = bridge ? Kind.BRIDGE : under[i] ? Kind.TUNNEL : Kind.GROUND;
+        }
+        // a tunnel shorter than this is a deep cut instead: a few blocks of roof over a road reads as a mistake
+        for (int i = 0; i < n;) {
+            if (kind[i] != Kind.TUNNEL) {
+                i++;
+                continue;
+            }
+            int j = i;
+            while (j < n && kind[j] == Kind.TUNNEL)
+                j++;
+            if ((j - i) * STEP < MIN_TUNNEL)
+                for (int t = i; t < j; t++)
+                    kind[t] = Kind.GROUND;
+            i = j;
         }
         int minX = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
         int reach = halfWidth + SIDE + 2;
@@ -398,7 +418,7 @@ public final class Highways {
             minZ = Math.min(minZ, (int) Math.floor(zs[i]) - reach);
             maxZ = Math.max(maxZ, (int) Math.ceil(zs[i]) + reach);
         }
-        return new Link(a, b, xs, zs, ys, kind, minX, minZ, maxX, maxZ, (System.nanoTime() - started) / 1_000_000);
+        return new Link(a, b, xs, zs, ys, deck, kind, minX, minZ, maxX, maxZ, (System.nanoTime() - started) / 1_000_000);
     }
 
     /** What a turn of one offset step costs, in the same units as a block of ground off the road's level. */
@@ -434,9 +454,19 @@ public final class Highways {
         Integer known = grid.get(key);
         if (known != null)
             return known;
-        int top = rough.top(gx * GRID, gz * GRID) + bias();
+        int top = shaped(gx * GRID, gz * GRID, rough.top(gx * GRID, gz * GRID) + bias());
         grid.putIfAbsent(key, top);
         return top;
+    }
+
+    /**
+     * The ground as it will be when the highway is drawn: vanilla's, except where a city's patch and blend ring reach,
+     * which bring it to the city's level first ({@link CitySites#groundAt}, the same easing the chunk gets). Reading
+     * the raw height there put a "tunnel" at a gate, under a hill the city had already levelled away.
+     */
+    private int shaped(int x, int z, int top) {
+        CitySites.Site site = sites.influencing(x >> 4, z >> 4);
+        return site == null ? top : sites.groundAt(site, x, z, top);
     }
 
     /** A centripetal-free uniform Catmull-Rom curve through the points, as a dense polyline (about a block apart). */
@@ -486,7 +516,7 @@ public final class Highways {
     // --- drawing -------------------------------------------------------------------------------------------
 
     /** Where a column stands against the nearest highway: how far from the centreline, the deck's y, its kind. */
-    public record Near(double distance, double along, int deck, Kind kind, int index, Link link) {
+    public record Near(double distance, double along, int deck, double height, Kind kind, int index, Link link) {
     }
 
     /** The nearest highway centreline to this column within {@code reach} blocks, among {@code candidates}; or null. */
@@ -507,8 +537,9 @@ public final class Highways {
                 double d = Math.hypot(px - cx, pz - cz);
                 if (d <= reach && (best == null || d < best.distance)) {
                     int y = (int) Math.round(link.y[i] + (link.y[i + 1] - link.y[i]) * f);
+                    double h = link.h[i] + (link.h[i + 1] - link.h[i]) * f;
                     Kind k = link.kind[f < 0.5 ? i : i + 1];
-                    best = new Near(d, (i + f) * STEP, y, k, i, link);
+                    best = new Near(d, (i + f) * STEP, y, h, k, i, link);
                 }
             }
         }
