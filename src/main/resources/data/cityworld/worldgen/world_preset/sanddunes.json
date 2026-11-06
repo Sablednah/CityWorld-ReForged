@@ -4,7 +4,7 @@
       "type": "minecraft:overworld",
       "generator": {
         "type": "cityworld:city",
-        "oceans": true,
+        "made_with": 7,
         "settings": "cityworld:default",
         "style": "sanddunes",
         "biome_source": {
