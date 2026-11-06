@@ -1692,6 +1692,15 @@ public final class CityWorldSelfTest {
             fail("getBaseHeight disagrees with its own column scan at " + wrong + " of " + checked + " asks");
     }
 
+    /**
+     * A set 7.0's deep oceans add (buried treasure is a candidate in one chunk in a hundred): left out of the forecast
+     * scan, which looks for land structures near spawn and would spend its whole budget on chunks with no sea.
+     */
+    private static boolean oceanSet(Holder<StructureSet> set) {
+        return set.unwrapKey().map(k -> me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator.OCEAN_STRUCTURE_SETS
+                .contains(k.location().toString())).orElse(false);
+    }
+
     private void checkForecast(MinecraftServer server, ChunkGeneratorStructureState state) {
         ServerLevel level = server.overworld();
         if (!(level.getChunkSource().getGenerator()
@@ -1715,7 +1724,7 @@ public final class CityWorldSelfTest {
                     boolean candidate = false;
                     for (Holder<StructureSet> set : state.possibleStructureSets())
                         if (!(set.value().placement() instanceof ConcentricRingsStructurePlacement)
-                                && set.value().placement().isStructureChunk(state, cx, cz))
+                                && !oceanSet(set) && set.value().placement().isStructureChunk(state, cx, cz))
                             candidate = true;
                     if (!candidate)
                         continue;
