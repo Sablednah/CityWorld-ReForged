@@ -83,7 +83,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     net.minecraft.world.level.Level.RESOURCE_KEY_CODEC.optionalFieldOf("twin_of").forGetter(g -> g.twinOf),
                     Codec.STRING.optionalFieldOf("environment").forGetter(g -> g.environment),
                     Codec.STRING.optionalFieldOf("terrain").forGetter(g -> g.terrain),
-                    Codec.BOOL.optionalFieldOf("oceans").forGetter(g -> g.oceans)
+                    Codec.INT.optionalFieldOf("made_with").forGetter(g -> g.madeWith)
             ).apply(instance, CityWorldChunkGenerator::new));
 
     /**
@@ -177,18 +177,27 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private final Optional<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> twinOf;
 
-    /**
-     * The world's 7.0 stamp: {@code true} when the world was created with deep oceans available (the world presets
-     * and the Customize screen write it). Saved with the generator in the world, so a world made before 7.0 has none
-     * and never grows an ocean, although it re-reads its settings entry from the jar on every load. A twin follows
-     * the dimension it copies. See {@link CityWorldSettingsData.Oceans}.
-     */
-    private final Optional<Boolean> oceans;
+    /** The CityWorld major version a world made now is stamped with ({@link #madeWith}). */
+    public static final int MADE_WITH = 7;
 
-    /** Whether this world was created with oceans available (its own stamp, or its twin source's). */
-    public boolean oceansStamped() {
+    /**
+     * The world's stamp: the CityWorld major version it was created with (the world presets and the Customize screen
+     * write {@link #MADE_WITH}). Saved with the generator in the world, so a world made before 7.0 has none — and a
+     * feature that would change the land under it (7.0's deep oceans and highways) stays off there, although the world
+     * re-reads its settings entry from the jar on every load: new chunks would otherwise meet an ocean or a road that
+     * stops dead at the edge of the ones already made. A twin follows the dimension it copies.
+     */
+    private final Optional<Integer> madeWith;
+
+    /** The CityWorld major version this world was made with (its own stamp, or its twin source's); 0 before 7.0. */
+    public int madeWith() {
         CityWorldChunkGenerator source = twinSource(false);
-        return source != null ? source.oceansStamped() : oceans.orElse(false);
+        return source != null ? source.madeWith() : madeWith.orElse(0);
+    }
+
+    /** Whether this world was made with 7.0 or later, so may have deep oceans and highways. */
+    public boolean oceansStamped() {
+        return madeWith() >= 7;
     }
 
     /** The settings with the 7.0 oceans stamp folded in: no stamp, no oceans, whatever the settings say. */
@@ -334,9 +343,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     public CityWorldChunkGenerator(BiomeSource biomeSource, Optional<Boolean> decayed, Optional<String> style,
             Optional<Holder<CityWorldSettingsData>> settings,
             Optional<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> twinOf,
-            Optional<String> environment, Optional<String> terrain, Optional<Boolean> oceans) {
+            Optional<String> environment, Optional<String> terrain, Optional<Integer> madeWith) {
         super(biomeSource);
-        this.oceans = oceans;
+        this.madeWith = madeWith;
         this.terrain = terrain;
         this.vanillaByField = terrain.map(t -> t.trim().equalsIgnoreCase("vanilla")).orElse(false);
         this.overworld = parseEnvironment(environment) == me.daddychurchill.CityWorld.compat.Environment.NORMAL;
@@ -643,8 +652,12 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     // the route search reads vanilla's own cheap estimate of the surface, microseconds a column where an
                     // exact height costs milliseconds
                     net.minecraft.world.level.levelgen.DensityFunction surface = random.router().preliminarySurfaceLevel();
-                    highways = Highways.enabled() ? new Highways(citySites, (x, z) -> (int) Math.floor(surface.compute(
-                            new net.minecraft.world.level.levelgen.DensityFunction.SinglePointContext(x, 0, z)))) : null;
+                    // a world made before 7.0 has none: new chunks would meet a road that stops at the ones already made
+                    var roads = citiesConfig().highways();
+                    highways = roads.enabled() && oceansStamped() && !Boolean.getBoolean("cityworld.highways.off")
+                            ? new Highways(citySites, (x, z) -> (int) Math.floor(surface.compute(
+                                    new net.minecraft.world.level.levelgen.DensityFunction.SinglePointContext(x, 0, z))), roads)
+                            : null;
                     vanillaOverworld = local = built;
                 }
             }
@@ -674,7 +687,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private void drawHighways(CityWorldGenerator context, ChunkAccess chunk) {
         ChunkPos pos = chunk.getPos();
         int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
-        int reach = Highways.HALF_WIDTH + Highways.SIDE + 2;
+        int reach = highways.halfWidth() + Highways.SIDE + 2;
         var links = highways.linksTouching(minX - reach, minZ - reach, minX + 15 + reach, minZ + 15 + reach);
         if (links.isEmpty())
             return;
@@ -688,12 +701,12 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         BlockState rail = net.minecraft.world.level.block.Blocks.STONE_BRICK_WALL.defaultBlockState();
         BlockState pier = net.minecraft.world.level.block.Blocks.STONE_BRICKS.defaultBlockState();
         int floor = chunk.getMinY(), ceiling = chunk.getMaxY();
-        double half = Highways.HALF_WIDTH + 0.5;
+        double half = highways.halfWidth() + 0.5;
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         java.util.BitSet cut = null;
         for (int x = 0; x < 16; x++)
             for (int z = 0; z < 16; z++) {
-                var near = Highways.nearest(links, minX + x + 0.5, minZ + z + 0.5, Highways.HALF_WIDTH + Highways.SIDE + 1);
+                var near = Highways.nearest(links, minX + x + 0.5, minZ + z + 0.5, highways.halfWidth() + Highways.SIDE + 1);
                 if (near == null)
                     continue;
                 int bx = minX + x, bz = minZ + z;
@@ -724,7 +737,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         chunk.setBlockState(cursor.set(bx, deck - 1, bz), edge);
                         // piers every sixteen blocks, under each side of the deck, down to the ground or sea bed
                         double m = near.along() % 16;
-                        if ((m < 1.0 || m > 15.0) && d > Highways.HALF_WIDTH - 1.5 && d <= half)
+                        if ((m < 1.0 || m > 15.0) && d > highways.halfWidth() - 1.5 && d <= half)
                             for (int y = deck - 2; y > top && y > floor; y--)
                                 chunk.setBlockState(cursor.set(bx, y, bz), pier);
                     }
@@ -742,7 +755,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     if (cut == null)
                         cut = new java.util.BitSet(256);
                     cut.set(x << 4 | z);
-                } else if (top < bankTo && bankTo - top <= Highways.FILL_MAX + Highways.SIDE) {
+                } else if (top < bankTo && bankTo - top <= highways.fillMax() + Highways.SIDE) {
                     for (int y = top + 1; y <= bankTo; y++)
                         chunk.setBlockState(cursor.set(bx, y, bz), stone);
                     if (cut == null)

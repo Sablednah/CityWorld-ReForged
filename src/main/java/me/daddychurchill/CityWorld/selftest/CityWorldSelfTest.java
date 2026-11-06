@@ -733,10 +733,10 @@ public final class CityWorldSelfTest {
             if (cw.oceansStamped())
                 stamped++;
             else
-                fail("world preset " + ref.key().location() + " does not stamp a new world with oceans");
+                fail("world preset " + ref.key().location() + " does not stamp a new world made_with " + me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator.MADE_WITH);
         }
         if (presets == 0)
-            fail("no CityWorld world preset found to check for the oceans stamp");
+            fail("no CityWorld world preset found to check for the made_with stamp");
         ServerLevel overworld = server.overworld();
         var live = overworld.getChunkSource().getGenerator();
         if (live instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw) {
@@ -745,9 +745,9 @@ public final class CityWorldSelfTest {
                     java.util.Optional.empty(), java.util.Optional.empty(), java.util.Optional.empty(),
                     java.util.Optional.empty());
             if (old.oceansStamped())
-                fail("a generator with no oceans stamp (a world made before 7.0) reads as stamped");
+                fail("a generator with no made_with stamp (a world made before 7.0) reads as made with 7");
             if (!cw.oceansStamped())
-                fail("the self-test world, made from the city preset, is not stamped with oceans");
+                fail("the self-test world, made from the city preset, is not stamped made_with 7");
             boolean monuments = overworld.getChunkSource().getGeneratorState().possibleStructureSets().stream()
                     .anyMatch(h -> h.unwrapKey().map(k -> k.location().toString().equals("minecraft:ocean_monuments"))
                             .orElse(false));
