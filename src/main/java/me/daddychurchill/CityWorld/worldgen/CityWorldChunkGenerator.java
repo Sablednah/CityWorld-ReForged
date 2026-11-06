@@ -649,7 +649,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                         || key == net.minecraft.world.level.biome.Biomes.FROZEN_RIVER;
                             },
                             citiesConfig());
-                    highways = Highways.enabled() ? new Highways(citySites) : null;
+                    // the route search reads vanilla's own cheap estimate of the surface, microseconds a column where an
+                    // exact height costs milliseconds
+                    net.minecraft.world.level.levelgen.DensityFunction surface = random.router().preliminarySurfaceLevel();
+                    highways = Highways.enabled() ? new Highways(citySites, (x, z) -> (int) Math.floor(surface.compute(
+                            new net.minecraft.world.level.levelgen.DensityFunction.SinglePointContext(x, 0, z)))) : null;
                     vanillaOverworld = local = built;
                 }
             }
