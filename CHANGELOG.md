@@ -5,6 +5,21 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 7.0.0 (unreleased)
+
+### Added
+
+- **Deep oceans on CityWorld's own land.** Now and then the land runs down a shelf into a wide ocean thirty
+  blocks deep, with vanilla's ocean biomes (deep, cold, frozen, lukewarm, warm) and what lives in them: ocean
+  monuments, ocean ruins, shipwrecks and buried treasure, and the sea structures of mods that ask for ocean biomes
+  (Cataclysm's Sunken City, which had nowhere to go on CityWorld land before, and Battle Towers' ocean tower).
+  About 6% of the land at the default, oceans 1–5 km across; cities keep off them. The ruined Nether twin has a lava
+  sea in the same place. Modern, Apocalypse, Classic and Sparse. Settings `cities.oceans` (`enabled`, `size`,
+  `rarity`, `depth`, `shelf`), and **Oceans** / **Ocean share** in Customize. **A world made before 7.0 never has
+  them**: the world presets now mark a new world as made with oceans, and a world without that mark keeps the
+  land it always had. The Structures page shows the ocean structures as on when oceans are, and switching one off
+  there still wins.
+
 ## 6.14.0
 
 ### Added

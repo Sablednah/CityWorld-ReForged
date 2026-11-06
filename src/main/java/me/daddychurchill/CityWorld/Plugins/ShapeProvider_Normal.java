@@ -190,6 +190,16 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		constructMin = seaLevel;
 		constructRange = height - constructMin;
 
+		var oc = generator.getSettings().cities.oceans();
+		if (oceansWanted(generator)) {
+			oceanShape = new SimplexOctaveGenerator(seed + 5150, 2);
+			oceanShape.setScale(1.0 / oc.size());
+		} else
+			oceanShape = null;
+		oceanRarity = oc.rarity();
+		oceanShelf = oc.shelf();
+		oceanDepth = oc.depth();
+
 		rivers = riversWanted(generator) ? new RiverNetwork(seed, new RiverNetwork.Terrain() {
 			public double drainage(int x, int z) {
 				return drainageAt(x, z);
@@ -220,6 +230,56 @@ public class ShapeProvider_Normal extends ShapeProvider {
 	}
 
 	private final RiverNetwork rivers;
+
+	/**
+	 * Deep oceans (7.0, settings {@code cities.oceans}): only on this plain terrain itself (its subclasses reshape
+	 * the land their own way), in the overworld and its ruined Nether twin (where the sea is lava), with seas on
+	 * and nature not decayed (that drains them). The world must have been created with oceans: the generator
+	 * folds its stamp into {@code enabled}. {@code -Dcityworld.oceans.off=true} turns them off for a probe.
+	 */
+	private boolean oceansWanted(CityWorldGenerator generator) {
+		var settings = generator.getSettings();
+		var env = generator.worldEnvironment;
+		return getClass() == ShapeProvider_Normal.class
+				&& (env == me.daddychurchill.CityWorld.compat.Environment.NORMAL
+						|| env == me.daddychurchill.CityWorld.compat.Environment.NETHER)
+				&& settings.cities.oceans().enabled() && !Boolean.getBoolean("cityworld.oceans.off")
+				&& settings.includeSeas && !settings.includeDecayedNature;
+	}
+
+	/** The ocean mask, or null when this world has no deep oceans. */
+	private final SimplexOctaveGenerator oceanShape;
+	private final double oceanRarity;
+	private final double oceanShelf;
+	private final int oceanDepth;
+
+	/** Whether this world has deep oceans (the probe's and the biome matrix's question). */
+	public boolean hasOceans() {
+		return oceanShape != null;
+	}
+
+	/** The raw ocean mask at a column, about -1..1; only meaningful when {@link #hasOceans()}. */
+	private double oceanMask(int blockX, int blockZ) {
+		return oceanShape.noise(blockX, blockZ, 0.5, 0.5, true);
+	}
+
+	/**
+	 * How far into a deep ocean a column is: 0 on land, rising over the shelf to 1 where the floor reaches its full
+	 * depth (a smoothstep, so the shelf has no crease at either end).
+	 */
+	public double oceanAt(int blockX, int blockZ) {
+		if (oceanShape == null)
+			return 0;
+		return smoothstep((oceanMask(blockX, blockZ) - oceanRarity) / oceanShelf);
+	}
+
+	private static double smoothstep(double u) {
+		if (u <= 0)
+			return 0;
+		if (u >= 1)
+			return 1;
+		return u * u * (3 - 2 * u);
+	}
 
 	/** The river network, or null when this world has no rivers (the probe's {@code survey:treasure}). */
 	public RiverNetwork rivers() {
@@ -795,6 +855,16 @@ public class ShapeProvider_Normal extends ShapeProvider {
 			y = Math.max(seaLevel, landY + 1);
 		}
 
+		// a deep ocean: ease the ground down the shelf to the deep floor (only ever lowering it), so a mountain that
+		// meets the ocean runs down into it and the plain dips under the waterline where the shelf begins
+		if (oceanShape != null) {
+			double t = oceanAt(blockX, blockZ);
+			if (t > 0) {
+				double floor = seaLevel - oceanDepth + sea * OCEAN_FLOOR_SWELL + noise * noiseVerticalScale;
+				y = Math.min(y, y + (floor - y) * t);
+			}
+		}
+
 		// for real?
 		if (!generator.getSettings().includeMountains)
 			y = Math.min(seaLevel + 1, y);
@@ -817,8 +887,21 @@ public class ShapeProvider_Normal extends ShapeProvider {
 		double land2 = seaLevel + landShape2.noise(blockX, blockZ, landFrequency2, landAmplitude2, true)
 				* (landRange / (double) landFactor1to2) - landFlattening;
 		double sea = seaShape.noise(blockX, blockZ, seaFrequency, seaAmplitude, true);
-		return Math.max(Math.max(land1, land2), seaLevel) + DRAINAGE_SEA_TILT * sea * seaRange;
+		double drainage = Math.max(Math.max(land1, land2), seaLevel) + DRAINAGE_SEA_TILT * sea * seaRange;
+		// a deep ocean is the lowest thing around, and its pull starts a band before its shore, so a river near one
+		// runs to it rather than to the next patch of shallow sea
+		if (oceanShape != null) {
+			double pull = smoothstep((oceanMask(blockX, blockZ) - oceanRarity + OCEAN_DRAINAGE_REACH)
+					/ (OCEAN_DRAINAGE_REACH + oceanShelf));
+			drainage -= pull * (oceanDepth + seaRange);
+		}
+		return drainage;
 	}
+
+	/** How much the sea noise swells the deep ocean floor, in blocks either way. */
+	private final static double OCEAN_FLOOR_SWELL = 6.0;
+	/** How far outside an ocean (in mask units) its pull on rivers reaches. */
+	private final static double OCEAN_DRAINAGE_REACH = 0.15;
 
 	private final static double DRAINAGE_SEA_TILT = 0.5;
 

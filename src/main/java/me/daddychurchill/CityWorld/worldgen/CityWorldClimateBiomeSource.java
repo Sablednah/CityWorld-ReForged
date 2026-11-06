@@ -280,7 +280,7 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
     @Override
     public Holder<Biome> classify(CityWorldGenerator g, int terrainY, double temp, double humid, boolean decayedNature) {
         if (terrainY < g.deepseaLevel)
-            return deepOcean(temp);
+            return vanillaOceans(g) ? vanillaDeepOcean(temp) : deepOcean(temp);
         if (terrainY < g.seaLevel) {
             // warm, humid, shallow water reads as swamp rather than open ocean — gives the lowland swamp
             // a watery edge (marsh) instead of a hard dry-land-meets-sea line.
@@ -315,6 +315,24 @@ public class CityWorldClimateBiomeSource extends BiomeSource implements CityWorl
         if (cold(t)) return b(Biomes.DEEP_COLD_OCEAN);
         if (warm(t)) return b(Biomes.DEEP_OCEAN);
         return b(Biomes.DEEP_LUKEWARM_OCEAN);
+    }
+
+    /**
+     * A world with 7.0's deep oceans takes vanilla's deep row as {@code OverworldBiomeBuilder} lays it out (frozen,
+     * cold, plain, lukewarm, then warm, which has no deep form), so its oceans have the biomes, and with them the
+     * structures and mob spawns, that players and mods expect of a vanilla deep ocean. A world without them keeps
+     * the row it always had, so its biomes never change under it.
+     */
+    private static boolean vanillaOceans(CityWorldGenerator g) {
+        return g.shapeProvider instanceof me.daddychurchill.CityWorld.Plugins.ShapeProvider_Normal n && n.hasOceans();
+    }
+
+    private Holder<Biome> vanillaDeepOcean(double t) {
+        if (t < 0.2) return b(Biomes.DEEP_FROZEN_OCEAN);
+        if (cold(t)) return b(Biomes.DEEP_COLD_OCEAN);
+        if (temperate(t)) return b(Biomes.DEEP_OCEAN);
+        if (warm(t)) return b(Biomes.DEEP_LUKEWARM_OCEAN);
+        return b(Biomes.WARM_OCEAN);
     }
 
     private Holder<Biome> ocean(double t) {

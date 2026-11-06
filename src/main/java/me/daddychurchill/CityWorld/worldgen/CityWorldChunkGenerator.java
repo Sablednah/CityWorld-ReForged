@@ -82,7 +82,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             .optionalFieldOf("settings").forGetter(g -> g.settings),
                     net.minecraft.world.level.Level.RESOURCE_KEY_CODEC.optionalFieldOf("twin_of").forGetter(g -> g.twinOf),
                     Codec.STRING.optionalFieldOf("environment").forGetter(g -> g.environment),
-                    Codec.STRING.optionalFieldOf("terrain").forGetter(g -> g.terrain)
+                    Codec.STRING.optionalFieldOf("terrain").forGetter(g -> g.terrain),
+                    Codec.BOOL.optionalFieldOf("oceans").forGetter(g -> g.oceans)
             ).apply(instance, CityWorldChunkGenerator::new));
 
     /**
@@ -175,6 +176,28 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * the overworld's cannot be shared).
      */
     private final Optional<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> twinOf;
+
+    /**
+     * The world's 7.0 stamp: {@code true} when the world was created with deep oceans available (the world presets
+     * and the Customize screen write it). Saved with the generator in the world, so a world made before 7.0 has none
+     * and never grows an ocean, although it re-reads its settings entry from the jar on every load. A twin follows
+     * the dimension it copies. See {@link CityWorldSettingsData.Oceans}.
+     */
+    private final Optional<Boolean> oceans;
+
+    /** Whether this world was created with oceans available (its own stamp, or its twin source's). */
+    public boolean oceansStamped() {
+        CityWorldChunkGenerator source = twinSource(false);
+        return source != null ? source.oceansStamped() : oceans.orElse(false);
+    }
+
+    /** The settings with the 7.0 oceans stamp folded in: no stamp, no oceans, whatever the settings say. */
+    private CityWorldSettingsData stampOceans(CityWorldSettingsData data) {
+        var c = data.cities();
+        if (c.oceans().enabled() && !oceansStamped())
+            return data.withCities(c.withOceans(c.oceans().withEnabled(false)));
+        return data;
+    }
 
     /**
      * The realm, straight from the JSON: {@code "nether"} for the ruined-city Nether; absent means the
@@ -305,7 +328,15 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             Optional<Holder<CityWorldSettingsData>> settings,
             Optional<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> twinOf,
             Optional<String> environment, Optional<String> terrain) {
+        this(biomeSource, decayed, style, settings, twinOf, environment, terrain, Optional.empty());
+    }
+
+    public CityWorldChunkGenerator(BiomeSource biomeSource, Optional<Boolean> decayed, Optional<String> style,
+            Optional<Holder<CityWorldSettingsData>> settings,
+            Optional<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> twinOf,
+            Optional<String> environment, Optional<String> terrain, Optional<Boolean> oceans) {
         super(biomeSource);
+        this.oceans = oceans;
         this.terrain = terrain;
         this.vanillaByField = terrain.map(t -> t.trim().equalsIgnoreCase("vanilla")).orElse(false);
         this.overworld = parseEnvironment(environment) == me.daddychurchill.CityWorld.compat.Environment.NORMAL;
@@ -371,6 +402,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                 : twin.resolvedSettings();
                         twinResolved = true;
                     }
+                    settingsData = stampOceans(settingsData);
                     // The End is never ruined, whatever it mirrors: the dragon kept everyone away until it was
                     // killed, so its city stands as built while the overworld's fell (owner, 2026-09-17 — and why
                     // ZARP's voidlings only turn up afterwards). Applied here as well as in the presets, so an End
@@ -2319,6 +2351,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // and its Structures page lists the Nether's and the End's sets beside the overworld's.
         CityWorldChunkGenerator twin = twinSource(false);
         CityWorldSettingsData.Structures choice = (twin != null ? twin : this).resolvedSettings().structures();
+        // A world with deep oceans places vanilla's ocean structures in them (a deny in the settings still wins).
+        // Added here rather than to #cityworld:allowed, which every world reads, so a world made before 7.0 keeps
+        // placing exactly what it did.
+        if (deepOceansHere(twin))
+            choice = choice.alsoAllowing(OCEAN_STRUCTURE_SETS);
         // A vanilla-terrain world places vanilla's structures by vanilla's own noise (strongholds search biomes
         // through the random state), and keeps every structure set its settings do not turn off: the wild is a
         // normal world. The noise must exist now, not at first chunk — see the End above.
@@ -2411,6 +2448,29 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     public static HolderLookup<StructureSet> onlyAllowed(HolderLookup<StructureSet> all,
             CityWorldSettingsData.Structures choice) {
         return onlyAllowed(all, choice, false);
+    }
+
+    /** The structure sets a world with deep oceans adds: the ones vanilla puts in and beside its oceans. */
+    public static final java.util.List<String> OCEAN_STRUCTURE_SETS = java.util.List.of(
+            "minecraft:ocean_monuments", "minecraft:ocean_ruins", "minecraft:shipwrecks", "minecraft:buried_treasures");
+
+    /**
+     * Whether this dimension has 7.0's deep oceans, decided without the per-world context (which does not exist yet
+     * when the structure state is made): the overworld of a CityWorld-land world stamped with oceans, whose settings
+     * leave them on, in a style built on the plain terrain that keeps its seas (Destroyed drains them). The shaper's
+     * own test ({@code ShapeProvider_Normal.oceansWanted}) also checks the seas toggle; with seas off there is no
+     * ocean for the sets to find, and vanilla's biome checks place nothing.
+     */
+    private boolean deepOceansHere(CityWorldChunkGenerator twin) {
+        // a twin (the /cityworld city before the fall) is judged by the world it copies, as its terrain is
+        CityWorldChunkGenerator source = twin != null ? twin : this;
+        if (!overworld || vanillaTerrain() || !oceansStamped() || Boolean.getBoolean("cityworld.oceans.off")
+                || !source.resolvedSettings().cities().oceans().enabled())
+            return false;
+        return switch (source.resolvedStyle()) {
+            case MODERN, APOCALYPSE, CLASSIC, SPARSE -> true;
+            default -> false;
+        };
     }
 
     /** @param everything every set counts as tagged (a vanilla-terrain world), so only the deny list takes any away */

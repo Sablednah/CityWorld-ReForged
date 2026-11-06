@@ -58,7 +58,7 @@ world after adding it. New to datapacks? See the [Beginner's guide to datapacks]
 Settings are read when the world **starts** — restart the server, or quit to the title screen and reopen
 the world. `/reload` does not apply them. And only **new chunks** change: existing chunks never
 regenerate. Spawn odds, names, treasure odds and decay bite as you explore into fresh land;
-terrain-shaping settings (seas, mountains, caves, radius, rivers) want a brand-new world to be seen
+terrain-shaping settings (seas, mountains, caves, radius, rivers, oceans) want a brand-new world to be seen
 properly.
 
 ### Your style forces some values
@@ -80,6 +80,18 @@ at it with `"settings": "cityworld:ruined"`.
 
 A few common asks. Each shows only the part to change: put these keys into your copy of the world type's
 settings file (see the table above), leaving the rest of it as shipped.
+
+**No deep oceans (or rarer ones).** A world made before 7.0 needs nothing: it never has them. For a new world,
+switch **Oceans** off in Customize, or in a settings datapack:
+
+```json
+{
+  "cities": { "oceans": { "enabled": false } }
+}
+```
+
+`"rarity": 0.62` instead keeps them but makes them about a third as common. Decide before you explore: changed
+under a world already played, an ocean stops dead at the chunks already made.
 
 **A gentler apocalypse — ruined buildings and roads, but no fire, on a normal green world:**
 
@@ -427,7 +439,7 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 | `wildBridgeRegion` | `32` | The size of a bridge region, in chunks square. A region has at most one wild rope bridge, wholly inside it: its seed orders its chunk rows and columns, and the bridge is the first span along the first of them that has one. |
 | `oddsOfWildBridge` | `0.5` | The chance a region has its bridge (1 in 2). At the defaults a mountain range shows one, maybe two. |
 
-### `cities` — cities in a vanilla world, and rivers
+### `cities` — cities in a vanilla world, rivers and oceans
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -439,6 +451,21 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 | `maxWater` | `0.35` | The share of a candidate site that may be under the sea. Datapack only. |
 | `minNear` | `0.75` | The share of a candidate site that must already lie within sixteen blocks of the city's level. Datapack only. |
 | `rivers` | `false`* | Rivers on CityWorld's own land: springs in the hills, waterfalls, rivers widening to the sea, bridges where roads cross, and the waterside by district (quays, slips, harbours, beaches, lighthouses). *On in the world presets; off in a world saved before rivers existed, so an old world never grows a river that stops at the chunks it already has. |
+| `oceans` | see below | Deep oceans on CityWorld's own land (7.0). **Oceans** and **Ocean share** in Customize. |
+
+`oceans` is a group of its own:
+
+```json
+"cities": { "oceans": { "enabled": true, "size": 6000, "rarity": 0.5, "depth": 30, "shelf": 0.1 } }
+```
+
+| Setting | Default | What it does |
+|---|---|---|
+| `enabled` | `true`* | Now and then the land runs down into a wide, deep ocean, with vanilla's ocean biomes (deep, cold, frozen, lukewarm, warm), and the structures that live there: ocean monuments, ocean ruins, shipwrecks and buried treasure, and any mod's that ask for ocean biomes (Cataclysm's Sunken City and Acropolis, Battle Towers' ocean tower). Cities keep off it. In the ruined Nether twin it is a lava sea. *On for a world made with 7.0 or later; **a world made before 7.0 never has them**, whatever this says, so explored land never meets an ocean cut off at its edge. Modern, Apocalypse, Classic and Sparse, with seas on; Destroyed (decayed nature) and the styles that are their own terrain ignore it, and vanilla land has vanilla's oceans. |
+| `size` | `6000` | How broad the ocean pattern is, in blocks: larger means fewer, bigger oceans. `1024`–`32768`. |
+| `rarity` | `0.5` | How much of the land stays land: higher is rarer. **Ocean share** in Customize: `0.62` about 2%, `0.56` about 4%, `0.5` about 6%, `0.44` about 9%, `0.38` about 13% (measured over 80 km on three seeds; it varies by seed). At the default an ocean is about 1–5 km across. `0`–`0.95`. |
+| `depth` | `30` | How far below sea level the ocean floor lies (vanilla's deep oceans are about this deep). `8`–`56`. |
+| `shelf` | `0.1` | How wide the slope from the shore to the deep is, as a share of the pattern: larger is a gentler, wider shelf. `0.01`–`0.5`. |
 
 > Every city in a vanilla world is worked out from the seed and these numbers, so **change them only before
 > the world is made**: changed under an existing world, cities move or change level under chunks already built.

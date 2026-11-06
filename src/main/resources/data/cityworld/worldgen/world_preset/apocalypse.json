@@ -4,6 +4,7 @@
       "type": "minecraft:overworld",
       "generator": {
         "type": "cityworld:city",
+        "oceans": true,
         "settings": "cityworld:apocalypse",
         "style": "apocalypse",
         "biome_source": {
