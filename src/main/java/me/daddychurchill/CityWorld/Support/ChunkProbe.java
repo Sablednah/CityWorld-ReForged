@@ -452,14 +452,32 @@ public final class ChunkProbe {
         var links = highwayLinks(level);
         int i = 0;
         for (var link : links) {
-            int n = link.x().length, lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE, bridge = 0, steepest = 0;
+            int n = link.x().length, lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE, bridge = 0, tunnel = 0, steepest = 0;
             for (int k = 0; k < n; k++) {
                 lo = Math.min(lo, link.y()[k]);
                 hi = Math.max(hi, link.y()[k]);
                 if (link.kind()[k] == me.daddychurchill.CityWorld.worldgen.Highways.Kind.BRIDGE)
                     bridge++;
+                if (link.kind()[k] == me.daddychurchill.CityWorld.worldgen.Highways.Kind.TUNNEL)
+                    tunnel++;
                 if (k >= 8)
                     steepest = Math.max(steepest, Math.abs(link.y()[k] - link.y()[k - 8]));
+            }
+            if (i == Integer.getInteger("cityworld.probe.highway", -1)) {
+                var heights = ((me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator) level.getChunkSource().getGenerator())
+                        .citySites().heights();
+                StringBuilder dump = new StringBuilder();
+                for (int k = 0; k < Math.min(n, 80); k += 2)
+                {
+                    int wx = (int) Math.floor(link.x()[k]), wz = (int) Math.floor(link.z()[k]);
+                    int world = k <= 40 ? level.getServer().submit(() -> level.getChunk(wx >> 4, wz >> 4)
+                            .getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR, wx & 15, wz & 15)).join() : -1;
+                    var site = ((me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator) level.getChunkSource().getGenerator())
+                            .citySites().influencing(wx >> 4, wz >> 4);
+                    dump.append(String.format("%d:(%d,%d) g%d w%d %s d%.1f %s; ", k, wx, wz, heights.top(wx, wz), world,
+                            site == null ? "-" : "site" + site.level(), link.h()[k], link.kind()[k].name().charAt(0)));
+                }
+                CityWorldMod.LOGGER.warn("SURVEY highway {} samples: {}", i, dump);
             }
             int mid = n / 2;
             int[] err = level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator g
@@ -467,11 +485,15 @@ public final class ChunkProbe {
             CityWorldMod.LOGGER.warn("SURVEY highway {}: rough ground off by {} on average, {} at worst (24 points)", i, err[0], err[1]);
             StringBuilder profile = new StringBuilder();
             for (int k = 0; k < n; k += 32)
-                profile.append(link.y()[k]).append(link.kind()[k] == me.daddychurchill.CityWorld.worldgen.Highways.Kind.BRIDGE ? "b " : " ");
+                profile.append(link.y()[k]).append(switch (link.kind()[k]) {
+                    case BRIDGE -> "b ";
+                    case TUNNEL -> "t ";
+                    default -> " ";
+                });
             CityWorldMod.LOGGER.warn("SURVEY highway {}: ({},{}) y{} -> ({},{}) y{}; {} blocks; deck y{}..{}; steepest {} in 16; "
-                    + "bridge {}%; planned in {} ms; middle /tp {} {} {}; profile {}", i++, link.a().centreX(), link.a().centreZ(),
+                    + "bridge {}%; tunnel {}%; planned in {} ms; middle /tp {} {} {}; profile {}", i++, link.a().centreX(), link.a().centreZ(),
                     link.a().level(), link.b().centreX(), link.b().centreZ(), link.b().level(), link.length(), lo, hi, steepest,
-                    bridge * 100 / n, link.planMs(), (int) link.x()[mid], link.y()[mid] + 2, (int) link.z()[mid], profile);
+                    bridge * 100 / n, tunnel * 100 / n, link.planMs(), (int) link.x()[mid], link.y()[mid] + 2, (int) link.z()[mid], profile);
         }
         CityWorldMod.LOGGER.warn("SURVEY highways: {} links in {} ms; rough ground bias {}", links.size(), (System.nanoTime() - started) / 1_000_000,
                 ((me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator) level.getChunkSource().getGenerator()).highways().biasForSurvey());
@@ -1146,6 +1168,12 @@ public final class ChunkProbe {
                     throw new IllegalStateException("no highway " + n + " (there are " + links.size() + ")");
                 var link = links.get(n);
                 int mid = parts.length > 3 && parts[3].equals("start") ? 0 : link.x().length / 2;
+                if (parts.length > 3 && (parts[3].equals("tunnel") || parts[3].equals("bridge")))
+                    for (int k = 0; k < link.x().length; k++)
+                        if (link.kind()[k].name().equalsIgnoreCase(parts[3])) {
+                            mid = Math.min(link.x().length - 1, k + 8);
+                            break;
+                        }
                 CityWorldMod.LOGGER.warn("PROBE: highway {} sample {} at {}, {} deck y{}", n, mid, (int) link.x()[mid],
                         (int) link.z()[mid], link.y()[mid]);
                 cx = Math.floorDiv((int) link.x()[mid], 16);
