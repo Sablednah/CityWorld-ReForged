@@ -328,7 +328,15 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         addRow(oceans, oceanShare);
         byLabel.put("Oceans", oceans);
         byLabel.put("Ocean share", oceanShare);
-        cityDials.addAll(List.of(spacing, size, vary, rise));
+        CycleButton<Boolean> highwaysButton = cycle("Highways", new Boolean[] { false, true }, cities.highways().enabled(),
+                v -> Component.literal(v ? "On" : "Off"),
+                v -> cities = cities.withHighways(cities.highways().withEnabled(v)));
+        highwaysButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                "Vanilla land only: a road from each city to its neighbours east and south, leaving along the city's "
+                        + "own streets, winding round the hills, cut through them, bridged over rivers and tunnelled "
+                        + "under the ridges.")));
+        addRow(highwaysButton, null);
+        cityDials.addAll(List.of(spacing, size, vary, rise, highwaysButton));
         for (AbstractWidget dial : cityDials)
             dial.active = cities.vanillaTerrain();
 

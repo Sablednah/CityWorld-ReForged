@@ -198,6 +198,7 @@ public final class CityWorldSelfTest {
             checkWeightedSubstitutes();
             checkPalettesShipEmpty();
             checkOceans(server);
+            checkHighways();
             checkBiomeGroundTags(server);
             checkPlanning();
             checkPristineTwin();
@@ -799,6 +800,98 @@ public final class CityWorldSelfTest {
         report.put("oceans.check", String.format("%d presets stamped; %.1f%% of %d km² is ocean; floor y%d at %d,%d "
                 + "(y%d without); %s over it", stamped, share, (2 * span / 1000) * (2 * span / 1000), floor, deepX, deepZ,
                 without, context));
+    }
+
+    /**
+     * 7.0's highways, planned over a made-up land (CitySites takes its heights as a function): flat at y70, a ridge to
+     * y110 across every east-west route and a river across every north-south one. Each link must leave both cities on
+     * a road line at the city's level, climb no steeper than the grade, bridge the river and tunnel the ridge.
+     */
+    private void checkHighways() {
+        final int ridgeX0 = 2000, ridgeX1 = 2096, riverZ0 = 2000, riverZ1 = 2040;
+        me.daddychurchill.CityWorld.worldgen.CitySites.Heights land = (x, z) -> x >= ridgeX0 && x <= ridgeX1 ? 110
+                : z >= riverZ0 && z <= riverZ1 ? 55 : 70;
+        var cities = me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Cities.DEFAULT;
+        var sites = new me.daddychurchill.CityWorld.worldgen.CitySites(PLAN_SEED, 64, 63, land,
+                (x, z) -> z >= riverZ0 && z <= riverZ1 && !(x >= ridgeX0 && x <= ridgeX1), cities);
+        var settings = cities.highways();
+        var highways = new me.daddychurchill.CityWorld.worldgen.Highways(sites, null, settings);
+        var links = highways.linksOfCells(0, 0, 1, 1);
+        if (links.size() < 2) {
+            fail("highways: only " + links.size() + " links planned among four cells of flat land");
+            return;
+        }
+        int bridged = 0, tunnelled = 0, crossedRidge = 0, crossedRiver = 0;
+        double allowed = Math.ceil(16 * settings.grade()) + 1;
+        for (var link : links) {
+            int n = link.x().length;
+            String name = "highway (" + link.a().centreX() + "," + link.a().centreZ() + ")->(" + link.b().centreX() + ","
+                    + link.b().centreZ() + ")";
+            if (link.y()[0] != link.a().level() || link.y()[n - 1] != link.b().level())
+                fail(name + " does not meet its cities at their levels: y" + link.y()[0] + "/" + link.a().level() + ", y"
+                        + link.y()[n - 1] + "/" + link.b().level());
+            for (int end : new int[] { 0, n - 1 }) {
+                // a gate is on a road line: chunk index 2 or 7 of its platmap, at the chunk's middle
+                boolean alongX = Math.abs(link.b().centreX() - link.a().centreX()) >= Math.abs(link.b().centreZ() - link.a().centreZ());
+                double across = alongX ? link.z()[end] : link.x()[end];
+                int chunk = Math.floorDiv((int) Math.floor(across), 16);
+                if (Math.floorMod(chunk, 5) != 2 || Math.abs(across - (chunk * 16 + 8)) > 0.01)
+                    fail(name + " leaves its city off a road line, at " + across);
+            }
+            for (int i = 8; i < n; i++)
+                if (Math.abs(link.y()[i] - link.y()[i - 8]) > allowed) {
+                    fail(name + " climbs " + Math.abs(link.y()[i] - link.y()[i - 8]) + " in 16 blocks at sample " + i
+                            + " — steeper than the grade " + settings.grade());
+                    break;
+                }
+            boolean overRidge = false, overRiver = false;
+            for (int i = 0; i < n; i++) {
+                int x = (int) Math.floor(link.x()[i]), z = (int) Math.floor(link.z()[i]);
+                if (x >= ridgeX0 + 24 && x <= ridgeX1 - 24) {
+                    overRidge = true;
+                    if (link.kind()[i] == me.daddychurchill.CityWorld.worldgen.Highways.Kind.TUNNEL)
+                        tunnelled++;
+                    else {
+                        fail(name + " crosses the ridge at " + x + "," + z + " as " + link.kind()[i] + " (deck y"
+                                + link.y()[i] + " under ground y110) — expected a tunnel");
+                        break;
+                    }
+                }
+                if (z >= riverZ0 + 2 && z <= riverZ1 - 2 && !(x >= ridgeX0 && x <= ridgeX1)) {
+                    overRiver = true;
+                    if (link.kind()[i] == me.daddychurchill.CityWorld.worldgen.Highways.Kind.BRIDGE)
+                        bridged++;
+                    else {
+                        fail(name + " crosses the river at " + x + "," + z + " as " + link.kind()[i] + " — expected a bridge");
+                        break;
+                    }
+                }
+            }
+            if (overRidge)
+                crossedRidge++;
+            if (overRiver)
+                crossedRiver++;
+        }
+        // every chunk a road runs through must be handed that road by the call the drawing makes (a rough box from the
+        // city centres once left chunks near a gate asking for nothing: a road ending at a chunk edge)
+        int reach = highways.halfWidth() + me.daddychurchill.CityWorld.worldgen.Highways.SIDE + 2, unseen = 0;
+        for (var link : links)
+            for (int i = 0; i < link.x().length; i += 8) {
+                int minX = Math.floorDiv((int) Math.floor(link.x()[i]), 16) * 16, minZ = Math.floorDiv((int) Math.floor(link.z()[i]), 16) * 16;
+                var asked = highways.linksTouching(minX - reach, minZ - reach, minX + 15 + reach, minZ + 15 + reach);
+                if (asked.stream().noneMatch(l -> l.a().equals(link.a()) && l.b().equals(link.b()))) {
+                    if (unseen++ == 0)
+                        fail("highway (" + link.a().centreX() + "," + link.a().centreZ() + ")->(" + link.b().centreX() + ","
+                                + link.b().centreZ() + ") runs through chunk at " + minX + "," + minZ
+                                + " but linksTouching does not hand it to that chunk — the road would stop at its edge");
+                }
+            }
+        if (crossedRidge == 0)
+            fail("highways: no link crossed the ridge between the cells — the check proves nothing about tunnels");
+        if (crossedRiver == 0)
+            fail("highways: no link crossed the river between the cells — the check proves nothing about bridges");
+        report.put("highways.check", links.size() + " links; " + crossedRidge + " through the ridge (" + tunnelled
+                + " tunnel samples), " + crossedRiver + " over the river (" + bridged + " bridge samples)");
     }
 
     private void checkPalettesShipEmpty() {

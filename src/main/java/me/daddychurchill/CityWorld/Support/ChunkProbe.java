@@ -450,6 +450,29 @@ public final class ChunkProbe {
     private static void surveyHighways(ServerLevel level) {
         long started = System.nanoTime();
         var links = highwayLinks(level);
+        // every chunk a road or its slopes reach must be handed that road by the call the drawing makes
+        var hw = ((me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator) level.getChunkSource().getGenerator()).highways();
+        int edge = hw.halfWidth() + me.daddychurchill.CityWorld.worldgen.Highways.SIDE + 2;
+        int checked = 0, unhanded = 0;
+        for (var link : links) {
+            java.util.Set<Long> chunks = new java.util.HashSet<>();
+            for (int k = 0; k < link.x().length; k++)
+                for (int ox = -1; ox <= 1; ox++)
+                    for (int oz = -1; oz <= 1; oz++)
+                        chunks.add(net.minecraft.world.level.ChunkPos.asLong(Math.floorDiv((int) Math.floor(link.x()[k]) + ox * edge, 16),
+                                Math.floorDiv((int) Math.floor(link.z()[k]) + oz * edge, 16)));
+            for (long c : chunks) {
+                int minX = net.minecraft.world.level.ChunkPos.getX(c) * 16, minZ = net.minecraft.world.level.ChunkPos.getZ(c) * 16;
+                checked++;
+                if (hw.linksTouching(minX - edge, minZ - edge, minX + 15 + edge, minZ + 15 + edge).stream()
+                        .noneMatch(l -> l.a().equals(link.a()) && l.b().equals(link.b()))) {
+                    if (unhanded++ < 5)
+                        CityWorldMod.LOGGER.warn("SURVEY highway UNHANDED: chunk {},{} is crossed by ({},{})->({},{}) but not handed it",
+                                minX >> 4, minZ >> 4, link.a().centreX(), link.a().centreZ(), link.b().centreX(), link.b().centreZ());
+                }
+            }
+        }
+        CityWorldMod.LOGGER.warn("SURVEY highways handed: {} chunks checked, {} not handed their road", checked, unhanded);
         int i = 0;
         for (var link : links) {
             int n = link.x().length, lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE, bridge = 0, tunnel = 0, steepest = 0;
