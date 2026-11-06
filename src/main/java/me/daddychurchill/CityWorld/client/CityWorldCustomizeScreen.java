@@ -306,6 +306,24 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                         + "keeps vanilla's own rivers.")));
         addRow(rise, rivers);
         byLabel.put("Rivers", rivers); // greyed on vanilla land by applyLand, like the other options it ignores
+        CycleButton<Boolean> oceans = cycle("Oceans", new Boolean[] { false, true }, cities.oceans().enabled(),
+                v -> Component.literal(v ? "On" : "Off"),
+                v -> cities = cities.withOceans(cities.oceans().withEnabled(v)));
+        oceans.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                "CityWorld land only: now and then the land runs down to a wide, deep ocean, with vanilla's ocean "
+                        + "biomes, monuments, ruins and shipwrecks, and any mod's sea biomes. Vanilla land has its "
+                        + "own oceans.")));
+        int share = (int) Math.round(cities.oceans().rarity() * 100);
+        CycleButton<Integer> oceanShare = cycle("Ocean share", withValue(OCEAN_SHARE_CHOICES, share), share,
+                v -> Component.literal(oceanShareLabel(v)),
+                v -> cities = cities.withOceans(new me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Oceans(
+                        cities.oceans().enabled(), cities.oceans().size(), v / 100.0, cities.oceans().depth(),
+                        cities.oceans().shelf())));
+        oceanShare.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                "CityWorld land only: how much of the land is deep ocean, roughly (it varies by seed).")));
+        addRow(oceans, oceanShare);
+        byLabel.put("Oceans", oceans);
+        byLabel.put("Ocean share", oceanShare);
         cityDials.addAll(List.of(spacing, size, vary, rise));
         for (AbstractWidget dial : cityDials)
             dial.active = cities.vanillaTerrain();
@@ -340,9 +358,9 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
             this.list.addHeader(Component.literal("Structures"));
             Button pick = Button.builder(
                     Component.literal("Vanilla & mod structures: "
-                            + me.daddychurchill.CityWorld.worldgen.StructureChoices.count(structureEntries, structures)
+                            + me.daddychurchill.CityWorld.worldgen.StructureChoices.count(structureEntriesNow(), structures)
                             + " of " + structureEntries.size()),
-                    b -> this.minecraft.gui.setScreen(new CityWorldStructuresScreen(this, structureEntries, structures,
+                    b -> this.minecraft.gui.setScreen(new CityWorldStructuresScreen(this, structureEntriesNow(), structures,
                             this::reopened)))
                     .size(WIDTH * 2 + 10, HEIGHT).build();
             pick.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
@@ -613,6 +631,39 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private static final Integer[] RISE_CHOICES = { 0, 16, 24, 32, 40, 56, 72, 96 };
 
     /** The choices, with the world's own value among them — a picker that lacks the value rewrites it on save. */
+    /**
+     * The structure sets with their defaults as this world will see them: deep oceans add vanilla's ocean structures
+     * (CityWorldChunkGenerator.OCEAN_STRUCTURE_SETS) to what the tag allows, so the page shows them on, and switching
+     * one off there writes a deny, which wins. Oceans need CityWorld's own land in a style on the plain terrain.
+     */
+    private List<me.daddychurchill.CityWorld.worldgen.StructureChoices.Entry> structureEntriesNow() {
+        boolean oceans = cities.oceans().enabled() && !cities.vanillaTerrain() && switch (style) {
+            case MODERN, APOCALYPSE, CLASSIC, SPARSE -> true;
+            default -> false;
+        };
+        if (!oceans)
+            return structureEntries;
+        var ids = me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator.OCEAN_STRUCTURE_SETS;
+        return structureEntries.stream().map(e -> e.byDefault() || !ids.contains(e.id()) ? e
+                : new me.daddychurchill.CityWorld.worldgen.StructureChoices.Entry(e.id(), e.group(), e.label(), true,
+                        e.structures(), e.realms())).toList();
+    }
+
+    /** Ocean share steps, as the mask threshold in hundredths: higher is rarer. The default (50) is one of them. */
+    private static final Integer[] OCEAN_SHARE_CHOICES = { 62, 56, 50, 44, 38 };
+
+    /** The share each step gives, measured over 80 km squares on three seeds (it varies by seed). */
+    private static String oceanShareLabel(int threshold) {
+        return switch (threshold) {
+            case 62 -> "about 2%";
+            case 56 -> "about 4%";
+            case 50 -> "about 6%";
+            case 44 -> "about 9%";
+            case 38 -> "about 13%";
+            default -> "threshold 0." + threshold;
+        };
+    }
+
     private static Integer[] withValue(Integer[] choices, int value) {
         for (Integer choice : choices)
             if (choice == value)
@@ -720,7 +771,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
             "Chests in bunkers", "Spawners in bunkers", "Spawners in subways", "Chest odds: mines",
             "Chest odds: bunkers", "Mine alcove odds", "Tree style", "Tree density", "Under-floating fill",
             "Ruralness", "Wild plants", "Climate warmth", "Biome scale", "Modded biomes", "Modded biome share",
-            "Rivers");
+            "Rivers", "Oceans", "Ocean share");
 
     /** Every option widget by its label, for {@link #applyLand}. */
     private final java.util.Map<String, AbstractWidget> byLabel = new java.util.HashMap<>();
