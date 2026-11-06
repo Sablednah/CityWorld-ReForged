@@ -379,13 +379,18 @@ public record CityWorldSettingsData(
      * a style that IS a terrain (floating, flooded, dunes, astral, maze, nature, metro) ignores it.
      */
     public record Cities(boolean vanillaTerrain, int spacing, int districts, int districtsVariance, int levelRange,
-            double maxWater, double minNear, boolean rivers) {
+            double maxWater, double minNear, boolean rivers, Oceans oceans) {
 
         /**
          * {@code rivers} (CityWorld's own terrain, {@code worldgen/RiverNetwork}) defaults OFF so a world saved before
          * rivers existed never grows one that stops dead at the chunks it already has; the presets turn it on.
          */
-        public static final Cities DEFAULT = new Cities(false, 2048, 3, 1, 40, 0.35, 0.75, false);
+        public static final Cities DEFAULT = new Cities(false, 2048, 3, 1, 40, 0.35, 0.75, false, Oceans.DEFAULT);
+
+        public Cities(boolean vanillaTerrain, int spacing, int districts, int districtsVariance, int levelRange,
+                double maxWater, double minNear, boolean rivers) {
+            this(vanillaTerrain, spacing, districts, districtsVariance, levelRange, maxWater, minNear, rivers, Oceans.DEFAULT);
+        }
 
         public static final Codec<Cities> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("vanillaTerrain", false).forGetter(Cities::vanillaTerrain),
@@ -395,31 +400,69 @@ public record CityWorldSettingsData(
                 Codec.intRange(0, 120).optionalFieldOf("levelRange", 40).forGetter(Cities::levelRange),
                 Codec.doubleRange(0.0, 1.0).optionalFieldOf("maxWater", 0.35).forGetter(Cities::maxWater),
                 Codec.doubleRange(0.0, 1.0).optionalFieldOf("minNear", 0.75).forGetter(Cities::minNear),
-                Codec.BOOL.optionalFieldOf("rivers", false).forGetter(Cities::rivers)
+                Codec.BOOL.optionalFieldOf("rivers", false).forGetter(Cities::rivers),
+                Oceans.CODEC.optionalFieldOf("oceans", Oceans.DEFAULT).forGetter(Cities::oceans)
         ).apply(i, Cities::new));
 
         public Cities withVanillaTerrain(boolean v) {
-            return new Cities(v, spacing, districts, districtsVariance, levelRange, maxWater, minNear, rivers);
+            return new Cities(v, spacing, districts, districtsVariance, levelRange, maxWater, minNear, rivers, oceans);
         }
 
         public Cities withSpacing(int v) {
-            return new Cities(vanillaTerrain, v, districts, districtsVariance, levelRange, maxWater, minNear, rivers);
+            return new Cities(vanillaTerrain, v, districts, districtsVariance, levelRange, maxWater, minNear, rivers, oceans);
         }
 
         public Cities withDistricts(int v) {
-            return new Cities(vanillaTerrain, spacing, v, districtsVariance, levelRange, maxWater, minNear, rivers);
+            return new Cities(vanillaTerrain, spacing, v, districtsVariance, levelRange, maxWater, minNear, rivers, oceans);
         }
 
         public Cities withDistrictsVariance(int v) {
-            return new Cities(vanillaTerrain, spacing, districts, v, levelRange, maxWater, minNear, rivers);
+            return new Cities(vanillaTerrain, spacing, districts, v, levelRange, maxWater, minNear, rivers, oceans);
         }
 
         public Cities withRivers(boolean v) {
-            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, levelRange, maxWater, minNear, v);
+            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, levelRange, maxWater, minNear, v, oceans);
         }
 
         public Cities withLevelRange(int v) {
-            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, v, maxWater, minNear, rivers);
+            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, v, maxWater, minNear, rivers, oceans);
+        }
+
+        public Cities withOceans(Oceans v) {
+            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, levelRange, maxWater, minNear, rivers, v);
+        }
+    }
+
+    /**
+     * Rare, large, deep oceans on CityWorld's own land (7.0): a slow mask over the plain terrain that eases the ground
+     * down a shelf to a vanilla-depth floor, in the overworld and (as lava) in its ruined Nether twin. Vanilla's ocean
+     * biomes and ocean structures come with them. Vanilla land has real oceans already and ignores this.
+     *
+     * <p>{@code enabled} defaults on, but a world only has oceans if its GENERATOR says {@code "oceans": true} too —
+     * stamped into the world when it is created (the world presets and the Customize screen do it), so a world made
+     * before 7.0, which re-reads these settings from the jar on every load, never grows an ocean through land it
+     * already has. The generator folds that stamp in, so {@code enabled} is the effective switch at runtime.
+     *
+     * @param size   the mask's scale in blocks: bigger is broader basins further apart
+     * @param rarity the mask threshold, 0..1: higher is rarer and smaller (0.5 is about 7% of the land)
+     * @param depth  how far below sea level the deep floor lies
+     * @param shelf  how much of the mask the slope down to the floor takes: bigger is a gentler, wider shelf
+     */
+    public record Oceans(boolean enabled, int size, double rarity, int depth, double shelf) {
+
+        public static final Oceans DEFAULT = new Oceans(true, 6000, 0.5, 30, 0.1);
+        public static final Oceans OFF = DEFAULT.withEnabled(false);
+
+        public static final Codec<Oceans> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.BOOL.optionalFieldOf("enabled", true).forGetter(Oceans::enabled),
+                Codec.intRange(1024, 32768).optionalFieldOf("size", 6000).forGetter(Oceans::size),
+                Codec.doubleRange(0.0, 0.95).optionalFieldOf("rarity", 0.5).forGetter(Oceans::rarity),
+                Codec.intRange(8, 56).optionalFieldOf("depth", 30).forGetter(Oceans::depth),
+                Codec.doubleRange(0.01, 0.5).optionalFieldOf("shelf", 0.1).forGetter(Oceans::shelf)
+        ).apply(i, Oceans::new));
+
+        public Oceans withEnabled(boolean v) {
+            return new Oceans(v, size, rarity, depth, shelf);
         }
     }
 
@@ -476,6 +519,15 @@ public record CityWorldSettingsData(
             if (deny.contains(id))
                 return false;
             return inTag || allow.contains(id);
+        }
+
+        /** These sets allowed as well (a deny still wins): what a world with deep oceans adds to the tag. */
+        public Structures alsoAllowing(java.util.List<String> ids) {
+            java.util.List<String> more = new java.util.ArrayList<>(allow);
+            for (String id : ids)
+                if (!more.contains(id))
+                    more.add(id);
+            return new Structures(java.util.List.copyOf(more), deny, wildernessOnly);
         }
     }
 
