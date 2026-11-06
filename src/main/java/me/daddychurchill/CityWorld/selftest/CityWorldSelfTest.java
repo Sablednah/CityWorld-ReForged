@@ -197,6 +197,7 @@ public final class CityWorldSelfTest {
             checkSettingsExport(server);
             checkWeightedSubstitutes();
             checkPalettesShipEmpty();
+            checkOceans(server);
             checkBiomeGroundTags(server);
             checkPlanning();
             checkPristineTwin();
@@ -696,6 +697,110 @@ public final class CityWorldSelfTest {
      * built, so a tag file that slipped into the jar would silently change every world's look. And an empty part must
      * hand the caller's block back unchanged.
      */
+    /** The default settings without 7.0's deep oceans: what every world made before 7.0 plans with. */
+    private static final me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData NO_OCEANS =
+            me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.DEFAULT.withCities(
+                    me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.DEFAULT.cities().withOceans(
+                            me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Oceans.OFF));
+
+    /**
+     * A plan-only generator for the sweeps whose numbers are compared release to release (the plan hash, the farm
+     * mix): without deep oceans, so a report from before 7.0 and one from after hash the same where nothing else
+     * changed. {@link #checkOceans} covers the oceans themselves.
+     */
+    private static CityWorldGenerator planGenerator(WorldStyle style) {
+        return new CityWorldGenerator(PLAN_SEED, 256, 63, style, -64, 320, java.util.Optional.empty(), NO_OCEANS);
+    }
+
+    /**
+     * 7.0's deep oceans: the shipped world presets stamp a new world with them and an unstamped generator (a world
+     * from before 7.0) answers no; the live world, made from the preset, has them and places vanilla's ocean
+     * structure sets; and the plan itself has rare, deep basins where the same seed without them has land, which
+     * the city keeps off.
+     */
+    private void checkOceans(MinecraftServer server) {
+        // the stamp: every shipped world preset carries it, and a generator without it has no oceans
+        int presets = 0, stamped = 0;
+        var presetReg = server.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.WORLD_PRESET);
+        for (var ref : presetReg.listElements().toList()) {
+            if (!ref.key().identifier().getNamespace().equals(CityWorldMod.MODID))
+                continue;
+            var stem = ref.value().createWorldDimensions().get(net.minecraft.world.level.dimension.LevelStem.OVERWORLD);
+            if (stem.isEmpty() || !(stem.get().generator()
+                    instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw))
+                continue;
+            presets++;
+            if (cw.oceansStamped())
+                stamped++;
+            else
+                fail("world preset " + ref.key().identifier() + " does not stamp a new world with oceans");
+        }
+        if (presets == 0)
+            fail("no CityWorld world preset found to check for the oceans stamp");
+        ServerLevel overworld = server.overworld();
+        var live = overworld.getChunkSource().getGenerator();
+        if (live instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw) {
+            var old = new me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator(cw.getBiomeSource(),
+                    java.util.Optional.empty(), java.util.Optional.of("modern"), java.util.Optional.empty(),
+                    java.util.Optional.empty(), java.util.Optional.empty(), java.util.Optional.empty(),
+                    java.util.Optional.empty());
+            if (old.oceansStamped())
+                fail("a generator with no oceans stamp (a world made before 7.0) reads as stamped");
+            if (!cw.oceansStamped())
+                fail("the self-test world, made from the city preset, is not stamped with oceans");
+            boolean monuments = overworld.getChunkSource().getGeneratorState().possibleStructureSets().stream()
+                    .anyMatch(h -> h.unwrapKey().map(k -> k.identifier().toString().equals("minecraft:ocean_monuments"))
+                            .orElse(false));
+            if (!monuments)
+                fail("a world with deep oceans does not place ocean monuments");
+        }
+
+        // the plan: rare deep basins on the plan seed, land there without them, no city on the water
+        CityWorldGenerator on = new CityWorldGenerator(PLAN_SEED, 256, 63, WorldStyle.MODERN, -64, 320);
+        CityWorldGenerator off = planGenerator(WorldStyle.MODERN);
+        if (!(on.shapeProvider instanceof me.daddychurchill.CityWorld.Plugins.ShapeProvider_Normal shape) || !shape.hasOceans()) {
+            fail("the default settings give a Modern world no deep oceans");
+            return;
+        }
+        if (off.shapeProvider instanceof me.daddychurchill.CityWorld.Plugins.ShapeProvider_Normal n && n.hasOceans())
+            fail("oceans off in the settings still gives a world deep oceans");
+        int span = 8192, step = 128, cells = 0, ocean = 0, deepX = 0, deepZ = 0;
+        boolean deepFound = false;
+        for (int x = -span; x <= span; x += step)
+            for (int z = -span; z <= span; z += step) {
+                cells++;
+                double t = shape.oceanAt(x, z);
+                if (t > 0)
+                    ocean++;
+                if (!deepFound && t >= 1) {
+                    deepFound = true;
+                    deepX = x;
+                    deepZ = z;
+                }
+            }
+        double share = 100.0 * ocean / cells;
+        if (share < 1 || share > 20)
+            fail(String.format("deep oceans cover %.1f%% of the land on the plan seed — expected rare but present (1-20%%)", share));
+        if (!deepFound) {
+            fail("no column reaches full ocean depth within " + span + " blocks of the plan seed's origin");
+            return;
+        }
+        int floor = on.getNaturalBlockY(deepX, deepZ), without = off.getNaturalBlockY(deepX, deepZ);
+        int depth = on.getSettings().cities.oceans().depth();
+        if (floor > on.seaLevel - depth + 12)
+            fail("the deep ocean floor at " + deepX + "," + deepZ + " is y" + floor + " — expected about y"
+                    + (on.seaLevel - depth));
+        if (without <= floor)
+            fail("the same column without oceans is no higher (y" + without + ") — the ocean did not lower the land");
+        PlatMap map = on.getPlatMap(deepX >> 4, deepZ >> 4);
+        String context = map.context == null ? "null" : map.context.getClass().getSimpleName();
+        if (!context.contains("Nature"))
+            fail("the platmap over a deep ocean plans as " + context + " — a city should keep off the water");
+        report.put("oceans.check", String.format("%d presets stamped; %.1f%% of %d km² is ocean; floor y%d at %d,%d "
+                + "(y%d without); %s over it", stamped, share, (2 * span / 1000) * (2 * span / 1000), floor, deepX, deepZ,
+                without, context));
+    }
+
     private void checkPalettesShipEmpty() {
         int checked = 0;
         for (WorldStyle style : WorldStyle.values()) {
@@ -747,7 +852,7 @@ public final class CityWorldSelfTest {
     private void checkFarmCrops() {
         Map<String, Integer> crops = new TreeMap<>();
         int farms = 0, bare = 0, tilled = 0;
-        CityWorldGenerator gen = new CityWorldGenerator(PLAN_SEED, 256, 63, WorldStyle.MODERN, -64, 320);
+        CityWorldGenerator gen = planGenerator(WorldStyle.MODERN);
         for (int cx = -PLAN_RADIUS; cx <= PLAN_RADIUS; cx += PlatMap.Width)
             for (int cz = -PLAN_RADIUS; cz <= PLAN_RADIUS; cz += PlatMap.Width) {
                 PlatMap platmap = gen.getPlatMap(cx, cz);
@@ -954,7 +1059,7 @@ public final class CityWorldSelfTest {
             Map<String, Integer> contexts = new TreeMap<>();
             Map<String, Integer> lots = new TreeMap<>();
             int platmaps = 0;
-            CityWorldGenerator gen = new CityWorldGenerator(PLAN_SEED, 256, 63, style, -64, 320);
+            CityWorldGenerator gen = planGenerator(style);
             for (int cx = -PLAN_RADIUS; cx <= PLAN_RADIUS; cx += PlatMap.Width) {
                 for (int cz = -PLAN_RADIUS; cz <= PLAN_RADIUS; cz += PlatMap.Width) {
                     PlatMap platmap = gen.getPlatMap(cx, cz);
