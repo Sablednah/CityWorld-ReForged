@@ -673,12 +673,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             citiesConfig());
                     // the route search reads vanilla's own cheap estimate of the surface, microseconds a column where an
                     // exact height costs milliseconds
-                    net.minecraft.world.level.levelgen.DensityFunction surface = random.router().preliminarySurfaceLevel();
+                    // (26.3: the router's chunkSurfaceLevel, sampled through the random state)
+                    var surface = built.generatorSettings().value().noiseRouter().chunkSurfaceLevel();
+                    var sampling = random;
                     // a world made before 7.0 has none: new chunks would meet a road that stops at the ones already made
                     var roads = citiesConfig().highways();
                     highways = roads.enabled() && oceansStamped() && !Boolean.getBoolean("cityworld.highways.off")
-                            ? new Highways(citySites, (x, z) -> (int) Math.floor(surface.compute(
-                                    new net.minecraft.world.level.levelgen.DensityFunction.SinglePointContext(x, 0, z))), roads)
+                            ? new Highways(citySites, (x, z) -> (int) Math.floor(sampling.sampleBlockValueUncached(surface, x, 0, z)), roads)
                             : null;
                     vanillaOverworld = local = built;
                 }
@@ -737,10 +738,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         double deckEdge = half + 0.5;
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         java.util.BitSet cut = null;
-        // Vanilla's carvers run after this and skip a block already in the chunk's carving mask: marking the road's own
-        // volume keeps a ravine from cutting it (one did, at a gate: a road with a hole to y 49 under it).
-        net.minecraft.world.level.chunk.CarvingMask carving = chunk instanceof net.minecraft.world.level.chunk.ProtoChunk proto
-                ? proto.getOrCreateCarvingMask() : null;
+        // (26.3: vanilla carves inside its own fillFromNoise, BEFORE this, so the road simply draws over a ravine — its
+        // bank and bed fill the hole — and there is no mask to keep the carvers out with)
+        net.minecraft.world.level.chunk.CarvingMask carving = null;
         for (int x = 0; x < 16; x++)
             for (int z = 0; z < 16; z++) {
                 var near = Highways.nearest(links, minX + x + 0.5, minZ + z + 0.5, half + Highways.SIDE + 1);
@@ -758,7 +758,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 double d = near.distance();
                 if (carving != null && d <= deckEdge + 2)
                     for (int y = Math.max(floor, deck - CARVE_GUARD); y <= Math.min(ceiling - 1, deck + 7); y++)
-                        carving.set(x, y, z);
+                        carving.carve(x, y, z);
                 // a tunnel only where the hill really stands over its roof (the plan reads the ground every few blocks,
                 // and a roof ran on into the open air past a hillside); elsewhere it is a cut like any other
                 if (kind == Highways.Kind.TUNNEL && top <= deck + 7)
@@ -821,7 +821,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             }
         if (cut != null) {
             java.util.BitSet bits = cut;
-            cutColumns.merge(ChunkPos.asLong(minX >> 4, minZ >> 4), bits, (old, add) -> {
+            cutColumns.merge(ChunkPos.pack(minX >> 4, minZ >> 4), bits, (old, add) -> {
                 java.util.BitSet both = (java.util.BitSet) old.clone();
                 both.or(add);
                 return both;
