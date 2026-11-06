@@ -660,12 +660,21 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             citiesConfig());
                     // the route search reads vanilla's own cheap estimate of the surface, microseconds a column where an
                     // exact height costs milliseconds
-                    net.minecraft.world.level.levelgen.DensityFunction surface = random.router().preliminarySurfaceLevel();
+                    // (this line's router has no preliminarySurfaceLevel: the same estimate vanilla made then, the top of
+                    // initialDensityWithoutJaggedness found a cell at a time down the column)
+                    net.minecraft.world.level.levelgen.DensityFunction surface = random.router().initialDensityWithoutJaggedness();
+                    var noise = built.generatorSettings().value().noiseSettings();
+                    int cell = noise.getCellHeight(), lowest = noise.minY(),
+                            highest = Math.floorDiv(noise.minY() + noise.height(), cell) * cell;
                     // a world made before 7.0 has none: new chunks would meet a road that stops at the ones already made
                     var roads = citiesConfig().highways();
                     highways = roads.enabled() && oceansStamped() && !Boolean.getBoolean("cityworld.highways.off")
-                            ? new Highways(citySites, (x, z) -> (int) Math.floor(surface.compute(
-                                    new net.minecraft.world.level.levelgen.DensityFunction.SinglePointContext(x, 0, z))), roads)
+                            ? new Highways(citySites, (x, z) -> {
+                                for (int y = highest; y >= lowest; y -= cell)
+                                    if (surface.compute(new net.minecraft.world.level.levelgen.DensityFunction.SinglePointContext(x, y, z)) > 0.390625)
+                                        return y;
+                                return lowest;
+                            }, roads)
                             : null;
                     vanillaOverworld = local = built;
                 }
@@ -720,14 +729,14 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         BlockState rail = net.minecraft.world.level.block.Blocks.STONE_BRICK_WALL.defaultBlockState();
         BlockState masonry = net.minecraft.world.level.block.Blocks.STONE_BRICKS.defaultBlockState();
         BlockState light = net.minecraft.world.level.block.Blocks.SEA_LANTERN.defaultBlockState();
-        int floor = chunk.getMinY(), ceiling = chunk.getMaxY();
+        int floor = chunk.getMinBuildHeight(), ceiling = chunk.getMaxBuildHeight();
         double deckEdge = half + 0.5;
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         java.util.BitSet cut = null;
         // Vanilla's carvers run after this and skip a block already in the chunk's carving mask: marking the road's own
         // volume keeps a ravine from cutting it (one did, at a gate: a road with a hole to y 49 under it).
         net.minecraft.world.level.chunk.CarvingMask carving = chunk instanceof net.minecraft.world.level.chunk.ProtoChunk proto
-                ? proto.getOrCreateCarvingMask() : null;
+                ? proto.getOrCreateCarvingMask(net.minecraft.world.level.levelgen.GenerationStep.Carving.AIR) : null;
         for (int x = 0; x < 16; x++)
             for (int z = 0; z < 16; z++) {
                 var near = Highways.nearest(links, minX + x + 0.5, minZ + z + 0.5, half + Highways.SIDE + 1);
@@ -756,8 +765,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         continue;
                     boolean wall = d > deckEdge + 1;
                     for (int y = deck + 1; y <= deck + 5; y++)
-                        chunk.setBlockState(cursor.set(bx, y, bz), wall ? masonry : air);
-                    chunk.setBlockState(cursor.set(bx, deck + 6, bz), d < 0.75 && ((int) near.along()) % 12 < 2 ? light : masonry);
+                        chunk.setBlockState(cursor.set(bx, y, bz), wall ? masonry : air, false);
+                    chunk.setBlockState(cursor.set(bx, deck + 6, bz), d < 0.75 && ((int) near.along()) % 12 < 2 ? light : masonry, false);
                     if (!wall)
                         drawDeck(chunk, cursor, bx, bz, deck, halfStep, d, deckEdge, near.along(), pavement, pavementSlab,
                                 lines, edge, edgeSlab, false, rail);
@@ -768,21 +777,21 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 if (d <= deckEdge + 1) {
                     // the deck and its headroom; on a bridge the outer row is its kerb and railing
                     for (int y = Math.max(sky, deck + 6); y > deck; y--)
-                        chunk.setBlockState(cursor.set(bx, y, bz), air);
+                        chunk.setBlockState(cursor.set(bx, y, bz), air, false);
                     drawDeck(chunk, cursor, bx, bz, deck, halfStep, d, deckEdge, near.along(), pavement, pavementSlab, lines,
                             edge, edgeSlab, bridge, rail);
                     if (!bridge) {
                         // banked up to the deck where the ground is lower (water too), on a bed over any cave
                         for (int y = top + 1; y < deck; y++)
-                            chunk.setBlockState(cursor.set(bx, y, bz), stone);
+                            chunk.setBlockState(cursor.set(bx, y, bz), stone, false);
                         roadBed(chunk, cursor, bx, bz, deck, stone);
                     } else {
-                        chunk.setBlockState(cursor.set(bx, deck - 1, bz), edge);
+                        chunk.setBlockState(cursor.set(bx, deck - 1, bz), edge, false);
                         // piers every sixteen blocks, under each side of the deck, down to the ground or sea bed
                         double m = near.along() % 16;
                         if ((m < 1.0 || m > 15.0) && d > half - 1.5 && d <= deckEdge)
                             for (int y = deck - 2; y > top && y > floor; y--)
-                                chunk.setBlockState(cursor.set(bx, y, bz), masonry);
+                                chunk.setBlockState(cursor.set(bx, y, bz), masonry, false);
                     }
                     continue;
                 }
@@ -794,13 +803,13 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 int bankTo = deck - (int) Math.ceil(e);
                 if (top > cutTo) {
                     for (int y = sky; y > cutTo; y--)
-                        chunk.setBlockState(cursor.set(bx, y, bz), air);
+                        chunk.setBlockState(cursor.set(bx, y, bz), air, false);
                     if (cut == null)
                         cut = new java.util.BitSet(256);
                     cut.set(x << 4 | z);
                 } else if (top < bankTo && bankTo - top <= highways.fillMax() + Highways.SIDE) {
                     for (int y = top + 1; y <= bankTo; y++)
-                        chunk.setBlockState(cursor.set(bx, y, bz), stone);
+                        chunk.setBlockState(cursor.set(bx, y, bz), stone, false);
                     if (cut == null)
                         cut = new java.util.BitSet(256);
                     cut.set(x << 4 | z);
@@ -820,10 +829,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private static final int ROAD_BED = 4;
 
     private static void roadBed(ChunkAccess chunk, BlockPos.MutableBlockPos cursor, int bx, int bz, int deck, BlockState stone) {
-        for (int y = deck - 1; y >= deck - ROAD_BED && y > chunk.getMinY(); y--) {
+        for (int y = deck - 1; y >= deck - ROAD_BED && y > chunk.getMinBuildHeight(); y--) {
             BlockState here = chunk.getBlockState(cursor.set(bx, y, bz));
             if (here.isAir() || !here.getFluidState().isEmpty())
-                chunk.setBlockState(cursor, stone);
+                chunk.setBlockState(cursor, stone, false);
         }
     }
 
@@ -836,11 +845,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             BlockState lines, BlockState edge, BlockState edgeSlab, boolean railed, BlockState rail) {
         boolean kerb = d > deckEdge;
         boolean dash = !kerb && !halfStep && d < 0.75 && ((int) (along / 4)) % 2 == 0;
-        chunk.setBlockState(cursor.set(bx, deck, bz), kerb ? edge : dash ? lines : pavement);
+        chunk.setBlockState(cursor.set(bx, deck, bz), kerb ? edge : dash ? lines : pavement, false);
         if (halfStep)
-            chunk.setBlockState(cursor.set(bx, deck + 1, bz), kerb ? edgeSlab : pavementSlab != null ? pavementSlab : pavement);
+            chunk.setBlockState(cursor.set(bx, deck + 1, bz), kerb ? edgeSlab : pavementSlab != null ? pavementSlab : pavement, false);
         if (kerb && railed)
-            chunk.setBlockState(cursor.set(bx, deck + (halfStep ? 2 : 1), bz), rail);
+            chunk.setBlockState(cursor.set(bx, deck + (halfStep ? 2 : 1), bz), rail, false);
     }
 
     /**
@@ -855,7 +864,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         for (String t : tries) {
             if (t == null)
                 continue;
-            var id = net.minecraft.resources.Identifier.fromNamespaceAndPath(key.getNamespace(), t);
+            var id = new net.minecraft.resources.ResourceLocation(key.getNamespace(), t);
             var found = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getOptional(id);
             if (found.isPresent())
                 return found.get().defaultBlockState();
