@@ -793,6 +793,15 @@ public final class CityWorldSelfTest {
                     + (on.seaLevel - depth));
         if (without <= floor)
             fail("the same column without oceans is no higher (y" + without + ") — the ocean did not lower the land");
+        // the deep-ocean-only cave biomes (Alex's Caves' abyssal chasm) may own this column and no other kind
+        if (!me.daddychurchill.CityWorld.worldgen.CaveRegions.underDeepOcean(on, floor))
+            fail("the deep ocean floor at " + deepX + "," + deepZ + " (y" + floor + ") does not count as deep ocean for the "
+                    + "cave pool — the abyssal chasm could never appear under it");
+        if (me.daddychurchill.CityWorld.worldgen.CaveRegions.underDeepOcean(off, floor))
+            fail("a world without 7.0's oceans counts as deep ocean for the cave pool — the abyssal chasm would cut into "
+                    + "seas whose old chunks have none");
+        if (me.daddychurchill.CityWorld.worldgen.CaveRegions.underDeepOcean(on, on.seaLevel + 1))
+            fail("land counts as deep ocean for the cave pool — the abyssal chasm would open under dry land");
         PlatMap map = on.getPlatMap(deepX >> 4, deepZ >> 4);
         String context = map.context == null ? "null" : map.context.getClass().getSimpleName();
         if (!context.contains("Nature"))

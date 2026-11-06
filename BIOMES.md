@@ -25,7 +25,7 @@ CityWorld makes two kinds of overworld, chosen on the Customize screen's **Land*
 | **TerraBlender regions** (the mod registers climate points through TerraBlender) | Biomes O' Plenty, Oh The Biomes We've Gone, Nyctophobia, VanillaBackport's pale garden, Terralith's companion mods | ✅ harvested into CityWorld's climate lookup (`TerraBlenderBridge`) | ✅ TerraBlender is initialised for the vanilla generator |
 | **A datapack world preset** (the mod rewrites `minecraft:normal` with its own biome list and noise) | Terralith, Dreamwoods + Grand Terrain, most pure-datapack biome packs | ✅ the preset's climate points join the same lookup (`world.packPreset`) | ✅ the preset's terrain and biome source are used outright |
 | **Lithostitched injectors** (density-function layouts over vanilla's biomes) | Regions Unexplored | ❌ nothing to harvest — the layout is not climate points | ✅ Lithostitched's passes run on the vanilla generator |
-| **A mixin on vanilla's `MultiNoiseBiomeSource`** | Alex's Caves (cave biomes) | ✅ via `#cityworld:cave_pool` | ✅ |
+| **A mixin on vanilla's `MultiNoiseBiomeSource`** | Alex's Caves (cave biomes) | ✅ via `#cityworld:cave_pool` (the abyssal chasm only under a 7.0 deep ocean) | ✅ |
 
 Which road a mod uses is in its jar: `terrablender` in its dependencies, `data/minecraft/worldgen/world_preset/normal.json`
 in its data, or `lithostitched` in its dependencies.

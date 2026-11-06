@@ -36,6 +36,8 @@
     { "id": "alexscaves:gingerbread_town",    "required": false },
     { "id": "alexscaves:licowitch_tower",     "required": false },
     { "id": "alexscaves:soda_bottle",         "required": false },
-    { "id": "alexscaves:underground_cabin",   "required": false }
+    { "id": "alexscaves:underground_cabin",   "required": false },
+    { "id": "alexscaves:ocean_trench",        "required": false },
+    { "id": "alexscaves:abyssal_ruins",       "required": false }
   ]
 }

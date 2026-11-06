@@ -21,6 +21,9 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   blocks deep, with vanilla's ocean biomes (deep, cold, frozen, lukewarm, warm) and what lives in them: ocean
   monuments, ocean ruins, shipwrecks and buried treasure, and the sea structures of mods that ask for ocean biomes
   (Cataclysm's Sunken City, which had nowhere to go on CityWorld land before, and Battle Towers' ocean tower).
+  With Alex's Caves (1.20.1), the abyssal chasm opens under the deep water: its ocean trench cuts down from the sea
+  bed towards bedrock, with the abyssal ruins at the bottom. It joins `#cityworld:cave_pool`, and only ever claims a
+  column under a 7.0 deep ocean (never under land, and never in an older world's seas).
   About 6% of the land at the default, oceans 1–5 km across; cities keep off them. The ruined Nether twin has a lava
   sea in the same place. Modern, Apocalypse, Classic and Sparse. Settings `cities.oceans` (`enabled`, `size`,
   `rarity`, `depth`, `shelf`), and **Oceans** / **Ocean share** in Customize. **A world made before 7.0 never has
