@@ -18,10 +18,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * to a {@link #GRADE} grade, pinned to each city's level at its gate.
  *
  * <p><b>Each sample is a kind:</b> {@link Kind#GROUND} (on the ground, cut through or banked up within
- * {@link #FILL_MAX}), or {@link Kind#BRIDGE} over water or over a drop deeper than that. Short runs are merged, so a
+ * {@link #fillMax}), or {@link Kind#BRIDGE} over water or over a drop deeper than that. Short runs are merged, so a
  * bridge is a bridge from bank to bank.
  *
- * <p>Spike (2026-11-06): behind {@code -Dcityworld.highways=true} until it is measured and made a setting.
+ * <p>The settings are {@code cities.highways} ({@link CityWorldSettingsData.Highways}): the deck's width, the grade,
+ * how deep a bank may be and how high a bridge stands over water. The route search's own figures (waypoint spacing,
+ * how far sideways, what a turn or water costs) are fixed: they shape how a road is found, not what it is.
  */
 public final class Highways {
 
@@ -31,16 +33,10 @@ public final class Highways {
     static final int WAYPOINT = 192, OFFSET = 48, OFFSETS = 6;
     /** Blocks a link runs straight out of each city before it may turn. */
     static final int RUN_OUT = 40;
-    /** The deck's steepest climb: blocks of rise per block of run. */
-    static final double GRADE = 0.1;
     /** Samples either side the ground is averaged over before the grade is applied. */
     static final int SMOOTH = 12;
-    /** The deepest a road is banked up; deeper (or over water) it is a bridge. */
-    static final int FILL_MAX = 8;
-    /** How high a deck stands over water, above sea level. */
-    static final int WATER_CLEARANCE = 5;
-    /** Half the deck's width (the deck is 2 * this + 1 wide), and how far the cut and bank slopes reach past it. */
-    public static final int HALF_WIDTH = 4, SIDE = 14;
+    /** How far the cut and bank slopes reach past the deck's kerb. */
+    public static final int SIDE = 14;
     /** Grid the route search reads heights on. */
     static final int GRID = 64;
     /** Every this many samples the ground under the centreline is read exactly; between, it is interpolated. */
@@ -75,10 +71,28 @@ public final class Highways {
      * @param rough a cheap estimate of vanilla's ground (its noise router's preliminary surface level), which the
      *              route search reads on its grid; or {@code sites.heights()} where a line has none (exact, slow)
      */
-    public Highways(CitySites sites, CitySites.Heights rough) {
+    /** The settings, unpacked: half the deck's width (it is 2 * this + 1 wide), the grade, the bank, the clearance. */
+    private final int halfWidth, fillMax, clearance;
+    private final double grade;
+
+    public Highways(CitySites sites, CitySites.Heights rough, CityWorldSettingsData.Highways settings) {
         this.sites = sites;
         this.seaLevel = sites.seaLevel();
         this.rough = rough != null ? rough : sites.heights();
+        this.halfWidth = Math.max(1, (settings.width() - 1) / 2);
+        this.grade = settings.grade();
+        this.fillMax = settings.fillMax();
+        this.clearance = settings.clearance();
+    }
+
+    /** Half the deck's width: the deck is {@code 2 * halfWidth() + 1} blocks wide, plus a kerb each side. */
+    public int halfWidth() {
+        return halfWidth;
+    }
+
+    /** The deepest a road is banked up; deeper (or over water) it is a bridge. */
+    public int fillMax() {
+        return fillMax;
     }
 
     /**
@@ -124,11 +138,6 @@ public final class Highways {
         return new int[] { (int) (sum / Math.max(1, count)), worst };
     }
 
-    /** Whether the spike is on for this run. */
-    public static boolean enabled() {
-        return Boolean.getBoolean("cityworld.highways");
-    }
-
     /**
      * Every link whose box reaches into this square of blocks. A link joins a cell to its east or south neighbour,
      * and its route stays within {@link #OFFSETS} offsets of the line between them, so only the links of the cells
@@ -140,7 +149,7 @@ public final class Highways {
         int cell = sites.cell();
         int cx0 = Math.floorDiv(x0, cell) - 1, cx1 = Math.floorDiv(x1, cell) + 1;
         int cz0 = Math.floorDiv(z0, cell) - 1, cz1 = Math.floorDiv(z1, cell) + 1;
-        int pad = OFFSETS * OFFSET + HALF_WIDTH + SIDE + RUN_OUT;
+        int pad = OFFSETS * OFFSET + halfWidth + SIDE + RUN_OUT;
         for (int cx = cx0; cx <= cx1; cx++)
             for (int cz = cz0; cz <= cz1; cz++) {
                 CitySites.Site here = sites.siteAt(cx * cell, cz * cell);
@@ -328,7 +337,7 @@ public final class Highways {
                 continue;
             int top = sites.heights().top((int) Math.floor(xs[i]), (int) Math.floor(zs[i]));
             wet[i] = top < seaLevel - 1;
-            ground[i] = wet[i] ? seaLevel + WATER_CLEARANCE : top;
+            ground[i] = wet[i] ? seaLevel + clearance : top;
             if (last >= 0)
                 for (int j = last + 1; j < i; j++) {
                     double f = (j - last) / (double) (i - last);
@@ -340,7 +349,7 @@ public final class Highways {
         for (int i = 0; i < n; i++)
             if (!wet[i] && sites.isRiverColumn((int) Math.floor(xs[i]), (int) Math.floor(zs[i]))) {
                 wet[i] = true;
-                ground[i] = seaLevel + WATER_CLEARANCE;
+                ground[i] = seaLevel + clearance;
             }
         // smoothed, then held to the grade and pinned to each city's level at its gate
         double[] deck = new double[n];
@@ -353,7 +362,7 @@ public final class Highways {
             }
             deck[i] = sum / count;
         }
-        double perStep = GRADE * STEP;
+        double perStep = grade * STEP;
         for (int i = 0; i < n; i++) {
             double fromA = i * perStep, fromB = (n - 1 - i) * perStep;
             double upper = Math.min(a.level() + fromA, b.level() + fromB);
@@ -371,7 +380,7 @@ public final class Highways {
         // the kind of each sample, then runs shorter than a few samples merged into their neighbours
         boolean[] over = new boolean[n];
         for (int i = 0; i < n; i++)
-            over[i] = wet[i] || ys[i] - ground[i] > FILL_MAX;
+            over[i] = wet[i] || ys[i] - ground[i] > fillMax;
         // a bridge reaches onto its banks: widened from the raw answer, never from its own output (which ran the
         // first bridge on to the end of the road)
         Kind[] kind = new Kind[n];
@@ -382,7 +391,7 @@ public final class Highways {
             kind[i] = bridge ? Kind.BRIDGE : Kind.GROUND;
         }
         int minX = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
-        int reach = HALF_WIDTH + SIDE + 2;
+        int reach = halfWidth + SIDE + 2;
         for (int i = 0; i < n; i++) {
             minX = Math.min(minX, (int) Math.floor(xs[i]) - reach);
             maxX = Math.max(maxX, (int) Math.ceil(xs[i]) + reach);
@@ -412,7 +421,7 @@ public final class Highways {
             double want = a.level() + (b.level() - a.level()) * (t0 + (t1 - t0) * f);
             int top = gridTop(x, z);
             if (top < seaLevel - 1)
-                cost += WATER_COST + Math.abs(seaLevel + WATER_CLEARANCE - want);
+                cost += WATER_COST + Math.abs(seaLevel + clearance - want);
             else
                 cost += Math.abs(top - want);
         }
