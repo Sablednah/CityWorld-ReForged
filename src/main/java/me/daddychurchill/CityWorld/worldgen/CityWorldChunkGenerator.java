@@ -709,66 +709,100 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private void drawHighways(CityWorldGenerator context, ChunkAccess chunk) {
         ChunkPos pos = chunk.getPos();
         int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
-        int reach = highways.halfWidth() + Highways.SIDE + 2;
+        int half = highways.halfWidth();
+        int reach = half + Highways.SIDE + 2;
         var links = highways.linksTouching(minX - reach, minZ - reach, minX + 15 + reach, minZ + 15 + reach);
         if (links.isEmpty())
             return;
-        BlockState pavement = context.materialProvider.itemsMaterialListFor_Roads
-                .getNthMaterial(0, Material.WHITE_TERRACOTTA).getBlockState();
-        BlockState lines = context.materialProvider.itemsMaterialListFor_Roads
-                .getNthMaterial(1, Material.QUARTZ_BLOCK).getBlockState();
+        // the city's own road: a pack's street palette, else a road mod's surface (Macaw's), else the style's
+        var streetPool = me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_SURFACE;
+        var kit = me.daddychurchill.CityWorld.Support.Palettes.poolFor(context, streetPool).isEmpty()
+                ? me.daddychurchill.CityWorld.Support.RoadKit.forWorld(context) : null;
+        Material pavementMat = kit != null ? kit.surface
+                : me.daddychurchill.CityWorld.Support.Palettes.pick(context, streetPool, 0, 0,
+                        context.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(0, Material.WHITE_TERRACOTTA));
+        BlockState pavement = pavementMat.getBlockState();
+        BlockState lines = me.daddychurchill.CityWorld.Support.Palettes.pick(context,
+                me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_LINES, 0, 0,
+                context.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(1, Material.QUARTZ_BLOCK)).getBlockState();
+        BlockState pavementSlab = slabOf(pavement);
         BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
         BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
         BlockState edge = net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState();
+        BlockState edgeSlab = net.minecraft.world.level.block.Blocks.SMOOTH_STONE_SLAB.defaultBlockState();
         BlockState rail = net.minecraft.world.level.block.Blocks.STONE_BRICK_WALL.defaultBlockState();
-        BlockState pier = net.minecraft.world.level.block.Blocks.STONE_BRICKS.defaultBlockState();
+        BlockState masonry = net.minecraft.world.level.block.Blocks.STONE_BRICKS.defaultBlockState();
+        BlockState light = net.minecraft.world.level.block.Blocks.SEA_LANTERN.defaultBlockState();
         int floor = chunk.getMinY(), ceiling = chunk.getMaxY();
-        double half = highways.halfWidth() + 0.5;
+        double deckEdge = half + 0.5;
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         java.util.BitSet cut = null;
+        // Vanilla's carvers run after this and skip a block already in the chunk's carving mask: marking the road's own
+        // volume keeps a ravine from cutting it (one did, at a gate: a road with a hole to y 49 under it).
+        net.minecraft.world.level.chunk.CarvingMask carving = chunk instanceof net.minecraft.world.level.chunk.ProtoChunk proto
+                ? proto.getOrCreateCarvingMask() : null;
         for (int x = 0; x < 16; x++)
             for (int z = 0; z < 16; z++) {
-                var near = Highways.nearest(links, minX + x + 0.5, minZ + z + 0.5, highways.halfWidth() + Highways.SIDE + 1);
+                var near = Highways.nearest(links, minX + x + 0.5, minZ + z + 0.5, half + Highways.SIDE + 1);
                 if (near == null)
                     continue;
                 int bx = minX + x, bz = minZ + z;
                 int top = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x, z);
                 int sky = Math.max(top, chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z));
-                int deck = Math.max(floor + 2, Math.min(ceiling - 8, near.deck()));
-                boolean bridge = near.kind() == Highways.Kind.BRIDGE;
+                // the deck: a whole block at its floor, and a slab on it where the climb is half a block or more past
+                double height = Math.max(floor + 2, Math.min(ceiling - 9, near.height()));
+                // (a pavement with no slab — terracotta — climbs in whole steps, rounded, kerb and all)
+                int deck = pavementSlab != null ? (int) Math.floor(height) : (int) Math.round(height);
+                boolean halfStep = pavementSlab != null && height - deck >= 0.5;
+                var kind = near.kind();
                 double d = near.distance();
-                if (d <= half + 1) {
+                if (carving != null && d <= deckEdge + 2)
+                    for (int y = Math.max(floor, deck - CARVE_GUARD); y <= Math.min(ceiling - 1, deck + 7); y++)
+                        carving.set(x, y, z);
+                // a tunnel only where the hill really stands over its roof (the plan reads the ground every few blocks,
+                // and a roof ran on into the open air past a hillside); elsewhere it is a cut like any other
+                if (kind == Highways.Kind.TUNNEL && top <= deck + 7)
+                    kind = Highways.Kind.GROUND;
+                if (kind == Highways.Kind.TUNNEL) {
+                    // through the hill: headroom, walls and a lit roof; the hill above is left as it is
+                    if (d > deckEdge + 2)
+                        continue;
+                    boolean wall = d > deckEdge + 1;
+                    for (int y = deck + 1; y <= deck + 5; y++)
+                        chunk.setBlockState(cursor.set(bx, y, bz), wall ? masonry : air);
+                    chunk.setBlockState(cursor.set(bx, deck + 6, bz), d < 0.75 && ((int) near.along()) % 12 < 2 ? light : masonry);
+                    if (!wall)
+                        drawDeck(chunk, cursor, bx, bz, deck, halfStep, d, deckEdge, near.along(), pavement, pavementSlab,
+                                lines, edge, edgeSlab, false, rail);
+                    roadBed(chunk, cursor, bx, bz, deck, stone);
+                    continue;
+                }
+                boolean bridge = kind == Highways.Kind.BRIDGE;
+                if (d <= deckEdge + 1) {
                     // the deck and its headroom; on a bridge the outer row is its kerb and railing
                     for (int y = Math.max(sky, deck + 6); y > deck; y--)
                         chunk.setBlockState(cursor.set(bx, y, bz), air);
-                    boolean kerb = d > half;
-                    if (kerb && !bridge)
-                        chunk.setBlockState(cursor.set(bx, deck, bz), edge);
-                    else if (kerb) {
-                        chunk.setBlockState(cursor.set(bx, deck, bz), edge);
-                        chunk.setBlockState(cursor.set(bx, deck + 1, bz), rail);
-                    } else {
-                        boolean dash = d < 0.75 && ((int) (near.along() / 4)) % 2 == 0;
-                        chunk.setBlockState(cursor.set(bx, deck, bz), dash ? lines : pavement);
-                    }
+                    drawDeck(chunk, cursor, bx, bz, deck, halfStep, d, deckEdge, near.along(), pavement, pavementSlab, lines,
+                            edge, edgeSlab, bridge, rail);
                     if (!bridge) {
-                        // banked up to the deck where the ground is lower (water too)
+                        // banked up to the deck where the ground is lower (water too), on a bed over any cave
                         for (int y = top + 1; y < deck; y++)
                             chunk.setBlockState(cursor.set(bx, y, bz), stone);
+                        roadBed(chunk, cursor, bx, bz, deck, stone);
                     } else {
                         chunk.setBlockState(cursor.set(bx, deck - 1, bz), edge);
                         // piers every sixteen blocks, under each side of the deck, down to the ground or sea bed
                         double m = near.along() % 16;
-                        if ((m < 1.0 || m > 15.0) && d > highways.halfWidth() - 1.5 && d <= half)
+                        if ((m < 1.0 || m > 15.0) && d > half - 1.5 && d <= deckEdge)
                             for (int y = deck - 2; y > top && y > floor; y--)
-                                chunk.setBlockState(cursor.set(bx, y, bz), pier);
+                                chunk.setBlockState(cursor.set(bx, y, bz), masonry);
                     }
                     continue;
                 }
                 if (bridge)
                     continue;
                 // the slopes beside a road on the ground: 1:1 down to it through higher ground, up to it from lower
-                double e = d - (half + 1);
+                double e = d - (deckEdge + 1);
                 int cutTo = deck + (int) Math.ceil(e);
                 int bankTo = deck - (int) Math.ceil(e);
                 if (top > cutTo) {
@@ -793,6 +827,53 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 return both;
             });
         }
+    }
+
+    /** How deep a road's bed is: air or water this close under the deck (a cave in vanilla's noise) is filled. */
+    private static final int ROAD_BED = 4;
+
+    private static void roadBed(ChunkAccess chunk, BlockPos.MutableBlockPos cursor, int bx, int bz, int deck, BlockState stone) {
+        for (int y = deck - 1; y >= deck - ROAD_BED && y > chunk.getMinY(); y--) {
+            BlockState here = chunk.getBlockState(cursor.set(bx, y, bz));
+            if (here.isAir() || !here.getFluidState().isEmpty())
+                chunk.setBlockState(cursor, stone);
+        }
+    }
+
+    /** How far under a highway's deck the carvers are kept out: a ravine may pass beneath, not through. */
+    private static final int CARVE_GUARD = 16;
+
+    /** One column of a highway's deck: pavement (a dash on the centreline), or the kerb; a slab on it for a half step. */
+    private static void drawDeck(ChunkAccess chunk, BlockPos.MutableBlockPos cursor, int bx, int bz, int deck,
+            boolean halfStep, double d, double deckEdge, double along, BlockState pavement, BlockState pavementSlab,
+            BlockState lines, BlockState edge, BlockState edgeSlab, boolean railed, BlockState rail) {
+        boolean kerb = d > deckEdge;
+        boolean dash = !kerb && !halfStep && d < 0.75 && ((int) (along / 4)) % 2 == 0;
+        chunk.setBlockState(cursor.set(bx, deck, bz), kerb ? edge : dash ? lines : pavement);
+        if (halfStep)
+            chunk.setBlockState(cursor.set(bx, deck + 1, bz), kerb ? edgeSlab : pavementSlab != null ? pavementSlab : pavement);
+        if (kerb && railed)
+            chunk.setBlockState(cursor.set(bx, deck + (halfStep ? 2 : 1), bz), rail);
+    }
+
+    /**
+     * The slab of a block, found by name ({@code stone_bricks} -> {@code stone_brick_slab}, {@code smooth_stone} ->
+     * {@code smooth_stone_slab}, {@code mod:asphalt} -> {@code mod:asphalt_slab}); null when it has none.
+     */
+    private static BlockState slabOf(BlockState block) {
+        var key = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block.getBlock());
+        String path = key.getPath();
+        String[] tries = { path + "_slab", path.endsWith("s") ? path.substring(0, path.length() - 1) + "_slab" : null,
+                path.endsWith("_block") ? path.substring(0, path.length() - "_block".length()) + "_slab" : null };
+        for (String t : tries) {
+            if (t == null)
+                continue;
+            var id = net.minecraft.resources.Identifier.fromNamespaceAndPath(key.getNamespace(), t);
+            var found = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getOptional(id);
+            if (found.isPresent())
+                return found.get().defaultBlockState();
+        }
+        return null;
     }
 
     /** The city sites of a vanilla-terrain world (null in any other), for the probe and commands. */
