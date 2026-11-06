@@ -1,5 +1,59 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Resume here — 7.0.0: deep oceans and highways (built 2026-11-06, unreleased)
+
+The owner's "world-changing drop": two things that change new worlds, released together as **7.0.0**.
+
+**The stamp.** Every world_preset overworld generator and Customize write `"made_with": 7`
+(`CityWorldChunkGenerator.MADE_WITH`); level.dat keeps the generator block whole, so a world made before 7.0 has
+none, and `madeWith()` (following a twin's source) gates both features off there. Preset worlds re-read
+`cityworld:modern` etc. from the jar every load, so a settings default alone would have leaked into old worlds:
+that is why the gate is a generator field. A world without the stamp logs once why it has neither.
+
+**Deep oceans** (`cities.oceans {enabled, size 6000, rarity 0.5, depth 30, shelf 0.1}`; Customize Oceans + Ocean
+share 62/56/50/44/38 = ~2/4/6/9/13% measured over 80 km on three seeds): `ShapeProvider_Normal.oceanAt` lowers
+`naturalY` behind a smoothstep shelf (Modern, Apocalypse, Classic, Sparse only; seas on, decayed nature off);
+`classify`'s deep row becomes vanilla's deep oceans by temperature; `OCEAN_STRUCTURE_SETS` join the allowed sets
+only where oceans are effective (a deny still wins). The Nether twin gets a lava sea for free. Self-test
+`checkOceans`; plan sweeps pinned to oceans OFF (`planGenerator`) so `--compare` still agrees with 6.14. Trap: the
+ocean sets (buried treasure is a candidate in 1% of chunks) used up checkForecast's candidate budget (`oceanSet()`
+skip). Mod sea structures: Cataclysm Sunken City (deep oceans only), Acropolis (warm ocean), Battle Towers ocean
+tower; Alex's Caves' abyssal chasm is NOT in the cave pool (offered, not done).
+
+**Highways** (vanilla land only; GitHub issue #3 asked for Highways & Byways, which is ARR, 1.21.1-only and joins
+vanilla structures, so CityWorld builds its own): `worldgen/Highways` plans a link from each CitySites cell to its
+east and south neighbour — gates on a city road line (chunk index 2/7) at the city's level, a 40-block run-out,
+then a Viterbi search over sideways offsets (13 × 48 blocks, waypoints every 192, turn cost, water cost) on a 64-block
+grid of vanilla's cheap surface estimate (bias calibrated per world as the median gap to 16 exact heights),
+Catmull-Rom, resampled every 2 blocks, ground read exactly every 4 samples **through `CitySites.groundAt`** (raw
+heights made a "tunnel" at a gate under a hill the city had levelled), river biome per sample, deck smoothed then
+held to the grade by Lipschitz passes and pinned to both cities' levels. Kinds GROUND / BRIDGE (water, or deeper
+than `fillMax`) / TUNNEL (ground more than `tunnel` above the deck; < 16 blocks becomes a cut). `drawHighways` in
+`fillFromNoise` (non-city chunks): deck + kerb, half slabs from the exact deck height (whole rounded steps where the
+surface has no slab), the city's street surface (pack palette → RoadKit/Macaw's → style), bridges with railings and
+piers every 16, tunnels with walls and a lit roof only where the real hill covers the roof, 1:1 cut and bank slopes
+(added to `cutColumns`), a 4-block bed over caves, and the road volume in the carving mask so ravines pass beneath.
+Settings `cities.highways {enabled, width 9, grade 0.1, fillMax 8, clearance 5, tunnel 12}`; Customize Highways.
+
+Per-line drift: surface estimate — 1.21.11/26.1/26.2 `router.preliminarySurfaceLevel()`; 1.20.1/1.21.1 have none,
+so the column is scanned top-down a cell at a time on `initialDensityWithoutJaggedness` (> 0.390625, vanilla's own
+old estimate); 26.3 `RandomState.sampleBlockValueUncached(settings.noiseRouter().chunkSurfaceLevel(), x, 0, z)`.
+Carving — 1.20.1/1.21.1 `getOrCreateCarvingMask(GenerationStep.Carving.AIR)`; **26.3 carves inside vanilla's own
+`fillFromNoise`, before CityWorld draws, and its CarvingMask is output-only**, so there the road just draws over a
+ravine. 26.x `ChunkPos.pack`; 1.20.1/1.21.1 three-argument `setBlockState`, `getMin/MaxBuildHeight`, `ResourceLocation`.
+
+Measured on vanilla-land seed 1688298913692546204 (`survey:highways`, `find:highway:<n>[:start|tunnel|bridge]`, run
+with `cities.vanillaTerrain: true` in `world_settings/modern.json` and that seed in `run/server.properties` — revert
+both): 17 links in 2×2 cells, 758–2,686 blocks, steepest 2 in 16, bridges 10–70%, tunnels on 11 of 17 at 2–14%;
+planning 0.3–0.9 s a link; 441 chunks across a highway 40.6 s with highways vs 41.4 s without. An independent review
+(Fable) found `linksTouching`'s rough box built from the city CENTRES, not the gates — a road could stop at a chunk
+edge — and a ring one cell short; fixed, and the survey's handed-road count reads 0 of 12,488 chunks over 30 links
+(it fires with the box shrunk). Also from it: single-flight planning through `Waiting.join`, failures not memoised.
+
+Open before release: above-sea lakes beside a cut (the review's "plausible": measure on the seed), the rivers note
+(measure whether pre-6.0 preset worlds grew rivers, then correct the 6.0 docs — no behaviour change), the owner's
+look in game, then the release recipe (the owner's go).
+
 ## ▶ Released: v5.15.2 (2026-09-29): 26.3 only, NeoForge 26.3.0.20+
 
 **NeoForge 26.3.0.20 renamed `DataPackRegistryEvent.NewRegistry` → `NewDatapackRegistryEvent`

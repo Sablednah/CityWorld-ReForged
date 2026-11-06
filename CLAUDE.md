@@ -24,6 +24,14 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-06 night): 7.0.0 is BUILT on all six lines, unreleased — deep oceans + highways.**
+- Owner's "world-changing drop" (version 7.0.0, their pick): rare deep oceans on CityWorld land and CityWorld's own
+  highways between vanilla-land cities (issue #3). Both gated by the generator stamp `"made_with": 7` (pre-7.0 worlds
+  never get either). PORTING.md "▶ Resume here — 7.0.0" has the design, per-line drift and measurements. Master
+  `86e74c21` + docs `7de94756`; all five branches carry the picks + per-line fixes. Nothing pushed.
+  Open: above-sea lakes beside a highway cut (measure), the rivers note (measure pre-6.0 preset worlds, fix docs
+  only), Alex's Caves abyssal chasm (offered), the owner's look, then the release recipe on the owner's go.
+
 **▶ Resume here (2026-11-05 night): v6.14.0 is released — weighted substitutes and per-part palettes.**
 - **v6.14.0 is released** (2026-11-05) on all six lines — tag `v6.14.0` at the master bump `e530b67e` (branch bumps
   a212e950/7a845b1e/b89dca58/e09a15b4/2e46605c), CurseForge 9465296–9465302, fleet `DEPLOYED-v6.14.0` on 11 (ZARP
