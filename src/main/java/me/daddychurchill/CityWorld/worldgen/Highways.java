@@ -42,7 +42,9 @@ public final class Highways {
     /** Half the deck's width (the deck is 2 * this + 1 wide), and how far the cut and bank slopes reach past it. */
     public static final int HALF_WIDTH = 4, SIDE = 14;
     /** Grid the route search reads heights on. */
-    static final int GRID = 32;
+    static final int GRID = 64;
+    /** Every this many samples the ground under the centreline is read exactly; between, it is interpolated. */
+    static final int EXACT = 4;
 
     public enum Kind { GROUND, BRIDGE }
 
@@ -66,9 +68,60 @@ public final class Highways {
     private final ConcurrentHashMap<Long, java.util.Optional<Link>> links = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Long, Integer> grid = new ConcurrentHashMap<>();
 
-    public Highways(CitySites sites) {
+    /** A cheap estimate of the ground, for the route search only (vanilla's preliminary surface level). */
+    private final CitySites.Heights rough;
+
+    /**
+     * @param rough a cheap estimate of vanilla's ground (its noise router's preliminary surface level), which the
+     *              route search reads on its grid; or {@code sites.heights()} where a line has none (exact, slow)
+     */
+    public Highways(CitySites sites, CitySites.Heights rough) {
         this.sites = sites;
         this.seaLevel = sites.seaLevel();
+        this.rough = rough != null ? rough : sites.heights();
+    }
+
+    /**
+     * How far the estimate sits below the real ground, measured once per world: vanilla's preliminary surface level
+     * runs about twelve blocks under it (seed 1688298913692546204: 8 to 23 by link), and a terrain pack may move
+     * that, so it is the median gap over sixteen exact heights near the origin rather than a constant.
+     */
+    private volatile Integer bias;
+
+    public int biasForSurvey() {
+        return bias();
+    }
+
+    private int bias() {
+        Integer known = bias;
+        if (known != null)
+            return known;
+        if (rough == sites.heights())
+            return bias = 0;
+        java.util.Random pick = new java.util.Random(sites.seed() ^ 0x5eedL);
+        int[] gaps = new int[16];
+        for (int i = 0; i < gaps.length; i++) {
+            int x = pick.nextInt(4096) - 2048, z = pick.nextInt(4096) - 2048;
+            gaps[i] = sites.heights().top(x, z) - rough.top(x, z);
+        }
+        java.util.Arrays.sort(gaps);
+        return bias = gaps[gaps.length / 2];
+    }
+
+    /** Mean and worst gap between the estimate and the exact ground over this many points of a link: for the survey. */
+    public int[] roughError(Link link, int points) {
+        int n = link.x().length, worst = 0;
+        long sum = 0;
+        int count = 0;
+        for (int k = 0; k < points; k++) {
+            int i = (int) ((long) k * (n - 1) / Math.max(1, points - 1));
+            int x = (int) Math.floor(link.x()[i]), z = (int) Math.floor(link.z()[i]);
+            int gap = rough.top(x, z) + bias() - sites.heights().top(x, z);
+            sum += gap;
+            worst = Math.max(worst, Math.abs(gap));
+            count++;
+        }
+        return new int[] { (int) (sum / Math.max(1, count)), worst };
     }
 
     /** Whether the spike is on for this run. */
@@ -265,21 +318,30 @@ public final class Highways {
             zs[i] = line[i][1];
         }
 
-        // the ground under the centreline, every other sample, read exactly (a narrow river hides between grid points)
+        // the ground under the centreline: read exactly every EXACT samples (a vanilla height costs milliseconds) and
+        // interpolated between; a river narrower than that is caught by its biome, which is cheap, on every sample
         double[] ground = new double[n];
         boolean[] wet = new boolean[n];
-        for (int i = 0; i < n; i += 2) {
+        int last = -1;
+        for (int i = 0; i < n; i++) {
+            if (i % EXACT != 0 && i != n - 1)
+                continue;
             int top = sites.heights().top((int) Math.floor(xs[i]), (int) Math.floor(zs[i]));
             wet[i] = top < seaLevel - 1;
             ground[i] = wet[i] ? seaLevel + WATER_CLEARANCE : top;
+            if (last >= 0)
+                for (int j = last + 1; j < i; j++) {
+                    double f = (j - last) / (double) (i - last);
+                    ground[j] = ground[last] + (ground[i] - ground[last]) * f;
+                    wet[j] = wet[last] && wet[i];
+                }
+            last = i;
         }
-        for (int i = 1; i < n; i += 2) {
-            int j = Math.min(n - 1, i + 1);
-            if (j % 2 == 1)
-                j = i - 1;
-            ground[i] = (ground[i - 1] + ground[j]) / 2;
-            wet[i] = wet[i - 1] || wet[j];
-        }
+        for (int i = 0; i < n; i++)
+            if (!wet[i] && sites.isRiverColumn((int) Math.floor(xs[i]), (int) Math.floor(zs[i]))) {
+                wet[i] = true;
+                ground[i] = seaLevel + WATER_CLEARANCE;
+            }
         // smoothed, then held to the grade and pinned to each city's level at its gate
         double[] deck = new double[n];
         for (int i = 0; i < n; i++) {
@@ -363,7 +425,7 @@ public final class Highways {
         Integer known = grid.get(key);
         if (known != null)
             return known;
-        int top = sites.heights().top(gx * GRID, gz * GRID);
+        int top = rough.top(gx * GRID, gz * GRID) + bias();
         grid.putIfAbsent(key, top);
         return top;
     }
