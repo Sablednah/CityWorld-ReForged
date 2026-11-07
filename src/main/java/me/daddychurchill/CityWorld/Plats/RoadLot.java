@@ -595,7 +595,7 @@ public class RoadLot extends ConnectedLot {
 			return;
 
 		// the road's run: N-S or E-W. Its nature-facing sides are the edges perpendicular to that.
-		SurroundingRoads roads = new SurroundingRoads(platmap, platX, platZ);
+		SurroundingRoads roads = new SurroundingRoads(platmap, platX, platZ, true);
 		boolean ns = roads.toNorth() && roads.toSouth();
 		boolean ew = roads.toEast() && roads.toWest();
 		int band = 3, w = chunk.width;
@@ -661,7 +661,7 @@ public class RoadLot extends ConnectedLot {
 		boolean doSewer = generator.getSettings().includeSewers && inACity;
 
 		// look around
-		SurroundingRoads roads = new SurroundingRoads(platmap, platX, platZ);
+		SurroundingRoads roads = new SurroundingRoads(platmap, platX, platZ, true);
 
 		// a city stream under the street (CityWorld's own rivers, at street level, no sea beneath): a flat road on
 		// over it like any other, the water put back under its deck below — upstream's bridge made a humpback over a
@@ -2032,6 +2032,20 @@ public class RoadLot extends ConnectedLot {
 			signFor(chunk, kit.sign("dead_end"), from.getOppositeFace(), true, y, false, left);
 		}
 
+		// where a highway leaves: the town's board at the line, and a chunk-width in, the highway's limit for the
+		// traffic going out and the town's for the traffic coming in (the street would have ended in a DEAD END)
+		BlockFace exit = roads.highwayExit();
+		if (exit != null) {
+			Material board = kit.sign("city_" + (1 + chunkOdds.getRandomInt(5)) + "_sign");
+			BlockFace in = exit.getOppositeFace();
+			signFor(chunk, board, in, true, y, false, left);
+			signFor(chunk, board, exit, false, y, true, left);
+			int highway = rounded(highwaySpeedLimit(generator));
+			signFor(chunk, speedSign(settings, platmap), in, false, y, false, left);
+			signFor(chunk, kit.sign("speedlimit_" + highway), exit, true, y, false, left);
+			return;
+		}
+
 		// where this road crosses the platmap's edge, and what lies across it
 		BlockFace across = platX == 0 && roads.toWest() ? BlockFace.WEST
 				: platX == PlatMap.Width - 1 && roads.toEast() ? BlockFace.EAST
@@ -2065,6 +2079,11 @@ public class RoadLot extends ConnectedLot {
 			signFor(chunk, here, one, true, y, false, left);
 			signFor(chunk, here, one.getOppositeFace(), false, y, false, left);
 		}
+	}
+
+	/** The highways' limit, from the world's settings. */
+	private static int highwaySpeedLimit(CityWorldGenerator generator) {
+		return generator.getSettings().cities.highways().speedLimit();
 	}
 
 	/** A platmap's speed-limit sign: rural where it is mostly nature (the context ladder's bands), urban otherwise. */
