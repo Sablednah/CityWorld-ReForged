@@ -10,10 +10,13 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 ### Added
 
 - **Highways between the cities of a vanilla world.** Each city gets a road to its neighbours east and south,
-  leaving along one of its own streets at its own level. The road winds round hills and along valleys, never
+  leaving from the end of one of its own streets, across its open edge, at its own level. The road winds round hills and along valleys, never
   climbing steeper than one in ten. It is cut through higher ground with sloped sides and banked up over dips, and it
   crosses rivers and gorges on bridges with railings and piers and goes under ridges in lit tunnels. Its surface is
-  the city's street, Macaw's asphalt included. Vanilla's ravines pass under a highway, not through it. Settings
+  the city's street (the grey of a city road, or Macaw's asphalt). Tunnels are arched like a city road's, with room
+  for a truck down the middle. Villages and other surface structures are kept off the road, and what vanilla and
+  biome mods grow on it (grass, bushes, springs running onto it) is cleared. Vanilla's ravines pass under a
+  highway, not through it. Settings
   `cities.highways` (`enabled`, `width`, `grade`, `fillMax`, `clearance`, `tunnel`) and **Highways** in Customize.
   From a player's request for Highways & Byways support (GitHub issue #3); CityWorld builds its own, because that
   mod's roads join vanilla structures rather than cities.
@@ -25,8 +28,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   bed towards bedrock, with the abyssal ruins at the bottom. It joins `#cityworld:cave_pool`, and only ever claims a
   column under a 7.0 deep ocean (never under land, and never in an older world's seas).
   About 6% of the land at the default, oceans 1–5 km across; cities keep off them. The ruined Nether twin has a lava
-  sea in the same place. Modern, Apocalypse, Classic and Sparse. Settings `cities.oceans` (`enabled`, `size`,
-  `rarity`, `depth`, `shelf`), and **Oceans** / **Ocean share** in Customize. **A world made before 7.0 never has
+  sea in the same place. Oil rigs stand in them, far apart (`rigs`). Modern, Apocalypse, Classic and Sparse. Settings
+  `cities.oceans` (`enabled`, `size`, `rarity`, `depth`, `shelf`, `rigs`), and **Oceans** / **Ocean share** in Customize. **A world made before 7.0 never has
   them**: the world presets and Customize now stamp a new world `"made_with": 7`, and a world without that stamp
   keeps the land it always had (highways too). The Structures page shows the ocean structures as on when oceans are, and switching one off
   there still wins.

@@ -482,6 +482,7 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 | `rarity` | `0.5` | How much of the land stays land: higher is rarer. **Ocean share** in Customize: `0.62` about 2%, `0.56` about 4%, `0.5` about 6%, `0.44` about 9%, `0.38` about 13% (measured over 80 km on three seeds; it varies by seed). At the default an ocean is about 1–5 km across. `0`–`0.95`. |
 | `depth` | `30` | How far below sea level the ocean floor lies (vanilla's deep oceans are about this deep). `8`–`56`. |
 | `shelf` | `0.1` | How wide the slope from the shore to the deep is, as a share of the pattern: larger is a gentler, wider shelf. `0.01`–`0.5`. |
+| `rigs` | `0.0625` | The share of the deep-water sites inside these oceans that get an oil rig (a site comes up in about one platmap in two). `1` puts a rig on every one; `0` none. The old, patchy deep sea outside them keeps every rig. `0`–`1`. |
 
 > Every city in a vanilla world is worked out from the seed and these numbers, so **change them only before
 > the world is made**: changed under an existing world, cities move or change level under chunks already built.
