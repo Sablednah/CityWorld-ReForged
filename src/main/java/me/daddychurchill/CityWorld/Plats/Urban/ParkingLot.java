@@ -110,12 +110,22 @@ public class ParkingLot extends IsolatedLot {
             chunk.setBlocks(x, stand, stand + 4, 7, Material.COBBLESTONE_WALL);
             chunk.setBlock(x, stand + 4, 7, Material.SEA_LANTERN);
         }
-        // cars in some bays, nose to the kerb
+        // cars in some bays, nose to the kerb: Immersive Vehicles' when a vehicle pack is installed (a ruin keeps its
+        // wrecks), each centred in its bay (three cells between the lines, five long) with the brake on
+        var settings = generator.getSettings();
+        boolean real = !ruined && settings.includeVehicles && me.daddychurchill.CityWorld.worldgen.Vehicles.any("car");
         for (int bay = 0; bay < 4; bay++)
             for (int row = 0; row < 2; row++) {
-                if (!odds.playOdds(ruined ? 0.35 : 0.5))
+                if (!odds.playOdds(ruined ? 0.35 : real ? settings.oddsOfParkedVehicle : 0.5))
                     continue;
                 int x0 = bay * 4 + 1, z0 = row == 0 ? 1 : 11;
+                if (real) {
+                    Odds car = odds.fork(); // its own stream: a vehicle's picks never shift the bays after it
+                    double cx = chunk.getBlockX(x0) + 1.5, cz = chunk.getBlockZ(row == 0 ? 1 : 10) + 2.5;
+                    if (me.daddychurchill.CityWorld.worldgen.Vehicles.park(chunk.getWorld(), "car", cx, stand, cz,
+                            row == 0 ? 180 : 0, settings.vehicleFuel, car))
+                        continue;
+                }
                 car(chunk, odds, x0, stand, z0, CAR_PAINT[odds.getRandomInt(CAR_PAINT.length)], ruined);
             }
         // a sign for the mall at one corner

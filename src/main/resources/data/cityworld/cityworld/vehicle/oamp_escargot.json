@@ -1,0 +1,143 @@
+{
+  "requires_mod": "oamp",
+  "vehicle": "oamp:escargot",
+  "kind": "car",
+  "paints": [
+    "_black",
+    "_blue",
+    "_brown",
+    "_gray",
+    "_joepeach",
+    "_lightyellow",
+    "_maroon",
+    "_mascar",
+    "_mint",
+    "_pink",
+    "_red",
+    "_salmon",
+    "_seagreen",
+    "_skyblue",
+    "_white",
+    "_yellow"
+  ],
+  "centre": 1.719,
+  "fuel_capacity": 15000,
+  "parts": [
+    {
+      "slot": 0,
+      "part": "oamp:wheelvintage",
+      "subs": [
+        "_sinty",
+        "_mint",
+        "_lightblue"
+      ]
+    },
+    {
+      "slot": 1,
+      "part": "oamp:wheelvintage",
+      "subs": [
+        "_sinty",
+        "_mint",
+        "_lightblue"
+      ]
+    },
+    {
+      "slot": 2,
+      "part": "oamp:wheelvintage",
+      "subs": [
+        "_sinty",
+        "_mint",
+        "_lightblue"
+      ]
+    },
+    {
+      "slot": 3,
+      "part": "oamp:wheelvintage",
+      "subs": [
+        "_sinty",
+        "_mint",
+        "_lightblue"
+      ]
+    },
+    {
+      "slot": 4,
+      "part": "oamp:engineescargoti6",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 5,
+      "part": "oamp:sportseat",
+      "subs": [
+        "_red",
+        "_brown",
+        "_gray",
+        "_cream",
+        "_coffee",
+        "_blackbrown",
+        "_beige"
+      ]
+    },
+    {
+      "slot": 6,
+      "part": "oamp:sportseat",
+      "subs": [
+        "_red",
+        "_brown",
+        "_gray",
+        "_cream",
+        "_coffee",
+        "_blackbrown",
+        "_beige"
+      ]
+    },
+    {
+      "slot": 7,
+      "part": "oamp:sportseat",
+      "subs": [
+        "_red",
+        "_brown",
+        "_gray",
+        "_cream",
+        "_coffee",
+        "_blackbrown",
+        "_beige"
+      ]
+    },
+    {
+      "slot": 8,
+      "part": "oamp:sportseat",
+      "subs": [
+        "_red",
+        "_brown",
+        "_gray",
+        "_cream",
+        "_coffee",
+        "_blackbrown",
+        "_beige"
+      ]
+    },
+    {
+      "slot": 9,
+      "part": "mts:invisible_standing",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 11,
+      "part": "mtsofficialpack:gloveboxscout",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 17,
+      "part": "mtsofficialpack:wheellarge_whitewall",
+      "subs": [
+        ""
+      ]
+    }
+  ]
+}

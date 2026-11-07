@@ -41,19 +41,30 @@ import net.minecraft.world.level.block.state.BlockState;
  *       cell is still clear and the wall still stands.</li>
  * </ul>
  * The file and each line can carry {@code requires_mod}; anything whose mod is absent, or whose block or item does
- * not parse, is skipped (a bad line is logged once, when the world loads).
+ * not parse, is skipped (a bad line is logged once, when the world loads). A block line can carry its block entity's
+ * data in {@code /setblock} form ({@code mts:fuelpump{packID:"mtsofficialpack",...}}), and {@code heading}: the name
+ * of a number in that data holding a compass heading, turned with the building (see {@link Data}).
  */
 public final class SchematicFitOuts {
 
     private SchematicFitOuts() {
     }
 
-    public record BlockLine(BlockPos pos, String block, Optional<String> requiresMod) {
+    public record BlockLine(BlockPos pos, String block, Optional<String> requiresMod, Optional<String> heading) {
         public static final Codec<BlockLine> CODEC = RecordCodecBuilder.create(i -> i.group(
                 BlockPos.CODEC.fieldOf("pos").forGetter(BlockLine::pos),
                 Codec.STRING.fieldOf("block").forGetter(BlockLine::block),
-                Codec.STRING.optionalFieldOf("requires_mod").forGetter(BlockLine::requiresMod))
+                Codec.STRING.optionalFieldOf("requires_mod").forGetter(BlockLine::requiresMod),
+                Codec.STRING.optionalFieldOf("heading").forGetter(BlockLine::heading))
                 .apply(i, BlockLine::new));
+    }
+
+    /**
+     * A swapped block's own data ({@code /setblock}'s {@code {...}}): given to its block entity as placed. {@code heading}
+     * names a number in it that is a compass heading in degrees (0 south, 90 east, 180 north, 270 west: how Immersive
+     * Vehicles stores a decor's facing, {@code anglesy}), turned and mirrored with the building.
+     */
+    public record Data(net.minecraft.nbt.CompoundTag nbt, Optional<String> heading) {
     }
 
     public record FrameLine(BlockPos pos, Direction facing, String item, boolean glow, Optional<String> requiresMod) {
@@ -83,8 +94,8 @@ public final class SchematicFitOuts {
     }
 
     /** One schematic's fit-out, resolved: block states by stored position, and frames. */
-    public record Resolved(Map<BlockPos, BlockState> blocks, List<Frame> frames) {
-        public static final Resolved NONE = new Resolved(Map.of(), List.of());
+    public record Resolved(Map<BlockPos, BlockState> blocks, List<Frame> frames, Map<BlockPos, Data> data) {
+        public static final Resolved NONE = new Resolved(Map.of(), List.of(), Map.of());
     }
 
     private static volatile Map<String, Resolved> bySchematic = Map.of();
@@ -97,12 +108,17 @@ public final class SchematicFitOuts {
             files.sort(Comparator.comparing(e -> e.getKey().location().toString()));
             Map<String, Map<BlockPos, BlockState>> blocks = new HashMap<>();
             Map<String, List<Frame>> frames = new HashMap<>();
+            Map<String, Map<BlockPos, Data>> data = new HashMap<>();
             int skipped = 0;
             for (Map.Entry<ResourceKey<FitOut>, FitOut> e : files) {
                 List<String> problems = new ArrayList<>();
                 Resolved r = resolve(access, e.getValue(), problems);
                 String name = e.getValue().schematic().toLowerCase(java.util.Locale.ROOT);
-                blocks.computeIfAbsent(name, k -> new HashMap<>()).putAll(r.blocks());
+                Map<BlockPos, BlockState> theirs = blocks.computeIfAbsent(name, k -> new HashMap<>());
+                Map<BlockPos, Data> theirData = data.computeIfAbsent(name, k -> new HashMap<>());
+                theirData.keySet().removeAll(r.blocks().keySet()); // a later file's block takes its own data or none
+                theirs.putAll(r.blocks());
+                theirData.putAll(r.data());
                 frames.computeIfAbsent(name, k -> new ArrayList<>()).addAll(r.frames());
                 skipped += e.getValue().blocks().size() + e.getValue().frames().size() - r.blocks().size() - r.frames().size();
                 for (String problem : problems)
@@ -112,7 +128,8 @@ public final class SchematicFitOuts {
             Map<String, Resolved> resolved = new HashMap<>();
             for (String name : blocks.keySet())
                 if (!blocks.get(name).isEmpty() || !frames.get(name).isEmpty())
-                    resolved.put(name, new Resolved(Map.copyOf(blocks.get(name)), List.copyOf(frames.get(name))));
+                    resolved.put(name, new Resolved(Map.copyOf(blocks.get(name)), List.copyOf(frames.get(name)),
+                            Map.copyOf(data.get(name))));
             bySchematic = Map.copyOf(resolved);
             if (!files.isEmpty() && WARNED.add("summary " + files.size() + " " + resolved.size() + " " + skipped))
                 CityWorldMod.LOGGER.info("CityWorld fit-outs: {} file(s) for {} schematic(s), {} line(s) skipped",
@@ -134,12 +151,16 @@ public final class SchematicFitOuts {
         var blockLookup = access.lookupOrThrow(Registries.BLOCK);
         ItemParser items = new ItemParser(access);
         Map<BlockPos, BlockState> blocks = new HashMap<>();
+        Map<BlockPos, Data> data = new HashMap<>();
         List<Frame> frames = new ArrayList<>();
         for (BlockLine b : f.blocks()) {
             if (!loaded(b.requiresMod()))
                 continue;
             try {
-                blocks.put(b.pos().immutable(), BlockStateParser.parseForBlock(blockLookup, b.block(), false).blockState());
+                var parsed = BlockStateParser.parseForBlock(blockLookup, b.block(), true);
+                blocks.put(b.pos().immutable(), parsed.blockState());
+                if (parsed.nbt() != null)
+                    data.put(b.pos().immutable(), new Data(parsed.nbt(), b.heading()));
             } catch (Exception ex) {
                 problems.add("block '" + b.block() + "' at " + b.pos().toShortString() + ": " + ex.getMessage());
             }
@@ -156,11 +177,41 @@ public final class SchematicFitOuts {
                 problems.add("item '" + fr.item() + "' at " + fr.pos().toShortString() + ": " + ex.getMessage());
             }
         }
-        return new Resolved(Map.copyOf(blocks), List.copyOf(frames));
+        return new Resolved(Map.copyOf(blocks), List.copyOf(frames), Map.copyOf(data));
     }
 
     private static boolean loaded(Optional<String> mod) {
         return mod.map(m -> net.neoforged.fml.ModList.get().isLoaded(m)).orElse(true);
+    }
+
+    /**
+     * The data a swap carries, as placed: a copy, its {@code heading} turned as the building is — mirrored first, then
+     * rotated, as vanilla places a template. A heading's forward is (sin h, cos h) in (x, z).
+     */
+    public static net.minecraft.nbt.CompoundTag placed(Data d, net.minecraft.world.level.block.Mirror mirror,
+            net.minecraft.world.level.block.Rotation rotation) {
+        net.minecraft.nbt.CompoundTag nbt = d.nbt().copy();
+        if (d.heading().isEmpty() || !nbt.contains(d.heading().get()))
+            return nbt;
+        String key = d.heading().get();
+        double h;
+        try { // SNBT of any number (270.0d, 90f, 180): read it the same way on every version
+            h = Double.parseDouble(String.valueOf(nbt.get(key)).replaceAll("[dDfFbBsSlL]$", ""));
+        } catch (NumberFormatException e) {
+            return nbt;
+        }
+        if (mirror == net.minecraft.world.level.block.Mirror.LEFT_RIGHT) // z flips
+            h = 180 - h;
+        else if (mirror == net.minecraft.world.level.block.Mirror.FRONT_BACK) // x flips
+            h = -h;
+        h -= switch (rotation) {
+            case CLOCKWISE_90 -> 90;
+            case CLOCKWISE_180 -> 180;
+            case COUNTERCLOCKWISE_90 -> 270;
+            default -> 0;
+        };
+        nbt.putDouble(key, ((h % 360) + 360) % 360);
+        return nbt;
     }
 
     /** The fit-out for a schematic by its name, or {@link Resolved#NONE}. */
