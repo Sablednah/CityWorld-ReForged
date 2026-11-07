@@ -28,11 +28,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class Highways {
 
     /** Blocks between centreline samples. */
-    static final int STEP = 2;
+    public static final int STEP = 2;
     /** Blocks between route waypoints, and how far sideways each may move, in steps of {@link #OFFSET}. */
     static final int WAYPOINT = 192, OFFSET = 48, OFFSETS = 6;
     /** Blocks a link runs straight out of each city before it may turn. */
-    static final int RUN_OUT = 40;
+    public static final int RUN_OUT = 40;
     /** Samples either side the ground is averaged over before the grade is applied. */
     static final int SMOOTH = 12;
     /** The shortest tunnel, in blocks. */
@@ -278,6 +278,47 @@ public final class Highways {
      * highway ran into an office block on one, and others stopped short at the city's nature ring). With no plan,
      * or no such street, the road-line rule alone: along the line nearest the crossing, from the city's edge.
      */
+    private final java.util.concurrent.ConcurrentHashMap<List<Integer>, Gate> gates = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * The sides of a chunk a highway leaves from: bits {@link #EXIT_NORTH}, {@link #EXIT_EAST}, {@link #EXIT_SOUTH},
+     * {@link #EXIT_WEST}; 0 for most. A street chunk with one carries its road on to that edge and signs it, where it
+     * would have ended in a kerb and a DEAD END. From the gates alone (the city plan, no heights), so drawing a city's
+     * street never waits on a route being planned.
+     */
+    public int exitsAt(int chunkX, int chunkZ) {
+        CitySites.Site site = sites.influencing(chunkX, chunkZ);
+        if (site == null || !sites.isCityChunk(chunkX, chunkZ))
+            return 0;
+        int cell = sites.cell();
+        int cx = Math.floorDiv(site.centreX(), cell), cz = Math.floorDiv(site.centreZ(), cell);
+        int bits = 0;
+        int[][] around = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
+        for (int[] o : around) {
+            CitySites.Site there = sites.siteAt((cx + o[0]) * cell + cell / 2, (cz + o[1]) * cell + cell / 2);
+            if (there == null)
+                continue;
+            Gate g = gateOf(site, there);
+            int gx = Math.floorDiv((int) Math.floor(g.x - g.dx * 8), 16), gz = Math.floorDiv((int) Math.floor(g.z - g.dz * 8), 16);
+            if (gx == chunkX && gz == chunkZ)
+                bits |= g.dx > 0 ? EXIT_EAST : g.dx < 0 ? EXIT_WEST : g.dz > 0 ? EXIT_SOUTH : EXIT_NORTH;
+        }
+        return bits;
+    }
+
+    public static final int EXIT_NORTH = 1, EXIT_EAST = 2, EXIT_SOUTH = 4, EXIT_WEST = 8;
+
+    /** A site's gate toward another, worked out once (outside any map lock: it reads the city's plan). */
+    private Gate gateOf(CitySites.Site site, CitySites.Site toward) {
+        List<Integer> key = List.of(site.centreX(), site.centreZ(), toward.centreX(), toward.centreZ());
+        Gate known = gates.get(key);
+        if (known != null)
+            return known;
+        Gate made = gate(site, toward);
+        Gate raced = gates.putIfAbsent(key, made);
+        return raced != null ? raced : made;
+    }
+
     private Gate gate(CitySites.Site site, CitySites.Site toward) {
         double dx = toward.centreX() - site.centreX(), dz = toward.centreZ() - site.centreZ();
         boolean alongX = Math.abs(dx) >= Math.abs(dz);
@@ -376,7 +417,7 @@ public final class Highways {
 
     private Link plan(CitySites.Site a, CitySites.Site b) {
         long started = System.nanoTime();
-        Gate ga = gate(a, b), gb = gate(b, a);
+        Gate ga = gateOf(a, b), gb = gateOf(b, a);
         double ax = ga.x + ga.dx * ga.run, az = ga.z + ga.dz * ga.run;
         double bx = gb.x + gb.dx * gb.run, bz = gb.z + gb.dz * gb.run;
         double lx = bx - ax, lz = bz - az, length = Math.hypot(lx, lz);
@@ -432,15 +473,29 @@ public final class Highways {
         }
         offset[0] = 0;
 
-        // the control points: gate, run-out end, waypoints, run-out end, gate
-        List<double[]> control = new ArrayList<>();
-        control.add(new double[] { ga.x, ga.z });
-        for (int i = 0; i <= segments; i++) {
+        // the line: straight along the street from the gate to the run-out end, then through the waypoints, then
+        // straight in along the other street. Each span between them is a cubic leaving one point along the line's
+        // heading there and arriving at the next along its heading: at a run-out end the street's own, so the road
+        // leaves its city straight and turns one way only (the owner's look: a curve through all the points wiggled
+        // out of a gate, overshot, and swung back)
+        List<double[]> stops = new ArrayList<>();
+        stops.add(new double[] { ax, az });
+        for (int i = 1; i < segments; i++) {
             double t = i / (double) segments;
-            control.add(new double[] { ax + lx * t + nx * offset[i] * OFFSET, az + lz * t + nz * offset[i] * OFFSET });
+            stops.add(new double[] { ax + lx * t + nx * offset[i] * OFFSET, az + lz * t + nz * offset[i] * OFFSET });
         }
-        control.add(new double[] { gb.x, gb.z });
-        double[][] line = resample(catmullRom(control), STEP);
+        stops.add(new double[] { bx, bz });
+        List<double[]> dense = new ArrayList<>();
+        straight(dense, new double[] { ga.x, ga.z }, stops.get(0));
+        for (int i = 0; i < stops.size() - 1; i++) {
+            double[] p1 = stops.get(i), p2 = stops.get(i + 1);
+            double[] t1 = i == 0 ? new double[] { ga.dx, ga.dz } : unit(p2, stops.get(i - 1));
+            double[] t2 = i == stops.size() - 2 ? new double[] { -gb.dx, -gb.dz } : unit(stops.get(i + 2), p1);
+            cubic(dense, p1, t1, p2, t2);
+        }
+        straight(dense, stops.get(stops.size() - 1), new double[] { gb.x, gb.z });
+        dense.add(new double[] { gb.x, gb.z });
+        double[][] line = resample(dense, STEP);
         int n = line.length;
         double[] xs = new double[n], zs = new double[n];
         for (int i = 0; i < n; i++) {
@@ -543,6 +598,8 @@ public final class Highways {
     private static final double TURN_COST = 1500;
     /** What a sample over water costs on top of its height difference. */
     private static final double WATER_COST = 60;
+    /** What a route pays for each sample on a city's own ground: more than any detour around it. */
+    private static final double CITY_COST = 2000;
 
     /** The cost of the stretch between waypoints {@code i0} (offset {@code k0}) and {@code i1} ({@code k1}). */
     private double segmentCost(CitySites.Site a, CitySites.Site b, double length, double ax, double az, double ux,
@@ -558,6 +615,9 @@ public final class Highways {
             double x = x0 + (x1 - x0) * f, z = z0 + (z1 - z0) * f;
             double want = a.level() + (b.level() - a.level()) * (t0 + (t1 - t0) * f);
             int top = gridTop(x, z);
+            // a city's ground is the city's: a route back across it is drawn under its buildings and trees
+            if (sites.isCityChunk(Math.floorDiv((int) Math.floor(x), 16), Math.floorDiv((int) Math.floor(z), 16)))
+                cost += CITY_COST;
             if (top < seaLevel - 1)
                 cost += WATER_COST + Math.abs(seaLevel + clearance - want);
             else
@@ -587,25 +647,36 @@ public final class Highways {
         return site == null ? top : sites.groundAt(site, x, z, top);
     }
 
-    /** A centripetal-free uniform Catmull-Rom curve through the points, as a dense polyline (about a block apart). */
-    private static List<double[]> catmullRom(List<double[]> points) {
-        List<double[]> out = new ArrayList<>();
-        int n = points.size();
-        for (int i = 0; i < n - 1; i++) {
-            double[] p0 = points.get(Math.max(0, i - 1)), p1 = points.get(i), p2 = points.get(i + 1),
-                    p3 = points.get(Math.min(n - 1, i + 2));
-            int steps = Math.max(1, (int) Math.ceil(Math.hypot(p2[0] - p1[0], p2[1] - p1[1])));
-            for (int s = 0; s < steps; s++) {
-                double t = s / (double) steps, t2 = t * t, t3 = t2 * t;
-                double[] q = new double[2];
-                for (int c = 0; c < 2; c++)
-                    q[c] = 0.5 * (2 * p1[c] + (-p0[c] + p2[c]) * t + (2 * p0[c] - 5 * p1[c] + 4 * p2[c] - p3[c]) * t2
-                            + (-p0[c] + 3 * p1[c] - 3 * p2[c] + p3[c]) * t3);
-                out.add(q);
-            }
+    /** A straight line from one point toward another, about a block apart (the end itself left to the next piece). */
+    private static void straight(List<double[]> out, double[] a, double[] b) {
+        int steps = Math.max(1, (int) Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1])));
+        for (int s = 0; s < steps; s++) {
+            double t = s / (double) steps;
+            out.add(new double[] { a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t });
         }
-        out.add(points.get(n - 1).clone());
-        return out;
+    }
+
+    /**
+     * A cubic from {@code a}, leaving along {@code ta}, to {@code b}, arriving along {@code tb} (unit headings, both
+     * the way of travel), about a block apart: its handles a third of the span long, so it never loops.
+     */
+    private static void cubic(List<double[]> out, double[] a, double[] ta, double[] b, double[] tb) {
+        double k = Math.hypot(b[0] - a[0], b[1] - a[1]) / 3;
+        double[] c1 = { a[0] + ta[0] * k, a[1] + ta[1] * k }, c2 = { b[0] - tb[0] * k, b[1] - tb[1] * k };
+        int steps = Math.max(1, (int) Math.ceil(3 * k));
+        for (int s = 0; s < steps; s++) {
+            double t = s / (double) steps, u = 1 - t;
+            double[] q = new double[2];
+            for (int c = 0; c < 2; c++)
+                q[c] = u * u * u * a[c] + 3 * u * u * t * c1[c] + 3 * u * t * t * c2[c] + t * t * t * b[c];
+            out.add(q);
+        }
+    }
+
+    /** The unit heading from one point to another. */
+    private static double[] unit(double[] to, double[] from) {
+        double x = to[0] - from[0], z = to[1] - from[1], l = Math.max(1e-9, Math.hypot(x, z));
+        return new double[] { x / l, z / l };
     }
 
     /** The polyline resampled every {@code step} blocks along its length. */
