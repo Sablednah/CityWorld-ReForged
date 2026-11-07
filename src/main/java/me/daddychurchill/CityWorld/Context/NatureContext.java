@@ -270,6 +270,22 @@ public class NatureContext extends UncivilizedContext {
 		return null;
 	}
 
+	/**
+	 * Whether a deep-sea site gets its oil rig. Every one did, which suited the old deep sea's scattered patches; a 7.0
+	 * ocean is hundreds of platmaps, and was dotted with rigs (owner, 2026-11-07). Inside one, settings
+	 * {@code cities.oceans.rigs} of the sites keep theirs, picked by position (the planner's odds are untouched).
+	 */
+	private static boolean rigHere(CityWorldGenerator generator, int chunkX, int chunkZ) {
+		if (!(generator.shapeProvider instanceof me.daddychurchill.CityWorld.Plugins.ShapeProvider_Normal normal)
+				|| !normal.hasOceans() || normal.oceanAt(chunkX * 16 + 8, chunkZ * 16 + 8) <= 0)
+			return true;
+		long h = generator.getWorldSeed() ^ 0x5249475321L ^ chunkX * 0x9E3779B97F4A7C15L ^ chunkZ * 0xC2B2AE3D27D4EB4FL;
+		h = (h ^ (h >>> 30)) * 0xBF58476D1CE4E5B9L;
+		h = (h ^ (h >>> 27)) * 0x94D049BB133111EBL;
+		h ^= h >>> 31;
+		return (h >>> 11) * 0x1.0p-53 < generator.getSettings().cities.oceans().rigs();
+	}
+
 	protected void populateSpecial(CityWorldGenerator generator, PlatMap platmap, int x, int y, int z,
 			HeightState state) {
 
@@ -297,7 +313,7 @@ public class NatureContext extends UncivilizedContext {
 				switch (state) {
 			case DEEPSEA:
 				// Oil rigs
-				if (generator.getSettings().includeBuildings)
+				if (generator.getSettings().includeBuildings && rigHere(generator, platmap.originX + x, platmap.originZ + z))
 					current = new OilPlatformLot(platmap, platmap.originX + x, platmap.originZ + z);
 				break;
 			case SEA:

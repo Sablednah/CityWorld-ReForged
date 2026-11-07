@@ -322,7 +322,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 v -> Component.literal(oceanShareLabel(v)),
                 v -> cities = cities.withOceans(new me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Oceans(
                         cities.oceans().enabled(), cities.oceans().size(), v / 100.0, cities.oceans().depth(),
-                        cities.oceans().shelf())));
+                        cities.oceans().shelf(), cities.oceans().rigs())));
         oceanShare.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
                 "CityWorld land only: how much of the land is deep ocean, roughly (it varies by seed).")));
         addRow(oceans, oceanShare);
