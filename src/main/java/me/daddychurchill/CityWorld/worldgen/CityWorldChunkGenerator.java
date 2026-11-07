@@ -953,12 +953,12 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 return;
         BlockState rod = (kit.rod != null ? kit.rod : Material.SPRUCE_FENCE).getBlockState();
         for (int y = base; y < top + 3; y++)
-            chunk.setBlockState(cursor.set(x, y, z), rod);
+            chunk.setBlockState(cursor.set(x, y, z), rod, false);
         // a sign faces the way it is read from: against its traffic, snapped to the nearest side
         me.daddychurchill.CityWorld.compat.BlockFace facing = Math.abs(tx) >= Math.abs(tz)
                 ? (tx > 0 ? me.daddychurchill.CityWorld.compat.BlockFace.WEST : me.daddychurchill.CityWorld.compat.BlockFace.EAST)
                 : (tz > 0 ? me.daddychurchill.CityWorld.compat.BlockFace.NORTH : me.daddychurchill.CityWorld.compat.BlockFace.SOUTH);
-        chunk.setBlockState(cursor.set(x, top + 3, z), sign.withFacing(facing));
+        chunk.setBlockState(cursor.set(x, top + 3, z), sign.withFacing(facing), false);
     }
 
     /**
