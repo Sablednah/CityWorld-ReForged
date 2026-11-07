@@ -844,6 +844,112 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 return both;
             });
         }
+        drawHighwaySigns(context, chunk, links);
+    }
+
+    /**
+     * A road mod's signs along a highway (Macaw's Roads: the road kit's mod), each on a rod on the kerb at the driver's
+     * side of the traffic it is for and facing it: MOTORWAY for the traffic leaving a city, a chunk past its edge;
+     * TUNNEL before each portal, both ways; STEEP ASCENT / STEEP DESCENT at the foot and the top of a long climb
+     * ({@link #STEEP_RISE} over {@link #STEEP_RUN} blocks), for the traffic about to climb or drop. None in a tunnel or
+     * on a bridge (its kerb is a railing), and nothing without the mod.
+     */
+    private void drawHighwaySigns(CityWorldGenerator context, ChunkAccess chunk, List<Highways.Link> links) {
+        me.daddychurchill.CityWorld.Support.RoadKit kit = me.daddychurchill.CityWorld.Support.RoadKit.forWorld(context);
+        if (kit == null)
+            return;
+        boolean left = context.getSettings().driveOnLeft;
+        int side = highways.halfWidth() + 1;
+        int run = Highways.STEEP_RUN_SAMPLES;
+        for (Highways.Link link : links) {
+            int n = link.x().length;
+            // {sample, direction of travel along the samples (+1 / -1), sign}
+            List<Object[]> spots = new java.util.ArrayList<>();
+            for (int end = 0; end < 2; end++) {
+                int dir = end == 0 ? 1 : -1, k = end == 0 ? 0 : n - 1;
+                while (k >= 0 && k < n && citySites.isCityChunk(Math.floorDiv((int) Math.floor(link.x()[k]), 16),
+                        Math.floorDiv((int) Math.floor(link.z()[k]), 16)))
+                    k += dir;
+                spots.add(new Object[] { k + dir * 8, dir, "motorway" });
+            }
+            for (int k = 0; k < n; ) {
+                if (link.kind()[k] != Highways.Kind.TUNNEL) {
+                    k++;
+                    continue;
+                }
+                int e = k;
+                while (e < n && link.kind()[e] == Highways.Kind.TUNNEL)
+                    e++;
+                spots.add(new Object[] { k - 6, 1, "tunnel" });
+                spots.add(new Object[] { e - 1 + 6, -1, "tunnel" });
+                k = e;
+            }
+            for (int k = 0, last = -1; k + run < n; k += 4) {
+                int rise = link.y()[k + run] - link.y()[k];
+                if (k <= last || Math.abs(rise) < STEEP_RISE)
+                    continue;
+                int up = Integer.signum(rise), e = k + run;
+                while (e + run / 2 < n && (link.y()[e + run / 2] - link.y()[e]) * up >= 2)
+                    e += run / 2;
+                spots.add(new Object[] { k, 1, up > 0 ? "steep_ascent" : "steep_descent" });
+                spots.add(new Object[] { e, -1, up > 0 ? "steep_descent" : "steep_ascent" });
+                last = e;
+            }
+            for (Object[] spot : spots)
+                highwaySign(chunk, kit, link, (int) spot[0], (int) spot[1], (String) spot[2], side, left);
+        }
+    }
+
+    /** How much a highway climbs over {@link Highways#STEEP_RUN_SAMPLES} samples to be signed as steep. */
+    private static final int STEEP_RISE = 8;
+
+    /** One highway sign at a sample, if it falls in this chunk on open kerb (see {@link #drawHighwaySigns}). */
+    private static void highwaySign(ChunkAccess chunk, me.daddychurchill.CityWorld.Support.RoadKit kit, Highways.Link link,
+            int k, int dir, String name, int side, boolean left) {
+        int n = link.x().length;
+        if (k < 1 || k >= n - 1 || link.kind()[k] != Highways.Kind.GROUND)
+            return;
+        Material sign = kit.sign(name);
+        if (sign == null)
+            return;
+        double tx = (link.x()[k + 1] - link.x()[k - 1]) * dir, tz = (link.z()[k + 1] - link.z()[k - 1]) * dir;
+        double l = Math.hypot(tx, tz);
+        if (l == 0)
+            return;
+        tx /= l;
+        tz /= l;
+        double sx = -tz, sz = tx; // the right of the traffic
+        if (left) {
+            sx = -sx;
+            sz = -sz;
+        }
+        int x = (int) Math.floor(link.x()[k] + sx * side), z = (int) Math.floor(link.z()[k] + sz * side);
+        ChunkPos pos = chunk.getPos();
+        if (x < pos.getMinBlockX() || x > pos.getMaxBlockX() || z < pos.getMinBlockZ() || z > pos.getMaxBlockZ())
+            return;
+        // the kerb's top: the first solid block down from just above the deck
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        int top = Integer.MIN_VALUE;
+        for (int y = link.y()[k] + 3; y >= link.y()[k] - 3; y--)
+            if (!chunk.getBlockState(cursor.set(x, y, z)).isAir()) {
+                top = y;
+                break;
+            }
+        if (top == Integer.MIN_VALUE)
+            return;
+        BlockState below = chunk.getBlockState(cursor.set(x, top, z));
+        int base = below.getBlock() instanceof net.minecraft.world.level.block.SlabBlock ? top : top + 1;
+        for (int y = base; y <= top + 3; y++)
+            if (y > top && !chunk.getBlockState(cursor.set(x, y, z)).isAir())
+                return;
+        BlockState rod = (kit.rod != null ? kit.rod : Material.SPRUCE_FENCE).getBlockState();
+        for (int y = base; y < top + 3; y++)
+            chunk.setBlockState(cursor.set(x, y, z), rod);
+        // a sign faces the way it is read from: against its traffic, snapped to the nearest side
+        me.daddychurchill.CityWorld.compat.BlockFace facing = Math.abs(tx) >= Math.abs(tz)
+                ? (tx > 0 ? me.daddychurchill.CityWorld.compat.BlockFace.WEST : me.daddychurchill.CityWorld.compat.BlockFace.EAST)
+                : (tz > 0 ? me.daddychurchill.CityWorld.compat.BlockFace.NORTH : me.daddychurchill.CityWorld.compat.BlockFace.SOUTH);
+        chunk.setBlockState(cursor.set(x, top + 3, z), sign.withFacing(facing));
     }
 
     /**
@@ -918,6 +1024,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         if (links.isEmpty())
             return;
         boolean slabbed = highwaySlab(highwayPavement(context)) != null;
+        me.daddychurchill.CityWorld.Support.RoadKit kit = me.daddychurchill.CityWorld.Support.RoadKit.forWorld(context); // its signs stay
         BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
         BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
         int floor = chunk.getMinBuildHeight(), ceiling = chunk.getMaxBuildHeight();
@@ -942,7 +1049,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             int from = deck + 1 + (step ? 1 : 0) + (kerb && kind == Highways.Kind.BRIDGE ? 1 : 0);
                             int to = deck + (kerb ? 4 : 5);
                             for (int y = from; y <= to; y++) {
-                                if (!level.getBlockState(cursor.set(bx, y, bz)).isAir())
+                                BlockState there = level.getBlockState(cursor.set(bx, y, bz));
+                                if (!there.isAir() && (kit == null || !kit.owns(there)))
                                     level.setBlock(cursor, air, 2);
                             }
                             // and the trees over it, open to the sky: a canopy from beside the road hid it (the

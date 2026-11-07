@@ -33,6 +33,8 @@ public final class Highways {
     static final int WAYPOINT = 192, OFFSET = 48, OFFSETS = 6;
     /** Blocks a link runs straight out of each city before it may turn. */
     public static final int RUN_OUT = 40;
+    /** The run a climb is measured over for a STEEP sign, in samples (96 blocks). */
+    public static final int STEEP_RUN_SAMPLES = 96 / STEP;
     /** Samples either side the ground is averaged over before the grade is applied. */
     static final int SMOOTH = 12;
     /** The shortest tunnel, in blocks. */
