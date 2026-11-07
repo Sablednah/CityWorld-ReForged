@@ -1,0 +1,790 @@
+{
+ "schematic": "gas_stop",
+ "requires_mod": "mtsofficialpack",
+ "blocks": [
+  {
+   "pos": [
+    7,
+    1,
+    6
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:270.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    6
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:90.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    7
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:270.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    7
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:90.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    11
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:270.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    11
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:90.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    12
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:270.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    12
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:90.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    19
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:270.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    19
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:90.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    20
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:270.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    20
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:90.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    24
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:270.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    24
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:90.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    25
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:270.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    25
+   ],
+   "block": "mts:fuelpump{packID:\"mtsofficialpack\",systemName:\"fuelpump\",subName:\"\",anglesy:90.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    25
+   ],
+   "block": "minecraft:air"
+  }
+ ]
+}

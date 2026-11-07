@@ -1,0 +1,206 @@
+{
+  "requires_mod": "mtsofficialpack",
+  "vehicle": "mtsofficialpack:firetruck",
+  "kind": "fire_engine",
+  "paints": [
+    ""
+  ],
+  "centre": 2.7,
+  "fuel_capacity": 15000,
+  "parts": [
+    {
+      "slot": 0,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 1,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 2,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 3,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 4,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 5,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 6,
+      "part": "mtsofficialpack:carseat",
+      "subs": [
+        "_black",
+        "_brown",
+        "_red",
+        "_white",
+        "_grey",
+        "_tan",
+        "_maroon"
+      ]
+    },
+    {
+      "slot": 7,
+      "part": "mtsofficialpack:carseat",
+      "subs": [
+        "_black",
+        "_brown",
+        "_red",
+        "_white",
+        "_grey",
+        "_tan",
+        "_maroon"
+      ]
+    },
+    {
+      "slot": 8,
+      "part": "mtsofficialpack:carseat",
+      "subs": [
+        "_black",
+        "_brown",
+        "_red",
+        "_white",
+        "_grey",
+        "_tan",
+        "_maroon"
+      ]
+    },
+    {
+      "slot": 9,
+      "part": "mtsofficialpack:carseat",
+      "subs": [
+        "_black",
+        "_brown",
+        "_red",
+        "_white",
+        "_grey",
+        "_tan",
+        "_maroon"
+      ]
+    },
+    {
+      "slot": 10,
+      "part": "mtsofficialpack:enginedetroitdiesel",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 11,
+      "part": "mtsofficialpack:watercannon",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 12,
+      "part": "mtsofficialpack:gunfireextinguisher",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 13,
+      "part": "mtsofficialpack:gunfireextinguisher",
+      "subs": [
+        ""
+      ]
+    }
+  ]
+}

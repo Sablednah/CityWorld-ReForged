@@ -327,14 +327,16 @@ public record CityWorldSettingsData(
      * {@code wildBridges}, a rope bridge from a ridge crest in the wild across a valley at least
      * {@code wildBridgeDepth} deep to where the far side's ground meets the deck, up to {@code wildBridgeSpan} long:
      * at most one per region of {@code wildBridgeRegion} chunks square, and a region has one in
-     * {@code oddsOfWildBridge}.
+     * {@code oddsOfWildBridge}. With Immersive Vehicles and a vehicle pack ({@code vehicles}), a bay in a car park
+     * holds a parked vehicle in {@code oddsOfParkedVehicle}, with {@code vehicleFuel} millibuckets in its tank.
      */
     public record Roads(boolean driveOnLeft, int speedLimitUrban, int speedLimitRural, double oddsOfSpeedRepeat,
             boolean skybridges, double oddsOfSkybridge, int skybridgeMinFloors, double oddsOfStreetRope, boolean wildBridges,
-            int wildBridgeDepth, int wildBridgeSpan, double oddsOfWildBridge, int wildBridgeRegion) {
+            int wildBridgeDepth, int wildBridgeSpan, double oddsOfWildBridge, int wildBridgeRegion, boolean vehicles,
+            double oddsOfParkedVehicle, int vehicleFuel) {
 
         public static final Roads DEFAULT = new Roads(false, 50, 30, Odds.oddsUnlikely,
-                false, Odds.oddsSomewhatLikely, 6, Odds.oddsSomewhatLikely, true, 8, 48, Odds.oddsLikely, 32);
+                false, Odds.oddsSomewhatLikely, 6, Odds.oddsSomewhatLikely, true, 8, 48, Odds.oddsLikely, 32, true, 0.5, 0);
 
         public static final Codec<Roads> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("driveOnLeft", false).forGetter(Roads::driveOnLeft),
@@ -349,19 +351,26 @@ public record CityWorldSettingsData(
                 Codec.INT.optionalFieldOf("wildBridgeDepth", 8).forGetter(Roads::wildBridgeDepth),
                 Codec.INT.optionalFieldOf("wildBridgeSpan", 48).forGetter(Roads::wildBridgeSpan),
                 Codec.DOUBLE.optionalFieldOf("oddsOfWildBridge", Odds.oddsLikely).forGetter(Roads::oddsOfWildBridge),
-                Codec.INT.optionalFieldOf("wildBridgeRegion", 32).forGetter(Roads::wildBridgeRegion)
+                Codec.INT.optionalFieldOf("wildBridgeRegion", 32).forGetter(Roads::wildBridgeRegion),
+                Codec.BOOL.optionalFieldOf("vehicles", true).forGetter(Roads::vehicles),
+                Codec.DOUBLE.optionalFieldOf("oddsOfParkedVehicle", 0.5).forGetter(Roads::oddsOfParkedVehicle),
+                Codec.INT.optionalFieldOf("vehicleFuel", 0).forGetter(Roads::vehicleFuel)
         ).apply(i, Roads::new));
 
         public Roads withDriveOnLeft(boolean v) {
-            return new Roads(v, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion);
+            return new Roads(v, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles, oddsOfParkedVehicle, vehicleFuel);
         }
 
         public Roads withSkybridges(boolean v) {
-            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, v, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion);
+            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, v, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles, oddsOfParkedVehicle, vehicleFuel);
+        }
+
+        public Roads withVehicles(boolean v) {
+            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, v, oddsOfParkedVehicle, vehicleFuel);
         }
 
         public Roads withWildBridges(boolean v) {
-            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, v, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion);
+            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, v, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles, oddsOfParkedVehicle, vehicleFuel);
         }
     }
 
@@ -882,6 +891,11 @@ public record CityWorldSettingsData(
      * that list — unless {@link #append} is set, in which case it is <em>added</em> to the compiled
      * defaults instead. Names are joined by the same generator logic either way, so a short custom
      * list still produces varied street names.
+     *
+     * <p>Places ({@code Support.PlaceNames}): each city of a vanilla world, and each district of CityWorld's own land
+     * ({@code districtSize} platmaps square), is named from {@code placeNames} (whole names) or {@code placeStarts} +
+     * {@code placeEnds}, shaped by {@code placeFormat} ({@code {name}}; {@code {n}} is a number 1-99, so
+     * {@code "District {n}"} numbers them). These replace CityWorld's own words whatever {@code append} says.
      */
     public record Naming(
             List<String> villagerGivenNames,
@@ -894,10 +908,15 @@ public record CityWorldSettingsData(
             List<String> fossilPrefixes,
             List<String> fossilSuffixes,
             List<String> professionNames,
-            boolean append) {
+            boolean append,
+            List<String> placeNames,
+            List<String> placeStarts,
+            List<String> placeEnds,
+            String placeFormat,
+            int districtSize) {
 
         public static final Naming DEFAULT = new Naming(List.of(), List.of(), List.of(), List.of(), List.of(),
-                List.of(), List.of(), List.of(), List.of(), List.of(), false);
+                List.of(), List.of(), List.of(), List.of(), List.of(), false, List.of(), List.of(), List.of(), "{name}", 4);
 
         private static final Codec<List<String>> LIST = Codec.STRING.listOf();
 
@@ -912,7 +931,12 @@ public record CityWorldSettingsData(
                 LIST.optionalFieldOf("fossilPrefixes", List.of()).forGetter(Naming::fossilPrefixes),
                 LIST.optionalFieldOf("fossilSuffixes", List.of()).forGetter(Naming::fossilSuffixes),
                 LIST.optionalFieldOf("professionNames", List.of()).forGetter(Naming::professionNames),
-                Codec.BOOL.optionalFieldOf("append", false).forGetter(Naming::append)
+                Codec.BOOL.optionalFieldOf("append", false).forGetter(Naming::append),
+                LIST.optionalFieldOf("placeNames", List.of()).forGetter(Naming::placeNames),
+                LIST.optionalFieldOf("placeStarts", List.of()).forGetter(Naming::placeStarts),
+                LIST.optionalFieldOf("placeEnds", List.of()).forGetter(Naming::placeEnds),
+                Codec.STRING.optionalFieldOf("placeFormat", "{name}").forGetter(Naming::placeFormat),
+                Codec.intRange(1, 64).optionalFieldOf("districtSize", 4).forGetter(Naming::districtSize)
         ).apply(i, Naming::new));
     }
 
