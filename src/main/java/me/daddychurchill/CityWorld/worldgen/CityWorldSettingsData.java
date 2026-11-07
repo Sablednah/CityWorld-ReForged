@@ -460,11 +460,12 @@ public record CityWorldSettingsData(
      * east and south, on a road {@code width} blocks wide that climbs no steeper than {@code grade}, cut through higher
      * ground and banked up on lower to {@code fillMax} deep, bridged over water ({@code clearance} above the sea) and
      * deeper drops, and through a tunnel where the ground stands more than {@code tunnel} above it. Like the oceans, off in any world made before 7.0 whatever this says (the generator's
-     * {@code made_with} stamp).
+     * {@code made_with} stamp). {@code speedLimit}: the sign where a city's street becomes the highway (in tens, 10–120:
+     * the road mod's signs).
      */
-    public record Highways(boolean enabled, int width, double grade, int fillMax, int clearance, int tunnel) {
+    public record Highways(boolean enabled, int width, double grade, int fillMax, int clearance, int tunnel, int speedLimit) {
 
-        public static final Highways DEFAULT = new Highways(true, 9, 0.1, 8, 5, 12);
+        public static final Highways DEFAULT = new Highways(true, 9, 0.1, 8, 5, 12, 70);
         public static final Highways OFF = DEFAULT.withEnabled(false);
 
         public static final Codec<Highways> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -473,11 +474,12 @@ public record CityWorldSettingsData(
                 Codec.doubleRange(0.02, 0.5).optionalFieldOf("grade", 0.1).forGetter(Highways::grade),
                 Codec.intRange(0, 32).optionalFieldOf("fillMax", 8).forGetter(Highways::fillMax),
                 Codec.intRange(1, 32).optionalFieldOf("clearance", 5).forGetter(Highways::clearance),
-                Codec.intRange(8, 128).optionalFieldOf("tunnel", 12).forGetter(Highways::tunnel)
+                Codec.intRange(8, 128).optionalFieldOf("tunnel", 12).forGetter(Highways::tunnel),
+                Codec.intRange(10, 120).optionalFieldOf("speedLimit", 70).forGetter(Highways::speedLimit)
         ).apply(i, Highways::new));
 
         public Highways withEnabled(boolean v) {
-            return new Highways(v, width, grade, fillMax, clearance, tunnel);
+            return new Highways(v, width, grade, fillMax, clearance, tunnel, speedLimit);
         }
     }
 

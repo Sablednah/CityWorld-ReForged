@@ -435,6 +435,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     if (vanillaTerrain()) {
                         vanillaOverworld();
                         local.citySites = citySites;
+                        local.highways = highways;
                     }
                     // The biome source answers getNoiseBiome from this context (terrain height + climate),
                     // so hand it over the moment it exists — this is the earliest point it can be had.
@@ -953,6 +954,12 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                 if (!level.getBlockState(cursor.set(bx, y, bz)).isAir())
                                     level.setBlock(cursor, air, 2);
                             }
+                            // and the trees over it, open to the sky: a canopy from beside the road hid it (the
+                            // owner's look at a mangrove swamp)
+                            if (kind != Highways.Kind.TUNNEL)
+                                for (int y = to + 1; y <= Math.min(ceiling - 1, deck + CANOPY_CLEAR); y++)
+                                    if (treePart(level.getBlockState(cursor.set(bx, y, bz))))
+                                        level.setBlock(cursor, air, 2);
                         } else if (kind != Highways.Kind.BRIDGE) {
                             for (int y = deck + 1; y <= deck + Highways.SIDE + 2; y++) {
                                 var fluid = level.getFluidState(cursor.set(bx, y, bz));
@@ -962,6 +969,17 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         }
                     }
             }
+    }
+
+    /** How high over a highway's deck the trees are cleared away. */
+    private static final int CANOPY_CLEAR = 32;
+
+    /** A tree's leaves, wood, vines, roots or fruit: what is cleared from over a highway. */
+    private static boolean treePart(BlockState state) {
+        return state.is(net.minecraft.tags.BlockTags.LEAVES) || state.is(net.minecraft.tags.BlockTags.LOGS)
+                || state.is(net.minecraft.world.level.block.Blocks.VINE) || state.is(net.minecraft.world.level.block.Blocks.MANGROVE_ROOTS)
+                || state.is(net.minecraft.world.level.block.Blocks.MANGROVE_PROPAGULE) || state.is(net.minecraft.world.level.block.Blocks.BEE_NEST)
+                || state.is(net.minecraft.world.level.block.Blocks.COCOA);
     }
 
     /**

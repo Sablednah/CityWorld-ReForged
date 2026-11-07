@@ -158,6 +158,18 @@ public class CityWorldGenerator {
     public volatile me.daddychurchill.CityWorld.worldgen.CitySites citySites;
 
     /**
+     * The highways between a vanilla-terrain world's cities, bound with {@link #citySites} (null in any other world,
+     * or with them off): a street a highway leaves from runs on to its chunk's edge instead of ending.
+     */
+    public volatile me.daddychurchill.CityWorld.worldgen.Highways highways;
+
+    /** The sides a highway leaves this street chunk from ({@code Highways.EXIT_*} bits); 0 without highways. */
+    public int highwayExitsAt(int chunkX, int chunkZ) {
+        me.daddychurchill.CityWorld.worldgen.Highways local = highways;
+        return local == null ? 0 : local.exitsAt(chunkX, chunkZ);
+    }
+
+    /**
      * Vanilla's End terrain, as the noise answers it — bound by the chunk generator the moment this context
      * exists, and only in the End. {@code ShapeProvider_TheEnd} plans against it; null everywhere else.
      */
