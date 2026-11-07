@@ -185,10 +185,11 @@ public final class Highways {
                     if (there == null)
                         continue;
                     // the route swings up to OFFSETS offsets off the line between the GATES, and a gate stands up to
-                    // GATE_REACH of the radius across from its centre, on a road line (half a chunk more); a box from
+                    // the radius across from its centre, on a road line (half a chunk more), and a run may be lengthened
+                    // RUN_TRIES chunks to clear a built lot; a box from
                     // the centres alone left a chunk asking nothing and a road ending at its edge
                     int pad = OFFSETS * OFFSET + halfWidth + SIDE + RUN_OUT + 64
-                            + (int) Math.ceil(GATE_REACH * Math.max(here.radius(), there.radius()));
+                            + RUN_TRIES * 16 + 2 * Math.max(here.radius(), there.radius()); // a road round a city: AROUND radii out, at a corner
                     int bx0 = Math.min(here.centreX(), there.centreX()) - pad, bx1 = Math.max(here.centreX(), there.centreX()) + pad;
                     int bz0 = Math.min(here.centreZ(), there.centreZ()) - pad, bz1 = Math.max(here.centreZ(), there.centreZ()) + pad;
                     if (x1 < bx0 || x0 > bx1 || z1 < bz0 || z0 > bz1)
@@ -334,19 +335,28 @@ public final class Highways {
         CityPlan plan = cityPlan;
         if (plan != null) {
             // the side facing the other city, then the other side facing it (a city whose every street that way runs
-            // into a farm or a block before its edge: a fifth of them, measured)
-            Gate found = streetGate(plan, site, alongX, sign, across);
-            if (found == null) {
-                boolean sideX = !alongX;
-                double sideComponent = sideX ? dx : dz;
-                int sideSign = sideComponent >= 0 ? 1 : -1;
-                double sideAcross = sideX ? site.centreZ() + dz / length * site.radius() : site.centreX() + dx / length * site.radius();
-                double sideCentre = sideX ? site.centreZ() : site.centreX();
-                sideAcross = Math.max(sideCentre - limit, Math.min(sideCentre + limit, sideAcross));
-                found = streetGate(plan, site, sideX, sideSign, sideAcross);
+            // into a farm or a block before its edge: a fifth of them, measured), then both with every row to the
+            // city's rim, then a street along the rim met as a T, then the sides facing away, the road going round
+            // (the owner's dead ends: a road that met the city's edge with no street to meet)
+            boolean sideX = !alongX;
+            int sideSign = (sideX ? dx : dz) >= 0 ? 1 : -1;
+            double sideAcross = sideX ? site.centreZ() + dz / length * site.radius() : site.centreX() + dx / length * site.radius();
+            double sideCentre = sideX ? site.centreZ() : site.centreX();
+            double wholeAcross = across;
+            // {side?, sign, share of the radius, rows only?}: last, a street running along the city's edge, met
+            // square on as a T (any chunk across, its last road chunk a cross street's)
+            double[][] tries = { { 0, sign, GATE_REACH, 1 }, { 1, sideSign, GATE_REACH, 1 }, { 0, sign, 1, 1 },
+                    { 1, sideSign, 1, 1 }, { 0, sign, 1, 0 }, { 1, sideSign, 1, 0 },
+                    { 1, -sideSign, 1, 1 }, { 0, -sign, 1, 1 }, { 1, -sideSign, 1, 0 }, { 0, -sign, 1, 0 } };
+            for (double[] t : tries) {
+                boolean side = t[0] == 1;
+                double reach = site.radius() * t[2];
+                double centre = side ? sideCentre : centreAcross;
+                double want = Math.max(centre - reach, Math.min(centre + reach, side ? sideAcross : wholeAcross));
+                Gate found = streetGate(plan, site, side ? sideX : alongX, (int) t[1], want, t[2], t[3] == 1);
+                if (found != null)
+                    return found;
             }
-            if (found != null)
-                return found;
         }
 
         int row = nearestRoadLine(Math.floorDiv((int) Math.round(across), 16));
@@ -369,26 +379,31 @@ public final class Highways {
      * {@link #GATE_REACH} of the centre, nearest {@code across} first, the first whose last road chunk has only open
      * ground between it and the city's edge. Null when none has, or the plan cannot be had.
      */
-    private Gate streetGate(CityPlan plan, CitySites.Site site, boolean alongX, int sign, double across) {
+    private Gate streetGate(CityPlan plan, CitySites.Site site, boolean alongX, int sign, double across, double share,
+            boolean rowsOnly) {
         double centreAcross = alongX ? site.centreZ() : site.centreX();
-        double limit = site.radius() * GATE_REACH;
+        double limit = site.radius() * share;
         int start = Math.floorDiv(alongX ? site.centreX() : site.centreZ(), 16);
         List<Integer> rows = new ArrayList<>();
         for (int c = Math.floorDiv((int) Math.floor(centreAcross - limit), 16); c <= Math.floorDiv(
                 (int) Math.ceil(centreAcross + limit), 16); c++)
-            if (Math.floorMod(c, 5) == 2)
+            if (!rowsOnly || Math.floorMod(c, 5) == 2)
                 rows.add(c);
         rows.sort(java.util.Comparator.comparingDouble(r -> Math.abs(r * 16.0 + 8.0 - across)));
         for (int row : rows) {
             int lastRoad = Integer.MIN_VALUE, end = Integer.MIN_VALUE;
             boolean builtBeyond = false;
             int c = start;
+            // on to the city's OUTERMOST chunk on the line: its rim has gaps (water, the wobble), and farms past a gap
+            // stood on a run that stopped at the first (the owner's seed: a road along a row of farms)
             for (int i = 0; i < 64; i++, c += sign) {
                 int cx = alongX ? c : row, cz = alongX ? row : c;
                 if (!sites.isCityChunk(cx, cz)) {
-                    end = c;
-                    break;
+                    if (end == Integer.MIN_VALUE)
+                        end = c;
+                    continue;
                 }
+                end = Integer.MIN_VALUE;
                 int kind = plan.at(cx, cz);
                 if (kind == CityPlan.UNKNOWN)
                     return null;
@@ -418,8 +433,80 @@ public final class Highways {
     private Link plan(CitySites.Site a, CitySites.Site b) {
         long started = System.nanoTime();
         Gate ga = gateOf(a, b), gb = gateOf(b, a);
-        double ax = ga.x + ga.dx * ga.run, az = ga.z + ga.dz * ga.run;
-        double bx = gb.x + gb.dx * gb.run, bz = gb.z + gb.dz * gb.run;
+        // a turn after the run can cut across a built lot of a row of the same city that reaches further out than the
+        // street the road left by (the owner's look: a road under an office): run that end on a chunk further, and
+        // again, until the line is clear of every built lot
+        // A run that still crosses one after half the tries goes round its city instead (a gate facing sideways whose
+        // turn hugs the rim: a road along a row of the city's own farms, on the owner's seed)
+        boolean[] round = new boolean[2];
+        int[] longer = new int[2];
+        List<double[]> dense = route(a, b, ga, gb, round);
+        for (int tries = 0; tries < RUN_TRIES; tries++) {
+            int[] crossed = builtCrossing(dense, ga, gb);
+            if (crossed == null)
+                break;
+            CitySites.Site owner = sites.influencing(crossed[0], crossed[1]);
+            boolean nearA = owner != null ? owner.equals(a)
+                    : Math.hypot(crossed[0] * 16 - ga.x, crossed[1] * 16 - ga.z) < Math.hypot(crossed[0] * 16 - gb.x, crossed[1] * 16 - gb.z);
+            int end = nearA ? 0 : 1;
+            if (longer[end] >= RUN_TRIES / 2 && !round[end])
+                round[end] = true;
+            else if (nearA) {
+                ga = new Gate(ga.x, ga.z, ga.dx, ga.dz, ga.run + 16);
+                longer[0]++;
+            } else {
+                gb = new Gate(gb.x, gb.z, gb.dx, gb.dz, gb.run + 16);
+                longer[1]++;
+            }
+            dense = route(a, b, ga, gb, round);
+        }
+        double[][] line = resample(dense, STEP);
+        return finish(a, b, line, started);
+    }
+
+    /** How many times a run is lengthened to clear a built lot before the road is drawn as it is. */
+    private static final int RUN_TRIES = 8;
+
+    /**
+     * The first chunk past either run whose city plan has a building on it, as {chunkX, chunkZ}; null when the line
+     * is clear (or no plan is to be had).
+     */
+    private int[] builtCrossing(List<double[]> dense, Gate ga, Gate gb) {
+        CityPlan plan = cityPlan;
+        if (plan == null)
+            return null;
+        long last = Long.MIN_VALUE;
+        for (int i = 0; i < dense.size(); i += 2) {
+            double[] q = dense.get(i);
+            // the runs themselves are along the street and over open ground: checked when the gate was chosen
+            double fromA = (q[0] - ga.x) * ga.dx + (q[1] - ga.z) * ga.dz, fromB = (q[0] - gb.x) * gb.dx + (q[1] - gb.z) * gb.dz;
+            if (fromA >= 0 && fromA <= ga.run && Math.abs((q[0] - ga.x) * ga.dz - (q[1] - ga.z) * ga.dx) < 1
+                    || fromB >= 0 && fromB <= gb.run && Math.abs((q[0] - gb.x) * gb.dz - (q[1] - gb.z) * gb.dx) < 1)
+                continue;
+            // the deck and its kerbs reach halfWidth + 1 either side of the line
+            for (int side = -1; side <= 1; side++) {
+                double[] t = i + 1 < dense.size() ? unit(dense.get(i + 1), q) : unit(q, dense.get(i - 1));
+                int cx = Math.floorDiv((int) Math.floor(q[0] - t[1] * side * (halfWidth + 1)), 16);
+                int cz = Math.floorDiv((int) Math.floor(q[1] + t[0] * side * (halfWidth + 1)), 16);
+                long key = ((long) cx << 32) ^ (cz & 0xffffffffL);
+                if (key == last || !sites.isCityChunk(cx, cz))
+                    continue;
+                last = key;
+                if (plan.at(cx, cz) == CityPlan.BUILT)
+                    return new int[] { cx, cz };
+            }
+        }
+        return null;
+    }
+
+    /** The line between two gates: Viterbi waypoints, straight runs, one-way cubics (dense, about a block apart). */
+    private List<double[]> route(CitySites.Site a, CitySites.Site b, Gate ga, Gate gb, boolean[] round) {
+        double[] endA = { ga.x + ga.dx * ga.run, ga.z + ga.dz * ga.run }, endB = { gb.x + gb.dx * gb.run, gb.z + gb.dz * gb.run };
+        List<double[]> roundA = around(a, ga, endA, b, round[0]), roundB = around(b, gb, endB, a, round[1]);
+        double[] fromA = roundA.isEmpty() ? endA : roundA.get(roundA.size() - 1);
+        double[] fromB = roundB.isEmpty() ? endB : roundB.get(roundB.size() - 1);
+        double ax = fromA[0], az = fromA[1];
+        double bx = fromB[0], bz = fromB[1];
         double lx = bx - ax, lz = bz - az, length = Math.hypot(lx, lz);
         double ux = lx / length, uz = lz / length, nx = -uz, nz = ux;
         int segments = Math.max(1, (int) Math.round(length / WAYPOINT));
@@ -479,12 +566,15 @@ public final class Highways {
         // leaves its city straight and turns one way only (the owner's look: a curve through all the points wiggled
         // out of a gate, overshot, and swung back)
         List<double[]> stops = new ArrayList<>();
-        stops.add(new double[] { ax, az });
+        stops.add(endA);
+        stops.addAll(roundA);
         for (int i = 1; i < segments; i++) {
             double t = i / (double) segments;
             stops.add(new double[] { ax + lx * t + nx * offset[i] * OFFSET, az + lz * t + nz * offset[i] * OFFSET });
         }
-        stops.add(new double[] { bx, bz });
+        for (int i = roundB.size() - 1; i >= 0; i--)
+            stops.add(roundB.get(i));
+        stops.add(endB);
         List<double[]> dense = new ArrayList<>();
         straight(dense, new double[] { ga.x, ga.z }, stops.get(0));
         for (int i = 0; i < stops.size() - 1; i++) {
@@ -495,7 +585,39 @@ public final class Highways {
         }
         straight(dense, stops.get(stops.size() - 1), new double[] { gb.x, gb.z });
         dense.add(new double[] { gb.x, gb.z });
-        double[][] line = resample(dense, STEP);
+        return dense;
+    }
+
+    /**
+     * The way round a city for a road that leaves by a street facing away from where it goes (a city whose every
+     * street toward the other runs into a farm or a block: the owner's dead ends): out to a corner beside the city,
+     * then back abeam its centre on the side toward the other, both well clear of its rim. Empty for a gate that does
+     * not face away, unless {@code always}.
+     */
+    private List<double[]> around(CitySites.Site site, Gate g, double[] end, CitySites.Site other, boolean always) {
+        double ox = other.centreX() - site.centreX(), oz = other.centreZ() - site.centreZ();
+        if (g.dx * ox + g.dz * oz >= 0 && !always)
+            return List.of();
+        double px = -g.dz, pz = g.dx; // across the gate, toward the other city
+        if (px * ox + pz * oz < 0) {
+            px = -px;
+            pz = -pz;
+        }
+        double out = (end[0] - site.centreX()) * g.dx + (end[1] - site.centreZ()) * g.dz;
+        double clear = Math.max(out, site.radius() * AROUND + RUN_OUT);
+        double[] corner = { site.centreX() + g.dx * out + px * clear, site.centreZ() + g.dz * out + pz * clear };
+        // a gate facing away comes back abeam the centre; one facing across goes on from the corner, already clear
+        if (g.dx * ox + g.dz * oz >= 0)
+            return List.of(corner);
+        double[] abeam = { site.centreX() + px * clear, site.centreZ() + pz * clear };
+        return List.of(corner, abeam);
+    }
+
+    /** How far out, in radii, a road going round a city passes: past the rim's wobble and its blend. */
+    private static final double AROUND = 1.4;
+
+    /** Heights, kinds and the bounds of a planned line: the link. */
+    private Link finish(CitySites.Site a, CitySites.Site b, double[][] line, long started) {
         int n = line.length;
         double[] xs = new double[n], zs = new double[n];
         for (int i = 0; i < n; i++) {
