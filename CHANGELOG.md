@@ -16,7 +16,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   across the city's own lots; where no street toward the other city has open ground beyond it, it meets one along
   the city's edge as a T, or leaves by a street on another side and swings round the city. It climbs in half-block
   steps (the surface's own slab, or cobbled deepslate), so vehicles that cannot climb a whole block (Immersive
-  Vehicles and most others) can drive it. It winds round hills and along valleys, never
+  Vehicles and most others) can drive it. With Macaw's Roads it is signed: MOTORWAY as it leaves a city, TUNNEL
+  before each portal, STEEP ASCENT and STEEP DESCENT at long climbs. It winds round hills and along valleys, never
   climbing steeper than one in ten. It is cut through higher ground with sloped sides and banked up over dips, and it
   crosses rivers and gorges on bridges with railings and piers and goes under ridges in lit tunnels. Its surface is
   the city's street (the grey of a city road, or Macaw's asphalt). Tunnels are arched like a city road's, with room
