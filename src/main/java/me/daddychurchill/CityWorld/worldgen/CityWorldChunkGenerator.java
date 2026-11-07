@@ -746,7 +746,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         BlockState lines = me.daddychurchill.CityWorld.Support.Palettes.pick(context,
                 me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_LINES, 0, 0,
                 context.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(1, Material.QUARTZ_BLOCK)).getBlockState();
-        BlockState pavementSlab = slabOf(pavement);
+        BlockState pavementSlab = highwaySlab(pavement);
         BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
         BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
         BlockState edge = net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState();
@@ -930,7 +930,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         var links = highways.linksTouching(x0 - reach, z0 - reach, x0 + 47 + reach, z0 + 47 + reach);
         if (links.isEmpty())
             return;
-        boolean slabbed = slabOf(highwayPavement(context)) != null;
+        boolean slabbed = highwaySlab(highwayPavement(context)) != null;
         BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
         BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
         int floor = chunk.getMinY(), ceiling = chunk.getMaxY();
@@ -1031,12 +1031,26 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             boolean halfStep, double d, double deckEdge, double along, BlockState pavement, BlockState pavementSlab,
             BlockState lines, BlockState edge, BlockState edgeSlab, boolean railed, BlockState rail) {
         boolean kerb = d > deckEdge;
-        boolean dash = !kerb && !halfStep && d < 0.75 && ((int) (along / 4)) % 2 == 0;
-        chunk.setBlockState(cursor.set(bx, deck, bz), kerb ? edge : dash ? lines : pavement);
-        if (halfStep)
-            chunk.setBlockState(cursor.set(bx, deck + 1, bz), kerb ? edgeSlab : pavementSlab != null ? pavementSlab : pavement);
+        boolean dash = !kerb && d < 0.75 && ((int) (along / 4)) % 2 == 0;
+        chunk.setBlockState(cursor.set(bx, deck, bz), kerb ? edge : dash && !halfStep ? lines : pavement);
+        if (halfStep) {
+            BlockState lineSlab = dash ? slabOf(lines) : null;
+            chunk.setBlockState(cursor.set(bx, deck + 1, bz), kerb ? edgeSlab
+                    : lineSlab != null ? lineSlab : pavementSlab != null ? pavementSlab : pavement);
+        }
         if (kerb && railed)
             chunk.setBlockState(cursor.set(bx, deck + (halfStep ? 2 : 1), bz), rail);
+    }
+
+    /**
+     * The half step on a highway, so a vehicle that cannot climb a whole block (Immersive Vehicles and most others)
+     * can drive it: the surface's own slab where it has one (26.3's concrete, a pack's palette), else cobbled
+     * deepslate, the nearest slab in colour to cyan terracotta that every version has, and all but identical to
+     * Macaw's asphalt (which has none). Owner's pick, 2026-11-07.
+     */
+    private static BlockState highwaySlab(BlockState pavement) {
+        BlockState own = slabOf(pavement);
+        return own != null ? own : net.minecraft.world.level.block.Blocks.COBBLED_DEEPSLATE_SLAB.defaultBlockState();
     }
 
     /**

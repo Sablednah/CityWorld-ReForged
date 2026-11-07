@@ -506,10 +506,37 @@ public final class ChunkProbe {
                 }
                 if (built)
                     builtAhead++;
-                if (!street || built)
+                if (!street || built) {
                     CityWorldMod.LOGGER.warn("SURVEY highway gate MISS: ({},{})->({},{}) end {} at {} {}: behind {}, built ahead {}",
                             link.a().centreX(), link.a().centreZ(), link.b().centreX(), link.b().centreZ(), end, (int) gx, (int) gz,
                             behind == null ? "not city" : behind.getClass().getSimpleName(), built);
+                    // which sides of that city have a street with only open ground beyond it (lines across, E W S N)
+                    var site = end == 0 ? link.a() : link.b();
+                    StringBuilder sides = new StringBuilder();
+                    int[][] dirs = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
+                    for (int[] dir : dirs) {
+                        int open = 0, lines = 0;
+                        int ccx = site.centreX() >> 4, ccz = site.centreZ() >> 4, r = site.radius() / 16 + 2;
+                        for (int a2 = -r; a2 <= r; a2++) {
+                            int lastRoad = -1; boolean builtBeyond = false, reached = false;
+                            for (int step = 0; step < 64; step++) {
+                                int cx = ccx + dir[0] * step + (dir[0] == 0 ? a2 : 0), cz = ccz + dir[1] * step + (dir[1] == 0 ? a2 : 0);
+                                if (!sitesHere.isCityChunk(cx, cz)) { reached = step > 0; break; }
+                                var lot = ctx.getPlatMap(cx, cz).getMapLot(cx, cz);
+                                var st = lot == null ? null : lot.style;
+                                if (st == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.ROAD
+                                        || st == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.ROUNDABOUT) { lastRoad = step; builtBeyond = false; }
+                                else if (st != null && st != me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE) builtBeyond = true;
+                            }
+                            if (!reached) continue;
+                            lines++;
+                            if (lastRoad >= 0 && !builtBeyond) open++;
+                        }
+                        sides.append(open).append('/').append(lines).append(' ');
+                    }
+                    CityWorldMod.LOGGER.warn("SURVEY highway gate MISS city ({},{}) r{}: open lines E W S N: {}", site.centreX(),
+                            site.centreZ(), site.radius(), sides);
+                }
             }
         CityWorldMod.LOGGER.warn("SURVEY highway gates: {} ends, {} meet a street, {} have something built ahead, {} streets told to run on",
                 ends, onStreet, builtAhead, told);
@@ -528,8 +555,9 @@ public final class ChunkProbe {
                         && lot.style != me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.ROAD
                         && lot.style != me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.ROUNDABOUT) {
                     if (overBuilt++ < 8)
-                        CityWorldMod.LOGGER.warn("SURVEY highway OVER BUILT: ({},{})->({},{}) chunk {},{} {}", link.a().centreX(),
-                                link.a().centreZ(), link.b().centreX(), link.b().centreZ(), cx, cz, lot.getClass().getSimpleName());
+                        CityWorldMod.LOGGER.warn("SURVEY highway OVER BUILT: ({},{})->({},{}) chunk {},{} {} at sample {} of {} ({} {})",
+                                link.a().centreX(), link.a().centreZ(), link.b().centreX(), link.b().centreZ(), cx, cz,
+                                lot.getClass().getSimpleName(), k, n, (int) link.x()[k], (int) link.z()[k]);
                 }
             }
             for (int end = 0; end < 2; end++) {
