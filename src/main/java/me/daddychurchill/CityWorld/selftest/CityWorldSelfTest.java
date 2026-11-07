@@ -2719,7 +2719,8 @@ public final class CityWorldSelfTest {
                 {"schematic": "winchester",
                  "blocks": [{"pos": [5, 11, 10], "block": "minecraft:lectern[facing=east]"},
                             {"pos": [5, 12, 10], "block": "minecraft:air"},
-                            {"pos": [1, 1, 1], "block": "minecraft:stone", "requires_mod": "no_such_mod"}],
+                            {"pos": [1, 1, 1], "block": "minecraft:stone", "requires_mod": "no_such_mod"},
+                            {"pos": [3, 3, 3], "block": "minecraft:chest{anglesy:270.0d}", "heading": "anglesy"}],
                  "frames": [{"pos": [2, 14, 6], "facing": "east", "item": "%s"},
                             {"pos": [2, 14, 7], "facing": "east", "item": "minecraft:no_such_item"}]}
                 """.formatted(SAMPLE_FRAME_ITEM.replace("\"", "\\\""));
@@ -2736,8 +2737,30 @@ public final class CityWorldSelfTest {
         if (lectern == null || !lectern.is(net.minecraft.world.level.block.Blocks.LECTERN)
                 || lectern.getValue(net.minecraft.world.level.block.LecternBlock.FACING) != net.minecraft.core.Direction.EAST)
             fail("fit-outs: the lectern line resolved to " + lectern);
-        if (r.blocks().size() != 2 || !r.blocks().get(new net.minecraft.core.BlockPos(5, 12, 10)).isAir())
-            fail("fit-outs: expected the lectern and the air line only, got " + r.blocks());
+        if (r.blocks().size() != 3 || !r.blocks().get(new net.minecraft.core.BlockPos(5, 12, 10)).isAir())
+            fail("fit-outs: expected the lectern, the air line and the chest, got " + r.blocks());
+        // a line's own data (an Immersive Vehicles pump's), its heading turned and mirrored with the building
+        var data = r.data().get(new net.minecraft.core.BlockPos(3, 3, 3));
+        if (data == null) {
+            fail("fit-outs: the chest line kept no data");
+        } else {
+            String turned = String.valueOf(me.daddychurchill.CityWorld.worldgen.SchematicFitOuts.placed(data,
+                    net.minecraft.world.level.block.Mirror.NONE, net.minecraft.world.level.block.Rotation.CLOCKWISE_90).get("anglesy"));
+            String mirrored = String.valueOf(me.daddychurchill.CityWorld.worldgen.SchematicFitOuts.placed(data,
+                    net.minecraft.world.level.block.Mirror.FRONT_BACK, net.minecraft.world.level.block.Rotation.NONE).get("anglesy"));
+            report.put("fitout.heading", "west turned " + turned + ", mirrored " + mirrored);
+            if (!turned.startsWith("180.0") || !mirrored.startsWith("90.0"))
+                fail("fit-outs: a west heading (270) should turn to 180 and mirror to 90, got " + turned + " and " + mirrored);
+        }
+        // the parked vehicles' registry is there, with CityWorld's files (whether or not Immersive Vehicles is)
+        try {
+            long vehicles = access.lookupOrThrow(me.daddychurchill.CityWorld.worldgen.Vehicles.VEHICLES).listElements().count();
+            report.put("vehicle.files", String.valueOf(vehicles));
+            if (vehicles == 0)
+                fail("vehicles: the registry holds no files");
+        } catch (RuntimeException e) {
+            fail("vehicles: registry missing: " + e);
+        }
         if (r.frames().size() != 1 || !r.frames().get(0).item().is(net.minecraft.world.item.Items.DIAMOND_SWORD)
                 || !r.frames().get(0).item().getHoverName().getString().contains("Ed wins the bet"))
             fail("fit-outs: expected one named diamond sword, got " + r.frames());

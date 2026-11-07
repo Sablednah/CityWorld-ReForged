@@ -1,0 +1,153 @@
+{
+  "requires_mod": "oamp",
+  "vehicle": "oamp:stationmerc",
+  "kind": "car",
+  "paints": [
+    "_blue",
+    "_white",
+    "_seagreen",
+    "_maroon",
+    "_brown",
+    "_green",
+    "_black",
+    "_red",
+    "_gray",
+    "_olive",
+    "_beige",
+    "_silver",
+    "_yellow",
+    "_salmon"
+  ],
+  "centre": 1.547,
+  "fuel_capacity": 15000,
+  "parts": [
+    {
+      "slot": 0,
+      "part": "oamp:wheelvintage",
+      "subs": [
+        "_sinty",
+        "_mint",
+        "_lightblue"
+      ]
+    },
+    {
+      "slot": 1,
+      "part": "oamp:wheelvintage",
+      "subs": [
+        "_sinty",
+        "_mint",
+        "_lightblue"
+      ]
+    },
+    {
+      "slot": 2,
+      "part": "oamp:wheelvintage",
+      "subs": [
+        "_sinty",
+        "_mint",
+        "_lightblue"
+      ]
+    },
+    {
+      "slot": 3,
+      "part": "oamp:wheelvintage",
+      "subs": [
+        "_sinty",
+        "_mint",
+        "_lightblue"
+      ]
+    },
+    {
+      "slot": 4,
+      "part": "mtsofficialpack:enginemercedesm102",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 5,
+      "part": "oamp:sportseat",
+      "subs": [
+        "_red",
+        "_brown",
+        "_gray",
+        "_cream",
+        "_coffee",
+        "_blackbrown",
+        "_beige"
+      ]
+    },
+    {
+      "slot": 6,
+      "part": "oamp:sportseat",
+      "subs": [
+        "_red",
+        "_brown",
+        "_gray",
+        "_cream",
+        "_coffee",
+        "_blackbrown",
+        "_beige"
+      ]
+    },
+    {
+      "slot": 7,
+      "part": "oamp:sportseat",
+      "subs": [
+        "_red",
+        "_brown",
+        "_gray",
+        "_cream",
+        "_coffee",
+        "_blackbrown",
+        "_beige"
+      ]
+    },
+    {
+      "slot": 8,
+      "part": "oamp:sportseat",
+      "subs": [
+        "_red",
+        "_brown",
+        "_gray",
+        "_cream",
+        "_coffee",
+        "_blackbrown",
+        "_beige"
+      ]
+    },
+    {
+      "slot": 10,
+      "part": "mtsofficialpack:gloveboxscout",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 25,
+      "part": "oamp:sportseat",
+      "subs": [
+        "_red",
+        "_brown",
+        "_gray",
+        "_cream",
+        "_coffee",
+        "_blackbrown",
+        "_beige"
+      ]
+    },
+    {
+      "slot": 26,
+      "part": "oamp:sportseat",
+      "subs": [
+        "_red",
+        "_brown",
+        "_gray",
+        "_cream",
+        "_coffee",
+        "_blackbrown",
+        "_beige"
+      ]
+    }
+  ]
+}

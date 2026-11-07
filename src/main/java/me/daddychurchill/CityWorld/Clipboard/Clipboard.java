@@ -275,7 +275,9 @@ public final class Clipboard {
      * stored position and state; the stored block's own data (a dispenser's contents) goes with it.
      */
     private net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessor fitOut() {
-        var swaps = me.daddychurchill.CityWorld.worldgen.SchematicFitOuts.forSchematic(name).blocks();
+        var fitOut = me.daddychurchill.CityWorld.worldgen.SchematicFitOuts.forSchematic(name);
+        var swaps = fitOut.blocks();
+        var data = fitOut.data();
         return new net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessor() {
             @Override
             public net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo process(
@@ -285,9 +287,12 @@ public final class Clipboard {
                     StructurePlaceSettings settings,
                     net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate template) {
                 var swapped = swaps.isEmpty() ? null : swaps.get(raw.pos());
-                return swapped == null ? info
-                        : new net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo(
-                                info.pos(), swapped, null);
+                if (swapped == null)
+                    return info;
+                var own = data.get(raw.pos());
+                return new net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo(
+                        info.pos(), swapped, own == null ? null
+                                : me.daddychurchill.CityWorld.worldgen.SchematicFitOuts.placed(own, settings.getMirror(), settings.getRotation()));
             }
 
             @Override

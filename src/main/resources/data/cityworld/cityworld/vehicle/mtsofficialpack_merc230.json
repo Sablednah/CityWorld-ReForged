@@ -1,0 +1,175 @@
+{
+  "requires_mod": "mtsofficialpack",
+  "vehicle": "mtsofficialpack:merc230",
+  "kind": "car",
+  "paints": [
+    "_blue",
+    "_white",
+    "_seagreen",
+    "_maroon",
+    "_brown",
+    "_green",
+    "_black",
+    "_red",
+    "_gray",
+    "_extravagant",
+    "_olive",
+    "_beige",
+    "_silver",
+    "_yellow",
+    "_salmon"
+  ],
+  "centre": 1.578,
+  "fuel_capacity": 15000,
+  "parts": [
+    {
+      "slot": 0,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 1,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 2,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 3,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 4,
+      "part": "mtsofficialpack:enginemercedesm102",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 5,
+      "part": "mtsofficialpack:carseat",
+      "subs": [
+        "_black",
+        "_brown",
+        "_red",
+        "_white",
+        "_grey",
+        "_tan",
+        "_maroon"
+      ]
+    },
+    {
+      "slot": 6,
+      "part": "mtsofficialpack:carseat",
+      "subs": [
+        "_black",
+        "_brown",
+        "_red",
+        "_white",
+        "_grey",
+        "_tan",
+        "_maroon"
+      ]
+    },
+    {
+      "slot": 7,
+      "part": "mtsofficialpack:carseat",
+      "subs": [
+        "_black",
+        "_brown",
+        "_red",
+        "_white",
+        "_grey",
+        "_tan",
+        "_maroon"
+      ]
+    },
+    {
+      "slot": 8,
+      "part": "mtsofficialpack:carseat",
+      "subs": [
+        "_black",
+        "_brown",
+        "_red",
+        "_white",
+        "_grey",
+        "_tan",
+        "_maroon"
+      ]
+    },
+    {
+      "slot": 9,
+      "part": "mts:invisible_standing",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 11,
+      "part": "mtsofficialpack:gloveboxscout",
+      "subs": [
+        ""
+      ]
+    }
+  ]
+}
