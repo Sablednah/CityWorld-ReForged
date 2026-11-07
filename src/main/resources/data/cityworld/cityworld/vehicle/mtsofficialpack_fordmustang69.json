@@ -1,0 +1,181 @@
+{
+  "requires_mod": "mtsofficialpack",
+  "vehicle": "mtsofficialpack:fordmustang69",
+  "kind": "car",
+  "paints": [
+    "_red",
+    "_yellow",
+    "_black",
+    "_silver",
+    "_extravagant",
+    "_orange",
+    "_white",
+    "_seagreen",
+    "_bluestripe",
+    "_redstripe",
+    "_whitestripe",
+    "_lime"
+  ],
+  "centre": 1.656,
+  "fuel_capacity": 8000,
+  "parts": [
+    {
+      "slot": 0,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 1,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 2,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 3,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 4,
+      "part": "mtsofficialpack:carseat",
+      "subs": [
+        "_black",
+        "_brown",
+        "_red",
+        "_white",
+        "_grey",
+        "_tan",
+        "_maroon"
+      ]
+    },
+    {
+      "slot": 5,
+      "part": "mtsofficialpack:carseat",
+      "subs": [
+        "_black",
+        "_brown",
+        "_red",
+        "_white",
+        "_grey",
+        "_tan",
+        "_maroon"
+      ]
+    },
+    {
+      "slot": 6,
+      "part": "mtsofficialpack:enginefordfe428",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 8,
+      "part": "mtsofficialpack:gloveboxscout",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 9,
+      "part": "mtsofficialpack:mirrorornament",
+      "subs": [
+        "",
+        "_pine",
+        "_mogus",
+        "_snail",
+        "_steak",
+        "_heart",
+        "_totem",
+        "_diamond",
+        "_emerald",
+        "_gapple",
+        "_blockgrass",
+        "_blocktnt",
+        "_creeper",
+        "_anvil",
+        "_blockgold",
+        "_blockacacia",
+        "_potato",
+        "_nstar",
+        "_skull",
+        "_car",
+        "_nuts",
+        "_saturn",
+        "_aviators",
+        "_cat",
+        "_clock",
+        "_joystick",
+        "_gmc",
+        "_hc",
+        "_rubix",
+        "_cactus",
+        "_1911black",
+        "_1911gray",
+        "_1911gold",
+        "_butter",
+        "_wheel",
+        "_piston"
+      ]
+    }
+  ]
+}

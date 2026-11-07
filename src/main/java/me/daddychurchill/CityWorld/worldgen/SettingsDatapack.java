@@ -200,6 +200,11 @@ public final class SettingsDatapack {
         naming.add("fossilSuffixes", arr(n.fossilSuffixes()));
         naming.add("professionNames", arr(n.professionNames()));
         naming.addProperty("append", n.append());
+        naming.add("placeNames", arr(n.placeNames()));
+        naming.add("placeStarts", arr(n.placeStarts()));
+        naming.add("placeEnds", arr(n.placeEnds()));
+        naming.addProperty("placeFormat", n.placeFormat());
+        naming.addProperty("districtSize", n.districtSize());
         root.add("naming", naming);
 
         CityWorldSettingsData.Mobs m = d.mobs();
@@ -265,6 +270,9 @@ public final class SettingsDatapack {
         roads.addProperty("wildBridgeSpan", rd.wildBridgeSpan());
         roads.addProperty("oddsOfWildBridge", rd.oddsOfWildBridge());
         roads.addProperty("wildBridgeRegion", rd.wildBridgeRegion());
+        roads.addProperty("vehicles", rd.vehicles());
+        roads.addProperty("oddsOfParkedVehicle", rd.oddsOfParkedVehicle());
+        roads.addProperty("vehicleFuel", rd.vehicleFuel());
         root.add("roads", roads);
 
         // The codec's own encoding goes over the top. It is sparse (a field at its default is left out, and

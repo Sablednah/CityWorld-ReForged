@@ -62,6 +62,12 @@ public final class ShiftedRegion extends WorldGenRegion {
                 + level.getClass().getName());
     }
 
+    /** How far up a level lifts what is drawn into it: its shift for a ShiftedRegion, else 0 (for data written
+     *  straight into a chunk, which no seam of this class sees). */
+    public static int shiftOf(net.minecraft.world.level.LevelAccessor level) {
+        return level instanceof ShiftedRegion shifted ? shifted.shift : 0;
+    }
+
     private BlockPos up(BlockPos pos) {
         return pos.offset(0, shift, 0);
     }
