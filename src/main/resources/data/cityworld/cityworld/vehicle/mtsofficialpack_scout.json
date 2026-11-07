@@ -1,0 +1,155 @@
+{
+  "requires_mod": "mtsofficialpack",
+  "vehicle": "mtsofficialpack:scout",
+  "kind": "car",
+  "paints": [
+    "_blue",
+    "_yellow",
+    "_white",
+    "_red",
+    "_olive",
+    "_black",
+    "_gray",
+    "_gold",
+    "_tan",
+    "_orange",
+    "_brown",
+    "_yellowwhite",
+    "_seagreen",
+    "_maroon"
+  ],
+  "centre": 1.275,
+  "fuel_capacity": 15000,
+  "parts": [
+    {
+      "slot": 0,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 1,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 2,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 3,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain"
+      ]
+    },
+    {
+      "slot": 4,
+      "part": "mtsofficialpack:carseat",
+      "subs": [
+        "_black",
+        "_brown",
+        "_red",
+        "_white",
+        "_grey",
+        "_tan",
+        "_maroon"
+      ]
+    },
+    {
+      "slot": 5,
+      "part": "mtsofficialpack:carseat",
+      "subs": [
+        "_black",
+        "_brown",
+        "_red",
+        "_white",
+        "_grey",
+        "_tan",
+        "_maroon"
+      ]
+    },
+    {
+      "slot": 7,
+      "part": "mtsofficialpack:scoutbedpickup",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 8,
+      "part": "mtsofficialpack:engineamci4",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 10,
+      "part": "mtsofficialpack:bumpersticker_roostair",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 15,
+      "part": "mtsofficialpack:gloveboxscout",
+      "subs": [
+        ""
+      ]
+    }
+  ]
+}

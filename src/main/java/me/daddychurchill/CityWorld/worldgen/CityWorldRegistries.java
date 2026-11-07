@@ -71,5 +71,7 @@ public final class CityWorldRegistries {
         event.dataPackRegistry(ZooCatalog.HABITATS, ZooCatalog.Habitat.CODEC);
         // a pack's block swaps and item frames for a schematic building (SchematicFitOuts)
         event.dataPackRegistry(SchematicFitOuts.FIT_OUTS, SchematicFitOuts.FitOut.CODEC);
+        // Immersive Vehicles' vehicles to park (Vehicles)
+        event.dataPackRegistry(Vehicles.VEHICLES, Vehicles.Vehicle.CODEC);
     }
 }

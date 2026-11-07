@@ -1,0 +1,106 @@
+{
+ "schematic": "G45station",
+ "requires_mod": "mts",
+ "blocks": [
+  {
+   "pos": [
+    6,
+    1,
+    7
+   ],
+   "block": "mts:fuelpump{packID:\"mts\",systemName:\"fuelpump\",subName:\"\",anglesy:270.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    7
+   ],
+   "block": "mts:fuelpump{packID:\"mts\",systemName:\"fuelpump\",subName:\"\",anglesy:90.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    5,
+    1,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    8
+   ],
+   "block": "mts:fuelpump{packID:\"mts\",systemName:\"fuelpump\",subName:\"\",anglesy:270.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    8
+   ],
+   "block": "mts:fuelpump{packID:\"mts\",systemName:\"fuelpump\",subName:\"\",anglesy:90.0d,tank:{currentFluid:\"lava\",currentFluidMod:\"minecraft\",fluidLevel:15000.0d}}",
+   "heading": "anglesy"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    8
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    8
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    5,
+    1,
+    8
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    8
+   ],
+   "block": "minecraft:air"
+  }
+ ]
+}

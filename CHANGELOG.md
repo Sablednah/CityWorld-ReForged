@@ -28,6 +28,12 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   in Customize.
   From a player's request for Highways & Byways support (GitHub issue #3); CityWorld builds its own, because that
   mod's roads join vanilla structures rather than cities.
+- **Immersive Vehicles in the city.** With Immersive Vehicles and its Official Content Pack, mall car parks hold
+  real, drivable vehicles in their bays (the Official Content and Official Automobile packs' cars, any paint but
+  police), parked with the brake on, a charged battery and an empty tank, and the gas stations' pump islands have
+  its fuel pumps, full of lava. The vehicles are data (`cityworld:vehicle`), so a pack can add its own; settings
+  `roads.vehicles`, `roads.oddsOfParkedVehicle`, `roads.vehicleFuel`. Schematic fit-outs can now carry a block's
+  own data and turn a heading kept in it (`heading`) with the building.
 - **Deep oceans on CityWorld's own land.** Now and then the land runs down a shelf into a wide ocean thirty
   blocks deep, with vanilla's ocean biomes (deep, cold, frozen, lukewarm, warm) and what lives in them: ocean
   monuments, ocean ruins, shipwrecks and buried treasure, and the sea structures of mods that ask for ocean biomes

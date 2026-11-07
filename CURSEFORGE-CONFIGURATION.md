@@ -419,7 +419,7 @@ lists. Cities keep clear of whatever is placed.
 | `enabled` | `true` | A station in every urban district — a ticket hall beside a road, switchback stairs down to twin-track platforms 24 blocks under the street — and tunnels to the first station along its row or column up to six districts away, so lines cross the countryside between city clusters. East-west lines run on the upper level, north-south lines eight blocks lower, so lines never junction; a station on both is an interchange with stairs between its halls, and one with a single line each way joins them in a sloped loop instead of two dead ends. Lit, ringed in brick, powered rails so a cart runs the line. Stations announce as the landmark kind `subway` (off by default). |
 | `spawners` | `true` | In a ruined (APOCALYPSE) world, sewer-mob spawners in niches in the tunnel walls. |
 
-### `roads` — road signs and bridges (Macaw's Roads and Streets, Macaw's Bridges; nothing without them)
+### `roads` — road signs, bridges and parked vehicles (Macaw's Roads and Streets, Macaw's Bridges, Immersive Vehicles; nothing without them)
 
 Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fittings/road`, `#cityworld:fittings/skybridge`, `#cityworld:fittings/rope_bridge`), so without them these settings change nothing.
 
@@ -438,6 +438,9 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 | `wildBridgeSpan` | `48` | The longest bridge, in blocks; a valley wider than this gets none. The shortest is a chunk. |
 | `wildBridgeRegion` | `32` | The size of a bridge region, in chunks square. A region has at most one wild rope bridge, wholly inside it: its seed orders its chunk rows and columns, and the bridge is the first span along the first of them that has one. |
 | `oddsOfWildBridge` | `0.5` | The chance a region has its bridge (1 in 2). At the defaults a mountain range shows one, maybe two. |
+| `vehicles` | `true` | With Immersive Vehicles and a vehicle pack, park real vehicles in the bays of mall car parks instead of block cars (a ruin keeps its wrecks). The vehicles are data: see PALETTES.md, "Parked vehicles". |
+| `oddsOfParkedVehicle` | `0.5` | The chance a car park bay holds a vehicle. |
+| `vehicleFuel` | `0` | Millibuckets of lava (Immersive Vehicles' stock fuel) in a parked vehicle's tank. None by default: the gas stations' fuel pumps are full. |
 
 ### `cities` — cities in a vanilla world, highways, rivers and oceans
 

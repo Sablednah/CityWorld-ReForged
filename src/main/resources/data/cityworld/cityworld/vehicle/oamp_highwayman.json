@@ -1,0 +1,98 @@
+{
+  "requires_mod": "oamp",
+  "vehicle": "oamp:highwayman",
+  "kind": "car",
+  "paints": [
+    "_lightblue",
+    "_red",
+    "_purple",
+    "_white",
+    "_blue",
+    "_pink",
+    "_jadegreen",
+    "_seagreen",
+    "_salmon"
+  ],
+  "centre": 1.7,
+  "fuel_capacity": 10000,
+  "parts": [
+    {
+      "slot": 0,
+      "part": "oamp:wheelvintage",
+      "subs": [
+        "_sinty",
+        "_mint",
+        "_lightblue"
+      ]
+    },
+    {
+      "slot": 1,
+      "part": "oamp:wheelvintage",
+      "subs": [
+        "_sinty",
+        "_mint",
+        "_lightblue"
+      ]
+    },
+    {
+      "slot": 2,
+      "part": "oamp:wheelvintage",
+      "subs": [
+        "_sinty",
+        "_mint",
+        "_lightblue"
+      ]
+    },
+    {
+      "slot": 3,
+      "part": "oamp:wheelvintage",
+      "subs": [
+        "_sinty",
+        "_mint",
+        "_lightblue"
+      ]
+    },
+    {
+      "slot": 4,
+      "part": "oamp:enginecamarov8",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 5,
+      "part": "oamp:sportseat",
+      "subs": [
+        "_red",
+        "_brown",
+        "_gray",
+        "_cream",
+        "_coffee",
+        "_blackbrown",
+        "_beige"
+      ]
+    },
+    {
+      "slot": 6,
+      "part": "oamp:sportseat",
+      "subs": [
+        "_red",
+        "_brown",
+        "_gray",
+        "_cream",
+        "_coffee",
+        "_blackbrown",
+        "_beige"
+      ]
+    },
+    {
+      "slot": 10,
+      "part": "oamp:wheelvintage",
+      "subs": [
+        "_sinty",
+        "_mint",
+        "_lightblue"
+      ]
+    }
+  ]
+}

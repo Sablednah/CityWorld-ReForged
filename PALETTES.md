@@ -499,9 +499,62 @@ are facings: CityWorld turns the building to fit its lot and turns the fit-out w
   `facing` into the room. `item` is in `/give` syntax for the Minecraft version, so item data such as a gun's
   ammunition is written the way `/give` takes it — components (`id[...]`) from 1.20.5 on, NBT (`id{...}`) on 1.20.1.
   Frames go up after decay, and only where the cell is still clear and the wall still stands.
+- **A block's own data** goes in `/setblock`'s braces and is handed to its block entity as the building is placed:
+  `mts:fuelpump{packID:"mtsofficialpack",systemName:"fuelpump",subName:"",anglesy:270.0d,tank:{...}}`. Where a mod
+  keeps a block's facing in that data rather than in its state (Immersive Vehicles' decors keep a compass heading,
+  `anglesy`: 0 south, 90 east, 180 north, 270 west), name it in **`heading`** (`"heading": "anglesy"`) and it turns
+  and mirrors with the building like a facing does. CityWorld's own `iv_gas_stop` and `iv_g45station` put Immersive
+  Vehicles' fuel pumps (full of lava, IV's stock fuel) on the gas stations' islands when its Official Content Pack
+  is installed (IV's own pump without it: `iv_core_*`). A pump's `anglesy` is the way its front faces, away from
+  its island. To find a cell in a schematic, read it with `scripts/region_dump.py`'s `read_nbt` (the old format
+  keeps `Blocks` in y, z, x order: index `(y * Length + z) * Width + x`) or paste it in game with WorldEdit and
+  count from its origin.
 - **`requires_mod`** on the file or on any line skips it when that mod is not installed. A block or item that
   does not parse is skipped and named once in the log. Files apply in id order; for a cell two files both swap, the
   later file wins.
+
+### Parked vehicles (Immersive Vehicles)
+
+With [Immersive Vehicles](https://www.curseforge.com/minecraft/mc-mods/minecraft-transport-simulator) and a vehicle
+pack, the bays of a mall's car park hold real vehicles instead of block cars (a ruin keeps its wrecks). They come
+from the registry `cityworld:vehicle`, one file per vehicle at `data/<ns>/cityworld/vehicle/<name>.json`. CityWorld
+ships the Official Content Pack's and the Official Automobile Pack's road vehicles (written from their jars by
+`scripts/gen_iv_vehicles.py`); a pack adds its own the same way:
+
+```json
+{
+  "requires_mod": "oamp",
+  "vehicle": "oamp:camaro",
+  "kind": "car",
+  "paints": ["_white", "_red", "_blue"],
+  "centre": 1.562,
+  "parts": [
+    { "slot": 0, "part": "oamp:wheelvintage", "subs": ["_sinty", "_mint"] },
+    { "slot": 4, "part": "oamp:enginecamarov8" },
+    { "slot": 5, "part": "oamp:sportseat", "subs": ["_red", "_brown"] }
+  ]
+}
+```
+
+- **`vehicle`** is the pack's mod id and the vehicle's file name under `assets/<pack>/jsondefs/vehicles/` in the
+  pack's jar (`oamp:camaro` is `assets/oamp/jsondefs/vehicles/camaro.json`).
+- **`kind`** is what a lot asks for: `car` fills car parks. (`truck`, `quad` and `fire_engine` ship for lots to come.)
+- **`paints`** are the vehicle's sub names, its file's `definitions[].subName`; one is picked per vehicle.
+- **`centre`** is how far forward of the vehicle's origin its wheelbase's middle is, so it stands centred in a bay.
+- **`parts`** by slot, the slot's index (from 0) in the vehicle file's `parts` list. A vehicle spawned from data gets
+  only the parts it is given (a player's spawn adds the defaults), so name the wheels, seats and engine: a wheel
+  whose height (its file's `ground.height`) is within the slot's `minValue`..`maxValue`, a seat for each `seat`
+  slot, and each slot's `defaultPart`. `subs` are the part's own sub names (leave it out for a part with none). **A
+  part or sub name that does not exist makes Immersive Vehicles throw the whole vehicle away** when it loads ("Did a
+  pack change?" in the log), so check them against the pack.
+- **`fuel_capacity`** holds `roads.vehicleFuel` to the vehicle's tank (its `motorized.fuelCapacity`).
+- A parked car's doors are shut (a crafted one comes with them open).
+- **The generator does all this for you:** `python3 -I scripts/gen_iv_vehicles.py --list <pack jar> <OCP jar>`
+  lists a pack's vehicles; `--kind <pack>:<vehicle>=car` (once per vehicle) and `--out
+  <your pack>/data/<ns>/cityworld/vehicle` write their files, wheels and seats picked by size from the pack itself
+  and then from the Official Content Pack.
+- A vehicle parks with the brake on, a charged battery and `roads.vehicleFuel` millibuckets of lava in the tank
+  (none by default: the gas stations' pumps are full). Settings `roads.vehicles`, `roads.oddsOfParkedVehicle`.
 
 ## Data maps: swapping blocks, unlit lights, biome ground
 
