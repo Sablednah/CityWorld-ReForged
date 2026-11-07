@@ -10,14 +10,18 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 ### Added
 
 - **Highways between the cities of a vanilla world.** Each city gets a road to its neighbours east and south,
-  leaving from the end of one of its own streets, across its open edge, at its own level. The road winds round hills and along valleys, never
+  leaving from the end of one of its own streets, across its open edge, at its own level. That street runs on into
+  the highway instead of ending in a kerb, signed with the town's board and the highway's speed limit (with Macaw's
+  Roads) where it would have said DEAD END. The road leaves straight along the street and only then turns, never
+  across the city's own lots. It winds round hills and along valleys, never
   climbing steeper than one in ten. It is cut through higher ground with sloped sides and banked up over dips, and it
   crosses rivers and gorges on bridges with railings and piers and goes under ridges in lit tunnels. Its surface is
   the city's street (the grey of a city road, or Macaw's asphalt). Tunnels are arched like a city road's, with room
   for a truck down the middle. Villages and other surface structures are kept off the road, and what vanilla and
-  biome mods grow on it (grass, bushes, springs running onto it) is cleared. Vanilla's ravines pass under a
+  biome mods grow on it (grass, bushes, springs running onto it, the trees over it) is cleared. Vanilla's ravines pass under a
   highway, not through it. Settings
-  `cities.highways` (`enabled`, `width`, `grade`, `fillMax`, `clearance`, `tunnel`) and **Highways** in Customize.
+  `cities.highways` (`enabled`, `width`, `grade`, `fillMax`, `clearance`, `tunnel`, `speedLimit`) and **Highways**
+  in Customize.
   From a player's request for Highways & Byways support (GitHub issue #3); CityWorld builds its own, because that
   mod's roads join vanilla structures rather than cities.
 - **Deep oceans on CityWorld's own land.** Now and then the land runs down a shelf into a wide ocean thirty

@@ -847,6 +847,25 @@ public final class CityWorldSelfTest {
                 if (Math.floorMod(chunk, 5) != 2 || Math.abs(across - (chunk * 16 + 8)) > 0.01)
                     fail(name + " leaves its city off a road line, at " + across);
             }
+            // each end leaves straight along its street for the run-out, and its first turn goes one way only (the
+            // owner's look: a curve through every point wiggled out of a gate, overshot and swung back)
+            for (int end = 0; end < 2; end++) {
+                int k0 = end == 0 ? 0 : n - 1, dir = end == 0 ? 1 : -1;
+                double gx = link.x()[k0], gz = link.z()[k0];
+                boolean alongX = Math.abs(link.x()[k0 + dir * 2] - gx) >= Math.abs(link.z()[k0 + dir * 2] - gz);
+                double travel = 0, prev = 0, offLine = 0;
+                for (int k = k0, steps = 0; k >= 0 && k < n && steps * me.daddychurchill.CityWorld.worldgen.Highways.STEP <= 160; k += dir, steps++) {
+                    double lat = alongX ? link.z()[k] - gz : link.x()[k] - gx;
+                    if (steps > 0)
+                        travel += Math.abs(lat - prev);
+                    prev = lat;
+                    if (steps * me.daddychurchill.CityWorld.worldgen.Highways.STEP <= me.daddychurchill.CityWorld.worldgen.Highways.RUN_OUT)
+                        offLine = Math.max(offLine, Math.abs(lat));
+                }
+                if (offLine > 0.5 || travel - Math.abs(prev) > 2)
+                    fail(name + " end " + end + " does not leave its street straight: " + String.format("%.1f", offLine)
+                            + " off the line in the run-out, " + String.format("%.1f", travel - Math.abs(prev)) + " sideways and back");
+            }
             for (int i = 8; i < n; i++)
                 if (Math.abs(link.y()[i] - link.y()[i - 8]) > allowed) {
                     fail(name + " climbs " + Math.abs(link.y()[i] - link.y()[i - 8]) + " in 16 blocks at sample " + i

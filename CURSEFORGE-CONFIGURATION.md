@@ -457,7 +457,7 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 `highways` is a group of its own:
 
 ```json
-"cities": { "highways": { "enabled": true, "width": 9, "grade": 0.1, "fillMax": 8, "clearance": 5, "tunnel": 12 } }
+"cities": { "highways": { "enabled": true, "width": 9, "grade": 0.1, "fillMax": 8, "clearance": 5, "tunnel": 12, "speedLimit": 70 } }
 ```
 
 | Setting | Default | What it does |
@@ -468,6 +468,7 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 | `fillMax` | `8` | The deepest a road is banked up on the ground; deeper than this it is a bridge. `0`–`32`. |
 | `clearance` | `5` | How high a bridge deck stands above the sea when it crosses water. `1`–`32`. |
 | `tunnel` | `12` | How far the ground must stand above the road for a tunnel; less is a cut with sloped sides. `8`–`128`. |
+| `speedLimit` | `70` | The limit signed where a city's street becomes the highway (with a road mod's signs: Macaw's Roads), beside the town's board. `10`–`120`, in tens. |
 
 `oceans` is a group of its own:
 
