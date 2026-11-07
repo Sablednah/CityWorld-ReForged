@@ -13,7 +13,10 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   leaving from the end of one of its own streets, across its open edge, at its own level. That street runs on into
   the highway instead of ending in a kerb, signed with the town's board and the highway's speed limit (with Macaw's
   Roads) where it would have said DEAD END. The road leaves straight along the street and only then turns, never
-  across the city's own lots. It winds round hills and along valleys, never
+  across the city's own lots; where no street toward the other city has open ground beyond it, it meets one along
+  the city's edge as a T, or leaves by a street on another side and swings round the city. It climbs in half-block
+  steps (the surface's own slab, or cobbled deepslate), so vehicles that cannot climb a whole block (Immersive
+  Vehicles and most others) can drive it. It winds round hills and along valleys, never
   climbing steeper than one in ten. It is cut through higher ground with sloped sides and banked up over dips, and it
   crosses rivers and gorges on bridges with railings and piers and goes under ridges in lit tunnels. Its surface is
   the city's street (the grey of a city road, or Macaw's asphalt). Tunnels are arched like a city road's, with room
