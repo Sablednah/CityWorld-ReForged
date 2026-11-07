@@ -89,6 +89,25 @@ public final class Highways {
         this.tunnel = settings.tunnel();
     }
 
+    /**
+     * What a city's plan has on a chunk, for choosing a gate: one of its streets, something built, or open ground.
+     * Asked only of chunks inside a city's patch; {@link #UNKNOWN} when the plan cannot be had (then a gate falls back
+     * to the road-line rule alone).
+     */
+    @FunctionalInterface
+    public interface CityPlan {
+        int ROAD = 0, BUILT = 1, OPEN = 2, UNKNOWN = -1;
+
+        int at(int chunkX, int chunkZ);
+    }
+
+    private volatile CityPlan cityPlan;
+
+    /** The city plan the gates are chosen from (the generator's own PlatMaps); null keeps the road-line rule. */
+    public void usePlan(CityPlan plan) {
+        this.cityPlan = plan;
+    }
+
     /** Half the deck's width: the deck is {@code 2 * halfWidth() + 1} blocks wide, plus a kerb each side. */
     public int halfWidth() {
         return halfWidth;
@@ -166,10 +185,10 @@ public final class Highways {
                     if (there == null)
                         continue;
                     // the route swings up to OFFSETS offsets off the line between the GATES, and a gate stands up to
-                    // 0.6 of the radius across from its centre, snapped to a road line (up to three chunks more); a
-                    // box from the centres alone left a chunk asking nothing and a road ending at its edge
+                    // GATE_REACH of the radius across from its centre, on a road line (half a chunk more); a box from
+                    // the centres alone left a chunk asking nothing and a road ending at its edge
                     int pad = OFFSETS * OFFSET + halfWidth + SIDE + RUN_OUT + 64
-                            + (int) Math.ceil(0.6 * Math.max(here.radius(), there.radius()));
+                            + (int) Math.ceil(GATE_REACH * Math.max(here.radius(), there.radius()));
                     int bx0 = Math.min(here.centreX(), there.centreX()) - pad, bx1 = Math.max(here.centreX(), there.centreX()) + pad;
                     int bz0 = Math.min(here.centreZ(), there.centreZ()) - pad, bz1 = Math.max(here.centreZ(), there.centreZ()) + pad;
                     if (x1 < bx0 || x0 > bx1 || z1 < bz0 || z0 > bz1)
@@ -180,6 +199,21 @@ public final class Highways {
                 }
             }
         return found;
+    }
+
+    /**
+     * Whether a highway's deck, kerbs and the slopes beside them come within {@code margin} blocks of this square of
+     * blocks: a village street laid across one turns its pavement to a dirt path, and a house stands on it.
+     */
+    public boolean crosses(int x0, int z0, int x1, int z1, int margin) {
+        int reach = halfWidth + SIDE + 1 + margin;
+        for (Link link : linksTouching(x0 - reach, z0 - reach, x1 + reach, z1 + reach)) {
+            double[] xs = link.x(), zs = link.z();
+            for (int i = 0; i < xs.length; i++)
+                if (xs[i] >= x0 - reach && xs[i] <= x1 + 1 + reach && zs[i] >= z0 - reach && zs[i] <= z1 + 1 + reach)
+                    return true;
+        }
+        return false;
     }
 
     /** Every link out of the cells in this square of cells, planned: for the survey. */
@@ -226,13 +260,23 @@ public final class Highways {
 
     // --- planning -------------------------------------------------------------------------------------------
 
-    /** Where a link leaves a city: the point on its edge, and the unit direction it runs out in. */
-    private record Gate(double x, double z, double dx, double dz) {
+    /**
+     * Where a link leaves a city: the end of one of its streets, the unit direction it runs out in, and how far it runs
+     * straight before the route may turn (through the city's open edge, then {@link #RUN_OUT} more).
+     */
+    private record Gate(double x, double z, double dx, double dz, double run) {
     }
 
+    /** How far across from a city's centre a gate may be, as a share of its radius. */
+    private static final double GATE_REACH = 0.8;
+
     /**
-     * The gate on {@code site}'s side facing {@code toward}: along the road row (or column) nearest where the straight
-     * line between the centres crosses the city's edge, at the first chunk past the city's ground.
+     * The gate on {@code site}'s side facing {@code toward}. From the city's own plan: the street row (or column),
+     * nearest where the straight line between the centres crosses the city's edge, whose last stretch of road reaches
+     * open ground with nothing built beyond it; the gate is the end of that road, and the highway runs straight out
+     * across the city's open edge. A road line is only where a city MAY run a street (the owner's first look: a
+     * highway ran into an office block on one, and others stopped short at the city's nature ring). With no plan,
+     * or no such street, the road-line rule alone: along the line nearest the crossing, from the city's edge.
      */
     private Gate gate(CitySites.Site site, CitySites.Site toward) {
         double dx = toward.centreX() - site.centreX(), dz = toward.centreZ() - site.centreZ();
@@ -242,12 +286,30 @@ public final class Highways {
         // where the line leaves the disc, across the run of the road rows
         double across = alongX ? site.centreZ() + dz / length * site.radius() : site.centreX() + dx / length * site.radius();
         double centreAcross = alongX ? site.centreZ() : site.centreX();
-        // keep the row well inside the disc, or it meets the edge almost at once
-        double limit = site.radius() * 0.6;
+        double limit = site.radius() * GATE_REACH;
         across = Math.max(centreAcross - limit, Math.min(centreAcross + limit, across));
+        int start = Math.floorDiv(alongX ? site.centreX() : site.centreZ(), 16);
+
+        CityPlan plan = cityPlan;
+        if (plan != null) {
+            // the side facing the other city, then the other side facing it (a city whose every street that way runs
+            // into a farm or a block before its edge: a fifth of them, measured)
+            Gate found = streetGate(plan, site, alongX, sign, across);
+            if (found == null) {
+                boolean sideX = !alongX;
+                double sideComponent = sideX ? dx : dz;
+                int sideSign = sideComponent >= 0 ? 1 : -1;
+                double sideAcross = sideX ? site.centreZ() + dz / length * site.radius() : site.centreX() + dx / length * site.radius();
+                double sideCentre = sideX ? site.centreZ() : site.centreX();
+                sideAcross = Math.max(sideCentre - limit, Math.min(sideCentre + limit, sideAcross));
+                found = streetGate(plan, site, sideX, sideSign, sideAcross);
+            }
+            if (found != null)
+                return found;
+        }
+
         int row = nearestRoadLine(Math.floorDiv((int) Math.round(across), 16));
         // walk out from the centre along the row to the first chunk that is not city ground
-        int start = Math.floorDiv(alongX ? site.centreX() : site.centreZ(), 16);
         int c = start;
         for (int i = 0; i < 64; i++) {
             boolean city = alongX ? sites.isCityChunk(c, row) : sites.isCityChunk(row, c);
@@ -258,7 +320,52 @@ public final class Highways {
         // the boundary between the last city chunk and the first that is not
         double edge = sign > 0 ? c * 16.0 : (c + 1) * 16.0;
         double rowCentre = row * 16.0 + 8.0;
-        return alongX ? new Gate(edge, rowCentre, sign, 0) : new Gate(rowCentre, edge, 0, sign);
+        return alongX ? new Gate(edge, rowCentre, sign, 0, RUN_OUT) : new Gate(rowCentre, edge, 0, sign, RUN_OUT);
+    }
+
+    /**
+     * The end of a street leaving {@code site} along X (or Z) in direction {@code sign}: of the road rows within
+     * {@link #GATE_REACH} of the centre, nearest {@code across} first, the first whose last road chunk has only open
+     * ground between it and the city's edge. Null when none has, or the plan cannot be had.
+     */
+    private Gate streetGate(CityPlan plan, CitySites.Site site, boolean alongX, int sign, double across) {
+        double centreAcross = alongX ? site.centreZ() : site.centreX();
+        double limit = site.radius() * GATE_REACH;
+        int start = Math.floorDiv(alongX ? site.centreX() : site.centreZ(), 16);
+        List<Integer> rows = new ArrayList<>();
+        for (int c = Math.floorDiv((int) Math.floor(centreAcross - limit), 16); c <= Math.floorDiv(
+                (int) Math.ceil(centreAcross + limit), 16); c++)
+            if (Math.floorMod(c, 5) == 2)
+                rows.add(c);
+        rows.sort(java.util.Comparator.comparingDouble(r -> Math.abs(r * 16.0 + 8.0 - across)));
+        for (int row : rows) {
+            int lastRoad = Integer.MIN_VALUE, end = Integer.MIN_VALUE;
+            boolean builtBeyond = false;
+            int c = start;
+            for (int i = 0; i < 64; i++, c += sign) {
+                int cx = alongX ? c : row, cz = alongX ? row : c;
+                if (!sites.isCityChunk(cx, cz)) {
+                    end = c;
+                    break;
+                }
+                int kind = plan.at(cx, cz);
+                if (kind == CityPlan.UNKNOWN)
+                    return null;
+                if (kind == CityPlan.ROAD) {
+                    lastRoad = c;
+                    builtBeyond = false;
+                } else if (kind == CityPlan.BUILT)
+                    builtBeyond = true;
+            }
+            if (end == Integer.MIN_VALUE || lastRoad == Integer.MIN_VALUE || builtBeyond)
+                continue;
+            double edge = sign > 0 ? (lastRoad + 1) * 16.0 : lastRoad * 16.0;
+            double cityEdge = sign > 0 ? end * 16.0 : (end + 1) * 16.0;
+            double rowCentre = row * 16.0 + 8.0;
+            double run = Math.abs(cityEdge - edge) + RUN_OUT;
+            return alongX ? new Gate(edge, rowCentre, sign, 0, run) : new Gate(rowCentre, edge, 0, sign, run);
+        }
+        return null;
     }
 
     /** The road line (chunk index 2 or 7 within its platmap) nearest this chunk index. */
@@ -270,8 +377,8 @@ public final class Highways {
     private Link plan(CitySites.Site a, CitySites.Site b) {
         long started = System.nanoTime();
         Gate ga = gate(a, b), gb = gate(b, a);
-        double ax = ga.x + ga.dx * RUN_OUT, az = ga.z + ga.dz * RUN_OUT;
-        double bx = gb.x + gb.dx * RUN_OUT, bz = gb.z + gb.dz * RUN_OUT;
+        double ax = ga.x + ga.dx * ga.run, az = ga.z + ga.dz * ga.run;
+        double bx = gb.x + gb.dx * gb.run, bz = gb.z + gb.dz * gb.run;
         double lx = bx - ax, lz = bz - az, length = Math.hypot(lx, lz);
         double ux = lx / length, uz = lz / length, nx = -uz, nz = ux;
         int segments = Math.max(1, (int) Math.round(length / WAYPOINT));

@@ -481,9 +481,9 @@ public record CityWorldSettingsData(
         }
     }
 
-    public record Oceans(boolean enabled, int size, double rarity, int depth, double shelf) {
+    public record Oceans(boolean enabled, int size, double rarity, int depth, double shelf, double rigs) {
 
-        public static final Oceans DEFAULT = new Oceans(true, 6000, 0.5, 30, 0.1);
+        public static final Oceans DEFAULT = new Oceans(true, 6000, 0.5, 30, 0.1, 0.0625);
         public static final Oceans OFF = DEFAULT.withEnabled(false);
 
         public static final Codec<Oceans> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -491,11 +491,14 @@ public record CityWorldSettingsData(
                 Codec.intRange(1024, 32768).optionalFieldOf("size", 6000).forGetter(Oceans::size),
                 Codec.doubleRange(0.0, 0.95).optionalFieldOf("rarity", 0.5).forGetter(Oceans::rarity),
                 Codec.intRange(8, 56).optionalFieldOf("depth", 30).forGetter(Oceans::depth),
-                Codec.doubleRange(0.01, 0.5).optionalFieldOf("shelf", 0.1).forGetter(Oceans::shelf)
+                Codec.doubleRange(0.01, 0.5).optionalFieldOf("shelf", 0.1).forGetter(Oceans::shelf),
+                // the share of the sites in a deep ocean that get an oil rig (one site in about two platmaps): every
+                // one did, and an ocean is hundreds of platmaps
+                Codec.doubleRange(0.0, 1.0).optionalFieldOf("rigs", 0.0625).forGetter(Oceans::rigs)
         ).apply(i, Oceans::new));
 
         public Oceans withEnabled(boolean v) {
-            return new Oceans(v, size, rarity, depth, shelf);
+            return new Oceans(v, size, rarity, depth, shelf, rigs);
         }
     }
 
