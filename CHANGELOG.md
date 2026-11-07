@@ -27,6 +27,9 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   With Alex's Caves (1.20.1), the abyssal chasm opens under the deep water: its ocean trench cuts down from the sea
   bed towards bedrock, with the abyssal ruins at the bottom. It joins `#cityworld:cave_pool`, and only ever claims a
   column under a 7.0 deep ocean (never under land, and never in an older world's seas).
+  Alex's caves on CityWorld land also open as wide as they do in vanilla: each one is sized by how far its biome
+  runs at a height that can be below the world's floor, where CityWorld answered no cave at all — the chasm came out
+  as a ring of separate round holes, and the magnetic, primordial, toxic, forlorn and candy caves smaller than meant.
   About 6% of the land at the default, oceans 1–5 km across; cities keep off them. The ruined Nether twin has a lava
   sea in the same place. Oil rigs stand in them, far apart (`rigs`). Modern, Apocalypse, Classic and Sparse. Settings
   `cities.oceans` (`enabled`, `size`, `rarity`, `depth`, `shelf`, `rigs`), and **Oceans** / **Ocean share** in Customize. **A world made before 7.0 never has
