@@ -1485,6 +1485,25 @@ public final class CityWorldSelfTest {
             fail("the cityworld:cave_pool tag resolved to nothing — no cave biomes at all, so ancient "
                     + "cities cannot place and cave decoration has nothing to key off");
 
+        // A cave band that reaches the floor answers below it as well: Alex's Caves sizes each cave by how far its biome
+        // runs sideways at a height that can be under the floor (the abyssal chasm asks at about y -94), and a band
+        // that stopped at -64 cut every trench to a few blocks (owner's look, 2026-11-07). Deep dark is a floor band on
+        // every line, so it stands in for Alex's biomes, which no dev runtime has.
+        int underFloorChecked = 0, underFloorKept = 0;
+        for (int x = -BIOME_SWEEP_BLOCKS; x <= BIOME_SWEEP_BLOCKS; x += BIOME_SWEEP_STEP)
+            for (int z = -BIOME_SWEEP_BLOCKS; z <= BIOME_SWEEP_BLOCKS; z += BIOME_SWEEP_STEP) {
+                int qx = QuartPos.fromBlock(x), qz = QuartPos.fromBlock(z);
+                if (!biomeName(source, qx, QuartPos.fromBlock(-60), qz, sampler).equals("deep_dark"))
+                    continue;
+                underFloorChecked++;
+                if (biomeName(source, qx, QuartPos.fromBlock(-94), qz, sampler).equals("deep_dark"))
+                    underFloorKept++;
+            }
+        report.put("biome.underFloor", underFloorKept + "/" + underFloorChecked);
+        if (underFloorKept < underFloorChecked)
+            fail("a cave biome reaching the floor stops there: " + underFloorKept + " of " + underFloorChecked
+                    + " deep dark columns are still deep dark under it (Alex's Caves' trenches shrink to holes)");
+
         Map<String, Integer> deepBiomes = new TreeMap<>();
         Map<String, Integer> surfaceBiomes = new TreeMap<>();
         int columns = 0, columnsVaryingWithDepth = 0, poolHits = 0;
