@@ -147,6 +147,9 @@ public final class CaveRegions {
      */
     private static final java.util.Set<String> DEEP_OCEAN_ONLY = java.util.Set.of("alexscaves:abyssal_chasm");
 
+    /** The overworld's floor: a band starting here runs on below it (see {@code Patch.holds}). */
+    private static final int WORLD_FLOOR = -64;
+
     /** Whether a column counts as deep ocean for {@link #DEEP_OCEAN_ONLY}: the deep row, with 7.0's oceans. */
     public static boolean underDeepOcean(me.daddychurchill.CityWorld.CityWorldGenerator g, int terrainY) {
         return terrainY < g.deepseaLevel
@@ -235,6 +238,17 @@ public final class CaveRegions {
 
     /** One resolved entry: a biome that exists here, plus how its patches are shaped. */
     private record Patch(Holder<Biome> biome, int cell, int percent, int minY, int maxY, long salt, boolean deepOceanOnly) {
+
+        /**
+         * Whether a height is inside this patch's band. A band that reaches the world's floor goes on below it: Alex's
+         * Caves sizes each cave by asking the biome source how far its biome continues sideways, at a height under its
+         * start that can be below the floor (the abyssal chasm asks at about y -94). Vanilla's noise still answers the
+         * cave there; a band stopping at -64 answered nothing, and every trench came out a hole a few blocks across
+         * where vanilla's run together into one chasm (owner's look, 2026-11-07).
+         */
+        boolean holds(int blockY) {
+            return (blockY >= minY || minY <= WORLD_FLOOR) && blockY <= maxY;
+        }
 
         /** Whether this patch's cell may own a column at all, given whether the column is deep ocean. */
         boolean allowedIn(boolean deepOcean) {
@@ -335,7 +349,7 @@ public final class CaveRegions {
             for (Patch patch : patches) {
                 if (!patch.allowedIn(deepOcean) || !inCell(worldSeed, patch, blockX, blockZ))
                     continue;
-                if (blockY < patch.minY() || blockY > patch.maxY())
+                if (!patch.holds(blockY))
                     return null;
                 return WALL_ROCK.get(idOf(patch.biome()));
             }
@@ -392,7 +406,7 @@ public final class CaveRegions {
                 // particular point is inside the patch or back to the surface biome. Deliberately NOT
                 // "first matching cell AND band", which would let a second type claim the rest of the
                 // column — see the class note on stacking.
-                return blockY >= patch.minY() && blockY <= patch.maxY() ? patch.biome() : null;
+                return patch.holds(blockY) ? patch.biome() : null;
             }
             return null;
         }
