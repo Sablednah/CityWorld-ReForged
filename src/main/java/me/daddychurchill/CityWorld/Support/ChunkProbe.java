@@ -476,7 +476,7 @@ public final class ChunkProbe {
         var gen = (me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator) level.getChunkSource().getGenerator();
         var ctx = gen.getContext(level);
         var sitesHere = gen.citySites();
-        int ends = 0, onStreet = 0, builtAhead = 0;
+        int ends = 0, onStreet = 0, builtAhead = 0, told = 0;
         for (var link : links)
             for (int end = 0; end < 2; end++) {
                 int n = link.x().length, k0 = end == 0 ? 0 : n - 1, k1 = end == 0 ? Math.min(n - 1, 4) : Math.max(0, n - 5);
@@ -491,6 +491,10 @@ public final class ChunkProbe {
                         || behind.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.ROUNDABOUT);
                 if (street)
                     onStreet++;
+                // the street there must know to run on to its edge (the road lot asks highwayExitsAt)
+                if (street && ctx.highwayExitsAt(bx, bz) != 0 && told++ < 4)
+                    CityWorldMod.LOGGER.warn("SURVEY highway gate on a street: chunk {},{} (exits {}), gate {} {}", bx, bz,
+                            ctx.highwayExitsAt(bx, bz), (int) gx, (int) gz);
                 boolean built = false;
                 for (int step = 8; step < 400; step += 8) {
                     int cx = Math.floorDiv((int) Math.floor(gx + dx * step), 16), cz = Math.floorDiv((int) Math.floor(gz + dz * step), 16);
@@ -509,7 +513,54 @@ public final class ChunkProbe {
                             link.a().centreX(), link.a().centreZ(), link.b().centreX(), link.b().centreZ(), end, (int) gx, (int) gz,
                             behind == null ? "not city" : behind.getClass().getSimpleName(), built);
             }
-        CityWorldMod.LOGGER.warn("SURVEY highway gates: {} ends, {} meet a street, {} have something built ahead", ends, onStreet, builtAhead);
+        CityWorldMod.LOGGER.warn("SURVEY highway gates: {} ends, {} meet a street, {} have something built ahead, {} streets told to run on",
+                ends, onStreet, builtAhead, told);
+        // the owner's two looks: a road must not run over a city's built lots, and must leave its gate straight, without
+        // swinging one way and back (lateral offset from the gate's axis over the first 160 blocks: travel minus net)
+        int overBuilt = 0, wiggles = 0, crooked = 0;
+        for (var link : links) {
+            int n = link.x().length;
+            java.util.Set<Long> seen = new java.util.HashSet<>();
+            for (int k = 0; k < n; k++) {
+                int cx = Math.floorDiv((int) Math.floor(link.x()[k]), 16), cz = Math.floorDiv((int) Math.floor(link.z()[k]), 16);
+                if (!seen.add(net.minecraft.world.level.ChunkPos.asLong(cx, cz)) || !sitesHere.isCityChunk(cx, cz))
+                    continue;
+                var lot = ctx.getPlatMap(cx, cz).getMapLot(cx, cz);
+                if (lot != null && lot.style != me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE
+                        && lot.style != me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.ROAD
+                        && lot.style != me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.ROUNDABOUT) {
+                    if (overBuilt++ < 8)
+                        CityWorldMod.LOGGER.warn("SURVEY highway OVER BUILT: ({},{})->({},{}) chunk {},{} {}", link.a().centreX(),
+                                link.a().centreZ(), link.b().centreX(), link.b().centreZ(), cx, cz, lot.getClass().getSimpleName());
+                }
+            }
+            for (int end = 0; end < 2; end++) {
+                int k0 = end == 0 ? 0 : n - 1, dir = end == 0 ? 1 : -1;
+                double gx = link.x()[k0], gz = link.z()[k0];
+                double ax = link.x()[k0 + dir * Math.min(n - 1, 2)] - gx, az = link.z()[k0 + dir * Math.min(n - 1, 2)] - gz;
+                boolean alongX = Math.abs(ax) >= Math.abs(az);
+                double travel = 0, prev = 0, firstRun = 0;
+                int steps = 0;
+                for (int k = k0; k >= 0 && k < n && steps * me.daddychurchill.CityWorld.worldgen.Highways.STEP <= 160; k += dir, steps++) {
+                    double lat = alongX ? link.z()[k] - gz : link.x()[k] - gx;
+                    if (steps > 0)
+                        travel += Math.abs(lat - prev);
+                    prev = lat;
+                    if (steps * me.daddychurchill.CityWorld.worldgen.Highways.STEP <= 40)
+                        firstRun = Math.max(firstRun, Math.abs(lat));
+                }
+                if (travel - Math.abs(prev) > 2) {
+                    if (wiggles++ < 8)
+                        CityWorldMod.LOGGER.warn("SURVEY highway WIGGLE: ({},{})->({},{}) end {} at {} {}: {} blocks sideways for a net {}",
+                                link.a().centreX(), link.a().centreZ(), link.b().centreX(), link.b().centreZ(), end, (int) gx, (int) gz,
+                                Math.round(travel), Math.round(Math.abs(prev)));
+                }
+                if (firstRun > 0.5)
+                    crooked++;
+            }
+        }
+        CityWorldMod.LOGGER.warn("SURVEY highway shape: {} chunks over built lots, {} ends wiggle, {} ends off their street line in the first 40 blocks",
+                overBuilt, wiggles, crooked);
         int i = 0;
         for (var link : links) {
             int n = link.x().length, lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE, bridge = 0, tunnel = 0, steepest = 0;
