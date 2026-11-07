@@ -55,6 +55,11 @@ public final class RoadKit {
         return new RoadKit(surface, key.toString());
     }
 
+    /** Whether a block is one of the kit's mod's (a sign or its rod): what a sweep of the road leaves standing. */
+    public boolean owns(net.minecraft.world.level.block.state.BlockState state) {
+        return BuiltInRegistries.BLOCK.getKey(state.getBlock()).getNamespace().equals(namespace);
+    }
+
     /** A sign block of the kit's mod by name, or null if the mod has none of that name. */
     public Material sign(String name) {
         return piece(namespace + ":" + name);
