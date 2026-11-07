@@ -1,0 +1,113 @@
+{
+  "requires_mod": "mtsofficialpack",
+  "vehicle": "mtsofficialpack:quad",
+  "kind": "quad",
+  "paints": [
+    "_white",
+    "_olive",
+    "_green",
+    "_red",
+    "_yellow",
+    "_tan",
+    "_gray",
+    "_orange"
+  ],
+  "centre": 0.0,
+  "fuel_capacity": 2000,
+  "parts": [
+    {
+      "slot": 0,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain",
+        "_police"
+      ]
+    },
+    {
+      "slot": 1,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain",
+        "_police"
+      ]
+    },
+    {
+      "slot": 2,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain",
+        "_police"
+      ]
+    },
+    {
+      "slot": 3,
+      "part": "mtsofficialpack:wheellarge",
+      "subs": [
+        "",
+        "_holes",
+        "_holering",
+        "_spokes",
+        "_whitewall",
+        "_whiterim",
+        "_rusty",
+        "_spokes2",
+        "_gold",
+        "_spokescopper",
+        "_legacy",
+        "_goth",
+        "_chain",
+        "_police"
+      ]
+    },
+    {
+      "slot": 4,
+      "part": "mts:invisible_seat",
+      "subs": [
+        ""
+      ]
+    },
+    {
+      "slot": 5,
+      "part": "mtsofficialpack:enginequad",
+      "subs": [
+        ""
+      ]
+    }
+  ]
+}

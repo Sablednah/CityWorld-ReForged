@@ -205,6 +205,10 @@ public class CityWorldSettings {
     public boolean includeSkybridges = false, includeWildBridges = true; // skybridges: Apocalypse soft default (styleDefaults)
     public double oddsOfSkybridge = Odds.oddsSomewhatLikely;
     public int skybridgeMinFloors = 6, wildBridgeDepth = 8, wildBridgeSpan = 48;
+    /** Immersive Vehicles: park vehicles in car parks (roads group; see CityWorldSettingsData.Roads). */
+    public boolean includeVehicles = true;
+    public double oddsOfParkedVehicle = 0.5;
+    public int vehicleFuel = 0;
     public double oddsOfWildBridge = Odds.oddsLikely;
     public boolean spawnersInSubways = true;
 
@@ -367,6 +371,11 @@ public class CityWorldSettings {
     public java.util.List<String> fossilSuffixes = java.util.List.of();
     /** Role-themed worker surnames as {@code "profession:Surname"} entries (e.g. {@code "fletcher:Bowman"}). */
     public java.util.List<String> professionNames = java.util.List.of();
+    /** Place names (naming group; see Support.PlaceNames). */
+    public java.util.List<String> placeNames = java.util.List.of(), placeStarts = java.util.List.of(),
+            placeEnds = java.util.List.of();
+    public String placeFormat = "{name}";
+    public int districtSize = 4;
     /** When true, the name lists above are appended to the compiled defaults instead of replacing them. */
     public boolean namesAppend = false;
 
@@ -630,6 +639,9 @@ public class CityWorldSettings {
         includeSkybridges = data.roads().skybridges();
         oddsOfSkybridge = data.roads().oddsOfSkybridge();
         skybridgeMinFloors = data.roads().skybridgeMinFloors();
+        includeVehicles = data.roads().vehicles();
+        oddsOfParkedVehicle = data.roads().oddsOfParkedVehicle();
+        vehicleFuel = data.roads().vehicleFuel();
         includeWildBridges = data.roads().wildBridges();
         wildBridgeDepth = data.roads().wildBridgeDepth();
         wildBridgeSpan = data.roads().wildBridgeSpan();
@@ -701,6 +713,11 @@ public class CityWorldSettings {
         fossilPrefixes = n.fossilPrefixes();
         fossilSuffixes = n.fossilSuffixes();
         professionNames = n.professionNames();
+        placeNames = n.placeNames();
+        placeStarts = n.placeStarts();
+        placeEnds = n.placeEnds();
+        placeFormat = n.placeFormat();
+        districtSize = n.districtSize();
         namesAppend = n.append();
 
         CityWorldSettingsData.Mobs m = data.mobs();
@@ -752,7 +769,8 @@ public class CityWorldSettings {
                 cityChunkRadius, buildOutsideRadius, minInbetweenChunkDistanceOfCities);
         CityWorldSettingsData.Naming naming = new CityWorldSettingsData.Naming(
                 villagerGivenNames, villagerSurnames, streetTerms, streetPrefixes, streetStarts, streetEnds,
-                streetSuffixes, fossilPrefixes, fossilSuffixes, professionNames, namesAppend);
+                streetSuffixes, fossilPrefixes, fossilSuffixes, professionNames, namesAppend, placeNames, placeStarts,
+                placeEnds, placeFormat, districtSize);
         CityWorldSettingsData.Mobs mobs = new CityWorldSettingsData.Mobs(
                 ids(mobGoodies), ids(mobBaddies), ids(mobAnimals), ids(mobSeaAnimals), ids(mobVagrants),
                 ids(mobSewers), ids(mobMine), ids(mobBunker), ids(mobWaterPit), ids(mobLavaPit), mobsAppend);
@@ -765,7 +783,8 @@ public class CityWorldSettings {
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);
         CityWorldSettingsData.Roads roads = new CityWorldSettingsData.Roads(driveOnLeft, speedLimitUrban, speedLimitRural,
                 oddsOfSpeedRepeat, includeSkybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, includeWildBridges,
-                wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion);
+                wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, includeVehicles, oddsOfParkedVehicle,
+                vehicleFuel);
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
                 overgrowth, shops, decay, caves, subways, structures, cities, roads);
     }
