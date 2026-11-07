@@ -563,15 +563,18 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     .thenApply(filled -> {
                         int chunkX = filled.getPos().getMinBlockX() >> 4, chunkZ = filled.getPos().getMinBlockZ() >> 4;
                         CitySites.Site site = citySites.influencing(chunkX, chunkZ);
+                        boolean built = false;
                         if (site != null) {
                             shapeCityGround(context, filled, site);
-                            if (isBuiltLot(context, chunkX, chunkZ)) {
+                            built = isBuiltLot(context, chunkX, chunkZ);
+                            if (built) {
                                 InitialBlocks blocks = new InitialBlocks(context, filled, chunkX, chunkZ);
                                 blocks.yShift = citySites.shift(site);
                                 context.getPlatMap(chunkX, chunkZ).generateChunk(blocks, IGNORE_BIOMES);
                             }
                         }
-                        if (highways != null && !citySites.isCityChunk(chunkX, chunkZ))
+                        // a highway reaches the end of one of the city's streets, across its open edge
+                        if (highways != null && !built)
                             drawHighways(context, filled);
                         return filled;
                     });
@@ -675,6 +678,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                 return lowest;
                             }, roads)
                             : null;
+                    if (highways != null)
+                        highways.usePlan((cx, cz) -> cityPlanAt(bounds, cx, cz));
                     vanillaOverworld = local = built;
                 }
             }
@@ -689,6 +694,19 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
     /** The highways between the cities of a vanilla-terrain world, when they are on; else null. */
     private volatile Highways highways;
+
+    /** What the city's plan has on a chunk, for {@link Highways}' gates: a street, something built, or open ground. */
+    private int cityPlanAt(LevelHeightAccessor bounds, int chunkX, int chunkZ) {
+        CityWorldGenerator local = context != null ? context : context(bounds);
+        me.daddychurchill.CityWorld.Plats.PlatLot lot = local.getPlatMap(chunkX, chunkZ).getMapLot(chunkX, chunkZ);
+        if (lot == null)
+            return Highways.CityPlan.OPEN;
+        return switch (lot.style) {
+            case ROAD, ROUNDABOUT -> Highways.CityPlan.ROAD;
+            case NATURE -> Highways.CityPlan.OPEN;
+            default -> Highways.CityPlan.BUILT;
+        };
+    }
 
     /** The highways of a vanilla-terrain world (null in any other, or with them off), for the probe. */
     public Highways highways() {
@@ -709,14 +727,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         var links = highways.linksTouching(minX - reach, minZ - reach, minX + 15 + reach, minZ + 15 + reach);
         if (links.isEmpty())
             return;
-        // the city's own road: a pack's street palette, else a road mod's surface (Macaw's), else the style's
-        var streetPool = me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_SURFACE;
-        var kit = me.daddychurchill.CityWorld.Support.Palettes.poolFor(context, streetPool).isEmpty()
-                ? me.daddychurchill.CityWorld.Support.RoadKit.forWorld(context) : null;
-        Material pavementMat = kit != null ? kit.surface
-                : me.daddychurchill.CityWorld.Support.Palettes.pick(context, streetPool, 0, 0,
-                        context.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(0, Material.WHITE_TERRACOTTA));
-        BlockState pavement = pavementMat.getBlockState();
+        BlockState pavement = highwayPavement(context);
         BlockState lines = me.daddychurchill.CityWorld.Support.Palettes.pick(context,
                 me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_LINES, 0, 0,
                 context.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(1, Material.QUARTZ_BLOCK)).getBlockState();
@@ -736,6 +747,10 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         // volume keeps a ravine from cutting it (one did, at a gate: a road with a hole to y 49 under it).
         net.minecraft.world.level.chunk.CarvingMask carving = chunk instanceof net.minecraft.world.level.chunk.ProtoChunk proto
                 ? proto.getOrCreateCarvingMask(net.minecraft.world.level.levelgen.GenerationStep.Carving.AIR) : null;
+        int[] tops = new int[256];
+        for (int x = 0; x < 16; x++)
+            for (int z = 0; z < 16; z++)
+                tops[x << 4 | z] = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x, z);
         for (int x = 0; x < 16; x++)
             for (int z = 0; z < 16; z++) {
                 var near = Highways.nearest(links, minX + x + 0.5, minZ + z + 0.5, half + Highways.SIDE + 1);
@@ -745,27 +760,33 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 int top = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x, z);
                 int sky = Math.max(top, chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z));
                 // the deck: a whole block at its floor, and a slab on it where the climb is half a block or more past
-                double height = Math.max(floor + 2, Math.min(ceiling - 9, near.height()));
                 // (a pavement with no slab — terracotta — climbs in whole steps, rounded, kerb and all)
-                int deck = pavementSlab != null ? (int) Math.floor(height) : (int) Math.round(height);
-                boolean halfStep = pavementSlab != null && height - deck >= 0.5;
+                int deck = deckY(near, floor, ceiling, pavementSlab != null);
+                boolean halfStep = halfStep(near, floor, ceiling, deck, pavementSlab != null);
                 var kind = near.kind();
                 double d = near.distance();
                 if (carving != null && d <= deckEdge + 2)
-                    for (int y = Math.max(floor, deck - CARVE_GUARD); y <= Math.min(ceiling - 1, deck + 7); y++)
+                    for (int y = Math.max(floor, deck - CARVE_GUARD); y <= Math.min(ceiling - 1, deck + TUNNEL_ROOF + 1); y++)
                         carving.set(x, y, z);
-                // a tunnel only where the hill really stands over its roof (the plan reads the ground every few blocks,
-                // and a roof ran on into the open air past a hillside); elsewhere it is a cut like any other
-                if (kind == Highways.Kind.TUNNEL && top <= deck + 7)
+                // a tunnel only where the hill reaches its crown (the plan reads the ground every few blocks, and a roof
+                // ran on into the open air past a hillside); elsewhere it is a cut like any other. Not the crown's own
+                // height: a sinkhole down to the roof then opened a one-block slit in it to the sky
+                if (kind == Highways.Kind.TUNNEL && hill(tops, x, z) < deck + TUNNEL_ROOF - 1)
                     kind = Highways.Kind.GROUND;
                 if (kind == Highways.Kind.TUNNEL) {
-                    // through the hill: headroom, walls and a lit roof; the hill above is left as it is
+                    // through the hill: an arch like a city road's tunnel, high enough for a truck down the middle,
+                    // stepping down to the kerbs, two blocks thick, lit along its crown; the hill above is left be
                     if (d > deckEdge + 2)
                         continue;
                     boolean wall = d > deckEdge + 1;
-                    for (int y = deck + 1; y <= deck + 5; y++)
-                        chunk.setBlockState(cursor.set(bx, y, bz), wall ? masonry : air, false);
-                    chunk.setBlockState(cursor.set(bx, deck + 6, bz), d < 0.75 && ((int) near.along()) % 12 < 2 ? light : masonry, false);
+                    int roof = wall ? deck + 1 : deck + tunnelRoof(d, deckEdge);
+                    for (int y = deck + 1; y < roof; y++)
+                        chunk.setBlockState(cursor.set(bx, y, bz), air, false);
+                    int shellTop = wall ? deck + TUNNEL_ROOF - 2 : roof + 1;
+                    for (int y = roof; y <= shellTop; y++)
+                        chunk.setBlockState(cursor.set(bx, y, bz), masonry, false);
+                    if (!wall && d < 0.75 && ((int) near.along()) % 12 < 2)
+                        chunk.setBlockState(cursor.set(bx, roof, bz), light, false);
                     if (!wall)
                         drawDeck(chunk, cursor, bx, bz, deck, halfStep, d, deckEdge, near.along(), pavement, pavementSlab,
                                 lines, edge, edgeSlab, false, rail);
@@ -821,6 +842,142 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 both.or(add);
                 return both;
             });
+        }
+    }
+
+    /**
+     * The hill over a column for a tunnel's say: the highest ground among it and the columns beside it in the chunk. A
+     * column's own height made a jagged mouth where a tunnel leaves a slanting hillside, down to a one-block slit in
+     * the roof under a sinkhole.
+     */
+    private static int hill(int[] tops, int x, int z) {
+        int best = tops[x << 4 | z];
+        for (int dx = -1; dx <= 1; dx++)
+            for (int dz = -1; dz <= 1; dz++) {
+                int nx = x + dx, nz = z + dz;
+                if (nx >= 0 && nx < 16 && nz >= 0 && nz < 16)
+                    best = Math.max(best, tops[nx << 4 | nz]);
+            }
+        return best;
+    }
+
+    /** Where a highway tunnel's arch begins over its middle lane: seven blocks of headroom, for a truck. */
+    private static final int TUNNEL_ROOF = 8;
+
+    /** How high over the deck a tunnel's arch is at this distance from the centreline: stepping down to the kerbs. */
+    private static int tunnelRoof(double d, double deckEdge) {
+        if (d <= deckEdge - 2)
+            return TUNNEL_ROOF;
+        if (d <= deckEdge - 1)
+            return TUNNEL_ROOF - 1;
+        if (d <= deckEdge)
+            return TUNNEL_ROOF - 2;
+        return TUNNEL_ROOF - 3; // the kerb
+    }
+
+    /** The y of a highway's deck block at a column: floored where a slab can take the half step, else rounded. */
+    private static int deckY(Highways.Near near, int floor, int ceiling, boolean slabbed) {
+        double height = Math.max(floor + 2, Math.min(ceiling - 11, near.height()));
+        return slabbed ? (int) Math.floor(height) : (int) Math.round(height);
+    }
+
+    private static boolean halfStep(Highways.Near near, int floor, int ceiling, int deck, boolean slabbed) {
+        double height = Math.max(floor + 2, Math.min(ceiling - 11, near.height()));
+        return slabbed && height - deck >= 0.5;
+    }
+
+    /**
+     * The highway's surface: a pack's street palette, else a road mod's (Macaw's), else the style's road — with white
+     * terracotta (which looks pink) swapped for the cyan, grey to the eye, that a city street paves with
+     * ({@link me.daddychurchill.CityWorld.Plats.RoadLot#cityPavement}).
+     */
+    private static BlockState highwayPavement(CityWorldGenerator context) {
+        var streetPool = me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_SURFACE;
+        var kit = me.daddychurchill.CityWorld.Support.Palettes.poolFor(context, streetPool).isEmpty()
+                ? me.daddychurchill.CityWorld.Support.RoadKit.forWorld(context) : null;
+        Material pavementMat = kit != null ? kit.surface
+                : me.daddychurchill.CityWorld.Support.Palettes.pick(context, streetPool, 0, 0,
+                        me.daddychurchill.CityWorld.Plats.RoadLot.cityPavement(context));
+        return pavementMat.getBlockState();
+    }
+
+    /**
+     * After vanilla's decoration, the highway is cleared of what it grew there: plants and features on the deck, and
+     * water or lava running onto it from a spring or an aquifer in a cut's face (a spring's source becomes stone in
+     * the face; the run of it, air). Swept across the 3x3 chunks the decoration could write to, so a tree a
+     * neighbour decorates later is cleared by the neighbour's own sweep.
+     */
+    private void sweepHighways(CityWorldGenerator context, WorldGenLevel level, ChunkAccess chunk) {
+        ChunkPos pos = chunk.getPos();
+        int half = highways.halfWidth();
+        double deckEdge = half + 0.5;
+        int reach = half + Highways.SIDE + 2;
+        int x0 = pos.getMinBlockX() - 16, z0 = pos.getMinBlockZ() - 16;
+        var links = highways.linksTouching(x0 - reach, z0 - reach, x0 + 47 + reach, z0 + 47 + reach);
+        if (links.isEmpty())
+            return;
+        boolean slabbed = slabOf(highwayPavement(context)) != null;
+        BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
+        BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        int floor = chunk.getMinBuildHeight(), ceiling = chunk.getMaxBuildHeight();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        for (int dx = -1; dx <= 1; dx++)
+            for (int dz = -1; dz <= 1; dz++) {
+                int chunkX = pos.x + dx, chunkZ = pos.z + dz;
+                if (!level.hasChunk(chunkX, chunkZ) || isBuiltLot(context, chunkX, chunkZ))
+                    continue;
+                for (int x = 0; x < 16; x++)
+                    for (int z = 0; z < 16; z++) {
+                        int bx = (chunkX << 4) + x, bz = (chunkZ << 4) + z;
+                        var near = Highways.nearest(links, bx + 0.5, bz + 0.5, reach);
+                        if (near == null)
+                            continue;
+                        int deck = deckY(near, floor, ceiling, slabbed);
+                        boolean step = halfStep(near, floor, ceiling, deck, slabbed);
+                        double d = near.distance();
+                        var kind = near.kind();
+                        if (d <= deckEdge + 1) {
+                            boolean kerb = d > deckEdge;
+                            int from = deck + 1 + (step ? 1 : 0) + (kerb && kind == Highways.Kind.BRIDGE ? 1 : 0);
+                            int to = deck + (kerb ? 4 : 5);
+                            for (int y = from; y <= to; y++) {
+                                if (!level.getBlockState(cursor.set(bx, y, bz)).isAir())
+                                    level.setBlock(cursor, air, 2);
+                            }
+                        } else if (kind != Highways.Kind.BRIDGE) {
+                            for (int y = deck + 1; y <= deck + Highways.SIDE + 2; y++) {
+                                var fluid = level.getFluidState(cursor.set(bx, y, bz));
+                                if (!fluid.isEmpty())
+                                    level.setBlock(cursor, fluid.isSource() ? stone : air, 2);
+                            }
+                        }
+                    }
+            }
+    }
+
+    /**
+     * Drops a surface structure that would stand on a highway — a village's street turns the pavement to a dirt path,
+     * and its houses sit on the road. Underground ones (mineshafts, strongholds) pass beneath and stay.
+     */
+    private void dropStartsOnHighways(ChunkAccess chunk) {
+        for (var entry : java.util.List.copyOf(chunk.getAllStarts().entrySet())) {
+            var start = entry.getValue();
+            if (!start.isValid() || entry.getKey().step()
+                    != net.minecraft.world.level.levelgen.GenerationStep.Decoration.SURFACE_STRUCTURES)
+                continue;
+            var whole = start.getBoundingBox();
+            if (!highways.crosses(whole.minX(), whole.minZ(), whole.maxX(), whole.maxZ(), 2))
+                continue;
+            for (var piece : start.getPieces()) {
+                var box = piece.getBoundingBox();
+                if (highways.crosses(box.minX(), box.minZ(), box.maxX(), box.maxZ(), 2)) {
+                    chunk.setStartForStructure(entry.getKey(),
+                            net.minecraft.world.level.levelgen.structure.StructureStart.INVALID_START);
+                    me.daddychurchill.CityWorld.CityWorldMod.LOGGER.debug("CityWorld: kept {} off a highway at chunk {}",
+                            entry.getKey().getClass().getSimpleName(), chunk.getPos());
+                    break;
+                }
+            }
         }
     }
 
@@ -2468,6 +2625,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         if (local != null)
             local.bind();
         super.createStructures(registryAccess, structureState, structureManager, chunk, templateManager);
+        if (vanillaTerrain() && highways != null)
+            dropStartsOnHighways(chunk);
         // A set kept to the wild (settings structures.wildernessOnly, or #cityworld:wilderness_only) is taken back out
         // of a chunk the city would build: Arboria's ponds are structures, and every one of them cut a city in two
         // (a player's report, 2026-10-29). Done after vanilla's placement, with its own public setter, so the start
@@ -2762,6 +2921,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             CitySites.Site site = citySites.influencing(chunkX, chunkZ);
             if (site == null || !isBuiltLot(context, chunkX, chunkZ)) {
                 super.applyBiomeDecoration(level, chunk, structureManager);
+                if (highways != null)
+                    sweepHighways(context, level, chunk);
                 return;
             }
             WorldGenLevel raised = ShiftedRegion.of(level, citySites.shift(site));
