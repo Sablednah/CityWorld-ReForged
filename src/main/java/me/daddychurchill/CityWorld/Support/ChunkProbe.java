@@ -470,6 +470,44 @@ public final class ChunkProbe {
             }
         }
         CityWorldMod.LOGGER.warn("SURVEY highways handed: {} chunks checked, {} not handed their road", checked, unhanded);
+        // each end must meet one of its city's streets: the chunk behind the gate a road lot, nothing built ahead of it
+        var gen = (me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator) level.getChunkSource().getGenerator();
+        var ctx = gen.getContext(level);
+        var sitesHere = gen.citySites();
+        int ends = 0, onStreet = 0, builtAhead = 0;
+        for (var link : links)
+            for (int end = 0; end < 2; end++) {
+                int n = link.x().length, k0 = end == 0 ? 0 : n - 1, k1 = end == 0 ? Math.min(n - 1, 4) : Math.max(0, n - 5);
+                double gx = link.x()[k0], gz = link.z()[k0];
+                double dx = link.x()[k1] - gx, dz = link.z()[k1] - gz, len = Math.max(1e-6, Math.hypot(dx, dz));
+                dx /= len;
+                dz /= len;
+                ends++;
+                int bx = Math.floorDiv((int) Math.floor(gx - dx * 8), 16), bz = Math.floorDiv((int) Math.floor(gz - dz * 8), 16);
+                var behind = sitesHere.isCityChunk(bx, bz) ? ctx.getPlatMap(bx, bz).getMapLot(bx, bz) : null;
+                boolean street = behind != null && (behind.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.ROAD
+                        || behind.style == me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.ROUNDABOUT);
+                if (street)
+                    onStreet++;
+                boolean built = false;
+                for (int step = 8; step < 400; step += 8) {
+                    int cx = Math.floorDiv((int) Math.floor(gx + dx * step), 16), cz = Math.floorDiv((int) Math.floor(gz + dz * step), 16);
+                    if (!sitesHere.isCityChunk(cx, cz))
+                        break;
+                    var lot = ctx.getPlatMap(cx, cz).getMapLot(cx, cz);
+                    if (lot != null && lot.style != me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE) {
+                        built = true;
+                        break;
+                    }
+                }
+                if (built)
+                    builtAhead++;
+                if (!street || built)
+                    CityWorldMod.LOGGER.warn("SURVEY highway gate MISS: ({},{})->({},{}) end {} at {} {}: behind {}, built ahead {}",
+                            link.a().centreX(), link.a().centreZ(), link.b().centreX(), link.b().centreZ(), end, (int) gx, (int) gz,
+                            behind == null ? "not city" : behind.getClass().getSimpleName(), built);
+            }
+        CityWorldMod.LOGGER.warn("SURVEY highway gates: {} ends, {} meet a street, {} have something built ahead", ends, onStreet, builtAhead);
         int i = 0;
         for (var link : links) {
             int n = link.x().length, lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE, bridge = 0, tunnel = 0, steepest = 0;
@@ -1212,6 +1250,35 @@ public final class ChunkProbe {
                 findChasm(level);
                 return;
             }
+            if (spec.startsWith("survey:rigs")) {
+                // -Dcityworld.probe=survey:rigs[:platmaps]: oil rigs planned over a square of platmaps, against how many
+                // of its chunks lie in a 7.0 ocean — plans only, nothing generated
+                int r = spec.length() > "survey:rigs:".length() ? Integer.parseInt(spec.substring("survey:rigs:".length())) : 25;
+                var g = (me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator) level.getChunkSource().getGenerator();
+                var ctx = g.getContext(level);
+                int rigs = 0, ocean = 0, chunks = 0, rigsInOcean = 0;
+                for (int px = -r; px < r; px++)
+                    for (int pz = -r; pz < r; pz++) {
+                        var map = ctx.getPlatMap(px * 10, pz * 10);
+                        for (int dx = 0; dx < 10; dx++)
+                            for (int dz = 0; dz < 10; dz++) {
+                                int rx = map.originX + dx, rz = map.originZ + dz;
+                                chunks++;
+                                boolean sea = ctx.shapeProvider instanceof me.daddychurchill.CityWorld.Plugins.ShapeProvider_Normal n
+                                        && n.hasOceans() && n.oceanAt(rx * 16 + 8, rz * 16 + 8) > 0;
+                                if (sea)
+                                    ocean++;
+                                if (map.getMapLot(rx, rz) instanceof me.daddychurchill.CityWorld.Plats.Nature.OilPlatformLot) {
+                                    rigs++;
+                                    if (sea)
+                                        rigsInOcean++;
+                                }
+                            }
+                    }
+                CityWorldMod.LOGGER.warn("SURVEY rigs: {} chunks, {} in 7.0 oceans; {} rigs, {} of them in those oceans", chunks, ocean,
+                        rigs, rigsInOcean);
+                return;
+            }
             if (spec.startsWith("survey:highways")) {
                 surveyHighways(level);
                 return;
@@ -1235,14 +1302,33 @@ public final class ChunkProbe {
                     throw new IllegalStateException("no highway " + n + " (there are " + links.size() + ")");
                 var link = links.get(n);
                 int mid = parts.length > 3 && parts[3].equals("start") ? 0 : link.x().length / 2;
-                if (parts.length > 3 && (parts[3].equals("tunnel") || parts[3].equals("bridge")))
-                    for (int k = 0; k < link.x().length; k++)
-                        if (link.kind()[k].name().equalsIgnoreCase(parts[3])) {
-                            mid = Math.min(link.x().length - 1, k + 8);
-                            break;
+                if (parts.length > 3 && (parts[3].equals("tunnel") || parts[3].equals("bridge"))) {
+                    // the middle of the longest run of that kind
+                    int best = -1, bestLen = 0;
+                    for (int k = 0; k < link.x().length; ) {
+                        if (!link.kind()[k].name().equalsIgnoreCase(parts[3])) {
+                            k++;
+                            continue;
                         }
+                        int e = k;
+                        while (e < link.x().length && link.kind()[e] == link.kind()[k])
+                            e++;
+                        if (e - k > bestLen) {
+                            bestLen = e - k;
+                            best = (k + e) / 2;
+                        }
+                        k = e;
+                    }
+                    if (best >= 0)
+                        mid = best;
+                }
                 CityWorldMod.LOGGER.warn("PROBE: highway {} sample {} at {}, {} deck y{}", n, mid, (int) link.x()[mid],
                         (int) link.z()[mid], link.y()[mid]);
+                StringBuilder around = new StringBuilder();
+                for (int k = Math.max(0, mid - 24); k < Math.min(link.x().length, mid + 24); k += 2)
+                    around.append(String.format("%d:(%d,%d)y%d%s ", k, (int) link.x()[k], (int) link.z()[k], link.y()[k],
+                            link.kind()[k].name().charAt(0)));
+                CityWorldMod.LOGGER.warn("PROBE: highway {} around: {}", n, around);
                 cx = Math.floorDiv((int) link.x()[mid], 16);
                 cz = Math.floorDiv((int) link.z()[mid], 16);
                 CityWorldMod.LOGGER.warn("PROBE: highway {} middle is chunk {}, {}", n, cx, cz);
