@@ -293,7 +293,7 @@ a region.
 | `buildOutsideRadius` | `false` | `true` = build the ring **outside** the radius instead of the disc inside it. |
 | `minInbetweenChunkDistanceOfCities` | `0` | `>0` tiles cities on a grid this many chunks apart (SPARSE uses 100). |
 
-### `naming` — your own villager and street names
+### `naming` — your own villager, street and place names
 
 Each list is empty by default (= keep the built-in hundreds). List your own to **replace** a list, or
 add `"append": true` to **add** to it instead:
@@ -315,6 +315,10 @@ add `"append": true` to **add** to it instead:
 | `streetStarts` / `streetEnds` | Invented street name syllables (`Elm` + `wood`, `Oak` + `ville`, ...). |
 | `streetSuffixes` | Road types (`Street`, `Avenue`, `Boulevard`, ...). |
 | `fossilPrefixes` / `fossilSuffixes` | Museum fossil names (`Tyranno` + `saurus`, ...). |
+| `placeNames` | Whole place names (`Midtown`, `Soho`, `The Heights`, ...). Every city in a vanilla world has a name, and CityWorld's own land (one great city) is named district by district. These lists replace the built-in ones whatever `append` says. |
+| `placeStarts` / `placeEnds` | Invented place names (`Ash` + `ford`, `River` + `side`). A district is as often a whole name as an invented one, a city of its own mostly invented. |
+| `placeFormat` | `"{name}"` by default. `{name}` is a name from the lists, `{n}` a number from 1 to 99: `"City {n}"`, `"District {n}"`, `"New {name}"`. |
+| `districtSize` | `4`: how many platmaps (of ten chunks) square a named district of CityWorld's own land is, so 640 blocks. |
 | `professionNames` | Occupational surnames for employed shop/farm workers, as `"profession:Surname"` (e.g. `"fisherman:Angler"`). A worker becomes "*given name* *surname for its trade*". Profession ids: `farmer`, `fisherman`, `fletcher`, `cartographer`, `mason`, `armorer`, `weaponsmith`, `toolsmith`, `butcher`, `leatherworker`, `cleric`, `shepherd`, `librarian`. |
 
 ### `mobs` — your own creature lists (weighted by repetition)
