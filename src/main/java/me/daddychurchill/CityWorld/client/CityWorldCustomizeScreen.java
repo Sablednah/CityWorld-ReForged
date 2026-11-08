@@ -276,19 +276,36 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 "Vanilla, cities apart: a normal vanilla world — its terrain, caves, villages and animals — with a "
                         + "city every so often, like a village, each on its own level. CityWorld: CityWorld's own "
                         + "terrain, a world of cities. Only for the Modern, Apocalypse, Classic, Destroyed and Sparse styles.")));
+        // a size and variance too big for the spacing: the size button says what fits (a 7.0 world cuts a too-big roll
+        // to that; before, the try was refused, and the owner's world at the smallest spacing had a city in one cell
+        // in nine)
+        Runnable[] refit = { () -> {
+        } };
         CycleButton<Integer> spacing = cycle("City spacing", withValue(SPACING_CHOICES, cities.spacing()), cities.spacing(),
-                v -> Component.literal(v + " blocks"), v -> cities = cities.withSpacing(v));
+                v -> Component.literal(v + " blocks"), v -> {
+                    cities = cities.withSpacing(v);
+                    refit[0].run();
+                });
         spacing.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
                 "Vanilla land only: one city at most per this many blocks each way. Fewer where the sea or the "
                         + "mountains refuse a site.")));
         addRow(land, spacing);
         CycleButton<Integer> size = cycle("City size", withValue(DISTRICT_CHOICES, cities.districts()), cities.districts(),
-                v -> Component.literal(v + " x " + v + " districts"), v -> cities = cities.withDistricts(v));
-        size.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
-                "Vanilla land only: how many districts (160 blocks each) a city is across.")));
+                this::citySizeLabel, v -> {
+                    cities = cities.withDistricts(v);
+                    refit[0].run();
+                });
         CycleButton<Integer> vary = cycle("Size varies by", withValue(VARIANCE_CHOICES, cities.districtsVariance()),
                 cities.districtsVariance(), v -> Component.literal(v == 0 ? "nothing" : "up to " + v),
-                v -> cities = cities.withDistrictsVariance(v));
+                v -> {
+                    cities = cities.withDistrictsVariance(v);
+                    refit[0].run();
+                });
+        refit[0] = () -> {
+            size.setValue(size.getValue()); // re-render the label for the new spacing or variance
+            size.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(citySizeTip())));
+        };
+        refit[0].run();
         vary.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
                 "Vanilla land only: a city may be this many districts bigger or smaller than the size.")));
         addRow(size, vary);
@@ -328,7 +345,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 v -> Component.literal(v ? "On" : "Off"),
                 v -> cities = cities.withHighways(cities.highways().withEnabled(v)));
         highwaysButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
-                "Vanilla land only: a road from each city to its neighbours east and south, leaving along the city's "
+                "Vanilla land only: a road from each city to the nearest city east and south (up to three cells past "
+                        + "empty ones), leaving along the city's "
                         + "own streets, winding round the hills, cut through them, bridged over rivers and tunnelled "
                         + "under the ridges.")));
         addRow(highwaysButton, null);
@@ -761,6 +779,26 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
             if (Math.abs((long) choice - value) < Math.abs((long) best - value))
                 best = choice;
         return best;
+    }
+
+    /** The city size, and in gold how many fit when the size and its variance are too big for the spacing. */
+    private Component citySizeLabel(int districts) {
+        int fits = me.daddychurchill.CityWorld.worldgen.CitySites.largestThatFits(cities.spacing());
+        if (districts + cities.districtsVariance() <= fits)
+            return Component.literal(districts + " x " + districts + " districts");
+        return Component.literal(districts + " x " + districts + " ")
+                .append(Component.literal("(" + fits + " fit)").withStyle(net.minecraft.ChatFormatting.GOLD));
+    }
+
+    private String citySizeTip() {
+        String tip = "Vanilla land only: how many districts (160 blocks each) a city is across.";
+        int fits = me.daddychurchill.CityWorld.worldgen.CitySites.largestThatFits(cities.spacing());
+        int biggest = cities.districts() + cities.districtsVariance();
+        if (biggest > fits)
+            tip += " At " + cities.spacing() + " blocks' spacing a city fits at most " + fits + " across, so bigger ones"
+                    + " are built " + fits + " across. A city " + biggest + " across needs a spacing of "
+                    + me.daddychurchill.CityWorld.worldgen.CitySites.spacingFor(biggest) + " or more.";
+        return tip;
     }
 
     private static <T> CycleButton<T> cycle(String label, T[] values, T init,
