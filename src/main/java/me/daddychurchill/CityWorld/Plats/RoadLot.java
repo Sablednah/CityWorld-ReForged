@@ -1184,7 +1184,7 @@ public class RoadLot extends ConnectedLot {
 				}
 
 				// the road mod's signs: stop at a T, dead end, a speed limit on a straight, the town's board at its edge
-				if (inACity && kit != null)
+				if (inACity && (kit != null || me.daddychurchill.CityWorld.worldgen.PoleSigns.any()))
 					generateRoadSigns(generator, chunk, platmap, platX, platZ, roads, sidewalkLevel);
 
 				// a rope bridge between two towers across this street, if the platmap's one is here (Apocalypse)
@@ -2025,24 +2025,24 @@ public class RoadLot extends ConnectedLot {
 		if (n == 3) { // the traffic on the stem travels toward the missing arm
 			BlockFace travel = !roads.toEast() ? BlockFace.EAST : !roads.toWest() ? BlockFace.WEST
 					: !roads.toSouth() ? BlockFace.SOUTH : BlockFace.NORTH;
-			signFor(chunk, kit.sign("stop"), travel, true, y, false, left);
+			signFor(chunk, sign("stop", "", "stop"), travel, true, y, false, left);
 		} else if (n == 1) { // the traffic comes in from the one road
 			BlockFace from = roads.toWest() ? BlockFace.WEST : roads.toEast() ? BlockFace.EAST
 					: roads.toNorth() ? BlockFace.NORTH : BlockFace.SOUTH;
-			signFor(chunk, kit.sign("dead_end"), from.getOppositeFace(), true, y, false, left);
+			signFor(chunk, sign("dead_end", "", "dead_end"), from.getOppositeFace(), true, y, false, left);
 		}
 
 		// where a highway leaves: the town's board at the line, and a chunk-width in, the highway's limit for the
 		// traffic going out and the town's for the traffic coming in (the street would have ended in a DEAD END)
 		BlockFace exit = roads.highwayExit();
 		if (exit != null) {
-			Material board = kit.sign("city_" + (1 + chunkOdds.getRandomInt(5)) + "_sign");
+			RoadSign board = townBoard(generator);
 			BlockFace in = exit.getOppositeFace();
 			signFor(chunk, board, in, true, y, false, left);
 			signFor(chunk, board, exit, false, y, true, left);
 			int highway = rounded(highwaySpeedLimit(generator));
 			signFor(chunk, speedSign(settings, platmap), in, false, y, false, left);
-			signFor(chunk, kit.sign("speedlimit_" + highway), exit, true, y, false, left);
+			signFor(chunk, sign("speed_limit", String.valueOf(highway), "speedlimit_" + highway), exit, true, y, false, left);
 			return;
 		}
 
@@ -2052,13 +2052,13 @@ public class RoadLot extends ConnectedLot {
 				: platZ == 0 && roads.toNorth() ? BlockFace.NORTH
 				: platZ == PlatMap.Width - 1 && roads.toSouth() ? BlockFace.SOUTH : null;
 		boolean built = !(platmap.context instanceof me.daddychurchill.CityWorld.Context.NatureContext);
-		Material here = speedSign(settings, platmap);
+		RoadSign here = speedSign(settings, platmap);
 		if (across != null && built) {
 			int nx = chunkX + across.getModX(), nz = chunkZ + across.getModZ();
 			BlockFace out = across, in = across.getOppositeFace();
 			if (wildPlatmap(generator, nx, nz)) {
 				// the town's board at the line, then a chunk-width in, the limit and its end
-				Material board = kit.sign("city_" + (1 + chunkOdds.getRandomInt(5)) + "_sign");
+				RoadSign board = townBoard(generator);
 				signFor(chunk, board, in, true, y, false, left);
 				signFor(chunk, board, out, false, y, true, left);
 				if (straight) {
@@ -2066,14 +2066,14 @@ public class RoadLot extends ConnectedLot {
 					signFor(chunk, here, out, true, y, true, left);
 				}
 			} else if (straight && (across == BlockFace.EAST || across == BlockFace.SOUTH)) {
-				Material there = speedSign(settings, generator.getPlatMap(nx, nz));
+				RoadSign there = speedSign(settings, generator.getPlatMap(nx, nz));
 				if (!java.util.Objects.equals(there, here)) { // a pair back to back at the line
 					signFor(chunk, there, out, false, y, false, left);
 					signFor(chunk, here, in, true, y, false, left);
 				}
 			}
 		} else if (straight && built && here != null
-				&& here.equals(kit.sign("speedlimit_" + Math.min(rounded(settings.speedLimitUrban), rounded(settings.speedLimitRural))))
+				&& here.text().equals(String.valueOf(Math.min(rounded(settings.speedLimitUrban), rounded(settings.speedLimitRural))))
 				&& chunkOdds.playOdds(settings.oddsOfSpeedRepeat)) { // repeats in the slower zones only (owner)
 			BlockFace one = roads.toNorth() ? BlockFace.NORTH : BlockFace.WEST; // a repeat pair at one end
 			signFor(chunk, here, one, true, y, false, left);
@@ -2087,9 +2087,27 @@ public class RoadLot extends ConnectedLot {
 	}
 
 	/** A platmap's speed-limit sign: rural where it is mostly nature (the context ladder's bands), urban otherwise. */
-	private Material speedSign(me.daddychurchill.CityWorld.CityWorldSettings settings, PlatMap platmap) {
-		int limit = platmap.getNaturePercent() >= 0.40 ? settings.speedLimitRural : settings.speedLimitUrban;
-		return kit.sign("speedlimit_" + rounded(limit));
+	private RoadSign speedSign(me.daddychurchill.CityWorld.CityWorldSettings settings, PlatMap platmap) {
+		int limit = rounded(platmap.getNaturePercent() >= 0.40 ? settings.speedLimitRural : settings.speedLimitUrban);
+		return sign("speed_limit", String.valueOf(limit), "speedlimit_" + limit);
+	}
+
+	/**
+	 * A sign by CityWorld's name for it ({@link me.daddychurchill.CityWorld.worldgen.PoleSigns}) and its text, with
+	 * the Macaw's Roads block for it if that mod is the road kit.
+	 */
+	private record RoadSign(String name, String text, Material macaws) {
+	}
+
+	private RoadSign sign(String name, String text, String macawsName) {
+		return new RoadSign(name, text, kit == null ? null : kit.sign(macawsName));
+	}
+
+	/** The town's name board (Macaw's has five looks, picked as before so its towns draw the same). */
+	private RoadSign townBoard(CityWorldGenerator generator) {
+		int look = 1 + chunkOdds.getRandomInt(5);
+		return sign("town", me.daddychurchill.CityWorld.Support.PlaceNames.at(generator, chunkX, chunkZ),
+				"city_" + look + "_sign");
 	}
 
 	/** A limit as the mod has a sign for it: 10 to 120 in tens. */
@@ -2103,7 +2121,7 @@ public class RoadLot extends ConnectedLot {
 	 * An unrotated Macaw's sign shows its face to the north (its model's north face carries the picture), so a sign
 	 * faces the way it is read from: against the traffic.
 	 */
-	private void signFor(RealBlocks chunk, Material sign, BlockFace travel, boolean entering, int y, boolean end,
+	private void signFor(RealBlocks chunk, RoadSign sign, BlockFace travel, boolean entering, int y, boolean end,
 			boolean left) {
 		int in = 1, out = chunk.width - 2;
 		boolean positive = travel == BlockFace.EAST || travel == BlockFace.SOUTH;
@@ -2133,11 +2151,21 @@ public class RoadLot extends ConnectedLot {
 	 * full top, the rod replaces it, so the post stands on the ground instead of floating half a block up; over a
 	 * hole (decay), no sign.
 	 */
-	private void placeRoadSign(RealBlocks chunk, Material sign, int x, int y, int z, BlockFace facing, boolean end) {
-		if (sign == null || !chunk.isEmpty(x, y + 1, z) || !chunk.isEmpty(x, y + 2, z) || !chunk.isEmpty(x, y + 3, z)
+	private void placeRoadSign(RealBlocks chunk, RoadSign road, int x, int y, int z, BlockFace facing, boolean end) {
+		if (road == null || !chunk.isEmpty(x, y + 1, z) || !chunk.isEmpty(x, y + 2, z) || !chunk.isEmpty(x, y + 3, z)
 				|| chunk.isEmpty(x, y, z))
 			return;
 		int base = chunk.isSturdyTop(x, y, z) ? y + 1 : y;
+		// Immersive Vehicles' signs first (they carry the town's name), on a pole in place of the rod
+		String name = end ? road.name() + "_end" : road.name();
+		int lift = me.daddychurchill.CityWorld.worldgen.ShiftedRegion.shiftOf(chunk.getWorld());
+		var access = chunk.getWorld().getChunk(chunk.sectionX, chunk.sectionZ);
+		if (me.daddychurchill.CityWorld.worldgen.PoleSigns.place(access, name, road.text(), chunk.getBlockX(x),
+				base + lift, y + 3 + lift, chunk.getBlockZ(z), facing))
+			return;
+		Material sign = road.macaws();
+		if (sign == null)
+			return;
 		chunk.setBlocks(x, base, y + 3, z, kit.rod != null ? kit.rod : Material.SPRUCE_FENCE);
 		net.minecraft.world.level.block.state.BlockState state = sign.withFacing(facing);
 		if (end)

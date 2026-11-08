@@ -1,0 +1,70 @@
+{
+ "requires_mod": "osip",
+ "pack": "osip",
+ "core": "pole_core",
+ "priority": 20,
+ "signs": {
+  "stop": {
+   "sign": "sign_stop"
+  },
+  "dead_end": {
+   "sign": "sign_informational",
+   "sub": "_deadend"
+  },
+  "town": {
+   "sign": "sign_town",
+   "sub": "_entrance",
+   "text": "Town Name",
+   "max": 20
+  },
+  "town_end": {
+   "sign": "sign_town",
+   "sub": "_exit",
+   "text": "Town Name",
+   "max": 20
+  },
+  "speed_limit": {
+   "sign": "sign_allowed",
+   "sub": "_speedlimit",
+   "text": "Speed Limit",
+   "max": 3
+  },
+  "speed_limit_end": {
+   "sign": "sign_allowed",
+   "sub": "_speedlimitend",
+   "text": "Speed Limit",
+   "max": 3
+  },
+  "motorway": {
+   "sign": "sign_informational",
+   "sub": "_highway"
+  },
+  "motorway_end": {
+   "sign": "sign_informational",
+   "sub": "_highwayend"
+  },
+  "tunnel": {
+   "sign": "sign_informational",
+   "sub": "_tunnel"
+  },
+  "steep_ascent": {
+   "sign": "sign_warn",
+   "sub": "_ascent"
+  },
+  "steep_descent": {
+   "sign": "sign_warn",
+   "sub": "_descent"
+  },
+  "gantry": {
+   "sign": "signhighway",
+   "sub": "_exitbblank",
+   "text": "Text",
+   "max": 20
+  },
+  "street_name": {
+   "sign": "sign_additionaltext_small",
+   "text": "Text",
+   "max": 24
+  }
+ }
+}
