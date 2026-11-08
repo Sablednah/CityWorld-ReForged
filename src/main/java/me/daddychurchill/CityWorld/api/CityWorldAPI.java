@@ -318,6 +318,20 @@ public final class CityWorldAPI {
     }
 
     /**
+     * The name of the place at {@code pos}: the city whose cell a vanilla-land position is in, or the
+     * district of CityWorld's own land ({@code naming.districtSize} platmaps square), shaped by
+     * {@code naming.placeFormat}. A pure function of the seed and the place (no planning; on vanilla land the first
+     * call for a cell judges it from vanilla's heights, so call it off the server thread); empty off a
+     * non-CityWorld level. The same name the town signs carry.
+     */
+    public static Optional<String> placeName(ServerLevel level, BlockPos pos) {
+        CityWorldGenerator generator = contextFor(level);
+        if (generator == null)
+            return Optional.empty();
+        return Optional.of(me.daddychurchill.CityWorld.Support.PlaceNames.at(generator, pos.getX() >> 4, pos.getZ() >> 4));
+    }
+
+    /**
      * The middle of the nearest city, at street level, within {@code maxBlocks}. In a vanilla-land world that is the
      * nearest city site; on CityWorld's own land, where city is everywhere it is not wild, it is the nearest chunk of
      * a built-up district (anything but nature and farmland). Plan only; call it off the server thread.

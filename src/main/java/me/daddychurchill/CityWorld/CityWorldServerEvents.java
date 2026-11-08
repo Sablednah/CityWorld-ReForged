@@ -66,6 +66,8 @@ public final class CityWorldServerEvents {
             me.daddychurchill.CityWorld.worldgen.ZooCatalog.bind(level.registryAccess());
             me.daddychurchill.CityWorld.worldgen.SchematicFitOuts.bind(level.registryAccess());
             me.daddychurchill.CityWorld.worldgen.Vehicles.bind(level.registryAccess());
+            me.daddychurchill.CityWorld.worldgen.Spawns.bind(level.registryAccess());
+            me.daddychurchill.CityWorld.worldgen.PoleSigns.bind(level.registryAccess());
         }
     }
 

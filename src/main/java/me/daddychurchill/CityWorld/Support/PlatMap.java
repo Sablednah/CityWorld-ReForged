@@ -127,6 +127,8 @@ public class PlatMap {
 
 			// do what we came here for
 			platlot.generateBlocks(generator, this, chunk, context, platX, platZ);
+			// last, once the lot (and any subclass after it) has drawn everything: what a pack places here
+			me.daddychurchill.CityWorld.worldgen.Spawns.apply(generator, this, platlot, chunk);
 		}
 	}
 
