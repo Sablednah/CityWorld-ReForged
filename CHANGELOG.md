@@ -9,8 +9,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Added
 
-- **Highways between the cities of a vanilla world.** Each city gets a road to its neighbours east and south,
-  leaving from the end of one of its own streets, across its open edge, at its own level. That street runs on into
+- **Highways between the cities of a vanilla world.** Each city gets a road to the nearest city east and the nearest
+  south (up to `reach` cells past empty ones, so a world of sparse cities still has its roads), leaving from the end of one of its own streets, across its open edge, at its own level. That street runs on into
   the highway instead of ending in a kerb, signed with the town's board and the highway's speed limit (with Macaw's
   Roads) where it would have said DEAD END. The road leaves straight along the street and only then turns, never
   across the city's own lots; where no street toward the other city has open ground beyond it, it meets one along
@@ -24,8 +24,11 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   for a truck down the middle. Villages and other surface structures are kept off the road, and what vanilla and
   biome mods grow on it (grass, bushes, springs running onto it, the trees over it) is cleared. Vanilla's ravines pass under a
   highway, not through it. Settings
-  `cities.highways` (`enabled`, `width`, `grade`, `fillMax`, `clearance`, `tunnel`, `speedLimit`) and **Highways**
-  in Customize.
+  `cities.highways` (`enabled`, `width`, `grade`, `fillMax`, `clearance`, `tunnel`, `speedLimit`, `reach`) and
+  **Highways** in Customize.
+- **Vanilla land: a city too big for its spacing is built as big as fits**, where before it was not built at all (a
+  world at the smallest spacing with the biggest sizes had a city in one cell in nine). Worlds made with 7.0 or
+  later; Customize's **City size** says "(N fit)" when the size can't fit the spacing.
   From a player's request for Highways & Byways support (GitHub issue #3); CityWorld builds its own, because that
   mod's roads join vanilla structures rather than cities.
 - **Immersive Vehicles in the city.** With Immersive Vehicles and its Official Content Pack, mall car parks hold

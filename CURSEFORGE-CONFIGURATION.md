@@ -447,8 +447,8 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 | Setting | Default | What it does |
 |---|---|---|
 | `vanillaTerrain` | `false` | **Land: vanilla** in Customize. The land is vanilla's throughout (its biomes, mountains, rivers and structures), and CityWorld builds cities on it like villages: one per `spacing`-block cell, each on its own level, with quays and natural banks where a river runs through. Modern-family and Classic styles; a style that is its own terrain (floating, flooded, dunes, astral, maze, nature, metro) ignores it. |
-| `spacing` | `2048` | Blocks between cities in a vanilla world (one city per cell this wide). `1024`–`16384`. |
-| `districts` | `3` | How many districts across a vanilla-world city is. `1`–`8`. |
+| `spacing` | `2048` | Blocks between cities in a vanilla world (one city per cell this wide). `1024`–`16384`. The whole city and its blend ring into the land must fit in its cell, so the spacing caps the size: `1024` fits 4 districts across, `1536` 6, `2048` 9, and a city *d* across needs about 179 × *d* + 284 blocks. |
+| `districts` | `3` | How many districts across a vanilla-world city is. `1`–`8`. In a world made with 7.0 or later a size too big for the spacing is built as the biggest that fits (Customize's **City size** shows "(N fit)" in gold); before 7.0 that city was not built at all. |
 | `districtsVariance` | `1` | How much each city's size varies from `districts`, plus or minus. `0`–`3`. |
 | `levelRange` | `40` | How far above CityWorld's street level (y 64) a vanilla-world city may stand, to sit on the land around it. `0`–`120`. |
 | `maxWater` | `0.35` | The share of a candidate site that may be under the sea. Datapack only. |
@@ -460,18 +460,19 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 `highways` is a group of its own:
 
 ```json
-"cities": { "highways": { "enabled": true, "width": 9, "grade": 0.1, "fillMax": 8, "clearance": 5, "tunnel": 12, "speedLimit": 70 } }
+"cities": { "highways": { "enabled": true, "width": 9, "grade": 0.1, "fillMax": 8, "clearance": 5, "tunnel": 12, "speedLimit": 70, "reach": 3 } }
 ```
 
 | Setting | Default | What it does |
 |---|---|---|
-| `enabled` | `true`* | **Vanilla land only.** A road from each city to its neighbour east and south. It leaves each city along one of the city's own streets, at the city's level, then winds round hills and along valleys rather than over them, and climbs no steeper than `grade`. Where the ground is higher it is cut through, where lower it is banked up, over water and deep drops it is a bridge (railings, piers), and under a ridge a tunnel (lit). Its surface is the city's street: a road mod's asphalt (Macaw's Roads) where the city has it. *On for a world made with 7.0 or later; **a world made before 7.0 never has them**, so explored land never meets a road cut off at its edge. A city with no neighbour in a cell gets no road that way. |
+| `enabled` | `true`* | **Vanilla land only.** A road from each city to the nearest city east and the nearest south (see `reach`). It leaves each city along one of the city's own streets, at the city's level, then winds round hills and along valleys rather than over them, and climbs no steeper than `grade`. Where the ground is higher it is cut through, where lower it is banked up, over water and deep drops it is a bridge (railings, piers), and under a ridge a tunnel (lit). Its surface is the city's street: a road mod's asphalt (Macaw's Roads) where the city has it. *On for a world made with 7.0 or later; **a world made before 7.0 never has them**, so explored land never meets a road cut off at its edge. A city with no city within `reach` that way gets no road that way. |
 | `width` | `9` | The road's width in blocks, plus a kerb each side. `3`–`15`. |
 | `grade` | `0.1` | The steepest climb: blocks up per block along (`0.1` is one in ten). The steps are half slabs where the surface has a slab. `0.02`–`0.5`. |
 | `fillMax` | `8` | The deepest a road is banked up on the ground; deeper than this it is a bridge. `0`–`32`. |
 | `clearance` | `5` | How high a bridge deck stands above the sea when it crosses water. `1`–`32`. |
 | `tunnel` | `12` | How far the ground must stand above the road for a tunnel; less is a cut with sloped sides. `8`–`128`. |
 | `speedLimit` | `70` | The limit signed where a city's street becomes the highway (with a road mod's signs: Macaw's Roads), beside the town's board. `10`–`120`, in tens. |
+| `reach` | `3` | How many cells (each `spacing` blocks) a highway may run past empty ones to the next city. A city takes the next cell's city when there is one, otherwise the nearest that way up to this many cells off whose straight line passes no other city. `1` joins next-door cities only. `1`–`6`. |
 
 `oceans` is a group of its own:
 
