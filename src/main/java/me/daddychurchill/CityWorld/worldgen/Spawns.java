@@ -121,7 +121,8 @@ public final class Spawns {
                             entityId = "minecraft:" + entityId;
                         if (!loaded(entityId.substring(0, entityId.indexOf(':'))))
                             continue;
-                        if (net.minecraft.world.entity.EntityType.byString(entityId).isEmpty()) {
+                        final String wanted = entityId; // the registry's keys, by name: the same on every line
+                        if (BuiltInRegistries.ENTITY_TYPE.keySet().stream().noneMatch(k -> k.toString().equals(wanted))) {
                             problems.add(id + ": no entity '" + entityId + "'");
                             continue;
                         }
