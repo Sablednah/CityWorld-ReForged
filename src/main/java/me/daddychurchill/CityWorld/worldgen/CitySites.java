@@ -1,5 +1,6 @@
 package me.daddychurchill.CityWorld.worldgen;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import me.daddychurchill.CityWorld.compat.noise.SimplexNoiseGenerator;
@@ -252,6 +253,30 @@ public final class CitySites {
     /** How far a site's streets stand above the level the city is planned and drawn at. */
     public int shift(Site site) {
         return site.level() - streetLevel;
+    }
+
+    /**
+     * Judge every cell of this square of cells not judged yet, side by side on the planning pool, and wait for them:
+     * a highway asks the cells for several cells around (its {@code reach}), each costs about half a second of vanilla
+     * heights, and judged one after another they held a world's spawn area for a minute (the owner's seed at the
+     * smallest spacing: one worker judging, the rest waiting on its road). On a planning-pool thread, nothing is
+     * queued (the pool would wait on itself): the cells are judged as they are asked.
+     */
+    public void judgeAll(int cellX0, int cellZ0, int cellX1, int cellZ1) {
+        if (Thread.currentThread().getName().startsWith("cityworld-planner"))
+            return;
+        List<java.util.concurrent.CompletableFuture<Void>> waiting = new java.util.ArrayList<>();
+        int spacing = config.spacing();
+        for (int cx = cellX0; cx <= cellX1; cx++)
+            for (int cz = cellZ0; cz <= cellZ1; cz++) {
+                if (cells.containsKey(((long) cx << 32) ^ (cz & 0xffffffffL)))
+                    continue;
+                int x = cx * spacing, z = cz * spacing;
+                waiting.add(java.util.concurrent.CompletableFuture.runAsync(() -> verdictAt(x, z),
+                        me.daddychurchill.CityWorld.Support.Planners.POOL));
+            }
+        for (var w : waiting)
+            Waiting.join(w);
     }
 
     /** The verdict for the cell holding this column (computed on first ask). */

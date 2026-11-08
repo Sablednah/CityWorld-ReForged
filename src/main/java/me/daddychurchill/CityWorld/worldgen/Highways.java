@@ -282,6 +282,9 @@ public final class Highways {
         // than the pad) one more
         int cx0 = Math.floorDiv(x0, cell) - reach - 1, cx1 = Math.floorDiv(x1, cell) + reach + 1;
         int cz0 = Math.floorDiv(z0, cell) - reach - 1, cz1 = Math.floorDiv(z1, cell) + reach;
+        // the cells asked, judged side by side first (a partner further out is judged when its cone is searched)
+        if (reach > 1)
+            sites.judgeAll(cx0, cz0, cx1, cz1);
         for (int cx = cx0; cx <= cx1; cx++)
             for (int cz = cz0; cz <= cz1; cz++) {
                 CitySites.Site here = site(cx, cz);
