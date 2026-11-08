@@ -96,6 +96,14 @@ public final class PoleSigns {
         return net.neoforged.fml.ModList.get().isLoaded(mod);
     }
 
+    /** Whether a block is one of IV's poles: what the highway sweep leaves standing. */
+    public static boolean owns(BlockState state) {
+        if (sets.isEmpty())
+            return false;
+        Material pole = Material.of("mts:pole");
+        return pole != null && state.is(pole.getBlockState().getBlock());
+    }
+
     /** Whether any sign set is installed. */
     public static boolean any() {
         return !sets.isEmpty();
