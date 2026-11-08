@@ -285,6 +285,7 @@ public final class Highways {
         // the cells asked, judged side by side first (a partner further out is judged when its cone is searched)
         if (reach > 1)
             sites.judgeAll(cx0, cz0, cx1, cz1);
+        List<Object[]> wanted = new ArrayList<>();
         for (int cx = cx0; cx <= cx1; cx++)
             for (int cz = cz0; cz <= cz1; cz++) {
                 CitySites.Site here = site(cx, cz);
@@ -305,12 +306,26 @@ public final class Highways {
                     int bz0 = Math.min(here.centreZ(), there.centreZ()) - pad, bz1 = Math.max(here.centreZ(), there.centreZ()) + pad;
                     if (x1 < bx0 || x0 > bx1 || z1 < bz0 || z0 > bz1)
                         continue;
-                    Link link = link(cx, cz, dir, here, there);
-                    if (link != null && link.touches(x0, z0, x1, z1))
-                        found.add(link);
+                    wanted.add(new Object[] { cx, cz, dir, here, there });
                 }
             }
+        // First plan every link nobody has started, this thread taking each in turn; then wait for the ones others are
+        // planning. Taken in order and waited on one by one, a chunk wanting five links waited out the first while
+        // every other worker did too, then queued behind the second: the owner's spawn area at the smallest spacing
+        // planned its fourteen links one at a time.
+        for (Object[] w : wanted)
+            if (!links.containsKey(linkKey((int) w[0], (int) w[1], (int) w[2])))
+                link((int) w[0], (int) w[1], (int) w[2], (CitySites.Site) w[3], (CitySites.Site) w[4]);
+        for (Object[] w : wanted) {
+            Link link = link((int) w[0], (int) w[1], (int) w[2], (CitySites.Site) w[3], (CitySites.Site) w[4]);
+            if (link != null && link.touches(x0, z0, x1, z1))
+                found.add(link);
+        }
         return found;
+    }
+
+    private static long linkKey(int cx, int cz, int dir) {
+        return ((long) cx << 33) ^ ((long) cz << 1) ^ dir;
     }
 
     /**
@@ -351,7 +366,7 @@ public final class Highways {
     }
 
     private Link link(int cx, int cz, int dir, CitySites.Site here, CitySites.Site there) {
-        long key = ((long) cx << 33) ^ ((long) cz << 1) ^ dir;
+        long key = linkKey(cx, cz, dir);
         // one thread plans a link and the rest wait for it (every chunk along a new road asks at once); planned outside
         // any map lock, waited through Waiting.join (never a bare join on a worker)
         var mine = new java.util.concurrent.CompletableFuture<java.util.Optional<Link>>();
