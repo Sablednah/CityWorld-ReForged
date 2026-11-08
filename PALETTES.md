@@ -556,6 +556,88 @@ ships the Official Content Pack's and the Official Automobile Pack's road vehicl
 - A vehicle parks with the brake on, a charged battery and `roads.vehicleFuel` millibuckets of lava in the tank
   (none by default: the gas stations' pumps are full). Settings `roads.vehicles`, `roads.oddsOfParkedVehicle`.
 
+### Road signs on Immersive Vehicles' poles (from 7.0)
+
+With Immersive Vehicles and its Official Signs pack (`osip`) or the Official Content Pack, a city's road signs stand
+on IV poles, and those that carry text carry it: the **town's name** on its boards, the limit on a speed sign, and on
+a highway an **overhead gantry** naming the city ahead. Each sign pack is one file in `cityworld/pole_signs/`
+(CityWorld ships `osip`, priority 20, and `official_content_pack`, 10); a sign no installed set has falls back to
+Macaw's Roads if that is installed. The signs:
+
+| CityWorld's sign | Where | osip | OCP |
+|---|---|---|---|
+| `stop` | the stem of a T | `sign_stop` | `sign_stop` |
+| `dead_end` | a street's last chunk | `sign_informational` `_deadend` | `sign_deadend` |
+| `town`, `town_end` | where a street leaves for the wild or a highway: the town's name, coming and going | `sign_town` `_entrance` / `_exit` | |
+| `speed_limit`, `speed_limit_end` | where the limit changes (`roads.speedLimitUrban`/`Rural`) | `sign_allowed` `_speedlimit` / `_speedlimitend` | `sign_speedlimit` |
+| `motorway`, `motorway_end` | a highway, leaving and coming into a city | `sign_informational` `_highway` / `_highwayend` | `sign_highway` / `sign_highwayend` |
+| `tunnel`, `steep_ascent`, `steep_descent` | before a tunnel, a long climb or drop | `sign_informational` `_tunnel`, `sign_warn` `_ascent` / `_descent` | |
+| `gantry` | over a highway's lanes, 24 samples out: the city it leads to | `signhighway` `_exitbblank` | |
+
+A set for another sign pack:
+
+```json
+{
+  "requires_mod": "mysigns",
+  "pack": "mysigns",
+  "core": "pole_core",
+  "priority": 30,
+  "signs": {
+    "town": { "sign": "sign_welcome", "sub": "_blue", "text": "Town Name", "max": 20 },
+    "stop": { "sign": "sign_stop" }
+  }
+}
+```
+
+`pack` is the sign pack's mod id; `core` its pole core (`jsondefs/poles/<core>.json`); each sign names the pole
+component (`sign`, a file in `jsondefs/poles/`), its `sub` (a `definitions[].subName`) and, for one with text, the
+`text` field's `fieldName` and `maxLength` (`rendering.textObjects` in the same file). A higher `priority` wins; a set
+with only some signs leaves the rest to the next. Town names come from `naming` (see CURSEFORGE-CONFIGURATION.md).
+
+### Putting anything in the city: spawns (from 7.0)
+
+"How do I make X appear?" One file per thing in `data/<your namespace>/cityworld/spawn/<name>.json` puts a mob, a
+mod's NPC, a parked vehicle or a block with its data (a vending machine, a workstation) in the lots, districts,
+places and styles you choose. CityWorld ships none, so a world without your pack draws exactly what it drew.
+
+```json
+{
+  "requires_mod": "guardvillagers",
+  "entity": "guardvillagers:guard{PersistenceRequired:1b}",
+  "lots": ["structure"],
+  "districts": ["municipal", "highrise"],
+  "styles": ["modern"],
+  "at": "indoors",
+  "odds": 0.25,
+  "count": 1,
+  "count_max": 2
+}
+```
+
+| Field | Default | What it does |
+|---|---|---|
+| `entity` | | An entity in `/summon` form: its id, then its data (`"minecraft:villager{VillagerData:{profession:\"minecraft:librarian\"}}"`). |
+| `vehicle` | | Or a parked vehicle of that [kind](#parked-vehicles-immersive-vehicles): `car`, `truck`, `quad`, `fire_engine`, or your own. |
+| `block` | | Or a block in `/setblock` form, its data included (`"mymod:vending_machine[facing=north]{Stock:[...]}"`). |
+| `requires_mod` | | The file is ignored unless this mod is installed. An entity whose namespace is not installed is ignored too. |
+| `lots` | any | Lot class names (`ParkingLot`, `FinishedBuildingLot`, `HospitalLot`, `PlazaLot`, `RoadLot`, `MallLot`, ... — F3 shows the one you stand in) or the lot kinds `structure` (buildings), `road`, `roundabout`, `nature`. |
+| `districts` | any | The district's building family: `highrise`, `midrise`, `lowrise`, `industrial`, `municipal`, `construction`, `neighborhood`, `farm`, `park`, `roundabout`, `nature`, `outland`, `astral`. |
+| `styles` | any | World styles: `modern`, `apocalypse`, `classic`, `destroyed`, ... |
+| `places` | any | Place names ([naming](CURSEFORGE-CONFIGURATION.md): a vanilla-land city's name, or a CityWorld district's: `"District 12"`). |
+| `environments` | any | `normal`, `nether`, `the_end`. |
+| `land` | `any` | `cityworld` (CityWorld's own land) or `vanilla` (cities in a vanilla world). |
+| `at` | `outdoors` | `outdoors`: on the top of the ground, a roof or a road. `indoors`: on a floor with something over it within 16 blocks (rooms, basements, car park decks). `anywhere`. Feet and head clear, a solid top underfoot. |
+| `odds` | `1.0` | The chance per chunk that matches. |
+| `count`, `count_max` | `1`, `0` | How many when it does: `count`, or `count` to `count_max`. |
+| `persistent` | `true` | Entities never despawn (`PersistenceRequired`), unless `false` or their data says otherwise. |
+
+- Things are written into the chunk as it generates, the way a saved chunk holds them: an entity is loaded from
+  its data, not spawned, so a mob's random looks (a villager's biome, equipment) are only what its data says, and
+  mods that act on a spawn (Minecraft Comes Alive converting villagers) do not see it.
+- Each file rolls on its own stream from the world seed, the chunk and the file's id: adding or removing a file
+  never moves anything else, and the same seed puts the same things in the same places.
+- The log names every file it read and every one it skipped and why (`CityWorld spawns:`).
+
 ## Data maps: swapping blocks, unlit lights, biome ground
 
 Tags say *which* blocks belong to a pool. **Data maps** attach a value to a block or biome instead. Three

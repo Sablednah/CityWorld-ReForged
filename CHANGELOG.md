@@ -34,6 +34,16 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   its fuel pumps, full of lava. The vehicles are data (`cityworld:vehicle`), so a pack can add its own; settings
   `roads.vehicles`, `roads.oddsOfParkedVehicle`, `roads.vehicleFuel`. Schematic fit-outs can now carry a block's
   own data and turn a heading kept in it (`heading`) with the building.
+- **Road signs on Immersive Vehicles' poles, with names.** With the Official Signs pack (or the Official Content
+  Pack's signs), stop, dead end, speed limit, motorway, tunnel and steep signs stand on IV poles; a town's boards
+  carry its name, and highways get overhead gantries naming the city ahead. Sign packs are data
+  (`cityworld:pole_signs`); Macaw's Roads fills in any sign a pack lacks.
+- **Places have names.** Every city in a vanilla world, and every district of CityWorld's own land (4x4 platmaps),
+  is named — `naming.placeNames`/`placeStarts`/`placeEnds`, and `naming.placeFormat` (`"District {n}"`, `"City {n}"`)
+  for the styles that number their places.
+- **Put anything in the city: spawns.** Datapack registry `cityworld:spawn` places any entity (`/summon` form), parked
+  vehicle or block with its data, by lot, district, place, style, land and dimension, indoors or out, with odds and
+  counts. CityWorld ships none.
 - **Deep oceans on CityWorld's own land.** Now and then the land runs down a shelf into a wide ocean thirty
   blocks deep, with vanilla's ocean biomes (deep, cold, frozen, lukewarm, warm) and what lives in them: ocean
   monuments, ocean ruins, shipwrecks and buried treasure, and the sea structures of mods that ask for ocean biomes

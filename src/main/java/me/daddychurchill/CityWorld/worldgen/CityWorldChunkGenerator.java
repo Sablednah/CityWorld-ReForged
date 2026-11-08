@@ -846,7 +846,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private void drawHighwaySigns(CityWorldGenerator context, ChunkAccess chunk, List<Highways.Link> links) {
         me.daddychurchill.CityWorld.Support.RoadKit kit = me.daddychurchill.CityWorld.Support.RoadKit.forWorld(context);
-        if (kit == null)
+        if (kit == null && !PoleSigns.any())
             return;
         boolean left = context.getSettings().driveOnLeft;
         int side = highways.halfWidth() + 1;
@@ -861,6 +861,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         Math.floorDiv((int) Math.floor(link.z()[k]), 16)))
                     k += dir;
                 spots.add(new Object[] { k + dir * 8, dir, "motorway" });
+                // the traffic coming in: the end of the motorway (Immersive Vehicles' signs; Macaw's has none), and
+                // further out a gantry over its lanes naming the city it is coming to
+                spots.add(new Object[] { k + dir * 8, -dir, "motorway_end" });
+                if (PoleSigns.has("gantry"))
+                    highwayGantry(context, chunk, link, k + dir * 24, -dir, end == 0 ? 0 : n - 1, side, left);
             }
             for (int k = 0; k < n; ) {
                 if (link.kind()[k] != Highways.Kind.TUNNEL) {
@@ -899,8 +904,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         int n = link.x().length;
         if (k < 1 || k >= n - 1 || link.kind()[k] != Highways.Kind.GROUND)
             return;
-        Material sign = kit.sign(name);
-        if (sign == null)
+        Material sign = kit == null ? null : kit.sign(name);
+        if (sign == null && !PoleSigns.has(name))
             return;
         double tx = (link.x()[k + 1] - link.x()[k - 1]) * dir, tz = (link.z()[k + 1] - link.z()[k - 1]) * dir;
         double l = Math.hypot(tx, tz);
@@ -932,14 +937,79 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         for (int y = base; y <= top + 3; y++)
             if (y > top && !chunk.getBlockState(cursor.set(x, y, z)).isAir())
                 return;
+        // a sign faces the way it is read from: against its traffic, snapped to the nearest side
+        me.daddychurchill.CityWorld.compat.BlockFace facing = against(tx, tz);
+        if (PoleSigns.place(chunk, name, "", x, base, top + 3, z, facing) || sign == null)
+            return; // Immersive Vehicles' signs first, then Macaw's
         BlockState rod = (kit.rod != null ? kit.rod : Material.SPRUCE_FENCE).getBlockState();
         for (int y = base; y < top + 3; y++)
             chunk.setBlockState(cursor.set(x, y, z), rod);
-        // a sign faces the way it is read from: against its traffic, snapped to the nearest side
-        me.daddychurchill.CityWorld.compat.BlockFace facing = Math.abs(tx) >= Math.abs(tz)
+        chunk.setBlockState(cursor.set(x, top + 3, z), sign.withFacing(facing));
+    }
+
+    /** The side a sign shows to the traffic travelling (tx, tz): against it, snapped to the nearest. */
+    private static me.daddychurchill.CityWorld.compat.BlockFace against(double tx, double tz) {
+        return Math.abs(tx) >= Math.abs(tz)
                 ? (tx > 0 ? me.daddychurchill.CityWorld.compat.BlockFace.WEST : me.daddychurchill.CityWorld.compat.BlockFace.EAST)
                 : (tz > 0 ? me.daddychurchill.CityWorld.compat.BlockFace.NORTH : me.daddychurchill.CityWorld.compat.BlockFace.SOUTH);
-        chunk.setBlockState(cursor.set(x, top + 3, z), sign.withFacing(facing));
+    }
+
+    /** How high a gantry's bar runs over the deck: clear of a lorry. */
+    private static final int GANTRY_CLEARANCE = 6;
+
+    /**
+     * An overhead gantry across the highway at sample {@code k} for the traffic travelling {@code dir}: a pole on each
+     * kerb, a bar of poles over the deck, and on the bar over that traffic's lanes the name of the city at sample
+     * {@code toward} (Immersive Vehicles' signs). Each chunk draws the cells that fall in it; open ground only.
+     */
+    private void highwayGantry(CityWorldGenerator context, ChunkAccess chunk, Highways.Link link, int k, int dir,
+            int toward, int side, boolean left) {
+        int n = link.x().length;
+        if (k < 1 || k >= n - 1 || link.kind()[k] != Highways.Kind.GROUND)
+            return;
+        double tx = (link.x()[k + 1] - link.x()[k - 1]) * dir, tz = (link.z()[k + 1] - link.z()[k - 1]) * dir;
+        double l = Math.hypot(tx, tz);
+        if (l == 0)
+            return;
+        tx /= l;
+        tz /= l;
+        double sx = -tz, sz = tx; // the right of the traffic
+        if (left) {
+            sx = -sx;
+            sz = -sz;
+        }
+        String city = me.daddychurchill.CityWorld.Support.PlaceNames.at(context,
+                Math.floorDiv((int) Math.floor(link.x()[toward]), 16), Math.floorDiv((int) Math.floor(link.z()[toward]), 16));
+        me.daddychurchill.CityWorld.compat.BlockFace facing = against(tx, tz);
+        int deck = link.y()[k], bar = deck + GANTRY_CLEARANCE;
+        ChunkPos pos = chunk.getPos();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        int signAt = Math.max(1, side / 2);
+        java.util.Set<Long> done = new java.util.HashSet<>();
+        for (int t = -side; t <= side; t++) {
+            int x = (int) Math.floor(link.x()[k] + sx * t), z = (int) Math.floor(link.z()[k] + sz * t);
+            if (!done.add(BlockPos.asLong(x, 0, z)) || x < pos.getMinBlockX() || x > pos.getMaxBlockX()
+                    || z < pos.getMinBlockZ() || z > pos.getMaxBlockZ())
+                continue;
+            boolean kerb = Math.abs(t) == side;
+            int base = bar;
+            if (kerb) { // the post: from the kerb's top
+                base = Integer.MIN_VALUE;
+                for (int y = deck + 3; y >= deck - 3; y--)
+                    if (!chunk.getBlockState(cursor.set(x, y, z)).isAir()) {
+                        base = y + 1;
+                        break;
+                    }
+                if (base == Integer.MIN_VALUE)
+                    continue;
+            }
+            boolean clear = true;
+            for (int y = base; y <= bar && clear; y++)
+                clear = chunk.getBlockState(cursor.set(x, y, z)).isAir();
+            if (!clear)
+                continue;
+            PoleSigns.place(chunk, t == signAt ? "gantry" : null, city, x, base, bar, z, facing);
+        }
     }
 
     /**
@@ -3848,10 +3918,12 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             CitySites.Site site = verdict == null ? null : verdict.site();
             info.add(verdict == null ? "CityWorld: this cell is not judged yet"
                     : site == null ? "CityWorld: no city in this cell"
-                    : String.format("CityWorld: city at %d, %d — %d districts, streets at y %d, edge %+d blocks",
+                    : String.format("CityWorld: %s, city at %d, %d — %d districts, streets at y %d, edge %+d blocks",
+                            me.daddychurchill.CityWorld.Support.PlaceNames.ofCity(context, site),
                             site.centreX(), site.centreZ(), site.districts(), site.level() + 1,
                             (int) sites.edgeDistance(site, pos.getX(), pos.getZ())));
-        }
+        } else
+            info.add("CityWorld: " + me.daddychurchill.CityWorld.Support.PlaceNames.at(context, pos.getX() >> 4, pos.getZ() >> 4));
     }
 
     /** The context if it has been built, else null — for diagnostics that must not force creation. */
