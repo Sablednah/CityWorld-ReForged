@@ -2792,6 +2792,22 @@ public final class CityWorldSelfTest {
         } catch (Exception e) {
             fail("spawns: " + e);
         }
+        // place names (the town signs, JourneyMap's tooltips, CityWorldAPI.placeName): one per district, the same
+        // every time it is asked, and the API agrees
+        {
+            ServerLevel over = server.overworld();
+            if (over.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator cg) {
+                CityWorldGenerator ctx = cg.getContext(over);
+                String a = me.daddychurchill.CityWorld.Support.PlaceNames.at(ctx, 0, 0);
+                String again = me.daddychurchill.CityWorld.Support.PlaceNames.at(ctx, 3, 7);
+                String next = me.daddychurchill.CityWorld.Support.PlaceNames.at(ctx, 40 * 3, 0);
+                String api = me.daddychurchill.CityWorld.api.CityWorldAPI.placeName(over, new net.minecraft.core.BlockPos(8, 64, 8)).orElse("");
+                report.put("place.names", a + " / " + next + (ctx.citySites != null ? " (vanilla land)" : ""));
+                if (a.isEmpty() || !a.equals(again) || !a.equals(api))
+                    fail("place names: expected one name for a district, the API agreeing, got '" + a + "', '" + again
+                            + "', api '" + api + "'");
+            }
+        }
         if (r.frames().size() != 1 || !r.frames().get(0).item().is(net.minecraft.world.item.Items.DIAMOND_SWORD)
                 || !r.frames().get(0).item().getHoverName().getString().contains("Ed wins the bet"))
             fail("fit-outs: expected one named diamond sword, got " + r.frames());
