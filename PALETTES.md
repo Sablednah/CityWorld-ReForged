@@ -560,7 +560,8 @@ ships the Official Content Pack's and the Official Automobile Pack's road vehicl
 
 With Immersive Vehicles and its Official Signs pack (`osip`) or the Official Content Pack, a city's road signs stand
 on IV poles, and those that carry text carry it: the **town's name** on its boards, the limit on a speed sign, and on
-a highway an **overhead gantry** naming the city ahead. Each sign pack is one file in `cityworld/pole_signs/`
+a highway an **overhead gantry** naming the city ahead. Each sign pack is one file in
+`data/<your namespace>/cityworld/pole_signs/<name>.json`
 (CityWorld ships `osip`, priority 20, and `official_content_pack`, 10); a sign no installed set has falls back to
 Macaw's Roads if that is installed. The signs:
 
@@ -589,10 +590,14 @@ A set for another sign pack:
 }
 ```
 
-`pack` is the sign pack's mod id; `core` its pole core (`jsondefs/poles/<core>.json`); each sign names the pole
+`pack` is the sign pack's **mod id** — a sign pack Immersive Vehicles loads that is not also a mod (no
+`mods.toml`) is not seen; `core` its pole core (`jsondefs/poles/<core>.json`); each sign names the pole
 component (`sign`, a file in `jsondefs/poles/`), its `sub` (a `definitions[].subName`) and, for one with text, the
 `text` field's `fieldName` and `maxLength` (`rendering.textObjects` in the same file). A higher `priority` wins; a set
-with only some signs leaves the rest to the next. Town names come from `naming` (see CURSEFORGE-CONFIGURATION.md).
+with only some signs leaves the rest to the next; `town` and `town_end` (and the limit and its end) are separate
+entries. **A component or sub name the pack does not have makes Immersive Vehicles remove the pole** on its first
+tick ("Did a pack change?" in the log), so check each against the pack's jar. Town names come from `naming` (see
+CURSEFORGE-CONFIGURATION.md).
 
 ### Putting anything in the city: spawns (from 7.0)
 
@@ -620,20 +625,23 @@ places and styles you choose. CityWorld ships none, so a world without your pack
 | `vehicle` | | Or a parked vehicle of that [kind](#parked-vehicles-immersive-vehicles): `car`, `truck`, `quad`, `fire_engine`, or your own. |
 | `block` | | Or a block in `/setblock` form, its data included (`"mymod:vending_machine[facing=north]{Stock:[...]}"`). |
 | `requires_mod` | | The file is ignored unless this mod is installed. An entity whose namespace is not installed is ignored too. |
-| `lots` | any | Lot class names (`ParkingLot`, `FinishedBuildingLot`, `HospitalLot`, `PlazaLot`, `RoadLot`, `MallLot`, ... — F3 shows the one you stand in) or the lot kinds `structure` (buildings), `road`, `roundabout`, `nature`. |
+| `lots` | any | Lot class names, exactly (a subclass does not match its parent): shops `StoreBuildingLot`, `CornerShopLot`, `MallLot`; offices and towers `OfficeBuildingLot`, `FinishedBuildingLot`; `HospitalLot`, `MuseumBuildingLot`, `PlazaLot`, `ParkingLot`, `SubwayStationLot`, `RoadLot`, `HouseLot`, `FarmLot`, `ParkLot`, ... — F3 shows the one you stand in. Or the lot kinds `structure` (any building), `road`, `roundabout`, `nature`. |
 | `districts` | any | The district's building family: `highrise`, `midrise`, `lowrise`, `industrial`, `municipal`, `construction`, `neighborhood`, `farm`, `park`, `roundabout`, `nature`, `outland`, `astral`. |
 | `styles` | any | World styles: `modern`, `apocalypse`, `classic`, `destroyed`, ... |
-| `places` | any | Place names ([naming](CURSEFORGE-CONFIGURATION.md): a vanilla-land city's name, or a CityWorld district's: `"District 12"`). |
+| `places` | any | Place names ([naming](CURSEFORGE-CONFIGURATION.md): a vanilla-land city's name, or a CityWorld district's; F3 shows it. `"District 12"` needs `naming.placeFormat` `"District {n}"`). |
 | `environments` | any | `normal`, `nether`, `the_end`. |
 | `land` | `any` | `cityworld` (CityWorld's own land) or `vanilla` (cities in a vanilla world). |
-| `at` | `outdoors` | `outdoors`: on the top of the ground, a roof or a road. `indoors`: on a floor with something over it within 16 blocks (rooms, basements, car park decks). `anywhere`. Feet and head clear, a solid top underfoot. |
+| `at` | `outdoors` | `outdoors`: on the top of the ground, a roof or a road. `indoors`: on a floor with anything over it within 16 blocks (rooms, basements, car park decks — and the ground under a tree). `anywhere`. Feet and head clear, a solid top underfoot, from 48 below the street to 160 above it (deep vault levels are out of reach). |
 | `odds` | `1.0` | The chance per chunk that matches. |
 | `count`, `count_max` | `1`, `0` | How many when it does: `count`, or `count` to `count_max`. |
 | `persistent` | `true` | Entities never despawn (`PersistenceRequired`), unless `false` or their data says otherwise. |
 
 - Things are written into the chunk as it generates, the way a saved chunk holds them: an entity is loaded from
-  its data, not spawned, so a mob's random looks (a villager's biome, equipment) are only what its data says, and
-  mods that act on a spawn (Minecraft Comes Alive converting villagers) do not see it.
+  its data, not spawned, so a mob's random looks (a villager's biome, equipment) are only what its data says — give
+  a guard its gear in the data (`HandItems`, `ArmorItems` on 1.20.1/1.21.1; `equipment` from 1.21.5) — and mods that
+  act on a spawn (Minecraft Comes Alive converting villagers) do not see it.
+- `odds` is per matching chunk: a district has a hundred, so `0.25` on `structure` lots is dozens. A block keeps the
+  `facing` you write; it is not turned to a wall.
 - Each file rolls on its own stream from the world seed, the chunk and the file's id: adding or removing a file
   never moves anything else, and the same seed puts the same things in the same places.
 - The log names every file it read and every one it skipped and why (`CityWorld spawns:`).
