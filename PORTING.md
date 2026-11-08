@@ -35,7 +35,22 @@ All on master and the five branches, nothing pushed:
 - `BUILDING-DATAPACKS-PLAN.md` — Fable's plan for building kinds as data (`cityworld:building`: tower/campus/kit/
   schematic; fire station phase 0, police campus phase 1, outland airport kit phase 2-3, style ids as data phase 4;
   vanilla jigsaw NOT reused for v1). For the owner to read and pick from; nothing built.
-- Fable's pack-author walkthrough of spawns/pole signs: `scratchpad/fable-spawns-signs-review.md`.
+- Fable's pack-author walkthrough of spawns/pole signs (`scratchpad/fable-spawns-signs-review.md`, checked against
+  IV's source: our pole keys are exactly what `TileEntityPole` reads, no UUID needed, SOUTH faces south) found the
+  **highway kerb sweep would have deleted IV highway signs and gantry posts** on vanilla land — fixed `b983591f`
+  (`PoleSigns.owns`), plus diagonal gantry bars (IV joins poles only side-to-side: corner cells), cached spots,
+  entity ids checked at bind (`848dd911`: by registry key name; `EntityType.byString` is gone on 26.x), doc gaps.
+  Left as is: spots depend on neighbour-timing content to within a cell (the 6.9.0 class, on the file's own
+  stream); `pack` must be a mod id (IV loads non-mod packs from `mods/` that CityWorld cannot see); OCP-only gives
+  mixed IV/Macaw's signs; with IV only, `townBoard`'s draw shifts later draws versus the same seed without IV (no
+  change without IV). **Naming is now at the 16-field cap too.**
+- **Vanilla-land probe after the fix** (1.21.1, seed 1688298913692546204, world datapack setting
+  `cities.vanillaTerrain`, chunks -166,68 x18): motorway at (-2512,73,1213) facing west (the Macaw's spot),
+  motorway end at (-2512,73,1203) facing east, a gantry at x -2481 naming "Thornfield": posts on both kerbs (z 1202,
+  1212), the bar continuous at y 78 (deck 72 + 6) with its corner cell at z 1208.
+- **Server load of parked cars (Fable's M3), measured:** seed 8675309, chunks 77,84 x12 around a mall, 30 s settle
+  then 3 x 100-tick samples: 66 IV vehicles (15 built in ticking chunks) mean 2.4-2.8 ms/tick (max 8.1) against
+  1.1-1.2 ms (max 2.9) with `roads.vehicles` off. About +1.3 ms for a mall's worth: default kept at 0.5.
 - Probe recipe (this session's scratchpad, gone after it): `scratchpad/wl-iv.sh <checkout> <jdk> <x,z,size>` = `scripts/wideload.sh` + a test spawn datapack in
   the fresh world; needs `scratchpad/WideLoad-mts.java`-derived debug class in `src/.../debug/` (DELETE after).
 

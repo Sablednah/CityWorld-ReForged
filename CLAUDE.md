@@ -28,8 +28,10 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 - `6a7ba4ed` IV parked cars (mall car parks) + fuel pumps (gas stations); `121fb2e7` road signs on IV poles with
   town names + highway gantries (`cityworld:pole_signs`), `cityworld:spawn` (anything by lot/district/place/style,
   ships empty), place names (`naming.place*`, `CityWorldAPI.placeName`, F3). On all six lines, nothing pushed.
-  PORTING.md "▶ Resume here — 7.0.0 overnight" has the measurements and what is NOT confirmed (IV building the pole
-  objects; a client look; TPS with parked cars). `BUILDING-DATAPACKS-PLAN.md` is Fable's plan for building kinds as
+  PORTING.md "▶ Resume here — 7.0.0 overnight" has the measurements (signs with town names on both lands, a
+  gantry naming the city ahead, +1.3 ms/tick for a mall of parked cars) and what is NOT confirmed (a client look at
+  IV's poles; the pole keys were checked against IV's source, not seen built). Naming and roads are at the 16-field
+  codec cap. `BUILDING-DATAPACKS-PLAN.md` is Fable's plan for building kinds as
   data (fire/police stations, airports, styles) — the owner's to read and choose from.
 
 **▶ Resume here (2026-11-06 night): 7.0.0 is BUILT on all six lines, unreleased — deep oceans + highways.**
