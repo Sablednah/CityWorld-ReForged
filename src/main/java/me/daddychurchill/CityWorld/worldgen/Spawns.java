@@ -121,6 +121,10 @@ public final class Spawns {
                             entityId = "minecraft:" + entityId;
                         if (!loaded(entityId.substring(0, entityId.indexOf(':'))))
                             continue;
+                        if (net.minecraft.world.entity.EntityType.byString(entityId).isEmpty()) {
+                            problems.add(id + ": no entity '" + entityId + "'");
+                            continue;
+                        }
                         entityData = brace < 0 ? new CompoundTag() : parseCompound(text.substring(brace));
                     } else if (s.block().isPresent()) {
                         var parsed = BlockStateParser.parseForBlock(blockLookup, s.block().get(), true);
@@ -165,6 +169,7 @@ public final class Spawns {
         if (list.isEmpty() || lot == null)
             return;
         String place = null;
+        java.util.Map<String, List<int[]>> found = new java.util.HashMap<>(); // the cells, read once per kind of spot
         for (Bound b : list) {
             Spawn s = b.spawn();
             if (!matches(generator, platmap, lot, s))
@@ -182,7 +187,8 @@ public final class Spawns {
             int n = s.countMax() > s.count() ? s.count() + odds.getRandomInt(s.countMax() - s.count() + 1) : s.count();
             if (n <= 0)
                 continue;
-            List<int[]> spots = spots(generator, chunk, s.at());
+            List<int[]> spots = new ArrayList<>(found.computeIfAbsent(s.at().toLowerCase(Locale.ROOT),
+                    at -> spots(generator, chunk, at)));
             for (int k = 0; k < n && !spots.isEmpty(); k++) {
                 int[] p = spots.remove(odds.getRandomInt(spots.size()));
                 place(generator, chunk, b, p[0], p[1], p[2], odds);
@@ -262,10 +268,12 @@ public final class Spawns {
             return;
         int lift = ShiftedRegion.shiftOf(chunk.getWorld()); // a city drawn below its level (vanilla land) stands lifted
         if (b.state() != null) {
-            chunk.getActualBlock(x, y, z).setBlockData(b.state(), false);
-            if (b.blockData() != null && b.state().getBlock() instanceof EntityBlock eb) {
+            var cell = chunk.getActualBlock(x, y, z);
+            cell.setBlockData(b.state(), false);
+            BlockState placed = cell.getBlockData(); // after any block substitute
+            if (b.blockData() != null && placed.getBlock() instanceof EntityBlock eb) {
                 BlockPos pos = new BlockPos(chunk.getBlockX(x), y + lift, chunk.getBlockZ(z));
-                var be = eb.newBlockEntity(pos, b.state());
+                var be = eb.newBlockEntity(pos, placed);
                 if (be != null) {
                     CompoundTag tag = b.blockData().copy();
                     tag.putString("id", String.valueOf(BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(be.getType())));
