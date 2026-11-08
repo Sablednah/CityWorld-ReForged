@@ -362,7 +362,7 @@ final class CityPlanOverlay {
                 // it would just dirty the view. Its ROADS still get drawn, though: a highway running
                 // out through the countryside is the most useful line on the whole map, and skipping
                 // the platmap outright dropped every one of them.
-                String tooltip = tooltip(platmap, family);
+                String tooltip = tooltip(context, platmap, family, platX, platZ);
                 long[] at = { platX, platZ };
                 if (family != SchematicFamily.NATURE) {
                     ServerPolygon district = district(dimension, platmap, family, platX, platZ, y, tooltip);
@@ -548,9 +548,18 @@ final class CityPlanOverlay {
         };
     }
 
-    /** The one line that describes a platmap, shared by its district tint and its streets. */
-    private static String tooltip(PlatMap platmap, SchematicFamily family) {
-        return title(family.name()) + " district · " + platmap.getNumberOfRoads() + " roads · "
+    /**
+     * The one line that describes a platmap, shared by its district tint and its streets: the place's name (the
+     * vanilla-land city, or the CityWorld-land district; {@code naming}), then the district's kind. Built on the
+     * planner pool, so a vanilla-land cell judged here for the first time costs the map, never the server thread.
+     */
+    private static String tooltip(CityWorldGenerator context, PlatMap platmap, SchematicFamily family, int platX,
+            int platZ) {
+        // the wild is nobody's district: its highways' tooltip names no place
+        String place = family == SchematicFamily.NATURE ? ""
+                : me.daddychurchill.CityWorld.Support.PlaceNames.at(context, platX + PlatMap.Width / 2,
+                        platZ + PlatMap.Width / 2) + " · ";
+        return place + title(family.name()) + " district · " + platmap.getNumberOfRoads() + " roads · "
                 + Math.round(platmap.getNaturePercent() * 100) + "% open land";
     }
 
