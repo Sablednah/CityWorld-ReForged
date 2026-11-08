@@ -5,7 +5,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Highways between the cities of a vanilla-terrain world: one road from each city to its neighbour east and south,
+ * Highways between the cities of a vanilla-terrain world: one road from each city to the nearest city east and the
+ * nearest south (the next cell's, or up to {@code highways.reach} cells past empty ones: {@link #partner}),
  * a pure function of the seed and the {@link CitySites}, planned once per link and drawn chunk by chunk.
  *
  * <p><b>A link.</b> Each end leaves its city along one of the city's own road rows (chunk lines 2 and 7 of every
@@ -89,7 +90,11 @@ public final class Highways {
         this.fillMax = settings.fillMax();
         this.clearance = settings.clearance();
         this.tunnel = settings.tunnel();
+        this.reach = settings.reach();
     }
+
+    /** How many cells a highway may reach past empty ones to the next city ({@code highways.reach}). */
+    private final int reach;
 
     /**
      * What a city's plan has on a chunk, for choosing a gate: one of its streets, something built, or open ground.
@@ -164,28 +169,129 @@ public final class Highways {
     }
 
     /**
-     * Every link whose box reaches into this square of blocks. A link joins a cell to its east or south neighbour,
-     * and its route stays within {@link #OFFSETS} offsets of the line between them, so only the links of the cells
-     * around the square's own need asking — and only those whose rough box (from the two sites alone, before any
-     * height is read) reaches it are planned.
+     * The city in the cell a site stands in (cells are {@code sites.cell()} blocks), or null.
+     */
+    private CitySites.Site site(int cx, int cz) {
+        int cell = sites.cell();
+        return sites.siteAt(cx * cell + cell / 2, cz * cell + cell / 2);
+    }
+
+    /** Cell + direction (0 east, 1 south) to the cell its highway runs to; an empty array for none. */
+    private final ConcurrentHashMap<Long, int[]> partners = new ConcurrentHashMap<>();
+
+    /**
+     * The cell the city in cell {@code (cx, cz)} runs its highway to eastward ({@code dir} 0) or southward (1), or
+     * null. The next cell's city when there is one (a world full of cities keeps its grid of roads); otherwise the
+     * nearest city in that direction up to {@link #reach} cells away whose straight line passes no other city — so a
+     * sparse world (big cities at a small spacing: the owner's, one cell in nine) still has roads between its towns.
+     * <p>Eastward is every cell with {@code dx > |dz|}, southward every cell with {@code dz >= |dx|}: between them half
+     * the plane, and the other half is the other city's, so every pair of cells is one city's to link and a road is
+     * never planned twice.
+     */
+    int[] partner(int cx, int cz, int dir) {
+        long key = ((long) cx << 33) ^ ((long) cz << 1) ^ dir;
+        int[] known = partners.get(key);
+        if (known == null) {
+            int[] found = findPartner(cx, cz, dir);
+            known = found == null ? new int[0] : found;
+            int[] raced = partners.putIfAbsent(key, known);
+            if (raced != null)
+                known = raced;
+        }
+        return known.length == 0 ? null : known;
+    }
+
+    private int[] findPartner(int cx, int cz, int dir) {
+        CitySites.Site here = site(cx, cz);
+        if (here == null)
+            return null;
+        int nx = cx + (dir == 0 ? 1 : 0), nz = cz + (dir == 0 ? 0 : 1);
+        if (site(nx, nz) != null)
+            return new int[] { nx, nz };
+        int[] best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (int k = 1; k <= reach; k++)
+            for (int side = -k; side <= k; side++) {
+                if (dir == 0 && Math.abs(side) >= k)
+                    continue; // eastward: dx > |dz|
+                int ox = dir == 0 ? k : side, oz = dir == 0 ? side : k;
+                if (ox == nx - cx && oz == nz - cz)
+                    continue;
+                CitySites.Site there = site(cx + ox, cz + oz);
+                if (there == null)
+                    continue;
+                double distance = Math.hypot(there.centreX() - here.centreX(), there.centreZ() - here.centreZ());
+                if (distance < bestDistance && clearBetween(here, there, cx, cz, cx + ox, cz + oz)) {
+                    best = new int[] { cx + ox, cz + oz };
+                    bestDistance = distance;
+                }
+            }
+        return best;
+    }
+
+    /** Whether the straight line between two cities passes clear of every other city near it. */
+    private boolean clearBetween(CitySites.Site a, CitySites.Site b, int acx, int acz, int bcx, int bcz) {
+        double lx = b.centreX() - a.centreX(), lz = b.centreZ() - a.centreZ(), length2 = lx * lx + lz * lz;
+        for (int x = Math.min(acx, bcx) - 1; x <= Math.max(acx, bcx) + 1; x++)
+            for (int z = Math.min(acz, bcz) - 1; z <= Math.max(acz, bcz) + 1; z++) {
+                CitySites.Site other = site(x, z);
+                if (other == null || other.equals(a) || other.equals(b))
+                    continue;
+                double t = Math.max(0, Math.min(1, ((other.centreX() - a.centreX()) * lx + (other.centreZ() - a.centreZ()) * lz)
+                        / Math.max(1, length2)));
+                double d = Math.hypot(a.centreX() + t * lx - other.centreX(), a.centreZ() + t * lz - other.centreZ());
+                if (d < other.radius() * 1.2 + halfWidth + SIDE + 32)
+                    return false;
+            }
+        return true;
+    }
+
+    /** The cities a city's highways run to, out of its cell and into it. */
+    private List<CitySites.Site> linkedTo(int cx, int cz) {
+        List<CitySites.Site> found = new ArrayList<>();
+        for (int dir = 0; dir < 2; dir++) {
+            int[] p = partner(cx, cz, dir);
+            if (p != null)
+                found.add(site(p[0], p[1]));
+        }
+        // a city to the west whose eastward road comes here (dx > |dz| from it), or to the north whose southward does
+        for (int k = 1; k <= reach; k++)
+            for (int side = -k; side <= k; side++) {
+                if (Math.abs(side) < k) {
+                    int[] p = partner(cx - k, cz - side, 0);
+                    if (p != null && p[0] == cx && p[1] == cz)
+                        found.add(site(cx - k, cz - side));
+                }
+                int[] q = partner(cx - side, cz - k, 1);
+                if (q != null && q[0] == cx && q[1] == cz)
+                    found.add(site(cx - side, cz - k));
+            }
+        return found;
+    }
+
+    /**
+     * Every link whose box reaches into this square of blocks. A link runs from a cell to its {@link #partner}, at
+     * most {@link #reach} cells east or south (or either side of south), and its route stays within {@link #OFFSETS}
+     * offsets of the line between them, so only the links of the cells that near the square need asking — and only
+     * those whose rough box (from the two sites alone, before any height is read) reaches it are planned.
      */
     public List<Link> linksTouching(int x0, int z0, int x1, int z1) {
         List<Link> found = new ArrayList<>();
         int cell = sites.cell();
-        // two cells west and north: a link runs east or south, and one from two cells back can reach in here (a site
-        // is only `margin` from its cell's edge, less than the pad below)
-        int cx0 = Math.floorDiv(x0, cell) - 2, cx1 = Math.floorDiv(x1, cell) + 1;
-        int cz0 = Math.floorDiv(z0, cell) - 2, cz1 = Math.floorDiv(z1, cell) + 1;
+        // a link's far end may be `reach` cells off, and its pad (a site is only `margin` from its cell's edge, less
+        // than the pad) one more
+        int cx0 = Math.floorDiv(x0, cell) - reach - 1, cx1 = Math.floorDiv(x1, cell) + reach + 1;
+        int cz0 = Math.floorDiv(z0, cell) - reach - 1, cz1 = Math.floorDiv(z1, cell) + reach;
         for (int cx = cx0; cx <= cx1; cx++)
             for (int cz = cz0; cz <= cz1; cz++) {
-                CitySites.Site here = sites.siteAt(cx * cell, cz * cell);
+                CitySites.Site here = site(cx, cz);
                 if (here == null)
                     continue;
                 for (int dir = 0; dir < 2; dir++) {
-                    int nx = cx + (dir == 0 ? 1 : 0), nz = cz + (dir == 0 ? 0 : 1);
-                    CitySites.Site there = sites.siteAt(nx * cell, nz * cell);
-                    if (there == null)
+                    int[] p = partner(cx, cz, dir);
+                    if (p == null)
                         continue;
+                    CitySites.Site there = site(p[0], p[1]);
                     // the route swings up to OFFSETS offsets off the line between the GATES, and a gate stands up to
                     // the radius across from its centre, on a road line (half a chunk more), and a run may be lengthened
                     // RUN_TRIES chunks to clear a built lot; a box from
@@ -225,13 +331,14 @@ public final class Highways {
         int cell = sites.cell();
         for (int cx = cx0; cx <= cx1; cx++)
             for (int cz = cz0; cz <= cz1; cz++) {
-                CitySites.Site here = sites.siteAt(cx * cell, cz * cell);
+                CitySites.Site here = site(cx, cz);
                 if (here == null)
                     continue;
                 for (int dir = 0; dir < 2; dir++) {
-                    CitySites.Site there = sites.siteAt((cx + (dir == 0 ? 1 : 0)) * cell, (cz + (dir == 0 ? 0 : 1)) * cell);
-                    if (there == null)
+                    int[] p = partner(cx, cz, dir);
+                    if (p == null)
                         continue;
+                    CitySites.Site there = site(p[0], p[1]);
                     Link link = link(cx, cz, dir, here, there);
                     if (link != null)
                         found.add(link);
@@ -296,11 +403,7 @@ public final class Highways {
         int cell = sites.cell();
         int cx = Math.floorDiv(site.centreX(), cell), cz = Math.floorDiv(site.centreZ(), cell);
         int bits = 0;
-        int[][] around = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
-        for (int[] o : around) {
-            CitySites.Site there = sites.siteAt((cx + o[0]) * cell + cell / 2, (cz + o[1]) * cell + cell / 2);
-            if (there == null)
-                continue;
+        for (CitySites.Site there : linkedTo(cx, cz)) {
             Gate g = gateOf(site, there);
             int gx = Math.floorDiv((int) Math.floor(g.x - g.dx * 8), 16), gz = Math.floorDiv((int) Math.floor(g.z - g.dz * 8), 16);
             if (gx == chunkX && gz == chunkZ)
