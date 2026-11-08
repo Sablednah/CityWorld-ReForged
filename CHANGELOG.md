@@ -40,7 +40,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   (`cityworld:pole_signs`); Macaw's Roads fills in any sign a pack lacks.
 - **Places have names.** Every city in a vanilla world, and every district of CityWorld's own land (4x4 platmaps),
   is named — `naming.placeNames`/`placeStarts`/`placeEnds`, and `naming.placeFormat` (`"District {n}"`, `"City {n}"`)
-  for the styles that number their places.
+  for the styles that number their places. The name is on the town signs, F3, JourneyMap's district tooltips
+  ("Midtown · Highrise district · ...") and `CityWorldAPI.placeName` for other mods.
 - **Put anything in the city: spawns.** Datapack registry `cityworld:spawn` places any entity (`/summon` form), parked
   vehicle or block with its data, by lot, district, place, style, land and dimension, indoors or out, with odds and
   counts. CityWorld ships none.
