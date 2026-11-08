@@ -199,6 +199,7 @@ public final class CityWorldSelfTest {
             checkPalettesShipEmpty();
             checkOceans(server);
             checkHighways();
+            checkCityFitAndReach();
             checkBiomeGroundTags(server);
             checkPlanning();
             checkPristineTwin();
@@ -816,6 +817,56 @@ public final class CityWorldSelfTest {
      * y110 across every east-west route and a river across every north-south one. Each link must leave both cities on
      * a road line at the city's level, climb no steeper than the grade, bridge the river and tunnel the ridge.
      */
+    /**
+     * Vanilla land, 7.0: a size rolled too big for the cell is built as the biggest that fits (the owner's world at
+     * spacing 1024 with sizes 6 +/- 2 refused every roll over 4 and had a city in one cell in nine), an older world keeps
+     * refusing it, and a highway reaches past empty cells to the next city (two islands three cells apart on a sea).
+     */
+    private void checkCityFitAndReach() {
+        var base = me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Cities.DEFAULT;
+        int fits1024 = me.daddychurchill.CityWorld.worldgen.CitySites.largestThatFits(1024);
+        int fits2048 = me.daddychurchill.CityWorld.worldgen.CitySites.largestThatFits(2048);
+        var big = base.withSpacing(1024).withDistricts(6).withDistrictsVariance(2);
+        me.daddychurchill.CityWorld.worldgen.CitySites.Heights flat = (x, z) -> 70;
+        var fitted = new me.daddychurchill.CityWorld.worldgen.CitySites(PLAN_SEED, 64, 63, flat, (x, z) -> false, big, true);
+        var refused = new me.daddychurchill.CityWorld.worldgen.CitySites(PLAN_SEED, 64, 63, flat, (x, z) -> false, big, false);
+        int fittedCount = 0, refusedCount = 0, oversize = 0;
+        for (int cx = 0; cx < 4; cx++)
+            for (int cz = 0; cz < 4; cz++) {
+                var f = fitted.siteAt(cx * 1024 + 512, cz * 1024 + 512);
+                if (f != null) {
+                    fittedCount++;
+                    if (f.districts() > fits1024)
+                        oversize++;
+                }
+                if (refused.siteAt(cx * 1024 + 512, cz * 1024 + 512) != null)
+                    refusedCount++;
+            }
+        // two islands on a sea, cells 0 and 3 of row 0: the road between them crosses two empty cells
+        me.daddychurchill.CityWorld.worldgen.CitySites.Heights islands = (x, z) -> z >= 0 && z < 1024
+                && ((x >= 0 && x < 1024) || (x >= 3072 && x < 4096)) ? 70 : 40;
+        var sea = new me.daddychurchill.CityWorld.worldgen.CitySites(PLAN_SEED, 64, 63, islands, (x, z) -> false,
+                base.withSpacing(1024), true);
+        int reach3 = new me.daddychurchill.CityWorld.worldgen.Highways(sea, null, base.highways())
+                .linksOfCells(0, 0, 0, 0).size();
+        var near = base.highways();
+        near = new me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Highways(near.enabled(), near.width(),
+                near.grade(), near.fillMax(), near.clearance(), near.tunnel(), near.speedLimit(), 1);
+        int reach1 = new me.daddychurchill.CityWorld.worldgen.Highways(sea, null, near).linksOfCells(0, 0, 0, 0).size();
+        report.put("cities.fit", "fits " + fits1024 + " at 1024, " + fits2048 + " at 2048; 6+/-2 at 1024 on flat land: "
+                + fittedCount + "/16 cities cut to fit, " + refusedCount + "/16 the old way");
+        report.put("highways.reach", "islands 3 cells apart: " + reach3 + " link(s) at reach 3, " + reach1 + " at reach 1");
+        if (fits1024 != 4 || fits2048 != 9)
+            fail("cities fit: expected 4 across at spacing 1024 and 9 at 2048, got " + fits1024 + " and " + fits2048);
+        if (fittedCount < 12 || oversize > 0 || refusedCount >= fittedCount)
+            fail("cities fit: on flat land at spacing 1024, 6 +/- 2 districts should give a city of at most 4 across in "
+                    + "nearly every cell, more than the old rule; got " + fittedCount + " (" + oversize + " too big) vs "
+                    + refusedCount);
+        if (reach3 != 1 || reach1 != 0)
+            fail("highways reach: two cities three cells apart with nothing between should be joined at reach 3 and "
+                    + "not at reach 1; got " + reach3 + " and " + reach1);
+    }
+
     private void checkHighways() {
         final int ridgeX0 = 2000, ridgeX1 = 2096, riverZ0 = 2000, riverZ1 = 2040;
         me.daddychurchill.CityWorld.worldgen.CitySites.Heights land = (x, z) -> x >= ridgeX0 && x <= ridgeX1 ? 110
