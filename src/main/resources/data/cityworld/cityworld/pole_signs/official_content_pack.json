@@ -1,0 +1,25 @@
+{
+ "requires_mod": "mtsofficialpack",
+ "pack": "mtsofficialpack",
+ "core": "pole_core",
+ "priority": 10,
+ "signs": {
+  "stop": {
+   "sign": "sign_stop"
+  },
+  "dead_end": {
+   "sign": "sign_deadend"
+  },
+  "speed_limit": {
+   "sign": "sign_speedlimit",
+   "text": "text",
+   "max": 3
+  },
+  "motorway": {
+   "sign": "sign_highway"
+  },
+  "motorway_end": {
+   "sign": "sign_highwayend"
+  }
+ }
+}

@@ -2761,6 +2761,32 @@ public final class CityWorldSelfTest {
         } catch (RuntimeException e) {
             fail("vehicles: registry missing: " + e);
         }
+        // the pole-sign registry holds CityWorld's two sets (osip, the Official Content Pack), installed or not
+        try {
+            long sets = access.lookupOrThrow(me.daddychurchill.CityWorld.worldgen.PoleSigns.POLE_SIGNS).listElements().count();
+            report.put("polesigns.files", String.valueOf(sets));
+            if (sets < 2)
+                fail("pole signs: expected CityWorld's two sets, got " + sets);
+        } catch (RuntimeException e) {
+            fail("pole signs: registry missing: " + e);
+        }
+        // the spawn registry: a file decodes with its defaults, and an entity's data keeps its types
+        try {
+            access.lookupOrThrow(me.daddychurchill.CityWorld.worldgen.Spawns.SPAWNS);
+            var spawnJson = com.google.gson.JsonParser.parseString(
+                    "{\"entity\": \"minecraft:villager{VillagerData:{level:2},Age:-1200}\", \"lots\": [\"ParkingLot\"], \"count_max\": 3}");
+            var spawn = me.daddychurchill.CityWorld.worldgen.Spawns.Spawn.CODEC
+                    .parse(com.mojang.serialization.JsonOps.INSTANCE, spawnJson).getOrThrow();
+            var spawnData = me.daddychurchill.CityWorld.worldgen.Spawns.parseCompound("{VillagerData:{level:2},Age:-1200,PersistenceRequired:1b}");
+            String got = spawn.at() + " " + spawn.odds() + " " + spawn.count() + ".." + spawn.countMax() + " "
+                    + spawn.persistent() + " " + spawnData.get("Age").getClass().getSimpleName() + " "
+                    + spawnData.get("PersistenceRequired").getClass().getSimpleName();
+            report.put("spawn.decode", got + "; " + me.daddychurchill.CityWorld.worldgen.Spawns.count() + " file(s) bound");
+            if (!got.equals("outdoors 1.0 1..3 true IntTag ByteTag"))
+                fail("spawns: expected 'outdoors 1.0 1..3 true IntTag ByteTag', got '" + got + "'");
+        } catch (Exception e) {
+            fail("spawns: " + e);
+        }
         if (r.frames().size() != 1 || !r.frames().get(0).item().is(net.minecraft.world.item.Items.DIAMOND_SWORD)
                 || !r.frames().get(0).item().getHoverName().getString().contains("Ed wins the bet"))
             fail("fit-outs: expected one named diamond sword, got " + r.frames());
