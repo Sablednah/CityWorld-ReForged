@@ -24,6 +24,14 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-08 overnight): 7.0.0 grew Immersive Vehicles, pole signs, spawns and place names.**
+- `6a7ba4ed` IV parked cars (mall car parks) + fuel pumps (gas stations); `121fb2e7` road signs on IV poles with
+  town names + highway gantries (`cityworld:pole_signs`), `cityworld:spawn` (anything by lot/district/place/style,
+  ships empty), place names (`naming.place*`, `CityWorldAPI.placeName`, F3). On all six lines, nothing pushed.
+  PORTING.md "▶ Resume here — 7.0.0 overnight" has the measurements and what is NOT confirmed (IV building the pole
+  objects; a client look; TPS with parked cars). `BUILDING-DATAPACKS-PLAN.md` is Fable's plan for building kinds as
+  data (fire/police stations, airports, styles) — the owner's to read and choose from.
+
 **▶ Resume here (2026-11-06 night): 7.0.0 is BUILT on all six lines, unreleased — deep oceans + highways.**
 - Owner's "world-changing drop" (version 7.0.0, their pick): rare deep oceans on CityWorld land and CityWorld's own
   highways between vanilla-land cities (issue #3). Both gated by the generator stamp `"made_with": 7` (pre-7.0 worlds

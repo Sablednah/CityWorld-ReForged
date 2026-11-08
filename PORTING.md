@@ -1,5 +1,44 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ Resume here — 7.0.0 overnight (2026-11-07/08): Immersive Vehicles, pole signs, spawns, place names
+
+The owner's overnight ask (2026-11-07 bedtime): "work on immersive and the roads/signs and so on, and then a system to
+let modders (or us) add compatibility for entity spawning in certain lots etc. And then plan ideas for how to do a
+building datapack ... fire stations, police stations - and very rare airports/runways outside of cities. use Fable -
+to check everything over for cars and to plan the datapacks so we have an extra test/walkthrough of them to polish."
+All on master and the five branches, nothing pushed:
+
+- `6a7ba4ed` **Immersive Vehicles**: `cityworld:vehicle` (12 files by `scripts/gen_iv_vehicles.py`, OCP + OAmP road
+  vehicles; `--kind/--out/--list` for a third-party pack), parked in mall car parks (`ParkingLot`, settings
+  `roads.vehicles`/`oddsOfParkedVehicle`/`vehicleFuel`; **roads is at the 16-field cap**), written as IV's own entity
+  NBT (`mts:builder_existing` + flat IV keys) into the generating ProtoChunk. Fuel pumps (`mts:fuelpump` + tank NBT)
+  on gas_stop, G45station, polar_gas via fit-outs (`iv_core_*` IV's own pump, `iv_*` OCP's over it); fit-out lines
+  now carry block-entity data and a `heading` that turns/mirrors (`SchematicFitOuts.placed`). Fable reviewed it
+  against IV's source (`scratchpad/fable-iv-review.md`): all fixed except **server load (M3): measure TPS with a mall
+  of parked IV cars on the 1.21.1 bed** (IV vehicles tick physics every tick; 0.5 x 8 bays per car-park chunk).
+  Measured on 1.21.1 (IV 24.0.0, OCP V29, OAmP V3): 7/7 cars in ticking chunks built as `EntityVehicleF_Physics`,
+  16/16 gas_stop pumps built with full tanks.
+- `121fb2e7` **Pole signs** (`worldgen/PoleSigns`, registry `cityworld:pole_signs`, osip priority 20 + OCP 10 ship):
+  CityWorld's sign names -> a pack's pole components + text fields; `RoadLot` signs through a `RoadSign` record (IV
+  first, Macaw's fallback; Macaw's draws as before — its board look is still the same draw), town boards with the
+  town's name, `motorway_end` for traffic coming into a city, an overhead **gantry** 24 samples out naming the city
+  ahead (`highwayGantry`: posts on both kerbs, a bar of `mts:pole` at deck + 6). **Spawns** (`worldgen/Spawns`,
+  registry `cityworld:spawn`, ships empty): entity SNBT / vehicle kind / block + data by lot, district family, style,
+  place, environment, land; outdoors/indoors/anywhere; odds + count; hooked in `PlatMap.generateBlocks` after the lot.
+  **Place names** (`Support/PlaceNames`, `naming.placeNames/placeStarts/placeEnds/placeFormat/districtSize`,
+  `CityWorldAPI.placeName` for Diorama, F3 line). Probe (1.21.1, seed 8675309, chunks 70,80 x24, osip+OCP+IV):
+  19 pole signs (stop 5, speed limit 9 with "30"/"50", limit end 1, dead end 2, town entrance/exit "Parkside"), 42
+  test allays (a world datapack `spawn/allay.json`, roads, outdoors, odds 0.5) all persistent. **Not confirmed: that
+  IV builds the pole objects from the data** — the probe read the block entities before IV's first tick (the pumps
+  read unbuilt in the same run, built in the run before). Needs a client look; gantries were not in the probe area
+  (vanilla land only, where highways are).
+- `BUILDING-DATAPACKS-PLAN.md` — Fable's plan for building kinds as data (`cityworld:building`: tower/campus/kit/
+  schematic; fire station phase 0, police campus phase 1, outland airport kit phase 2-3, style ids as data phase 4;
+  vanilla jigsaw NOT reused for v1). For the owner to read and pick from; nothing built.
+- Fable's pack-author walkthrough of spawns/pole signs: `scratchpad/fable-spawns-signs-review.md`.
+- Probe recipe (this session's scratchpad, gone after it): `scratchpad/wl-iv.sh <checkout> <jdk> <x,z,size>` = `scripts/wideload.sh` + a test spawn datapack in
+  the fresh world; needs `scratchpad/WideLoad-mts.java`-derived debug class in `src/.../debug/` (DELETE after).
+
 ## ▶ Resume here — 7.0.0: deep oceans and highways (built 2026-11-06, unreleased)
 
 The owner's "world-changing drop": two things that change new worlds, released together as **7.0.0**.
