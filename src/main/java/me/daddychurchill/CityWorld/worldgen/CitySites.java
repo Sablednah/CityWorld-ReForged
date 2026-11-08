@@ -83,6 +83,7 @@ public final class CitySites {
      * {@code minNear} of them within {@link #NEAR} of its level. Baked into the world: a change moves every city.
      */
     private final CityWorldSettingsData.Cities config;
+    private final boolean fitToCell;
     private final SimplexNoiseGenerator wobble;
     private final ConcurrentHashMap<Long, Verdict> cells = new ConcurrentHashMap<>();
 
@@ -92,6 +93,16 @@ public final class CitySites {
      */
     public CitySites(long seed, int streetLevel, int seaLevel, Heights heights, Rivers rivers,
             CityWorldSettingsData.Cities config) {
+        this(seed, streetLevel, seaLevel, heights, rivers, config, true);
+    }
+
+    /**
+     * @param fitToCell a size rolled too big for the cell is cut to the biggest that fits (a 7.0 world); false keeps
+     *                  the older rule, which refused the try — so a world made before 7.0 places the same cities
+     */
+    public CitySites(long seed, int streetLevel, int seaLevel, Heights heights, Rivers rivers,
+            CityWorldSettingsData.Cities config, boolean fitToCell) {
+        this.fitToCell = fitToCell;
         this.seed = seed;
         this.config = config;
         this.rivers = rivers;
@@ -392,6 +403,29 @@ public final class CitySites {
         return site.level() + (int) Math.round(rise * eased);
     }
 
+    /**
+     * How far inside its cell a city of this many districts across must stand: far enough that the disc, its wobble
+     * and its blend ring all stay in the cell. Then a column belongs to at most one city, and its cell is the only one
+     * that need be asked.
+     */
+    static int marginFor(int districts) {
+        int radius = districts * DISTRICT / 2;
+        return (int) Math.ceil(radius * (1.0 + WOBBLE)) + APRON + TAPER_MAX + 16;
+    }
+
+    /** The most districts across a city can be and still fit a cell of {@code spacing} blocks (0 when none can). */
+    public static int largestThatFits(int spacing) {
+        int districts = 0;
+        while (spacing - 2 * marginFor(districts + 1) > 0)
+            districts++;
+        return districts;
+    }
+
+    /** The smallest spacing a city of this many districts across fits. */
+    public static int spacingFor(int districts) {
+        return 2 * marginFor(districts) + 1;
+    }
+
     private Verdict judge(int cellX, int cellZ) {
         java.util.Random roll = new java.util.Random(seed * 31L + cellX * 341873128712L + cellZ * 132897987541L);
         StringBuilder refusals = new StringBuilder();
@@ -401,10 +435,12 @@ public final class CitySites {
             int variance = config.districtsVariance();
             int span = 2 * variance + 1, pick = roll.nextInt(span + 1);
             int districts = Math.max(1, config.districts() + (pick == span ? 0 : pick - variance));
+            // a size too big for the cell is cut to the biggest that fits (7.0: the owner's world at the smallest
+            // spacing and the biggest sizes refused every try over 4 across, and had a city in one cell in nine)
+            if (fitToCell)
+                districts = Math.max(1, Math.min(districts, largestThatFits(config.spacing())));
             int radius = districts * DISTRICT / 2;
-            // Far enough inside the cell that the disc, its wobble and its blend ring all stay in it: then a
-            // column belongs to at most one city, and its cell is the only one that need be asked.
-            int margin = (int) Math.ceil(radius * (1.0 + WOBBLE)) + APRON + TAPER_MAX + 16;
+            int margin = marginFor(districts);
             int room = config.spacing() - 2 * margin;
             if (room <= 0) {
                 refusals.append("cell too small for ").append(districts).append(" districts; ");

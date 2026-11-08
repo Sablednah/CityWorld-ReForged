@@ -659,7 +659,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                 return key == net.minecraft.world.level.biome.Biomes.RIVER
                                         || key == net.minecraft.world.level.biome.Biomes.FROZEN_RIVER;
                             },
-                            citiesConfig());
+                            citiesConfig(), oceansStamped());
                     // the route search reads vanilla's own cheap estimate of the surface, microseconds a column where an
                     // exact height costs milliseconds
                     net.minecraft.world.level.levelgen.DensityFunction surface = random.router().preliminarySurfaceLevel();
