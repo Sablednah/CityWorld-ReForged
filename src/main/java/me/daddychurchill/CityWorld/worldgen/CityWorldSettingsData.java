@@ -465,16 +465,17 @@ public record CityWorldSettingsData(
      * @param shelf  how much of the mask the slope down to the floor takes: bigger is a gentler, wider shelf
      */
     /**
-     * Highways between the cities of a vanilla-land world (7.0, {@code worldgen/Highways}): each city to its neighbour
-     * east and south, on a road {@code width} blocks wide that climbs no steeper than {@code grade}, cut through higher
+     * Highways between the cities of a vanilla-land world (7.0, {@code worldgen/Highways}): each city to the nearest
+     * city eastward and the nearest southward, up to {@code reach} cells away (1: only the next cell's), on a road {@code width} blocks wide that climbs no steeper than {@code grade}, cut through higher
      * ground and banked up on lower to {@code fillMax} deep, bridged over water ({@code clearance} above the sea) and
      * deeper drops, and through a tunnel where the ground stands more than {@code tunnel} above it. Like the oceans, off in any world made before 7.0 whatever this says (the generator's
      * {@code made_with} stamp). {@code speedLimit}: the sign where a city's street becomes the highway (in tens, 10–120:
      * the road mod's signs).
      */
-    public record Highways(boolean enabled, int width, double grade, int fillMax, int clearance, int tunnel, int speedLimit) {
+    public record Highways(boolean enabled, int width, double grade, int fillMax, int clearance, int tunnel, int speedLimit,
+            int reach) {
 
-        public static final Highways DEFAULT = new Highways(true, 9, 0.1, 8, 5, 12, 70);
+        public static final Highways DEFAULT = new Highways(true, 9, 0.1, 8, 5, 12, 70, 3);
         public static final Highways OFF = DEFAULT.withEnabled(false);
 
         public static final Codec<Highways> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -484,11 +485,12 @@ public record CityWorldSettingsData(
                 Codec.intRange(0, 32).optionalFieldOf("fillMax", 8).forGetter(Highways::fillMax),
                 Codec.intRange(1, 32).optionalFieldOf("clearance", 5).forGetter(Highways::clearance),
                 Codec.intRange(8, 128).optionalFieldOf("tunnel", 12).forGetter(Highways::tunnel),
-                Codec.intRange(10, 120).optionalFieldOf("speedLimit", 70).forGetter(Highways::speedLimit)
+                Codec.intRange(10, 120).optionalFieldOf("speedLimit", 70).forGetter(Highways::speedLimit),
+                Codec.intRange(1, 6).optionalFieldOf("reach", 3).forGetter(Highways::reach)
         ).apply(i, Highways::new));
 
         public Highways withEnabled(boolean v) {
-            return new Highways(v, width, grade, fillMax, clearance, tunnel, speedLimit);
+            return new Highways(v, width, grade, fillMax, clearance, tunnel, speedLimit, reach);
         }
     }
 
