@@ -1,5 +1,36 @@
 # CityWorld — Bukkit → NeoForge port plan
 
+## ▶ 7.0.0 (2026-11-08 evening): cities cut to fit, highways past empty cells — and what highways cost at spawn
+
+The owner's 1.20.1 world (New World (56), seed -5605502670739223417, spacing 1024, districts 6 +/- 2) had almost no
+highways. A city of *d* districts across needs a cell of about 179 *d* + 284 blocks (`CitySites.marginFor`), so at 1024
+nothing over 4 fits, and the old rule refused every bigger roll: 19 cities in 169 cells (`survey:sites`, cells 6), few
+side by side, and a highway only joined next-door cells.
+- `CitySites` (7.0 worlds only, `fitToCell` = the generator's `oceansStamped()`): a too-big roll is cut to
+  `largestThatFits(spacing)`. Same world: **19 -> 57 cities**, all 4 across.
+- `Highways.partner`: the next cell's city as before, else the nearest city up to `highways.reach` (3) cells away whose
+  straight line passes no other city; east is dx > |dz|, south dz >= |dx| (every pair is one city's). `exitsAt`
+  (`linkedTo`), `linksTouching` and `linksOfCells` follow it.
+- Customize: City size reads "(N fit)" in gold when size + variance cannot fit the spacing.
+- Self-test `checkCityFitAndReach` (`cities.fit`, `highways.reach`: two islands three cells apart, joined at reach 3,
+  not at reach 1).
+
+**What highways cost at spawn, measured on the 1.20.1 dev server** (23x23 spawn area, the owner's level.dat):
+
+| World | highways off | 7.0 as built (reach 1) | reach 3 |
+|---|---|---|---|
+| owner's (1024, 6 +/- 2), fit on | — | 105 s | 180 s; 172 s judged in parallel; **149 s** links claimed in parallel |
+| owner's, old code (19 cities, none beside spawn's) | — | 27 s | — |
+| same seed at defaults (2048, 3 +/- 1) | **29 s** | **94 s** | 130 s (before the parallel-claim fix) |
+
+A link costs 0.7–29 s to plan (`survey:highways` "planned in"; 1.21.11 the same range, so not a 1.20.1 problem), and
+nearly all of it is the two cities' plans read for the gates (`streetGate` -> `cityPlanAt` -> `getPlatMap` ->
+vanilla land's exact heights), not the route. Thread dumps during spawn prep: one worker planning, the rest waiting on
+its link. Two fixes went in (`8c7e1db2` judge cells side by side on `Planners`; `2d133818` a chunk plans the links
+nobody has started before waiting on the rest). **Open, the owner's call:** highways roughly triple 1.20.1's spawn
+preparation at default settings even before reach — a gate that does not plan the far city (or plans its edge only)
+is the real fix.
+
 ## ▶ Resume here — 7.0.0 overnight (2026-11-07/08): Immersive Vehicles, pole signs, spawns, place names
 
 The owner's overnight ask (2026-11-07 bedtime): "work on immersive and the roads/signs and so on, and then a system to
