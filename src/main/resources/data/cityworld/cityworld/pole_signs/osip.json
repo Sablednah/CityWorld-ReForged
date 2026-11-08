@@ -60,11 +60,6 @@
    "sub": "_exitbblank",
    "text": "Text",
    "max": 20
-  },
-  "street_name": {
-   "sign": "sign_additionaltext_small",
-   "text": "Text",
-   "max": 24
   }
  }
 }

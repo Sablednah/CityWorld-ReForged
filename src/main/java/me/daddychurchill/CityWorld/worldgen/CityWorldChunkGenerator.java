@@ -1004,13 +1004,25 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         ChunkPos pos = chunk.getPos();
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         int signAt = Math.max(1, side / 2);
-        java.util.Set<Long> done = new java.util.HashSet<>();
+        // the cells across, each touching the last by a side (IV joins poles only to their four neighbours, so a
+        // diagonal highway's bar takes a corner cell between two diagonal steps)
+        List<int[]> cells = new java.util.ArrayList<>(); // {x, z, t, kerb}
         for (int t = -side; t <= side; t++) {
             int x = (int) Math.floor(link.x()[k] + sx * t), z = (int) Math.floor(link.z()[k] + sz * t);
-            if (!done.add(BlockPos.asLong(x, 0, z)) || x < pos.getMinBlockX() || x > pos.getMaxBlockX()
-                    || z < pos.getMinBlockZ() || z > pos.getMaxBlockZ())
+            if (!cells.isEmpty()) {
+                int[] last = cells.get(cells.size() - 1);
+                if (last[0] == x && last[1] == z)
+                    continue;
+                if (last[0] != x && last[1] != z)
+                    cells.add(new int[] { x, last[1], Integer.MIN_VALUE, 0 });
+            }
+            cells.add(new int[] { x, z, t, Math.abs(t) == side ? 1 : 0 });
+        }
+        for (int[] cell : cells) {
+            int x = cell[0], z = cell[1], t = cell[2];
+            if (x < pos.getMinBlockX() || x > pos.getMaxBlockX() || z < pos.getMinBlockZ() || z > pos.getMaxBlockZ())
                 continue;
-            boolean kerb = Math.abs(t) == side;
+            boolean kerb = cell[3] == 1;
             int base = bar;
             if (kerb) { // the post: from the kerb's top
                 base = Integer.MIN_VALUE;
@@ -1129,7 +1141,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                             int to = deck + (kerb ? 4 : 5);
                             for (int y = from; y <= to; y++) {
                                 BlockState there = level.getBlockState(cursor.set(bx, y, bz));
-                                if (!there.isAir() && (kit == null || !kit.owns(there)))
+                                if (!there.isAir() && (kit == null || !kit.owns(there)) && !PoleSigns.owns(there))
                                     level.setBlock(cursor, air, 2);
                             }
                             // and the trees over it, open to the sky: a canopy from beside the road hid it (the
