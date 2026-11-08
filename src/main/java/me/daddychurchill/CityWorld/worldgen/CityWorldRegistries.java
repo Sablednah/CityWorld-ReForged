@@ -73,5 +73,9 @@ public final class CityWorldRegistries {
         event.worldRegistry(SchematicFitOuts.FIT_OUTS, SchematicFitOuts.FitOut.CODEC);
         // Immersive Vehicles' vehicles to park (Vehicles)
         event.worldRegistry(Vehicles.VEHICLES, Vehicles.Vehicle.CODEC);
+        // anything a pack wants placed by lot, district, place or style (Spawns)
+        event.worldRegistry(Spawns.SPAWNS, Spawns.Spawn.CODEC);
+        // road signs on Immersive Vehicles' poles, one file per sign pack (PoleSigns)
+        event.worldRegistry(PoleSigns.POLE_SIGNS, PoleSigns.SignSet.CODEC);
     }
 }

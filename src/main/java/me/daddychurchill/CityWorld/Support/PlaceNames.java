@@ -23,14 +23,19 @@ public final class PlaceNames {
     /** The name of the place holding this chunk. */
     public static String at(CityWorldGenerator generator, int chunkX, int chunkZ) {
         var sites = generator.citySites;
-        if (sites != null) { // vanilla land: the city whose cell this is (or the one nearest, outside any)
+        if (sites != null) { // vanilla land: the city whose cell this is (a cell with none: named like a district)
             var site = sites.siteAt(chunkX * 16 + 8, chunkZ * 16 + 8);
             if (site != null)
-                return named(generator, 0x43495459L ^ (((long) site.centreX() << 32) ^ (site.centreZ() & 0xffffffffL)), true);
+                return ofCity(generator, site);
         }
         int size = Math.max(1, generator.getSettings().districtSize) * 10; // in chunks
         long dx = Math.floorDiv(chunkX, size), dz = Math.floorDiv(chunkZ, size);
         return named(generator, 0x44495354L ^ ((dx << 32) ^ (dz & 0xffffffffL)), false);
+    }
+
+    /** A vanilla-land city's name. */
+    public static String ofCity(CityWorldGenerator generator, me.daddychurchill.CityWorld.worldgen.CitySites.Site site) {
+        return named(generator, 0x43495459L ^ (((long) site.centreX() << 32) ^ (site.centreZ() & 0xffffffffL)), true);
     }
 
     /** The name for a place by its key (a city's centre, a district's square); {@code town}: a city of its own. */
