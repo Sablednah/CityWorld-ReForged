@@ -470,12 +470,15 @@ public record CityWorldSettingsData(
      * ground and banked up on lower to {@code fillMax} deep, bridged over water ({@code clearance} above the sea) and
      * deeper drops, and through a tunnel where the ground stands more than {@code tunnel} above it. Like the oceans, off in any world made before 7.0 whatever this says (the generator's
      * {@code made_with} stamp). {@code speedLimit}: the sign where a city's street becomes the highway (in tens, 10–120:
-     * the road mod's signs).
+     * the road mod's signs). {@code surface}: the deck's block where no road mod gives the street one (a block with a
+     * slab, so the climbs match it: cobbled deepslate; the street's own terracotta has no slab, and deepslate steps on
+     * it stood out — the owner's look). With Macaw's Roads the deck is its asphalt and its slab whatever this says.
      */
     public record Highways(boolean enabled, int width, double grade, int fillMax, int clearance, int tunnel, int speedLimit,
-            int reach) {
+            int reach, String surface) {
 
-        public static final Highways DEFAULT = new Highways(true, 9, 0.1, 8, 5, 12, 70, 3);
+        public static final String DEFAULT_SURFACE = "minecraft:cobbled_deepslate";
+        public static final Highways DEFAULT = new Highways(true, 9, 0.1, 8, 5, 12, 70, 3, DEFAULT_SURFACE);
         public static final Highways OFF = DEFAULT.withEnabled(false);
 
         public static final Codec<Highways> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -486,11 +489,12 @@ public record CityWorldSettingsData(
                 Codec.intRange(1, 32).optionalFieldOf("clearance", 5).forGetter(Highways::clearance),
                 Codec.intRange(8, 128).optionalFieldOf("tunnel", 12).forGetter(Highways::tunnel),
                 Codec.intRange(10, 120).optionalFieldOf("speedLimit", 70).forGetter(Highways::speedLimit),
-                Codec.intRange(1, 6).optionalFieldOf("reach", 3).forGetter(Highways::reach)
+                Codec.intRange(1, 6).optionalFieldOf("reach", 3).forGetter(Highways::reach),
+                Codec.STRING.optionalFieldOf("surface", DEFAULT_SURFACE).forGetter(Highways::surface)
         ).apply(i, Highways::new));
 
         public Highways withEnabled(boolean v) {
-            return new Highways(v, width, grade, fillMax, clearance, tunnel, speedLimit, reach);
+            return new Highways(v, width, grade, fillMax, clearance, tunnel, speedLimit, reach, surface);
         }
     }
 

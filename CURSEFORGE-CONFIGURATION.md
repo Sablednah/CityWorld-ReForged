@@ -460,7 +460,7 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 `highways` is a group of its own:
 
 ```json
-"cities": { "highways": { "enabled": true, "width": 9, "grade": 0.1, "fillMax": 8, "clearance": 5, "tunnel": 12, "speedLimit": 70, "reach": 3 } }
+"cities": { "highways": { "enabled": true, "width": 9, "grade": 0.1, "fillMax": 8, "clearance": 5, "tunnel": 12, "speedLimit": 70, "reach": 3, "surface": "minecraft:cobbled_deepslate" } }
 ```
 
 | Setting | Default | What it does |
@@ -473,6 +473,7 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 | `tunnel` | `12` | How far the ground must stand above the road for a tunnel; less is a cut with sloped sides. `8`–`128`. |
 | `speedLimit` | `70` | The limit signed where a city's street becomes the highway (with a road mod's signs: Macaw's Roads), beside the town's board. `10`–`120`, in tens. |
 | `reach` | `3` | How many cells (each `spacing` blocks) a highway may run past empty ones to the next city. A city takes the next cell's city when there is one, otherwise the nearest that way up to this many cells off whose straight line passes no other city. `1` joins next-door cities only. `1`–`6`. |
+| `surface` | `minecraft:cobbled_deepslate` | The deck's block where no road mod gives the street one: a block that has a slab, so the half-block climbs match it (`minecraft:polished_deepslate`, `minecraft:smooth_stone`, `minecraft:deepslate_tiles` all do). The city's street keeps its own surface, so the deck changes where the highway begins. With Macaw's Roads the deck is its asphalt whatever this says; a pack's `street/surface` palette also wins. A name that is not a block falls back to the street's surface. |
 
 `oceans` is a group of its own:
 

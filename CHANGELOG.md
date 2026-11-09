@@ -24,8 +24,9 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   for a truck down the middle. Villages and other surface structures are kept off the road, and what vanilla and
   biome mods grow on it (grass, bushes, springs running onto it, the trees over it) is cleared. Vanilla's ravines pass under a
   highway, not through it. Settings
-  `cities.highways` (`enabled`, `width`, `grade`, `fillMax`, `clearance`, `tunnel`, `speedLimit`, `reach`) and
-  **Highways** in Customize.
+  `cities.highways` (`enabled`, `width`, `grade`, `fillMax`, `clearance`, `tunnel`, `speedLimit`, `reach`,
+  `surface`) and **Highways** in Customize. Without a road mod the deck is cobbled deepslate (`surface`), a block
+  with a slab, so its climbs match it; the street's terracotta has no slab and the deepslate steps on it stood out.
 - **Vanilla land: a city too big for its spacing is built as big as fits**, where before it was not built at all (a
   world at the smallest spacing with the biggest sizes had a city in one cell in nine). Worlds made with 7.0 or
   later; Customize's **City size** says "(N fit)" when the size can't fit the spacing.
