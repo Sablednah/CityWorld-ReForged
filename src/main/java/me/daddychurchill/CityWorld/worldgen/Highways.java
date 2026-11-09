@@ -232,11 +232,26 @@ public final class Highways {
         return true;
     }
 
+    /**
+     * Judge, side by side, every cell the links of this square of cells can ask for: the square, then around each
+     * city found in it the cells its partner search reads (its cones, {@link #reach} out, and a cell round them for
+     * the line check). So no cell is judged one at a time on the thread that first wanted a road while the rest wait.
+     */
+    private void prejudge(int cx0, int cz0, int cx1, int cz1) {
+        sites.judgeAll(cx0, cz0, cx1, cz1);
+        List<int[]> cones = new ArrayList<>();
+        for (int cx = cx0; cx <= cx1; cx++)
+            for (int cz = cz0; cz <= cz1; cz++)
+                if (site(cx, cz) != null)
+                    cones.add(new int[] { cx - reach - 1, cz - reach - 1, cx + reach + 1, cz + reach + 1 });
+        if (!cones.isEmpty())
+            sites.judgeAll(cones);
+    }
+
     /** The cities a city's highways run to, out of its cell and into it. */
     private List<CitySites.Site> linkedTo(int cx, int cz) {
         List<CitySites.Site> found = new ArrayList<>();
-        if (reach > 1)
-            sites.judgeAll(cx - reach, cz - reach, cx + reach, cz + reach);
+        prejudge(cx - reach, cz - reach, cx + reach, cz + reach);
         for (int dir = 0; dir < 2; dir++) {
             int[] p = partner(cx, cz, dir);
             if (p != null)
@@ -270,9 +285,7 @@ public final class Highways {
         // than the pad) one more
         int cx0 = Math.floorDiv(x0, cell) - reach - 1, cx1 = Math.floorDiv(x1, cell) + reach + 1;
         int cz0 = Math.floorDiv(z0, cell) - reach - 1, cz1 = Math.floorDiv(z1, cell) + reach;
-        // the cells asked, judged side by side first (a partner further out is judged when its cone is searched)
-        if (reach > 1)
-            sites.judgeAll(cx0, cz0, cx1, cz1);
+        prejudge(cx0, cz0, cx1, cz1);
         List<Object[]> wanted = new ArrayList<>();
         for (int cx = cx0; cx <= cx1; cx++)
             for (int cz = cz0; cz <= cz1; cz++) {
