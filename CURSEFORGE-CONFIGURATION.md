@@ -233,6 +233,111 @@ Cave biomes bring their own mobs. The deep dark carries none at all, plus warden
 | Setting | Default | What it does |
 |---|---|---|
 | `enabled` | `false` | Villager job-site blocks so a store/farm reads as its trade (cartography table = map seller, fletching table = fletcher, smoker = butcher, ...), a composter at farm edges, and a rare fish-pond farm. The shop classification itself is always computed for `/cityinfo`; this only governs block placement. |
+<<<<<<< HEAD
+=======
+| `malls` | `true` | Shopping malls (MODERN and APOCALYPSE): rare, at the edge of town, two or three storeys round a glass-roofed atrium, built in wings — a bar, L, T, U, Z or cross, up to eight chunks each way — with dozens of named shops, each with its own loot table (`chests/mall_<kind>`, each ending in an `_extra` hook), and car parks out to the road. Announced as the landmark kind `mall`. Independent of `enabled`. |
+| `oddsOfAtmInCivic` | `0.333` (1 in 3) | **ATMs: civic**: the chance each ground-floor chunk of a city hall or courthouse has a cash machine against an inside wall, from `#cityworld:fittings/atm`. Only when a mod supplies one ([Modernlife](https://www.curseforge.com/minecraft/mc-mods/modernlife)'s ATM is listed); none otherwise. |
+| `oddsOfAtmInShops` | `0.125` (1 in 8) | **ATMs: shops**: the same, per ground-floor chunk of a shop. |
+| `oddsOfAtmInMalls` | `0.2` (1 in 5) | **ATMs: malls**: the same, per chunk of a shopping mall's ground floor. |
+| `bankPlazaRadius` | `2` | **Bank plaza (Modernlife)**, *1.20.1 only, the one version Modernlife ships for*: with Modernlife installed, a new world's spawn sits on a paved town square this many chunks out (2 = 80 blocks: paving, street lamps, benches, planters) so the bank Modernlife builds beside a new player lands on the square instead of on top of a shop. 2 is the smallest at which Modernlife's own flat-land check passes where the player lands. The city's roads run up to its kerb. `0` for none. Decided when the world is created. |
+
+### `structures` — which vanilla and mod structures this world places
+
+Two lists of structure-**set** ids laid over the tag `#cityworld:allowed` (CityWorld's defaults: strongholds,
+trial chambers, ancient cities, the Nether's fortresses and bastions, end cities, and several mods' sets). This is
+what the Structures page of the Customize screen writes.
+
+| Setting | Default | What it does |
+|---|---|---|
+| `allow` | `[]` | Structure sets to place as well: `["minecraft:villages", "minecraft:woodland_mansions"]`. |
+| `deny` | `[]` | Structure sets to stop placing: `["minecraft:trial_chambers"]`. |
+| `wildernessOnly` | `false` | Keep every placed set to the wild: a structure never starts in a platmap the city plans to build (a district of any kind, farms and outland included) — so a pond or ruin structure cannot cut a city in two. Strongholds are never affected: the eyes of ender point at their ring whether or not one stands. Set by set instead, a datapack tags `#cityworld:wilderness_only` (structure sets; Arboria's lakes ship in it). |
+
+Ids are sets (`data/<namespace>/worldgen/structure_set/`), not single structures. An id whose mod is not installed
+is ignored. A structure still only appears where its biomes exist. The Nether and the End follow the overworld's
+lists. Cities keep clear of whatever is placed.
+
+### `subways` — a metro under the city (MODERN and APOCALYPSE; forced off elsewhere)
+
+| Setting | Default | What it does |
+|---|---|---|
+| `enabled` | `true` | A station in every urban district — a ticket hall beside a road, switchback stairs down to twin-track platforms 24 blocks under the street — and tunnels to the first station along its row or column up to six districts away, so lines cross the countryside between city clusters. East-west lines run on the upper level, north-south lines eight blocks lower, so lines never junction; a station on both is an interchange with stairs between its halls, and one with a single line each way joins them in a sloped loop instead of two dead ends. Lit, ringed in brick, powered rails so a cart runs the line. Stations announce as the landmark kind `subway` (off by default). |
+| `spawners` | `true` | In a ruined (APOCALYPSE) world, sewer-mob spawners in niches in the tunnel walls. |
+
+### `roads` — road signs, bridges and parked vehicles (Macaw's Roads and Streets, Macaw's Bridges, Immersive Vehicles; nothing without them)
+
+Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fittings/road`, `#cityworld:fittings/skybridge`, `#cityworld:fittings/rope_bridge`), so without them these settings change nothing.
+
+| Setting | Default | What it does |
+|---|---|---|
+| `driveOnLeft` | `false` | **Drive on** in Customize. The side of the road traffic keeps to: `false` the right (the US, most of the world), `true` the left (the UK). Every road sign stands on the driver's side of the traffic it is for and faces it. |
+| `speedLimitUrban` | `50` | A town's speed limit, on the mod's signs (10 to 120 in tens; another number rounds to the nearest). |
+| `speedLimitRural` | `30` | The limit in a district that is mostly nature: neighbourhoods, farms, the outskirts. Where a road crosses from one limit to another the signs come in a pair, back to back across the road: the new limit for the traffic going in, the old one for the traffic coming out. Where a road leaves a town for the wild, the town's name board and its "leaving" face, then a chunk in, the limit and its end. |
+| `oddsOfSpeedRepeat` | `0.125` (1 in 8) | The chance a straight stretch in the slower zone repeats its limit, as a pair. |
+| `skybridges` | `false` (Apocalypse `true`) | **Skybridges** in Customize. A deck between an upper floor of two neighbouring towers of different buildings, with a doorway cut into each wall: survivors' ways about a ruined city, so Apocalypse has them by default and a working city does not. As often a one-wide rope bridge as a two-wide solid deck, each from its own pool (`#cityworld:fittings/skybridge`, `#cityworld:fittings/rope_bridge`). Each half runs from its chunk edge until it meets the building. |
+| `oddsOfSkybridge` | `0.333` (1 in 3) | The chance each qualifying pair of towers gets a deck. |
+| `skybridgeMinFloors` | `6` | Both towers must have at least this many floors; the deck lands on the highest floor they share, never the second floor or lower. |
+| `oddsOfStreetRope` | `0.333` (1 in 3) | With skybridges on, the chance a district gets one rope bridge across a street, between two towers that face each other over a road. Never more than one per district. |
+| `wildBridges` | `true` | **Wild rope bridges** in Customize. A one-wide rope bridge from a ridge crest in the wild across a valley to where the far side's ground comes back up to the deck, so it always lands on the hill and needs no support. A find, not a fixture: see `wildBridgeRegion`. |
+| `wildBridgeDepth` | `8` | How far the valley floor must lie below the crest for a rope bridge to be worth building. |
+| `wildBridgeSpan` | `48` | The longest bridge, in blocks; a valley wider than this gets none. The shortest is a chunk. |
+| `wildBridgeRegion` | `32` | The size of a bridge region, in chunks square. A region has at most one wild rope bridge, wholly inside it: its seed orders its chunk rows and columns, and the bridge is the first span along the first of them that has one. |
+| `oddsOfWildBridge` | `0.5` | The chance a region has its bridge (1 in 2). At the defaults a mountain range shows one, maybe two. |
+| `vehicles` | `true` | With Immersive Vehicles and a vehicle pack, park real vehicles in the bays of mall car parks instead of block cars (a ruin keeps its wrecks). The vehicles are data: see PALETTES.md, "Parked vehicles". |
+| `oddsOfParkedVehicle` | `0.5` | The chance a car park bay holds a vehicle. |
+| `vehicleFuel` | `0` | Millibuckets of lava (Immersive Vehicles' stock fuel) in a parked vehicle's tank. None by default: the gas stations' fuel pumps are full. |
+
+### `cities` — cities in a vanilla world, highways, rivers and oceans
+
+| Setting | Default | What it does |
+|---|---|---|
+| `vanillaTerrain` | `false` | **Land: vanilla** in Customize. The land is vanilla's throughout (its biomes, mountains, rivers and structures), and CityWorld builds cities on it like villages: one per `spacing`-block cell, each on its own level, with quays and natural banks where a river runs through. Modern-family and Classic styles; a style that is its own terrain (floating, flooded, dunes, astral, maze, nature, metro) ignores it. |
+| `spacing` | `2048` | Blocks between cities in a vanilla world (one city per cell this wide). `1024`–`16384`. The whole city and its blend ring into the land must fit in its cell, so the spacing caps the size: `1024` fits 4 districts across, `1536` 6, `2048` 9, and a city *d* across needs about 179 × *d* + 284 blocks. |
+| `districts` | `3` | How many districts across a vanilla-world city is. `1`–`8`. In a world made with 7.0 or later a size too big for the spacing is built as the biggest that fits (Customize's **City size** shows "(N fit)" in gold); before 7.0 that city was not built at all. |
+| `districtsVariance` | `1` | How much each city's size varies from `districts`, plus or minus. `0`–`3`. |
+| `levelRange` | `40` | How far above CityWorld's street level (y 64) a vanilla-world city may stand, to sit on the land around it. `0`–`120`. |
+| `maxWater` | `0.35` | The share of a candidate site that may be under the sea. Datapack only. |
+| `minNear` | `0.75` | The share of a candidate site that must already lie within sixteen blocks of the city's level. Datapack only. |
+| `rivers` | `false`* | Rivers on CityWorld's own land: springs in the hills, waterfalls, rivers widening to the sea, bridges where roads cross, and the waterside by district (quays, slips, harbours, beaches, lighthouses). *On in the world presets; off in a world saved before rivers existed, so an old world never grows a river that stops at the chunks it already has. |
+| `highways` | see below | Roads between the cities of a vanilla world (7.0). **Highways** in Customize. |
+| `oceans` | see below | Deep oceans on CityWorld's own land (7.0). **Oceans** and **Ocean share** in Customize. |
+
+`highways` is a group of its own:
+
+```json
+"cities": { "highways": { "enabled": true, "width": 9, "grade": 0.1, "fillMax": 8, "clearance": 5, "tunnel": 12, "speedLimit": 70, "reach": 3, "surface": "minecraft:cobbled_deepslate" } }
+```
+
+| Setting | Default | What it does |
+|---|---|---|
+| `enabled` | `true`* | **Vanilla land only.** A road from each city to the nearest city east and the nearest south (see `reach`). It leaves each city along one of the city's own streets (the city paves that street out to its edge for it), at the city's level, then winds round hills and along valleys rather than over them, and climbs no steeper than `grade`. Where the ground is higher it is cut through, where lower it is banked up, over water and deep drops it is a bridge (railings, piers), and under a ridge a tunnel (lit). Its surface is the city's street: a road mod's asphalt (Macaw's Roads) where the city has it. *On for a world made with 7.0 or later; **a world made before 7.0 never has them**, so explored land never meets a road cut off at its edge. A city with no city within `reach` that way gets no road that way. |
+| `width` | `9` | The road's width in blocks, plus a kerb each side. `3`–`15`. |
+| `grade` | `0.1` | The steepest climb: blocks up per block along (`0.1` is one in ten). The steps are half slabs where the surface has a slab. `0.02`–`0.5`. |
+| `fillMax` | `8` | The deepest a road is banked up on the ground; deeper than this it is a bridge. `0`–`32`. |
+| `clearance` | `5` | How high a bridge deck stands above the sea when it crosses water. `1`–`32`. |
+| `tunnel` | `12` | How far the ground must stand above the road for a tunnel; less is a cut with sloped sides. `8`–`128`. |
+| `speedLimit` | `70` | The limit signed where a city's street becomes the highway (with a road mod's signs: Macaw's Roads), beside the town's board. `10`–`120`, in tens. |
+| `reach` | `3` | How many cells (each `spacing` blocks) a highway may run past empty ones to the next city. A city takes the next cell's city when there is one, otherwise the nearest that way up to this many cells off whose straight line passes no other city. `1` joins next-door cities only. `1`–`6`. |
+| `surface` | `minecraft:cobbled_deepslate` | The deck's block where no road mod gives the street one: a block that has a slab, so the half-block climbs match it (`minecraft:polished_deepslate`, `minecraft:smooth_stone`, `minecraft:deepslate_tiles` all do). The city's street keeps its own surface, so the deck changes where the highway begins. With Macaw's Roads the deck is its asphalt whatever this says; a pack's `street/surface` palette also wins. A name that is not a block falls back to the street's surface. |
+
+`oceans` is a group of its own:
+
+```json
+"cities": { "oceans": { "enabled": true, "size": 6000, "rarity": 0.5, "depth": 30, "shelf": 0.1 } }
+```
+
+| Setting | Default | What it does |
+|---|---|---|
+| `enabled` | `true`* | Now and then the land runs down into a wide, deep ocean, with vanilla's ocean biomes (deep, cold, frozen, lukewarm, warm), and the structures that live there: ocean monuments, ocean ruins, shipwrecks and buried treasure, and any mod's that ask for ocean biomes (Cataclysm's Sunken City and Acropolis, Battle Towers' ocean tower). Cities keep off it. In the ruined Nether twin it is a lava sea. *On for a world made with 7.0 or later (the world's generator carries `"made_with": 7`); **a world made before 7.0 never has them**, whatever this says, so explored land never meets an ocean cut off at its edge. Modern, Apocalypse, Classic and Sparse, with seas on; Destroyed (decayed nature) and the styles that are their own terrain ignore it, and vanilla land has vanilla's oceans. |
+| `size` | `6000` | How broad the ocean pattern is, in blocks: larger means fewer, bigger oceans. `1024`–`32768`. |
+| `rarity` | `0.5` | How much of the land stays land: higher is rarer. **Ocean share** in Customize: `0.62` about 2%, `0.56` about 4%, `0.5` about 6%, `0.44` about 9%, `0.38` about 13% (measured over 80 km on three seeds; it varies by seed). At the default an ocean is about 1–5 km across. `0`–`0.95`. |
+| `depth` | `30` | How far below sea level the ocean floor lies (vanilla's deep oceans are about this deep). `8`–`56`. |
+| `shelf` | `0.1` | How wide the slope from the shore to the deep is, as a share of the pattern: larger is a gentler, wider shelf. `0.01`–`0.5`. |
+| `rigs` | `0.0625` | The share of the deep-water sites inside these oceans that get an oil rig (a site comes up in about one platmap in two). `1` puts a rig on every one; `0` none. The old, patchy deep sea outside them keeps every rig. `0`–`1`. |
+
+> Every city in a vanilla world is worked out from the seed and these numbers, so **change them only before
+> the world is made**: changed under an existing world, cities move or change level under chunks already built.
+>>>>>>> 0c819abc (Highways: the deck without a road mod is highways.surface (cobbled deepslate), so its half-block climbs match it)
 
 ### `spawns` — who turns up, and how often (odds `0.0`–`1.0`)
 
