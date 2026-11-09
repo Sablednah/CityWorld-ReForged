@@ -111,23 +111,34 @@ public class ParkingLot extends IsolatedLot {
             chunk.setBlock(x, stand + 4, 7, Material.SEA_LANTERN);
         }
         // cars in some bays, nose to the kerb: Immersive Vehicles' when a vehicle pack is installed (a ruin keeps its
-        // wrecks), each centred in its bay (three cells between the lines, five long) with the brake on
+        // wrecks), each centred in its bay (three cells between the lines, five long) with the brake on. Real
+        // vehicles are few — up to vehicles.carParkVehicles a chunk, each in oddsOfParkedVehicle, the other bays
+        // empty: every one costs the client frames (the owner's first mall, a bay in two filled: four a chunk, 1 fps)
         var settings = generator.getSettings();
         boolean real = !ruined && settings.includeVehicles && me.daddychurchill.CityWorld.worldgen.Vehicles.any("car");
-        for (int bay = 0; bay < 4; bay++)
-            for (int row = 0; row < 2; row++) {
-                if (!odds.playOdds(ruined ? 0.35 : real ? settings.oddsOfParkedVehicle : 0.5))
+        if (real) {
+            boolean[] taken = new boolean[8];
+            for (int slot = 0; slot < Math.min(settings.carParkVehicles, 8); slot++) {
+                int at = odds.getRandomInt(8);
+                while (taken[at])
+                    at = (at + 1) % 8;
+                taken[at] = true;
+                if (!odds.playOdds(settings.oddsOfParkedVehicle))
                     continue;
-                int x0 = bay * 4 + 1, z0 = row == 0 ? 1 : 11;
-                if (real) {
-                    Odds car = odds.fork(); // its own stream: a vehicle's picks never shift the bays after it
-                    double cx = chunk.getBlockX(x0) + 1.5, cz = chunk.getBlockZ(row == 0 ? 1 : 10) + 2.5;
-                    if (me.daddychurchill.CityWorld.worldgen.Vehicles.park(chunk.getWorld(), "car", cx, stand, cz,
-                            row == 0 ? 180 : 0, settings.vehicleFuel, car))
-                        continue;
-                }
-                car(chunk, odds, x0, stand, z0, CAR_PAINT[odds.getRandomInt(CAR_PAINT.length)], ruined);
+                int bay = at % 4, row = at / 4, x0 = bay * 4 + 1;
+                Odds car = odds.fork(); // its own stream: a vehicle's picks never shift the bays after it
+                double cx = chunk.getBlockX(x0) + 1.5, cz = chunk.getBlockZ(row == 0 ? 1 : 10) + 2.5;
+                if (!me.daddychurchill.CityWorld.worldgen.Vehicles.park(chunk.getWorld(), "car", cx, stand, cz,
+                        row == 0 ? 180 : 0, settings.vehicleFuel, car))
+                    car(chunk, odds, x0, stand, row == 0 ? 1 : 11, CAR_PAINT[odds.getRandomInt(CAR_PAINT.length)], false);
             }
+        } else
+            for (int bay = 0; bay < 4; bay++)
+                for (int row = 0; row < 2; row++) {
+                    if (!odds.playOdds(ruined ? 0.35 : 0.5))
+                        continue;
+                    car(chunk, odds, bay * 4 + 1, stand, row == 0 ? 1 : 11, CAR_PAINT[odds.getRandomInt(CAR_PAINT.length)], ruined);
+                }
         // a sign for the mall at one corner
         if (!open[3] && !open[0])
             chunk.setSignPost(1, stand, 1, Material.OAK_SIGN, BlockFace.SOUTH, new String[] { mall.name, "Customer", "Parking" });

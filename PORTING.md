@@ -53,7 +53,7 @@ All on master and the five branches, nothing pushed:
 
 - `6a7ba4ed` **Immersive Vehicles**: `cityworld:vehicle` (12 files by `scripts/gen_iv_vehicles.py`, OCP + OAmP road
   vehicles; `--kind/--out/--list` for a third-party pack), parked in mall car parks (`ParkingLot`, settings
-  `roads.vehicles`/`oddsOfParkedVehicle`/`vehicleFuel`; **roads is at the 16-field cap**), written as IV's own entity
+  settings group `roads.vehicles`, a nested record, so **roads has 14 fields**; 2026-11-09: thinned to ~1 a car-park chunk + 1 a district at a kerb after the owner's 1-fps mall), written as IV's own entity
   NBT (`mts:builder_existing` + flat IV keys) into the generating ProtoChunk. Fuel pumps (`mts:fuelpump` + tank NBT)
   on gas_stop, G45station, polar_gas via fit-outs (`iv_core_*` IV's own pump, `iv_*` OCP's over it); fit-out lines
   now carry block-entity data and a `heading` that turns/mirrors (`SchematicFitOuts.placed`). Fable reviewed it

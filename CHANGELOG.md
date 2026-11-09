@@ -37,12 +37,15 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   later; Customize's **City size** says "(N fit)" when the size can't fit the spacing.
   From a player's request for Highways & Byways support (GitHub issue #3); CityWorld builds its own, because that
   mod's roads join vanilla structures rather than cities.
-- **Immersive Vehicles in the city.** With Immersive Vehicles and its Official Content Pack, mall car parks hold
-  real, drivable vehicles in their bays (the Official Content and Official Automobile packs' cars, any paint but
-  police), parked with the brake on, a charged battery and an empty tank, and the gas stations' pump islands have
-  its fuel pumps, full of lava. The vehicles are data (`cityworld:vehicle`), so a pack can add its own; settings
-  `roads.vehicles`, `roads.oddsOfParkedVehicle`, `roads.vehicleFuel`. Schematic fit-outs can now carry a block's
-  own data and turn a heading kept in it (`heading`) with the building.
+- **Immersive Vehicles in the city.** With Immersive Vehicles and its Official Content Pack, real, drivable
+  vehicles stand in the city (the Official Content and Official Automobile packs' cars, any paint but police),
+  parked with the brake on, a charged battery and an empty tank: a few in the mall car parks (up to one a chunk,
+  one chunk in two) and one at a kerb in about every other district, nose along the traffic on its side — few,
+  because every one costs the client frames (a car park with every other bay filled ran at 1 fps). The gas
+  stations' pump islands have its fuel pumps, full of lava. The vehicles are data (`cityworld:vehicle`), so a
+  pack can add its own; settings group `roads.vehicles` (`enabled`, `carParkVehicles`, `oddsOfParkedVehicle`,
+  `streetVehicles`, `oddsOfStreetVehicle`, `fuel`). Schematic fit-outs can now carry a block's own data and turn a
+  heading kept in it (`heading`) with the building.
 - **Road signs on Immersive Vehicles' poles, with names.** With the Official Signs pack (or the Official Content
   Pack's signs), stop, dead end, speed limit, motorway, tunnel and steep signs stand on IV poles; a town's boards
   carry its name, and highways get overhead gantries naming the city ahead. Sign packs are data

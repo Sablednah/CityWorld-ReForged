@@ -547,14 +547,17 @@ ships the Official Content Pack's and the Official Automobile Pack's road vehicl
   slot, and each slot's `defaultPart`. `subs` are the part's own sub names (leave it out for a part with none). **A
   part or sub name that does not exist makes Immersive Vehicles throw the whole vehicle away** when it loads ("Did a
   pack change?" in the log), so check them against the pack.
-- **`fuel_capacity`** holds `roads.vehicleFuel` to the vehicle's tank (its `motorized.fuelCapacity`).
+- **`fuel_capacity`** holds `roads.vehicles.fuel` to the vehicle's tank (its `motorized.fuelCapacity`).
 - A parked car's doors are shut (a crafted one comes with them open).
 - **The generator does all this for you:** `python3 -I scripts/gen_iv_vehicles.py --list <pack jar> <OCP jar>`
   lists a pack's vehicles; `--kind <pack>:<vehicle>=car` (once per vehicle) and `--out
   <your pack>/data/<ns>/cityworld/vehicle` write their files, wheels and seats picked by size from the pack itself
   and then from the Official Content Pack.
-- A vehicle parks with the brake on, a charged battery and `roads.vehicleFuel` millibuckets of lava in the tank
-  (none by default: the gas stations' pumps are full). Settings `roads.vehicles`, `roads.oddsOfParkedVehicle`.
+- A vehicle parks with the brake on, a charged battery and `roads.vehicles.fuel` millibuckets of lava in the tank
+  (none by default: the gas stations' pumps are full). Every parked vehicle costs the client frames, so they are
+  few by default: a car-park chunk holds up to `carParkVehicles` (1) in `oddsOfParkedVehicle`, and a district parks
+  up to `streetVehicles` (1) at the kerb of a straight street in `oddsOfStreetVehicle` (settings group
+  `roads.vehicles`, CURSEFORGE-CONFIGURATION.md).
 
 ### Road signs on Immersive Vehicles' poles (from 7.0)
 

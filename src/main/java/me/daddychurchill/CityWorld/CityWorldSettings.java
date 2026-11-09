@@ -205,10 +205,10 @@ public class CityWorldSettings {
     public boolean includeSkybridges = false, includeWildBridges = true; // skybridges: Apocalypse soft default (styleDefaults)
     public double oddsOfSkybridge = Odds.oddsSomewhatLikely;
     public int skybridgeMinFloors = 6, wildBridgeDepth = 8, wildBridgeSpan = 48;
-    /** Immersive Vehicles: park vehicles in car parks (roads group; see CityWorldSettingsData.Roads). */
+    /** Immersive Vehicles' parked vehicles (roads.vehicles; see CityWorldSettingsData.Roads.Vehicles). */
     public boolean includeVehicles = true;
-    public double oddsOfParkedVehicle = 0.5;
-    public int vehicleFuel = 0;
+    public int carParkVehicles = 1, streetVehicles = 1, vehicleFuel = 0;
+    public double oddsOfParkedVehicle = Odds.oddsLikely, oddsOfStreetVehicle = Odds.oddsLikely;
     public double oddsOfWildBridge = Odds.oddsLikely;
     public boolean spawnersInSubways = true;
 
@@ -639,9 +639,12 @@ public class CityWorldSettings {
         includeSkybridges = data.roads().skybridges();
         oddsOfSkybridge = data.roads().oddsOfSkybridge();
         skybridgeMinFloors = data.roads().skybridgeMinFloors();
-        includeVehicles = data.roads().vehicles();
-        oddsOfParkedVehicle = data.roads().oddsOfParkedVehicle();
-        vehicleFuel = data.roads().vehicleFuel();
+        includeVehicles = data.roads().vehicles().enabled();
+        carParkVehicles = data.roads().vehicles().carParkVehicles();
+        oddsOfParkedVehicle = data.roads().vehicles().oddsOfParkedVehicle();
+        streetVehicles = data.roads().vehicles().streetVehicles();
+        oddsOfStreetVehicle = data.roads().vehicles().oddsOfStreetVehicle();
+        vehicleFuel = data.roads().vehicles().fuel();
         includeWildBridges = data.roads().wildBridges();
         wildBridgeDepth = data.roads().wildBridgeDepth();
         wildBridgeSpan = data.roads().wildBridgeSpan();
@@ -783,8 +786,9 @@ public class CityWorldSettings {
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);
         CityWorldSettingsData.Roads roads = new CityWorldSettingsData.Roads(driveOnLeft, speedLimitUrban, speedLimitRural,
                 oddsOfSpeedRepeat, includeSkybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, includeWildBridges,
-                wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, includeVehicles, oddsOfParkedVehicle,
-                vehicleFuel);
+                wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion,
+                new CityWorldSettingsData.Vehicles(includeVehicles, carParkVehicles, oddsOfParkedVehicle,
+                        streetVehicles, oddsOfStreetVehicle, vehicleFuel));
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
                 overgrowth, shops, decay, caves, subways, structures, cities, roads);
     }

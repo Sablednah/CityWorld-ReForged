@@ -438,9 +438,24 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 | `wildBridgeSpan` | `48` | The longest bridge, in blocks; a valley wider than this gets none. The shortest is a chunk. |
 | `wildBridgeRegion` | `32` | The size of a bridge region, in chunks square. A region has at most one wild rope bridge, wholly inside it: its seed orders its chunk rows and columns, and the bridge is the first span along the first of them that has one. |
 | `oddsOfWildBridge` | `0.5` | The chance a region has its bridge (1 in 2). At the defaults a mountain range shows one, maybe two. |
-| `vehicles` | `true` | With Immersive Vehicles and a vehicle pack, park real vehicles in the bays of mall car parks instead of block cars (a ruin keeps its wrecks). The vehicles are data: see PALETTES.md, "Parked vehicles". |
-| `oddsOfParkedVehicle` | `0.5` | The chance a car park bay holds a vehicle. |
-| `vehicleFuel` | `0` | Millibuckets of lava (Immersive Vehicles' stock fuel) in a parked vehicle's tank. None by default: the gas stations' fuel pumps are full. |
+| `vehicles` | see below | Immersive Vehicles' parked vehicles (7.0). **Parked vehicles** in Customize. |
+
+`vehicles` is a group of its own. Every parked vehicle costs the client frames (a car park with a bay in two filled
+ran at 1 fps), so by default they are few: about one in two mall car-park chunks holds one, and one district in two
+has one at a kerb.
+
+```json
+"roads": { "vehicles": { "enabled": true, "carParkVehicles": 1, "oddsOfParkedVehicle": 0.5, "streetVehicles": 1, "oddsOfStreetVehicle": 0.5, "fuel": 0 } }
+```
+
+| Setting | Default | What it does |
+|---|---|---|
+| `enabled` | `true` | With Immersive Vehicles and a vehicle pack, park real vehicles: in mall car parks (the bays hold block cars otherwise; a ruin keeps its block wrecks) and at the kerbs of straight streets. The vehicles are data: see PALETTES.md, "Parked vehicles". Nothing is placed without the mod. |
+| `carParkVehicles` | `1` | The most real vehicles a mall car-park chunk holds (it has eight bays). The other bays stay empty. |
+| `oddsOfParkedVehicle` | `0.5` | The chance each of those is there. |
+| `streetVehicles` | `1` | The most vehicles a district (a 10×10-chunk platmap) parks at its kerbs, each on a different straight street, mid-chunk, in the kerb lane, nose along the traffic on its side (`driveOnLeft`). Never in a ruin, a tunnel or on a bridge. |
+| `oddsOfStreetVehicle` | `0.5` | The chance a district has its street vehicles at all. |
+| `fuel` | `0` | Millibuckets of lava (Immersive Vehicles' stock fuel) in a parked vehicle's tank. None by default: the gas stations' fuel pumps are full. |
 
 ### `cities` — cities in a vanilla world, highways, rivers and oceans
 
