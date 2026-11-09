@@ -80,8 +80,9 @@ jar deployed to the `1.20.1  Forge` instance (stamp `091d08d5`):
 - **Vanilla land loot (`ccc2a7bd`)**: the end-of-lot container pass asked the lifted cell; 23 → 148 tabled of 190.
 - **JourneyMap (`a4fa485e`)**: the plan overlay skips a platmap with no plan (vanilla land outside a city threw an
   NPE per sweep, ~1000 lines in his log).
-Gates so far: 1.21.11 and 1.21.1 self-tests PASS on the vehicles + overlay heads (before the vegetation fix);
-26.1/26.2 running on the fixed heads; the rest to run. Then the 7.0.0 release recipe on the owner's go.
+Gates: six self-tests PASS on the fixed heads (1.21.11 `5d0e651a`, 1.20.1 `091d08d5`, 1.21.1 `d874153f`, 26.1 `8c8dc738`,
+26.2 `6ea68cf1`, 26.3 `49c2e76b`) and `--compare` agrees on the fresh reports. Not pushed. Then the 7.0.0 release
+recipe on the owner's go.
 
 ## ▶ Resume here — 7.0.0 overnight (2026-11-07/08): Immersive Vehicles, pole signs, spawns, place names
 

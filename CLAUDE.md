@@ -29,8 +29,8 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   motion" as weeds, and IV's poles/pumps block none (18/29 poles short → 0; fixed `5d0e651a`, all six lines; 1.20.1
   deployed `091d08d5`). Vehicles are FEW now (`roads.vehicles`, 1 a car-park chunk, 1 a district at a kerb; his mall
   ran at 1 fps), signs on a smooth stone base, vanilla-land loot pass fixed, JourneyMap overlay NPE on vanilla land
-  fixed. Test bed for IV on 1.20.1: the Forge dedicated server in the scratchpad (recipe in PORTING.md). Self-tests:
-  1.21.11 + 1.21.1 PASS pre-fix, others running — finish the six, then the 7.0.0 release on the owner's go.
+  fixed. Test bed for IV on 1.20.1: the Forge dedicated server in the scratchpad (recipe in PORTING.md). Six self-tests PASS
+  on the fixed heads + `--compare` agrees. Nothing pushed. Next: the owner's look, then the 7.0.0 release on their go.
 
 **▶ Resume here (2026-11-08 overnight): 7.0.0 grew Immersive Vehicles, pole signs, spawns and place names.**
 - `6a7ba4ed` IV parked cars (mall car parks) + fuel pumps (gas stations); `121fb2e7` road signs on IV poles with
