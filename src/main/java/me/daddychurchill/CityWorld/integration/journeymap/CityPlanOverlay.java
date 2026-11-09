@@ -356,6 +356,9 @@ final class CityPlanOverlay {
                 int platX = centreX + dx * PlatMap.Width;
                 int platZ = centreZ + dz * PlatMap.Width;
                 PlatMap platmap = context.getPlatMap(platX, platZ);
+                if (platmap == null || platmap.context == null)
+                    continue; // vanilla land outside every city: no plan to draw (it threw an NPE per sweep, four
+                              // planner threads at a time, in the owner's 1.20.1 log)
                 SchematicFamily family = platmap.context.getSchematicFamily();
 
                 // Wild land gets no tint — the map already shows what it looks like, and colouring
