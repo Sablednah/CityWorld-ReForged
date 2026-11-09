@@ -469,6 +469,18 @@ public class PlatMap {
 		placeIntersection(RoadLot.PlatMapRoadInset - 1, Width - RoadLot.PlatMapRoadInset);
 		placeIntersection(Width - RoadLot.PlatMapRoadInset, RoadLot.PlatMapRoadInset - 1);
 		placeIntersection(Width - RoadLot.PlatMapRoadInset, Width - RoadLot.PlatMapRoadInset);
+
+		// Vanilla land with highways (7.0): the street a highway leaves by is paved from the city's centre line to its
+		// edge whatever this district would have done there (a stretch left out, a farm, a house). The gate is decided
+		// from the sites alone (Highways.gate) and the city conforms to it: finding a street in the PLAN instead meant
+		// planning the far city, which held a world's spawn area for a minute. Before the buildings, so they step round
+		// it like any street; a structure's reservation still wins (paveLot).
+		var highways = generator.highways;
+		if (highways != null)
+			for (int x = 0; x < Width; x++)
+				for (int z = 0; z < Width; z++)
+					if (highways.exitRoadAt(originX + x, originZ + z))
+						paveLot(x, z, false);
 	}
 
 	public void validateRoads() {
