@@ -632,6 +632,7 @@ public final class ChunkProbe {
                     link.a().level(), link.b().centreX(), link.b().centreZ(), link.b().level(), link.length(), lo, hi, steepest,
                     bridge * 100 / n, tunnel * 100 / n, link.planMs(), (int) link.x()[mid], link.y()[mid] + 2, (int) link.z()[mid], profile);
         }
+        CityWorldMod.LOGGER.warn("SURVEY costs so far: {}", hw.sitesForSurvey().costs());
         CityWorldMod.LOGGER.warn("SURVEY highways: {} links in {} ms; rough ground bias {}", links.size(), (System.nanoTime() - started) / 1_000_000,
                 ((me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator) level.getChunkSource().getGenerator()).highways().biasForSurvey());
     }
@@ -692,6 +693,7 @@ public final class ChunkProbe {
             }
             CityWorldMod.LOGGER.warn("CELLS {}", row);
         }
+        CityWorldMod.LOGGER.warn("SURVEY costs so far: {}", sites.costs());
         CityWorldMod.LOGGER.warn("SURVEY sites: {} of {} cells ({} blocks each) hold a city, judged in {} ms; by districts across {}; by ground level (8s) {}",
                 accepted, total, cell, (System.nanoTime() - started) / 1_000_000, bySize, byLevel);
         // -Dcityworld.probe.at=x,z: map the city nearest that point instead of the origin's
