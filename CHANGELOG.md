@@ -32,6 +32,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   the lamp posts, instead of the post replacing a slab or plant there.
 - Vanilla land: the end-of-lot loot pass (every untouched container gets the lot's table) asked for each container
   at the cell above it by the city's lift, so it filled nothing there; it works in the lot's own frame now.
+- JourneyMap: on vanilla land the city-plan overlay threw an error for every platmap outside a city (no plan to
+  draw), hundreds of lines a session; those are skipped.
 - **Vanilla land: a city too big for its spacing is built as big as fits**, where before it was not built at all (a
   world at the smallest spacing with the biggest sizes had a city in one cell in nine). Worlds made with 7.0 or
   later; Customize's **City size** says "(N fit)" when the size can't fit the spacing.
