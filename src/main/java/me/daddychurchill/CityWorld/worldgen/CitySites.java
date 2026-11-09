@@ -273,45 +273,86 @@ public final class CitySites {
         return site.level() - streetLevel;
     }
 
+    /** A cell being judged right now, so two threads never judge the same one and anyone may wait for it. */
+    private final ConcurrentHashMap<Long, java.util.concurrent.CompletableFuture<Verdict>> pending = new ConcurrentHashMap<>();
+
+    private static long cellKey(int cellX, int cellZ) {
+        return ((long) cellX << 32) ^ (cellZ & 0xffffffffL);
+    }
+
     /**
-     * Judge every cell of this square of cells not judged yet, side by side on the planning pool, and wait for them:
-     * a highway asks the cells for several cells around (its {@code reach}), each costs about half a second of vanilla
-     * heights, and judged one after another they held a world's spawn area for a minute (the owner's seed at the
-     * smallest spacing: one worker judging, the rest waiting on its road). On a planning-pool thread, nothing is
-     * queued (the pool would wait on itself): the cells are judged as they are asked.
+     * Judge every cell of these squares of cells ({@code {cellX0, cellZ0, cellX1, cellZ1}} each, inclusive) not judged
+     * yet, side by side on {@link me.daddychurchill.CityWorld.Support.Planners#BURST}, and wait for them. A highway asks
+     * the cells for several cells around (its {@code reach}); each costs about half a second of exact vanilla heights,
+     * and judged one after another on the thread that first asked they held a world's spawn area for 90 s (201 cells
+     * at default settings) while 21 cores idled. A cell another thread is already judging is waited for, not judged
+     * again.
      */
-    public void judgeAll(int cellX0, int cellZ0, int cellX1, int cellZ1) {
-        if (Thread.currentThread().getName().startsWith("cityworld-planner"))
-            return;
-        List<java.util.concurrent.CompletableFuture<Void>> waiting = new java.util.ArrayList<>();
-        int spacing = config.spacing();
-        for (int cx = cellX0; cx <= cellX1; cx++)
-            for (int cz = cellZ0; cz <= cellZ1; cz++) {
-                if (cells.containsKey(((long) cx << 32) ^ (cz & 0xffffffffL)))
-                    continue;
-                int x = cx * spacing, z = cz * spacing;
-                waiting.add(java.util.concurrent.CompletableFuture.runAsync(() -> verdictAt(x, z),
-                        me.daddychurchill.CityWorld.Support.Planners.POOL));
-            }
+    public void judgeAll(List<int[]> squares) {
+        List<java.util.concurrent.CompletableFuture<Verdict>> waiting = new java.util.ArrayList<>();
+        java.util.Set<Long> seen = new java.util.HashSet<>();
+        for (int[] sq : squares)
+            for (int cx = sq[0]; cx <= sq[2]; cx++)
+                for (int cz = sq[1]; cz <= sq[3]; cz++) {
+                    long key = cellKey(cx, cz);
+                    if (!seen.add(key) || cells.containsKey(key))
+                        continue;
+                    var known = pending.get(key);
+                    if (known != null) {
+                        waiting.add(known);
+                        continue;
+                    }
+                    var mine = new java.util.concurrent.CompletableFuture<Verdict>();
+                    var raced = pending.putIfAbsent(key, mine);
+                    if (raced != null) {
+                        waiting.add(raced);
+                        continue;
+                    }
+                    int x = cx, z = cz;
+                    me.daddychurchill.CityWorld.Support.Planners.BURST.execute(() -> judgeInto(key, x, z, mine));
+                    waiting.add(mine);
+                }
         for (var w : waiting)
             Waiting.join(w);
     }
 
-    /** The verdict for the cell holding this column (computed on first ask). */
+    /** {@link #judgeAll(List)} for one square. */
+    public void judgeAll(int cellX0, int cellZ0, int cellX1, int cellZ1) {
+        judgeAll(List.of(new int[] { cellX0, cellZ0, cellX1, cellZ1 }));
+    }
+
+    /** Judge a claimed cell, remember it, and release everyone waiting for it. */
+    private void judgeInto(long key, int cellX, int cellZ, java.util.concurrent.CompletableFuture<Verdict> mine) {
+        try {
+            long t = System.nanoTime();
+            Verdict verdict = judge(cellX, cellZ);
+            judgeNanos.addAndGet(System.nanoTime() - t);
+            judged.incrementAndGet();
+            cells.put(key, verdict);
+            mine.complete(verdict);
+        } catch (RuntimeException | Error e) {
+            mine.completeExceptionally(e);
+            throw e;
+        } finally {
+            pending.remove(key, mine);
+        }
+    }
+
+    /** The verdict for the cell holding this column (computed on first ask, on this thread unless another has it). */
     public Verdict verdictAt(int blockX, int blockZ) {
         int cellX = Math.floorDiv(blockX, config.spacing()), cellZ = Math.floorDiv(blockZ, config.spacing());
-        long key = ((long) cellX << 32) ^ (cellZ & 0xffffffffL);
+        long key = cellKey(cellX, cellZ);
         Verdict known = cells.get(key);
         if (known != null)
             return known;
-        // Outside any map lock: judging a site asks vanilla for heights, which is slow, and the answer is the
-        // same whichever thread works it out.
-        long t = System.nanoTime();
-        Verdict verdict = judge(cellX, cellZ);
-        judgeNanos.addAndGet(System.nanoTime() - t);
-        this.judged.incrementAndGet();
-        Verdict raced = cells.putIfAbsent(key, verdict);
-        return raced != null ? raced : verdict;
+        // Outside any map lock: judging a site asks vanilla for heights, which is slow, and the answer is the same
+        // whichever thread works it out — so one does, and the rest wait for it
+        var mine = new java.util.concurrent.CompletableFuture<Verdict>();
+        var raced = pending.putIfAbsent(key, mine);
+        if (raced != null)
+            return Waiting.join(raced);
+        judgeInto(key, cellX, cellZ, mine);
+        return mine.join();
     }
 
     /**
