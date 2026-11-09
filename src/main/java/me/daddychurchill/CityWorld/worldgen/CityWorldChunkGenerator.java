@@ -679,8 +679,6 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                 return lowest;
                             }, roads)
                             : null;
-                    if (highways != null)
-                        highways.usePlan((cx, cz) -> cityPlanAt(bounds, cx, cz));
                     vanillaOverworld = local = built;
                 }
             }
@@ -695,19 +693,6 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
     /** The highways between the cities of a vanilla-terrain world, when they are on; else null. */
     private volatile Highways highways;
-
-    /** What the city's plan has on a chunk, for {@link Highways}' gates: a street, something built, or open ground. */
-    private int cityPlanAt(LevelHeightAccessor bounds, int chunkX, int chunkZ) {
-        CityWorldGenerator local = context != null ? context : context(bounds);
-        me.daddychurchill.CityWorld.Plats.PlatLot lot = local.getPlatMap(chunkX, chunkZ).getMapLot(chunkX, chunkZ);
-        if (lot == null)
-            return Highways.CityPlan.OPEN;
-        return switch (lot.style) {
-            case ROAD, ROUNDABOUT -> Highways.CityPlan.ROAD;
-            case NATURE -> Highways.CityPlan.OPEN;
-            default -> Highways.CityPlan.BUILT;
-        };
-    }
 
     /** The highways of a vanilla-terrain world (null in any other, or with them off), for the probe. */
     public Highways highways() {
