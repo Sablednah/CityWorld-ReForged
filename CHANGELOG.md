@@ -12,9 +12,9 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 - **Highways between the cities of a vanilla world.** Each city gets a road to the nearest city east and the nearest
   south (up to `reach` cells past empty ones, so a world of sparse cities still has its roads), leaving from the end of one of its own streets, across its open edge, at its own level. That street runs on into
   the highway instead of ending in a kerb, signed with the town's board and the highway's speed limit (with Macaw's
-  Roads) where it would have said DEAD END. The road leaves straight along the street and only then turns, never
-  across the city's own lots; where no street toward the other city has open ground beyond it, it meets one along
-  the city's edge as a T, or leaves by a street on another side and swings round the city. It climbs in half-block
+  Roads) where it would have said DEAD END. The city paves that street out to its edge whatever the district would
+  have put there (a farm, a house, a stretch left out), so the highway always leaves by a street; the road leaves
+  straight along it and only then turns, never across the city's own lots. It climbs in half-block
   steps (the surface's own slab, or cobbled deepslate), so vehicles that cannot climb a whole block (Immersive
   Vehicles and most others) can drive it. With Macaw's Roads it is signed: MOTORWAY as it leaves a city, TUNNEL
   before each portal, STEEP ASCENT and STEEP DESCENT at long climbs. It winds round hills and along valleys, never
