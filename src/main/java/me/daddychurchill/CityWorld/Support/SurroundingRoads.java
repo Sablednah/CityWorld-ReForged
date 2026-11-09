@@ -15,8 +15,8 @@ public final class SurroundingRoads extends Surroundings {
 
 	/**
 	 * With {@code highways}, a side a highway leaves from counts as a road: the street runs on to that edge (and is
-	 * signed for it) where it would have ended. Only the road's own drawing asks: finding a city's gates reads its
-	 * plan and its neighbours' sites, which a map or a command on the server thread must not wait for.
+	 * signed for it) where it would have ended. Only the road's own drawing asks: finding a city's gates judges its
+	 * neighbours' sites, which a map or a command on the server thread must not wait for.
 	 */
 	public SurroundingRoads(PlatMap platmap, int platX, int platZ, boolean highways) {
 		super();
