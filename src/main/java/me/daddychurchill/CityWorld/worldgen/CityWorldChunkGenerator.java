@@ -730,7 +730,6 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
         BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
         BlockState edge = net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState();
-        BlockState edgeSlab = net.minecraft.world.level.block.Blocks.SMOOTH_STONE_SLAB.defaultBlockState();
         BlockState rail = net.minecraft.world.level.block.Blocks.STONE_BRICK_WALL.defaultBlockState();
         BlockState masonry = net.minecraft.world.level.block.Blocks.STONE_BRICKS.defaultBlockState();
         BlockState light = net.minecraft.world.level.block.Blocks.SEA_LANTERN.defaultBlockState();
@@ -784,7 +783,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         chunk.setBlockState(cursor.set(bx, roof, bz), light, false);
                     if (!wall)
                         drawDeck(chunk, cursor, bx, bz, deck, halfStep, d, deckEdge, near.along(), pavement, pavementSlab,
-                                lines, edge, edgeSlab, false, rail);
+                                lines, edge, false, rail);
                     roadBed(chunk, cursor, bx, bz, deck, stone);
                     continue;
                 }
@@ -794,7 +793,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     for (int y = Math.max(sky, deck + 6); y > deck; y--)
                         chunk.setBlockState(cursor.set(bx, y, bz), air, false);
                     drawDeck(chunk, cursor, bx, bz, deck, halfStep, d, deckEdge, near.along(), pavement, pavementSlab, lines,
-                            edge, edgeSlab, bridge, rail);
+                            edge, bridge, rail);
                     if (!bridge) {
                         // banked up to the deck where the ground is lower (water too), on a bed over any cave
                         for (int y = top + 1; y < deck; y++)
@@ -1212,13 +1211,14 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     /** One column of a highway's deck: pavement (a dash on the centreline), or the kerb; a slab on it for a half step. */
     private static void drawDeck(ChunkAccess chunk, BlockPos.MutableBlockPos cursor, int bx, int bz, int deck,
             boolean halfStep, double d, double deckEdge, double along, BlockState pavement, BlockState pavementSlab,
-            BlockState lines, BlockState edge, BlockState edgeSlab, boolean railed, BlockState rail) {
+            BlockState lines, BlockState edge, boolean railed, BlockState rail) {
         boolean kerb = d > deckEdge;
         boolean dash = !kerb && d < 0.75 && ((int) (along / 4)) % 2 == 0;
         chunk.setBlockState(cursor.set(bx, deck, bz), kerb ? edge : dash && !halfStep ? lines : pavement, false);
         if (halfStep) {
             BlockState lineSlab = dash ? slabOf(lines) : null;
-            chunk.setBlockState(cursor.set(bx, deck + 1, bz), kerb ? edgeSlab
+            // the kerb climbs in whole blocks: a wall on a slab floats half a block above it (the owner's screenshot)
+            chunk.setBlockState(cursor.set(bx, deck + 1, bz), kerb ? edge
                     : lineSlab != null ? lineSlab : pavementSlab != null ? pavementSlab : pavement, false);
         }
         if (kerb && railed)
