@@ -2147,15 +2147,17 @@ public class RoadLot extends ConnectedLot {
 
 	/**
 	 * A sign on a rod at a sidewalk cell, if the cell is free; nothing without the sign. {@code end} is the mod's
-	 * second face of a two-faced sign (the end of a limit, leaving a town). On a slab or anything else short of a
-	 * full top, the rod replaces it, so the post stands on the ground instead of floating half a block up; over a
-	 * hole (decay), no sign.
+	 * second face of a two-faced sign (the end of a limit, leaving a town). The post stands on a smooth stone base
+	 * set into the pavement, like the lamp posts ({@link #lightpostbaseMaterial}): a slab or a plant there is
+	 * replaced by the base, never by the post (a post sunk into a slab cell left a hole beside it, the owner's
+	 * 1.20.1 look); over a hole (decay), no sign.
 	 */
 	private void placeRoadSign(RealBlocks chunk, RoadSign road, int x, int y, int z, BlockFace facing, boolean end) {
 		if (road == null || !chunk.isEmpty(x, y + 1, z) || !chunk.isEmpty(x, y + 2, z) || !chunk.isEmpty(x, y + 3, z)
 				|| chunk.isEmpty(x, y, z))
 			return;
-		int base = chunk.isSturdyTop(x, y, z) ? y + 1 : y;
+		chunk.setBlock(x, y, z, lightpostbaseMaterial);
+		int base = y + 1;
 		// Immersive Vehicles' signs first (they carry the town's name), on a pole in place of the rod
 		String name = end ? road.name() + "_end" : road.name();
 		int lift = me.daddychurchill.CityWorld.worldgen.ShiftedRegion.shiftOf(chunk.getWorld());
