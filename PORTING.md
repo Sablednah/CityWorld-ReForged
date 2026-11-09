@@ -15,21 +15,33 @@ side by side, and a highway only joined next-door cells.
 - Self-test `checkCityFitAndReach` (`cities.fit`, `highways.reach`: two islands three cells apart, joined at reach 3,
   not at reach 1).
 
-**What highways cost at spawn, measured on the 1.20.1 dev server** (23x23 spawn area, the owner's level.dat):
+**What highways cost at spawn, and the fix (2026-11-09 night).** Measured on the 1.20.1 dev server (23x23 spawn
+area, the owner's level.dat copied into `run/world` by a probe-script variant; `survey:sites` and `survey:highways`
+print `CitySites.costs()`: cells judged, exact columns, ms):
 
-| World | highways off | 7.0 as built (reach 1) | reach 3 |
-|---|---|---|---|
-| owner's (1024, 6 +/- 2), fit on | — | 105 s | 180 s; 172 s judged in parallel; **149 s** links claimed in parallel |
-| owner's, old code (19 cities, none beside spawn's) | — | 27 s | — |
-| same seed at defaults (2048, 3 +/- 1) | **29 s** | **94 s** | 130 s (before the parallel-claim fix) |
+| World (1.20.1 dev server) | highways off | before (7.0 as built, reach 1) | reach 3, first cut | **now** |
+|---|---|---|---|---|
+| defaults (2048, 3 +/- 1) | **29 s** (4 cells judged) | 94 s | 130 s | **51 s** (298 cells) |
+| owner's (1024, 6 +/- 2, cut to fit) | — | 105 s | 180 s | **41 s** |
 
-A link costs 0.7–29 s to plan (`survey:highways` "planned in"; 1.21.11 the same range, so not a 1.20.1 problem), and
-nearly all of it is the two cities' plans read for the gates (`streetGate` -> `cityPlanAt` -> `getPlatMap` ->
-vanilla land's exact heights), not the route. Thread dumps during spawn prep: one worker planning, the rest waiting on
-its link. Two fixes went in (`8c7e1db2` judge cells side by side on `Planners`; `2d133818` a chunk plans the links
-nobody has started before waiting on the rest). **Open, the owner's call:** highways roughly triple 1.20.1's spawn
-preparation at default settings even before reach — a gate that does not plan the far city (or plans its edge only)
-is the real fix.
+Two things, found by thread dumps during spawn preparation (`jstack` every 4 s, tallied by innermost CityWorld frame):
+1. **The gate read the far city's PLAN** (`streetGate` -> `cityPlanAt` -> `getPlatMap`), and planning a city's rim
+   platmaps judges the cells around them. Owner's idea: decide the gate from the sites alone and make the city conform.
+   `Highways.gate` is now geometry (the road line nearest the centre-to-centre crossing, within `GATE_REACH`, out to
+   the last chunk of city ground); `PlatMap.populateRoads` paves that street from the centre line to the gate
+   (`Highways.exitRoadAt`) before the buildings, so a highway always leaves by a street. `CityPlan`/`usePlan`,
+   `builtCrossing`, the run lengthening and `around` are gone (the route's `CITY_COST` already keeps it off the
+   discs). Survey on the owner's world: 28/28 ends meet a street, 0 built ahead, 0 chunks over built lots.
+2. **Judging was serial.** 201 cells (25,055 exact columns at 3.9 ms) judged one after another on the first worker
+   that wanted a road — 89 s of a 95 s spawn — while 21 cores idled and every other worker waited on that link. The
+   `Planners` pool is 4 wide by design. Now `CitySites.judgeAll` claims each cell once (`pending` futures; a cell
+   another thread has is waited for) and judges on `Planners.BURST` (cores - 2, MIN_PRIORITY), and
+   `Highways.prejudge` judges the square a chunk's links can come from, then the partner-search cones of the cities
+   in it, before any link is claimed. Under contention a column costs 6.5–8.5 ms (noise generation on 20 threads).
+
+What remains is inherent: reach 3 at a 2 km spacing judges a ~14-cell square (28 km) around spawn, ~300 cells, once
+per world. `highways.reach` 1 judges 25. The judge itself (3 tries x ~40 exact columns) is untouched: changing it
+moves cities in 5.19–6.14 vanilla-land worlds.
 
 ## ▶ Resume here — 7.0.0 overnight (2026-11-07/08): Immersive Vehicles, pole signs, spawns, place names
 
