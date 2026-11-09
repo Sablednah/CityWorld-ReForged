@@ -43,6 +43,46 @@ What remains is inherent: reach 3 at a 2 km spacing judges a ~14-cell square (28
 per world. `highways.reach` 1 judges 25. The judge itself (3 tries x ~40 exact columns) is untouched: changing it
 moves cities in 5.19–6.14 vanilla-land worlds.
 
+## ▶ Resume here — 2026-11-09 evening: the owner's 1.20.1 look at Immersive Vehicles
+
+Four fixes from the owner's screenshots and words, on master and the five branches (nothing pushed), the 1.20.1
+jar deployed to the `1.20.1  Forge` instance (stamp `091d08d5`):
+
+- **Floating pole signs / "gas_stop has no pumps" — found and fixed (`5d0e651a`).** Every IV pole on a BoP verge
+  had lost its two lowest segments. `PlatLot.clearVegetation` (used by `applyBiomeGround`, the MODERN pass that
+  gives exposed natural ground its biome's signature block, and by NatureLot) cleared *anything non-air that does not
+  block motion* at top+1 and top+2 before laying the ground — and IV's blocks block no motion. So wherever the
+  biome has a signature ground (BoP's old growth woodland → coarse dirt through `#cityworld:ground/coarse_dirt`)
+  the pass took the pole's bottom two segments and any pump standing on grass. Now `PlatLot.isVegetation`: a
+  replaceable block, FLOWERS/SAPLINGS/CROPS, or a `VegetationBlock` (`BushBlock` on 1.20.1/1.21.1; 26.2 has no
+  SAPLINGS tag; 26.3 reads `isSolid()` for `blocksMotion()`), never a block entity. **Rule: "does not block
+  motion" is not "empty-ish" — vehicle and decor mods' blocks have no collision.**
+  How it was found, because three cheaper theories were wrong: a Forge 1.20.1 dedicated server in the scratchpad
+  (`forge120/`, installer 47.4.10, the owner's `level.dat`, his mods copied in, commands on stdin: `forceload add`
+  to make chunks tick, or `-Dcityworld.probe=<x>,<z>` + `probe.radius` to generate without ticking). CityWorld
+  alone: intact. + Macaw's: intact. The owner's full mod set: broken. BoP + IV alone: broken. BoP with the biome's
+  vegetal features emptied by a world datapack: STILL broken (so not a feature spilling from the neighbour chunk).
+  Then a scratch jar with a per-pipeline-stage logger at one cell: the segments were gone right after the lot's own
+  `generateBlocks`. Measured: 18 of 29 pole columns short → 0 of 25 (all complete) with the fix; the nearest gas stop
+  (chunk 50,78, a vanilla biome, pumps on the forecourt's wool) keeps its 16 `builder_fluidtank` pumps with either
+  jar — the pass only sweeps where the biome HAS a signature ground, so the pumps the owner lost stood in a BoP
+  biome; not A/B'd at such a one. ⚠ `-Dcityworld.watch` compares the LOT frame: on
+  vanilla land subtract the city's shift from the world y, or it logs nothing (it cost one run here).
+  Not reproduced: the owner's `/cityschem gas_stop` pumps "vanishing a couple of seconds later" — a runtime paste
+  (`Clipboard.paste` → `placeInWorld`, flag 2) runs no CityWorld pass afterwards, IV's own removal path logs
+  "Failed to load tile entity" and his log has none; the one "Failed to load entity" line is his `/summon`. If it
+  recurs after this jar, a relog tells client (reappears) from server (does not).
+- **Parked vehicles are few (`88767f5b`)**: settings group `roads.vehicles` (nested record; roads has 14 fields):
+  `carParkVehicles` 1 per car-park chunk at `oddsOfParkedVehicle` 1/2, `streetVehicles` 1 per district at a kerb of
+  a straight street (`RoadLot.parkStreetVehicle`, picked by platmap seed), `fuel` 0. The owner's mall of parked cars
+  ran at 1 fps. Not built: a stand-alone car park lot / multi-storey car park (his "maybe").
+- **Road signs stand on a smooth stone base (`74e53ce5`)** like the lamp posts (they were sunk into the pavement).
+- **Vanilla land loot (`ccc2a7bd`)**: the end-of-lot container pass asked the lifted cell; 23 → 148 tabled of 190.
+- **JourneyMap (`a4fa485e`)**: the plan overlay skips a platmap with no plan (vanilla land outside a city threw an
+  NPE per sweep, ~1000 lines in his log).
+Gates so far: 1.21.11 and 1.21.1 self-tests PASS on the vehicles + overlay heads (before the vegetation fix);
+26.1/26.2 running on the fixed heads; the rest to run. Then the 7.0.0 release recipe on the owner's go.
+
 ## ▶ Resume here — 7.0.0 overnight (2026-11-07/08): Immersive Vehicles, pole signs, spawns, place names
 
 The owner's overnight ask (2026-11-07 bedtime): "work on immersive and the roads/signs and so on, and then a system to
