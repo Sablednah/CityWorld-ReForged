@@ -110,7 +110,13 @@ public final class ContainerLoot {
             // The first version asked the chunk and so found only the chests setChest had already
             // materialised — 848 "skipped", zero handled, with three furniture mods installed. Copy the
             // key set: materialising moves an entry from the pending map into the live one.
-            for (BlockPos pos : List.copyOf(access.getBlockEntitiesPos())) {
+            // ⚠ The chunk's positions are world coordinates; on vanilla land the lot draws through a ShiftedRegion
+            // that LIFTS every position it is given by the city's shift, so a chunk position handed straight to it
+            // asked (and fed) the cell above the container by the lift — every vanilla-land container this pass
+            // alone would have filled stayed empty. Everything below works in the lot's own (unlifted) frame.
+            int lift = me.daddychurchill.CityWorld.worldgen.ShiftedRegion.shiftOf(level);
+            for (BlockPos at : List.copyOf(access.getBlockEntitiesPos())) {
+                BlockPos pos = lift == 0 ? at : at.below(lift);
                 BlockEntity entity = level.getBlockEntity(pos);
                 if (entity == null)
                     continue;
