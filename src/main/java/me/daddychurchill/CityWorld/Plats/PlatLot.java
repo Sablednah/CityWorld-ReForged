@@ -529,11 +529,27 @@ public abstract class PlatLot {
 			chunk.setBlock(x, y, z, generator.badlandsBandAt(wx, y, wz));
 	}
 
-	/** Clear a bit of surface vegetation (grass/ferns/flowers/tall plants) — anything non-air that
-	 *  doesn't block motion — leaving solid blocks be. */
+	/** Clear a bit of surface vegetation (grass/ferns/flowers/tall plants), leaving everything else be. */
 	protected void clearVegetation(RealBlocks chunk, int x, int y, int z) {
-		if (!chunk.isEmpty(x, y, z) && !chunk.getActualBlock(x, y, z).getBlockData().blocksMotion())
+		if (!chunk.isEmpty(x, y, z) && isVegetation(chunk.getActualBlock(x, y, z).getBlockData()))
 			chunk.setBlock(x, y, z, Material.AIR);
+	}
+
+	/**
+	 * Whether a block is a plant the ground passes may sweep away: a replaceable one (grass, ferns, vines, a snow
+	 * layer), a flower, sapling or crop, or any other plant block. It used to be "anything that does not block
+	 * motion", and Immersive Vehicles' blocks block none — so {@link #applyBiomeGround} took the two lowest
+	 * segments of every pole sign standing on a verge whose biome has a signature ground (BoP's old growth
+	 * woodland, coarse dirt), and the fuel pumps of a gas stop that stood on grass (the owner's 1.20.1 world,
+	 * 2026-11-09; measured on a Forge server: 18 of 29 poles short, 0 after). A block with a block entity is
+	 * never vegetation.
+	 */
+	public static boolean isVegetation(net.minecraft.world.level.block.state.BlockState state) {
+		if (state.isAir() || state.hasBlockEntity() || state.blocksMotion())
+			return false;
+		return state.canBeReplaced() || state.is(net.minecraft.tags.BlockTags.FLOWERS)
+				|| state.is(net.minecraft.tags.BlockTags.SAPLINGS) || state.is(net.minecraft.tags.BlockTags.CROPS)
+				|| state.getBlock() instanceof net.minecraft.world.level.block.BushBlock; // VegetationBlock on 1.21.4+
 	}
 
 	protected void destroyLot(CityWorldGenerator generator, int y1, int y2) {
