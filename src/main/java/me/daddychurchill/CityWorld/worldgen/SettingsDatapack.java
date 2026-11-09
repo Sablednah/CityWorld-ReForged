@@ -272,9 +272,14 @@ public final class SettingsDatapack {
         roads.addProperty("wildBridgeSpan", rd.wildBridgeSpan());
         roads.addProperty("oddsOfWildBridge", rd.oddsOfWildBridge());
         roads.addProperty("wildBridgeRegion", rd.wildBridgeRegion());
-        roads.addProperty("vehicles", rd.vehicles());
-        roads.addProperty("oddsOfParkedVehicle", rd.oddsOfParkedVehicle());
-        roads.addProperty("vehicleFuel", rd.vehicleFuel());
+        JsonObject vehicles = new JsonObject();
+        vehicles.addProperty("enabled", rd.vehicles().enabled());
+        vehicles.addProperty("carParkVehicles", rd.vehicles().carParkVehicles());
+        vehicles.addProperty("oddsOfParkedVehicle", rd.vehicles().oddsOfParkedVehicle());
+        vehicles.addProperty("streetVehicles", rd.vehicles().streetVehicles());
+        vehicles.addProperty("oddsOfStreetVehicle", rd.vehicles().oddsOfStreetVehicle());
+        vehicles.addProperty("fuel", rd.vehicles().fuel());
+        roads.add("vehicles", vehicles);
         root.add("roads", roads);
 
         // The codec's own encoding goes over the top. It is sparse (a field at its default is left out, and

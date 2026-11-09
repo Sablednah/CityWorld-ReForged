@@ -327,16 +327,14 @@ public record CityWorldSettingsData(
      * {@code wildBridges}, a rope bridge from a ridge crest in the wild across a valley at least
      * {@code wildBridgeDepth} deep to where the far side's ground meets the deck, up to {@code wildBridgeSpan} long:
      * at most one per region of {@code wildBridgeRegion} chunks square, and a region has one in
-     * {@code oddsOfWildBridge}. With Immersive Vehicles and a vehicle pack ({@code vehicles}), a bay in a car park
-     * holds a parked vehicle in {@code oddsOfParkedVehicle}, with {@code vehicleFuel} millibuckets in its tank.
+     * {@code oddsOfWildBridge}. {@code vehicles}: Immersive Vehicles' parked vehicles ({@link Vehicles}).
      */
     public record Roads(boolean driveOnLeft, int speedLimitUrban, int speedLimitRural, double oddsOfSpeedRepeat,
             boolean skybridges, double oddsOfSkybridge, int skybridgeMinFloors, double oddsOfStreetRope, boolean wildBridges,
-            int wildBridgeDepth, int wildBridgeSpan, double oddsOfWildBridge, int wildBridgeRegion, boolean vehicles,
-            double oddsOfParkedVehicle, int vehicleFuel) {
+            int wildBridgeDepth, int wildBridgeSpan, double oddsOfWildBridge, int wildBridgeRegion, Vehicles vehicles) {
 
         public static final Roads DEFAULT = new Roads(false, 50, 30, Odds.oddsUnlikely,
-                false, Odds.oddsSomewhatLikely, 6, Odds.oddsSomewhatLikely, true, 8, 48, Odds.oddsLikely, 32, true, 0.5, 0);
+                false, Odds.oddsSomewhatLikely, 6, Odds.oddsSomewhatLikely, true, 8, 48, Odds.oddsLikely, 32, Vehicles.DEFAULT);
 
         public static final Codec<Roads> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("driveOnLeft", false).forGetter(Roads::driveOnLeft),
@@ -352,25 +350,50 @@ public record CityWorldSettingsData(
                 Codec.INT.optionalFieldOf("wildBridgeSpan", 48).forGetter(Roads::wildBridgeSpan),
                 Codec.DOUBLE.optionalFieldOf("oddsOfWildBridge", Odds.oddsLikely).forGetter(Roads::oddsOfWildBridge),
                 Codec.INT.optionalFieldOf("wildBridgeRegion", 32).forGetter(Roads::wildBridgeRegion),
-                Codec.BOOL.optionalFieldOf("vehicles", true).forGetter(Roads::vehicles),
-                Codec.DOUBLE.optionalFieldOf("oddsOfParkedVehicle", 0.5).forGetter(Roads::oddsOfParkedVehicle),
-                Codec.INT.optionalFieldOf("vehicleFuel", 0).forGetter(Roads::vehicleFuel)
+                Vehicles.CODEC.optionalFieldOf("vehicles", Vehicles.DEFAULT).forGetter(Roads::vehicles)
         ).apply(i, Roads::new));
 
         public Roads withDriveOnLeft(boolean v) {
-            return new Roads(v, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles, oddsOfParkedVehicle, vehicleFuel);
+            return new Roads(v, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles);
         }
 
         public Roads withSkybridges(boolean v) {
-            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, v, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles, oddsOfParkedVehicle, vehicleFuel);
+            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, v, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles);
         }
 
         public Roads withVehicles(boolean v) {
-            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, v, oddsOfParkedVehicle, vehicleFuel);
+            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles.withEnabled(v));
         }
 
         public Roads withWildBridges(boolean v) {
-            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, v, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles, oddsOfParkedVehicle, vehicleFuel);
+            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, v, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles);
+        }
+    }
+
+    /**
+     * Immersive Vehicles' parked vehicles, with the mod and a vehicle pack ({@code enabled}; nothing is placed
+     * without them, and a ruin keeps its block wrecks). Every one costs the client frames (the owner's first mall:
+     * four a chunk, 1 fps), so they are few: a mall car park chunk holds up to {@code carParkVehicles}, each in
+     * {@code oddsOfParkedVehicle}; a district (platmap) parks up to {@code streetVehicles} at the kerb of a straight
+     * street, nose along the traffic on its side, in {@code oddsOfStreetVehicle}. {@code fuel}: millibuckets of lava
+     * (IV's stock fuel) in a tank; none by default, the gas stations' pumps are full.
+     */
+    public record Vehicles(boolean enabled, int carParkVehicles, double oddsOfParkedVehicle, int streetVehicles,
+            double oddsOfStreetVehicle, int fuel) {
+
+        public static final Vehicles DEFAULT = new Vehicles(true, 1, Odds.oddsLikely, 1, Odds.oddsLikely, 0);
+
+        public static final Codec<Vehicles> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.BOOL.optionalFieldOf("enabled", true).forGetter(Vehicles::enabled),
+                Codec.INT.optionalFieldOf("carParkVehicles", 1).forGetter(Vehicles::carParkVehicles),
+                Codec.DOUBLE.optionalFieldOf("oddsOfParkedVehicle", Odds.oddsLikely).forGetter(Vehicles::oddsOfParkedVehicle),
+                Codec.INT.optionalFieldOf("streetVehicles", 1).forGetter(Vehicles::streetVehicles),
+                Codec.DOUBLE.optionalFieldOf("oddsOfStreetVehicle", Odds.oddsLikely).forGetter(Vehicles::oddsOfStreetVehicle),
+                Codec.INT.optionalFieldOf("fuel", 0).forGetter(Vehicles::fuel)
+        ).apply(i, Vehicles::new));
+
+        public Vehicles withEnabled(boolean v) {
+            return new Vehicles(v, carParkVehicles, oddsOfParkedVehicle, streetVehicles, oddsOfStreetVehicle, fuel);
         }
     }
 
