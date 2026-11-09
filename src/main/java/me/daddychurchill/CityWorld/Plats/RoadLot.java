@@ -1191,6 +1191,10 @@ public class RoadLot extends ConnectedLot {
 				if (inACity)
 					FinishedBuildingLot.drawStreetRope(generator, platmap, chunk, platX, platZ);
 
+				// a vehicle parked at the kerb, if one of the platmap's few is on this street (Immersive Vehicles)
+				if (inACity)
+					parkStreetVehicle(generator, chunk, platmap, platX, platZ, roads, sidewalkLevel);
+
 				// half as likely in the middle of the road
 				generateEntities(generator, chunk, sidewalkLevel);
 			}
@@ -2079,6 +2083,71 @@ public class RoadLot extends ConnectedLot {
 			signFor(chunk, here, one, true, y, false, left);
 			signFor(chunk, here, one.getOppositeFace(), false, y, false, left);
 		}
+	}
+
+	/**
+	 * The few vehicles a district parks at its kerbs (Immersive Vehicles, {@code roads.vehicles}): the platmap rolls
+	 * {@code oddsOfStreetVehicle} once and picks up to {@code streetVehicles} of its straight street chunks and a side
+	 * of each by its seed, so every chunk gets the same answer from the plan alone. Malls are rare, and their car
+	 * parks were the only place a vehicle stood (the owner: "one car per region parked on the street, or outside
+	 * someone's house"). The car stands in the kerb lane, nose along the traffic on its side ({@code driveOnLeft}),
+	 * mid-chunk, where a straight has no crossing. Never in a ruin (its wrecks are blocks), a tunnel or on a bridge.
+	 */
+	private void parkStreetVehicle(CityWorldGenerator generator, RealBlocks chunk, PlatMap platmap, int platX,
+			int platZ, SurroundingRoads roads, int sidewalkLevel) {
+		me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
+		if (roundaboutRoad || generator.isApocalypseStyle() || !settings.includeVehicles
+				|| !me.daddychurchill.CityWorld.worldgen.Vehicles.any("car"))
+			return;
+		boolean ns = roads.toNorth() && roads.toSouth(), ew = roads.toWest() && roads.toEast();
+		if (roads.getNeighborCount() != 2 || !(ns || ew))
+			return;
+		int side = -1;
+		for (int[] pick : streetVehicles(generator, platmap))
+			if (pick[0] == platX && pick[1] == platZ)
+				side = pick[2];
+		if (side < 0)
+			return;
+		// the traffic on this kerb: right-hand traffic keeps the low side (west, north) heading down the axis
+		boolean low = side == 0, left = settings.driveOnLeft;
+		BlockFace travel = ns ? (low == left ? BlockFace.NORTH : BlockFace.SOUTH)
+				: (low == left ? BlockFace.EAST : BlockFace.WEST);
+		double heading = travel == BlockFace.SOUTH ? 0 : travel == BlockFace.EAST ? 90 : travel == BlockFace.NORTH ? 180 : 270;
+		double kerb = low ? sidewalkWidth + 1.5 : chunk.width - sidewalkWidth - 1.5, along = chunk.width / 2.0;
+		int kx = (int) Math.floor(ns ? kerb : along), kz = (int) Math.floor(ns ? along : kerb);
+		for (int dx = -1; dx <= 1; dx++) // the lane must be clear and paved (a hole in a decayed road, a planter)
+			for (int dz = -2; dz <= 2; dz++)
+				if (!chunk.isEmpty(kx + dx, sidewalkLevel, kz + dz) || chunk.isEmpty(kx + dx, sidewalkLevel - 1, kz + dz))
+					return;
+		Odds car = new Odds(generator.getWorldSeed() ^ ((long) chunk.getOriginX() << 32) ^ (chunk.getOriginZ() & 0xffffffffL)
+				^ 0x50415248L); // its own stream: the vehicle's picks shift nothing else in the chunk
+		me.daddychurchill.CityWorld.worldgen.Vehicles.park(chunk.getWorld(), "car", chunk.getBlockX(0) + (ns ? kerb : along),
+				sidewalkLevel, chunk.getBlockZ(0) + (ns ? along : kerb), heading, settings.vehicleFuel, car);
+	}
+
+	/** The platmap's street-parked vehicles: {platX, platZ, side} each, from the plan and the seed alone. */
+	static java.util.List<int[]> streetVehicles(CityWorldGenerator generator, PlatMap platmap) {
+		me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
+		Odds dice = new Odds(generator.getWorldSeed() ^ ((long) platmap.originX << 32) ^ (platmap.originZ & 0xffffffffL)
+				^ 0x4b45524243415253L);
+		if (settings.streetVehicles <= 0 || !dice.playOdds(settings.oddsOfStreetVehicle))
+			return java.util.List.of();
+		java.util.List<int[]> straights = new java.util.ArrayList<>();
+		for (int x = 0; x < PlatMap.Width; x++)
+			for (int z = 0; z < PlatMap.Width; z++) {
+				if (!(platmap.getLot(x, z) instanceof RoadLot road) || road.roundaboutRoad)
+					continue;
+				SurroundingRoads around = new SurroundingRoads(platmap, x, z);
+				if (around.getNeighborCount() == 2 && (around.toNorth() && around.toSouth() || around.toWest() && around.toEast()))
+					straights.add(new int[] { x, z, 0 });
+			}
+		java.util.List<int[]> picks = new java.util.ArrayList<>();
+		for (int i = 0; i < settings.streetVehicles && !straights.isEmpty(); i++) {
+			int[] pick = straights.remove(dice.getRandomInt(straights.size()));
+			pick[2] = dice.flipCoin() ? 1 : 0;
+			picks.add(pick);
+		}
+		return picks;
 	}
 
 	/** The highways' limit, from the world's settings. */
