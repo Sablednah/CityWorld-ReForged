@@ -30,6 +30,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   The kerb climbs in whole blocks (a bridge wall on a slab kerb floated half a block above it).
 - Road signs (the road mod's and Immersive Vehicles' poles) stand on a smooth stone base set into the pavement like
   the lamp posts, instead of the post replacing a slab or plant there.
+- Vanilla land: the end-of-lot loot pass (every untouched container gets the lot's table) asked for each container
+  at the cell above it by the city's lift, so it filled nothing there; it works in the lot's own frame now.
 - **Vanilla land: a city too big for its spacing is built as big as fits**, where before it was not built at all (a
   world at the smallest spacing with the biggest sizes had a city in one cell in nine). Worlds made with 7.0 or
   later; Customize's **City size** says "(N fit)" when the size can't fit the spacing.
