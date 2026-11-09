@@ -27,6 +27,7 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   `cities.highways` (`enabled`, `width`, `grade`, `fillMax`, `clearance`, `tunnel`, `speedLimit`, `reach`,
   `surface`) and **Highways** in Customize. Without a road mod the deck is cobbled deepslate (`surface`), a block
   with a slab, so its climbs match it; the street's terracotta has no slab and the deepslate steps on it stood out.
+  The kerb climbs in whole blocks (a bridge wall on a slab kerb floated half a block above it).
 - **Vanilla land: a city too big for its spacing is built as big as fits**, where before it was not built at all (a
   world at the smallest spacing with the biggest sizes had a city in one cell in nine). Worlds made with 7.0 or
   later; Customize's **City size** says "(N fit)" when the size can't fit the spacing.
