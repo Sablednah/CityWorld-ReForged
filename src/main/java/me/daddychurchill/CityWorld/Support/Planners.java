@@ -31,6 +31,20 @@ public final class Planners {
     public static final ExecutorService POOL = Executors.newFixedThreadPool(
             Math.max(2, Math.min(4, Runtime.getRuntime().availableProcessors() / 2)), FACTORY);
 
+    /**
+     * A wide pool for a burst of independent once-per-world work the server is waiting on anyway — judging the city
+     * cells a highway asks for (about 200 at a world's spawn, half a second each, serial they held it for 90 s) — at
+     * the lowest priority, so it never competes with a tick. Not {@link #POOL}: that is kept narrow so planning never
+     * crowds the server, and a burst there ran four wide on a 22-core machine.
+     */
+    public static final ExecutorService BURST = Executors.newFixedThreadPool(
+            Math.max(2, Runtime.getRuntime().availableProcessors() - 2), r -> {
+                Thread t = new Thread(r, "cityworld-burst-" + N.incrementAndGet());
+                t.setDaemon(true);
+                t.setPriority(Thread.MIN_PRIORITY);
+                return t;
+            });
+
     /** Run a planning task on the pool (a raw {@code new Thread} was the pattern before). */
     public static void run(Runnable task) {
         POOL.execute(task);
