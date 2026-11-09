@@ -1055,14 +1055,26 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * terracotta (which looks pink) swapped for the cyan, grey to the eye, that a city street paves with
      * ({@link me.daddychurchill.CityWorld.Plats.RoadLot#cityPavement}).
      */
-    private static BlockState highwayPavement(CityWorldGenerator context) {
+    /**
+     * The deck: a road mod's street surface (Macaw's asphalt) where the world has one, else a pack's
+     * {@code street/surface} palette, else {@code highways.surface} — a block with a slab, so the half-block climbs
+     * match it (the street's terracotta has none, and the deepslate steps on it stood out: the owner's look) — and
+     * only if that names no block, the street's own.
+     */
+    private BlockState highwayPavement(CityWorldGenerator context) {
         var streetPool = me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_SURFACE;
-        var kit = me.daddychurchill.CityWorld.Support.Palettes.poolFor(context, streetPool).isEmpty()
-                ? me.daddychurchill.CityWorld.Support.RoadKit.forWorld(context) : null;
-        Material pavementMat = kit != null ? kit.surface
-                : me.daddychurchill.CityWorld.Support.Palettes.pick(context, streetPool, 0, 0,
-                        me.daddychurchill.CityWorld.Plats.RoadLot.cityPavement(context));
-        return pavementMat.getBlockState();
+        boolean palette = !me.daddychurchill.CityWorld.Support.Palettes.poolFor(context, streetPool).isEmpty();
+        var kit = palette ? null : me.daddychurchill.CityWorld.Support.RoadKit.forWorld(context);
+        if (kit != null)
+            return kit.surface.getBlockState();
+        if (palette)
+            return me.daddychurchill.CityWorld.Support.Palettes.pick(context, streetPool, 0, 0,
+                    me.daddychurchill.CityWorld.Plats.RoadLot.cityPavement(context)).getBlockState();
+        var id = net.minecraft.resources.Identifier.tryParse(citiesConfig().highways().surface());
+        var own = id == null ? java.util.Optional.<net.minecraft.world.level.block.Block>empty()
+                : net.minecraft.core.registries.BuiltInRegistries.BLOCK.getOptional(id);
+        return own.map(net.minecraft.world.level.block.Block::defaultBlockState)
+                .orElseGet(() -> me.daddychurchill.CityWorld.Plats.RoadLot.cityPavement(context).getBlockState());
     }
 
     /**
