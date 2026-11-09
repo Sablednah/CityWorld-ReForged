@@ -87,6 +87,16 @@ public final class CitySites {
     private final boolean fitToCell;
     private final SimplexNoiseGenerator wobble;
     private final ConcurrentHashMap<Long, Verdict> cells = new ConcurrentHashMap<>();
+    private final java.util.concurrent.atomic.AtomicLong exactCalls = new java.util.concurrent.atomic.AtomicLong(),
+            exactNanos = new java.util.concurrent.atomic.AtomicLong(), judgeNanos = new java.util.concurrent.atomic.AtomicLong();
+    private final java.util.concurrent.atomic.AtomicInteger judged = new java.util.concurrent.atomic.AtomicInteger();
+
+    /** What the sites have cost this world so far: cells judged, exact vanilla columns read, and their time. */
+    public String costs() {
+        long calls = exactCalls.get(), nanos = exactNanos.get();
+        return judged.get() + " cells judged in " + judgeNanos.get() / 1_000_000 + " ms; " + calls + " exact columns in "
+                + nanos / 1_000_000 + " ms (" + (calls == 0 ? 0 : nanos / calls / 1000) + " us each)";
+    }
 
     /**
      * @param streetLevel CityWorld's own street level (the top block of buildable ground), the lowest a city stands
@@ -109,7 +119,15 @@ public final class CitySites {
         this.rivers = rivers;
         this.streetLevel = streetLevel;
         this.seaLevel = seaLevel;
-        this.heights = heights;
+        // counted: how many exact columns the sites and highways cost a world is the figure that decides how they are
+        // planned (the surveys print costs())
+        this.heights = (x, z) -> {
+            long t = System.nanoTime();
+            int top = heights.top(x, z);
+            exactNanos.addAndGet(System.nanoTime() - t);
+            exactCalls.incrementAndGet();
+            return top;
+        };
         this.wobble = new SimplexNoiseGenerator(seed + 7411);
     }
 
@@ -288,9 +306,12 @@ public final class CitySites {
             return known;
         // Outside any map lock: judging a site asks vanilla for heights, which is slow, and the answer is the
         // same whichever thread works it out.
-        Verdict judged = judge(cellX, cellZ);
-        Verdict raced = cells.putIfAbsent(key, judged);
-        return raced != null ? raced : judged;
+        long t = System.nanoTime();
+        Verdict verdict = judge(cellX, cellZ);
+        judgeNanos.addAndGet(System.nanoTime() - t);
+        this.judged.incrementAndGet();
+        Verdict raced = cells.putIfAbsent(key, verdict);
+        return raced != null ? raced : verdict;
     }
 
     /**
