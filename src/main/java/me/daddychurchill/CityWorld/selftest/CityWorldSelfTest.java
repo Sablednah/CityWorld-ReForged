@@ -851,7 +851,7 @@ public final class CityWorldSelfTest {
                 .linksOfCells(0, 0, 0, 0).size();
         var near = base.highways();
         near = new me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Highways(near.enabled(), near.width(),
-                near.grade(), near.fillMax(), near.clearance(), near.tunnel(), near.speedLimit(), 1);
+                near.grade(), near.fillMax(), near.clearance(), near.tunnel(), near.speedLimit(), 1, near.surface());
         int reach1 = new me.daddychurchill.CityWorld.worldgen.Highways(sea, null, near).linksOfCells(0, 0, 0, 0).size();
         report.put("cities.fit", "fits " + fits1024 + " at 1024, " + fits2048 + " at 2048; 6+/-2 at 1024 on flat land: "
                 + fittedCount + "/16 cities cut to fit, " + refusedCount + "/16 the old way");
