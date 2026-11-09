@@ -114,6 +114,10 @@ public final class Highways {
      */
     private volatile Integer bias;
 
+    public CitySites sitesForSurvey() {
+        return sites;
+    }
+
     public int biasForSurvey() {
         return bias();
     }
