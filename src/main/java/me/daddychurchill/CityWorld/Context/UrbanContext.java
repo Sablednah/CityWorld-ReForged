@@ -166,6 +166,15 @@ public abstract class UrbanContext extends CivilizedContext {
 	}
 
 	protected PlatLot getBuilding(CityWorldGenerator generator, PlatMap platmap, Odds odds, int chunkX, int chunkZ) {
+		// car parks in place of a building (roads.carParks): a surface one, or a multi-storey one of a few decks
+		me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
+		if (settings.includeCarParks && generator.isModernStyle()) {
+			if (odds.playOdds(settings.oddsOfMultiStoreyCarPark))
+				return new me.daddychurchill.CityWorld.Plats.Urban.MultiStoreyCarParkLot(platmap, chunkX, chunkZ,
+						settings.carParkMinLevels + odds.getRandomInt(settings.carParkMaxLevels - settings.carParkMinLevels + 1));
+			if (odds.playOdds(settings.oddsOfSurfaceCarPark))
+				return new me.daddychurchill.CityWorld.Plats.Urban.ParkingLot(platmap, chunkX, chunkZ, null);
+		}
 		// Rebalanced (owner, 2026-09-03) from the old 6-way pick (office 50%, empty/store/library
 		// 17% each): more stores, fewer libraries and empties, and apartment towers dealt out
 		// directly — the upstream author's commented-out ApartmentBuildingLot, finally real.
