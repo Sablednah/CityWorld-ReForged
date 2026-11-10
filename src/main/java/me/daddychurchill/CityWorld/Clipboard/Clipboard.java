@@ -92,6 +92,16 @@ public final class Clipboard {
      */
     public final String loot;
 
+    /**
+     * {@code Driveway:} sidecar lines — where the build's own ground (a car park, a forecourt, a drive) meets its
+     * edge and a road there should drop its sidewalk and lamp posts to let vehicles in. Each entry is {@code
+     * {side, from, to}} in the schematic's OWN frame before any rotation or mirroring: side 0 north, 1 south, 2
+     * east, 3 west; {@code from}..{@code to} the inclusive block offsets along that edge counted from its west end
+     * (north/south sides) or north end (east/west), or -1 for the whole edge. {@code "Driveway: south 16-22"},
+     * {@code "Driveway: east"}, several on one line with commas or on more lines.
+     */
+    public final java.util.List<int[]> driveways;
+
     private Clipboard(String name, SchematicFamily family, StructureTemplate template, Meta meta) {
         this.name = name;
         this.family = family;
@@ -113,6 +123,36 @@ public final class Clipboard {
         this.keepAir = meta.keepAir;
         this.anchor = meta.anchor;
         this.loot = meta.loot == null || meta.loot.isBlank() ? null : meta.loot.trim();
+        this.driveways = java.util.List.copyOf(meta.driveways);
+    }
+
+    /**
+     * The driveway cells on the build's edge once it is placed turned and mirrored: each {@code {x, z}} relative
+     * to the placed build's NW corner, in {@code 0..rotSizeX-1} by {@code 0..rotSizeZ-1}. Vanilla's own
+     * {@link StructureTemplate#transform} does the turning, so the cells land exactly where the paste puts them.
+     */
+    public java.util.List<int[]> drivewayCells(Rotation rotation, Mirror mirror) {
+        java.util.List<int[]> out = new java.util.ArrayList<>();
+        if (driveways.isEmpty())
+            return out;
+        int minX = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+        for (int[] c : new int[][] { { 0, 0 }, { sizeX - 1, 0 }, { 0, sizeZ - 1 }, { sizeX - 1, sizeZ - 1 } }) {
+            BlockPos t = StructureTemplate.transform(new BlockPos(c[0], 0, c[1]), mirror, rotation, BlockPos.ZERO);
+            minX = Math.min(minX, t.getX());
+            minZ = Math.min(minZ, t.getZ());
+        }
+        for (int[] d : driveways) {
+            boolean alongX = d[0] == 0 || d[0] == 1;
+            int len = alongX ? sizeX : sizeZ;
+            int from = d[1] < 0 ? 0 : Math.max(0, d[1]), to = d[2] < 0 ? len - 1 : Math.min(len - 1, d[2]);
+            for (int i = from; i <= to; i++) {
+                int sx = alongX ? i : d[0] == 2 ? sizeX - 1 : 0;
+                int sz = alongX ? (d[0] == 0 ? 0 : sizeZ - 1) : i;
+                BlockPos t = StructureTemplate.transform(new BlockPos(sx, 0, sz), mirror, rotation, BlockPos.ZERO);
+                out.add(new int[] { t.getX() - minX, t.getZ() - minZ });
+            }
+        }
+        return out;
     }
 
     private static int ceilDiv(int a, int b) {
@@ -361,6 +401,32 @@ public final class Clipboard {
         boolean keepAir = false;
         boolean anchor = false;
         String loot = null;
+        final java.util.List<int[]> driveways = new java.util.ArrayList<>();
+
+        /** {@code "south 16-22, east, north 3"}: a side, then an optional block range along it. */
+        void addDriveways(String val) {
+            for (String item : val.split(",")) {
+                String[] w = item.trim().toLowerCase(Locale.ROOT).split("\\s+");
+                if (w.length == 0 || w[0].isEmpty())
+                    continue;
+                int side = switch (w[0]) {
+                    case "north", "n" -> 0;
+                    case "south", "s" -> 1;
+                    case "east", "e" -> 2;
+                    case "west", "w" -> 3;
+                    default -> -1;
+                };
+                if (side < 0)
+                    continue;
+                int from = -1, to = -1;
+                if (w.length > 1) {
+                    String[] r = w[1].split("-", 2);
+                    from = Integer.parseInt(r[0].trim());
+                    to = r.length > 1 && !r[1].isBlank() ? Integer.parseInt(r[1].trim()) : from;
+                }
+                driveways.add(new int[] { side, from, to });
+            }
+        }
 
         static Meta parse(InputStream in) throws IOException {
             Meta m = new Meta();
@@ -389,6 +455,7 @@ public final class Clipboard {
                             case "KeepAir" -> m.keepAir = Boolean.parseBoolean(val);
                             case "Anchor" -> m.anchor = Boolean.parseBoolean(val);
                             case "Loot" -> m.loot = val;
+                            case "Driveway", "Driveways" -> m.addDriveways(val);
                             default -> { /* ignore unknown keys */ }
                         }
                     } catch (NumberFormatException ignored) {
