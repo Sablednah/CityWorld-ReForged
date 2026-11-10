@@ -145,7 +145,7 @@ public class ParkingLot extends IsolatedLot {
                 Odds car = odds.fork(); // its own stream: a vehicle's picks never shift the bays after it
                 double cx = chunk.getBlockX(x0) + 1.5, cz = chunk.getBlockZ(row == 0 ? 1 : 10) + 2.5;
                 if (!me.daddychurchill.CityWorld.worldgen.Vehicles.park(chunk.getWorld(), "car", cx, stand, cz,
-                        row == 0 ? 180 : 0, settings.vehicleFuel, car))
+                        row == 0 ? 180 : 0, settings.vehicleFuelFor(car), car))
                     car(chunk, odds, x0, stand, row == 0 ? 1 : 11, CAR_PAINT[odds.getRandomInt(CAR_PAINT.length)], false);
             }
         } else
