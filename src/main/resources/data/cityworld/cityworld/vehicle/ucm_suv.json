@@ -1,0 +1,58 @@
+{
+  "requires_mod": "car",
+  "vehicle": "car:car",
+  "kind": "car",
+  "paints": [
+    "white",
+    "orange",
+    "magenta",
+    "light_blue",
+    "yellow",
+    "lime",
+    "pink",
+    "gray",
+    "light_gray",
+    "cyan",
+    "purple",
+    "blue",
+    "brown",
+    "green",
+    "red",
+    "black"
+  ],
+  "fuel_capacity": 1500,
+  "parts": [
+    {
+      "slot": 0,
+      "part": "car:{paint}_suv_body"
+    },
+    {
+      "slot": 1,
+      "part": "car:iron_license_plate_holder"
+    },
+    {
+      "slot": 2,
+      "part": "car:large_tank"
+    },
+    {
+      "slot": 3,
+      "part": "car:engine_6_cylinder"
+    },
+    {
+      "slot": 4,
+      "part": "car:big_wheel"
+    },
+    {
+      "slot": 5,
+      "part": "car:big_wheel"
+    },
+    {
+      "slot": 6,
+      "part": "car:big_wheel"
+    },
+    {
+      "slot": 7,
+      "part": "car:big_wheel"
+    }
+  ]
+}

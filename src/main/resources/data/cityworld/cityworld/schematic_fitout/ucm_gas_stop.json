@@ -1,0 +1,774 @@
+{
+ "schematic": "gas_stop",
+ "requires_mod": "car",
+ "blocks": [
+  {
+   "pos": [
+    7,
+    1,
+    6
+   ],
+   "block": "car:gas_station[facing=west]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    6
+   ],
+   "block": "car:gas_station_top[facing=west]"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    6
+   ],
+   "block": "car:gas_station[facing=east]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    6
+   ],
+   "block": "car:gas_station_top[facing=east]"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    7
+   ],
+   "block": "car:gas_station[facing=west]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    7
+   ],
+   "block": "car:gas_station_top[facing=west]"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    7
+   ],
+   "block": "car:gas_station[facing=east]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    7
+   ],
+   "block": "car:gas_station_top[facing=east]"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    11
+   ],
+   "block": "car:gas_station[facing=west]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    11
+   ],
+   "block": "car:gas_station_top[facing=west]"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    11
+   ],
+   "block": "car:gas_station[facing=east]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    11
+   ],
+   "block": "car:gas_station_top[facing=east]"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    12
+   ],
+   "block": "car:gas_station[facing=west]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    12
+   ],
+   "block": "car:gas_station_top[facing=west]"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    12
+   ],
+   "block": "car:gas_station[facing=east]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    12
+   ],
+   "block": "car:gas_station_top[facing=east]"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    19
+   ],
+   "block": "car:gas_station[facing=west]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    19
+   ],
+   "block": "car:gas_station_top[facing=west]"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    19
+   ],
+   "block": "car:gas_station[facing=east]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    19
+   ],
+   "block": "car:gas_station_top[facing=east]"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    20
+   ],
+   "block": "car:gas_station[facing=west]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    20
+   ],
+   "block": "car:gas_station_top[facing=west]"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    20
+   ],
+   "block": "car:gas_station[facing=east]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    20
+   ],
+   "block": "car:gas_station_top[facing=east]"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    24
+   ],
+   "block": "car:gas_station[facing=west]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    24
+   ],
+   "block": "car:gas_station_top[facing=west]"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    24
+   ],
+   "block": "car:gas_station[facing=east]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    24
+   ],
+   "block": "car:gas_station_top[facing=east]"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    25
+   ],
+   "block": "car:gas_station[facing=west]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    25
+   ],
+   "block": "car:gas_station_top[facing=west]"
+  },
+  {
+   "pos": [
+    8,
+    1,
+    25
+   ],
+   "block": "car:gas_station[facing=east]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    8,
+    2,
+    25
+   ],
+   "block": "car:gas_station_top[facing=east]"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    6
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    7
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    12
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    19
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    20
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    24
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    1,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    2,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    6,
+    3,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    1,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    2,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    9,
+    3,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    3,
+    25
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    8,
+    3,
+    25
+   ],
+   "block": "minecraft:air"
+  }
+ ]
+}
