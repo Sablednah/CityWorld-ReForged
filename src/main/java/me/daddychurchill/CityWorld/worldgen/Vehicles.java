@@ -124,6 +124,7 @@ public final class Vehicles {
         if (list == null || list.isEmpty())
             return false;
         Vehicle v = list.get(odds.getRandomInt(list.size()));
+        heading = safeHeading(heading);
         double rad = Math.toRadians(heading);
         // the origin sits `centre` behind the wheelbase's middle: forward is (sin, cos) in IV's yaw
         double ox = x - Math.sin(rad) * v.centre(), oz = z - Math.cos(rad) * v.centre();
@@ -178,6 +179,23 @@ public final class Vehicles {
         }
         chunk.addEntity(tag);
         return true;
+    }
+
+    /** Degrees a parked heading keeps away from exactly 180: half a degree moves a five-block car's tail 0.04 blocks. */
+    static final double HEADING_NUDGE = 0.5;
+
+    /**
+     * A heading Immersive Vehicles can interpolate from. A yaw of exactly 180 is a rotation whose quaternion has
+     * w = 0, and IV up to 24.0.0 divides by it when it blends the previous and current orientation for the camera
+     * and the renderer, so the first frame such a vehicle turns, its orientation is NaN, the camera's angles are
+     * NaN and vanilla's {@code Frustum.offsetToFullyIncludeCameraCube} loops for ever: the client freezes while
+     * the server drives on (the owner's two lock-ups driving a parked car, 2026-11-10, read from a heap dump of
+     * the frozen game; fixed upstream on 2026-10-27, after 24.0.0). Car-park bays and kerbs face the cardinal
+     * directions, so a quarter of parked cars faced exactly 180 and every one of them froze the game when driven.
+     */
+    public static double safeHeading(double heading) {
+        double h = ((heading % 360) + 360) % 360;
+        return Math.abs(h - 180) < HEADING_NUDGE ? heading - h + 180 - HEADING_NUDGE : heading;
     }
 
     private static UUID uuid(Odds odds) {
