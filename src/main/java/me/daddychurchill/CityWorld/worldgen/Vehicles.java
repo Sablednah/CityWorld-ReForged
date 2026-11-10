@@ -77,7 +77,7 @@ public final class Vehicles {
     /** Reads the registry off a loaded level, keeping the vehicles whose pack (and IV) is installed. */
     public static void bind(RegistryAccess access) {
         try {
-            if (!loaded("mts")) {
+            if (!loaded("mts") && !loaded("car")) { // Immersive Vehicles, Ultimate Car Mod
                 byKind = Map.of();
                 return;
             }
@@ -126,14 +126,20 @@ public final class Vehicles {
         Vehicle v = list.get(odds.getRandomInt(list.size()));
         heading = safeHeading(heading);
         double rad = Math.toRadians(heading);
-        // the origin sits `centre` behind the wheelbase's middle: forward is (sin, cos) in IV's yaw
-        double ox = x - Math.sin(rad) * v.centre(), oz = z - Math.cos(rad) * v.centre();
+        // the origin sits `centre` behind the wheelbase's middle: forward is (sin, cos) in IV's yaw; an Ultimate Car
+        // Mod car is one entity whose position is its own middle, so it takes the spot as given
+        String[] id = v.vehicle().split(":", 2);
+        double centre = id[0].equals("car") ? 0 : v.centre();
+        double ox = x - Math.sin(rad) * centre, oz = z - Math.cos(rad) * centre;
         var access = level.getChunk(net.minecraft.util.Mth.floor(ox) >> 4, net.minecraft.util.Mth.floor(oz) >> 4);
         // only the chunk being generated: a full neighbour hands out an ImposterProtoChunk, which drops entity data
         if (!(access instanceof ProtoChunk chunk) || access instanceof net.minecraft.world.level.chunk.ImposterProtoChunk)
             return false;
         y += ShiftedRegion.shiftOf(level); // a city drawn below its level (vanilla land) stands lifted
-        String[] id = v.vehicle().split(":", 2);
+        if (id[0].equals("car")) {
+            chunk.addEntity(ultimateCar(v, ox, y, oz, heading, fuel, odds));
+            return true;
+        }
         CompoundTag tag = new CompoundTag();
         tag.putString("id", "mts:builder_existing");
         tag.put("Pos", doubles(ox, y, oz));
@@ -179,6 +185,58 @@ public final class Vehicles {
         }
         chunk.addEntity(tag);
         return true;
+    }
+
+    /**
+     * An Ultimate Car Mod car ({@code car:car}) as its saved data: the car IS its {@code parts} list (a body, an
+     * engine, a tank, wheels, a plate holder; each a vanilla item stack with its slot), so a vehicle file lists
+     * them by slot with {@code {paint}} in an id standing for the picked paint ({@code car:{paint}_sport_body} with
+     * paints {@code red}, {@code blue}…) and a part's {@code subs} appended to its id ({@code car:engine_} with
+     * {@code 3_cylinder}). Parked with a full battery (the mod reads a missing one as flat: the car would never
+     * start), not started, {@code fuel} millibuckets of bio diesel, a plate of its own. The item stacks carry both
+     * the old ({@code Count}) and new ({@code count}) count keys and a byte {@code Slot}, which every line's reader
+     * takes, so one file serves them all.
+     */
+    private static CompoundTag ultimateCar(Vehicle v, double x, double y, double z, double heading, int fuel, Odds odds) {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("id", "car:car");
+        tag.put("Pos", doubles(x, y, z));
+        tag.put("Motion", doubles(0, 0, 0));
+        ListTag rotation = new ListTag();
+        rotation.add(FloatTag.valueOf((float) -heading)); // vanilla yaw: 0 south, 90 west; CityWorld's heading turns the other way
+        rotation.add(FloatTag.valueOf(0f));
+        tag.put("Rotation", rotation);
+        tag.putIntArray("UUID", UUIDUtil.uuidToIntArray(uuid(odds)));
+        tag.putBoolean("started", false);
+        tag.putFloat("temperature", 20f);
+        tag.putInt("battery", 1000);
+        tag.putFloat("damage", 0f);
+        if (v.fuelCapacity() > 0)
+            fuel = Math.min(fuel, v.fuelCapacity());
+        tag.putInt("fuel", Math.max(0, fuel));
+        tag.putString("fuel_type", "car:bio_diesel");
+        tag.putBoolean("locked", false);
+        String letters = "ABCDEFGHJKLMNPRSTUVWXYZ";
+        tag.putString("license_plate", "" + letters.charAt(odds.getRandomInt(letters.length()))
+                + letters.charAt(odds.getRandomInt(letters.length())) + " " + (100 + odds.getRandomInt(900)));
+        tag.putInt("external_inventory_size", 0);
+        tag.put("int_inventory", new ListTag());
+        tag.put("external_inventory", new ListTag());
+        String paint = v.paints().get(odds.getRandomInt(v.paints().size()));
+        Map<String, String> picked = new HashMap<>();
+        ListTag parts = new ListTag();
+        for (Part p : v.parts()) {
+            String sub = picked.computeIfAbsent(p.part(), k -> p.subs().isEmpty() ? "" : p.subs().get(odds.getRandomInt(p.subs().size())));
+            String item = p.part().replace("{paint}", paint) + sub;
+            CompoundTag stack = new CompoundTag();
+            stack.putByte("Slot", (byte) p.slot());
+            stack.putString("id", item);
+            stack.putInt("count", 1);
+            stack.putByte("Count", (byte) 1);
+            parts.add(stack);
+        }
+        tag.put("parts", parts);
+        return tag;
     }
 
     /** Degrees a parked heading keeps away from exactly 180: half a degree moves a five-block car's tail 0.04 blocks. */
