@@ -469,6 +469,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, onOff("Skybridges", roads.skybridges(), v -> roads = roads.withSkybridges(v)));
         pair(row, onOff("Wild rope bridges", roads.wildBridges(), v -> roads = roads.withWildBridges(v)));
         pair(row, onOff("Parked vehicles", roads.vehicles().enabled(), v -> roads = roads.withVehicles(v))); // Immersive Vehicles
+        pair(row, onOff("Car parks", roads.carParks().enabled(), v -> roads = roads.withCarParks(v)));
         pair(row, cycle("Drive on", new Boolean[] { false, true }, roads.driveOnLeft(),
                 v -> Component.literal(v ? "the left (UK)" : "the right (US)"), v -> roads = roads.withDriveOnLeft(v)));
         pair(row, onOff("Chests in buildings", treasuresInBuildings, v -> treasuresInBuildings = v));
