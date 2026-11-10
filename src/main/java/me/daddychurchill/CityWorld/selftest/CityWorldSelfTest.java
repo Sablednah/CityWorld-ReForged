@@ -3406,6 +3406,7 @@ public final class CityWorldSelfTest {
         }
         java.util.Map<me.daddychurchill.CityWorld.Plats.Urban.Mall, List<int[]>> malls = new java.util.LinkedHashMap<>();
         int parking = 0;
+        java.util.TreeMap<Integer, Integer> multiStorey = new java.util.TreeMap<>();
         for (int cx = -PLAN_RADIUS; cx <= PLAN_RADIUS; cx++)
             for (int cz = -PLAN_RADIUS; cz <= PLAN_RADIUS; cz++) {
                 PlatLot lot = lotAt(plan, cx, cz);
@@ -3413,7 +3414,12 @@ public final class CityWorldSelfTest {
                     malls.computeIfAbsent(m.getMall(), k -> new ArrayList<>()).add(new int[] { cx, cz });
                 else if (lot instanceof me.daddychurchill.CityWorld.Plats.Urban.ParkingLot)
                     parking++;
+                else if (lot instanceof me.daddychurchill.CityWorld.Plats.Urban.MultiStoreyCarParkLot m)
+                    multiStorey.merge(m.getLevels(), 1, Integer::sum);
             }
+        report.put("carpark.multistorey", multiStorey.toString());
+        if (multiStorey.isEmpty())
+            fail("car parks: no multi-storey car park planned within " + PLAN_RADIUS + " chunks (roads.carParks)");
         report.put("mall.count", Integer.toString(malls.size()));
         report.put("mall.sites", me.daddychurchill.CityWorld.Plats.Urban.Mall.sites());
         report.put("mall.parkingLots", Integer.toString(parking));

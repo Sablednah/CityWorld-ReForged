@@ -147,6 +147,25 @@ public abstract class PlatLot {
 	}
 
 	/**
+	 * Where a road beside this lot drops its kerb so vehicles can roll in: the cells along the shared edge, as a
+	 * mask indexed by the along-coordinate in this chunk (x for a road to the north or south, z for one to the
+	 * east or west), or null for a plain kerb (the default). {@code toward} is the side of THIS lot the road lies
+	 * on. Car parks open their whole edge; a schematic opens what its sidecar's {@code Driveway:} lines say.
+	 */
+	public boolean[] roadOpening(CityWorldGenerator generator, me.daddychurchill.CityWorld.compat.BlockFace toward) {
+		return null;
+	}
+
+	/**
+	 * Whether a road opening meets this lot at sidewalk level (a schematic's forecourt stands on the pavement: the
+	 * sidewalk keeps its height but is surfaced like the road, with a slab ramp at the kerb) rather than being
+	 * dropped to the road's level (a car park's asphalt).
+	 */
+	public boolean roadOpeningRaised() {
+		return false;
+	}
+
+	/**
 	 * Whether vanilla's biome decoration will run on this lot's chunk — THE gate the chunk generator uses
 	 * ({@code CityWorldChunkGenerator.applyBiomeDecoration}): a MODERN-family world with the wild handed to vanilla, a
 	 * NATURE lot that allows it, outside a reserved site's core. A lot that does its own stand-in for a vanilla
