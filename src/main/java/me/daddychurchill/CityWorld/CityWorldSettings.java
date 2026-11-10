@@ -208,10 +208,16 @@ public class CityWorldSettings {
     public int skybridgeMinFloors = 6, wildBridgeDepth = 8, wildBridgeSpan = 48;
     /** Immersive Vehicles' parked vehicles (roads.vehicles; see CityWorldSettingsData.Roads.Vehicles). */
     public boolean includeVehicles = true;
-    public int carParkVehicles = 1, streetVehicles = 1, vehicleFuel = 0;
+    public int carParkVehicles = 1, streetVehicles = 1, vehicleFuel = 1000, vehicleFuelMin = 0;
+
+    /** A parked vehicle's fuel: anywhere from {@code vehicleFuelMin} to {@code vehicleFuel} millibuckets, by the dice. */
+    public int vehicleFuelFor(Odds odds) {
+        int low = Math.max(0, Math.min(vehicleFuelMin, vehicleFuel)), high = Math.max(vehicleFuelMin, vehicleFuel);
+        return high <= low ? low : low + odds.getRandomInt(high - low + 1);
+    }
     public double oddsOfParkedVehicle = Odds.oddsLikely, oddsOfStreetVehicle = Odds.oddsLikely;
     public boolean includeCarParks = true;
-    public double oddsOfSurfaceCarPark = Odds.oddsVeryUnlikely, oddsOfMultiStoreyCarPark = Odds.oddsVeryUnlikely;
+    public double oddsOfSurfaceCarPark = Odds.oddsExtremelyUnlikely, oddsOfMultiStoreyCarPark = Odds.oddsExtremelyUnlikely;
     public int carParkMinLevels = 2, carParkMaxLevels = 4;
     public double oddsOfWildBridge = Odds.oddsLikely;
     public boolean spawnersInSubways = true;
@@ -650,6 +656,7 @@ public class CityWorldSettings {
         streetVehicles = data.roads().vehicles().streetVehicles();
         oddsOfStreetVehicle = data.roads().vehicles().oddsOfStreetVehicle();
         vehicleFuel = data.roads().vehicles().fuel();
+        vehicleFuelMin = data.roads().vehicles().fuelMin();
         includeCarParks = data.roads().carParks().enabled();
         oddsOfSurfaceCarPark = data.roads().carParks().oddsOfSurface();
         oddsOfMultiStoreyCarPark = data.roads().carParks().oddsOfMultiStorey();
@@ -798,7 +805,7 @@ public class CityWorldSettings {
                 oddsOfSpeedRepeat, includeSkybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, includeWildBridges,
                 wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion,
                 new CityWorldSettingsData.Vehicles(includeVehicles, carParkVehicles, oddsOfParkedVehicle,
-                        streetVehicles, oddsOfStreetVehicle, vehicleFuel),
+                        streetVehicles, oddsOfStreetVehicle, vehicleFuel, vehicleFuelMin),
                 new CityWorldSettingsData.CarParks(includeCarParks, oddsOfSurfaceCarPark, oddsOfMultiStoreyCarPark,
                         carParkMinLevels, carParkMaxLevels));
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,

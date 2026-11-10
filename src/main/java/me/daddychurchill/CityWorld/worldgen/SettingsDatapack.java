@@ -279,6 +279,7 @@ public final class SettingsDatapack {
         vehicles.addProperty("streetVehicles", rd.vehicles().streetVehicles());
         vehicles.addProperty("oddsOfStreetVehicle", rd.vehicles().oddsOfStreetVehicle());
         vehicles.addProperty("fuel", rd.vehicles().fuel());
+        vehicles.addProperty("fuelMin", rd.vehicles().fuelMin());
         roads.add("vehicles", vehicles);
         JsonObject carParks = new JsonObject();
         carParks.addProperty("enabled", rd.carParks().enabled());
