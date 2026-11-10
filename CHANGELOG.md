@@ -44,6 +44,9 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   that (car-park bays and kerbs face the cardinal directions). Parked vehicles now keep half a degree off 180.
   (Fixed upstream in IV after 24.0.0; worlds already generated keep their cars, so update IV when a newer build
   ships, or do not drive the ones facing exactly north/south in IV's terms.)
+- WoodDye: the city no longer builds with WoodDye's legacy 2.0 fireproof planks, doors and trapdoors (WoodDye 3 marks
+  fireproofing on the position instead and converts those blocks on chunk load, which it logged for every new
+  chunk). The five pools that draw on vanilla's wood tags remove them.
 - **Vanilla land: a city too big for its spacing is built as big as fits**, where before it was not built at all (a
   world at the smallest spacing with the biggest sizes had a city in one cell in nine). Worlds made with 7.0 or
   later; Customize's **City size** says "(N fit)" when the size can't fit the spacing.

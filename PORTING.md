@@ -90,6 +90,27 @@ real cure there. Nothing else in CityWorld writes a vehicle orientation; pumps a
 (`taskkill.exe /PID 41696 /F`). The 4.4 GB `tools/jdk17win-dl/hang.hprof` and the Temurin zip were deleted
 after the read; the extracted field reports live in the session scratchpad only.
 
+**Gates:** six self-tests PASS on the picked heads (master `e47da5a9`, 1.20.1 `01bed8c5`, 1.21.1 `24be56ed`, 26.1
+`26bbe7ed`, 26.2 `27a3566e`, 26.3 `3a9100a9`), `--compare` agrees on the fresh reports; the 1.20.1 jar deployed to
+the owner's instance (`DEPLOYED-01bed8c5`). Nothing pushed.
+
+**Same day, the WoodDye noise (`596e835f`).** The owner's log carried "WoodDye: converted N legacy fireproof blocks in
+chunk" for new chunks. WoodDye 3.0.2 (the owner's mod, `../WoodDye`) marks fireproofing on a position (`SavedData`)
+and keeps its 2.0 `wooddye:fireproof_*` blocks registered only so old worlds convert on load — but its
+`data/minecraft/tags/block/{planks,wooden_doors,wooden_trapdoors,logs,…}.json` still list them, so every pool
+built on `#minecraft:planks` / `#minecraft:wooden_doors` / `#minecraft:wooden_trapdoors` rolled them and WoodDye
+converted each new chunk. CityWorld's five such pools (`build/planks`, `fittings/door`, `interior_door`,
+`store_door`, `trapdoor`) now carry a `remove` list of the nine legacy blocks each could draw (optional entries;
+Forge 1.20.1 treats every removal as optional anyway, `TagLoader.java:78`). Marked (fireproof) wood cannot be
+placed at generation: the mark lives in WoodDye's saved data, not the block. The root fix is WoodDye's: drop the
+legacy blocks from its ten vanilla tag files and every mod stops drawing them (told the owner; the WoodDye session
+owns that repo). Measured on the Forge 1.20.1 bed with WoodDye 3.0.2 in `mods` (`scratchpad/wdtest.sh`, the probe
+area at chunk −45,49 radius 7 regenerated per jar): the control jar had WoodDye convert **724 legacy fireproof
+blocks in 24 chunks**; the fixed jar, **no conversion at all** (WoodDye logs only its start-up lines). The saved
+region holds no `wooddye:` block either way, because WoodDye converts them before the chunk is saved — count the
+conversion line, not the blocks. Gates: six self-tests on the picked heads (master `596e835f`, 1.20.1 `820b7bcc`,
+1.21.1 `203fa62d`, 26.1 `87e7d279`, 26.2 `b1d2ad3f`, 26.3 `bb2be68c`) — see the resume line for the result.
+
 ## ▶ Resume here — 2026-11-09 evening: the owner's 1.20.1 look at Immersive Vehicles
 
 Four fixes from the owner's screenshots and words, on master and the five branches (nothing pushed), the 1.20.1

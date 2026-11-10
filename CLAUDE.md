@@ -31,7 +31,10 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   quarter of CityWorld's parked cars faced exactly 180. `Vehicles.safeHeading` keeps parked headings half a degree
   off it (self-test `vehicle.heading180`). The client loops in vanilla's `Frustum.offsetToFullyIncludeCameraCube`
   (JOML returns a plane index for NaN, never INSIDE) while the server drives the car on — hence the wreck in the
-  building. Upstream fixed it 2026-10-27, after 24.0.0. Nothing pushed. Next: the owner's look, then 7.0.0.
+  building. Upstream fixed it 2026-10-27, after 24.0.0. Six self-tests PASS + `--compare`; 1.20.1 deployed
+  `01bed8c5`. Same day: WoodDye's legacy fireproof planks/doors/trapdoors removed from the five pools that draw on
+  vanilla wood tags (`596e835f`; WoodDye 3 still lists them in its `data/minecraft/tags` — the root fix is WoodDye's).
+  Nothing pushed. Next: the owner's look, then 7.0.0.
 
 **▶ Resume here (2026-11-09 evening): the owner's 1.20.1 look — floating IV poles were `clearVegetation`.**
 - PORTING.md "▶ Resume here — 2026-11-09 evening" has it: the biome-ground pass swept "anything that does not block
