@@ -43,6 +43,53 @@ What remains is inherent: reach 3 at a 2 km spacing judges a ~14-cell square (28
 per world. `highways.reach` 1 judges 25. The judge itself (3 tries x ~40 exact columns) is untouched: changing it
 moves cities in 5.19–6.14 vanilla-land worlds.
 
+## ▶ Resume here — 2026-11-10: "driving a car away locked up Minecraft" — IV's yaw-180 division by zero
+
+The owner's two lock-ups (one killed; the second left open for diagnosis, PID 41696, 7 GB javaw on Mojang's
+java-runtime-gamma 17.0.8): a parked CityWorld car, the game froze the moment it moved; after the first, reloading
+put them "inside a building in a wrecked car at the end of the street". Logs clean, no crash report.
+
+**What the dumps said.** jstack ×8: the Render thread RUNNABLE in `Frustum.offsetToFullyIncludeCameraCube`
+(`m_194441_`, Frustum.java:41) every time, CPU climbing; the Server thread alive and ticking (`waitUntilNextTick`
+/ `ChunkMap`), the car's saved position moving between two autosaves — so the server kept driving the car with
+the frozen client's last throttle, which is the wreck in the building. Zero `daddychurchill` frames. That vanilla
+loop runs `while (intersectAab(...) != INSIDE) cam -= viewVector*4`, and JOML's int `intersectAab` returns a plane
+index (never INSIDE) for a NaN input (bytecode: `fcmpl; iflt → return plane`): any NaN in the camera ends the
+client. jhsdb (the serviceability agent, Temurin 17.0.8+7 downloaded to `tools/jdk17win-dl/`) failed with
+"bad SID 0"; what worked was `jcmd.exe <pid> GC.heap_dump` (the hung JVM writes 4.4 GB in 13 s) and a 100-line
+hprof reader, now `scripts/hprof_fields.py` (statics + instances by class name, SRG field names mapped through
+`intermediateToNamed.srg`, value classes followed two levels; instance fields are laid out most-derived class
+FIRST — the first version had it backwards and printed garbage for anything with a superclass). It read:
+`Frustum.viewVector = (NaN, NaN, NaN, -0.1)`, `Camera.xRot/yRot = NaN` with a finite quaternion (Forge's
+`setAnglesInternal` stores the `ComputeCameraAngles` event's angles without rebuilding it, then the projection
+is built from them), `Camera.position` finite, the player's rotation finite, and IV's static
+`InterfaceEventsEntityRendering.cameraAdjustedOrientation` all NaN with `adjustedCamera = true` — IV's camera
+handler fed NaN yaw/pitch/roll into the event. The player's `PartSeat` (and its vehicle): `prevOrientation` =
+yaw **180.0 exactly**, `orientation` = yaw −179.9925 (the first frame it turned).
+
+**The bug (IV's, read from its source for interop only).** `RotationMatrix.interploate` in the shipped 24.0.0
+jar (bytecode checked against the pre-fix source at the base of upstream PR #2232) converts each matrix to a
+quaternion as `w = sqrt(1 + trace)/2`, then `i,j,k = (m21−m12 …)/(4w)`, guarded only when BOTH w < 1e-6. A yaw
+of exactly 180 is trace −1, w = 0; the moment the car turns, the current matrix has w ≈ 6.5e-5 (≥ 1e-6), the
+guard fails and the previous quaternion is 0/0 = NaN. A Python replay of the shipped algorithm on the dump's
+own seat and car matrices gives `start quat = (0, NaN, Inf, −Inf)`; the new upstream algorithm (merged
+2026-10-27, "Fixed RotationMatrix operations", after 24.0.0) gives finite values for the same inputs. Crafted
+cars take the player's yaw and almost never hit 180.0 exactly; CityWorld parks at 0/90/180/270 (car-park rows
+and kerbs, `Spawns` by a coin), so a quarter of its cars were landmines — standing still both w are 0 and the
+guard holds, the first turn kills the client. (A parked car bumped by another would do it too: the renderer
+interpolates every vehicle on screen.)
+
+**The fix (ours, `Vehicles.safeHeading`, `HEADING_NUDGE` 0.5°):** a parked heading within half a degree of 180
+(mod 360) becomes 179.5 — w = 0.0044, a five-block car's tail moves 0.04 blocks. Self-test `checkVehicles`
+proves 180 and −180 move within a degree and 90 stays (proved failing with the helper sabotaged). Existing
+worlds keep their 180° cars: the owner's world has them; updating IV past 24.0.0 (when a build ships) is the
+real cure there. Nothing else in CityWorld writes a vehicle orientation; pumps and poles are block entities
+(no interpolation).
+
+**Recovery of the open game:** nothing to save — the server autosaves while the client spins; kill the javaw
+(`taskkill.exe /PID 41696 /F`). The 4.4 GB `tools/jdk17win-dl/hang.hprof` and the Temurin zip were deleted
+after the read; the extracted field reports live in the session scratchpad only.
+
 ## ▶ Resume here — 2026-11-09 evening: the owner's 1.20.1 look at Immersive Vehicles
 
 Four fixes from the owner's screenshots and words, on master and the five branches (nothing pushed), the 1.20.1

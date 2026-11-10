@@ -24,6 +24,15 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-10): "driving a car away locked up Minecraft" — IV's division by zero at yaw 180.**
+- PORTING.md "▶ Resume here — 2026-11-10" has it: a heap dump of the frozen game (`jcmd GC.heap_dump` +
+  `scripts/hprof_fields.py`) read NaN camera angles out of IV's camera handler; IV ≤ 24.0.0's
+  `RotationMatrix.interploate` divides by w = 0 for a yaw of exactly 180 the first frame the vehicle turns, and a
+  quarter of CityWorld's parked cars faced exactly 180. `Vehicles.safeHeading` keeps parked headings half a degree
+  off it (self-test `vehicle.heading180`). The client loops in vanilla's `Frustum.offsetToFullyIncludeCameraCube`
+  (JOML returns a plane index for NaN, never INSIDE) while the server drives the car on — hence the wreck in the
+  building. Upstream fixed it 2026-10-27, after 24.0.0. Nothing pushed. Next: the owner's look, then 7.0.0.
+
 **▶ Resume here (2026-11-09 evening): the owner's 1.20.1 look — floating IV poles were `clearVegetation`.**
 - PORTING.md "▶ Resume here — 2026-11-09 evening" has it: the biome-ground pass swept "anything that does not block
   motion" as weeds, and IV's poles/pumps block none (18/29 poles short → 0; fixed `5d0e651a`, all six lines; 1.20.1

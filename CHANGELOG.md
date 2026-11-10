@@ -38,6 +38,12 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   natural ground whose biome has a signature block (Biomes O' Plenty's old growth woodland, coarse dirt): the
   biome-ground pass swept "anything that does not block motion" as vegetation, and IV's blocks block none. It
   sweeps plants only now (replaceable blocks, flowers, saplings, crops, other plant blocks; never a block entity).
+- Immersive Vehicles: driving a parked car away could freeze the game (the client's render thread loops for ever
+  while the server drives the car on into the nearest building). IV up to 24.0.0 divides by zero when it blends a
+  vehicle's orientation from a yaw of exactly 180 degrees, and a quarter of CityWorld's parked cars faced exactly
+  that (car-park bays and kerbs face the cardinal directions). Parked vehicles now keep half a degree off 180.
+  (Fixed upstream in IV after 24.0.0; worlds already generated keep their cars, so update IV when a newer build
+  ships, or do not drive the ones facing exactly north/south in IV's terms.)
 - **Vanilla land: a city too big for its spacing is built as big as fits**, where before it was not built at all (a
   world at the smallest spacing with the biggest sizes had a city in one cell in nine). Worlds made with 7.0 or
   later; Customize's **City size** says "(N fit)" when the size can't fit the spacing.
