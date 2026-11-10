@@ -6,6 +6,8 @@ import me.daddychurchill.CityWorld.compat.Material;
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Context.DataContext;
 import me.daddychurchill.CityWorld.Plats.IsolatedLot;
+import me.daddychurchill.CityWorld.Plats.RoadLot;
+import me.daddychurchill.CityWorld.compat.BlockFace;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Support.AbstractCachedYs;
 import me.daddychurchill.CityWorld.Support.InitialBlocks;
@@ -173,6 +175,9 @@ public class ClipboardLot extends IsolatedLot {
 			int depth = surfaceLevel(generator) - clip.groundLevelY;
 			destroyLot(generator, depth, depth + clip.sizeY);
 		}
+
+		// the sidecar's driveways: pave from the build's edge out to a road, after decay so the way in stays whole
+		paveDriveways(generator, platmap, chunk, platX, platZ);
 
 		// a pack's item frames (cityworld:schematic_fitout), after decay so they hang only on what still stands
 		clip.hangFrames(level, nwX, surfaceLevel(generator), nwZ, chunk.getOriginX(), chunk.getOriginZ(), rotation, mirror);
@@ -435,6 +440,100 @@ public class ClipboardLot extends IsolatedLot {
 	}
 
 	private static final int CHUNK = 16;
+
+	@Override
+	public boolean roadOpeningRaised() {
+		return true; // the build's ground layer stands on the pavement, so its drive meets the sidewalk flush
+	}
+
+	/**
+	 * The sidecar's {@code Driveway:} cells that lie on the placed build's edge facing {@code toward}, as a mask over
+	 * this chunk's columns along that edge — only from the chunk the edge itself lies in (the outermost row or
+	 * column of the footprint on that side), since that is the chunk a road there touches.
+	 */
+	@Override
+	public boolean[] roadOpening(CityWorldGenerator generator, BlockFace toward) {
+		if (clip.driveways.isEmpty() || clip.ocean)
+			return null;
+		int rotSizeX = Clipboard.swapsFootprint(rotation) ? clip.sizeZ : clip.sizeX;
+		int rotSizeZ = Clipboard.swapsFootprint(rotation) ? clip.sizeX : clip.sizeZ;
+		int nwX = buildNwX(), nwZ = buildNwZ(), oX = chunkX * CHUNK, oZ = chunkZ * CHUNK;
+		boolean alongX = toward == BlockFace.NORTH || toward == BlockFace.SOUTH;
+		int edge = switch (toward) { // the build's edge coordinate on that side, perpendicular to the mask
+			case NORTH -> nwZ;
+			case SOUTH -> nwZ + rotSizeZ - 1;
+			case EAST -> nwX + rotSizeX - 1;
+			default -> nwX;
+		};
+		int edgeOrigin = alongX ? oZ : oX;
+		if (edge < edgeOrigin || edge >= edgeOrigin + CHUNK)
+			return null; // the edge is in another chunk of the footprint
+		boolean[] mask = new boolean[CHUNK];
+		boolean any = false;
+		for (int[] c : clip.drivewayCells(rotation, mirror)) {
+			boolean onSide = switch (toward) {
+				case NORTH -> c[1] == 0;
+				case SOUTH -> c[1] == rotSizeZ - 1;
+				case EAST -> c[0] == rotSizeX - 1;
+				default -> c[0] == 0;
+			};
+			if (!onSide)
+				continue;
+			int along = alongX ? nwX + c[0] - oX : nwZ + c[1] - oZ;
+			if (along >= 0 && along < CHUNK) {
+				mask[along] = true;
+				any = true;
+			}
+		}
+		return any ? mask : null;
+	}
+
+	/**
+	 * Paves each driveway from the build's edge out to the chunk's edge where a road lies beyond it, level with
+	 * the build's ground layer (the sidewalk's height), on a stone fill down to solid ground, with headroom
+	 * cleared; the road drops its own kerb to meet it ({@link RoadLot}). Nothing where the way out faces anything
+	 * but a road in this district.
+	 */
+	private void paveDriveways(CityWorldGenerator generator, PlatMap platmap, RealBlocks chunk, int platX, int platZ) {
+		if (clip.driveways.isEmpty() || clip.ocean)
+			return;
+		int rotSizeX = Clipboard.swapsFootprint(rotation) ? clip.sizeZ : clip.sizeX;
+		int rotSizeZ = Clipboard.swapsFootprint(rotation) ? clip.sizeX : clip.sizeZ;
+		int nwX = buildNwX(), nwZ = buildNwZ(), oX = chunkX * CHUNK, oZ = chunkZ * CHUNK;
+		int y = surfaceLevel(generator);
+		Material paving = RoadLot.cityPavement(generator), stratum = generator.oreProvider.stratumMaterial;
+		int floor = chunk.minY + 1;
+		BlockFace[] sides = { BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST };
+		int[][] off = { { 0, -1 }, { 0, 1 }, { 1, 0 }, { -1, 0 } };
+		for (int s = 0; s < 4; s++) {
+			int nx = platX + off[s][0], nz = platZ + off[s][1];
+			if (!platmap.inBounds(nx, nz) || !(platmap.getLot(nx, nz) instanceof RoadLot))
+				continue;
+			boolean[] open = roadOpening(generator, sides[s]);
+			if (open == null)
+				continue;
+			// the columns between the build's edge and the chunk's edge on that side
+			int from, to;
+			switch (sides[s]) {
+				case NORTH -> { from = 0; to = nwZ - oZ - 1; }
+				case SOUTH -> { from = nwZ + rotSizeZ - oZ; to = CHUNK - 1; }
+				case EAST -> { from = nwX + rotSizeX - oX; to = CHUNK - 1; }
+				default -> { from = 0; to = nwX - oX - 1; }
+			}
+			boolean alongX = s < 2;
+			for (int along = 0; along < CHUNK; along++) {
+				if (!open[along])
+					continue;
+				for (int d = from; d <= to; d++) {
+					int x = alongX ? along : d, z = alongX ? d : along;
+					chunk.setBlock(x, y, z, paving);
+					for (int fy = y - 1; fy > floor && chunk.isEmpty(x, fy, z); fy--)
+						chunk.setBlock(x, fy, z, stratum);
+					chunk.setBlocks(x, y + 1, y + 5, z, Material.AIR);
+				}
+			}
+		}
+	}
 
 	/** The centred build's NW corner (world X), the same value every footprint chunk computes. */
 	private int buildNwX() {
