@@ -1,0 +1,54 @@
+{
+  "requires_mod": "car",
+  "vehicle": "car:car",
+  "kind": "car",
+  "paints": [
+    "oak",
+    "spruce",
+    "birch",
+    "jungle",
+    "acacia",
+    "dark_oak",
+    "crimson",
+    "warped"
+  ],
+  "fuel_capacity": 500,
+  "parts": [
+    {
+      "slot": 0,
+      "part": "car:{paint}_body"
+    },
+    {
+      "slot": 1,
+      "part": "car:{paint}_bumper"
+    },
+    {
+      "slot": 2,
+      "part": "car:{paint}_license_plate_holder"
+    },
+    {
+      "slot": 3,
+      "part": "car:small_tank"
+    },
+    {
+      "slot": 4,
+      "part": "car:engine_3_cylinder"
+    },
+    {
+      "slot": 5,
+      "part": "car:wheel"
+    },
+    {
+      "slot": 6,
+      "part": "car:wheel"
+    },
+    {
+      "slot": 7,
+      "part": "car:wheel"
+    },
+    {
+      "slot": 8,
+      "part": "car:wheel"
+    }
+  ]
+}
