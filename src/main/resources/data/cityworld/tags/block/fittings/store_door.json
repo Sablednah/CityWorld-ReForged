@@ -22,5 +22,43 @@
       "id": "#mcwdoors:barn_glass_doors",
       "required": false
     }
+  ],
+  "remove": [
+    {
+      "id": "wooddye:fireproof_acacia_door",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_bamboo_door",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_birch_door",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_cherry_door",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_dark_oak_door",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_jungle_door",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_mangrove_door",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_oak_door",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_spruce_door",
+      "required": false
+    }
   ]
 }

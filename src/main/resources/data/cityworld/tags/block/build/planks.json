@@ -1,5 +1,46 @@
 {
   "values": [
-    { "id": "#minecraft:planks", "required": false }
+    {
+      "id": "#minecraft:planks",
+      "required": false
+    }
+  ],
+  "remove": [
+    {
+      "id": "wooddye:fireproof_acacia_planks",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_bamboo_planks",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_birch_planks",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_cherry_planks",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_dark_oak_planks",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_jungle_planks",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_mangrove_planks",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_oak_planks",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_spruce_planks",
+      "required": false
+    }
   ]
 }
