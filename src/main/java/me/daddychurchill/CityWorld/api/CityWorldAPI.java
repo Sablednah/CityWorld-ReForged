@@ -201,7 +201,7 @@ public final class CityWorldAPI {
             new Place("zoo", "Zoo", java.util.Set.of("ZooLot", "BigZooLot")),
             new Place("biodome", "Biodome", java.util.Set.of("BiodomeLot", "BigBiodomeLot")),
             new Place("park", "Park", java.util.Set.of("ParkLot", "FloodedParkLot", "SandDunesParkLot", "SnowDunesParkLot")),
-            new Place("parking", "Car park", java.util.Set.of("ParkingLot")),
+            new Place("parking", "Car park", java.util.Set.of("ParkingLot", "MultiStoreyCarParkLot")),
             new Place("factory", "Factory", java.util.Set.of("FactoryBuildingLot")),
             new Place("warehouse", "Warehouse", java.util.Set.of("WarehouseBuildingLot")),
             new Place("silo", "Silos", java.util.Set.of("SiloLot")),

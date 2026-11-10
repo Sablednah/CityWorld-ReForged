@@ -331,10 +331,12 @@ public record CityWorldSettingsData(
      */
     public record Roads(boolean driveOnLeft, int speedLimitUrban, int speedLimitRural, double oddsOfSpeedRepeat,
             boolean skybridges, double oddsOfSkybridge, int skybridgeMinFloors, double oddsOfStreetRope, boolean wildBridges,
-            int wildBridgeDepth, int wildBridgeSpan, double oddsOfWildBridge, int wildBridgeRegion, Vehicles vehicles) {
+            int wildBridgeDepth, int wildBridgeSpan, double oddsOfWildBridge, int wildBridgeRegion, Vehicles vehicles,
+            CarParks carParks) {
 
         public static final Roads DEFAULT = new Roads(false, 50, 30, Odds.oddsUnlikely,
-                false, Odds.oddsSomewhatLikely, 6, Odds.oddsSomewhatLikely, true, 8, 48, Odds.oddsLikely, 32, Vehicles.DEFAULT);
+                false, Odds.oddsSomewhatLikely, 6, Odds.oddsSomewhatLikely, true, 8, 48, Odds.oddsLikely, 32, Vehicles.DEFAULT,
+                CarParks.DEFAULT);
 
         public static final Codec<Roads> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("driveOnLeft", false).forGetter(Roads::driveOnLeft),
@@ -350,23 +352,28 @@ public record CityWorldSettingsData(
                 Codec.INT.optionalFieldOf("wildBridgeSpan", 48).forGetter(Roads::wildBridgeSpan),
                 Codec.DOUBLE.optionalFieldOf("oddsOfWildBridge", Odds.oddsLikely).forGetter(Roads::oddsOfWildBridge),
                 Codec.INT.optionalFieldOf("wildBridgeRegion", 32).forGetter(Roads::wildBridgeRegion),
-                Vehicles.CODEC.optionalFieldOf("vehicles", Vehicles.DEFAULT).forGetter(Roads::vehicles)
+                Vehicles.CODEC.optionalFieldOf("vehicles", Vehicles.DEFAULT).forGetter(Roads::vehicles),
+                CarParks.CODEC.optionalFieldOf("carParks", CarParks.DEFAULT).forGetter(Roads::carParks)
         ).apply(i, Roads::new));
 
         public Roads withDriveOnLeft(boolean v) {
-            return new Roads(v, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles);
+            return new Roads(v, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles, carParks);
         }
 
         public Roads withSkybridges(boolean v) {
-            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, v, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles);
+            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, v, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles, carParks);
         }
 
         public Roads withVehicles(boolean v) {
-            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles.withEnabled(v));
+            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles.withEnabled(v), carParks);
+        }
+
+        public Roads withCarParks(boolean v) {
+            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, wildBridges, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles, carParks.withEnabled(v));
         }
 
         public Roads withWildBridges(boolean v) {
-            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, v, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles);
+            return new Roads(driveOnLeft, speedLimitUrban, speedLimitRural, oddsOfSpeedRepeat, skybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, v, wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion, vehicles, carParks);
         }
     }
 
@@ -394,6 +401,32 @@ public record CityWorldSettingsData(
 
         public Vehicles withEnabled(boolean v) {
             return new Vehicles(v, carParkVehicles, oddsOfParkedVehicle, streetVehicles, oddsOfStreetVehicle, fuel);
+        }
+    }
+
+    /**
+     * Car parks as buildings of their own ({@code enabled}), in the modern family's highrise, midrise and lowrise
+     * districts, each in place of a building: a surface car park (the mall's lot, the same bays and verges, open
+     * to every road it fronts) in {@code oddsOfSurface} of building picks, a multi-storey car park in
+     * {@code oddsOfMultiStorey} — {@code minLevels} to {@code maxLevels} decks of bays either side of an aisle,
+     * slab ramps a vehicle can drive between them, open sides behind a parapet, a ladder up the stairwell. Both
+     * flood-fill into their neighbours like any building, so they come in one to a few chunks, and both take the
+     * {@code vehicles} rules for what stands in their bays. The mall keeps its own car parks whatever this says.
+     */
+    public record CarParks(boolean enabled, double oddsOfSurface, double oddsOfMultiStorey, int minLevels, int maxLevels) {
+
+        public static final CarParks DEFAULT = new CarParks(true, Odds.oddsVeryUnlikely, Odds.oddsVeryUnlikely, 2, 4);
+
+        public static final Codec<CarParks> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.BOOL.optionalFieldOf("enabled", true).forGetter(CarParks::enabled),
+                Codec.DOUBLE.optionalFieldOf("oddsOfSurface", Odds.oddsVeryUnlikely).forGetter(CarParks::oddsOfSurface),
+                Codec.DOUBLE.optionalFieldOf("oddsOfMultiStorey", Odds.oddsVeryUnlikely).forGetter(CarParks::oddsOfMultiStorey),
+                Codec.INT.optionalFieldOf("minLevels", 2).forGetter(CarParks::minLevels),
+                Codec.INT.optionalFieldOf("maxLevels", 4).forGetter(CarParks::maxLevels)
+        ).apply(i, CarParks::new));
+
+        public CarParks withEnabled(boolean v) {
+            return new CarParks(v, oddsOfSurface, oddsOfMultiStorey, minLevels, maxLevels);
         }
     }
 
