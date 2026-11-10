@@ -14,10 +14,11 @@ import me.daddychurchill.CityWorld.compat.BlockFace;
 import me.daddychurchill.CityWorld.compat.Material;
 
 /**
- * A mall's car park, one chunk: asphalt at road level, two rows of bays with painted lines either side of
+ * A car park, one chunk: asphalt at road level, two rows of bays with painted lines either side of
  * an aisle, lamp posts down the aisle, a planted verge on any side that is not a road, the mall or more
  * car park — and cars in some of the bays, abandoned in a ruined world. Open to the road on every side
- * that fronts one, so the roads run straight in.
+ * that fronts one, so the roads run straight in. A mall's ({@code mall} set) or a district's own (null:
+ * {@code roads.carParks}, picked in place of a building and flood-filled like one).
  */
 public class ParkingLot extends IsolatedLot {
 
@@ -34,9 +35,24 @@ public class ParkingLot extends IsolatedLot {
         return new ParkingLot(platmap, chunkX, chunkZ, mall);
     }
 
+    private static final boolean[] WHOLE_EDGE = new boolean[16];
+    static {
+        java.util.Arrays.fill(WHOLE_EDGE, true);
+    }
+
+    @Override
+    public boolean[] roadOpening(CityWorldGenerator generator, BlockFace toward) {
+        return WHOLE_EDGE; // open to the road on every side that fronts one
+    }
+
+    @Override
+    public boolean makeConnected(PlatLot relative) {
+        return relative instanceof ParkingLot; // a flood-filled copy joins by being the same kind (belongs)
+    }
+
     @Override
     public String getInteriorDescription() {
-        return mall.name + " car park";
+        return mall == null ? "Car park" : mall.name + " car park";
     }
 
     @Override
@@ -69,7 +85,7 @@ public class ParkingLot extends IsolatedLot {
         return lot instanceof ParkingLot || lot instanceof MallLot || platmap.isExistingRoad(x, z);
     }
 
-    private static final Material[] CAR_PAINT = { Material.RED_CONCRETE, Material.BLUE_CONCRETE, Material.WHITE_CONCRETE,
+    static final Material[] CAR_PAINT = { Material.RED_CONCRETE, Material.BLUE_CONCRETE, Material.WHITE_CONCRETE,
             Material.BLACK_CONCRETE, Material.LIGHT_GRAY_CONCRETE, Material.GREEN_CONCRETE, Material.YELLOW_CONCRETE };
 
     @Override
@@ -141,7 +157,8 @@ public class ParkingLot extends IsolatedLot {
                 }
         // a sign for the mall at one corner
         if (!open[3] && !open[0])
-            chunk.setSignPost(1, stand, 1, Material.OAK_SIGN, BlockFace.SOUTH, new String[] { mall.name, "Customer", "Parking" });
+            chunk.setSignPost(1, stand, 1, Material.OAK_SIGN, BlockFace.SOUTH, mall == null
+                    ? new String[] { "Public", "Car Park", "Pay & Display" } : new String[] { mall.name, "Customer", "Parking" });
         chunk.reconnect(0, 16, stand, stand + 4, 0, 16);
     }
 
@@ -164,7 +181,7 @@ public class ParkingLot extends IsolatedLot {
     }
 
     /** A little car, two wide and four long: body, glass cabin, dark wheels. Rusted and doorless in a ruin. */
-    private static void car(RealBlocks chunk, Odds odds, int x0, int stand, int z0, Material paint, boolean ruined) {
+    static void car(RealBlocks chunk, Odds odds, int x0, int stand, int z0, Material paint, boolean ruined) {
         for (int x = x0; x <= x0 + 1; x++)
             for (int z = z0; z <= z0 + 3; z++) {
                 boolean wheel = z == z0 || z == z0 + 3;
