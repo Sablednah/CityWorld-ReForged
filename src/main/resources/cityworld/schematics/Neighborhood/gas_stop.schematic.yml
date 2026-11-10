@@ -5,3 +5,4 @@ FlipableZ: false
 OddsOfAppearance: 0.2
 BroadcastLocation: false
 Decayable: true
+Driveway: north 2-6, north 9-13, south 2-6, south 9-13, west 1-6, west 25-29
