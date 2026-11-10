@@ -43,6 +43,77 @@ What remains is inherent: reach 3 at a 2 km spacing judges a ~14-cell square (28
 per world. `highways.reach` 1 judges 25. The judge itself (3 tries x ~40 exact columns) is untouched: changing it
 moves cities in 5.19–6.14 vanilla-land worlds.
 
+## ▶ Resume here — 2026-11-10 evening: car parks, Ultimate Car Mod, schematic driveways — and issue #4 found
+
+The owner's three asks before 7.0.0: **car parks incl. multi-storey**, **Ultimate Car Mod** (UCM — "simpler cars,
+road surfaces, paint markings and signs in one popular mod"), and **GitHub issue #4** (WWOO towers). Mid-way: *"some
+of the schematics have a drive way or a side to connect to the road … we need a way to specify which side and where
+connect to road — so we can remove the sidewalk"*, and *"test out the datapack entity system, see if we can add a
+car to both carparks"*. All built on master and picked to the five lines (code commits `65ddb5f4` car parks,
+`fb6448b3` UCM, `65acae2a` driveways; docs `71ede4a2` stays on master — the pick is empty on a branch, abort it).
+
+**Car parks** (`roads.carParks`: enabled, oddsOfSurface, oddsOfMultiStorey, minLevels, maxLevels; Roads is at 15 of
+its 16 codec fields). `Plats/Urban/MultiStoreyCarParkLot`: decks `PITCH` apart with painted bays, a ramp strip
+alternating north/south per deck, pillars, a one-block parapet with the entrance cut through at street level on the
+sides that front a road (N cells 12–14, S 6–9, E/W 7–8), a ladder stairwell on the east wall, lamp posts on the roof;
+real vehicles in some bays, block wrecks in a ruin; self-test records `carpark.multistorey` (levels histogram).
+**The kerb drop:** `PlatLot.roadOpening(generator, toward)` answers which cells of the edge facing a road are a way
+in (`toward` is the NEIGHBOUR's side that faces us: a road north of a lot asks it with SOUTH) and
+`roadOpeningRaised()` whether the lot stands at street+1; `RoadLot.dropKerbs` (after the sidewalks, before nothing
+else) turns those sidewalk cells (along 3..12 only) into the road's own surface — the road kit's surface when a kit
+is in play, else the pavement — with a `SMOOTH_STONE_SLAB` ramp at the kerb and the road cell's lip cleared.
+Probed: the multi-storey's south entrance at cells 6..9 reads as a 4-wide gap in the sidewalk row, slab at the kerb.
+
+**Ultimate Car Mod** (All Rights Reserved; read for interop only, nothing copied): `car:asphalt` joins
+`#cityworld:fittings/road`; `RoadKit` gains a *paint mode* — UCM's markings (`car:line_middle`, `car:arrow_zebras`)
+are blocks laid ON the road at street+1, not road variants — and `textSign` (`car:sign` on `car:sign_post` ×2 on a
+smooth stone base). `Vehicles.ultimateCar` writes a `car:car` entity by NBT (battery 1000, licence plate, a paint
+from the vehicle file's `subs`); **its position is the spot itself** — an IV vehicle's origin sits `centre` behind
+the wheelbase middle, a UCM car's origin is its own middle. Four `cityworld:vehicle/ucm_*.json`, three
+`schematic_fitout/ucm_*.json` (16 pumps per gas stop), all inert without the mod. `car-neoforge-1.21.11-1.0.51.jar`
+sits in master's `run/mods` (gitignored) so the self-test exercises the path. Highway gantries have no UCM text
+equivalent (IV pole signs only) — open.
+
+**Driveways.** A sidecar's `Driveway: <side> [from-to]` lines (unrotated schematic, counted from the west end of a
+N/S edge or the north end of an E/W edge, from 0; a side alone = the whole edge; commas or several lines).
+`Clipboard.drivewayCells(rotation, mirror)`; `ClipboardLot.roadOpening` only for the edge that lies in THIS chunk of
+a multi-chunk build; `paveDriveways` paves from the build's edge to the chunk edge toward a RoadLot. **Siting:**
+`PlatMap.placeClipByDriveway` tries every rotation × mirror at every buildable site and keeps the fits where a
+driveway cell's edge faces an existing road (roads are planned before schematics: `populateRoads → validateRoads →
+context`), one picked by the odds; no fit → the old random siting, with no extra draws. Condo, bank, G45station,
+gas_stop, polar_gas carry theirs. Probed at the gas stop: east driveways facing road chunk −8,20/21, asphalt + slab
+ramp in the sidewalk, lip cleared. **Spawn datapack proved:** a `cwtest` `cityworld:spawn` file put two `car:car`
+into the multi-storey car park (`scripts/region_entities.py <entities dir> car: --pos`).
+
+**Traps paid for today:** (1) `gradlew runServer` COMPILES the checkout first, so an edit made while a probe starts
+moves the thing you are watching (`-Dcityworld.watch` logged nothing because the gas stop had moved); (2) copy
+`run/world/region` in the SAME command as the probe — a parallel call's `rm -rf run/world` raced it and every slice
+read `?`; (3) a random rotation put the driveways on the roadless sides (hence the siting); (4) the kerb's surface
+must be the KIT's (`pavementMat` gave a cyan terracotta ramp on a UCM road); (5) a cherry-pick of a docs-only
+commit onto a branch that lacks the file (`SCHEMATICS.md`) cannot take `--ours` — abort it, docs live on master.
+
+**Issue #4 — found, not a CityWorld bug (reply draft in the scratchpad `issue4/reply.md`, the owner posts).** The
+towers are WWOO's **Towering Tepuis** (`wythers:terrain/feature/tepui*`: deepslate disks re-placed at
+`WORLD_SURFACE` ×128, tuff/basalt bands, caverns, amethyst crystals, flat top at y 234), which WWOO grows wherever
+the ground is ALREADY y 135–230 in a biome whose feature list carries them — only `minecraft:jungle`, through the
+Towering Tepuis add-on. Vanilla jungle hardly reaches 135; CityWorld's hot mountains are jungle at 150–203, so each
+became one. Reproduced on the dev seed in the exp-1.21.1 bed with WWOO **2.3.4** (June 2024, the only other
+NeoForge 1.21.1 build on Modrinth; 3 classes, data in `data/`, ungated) + the add-on, the mountain's biomes given
+the add-on's jungle list: top 203 → 239, 323k deepslate / 154k tuff / 66k basalt / 275k cave_air above y 150
+(`scripts/region_render.py` pictures in `issue4/`). **WWOO 2.6.4+ (May 2026) gates every tepui feature on 1.21 behind
+a never-true `block_predicate_filter`** (moss_block at minY+1 AND sculk at minY+2 at the chunk origin), so with
+2.6.7 + Cliffs + Tepuis on 1.21.1 nothing grew in ~4,000 chunks (origin 25×25, the jungle city, the mountain) against
+a no-WWOO control. **Cliffs and Coves** is ONE placed feature (`wythers:terrain/carver/ocean`: air disks where the
+surface is 67–70), byte-identical across 1.2.2/1.3.0/1.3.1 and an embedded config-flag pack in the 2.6.x mod: it
+cannot raise anything. City chunks never run biome features (`applyBiomeDecoration` only on wild NATURE lots), so
+skyscraper roofs at 220 grew nothing even ungated. Catalogue, archives and tools: scratchpad `wwoo/CATALOGUE.md`,
+`wwoo_terrain_scan.py <region> <y>` (terrain top per chunk by block, tally above y, marker count — a WORLD_SURFACE
+"raise" is buildings and trees, so compare TERRAIN blocks against a same-seed control), `biome_tally.py`,
+`probe_dp_exp*.sh` (a probe with a world datapack staged). Possible CityWorld-side mitigation if the owner wants
+one: a data-driven deny list of placed features on CityWorld land — not built.
+
+**Gates:** six self-tests PASS on the picked heads (master `71ede4a2`, branches 836e9976 / d0071e87 / f7397c37 / 6901ce04 / 5e3989f2; `carpark.multistorey {2=140, 3=127, 4=179}` within the 150-chunk plan radius, `vehicle.files` 16) and `--compare` agrees on the fresh reports (MODERN, APOCALYPSE, CLASSIC identical); 1.20.1 built from `build/libs` with SRG names present (15 in the generator and client classes) and deployed to the `1.20.1  Forge` instance as `DEPLOYED-836e9976`. Not pushed, not released. Not yet seen on a client: a UCM car driven, the kerb ramp walked, the multi-storey's ladder and ramps. The owner's look is next, then 7.0.0.
+
 ## ▶ Resume here — 2026-11-10: "driving a car away locked up Minecraft" — IV's yaw-180 division by zero
 
 The owner's two lock-ups (one killed; the second left open for diagnosis, PID 41696, 7 GB javaw on Mojang's

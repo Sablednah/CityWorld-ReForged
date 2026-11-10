@@ -24,6 +24,16 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-10 evening): car parks, Ultimate Car Mod, schematic driveways — issue #4 found.**
+- PORTING.md "▶ Resume here — 2026-11-10 evening" has it: surface + multi-storey car parks (`roads.carParks`,
+  `MultiStoreyCarParkLot`, `PlatLot.roadOpening` + `RoadLot.dropKerbs`), Ultimate Car Mod (asphalt in the road pool,
+  paint-mode markings, text signs, `car:car` cars, pumps in the gas stations), sidecar `Driveway:` lines with
+  road-facing siting (`PlatMap.placeClipByDriveway`), the spawn datapack proved with two cars in a car park. Code
+  commits `65ddb5f4` `fb6448b3` `65acae2a` on master and all five lines (docs `71ede4a2` master only). **Issue #4
+  is WWOO's Towering Tepuis** grown on CityWorld's jungle mountains (ground already ≥ y 135), reproduced with WWOO
+  2.3.4 + the add-on; WWOO 2.6.4+ gates them off on 1.21; Cliffs and Coves only digs coves. Reply draft for the
+  owner in the scratchpad `issue4/reply.md`. Nothing pushed. Next: the owner's look (UCM on 1.20.1), then 7.0.0.
+
 **▶ Resume here (2026-11-10): "driving a car away locked up Minecraft" — IV's division by zero at yaw 180.**
 - PORTING.md "▶ Resume here — 2026-11-10" has it: a heap dump of the frozen game (`jcmd GC.heap_dump` +
   `scripts/hprof_fields.py`) read NaN camera angles out of IV's camera handler; IV ≤ 24.0.0's
