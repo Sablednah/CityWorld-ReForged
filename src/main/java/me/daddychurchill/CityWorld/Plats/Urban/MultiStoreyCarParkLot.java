@@ -225,7 +225,7 @@ public class MultiStoreyCarParkLot extends ConnectedLot {
                 Odds car = odds.fork();
                 double cx = chunk.getBlockX(bay * 4 + 1) + 1.5, cz = chunk.getBlockZ(row == 0 ? 3 : 9) + 2.0;
                 me.daddychurchill.CityWorld.worldgen.Vehicles.park(chunk.getWorld(), "car", cx, street + 1 + k * PITCH, cz,
-                        row == 0 ? 180 : 0, settings.vehicleFuel, car);
+                        row == 0 ? 180 : 0, settings.vehicleFuelFor(car), car);
             }
         } else if (ruined)
             for (int k = 0; k < levels; k++)

@@ -35,6 +35,9 @@ public final class RoadKit {
     public final boolean paint;
     private final Material textSignBlock;
     private final String namespace;
+    /** The rod under a picture sign; Macaw's rod under its signs on an Ultimate Car Mod road. */
+    public final Material pictureRod;
+    private final String signNamespace;
 
     private RoadKit(Material surface, String id) {
         this.surface = surface;
@@ -47,6 +50,9 @@ public final class RoadKit {
             this.kerb = null;
             this.rod = piece("car:sign_post");
             this.textSignBlock = piece("car:sign");
+            // Macaw's Roads alongside: its picture signs where it has one (a limit, STOP), text for the rest
+            this.signNamespace = piece("mcwroads:roadsign_rod") != null ? "mcwroads" : "car";
+            this.pictureRod = piece(signNamespace + ":roadsign_rod");
         } else {
             // the edge-dashed line, not the "center" one: that stripe sits 3-6 px from one edge of its block, and a
             // one-column line on a twelve-wide road can only sit on the centre when the stripe hugs the column's edge
@@ -56,6 +62,8 @@ public final class RoadKit {
             this.kerb = piece(namespace + ":sidewalk_step");
             this.rod = piece(namespace + ":roadsign_rod");
             this.textSignBlock = null;
+            this.signNamespace = namespace;
+            this.pictureRod = rod;
         }
     }
 
@@ -132,7 +140,11 @@ public final class RoadKit {
     }
 
     private static RoadKit pick(long worldSeed) {
-        Material surface = MaterialTags.pick(MaterialTags.FITTINGS_ROAD, new Odds(worldSeed ^ 0x524F414453L), null);
+        // Ultimate Car Mod's road wins when it is in the pool (the owner's call: its roads, Macaw's signs); otherwise
+        // one pick from the pool
+        Material surface = piece("car:asphalt");
+        if (surface == null || surface.getBlock() == null || !surface.getBlock().defaultBlockState().is(MaterialTags.FITTINGS_ROAD))
+            surface = MaterialTags.pick(MaterialTags.FITTINGS_ROAD, new Odds(worldSeed ^ 0x524F414453L), null);
         if (surface == null || surface.getBlock() == null)
             return null;
         var key = BuiltInRegistries.BLOCK.getKey(surface.getBlock());
@@ -141,12 +153,13 @@ public final class RoadKit {
 
     /** Whether a block is one of the kit's mod's (a sign or its rod): what a sweep of the road leaves standing. */
     public boolean owns(net.minecraft.world.level.block.state.BlockState state) {
-        return BuiltInRegistries.BLOCK.getKey(state.getBlock()).getNamespace().equals(namespace);
+        String ns = BuiltInRegistries.BLOCK.getKey(state.getBlock()).getNamespace();
+        return ns.equals(namespace) || ns.equals(signNamespace);
     }
 
-    /** A sign block of the kit's mod by name, or null if the mod has none of that name. */
+    /** A picture sign by name (Macaw's Roads, also beside an Ultimate Car Mod road), or null without one. */
     public Material sign(String name) {
-        return piece(namespace + ":" + name);
+        return piece(signNamespace + ":" + name);
     }
 
     private static Material piece(String id) {
