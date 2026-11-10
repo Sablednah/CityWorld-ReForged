@@ -2812,6 +2812,15 @@ public final class CityWorldSelfTest {
         } catch (RuntimeException e) {
             fail("vehicles: registry missing: " + e);
         }
+        // a parked heading is never exactly 180: Immersive Vehicles up to 24.0.0 divides by zero interpolating from it,
+        // and the client's render thread then loops for ever (the owner's lock-ups driving a parked car, 2026-11-10)
+        double nudged = me.daddychurchill.CityWorld.worldgen.Vehicles.safeHeading(180),
+                minus = me.daddychurchill.CityWorld.worldgen.Vehicles.safeHeading(-180),
+                kept = me.daddychurchill.CityWorld.worldgen.Vehicles.safeHeading(90);
+        report.put("vehicle.heading180", nudged + "/" + minus);
+        if (nudged == 180 || Math.abs(nudged - 180) > 1 || minus == -180 || Math.abs(minus + 180) > 1 || kept != 90)
+            fail("vehicles: a heading of 180 or -180 should move within a degree and 90 stay, got " + nudged + ", "
+                    + minus + " and " + kept);
         // the pole-sign registry holds CityWorld's two sets (osip, the Official Content Pack), installed or not
         try {
             long sets = access.lookupOrThrow(me.daddychurchill.CityWorld.worldgen.PoleSigns.POLE_SIGNS).listElements().count();
