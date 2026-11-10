@@ -4,6 +4,10 @@
     {
       "id": "mcwroads:asphalt",
       "required": false
+    },
+    {
+      "id": "car:asphalt",
+      "required": false
     }
   ]
 }
