@@ -489,6 +489,48 @@ public class ClipboardLot extends IsolatedLot {
 	}
 
 	/**
+	 * The cells of this chunk where something parked at the build's driveways stands: the build's edge row at each
+	 * driveway and the paving from it out to the chunk's edge, each as {x, z, yaw} with the yaw that faces the road
+	 * (0 south, 90 west, 180 north, 270 east). Empty when the build has no driveway in this chunk.
+	 */
+	public java.util.List<int[]> drivewayStands(CityWorldGenerator generator) {
+		java.util.List<int[]> out = new java.util.ArrayList<>();
+		if (clip.driveways.isEmpty() || clip.ocean)
+			return out;
+		int rotSizeX = Clipboard.swapsFootprint(rotation) ? clip.sizeZ : clip.sizeX;
+		int rotSizeZ = Clipboard.swapsFootprint(rotation) ? clip.sizeX : clip.sizeZ;
+		int nwX = buildNwX(), nwZ = buildNwZ(), oX = chunkX * CHUNK, oZ = chunkZ * CHUNK;
+		for (BlockFace side : new BlockFace[] { BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST }) {
+			boolean[] mask = roadOpening(generator, side);
+			if (mask == null)
+				continue;
+			for (int along = 0; along < CHUNK; along++) {
+				if (!mask[along])
+					continue;
+				switch (side) {
+				case NORTH -> {
+					for (int z = 0; z <= nwZ - oZ; z++)
+						out.add(new int[] { along, z, 180 });
+				}
+				case SOUTH -> {
+					for (int z = nwZ + rotSizeZ - 1 - oZ; z < CHUNK; z++)
+						out.add(new int[] { along, z, 0 });
+				}
+				case EAST -> {
+					for (int x = nwX + rotSizeX - 1 - oX; x < CHUNK; x++)
+						out.add(new int[] { x, along, 270 });
+				}
+				default -> {
+					for (int x = 0; x <= nwX - oX; x++)
+						out.add(new int[] { x, along, 90 });
+				}
+				}
+			}
+		}
+		return out;
+	}
+
+	/**
 	 * Paves each driveway from the build's edge out to the chunk's edge where a road lies beyond it, level with
 	 * the build's ground layer (the sidewalk's height), on a stone fill down to solid ground, with headroom
 	 * cleared; the road drops its own kerb to meet it ({@link RoadLot}). Nothing where the way out faces anything
