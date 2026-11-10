@@ -43,6 +43,43 @@ What remains is inherent: reach 3 at a 2 km spacing judges a ~14-cell square (28
 per world. `highways.reach` 1 judges 25. The judge itself (3 tries x ~40 exact columns) is untouched: changing it
 moves cities in 5.19–6.14 vanilla-land worlds.
 
+## ▶ Resume here — 2026-11-10 late: the owner's second look — rarer car parks, fuel, UCM roads with Macaw's signs
+
+The owner's second 1.20.1 look (after the ramp-hole fix `60abd4e2`) asked for six things; all on master `bbfcf8f4` +
+`e8177b28` (self-test count), picked to the five lines, 1.20.1 deployed.
+
+1. **Both car park kinds rarer** — *"they both seem quite common"*. `roads.carParks.oddsOfSurface` and
+   `oddsOfMultiStorey` default `oddsExtremelyUnlikely` (1/34, was 1/13). ⚠ A multi-storey car park is a
+   `ConnectedLot` with `newLike`, so `UrbanContext.fillOutBuilding` floods it over neighbouring chunks like any
+   building: the self-test's `carpark.multistorey` histogram counts CHUNKS by deck count, and fell only 530 → 421 in
+   the 301×301 plan sweep. `carpark.multistorey.count` (new) counts car parks by connected key — the number the odds
+   actually govern: 202 car parks over those 421 chunks (about two chunks each), 456 surface car park chunks, in the
+   dev seed's 301×301 plan. Customize has only the on/off toggles, and no shipped preset pins either group.
+2. **Parked vehicles with a random tank** — *"can the UCM cars spawn with a random amount of fuel?"*.
+   `roads.vehicles.fuel` is now the MOST a tank holds (default 1000 mB, was 0 = dry) and `fuelMin` the least (0);
+   `CityWorldSettings.vehicleFuelFor(odds)` rolls per vehicle on the lot's dice, at the four `Vehicles.park`
+   callers (RoadLot kerbs, ParkingLot, MultiStoreyCarParkLot, Spawns). IV gets lava, UCM bio diesel; `fuel: 0`
+   parks them all dry as before. Vehicles is 7 codec fields.
+3. **UCM's road wins the pick, Macaw's signs where it has one** — *"ucms signs are good only for the leaving XXX
+   kind of signs - not the 30/50/70"*. `RoadKit.pick` takes `car:asphalt` whenever it is in
+   `#cityworld:fittings/road` (a pack that wants Macaw's removes it from the tag), else the seeded pool pick as
+   before. Beside Macaw's Roads, the kit's `signNamespace` is `mcwroads` (probed by its `roadsign_rod`), so
+   `sign(name)` finds Macaw's picture signs and `pictureRod` its rod; `owns()` answers for both namespaces (the
+   road sweep leaves both standing). `RoadLot.placeRoadSign`: IV pole signs first (unchanged), then a text sign
+   only for the town board or when there is no picture sign, else the picture sign on the picture rod.
+4. **Gas stations a block lower** — `gas_stop` and `G45station` sidecars `GroundLevelY: 0 → 1`, `polar_gas`
+   `1 → 2` (its bottom layer was already one under), in every family folder. Probed on master
+   (`find:schematic:gas_stop`, chunk 3,6 of the dev seed): the apron layer now sits at y 64 with the street, the
+   pumps at 65 — before, the apron stood on the pavement at 65.
+5. **Canola and UCM's fluids** — `car:canola` in `#cityworld:farm/crops`; `car:bio_diesel`, `canola_oil`,
+   `methanol`, `glycerin`, `canola_methanol_mix` in `#cityworld:build/chemicals` (what the industrial tanks and
+   silos hold). Optional entries; 1.20.1 keeps them under `tags/blocks/` (checked after the pick).
+6. **`IMC_eaglman13_home_entry` removed** from every family folder (*"wrong size - and doesnt fit the style"*).
+
+Gates: master self-test PASS on `bbfcf8f4` (and again with the count), 1.20.1 self-test PASS on the picked head,
+1.20.1 rebuilt and deployed. Not measured: Macaw's + UCM together in a world (the dev beds have UCM alone; the
+owner's 1.20.1 instance has both — their look). Nothing pushed. Next: the owner's look, then 7.0.0.
+
 ## ▶ Resume here — 2026-11-10 evening: car parks, Ultimate Car Mod, schematic driveways — and issue #4 found
 
 The owner's three asks before 7.0.0: **car parks incl. multi-storey**, **Ultimate Car Mod** (UCM — "simpler cars,

@@ -24,6 +24,14 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-10 late): the owner's second look — rarer car parks, random fuel, UCM roads + Macaw's signs.**
+- PORTING.md "▶ Resume here — 2026-11-10 late" has it: car park odds 1/13 → 1/34 (a multi-storey FLOODS over
+  neighbours like any building, so count car parks by connected key — `carpark.multistorey.count`), parked tanks a
+  random `roads.vehicles.fuelMin`–`fuel` (0–1000 mB), `car:asphalt` wins the road pick with Macaw's picture signs
+  on Macaw's rod where it has one (text only for the town board), the three gas stations sunk a block (probed),
+  canola + UCM's five fluids pooled, `IMC_eaglman13_home_entry` gone. Master `bbfcf8f4` `e8177b28`, picked to the
+  five lines, 1.20.1 deployed. Nothing pushed. Next: the owner's look (both road mods together is unmeasured), then 7.0.0.
+
 **▶ Resume here (2026-11-10 evening): car parks, Ultimate Car Mod, schematic driveways — issue #4 found.**
 - PORTING.md "▶ Resume here — 2026-11-10 evening" has it: surface + multi-storey car parks (`roads.carParks`,
   `MultiStoreyCarParkLot`, `PlatLot.roadOpening` + `RoadLot.dropKerbs`), Ultimate Car Mod (asphalt in the road pool,
