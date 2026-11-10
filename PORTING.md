@@ -112,6 +112,19 @@ skyscraper roofs at 220 grew nothing even ungated. Catalogue, archives and tools
 `probe_dp_exp*.sh` (a probe with a world datapack staged). Possible CityWorld-side mitigation if the owner wants
 one: a data-driven deny list of placed features on CityWorld land — not built.
 
+**The owner's 1.20.1 look (22:01–22:10) and what it changed:** *"steps up in the multi story still have the roof"* /
+*"the gap IS there but wrong place"* — the hole in deck k was cut on `!rampNorth(k-1)`, the strip OPPOSITE the ramp
+below it, so every ramp ran into the deck and the gap opened over bare floor; now `rampNorth(k-1)` (`60abd4e2`;
+probed: the k=0 ramp's hole on the north strip at y 69 over its cells 3..10, the k=1 ramp's on the south strip at
+y 74). *"how common are the car parks"* — each building pick in an urban district rolls multi-storey at 1/13 then
+surface at 1/13 (`roads.carParks.oddsOfMultiStorey`/`oddsOfSurface` 0.077), about one plot in seven; the self-test's
+150-chunk plan radius holds 446 multi-storey. *"can we park a car outside the condo via datapack"* — spawn files
+gained `schematics` (names, matches ClipboardLot by `clip.name`; the Spawn codec is now at the 16-field cap) and
+`at: driveway` (`ClipboardLot.drivewayStands`: the build's edge row at each driveway plus the paving out to the
+chunk edge, each with the yaw that faces the road; a vehicle's heading is the mirror of Minecraft's yaw,
+`(360 - yaw) % 360`). Probed with `{ "vehicle": "car", "schematics": ["Condo"], "at": "driveway" }`: one `car:car`
+on the condo's north driveway row, yaw −179.5 (the nudge), nose to the road.
+
 **Gates:** six self-tests PASS on the picked heads (master `71ede4a2`, branches 836e9976 / d0071e87 / f7397c37 / 6901ce04 / 5e3989f2; `carpark.multistorey {2=140, 3=127, 4=179}` within the 150-chunk plan radius, `vehicle.files` 16) and `--compare` agrees on the fresh reports (MODERN, APOCALYPSE, CLASSIC identical); 1.20.1 built from `build/libs` with SRG names present (15 in the generator and client classes) and deployed to the `1.20.1  Forge` instance as `DEPLOYED-836e9976`. Not pushed, not released. Not yet seen on a client: a UCM car driven, the kerb ramp walked, the multi-storey's ladder and ramps. The owner's look is next, then 7.0.0.
 
 ## ▶ Resume here — 2026-11-10: "driving a car away locked up Minecraft" — IV's yaw-180 division by zero
