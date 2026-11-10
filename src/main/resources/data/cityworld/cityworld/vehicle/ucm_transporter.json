@@ -1,0 +1,70 @@
+{
+  "requires_mod": "car",
+  "vehicle": "car:car",
+  "kind": "truck",
+  "paints": [
+    "white",
+    "orange",
+    "magenta",
+    "light_blue",
+    "yellow",
+    "lime",
+    "pink",
+    "gray",
+    "light_gray",
+    "cyan",
+    "purple",
+    "blue",
+    "brown",
+    "green",
+    "red",
+    "black"
+  ],
+  "fuel_capacity": 1500,
+  "parts": [
+    {
+      "slot": 0,
+      "part": "car:{paint}_transporter_body"
+    },
+    {
+      "slot": 1,
+      "part": "car:{paint}_container"
+    },
+    {
+      "slot": 2,
+      "part": "car:iron_license_plate_holder"
+    },
+    {
+      "slot": 3,
+      "part": "car:large_tank"
+    },
+    {
+      "slot": 4,
+      "part": "car:engine_truck"
+    },
+    {
+      "slot": 5,
+      "part": "car:wheel"
+    },
+    {
+      "slot": 6,
+      "part": "car:wheel"
+    },
+    {
+      "slot": 7,
+      "part": "car:wheel"
+    },
+    {
+      "slot": 8,
+      "part": "car:wheel"
+    },
+    {
+      "slot": 9,
+      "part": "car:wheel"
+    },
+    {
+      "slot": 10,
+      "part": "car:wheel"
+    }
+  ]
+}

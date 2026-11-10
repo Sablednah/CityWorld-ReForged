@@ -1,0 +1,134 @@
+{
+ "schematic": "polar_gas",
+ "requires_mod": "car",
+ "blocks": [
+  {
+   "pos": [
+    1,
+    1,
+    3
+   ],
+   "block": "car:gas_station[facing=east]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    1,
+    2,
+    3
+   ],
+   "block": "car:gas_station_top[facing=east]"
+  },
+  {
+   "pos": [
+    1,
+    1,
+    12
+   ],
+   "block": "car:gas_station[facing=east]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    1,
+    2,
+    12
+   ],
+   "block": "car:gas_station_top[facing=east]"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    3
+   ],
+   "block": "car:gas_station[facing=west]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    3
+   ],
+   "block": "car:gas_station_top[facing=west]"
+  },
+  {
+   "pos": [
+    7,
+    1,
+    12
+   ],
+   "block": "car:gas_station[facing=east]{trade_amount:0,fluid:{id:\"car:bio_diesel\",amount:16000,FluidName:\"car:bio_diesel\",Amount:16000}}"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    12
+   ],
+   "block": "car:gas_station_top[facing=east]"
+  },
+  {
+   "pos": [
+    1,
+    2,
+    2
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    1,
+    2,
+    4
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    1,
+    2,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    1,
+    2,
+    13
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    2
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    4
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    11
+   ],
+   "block": "minecraft:air"
+  },
+  {
+   "pos": [
+    7,
+    2,
+    13
+   ],
+   "block": "minecraft:air"
+  }
+ ]
+}
