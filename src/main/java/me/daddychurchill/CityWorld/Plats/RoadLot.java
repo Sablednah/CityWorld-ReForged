@@ -1068,7 +1068,7 @@ public class RoadLot extends ConnectedLot {
 						// the mod's edge-dashed line in column 7, its stripe on the column's east edge (facing south turns
 						// the texture's west-edge stripe to the east), so it lies on the road's centre line between 7 and 8
 						for (int z = 0; z < chunk.width; z++)
-							chunk.setBlockState(7, pavementLevel, z, kit.brokenLine.withFacing(BlockFace.SOUTH));
+							kit.line(chunk, 7, pavementLevel, z, true);
 						if (kit.manhole != null && chunkOdds.playOdds(0.33))
 							chunk.setBlock(10, pavementLevel, 8, kit.manhole);
 					} else
@@ -1077,7 +1077,7 @@ public class RoadLot extends ConnectedLot {
 				} else if (roads.toWest() && roads.toEast() && !roads.toNorth() && !roads.toSouth()) {
 					if (kit != null && kit.brokenLine != null) {
 						for (int x = 0; x < chunk.width; x++) // stripe on row 7's south edge: the centre line
-							chunk.setBlockState(x, pavementLevel, 7, kit.brokenLine.withFacing(BlockFace.WEST));
+							kit.line(chunk, x, pavementLevel, 7, false);
 						if (kit.manhole != null && chunkOdds.playOdds(0.33))
 							chunk.setBlock(8, pavementLevel, 10, kit.manhole);
 					} else
@@ -1572,8 +1572,9 @@ public class RoadLot extends ConnectedLot {
 			}
 		}
 
-		// a dropped kerb wherever this road runs past a car park (a mall's): the raised pavement on that side is
-		// lowered to road level and surfaced like the road, so cars and players roll straight in
+		// a dropped kerb wherever this road runs past a car park's open side or a schematic's driveway: the pavement
+		// there is surfaced like the road (lowered to road level for a car park, kept at its height with a slab
+		// ramp at the kerb for a build whose own ground sits at pavement height), so cars and players roll in
 		dropKerbs(generator, platmap, chunk, platX, platZ);
 	}
 
@@ -1661,20 +1662,41 @@ public class RoadLot extends ConnectedLot {
 		if (!inACity)
 			return; // outside town the verge is already at road level
 		int street = generator.streetLevel;
-		Material surface = pavementIsClay ? pavementClay : pavementMat;
-		int[][] sides = { { 0, -1 }, { 0, 1 }, { 1, 0 }, { -1, 0 } }; // N S E W
+		Material surface = kit != null ? kit.surface : pavementIsClay ? pavementClay : pavementMat; // what the road itself is
+		int[][] sides = { { 0, -1 }, { 0, 1 }, { 1, 0 }, { -1, 0 } }; // N S E W: where the neighbour lies
+		BlockFace[] toward = { BlockFace.SOUTH, BlockFace.NORTH, BlockFace.WEST, BlockFace.EAST }; // its side we are on
 		for (int s = 0; s < 4; s++) {
 			int nx = platX + sides[s][0], nz = platZ + sides[s][1];
-			if (!platmap.inBounds(nx, nz)
-					|| !(platmap.getLot(nx, nz) instanceof me.daddychurchill.CityWorld.Plats.Urban.ParkingLot))
+			if (!platmap.inBounds(nx, nz))
 				continue;
-			for (int along = sidewalkWidth; along < 16 - sidewalkWidth; along++)
-				for (int depth = 0; depth < sidewalkWidth; depth++) {
+			PlatLot lot = platmap.getLot(nx, nz);
+			boolean[] open = lot == null ? null : lot.roadOpening(generator, toward[s]);
+			if (open == null)
+				continue;
+			boolean raised = lot.roadOpeningRaised();
+			for (int along = sidewalkWidth; along < 16 - sidewalkWidth; along++) {
+				if (!open[along])
+					continue;
+				// depth 0 is the cell against the lot, sidewalkWidth - 1 the kerb, sidewalkWidth the road cell at its foot
+				for (int depth = 0; depth <= sidewalkWidth; depth++) {
 					int x = s == 0 || s == 1 ? along : s == 2 ? 15 - depth : depth;
 					int z = s == 2 || s == 3 ? along : s == 1 ? 15 - depth : depth;
-					chunk.setBlocks(x, street + 1, street + 6, z, Material.AIR);
-					chunk.setBlock(x, street, z, surface);
+					if (depth == sidewalkWidth) {
+						if (!chunk.isEmpty(x, street + 1, z))
+							chunk.setBlock(x, street + 1, z, Material.AIR); // the road kit's kerb lip
+					} else if (raised) {
+						// a forecourt on the pavement: the sidewalk keeps its height, surfaced like the road, a slab ramp at the kerb
+						chunk.setBlocks(x, street + 2, street + 6, z, Material.AIR);
+						if (depth == sidewalkWidth - 1)
+							chunk.setBlock(x, street + 1, z, Material.SMOOTH_STONE_SLAB, SlabType.BOTTOM);
+						else
+							chunk.setBlock(x, street + 1, z, surface);
+					} else {
+						chunk.setBlocks(x, street + 1, street + 6, z, Material.AIR);
+						chunk.setBlock(x, street, z, surface);
+					}
 				}
+			}
 		}
 	}
 
@@ -1725,7 +1747,7 @@ public class RoadLot extends ConnectedLot {
 				if (kit != null && kit.crosswalk != null) {
 					for (int x = x1; x < x2; x++)
 						for (int z = z1; z < z2; z++)
-							chunk.setBlockState(x, y, z, kit.crosswalk.withFacing(BlockFace.NORTH));
+							kit.zebra(chunk, x, y, z, true);
 					return;
 				}
 				chunk.setBlocks(x1 + 1, x1 + 2, y, z1, z2, linesMat);
@@ -1748,7 +1770,7 @@ public class RoadLot extends ConnectedLot {
 				if (kit != null && kit.crosswalk != null) { // the mod's zebra, the whole arm, its stripes along the road
 					for (int x = x1; x < x2; x++)
 						for (int z = z1; z < z2; z++)
-							chunk.setBlockState(x, y, z, kit.crosswalk.withFacing(BlockFace.EAST));
+							kit.zebra(chunk, x, y, z, false);
 					return;
 				}
 				chunk.setBlocks(x1, x2, y, z1 + 1, z1 + 2, linesMat);
@@ -2234,6 +2256,12 @@ public class RoadLot extends ConnectedLot {
 		if (me.daddychurchill.CityWorld.worldgen.PoleSigns.place(access, name, road.text(), chunk.getBlockX(x),
 				base + lift, y + 3 + lift, chunk.getBlockZ(z), facing))
 			return;
+		// Ultimate Car Mod's: the words on a text sign on its post
+		if (kit != null && kit.textSigns()) {
+			chunk.setBlocks(x, base, y + 3, z, kit.rod != null ? kit.rod : Material.SPRUCE_FENCE);
+			kit.textSign(chunk, x, y + 3, z, facing, signText(road, end));
+			return;
+		}
 		Material sign = road.macaws();
 		if (sign == null)
 			return;
@@ -2242,6 +2270,17 @@ public class RoadLot extends ConnectedLot {
 		if (end)
 			state = Material.withProperty(state, "end", "true");
 		chunk.setBlockState(x, y + 3, z, state);
+	}
+
+	/** The words for a sign that is text (Ultimate Car Mod's): the sign's name in capitals, its number or town. */
+	static String[] signText(RoadSign road, boolean end) {
+		String head = road.name().replace('_', ' ').toUpperCase(java.util.Locale.ROOT);
+		return switch (road.name()) {
+			case "town" -> end ? new String[] { road.text(), "", "Thanks for", "visiting" }
+					: new String[] { "Welcome to", road.text() };
+			case "speed_limit" -> end ? new String[] { "END OF", head, road.text() } : new String[] { head, road.text() };
+			default -> end ? new String[] { "END", head } : new String[] { head };
+		};
 	}
 
 	private final static double oddsOfDecayedSign = Odds.oddsExtremelyLikely;

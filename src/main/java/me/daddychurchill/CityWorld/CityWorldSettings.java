@@ -210,6 +210,9 @@ public class CityWorldSettings {
     public boolean includeVehicles = true;
     public int carParkVehicles = 1, streetVehicles = 1, vehicleFuel = 0;
     public double oddsOfParkedVehicle = Odds.oddsLikely, oddsOfStreetVehicle = Odds.oddsLikely;
+    public boolean includeCarParks = true;
+    public double oddsOfSurfaceCarPark = Odds.oddsVeryUnlikely, oddsOfMultiStoreyCarPark = Odds.oddsVeryUnlikely;
+    public int carParkMinLevels = 2, carParkMaxLevels = 4;
     public double oddsOfWildBridge = Odds.oddsLikely;
     public boolean spawnersInSubways = true;
 
@@ -647,6 +650,11 @@ public class CityWorldSettings {
         streetVehicles = data.roads().vehicles().streetVehicles();
         oddsOfStreetVehicle = data.roads().vehicles().oddsOfStreetVehicle();
         vehicleFuel = data.roads().vehicles().fuel();
+        includeCarParks = data.roads().carParks().enabled();
+        oddsOfSurfaceCarPark = data.roads().carParks().oddsOfSurface();
+        oddsOfMultiStoreyCarPark = data.roads().carParks().oddsOfMultiStorey();
+        carParkMinLevels = Math.max(2, data.roads().carParks().minLevels());
+        carParkMaxLevels = Math.max(carParkMinLevels, data.roads().carParks().maxLevels());
         includeWildBridges = data.roads().wildBridges();
         wildBridgeDepth = data.roads().wildBridgeDepth();
         wildBridgeSpan = data.roads().wildBridgeSpan();
@@ -790,7 +798,9 @@ public class CityWorldSettings {
                 oddsOfSpeedRepeat, includeSkybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, includeWildBridges,
                 wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion,
                 new CityWorldSettingsData.Vehicles(includeVehicles, carParkVehicles, oddsOfParkedVehicle,
-                        streetVehicles, oddsOfStreetVehicle, vehicleFuel));
+                        streetVehicles, oddsOfStreetVehicle, vehicleFuel),
+                new CityWorldSettingsData.CarParks(includeCarParks, oddsOfSurfaceCarPark, oddsOfMultiStoreyCarPark,
+                        carParkMinLevels, carParkMaxLevels));
         return new CityWorldSettingsData(features, terrain, spawns, treasures, world, radius, naming, mobs,
                 overgrowth, shops, decay, caves, subways, structures, cities, roads);
     }
