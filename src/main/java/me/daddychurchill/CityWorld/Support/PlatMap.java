@@ -717,11 +717,70 @@ public class PlatMap {
 	private final static int maxPlaceTries = 16;
 
 	/**
+	 * Site a build whose .yml names a {@code Driveway}: every turn and mirror the schematic allows, at every
+	 * position of the platmap, is scored by whether a driveway cell on the build's edge faces a chunk of road
+	 * (roads are planned before schematics, so the platmap's own roads are known; a road just over the
+	 * platmap's edge is not, and does not count). One fit is picked by the dice. Only the cells on the edge
+	 * matter here: the road drops its kerb and the lot paves the gap at decoration ({@link ClipboardLot}).
+	 *
+	 * @return false when no turn at any position faces a road
+	 */
+	private boolean placeClipByDriveway(CityWorldGenerator generator, Odds odds, Clipboard clip) {
+		java.util.List<Object[]> fits = new java.util.ArrayList<>();
+		for (net.minecraft.world.level.block.Rotation rotation : Clipboard.ROTATIONS) {
+			java.util.List<net.minecraft.world.level.block.Mirror> mirrors = new java.util.ArrayList<>();
+			mirrors.add(net.minecraft.world.level.block.Mirror.NONE);
+			if (clip.flipableZ)
+				mirrors.add(net.minecraft.world.level.block.Mirror.LEFT_RIGHT);
+			if (clip.flipableX)
+				mirrors.add(net.minecraft.world.level.block.Mirror.FRONT_BACK);
+			int chunksX = clip.footprintChunkX(rotation);
+			int chunksZ = clip.footprintChunkZ(rotation);
+			int rotSizeX = Clipboard.swapsFootprint(rotation) ? clip.sizeZ : clip.sizeX;
+			int rotSizeZ = Clipboard.swapsFootprint(rotation) ? clip.sizeX : clip.sizeZ;
+			int offX = (chunksX * 16 - rotSizeX) / 2, offZ = (chunksZ * 16 - rotSizeZ) / 2; // the build centred in its footprint
+			for (net.minecraft.world.level.block.Mirror mirror : mirrors) {
+				java.util.List<int[]> cells = clip.drivewayCells(rotation, mirror);
+				for (int px = 0; px <= PlatMap.Width - chunksX; px++)
+					for (int pz = 0; pz <= PlatMap.Width - chunksZ; pz++) {
+						if (!isNaturalLots(px, pz, chunksX, chunksZ)
+								|| !footprintBuildable(generator, px, pz, chunksX, chunksZ))
+							continue;
+						boolean faces = false;
+						for (int[] c : cells) {
+							if (c[0] == 0 && isExistingRoad(px - 1, pz + (offZ + c[1]) / 16)
+									|| c[0] == rotSizeX - 1 && isExistingRoad(px + chunksX, pz + (offZ + c[1]) / 16)
+									|| c[1] == 0 && isExistingRoad(px + (offX + c[0]) / 16, pz - 1)
+									|| c[1] == rotSizeZ - 1 && isExistingRoad(px + (offX + c[0]) / 16, pz + chunksZ)) {
+								faces = true;
+								break;
+							}
+						}
+						if (faces)
+							fits.add(new Object[] { px, pz, rotation, mirror });
+					}
+			}
+		}
+		if (fits.isEmpty())
+			return false;
+		Object[] pick = fits.get(odds.getRandomInt(fits.size()));
+		placeSpecificClip(generator, odds, clip, (Integer) pick[0], (Integer) pick[1],
+				(net.minecraft.world.level.block.Rotation) pick[2], (net.minecraft.world.level.block.Mirror) pick[3]);
+		return true;
+	}
+
+	/**
 	 * Try to drop a schematic somewhere in this platmap: pick random spots until one is a run of
 	 * empty lots big enough for the clip's footprint, then fill that run with {@link ClipboardLot}s.
 	 * Gives up quietly after {@link #maxPlaceTries} misses — a full platmap simply gets no building.
 	 */
 	public boolean placeSpecificClip(CityWorldGenerator generator, Odds odds, Clipboard clip) {
+		// A build with a driveway (a forecourt, a car park, a drive) is turned and sited so that the driveway
+		// meets one of this platmap's roads; only when no site and turn of the platmap manages that does it
+		// take its chances like any other build (and its driveway then meets whatever is there).
+		if (!clip.driveways.isEmpty() && !clip.ocean && placeClipByDriveway(generator, odds, clip))
+			return true;
+
 		// Pick the building's facing once, up front, so the reserved footprint matches the turned
 		// shape (a 90/270 turn swaps its X and Z extents) and every footprint chunk shares it. Mirror
 		// only along an axis the schematic's .yml marked flippable — an asymmetric build flipped the
