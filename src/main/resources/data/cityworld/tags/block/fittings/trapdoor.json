@@ -2,5 +2,43 @@
   "replace": false,
   "values": [
     "#minecraft:wooden_trapdoors"
+  ],
+  "remove": [
+    {
+      "id": "wooddye:fireproof_acacia_trapdoor",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_bamboo_trapdoor",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_birch_trapdoor",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_cherry_trapdoor",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_dark_oak_trapdoor",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_jungle_trapdoor",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_mangrove_trapdoor",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_oak_trapdoor",
+      "required": false
+    },
+    {
+      "id": "wooddye:fireproof_spruce_trapdoor",
+      "required": false
+    }
   ]
 }
