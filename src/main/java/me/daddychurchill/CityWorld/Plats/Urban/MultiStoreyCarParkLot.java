@@ -135,7 +135,7 @@ public class MultiStoreyCarParkLot extends ConnectedLot {
         for (int k = 0; k < levels; k++) {
             int deck = street + k * PITCH, stand = deck + 1;
             boolean top = k == levels - 1;
-            boolean upNorth = rampNorth(k), holeNorth = !rampNorth(k - 1);
+            boolean upNorth = rampNorth(k), holeNorth = rampNorth(k - 1); // the hole is over the ramp below, on ITS strip
             // the deck: bays in rows 3..6 and 9..12 with a line every four cells, the aisle between, the strips
             // plain; above the ground the layer is laid here, with the hole the ramp from below comes up through
             if (k > 0)

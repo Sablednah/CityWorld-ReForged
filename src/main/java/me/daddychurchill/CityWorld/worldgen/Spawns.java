@@ -60,9 +60,9 @@ public final class Spawns {
     }
 
     public record Spawn(Optional<String> requiresMod, Optional<String> entity, Optional<String> vehicle,
-            Optional<String> block, List<String> lots, List<String> districts, List<String> styles,
-            List<String> places, List<String> environments, String land, String at, double odds, int count,
-            int countMax, boolean persistent) {
+            Optional<String> block, List<String> lots, List<String> schematics, List<String> districts,
+            List<String> styles, List<String> places, List<String> environments, String land, String at,
+            double odds, int count, int countMax, boolean persistent) {
 
         private static final Codec<List<String>> LIST = Codec.STRING.listOf();
 
@@ -72,6 +72,7 @@ public final class Spawns {
                 Codec.STRING.optionalFieldOf("vehicle").forGetter(Spawn::vehicle),
                 Codec.STRING.optionalFieldOf("block").forGetter(Spawn::block),
                 LIST.optionalFieldOf("lots", List.of()).forGetter(Spawn::lots),
+                LIST.optionalFieldOf("schematics", List.of()).forGetter(Spawn::schematics),
                 LIST.optionalFieldOf("districts", List.of()).forGetter(Spawn::districts),
                 LIST.optionalFieldOf("styles", List.of()).forGetter(Spawn::styles),
                 LIST.optionalFieldOf("places", List.of()).forGetter(Spawn::places),
@@ -189,10 +190,10 @@ public final class Spawns {
             if (n <= 0)
                 continue;
             List<int[]> spots = new ArrayList<>(found.computeIfAbsent(s.at().toLowerCase(Locale.ROOT),
-                    at -> spots(generator, chunk, at)));
+                    at -> at.equals("driveway") ? drivewaySpots(generator, lot, chunk) : spots(generator, chunk, at)));
             for (int k = 0; k < n && !spots.isEmpty(); k++) {
                 int[] p = spots.remove(odds.getRandomInt(spots.size()));
-                place(generator, chunk, b, p[0], p[1], p[2], odds);
+                place(generator, chunk, b, p[0], p[1], p[2], p.length > 3 ? p[3] : -1, odds);
             }
         }
     }
@@ -200,6 +201,9 @@ public final class Spawns {
     private static boolean matches(CityWorldGenerator generator, PlatMap platmap, PlatLot lot, Spawn s) {
         if (!s.lots().isEmpty() && !containsIgnoreCase(s.lots(), lot.getClass().getSimpleName())
                 && !(lot.style != null && containsIgnoreCase(s.lots(), lot.style.name())))
+            return false;
+        if (!s.schematics().isEmpty() && !(lot instanceof me.daddychurchill.CityWorld.Clipboard.ClipboardLot cl
+                && containsIgnoreCase(s.schematics(), cl.getClip().name)))
             return false;
         if (!s.districts().isEmpty()) {
             var family = platmap.context == null ? null : platmap.context.getSchematicFamily();
@@ -256,11 +260,33 @@ public final class Spawns {
         return out;
     }
 
-    private static void place(CityWorldGenerator generator, RealBlocks chunk, Bound b, int x, int y, int z, Odds odds) {
+    /**
+     * The cells at a schematic's driveways ({@code at: driveway}): the build's edge row at each driveway and the
+     * paving out to the road, each with the yaw that faces the road; nothing for a lot that is not a schematic.
+     */
+    static List<int[]> drivewaySpots(CityWorldGenerator generator, PlatLot lot, RealBlocks chunk) {
+        List<int[]> out = new ArrayList<>();
+        if (!(lot instanceof me.daddychurchill.CityWorld.Clipboard.ClipboardLot cl))
+            return out;
+        int low = generator.streetLevel - 48, high = Math.min(generator.height - 2, generator.streetLevel + 160);
+        for (int[] c : cl.drivewayStands(generator)) {
+            int x = c[0], z = c[1], top = high;
+            while (top > low && chunk.isEmpty(x, top, z))
+                top--;
+            if (top > low && top + 2 < high && chunk.isSturdyTop(x, top, z))
+                out.add(new int[] { x, top + 1, z, c[2] });
+        }
+        return out;
+    }
+
+    /** {@code yaw} is the facing (Minecraft's: 0 south, 90 west, 180 north, 270 east), or -1 for any. */
+    private static void place(CityWorldGenerator generator, RealBlocks chunk, Bound b, int x, int y, int z, int yaw,
+            Odds odds) {
         double wx = chunk.getBlockX(x) + 0.5, wz = chunk.getBlockZ(z) + 0.5;
-        int heading = odds.getRandomInt(4) * 90;
+        int heading = yaw < 0 ? odds.getRandomInt(4) * 90 : yaw;
         if (b.spawn().vehicle().isPresent()) {
-            Vehicles.park(chunk.getWorld(), b.spawn().vehicle().get(), wx, y, wz, heading,
+            // a vehicle's heading runs the other way round (forward is (sin, cos)): east is 90 there, 270 here
+            Vehicles.park(chunk.getWorld(), b.spawn().vehicle().get(), wx, y, wz, (360 - heading) % 360,
                     generator.getSettings().vehicleFuel, odds);
             return;
         }
