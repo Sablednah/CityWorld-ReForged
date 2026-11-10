@@ -287,7 +287,7 @@ public final class Spawns {
         if (b.spawn().vehicle().isPresent()) {
             // a vehicle's heading runs the other way round (forward is (sin, cos)): east is 90 there, 270 here
             Vehicles.park(chunk.getWorld(), b.spawn().vehicle().get(), wx, y, wz, (360 - heading) % 360,
-                    generator.getSettings().vehicleFuel, odds);
+                    generator.getSettings().vehicleFuelFor(odds), odds);
             return;
         }
         var access = chunk.getWorld().getChunk(chunk.sectionX, chunk.sectionZ);

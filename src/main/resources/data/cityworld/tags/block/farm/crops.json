@@ -12,6 +12,8 @@
 
     { "id": "biomesoplenty:barley", "required": false },
 
+    { "id": "car:canola", "required": false },
+
     { "id": "pamhc2crops:pamcorncrop", "required": false },
     { "id": "pamhc2crops:pamtomatocrop", "required": false },
     { "id": "pamhc2crops:pamlettucecrop", "required": false },
