@@ -672,12 +672,13 @@ places and styles you choose. CityWorld ships none, so a world without your pack
 | `block` | | Or a block in `/setblock` form, its data included (`"mymod:vending_machine[facing=north]{Stock:[...]}"`). |
 | `requires_mod` | | The file is ignored unless this mod is installed. An entity whose namespace is not installed is ignored too. |
 | `lots` | any | Lot class names, exactly (a subclass does not match its parent): shops `StoreBuildingLot`, `CornerShopLot`, `MallLot`; offices and towers `OfficeBuildingLot`, `FinishedBuildingLot`; `HospitalLot`, `MuseumBuildingLot`, `PlazaLot`, `ParkingLot`, `SubwayStationLot`, `RoadLot`, `HouseLot`, `FarmLot`, `ParkLot`, ... — F3 shows the one you stand in. Or the lot kinds `structure` (any building), `road`, `roundabout`, `nature`. |
+| `schematics` | any | Schematic names (the file name without its extension: `Condo`, `chayats-bank`, your own). Only a schematic lot matches. |
 | `districts` | any | The district's building family: `highrise`, `midrise`, `lowrise`, `industrial`, `municipal`, `construction`, `neighborhood`, `farm`, `park`, `roundabout`, `nature`, `outland`, `astral`. |
 | `styles` | any | World styles: `modern`, `apocalypse`, `classic`, `destroyed`, ... |
 | `places` | any | Place names ([naming](CURSEFORGE-CONFIGURATION.md): a vanilla-land city's name, or a CityWorld district's; F3 shows it. `"District 12"` needs `naming.placeFormat` `"District {n}"`). |
 | `environments` | any | `normal`, `nether`, `the_end`. |
 | `land` | `any` | `cityworld` (CityWorld's own land) or `vanilla` (cities in a vanilla world). |
-| `at` | `outdoors` | `outdoors`: on the top of the ground, a roof or a road. `indoors`: on a floor with anything over it within 16 blocks (rooms, basements, car park decks — and the ground under a tree). `anywhere`. Feet and head clear, a solid top underfoot, from 48 below the street to 160 above it (deep vault levels are out of reach). |
+| `at` | `outdoors` | `outdoors`: on the top of the ground, a roof or a road. `indoors`: on a floor with anything over it within 16 blocks (rooms, basements, car park decks — and the ground under a tree). `anywhere`. Feet and head clear, a solid top underfoot, from 48 below the street to 160 above it (deep vault levels are out of reach). `driveway`: on a schematic's driveway (its `Driveway:` cells and the paving out to the road), facing the road — a car on the condo's forecourt. |
 | `odds` | `1.0` | The chance per chunk that matches. |
 | `count`, `count_max` | `1`, `0` | How many when it does: `count`, or `count` to `count_max`. |
 | `persistent` | `true` | Entities never despawn (`PersistenceRequired`), unless `false` or their data says otherwise. |
@@ -688,6 +689,8 @@ places and styles you choose. CityWorld ships none, so a world without your pack
   act on a spawn (Minecraft Comes Alive converting villagers) do not see it.
 - `odds` is per matching chunk: a district has a hundred, so `0.25` on `structure` lots is dozens. A block keeps the
   `facing` you write; it is not turned to a wall.
+- A car outside a particular build: `{ "vehicle": "car", "schematics": ["Condo"], "at": "driveway" }` — one per
+  condo, on its forecourt, nose to the road.
 - Each file rolls on its own stream from the world seed, the chunk and the file's id: adding or removing a file
   never moves anything else, and the same seed puts the same things in the same places.
 - The log names every file it read and every one it skipped and why (`CityWorld spawns:`).

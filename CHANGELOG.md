@@ -78,6 +78,9 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   full of bio diesel and free (`cityworld:schematic_fitout`, `ucm_*`). Both mods installed: the road pool picks
   one surface per world; the vehicle pool mixes both mods' cars. The highway's own signs (MOTORWAY, TUNNEL, STEEP)
   still need Macaw's Roads or an IV sign pack.
+- **Spawns at a schematic's door.** A spawn file can name `schematics` (`["Condo"]`) and stand things `at:
+  driveway` — on the build's driveway cells and the paving out to the road, facing the road — so a pack can park a
+  car outside every condo.
 - **Schematics with a way in from the road.** A sidecar's `Driveway:` line (`Driveway: south 16-22`) says where a
   build's own ground — a forecourt, a car park, a drive — meets its edge. The build is turned and sited so a driveway meets one of the district's roads wherever the
   roads allow; the road there surfaces its sidewalk like the road with a slab ramp at the kerb, and CityWorld paves from the build's edge
