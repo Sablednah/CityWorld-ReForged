@@ -109,7 +109,8 @@ area at chunk −45,49 radius 7 regenerated per jar): the control jar had WoodDy
 blocks in 24 chunks**; the fixed jar, **no conversion at all** (WoodDye logs only its start-up lines). The saved
 region holds no `wooddye:` block either way, because WoodDye converts them before the chunk is saved — count the
 conversion line, not the blocks. Gates: six self-tests on the picked heads (master `596e835f`, 1.20.1 `820b7bcc`,
-1.21.1 `203fa62d`, 26.1 `87e7d279`, 26.2 `b1d2ad3f`, 26.3 `bb2be68c`) — see the resume line for the result.
+1.21.1 `203fa62d`, 26.1 `87e7d279`, 26.2 `b1d2ad3f`, 26.3 `bb2be68c`) all PASS, `--compare` agrees on the fresh
+reports, the 1.20.1 jar deployed to the owner's instance (`DEPLOYED-820b7bcc`). Nothing pushed.
 
 ## ▶ Resume here — 2026-11-09 evening: the owner's 1.20.1 look at Immersive Vehicles
 

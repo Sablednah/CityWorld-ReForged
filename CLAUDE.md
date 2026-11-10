@@ -33,7 +33,8 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   (JOML returns a plane index for NaN, never INSIDE) while the server drives the car on — hence the wreck in the
   building. Upstream fixed it 2026-10-27, after 24.0.0. Six self-tests PASS + `--compare`; 1.20.1 deployed
   `01bed8c5`. Same day: WoodDye's legacy fireproof planks/doors/trapdoors removed from the five pools that draw on
-  vanilla wood tags (`596e835f`; WoodDye 3 still lists them in its `data/minecraft/tags` — the root fix is WoodDye's).
+  vanilla wood tags (`596e835f`; WoodDye 3 still lists them in its `data/minecraft/tags` — the root fix is WoodDye's):
+  724 → 0 conversions on the Forge bed, six self-tests PASS + `--compare`, 1.20.1 deployed `820b7bcc`.
   Nothing pushed. Next: the owner's look, then 7.0.0.
 
 **▶ Resume here (2026-11-09 evening): the owner's 1.20.1 look — floating IV poles were `clearVegetation`.**
