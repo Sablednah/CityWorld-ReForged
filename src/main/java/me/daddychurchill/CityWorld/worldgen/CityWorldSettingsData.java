@@ -386,9 +386,9 @@ public record CityWorldSettingsData(
      * (IV's stock fuel) in a tank; none by default, the gas stations' pumps are full.
      */
     public record Vehicles(boolean enabled, int carParkVehicles, double oddsOfParkedVehicle, int streetVehicles,
-            double oddsOfStreetVehicle, int fuel) {
+            double oddsOfStreetVehicle, int fuel, int fuelMin) {
 
-        public static final Vehicles DEFAULT = new Vehicles(true, 1, Odds.oddsLikely, 1, Odds.oddsLikely, 0);
+        public static final Vehicles DEFAULT = new Vehicles(true, 1, Odds.oddsLikely, 1, Odds.oddsLikely, 1000, 0);
 
         public static final Codec<Vehicles> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("enabled", true).forGetter(Vehicles::enabled),
@@ -396,11 +396,12 @@ public record CityWorldSettingsData(
                 Codec.DOUBLE.optionalFieldOf("oddsOfParkedVehicle", Odds.oddsLikely).forGetter(Vehicles::oddsOfParkedVehicle),
                 Codec.INT.optionalFieldOf("streetVehicles", 1).forGetter(Vehicles::streetVehicles),
                 Codec.DOUBLE.optionalFieldOf("oddsOfStreetVehicle", Odds.oddsLikely).forGetter(Vehicles::oddsOfStreetVehicle),
-                Codec.INT.optionalFieldOf("fuel", 0).forGetter(Vehicles::fuel)
+                Codec.INT.optionalFieldOf("fuel", 1000).forGetter(Vehicles::fuel),
+                Codec.INT.optionalFieldOf("fuelMin", 0).forGetter(Vehicles::fuelMin)
         ).apply(i, Vehicles::new));
 
         public Vehicles withEnabled(boolean v) {
-            return new Vehicles(v, carParkVehicles, oddsOfParkedVehicle, streetVehicles, oddsOfStreetVehicle, fuel);
+            return new Vehicles(v, carParkVehicles, oddsOfParkedVehicle, streetVehicles, oddsOfStreetVehicle, fuel, fuelMin);
         }
     }
 
@@ -419,8 +420,8 @@ public record CityWorldSettingsData(
 
         public static final Codec<CarParks> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("enabled", true).forGetter(CarParks::enabled),
-                Codec.DOUBLE.optionalFieldOf("oddsOfSurface", Odds.oddsVeryUnlikely).forGetter(CarParks::oddsOfSurface),
-                Codec.DOUBLE.optionalFieldOf("oddsOfMultiStorey", Odds.oddsVeryUnlikely).forGetter(CarParks::oddsOfMultiStorey),
+                Codec.DOUBLE.optionalFieldOf("oddsOfSurface", Odds.oddsExtremelyUnlikely).forGetter(CarParks::oddsOfSurface),
+                Codec.DOUBLE.optionalFieldOf("oddsOfMultiStorey", Odds.oddsExtremelyUnlikely).forGetter(CarParks::oddsOfMultiStorey),
                 Codec.INT.optionalFieldOf("minLevels", 2).forGetter(CarParks::minLevels),
                 Codec.INT.optionalFieldOf("maxLevels", 4).forGetter(CarParks::maxLevels)
         ).apply(i, CarParks::new));

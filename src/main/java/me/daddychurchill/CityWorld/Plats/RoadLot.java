@@ -2144,7 +2144,7 @@ public class RoadLot extends ConnectedLot {
 		Odds car = new Odds(generator.getWorldSeed() ^ ((long) chunk.getOriginX() << 32) ^ (chunk.getOriginZ() & 0xffffffffL)
 				^ 0x50415248L); // its own stream: the vehicle's picks shift nothing else in the chunk
 		me.daddychurchill.CityWorld.worldgen.Vehicles.park(chunk.getWorld(), "car", chunk.getBlockX(0) + (ns ? kerb : along),
-				sidewalkLevel, chunk.getBlockZ(0) + (ns ? along : kerb), heading, settings.vehicleFuel, car);
+				sidewalkLevel, chunk.getBlockZ(0) + (ns ? along : kerb), heading, settings.vehicleFuelFor(car), car);
 	}
 
 	/** The platmap's street-parked vehicles: {platX, platZ, side} each, from the plan and the seed alone. */
@@ -2256,16 +2256,18 @@ public class RoadLot extends ConnectedLot {
 		if (me.daddychurchill.CityWorld.worldgen.PoleSigns.place(access, name, road.text(), chunk.getBlockX(x),
 				base + lift, y + 3 + lift, chunk.getBlockZ(z), facing))
 			return;
-		// Ultimate Car Mod's: the words on a text sign on its post
-		if (kit != null && kit.textSigns()) {
+		// Ultimate Car Mod's: the words on a text sign on its post — for the town's name always, for the rest only
+		// where no picture sign exists (Macaw's limits and STOP read better than words, the owner's call)
+		Material sign = road.macaws();
+		if (kit != null && kit.textSigns() && (sign == null || road.name().equals("town"))) {
 			chunk.setBlocks(x, base, y + 3, z, kit.rod != null ? kit.rod : Material.SPRUCE_FENCE);
 			kit.textSign(chunk, x, y + 3, z, facing, signText(road, end));
 			return;
 		}
-		Material sign = road.macaws();
 		if (sign == null)
 			return;
-		chunk.setBlocks(x, base, y + 3, z, kit.rod != null ? kit.rod : Material.SPRUCE_FENCE);
+		Material rod = kit.pictureRod != null ? kit.pictureRod : kit.rod;
+		chunk.setBlocks(x, base, y + 3, z, rod != null ? rod : Material.SPRUCE_FENCE);
 		net.minecraft.world.level.block.state.BlockState state = sign.withFacing(facing);
 		if (end)
 			state = Material.withProperty(state, "end", "true");

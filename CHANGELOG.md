@@ -68,16 +68,21 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   street level, a ladder up the stairwell, lamp posts on the roof. Both grow into their neighbours like any
   building, and both hold parked vehicles by the `roads.vehicles` rules (a ruin keeps block wrecks and decays).
   Settings group `roads.carParks` (`enabled`, `oddsOfSurface`, `oddsOfMultiStorey`, `minLevels`, `maxLevels`) and
-  **Car parks** in Customize. The mall keeps its own.
+  **Car parks** in Customize. The mall keeps its own. Both kinds roll at one building pick in thirty-four (`roads.carParks.oddsOfSurface`/`oddsOfMultiStorey`; the
+  owner found one in thirteen too common).
 - **Ultimate Car Mod.** With it installed, its asphalt joins the road pool (`#cityworld:fittings/road`): a world
   that picks it gets its roads in `car:asphalt` with the dashed centre line and zebra crossings as its paint, and
   its road signs as text on its posts (STOP, DEAD END, SPEED LIMIT 50, Welcome to <town> / Thanks for visiting,
   END OF SPEED LIMIT). Its cars park in the car parks and at the kerbs like Immersive Vehicles' do — sport cars,
   SUVs, wooden cars and transporters in every colour, as data in `cityworld:vehicle` (`ucm_*`), each with a full
-  battery, a plate and `roads.vehicles.fuel` of bio diesel. The gas stations' pump islands get its gas stations,
-  full of bio diesel and free (`cityworld:schematic_fitout`, `ucm_*`). Both mods installed: the road pool picks
-  one surface per world; the vehicle pool mixes both mods' cars. The highway's own signs (MOTORWAY, TUNNEL, STEEP)
+  battery, a plate and a random tank of bio diesel. The gas stations' pump islands get its gas stations, full of
+  bio diesel and free (`cityworld:schematic_fitout`, `ucm_*`); its canola joins the farms' crops and its five
+  fluids the industrial tanks. Both mods installed: Ultimate Car Mod's road wins the pick, and Macaw's picture
+  signs stand wherever Macaw's has one (STOP, DEAD END, the limits), the text signs carrying only the town's name
+  (the owner's call); the vehicle pool mixes both mods' cars. The highway's own signs (MOTORWAY, TUNNEL, STEEP)
   still need Macaw's Roads or an IV sign pack.
+- **Parked vehicles have fuel in the tank.** A random `roads.vehicles.fuelMin`–`fuel` millibuckets (0–1000 by
+  default) of lava (Immersive Vehicles) or bio diesel (Ultimate Car Mod); `fuel: 0` parks them all dry as before.
 - **Spawns at a schematic's door.** A spawn file can name `schematics` (`["Condo"]`) and stand things `at:
   driveway` — on the build's driveway cells and the paving out to the road, facing the road — so a pack can park a
   car outside every condo.
@@ -113,6 +118,15 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   them**: the world presets and Customize now stamp a new world `"made_with": 7`, and a world without that stamp
   keeps the land it always had (highways too). The Structures page shows the ocean structures as on when oceans are, and switching one off
   there still wins.
+
+### Changed
+
+- The three gas stations (`gas_stop`, `polar_gas`, `G45station`) sit one block lower (their sidecars' `GroundLevelY`),
+  level with the pavement; the owner's 1.20.1 look had them a block proud.
+
+### Removed
+
+- The `IMC_eaglman13_home_entry` house schematic (the wrong size for its lot, and not the pack's style).
 
 ## 6.14.0
 

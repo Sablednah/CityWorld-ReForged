@@ -553,8 +553,8 @@ ships the Official Content Pack's and the Official Automobile Pack's road vehicl
   lists a pack's vehicles; `--kind <pack>:<vehicle>=car` (once per vehicle) and `--out
   <your pack>/data/<ns>/cityworld/vehicle` write their files, wheels and seats picked by size from the pack itself
   and then from the Official Content Pack.
-- A vehicle parks with the brake on, a charged battery and `roads.vehicles.fuel` millibuckets of lava in the tank
-  (none by default: the gas stations' pumps are full). Every parked vehicle costs the client frames, so they are
+- A vehicle parks with the brake on, a charged battery and a random `roads.vehicles.fuelMin`–`fuel` millibuckets of
+  lava in the tank (0–1000 by default; `fuel: 0` parks them dry — the gas stations' pumps are full). Every parked vehicle costs the client frames, so they are
   few by default: a car-park chunk holds up to `carParkVehicles` (1) in `oddsOfParkedVehicle`, and a district parks
   up to `streetVehicles` (1) at the kerb of a straight street in `oddsOfStreetVehicle` (settings group
   `roads.vehicles`, CURSEFORGE-CONFIGURATION.md).
@@ -564,20 +564,23 @@ ships the Official Content Pack's and the Official Automobile Pack's road vehicl
 [Ultimate Car Mod](https://modrinth.com/mod/ultimate-car-mod) (mod id `car`) is the all-in-one: cars, asphalt and
 slabs, road paint and signs, fuel. CityWorld uses all of it, without a vehicle pack:
 
-- **Roads.** `car:asphalt` is in `#cityworld:fittings/road`, so a world that picks it (one pick per world; with
-  Macaw's Roads installed too it is a coin) gets its streets in asphalt with the mod's paint one block over the
-  road: `car:line_middle` dashes down a straight street's centre, `car:arrow_zebras` bands across each crossing arm.
+- **Roads.** `car:asphalt` is in `#cityworld:fittings/road`, and **it wins the pick whenever it is in the pool**
+  (with Macaw's Roads installed too, the streets are still Ultimate Car Mod's; a pack that wants Macaw's removes
+  `car:asphalt` from the tag). The streets are asphalt with the mod's paint one block over the road:
+  `car:line_middle` dashes down a straight street's centre, `car:arrow_zebras` bands across each crossing arm.
   Its road signs are **text** on `car:sign_post`s: `STOP`, `DEAD END`, `SPEED LIMIT 50`, `Welcome to <town>` and
-  `Thanks for visiting`, `END OF SPEED LIMIT 50`, each on both faces of a `car:sign`. The mod has no manhole or
-  kerb lip, so there are none; the highway's own signs (MOTORWAY, TUNNEL, STEEP ASCENT) still want Macaw's Roads
-  or an Immersive Vehicles sign pack.
+  `Thanks for visiting`, `END OF SPEED LIMIT 50`, each on both faces of a `car:sign` — but **with Macaw's Roads
+  installed as well, Macaw's picture signs stand wherever it has one** (STOP, DEAD END, the limits and their ends,
+  on Macaw's rod), and the text signs carry only the town's name, coming and going. The mod has no manhole or kerb
+  lip, so there are none; the highway's own signs (MOTORWAY, TUNNEL, STEEP ASCENT) still want Macaw's Roads or an
+  Immersive Vehicles sign pack.
 - **Cars.** Four vehicle files ship (`ucm_sport`, `ucm_suv`, `ucm_wood`, kind `car`; `ucm_transporter`, kind
   `truck`) and park wherever Immersive Vehicles' cars do — car parks, kerbs, `cityworld:spawn` files — under the
   same `roads.vehicles` numbers. A car is its parts, so a file lists them by slot; `{paint}` in a part's id takes
   one of the file's `paints` (`car:{paint}_sport_body` with `red`, `blue`…; the wooden cars' paints are their
   woods), and a part's `subs` are appended to its id (`car:engine_` with `3_cylinder`, `6_cylinder`). It parks with
-  a full battery (the mod reads a missing one as flat), not started, a number plate, and `roads.vehicles.fuel`
-  millibuckets of bio diesel (none by default).
+  a full battery (the mod reads a missing one as flat), not started, a number plate, and a random
+  `roads.vehicles.fuelMin`–`fuel` millibuckets of bio diesel (0–1000 by default).
 
 ```json
 {

@@ -82,6 +82,26 @@
     {
       "id": "mekanism:uranium_oxide",
       "required": false
+    },
+    {
+      "id": "car:bio_diesel",
+      "required": false
+    },
+    {
+      "id": "car:canola_oil",
+      "required": false
+    },
+    {
+      "id": "car:methanol",
+      "required": false
+    },
+    {
+      "id": "car:glycerin",
+      "required": false
+    },
+    {
+      "id": "car:canola_methanol_mix",
+      "required": false
     }
   ]
 }

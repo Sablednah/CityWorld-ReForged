@@ -446,7 +446,7 @@ ran at 1 fps), so by default they are few: about one in two mall car-park chunks
 has one at a kerb.
 
 ```json
-"roads": { "vehicles": { "enabled": true, "carParkVehicles": 1, "oddsOfParkedVehicle": 0.5, "streetVehicles": 1, "oddsOfStreetVehicle": 0.5, "fuel": 0 } }
+"roads": { "vehicles": { "enabled": true, "carParkVehicles": 1, "oddsOfParkedVehicle": 0.5, "streetVehicles": 1, "oddsOfStreetVehicle": 0.5, "fuel": 1000, "fuelMin": 0 } }
 ```
 
 | Setting | Default | What it does |
@@ -456,20 +456,21 @@ has one at a kerb.
 | `oddsOfParkedVehicle` | `0.5` | The chance each of those is there. |
 | `streetVehicles` | `1` | The most vehicles a district (a 10×10-chunk platmap) parks at its kerbs, each on a different straight street, mid-chunk, in the kerb lane, nose along the traffic on its side (`driveOnLeft`). Never in a ruin, a tunnel or on a bridge. |
 | `oddsOfStreetVehicle` | `0.5` | The chance a district has its street vehicles at all. |
-| `fuel` | `0` | Millibuckets of lava (Immersive Vehicles' stock fuel) in a parked vehicle's tank. None by default: the gas stations' fuel pumps are full. |
+| `fuel` | `1000` | The most fuel a parked vehicle has in its tank, in millibuckets: lava for Immersive Vehicles (its stock fuel), bio diesel for Ultimate Car Mod. Each vehicle gets a random amount between `fuelMin` and this. `0` parks them all dry (the gas stations' pumps are full). |
+| `fuelMin` | `0` | The least fuel a parked vehicle has. |
 
 `carParks` is a group of its own: car parks in place of a building, in the modern family's highrise, midrise and
 lowrise districts (the mall keeps its own whatever these say).
 
 ```json
-"roads": { "carParks": { "enabled": true, "oddsOfSurface": 0.077, "oddsOfMultiStorey": 0.077, "minLevels": 2, "maxLevels": 4 } }
+"roads": { "carParks": { "enabled": true, "oddsOfSurface": 0.029, "oddsOfMultiStorey": 0.029, "minLevels": 2, "maxLevels": 4 } }
 ```
 
 | Setting | Default | What it does |
 |---|---|---|
 | `enabled` | `true` | Car parks of their own: a surface car park (the mall's lot: bays, lamp posts, verges, open to every road it fronts) or a multi-storey one (decks of bays joined by slab ramps, open sides behind a parapet, a ladder up the stairwell). Each grows into its neighbours like a building, and holds parked vehicles by the `vehicles` rules. **Car parks** in Customize. |
-| `oddsOfSurface` | `0.077` | The chance each building pick is a surface car park instead (one in thirteen). |
-| `oddsOfMultiStorey` | `0.077` | The chance each building pick is a multi-storey car park instead (rolled first). |
+| `oddsOfSurface` | `0.029` | The chance each building pick is a surface car park instead (one in thirty-four). |
+| `oddsOfMultiStorey` | `0.029` | The chance each building pick is a multi-storey car park instead (rolled first, one in thirty-four). |
 | `minLevels`, `maxLevels` | `2`, `4` | How many decks a multi-storey car park has, picked per car park. Each deck is five blocks. |
 
 ### `cities` — cities in a vanilla world, highways, rivers and oceans
