@@ -61,6 +61,28 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   pack can add its own; settings group `roads.vehicles` (`enabled`, `carParkVehicles`, `oddsOfParkedVehicle`,
   `streetVehicles`, `oddsOfStreetVehicle`, `fuel`). Schematic fit-outs can now carry a block's own data and turn a
   heading kept in it (`heading`) with the building.
+- **Car parks of their own.** The modern family's highrise, midrise and lowrise districts now get the odd car park
+  in place of a building: a surface car park (the mall's, with its bays, lamp posts and verges, open to every road
+  it fronts) and a multi-storey car park of two to four decks — bays either side of an aisle on every deck, slab
+  ramps a vehicle can drive between them, pillars, open sides behind a parapet with the entrances cut through at
+  street level, a ladder up the stairwell, lamp posts on the roof. Both grow into their neighbours like any
+  building, and both hold parked vehicles by the `roads.vehicles` rules (a ruin keeps block wrecks and decays).
+  Settings group `roads.carParks` (`enabled`, `oddsOfSurface`, `oddsOfMultiStorey`, `minLevels`, `maxLevels`) and
+  **Car parks** in Customize. The mall keeps its own.
+- **Ultimate Car Mod.** With it installed, its asphalt joins the road pool (`#cityworld:fittings/road`): a world
+  that picks it gets its roads in `car:asphalt` with the dashed centre line and zebra crossings as its paint, and
+  its road signs as text on its posts (STOP, DEAD END, SPEED LIMIT 50, Welcome to <town> / Thanks for visiting,
+  END OF SPEED LIMIT). Its cars park in the car parks and at the kerbs like Immersive Vehicles' do — sport cars,
+  SUVs, wooden cars and transporters in every colour, as data in `cityworld:vehicle` (`ucm_*`), each with a full
+  battery, a plate and `roads.vehicles.fuel` of bio diesel. The gas stations' pump islands get its gas stations,
+  full of bio diesel and free (`cityworld:schematic_fitout`, `ucm_*`). Both mods installed: the road pool picks
+  one surface per world; the vehicle pool mixes both mods' cars. The highway's own signs (MOTORWAY, TUNNEL, STEEP)
+  still need Macaw's Roads or an IV sign pack.
+- **Schematics with a way in from the road.** A sidecar's `Driveway:` line (`Driveway: south 16-22`) says where a
+  build's own ground — a forecourt, a car park, a drive — meets its edge. The build is turned and sited so a driveway meets one of the district's roads wherever the
+  roads allow; the road there surfaces its sidewalk like the road with a slab ramp at the kerb, and CityWorld paves from the build's edge
+  out to the road. The shipped condo, bank and three gas stations have theirs. (Owner: the gas stations and the bank's
+  and condo's little car parks met a raised kerb.)
 - **Road signs on Immersive Vehicles' poles, with names.** With the Official Signs pack (or the Official Content
   Pack's signs), stop, dead end, speed limit, motorway, tunnel and steep signs stand on IV poles; a town's boards
   carry its name, and highways get overhead gantries naming the city ahead. Sign packs are data

@@ -79,6 +79,7 @@ The sidecar is a plain text file with the building's own name plus `.yml`: `poke
 | `Ocean` | `false` | An offshore build (a rig, a ship): placed only in deep open sea, floating at the waterline. Put it in `Nature`. `GroundLevelY` is then how far the hull or legs go under water. |
 | `Anchor` | `false` | With `Ocean`: run each leg down to the sea floor. |
 | `Loot` | — | A loot table for every container in it, e.g. `Loot: mypack:chests/pokecenter`. Without it, see [Loot](#loot-and-what-is-inside). |
+| `Driveway` | — | Where the build's own ground meets its edge for vehicles (a car park, a forecourt, a drive): a side, then the blocks along that edge, e.g. `Driveway: south 16-22`. CityWorld turns and sites the build so that a driveway meets one of the district's roads wherever its roads allow (a build without one lands anywhere it fits, facing any way); the road there surfaces its sidewalk like the road with a slab ramp at the kerb, and CityWorld paves from the build's edge out to the road. Several on one line with commas (`north 2-6, north 9-13, west`) or on more lines; a side alone opens its whole edge. Counted in the schematic as built (before any turning or mirroring), from the west end of a north or south edge and the north end of an east or west one, starting at 0. |
 
 ```yaml
 # pokecenter.nbt.yml
@@ -86,6 +87,7 @@ Title: "Pokémon Center"
 OddsOfAppearance: 0.3
 GroundLevelY: 0
 Decayable: false
+Driveway: south 16-22
 ```
 
 Lines starting with `#` are comments. Quotes around a value are optional.

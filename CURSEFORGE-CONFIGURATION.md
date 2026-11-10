@@ -438,7 +438,8 @@ Every pool here is empty unless the road and bridge mods fill it (`#cityworld:fi
 | `wildBridgeSpan` | `48` | The longest bridge, in blocks; a valley wider than this gets none. The shortest is a chunk. |
 | `wildBridgeRegion` | `32` | The size of a bridge region, in chunks square. A region has at most one wild rope bridge, wholly inside it: its seed orders its chunk rows and columns, and the bridge is the first span along the first of them that has one. |
 | `oddsOfWildBridge` | `0.5` | The chance a region has its bridge (1 in 2). At the defaults a mountain range shows one, maybe two. |
-| `vehicles` | see below | Immersive Vehicles' parked vehicles (7.0). **Parked vehicles** in Customize. |
+| `vehicles` | see below | Immersive Vehicles' and Ultimate Car Mod's parked vehicles (7.0). **Parked vehicles** in Customize. |
+| `carParks` | see below | Car parks as buildings of their own (7.0). **Car parks** in Customize. |
 
 `vehicles` is a group of its own. Every parked vehicle costs the client frames (a car park with a bay in two filled
 ran at 1 fps), so by default they are few: about one in two mall car-park chunks holds one, and one district in two
@@ -456,6 +457,20 @@ has one at a kerb.
 | `streetVehicles` | `1` | The most vehicles a district (a 10×10-chunk platmap) parks at its kerbs, each on a different straight street, mid-chunk, in the kerb lane, nose along the traffic on its side (`driveOnLeft`). Never in a ruin, a tunnel or on a bridge. |
 | `oddsOfStreetVehicle` | `0.5` | The chance a district has its street vehicles at all. |
 | `fuel` | `0` | Millibuckets of lava (Immersive Vehicles' stock fuel) in a parked vehicle's tank. None by default: the gas stations' fuel pumps are full. |
+
+`carParks` is a group of its own: car parks in place of a building, in the modern family's highrise, midrise and
+lowrise districts (the mall keeps its own whatever these say).
+
+```json
+"roads": { "carParks": { "enabled": true, "oddsOfSurface": 0.077, "oddsOfMultiStorey": 0.077, "minLevels": 2, "maxLevels": 4 } }
+```
+
+| Setting | Default | What it does |
+|---|---|---|
+| `enabled` | `true` | Car parks of their own: a surface car park (the mall's lot: bays, lamp posts, verges, open to every road it fronts) or a multi-storey one (decks of bays joined by slab ramps, open sides behind a parapet, a ladder up the stairwell). Each grows into its neighbours like a building, and holds parked vehicles by the `vehicles` rules. **Car parks** in Customize. |
+| `oddsOfSurface` | `0.077` | The chance each building pick is a surface car park instead (one in thirteen). |
+| `oddsOfMultiStorey` | `0.077` | The chance each building pick is a multi-storey car park instead (rolled first). |
+| `minLevels`, `maxLevels` | `2`, `4` | How many decks a multi-storey car park has, picked per car park. Each deck is five blocks. |
 
 ### `cities` — cities in a vanilla world, highways, rivers and oceans
 

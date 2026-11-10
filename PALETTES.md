@@ -559,6 +559,49 @@ ships the Official Content Pack's and the Official Automobile Pack's road vehicl
   up to `streetVehicles` (1) at the kerb of a straight street in `oddsOfStreetVehicle` (settings group
   `roads.vehicles`, CURSEFORGE-CONFIGURATION.md).
 
+### Ultimate Car Mod (from 7.0)
+
+[Ultimate Car Mod](https://modrinth.com/mod/ultimate-car-mod) (mod id `car`) is the all-in-one: cars, asphalt and
+slabs, road paint and signs, fuel. CityWorld uses all of it, without a vehicle pack:
+
+- **Roads.** `car:asphalt` is in `#cityworld:fittings/road`, so a world that picks it (one pick per world; with
+  Macaw's Roads installed too it is a coin) gets its streets in asphalt with the mod's paint one block over the
+  road: `car:line_middle` dashes down a straight street's centre, `car:arrow_zebras` bands across each crossing arm.
+  Its road signs are **text** on `car:sign_post`s: `STOP`, `DEAD END`, `SPEED LIMIT 50`, `Welcome to <town>` and
+  `Thanks for visiting`, `END OF SPEED LIMIT 50`, each on both faces of a `car:sign`. The mod has no manhole or
+  kerb lip, so there are none; the highway's own signs (MOTORWAY, TUNNEL, STEEP ASCENT) still want Macaw's Roads
+  or an Immersive Vehicles sign pack.
+- **Cars.** Four vehicle files ship (`ucm_sport`, `ucm_suv`, `ucm_wood`, kind `car`; `ucm_transporter`, kind
+  `truck`) and park wherever Immersive Vehicles' cars do — car parks, kerbs, `cityworld:spawn` files — under the
+  same `roads.vehicles` numbers. A car is its parts, so a file lists them by slot; `{paint}` in a part's id takes
+  one of the file's `paints` (`car:{paint}_sport_body` with `red`, `blue`…; the wooden cars' paints are their
+  woods), and a part's `subs` are appended to its id (`car:engine_` with `3_cylinder`, `6_cylinder`). It parks with
+  a full battery (the mod reads a missing one as flat), not started, a number plate, and `roads.vehicles.fuel`
+  millibuckets of bio diesel (none by default).
+
+```json
+{
+  "requires_mod": "car",
+  "vehicle": "car:car",
+  "kind": "car",
+  "paints": ["white", "red", "blue", "black"],
+  "fuel_capacity": 1000,
+  "parts": [
+    { "slot": 0, "part": "car:{paint}_sport_body" },
+    { "slot": 1, "part": "car:iron_license_plate_holder" },
+    { "slot": 2, "part": "car:medium_tank" },
+    { "slot": 3, "part": "car:engine_", "subs": ["3_cylinder", "6_cylinder"] },
+    { "slot": 4, "part": "car:wheel" }, { "slot": 5, "part": "car:wheel" },
+    { "slot": 6, "part": "car:wheel" }, { "slot": 7, "part": "car:wheel" }
+  ]
+}
+```
+
+- **Gas stations.** The three shipped gas stations' pump islands get `car:gas_station`s (with their tops), full of
+  bio diesel and free, through fit-outs `ucm_gas_stop`, `ucm_polar_gas`, `ucm_g45station` in
+  `cityworld:schematic_fitout` — the same positions as the Immersive Vehicles pumps; with both mods installed the
+  UCM ones win there (fit-outs apply in id order).
+
 ### Road signs on Immersive Vehicles' poles (from 7.0)
 
 With Immersive Vehicles and its Official Signs pack (`osip`) or the Official Content Pack, a city's road signs stand
