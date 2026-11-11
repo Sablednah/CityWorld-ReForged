@@ -113,6 +113,37 @@ public final class Templates {
         tag.put("blocks", kept);
     }
 
+    /**
+     * Which cells of a template hold a block that is not air, as a bit per cell indexed
+     * {@code (y * sizeZ + z) * sizeX + x} — read from the template's own saved form (palette + blocks), the one
+     * shape every schematic reader produces. A template stripped of its air has no entry for an air cell at all.
+     */
+    public static java.util.BitSet solidCells(net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate template) {
+        int sizeX = template.getSize().getX(), sizeY = template.getSize().getY(), sizeZ = template.getSize().getZ();
+        java.util.BitSet solid = new java.util.BitSet(sizeX * sizeY * sizeZ);
+        CompoundTag tag = template.save(new CompoundTag());
+        ListTag palette = tag.getList("palette", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        ListTag blocks = tag.getList("blocks", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        if (palette.isEmpty() || blocks.isEmpty())
+            return solid;
+        boolean[] air = new boolean[palette.size()];
+        for (int i = 0; i < palette.size(); i++)
+            air[i] = isAir(palette.getCompound(i).getString("Name"));
+        for (int i = 0; i < blocks.size(); i++) {
+            CompoundTag entry = blocks.getCompound(i);
+            int state = entry.contains("state") ? entry.getInt("state") : -1;
+            if (state < 0 || state >= air.length || air[state])
+                continue;
+            ListTag pos = entry.getList("pos", net.minecraft.nbt.Tag.TAG_INT);
+            if (pos.size() < 3)
+                continue;
+            int x = pos.getInt(0), y = pos.getInt(1), z = pos.getInt(2);
+            if (x >= 0 && x < sizeX && y >= 0 && y < sizeY && z >= 0 && z < sizeZ)
+                solid.set((y * sizeZ + z) * sizeX + x);
+        }
+        return solid;
+    }
+
     public static ListTag intList(int a, int b, int c) {
         ListTag list = new ListTag();
         list.add(IntTag.valueOf(a));

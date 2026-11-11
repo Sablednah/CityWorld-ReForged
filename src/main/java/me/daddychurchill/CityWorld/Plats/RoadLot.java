@@ -1673,7 +1673,7 @@ public class RoadLot extends ConnectedLot {
 			boolean[] open = lot == null ? null : lot.roadOpening(generator, toward[s]);
 			if (open == null)
 				continue;
-			boolean raised = lot.roadOpeningRaised();
+			boolean raised = lot.roadOpeningRaised(generator);
 			for (int along = sidewalkWidth; along < 16 - sidewalkWidth; along++) {
 				if (!open[along])
 					continue;

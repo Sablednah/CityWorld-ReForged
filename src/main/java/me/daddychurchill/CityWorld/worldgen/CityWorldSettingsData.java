@@ -416,12 +416,12 @@ public record CityWorldSettingsData(
      */
     public record CarParks(boolean enabled, double oddsOfSurface, double oddsOfMultiStorey, int minLevels, int maxLevels) {
 
-        public static final CarParks DEFAULT = new CarParks(true, Odds.oddsVeryUnlikely, Odds.oddsVeryUnlikely, 2, 4);
+        public static final CarParks DEFAULT = new CarParks(true, Odds.oddsExtremelyUnlikely / 2, Odds.oddsExtremelyUnlikely / 2, 2, 4); // what a preset without a carParks group gets: keep it the fields' defaults
 
         public static final Codec<CarParks> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("enabled", true).forGetter(CarParks::enabled),
-                Codec.DOUBLE.optionalFieldOf("oddsOfSurface", Odds.oddsExtremelyUnlikely).forGetter(CarParks::oddsOfSurface),
-                Codec.DOUBLE.optionalFieldOf("oddsOfMultiStorey", Odds.oddsExtremelyUnlikely).forGetter(CarParks::oddsOfMultiStorey),
+                Codec.DOUBLE.optionalFieldOf("oddsOfSurface", Odds.oddsExtremelyUnlikely / 2).forGetter(CarParks::oddsOfSurface),
+                Codec.DOUBLE.optionalFieldOf("oddsOfMultiStorey", Odds.oddsExtremelyUnlikely / 2).forGetter(CarParks::oddsOfMultiStorey),
                 Codec.INT.optionalFieldOf("minLevels", 2).forGetter(CarParks::minLevels),
                 Codec.INT.optionalFieldOf("maxLevels", 4).forGetter(CarParks::maxLevels)
         ).apply(i, CarParks::new));

@@ -217,7 +217,7 @@ public class CityWorldSettings {
     }
     public double oddsOfParkedVehicle = Odds.oddsLikely, oddsOfStreetVehicle = Odds.oddsLikely;
     public boolean includeCarParks = true;
-    public double oddsOfSurfaceCarPark = Odds.oddsExtremelyUnlikely, oddsOfMultiStoreyCarPark = Odds.oddsExtremelyUnlikely;
+    public double oddsOfSurfaceCarPark = Odds.oddsExtremelyUnlikely / 2, oddsOfMultiStoreyCarPark = Odds.oddsExtremelyUnlikely / 2; // 1/68: "still too common" at 1/34
     public int carParkMinLevels = 2, carParkMaxLevels = 4;
     public double oddsOfWildBridge = Odds.oddsLikely;
     public boolean spawnersInSubways = true;
