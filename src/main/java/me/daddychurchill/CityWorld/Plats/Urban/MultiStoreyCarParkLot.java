@@ -61,12 +61,12 @@ public class MultiStoreyCarParkLot extends ConnectedLot {
         // a big one keeps its parapet-less sides but has no road there, so the mask is the same either way
         boolean[] mask = new boolean[16];
         int from = switch (toward) {
-            case NORTH -> 12;
+            case NORTH -> 1;
             case SOUTH -> 6;
             default -> 7;
         };
         int to = switch (toward) {
-            case NORTH -> 14;
+            case NORTH -> 3;
             case SOUTH -> 9;
             default -> 8;
         };
@@ -108,9 +108,13 @@ public class MultiStoreyCarParkLot extends ConnectedLot {
         return k % 2 == 0;
     }
 
-    /** The x of ramp cell {@code i} (0 = foot) on the north strip (eastward) or the south (westward). */
+    /**
+     * The x of ramp cell {@code i} (0 = foot) on the north strip (eastward) or the south (westward). The foot
+     * stands three cells off its wall (1..3 free on the north strip, 12..14 on the south), room for a car to turn
+     * onto it; it was one cell off (the owner's 1.20.1 look: no space to turn).
+     */
     private static int rampX(boolean north, int i) {
-        return north ? 2 + i : 13 - i;
+        return north ? 4 + i : 11 - i;
     }
 
     private static boolean inStrip(boolean north, int z) {
@@ -173,9 +177,9 @@ public class MultiStoreyCarParkLot extends ConnectedLot {
                     }
                 }
             // the parapet round the open sides, one block, with the entrances cut through at street level: the
-            // aisle on an east or west road, past the ramp's foot on a north one, mid-side on a south one
+            // aisle on an east or west road, before the ramp's foot on a north one, mid-side on a south one
             for (int i = 0; i < 16; i++) {
-                if (openN && !(k == 0 && roadN && i >= 12 && i <= 14))
+                if (openN && !(k == 0 && roadN && i >= 1 && i <= 3))
                     chunk.setBlock(i, stand, 0, frame);
                 if (openS && !(k == 0 && roadS && i >= 6 && i <= 9))
                     chunk.setBlock(i, stand, 15, frame);

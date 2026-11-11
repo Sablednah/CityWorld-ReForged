@@ -161,7 +161,7 @@ public abstract class PlatLot {
 	 * sidewalk keeps its height but is surfaced like the road, with a slab ramp at the kerb) rather than being
 	 * dropped to the road's level (a car park's asphalt).
 	 */
-	public boolean roadOpeningRaised() {
+	public boolean roadOpeningRaised(CityWorldGenerator generator) {
 		return false;
 	}
 
