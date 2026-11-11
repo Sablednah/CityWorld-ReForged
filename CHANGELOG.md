@@ -150,6 +150,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   kerb with a one-block strip of road behind it. The sidewalk strip in the opening now goes whatever stands on it
   (a lamp post too), a bend's rounded corner with it, and an opening that reaches the sidewalk's end takes the
   corner square beside it.
+- The hotel and the graveyard are the owner's reworked schematics (Sponge `.schem`): the hotel's lobby pools and the
+  graveyard's water no longer flow out when placed.
 - The multi-storey car park's stairwell (a wall column and ladder on the east edge) stood in the middle of the east
   entrance; it is at the south strip's end now.
 - On 1.20.1 and 1.21.1 a Sponge version-2 `.schem` (WorldEdit's default) loaded as 0×0×0 — the reader asked for the
