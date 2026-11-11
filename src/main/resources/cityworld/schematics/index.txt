@@ -1,6 +1,6 @@
 Farm/crops_carrot.schematic
 Farm/crops_glados.schematic
-Farm/graveyard_knife.schematic
+Farm/graveyard_knife.schem
 Farm/richards_house.schematic
 Highrise/liberty.nbt
 Highrise/tower.schematic
@@ -15,12 +15,12 @@ Lowrise/polar_gas.schematic
 Lowrise/taco_church.schematic
 Lowrise/winchester.schematic
 Midrise/Condo.schematic
-Midrise/Hotel.schematic
+Midrise/Hotel.schem
 Midrise/midwich.schem
 Midrise/pagoda_titan.schematic
 Midrise/taco_church.schematic
 Midrise/winchester.schematic
-Municipal/Hotel.schematic
+Municipal/Hotel.schem
 Municipal/chayats-bank.schematic
 Municipal/gas_stop.schematic
 Municipal/midwich.schem
@@ -32,7 +32,7 @@ Neighborhood/polar_gas.schematic
 Neighborhood/richards_house.schematic
 Park/carasamara.schematic
 Park/dragon.schematic
-Park/graveyard_knife.schematic
+Park/graveyard_knife.schem
 Park/joster.schematic
 Park/judgement.schematic
 Park/kidspark.schematic
