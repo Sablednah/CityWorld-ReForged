@@ -212,11 +212,13 @@ public class MultiStoreyCarParkLot extends ConnectedLot {
                     chunk.setBlock(x, stand + 4, x == 4 ? 3 : 12, Material.SEA_LANTERN);
                 }
         }
-        // the stairwell: a wall column on the east edge with a ladder up it, from the street to the roof deck
+        // the stairwell: a wall column on the east edge with a ladder up it, from the street to the roof deck —
+        // at the south strip's end (z 14), clear of the ramp (x 2..11 there), the east entrance (z 7..8, where it
+        // stood in the owner's way, 2026-11-11) and the corner pillar
         int roof = street + (levels - 1) * PITCH + 1;
         if (openE) {
-            chunk.setBlocks(15, street + 1, roof + 2, 8, frame);
-            chunk.setLadder(14, street + 1, roof + 1, 8, BlockFace.WEST);
+            chunk.setBlocks(15, street + 1, roof + 2, 14, frame);
+            chunk.setLadder(14, street + 1, roof + 1, 14, BlockFace.WEST);
         }
         // vehicles in some bays, a chunk's worth spread over the decks; a ruin keeps block wrecks instead
         var settings = generator.getSettings();

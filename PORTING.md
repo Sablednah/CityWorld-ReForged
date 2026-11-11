@@ -97,6 +97,28 @@ Four messages after the third look's deploy; on master, picked to the five lines
    `.schematic` copies as `midwich.schem` (+ `midwich.schem.yml`, index lines). `scripts/schem_sponge.py`
    dumps a Sponge file (size, offset, per-layer blocks, fluids).
 
+6. **"car parks are attached — but attaching to corners for roads is leaving the curve of the corner ... a 1 block
+   strip that doesn't reach road because of corner."** `RoadLot.dropKerbs` walked depths 0..3 of the straight
+   sidewalk only (`along` 3..12). A BEND's `generateRoundedOut` lays an L of pavement one cell further in (depth 3,
+   along 3..6, plus a notch), and the sidewalk's corner squares (along 0..2 / 13..15) are outside the loop — so a
+   car park's mouth kept a stepped kerb with a one-block strip of road behind it. Now each open column clears
+   while the cell at street+1 is this lot's `pavementSidewalk` (at most four deep; the road cell after it loses
+   the kit's lip), and an opening that reaches along 3 / 12 also takes the corner square beside it (those
+   columns stop at the square so the sidewalk along the OTHER edge is untouched). Probed on master
+   (`find:ParkingLot`, radius 4, `region_slice.py plan 65`): the road north of a surface car park clears its
+   whole south sidewalk, corner squares included; one smooth-stone cell left at depth 2 is a lamp post's base.
+   The bend case is by construction, not probed (no bend-adjacent car park near the dev spawn).
+7. **"trying to find a midwich and can't ... pasted midwich 0x0x0."** On 1.20.1 and 1.21.1 — the lines on the OLD
+   NBT API — `SpongeSchematic.read` did `tag.getCompound("Schematic")` for v3's wrapper, and there a missing key
+   answers an EMPTY compound, not absent: a v2 file (WorldEdit's default, the owner's `midwitch.schem`) read as
+   0×0×0, planned nowhere (a 0-chunk footprint) and pasted nothing. Same for `root.getCompound("Blocks")` (v3 only),
+   which made the v2 branch unreachable. Branch-only fixes (`contains(key, TAG_COMPOUND) ? … : …`): mc1.20.1
+   `c1a73f57`, mc1.21.1 `2258ef65`. No bundled `.schem` had ever existed, so the path had never run on those lines —
+   the silent-fallback class again. Self-test `checkBundledSchematics` (`schematics.loaded`; fails on any clip with
+   no size) on every line. Control: 1.20.1 probe `find:schematic:midwich` → "no schematic:midwich planned within 20
+   platmaps"; after: 1.21.1 placed it at chunk −47,2 with its blocks. **On 1.20.1/1.21.1, every `getCompound`/
+   `getList` of an optional key needs a `contains` first.**
+
 Gates: master `1ad68e18` + `9d88e056` (docs `87230a4c`), picked to the five lines (mc1.20.1 `6be779f6`, mc1.21.1
 `2641b0dc`, mc26.1 `f3282213`, mc26.2 `beaf5d46`, mc26.3 `defcf5a8`); six self-tests PASS (`carpark.offRoad` 0 on
 each) and `--compare` agrees on the fresh reports; 1.20.1 built from `build/libs` (SRG names in the generator) and

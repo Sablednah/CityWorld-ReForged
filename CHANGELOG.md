@@ -149,6 +149,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   bend's rounded corner (one cell further in) and the sidewalk's corner square stood in the opening as a stepped
   kerb with a one-block strip of road behind it. Each column now clears as deep as the sidewalk goes, and an
   opening that reaches the sidewalk's end takes the corner square beside it.
+- The multi-storey car park's stairwell (a wall column and ladder on the east edge) stood in the middle of the east
+  entrance; it is at the south strip's end now.
 - On 1.20.1 and 1.21.1 a Sponge version-2 `.schem` (WorldEdit's default) loaded as 0×0×0 — the reader asked for the
   version-3 `Schematic` wrapper and those lines' NBT API answers an empty compound for a missing key. Self-test
   `schematics.loaded` fails on any bundled schematic without a size.
