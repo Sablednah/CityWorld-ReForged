@@ -133,8 +133,8 @@ public class MultiStoreyCarParkLot extends ConnectedLot {
         boolean openN = !joined.toNorth(), openS = !joined.toSouth(), openE = !joined.toEast(), openW = !joined.toWest();
         boolean roadN = platmap.isExistingRoad(platX, platZ - 1), roadS = platmap.isExistingRoad(platX, platZ + 1),
                 roadE = platmap.isExistingRoad(platX + 1, platZ), roadW = platmap.isExistingRoad(platX - 1, platZ);
-        if (!(roadN || roadS || roadE || roadW))
-            roadS = true; // an inner chunk of a big one still gets a way in from its own side
+        if (!(roadN || roadS || roadE || roadW) && openN && openS && openE && openW)
+            roadS = true; // nothing joined and no road (never, since the pick wants a road): a way in anyway
 
         for (int k = 0; k < levels; k++) {
             int deck = street + k * PITCH, stand = deck + 1;
