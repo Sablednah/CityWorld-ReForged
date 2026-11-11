@@ -167,8 +167,11 @@ public abstract class UrbanContext extends CivilizedContext {
 
 	protected PlatLot getBuilding(CityWorldGenerator generator, PlatMap platmap, Odds odds, int chunkX, int chunkZ) {
 		// car parks in place of a building (roads.carParks): a surface one, or a multi-storey one of a few decks
+		// — only where the chunk fronts a road: the roads are laid before the backfill, and a car park
+		// nobody can drive into (the owner's two, 2026-11-11, each a chunk in from the street) is a field
+		// of paint. A flood-filled copy may sit behind this chunk; it joins through it.
 		me.daddychurchill.CityWorld.CityWorldSettings settings = generator.getSettings();
-		if (settings.includeCarParks && generator.isModernStyle()) {
+		if (settings.includeCarParks && generator.isModernStyle() && platmap.frontsRoad(chunkX - platmap.originX, chunkZ - platmap.originZ)) {
 			if (odds.playOdds(settings.oddsOfMultiStoreyCarPark))
 				return new me.daddychurchill.CityWorld.Plats.Urban.MultiStoreyCarParkLot(platmap, chunkX, chunkZ,
 						settings.carParkMinLevels + odds.getRandomInt(settings.carParkMaxLevels - settings.carParkMinLevels + 1));
