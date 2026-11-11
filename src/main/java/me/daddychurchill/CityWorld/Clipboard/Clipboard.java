@@ -141,6 +141,16 @@ public final class Clipboard {
             minX = Math.min(minX, t.getX());
             minZ = Math.min(minZ, t.getZ());
         }
+        for (int[] c : unturnedDrivewayCells()) {
+            BlockPos t = StructureTemplate.transform(new BlockPos(c[0], 0, c[1]), mirror, rotation, BlockPos.ZERO);
+            out.add(new int[] { t.getX() - minX, t.getZ() - minZ });
+        }
+        return out;
+    }
+
+    /** The driveway cells as stored, {@code {x, z}} in the build's own orientation. */
+    private java.util.List<int[]> unturnedDrivewayCells() {
+        java.util.List<int[]> out = new java.util.ArrayList<>();
         for (int[] d : driveways) {
             boolean alongX = d[0] == 0 || d[0] == 1;
             int len = alongX ? sizeX : sizeZ;
@@ -148,11 +158,37 @@ public final class Clipboard {
             for (int i = from; i <= to; i++) {
                 int sx = alongX ? i : d[0] == 2 ? sizeX - 1 : 0;
                 int sz = alongX ? (d[0] == 0 ? 0 : sizeZ - 1) : i;
-                BlockPos t = StructureTemplate.transform(new BlockPos(sx, 0, sz), mirror, rotation, BlockPos.ZERO);
-                out.add(new int[] { t.getX() - minX, t.getZ() - minZ });
+                out.add(new int[] { sx, sz });
             }
         }
         return out;
+    }
+
+    private volatile java.util.BitSet solid;
+
+    /** Whether the build holds a block (not air) at a cell of its own, unturned, box; false outside it. */
+    public boolean isSolid(int x, int y, int z) {
+        if (x < 0 || x >= sizeX || y < 0 || y >= sizeY || z < 0 || z >= sizeZ)
+            return false;
+        java.util.BitSet s = solid;
+        if (s == null)
+            solid = s = Templates.solidCells(template);
+        return s.get((y * sizeZ + z) * sizeX + x);
+    }
+
+    /**
+     * Whether the build's driveway stands on layer {@code layer}: most of its driveway cells hold a block there
+     * (a forecourt floor), rather than air (the drive is on the layer below). What decides whether the kerb in
+     * front of it is dropped to the road or ramped up to the pavement.
+     */
+    public boolean drivewayOnLayer(int layer) {
+        int cells = 0, solidCells = 0;
+        for (int[] c : unturnedDrivewayCells()) {
+            cells++;
+            if (isSolid(c[0], layer, c[1]))
+                solidCells++;
+        }
+        return cells > 0 && solidCells * 2 > cells;
     }
 
     private static int ceilDiv(int a, int b) {
