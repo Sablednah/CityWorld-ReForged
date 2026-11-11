@@ -196,6 +196,7 @@ public final class CityWorldSelfTest {
             checkPermissionNodes();
             checkSettingsExport(server);
             checkSettingsDefaults();
+            checkBundledSchematics();
             checkWeightedSubstitutes();
             checkPalettesShipEmpty();
             checkOceans(server);
@@ -587,6 +588,27 @@ public final class CityWorldSelfTest {
      * shipped preset (none names {@code carParks}) kept the old odds. Decode an empty object (fields' defaults all the
      * way down) and compare with {@code DEFAULT} (group defaults all the way down), reporting the paths that differ.
      */
+    /**
+     * Every bundled schematic loads with a real size. A Sponge v2 file read as 0×0×0 on the lines whose NBT API
+     * answers an empty compound for a missing key (midwich.schem, 2026-11-11): it placed nowhere and pasted
+     * nothing, and nothing said so.
+     */
+    private void checkBundledSchematics() {
+        int clips = 0;
+        List<String> empty = new ArrayList<>();
+        for (var family : me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.values())
+            for (var clip : me.daddychurchill.CityWorld.Clipboard.SchematicLibrary.family(family)) {
+                clips++;
+                if (clip.sizeX <= 0 || clip.sizeY <= 0 || clip.sizeZ <= 0)
+                    empty.add(family + "/" + clip.name + " " + clip.sizeX + "x" + clip.sizeY + "x" + clip.sizeZ);
+            }
+        report.put("schematics.loaded", Integer.toString(clips));
+        if (clips == 0)
+            fail("bundled schematics: none loaded (index.txt?)");
+        if (!empty.isEmpty())
+            fail("bundled schematics with no size: " + empty);
+    }
+
     private void checkSettingsDefaults() {
         var codec = me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.CODEC;
         var ops = com.mojang.serialization.JsonOps.INSTANCE;

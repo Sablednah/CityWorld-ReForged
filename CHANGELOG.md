@@ -145,6 +145,13 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   salted stream). It also lives in Midrise now, where three centre blocks in four are flat (Lowrise: one in five),
   at one in ten per district, and ships as the owner's fixed `.schem` (the old file's water fell down its tower).
   Measured on one seed over 40×40 platmaps: 3 → 5 schools at one in seventeen, so about 8 at one in ten.
+- A car park's mouth is cleared to the road: the kerb drop walked only the straight three-cell sidewalk, so a
+  bend's rounded corner (one cell further in) and the sidewalk's corner square stood in the opening as a stepped
+  kerb with a one-block strip of road behind it. Each column now clears as deep as the sidewalk goes, and an
+  opening that reaches the sidewalk's end takes the corner square beside it.
+- On 1.20.1 and 1.21.1 a Sponge version-2 `.schem` (WorldEdit's default) loaded as 0×0×0 — the reader asked for the
+  version-3 `Schematic` wrapper and those lines' NBT API answers an empty compound for a missing key. Self-test
+  `schematics.loaded` fails on any bundled schematic without a size.
 - `-Dcityworld.probe=survey:schematics[:platmaps]`: a census of every schematic the plan places, by district and
   name, with how many platmaps each district planned and how many have a flat centre block.
 
