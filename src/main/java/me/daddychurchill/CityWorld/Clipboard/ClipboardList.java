@@ -55,7 +55,12 @@ public final class ClipboardList implements Iterable<Clipboard> {
 	 * A small cap keeps it sparse — a landmark here and there, not wall-to-wall.
 	 */
 	public void populate(CityWorldGenerator generator, PlatMap platmap, int maxPlacements) {
-		Odds odds = platmap.getOddsGenerator();
+		// The platmap's odds generator is a FRESH stream, seeded the same, every time it is asked for — so
+		// the first clip's roll here was the very number the hospital campus (MunicipalContext) and the
+		// backfill's first lot rolled too: a clip at the head of the list came up exactly on the platmaps
+		// whose centre the hospital had taken (midwich, Municipal: 0 of 35 platmaps). Salt a stream of
+		// our own, as populateRoads does.
+		Odds odds = new Odds(platmap.getOddsGenerator().getRandomLong() ^ 0xC11B0A7DL);
 		int placed = 0;
 		for (Clipboard clip : list) {
 			if (placed >= maxPlacements)
