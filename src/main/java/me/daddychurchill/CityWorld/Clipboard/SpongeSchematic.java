@@ -45,14 +45,16 @@ public final class SpongeSchematic {
 
     public static SpongeSchematic read(InputStream in) throws IOException {
         CompoundTag tag = NbtIo.readCompressed(in, NbtAccounter.unlimitedHeap());
-        CompoundTag root = tag.getCompound("Schematic"); // v3 nests under "Schematic"
+        // v3 nests under "Schematic"; v2 does not — and this line's getCompound answers an EMPTY compound for a
+        // missing key, not "absent", so a v2 file read as 0×0×0 here (the owner's midwich.schem, 2026-11-11)
+        CompoundTag root = tag.contains("Schematic", net.minecraft.nbt.Tag.TAG_COMPOUND) ? tag.getCompound("Schematic") : tag;
 
         int w = root.getShort("Width");
         int h = root.getShort("Height");
         int l = root.getShort("Length");
         int dv = root.getInt("DataVersion");
 
-        CompoundTag blocksTag = root.getCompound("Blocks"); // v3
+        CompoundTag blocksTag = root.contains("Blocks", net.minecraft.nbt.Tag.TAG_COMPOUND) ? root.getCompound("Blocks") : null; // v3
         CompoundTag paletteTag;
         byte[] blockData;
         ListTag blockEntities;
