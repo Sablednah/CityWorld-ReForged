@@ -1674,20 +1674,43 @@ public class RoadLot extends ConnectedLot {
 			if (open == null)
 				continue;
 			boolean raised = lot.roadOpeningRaised(generator);
-			for (int along = sidewalkWidth; along < 16 - sidewalkWidth; along++) {
-				if (!open[along])
+			// An opening that reaches the sidewalk's end takes the corner square beside it too, and every column
+			// is cleared as deep as the sidewalk goes — a bend's rounded corner (generateRoundedOut) stands one
+			// cell further in than the straight sidewalk, and the owner's car parks met it as a stepped kerb in
+			// their mouth with a one-block strip of road behind it (2026-11-11). The corner square's columns stop
+			// at the square, never nibbling the sidewalk along the other edge.
+			boolean[] cells = java.util.Arrays.copyOf(open, 16);
+			if (open[sidewalkWidth])
+				for (int a = 0; a < sidewalkWidth; a++)
+					cells[a] = true;
+			if (open[15 - sidewalkWidth])
+				for (int a = 16 - sidewalkWidth; a < 16; a++)
+					cells[a] = true;
+			for (int along = 0; along < 16; along++) {
+				if (!cells[along])
 					continue;
-				// depth 0 is the cell against the lot, sidewalkWidth - 1 the kerb, sidewalkWidth the road cell at its foot
-				for (int depth = 0; depth <= sidewalkWidth; depth++) {
+				boolean cornerColumn = along < sidewalkWidth || along >= 16 - sidewalkWidth;
+				int maxDepth = cornerColumn ? sidewalkWidth - 1 : sidewalkWidth;
+				// depth 0 is the cell against the lot; the sidewalk runs to `last`, the road cell is the one after
+				int last = -1;
+				for (int depth = 0; depth <= maxDepth; depth++) {
 					int x = s == 0 || s == 1 ? along : s == 2 ? 15 - depth : depth;
 					int z = s == 2 || s == 3 ? along : s == 1 ? 15 - depth : depth;
-					if (depth == sidewalkWidth) {
-						if (!chunk.isEmpty(x, street + 1, z))
+					if (chunk.isType(x, street + 1, z, pavementSidewalk))
+						last = depth;
+					else
+						break;
+				}
+				for (int depth = 0; depth <= last + 1; depth++) {
+					int x = s == 0 || s == 1 ? along : s == 2 ? 15 - depth : depth;
+					int z = s == 2 || s == 3 ? along : s == 1 ? 15 - depth : depth;
+					if (depth == last + 1) {
+						if (!cornerColumn && !chunk.isEmpty(x, street + 1, z) && !chunk.isType(x, street + 1, z, pavementSidewalk))
 							chunk.setBlock(x, street + 1, z, Material.AIR); // the road kit's kerb lip
 					} else if (raised) {
 						// a forecourt on the pavement: the sidewalk keeps its height, surfaced like the road, a slab ramp at the kerb
 						chunk.setBlocks(x, street + 2, street + 6, z, Material.AIR);
-						if (depth == sidewalkWidth - 1)
+						if (depth == last && !cornerColumn)
 							chunk.setBlock(x, street + 1, z, Material.SMOOTH_STONE_SLAB, SlabType.BOTTOM);
 						else
 							chunk.setBlock(x, street + 1, z, surface);
