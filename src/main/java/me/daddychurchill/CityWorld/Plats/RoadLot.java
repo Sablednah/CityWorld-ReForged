@@ -1709,13 +1709,13 @@ public class RoadLot extends ConnectedLot {
 							chunk.setBlock(x, street + 1, z, Material.AIR); // the road kit's kerb lip
 					} else if (raised) {
 						// a forecourt on the pavement: the sidewalk keeps its height, surfaced like the road, a slab ramp at the kerb
-						chunk.setBlocks(x, street + 2, street + 6, z, Material.AIR);
+						chunk.setBlocks(x, street + 2, street + lightpostHeight + 4, z, Material.AIR); // a lamp post and its head go too
 						if (depth == last && !cornerColumn)
 							chunk.setBlock(x, street + 1, z, Material.SMOOTH_STONE_SLAB, SlabType.BOTTOM);
 						else
 							chunk.setBlock(x, street + 1, z, surface);
 					} else {
-						chunk.setBlocks(x, street + 1, street + 6, z, Material.AIR);
+						chunk.setBlocks(x, street + 1, street + lightpostHeight + 4, z, Material.AIR);
 						chunk.setBlock(x, street, z, surface);
 					}
 				}
