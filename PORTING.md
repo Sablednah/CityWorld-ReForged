@@ -43,6 +43,49 @@ What remains is inherent: reach 3 at a 2 km spacing judges a ~14-cell square (28
 per world. `highways.reach` 1 judges 25. The judge itself (3 tries x ~40 exact columns) is untouched: changing it
 moves cities in 5.19–6.14 vanilla-land worlds.
 
+## ▶ Resume here — 2026-11-11: the owner's third look — kerbs, ramps, car parks halved again, the diner cropped
+
+Four screenshots and two messages after the second look's deploy; all on master, picked to the five lines, 1.20.1
+deployed. Nothing pushed.
+
+1. **The kerb in front of a schematic's drive.** `ClipboardLot.roadOpeningRaised()` always said raised (sidewalk kept
+   at its height, surfaced like the road, a slab ramp at the kerb) — right for a forecourt floored on the pavement
+   (the condo's car park), a step DOWN for a gas station whose apron was just sunk to the road. Now it reads the
+   build's own blocks: raised iff most driveway cells hold a block on the layer that lands at `streetLevel + 1`
+   (`Clipboard.isSolid` from a `BitSet` of the template's non-air cells — `Templates.solidCells` reads
+   `template.save()`'s palette + blocks, the one form every reader produces; `drivewayOnLayer(layer)`; layer =
+   `groundLevelY + (street + 1 - surfaceLevel)`). `PlatLot.roadOpeningRaised` now takes the generator. Probed on
+   master (UCM asphalt kit): polar gas (GroundLevelY 1, apron at the road) → the sidewalk cut to the road surface, no
+   slab; the bank (now GroundLevelY 1; its forecourt floor is its layer 1, at pavement height) and the condo
+   (GroundLevelY 2) → surfaced sidewalk + slab ramp. `gas_stop`/`G45station` stay at GroundLevelY 1; `polar_gas`
+   back to 1 (the owner: it was right); `chayats-bank` 0 → 1.
+2. **"Does the height of a schematic change by lot?"** No — by FAMILY. `ClipboardLot.surfaceLevel` is
+   `streetLevel + 1` for a city family (its ground layer stands on the pavement block, a block above the road and
+   half a block above the sidewalk slab) and `streetLevel` for Farm/Nature/Outland/Astral (the natural surface).
+   The same file in a city folder and a wild folder sits a block apart, and a city build at `GroundLevelY: 0` reads
+   a block proud of the road: the "often 1 off" the owner saw. SCHEMATICS.md's `GroundLevelY` row now says so.
+3. **Multi-storey ramps two cells further from the wall.** `rampX`: north `4 + i` (was `2 + i`), south `11 - i` (was
+   `13 - i`), so the foot has three free cells to turn a car onto it; the north entrance moves to parapet cells 1–3
+   (was 12–14, which the shifted ramp's top now fills) — `roadOpening` and the k == 0 cut agree. Sliced on master at
+   chunk −19,−20: slab at x4 on the deck, full blocks x5.., the north parapet uncut where no road is north, the
+   south entrance at x 6–9.
+4. **Car parks halved again — and why the first cut never showed.** 1/34 → 1/68 (`oddsExtremelyUnlikely / 2`).
+   The self-test count did not move at 1/34 because a preset that names no `carParks` group (every shipped one)
+   takes `CarParks.DEFAULT`, a separate record that still said 1/13; the fields' codec defaults apply only to a
+   group that is present but sparse. (The 530 → 421 chunk change at the second look was the eagleman removal
+   shifting the schematic picks.) Fixed both; new self-test `checkSettingsDefaults` decodes `{}` and compares it
+   with `DEFAULT`, reporting the differing paths (`settings.defaultsAgree`). Measured in the dev seed's 301×301
+   plan: 202 car parks / 456 surface chunks (really 1/13) → 34 car parks / 149 surface chunks.
+5. **The diner cropped to 16×16** (`dinner.schematic`, 17×14×17: its outermost ring was 33 grass blocks, the rest
+   air; dropped the east column and south row, every kept cell and its six block entities byte-identical —
+   scratchpad `tools/schem_crop.py inspect|crop`, a dependency-free legacy-NBT reader/writer). It claims one chunk,
+   not four. `tools/schem_footprints.py` lists every bundled schematic's size, chunk claim, fill and croppable
+   border: the diner was the only one a trim brings down a chunk (Randallsentry 27×22 in 2×2 at 58% and the
+   condo 39×64 in 3×4 are building, not border).
+
+Gates: master self-test PASS (count + defaults check), 1.20.1 self-test PASS on the picked head, five lines
+compile, 1.20.1 built and deployed. Next: the owner's look, then 7.0.0.
+
 ## ▶ Resume here — 2026-11-10 late: the owner's second look — rarer car parks, fuel, UCM roads with Macaw's signs
 
 The owner's second 1.20.1 look (after the ramp-hole fix `60abd4e2`) asked for six things; all on master `bbfcf8f4` +
@@ -92,7 +135,7 @@ car to both carparks"*. All built on master and picked to the five lines (code c
 **Car parks** (`roads.carParks`: enabled, oddsOfSurface, oddsOfMultiStorey, minLevels, maxLevels; Roads is at 15 of
 its 16 codec fields). `Plats/Urban/MultiStoreyCarParkLot`: decks `PITCH` apart with painted bays, a ramp strip
 alternating north/south per deck, pillars, a one-block parapet with the entrance cut through at street level on the
-sides that front a road (N cells 12–14, S 6–9, E/W 7–8), a ladder stairwell on the east wall, lamp posts on the roof;
+sides that front a road (N cells 1–3 since the third look — was 12–14 — S 6–9, E/W 7–8), a ladder stairwell on the east wall, lamp posts on the roof;
 real vehicles in some bays, block wrecks in a ruin; self-test records `carpark.multistorey` (levels histogram).
 **The kerb drop:** `PlatLot.roadOpening(generator, toward)` answers which cells of the edge facing a road are a way
 in (`toward` is the NEIGHBOUR's side that faces us: a road north of a lot asks it with SOUTH) and

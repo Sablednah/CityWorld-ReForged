@@ -24,6 +24,14 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-11): the owner's third look — kerbs by the build's own floor, ramps off the wall, car parks really halved, the diner 16×16.**
+- PORTING.md "▶ Resume here — 2026-11-11" has it: a schematic's kerb is dropped flat when its drive is at road level
+  and ramped when its floor stands on the pavement (`Clipboard.isSolid`/`drivewayOnLayer`); a schematic's height is
+  by FAMILY (city = pavement, wild = ground), not by lot; multi-storey ramps start at x4/x11 with the north entrance
+  at 1–3; car park odds 1/68 — and `CarParks.DEFAULT` (what every shipped preset takes) had still said 1/13, so the
+  1/34 cut never reached a world: self-test `checkSettingsDefaults` now compares every group default with its
+  fields'; the diner cropped to one chunk (`scratchpad/tools/schem_crop.py`, `schem_footprints.py`). Nothing pushed.
+
 **▶ Resume here (2026-11-10 late): the owner's second look — rarer car parks, random fuel, UCM roads + Macaw's signs.**
 - PORTING.md "▶ Resume here — 2026-11-10 late" has it: car park odds 1/13 → 1/34 (a multi-storey FLOODS over
   neighbours like any building, so count car parks by connected key — `carpark.multistorey.count`), parked tanks a
