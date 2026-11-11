@@ -441,9 +441,16 @@ public class ClipboardLot extends IsolatedLot {
 
 	private static final int CHUNK = 16;
 
+	/**
+	 * Raised when the build's drive is floored at the pavement's height ({@code streetLevel + 1}: a forecourt on the
+	 * sidewalk, so the kerb keeps its height under the road's surface with a slab ramp), not when that layer of the
+	 * build is air over the driveway (its ground layer sunk to the road by {@code GroundLevelY}: the gas stations,
+	 * whose aprons meet the road flush — the owner's 1.20.1 look wanted no ramp there, just the sidewalk gone).
+	 */
 	@Override
-	public boolean roadOpeningRaised() {
-		return true; // the build's ground layer stands on the pavement, so its drive meets the sidewalk flush
+	public boolean roadOpeningRaised(CityWorldGenerator generator) {
+		int layer = clip.groundLevelY + (generator.streetLevel + 1 - surfaceLevel(generator));
+		return clip.drivewayOnLayer(layer);
 	}
 
 	/**

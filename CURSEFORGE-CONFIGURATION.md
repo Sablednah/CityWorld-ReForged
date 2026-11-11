@@ -463,14 +463,14 @@ has one at a kerb.
 lowrise districts (the mall keeps its own whatever these say).
 
 ```json
-"roads": { "carParks": { "enabled": true, "oddsOfSurface": 0.029, "oddsOfMultiStorey": 0.029, "minLevels": 2, "maxLevels": 4 } }
+"roads": { "carParks": { "enabled": true, "oddsOfSurface": 0.0147, "oddsOfMultiStorey": 0.0147, "minLevels": 2, "maxLevels": 4 } }
 ```
 
 | Setting | Default | What it does |
 |---|---|---|
 | `enabled` | `true` | Car parks of their own: a surface car park (the mall's lot: bays, lamp posts, verges, open to every road it fronts) or a multi-storey one (decks of bays joined by slab ramps, open sides behind a parapet, a ladder up the stairwell). Each grows into its neighbours like a building, and holds parked vehicles by the `vehicles` rules. **Car parks** in Customize. |
-| `oddsOfSurface` | `0.029` | The chance each building pick is a surface car park instead (one in thirty-four). |
-| `oddsOfMultiStorey` | `0.029` | The chance each building pick is a multi-storey car park instead (rolled first, one in thirty-four). |
+| `oddsOfSurface` | `0.0147` | The chance each building pick is a surface car park instead (one in sixty-eight). |
+| `oddsOfMultiStorey` | `0.0147` | The chance each building pick is a multi-storey car park instead (rolled first, one in sixty-eight). |
 | `minLevels`, `maxLevels` | `2`, `4` | How many decks a multi-storey car park has, picked per car park. Each deck is five blocks. |
 
 ### `cities` — cities in a vanilla world, highways, rivers and oceans

@@ -68,8 +68,10 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   street level, a ladder up the stairwell, lamp posts on the roof. Both grow into their neighbours like any
   building, and both hold parked vehicles by the `roads.vehicles` rules (a ruin keeps block wrecks and decays).
   Settings group `roads.carParks` (`enabled`, `oddsOfSurface`, `oddsOfMultiStorey`, `minLevels`, `maxLevels`) and
-  **Car parks** in Customize. The mall keeps its own. Both kinds roll at one building pick in thirty-four (`roads.carParks.oddsOfSurface`/`oddsOfMultiStorey`; the
-  owner found one in thirteen too common).
+  **Car parks** in Customize. The mall keeps its own. Both kinds roll at one building pick in sixty-eight (`roads.carParks.oddsOfSurface`/`oddsOfMultiStorey`; the
+  owner found one in thirteen, then one in thirty-four, too common). (A preset that names no `carParks` group — every shipped one — took a separate
+  group default that still said one in thirteen, so the first cut never reached a world; the self-test now checks every
+  group's default against its fields'.)
 - **Ultimate Car Mod.** With it installed, its asphalt joins the road pool (`#cityworld:fittings/road`): a world
   that picks it gets its roads in `car:asphalt` with the dashed centre line and zebra crossings as its paint, and
   its road signs as text on its posts (STOP, DEAD END, SPEED LIMIT 50, Welcome to <town> / Thanks for visiting,
@@ -88,7 +90,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   car outside every condo.
 - **Schematics with a way in from the road.** A sidecar's `Driveway:` line (`Driveway: south 16-22`) says where a
   build's own ground — a forecourt, a car park, a drive — meets its edge. The build is turned and sited so a driveway meets one of the district's roads wherever the
-  roads allow; the road there surfaces its sidewalk like the road with a slab ramp at the kerb, and CityWorld paves from the build's edge
+  roads allow; the road there surfaces its sidewalk like the road — a slab ramp at the kerb for a drive floored at the
+  pavement's height, the sidewalk cut to the road for one at road level — and CityWorld paves from the build's edge
   out to the road. The shipped condo, bank and three gas stations have theirs. (Owner: the gas stations and the bank's
   and condo's little car parks met a raised kerb.)
 - **Road signs on Immersive Vehicles' poles, with names.** With the Official Signs pack (or the Official Content
@@ -121,8 +124,12 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Changed
 
-- The three gas stations (`gas_stop`, `polar_gas`, `G45station`) sit one block lower (their sidecars' `GroundLevelY`),
-  level with the pavement; the owner's 1.20.1 look had them a block proud.
+- The three gas stations (`gas_stop`, `G45station`; `polar_gas` already was) and the bank sit one block lower (their
+  sidecars' `GroundLevelY`), their aprons level with the road; the owner's 1.20.1 look had them a block proud.
+- The multi-storey car park's ramps start three cells off the wall instead of one (room to turn a car onto them),
+  and the north entrance is cut before the ramp's foot.
+- The diner schematic (`dinner`) is cropped from 17×17 to 16×16 — its outermost ring was a border of grass — so it
+  fits one chunk instead of claiming four.
 
 ### Removed
 

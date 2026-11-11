@@ -195,6 +195,7 @@ public final class CityWorldSelfTest {
             checkBuildStamp();
             checkPermissionNodes();
             checkSettingsExport(server);
+            checkSettingsDefaults();
             checkWeightedSubstitutes();
             checkPalettesShipEmpty();
             checkOceans(server);
@@ -578,6 +579,44 @@ public final class CityWorldSelfTest {
      * written JSON decodes back to the same settings; that the overworld's export lands on the entry the
      * overworld reads; and that the example folder holds all three entries.
      */
+    /**
+     * Every settings group has two defaults: the record its parent's codec falls back to when a preset names no such
+     * group at all ({@code Roads.DEFAULT}'s {@code CarParks.DEFAULT}), and the per-field defaults its own codec
+     * applies to a group that is present but sparse. They must agree, or a change to one reaches only half the
+     * worlds: the car park odds were cut on the fields while the group default still said one in thirteen, and every
+     * shipped preset (none names {@code carParks}) kept the old odds. Decode an empty object (fields' defaults all the
+     * way down) and compare with {@code DEFAULT} (group defaults all the way down), reporting the paths that differ.
+     */
+    private void checkSettingsDefaults() {
+        var codec = me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.CODEC;
+        var ops = com.mojang.serialization.JsonOps.INSTANCE;
+        var fromEmpty = codec.parse(ops, new com.google.gson.JsonObject()).result().orElse(null);
+        if (fromEmpty == null) {
+            fail("settings defaults: an empty settings object does not decode");
+            return;
+        }
+        var a = codec.encodeStart(ops, fromEmpty).result().orElse(null);
+        var b = codec.encodeStart(ops, me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.DEFAULT).result()
+                .orElse(null);
+        List<String> diffs = new ArrayList<>();
+        jsonDiff("", a, b, diffs);
+        report.put("settings.defaultsAgree", diffs.isEmpty() ? "yes" : String.join("; ", diffs));
+        if (!diffs.isEmpty())
+            fail("settings defaults: a group's DEFAULT record disagrees with its fields' defaults at " + diffs);
+    }
+
+    private static void jsonDiff(String path, com.google.gson.JsonElement a, com.google.gson.JsonElement b,
+            List<String> out) {
+        if (a != null && b != null && a.isJsonObject() && b.isJsonObject()) {
+            java.util.Set<String> keys = new java.util.TreeSet<>();
+            a.getAsJsonObject().keySet().forEach(keys::add);
+            b.getAsJsonObject().keySet().forEach(keys::add);
+            for (String k : keys)
+                jsonDiff(path.isEmpty() ? k : path + "." + k, a.getAsJsonObject().get(k), b.getAsJsonObject().get(k), out);
+        } else if (!java.util.Objects.equals(a, b))
+            out.add(path + " (fields " + a + ", group " + b + ")");
+    }
+
     private void checkSettingsExport(MinecraftServer server) {
         var codec = me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.CODEC;
         var registry = server.registryAccess().lookupOrThrow(
