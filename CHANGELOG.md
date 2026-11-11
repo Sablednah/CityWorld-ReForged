@@ -137,6 +137,16 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   each is now a still sunken pool round a lit quartz spire.
 - The bank's car park opens straight onto the road beside what was a cyan patch (now the black of the rest): the
   edge slabs there are gone and its sidecar's `Driveway` is that opening alone, so the kerb drops flat instead of ramping.
+- **Midwich (the school) actually appears.** Three things kept it out: it rolled after five likelier 2×2 builds
+  that could take a chunk of the one road-free 4×4 site in a platmap (schematics now roll biggest first); the
+  subway station claimed its chunk before any schematic (schematics now go first); and every planning pass drew its
+  first number from an identically seeded stream, so the head of the schematic list came up on exactly the
+  platmaps where Municipal's hospital campus had come up too and taken the centre (schematics roll on their own
+  salted stream). It also lives in Midrise now, where three centre blocks in four are flat (Lowrise: one in five),
+  at one in ten per district, and ships as the owner's fixed `.schem` (the old file's water fell down its tower).
+  Measured on one seed over 40×40 platmaps: 3 → 5 schools at one in seventeen, so about 8 at one in ten.
+- `-Dcityworld.probe=survey:schematics[:platmaps]`: a census of every schematic the plan places, by district and
+  name, with how many platmaps each district planned and how many have a flat centre block.
 
 ### Removed
 

@@ -43,7 +43,7 @@ What remains is inherent: reach 3 at a 2 km spacing judges a ~14-cell square (28
 per world. `highways.reach` 1 judges 25. The judge itself (3 tries x ~40 exact columns) is untouched: changing it
 moves cities in 5.19–6.14 vanilla-land worlds.
 
-## ▶ Resume here — 2026-11-11 (later): car parks off the road, the hotel's fountains, the bank's edge, Randallsentry gone
+## ▶ Resume here — 2026-11-11 (later): car parks off the road, the hotel's fountains, the bank's edge, Randallsentry gone, midwich placed
 
 Four messages after the third look's deploy; on master, picked to the five lines, 1.20.1 deployed. Nothing pushed.
 
@@ -73,7 +73,31 @@ Four messages after the third look's deploy; on master, picked to the five lines
    and its `index.txt` line; the two stale `IMC_eaglman13_home_entry` index lines from the second look went too
    (the loader skips a listed file it cannot find, silently).
 
-Not measured in game: the bank's new opening and the hotel pool (the owner's look). Next: the owner's look, then 7.0.0.
+5. **"midwich doesn't seem to spawn naturally — where would it be better?"** It is 64×64, a 4×4, and a platmap's
+   road lines at 2 and 7 leave ONE road-free 4×4 site, the centre block 3..6 — which also has to be flat
+   (`footprintBuildable`: every chunk buildable at street level). Measured with the new census probe
+   (`-Dcityworld.probe=survey:schematics[:platmaps]`, dry plans, by context and clip name, plus `<ctx>.flatCentre`
+   = platmaps whose centre block is flat) on the dev seed over 40×40 platmaps: Lowrise 125 platmaps, 27 flat
+   centres; Municipal 35/35; Midrise 80/61; Highrise 77/77. Three things then threw the roll away:
+   (a) list order — the family list was index order (alphabetical), so five 2×2 builds at 0.2 rolled before
+   midwich at 0.02, and one of them on a chunk of the centre block ended it (`DataContext.getSchematics` now
+   sorts biggest first, stable); (b) the subway station claimed its chunk BEFORE the schematics
+   (`UrbanContext.populateMap`: schematics first now; a one-chunk station can go beside any road);
+   (c) **`PlatMap.getOddsGenerator()` is a fresh `Odds` seeded the same every call** — so the first draw of
+   `ClipboardList.populate` was the SAME number as the first draw of `MunicipalContext`'s hospital roll and the
+   backfill's first lot: the clip at the head of the list came up exactly on the platmaps whose centre the hospital
+   had taken (midwich in Municipal: 0 of 35, with 9 water towers → 2 and 9 polar gas → 1 in the same run once the
+   sort put them at the head). Clips now roll on `new Odds(getOddsGenerator().getRandomLong() ^ 0xC11B0A7DL)`,
+   as `populateRoads` already did. **Any pass that takes `getOddsGenerator()` and rolls shares its first numbers
+   with every other such pass — salt a stream, as roads do.** Counts on the same seed (odds 0.06 during the test):
+   baseline 3 (Lowrise 3, Municipal 0); sort + station-after 1; salted + a Midrise copy 5 (Lowrise 1, Midrise 4,
+   Municipal 0; Condo 6 → 13 too). Shipped at `OddsOfAppearance: 0.1` in Lowrise/Midrise/Municipal, ≈8 per 6.4 km
+   square. The owner's fixed `midwitch.schem` (Sponge v2, DataVersion 3465, 64×25×64 — the same 25 layers as the
+   old file's y0–24, so `GroundLevelY: 6` holds; the old water column fell from the tower top) replaces the three
+   `.schematic` copies as `midwich.schem` (+ `midwich.schem.yml`, index lines). Scratchpad `tools/schem_sponge.py`
+   dumps a Sponge file (size, offset, per-layer blocks, fluids).
+
+Not measured in game: the bank's new opening, the hotel pool, the new midwich (the owner's look). Next: the owner's look, then 7.0.0.
 
 ## ▶ Resume here — 2026-11-11: the owner's third look — kerbs, ramps, car parks halved again, the diner cropped
 

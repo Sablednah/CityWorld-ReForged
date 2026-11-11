@@ -1365,6 +1365,37 @@ public final class ChunkProbe {
                 surveyHighways(level);
                 return;
             }
+            if (spec.startsWith("survey:schematics")) {
+                // -Dcityworld.probe=survey:schematics[:platmaps]: every schematic the plan places over a square of
+                // platmaps, by family folder and name, against how many platmaps each context planned — plans only.
+                // Why: "midwich never spawns" (owner, 2026-11-11) is a siting question (a 4×4 has ONE road-free site
+                // in a platmap, the centre block), and the only honest answer is a count.
+                int r = spec.length() > "survey:schematics:".length() ? Integer.parseInt(spec.substring("survey:schematics:".length())) : 20;
+                var g = (me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator) level.getChunkSource().getGenerator();
+                var ctx = g.getContext(level);
+                java.util.TreeMap<String, Integer> chunksByClip = new java.util.TreeMap<>(), platmapsByContext = new java.util.TreeMap<>();
+                java.util.Map<String, Integer> footprint = new java.util.HashMap<>();
+                for (int px = -r; px < r; px++)
+                    for (int pz = -r; pz < r; pz++) {
+                        var map = ctx.getPlatMap(px * 10, pz * 10);
+                        platmapsByContext.merge(map.context.getClass().getSimpleName(), 1, Integer::sum);
+                        if (map.isBuildableLots(3, 3, 4, 4)) // the one road-free 4×4 site: is its ground flat?
+                            platmapsByContext.merge(map.context.getClass().getSimpleName() + ".flatCentre", 1, Integer::sum);
+                        for (int dx = 0; dx < 10; dx++)
+                            for (int dz = 0; dz < 10; dz++)
+                                if (map.getLot(dx, dz) instanceof me.daddychurchill.CityWorld.Clipboard.ClipboardLot cl) {
+                                    var clip = cl.getClip();
+                                    String key = map.context.getClass().getSimpleName() + " " + clip.name;
+                                    chunksByClip.merge(key, 1, Integer::sum);
+                                    footprint.put(key, clip.chunkX * clip.chunkZ);
+                                }
+                    }
+                CityWorldMod.LOGGER.warn("SURVEY schematics over {}x{} platmaps — platmaps by context: {}", 2 * r, 2 * r, platmapsByContext);
+                for (var e : chunksByClip.entrySet())
+                    CityWorldMod.LOGGER.warn("SURVEY schematics: {} = {} placed ({} chunks of {} each)", e.getKey(),
+                            e.getValue() / footprint.get(e.getKey()), e.getValue(), footprint.get(e.getKey()));
+                return;
+            }
             if (spec.startsWith("find:biome:")) {
                 String id = spec.substring("find:biome:".length());
                 int[] found = findBiome(server, level, id);
