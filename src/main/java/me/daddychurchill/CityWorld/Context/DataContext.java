@@ -155,6 +155,11 @@ public abstract class DataContext {
 			for (Clipboard clip : SchematicLibrary.family(schematicFamily))
 				if (clip.chunkX <= schematicMaxX && clip.chunkZ <= schematicMaxZ)
 					fits.add(clip);
+			// Biggest first: a 4×4 (the midwich school) has ONE road-free site in a platmap, the centre block
+			// between the road lines, and any 2×2 that rolled before it (five of them in Lowrise, each far
+			// likelier) landing on a chunk of that block took it away — the owner never saw a school
+			// (2026-11-11). The sort is stable, so builds of a size keep the index's order.
+			fits.sort(java.util.Comparator.comparingInt((Clipboard c) -> c.chunkX * c.chunkZ).reversed());
 			mapsSchematics = new ClipboardList(fits);
 		}
 		return mapsSchematics;

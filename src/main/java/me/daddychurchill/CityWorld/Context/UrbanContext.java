@@ -28,13 +28,15 @@ public abstract class UrbanContext extends CivilizedContext {
 	@Override
 	public void populateMap(CityWorldGenerator generator, PlatMap platmap) {
 
-		// the subway station claims its chunk first: one per urban district, beside a road, so the
+		// let the user add their stuff first, then plug any remaining holes with our
+		// stuff — before the subway station: a one-chunk station can go beside any road, a 4×4 build
+		// (midwich) can only go in the centre block, and a station on one of its chunks left the
+		// school nowhere in the platmap (owner, 2026-11-11)
+		populateSchematics(generator, platmap);
+
+		// the subway station claims its chunk next: one per urban district, beside a road, so the
 		// tunnels between districts have somewhere to go (Support/Subway)
 		me.daddychurchill.CityWorld.Support.Subway.placeStation(generator, platmap);
-
-		// let the user add their stuff first, then plug any remaining holes with our
-		// stuff
-		populateSchematics(generator, platmap);
 
 		// random fluff!
 		Odds platmapOdds = platmap.getOddsGenerator();
