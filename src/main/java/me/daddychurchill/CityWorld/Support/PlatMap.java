@@ -284,6 +284,11 @@ public class PlatMap {
 			return false;
 	}
 
+	/** Does the lot at platmap {@code x, z} have a road (or roundabout) on any of its four sides. */
+	public boolean frontsRoad(int x, int z) {
+		return isExistingRoad(x - 1, z) || isExistingRoad(x + 1, z) || isExistingRoad(x, z - 1) || isExistingRoad(x, z + 1);
+	}
+
 	protected boolean isRoad(int x, int z) {
 		PlatLot current = platLots[x][z];
 		return current != null && (current.style == LotStyle.ROAD || current.style == LotStyle.ROUNDABOUT);
