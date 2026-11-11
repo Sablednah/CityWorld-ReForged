@@ -1690,16 +1690,16 @@ public class RoadLot extends ConnectedLot {
 				if (!cells[along])
 					continue;
 				boolean cornerColumn = along < sidewalkWidth || along >= 16 - sidewalkWidth;
-				int maxDepth = cornerColumn ? sidewalkWidth - 1 : sidewalkWidth;
-				// depth 0 is the cell against the lot; the sidewalk runs to `last`, the road cell is the one after
-				int last = -1;
-				for (int depth = 0; depth <= maxDepth; depth++) {
-					int x = s == 0 || s == 1 ? along : s == 2 ? 15 - depth : depth;
-					int z = s == 2 || s == 3 ? along : s == 1 ? 15 - depth : depth;
+				// depth 0 is the cell against the lot; the sidewalk strip proper (sidewalkWidth cells) goes whatever
+				// stands on it — a lamp post or sign base in the mouth kept the cells behind it as a stepped
+				// remnant (owner, 2026-11-11: "declare the block with the pillar to drop its curb") — and the cell
+				// after it only when it is a bend's rounded corner; the road cell is the one after `last`
+				int last = sidewalkWidth - 1;
+				if (!cornerColumn) {
+					int x = s == 0 || s == 1 ? along : s == 2 ? 15 - sidewalkWidth : sidewalkWidth;
+					int z = s == 2 || s == 3 ? along : s == 1 ? 15 - sidewalkWidth : sidewalkWidth;
 					if (chunk.isType(x, street + 1, z, pavementSidewalk))
-						last = depth;
-					else
-						break;
+						last = sidewalkWidth;
 				}
 				for (int depth = 0; depth <= last + 1; depth++) {
 					int x = s == 0 || s == 1 ? along : s == 2 ? 15 - depth : depth;
