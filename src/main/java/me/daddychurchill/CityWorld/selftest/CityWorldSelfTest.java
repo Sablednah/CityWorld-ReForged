@@ -3465,6 +3465,59 @@ public final class CityWorldSelfTest {
                     multiStoreyKeys.add(m.getConnectedKey());
                 }
             }
+        // every car park fronts a road (the owner's two a chunk in from the street, 2026-11-11): a surface
+        // one through any chunk of its flood-filled patch, a multi-storey one through any chunk of its key
+        java.util.Set<Long> keyedAtRoad = new java.util.HashSet<>();
+        java.util.Set<Long> surfaceAtRoad = new java.util.HashSet<>(); // packed chunk positions
+        List<int[]> surface = new ArrayList<>();
+        for (int cx = -PLAN_RADIUS; cx <= PLAN_RADIUS; cx++)
+            for (int cz = -PLAN_RADIUS; cz <= PLAN_RADIUS; cz++) {
+                PlatLot lot = lotAt(plan, cx, cz);
+                if (!(lot instanceof me.daddychurchill.CityWorld.Plats.Urban.ParkingLot
+                        || lot instanceof me.daddychurchill.CityWorld.Plats.Urban.MultiStoreyCarParkLot))
+                    continue;
+                boolean road = false;
+                for (int[] d : new int[][] { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) {
+                    PlatLot n = lotAt(plan, cx + d[0], cz + d[1]);
+                    road |= n != null && (n.style == PlatLot.LotStyle.ROAD || n.style == PlatLot.LotStyle.ROUNDABOUT);
+                }
+                if (lot instanceof me.daddychurchill.CityWorld.Plats.Urban.MultiStoreyCarParkLot m) {
+                    if (road)
+                        keyedAtRoad.add(m.getConnectedKey());
+                } else {
+                    surface.add(new int[] { cx, cz });
+                    if (road)
+                        surfaceAtRoad.add(((long) cx << 32) ^ (cz & 0xffffffffL));
+                }
+            }
+        // a surface chunk with no road reaches one through adjacent surface chunks
+        boolean grew = true;
+        while (grew) {
+            grew = false;
+            for (int[] c : surface) {
+                long key = ((long) c[0] << 32) ^ (c[1] & 0xffffffffL);
+                if (surfaceAtRoad.contains(key))
+                    continue;
+                for (int[] d : new int[][] { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } })
+                    if (surfaceAtRoad.contains(((long) (c[0] + d[0]) << 32) ^ ((c[1] + d[1]) & 0xffffffffL))) {
+                        surfaceAtRoad.add(key);
+                        grew = true;
+                        break;
+                    }
+            }
+        }
+        List<String> offRoad = new ArrayList<>();
+        for (int[] c : surface)
+            if (!surfaceAtRoad.contains(((long) c[0] << 32) ^ (c[1] & 0xffffffffL)))
+                offRoad.add("surface " + c[0] + "," + c[1]);
+        for (int cx = -PLAN_RADIUS; cx <= PLAN_RADIUS; cx++)
+            for (int cz = -PLAN_RADIUS; cz <= PLAN_RADIUS; cz++)
+                if (lotAt(plan, cx, cz) instanceof me.daddychurchill.CityWorld.Plats.Urban.MultiStoreyCarParkLot m
+                        && !keyedAtRoad.contains(m.getConnectedKey()))
+                    offRoad.add("multi-storey " + cx + "," + cz);
+        report.put("carpark.offRoad", Integer.toString(offRoad.size()));
+        if (!offRoad.isEmpty())
+            fail("car parks with no road on any side: " + offRoad.subList(0, Math.min(8, offRoad.size())));
         report.put("carpark.multistorey", multiStorey.toString());
         report.put("carpark.multistorey.count", multiStoreyKeys.size() + " car parks, " + parking + " surface chunks");
         if (multiStorey.isEmpty())

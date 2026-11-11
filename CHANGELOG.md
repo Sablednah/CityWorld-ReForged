@@ -130,10 +130,18 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   and the north entrance is cut before the ramp's foot.
 - The diner schematic (`dinner`) is cropped from 17×17 to 16×16 — its outermost ring was a border of grass — so it
   fits one chunk instead of claiming four.
+- A district's car park (surface or multi-storey) is only ever picked for a chunk that fronts a road; two of the
+  owner's sat a chunk in from the street with no way to drive in. A multi-storey chunk joined to its neighbours cuts
+  no entrance on a side with no road.
+- The hotel's two lobby fountains spilled across the floor when placed (their falling water landed on the pool):
+  each is now a still sunken pool round a lit quartz spire.
+- The bank's car park opens straight onto the road beside what was a cyan patch (now the black of the rest): the
+  edge slabs there are gone and its sidecar's `Driveway` is that opening alone, so the kerb drops flat instead of ramping.
 
 ### Removed
 
 - The `IMC_eaglman13_home_entry` house schematic (the wrong size for its lot, and not the pack's style).
+- The `Randallsentry` house schematic (an old, oversized house that looked out of place in a modern city).
 
 ## 6.14.0
 

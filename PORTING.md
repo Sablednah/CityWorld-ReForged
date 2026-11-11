@@ -43,6 +43,38 @@ What remains is inherent: reach 3 at a 2 km spacing judges a ~14-cell square (28
 per world. `highways.reach` 1 judges 25. The judge itself (3 tries x ~40 exact columns) is untouched: changing it
 moves cities in 5.19–6.14 vanilla-land worlds.
 
+## ▶ Resume here — 2026-11-11 (later): car parks off the road, the hotel's fountains, the bank's edge, Randallsentry gone
+
+Four messages after the third look's deploy; on master, picked to the five lines, 1.20.1 deployed. Nothing pushed.
+
+1. **Car parks with no road beside them** (two screenshots, each a surface car park a chunk in from the street,
+   savanna and woodland). `UrbanContext.getBuilding` rolled a car park for ANY backfill chunk; the roads are laid
+   before the backfill, so the pick now rolls only where `PlatMap.frontsRoad(x, z)` (a road or roundabout on one of
+   the four sides, in platmap coordinates — a neighbour platmap's roads need no look, since a road row runs the whole
+   platmap and the chunk itself would be road). A flood-filled copy may still sit behind the picked chunk: it joins
+   through it (`ParkingLot.belongs`, a multi-storey's joined side), so `MultiStoreyCarParkLot`'s "no road: cut a south
+   entrance anyway" fallback now applies only to a chunk joined on no side (never, after the pick rule) — a copy
+   behind the road chunk cut an entrance into the verge. Self-test `carpark.offRoad` (every surface patch reaches a
+   road through adjacent surface chunks; every multi-storey key has a chunk at a road) fails on any.
+2. **The hotel's two lobby fountains flowed when placed.** `Hotel.schematic` (Midrise + Municipal, one file) held
+   each as a 3×3 ring of source water sunk in the floor (y0) round a glowstone pedestal, falling water (data 9/8)
+   at y1 and a source with level-1 spill at y2: falling water landing on a source spreads sideways, so it ran across
+   the lobby. Edited in the schematic bytes (scratchpad `tools/schem_patch.py`: patches `Blocks`/`Data` inside the
+   raw NBT so everything else is byte-identical; `schem_read.py` prints a box of id:data): y1/y2 water → air, y1
+   centre a quartz pillar (155:2), y2 centre an end rod up (198:1). The y0 ring stays (sources walled by the rim,
+   solid below): a still lit pool round a spire.
+3. **The bank's car park edge.** `chayats-bank.schematic` (Lowrise + Municipal) had a cyan wool patch (x 27–30,
+   z 25–30) at the car park's east edge, a grass verge (x 31, y0) and a row of stone slabs (x 31, y1, z 1–30, double
+   slab posts at z 0/16) along the whole east side, with `Driveway: east 1-30` — the slab row made the drive
+   "raised" and ramped the kerb along the whole edge. Now: cyan → black wool like the floor, the verge and slabs
+   beside it (z 25–30) → floor and air, and `Driveway: east 25-30` — only that opening drops the kerb, flat (no
+   block on the street+1 layer), the rest of the edge keeps the sidewalk.
+4. **`Randallsentry` removed** (owner: "an old too large house that looks out of place in new cityworld") — files
+   and its `index.txt` line; the two stale `IMC_eaglman13_home_entry` index lines from the second look went too
+   (the loader skips a listed file it cannot find, silently).
+
+Not measured in game: the bank's new opening and the hotel pool (the owner's look). Next: the owner's look, then 7.0.0.
+
 ## ▶ Resume here — 2026-11-11: the owner's third look — kerbs, ramps, car parks halved again, the diner cropped
 
 Four screenshots and two messages after the second look's deploy; all on master, picked to the five lines, 1.20.1
