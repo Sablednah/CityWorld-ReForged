@@ -128,6 +128,14 @@ Four messages after the third look's deploy; on master, picked to the five lines
    platmaps"; after: 1.21.1 placed it at chunk −47,2 with its blocks. **On 1.20.1/1.21.1, every `getCompound`/
    `getList` of an optional key needs a `contains` first.**
 
+8. **The owner's reworked `hotel.schem` and `graveyard.schem`** (evening, 2026-11-11: the hotel's pools and the
+   graveyard's water fixed by hand) replace the legacy `Hotel.schematic` (Midrise + Municipal) and
+   `graveyard_knife.schematic` (Park + Farm) under the SAME names, sidecars (`GroundLevelY` unchanged: the new
+   files' bottom layers match the old ones') and index entries, so nothing else moves. Hotel 32×48×32 → 32×32×32,
+   graveyard 32×29×32 → 32×14×32. Master `5c9aa344`, picked (heads mc1.20.1 `f3055347`, mc1.21.1 `f96312a1`, mc26.1
+   `6b8f3803`, mc26.2 `a2ab0a8b`, mc26.3 `e95837ae`); six self-tests PASS (59 loaded) + `--compare` agrees; 1.20.1
+   deployed `DEPLOYED-f3055347` (the jar carries all four `.schem` copies). Nothing pushed.
+
 Gates for the afternoon's round (kerb mouths, stairwell, lamp posts, Sponge v2): master `709d0423` `833e128a`
 `ed195d5a` `dcd7db56`, picked to the five lines (heads mc1.20.1 `2ed94d77`, mc1.21.1 `6c207b24`, mc26.1 `57989b3a`,
 mc26.2 `d8a31446`, mc26.3 `4abdc189`; the Sponge fix is branch-only on 1.20.1/1.21.1); six self-tests PASS on

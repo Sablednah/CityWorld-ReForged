@@ -30,7 +30,9 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   moved out of the east entrance; **on 1.20.1/1.21.1 `getCompound` of a missing key answers EMPTY, not absent**, so
   a Sponge v2 `.schem` read 0×0×0 there (branch-only fix; self-test `schematics.loaded`; memory
   `cityworld-old-nbt-api-empty-not-absent.md`). Master `dcd7db56`, six self-tests PASS + `--compare`, 1.20.1
-  deployed `DEPLOYED-2ed94d77`. Owner: Midwich pastes and appears. Nothing pushed. Next: the owner's look, then 7.0.0.
+  deployed `DEPLOYED-2ed94d77`. Owner: Midwich pastes and appears. Then the owner's reworked hotel + graveyard `.schem`
+  replaced the legacy files under the same names (item 8; master `5c9aa344`, 1.20.1 `DEPLOYED-f3055347`, six PASS +
+  `--compare`). Nothing pushed. Next: the owner's look, then 7.0.0.
 
 **▶ Resume here (2026-11-11 later): the owner's fourth look — car parks off the road, hotel fountains, bank edge, midwich.**
 - PORTING.md "▶ Resume here — 2026-11-11 (later)" has it: a car park is picked only for a chunk that fronts a road
