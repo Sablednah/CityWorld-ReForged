@@ -2,7 +2,7 @@
 GroundLevelY: 6
 FlipableX: false
 FlipableZ: false
-OddsOfAppearance: 0.02
+OddsOfAppearance: 0.1
 BroadcastLocation: true
 Decayable: false
 Title: "Midwich"
