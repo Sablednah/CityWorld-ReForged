@@ -147,8 +147,9 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   Measured on one seed over 40×40 platmaps: 3 → 5 schools at one in seventeen, so about 8 at one in ten.
 - A car park's mouth is cleared to the road: the kerb drop walked only the straight three-cell sidewalk, so a
   bend's rounded corner (one cell further in) and the sidewalk's corner square stood in the opening as a stepped
-  kerb with a one-block strip of road behind it. Each column now clears as deep as the sidewalk goes, and an
-  opening that reaches the sidewalk's end takes the corner square beside it.
+  kerb with a one-block strip of road behind it. The sidewalk strip in the opening now goes whatever stands on it
+  (a lamp post too), a bend's rounded corner with it, and an opening that reaches the sidewalk's end takes the
+  corner square beside it.
 - The multi-storey car park's stairwell (a wall column and ladder on the east edge) stood in the middle of the east
   entrance; it is at the south strip's end now.
 - On 1.20.1 and 1.21.1 a Sponge version-2 `.schem` (WorldEdit's default) loaded as 0×0×0 — the reader asked for the
