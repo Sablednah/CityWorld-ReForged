@@ -83,8 +83,10 @@ deployed. Nothing pushed.
    border: the diner was the only one a trim brings down a chunk (Randallsentry 27×22 in 2×2 at 58% and the
    condo 39×64 in 3×4 are building, not border).
 
-Gates: master self-test PASS (count + defaults check), 1.20.1 self-test PASS on the picked head, five lines
-compile, 1.20.1 built and deployed. Next: the owner's look, then 7.0.0.
+Gates: master self-test PASS (count + defaults check), 1.20.1 and 1.21.1 self-tests PASS on the picked heads
+(`Templates.solidCells` is per-line NBT: `getList(name, type)`/`getCompound`/`getInt` on 1.20.1 and 1.21.1, folded
+into their pick commits `5e0f1407`/`04661f6c`; 26.x take master's), five lines compile, 1.20.1 built and deployed
+`DEPLOYED-5e0f1407` (its plan: 38 car parks / 184 surface chunks). Next: the owner's look, then 7.0.0.
 
 ## ▶ Resume here — 2026-11-10 late: the owner's second look — rarer car parks, fuel, UCM roads with Macaw's signs
 
