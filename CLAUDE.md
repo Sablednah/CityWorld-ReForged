@@ -24,6 +24,14 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-11 afternoon): car-park mouths, the stairwell, lamp posts, and Midwich 0×0×0 on 1.20.1.**
+- PORTING.md "▶ Resume here — 2026-11-11 (later)" items 6–7: a car park's mouth clears the whole sidewalk strip
+  (lamp posts, a bend's rounded corner, the corner square) to the lamp head's height; the multi-storey stairwell
+  moved out of the east entrance; **on 1.20.1/1.21.1 `getCompound` of a missing key answers EMPTY, not absent**, so
+  a Sponge v2 `.schem` read 0×0×0 there (branch-only fix; self-test `schematics.loaded`; memory
+  `cityworld-old-nbt-api-empty-not-absent.md`). Master `dcd7db56`, six self-tests PASS + `--compare`, 1.20.1
+  deployed `DEPLOYED-2ed94d77`. Owner: Midwich pastes and appears. Nothing pushed. Next: the owner's look, then 7.0.0.
+
 **▶ Resume here (2026-11-11 later): the owner's fourth look — car parks off the road, hotel fountains, bank edge, midwich.**
 - PORTING.md "▶ Resume here — 2026-11-11 (later)" has it: a car park is picked only for a chunk that fronts a road
   (`PlatMap.frontsRoad`; self-test `carpark.offRoad`); the hotel's fountains are still pools (schematic bytes

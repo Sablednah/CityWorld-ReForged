@@ -107,7 +107,16 @@ Four messages after the third look's deploy; on master, picked to the five lines
    columns stop at the square so the sidewalk along the OTHER edge is untouched). Probed on master
    (`find:ParkingLot`, radius 4, `region_slice.py plan 65`): the road north of a surface car park clears its
    whole south sidewalk, corner squares included; one smooth-stone cell left at depth 2 is a lamp post's base.
-   The bend case is by construction, not probed (no bend-adjacent car park near the dev spawn).
+   The bend case is by construction, not probed (no bend-adjacent car park near the dev spawn). Then two more
+   looks the same afternoon: *"pillar gets in way of carpark"* — the multi-storey's stairwell column (east edge,
+   z 8) stood in the middle of the east entrance cut (z 7–8): moved to the south strip's end (z 14), clear of the
+   ramp, the entrance and the corner pillar (`833e128a`); and *"still some of the curve in the way ... declare the
+   block with the pillar to drop its curb"* + *"definitely need lamp posts clearing"* — the per-column walk
+   stopped at the first non-pavement cell, so a lamp post's base (corner square, (2,2)) kept everything behind it
+   as a stepped remnant. The sidewalk strip in an opening now goes whatever stands on it, cleared to the lamp
+   head's height (`street + lightpostHeight + 4`), and only the cell after the strip is tested (a bend's
+   rounded corner) (`ed195d5a`, `dcd7db56`). Lamp posts are drawn BEFORE `dropKerbs` in `generateActualBlocks`,
+   so the drop sees them.
 7. **"trying to find a midwich and can't ... pasted midwich 0x0x0."** On 1.20.1 and 1.21.1 — the lines on the OLD
    NBT API — `SpongeSchematic.read` did `tag.getCompound("Schematic")` for v3's wrapper, and there a missing key
    answers an EMPTY compound, not absent: a v2 file (WorldEdit's default, the owner's `midwitch.schem`) read as
@@ -118,6 +127,13 @@ Four messages after the third look's deploy; on master, picked to the five lines
    no size) on every line. Control: 1.20.1 probe `find:schematic:midwich` → "no schematic:midwich planned within 20
    platmaps"; after: 1.21.1 placed it at chunk −47,2 with its blocks. **On 1.20.1/1.21.1, every `getCompound`/
    `getList` of an optional key needs a `contains` first.**
+
+Gates for the afternoon's round (kerb mouths, stairwell, lamp posts, Sponge v2): master `709d0423` `833e128a`
+`ed195d5a` `dcd7db56`, picked to the five lines (heads mc1.20.1 `2ed94d77`, mc1.21.1 `6c207b24`, mc26.1 `57989b3a`,
+mc26.2 `d8a31446`, mc26.3 `4abdc189`; the Sponge fix is branch-only on 1.20.1/1.21.1); six self-tests PASS on
+those heads (`schematics.loaded` 59 everywhere, `carpark.offRoad` 0) + `--compare` "All versions agree"; 1.20.1
+built reobfuscated (15 SRG names) and deployed `DEPLOYED-2ed94d77`. Owner: Midwich pastes and appears in the wild.
+Nothing pushed.
 
 Gates: master `1ad68e18` + `9d88e056` (docs `87230a4c`), picked to the five lines (mc1.20.1 `6be779f6`, mc1.21.1
 `2641b0dc`, mc26.1 `f3282213`, mc26.2 `beaf5d46`, mc26.3 `defcf5a8`); six self-tests PASS (`carpark.offRoad` 0 on
