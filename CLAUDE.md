@@ -32,7 +32,8 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   placed** because schematics rolled in index order after five likelier 2×2s, the subway station went first,
   and `PlatMap.getOddsGenerator()` is re-seeded identically per call so the head of the clip list shared its roll
   with the hospital campus — biggest first, schematics before the station, clips on a salted stream, a Midrise copy,
-  odds 0.1, the owner's fixed `midwich.schem`; census probe `survey:schematics`. Nothing pushed.
+  odds 0.1, the owner's fixed `midwich.schem`; census probe `survey:schematics`. Master `1ad68e18` `9d88e056`, picked
+  to the five lines, six self-tests PASS + `--compare`, 1.20.1 deployed `DEPLOYED-6be779f6`. Nothing pushed.
 
 **▶ Resume here (2026-11-11): the owner's third look — kerbs by the build's own floor, ramps off the wall, car parks really halved, the diner 16×16.**
 - PORTING.md "▶ Resume here — 2026-11-11" has it: a schematic's kerb is dropped flat when its drive is at road level

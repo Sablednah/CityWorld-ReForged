@@ -97,6 +97,11 @@ Four messages after the third look's deploy; on master, picked to the five lines
    `.schematic` copies as `midwich.schem` (+ `midwich.schem.yml`, index lines). `scripts/schem_sponge.py`
    dumps a Sponge file (size, offset, per-layer blocks, fluids).
 
+Gates: master `1ad68e18` + `9d88e056` (docs `87230a4c`), picked to the five lines (mc1.20.1 `6be779f6`, mc1.21.1
+`2641b0dc`, mc26.1 `f3282213`, mc26.2 `beaf5d46`, mc26.3 `defcf5a8`); six self-tests PASS (`carpark.offRoad` 0 on
+each) and `--compare` agrees on the fresh reports; 1.20.1 built from `build/libs` (SRG names in the generator) and
+deployed `DEPLOYED-6be779f6`. Nothing pushed.
+
 Not measured in game: the bank's new opening, the hotel pool, the new midwich (the owner's look). Next: the owner's look, then 7.0.0.
 
 ## ▶ Resume here — 2026-11-11: the owner's third look — kerbs, ramps, car parks halved again, the diner cropped
