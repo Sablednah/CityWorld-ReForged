@@ -59,8 +59,8 @@ Four messages after the third look's deploy; on master, picked to the five lines
 2. **The hotel's two lobby fountains flowed when placed.** `Hotel.schematic` (Midrise + Municipal, one file) held
    each as a 3×3 ring of source water sunk in the floor (y0) round a glowstone pedestal, falling water (data 9/8)
    at y1 and a source with level-1 spill at y2: falling water landing on a source spreads sideways, so it ran across
-   the lobby. Edited in the schematic bytes (scratchpad `tools/schem_patch.py`: patches `Blocks`/`Data` inside the
-   raw NBT so everything else is byte-identical; `schem_read.py` prints a box of id:data): y1/y2 water → air, y1
+   the lobby. Edited in the schematic bytes (`scripts/schem_patch.py`: patches `Blocks`/`Data` inside the
+   raw NBT so everything else is byte-identical; `scripts/schem_read.py` prints a box of id:data): y1/y2 water → air, y1
    centre a quartz pillar (155:2), y2 centre an end rod up (198:1). The y0 ring stays (sources walled by the rim,
    solid below): a still lit pool round a spire.
 3. **The bank's car park edge.** `chayats-bank.schematic` (Lowrise + Municipal) had a cyan wool patch (x 27–30,
@@ -94,7 +94,7 @@ Four messages after the third look's deploy; on master, picked to the five lines
    Municipal 0; Condo 6 → 13 too). Shipped at `OddsOfAppearance: 0.1` in Lowrise/Midrise/Municipal, ≈8 per 6.4 km
    square. The owner's fixed `midwitch.schem` (Sponge v2, DataVersion 3465, 64×25×64 — the same 25 layers as the
    old file's y0–24, so `GroundLevelY: 6` holds; the old water column fell from the tower top) replaces the three
-   `.schematic` copies as `midwich.schem` (+ `midwich.schem.yml`, index lines). Scratchpad `tools/schem_sponge.py`
+   `.schematic` copies as `midwich.schem` (+ `midwich.schem.yml`, index lines). `scripts/schem_sponge.py`
    dumps a Sponge file (size, offset, per-layer blocks, fluids).
 
 Not measured in game: the bank's new opening, the hotel pool, the new midwich (the owner's look). Next: the owner's look, then 7.0.0.

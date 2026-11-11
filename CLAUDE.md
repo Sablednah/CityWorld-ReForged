@@ -27,7 +27,7 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 **▶ Resume here (2026-11-11 later): the owner's fourth look — car parks off the road, hotel fountains, bank edge, midwich.**
 - PORTING.md "▶ Resume here — 2026-11-11 (later)" has it: a car park is picked only for a chunk that fronts a road
   (`PlatMap.frontsRoad`; self-test `carpark.offRoad`); the hotel's fountains are still pools (schematic bytes
-  patched, scratchpad `tools/schem_patch.py`); the bank's east edge opens beside the old cyan patch with
+  patched, `scripts/schem_patch.py`); the bank's east edge opens beside the old cyan patch with
   `Driveway: east 25-30` (a Driveway is the OPENING, not the edge); `Randallsentry` removed; **midwich never
   placed** because schematics rolled in index order after five likelier 2×2s, the subway station went first,
   and `PlatMap.getOddsGenerator()` is re-seeded identically per call so the head of the clip list shared its roll
