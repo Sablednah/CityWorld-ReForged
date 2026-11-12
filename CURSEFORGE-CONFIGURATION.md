@@ -230,6 +230,12 @@ The other sets you can name the same way: `minecraft:pillager_outposts`, `minecr
 `minecraft:ocean_ruins`, `minecraft:buried_treasures`, `minecraft:ruined_portals`,
 `minecraft:trail_ruins`, `minecraft:nether_fossils`.
 
+**Archaeology (suspicious sand and gravel) comes only through vanilla's structures**: CityWorld never places those
+blocks itself. On CityWorld's own land the default sets have none, so allow `minecraft:desert_pyramids`,
+`minecraft:trail_ruins` and `minecraft:ocean_ruins` to get them; a world with deep oceans (7.0) already has the
+ocean ruins, a vanilla-land world has every set, and a desert well (a vanilla feature, placed when **Wild plants**
+lets vanilla decorate the wild) carries its own.
+
 **What to expect.** An allowed structure is not simply dropped on top of the city. CityWorld reserves
 ground around it so streets and buildings plan *around* it, and bends the terrain under each piece so
 it sits in the land — measured on a fixed seed at 745 of 745 columns resting exactly on the block their

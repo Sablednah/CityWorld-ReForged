@@ -142,6 +142,17 @@ spawn and pole-sign registries; +97 config lines: `cities.oceans`, `cities.highw
 `roads.vehicles`, `naming.place*`). **The owner pastes `CURSEFORGE.md`** (7.0.0 headline) and moves ZARP to 7.0.0
 through the app when they choose.
 
+**After the release (2026-11-12):** 11 screenshots from the owner's 26.3 instance converted to optimised, descriptively
+named JPGs (`screengrabs/cityworld-*.jpg`); `CURSEFORGE.md` restructured so everything before 7.0.0 is folded into
+the feature sections (one headline, no per-version list) and then given a picture per section by raw GitHub URL;
+`README.md` brought to 7.0; the wiki gained **Examples** (`EXAMPLES.md`: thirteen one-thing-each recipes for modders,
+each claim checked against the code) and Building-Palettes the one-table reference "Everything a datapack can touch"
+(the coverage grep had found pools with no page: `loot/never`, `loot/food`, `decor/grim_*`, `fittings/atm_base`, the
+item tags, the orchard and nether-tree feature pools, `carve_cavern`, `structure_fit`). Master `6ceac9e5` `8064cd20`
+`bb5061d3`, wiki pushed. Asked and answered: CityWorld never places suspicious sand or gravel; they come only through
+vanilla's structures (ocean ruins in 7.0 deep oceans, every set on vanilla land, desert wells by wild decoration —
+the well not measured in a probe) — now a paragraph in CURSEFORGE-CONFIGURATION.md's structures section.
+
 8. **The owner's reworked `hotel.schem` and `graveyard.schem`** (evening, 2026-11-11: the hotel's pools and the
    graveyard's water fixed by hand) replace the legacy `Hotel.schematic` (Midrise + Municipal) and
    `graveyard_knife.schematic` (Park + Farm) under the SAME names, sidecars (`GroundLevelY` unchanged: the new

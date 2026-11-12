@@ -31,7 +31,9 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   the one-table reference of every registry, data map, tag family and loot hook — **add a new pool or registry
   there as well as in its own section.** `CURSEFORGE.md` embeds the 11 new `screengrabs/cityworld-*.jpg` by raw
   GitHub URL (owner: "work some appropriate images into the description - its a bit wordy"); README.md at 7.0.
-  Master `8064cd20`, wiki pushed. **The owner pastes `CURSEFORGE.md`** (with the images). Next: nothing queued.
+  Master `8064cd20` and the close-out commit, wiki pushed (+ an archaeology paragraph in the structures section:
+  CityWorld never places suspicious sand/gravel; only vanilla's structures do). **The owner pastes `CURSEFORGE.md`**
+  (with the images). Next: nothing queued — the owner's playtest is the queue.
 
 **▶ Resume here (2026-11-12): v7.0.0 is RELEASED — deep oceans, highways, car parks and real cars.**
 - Tag `v7.0.0` at the master bump `e552a48e` (branch bumps 4d388bfe/07a78094/550e10c1/0e7e495d/3d75e448), CurseForge
