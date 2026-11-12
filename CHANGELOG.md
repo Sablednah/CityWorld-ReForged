@@ -5,6 +5,18 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 7.1.0 (unreleased)
+
+### Added
+
+- **Cobblemon: villages in the wild, and Cobblemon's own structures** (GitHub issue #6). With Cobblemon installed,
+  vanilla's villages — which carry Cobblemon's Pokémon Centers and berry farms — and Cobblemon's ten structure sets
+  (habitats, ruins, Gimmighoul towers, fishing boats, shipwreck coves) are placed on CityWorld land, kept to the wild.
+  Without Cobblemon nothing changes. The mechanism is new and open to packs: the data map
+  `data/cityworld/data_maps/worldgen/structure_set/placed_sets.json` places a structure set under a
+  `neoforge:conditions` guard (`allow`, `wild`), which a `#cityworld:allowed` tag entry cannot carry. The Structures
+  page shows the result as the set's default tick. Self-test `placedSets`.
+
 ## 7.0.0 — 2026-11-12
 
 ### Added

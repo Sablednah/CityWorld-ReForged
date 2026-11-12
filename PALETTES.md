@@ -881,6 +881,7 @@ merges with CityWorld's on NeoForge and **replaces** it on 1.20.1):
 | `block/unlit.json` | what a light becomes with **Working lights** off | [Unlit lights](#unlit-lights) |
 | `block/furniture.json` | which way a furniture block faces, and its multi-block layout | [Mod authors](#mod-authors-supporting-cityworld-from-your-side) |
 | `worldgen/biome/ground.json` | a biome's surface and subsurface block | [Biome ground](#biome-ground) |
+| `worldgen/structure_set/placed_sets.json` | a structure set placed under a condition (each entry carries `neoforge:conditions`): `allow` (default true; false takes a tagged set away), `wild` (keep it out of the city). Ships vanilla's villages and Cobblemon's ten sets, guarded on Cobblemon | [Configuring CityWorld → structures](Configuring-CityWorld#structures--which-vanilla-and-mod-structures-this-world-places) |
 | `worldgen/structure/structure_fit.json` | how the ground meets a vanilla or modded structure: `clearance` (blocks of flat ground kept round it), `beard` (ground built up to its floor), `shave` (ground cut down to its box), `reserve` (keep the city off the chunks its surfacing pieces touch — for an underground structure with an entrance that comes up through the ground) | [Configuring CityWorld → structures](Configuring-CityWorld#structures--which-vanilla-and-mod-structures-this-world-places) |
 
 **Block tags** — `data/cityworld/tags/block/<family>/<name>.json`:

@@ -347,6 +347,24 @@ shapes the ground to meet it.
 { "replace": false, "values": [ { "id": "arboria:lake_common", "required": false } ] }
 ```
 
+**Place a set only when another mod is installed:** `data/cityworld/data_maps/worldgen/structure_set/placed_sets.json`.
+A tag entry cannot carry a condition; a data map entry can. This is how CityWorld itself places vanilla's villages
+(with their Pokémon Centers) and Cobblemon's own structures when Cobblemon is present, in the wild only:
+
+```json
+{
+  "values": {
+    "minecraft:villages": {
+      "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }],
+      "value": { "allow": true, "wild": true }
+    }
+  }
+}
+```
+
+`allow` defaults to true (`false` takes a tagged set away while the mod is present); `wild` keeps the set out of the
+city's platmaps, like `wilderness_only`. The Structures page shows the result as the set's default tick.
+
 **Tell CityWorld how the ground should meet your structure:** `data/cityworld/data_maps/worldgen/structure/structure_fit.json`
 
 ```json

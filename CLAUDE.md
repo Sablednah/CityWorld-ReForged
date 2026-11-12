@@ -24,6 +24,23 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-12 evening): Cobblemon (issue #6) surveyed and planned — `COBBLEMON-PLAN.md`.**
+- Cobblemon 1.8.4 read from its GitLab source; test bed = Cobblemon + Kotlin for Forge in `mc1.21.1/run/mods`
+  (git-ignored; copies in the session scratchpad; Modrinth `cobblemon` 1.8.4NF, `kotlin-for-forge` 5.12.0). Self-test
+  PASS with it. Measured: apricorn wood already in buildings (vanilla planks tag), wild land gets its trees/berries/
+  mints/roots, ores + type gems everywhere, **0 of its 67 structures in 14,203 chunks** because its ten sets are not in
+  `#cityworld:allowed`. No gym exists in the mod; its Pokémon Centers are village houses; the nurse is villager
+  profession `cobblemon:nurse`. Village-only spawns need a structure start → the `SpawningInfluenceDetector` seam.
+- **Then (same evening), the owner's ask "if Cobblemon is installed, villages in the wild":** new data map
+  `cityworld:placed_sets` on structure sets (`CityWorldDataMaps.PlacedSet {allow, wild}`, entries carry
+  `neoforge:conditions mod_loaded`), read by `onlyAllowed`, the wilderness-only set and the Structures page's default
+  tick; ships villages + Cobblemon's ten sets, all wild, guarded on `cobblemon`. Self-test `checkPlacedSets`.
+  His `/checkspawns` walk (read from the instance's `latest.log`: the client logs chat) is in `COBBLEMON-PLAN.md`
+  §7: streets read as jungle/desert temples (building walls), the sewer is a `derelict` habitat already, parks are
+  fine, **no urban species anywhere** (needs natural ground within 4 blocks of concrete). ⚠ 1.20.1's hand-rolled
+  data-map loader must evaluate the `mod_loaded` condition for this map (villages are vanilla's — the key always
+  exists). Next: the owner's look at villages on 1.21.1, then Stage 2 (Center lot, gym, spawn influence).
+
 **▶ Resume here (2026-11-12 later): the wiki has an Examples page, the CurseForge page has pictures, the README is at 7.0.**
 - `EXAMPLES.md` → wiki **Examples** (emit line + Home "Start here" link in `scripts/gen-wiki.sh`): complete
   one-thing-each recipes for modders; every claim in it was checked against the code or an existing doc (there is NO

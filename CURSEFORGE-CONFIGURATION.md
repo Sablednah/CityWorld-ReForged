@@ -330,7 +330,7 @@ Two things here are **datapack tags, not settings**, because they are lists of i
 
 | Tag | What it decides |
 |---|---|
-| `#cityworld:allowed` (structure sets) | Which vanilla and mod structures generate. Ships as strongholds, trial chambers, ancient cities, Nether fortresses and bastions, and End cities, plus optional entries for Cataclysm, Dungeon Crawl, Battle Towers and Alex's Caves (used only when those mods are installed). Add another mod's structure set here and it will generate; **an absent or empty tag means none**, so a stripped datapack falls back to CityWorld-only worldgen rather than letting villages loose. |
+| `#cityworld:allowed` (structure sets) | Which vanilla and mod structures generate. Ships as strongholds, trial chambers, ancient cities, Nether fortresses and bastions, and End cities, plus optional entries for Cataclysm, Dungeon Crawl, Battle Towers and Alex's Caves (used only when those mods are installed). Add another mod's structure set here and it will generate; **an absent or empty tag means none**, so a stripped datapack falls back to CityWorld-only worldgen rather than letting villages loose. A set that should generate only when another mod is installed goes in the `cityworld:placed_sets` data map instead (see `structures` below): CityWorld ships vanilla's villages there for Cobblemon. |
 | `#cityworld:cave_pool` (biomes) | Which cave biomes the underground draws from. Ships as deep dark, lush, dripstone, and sulfur caves (Minecraft 26.2+, marked optional so it is simply absent on older versions), plus optional Biomes O' Plenty and Alex's Caves cave biomes. Add a modded cave biome here and it will appear. |
 
 > **Adding another mod's structures — and telling whether it worked.**
@@ -415,7 +415,15 @@ what the Structures page of the Customize screen writes.
 | `wildernessOnly` | `false` | Keep every placed set to the wild: a structure never starts in a platmap the city plans to build (a district of any kind, farms and outland included) — so a pond or ruin structure cannot cut a city in two. Strongholds are never affected: the eyes of ender point at their ring whether or not one stands. Set by set instead, a datapack tags `#cityworld:wilderness_only` (structure sets; Arboria's lakes ship in it). |
 
 Ids are sets (`data/<namespace>/worldgen/structure_set/`), not single structures. An id whose mod is not installed
-is ignored. A structure still only appears where its biomes exist. The Nether and the End follow the overworld's
+is ignored.
+
+**With Cobblemon installed**, vanilla's villages (Cobblemon's Pokémon Centers are village houses) and Cobblemon's own
+ten structure sets (habitats, ruins, Gimmighoul towers, fishing boats, shipwreck coves) are placed as well, and kept
+to the wild. That comes from the data map `data/cityworld/data_maps/worldgen/structure_set/placed_sets.json`, whose
+entries carry a `neoforge:conditions` `mod_loaded` guard — the thing a tag entry cannot say. A pack can add its own
+entries: `"minecraft:woodland_mansions": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "mymod" }],
+"value": { "allow": true, "wild": true } }` (`allow` defaults true, `false` takes a tagged set away; `wild` defaults
+false). The Structures page shows the result as the set's default tick, and `allow`/`deny` above still win. A structure still only appears where its biomes exist. The Nether and the End follow the overworld's
 lists. Cities keep clear of whatever is placed.
 
 ### `subways` — a metro under the city (MODERN and APOCALYPSE; forced off elsewhere)
