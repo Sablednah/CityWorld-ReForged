@@ -2971,7 +2971,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             for (Holder<StructureSet> set : state.possibleStructureSets())
                 // never a concentric-ring set (strongholds): vanilla's /locate and the eyes of ender answer from the
                 // ring layout whether or not the start exists, so removing one would send a player to nothing
-                if ((choice.wildernessOnly() || tagged.contains(set)) && !(set.value().placement()
+                if ((choice.wildernessOnly() || tagged.contains(set)
+                        || me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.wildByData(set)) && !(set.value().placement()
                         instanceof net.minecraft.world.level.levelgen.structure.placement.ConcentricRingsStructurePlacement)) {
                     set.unwrapKey().ifPresent(keys::add);
                     for (StructureSet.StructureSelectionEntry e : set.value().structures())
@@ -2982,7 +2983,19 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             wildernessOnlyStructures = java.util.Set.copyOf(kept);
             if (!kept.isEmpty())
                 me.daddychurchill.CityWorld.CityWorldMod.LOGGER.info("CityWorld: {} structure set(s) keep to the wild{}",
-                        keys.size(), choice.wildernessOnly() ? " (structures.wildernessOnly)" : " (#cityworld:wilderness_only)");
+                        keys.size(), choice.wildernessOnly() ? " (structures.wildernessOnly)"
+                                : " (#cityworld:wilderness_only, cityworld:placed_sets)");
+            // what the data map decided, once per world: a server log should say where villages came from
+            java.util.List<String> byData = new java.util.ArrayList<>();
+            for (Holder<StructureSet> set : state.possibleStructureSets()) {
+                var placed = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.placedSetFor(set);
+                if (placed != null && placed.allow() && !tagged.contains(set))
+                    set.unwrapKey().ifPresent(k -> byData.add(k.identifier().toString()));
+            }
+            if (!byData.isEmpty())
+                me.daddychurchill.CityWorld.CityWorldMod.LOGGER.info(
+                        "CityWorld: {} structure set(s) placed by the cityworld:placed_sets data map ({}): {}",
+                        byData.size(), environment.orElse("overworld"), byData);
         }
         if (!choice.allow().isEmpty() || !choice.deny().isEmpty()) {
             // What a server owner needs to see once: the lists were read, and which ids name nothing here
@@ -3070,8 +3083,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 .<HolderSet<StructureSet>>map(named -> named)
                 .orElseGet(HolderSet::direct); // absent tag -> empty -> no vanilla structures
         // The world's own allow/deny lists (settings "structures") overrule the tag, set by set.
+        // The cityworld:placed_sets data map adds to the tag (or takes from it) under a condition — villages
+        // when Cobblemon is installed (CityWorldDataMaps.PlacedSet); the world's own lists still win.
         java.util.function.Predicate<Holder.Reference<StructureSet>> allowed = set -> choice
-                .allows(set.key().identifier().toString(), everything || tagged.contains(set));
+                .allows(set.key().identifier().toString(), me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps
+                        .placedByData(set, everything || tagged.contains(set)));
         return new HolderLookup<>() {
             @Override
             public Stream<Holder.Reference<StructureSet>> listElements() {
