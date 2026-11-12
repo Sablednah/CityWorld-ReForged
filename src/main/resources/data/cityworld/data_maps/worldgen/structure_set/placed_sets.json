@@ -1,0 +1,17 @@
+{
+  "replace": false,
+  "values": {
+    "minecraft:villages":                   { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "allow": true, "wild": true } },
+
+    "cobblemon:habitats/habitats":          { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "allow": true, "wild": true } },
+    "cobblemon:ruins/avoid_villages":       { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "allow": true, "wild": true } },
+    "cobblemon:ruins/avoid_jungle_temples": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "allow": true, "wild": true } },
+    "cobblemon:ruins/avoid_trial_chambers": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "allow": true, "wild": true } },
+    "cobblemon:ruins/avoid_witch_huts":     { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "allow": true, "wild": true } },
+    "cobblemon:ruins/avoid_woodland_mansions": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "allow": true, "wild": true } },
+    "cobblemon:ruins/avoid_ocean_monuments": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "allow": true, "wild": true } },
+    "cobblemon:ruins/gimmi_towers":         { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "allow": true, "wild": true } },
+    "cobblemon:fishing_boats":              { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "allow": true, "wild": true } },
+    "cobblemon:shipwreck_coves":            { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "allow": true, "wild": true } }
+  }
+}
