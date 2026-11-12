@@ -24,6 +24,14 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-12): v7.0.0 is RELEASED — deep oceans, highways, car parks and real cars.**
+- Tag `v7.0.0` at the master bump `e552a48e` (branch bumps 4d388bfe/07a78094/550e10c1/0e7e495d/3d75e448), CurseForge
+  9574494–9574499, fleet `DEPLOYED-v7.0.0` on 11 (ZARP opts out), wiki pushed. Gates: six self-tests PASS +
+  `--compare`, CI 43228577361, scan 0 after the positive, 1.20.1 SRG. **The owner pastes `CURSEFORGE.md`** (7.0.0
+  headline, with the Macaw's Roads + Ultimate Car Mod line) and moves ZARP to 7.0.0 in the app when they choose.
+  PORTING.md "▶ Resume here — 2026-11-11 (later)" has the release record. Next: nothing queued — the owner's playtest
+  is the queue (`BUILDING-DATAPACKS-PLAN.md` and the constants-as-settings sweep are the standing to-dos).
+
 **▶ Resume here (2026-11-11 afternoon): car-park mouths, the stairwell, lamp posts, and Midwich 0×0×0 on 1.20.1.**
 - PORTING.md "▶ Resume here — 2026-11-11 (later)" items 6–7: a car park's mouth clears the whole sidewalk strip
   (lamp posts, a bend's rounded corner, the corner square) to the lamp head's height; the multi-storey stairwell

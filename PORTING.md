@@ -128,6 +128,20 @@ Four messages after the third look's deploy; on master, picked to the five lines
    platmaps"; after: 1.21.1 placed it at chunk −47,2 with its blocks. **On 1.20.1/1.21.1, every `getCompound`/
    `getList` of an optional key needs a `contains` first.**
 
+**Released 2026-11-12 as v7.0.0** on all six lines, on the owner's go ("ok good to go - cut a release") after
+their look at 1.20.1 and the fleet carrying every line's head: tag `v7.0.0` at the master bump `e552a48e`
+(branch bumps mc1.20.1 `4d388bfe`, mc1.21.1 `07a78094`, mc26.1 `550e10c1`, mc26.2 `0e7e495d`, mc26.3
+`3d75e448`), docs `cf51cad9` (CHANGELOG dated with the six fixes under Fixed; CURSEFORGE.md 7.0.0 headline with
+the owner's "Macaw's Roads and Streets works well with Ultimate Car Mod" line, 6.12.0 folded into Other recent
+changes; WEBSITE.md handover). Gates: six self-tests PASS + `--compare` on the pre-bump heads, CI 43228577361
+green on the bump heads (six lines + same-seed), scan_jar 0/0/0 on all six after the synthetic positive read 2/2,
+1.20.1 SRG 15 on the generator (jar from `build/libs`). GitHub release with the six jars; CurseForge run
+43232247155: files 9574494 (1.20.1), 9574495 (1.21.1), 9574496 (1.21.11), 9574497 (26.1.2), 9574498 (26.2),
+9574499 (26.3). Fleet `DEPLOYED-v7.0.0` on 11 (ZARP opts out). Wiki pushed (+195 palette lines: the vehicle,
+spawn and pole-sign registries; +97 config lines: `cities.oceans`, `cities.highways`, `roads.carParks`,
+`roads.vehicles`, `naming.place*`). **The owner pastes `CURSEFORGE.md`** (7.0.0 headline) and moves ZARP to 7.0.0
+through the app when they choose.
+
 8. **The owner's reworked `hotel.schem` and `graveyard.schem`** (evening, 2026-11-11: the hotel's pools and the
    graveyard's water fixed by hand) replace the legacy `Hotel.schematic` (Midrise + Municipal) and
    `graveyard_knife.schematic` (Park + Farm) under the SAME names, sidecars (`GroundLevelY` unchanged: the new
