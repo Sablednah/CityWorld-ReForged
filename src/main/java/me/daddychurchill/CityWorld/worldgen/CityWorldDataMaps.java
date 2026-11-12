@@ -240,6 +240,77 @@ public final class CityWorldDataMaps {
         return fit != null && fit.shave();
     }
 
+    /**
+     * A structure SET placed by data, with a condition — what {@code #cityworld:allowed} cannot say. A tag entry
+     * is unconditional: it can hold a mod's own set (harmless when the mod is absent: the id names nothing), but
+     * it cannot say "villages, only when Cobblemon is installed" (GitHub issue #6: Cobblemon's Pokémon Centers are
+     * village houses, so a Cobblemon world wants vanilla's villages in CityWorld's wild). A data map's entries carry
+     * {@code neoforge:conditions}, so this one can. File:
+     * {@code data/cityworld/data_maps/worldgen/structure_set/placed_sets.json}, keyed by structure-set id.
+     *
+     * <p><b>allow</b> (default {@code true}) — the set is placed as if it were in {@code #cityworld:allowed};
+     * {@code false} takes a tagged set away. The world's own {@code structures} allow/deny lists still win, and the
+     * Customize screen's Structures page shows the result as the set's default tick.
+     * <b>wild</b> (default {@code false}) — the set also keeps to the wild, as if tagged
+     * {@code #cityworld:wilderness_only}: a village may not start in a platmap the city plans to build.
+     *
+     * <p>The 1.20.1 Forge line reads this file with its hand-rolled loader, which evaluates the
+     * {@code mod_loaded} conditions itself (the keys are vanilla's, so "not in the registry" cannot stand in for
+     * "mod absent" as it does for {@code structure_fit}).
+     */
+    public record PlacedSet(boolean allow, boolean wild) {
+
+        public static final Codec<PlacedSet> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.BOOL.optionalFieldOf("allow", true).forGetter(PlacedSet::allow),
+                Codec.BOOL.optionalFieldOf("wild", false).forGetter(PlacedSet::wild)
+        ).apply(i, PlacedSet::new));
+    }
+
+    public static final DataMapType<net.minecraft.world.level.levelgen.structure.StructureSet, PlacedSet>
+            PLACED_SETS = DataMapType
+                    .builder(ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "placed_sets"),
+                            Registries.STRUCTURE_SET, PlacedSet.CODEC)
+                    .build();
+
+    /** The declaration for this structure set, or {@code null} if it has none (or its condition failed). */
+    public static @Nullable PlacedSet placedSetFor(
+            @Nullable Holder<net.minecraft.world.level.levelgen.structure.StructureSet> set) {
+        if (set instanceof Holder.Reference<net.minecraft.world.level.levelgen.structure.StructureSet> reference)
+            return reference.getData(PLACED_SETS);
+        return null;
+    }
+
+    /** Whether this set counts as allowed: its declaration's {@code allow} when it has one, else {@code inTag}. */
+    public static boolean placedByData(
+            @Nullable Holder<net.minecraft.world.level.levelgen.structure.StructureSet> set, boolean inTag) {
+        PlacedSet placed = placedSetFor(set);
+        return placed == null ? inTag : placed.allow();
+    }
+
+    /** Whether this set's declaration keeps it to the wild. */
+    public static boolean wildByData(
+            @Nullable Holder<net.minecraft.world.level.levelgen.structure.StructureSet> set) {
+        PlacedSet placed = placedSetFor(set);
+        return placed != null && placed.wild();
+    }
+
+    /** The structure sets declaring a placement here, sorted — for the probe and the self-test. */
+    public static java.util.List<String> declaredPlacedSets(net.minecraft.core.HolderLookup.RegistryLookup<
+            net.minecraft.world.level.levelgen.structure.StructureSet> lookup) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        try {
+            lookup.listElements().forEach(reference -> {
+                PlacedSet placed = reference.getData(PLACED_SETS);
+                if (placed != null)
+                    out.add(reference.key().location() + (placed.allow() ? "" : " (off)") + (placed.wild() ? " (wild)" : ""));
+            });
+        } catch (Throwable t) {
+            return java.util.List.of("<threw: " + t + ">");
+        }
+        java.util.Collections.sort(out);
+        return out;
+    }
+
     /** Registered from {@code CityWorldMod} on the mod event bus. */
     /**
      * A block CityWorld places swapped for another, everywhere it draws (owner, 2026-10-04, from a player's comment:
@@ -441,6 +512,7 @@ public final class CityWorldDataMaps {
         event.register(GROUND);
         event.register(FURNITURE);
         event.register(STRUCTURE_FIT);
+        event.register(PLACED_SETS);
     }
 
     /** The declared facing offset for a furniture block, or {@code 0} if it declares none. */

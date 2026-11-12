@@ -213,6 +213,7 @@ public final class CityWorldSelfTest {
             checkBiomeDepth(server);
             checkStructures(server);
             checkStructureChoices(server);
+            checkPlacedSets(server);
             checkDecorationAndSigns(server);
             checkSubways(server);
             checkMalls(server);
@@ -2079,6 +2080,54 @@ public final class CityWorldSelfTest {
             fail("strongholds switched off by the structure choice were still in the structure state");
         if (!placed.contains("minecraft:ancient_cities"))
             fail("a set the choice left alone (ancient cities) dropped out of the structure state: " + placed);
+    }
+
+    /**
+     * The {@code cityworld:placed_sets} data map: a structure set placed under a {@code mod_loaded} condition
+     * (villages, with Cobblemon installed — issue #6). With Cobblemon in {@code run/mods} (the 1.21.1 line's test
+     * bed) villages must reach the structure state AND keep to the wild; without it the entry must not have loaded
+     * at all, which is the condition doing its job, and villages are placed only if a dev datapack tags them.
+     */
+    private void checkPlacedSets(MinecraftServer server) {
+        ServerLevel level = server.overworld();
+        var sets = server.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE_SET);
+        var declared = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.declaredPlacedSets(sets);
+        report.put("placedSets.declared", declared.toString());
+        boolean cobblemon = net.neoforged.fml.ModList.get().isLoaded("cobblemon");
+        var villages = sets.get(net.minecraft.resources.ResourceKey.create(
+                net.minecraft.core.registries.Registries.STRUCTURE_SET,
+                net.minecraft.resources.ResourceLocation.parse("minecraft:villages"))).orElse(null);
+        if (villages == null) {
+            fail("no minecraft:villages structure set in the registry");
+            return;
+        }
+        if (!(level.getChunkSource().getGenerator()
+                instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw)) {
+            fail("the overworld is not a CityWorld generator");
+            return;
+        }
+        java.util.Set<String> placedSets = new java.util.TreeSet<>();
+        for (Holder<StructureSet> set : level.getChunkSource().getGeneratorState().possibleStructureSets())
+            set.unwrapKey().ifPresent(k -> placedSets.add(k.location().toString()));
+        var placed = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.placedSetFor(villages);
+        if (cobblemon) {
+            if (placed == null || !placed.allow() || !placed.wild())
+                fail("Cobblemon is installed but the placed_sets entry for villages did not load as allow+wild: " + placed);
+            if (!placedSets.contains("minecraft:villages"))
+                fail("Cobblemon is installed but villages did not reach the structure state: " + placedSets);
+            if (!cw.keepsOutOfCities(villages))
+                fail("villages placed for Cobblemon are not kept to the wild");
+            long own = declared.stream().filter(d -> d.startsWith("cobblemon:")).count();
+            long ownPlaced = placedSets.stream().filter(d -> d.startsWith("cobblemon:")).count();
+            report.put("placedSets.cobblemon", own + " Cobblemon sets declared, " + ownPlaced
+                    + " in the structure state, villages placed and wild");
+        } else {
+            if (placed != null)
+                fail("the placed_sets entry for villages loaded without Cobblemon — its mod_loaded condition was not "
+                        + "honoured: " + placed);
+            report.put("placedSets.cobblemon", "n/a (Cobblemon not installed; villages placed="
+                    + placedSets.contains("minecraft:villages") + ")");
+        }
     }
 
     private void checkStructures(MinecraftServer server) {

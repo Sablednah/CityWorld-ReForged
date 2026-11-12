@@ -36,7 +36,8 @@ public final class StructureChoices {
      * @param id         the set's id, {@code minecraft:villages}
      * @param group      the mod (or datapack namespace) it comes from, for the page's headings
      * @param label      the set's name, readable
-     * @param byDefault  whether {@code #cityworld:allowed} holds it — the box starts ticked
+     * @param byDefault  whether {@code #cityworld:allowed} holds it, or the {@code cityworld:placed_sets} data map
+     *                   allows it (villages with Cobblemon installed) — the box starts ticked
      * @param structures the structures in the set
      * @param realms     where its biomes are, by vanilla's {@code is_overworld}/{@code is_nether}/{@code is_end}
      *                   tags; empty when its structures name no biome in any of them
@@ -73,7 +74,8 @@ public final class StructureChoices {
             if (end)
                 realms.add("End");
             entries.add(new Entry(id.toString(), group(id.getNamespace()), nice(id.getPath()),
-                    tagged.contains(set), List.copyOf(structures), List.copyOf(realms)));
+                    CityWorldDataMaps.placedByData(set, tagged.contains(set)), List.copyOf(structures),
+                    List.copyOf(realms)));
         });
         entries.sort(Comparator.comparing((Entry e) -> !e.id().startsWith("minecraft:"))
                 .thenComparing(Entry::group, String.CASE_INSENSITIVE_ORDER)
