@@ -24,6 +24,15 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-12 later): the wiki has an Examples page, the CurseForge page has pictures, the README is at 7.0.**
+- `EXAMPLES.md` → wiki **Examples** (emit line + Home "Start here" link in `scripts/gen-wiki.sh`): complete
+  one-thing-each recipes for modders; every claim in it was checked against the code or an existing doc (there is NO
+  `CityWorld substitutes:` log line — do not invent one). PALETTES.md ends with "Everything a datapack can touch",
+  the one-table reference of every registry, data map, tag family and loot hook — **add a new pool or registry
+  there as well as in its own section.** `CURSEFORGE.md` embeds the 11 new `screengrabs/cityworld-*.jpg` by raw
+  GitHub URL (owner: "work some appropriate images into the description - its a bit wordy"); README.md at 7.0.
+  Master `8064cd20`, wiki pushed. **The owner pastes `CURSEFORGE.md`** (with the images). Next: nothing queued.
+
 **▶ Resume here (2026-11-12): v7.0.0 is RELEASED — deep oceans, highways, car parks and real cars.**
 - Tag `v7.0.0` at the master bump `e552a48e` (branch bumps 4d388bfe/07a78094/550e10c1/0e7e495d/3d75e448), CurseForge
   9574494–9574499, fleet `DEPLOYED-v7.0.0` on 11 (ZARP opts out), wiki pushed. Gates: six self-tests PASS +
