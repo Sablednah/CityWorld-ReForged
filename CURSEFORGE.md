@@ -28,85 +28,6 @@ go on IV's poles, every town and district has a name, and a datapack can put any
 place (`cityworld:spawn`). Older worlds keep the land they always had: oceans and highways only come to a world
 made with 7.0.
 
-**New in 6.14.0: choose the blocks, part by part.** A datapack can now say what each part of the city is made of:
-office walls, roofs, columns and windows, house walls and roofs, shacks, sheds, factories, the road surface, its lines
-and the pavement, 28 parts in all, each a block tag, and each can be set for one world style only. Leave a part
-alone and it builds as it always did. Block substitutes take a weighted mix too (half plain concrete, a third smooth,
-a fifth tiles), and the simple forms people reach for first now work. The wiki's
-[beginner's guide to datapacks](https://github.com/Sablednah/CityWorld-ReForged/wiki/Beginners-Guide-to-Datapacks)
-walks through both.
-
-**New in 6.13.0: Macaw's paths, roads and bridges.** With **Macaw's Roads and Streets**, every city street is
-asphalt with a dashed centre line, zebra crossings at junctions, kerbs, manholes and road signs: STOP at a T, DEAD
-END, speed limits in pairs where town (50) meets country (30), and the town's name where a road leaves for the wild.
-The signs stand on the side traffic drives on, and a setting picks the UK or the US. **Macaw's Paths and Pavings**
-paves the parks (one paving per district, laid like a carpet or set in as a block, as the piece needs) and the country
-tracks. **Macaw's Bridges** strings a rare rope bridge across a mountain valley, about one per range, landing on the
-far hillside; and in a ruined city, survivors' bridges join the upper floors of neighbouring towers, solid decks or
-rope, now and then across a street. Without the mods, everything looks as it did.
-
-**Other recent changes**
-
-- **6.12.0** — a lighter server: asking "what is planned here" no longer plans the whole subway neighbourhood, mods
-  get non-blocking ways to ask, every background planner shares one small pool, the plan caches take a tenth of the
-  memory, and a mod that still plans on the server thread is named in the log once.
-- **6.11.0** — your biome mods, in the city too: every TerraBlender mod reaches CityWorld's own land on 1.21.1 and
-  1.20.1, datapack biome mods (Terralith, Grand Terrain) reach both lands, mod biomes come in proper patches, and
-  "Structures: only in the wild" keeps a mod's structures out of the streets.
-- **6.13.1** — `/cityexport` writes the settings file your world type actually reads, with every setting in it, and
-  the example settings pack in `config/cityworld/settings-example/` stays current. New on the wiki: a
-  [beginner's guide to datapacks](https://github.com/Sablednah/CityWorld-ReForged/wiki/Beginners-Guide-to-Datapacks).
-- **6.10.0** — loot that fits the world: a Modern drawer holds paper and a clock, a ruin's scrap and spoiled food,
-  one container in thirteen something worth having; with Modernlife, ATMs in city halls, shops and malls.
-- **6.9.0** — the same seed builds the same city: each part of a chunk's decoration rolls on its own numbers from
-  the seed, so a seed you share is the city your friends get.
-- **6.8.0** — animals in the wild: CityWorld's own land gets vanilla's herds as it is made, by biome, and a switch
-  lets them into the cities too; with Forgified Fabric API and a mod adding End biomes, the End no longer freezes.
-- **6.7.0** — save your Customize settings as presets and load them for the next world; All on / All off on the
-  Structures page; a style change in Customize gives exactly what picking that world type would.
-- **6.8.2** — works with C2ME: the End generated nothing with it installed (fixed), and C2ME made CityWorld's land
-  generate about two and a half times faster in our test. Also, one furniture mod's cutting board could leave the
-  rest of its chunk's containers empty.
-- **6.8.1** — the city before the fall (the `/cityworld` twin) keeps its own lights, overgrowth and spawner mobs
-  instead of taking the ruined world's; the Nether and End can be given their own the same way.
-- **6.6.0** — find anything: CityWorld can answer "where is the nearest hospital, mall or Winchester?" from its plan
-  (the [CityWorld Urban Compass](https://www.curseforge.com/minecraft/mc-mods/cityworld-urban-compass) is built on it),
-  and deep vault floors have the best loot.
-- **6.5.0** — fit out a building from a datapack: swap blocks and hang item frames in any schematic building
-  without replacing it.
-- **6.4.0** — zoos for any animal: which animals live in CityWorld's zoos, and each pen's habitat, come from
-  datapacks; and creating a world could now and then hang at "Preparing spawn area" — fixed.
-- **6.3.0** — radio towers have a hut you can walk into (a chair, a table and a chest of spares); hospital medicine
-  chests keep their potions with Lootr installed.
-- **6.2.0** — Working lights off really puts the city's lights out; the ruined city's vault keeps its own power and
-  goes four to eight levels deep, darker and more overrun floor by floor.
-- **6.1.0** — no more snow over the jungle: warm mountains carry savanna, forest and jungle up to stony peaks, the
-  way vanilla lays them out.
-- **6.0.0** — rivers on CityWorld's own land, with waterfalls and hidden finds behind them; the waterside follows the
-  district (quays, slips, harbours, beaches, lighthouses); the [All Vanilla Structures](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/all-vanilla-structures-1.0.0)
-  sample datapack.
-- **5.19.0** — cities in a vanilla world: pick Land — Vanilla, cities apart in Customize for vanilla terrain with a
-  CityWorld city every so often, rivers running through it with quays and bridges; and the Neutral Palette add-on
-  ([GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/neutral-palette-1.0.0)).
-- **5.18.0** — Farmer's Delight kitchens, feasts and rice paddies (1.20.1 and 1.21.1); street shops stock their
-  trade, fourteen trades in all, and neighbouring shops differ.
-- **5.17.0** — choose your structures in game: a Structures page in Customize switches every vanilla and modded
-  structure set on or off (villages, mansions, a mod's dungeons); Minecraft Comes Alive turns CityWorld's villagers
-  into its people; a fix for worlds hanging at "Preparing spawn area".
-- **5.16.0** — the features Ed Churchill meant to build: roads that go missing, lane lines, ruined tunnels, atria,
-  helipads, split-level and modern houses, park gazebos and ponds, monuments, and museums with fossils and exhibits.
-- **5.15.0** — a subway under the city (a station in every district, tunnels on two levels, interchanges, minecarts
-  run the line); shopping malls at the edge of town; a vault that gets worse, and richer, with depth.
-- **5.14.0** — rare large caverns; Alex's Caves, Pam's HarvestCraft, Battle Towers and Dungeon Crawl support; a
-  loot table on every container; a vault armoury.
-- **5.12.0–5.13.0** — the city plans round every vanilla and modded structure's real footprint, and the ground
-  is shaped to meet it.
-- **5.11.0** — Minecraft 1.20.1, on Forge.
-- **5.10.0–5.10.1** — Macaw's doors, windows, fences, roofs, stairs and lights fit the city out; silos and
-  gasometers; Minecraft 1.21.1 and 26.3 builds.
-- **5.7.0–5.8.0** — JourneyMap draws the city plan over unexplored ground; every street has a name
-  (`/cityinfo`, `/cityfind street`); a two-chunk airship.
-
 Full details of every release are in the changelog on each file.
 
 ---
@@ -116,53 +37,75 @@ Full details of every release are in the changelog on each file.
 Pick **CityWorld** as your world type and you land in a living city:
 
 - **Roads and infrastructure** — named streets with real street signs (and the name on `/cityinfo`,
-  F3 and the map), sidewalks, roundabouts (with
-  statues), bridges, tunnels through mountains, and the odd hidden lift shaft in a 4-way crossing below.
-- **Buildings, furnished** — houses through highrises, all fully furnished inside: kitchens, living
-  rooms, bedrooms, libraries with chiseled bookshelves, offices, shops with the right job-site block for
-  their trade (cartography tables, fletching benches, looms, smokers…) and a hanging sign out front.
-- **Districts** — municipal civic centres, industrial factories and warehouses (with bunkers underneath,
-  batteries of **silos** and the odd **gasometer**), farms with animals and crops, and parks with **zoos
-  and glass biodomes**.
+  F3 and the map), sidewalks, lane lines, roundabouts (with statues), bridges, tunnels through mountains, the
+  odd road that simply goes missing, and a hidden lift shaft now and then in a 4-way crossing below. Every
+  town and district has a name of its own, on its signs and in F3.
+- **Buildings, furnished** — houses (split-level and modern ones too) through highrises with atria and
+  helipads, all fully furnished inside: kitchens, living rooms, bedrooms, libraries with chiseled bookshelves,
+  offices, shops with the right job-site block for their trade (cartography tables, fletching benches, looms,
+  smokers…) and a hanging sign out front. Street shops stock their trade — fourteen trades, and neighbouring
+  shops differ.
+- **Districts** — municipal civic centres with monuments in their squares, museums with fossil skeletons and
+  exhibits, industrial factories and warehouses (with bunkers underneath, batteries of **silos** and the odd
+  **gasometer**), farms with animals and crops, parks with gazebos, ponds, benches, **zoos and glass biodomes**,
+  and now **car parks**, surface and multi-storey.
 - **A subway** — a station in every district, stairs down to the platforms, and twin-track tunnels
   between stations near and far, on two levels with interchanges; a minecart runs the line.
 - **Shopping malls** — rare, sprawling, at the edge of town: an atrium with balconies, escalators and
   lifts, dozens of named shops with their own goods and loot, and car parks out to the road.
+- **Rivers, seas and oceans** — rivers rise in the hills and run to the sea over waterfalls, with hidden finds
+  behind them; the waterside follows the district (quays, slips, harbours, beaches, lighthouses, rustic jetties)
+  and roads bridge the water; and now and then the land runs down a shelf into a **deep ocean** with vanilla's
+  ocean biomes, monuments, ruins, shipwrecks and buried treasure, and oil rigs far out.
 - **Underground** — mine networks with copper-age fittings, ore veins that get richer with depth,
   cave-spider nests, hanging lanterns, and vertical lift shafts; wet sewers; bunkers and basements with
-  loot and mob spawners.
+  loot and mob spawners; and rare **large caverns**.
 - **Nature and caves** — mountains, seas with beaches, and (in MODERN/APOCALYPSE) wandering, branching
   cave tunnels like vanilla's, and basalt-lined lava pools instead of a flat lava sea. Underground you
   will find real **cave biomes** in patches — lush (moss, glow-berry vines, dripleaf, pools with
   axolotls/frogs/tropical fish, surface azaleas), dripstone, deep dark, and sulfur caves on Minecraft
-  26.2 and later — each decorated the way vanilla decorates it.
+  26.2 and later — each decorated the way vanilla decorates it. Warm mountains carry savanna, forest and jungle up
+  to stony peaks, the way vanilla lays them out, so there is no snow over the jungle.
 - **Vanilla structures where they belong** — **strongholds** (so eyes of ender work and the End is
   reachable), **trial chambers**, and **ancient cities** in the deep dark. Villages and mineshafts are
   off by default — CityWorld builds its own — but the **Structures** page of the Customize screen
   switches on any structure the install has, vanilla's or a mod's (a datapack tag or the world settings
-  do the same for servers).
-- **Inhabitants** — named villagers employed at their shop's actual trade, animals in the fields, fish in
-  the sea, hostiles lurking in mines, sewers and the dark.
-- **Set-pieces** — castles, radio towers, oil platforms, flying saucers, hot-air balloons, two-chunk
-  airships with a crewed control car, campgrounds —
-  scattered rare landmarks, findable with `/cityfind`.
+  do the same for servers). Whatever is switched on, the city plans round its real footprint and the ground is
+  shaped to meet it.
+- **Inhabitants** — named villagers employed at their shop's actual trade, vanilla's herds in the wild by biome
+  (and in the cities, if you let them), fish in the sea, hostiles lurking in mines, sewers and the dark.
+- **Loot that fits the world** — every container has a table: a Modern drawer holds paper and a clock, a ruin's
+  scrap and spoiled food, and one container in thirteen holds something worth having.
+- **Set-pieces** — castles, radio towers with a hut you can walk into, oil platforms, flying saucers, hot-air
+  balloons, two-chunk airships with a crewed control car, campgrounds — scattered rare landmarks, findable
+  with `/cityfind`.
 - **Custom schematics** — a bundled catalog of classic buildings, plus drop your own
-  (`.schematic`/`.schem`/`.litematic`/`.nbt`) into a config folder and turn them loose in the city.
+  (`.schematic`/`.schem`/`.litematic`/`.nbt`) into a config folder and turn them loose in the city. A sidecar
+  file can say where a build's drive meets the road, and the city sites it so that drive opens onto a street.
+
+## Cities in a vanilla world
+
+Prefer vanilla terrain? Pick **Land — Vanilla, cities apart** in Customize and the world is vanilla's — its
+biomes, its structures, your biome mod's terrain — with a CityWorld city every so often, each on its own level,
+rivers running through with quays and bridges. A city too big for its spacing is built as big as fits. And the
+cities are joined: each gets a **highway** to the nearest city east and south, leaving from the end of one of its
+own streets, climbing in half-block steps a car can drive, winding round hills, cut through ridges in lit tunnels
+and over rivers on bridges, with villages kept off it.
 
 ## The map knows what the city is — with JourneyMap
 
-**New in 5.7.0.** Install **JourneyMap** and the map gains what only CityWorld can tell it. A map mod
-draws what you have *seen*; CityWorld decided where every road and district goes before anyone
-arrived — so the map shows **the plan**, over ground nobody has explored:
+Install **JourneyMap** and the map gains what only CityWorld can tell it. A map mod draws what you have
+*seen*; CityWorld decided where every road and district goes before anyone arrived — so the map shows
+**the plan**, over ground nobody has explored:
 
 - **Districts tinted by what they are** — highrise, municipal, industrial, park, farm — with the
   street grid over them, and the roads running out through the countryside. It stays drawn behind you
   as you travel.
-- **Point at any chunk and it tells you what is planned there** — the district, the kind of lot, the
-  schematic's name, the shop, and what is inside the building: *"Highrise · office building · Office
+- **Point at any chunk and it tells you what is planned there** — the place and district, the kind of lot, the
+  schematic's name, the shop, and what is inside the building: *"Midtown · Highrise · office building · Office
   cubicles"*, *"Farm · Potato field"*. Places nobody has visited included.
-- **Streets are labelled on the map** once you zoom in (new in 5.8.0), cities you have never visited
-  included, and pointing at a road names it.
+- **Streets are labelled on the map** once you zoom in, cities you have never visited included, and pointing
+  at a road names it.
 - **Rare landmarks become waypoints as they generate**, and `/cityfind`, `/cityfind lot` and
   `/cwlocate` drop a marker on whatever they find — in two separate groups, so the world's own
   discoveries and your searches can be shown or hidden apart.
@@ -173,25 +116,39 @@ arrived — so the map shows **the plan**, over ground nobody has explored:
 It is a soft dependency in the proper sense: no JourneyMap, no difference — CityWorld does not touch
 a single one of its classes unless it is installed.
 
+**Find anything.** CityWorld can answer "where is the nearest hospital, mall or Winchester?" from its plan, and the
+**[CityWorld Urban Compass](https://www.curseforge.com/minecraft/mc-mods/cityworld-urban-compass)** is built on
+that: a rare find and a craftable item that points at any district, place, shop or building.
+
 ## Beyond the overworld — the ruined Nether and the End
 
-**New in 5.9.0.** A CityWorld world type now comes with its own Nether and End (switch either back to
-Vanilla under Customize → Realms):
+A CityWorld world type comes with its own Nether and End (switch either back to Vanilla under Customize →
+Realms):
 
 - **The ruined-city Nether** is the overworld's own city — same seed, same streets, same buildings — burnt
   and collapsed, in Nether biomes (and Biomes O' Plenty's, when installed), on netherrack and blackstone with
-  lava seas. **Portals link 1:1**, so the ruin you arrive in stands where its overworld building does. Full
-  height, no bedrock roof; fortresses and bastions still generate, each bastion in its own cavern with a
-  ruined shaft down to it from the street.
+  lava seas (and a lava sea wherever the overworld has a deep ocean). **Portals link 1:1**, so the ruin you
+  arrive in stands where its overworld building does. Full height, no bedrock roof; fortresses and bastions
+  still generate, each bastion in its own cavern with a ruined shaft down to it from the street.
 - **The End is vanilla's throughout** — the central island, the dragon fight, the void ring, the outer
   islands with their chorus forests and end cities — with CityWorld's cities on the flat tops of the outer
   islands: clumps of city and clumps of wild End, streets lit by end rods, buildings blended with purpur and
   end stone brick, never ruined (the dragon kept everyone out). Biome mods' End biomes generate in the wild
   stretches. Nothing digs through the islands; basements go only as deep as the rock allows.
-- **`/cityworld`** visits the city before the fall — the overworld's own plan, pristine.
+- **`/cityworld`** visits the city before the fall — the overworld's own plan, pristine, with its own lights,
+  overgrowth and spawns rather than the ruin's. The Nether and End can be given their own settings the same way.
 - Modpacks can lock any of it: `lockedWorldPreset`, `ruinedNether` and `cityworldEnd` in
   `config/cityworld-startup.toml`, and `lockCustomize = true` removes the Customize button for the locked
   preset so every new world gets the preset's settings exactly as the pack ships them.
+
+## The ruined city — Apocalypse
+
+The **Apocalypse** style is the Modern city gone to ruin: buildings decaying, roads cracked, nature reclaiming
+(three times the overgrowth), the lights out and a rare hidden **Fallout-style vault** behind a blast door off a
+road tunnel, four to eight levels deep, darker and more overrun floor by floor, with the best loot at the bottom
+and an armoury on the way. The vault keeps its own power. Survivors' bridges join the upper floors of neighbouring
+towers (with Macaw's Bridges, rope ones too), and a hidden zombie spawner or two waits in the dark.
+**Destroyed** is the same with heavier war-zone damage and fires.
 
 ## Furnished and fitted out — and furniture mods make it more so
 
@@ -224,9 +181,25 @@ every BoP wood) and the city is built with them:
 - **Lights** — lamp posts on the streets, garden lights at park gates, tiki torches at campgrounds, and
   wall lanterns, sconces, chandeliers and ceiling lights indoors.
 
-**Roads, paths and bridges.** **Macaw's Roads and Streets** surfaces every street (centre lines, zebra crossings,
-kerbs, manholes, signs on the driving side), **Macaw's Paths and Pavings** paves parks and farm tracks, and **Macaw's
-Bridges** builds rope bridges over mountain valleys and, in a ruined city, bridges between the towers.
+**Roads, paths and bridges.** With **Macaw's Roads and Streets** every city street is asphalt with a dashed centre
+line, zebra crossings at junctions, kerbs, manholes and road signs: STOP at a T, DEAD END, speed limits in pairs
+where town (50) meets country (30), the town's name where a road leaves for the wild, and MOTORWAY, TUNNEL and STEEP
+on the highways. The signs stand on the side traffic drives on, and a setting picks the UK or the US. **Macaw's
+Paths and Pavings** paves the parks (one paving per district) and the country tracks. **Macaw's Bridges** strings a
+rare rope bridge across a mountain valley, about one per range, and in a ruined city the survivors' bridges between
+the towers. **Ultimate Car Mod**'s asphalt joins the road pool too, with its text signs; with both mods installed,
+Ultimate Car Mod's road wins and Macaw's picture signs stand wherever Macaw's has one.
+
+**Cars.** With **Immersive Vehicles** (and its Official Content Pack) or **Ultimate Car Mod**, drivable vehicles
+stand in the car parks and at the kerbs with the brake on, a charged battery and fuel in the tank — few, because
+every one costs the client frames — and the gas stations' pump islands get the mod's pumps. Road signs go on IV's
+poles when a sign pack is installed, with the town's name on its boards and gantries naming the city ahead on the
+highways. The vehicles are data, so a pack can add its own.
+
+**Kitchens and farms.** With **Farmer's Delight** (1.20.1 and 1.21.1) the kitchens are built from its cabinets,
+stove, pots and cutting boards, feasts stand on the dining tables, the farms grow its crops with flooded rice
+paddies, rich soil, compost, crates and bales, and the shops hang canvas signs. With **Modernlife** (1.20.1),
+ATMs stand in city halls, shops and malls.
 
 Mod authors: adding your own furniture takes two data files in your jar — see `PALETTES.md` in the repo.
 
@@ -253,14 +226,19 @@ Thirteen selectable styles, each its own world type (`cityworld:<style>`) or a c
 
 ## Configure everything
 
-CityWorld has around 100 tunable settings — which features generate, spawn/treasure odds, terrain
-toggles, city radius, decay intensity, even the villager-name and mob lists. Because settings are
-per-world, they ship as a **datapack**, not a global config: edit them by hand, or use the in-game
-**Customize** screen and export what you like with `/cityexport`. Customize can also save its settings as named
-presets (in `config/cityworld/presets/`) to reuse in your next world.
+CityWorld has well over a hundred tunable settings — which features generate, spawn/treasure odds, terrain
+toggles, city radius, decay intensity, oceans and highways, car parks and vehicles, even the villager-name,
+place-name and mob lists. Because settings are per-world, they ship as a **datapack**, not a global config: edit
+them by hand, or use the in-game **Customize** screen and export what you like with `/cityexport` (it writes the
+entry your world type actually reads, with every setting in it, and a current example pack sits in
+`config/cityworld/settings-example/`). Customize can also save its settings as named presets (in
+`config/cityworld/presets/`) to reuse in your next world, its **Structures** page switches every vanilla and
+modded structure set on or off with All on / All off, and a style change loads exactly what picking that world
+type would.
 
 **→ Full settings reference, example datapacks, and guides (villages and other vanilla structures,
 a gentler apocalypse, sparse cities, custom villager names, taller skyscrapers, and more): [sablecraft.co.uk/cityworld-reforged](https://sablecraft.co.uk/cityworld-reforged/)**
+and the wiki's [beginner's guide to datapacks](https://github.com/Sablednah/CityWorld-ReForged/wiki/Beginners-Guide-to-Datapacks).
 
 ### Your other mods' blocks build cities too
 
@@ -269,8 +247,17 @@ normal way — planks in `#minecraft:planks`, stone in `#c:stones` — starts ap
 moment you install it, with no patch and no compatibility pack. The odds stay put as the palette
 widens, so a heavily modded world gets *more variety*, not more wooden houses. For mods that don't tag
 their blocks, or to put a mod's blocks somewhere they wouldn't naturally go, a small datapack extends
-any palette directly, sets the blocks for one part of a building (house roofs, office walls, the road),
-or swaps a block everywhere for one or a weighted mix of others.
+any palette directly, sets the blocks for one part of a building (28 parts: house roofs, office walls, the road
+surface, its lines and the pavement…, each settable for one world style only), or swaps a block everywhere for
+one or a weighted mix of others (half plain concrete, a third smooth, a fifth tiles).
+
+### Make it yours: everything is data
+
+Beyond blocks, a datapack can **fit out** any schematic building (swap blocks and hang item frames without
+replacing it), say which **animals** live in the zoos and what each pen's habitat is, add **vehicles** and **sign
+packs**, and **put anything in the city** — any entity, parked vehicle or block with its data — by lot, district,
+place, style, land and dimension, indoors or out, with odds and counts (`cityworld:spawn`). Mods can ask CityWorld
+what is planned anywhere, cheaply and without blocking the server.
 
 ### Plainer cities, and no free iron: the Neutral Palette add-on
 
@@ -280,6 +267,8 @@ or copper blocks in buildings; coloured wool becomes planks, concrete becomes te
 becomes clear. It works on every world style, Apocalypse included. Drop it in `mods` beside CityWorld
 (5.19.0 or later). It is a plain datapack inside, so a pack author can change any swap.
 **→ [Download from GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/neutral-palette-1.0.0)**
+The **[All Vanilla Structures](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/all-vanilla-structures-1.0.0)**
+sample datapack switches every vanilla structure on, for servers.
 
 ### And your biome mod's biomes
 
@@ -308,9 +297,10 @@ left bare.
 
 ## Commands
 
-`/cityinfo` tells you what's under your feet, street name included; `/cityfind`/`/cityfind lot`/
-`/cityfind street`/`/cwlocate` track down a specific building, landmark, street or biome; `/cityschem` pastes catalog buildings by hand; `/cityexport`
-bottles a world's settings to hand to a server.
+`/cityinfo` tells you what's under your feet, street and place name included; `/cityfind`/`/cityfind lot`/
+`/cityfind street`/`/cityfind river`/`/cwlocate` track down a specific building, landmark, street, river or
+biome; `/cityschem` pastes catalog buildings by hand; `/cityexport` bottles a world's settings to hand to a
+server; `/citymap` controls the JourneyMap plan overlay.
 
 Every command is a **permission node** (`cityworld.info`, `.teleport`, `.find`, `.schematic`,
 `.export`), so LuckPerms — or any NeoForge permissions manager — can hand out finding and
@@ -333,10 +323,17 @@ Minecraft version is in the filename, so there is no guessing which is which.
 | 26.2 | NeoForge 26.2.0.59+ | 25 | `cityworld-<version>+mc26.2.jar` |
 | 26.3 | NeoForge 26.3.0.20+ (beta) | 25 | `cityworld-<version>+mc26.3.jar` |
 
-**A given seed builds the same city on all six.** The layout — terrain, roads, districts, which
-building stands where — is identical across versions; only the materials shift slightly, because newer
-Minecraft versions bring new blocks into the building palettes. Every version is verified automatically
-before release, generating a real world and checking the cities, signs and biomes come out right.
+**A given seed builds the same city on all six, and the same city every time.** The layout — terrain, roads,
+districts, which building stands where — is identical across versions, and each part of a chunk's decoration rolls
+on its own numbers from the seed, so a seed you share is the city your friends get; only the materials shift
+slightly between versions, because newer Minecraft versions bring new blocks into the building palettes. Every
+version is verified automatically before release, generating a real world and checking the cities, signs and
+biomes come out right.
+
+**On a server** CityWorld keeps off the main thread: asking what is planned somewhere never plans a neighbourhood,
+mods get non-blocking ways to ask, every background planner shares one small pool, and a mod that still plans on
+the server thread is named in the log once. **C2ME** makes CityWorld's land generate about two and a half times
+faster in our test.
 
 ## Works with
 
@@ -347,21 +344,29 @@ with none installed nothing changes.
 
 | Mod | What CityWorld does with it |
 |---|---|
-| **JourneyMap** | Draws the city plan over unexplored ground, names streets and landmarks. |
+| **JourneyMap** | Draws the city plan over unexplored ground, names streets, places and landmarks. |
 | **Macaw's Furniture**, **MrCrayfish's Refurbished Furniture**, **Fantasy's Furniture** (all sets, Decorations) | Furnishes every interior with their pieces. |
 | **Macaw's Doors, Windows, Fences and Walls, Roofs, Stairs, Trapdoors, Lights** (and the BoP add-on) | Builds the city's doors, windows, roofs, fences, stairs and lighting from them. |
-| **Macaw's Roads and Streets, Paths and Pavings, Bridges** | Street surfaces, markings and road signs; park and farm paths; rope bridges in the wild and between ruined towers. |
+| **Macaw's Roads and Streets, Paths and Pavings, Bridges** | Street and highway surfaces, markings and road signs; park and farm paths; rope bridges in the wild and between ruined towers. |
+| **Immersive Vehicles** (+ Official Content / Signs packs) | Drivable cars in the car parks and at the kerbs, fuel pumps at the gas stations, road signs on its poles. |
+| **Ultimate Car Mod** | Its asphalt roads and text signs, its cars parked in the city, its gas stations with free bio diesel, canola on the farms, its fluids in the industrial tanks. Pairs well with Macaw's Roads and Streets. |
 | **Biomes O' Plenty** / **TerraBlender** | Its biomes generate in the overworld, the ruined Nether and the End, with their own ground blocks. |
-| **Alex's Caves** (1.20.1) | Five of its cave biomes join the underground, in its own rock, with its cave structures. |
+| **Terralith**, **Dreamwoods**, **Regions Unexplored** and other datapack / Lithostitched biome mods | Their biomes and terrain reach CityWorld's land and vanilla land. |
+| **Alex's Caves** (1.20.1) | Five of its cave biomes join the underground, in its own rock, with its cave structures; the abyssal chasm opens under the deep oceans. |
 | **Pam's HarvestCraft 2** (Crops, Trees) | Its crops grow in the fields and its fruit trees in the orchards, by climate. |
 | **Farmer's Delight** (1.20.1, 1.21.1) | Kitchens built from its cabinets, stove, pots and cutting boards; feasts on dining tables; rice paddies; rich soil, compost, crates and bales on the farms; canvas shop signs. |
-| **L_Ender's Cataclysm**, **Battle Towers**, **Dungeon Crawl** | Their structures are placed, the city keeps clear, and the ground is shaped to fit them. |
+| **Modernlife** (1.20.1) | ATMs in city halls, shops and malls, and a paved square at spawn for its bank. |
+| **L_Ender's Cataclysm**, **Battle Towers**, **Dungeon Crawl** | Their structures are placed, the city keeps clear, and the ground is shaped to fit them; their sea structures in the deep oceans. |
+| **C2ME** | Faster generation; the End works with it. |
 
 **Made to work together:**
 
 | Mod | What was done |
 |---|---|
-| **Minecraft Comes Alive** | CityWorld's villagers become MCA people, keeping their names (5.17.0; no config change needed). |
+| **Minecraft Comes Alive** | CityWorld's villagers become MCA people, keeping their names (no config change needed). |
+| **Lootr** | Containers with a loot table keep their contents (hospital medicine chests kept their potions). |
+| **Forgified Fabric API** + a mod adding End biomes | The End no longer freezes. |
+| **CityWorld Urban Compass** | The companion mod: points at any district, place, shop or building. |
 
 **Works by design, not tested one by one:** any mod's **structures** can be switched on from the Structures
 page; any **TerraBlender** biome mod's biomes join the world; and any mod that tags its blocks, crops and
