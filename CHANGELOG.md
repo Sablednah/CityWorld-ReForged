@@ -5,7 +5,7 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
-## 7.0.0 (unreleased)
+## 7.0.0 — 2026-11-12
 
 ### Added
 
@@ -28,25 +28,6 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   `surface`) and **Highways** in Customize. Without a road mod the deck is cobbled deepslate (`surface`), a block
   with a slab, so its climbs match it; the street's terracotta has no slab and the deepslate steps on it stood out.
   The kerb climbs in whole blocks (a bridge wall on a slab kerb floated half a block above it).
-- Road signs (the road mod's and Immersive Vehicles' poles) stand on a smooth stone base set into the pavement like
-  the lamp posts, instead of the post replacing a slab or plant there.
-- Vanilla land: the end-of-lot loot pass (every untouched container gets the lot's table) asked for each container
-  at the cell above it by the city's lift, so it filled nothing there; it works in the lot's own frame now.
-- JourneyMap: on vanilla land the city-plan overlay threw an error for every platmap outside a city (no plan to
-  draw), hundreds of lines a session; those are skipped.
-- Immersive Vehicles: pole signs lost their two lowest segments and gas stops their pumps wherever they stood on
-  natural ground whose biome has a signature block (Biomes O' Plenty's old growth woodland, coarse dirt): the
-  biome-ground pass swept "anything that does not block motion" as vegetation, and IV's blocks block none. It
-  sweeps plants only now (replaceable blocks, flowers, saplings, crops, other plant blocks; never a block entity).
-- Immersive Vehicles: driving a parked car away could freeze the game (the client's render thread loops for ever
-  while the server drives the car on into the nearest building). IV up to 24.0.0 divides by zero when it blends a
-  vehicle's orientation from a yaw of exactly 180 degrees, and a quarter of CityWorld's parked cars faced exactly
-  that (car-park bays and kerbs face the cardinal directions). Parked vehicles now keep half a degree off 180.
-  (Fixed upstream in IV after 24.0.0; worlds already generated keep their cars, so update IV when a newer build
-  ships, or do not drive the ones facing exactly north/south in IV's terms.)
-- WoodDye: the city no longer builds with WoodDye's legacy 2.0 fireproof planks, doors and trapdoors (WoodDye 3 marks
-  fireproofing on the position instead and converts those blocks on chunk load, which it logged for every new
-  chunk). The five pools that draw on vanilla's wood tags remove them.
 - **Vanilla land: a city too big for its spacing is built as big as fits**, where before it was not built at all (a
   world at the smallest spacing with the biggest sizes had a city in one cell in nine). Worlds made with 7.0 or
   later; Customize's **City size** says "(N fit)" when the size can't fit the spacing.
@@ -159,6 +140,28 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   `schematics.loaded` fails on any bundled schematic without a size.
 - `-Dcityworld.probe=survey:schematics[:platmaps]`: a census of every schematic the plan places, by district and
   name, with how many platmaps each district planned and how many have a flat centre block.
+
+### Fixed
+
+- Road signs (the road mod's and Immersive Vehicles' poles) stand on a smooth stone base set into the pavement like
+  the lamp posts, instead of the post replacing a slab or plant there.
+- Vanilla land: the end-of-lot loot pass (every untouched container gets the lot's table) asked for each container
+  at the cell above it by the city's lift, so it filled nothing there; it works in the lot's own frame now.
+- JourneyMap: on vanilla land the city-plan overlay threw an error for every platmap outside a city (no plan to
+  draw), hundreds of lines a session; those are skipped.
+- Immersive Vehicles: pole signs lost their two lowest segments and gas stops their pumps wherever they stood on
+  natural ground whose biome has a signature block (Biomes O' Plenty's old growth woodland, coarse dirt): the
+  biome-ground pass swept "anything that does not block motion" as vegetation, and IV's blocks block none. It
+  sweeps plants only now (replaceable blocks, flowers, saplings, crops, other plant blocks; never a block entity).
+- Immersive Vehicles: driving a parked car away could freeze the game (the client's render thread loops for ever
+  while the server drives the car on into the nearest building). IV up to 24.0.0 divides by zero when it blends a
+  vehicle's orientation from a yaw of exactly 180 degrees, and a quarter of CityWorld's parked cars faced exactly
+  that (car-park bays and kerbs face the cardinal directions). Parked vehicles now keep half a degree off 180.
+  (Fixed upstream in IV after 24.0.0; worlds already generated keep their cars, so update IV when a newer build
+  ships, or do not drive the ones facing exactly north/south in IV's terms.)
+- WoodDye: the city no longer builds with WoodDye's legacy 2.0 fireproof planks, doors and trapdoors (WoodDye 3 marks
+  fireproofing on the position instead and converts those blocks on chunk load, which it logged for every new
+  chunk). The five pools that draw on vanilla's wood tags remove them.
 
 ### Removed
 

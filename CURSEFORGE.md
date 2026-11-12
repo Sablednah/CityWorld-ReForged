@@ -13,6 +13,21 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+**New in 7.0.0: deep oceans, highways, car parks and real cars.** A world-changing drop, so a major version.
+**Deep oceans** now and then run off CityWorld's own land: a shelf down into a wide, thirty-block-deep sea with
+vanilla's ocean biomes and everything that lives in them, monuments, ruins, shipwrecks, buried treasure and the sea
+structures of mods (Cataclysm's Sunken City, Alex's Caves' abyssal chasm on 1.20.1), with oil rigs far out and a lava
+sea in the ruined Nether twin. **Highways** join the cities of a vanilla world: each city's street runs on out of
+town, climbing in half-block steps a car can drive, winding round hills, cut through ridges in lit tunnels and over
+rivers on bridges, signed MOTORWAY, TUNNEL and STEEP with Macaw's Roads. **Car parks** stand among the buildings:
+surface lots and multi-storey decks with ramps, pillars, parapets and lit roofs, open to the road. **Real cars**: with
+**Immersive Vehicles** or **Ultimate Car Mod**, drivable vehicles wait in the car parks and at the kerbs, fuelled,
+and the gas stations get working pumps; **Macaw's Roads and Streets works well with Ultimate Car Mod** (its asphalt
+takes the roads, Macaw's picture signs stand where Macaw's has one, and both mods' cars share the kerbs). Road signs
+go on IV's poles, every town and district has a name, and a datapack can put anything in the city by lot, district or
+place (`cityworld:spawn`). Older worlds keep the land they always had: oceans and highways only come to a world
+made with 7.0.
+
 **New in 6.14.0: choose the blocks, part by part.** A datapack can now say what each part of the city is made of:
 office walls, roofs, columns and windows, house walls and roofs, shacks, sheds, factories, the road surface, its lines
 and the pavement, 28 parts in all, each a block tag, and each can be set for one world style only. Leave a part
@@ -30,16 +45,11 @@ tracks. **Macaw's Bridges** strings a rare rope bridge across a mountain valley,
 far hillside; and in a ruined city, survivors' bridges join the upper floors of neighbouring towers, solid decks or
 rope, now and then across a street. Without the mods, everything looks as it did.
 
-**New in 6.12.0: a lighter server.** A pass over everything that could stall the server thread, prompted by a
-55-second freeze in a modpack whose quest mod asked CityWorld about hundreds of chunks at once: asking "what is
-planned here" no longer plans the whole subway neighbourhood, mods get non-blocking ways to ask (`lotAtIfPlanned`,
-`lotAtAsync`), every background planner shares one small low-priority pool, map hovers are bounded, the plan caches
-take a tenth of the memory, no two threads assemble the same structure twice, and `/locate` and explorer maps get
-their height answers without building a whole column. A mod that still plans on the server thread is named in the
-log once, so a stall can be traced to its source.
-
 **Other recent changes**
 
+- **6.12.0** — a lighter server: asking "what is planned here" no longer plans the whole subway neighbourhood, mods
+  get non-blocking ways to ask, every background planner shares one small pool, the plan caches take a tenth of the
+  memory, and a mod that still plans on the server thread is named in the log once.
 - **6.11.0** — your biome mods, in the city too: every TerraBlender mod reaches CityWorld's own land on 1.21.1 and
   1.20.1, datapack biome mods (Terralith, Grand Terrain) reach both lands, mod biomes come in proper patches, and
   "Structures: only in the wild" keeps a mod's structures out of the streets.
