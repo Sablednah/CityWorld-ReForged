@@ -192,3 +192,18 @@ So in-city spawning is biome + building-block driven today, the sewer is already
 street never reads as urban. Stage 2's spawn influence is still the fix for streets; a cheaper partial is a
 **concrete kerb or planter beside grass verges** (a natural base within 4 blocks of `#cobblemon:concrete_blocks`
 is all the urban preset asks), measurable with the same `/checkspawns common` walk.
+
+**Measured (2026-11-12 night, all six lines):** six self-tests PASS. On 1.21.1 with Cobblemon in `run/mods`:
+`placedSets.cobblemon = 10 Cobblemon sets declared, 10 in the structure state, villages placed and wild`; the
+self-test world (12,837 chunks) went from **0 to 14 Cobblemon starts** (berry patches, ancient dais, crypt, bunker
+ruins, fishing boats, icebergs, ice spikes, lightning rod). Villages: 4 attempts fell in those chunks — 2 failed
+vanilla's own biome check (desert/savanna variants on plains), 2 plains attempts sat in platmaps with roads and
+were kept out (INVALID). A positive needed wild platmaps: `scripts/structure_sites.py 8675309` predicts vanilla's
+attempt chunks (linear spread, checked against the three recorded), and `-Dcityworld.probe=<cx>,<cz>
+-Dcityworld.probe.radius=3 -Dcityworld.probe.forecast=true` at 14 of them gave **two full villages in all-Nature
+platmaps** (plains at chunk -113,-79: 89 pieces, box 137×137; desert at -85,-94: 87 pieces) and INVALID at every
+attempt inside an Office/Concrete/Park platmap. Without Cobblemon (the other five lines' beds) the map declares
+nothing: `placedSets.declared = []`, 1.20.1's hand-rolled loader included. Deployed to the owner's `1.21.1`
+instance as `DEPLOYED-89bfb660` (a 7.0.0-named jar). ⚠ `probe.sh` uses `run/server.properties`' port 25599 — the
+same one `selftest-one.sh` takes by default — so a probe beside a self-test fails to bind and reads `chunks 0`
+(7 of 8 runs, before the port was moved for the run).

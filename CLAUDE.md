@@ -39,7 +39,12 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   §7: streets read as jungle/desert temples (building walls), the sewer is a `derelict` habitat already, parks are
   fine, **no urban species anywhere** (needs natural ground within 4 blocks of concrete). ⚠ 1.20.1's hand-rolled
   data-map loader must evaluate the `mod_loaded` condition for this map (villages are vanilla's — the key always
-  exists). Next: the owner's look at villages on 1.21.1, then Stage 2 (Center lot, gym, spawn influence).
+  exists). **Measured:** six self-tests PASS; 1.21.1 world 0 → 14 Cobblemon starts; two full villages (plains,
+  desert) in all-Nature platmaps via the probe at predicted attempt chunks (`scripts/structure_sites.py <seed>` +
+  `structure_starts.py`, both new), city attempts INVALID; deployed to the `1.21.1` instance `DEPLOYED-89bfb660`.
+  ⚠ a probe beside a running self-test collides on port 25599 and reads `chunks 0`. Nothing pushed. Next: the
+  owner's look at villages on 1.21.1 (a new world, or unexplored land), then Stage 2 (Center lot, gym, spawn
+  influence).
 
 **▶ Resume here (2026-11-12 later): the wiki has an Examples page, the CurseForge page has pictures, the README is at 7.0.**
 - `EXAMPLES.md` → wiki **Examples** (emit line + Home "Start here" link in `scripts/gen-wiki.sh`): complete
