@@ -369,6 +369,8 @@ public final class CityWorldDataMaps {
         event.addListener(loader("data_maps/block", "unlit", Unlit.CODEC, m -> UNLIT_DATA = m));
         event.addListener(loader("data_maps/worldgen/structure", "structure_fit", StructureFit.CODEC,
                 m -> STRUCTURE_FIT_DATA = m));
+        event.addListener(loader("data_maps/worldgen/structure_set", "placed_sets", PlacedSet.CODEC,
+                m -> PLACED_SETS_DATA = m));
     }
 
     /**
@@ -434,6 +436,82 @@ public final class CityWorldDataMaps {
     }
 
     /**
+     * A structure SET placed by data, with a condition — what {@code #cityworld:allowed} cannot say: "villages,
+     * only when Cobblemon is installed" (GitHub issue #6; Cobblemon's Pokémon Centers are village houses). Mirrors
+     * the NeoForge lines' {@code cityworld:placed_sets} data map; the file is shared verbatim
+     * ({@code data/cityworld/data_maps/worldgen/structure_set/placed_sets.json}). Because its keys are vanilla's,
+     * "not in the registry" cannot stand in for "mod absent" as it does for {@code structure_fit}, so the loader
+     * below evaluates each entry's {@code mod_loaded} condition itself.
+     *
+     * <p><b>allow</b> (default true) places the set as if tagged; {@code false} takes a tagged set away.
+     * <b>wild</b> (default false) keeps it to the wild, as {@code #cityworld:wilderness_only} does.
+     */
+    public record PlacedSet(boolean allow, boolean wild) {
+
+        public static final Codec<PlacedSet> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.BOOL.optionalFieldOf("allow", true).forGetter(PlacedSet::allow),
+                Codec.BOOL.optionalFieldOf("wild", false).forGetter(PlacedSet::wild)
+        ).apply(i, PlacedSet::new));
+    }
+
+    private static volatile Map<ResourceLocation, PlacedSet> PLACED_SETS_DATA = Map.of();
+
+    /** The declaration for this structure set, or {@code null} if it has none (or its condition failed). */
+    public static @Nullable PlacedSet placedSetFor(
+            @Nullable Holder<net.minecraft.world.level.levelgen.structure.StructureSet> set) {
+        if (set == null)
+            return null;
+        return set.unwrapKey().map(key -> PLACED_SETS_DATA.get(key.location())).orElse(null);
+    }
+
+    /** Whether this set counts as allowed: its declaration's {@code allow} when it has one, else {@code inTag}. */
+    public static boolean placedByData(
+            @Nullable Holder<net.minecraft.world.level.levelgen.structure.StructureSet> set, boolean inTag) {
+        PlacedSet placed = placedSetFor(set);
+        return placed == null ? inTag : placed.allow();
+    }
+
+    /** Whether this set's declaration keeps it to the wild. */
+    public static boolean wildByData(
+            @Nullable Holder<net.minecraft.world.level.levelgen.structure.StructureSet> set) {
+        PlacedSet placed = placedSetFor(set);
+        return placed != null && placed.wild();
+    }
+
+    /** The structure sets declaring a placement here, sorted — for the probe and the self-test. */
+    public static java.util.List<String> declaredPlacedSets(
+            net.minecraft.core.HolderLookup<net.minecraft.world.level.levelgen.structure.StructureSet> lookup) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        PLACED_SETS_DATA.forEach((id, placed) -> out.add(id + (placed.allow() ? "" : " (off)")
+                + (placed.wild() ? " (wild)" : "")));
+        java.util.Collections.sort(out);
+        return out;
+    }
+
+    /**
+     * Whether an entry's {@code neoforge:conditions} (or {@code forge:conditions}) hold. Only {@code mod_loaded}
+     * is understood — the one condition CityWorld's own files use; an entry carrying a condition of another type
+     * is kept, as every entry was before this existed. Needed for {@code placed_sets}, whose keys are vanilla's.
+     */
+    private static boolean conditionsHold(JsonObject wrapper) {
+        for (String key : new String[] { "neoforge:conditions", "forge:conditions" }) {
+            JsonElement conditions = wrapper.get(key);
+            if (conditions == null || !conditions.isJsonArray())
+                continue;
+            for (JsonElement condition : conditions.getAsJsonArray()) {
+                if (!condition.isJsonObject())
+                    continue;
+                JsonObject o = condition.getAsJsonObject();
+                String type = o.has("type") ? o.get("type").getAsString() : "";
+                if (type.endsWith(":mod_loaded") && o.has("modid")
+                        && !net.minecraftforge.fml.ModList.get().isLoaded(o.get("modid").getAsString()))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * ⚠ <b>KNOWN DEFECT: this reads ONE pack's file, not every pack's.</b> Proved 2026-09-22 with two
      * packs both writing {@code data/cityworld/data_maps/worldgen/structure/structure_fit.json}:
      * {@code SimpleJsonResourceReloadListener} keys by NAMESPACED FILE ID, so both collapse onto the
@@ -453,9 +531,10 @@ public final class CityWorldDataMaps {
      * <p>Reads one data-map file out of every pack that has it and decodes its {@code values} block.
      *
      * <p>Two shapes are accepted, because that is what the files contain: a bare value, and a
-     * {@code {"neoforge:conditions": …, "value": …}} wrapper. The condition itself needs no
-     * evaluating — every entry names a block or biome, so an entry whose id is not in the registry
-     * belongs to a mod that is not installed, which is precisely when it should be skipped.
+     * {@code {"neoforge:conditions": …, "value": …}} wrapper. For the block, biome and structure maps the
+     * condition needed no evaluating — an entry whose id is not in the registry belongs to a mod that is
+     * not installed. {@code placed_sets} keys vanilla's structure sets, so its {@code mod_loaded}
+     * conditions are evaluated ({@link #conditionsHold}) and a failing entry is skipped.
      */
     private static <T> SimpleJsonResourceReloadListener loader(String directory, String file,
             com.mojang.serialization.Codec<T> codec, java.util.function.Consumer<Map<ResourceLocation, T>> sink) {
@@ -480,8 +559,11 @@ public final class CityWorldDataMaps {
                         return;
                     for (Map.Entry<String, JsonElement> entry : values.getAsJsonObject().entrySet()) {
                         JsonElement value = entry.getValue();
-                        if (value.isJsonObject() && value.getAsJsonObject().has("value"))
+                        if (value.isJsonObject() && value.getAsJsonObject().has("value")) {
+                            if (!conditionsHold(value.getAsJsonObject()))
+                                continue;
                             value = value.getAsJsonObject().get("value");
+                        }
                         codec.parse(JsonOps.INSTANCE, value).result()
                                 .ifPresent(decoded -> out.put(new ResourceLocation(entry.getKey()), decoded));
                     }
