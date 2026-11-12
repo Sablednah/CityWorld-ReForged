@@ -50,6 +50,8 @@ emit() {
     printf '  %-34s -> %s.md\n' "$src" "$page"
 }
 
+emit EXAMPLES.md                 "Examples" \
+    "> Worked examples: add a block to the buildings, take one out, a new building, spawns, loot, zoos, structures, settings. Source: \`EXAMPLES.md\`."
 emit DATAPACKS.md                "Beginners-Guide-to-Datapacks" \
     "> New to datapacks? Where a pack goes, the folder names per version, and a first pack that proves yours works. Source: \`DATAPACKS.md\`."
 emit CURSEFORGE-CONFIGURATION.md "Configuring-CityWorld" \
@@ -83,16 +85,20 @@ MinecraftForge on 1.20.1.
 - **[Beginner's guide to datapacks](Beginners-Guide-to-Datapacks)** — never made a datapack? Where one goes
   (single player or server), the folder names that differ between Minecraft versions, the three rules that
   catch everyone, and a first pack that proves yours is being read.
+- **[Examples](Examples)** — somewhere to start: complete, one-thing-each recipes for adding a block to the
+  buildings or taking one out, a building of your own, what spawns in a lot or a schematic, an item in the loot, a
+  zoo animal, villages and other structures, and a setting for a world type.
 
 ## Advanced configuration
 
-- **[Configuring CityWorld](Configuring-CityWorld)** — all ~100 settings, the three ways to set them,
+- **[Configuring CityWorld](Configuring-CityWorld)** — every setting, the three ways to set them,
   and worked recipes. Start here.
   - [Villages and other vanilla structures](Configuring-CityWorld#recipes) — CityWorld suppresses
     vanilla structures so it can own the chunk; one small datapack turns them back on.
   - [Your other mods' blocks and biomes](Configuring-CityWorld#full-settings-reference)
-- **[Building Palettes](Building-Palettes)** — which blocks build the cities, how to add your own, and how to
-  swap one block for another everywhere (block substitutes).
+- **[Building Palettes](Building-Palettes)** — which blocks build the cities, how to add your own, how to
+  swap one block for another everywhere (block substitutes), and every registry a datapack can fill: furniture,
+  fittings, zoos, schematic fit-outs, vehicles, road signs and `cityworld:spawn`.
 - **[Custom Schematics](Custom-Schematics)** — add your own buildings: build it, save it, drop it in the folder for
   the district it belongs in (the folder names, the sidecar's odds and depth, a worked example, loot).
 - **[Loot Tables](Loot-Tables)** — what the cities' chests hold, how a modpack adds its own items, and every

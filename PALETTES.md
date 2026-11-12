@@ -854,3 +854,72 @@ builds the same city. Two consequences worth knowing:
 - Installing or removing a mod that contributes to these tags **will change what a given seed
   generates**. The terrain stays put; the materials shift.
 - Already-generated chunks never change. Palette edits show up in new land only.
+
+## Everything a datapack can touch — the reference
+
+Every CityWorld surface a datapack or mod jar can change, in one place. Paths are for 1.21 and newer; on 1.20.1
+the folders are `tags/blocks/`, `tags/items/` and `loot_tables/` (see the
+[Beginner's guide](Beginners-Guide-to-Datapacks)). Data maps and registries use the same path on every version.
+
+**Registries** — one JSON file per entry under `data/<namespace>/cityworld/<registry>/<name>.json`:
+
+| Registry | What an entry is | Documented |
+|---|---|---|
+| `cityworld/world_settings` | a world type's settings (`modern`, `apocalypse`, `default`) | [Configuring CityWorld](Configuring-CityWorld) |
+| `cityworld/schematic_fitout` | block swaps and item frames inside a schematic building | [Schematic fit-outs](#schematic-fit-outs) |
+| `cityworld/zoo/animal`, `cityworld/zoo/habitat` | a zoo resident and its pen's look | [Zoos](#zoos) |
+| `cityworld/vehicle` | a parked vehicle (Immersive Vehicles or Ultimate Car Mod) | [Parked vehicles](#parked-vehicles-immersive-vehicles), [Ultimate Car Mod](#ultimate-car-mod-from-70) |
+| `cityworld/pole_signs` | a road-sign pack on Immersive Vehicles' poles | [Road signs](#road-signs-on-immersive-vehicles-poles-from-70) |
+| `cityworld/spawn` | anything placed by lot, district, place, style or schematic | [Spawns](#putting-anything-in-the-city-spawns-from-70) |
+
+**Data maps** — `data/cityworld/data_maps/<kind>/<name>.json` (always the `cityworld` namespace; a pack's file
+merges with CityWorld's on NeoForge and **replaces** it on 1.20.1):
+
+| Data map | What it does | Documented |
+|---|---|---|
+| `block/substitute.json` | swap a block, or a weighted mix, everywhere CityWorld places it | [Block substitutes](#block-substitutes) |
+| `block/unlit.json` | what a light becomes with **Working lights** off | [Unlit lights](#unlit-lights) |
+| `block/furniture.json` | which way a furniture block faces, and its multi-block layout | [Mod authors](#mod-authors-supporting-cityworld-from-your-side) |
+| `worldgen/biome/ground.json` | a biome's surface and subsurface block | [Biome ground](#biome-ground) |
+| `worldgen/structure/structure_fit.json` | how the ground meets a vanilla or modded structure: `clearance` (blocks of flat ground kept round it), `beard` (ground built up to its floor), `shave` (ground cut down to its box), `reserve` (keep the city off the chunks its surfacing pieces touch — for an underground structure with an entrance that comes up through the ground) | [Configuring CityWorld → structures](Configuring-CityWorld#structures--which-vanilla-and-mod-structures-this-world-places) |
+
+**Block tags** — `data/cityworld/tags/block/<family>/<name>.json`:
+
+| Family | What the pool is for | Documented |
+|---|---|---|
+| `build/*` | the building palettes by kind of block (`planks`, `wool`, `concrete`, `modern_stones`…) | [The palettes](#the-palettes) |
+| `palette/<part>`, `palette/<style>/<part>` | one part of a building or street (28 parts), optionally for one style | [Per-part palettes](#per-part-palettes-from-614) |
+| `furniture/<role>` | what furnishes a room by role: `chair`, `table`, `sofa`, `desk`, `counter`, `cabinet`, `drawer`, `wardrobe`, `sink`, `bath`, `toilet`, `bookshelf`, `lamp`, `floor_lamp`, `bed`, `shelf`, `crate`, and the kitchen and office appliances `stove`, `fridge`, `freezer`, `microwave`, `toaster`, `cutting_board`, `bin`, `computer`, `tv`, `workbench`, `ceiling_fan` | [Furniture](#furniture) |
+| `decor/*` | tabletop, floor and wall scatter (`surface`, `floor`, `wall`, `desk`, `rug`, `feast`, `stove_top`, `hanging_light`) and the APOCALYPSE-only `grim_floor`, `grim_surface`, `grim_wall` | [Decoration](#furniture) |
+| `fittings/*` | doors (`door`, `interior_door`, `store_door`, `industrial_door`, `garage_door`), `trapdoor`, `window`, `roof`, `stairs`, `railing`, fences (`fence`, `farm_fence`, `gate`, `site_fence`, `site_wire`), `shop_sign`, `atm` and `atm_base` (the block an ATM stands on), and the road kit `road`, `path`, `track`, `skybridge`, `rope_bridge` | [Fittings](#fittings) |
+| `light/*` | `street_lamp`, `garden`, `tiki` | [Fittings](#fittings) |
+| `farm/*` | `crops`, `flowers`, `tall_flowers`, `soil`, `paddy`, `produce`, `compost`, `bales` | [Farms](#farms) |
+| `loot/never` | containers that are machines, not storage: they are never given loot (a furnace-like mod block that would otherwise be filled) | [Loot Tables](Loot-Tables) |
+| `loot/food` | containers that hold one thing being prepared (a cutting board, a skillet): they get a single food item from `#cityworld:kitchen/food` instead of the lot's loot | [Loot Tables](Loot-Tables) |
+
+**Item tags** — `data/cityworld/tags/item/<family>/<name>.json`:
+
+| Tag | What it feeds |
+|---|---|
+| `kitchen/food` | the one item a `loot/food` block holds |
+| `armoury/weapons`, `armoury/armour` | the vault armoury: weapons in item frames, armour on stands (the slot is read from the item) |
+| `museum/artifacts`, `museum/relics`, `museum/armour` | museum exhibits, shown worn and in cases |
+
+**Worldgen tags** — `data/cityworld/tags/worldgen/<kind>/<name>.json`:
+
+| Tag | What it does | Documented |
+|---|---|---|
+| `biome/surface_pool`, `biome/shore_pool`, `biome/ocean_pool`, `biome/cave_pool`, `biome/nether_pool` | biomes placed outright on land, the beach course, the sea, underground, and in the ruined Nether | [Biome pools](#biome-pools) |
+| `biome/ground/<kind>` | which biomes get which ground (`gravel`, `sand`, `stone`, `podzol`, `coarse_dirt`, `mud`, `basalt`, `terracotta`…) | [Biome ground](#biome-ground) |
+| `configured_feature/orchard/{temperate,cold,dry,tropical}` | the fruit trees an orchard grows, by climate (Pam's trees, vanilla cherry) | [Farms](#farms) |
+| `configured_feature/nether_trees` | the trees the ruined Nether's cover grows | — |
+| `structure/carve_cavern` | structures given a cavern of their own in CityWorld's terrain (bastion remnants) | — |
+| `structure_set/allowed` | which vanilla and mod structure sets generate | [Configuring CityWorld](Configuring-CityWorld#structures--which-vanilla-and-mod-structures-this-world-places) |
+| `structure_set/wilderness_only` | sets kept out of the city's platmaps | [Biome Mods](Biome-Mods#keep-a-mods-structures-out-of-the-city-set-by-set) |
+
+**Loot tables** — `data/cityworld/loot_table/chests/<name>.json`: every table and its `_extra` hook are listed on
+[Loot Tables](Loot-Tables); a schematic's own table is `chests/schematic/<name>`.
+
+**Schematics** are files, not data: `config/cityworld/schematics/<Family>/` with a `.yml` sidecar — [Custom
+Schematics](Custom-Schematics). Worked examples of all of the above, start to finish: [Examples](Examples).
+

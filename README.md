@@ -9,25 +9,28 @@ mines, sewers, farms and wild nature**, all seed-deterministic.
 
 **[Download on CurseForge](https://www.curseforge.com/minecraft/mc-mods/cityworld-reforged)** ·
 **[Documentation](https://sablecraft.co.uk/cityworld-reforged/)** ·
+**[Wiki](https://github.com/Sablednah/CityWorld-ReForged/wiki)** ·
 **[Report a bug](https://github.com/Sablednah/CityWorld-ReForged/issues)**
 
 | | |
 |---|---|
 | **Minecraft** | 1.20.1, 1.21.1, 1.21.11, 26.1.2, 26.2, 26.3 |
-| **Loader** | **Forge 47+** (1.20.1) · NeoForge 21.1.251+ / 21.11.42+ / 26.1.2.95+ / 26.2.0.59+ / 26.3.0.3+ |
+| **Loader** | **Forge 47+** (1.20.1) · NeoForge 21.1.251+ / 21.11.42+ / 26.1.2.95+ / 26.2.0.59+ / 26.3.0.20+ |
 | **Java** | 17 (1.20.1) · 21 (1.21.x) · 25 (26.x) |
 | **Licence** | GPL-3.0-only |
 | **Status** | ✅ Playable — full cities generate, inhabited and furnished, across 13 world styles |
 
-Jars are named for the Minecraft version they target — `cityworld-5.1.0+mc26.2.jar` — and a given
+Jars are named for the Minecraft version they target — `cityworld-7.0.0+mc26.2.jar` — and a given
 seed generates the same city on every supported version.
 
 Drop the jar in your `mods/` folder and pick **CityWorld** as the world type (or one of its styles),
 and you get endless procedurally-generated cities: named streets, furnished buildings, roundabouts
 with statues, civic districts, factories and warehouses, farms with animals, parks, and mountainous
 wild between them — with mines and sewers below, loot in the chests, and villagers (with names) in
-the streets. **And, from 5.9.0, a Nether and an End of its own:** a ruined 1:1 twin of your city in the
-Nether, and cities on the flat tops of vanilla's End islands.
+the streets. Rivers run to the sea and now and then to a deep ocean; a subway runs under the city and
+malls and car parks stand at its edge; with a vehicle mod, real cars wait at the kerbs. **A Nether and an End
+of its own:** a ruined 1:1 twin of your city in the Nether, and cities on the flat tops of vanilla's End islands.
+**Or cities in a vanilla world**, joined by highways.
 
 Battle-tested across 455 worlds and 7.6 million generated chunks — over 1,900 km² of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
@@ -55,6 +58,23 @@ generated city, more ground than all of Greater London and two and a half New Yo
 
 ![Schematic building at night](screengrabs/schematics.jpg)
 *One of the bundled catalog schematics, lit up after dark.*
+
+### Dusk and night
+
+![Highrise district in golden hour](screengrabs/cityworld-highrise-district-in-golden-hour.jpg)
+*The highrise core at golden hour.*
+
+![Lamp-lit boulevard](screengrabs/cityworld-lamp-lit-boulevard-at-dusk.jpg)
+*Lane lines and lamp posts down a boulevard at dusk.*
+
+![Shopping mall and car park](screengrabs/cityworld-shopping-mall-and-car-park-by-night.jpg)
+*A mall and its car park, lit for the night, the water tower behind.*
+
+![City lights across the lake](screengrabs/cityworld-city-lights-across-the-lake.jpg)
+*The city from a lamp-lit bridge across the lake.*
+
+![Street canyon](screengrabs/cityworld-street-canyon-from-above-by-night.jpg)
+*Straight down a street between the towers.*
 
 ### Nature and underground
 
@@ -120,12 +140,23 @@ generated city, more ground than all of Greater London and two and a half New Yo
   cisterns, with loot chests and mob spawners. APOCALYPSE hides a rare Fallout-style vault complex —
   multiple furnished levels behind a blast door — off the road tunnels through big mountains, darker and
   better-looted the deeper you go.
+- **Rivers, seas and oceans** — rivers rise in the hills and run to the sea over waterfalls, with finds
+  behind them; quays, slips, harbours, beaches and lighthouses by district; and (7.0) rare deep oceans thirty
+  blocks deep with vanilla's ocean biomes, monuments, shipwrecks and oil rigs.
+- **Roads** — named streets, lane lines, crossings, signs on the driving side (Macaw's Roads and Streets),
+  surface and multi-storey **car parks** (7.0), and with Immersive Vehicles or Ultimate Car Mod real cars at the
+  kerbs and in the bays and pumps at the gas stations. Every town and district has a name.
+- **Cities in a vanilla world** — pick *Land — Vanilla, cities apart* and the terrain is vanilla's with a CityWorld
+  city every so often, joined (7.0) by highways that climb in half-block steps, tunnel through ridges and bridge
+  rivers.
 - **Subway** (MODERN/APOCALYPSE) — a station in every urban district and twin-track tunnels between
   stations near and far, on two levels with interchanges and powered track; a minecart runs the network.
 - **Shopping malls** (MODERN/APOCALYPSE) — rare, sprawling, at the edge of town: an atrium in wings,
   escalators and lifts, dozens of named shops each with its own loot table, car parks out to the road.
-- **Inhabitants** — villagers (named, employed at their shop's trade), animals in the fields, fish in
-  the seas, hostiles in the dark.
+- **Inhabitants** — villagers (named, employed at their shop's trade), vanilla's herds in the wild by biome,
+  animals in the fields, fish in the seas, hostiles in the dark.
+- **Loot** — every container has a table that fits the world: a Modern drawer holds paper and a clock, a ruin's
+  scrap; one in thirteen holds something worth having. Every table ends in an `_extra` hook a pack can fill.
 - **Set-pieces** — oil platforms, castles, radio towers, flying saucers, hot-air balloons, campgrounds,
   zoos and biodomes.
 - **Furniture mods** — install Macaw's Furniture, MrCrayfish's Refurbished Furniture or any Fantasy's
@@ -155,17 +186,22 @@ hovering over low terrain) · `maze` · `astral` (alien).
 
 ## Configuring a world
 
-CityWorld has ~100 settings (which features generate, spawn/treasure odds, terrain toggles, city
-radius, and even the villager-name and mob lists). Because they are **per-world** and NeoForge config
-is per-instance, they are delivered as a **datapack**:
+CityWorld has well over a hundred settings (which features generate, spawn/treasure odds, terrain toggles,
+city radius, oceans, highways, car parks, vehicles, and even the villager-name, place-name and mob lists).
+Because they are **per-world**, they are delivered as a **datapack**:
 
-- On first run, a copy-and-edit example is written to
-  **`config/cityworld/settings-example/`** — a full `default.json` with every knob at its default,
-  plus **`settings-reference.txt`** explaining what each does and its sensible range.
-- Copy that folder into `<world>/datapacks/`, edit `default.json` (list only what you want to
-  change), and start the world. Different worlds — and different dimensions — can differ.
-- In single-player, the **Customize** screen edits everything visually, and **`/cityexport <name>`**
-  bottles a world you like into a datapack you can drop on a server.
+- Every run writes a copy-and-edit example to **`config/cityworld/settings-example/`**: the three shipped
+  entries (`modern.json`, `apocalypse.json`, `default.json`) with every setting spelled out, and a `README.txt`.
+  Your file **replaces** the entry your world type reads, so copy the whole shipped file and change what you need.
+- Copy the folder into `<world>/datapacks/` and start the world. Different worlds — and different dimensions —
+  can differ.
+- In single-player, the **Customize** screen edits everything visually (with named presets, a Structures page
+  with every installed structure set, and a style switch), and **`/cityexport <name>`** bottles a world you like
+  into a datapack you can drop on a server.
+
+Every setting is on the wiki's [Configuring CityWorld](https://github.com/Sablednah/CityWorld-ReForged/wiki/Configuring-CityWorld)
+page, and [Examples](https://github.com/Sablednah/CityWorld-ReForged/wiki/Examples) has one-thing-each recipes
+for packs and mods.
 
 Settings apply to **newly generated chunks** — existing chunks never regenerate, so start a fresh
 world to see terrain-shaping changes.
@@ -174,8 +210,10 @@ world to see terrain-shaping changes.
 
 CityWorld replaces the biome source outright, so biome mods used to be invisible to it. It now reads
 whatever any **TerraBlender**-based mod registered — Biomes O' Plenty and most of the modern biome
-mods — and folds those biomes into its own map. Measured with BoP installed: **52 of its biomes
-appear, over about a third of the ground**, while CityWorld still names the rest.
+mods — and folds those biomes into its own map, on every version. Measured with BoP installed: **all 59 of its
+overworld biomes appear, over about a third of the ground**, while CityWorld still names the rest. Datapack biome
+mods (Terralith, Dreamwoods' Grand Terrain) and Lithostitched mods (Regions Unexplored) reach the land too; see
+[`BIOMES.md`](BIOMES.md).
 
 On by default (installing a biome mod is itself the request); `world.useModdedBiomes` turns it off and
 `world.moddedBiomeShare` sets how much contested ground the mod may own. Costs nothing when no such
@@ -188,7 +226,10 @@ appear in buildings and fields without any patch — see [`PALETTES.md`](PALETTE
 
 Drop your own building schematics into `config/cityworld/schematics/<Family>/` (legacy `.schematic`,
 WorldEdit `.schem`, Litematica `.litematic`, or vanilla `.nbt`). Turn on `includeSchematics` and the
-generator salts them into cities. Filenames may contain spaces.
+generator salts them into cities. Filenames may contain spaces. A `.yml` sidecar sets the odds, how deep it
+sits, a title, and where its drive meets the road (`Driveway:`), so the city sites it facing a street. A
+datapack can fit out any schematic (swap blocks, hang item frames) without replacing it. See
+[`SCHEMATICS.md`](SCHEMATICS.md).
 
 Every container in a pasted schematic gets a loot table. A datapack that ships
 `data/cityworld/loot_table/chests/schematic/<name>.json` (the file's name, lowercased, spaces as
@@ -205,6 +246,8 @@ chests draw from `cityworld:chests/building`. The bundled Winchester ships an ex
 | `/cityworld` / `/cityworld leave` | op | Teleport into/out of the `cityworld:city` dimension. |
 | `/cityschem <name>` / `/cityschem list` | op | Paste / list catalog schematics (tab-completes). |
 | `/cityfind <name>` | op | Find the nearest matching schematic building (tab-completes). |
+| `/cityfind street <name>` / `/cityfind river` | op | Find a street by name, or the nearest river. |
+| `/citymap` | op | The JourneyMap city-plan overlay on a server. |
 | `/cityfind lot <kind>` / `/cityfind lots` | op | Find the nearest lot of a kind, or list the kinds. Add `tp` to teleport. |
 | `/cwlocate <biome>` | op | Find the nearest matching biome. Add `tp` to teleport. |
 | `/cityexport [name]` | op | Export this world's settings as a datapack. |

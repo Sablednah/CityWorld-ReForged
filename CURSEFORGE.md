@@ -13,6 +13,8 @@ screen.
 Battle-tested across **455 worlds and 7.6 million generated chunks** — over **1,900 km²** of procedurally
 generated city, more ground than all of Greater London and two and a half New Yorks.
 
+![The highrise core at golden hour](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/cityworld-highrise-district-in-golden-hour.jpg)
+
 **New in 7.0.0: deep oceans, highways, car parks and real cars.** A world-changing drop, so a major version.
 **Deep oceans** now and then run off CityWorld's own land: a shelf down into a wide, thirty-block-deep sea with
 vanilla's ocean biomes and everything that lives in them, monuments, ruins, shipwrecks, buried treasure and the sea
@@ -27,6 +29,8 @@ takes the roads, Macaw's picture signs stand where Macaw's has one, and both mod
 go on IV's poles, every town and district has a name, and a datapack can put anything in the city by lot, district or
 place (`cityworld:spawn`). Older worlds keep the land they always had: oceans and highways only come to a world
 made with 7.0.
+
+![A mall and its car park, lit for the night](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/cityworld-shopping-mall-and-car-park-by-night.jpg)
 
 Full details of every release are in the changelog on each file.
 
@@ -83,6 +87,8 @@ Pick **CityWorld** as your world type and you land in a living city:
   (`.schematic`/`.schem`/`.litematic`/`.nbt`) into a config folder and turn them loose in the city. A sidecar
   file can say where a build's drive meets the road, and the city sites it so that drive opens onto a street.
 
+![Towers on the waterfront at sunset](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/cityworld-waterfront-towers-at-sunset.jpg)
+
 ## Cities in a vanilla world
 
 Prefer vanilla terrain? Pick **Land — Vanilla, cities apart** in Customize and the world is vanilla's — its
@@ -91,6 +97,8 @@ rivers running through with quays and bridges. A city too big for its spacing is
 cities are joined: each gets a **highway** to the nearest city east and south, leaving from the end of one of its
 own streets, climbing in half-block steps a car can drive, winding round hills, cut through ridges in lit tunnels
 and over rivers on bridges, with villages kept off it.
+
+![A road bridge into the city](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/bridge.jpg)
 
 ## The map knows what the city is — with JourneyMap
 
@@ -150,6 +158,8 @@ and an armoury on the way. The vault keeps its own power. Survivors' bridges joi
 towers (with Macaw's Bridges, rope ones too), and a hidden zombie spawner or two waits in the dark.
 **Destroyed** is the same with heavier war-zone damage and fires.
 
+![An Apocalypse street](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/apocalypse-street.jpg)
+
 ## Furnished and fitted out — and furniture mods make it more so
 
 Every building has an interior. Offices and apartment towers, schools and courthouses inside the
@@ -181,6 +191,8 @@ every BoP wood) and the city is built with them:
 - **Lights** — lamp posts on the streets, garden lights at park gates, tiki torches at campgrounds, and
   wall lanterns, sconces, chandeliers and ceiling lights indoors.
 
+![A kitchen from a furniture mod](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/kitchen-with-stove.jpg)
+
 **Roads, paths and bridges.** With **Macaw's Roads and Streets** every city street is asphalt with a dashed centre
 line, zebra crossings at junctions, kerbs, manholes and road signs: STOP at a T, DEAD END, speed limits in pairs
 where town (50) meets country (30), the town's name where a road leaves for the wild, and MOTORWAY, TUNNEL and STEEP
@@ -189,6 +201,8 @@ Paths and Pavings** paves the parks (one paving per district) and the country tr
 rare rope bridge across a mountain valley, about one per range, and in a ruined city the survivors' bridges between
 the towers. **Ultimate Car Mod**'s asphalt joins the road pool too, with its text signs; with both mods installed,
 Ultimate Car Mod's road wins and Macaw's picture signs stand wherever Macaw's has one.
+
+![Lane lines and lamp posts down a boulevard at dusk](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/cityworld-lamp-lit-boulevard-at-dusk.jpg)
 
 **Cars.** With **Immersive Vehicles** (and its Official Content Pack) or **Ultimate Car Mod**, drivable vehicles
 stand in the car parks and at the kerbs with the brake on, a charged battery and fuel in the tank — few, because
@@ -202,6 +216,8 @@ paddies, rich soil, compost, crates and bales, and the shops hang canvas signs. 
 ATMs stand in city halls, shops and malls.
 
 Mod authors: adding your own furniture takes two data files in your jar — see `PALETTES.md` in the repo.
+
+![Lit towers over the park by night](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/cityworld-lit-towers-over-the-park-by-night.jpg)
 
 ## World styles
 
@@ -239,6 +255,8 @@ type would.
 **→ Full settings reference, example datapacks, and guides (villages and other vanilla structures,
 a gentler apocalypse, sparse cities, custom villager names, taller skyscrapers, and more): [sablecraft.co.uk/cityworld-reforged](https://sablecraft.co.uk/cityworld-reforged/)**
 and the wiki's [beginner's guide to datapacks](https://github.com/Sablednah/CityWorld-ReForged/wiki/Beginners-Guide-to-Datapacks).
+
+![The industrial district by night](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/cityworld-industrial-chimneys-by-night.jpg)
 
 ### Your other mods' blocks build cities too
 
@@ -309,6 +327,8 @@ changes: the defaults are the operator levels the commands always used.
 
 **→ Every command with usage examples: [sablecraft.co.uk/cityworld-reforged](https://sablecraft.co.uk/cityworld-reforged/)**
 
+![The skyline at dusk across the bay](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/cityworld-skyline-at-dusk-across-the-bay.jpg)
+
 ## Requirements
 
 CityWorld runs on **six Minecraft versions**, across two loaders. Download the file for yours — the
@@ -372,6 +392,8 @@ with none installed nothing changes.
 page; any **TerraBlender** biome mod's biomes join the world; and any mod that tags its blocks, crops and
 flowers the standard way has them built with and planted. If something you use misbehaves in a CityWorld
 world, say so in the comments.
+
+![Straight down a street between the towers](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/cityworld-street-canyon-from-above-by-night.jpg)
 
 ## Credits and licence
 
