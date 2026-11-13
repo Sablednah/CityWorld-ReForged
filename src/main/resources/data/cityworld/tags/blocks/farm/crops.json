@@ -48,6 +48,10 @@
     { "id": "pamhc2crops:pamcottoncrop", "required": false },
     { "id": "pamhc2crops:pamflaxcrop", "required": false },
     { "id": "pamhc2crops:pampeanutcrop", "required": false },
-    { "id": "pamhc2crops:pamricecrop", "required": false }
-  ]
+    { "id": "pamhc2crops:pamricecrop", "required": false },
+    { "id": "cobblemon:oran_berry", "required": false },
+    { "id": "cobblemon:cheri_berry", "required": false },
+    { "id": "cobblemon:pecha_berry", "required": false },
+    { "id": "cobblemon:sitrus_berry", "required": false }
+]
 }

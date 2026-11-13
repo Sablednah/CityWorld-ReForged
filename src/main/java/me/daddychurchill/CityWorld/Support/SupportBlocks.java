@@ -404,7 +404,21 @@ public abstract class SupportBlocks extends AbstractBlocks {
 	 * {@link #withScaledLevel} finds whichever the block actually has.
 	 */
 	public final void setBlock(int x, int y, int z, Material material, double level) {
-		setActualBlock(x, y, z, withScaledLevel(stateOf(material), level));
+		setActualBlock(x, y, z, asGenerated(withScaledLevel(stateOf(material), level)));
+	}
+
+	/**
+	 * A plant that knows the difference between planted and generated is told it was generated: Cobblemon's berry
+	 * bushes carry a {@code generated} property, and only a generated bush at fruiting age fills its own fruit when
+	 * its block entity loads (a planted one stands at age 5 with nothing to pick). Any block without the property
+	 * is unchanged.
+	 */
+	private static BlockState asGenerated(BlockState state) {
+		for (Property<?> property : state.getProperties())
+			if (property instanceof net.minecraft.world.level.block.state.properties.BooleanProperty flag
+					&& property.getName().equals("generated"))
+				return state.setValue(flag, true);
+		return state;
 	}
 
 	/**
