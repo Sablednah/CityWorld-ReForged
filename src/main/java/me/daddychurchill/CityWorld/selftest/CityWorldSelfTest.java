@@ -214,6 +214,7 @@ public final class CityWorldSelfTest {
             checkStructures(server);
             checkStructureChoices(server);
             checkPlacedSets(server);
+            checkCobblemonSpawns(server);
             checkDecorationAndSigns(server);
             checkSubways(server);
             checkMalls(server);
@@ -2128,6 +2129,68 @@ public final class CityWorldSelfTest {
             report.put("placedSets.cobblemon", "n/a (Cobblemon not installed; villages placed="
                     + placedSets.contains("minecraft:villages") + ")");
         }
+    }
+
+    /**
+     * Cobblemon's spawning sees the city: our influence detector sits in Cobblemon's set, the shipped
+     * {@code spawn_pool_world} entries (keyed on our markers) loaded into its world pool, and a street chunk's
+     * surface carries {@code cityworld:city} + {@code cityworld:street} and counts as civilisation while the
+     * sewer under it does not. Without Cobblemon: nothing installed, and the files are inert.
+     */
+    private void checkCobblemonSpawns(MinecraftServer server) {
+        boolean cobblemon = net.neoforged.fml.ModList.get().isLoaded("cobblemon");
+        boolean installed = me.daddychurchill.CityWorld.worldgen.CobblemonBridge.installed();
+        if (!cobblemon) {
+            if (installed)
+                fail("the Cobblemon spawning influence reports installed without Cobblemon");
+            report.put("cobblemon.spawns", "n/a (Cobblemon not installed)");
+            return;
+        }
+        if (!installed)
+            fail("Cobblemon is installed but CityWorld's spawning influence is not in its detector set");
+        int own = 0, total = 0;
+        try {
+            Class<?> pools = Class.forName("com.cobblemon.mod.common.api.spawning.CobblemonSpawnPools");
+            Object pool = pools.getMethod("getWORLD_SPAWN_POOL").invoke(pools.getField("INSTANCE").get(null));
+            List<?> details = (List<?>) pool.getClass().getMethod("getDetails").invoke(pool);
+            total = details.size();
+            for (Object detail : details) {
+                String id = (String) detail.getClass().getMethod("getId").invoke(detail);
+                if (id.startsWith("cityworld-"))
+                    own++;
+            }
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            fail("could not read Cobblemon's world spawn pool: " + e);
+        }
+        if (own == 0)
+            fail("none of CityWorld's cityworld-* spawn entries reached Cobblemon's world spawn pool");
+        ServerLevel level = server.overworld();
+        CityWorldGenerator plan = level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator g
+                ? g.getContext(level) : null;
+        String markers = "no road chunk in the plan radius";
+        if (plan != null)
+            outer: for (int cx = -PLAN_RADIUS; cx <= PLAN_RADIUS; cx++)
+                for (int cz = -PLAN_RADIUS; cz <= PLAN_RADIUS; cz++) {
+                    if (!(lotAt(plan, cx, cz) instanceof me.daddychurchill.CityWorld.Plats.RoadLot))
+                        continue;
+                    var info = me.daddychurchill.CityWorld.api.CityWorldAPI.lotAt(level,
+                            new BlockPos(cx * 16 + 8, 64, cz * 16 + 8));
+                    if (info.isEmpty())
+                        continue;
+                    java.util.Set<String> street = new java.util.TreeSet<>(), sewer = new java.util.TreeSet<>();
+                    boolean civilised = me.daddychurchill.CityWorld.worldgen.CobblemonBridge.markersFor(info.get(),
+                            info.get().streetLevel() + 1, street);
+                    boolean below = me.daddychurchill.CityWorld.worldgen.CobblemonBridge.markersFor(info.get(),
+                            info.get().streetLevel() - 10, sewer);
+                    if (!civilised || !street.contains("cityworld:city") || !street.contains("cityworld:street"))
+                        fail("a street's surface should be civilised city + street, got " + civilised + " " + street);
+                    if (below || !sewer.contains("cityworld:sewer") || !sewer.contains("cityworld:underground"))
+                        fail("under a street should be an uncivilised sewer, got " + below + " " + sewer);
+                    markers = street + " / " + sewer;
+                    break outer;
+                }
+        report.put("cobblemon.spawns", own + " CityWorld entries of " + total + " in the world pool; influence "
+                + (installed ? "installed" : "NOT installed") + "; street " + markers);
     }
 
     private void checkStructures(MinecraftServer server) {

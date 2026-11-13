@@ -76,6 +76,13 @@ public final class CityWorldServerEvents {
     }
 
     @SubscribeEvent
+    public static void onServerAboutToStart(net.neoforged.neoforge.event.server.ServerAboutToStartEvent event) {
+        // Cobblemon's detector set is static, so this installs once per game; a second server in the same game
+        // (single player, world after world) finds it installed already
+        me.daddychurchill.CityWorld.worldgen.CobblemonBridge.install();
+    }
+
+    @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         if (!MapMarkers.hasListeners())
             return;

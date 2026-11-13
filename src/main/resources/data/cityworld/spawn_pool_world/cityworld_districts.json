@@ -1,0 +1,1005 @@
+{
+  "_comment": "CityWorld: what lives in each district, by the markers CobblemonBridge puts on a spawning position (cityworld:district/<district>, cityworld:sewer, cityworld:subway, cityworld:lot/<lot>, cityworld:farm). Hand-kept; a datapack may replace this file or add its own beside it.",
+  "enabled": true,
+  "neededInstalledMods": [
+    "cobblemon"
+  ],
+  "neededUninstalledMods": [],
+  "spawns": [
+    {
+      "id": "cityworld-grimer-industrial",
+      "pokemon": "grimer",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 40,
+      "condition": {
+        "markers": [
+          "cityworld:district/industrial"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-koffing-industrial",
+      "pokemon": "koffing",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 40,
+      "condition": {
+        "markers": [
+          "cityworld:district/industrial"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-magnemite-industrial",
+      "pokemon": "magnemite",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 35,
+      "condition": {
+        "markers": [
+          "cityworld:district/industrial"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-trubbish-industrial",
+      "pokemon": "trubbish",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 40,
+      "condition": {
+        "markers": [
+          "cityworld:district/industrial"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-voltorb-industrial",
+      "pokemon": "voltorb",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 25,
+      "condition": {
+        "markers": [
+          "cityworld:district/industrial"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-klink-industrial",
+      "pokemon": "klink",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "15-40",
+      "weight": 20,
+      "condition": {
+        "markers": [
+          "cityworld:district/industrial"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-magneton-industrial",
+      "pokemon": "magneton",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "15-40",
+      "weight": 12,
+      "condition": {
+        "markers": [
+          "cityworld:district/industrial"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-muk-industrial",
+      "pokemon": "muk",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "15-40",
+      "weight": 10,
+      "condition": {
+        "markers": [
+          "cityworld:district/industrial"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-weezing-industrial",
+      "pokemon": "weezing",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "15-40",
+      "weight": 10,
+      "condition": {
+        "markers": [
+          "cityworld:district/industrial"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-electrode-industrial",
+      "pokemon": "electrode",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "15-40",
+      "weight": 8,
+      "condition": {
+        "markers": [
+          "cityworld:district/industrial"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-garbodor-industrial",
+      "pokemon": "garbodor",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "rare",
+      "level": "25-45",
+      "weight": 10.0,
+      "condition": {
+        "markers": [
+          "cityworld:district/industrial"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-caterpie-park",
+      "pokemon": "caterpie",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 40,
+      "condition": {
+        "markers": [
+          "cityworld:district/park"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-weedle-park",
+      "pokemon": "weedle",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 40,
+      "condition": {
+        "markers": [
+          "cityworld:district/park"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-oddish-park",
+      "pokemon": "oddish",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 35,
+      "condition": {
+        "markers": [
+          "cityworld:district/park"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-bellsprout-park",
+      "pokemon": "bellsprout",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 30,
+      "condition": {
+        "markers": [
+          "cityworld:district/park"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-budew-park",
+      "pokemon": "budew",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 30,
+      "condition": {
+        "markers": [
+          "cityworld:district/park"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-sunkern-park",
+      "pokemon": "sunkern",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 25,
+      "condition": {
+        "markers": [
+          "cityworld:district/park"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-combee-park",
+      "pokemon": "combee",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 20,
+      "condition": {
+        "markers": [
+          "cityworld:district/park"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-pidgey-park",
+      "pokemon": "pidgey",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 40,
+      "condition": {
+        "markers": [
+          "cityworld:district/park"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-butterfree-park",
+      "pokemon": "butterfree",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "10-35",
+      "weight": 15,
+      "condition": {
+        "markers": [
+          "cityworld:district/park"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-beedrill-park",
+      "pokemon": "beedrill",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "10-35",
+      "weight": 15,
+      "condition": {
+        "markers": [
+          "cityworld:district/park"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-roselia-park",
+      "pokemon": "roselia",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "10-35",
+      "weight": 12,
+      "condition": {
+        "markers": [
+          "cityworld:district/park"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-pikachu-park",
+      "pokemon": "pikachu",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "10-35",
+      "weight": 8,
+      "condition": {
+        "markers": [
+          "cityworld:district/park"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-chansey-municipal",
+      "pokemon": "chansey",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "12-35",
+      "weight": 15,
+      "condition": {
+        "markers": [
+          "cityworld:district/municipal"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-audino-municipal",
+      "pokemon": "audino",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "12-35",
+      "weight": 20,
+      "condition": {
+        "markers": [
+          "cityworld:district/municipal"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-clefairy-municipal",
+      "pokemon": "clefairy",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "12-35",
+      "weight": 12,
+      "condition": {
+        "markers": [
+          "cityworld:district/municipal"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-porygon-municipal",
+      "pokemon": "porygon",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "12-35",
+      "weight": 8,
+      "condition": {
+        "markers": [
+          "cityworld:district/municipal"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-blissey-municipal",
+      "pokemon": "blissey",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "rare",
+      "level": "30-50",
+      "weight": 6.0,
+      "condition": {
+        "markers": [
+          "cityworld:district/municipal"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-lillipup-neighborhood",
+      "pokemon": "lillipup",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 40,
+      "condition": {
+        "markers": [
+          "cityworld:district/neighborhood"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-purrloin-neighborhood",
+      "pokemon": "purrloin",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 35,
+      "condition": {
+        "markers": [
+          "cityworld:district/neighborhood"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-skitty-neighborhood",
+      "pokemon": "skitty",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 30,
+      "condition": {
+        "markers": [
+          "cityworld:district/neighborhood"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-pidove-neighborhood",
+      "pokemon": "pidove",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 40,
+      "condition": {
+        "markers": [
+          "cityworld:district/neighborhood"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-yungoos-neighborhood",
+      "pokemon": "yungoos",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 30,
+      "condition": {
+        "markers": [
+          "cityworld:district/neighborhood"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-fidough-neighborhood",
+      "pokemon": "fidough",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 25,
+      "condition": {
+        "markers": [
+          "cityworld:district/neighborhood"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-snubbull-neighborhood",
+      "pokemon": "snubbull",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "10-35",
+      "weight": 15,
+      "condition": {
+        "markers": [
+          "cityworld:district/neighborhood"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-growlithe-neighborhood",
+      "pokemon": "growlithe",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "10-35",
+      "weight": 15,
+      "condition": {
+        "markers": [
+          "cityworld:district/neighborhood"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-espurr-neighborhood",
+      "pokemon": "espurr",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "10-35",
+      "weight": 12,
+      "condition": {
+        "markers": [
+          "cityworld:district/neighborhood"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-ditto-neighborhood",
+      "pokemon": "ditto",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "10-35",
+      "weight": 4,
+      "condition": {
+        "markers": [
+          "cityworld:district/neighborhood"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-eevee-neighborhood",
+      "pokemon": "eevee",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "rare",
+      "level": "10-30",
+      "weight": 8.0,
+      "condition": {
+        "markers": [
+          "cityworld:district/neighborhood"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-pidove-highrise",
+      "pokemon": "pidove",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 40,
+      "condition": {
+        "markers": [
+          "cityworld:district/highrise"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-spearow-highrise",
+      "pokemon": "spearow",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 30,
+      "condition": {
+        "markers": [
+          "cityworld:district/highrise"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-murkrow-highrise",
+      "pokemon": "murkrow",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "10-35",
+      "weight": 15.0,
+      "condition": {
+        "markers": [
+          "cityworld:district/highrise"
+        ],
+        "timeRange": "night"
+      }
+    },
+    {
+      "id": "cityworld-noibat-highrise",
+      "pokemon": "noibat",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "10-35",
+      "weight": 10.0,
+      "condition": {
+        "markers": [
+          "cityworld:district/highrise"
+        ],
+        "timeRange": "night"
+      }
+    },
+    {
+      "id": "cityworld-grimer-sewer",
+      "pokemon": "grimer",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 50,
+      "condition": {
+        "markers": [
+          "cityworld:sewer"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-rattata-sewer",
+      "pokemon": "rattata",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 50,
+      "condition": {
+        "markers": [
+          "cityworld:sewer"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-zubat-sewer",
+      "pokemon": "zubat",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 50,
+      "condition": {
+        "markers": [
+          "cityworld:sewer"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-trubbish-sewer",
+      "pokemon": "trubbish",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 30,
+      "condition": {
+        "markers": [
+          "cityworld:sewer"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-croagunk-sewer",
+      "pokemon": "croagunk",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "15-40",
+      "weight": 20,
+      "condition": {
+        "markers": [
+          "cityworld:sewer"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-raticate-sewer",
+      "pokemon": "raticate",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "15-40",
+      "weight": 15,
+      "condition": {
+        "markers": [
+          "cityworld:sewer"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-golbat-sewer",
+      "pokemon": "golbat",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "15-40",
+      "weight": 10,
+      "condition": {
+        "markers": [
+          "cityworld:sewer"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-muk-sewer",
+      "pokemon": "muk",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "rare",
+      "level": "30-50",
+      "weight": 10.0,
+      "condition": {
+        "markers": [
+          "cityworld:sewer"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-zubat-subway",
+      "pokemon": "zubat",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 50,
+      "condition": {
+        "markers": [
+          "cityworld:subway"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-rattata-subway",
+      "pokemon": "rattata",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 40,
+      "condition": {
+        "markers": [
+          "cityworld:subway"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-voltorb-subway",
+      "pokemon": "voltorb",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 30,
+      "condition": {
+        "markers": [
+          "cityworld:subway"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-magnemite-subway",
+      "pokemon": "magnemite",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 30,
+      "condition": {
+        "markers": [
+          "cityworld:subway"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-golbat-subway",
+      "pokemon": "golbat",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "15-40",
+      "weight": 15.0,
+      "condition": {
+        "markers": [
+          "cityworld:subway"
+        ]
+      }
+    },
+    {
+      "id": "cityworld-gastly-vault",
+      "pokemon": "gastly",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 50,
+      "condition": {
+        "markers": [
+          "cityworld:lot/vault"
+        ],
+        "maxLight": 7
+      }
+    },
+    {
+      "id": "cityworld-shuppet-vault",
+      "pokemon": "shuppet",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 30,
+      "condition": {
+        "markers": [
+          "cityworld:lot/vault"
+        ],
+        "maxLight": 7
+      }
+    },
+    {
+      "id": "cityworld-drowzee-vault",
+      "pokemon": "drowzee",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 25,
+      "condition": {
+        "markers": [
+          "cityworld:lot/vault"
+        ],
+        "maxLight": 7
+      }
+    },
+    {
+      "id": "cityworld-haunter-vault",
+      "pokemon": "haunter",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "20-45",
+      "weight": 20,
+      "condition": {
+        "markers": [
+          "cityworld:lot/vault"
+        ],
+        "maxLight": 7
+      }
+    },
+    {
+      "id": "cityworld-misdreavus-vault",
+      "pokemon": "misdreavus",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "20-45",
+      "weight": 20,
+      "condition": {
+        "markers": [
+          "cityworld:lot/vault"
+        ],
+        "maxLight": 7
+      }
+    },
+    {
+      "id": "cityworld-hypno-vault",
+      "pokemon": "hypno",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "20-45",
+      "weight": 12,
+      "condition": {
+        "markers": [
+          "cityworld:lot/vault"
+        ],
+        "maxLight": 7
+      }
+    },
+    {
+      "id": "cityworld-gengar-vault",
+      "pokemon": "gengar",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "rare",
+      "level": "35-55",
+      "weight": 6,
+      "condition": {
+        "markers": [
+          "cityworld:lot/vault"
+        ],
+        "maxLight": 7
+      }
+    },
+    {
+      "id": "cityworld-rotom-vault",
+      "pokemon": "rotom",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "rare",
+      "level": "35-55",
+      "weight": 4,
+      "condition": {
+        "markers": [
+          "cityworld:lot/vault"
+        ],
+        "maxLight": 7
+      }
+    },
+    {
+      "id": "cityworld-mareep-farm",
+      "pokemon": "mareep",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 35,
+      "condition": {
+        "markers": [
+          "cityworld:farm"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-wooloo-farm",
+      "pokemon": "wooloo",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 35,
+      "condition": {
+        "markers": [
+          "cityworld:farm"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-ducklett-farm",
+      "pokemon": "ducklett",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "common",
+      "level": "5-30",
+      "weight": 20,
+      "condition": {
+        "markers": [
+          "cityworld:farm"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-miltank-farm",
+      "pokemon": "miltank",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "15-35",
+      "weight": 12,
+      "condition": {
+        "markers": [
+          "cityworld:farm"
+        ],
+        "minSkyLight": 8
+      }
+    },
+    {
+      "id": "cityworld-tauros-farm",
+      "pokemon": "tauros",
+      "type": "pokemon",
+      "spawnablePositionType": "grounded",
+      "bucket": "uncommon",
+      "level": "15-35",
+      "weight": 12,
+      "condition": {
+        "markers": [
+          "cityworld:farm"
+        ],
+        "minSkyLight": 8
+      }
+    }
+  ]
+}
