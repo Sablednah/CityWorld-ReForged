@@ -888,6 +888,11 @@ public abstract class SupportBlocks extends AbstractBlocks {
 	public final boolean setFurniture(int x, int y, int z, Material piece, BlockFace facing) {
 		var spec = me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.furnitureFor(piece);
 		BlockState base = withDirection(stateOf(piece), facing);
+		// a furniture piece stands dry: a block whose default state never names WATERLOGGED answers the property's
+		// FIRST value for it — true — and Cobblemon's pasture is one (a pasture waterlogged inside a Pokémon Center,
+		// probed 2026-11-13); a piece that belongs in water is placed through setWaterloggedBlock, never here
+		if (base.hasProperty(BlockStateProperties.WATERLOGGED))
+			base = base.setValue(BlockStateProperties.WATERLOGGED, false);
 		for (var prop : spec.props().entrySet())
 			base = withNamedValue(base, prop.getKey(), prop.getValue());
 		if (!spec.vary().isEmpty())
