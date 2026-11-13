@@ -301,3 +301,11 @@ and sign to the road, lime awning, white band at y 68, roof 176 green / 4 lime /
 region held **four `cobblemon:npc` with `NPCClass` grass/water/fighting/psychic and a `CustomName`** — Cobblemon
 applied the class on load (the name is from the class's `names`). 26.1 and 26.3 without Cobblemon: PASS,
 `cobblemon.lots = 0 / 0 / 0 (Cobblemon not installed)`, `cobblemon.spawns = n/a`.
+
+**1.20.1 loot (2026-11-13, final-head self-test):** `FAIL — 3 datapack element(s) failed to parse`: Forge 1.20.1 has
+no condition hook on loot tables (`ForgeHooks.loadLootTable` reads the JSON as it is; the `forge:conditions` key is
+simply ignored), so `cobblemon:rare_candy` as an `item` entry failed the whole table's parse without the mod
+(`Expected name to be an item, was unknown string`). `gen_cobblemon_loot.py` now writes **vanilla stand-ins** on that
+line (bread, honey bottles, emeralds, experience bottles…) with no condition; a pack adds Cobblemon's items through
+the `_extra` hooks. Master `ef4d4b7b`, 1.20.1 `8ac7fa18`. The other five lines keep the Cobblemon stock under
+`neoforge:conditions`.
