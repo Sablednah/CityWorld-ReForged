@@ -59,6 +59,14 @@ def convert(entry):
     condition = dict(entry.get('condition', {}))
     condition['markers'] = ['cityworld:city']
     out['condition'] = condition
+    # a herd names itself by its raw id in /checkspawns (SpawnDetail.getName: displayName ?: id), so the owner's
+    # list read "cityworld-herd-meowth-1"; the leader species' lang key makes it read "Meowth", and the command
+    # then folds it in with the single-Pokémon entry of the same name
+    if 'herdablePokemon' in entry and 'displayName' not in entry:
+        members = entry['herdablePokemon']
+        lead = next((m for m in members if m.get('isLeader')), members[0] if members else None)
+        if lead and lead.get('pokemon'):
+            out['displayName'] = 'cobblemon.species.%s.name' % lead['pokemon'].split()[0].lower()
     return out
 
 
