@@ -93,6 +93,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private Chance oddsOfTreasureInMines, oddsOfTreasureInBunkers, oddsOfTreasureInSewers,
             oddsOfTreasureInBuildings, oddsOfAlcoveInMines, oddsOfFinds, oddsOfAtmInCivic, oddsOfAtmInShops,
             oddsOfAtmInMalls, oddsOfPokecenter, oddsOfGym;
+    private int gymLeaderLevel;
     // world
     private TreeStyle treeStyle;
     private Chance spawnTrees;
@@ -202,6 +203,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         oddsOfAtmInMalls = Chance.nearest(data.shops().oddsOfAtmInMalls());
         oddsOfPokecenter = Chance.nearest(data.shops().oddsOfPokecenter());
         oddsOfGym = Chance.nearest(data.shops().oddsOfGym());
+        gymLeaderLevel = data.shops().gymLeaderLevel();
         includeSubways = data.subways().enabled();
         spawnersInSubways = data.subways().spawners();
         this.roads = data.roads();
@@ -426,6 +428,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         // Cobblemon's buildings, when it supplies #cityworld:fittings/healing_machine
         pair(row, chance("Pokémon Centers", oddsOfPokecenter, v -> oddsOfPokecenter = v));
         pair(row, chance("Pokémon gyms", oddsOfGym, v -> oddsOfGym = v));
+        pair(row, cycle("Gym leader level", withValue(GYM_LEVEL_CHOICES, gymLeaderLevel), gymLeaderLevel,
+                v -> Component.literal("Lv " + v), v -> gymLeaderLevel = v));
         flush(row);
 
         this.list.addHeader(Component.literal("Terrain"));
@@ -561,7 +565,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops, includeMalls, oddsOfAtmInCivic.value,
-                oddsOfAtmInShops.value, oddsOfAtmInMalls.value, oddsOfPokecenter.value, oddsOfGym.value);
+                oddsOfAtmInShops.value, oddsOfAtmInMalls.value, oddsOfPokecenter.value, oddsOfGym.value,
+                gymLeaderLevel);
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);
@@ -656,6 +661,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
      *  hand-edited value between two choices displays as the nearest one (the same rounding
      *  {@link Chance#nearest} does) and is only overwritten if the player actually turns the dial. */
     private static final Integer[] FLOOR_CHOICES = { 8, 12, 16, 20, 24, 30, 40, 50, 60 };
+    private static final Integer[] GYM_LEVEL_CHOICES = { 10, 15, 20, 25, 30, 40, 50, 60, 80, 100 };
 
     private static final Integer[] SPACING_CHOICES = { 1024, 1536, 2048, 3072, 4096, 6144, 8192 };
     private static final Integer[] DISTRICT_CHOICES = { 1, 2, 3, 4, 5, 6 };

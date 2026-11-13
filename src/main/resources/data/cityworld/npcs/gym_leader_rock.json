@@ -21,54 +21,54 @@
     "type": "pool",
     "minPokemon": 3,
     "maxPokemon": 5,
-    "isStatic": true,
+    "isStatic": false,
     "pool": [
       {
         "pokemon": "geodude",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "onix",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "rhyhorn",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "sudowoodo",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "larvitar",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "nosepass",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "aron",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "roggenrola",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       }
     ]

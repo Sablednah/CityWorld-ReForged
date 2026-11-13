@@ -21,54 +21,54 @@
     "type": "pool",
     "minPokemon": 3,
     "maxPokemon": 5,
-    "isStatic": true,
+    "isStatic": false,
     "pool": [
       {
         "pokemon": "growlithe",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "vulpix",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "ponyta",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "charmander",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "houndour",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "magby",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "slugma",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "torkoal",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       }
     ]

@@ -21,54 +21,54 @@
     "type": "pool",
     "minPokemon": 3,
     "maxPokemon": 5,
-    "isStatic": true,
+    "isStatic": false,
     "pool": [
       {
         "pokemon": "pikachu",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "magnemite",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "voltorb",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "mareep",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "elekid",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "shinx",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "electrike",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "pachirisu",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       }
     ]

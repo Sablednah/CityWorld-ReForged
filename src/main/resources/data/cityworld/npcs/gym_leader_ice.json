@@ -21,54 +21,54 @@
     "type": "pool",
     "minPokemon": 3,
     "maxPokemon": 5,
-    "isStatic": true,
+    "isStatic": false,
     "pool": [
       {
         "pokemon": "snorunt",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "swinub",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "sneasel",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "smoochum",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "spheal",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "snover",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "cubchoo",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "bergmite",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       }
     ]
