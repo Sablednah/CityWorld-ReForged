@@ -1,0 +1,76 @@
+{
+  "hitbox": "player",
+  "names": [
+    "Misty",
+    "Wallace",
+    "Marlon",
+    "Nessa"
+  ],
+  "canDespawn": false,
+  "isMovable": false,
+  "interaction": {
+    "type": "dialogue",
+    "dialogue": "cityworld:gym_leader"
+  },
+  "battleConfiguration": {
+    "canChallenge": true
+  },
+  "skill": 4,
+  "autoHealParty": true,
+  "party": {
+    "type": "pool",
+    "minPokemon": 3,
+    "maxPokemon": 5,
+    "isStatic": true,
+    "pool": [
+      {
+        "pokemon": "staryu",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "psyduck",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "poliwag",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "seel",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "horsea",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "krabby",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "squirtle",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "wooper",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      }
+    ]
+  }
+}

@@ -190,6 +190,10 @@ public class CityWorldSettings {
     public double oddsOfAtmInCivic = Odds.oddsSomewhatLikely;
     public double oddsOfAtmInShops = Odds.oddsUnlikely;
     public double oddsOfAtmInMalls = Odds.oddsSomewhatUnlikely;
+    /** Cobblemon: a Pokémon Center per road-fronting building chunk (lowrise/midrise/highrise), a gym per municipal
+     *  building chunk — nothing unless {@code #cityworld:fittings/healing_machine} resolves (Plats/Urban/PokecenterLot). */
+    public double oddsOfPokecenter = CityWorldSettingsData.Shops.POKECENTER_ODDS;
+    public double oddsOfGym = Odds.oddsUnlikely;
 
     /**
      * The subway: a station lot in every urban platmap and twin-track tunnels to the first station each
@@ -578,7 +582,7 @@ public class CityWorldSettings {
         CityWorldSettingsData.Overgrowth og = d.overgrowth();
         CityWorldSettingsData.Overgrowth og2 = new CityWorldSettingsData.Overgrowth(v, og.intensity(), v);
         CityWorldSettingsData.Shops sh = new CityWorldSettingsData.Shops(v, v, d.shops().oddsOfAtmInCivic(),
-                d.shops().oddsOfAtmInShops(), d.shops().oddsOfAtmInMalls());
+                d.shops().oddsOfAtmInShops(), d.shops().oddsOfAtmInMalls(), d.shops().oddsOfPokecenter(), d.shops().oddsOfGym());
         CityWorldSettingsData.Subways sw = new CityWorldSettingsData.Subways(v, v);
         return new CityWorldSettingsData(f, t2, d.spawns(), d.treasures(), d.world(), d.radius(), d.naming(),
                 d.mobs(), og2, sh, d.decay(), d.caves(), sw, d.structures(), d.cities(), d.roads());
@@ -637,6 +641,8 @@ public class CityWorldSettings {
         oddsOfAtmInCivic = data.shops().oddsOfAtmInCivic();
         oddsOfAtmInShops = data.shops().oddsOfAtmInShops();
         oddsOfAtmInMalls = data.shops().oddsOfAtmInMalls();
+        oddsOfPokecenter = data.shops().oddsOfPokecenter();
+        oddsOfGym = data.shops().oddsOfGym();
         includeSubways = data.subways().enabled();
         spawnersInSubways = data.subways().spawners();
         driveOnLeft = data.roads().driveOnLeft();
@@ -795,7 +801,7 @@ public class CityWorldSettings {
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops, includeMalls, oddsOfAtmInCivic,
-                oddsOfAtmInShops, oddsOfAtmInMalls);
+                oddsOfAtmInShops, oddsOfAtmInMalls, oddsOfPokecenter, oddsOfGym);
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);

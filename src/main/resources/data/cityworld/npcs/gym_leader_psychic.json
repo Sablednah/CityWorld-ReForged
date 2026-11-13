@@ -1,0 +1,76 @@
+{
+  "hitbox": "player",
+  "names": [
+    "Sabrina",
+    "Tate",
+    "Liza",
+    "Olympia"
+  ],
+  "canDespawn": false,
+  "isMovable": false,
+  "interaction": {
+    "type": "dialogue",
+    "dialogue": "cityworld:gym_leader"
+  },
+  "battleConfiguration": {
+    "canChallenge": true
+  },
+  "skill": 4,
+  "autoHealParty": true,
+  "party": {
+    "type": "pool",
+    "minPokemon": 3,
+    "maxPokemon": 5,
+    "isStatic": true,
+    "pool": [
+      {
+        "pokemon": "abra",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "drowzee",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "natu",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "ralts",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "wobbuffet",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "spoink",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "munna",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "gothita",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      }
+    ]
+  }
+}

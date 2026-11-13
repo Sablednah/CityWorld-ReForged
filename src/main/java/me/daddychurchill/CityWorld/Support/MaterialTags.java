@@ -166,6 +166,12 @@ public final class MaterialTags {
     /** A rope bridge across a ravine in the wild (Macaw's rope bridges, one per wood). */
     public static final TagKey<Block> FITTINGS_ROPE_BRIDGE = key("cityworld:fittings/rope_bridge");
     public static final TagKey<Block> FITTINGS_ATM = key("cityworld:fittings/atm");
+    /** A Pokémon Center's healing machine ({@code cobblemon:healing_machine}); while empty no Center is planned. */
+    public static final TagKey<Block> FITTINGS_HEALING_MACHINE = key("cityworld:fittings/healing_machine");
+    /** A Pokémon storage PC ({@code cobblemon:pc}, two high through its furniture layout): Centers, the Poké Mart counter. */
+    public static final TagKey<Block> FITTINGS_PC = key("cityworld:fittings/pc");
+    /** A pasture block ({@code cobblemon:pasture}, two high) at the back of a Center. */
+    public static final TagKey<Block> FITTINGS_PASTURE = key("cityworld:fittings/pasture");
     /** What an ATM stands on (its model is a counter-top height); shipped with vanilla stone, smooth stone if emptied. */
     public static final TagKey<Block> FITTINGS_ATM_BASE = key("cityworld:fittings/atm_base");
     /** Ceiling-hung signs a shop may use instead of the oak hanging sign (Farmer's Delight's canvas signs,
