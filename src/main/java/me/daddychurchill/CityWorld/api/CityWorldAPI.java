@@ -51,6 +51,11 @@ public final class CityWorldAPI {
     private CityWorldAPI() {}
 
     /** The plan for the chunk containing {@code pos}, or empty if {@code level} is not a CityWorld level. */
+    /** Whether CityWorld generates this level (its own land or cities on vanilla terrain); false for any other dimension. */
+    public static boolean isCityWorld(ServerLevel level) {
+        return contextFor(level) != null;
+    }
+
     public static Optional<LotInfo> lotAt(ServerLevel level, BlockPos pos) {
         CityWorldGenerator context = contextFor(level);
         if (context == null)
