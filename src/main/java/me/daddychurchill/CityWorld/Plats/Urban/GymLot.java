@@ -157,9 +157,11 @@ public class GymLot extends IsolatedLot {
             for (int yy = dy; yy <= dy + 1; yy++)
                 chunk.setBlock(f.x(u, 14), yy, f.z(u, 14), Material.AIR);
         chunk.setDoubleDoor(f.x(7, 14), dy, f.z(7, 14), Material.DARK_OAK_DOOR, f.face(BlockFace.SOUTH));
+        // the awning and sign hang over the SIDEWALK, which stands a block above the street (and our floor): dy + 2
+        // was head height for someone walking in (owner, 2026-11-13: "door is blocked by the red")
         for (int u = 6; u <= 9; u++)
-            chunk.setBlock(f.x(u, 15), dy + 2, f.z(u, 15), type.accent);
-        chunk.setWallSign(f.x(9, 15), dy + 1, f.z(9, 15), f.face(BlockFace.SOUTH), "Pokémon Gym", type.title());
+            chunk.setBlock(f.x(u, 15), dy + 3, f.z(u, 15), type.accent);
+        chunk.setWallSign(f.x(9, 15), dy + 2, f.z(9, 15), f.face(BlockFace.SOUTH), "Pokémon Gym", type.title());
 
         // bleachers down both long sides, the seats facing the arena
         for (int v = 4; v <= 11; v++) {
