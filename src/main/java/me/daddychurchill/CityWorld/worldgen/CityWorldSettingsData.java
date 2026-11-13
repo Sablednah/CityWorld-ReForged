@@ -650,10 +650,13 @@ public record CityWorldSettingsData(
      * shopping malls at the edge of town (modern-family only; on by default, independent of the rest).
      */
     public record Shops(boolean enabled, boolean malls, double oddsOfAtmInCivic, double oddsOfAtmInShops,
-            double oddsOfAtmInMalls, int bankPlazaRadius) {
+            double oddsOfAtmInMalls, int bankPlazaRadius, double oddsOfPokecenter, double oddsOfGym) {
+
+        /** A Pokémon Center's odds per road-fronting building chunk of a lowrise/midrise/highrise district: a rung of the Customize picker. */
+        public static final double POKECENTER_ODDS = 1.0 / 21.0;
 
         public static final Shops DEFAULT = new Shops(false, true, Odds.oddsSomewhatLikely, Odds.oddsUnlikely,
-                Odds.oddsSomewhatUnlikely, 2);
+                Odds.oddsSomewhatUnlikely, 2, POKECENTER_ODDS, Odds.oddsUnlikely);
 
         public static final Codec<Shops> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Shops::enabled),
@@ -668,7 +671,11 @@ public record CityWorldSettingsData(
                 // flat-land check passes first time: it samples the heights at the four corners of a 29x25 footprint
                 // from the player's position, and with the spawn scatter those reach 43 blocks out; at 1 they fell
                 // on the street lamps of the road in the ring and the bank walked 24 blocks south (2026-10-29). 0 = none
-                Codec.intRange(0, 8).optionalFieldOf("bankPlazaRadius", 2).forGetter(Shops::bankPlazaRadius)
+                Codec.intRange(0, 8).optionalFieldOf("bankPlazaRadius", 2).forGetter(Shops::bankPlazaRadius),
+                // Cobblemon (Plats/Urban/PokecenterLot, GymLot): only planned while #cityworld:fittings/healing_machine
+                // resolves, so these roll nothing without the mod
+                Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfPokecenter", POKECENTER_ODDS).forGetter(Shops::oddsOfPokecenter),
+                Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfGym", Odds.oddsUnlikely).forGetter(Shops::oddsOfGym)
         ).apply(i, Shops::new));
     }
 
@@ -869,7 +876,7 @@ public record CityWorldSettingsData(
          * balloon, fishpond, vaultroad, hospitaldept, subway} (default off). Everything always logs at debug.
          */
         public static final java.util.List<String> DEFAULT_ANNOUNCED = java.util.List.of(
-                "airship", "saucer", "vault", "zoo", "biodome", "hospital", "schematic", "mall");
+                "airship", "saucer", "vault", "zoo", "biodome", "hospital", "schematic", "mall", "pokecenter", "gym");
 
         /**
          * The world preset CityWorld reads the pack's overworld from (see {@code worldgen/PresetBiomes}). Vanilla

@@ -92,7 +92,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
             spawnersInSewers, treasuresInBuildings;
     private Chance oddsOfTreasureInMines, oddsOfTreasureInBunkers, oddsOfTreasureInSewers,
             oddsOfTreasureInBuildings, oddsOfAlcoveInMines, oddsOfFinds, oddsOfAtmInCivic, oddsOfAtmInShops,
-            oddsOfAtmInMalls;
+            oddsOfAtmInMalls, oddsOfPokecenter, oddsOfGym;
     // world
     private TreeStyle treeStyle;
     private Chance spawnTrees;
@@ -204,6 +204,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         oddsOfAtmInShops = Chance.nearest(data.shops().oddsOfAtmInShops());
         oddsOfAtmInMalls = Chance.nearest(data.shops().oddsOfAtmInMalls());
         bankPlazaRadius = data.shops().bankPlazaRadius();
+        oddsOfPokecenter = Chance.nearest(data.shops().oddsOfPokecenter());
+        oddsOfGym = Chance.nearest(data.shops().oddsOfGym());
         includeSubways = data.subways().enabled();
         spawnersInSubways = data.subways().spawners();
         this.roads = data.roads();
@@ -427,6 +429,9 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         pair(row, chance("ATMs: malls", oddsOfAtmInMalls, v -> oddsOfAtmInMalls = v));
         pair(row, cycle("Bank plaza (Modernlife)", PLAZA_CHOICES, bankPlazaRadius,
                 v -> Component.literal(v == 0 ? "Off" : v + " chunks"), v -> bankPlazaRadius = v));
+        // Cobblemon's buildings, when it supplies #cityworld:fittings/healing_machine
+        pair(row, chance("Pokémon Centers", oddsOfPokecenter, v -> oddsOfPokecenter = v));
+        pair(row, chance("Pokémon gyms", oddsOfGym, v -> oddsOfGym = v));
         flush(row);
 
         header(Component.literal("Terrain"));
@@ -651,7 +656,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops, includeMalls, oddsOfAtmInCivic.value,
-                oddsOfAtmInShops.value, oddsOfAtmInMalls.value, bankPlazaRadius);
+                oddsOfAtmInShops.value, oddsOfAtmInMalls.value, bankPlazaRadius, oddsOfPokecenter.value, oddsOfGym.value);
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);

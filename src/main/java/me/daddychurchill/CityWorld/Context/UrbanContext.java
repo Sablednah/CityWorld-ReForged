@@ -180,6 +180,12 @@ public abstract class UrbanContext extends CivilizedContext {
 			if (odds.playOdds(settings.oddsOfSurfaceCarPark))
 				return new me.daddychurchill.CityWorld.Plats.Urban.ParkingLot(platmap, chunkX, chunkZ, null);
 		}
+		// a Pokémon Center (Cobblemon) on the street: rolled only while its healing-machine pool resolves, so a world
+		// without the mod draws nothing from these dice and plans as before
+		if (generator.isModernStyle() && platmap.frontsRoad(chunkX - platmap.originX, chunkZ - platmap.originZ)
+				&& me.daddychurchill.CityWorld.Plats.Urban.PokecenterLot.available()
+				&& odds.playOdds(settings.oddsOfPokecenter))
+			return new me.daddychurchill.CityWorld.Plats.Urban.PokecenterLot(platmap, chunkX, chunkZ);
 		// Rebalanced (owner, 2026-09-03) from the old 6-way pick (office 50%, empty/store/library
 		// 17% each): more stores, fewer libraries and empties, and apartment towers dealt out
 		// directly — the upstream author's commented-out ApartmentBuildingLot, finally real.

@@ -197,6 +197,8 @@ public final class CityWorldAPI {
 
     private static final List<Place> PLACES = List.of(
             new Place("hospital", "Hospital", java.util.Set.of("HospitalLot")),
+            new Place("pokecenter", "Pokémon Center", java.util.Set.of("PokecenterLot")),
+            new Place("gym", "Pokémon gym", java.util.Set.of("GymLot")),
             new Place("mall", "Shopping mall", java.util.Set.of("MallLot")),
             new Place("museum", "Museum", java.util.Set.of("MuseumBuildingLot")),
             new Place("library", "Library", java.util.Set.of("LibraryBuildingLot")),
@@ -263,7 +265,8 @@ public final class CityWorldAPI {
         for (Place p : PLACES)
             out.add(new Findable("place:" + p.key(), "place", p.title()));
         for (ShopTrade t : ShopTrade.values())
-            out.add(new Findable("shop:" + t.name().toLowerCase(Locale.ROOT), "shop", t.displayName()));
+            if (t.available())
+                out.add(new Findable("shop:" + t.name().toLowerCase(Locale.ROOT), "shop", t.displayName()));
         DISTRICTS.forEach((family, title) -> out.add(
                 new Findable("district:" + family.name().toLowerCase(Locale.ROOT), "district", title)));
         for (String name : me.daddychurchill.CityWorld.Clipboard.SchematicLibrary.names()) {

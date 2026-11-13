@@ -52,7 +52,9 @@ public abstract class LootProvider extends Provider {
         // The armoury's ammunition shelves and crates: arrows and powder, and the hook a gun mod fills.
         VAULT_AMMO,
         // The radio tower hut's chest: copper and redstone, the spares a radio operator keeps.
-        RADIO_TOWER
+        RADIO_TOWER,
+        // Cobblemon's buildings (tables conditioned on the mod): a Pokémon Center's supplies, a gym's prize chest.
+        POKECENTER, GYM
     }
 
     public abstract void setLoot(CityWorldGenerator generator, Odds odds, LootLocation lootLocation, Block block);
