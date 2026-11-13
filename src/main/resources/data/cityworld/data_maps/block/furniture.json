@@ -16576,6 +16576,52 @@
       "value": {
         "facingOffset": 180
       }
+    },
+    "cobblemon:pc": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "cobblemon"
+        }
+      ],
+      "value": {
+        "layout": [
+          {
+            "props": {
+              "part": "bottom"
+            }
+          },
+          {
+            "up": 1,
+            "props": {
+              "part": "top"
+            }
+          }
+        ]
+      }
+    },
+    "cobblemon:pasture": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "cobblemon"
+        }
+      ],
+      "value": {
+        "layout": [
+          {
+            "props": {
+              "part": "bottom"
+            }
+          },
+          {
+            "up": 1,
+            "props": {
+              "part": "top"
+            }
+          }
+        ]
+      }
     }
   }
 }
