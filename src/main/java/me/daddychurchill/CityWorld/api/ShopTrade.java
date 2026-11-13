@@ -40,7 +40,10 @@ public enum ShopTrade {
     TOOLSMITH("Ironmonger", "toolsmith", "smithing_table", EnumSet.of(ShopScale.HIGH_STREET)),
     WEAPONSMITH("Weaponsmith", "weaponsmith", "grindstone", EnumSet.of(ShopScale.HIGH_STREET)),
     COBBLER("Cobbler", "leatherworker", "cauldron", EnumSet.of(ShopScale.HIGH_STREET)),
-    DRAPER("Draper", "shepherd", "loom", EnumSet.of(ShopScale.HIGH_STREET));
+    DRAPER("Draper", "shepherd", "loom", EnumSet.of(ShopScale.HIGH_STREET)),
+    // --- another mod's trade: only dealt while its mod is loaded (see available) -------------------
+    /** Cobblemon's Poké Mart: a PC on the counter, Poké Balls and potions in the stock. */
+    POKEMART("Poké Mart", "minecraft:cleric", "cobblemon:pc", EnumSet.of(ShopScale.CORNER_SHOP, ShopScale.HIGH_STREET));
 
     private final String displayName;
     private final Identifier profession;
@@ -49,9 +52,27 @@ public enum ShopTrade {
 
     ShopTrade(String displayName, String professionPath, String jobBlockPath, EnumSet<ShopScale> scales) {
         this.displayName = displayName;
-        this.profession = Identifier.withDefaultNamespace(professionPath);
-        this.jobBlock = Identifier.withDefaultNamespace(jobBlockPath);
+        this.profession = professionPath.contains(":") ? Identifier.parse(professionPath)
+                : Identifier.withDefaultNamespace(professionPath);
+        this.jobBlock = jobBlockPath.contains(":") ? Identifier.parse(jobBlockPath)
+                : Identifier.withDefaultNamespace(jobBlockPath);
         this.scales = scales;
+    }
+
+    /**
+     * Whether this trade can be dealt in this game: a vanilla trade always, another mod's trade only while that mod
+     * is loaded (its job block's namespace). A trade that is not available is never dealt to a shop and is not a
+     * {@code Findable}, so a world without the mod plans exactly as before.
+     */
+    public boolean available() {
+        String ns = jobBlock.getNamespace();
+        if (ns.equals("minecraft"))
+            return true;
+        try {
+            return net.neoforged.fml.ModList.get() != null && net.neoforged.fml.ModList.get().isLoaded(ns);
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     /** Human-readable shop-front label (e.g. "Map seller"). */
@@ -76,6 +97,6 @@ public enum ShopTrade {
 
     /** The trades eligible for a given setting, in declaration order — the picker's menu. */
     public static List<ShopTrade> tradesFor(ShopScale scale) {
-        return Stream.of(values()).filter(t -> t.appearsAt(scale)).collect(Collectors.toList());
+        return Stream.of(values()).filter(t -> t.appearsAt(scale) && t.available()).collect(Collectors.toList());
     }
 }

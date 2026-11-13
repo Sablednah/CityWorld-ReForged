@@ -1,0 +1,76 @@
+{
+  "hitbox": "player",
+  "names": [
+    "Pryce",
+    "Candice",
+    "Wulfric",
+    "Melony"
+  ],
+  "canDespawn": false,
+  "isMovable": false,
+  "interaction": {
+    "type": "dialogue",
+    "dialogue": "cityworld:gym_leader"
+  },
+  "battleConfiguration": {
+    "canChallenge": true
+  },
+  "skill": 4,
+  "autoHealParty": true,
+  "party": {
+    "type": "pool",
+    "minPokemon": 3,
+    "maxPokemon": 5,
+    "isStatic": true,
+    "pool": [
+      {
+        "pokemon": "snorunt",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "swinub",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "sneasel",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "smoochum",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "spheal",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "snover",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "cubchoo",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "bergmite",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      }
+    ]
+  }
+}
