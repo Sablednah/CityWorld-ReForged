@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "cobblemon:healing_machine",
+      "required": false
+    }
+  ]
+}
