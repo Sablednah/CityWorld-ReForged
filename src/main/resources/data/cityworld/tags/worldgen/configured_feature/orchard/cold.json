@@ -7,6 +7,8 @@
     { "id": "pamhc2trees:hazelnut", "required": false },
     { "id": "pamhc2trees:pinenut", "required": false },
     { "id": "pamhc2trees:gooseberry", "required": false },
-    { "id": "pamhc2trees:maple", "required": false }
-  ]
+    { "id": "pamhc2trees:maple", "required": false },
+    { "id": "cobblemon:blue_apricorn_tree", "required": false },
+    { "id": "cobblemon:white_apricorn_tree", "required": false }
+]
 }
