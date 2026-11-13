@@ -16,6 +16,33 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   `data/cityworld/data_maps/worldgen/structure_set/placed_sets.json` places a structure set under a
   `neoforge:conditions` guard (`allow`, `wild`), which a `#cityworld:allowed` tag entry cannot carry. The Structures
   page shows the result as the set's default tick. Self-test `placedSets`.
+- **Cobblemon: Pokémon Centers, gyms and Poké Marts in the city.** With Cobblemon installed (1.21.1 and newer), a
+  one-chunk Pokémon Center stands on the streets of the lowrise, midrise and highrise districts
+  (`shops.oddsOfPokecenter`, 1 in 21 road-fronting building chunks): white walls, a red band, a Poké Ball on the roof,
+  the healing machine behind the reception counter with a `cobblemon:nurse`, a bank of PCs, seating, beds upstairs, a
+  pasture out the back, chests on `cityworld:chests/pokecenter`. Municipal districts get **gyms**
+  (`shops.oddsOfGym`, 1 in 8): a two-storey hall typed by position — fire, water, grass, electric, rock, ice, psychic,
+  fighting — the arena in the type's concrete with its gem block at the heart, bleachers, two prize chests
+  (`cityworld:chests/gym`) and a **gym leader** waiting behind the arena: a Cobblemon NPC of class
+  `cityworld:gym_leader_<type>` with a typed party of three to five at `shops.gymLeaderLevel` (25), who challenges you through the
+  dialogue `cityworld:gym_leader` (both are data under `data/cityworld/npcs/` and `dialogues/`, yours to override).
+  Street shops deal a new trade, the **Poké Mart** (a PC on the counter, stock on `cityworld:chests/shop_pokemart`).
+  All three are planned only while `#cityworld:fittings/healing_machine` has a block in it (Cobblemon's; pools
+  `fittings/{healing_machine,pc,pasture}`), so a world without Cobblemon never rolls for them and plans as before.
+  `/cityfind pokecenter`, `/cityfind gym`, `/cityfind shop:pokemart`; both buildings are announced landmarks.
+- **Cobblemon: the city tells Cobblemon's spawner where it is.** Through Cobblemon's spawning-influence API, every
+  spawn position on CityWorld land carries **markers** (`cityworld:city`, `cityworld:street`, `cityworld:farm`,
+  `cityworld:wild`, `cityworld:underground`, `cityworld:sewer`, `cityworld:subway`, `cityworld:district/<family>`,
+  `cityworld:lot/<kind>`, `cityworld:shop/<trade>`) and a city's surface counts as civilization for Cobblemon's
+  village-only species. CityWorld ships two spawn pools: Cobblemon's own **urban** species (Meowth, Growlithe,
+  Trubbish, Pidove…) on `cityworld:city`, with Cobblemon's weights — until now a CityWorld street read to Cobblemon
+  as a jungle or desert temple, because of its building walls, and no urban species ever fired — and CityWorld's own
+  district list (Grimer and Koffing in industry, Chansey round the hospitals, Zubat and Rattata in the sewers and
+  subways, Gastly and Rotom in the vault, Mareep and Wooloo on the farms, Murkrow on the highrise roofs). A pack adds
+  its own with a `markers` condition. Self-test `cobblemon.spawns`, `cobblemon.lots`.
+- **Cobblemon: in the data.** Apricorn trees in the orchards (all four climates), Cobblemon's berries in the farm
+  crops (the bushes come up fruiting), the PC and pasture as two-high furniture, Cobblemon's six Gimmighoul towers
+  with flat ground kept round them (`structure_fit`). Every entry optional: nothing without the mod.
 
 ## 7.0.0 — 2026-11-12
 

@@ -207,3 +207,77 @@ nothing: `placedSets.declared = []`, 1.20.1's hand-rolled loader included. Deplo
 instance as `DEPLOYED-89bfb660` (a 7.0.0-named jar). ⚠ `probe.sh` uses `run/server.properties`' port 25599 — the
 same one `selftest-one.sh` takes by default — so a probe beside a self-test fails to bind and reads `chunks 0`
 (7 of 8 runs, before the port was moved for the run).
+
+## 8. Progress (2026-11-13 overnight) — Stage 1 and Stage 2 built on master and all five lines, unreleased
+
+Owner at bedtime: *"if you can plow on - and do as much cobble mon support as you can overnight please."*
+
+**Stage 1, data (`e8fcd55b`):** apricorn trees in the four orchard pools (`required: false`), Cobblemon's four
+berries in `farm/crops` (a bush drawn with its `generated` property true fills its own fruit on load —
+`SupportBlocks.asGenerated` sets any `generated` BooleanProperty in the levelled `setBlock`), `cobblemon:pc` and
+`cobblemon:pasture` as two-high furniture layouts in `data_maps/block/furniture.json` (`mod_loaded`), the six
+`cobblemon:ruins/*_gimmi_tower` in `structure_fit` (`clearance 3, beard true`). Files were re-appended in each
+file's own one-entry-per-line style after a `json.dump` rewrite reformatted them (499-line diff → reverted).
+
+**Stage 2a, the spawn bridge (`d39d3915`):** `worldgen/CobblemonBridge` — reflection + `Proxy` on Cobblemon's
+`SpawningInfluenceDetector` set (installed on `ServerAboutToStartEvent`; every class looked up by name, a
+`ClassNotFoundException` leaves the bridge off with one info line). `detectFromInput` answers one
+`UnconditionalSpawningZoneInfluence` for a CityWorld `ServerLevel`; its `affectSpawnablePosition` reads
+`lotAtIfPlanned` and adds **markers** (`cityworld:city/street/farm/wild` at the surface = y ≥ streetLevel−1;
+`cityworld:underground`, `cityworld:sewer` under a road, `cityworld:subway`; always `cityworld:district/<family>`,
+`cityworld:lot/<kind>`, `cityworld:shop/<trade>`) and, for a city surface position, loads the position's structure
+cache if needed and adds `#cobblemon:spawns/is_civilization` to its found tags — so Cobblemon's 199 village-only
+entries see a city as a village. Unknown default methods on the influence go to `invokeDefault`; non-default
+booleans default true. Two spawn pools in `data/cityworld/spawn_pool_world/`: `cityworld_city.json` = every
+Cobblemon **urban** entry (183 entries, 82 herds, 79 species) copied by `scripts/gen_cobblemon_city_spawns.py`
+with presets `urban`+`natural` dropped and `condition.markers = ["cityworld:city"]` (a preset's condition is MERGED
+into each entry, so the urban preset's concrete rule could not be OR'd away — hence the copy, keeping Cobblemon's
+weights); `cityworld_districts.json` = 69 hand-kept entries by district/marker (industrial, park, municipal,
+neighborhood, highrise, sewer, subway, vault, farm). Self-test `checkCobblemonSpawns`: 1.21.1 reads
+`252 CityWorld entries of 5430 in the world pool; influence installed; street [city, district/highrise, lot/road,
+street] / [district/highrise, lot/road, sewer, underground]`, zero Cobblemon errors about `cityworld-` entries.
+**1.20.1:** Cobblemon 1.5.2 has neither `markers` nor the detector API; the bridge logs and stays off, and the two
+pool files are deleted on that branch (1.5.2 would ignore the unknown `markers` and spawn every entry everywhere).
+
+**Stage 2b, the buildings (`7f9c1c86`):**
+- `Plats/Urban/PokecenterLot` (IsolatedLot, 1 chunk, 2 storeys): white concrete, red band, Poké Ball roof, double
+  door + awning + sign to the fronting road (`Frame.of(platmap, x, z)`: the lot is drawn in a canonical frame with
+  the street south and turned — cells, facings and yaw — to whichever neighbour is the road), reception counter,
+  `fittings/healing_machine` behind it, a `cobblemon:nurse` villager via `spawnWorker`, a `fittings/pc` bank (two
+  high via its furniture layout, so `setFurniture`), pooled chairs/table, planters, `fittings/pasture`, two chests
+  on `LootLocation.POKECENTER`, ladder, four beds and two more PCs upstairs. `reportLocation("pokecenter")`.
+- `Plats/Urban/GymLot` (IsolatedLot): type by position hash (fire/water/grass/electric/rock/ice/psychic/fighting),
+  hall in the type's concrete with white bands, arena floor with its `cobblemon:<type>_gem_block` centre (accent
+  concrete when the block is absent), bleachers, two chests on `LootLocation.GYM`, and the leader: a
+  `cobblemon:npc` with `{NPCClass:"cityworld:gym_leader_<type>"}` written through the new
+  `Spawns.placeEntity(chunk, id, data, x, y, z, yaw, persistent)` (the `cityworld:spawn` registry's tail,
+  factored out) when the entity type exists, else a cleric villager. Eight NPC classes in `data/cityworld/npcs/`
+  (four names each, `canChallenge`, `skill 4`, `autoHealParty`, a typed `pool` party of 3–5 from eight species each, all checked against Cobblemon 1.8.4's species list;
+  `isStatic: false` because Cobblemon builds a static party only on its own spawn path (`initialize`), and
+  `getPartyForChallenge` answers null for a static class loaded from NBT without one — a non-static party forms at
+  challenge time at the NPC's own level, which is `Level` in its NBT (0/absent loads as 1), set from the new
+  `shops.gymLeaderLevel` (25); a pool entry's `npcLevels` is a FILTER on that level, so ours is `1-100`) and `data/cityworld/dialogues/gym_leader.json`
+  (modelled on Cobblemon's `npc-example`: greet, Challenge → `q.npc.start_battle(q.player, 'single')`, Not today).
+- Planning: `UrbanContext.getBuilding` (lowrise/midrise/highrise) rolls `shops.oddsOfPokecenter` (default 1/21, a
+  Customize rung) only when `isModernStyle && platmap.frontsRoad && PokecenterLot.available()` — available = the
+  healing-machine pool resolves — so a world without Cobblemon takes no draw and plans byte-for-byte as before;
+  `MunicipalContext.getBuilding` the same for `GymLot` at `shops.oddsOfGym` (1/8). Settings `Shops` is 7 fields
+  (8 on 1.20.1 with `bankPlazaRadius`), DEFAULT = field defaults (`checkSettingsDefaults`), Customize pickers
+  "Pokémon Centers"/"Pokémon gyms", export included.
+- `ShopTrade.POKEMART("Poké Mart", minecraft:cleric, cobblemon:pc)`: the constructor now parses a namespaced id;
+  `available()` = the job block's mod is loaded (vanilla always), applied in `tradesFor` and the Findables, so an
+  absent mod changes nothing. `ShopFitter`: job block = first of `fittings/pc`, carpet red.
+- Loot: `scripts/gen_cobblemon_loot.py` writes `chests/{pokecenter,gym,shop_pokemart}` + `_extra` per dialect,
+  each table under a top-level `neoforge:conditions` (`forge:conditions` on 1.20.1) `mod_loaded cobblemon`;
+  run in master, mc26.3 (typed) and mc1.20.1 (`loot_tables/`, `name`).
+- Findables `pokecenter`, `gym`; `DEFAULT_ANNOUNCED` += both; self-test `checkCobblemonLots` (with Cobblemon all
+  three must appear in the plan; without it none may, and `available()` must equal "Cobblemon loaded").
+- Drift met on the picks: 1.21.1 `Identifier` → `ResourceLocation` (ShopTrade conflicted on the constructor);
+  1.20.1 `new ResourceLocation(ns, path)`, `net.minecraftforge.fml.ModList`,
+  `net.minecraftforge.event.server.ServerAboutToStartEvent`, the Shops record keeps `bankPlazaRadius` between
+  `oddsOfAtmInMalls` and the two new odds, `tags/blocks/` + `loot_tables/` by rename detection. 26.x clean.
+
+**Not done / to measure:** the lots seen built (probe `find:PokecenterLot`, `find:GymLot` on 1.21.1), a client look
+at the NPC leader (the NPC class fields were read from Cobblemon's source, not seen in game — `hitbox`,
+`battleConfiguration.canChallenge`, `party.type pool` are 1.8's shape), the `/checkspawns` walk after the bridge
+(urban species on a street is the claim), Stage 3.

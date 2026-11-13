@@ -252,6 +252,37 @@ CityWorld ships none. Three files, one thing each:
 Every field: [Spawns](Building-Palettes#putting-anything-in-the-city-spawns-from-70). **Check:** the log names every
 file read and every one skipped and why (`CityWorld spawns:`).
 
+**A Pokémon on the city's streets (Cobblemon)** — `data/mypack/spawn_pool_world/city_meowth.json`
+
+Cobblemon spawns are Cobblemon's own files, not CityWorld's registry — but with CityWorld every spawn position in a
+city carries markers (`cityworld:city`, `cityworld:street`, `cityworld:sewer`, `cityworld:district/industrial`,
+`cityworld:lot/hospital`…), so a condition can ask for one:
+
+```json
+{
+  "enabled": true,
+  "neededInstalledMods": ["cobblemon"],
+  "spawns": [
+    {
+      "id": "mypack-meowth-street",
+      "pokemon": "meowth",
+      "presets": ["natural"],
+      "type": "pokemon",
+      "context": "grounded",
+      "bucket": "common",
+      "level": "5-20",
+      "weight": 10,
+      "condition": { "markers": ["cityworld:street"] }
+    }
+  ]
+}
+```
+
+CityWorld's own two pool files (`cityworld_city.json`: Cobblemon's urban species on `cityworld:city`;
+`cityworld_districts.json`: Grimer in industry, Zubat in the sewers…) are overridden by a file of the same path, so
+an empty `spawns` list turns either off. The markers: [Cobblemon](Building-Palettes#cobblemon-what-the-city-tells-its-spawner-from-71).
+**Check:** stand in a street and `/checkspawns common` (Cobblemon's command) should list your species.
+
 ## 8. Add an item to the loot
 
 Every table ends by rolling an empty `_extra` table named after it. Replace the hook and your items join that

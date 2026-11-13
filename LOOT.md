@@ -125,6 +125,9 @@ hook. The vault's mess-hall store is the Modern `food` table in every world: the
 | `warehouse` | Industrial buildings and warehouses, and the yards of storage lots | yes |
 | `storage_shed` | The lock-up units on storage lots | yes |
 | `radio_tower` | The radio tower hut's chest (copper, redstone, spares) | yes |
+| `pokecenter` | A Pokémon Center's chests: potions, status cures, Poké Balls, berries, candy (*Cobblemon*; the table is skipped at load without it) | yes |
+| `gym` | A gym's prize chests: rare candy, Ultra Balls, Max Revives, emeralds (*Cobblemon*) | yes |
+| `shop_pokemart` | The Poké Mart's stock: Poké Balls, potions, cures, candy (*Cobblemon*; written with the shop tables by `scripts/gen_cobblemon_loot.py`) | yes |
 | `schematic/winchester` | The Winchester schematic (an example of a per-schematic table) | — |
 
 ### Underground
