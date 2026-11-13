@@ -309,3 +309,11 @@ simply ignored), so `cobblemon:rare_candy` as an `item` entry failed the whole t
 line (bread, honey bottles, emeralds, experience bottles…) with no condition; a pack adds Cobblemon's items through
 the `_extra` hooks. Master `ef4d4b7b`, 1.20.1 `8ac7fa18`. The other five lines keep the Cobblemon stock under
 `neoforge:conditions`.
+
+**Gates (2026-11-13 ~03:00):** six self-tests PASS on the final heads (master `80e1bb13`, 1.21.1 `8725c2cb`, 26.1
+`ff247c54`, 26.2 `544e2861`, 26.3 `5d549ef6`, 1.20.1 `8ac7fa18`); `selftest.sh --compare` on fresh reports: CLASSIC
+identical everywhere; MODERN and APOCALYPSE identical on the five lines WITHOUT Cobblemon and equal to the hashes the
+1.21.1 bed gave at the bridge commit, before the lots existed (MODERN `c4b95b7c`, APOCALYPSE `fd6df8c0`) — so the
+lots take no draw without the mod; 1.21.1 alone differs (`2df593e7` APOCALYPSE), because Cobblemon is installed there
+and 190 Centers / 157 gyms / 133 Marts are in its plan. Deployed to the owner's `1.21.1` instance
+`DEPLOYED-8725c2cb` (`cityworld-7.0.0+mc1.21.1.jar` rebuilt from that head). Nothing pushed, no release.

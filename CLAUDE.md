@@ -40,10 +40,15 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   gem centre, bleachers, chests) and four gym leaders saved as `cobblemon:npc` with their class names; the pasture came
   out `waterlogged=true` (Cobblemon's default state leaves the property unset → first value) — `setFurniture` now
   places every piece dry. Docs done (CONFIGURATION rows, PALETTES "Cobblemon" section + reference rows, LOOT, EXAMPLES,
-  CHANGELOG 7.1.0). Master `cab5cf9a`; picks on all five lines (1.20.1 keeps `bankPlazaRadius` in `Shops`). Final-head
-  self-tests were running at hand-off: read the scratchpad `final-*.txt`, then build the 1.21.1 jar and
-  `scripts/deploy-fleet.sh --only 1.21.1`. Nothing pushed. Next: the owner's look (a Center, a gym battle, `/checkspawns`
-  on a street), then 7.1.0.
+  CHANGELOG 7.1.0). Master `80e1bb13`; picks on all five lines (1.20.1 keeps `bankPlazaRadius` in `Shops`; **1.20.1's
+  three Cobblemon loot tables hold vanilla stand-ins** — Forge 1.20.1 has no loot-table condition hook, an unknown
+  `cobblemon:` item failed the whole parse, `gen_cobblemon_loot.py` handles it). **Six self-tests PASS on the final
+  heads** (1.21.1 `8725c2cb`, 26.1 `ff247c54`, 26.2 `544e2861`, 26.3 `5d549ef6`, 1.20.1 `8ac7fa18`). `--compare`: the
+  five lines without Cobblemon agree (MODERN `c4b95b7c`, APOCALYPSE `fd6df8c0` — the hashes 1.21.1 itself gave before
+  the lots existed), **1.21.1 differs because Cobblemon is in its `run/mods`** and the lots roll there: expected, and
+  it will differ at every compare while that bed keeps Cobblemon (move the two jars out for a release compare, or read
+  the five-way agreement as the gate). Deployed to the owner's `1.21.1` instance `DEPLOYED-8725c2cb`. Nothing pushed.
+  Next: the owner's look (a Center, a gym battle, `/checkspawns` on a street), then 7.1.0.
 
 **▶ Resume here (2026-11-12 evening): Cobblemon (issue #6) surveyed and planned — `COBBLEMON-PLAN.md`.**
 - Cobblemon 1.8.4 read from its GitLab source; test bed = Cobblemon + Kotlin for Forge in `mc1.21.1/run/mods`
