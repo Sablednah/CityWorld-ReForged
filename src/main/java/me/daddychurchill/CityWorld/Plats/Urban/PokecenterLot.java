@@ -195,15 +195,18 @@ public class PokecenterLot extends IsolatedLot {
         chunk.setWallSign(f.x(9, 15), dy + 2, f.z(9, 15), f.face(BlockFace.SOUTH), "Pokémon", "Center");
 
         // reception: the counter across the room, the healing machine and nurse behind it, a runner from the door
-        for (int u = 5; u <= 9; u++)
-            chunk.setBlock(f.x(u, 4), dy, f.z(u, 4), COUNTER);
+        // the healing machine IS the counter's middle block (owner, 2026-11-13); its front — like the PC's and the
+        // pasture's — is opposite Cobblemon's facing value, which the furniture data map's facingOffset carries
         Material machine = MaterialTags.pick(MaterialTags.FITTINGS_HEALING_MACHINE, chunkOdds, null);
+        for (int u = 5; u <= 9; u++)
+            if (u != 7 || machine == null)
+                chunk.setBlock(f.x(u, 4), dy, f.z(u, 4), COUNTER);
         if (machine != null)
-            chunk.setBlock(f.x(7, 3), dy, f.z(7, 3), machine, f.face(BlockFace.SOUTH));
+            chunk.setBlock(f.x(7, 4), dy, f.z(7, 4), machine, FurnitureTags.facingFor(machine, f.face(BlockFace.SOUTH)));
         for (int v = 5; v <= 13; v++)
             for (int u = 7; u <= 8; u++)
                 chunk.setBlock(f.x(u, v), dy, f.z(u, v), RUNNER);
-        generator.spawnProvider.spawnWorker(generator, chunk, chunkOdds, f.x(9, 3), dy, f.z(9, 3), NURSE);
+        generator.spawnProvider.spawnKeyWorker(generator, chunk, chunkOdds, f.x(9, 3), dy, f.z(9, 3), NURSE);
 
         // the PC bank along the west wall, screens to the room; seating along the east wall facing them
         Material pc = MaterialTags.pick(MaterialTags.FITTINGS_PC, chunkOdds, null);
@@ -227,12 +230,13 @@ public class PokecenterLot extends IsolatedLot {
                 LootProvider.LootLocation.POKECENTER);
         ladder(chunk, f, street, fh);
 
-        // upstairs: beds for trainers, two more PCs, a window seat
+        // upstairs: beds for trainers (heads to the wall: setBed's SOUTH puts the head at the anchor and the foot a
+        // cell on), two more PCs, a window seat
         int uy = street + fh + 1;
-        chunk.setBed(f.x(3, 2), uy, f.z(3, 2), BEDS[0], f.face(BlockFace.NORTH));
-        chunk.setBed(f.x(5, 2), uy, f.z(5, 2), BEDS[1], f.face(BlockFace.NORTH));
-        chunk.setBed(f.x(3, 11), uy, f.z(3, 11), BEDS[2], f.face(BlockFace.SOUTH));
-        chunk.setBed(f.x(5, 11), uy, f.z(5, 11), BEDS[3], f.face(BlockFace.SOUTH));
+        chunk.setBed(f.x(3, 2), uy, f.z(3, 2), BEDS[0], f.face(BlockFace.SOUTH));
+        chunk.setBed(f.x(5, 2), uy, f.z(5, 2), BEDS[1], f.face(BlockFace.SOUTH));
+        chunk.setBed(f.x(3, 11), uy, f.z(3, 11), BEDS[2], f.face(BlockFace.NORTH));
+        chunk.setBed(f.x(5, 11), uy, f.z(5, 11), BEDS[3], f.face(BlockFace.NORTH));
         if (pc != null)
             for (int v = 7; v <= 8; v++)
                 chunk.setFurniture(f.x(13, v), uy, f.z(13, v), pc, FurnitureTags.facingFor(pc, f.face(BlockFace.WEST)));
