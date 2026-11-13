@@ -188,9 +188,11 @@ public class PokecenterLot extends IsolatedLot {
             for (int yy = dy; yy <= dy + 1; yy++)
                 chunk.setBlock(f.x(u, 14), yy, f.z(u, 14), Material.AIR);
         chunk.setDoubleDoor(f.x(7, 14), dy, f.z(7, 14), Material.OAK_DOOR, f.face(BlockFace.SOUTH));
+        // the awning and sign hang over the SIDEWALK, which stands a block above the street (and our floor): dy + 2
+        // was head height for someone walking in (owner, 2026-11-13: "door is blocked by the red")
         for (int u = 6; u <= 9; u++)
-            chunk.setBlock(f.x(u, 15), dy + 2, f.z(u, 15), TRIM);
-        chunk.setWallSign(f.x(9, 15), dy + 1, f.z(9, 15), f.face(BlockFace.SOUTH), "Pokémon", "Center");
+            chunk.setBlock(f.x(u, 15), dy + 3, f.z(u, 15), TRIM);
+        chunk.setWallSign(f.x(9, 15), dy + 2, f.z(9, 15), f.face(BlockFace.SOUTH), "Pokémon", "Center");
 
         // reception: the counter across the room, the healing machine and nurse behind it, a runner from the door
         for (int u = 5; u <= 9; u++)
