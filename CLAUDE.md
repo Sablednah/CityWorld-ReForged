@@ -24,6 +24,27 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-13 overnight): Cobblemon Stage 1 + Stage 2 BUILT on all six lines, unreleased — `COBBLEMON-PLAN.md` §8.**
+- Owner at bedtime: *"do as much cobble mon support as you can overnight"*. Built: `worldgen/CobblemonBridge` (markers +
+  civilisation through Cobblemon's `SpawningInfluenceDetector`, two spawn pools in `data/cityworld/spawn_pool_world/`,
+  NOT on 1.20.1 — Cobblemon 1.5.2 has no markers), `Plats/Urban/PokecenterLot` (lowrise/midrise/highrise, road-fronting,
+  `shops.oddsOfPokecenter` 1/21), `Plats/Urban/GymLot` (municipal, `shops.oddsOfGym` 1/8, typed by position, a
+  `cobblemon:npc` leader of class `cityworld:gym_leader_<type>` at `shops.gymLeaderLevel` 25 — `isStatic: false`, the
+  party forms at challenge time; a static one loaded from NBT never battles), `ShopTrade.POKEMART` (dealt only while
+  its mod is loaded), pools `fittings/{healing_machine,pc,pasture}` — **the switch: all three are planned only while
+  the healing-machine pool resolves**, so a world without Cobblemon takes no new draw. Loot by
+  `scripts/gen_cobblemon_loot.py` (run per dialect; tables conditioned on the mod). Both lots drawn in a canonical
+  frame (`PokecenterLot.Frame`) turned to the fronting road. **Measured on 1.21.1 with Cobblemon:** self-test PASS,
+  `cobblemon.lots = 190 Pokémon Centers, 157 gyms, 133 Poké Marts in 301² chunks`; probes `find:PokecenterLot` /
+  `find:GymLot` read the whole ground floor as designed (counter, healing machine, PC bank, pasture, beds; arena,
+  gem centre, bleachers, chests) and four gym leaders saved as `cobblemon:npc` with their class names; the pasture came
+  out `waterlogged=true` (Cobblemon's default state leaves the property unset → first value) — `setFurniture` now
+  places every piece dry. Docs done (CONFIGURATION rows, PALETTES "Cobblemon" section + reference rows, LOOT, EXAMPLES,
+  CHANGELOG 7.1.0). Master `cab5cf9a`; picks on all five lines (1.20.1 keeps `bankPlazaRadius` in `Shops`). Final-head
+  self-tests were running at hand-off: read the scratchpad `final-*.txt`, then build the 1.21.1 jar and
+  `scripts/deploy-fleet.sh --only 1.21.1`. Nothing pushed. Next: the owner's look (a Center, a gym battle, `/checkspawns`
+  on a street), then 7.1.0.
+
 **▶ Resume here (2026-11-12 evening): Cobblemon (issue #6) surveyed and planned — `COBBLEMON-PLAN.md`.**
 - Cobblemon 1.8.4 read from its GitLab source; test bed = Cobblemon + Kotlin for Forge in `mc1.21.1/run/mods`
   (git-ignored; copies in the session scratchpad; Modrinth `cobblemon` 1.8.4NF, `kotlin-for-forge` 5.12.0). Self-test

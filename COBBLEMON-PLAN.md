@@ -281,3 +281,23 @@ pool files are deleted on that branch (1.5.2 would ignore the unknown `markers` 
 at the NPC leader (the NPC class fields were read from Cobblemon's source, not seen in game — `hitbox`,
 `battleConfiguration.canChallenge`, `party.type pool` are 1.8's shape), the `/checkspawns` walk after the bridge
 (urban species on a street is the claim), Stage 3.
+
+**Measured (2026-11-13, 1.21.1 with Cobblemon 1.8.4):** self-test PASS on the lots head — `cobblemon.lots = 190
+Pokémon Centers, 157 gyms {ELECTRIC 25, FIGHTING 23, FIRE 22, GRASS 20, ICE 12, PSYCHIC 24, ROCK 13, WATER 18}, 133
+Poké Marts in 301² chunks`, `cobblemon.spawns` as above, no Cobblemon error about any `cityworld-` entry. Probes
+(`scripts/probe.sh "-Dcityworld.probe=find:PokecenterLot -Dcityworld.probe.radius=1"` in the worktree, JAVA_HOME
+exported — without it the script fails silently with no `latest.log`): the Center at chunk −9,−29 reads back from the
+region (`region_slice.py plan 65`) with the counter, `cobblemon:healing_machine[facing=south]` behind it, four
+`cobblemon:pc[facing=east,part=bottom]`, the red runner from the double door, three chairs (quartz stairs — the chair
+pool is empty on this bed), table, ferns, chest, ladder, `cobblemon:pasture` — which came out **`waterlogged=true`**:
+Cobblemon's `PastureBlock` never sets WATERLOGGED in its default state, so `stateDefinition.any()` answers the
+property's first value, true (`PCBlock` sets it false). `SupportBlocks.setFurniture` now places every piece dry
+(`cab5cf9a`). Upstairs by tally: 4 red + 4 white bed halves, 2 PCs, chest, sea-lantern ceiling, red band at y 71,
+roof 32 black / 80 red / 84 white = 196, parapet. The nurse was not in that Center: `spawnWorker` rolls
+`spawnBeings` (2/3) like every worker and the hospital's medic, and that Center lost the roll — left as it is, the
+owner's beings setting governs. The gym at 14,−17 (GRASS): white floor with the arena's green lines pattern and
+`cobblemon:grass_gem_block` ×4 at the centre, 16 quartz-stair bleachers facing in, two chests, dark oak double door
+and sign to the road, lime awning, white band at y 68, roof 176 green / 4 lime / 4 lanterns / 12 white; the entity
+region held **four `cobblemon:npc` with `NPCClass` grass/water/fighting/psychic and a `CustomName`** — Cobblemon
+applied the class on load (the name is from the class's `names`). 26.1 and 26.3 without Cobblemon: PASS,
+`cobblemon.lots = 0 / 0 / 0 (Cobblemon not installed)`, `cobblemon.spawns = n/a`.
