@@ -216,6 +216,14 @@ public final class ChunkProbe {
                     for (int x = 0; x < width; x++)
                         for (int z = 0; z < width; z++) {
                             var lot = platmap.getLot(x, z);
+                            if (lotClass.startsWith("ctx:")) { // find:ctx:IndustrialContext — a built lot of that district
+                                if (lot != null && platmap.context != null
+                                        && platmap.context.getClass().getSimpleName().equals(lotClass.substring(4))
+                                        && !(lot instanceof me.daddychurchill.CityWorld.Plats.RoadLot)
+                                        && (lotClass.endsWith("NatureContext") || !(lot instanceof me.daddychurchill.CityWorld.Plats.NatureLot)))
+                                    return new int[] { platmap.originX + x, platmap.originZ + z };
+                                continue;
+                            }
                             if (lot != null && (lot.getClass().getSimpleName().equals(lotClass)
                                     || lotClass.startsWith("schematic:") // find:schematic:winchester — a placed schematic by name
                                             && lot instanceof me.daddychurchill.CityWorld.Clipboard.ClipboardLot clip
@@ -1004,6 +1012,125 @@ public final class ChunkProbe {
      * (vanilla base temperature below 0.2) and hot (above 0.9), listed by pair with a {@code /tp} point each.
      * Started by the comment "cold biomes and tropical biomes can appear right next to each other".
      */
+    /**
+     * {@code -Dcityworld.probe=survey:cobblemon} — Cobblemon's {@code /checkspawns} run headless at one chunk of each
+     * kind of place the city has (a street, the sewer under it, a park, an industrial, municipal, highrise and
+     * neighbourhood building, a farm, a subway station, the vault, and wild land as the control): the same
+     * generate → resolve → probabilities path the command runs, on a {@code FixedAreaSpawner} the size of a player's
+     * zone, so the markers {@code CobblemonBridge} adds are exercised exactly as they are in play. Prints, per zone and
+     * bucket, the species and percentages the command would. Needs Cobblemon in {@code run/mods}; every call is
+     * reflective so the class compiles without it. The owner cannot walk every zone of a city by hand (2026-11-13).
+     */
+    private static void surveyCobblemon(MinecraftServer server, ServerLevel level) {
+        if (!(level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw))
+            throw new IllegalStateException("survey:cobblemon needs a CityWorld overworld");
+        var context = cw.getContext(level);
+        int street = context.streetLevel;
+        // zone name, what to find (a lot class, or ctx:<Context class>), where to stand relative to the surface
+        // ("top" = on the ground/roof, else an offset from street level), and the spawner's vertical radius
+        String[][] zones = {
+                { "street", "RoadLot", "top", "8" }, { "sewer", "RoadLot", "-6", "4" },
+                { "park", "ParkLot", "top", "8" }, { "industrial", "ctx:IndustrialContext", "top", "8" },
+                { "municipal", "ctx:MunicipalContext", "top", "8" }, { "highrise roof", "ctx:HighriseContext", "top", "8" },
+                { "neighborhood", "ctx:NeighborhoodContext", "top", "8" }, { "farm", "ctx:FarmContext", "top", "8" },
+                { "subway station", "SubwayStationLot", "-10", "14" }, { "vault", "VaultLot", "-20", "24" },
+                { "wild (control)", "ctx:NatureContext", "top", "8" } };
+        for (String[] zone : zones) {
+            int[] at = findLot(level, zone[1]);
+            if (at == null) {
+                CityWorldMod.LOGGER.warn("PROBE cobblemon {}: no {} within 20 platmaps", zone[0], zone[1]);
+                continue;
+            }
+            int cx = at[0], cz = at[1];
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dz = -1; dz <= 1; dz++) {
+                    int sx = cx + dx, sz = cz + dz;
+                    server.submit(() -> level.getChunk(sx, sz, ChunkStatus.FULL, true)).join();
+                }
+            int x = cx * 16 + 8, z = cz * 16 + 8;
+            int y = zone[2].equals("top")
+                    ? level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, x, z) + 1
+                    : street + Integer.parseInt(zone[2]);
+            int vr = Integer.parseInt(zone[3]);
+            var lot = context.getPlatMap(cx, cz).getLot(Math.floorMod(cx, PlatMap.Width), Math.floorMod(cz, PlatMap.Width));
+            String where = String.format("%s @ %d,%d,%d lot=%s ctx=%s", zone[0], x, y, z,
+                    lot == null ? "-" : lot.getClass().getSimpleName(),
+                    context.getPlatMap(cx, cz).context == null ? "-" : context.getPlatMap(cx, cz).context.getClass().getSimpleName());
+            try {
+                String report = server.submit(() -> {
+                    try {
+                        return checkSpawns(level, new BlockPos(x, y, z), vr);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }).join();
+                for (String line : report.split("\n"))
+                    CityWorldMod.LOGGER.warn("PROBE cobblemon {}: {}", where, line);
+            } catch (Exception e) {
+                CityWorldMod.LOGGER.warn("PROBE cobblemon {}: FAILED {}", where, e.toString(), e);
+            }
+        }
+        CityWorldMod.LOGGER.warn("PROBE complete — the server is still running; stop it yourself.");
+    }
+
+    /** Cobblemon's checkspawns, by reflection: one line per bucket, "bucket: Name 12.3%, Name 4.5%, ..." (top 14). */
+    private static String checkSpawns(ServerLevel level, BlockPos pos, int verticalRadius) throws Exception {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        Class<?> cobblemon = Class.forName("com.cobblemon.mod.common.Cobblemon", true, cl);
+        Object main = cobblemon.getField("INSTANCE").get(null);
+        Object config = cobblemon.getMethod("getConfig").invoke(main);
+        float perChunk = (Float) config.getClass().getMethod("getPokemonPerChunk").invoke(config);
+        Object bestSpawner = cobblemon.getMethod("getBestSpawner").invoke(main);
+        Object bestConfig = bestSpawner.getClass().getMethod("getConfig").invoke(bestSpawner);
+        @SuppressWarnings("unchecked")
+        java.util.Map<String, Float> buckets = (java.util.Map<String, Float>) bestConfig.getClass().getMethod("getWorldBuckets").invoke(bestConfig);
+        Class<?> poolsClass = Class.forName("com.cobblemon.mod.common.api.spawning.CobblemonSpawnPools", true, cl);
+        Object pools = poolsClass.getField("INSTANCE").get(null);
+        Object pool = poolsClass.getMethod("getWORLD_SPAWN_POOL").invoke(pools);
+        Class<?> spawnerClass = Class.forName("com.cobblemon.mod.common.api.spawning.spawner.FixedAreaSpawner", true, cl);
+        Class<?> poolClass = Class.forName("com.cobblemon.mod.common.api.spawning.detail.SpawnPool", true, cl);
+        Object spawner = spawnerClass.getConstructor(String.class, poolClass, java.util.Map.class, ServerLevel.class, BlockPos.class,
+                int.class, int.class, float.class).newInstance("cityworld-probe", pool, buckets, level, pos, 4, verticalRadius, perChunk);
+        Class<?> spawnerIface = Class.forName("com.cobblemon.mod.common.api.spawning.spawner.Spawner", true, cl);
+        Class<?> causeClass = Class.forName("com.cobblemon.mod.common.api.spawning.SpawnCause", true, cl);
+        Object cause = causeClass.getConstructor(spawnerIface, net.minecraft.world.entity.Entity.class).newInstance(spawner, null);
+        Object input = spawnerClass.getMethod("getZoneInput", causeClass).invoke(spawner, cause);
+        Object generator = spawnerIface.getMethod("getGenerator").invoke(spawner);
+        Class<?> inputClass = Class.forName("com.cobblemon.mod.common.api.spawning.spawner.SpawningZoneInput", true, cl);
+        Object zone = generator.getClass().getMethod("generate", spawnerIface, inputClass).invoke(generator, spawner, input);
+        Class<?> calcClass = Class.forName("com.cobblemon.mod.common.api.spawning.position.calculators.SpawnablePositionCalculator", true, cl);
+        Object companion = calcClass.getField("Companion").get(null);
+        Object calculators = companion.getClass().getMethod("getPrioritizedAreaCalculators").invoke(companion);
+        Object resolver = spawnerIface.getMethod("getResolver").invoke(spawner);
+        Class<?> zoneClass = Class.forName("com.cobblemon.mod.common.api.spawning.SpawningZone", true, cl);
+        Class<?> resolverIface = Class.forName("com.cobblemon.mod.common.api.spawning.position.AreaSpawnablePositionResolver", true, cl);
+        Object positions = resolverIface.getMethod("resolve", spawnerIface, java.util.List.class, zoneClass).invoke(resolver, spawner, calculators, zone);
+        Object selector = spawnerIface.getMethod("getSelector").invoke(spawner);
+        Class<?> selectorIface = Class.forName("com.cobblemon.mod.common.api.spawning.selection.SpawningSelector", true, cl);
+        var getProbabilities = selectorIface.getMethod("getProbabilities", spawnerIface, String.class, java.util.List.class);
+        StringBuilder out = new StringBuilder();
+        out.append("positions ").append(((java.util.List<?>) positions).size());
+        for (String bucket : new String[] { "common", "uncommon", "rare", "ultra-rare" }) {
+            @SuppressWarnings("unchecked")
+            java.util.Map<Object, Float> probabilities = (java.util.Map<Object, Float>) getProbabilities.invoke(selector, spawner, bucket, positions);
+            java.util.Map<String, Float> byName = new java.util.LinkedHashMap<>();
+            for (var e : probabilities.entrySet()) {
+                Object name = e.getKey().getClass().getMethod("getName").invoke(e.getKey());
+                String key = ((net.minecraft.network.chat.Component) name).getString();
+                byName.merge(key, e.getValue(), Float::sum);
+            }
+            var sorted = new java.util.ArrayList<>(byName.entrySet());
+            sorted.sort((a, b) -> Float.compare(b.getValue(), a.getValue()));
+            out.append('\n').append(bucket).append(": ");
+            if (sorted.isEmpty())
+                out.append("(nothing can spawn here)");
+            for (int i = 0; i < Math.min(14, sorted.size()); i++)
+                out.append(i > 0 ? ", " : "").append(sorted.get(i).getKey()).append(' ')
+                        .append(String.format("%.1f%%", sorted.get(i).getValue()));
+        }
+        return out.toString();
+    }
+
     private static void surveyBiomes(MinecraftServer server, ServerLevel level) {
         if (!(level.getChunkSource().getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw)) {
             CityWorldMod.LOGGER.warn("SURVEY biomes: this dimension is not CityWorld's");
@@ -1318,6 +1445,10 @@ public final class ChunkProbe {
             }
             if (spec.startsWith("survey:rivers")) {
                 surveyRivers(level);
+                return;
+            }
+            if (spec.startsWith("survey:cobblemon")) {
+                surveyCobblemon(server, level);
                 return;
             }
             if (spec.startsWith("survey:biomes")) {
