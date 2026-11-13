@@ -650,13 +650,16 @@ public record CityWorldSettingsData(
      * shopping malls at the edge of town (modern-family only; on by default, independent of the rest).
      */
     public record Shops(boolean enabled, boolean malls, double oddsOfAtmInCivic, double oddsOfAtmInShops,
-            double oddsOfAtmInMalls, double oddsOfPokecenter, double oddsOfGym) {
+            double oddsOfAtmInMalls, double oddsOfPokecenter, double oddsOfGym, int gymLeaderLevel) {
+
+        /** The level a gym leader's party is formed at (their NPC's own level; the party rolls at challenge time). */
+        public static final int GYM_LEADER_LEVEL = 25;
 
         /** A Pokémon Center's odds per road-fronting building chunk of a lowrise/midrise/highrise district: a rung of the Customize picker. */
         public static final double POKECENTER_ODDS = 1.0 / 21.0;
 
         public static final Shops DEFAULT = new Shops(false, true, Odds.oddsSomewhatLikely, Odds.oddsUnlikely,
-                Odds.oddsSomewhatUnlikely, POKECENTER_ODDS, Odds.oddsUnlikely);
+                Odds.oddsSomewhatUnlikely, POKECENTER_ODDS, Odds.oddsUnlikely, GYM_LEADER_LEVEL);
 
         public static final Codec<Shops> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Shops::enabled),
@@ -669,7 +672,8 @@ public record CityWorldSettingsData(
                 // Cobblemon (Plats/Urban/PokecenterLot, GymLot): only planned while #cityworld:fittings/healing_machine
                 // resolves, so these roll nothing without the mod
                 Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfPokecenter", POKECENTER_ODDS).forGetter(Shops::oddsOfPokecenter),
-                Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfGym", Odds.oddsUnlikely).forGetter(Shops::oddsOfGym)
+                Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfGym", Odds.oddsUnlikely).forGetter(Shops::oddsOfGym),
+                Codec.intRange(1, 100).optionalFieldOf("gymLeaderLevel", GYM_LEADER_LEVEL).forGetter(Shops::gymLeaderLevel)
         ).apply(i, Shops::new));
     }
 
