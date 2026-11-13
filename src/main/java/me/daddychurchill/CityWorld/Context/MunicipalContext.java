@@ -43,6 +43,10 @@ public class MunicipalContext extends UrbanContext {
 
 	@Override
 	protected PlatLot getBuilding(CityWorldGenerator generator, PlatMap platmap, Odds odds, int chunkX, int chunkZ) {
+		// a Pokémon gym (Cobblemon), rolled only while the mod's blocks are here (see PokecenterLot.available)
+		if (generator.isModernStyle() && me.daddychurchill.CityWorld.Plats.Urban.PokecenterLot.available()
+				&& odds.playOdds(generator.getSettings().oddsOfGym))
+			return new me.daddychurchill.CityWorld.Plats.Urban.GymLot(platmap, chunkX, chunkZ);
 		double roll = odds.getRandomDouble();
 		if (roll < Odds.oddsVeryUnlikely)
 			return new GovernmentMonumentLot(platmap, chunkX, chunkZ);

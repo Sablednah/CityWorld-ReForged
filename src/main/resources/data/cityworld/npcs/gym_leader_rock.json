@@ -1,0 +1,76 @@
+{
+  "hitbox": "player",
+  "names": [
+    "Brock",
+    "Roxanne",
+    "Roark",
+    "Grant"
+  ],
+  "canDespawn": false,
+  "isMovable": false,
+  "interaction": {
+    "type": "dialogue",
+    "dialogue": "cityworld:gym_leader"
+  },
+  "battleConfiguration": {
+    "canChallenge": true
+  },
+  "skill": 4,
+  "autoHealParty": true,
+  "party": {
+    "type": "pool",
+    "minPokemon": 3,
+    "maxPokemon": 5,
+    "isStatic": true,
+    "pool": [
+      {
+        "pokemon": "geodude",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "onix",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "rhyhorn",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "sudowoodo",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "larvitar",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "nosepass",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "aron",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      },
+      {
+        "pokemon": "roggenrola",
+        "weight": 10,
+        "npcLevels": "18-30",
+        "selectableTimes": 1
+      }
+    ]
+  }
+}

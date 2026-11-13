@@ -294,7 +294,11 @@ public final class Spawns {
         if (!(access instanceof ProtoChunk proto) || access instanceof ImposterProtoChunk)
             return;
         int lift = ShiftedRegion.shiftOf(chunk.getWorld()); // a city drawn below its level (vanilla land) stands lifted
-        if (b.state() != null) {
+        if (b.state() == null) {
+            placeEntity(chunk, b.entityId(), b.entityData(), x, y, z, heading, b.spawn().persistent());
+            return;
+        }
+        {
             var cell = chunk.getActualBlock(x, y, z);
             cell.setBlockData(b.state(), false);
             BlockState placed = cell.getBlockData(); // after any block substitute
@@ -310,22 +314,37 @@ public final class Spawns {
                     proto.setBlockEntityNbt(tag);
                 }
             }
-            return;
         }
+    }
+
+    /**
+     * Writes an entity of {@code entityId} with {@code entityData} (a {@code /summon} data tag, may be null) into the
+     * chunk being generated at cell (x, y, z), facing {@code heading} degrees — the way the registry places its own,
+     * for a lot that spawns another mod's entity by id (a gym's Cobblemon NPC). Saved with the chunk; nothing touches
+     * the live level. Answers false when the chunk is not a proto-chunk (a decoration pass over a full chunk).
+     */
+    public static boolean placeEntity(RealBlocks chunk, String entityId, CompoundTag entityData, int x, int y, int z,
+            int heading, boolean persistent) {
+        var access = chunk.getWorld().getChunk(chunk.sectionX, chunk.sectionZ);
+        if (!(access instanceof ProtoChunk proto) || access instanceof ImposterProtoChunk)
+            return false;
+        int lift = ShiftedRegion.shiftOf(chunk.getWorld());
         CompoundTag tag = new CompoundTag();
-        tag.putString("id", b.entityId());
+        tag.putString("id", entityId);
         ListTag pos = new ListTag();
-        pos.add(DoubleTag.valueOf(wx));
+        pos.add(DoubleTag.valueOf(chunk.getBlockX(x) + 0.5));
         pos.add(DoubleTag.valueOf(y + lift));
-        pos.add(DoubleTag.valueOf(wz));
+        pos.add(DoubleTag.valueOf(chunk.getBlockZ(z) + 0.5));
         tag.put("Pos", pos);
         ListTag rotation = new ListTag();
         rotation.add(FloatTag.valueOf(heading));
         rotation.add(FloatTag.valueOf(0f));
         tag.put("Rotation", rotation);
-        if (b.spawn().persistent())
+        if (persistent)
             tag.putBoolean("PersistenceRequired", true);
-        tag.merge(b.entityData());
+        if (entityData != null)
+            tag.merge(entityData);
         proto.addEntity(tag);
+        return true;
     }
 }
