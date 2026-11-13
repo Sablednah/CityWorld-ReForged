@@ -12,6 +12,8 @@
     { "id": "pamhc2trees:lime", "required": false },
     { "id": "pamhc2trees:grapefruit", "required": false },
     { "id": "pamhc2trees:avocado", "required": false },
-    { "id": "pamhc2trees:tamarind", "required": false }
-  ]
+    { "id": "pamhc2trees:tamarind", "required": false },
+    { "id": "cobblemon:yellow_apricorn_tree", "required": false },
+    { "id": "cobblemon:black_apricorn_tree", "required": false }
+]
 }
