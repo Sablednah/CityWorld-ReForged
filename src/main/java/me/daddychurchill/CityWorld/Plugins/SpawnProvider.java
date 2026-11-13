@@ -400,6 +400,17 @@ public class SpawnProvider extends Provider {
     }
 
     /**
+     * A worker the building is nothing without — a Pokémon Center's nurse: spawned whenever beings are on at all
+     * ({@code spawnBeings} above zero), never rolled. {@link #spawnWorker} rolls those odds for the ordinary staff.
+     */
+    public final void spawnKeyWorker(CityWorldGenerator generator, SupportBlocks blocks, Odds odds, int x, int y, int z,
+            Identifier profession) {
+        if (profession == null || generator.getSettings().spawnBeings <= 0)
+            return;
+        spawnEntity(generator, blocks, odds, x, y, z, EntityType.VILLAGER, false, true, profession);
+    }
+
+    /**
      * Put one there, if there is room and it is above the water.
      *
      * <p>The {@code insideXYZ} guard is not the politeness it was under Bukkit — it is what keeps
