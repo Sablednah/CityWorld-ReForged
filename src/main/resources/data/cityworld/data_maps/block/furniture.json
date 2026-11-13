@@ -16585,6 +16585,7 @@
         }
       ],
       "value": {
+        "facingOffset": 180,
         "layout": [
           {
             "props": {
@@ -16600,6 +16601,17 @@
         ]
       }
     },
+    "cobblemon:healing_machine": {
+      "neoforge:conditions": [
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "cobblemon"
+        }
+      ],
+      "value": {
+        "facingOffset": 180
+      }
+    },
     "cobblemon:pasture": {
       "neoforge:conditions": [
         {
@@ -16608,6 +16620,7 @@
         }
       ],
       "value": {
+        "facingOffset": 180,
         "layout": [
           {
             "props": {
