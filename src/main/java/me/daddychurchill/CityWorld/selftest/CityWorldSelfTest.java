@@ -215,6 +215,7 @@ public final class CityWorldSelfTest {
             checkStructureChoices(server);
             checkPlacedSets(server);
             checkCobblemonSpawns(server);
+            checkCobblemonLots(server);
             checkDecorationAndSigns(server);
             checkSubways(server);
             checkMalls(server);
@@ -2191,6 +2192,47 @@ public final class CityWorldSelfTest {
                 }
         report.put("cobblemon.spawns", own + " CityWorld entries of " + total + " in the world pool; influence "
                 + (installed ? "installed" : "NOT installed") + "; street " + markers);
+    }
+
+    /**
+     * Cobblemon's buildings in the plan: with Cobblemon, Pokémon Centers on the streets of the ordinary districts,
+     * gyms in the municipal ones and Poké Marts among the shops; without it, none of the three — the pools they need
+     * are empty, so their dice are never rolled and the plan is the plan it was.
+     */
+    private void checkCobblemonLots(MinecraftServer server) {
+        boolean cobblemon = net.neoforged.fml.ModList.get().isLoaded("cobblemon");
+        ServerLevel level = server.overworld();
+        CityWorldGenerator plan = level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator g
+                ? g.getContext(level) : null;
+        if (plan == null || !plan.isModernStyle()) {
+            report.put("cobblemon.lots", "n/a (not a modern-family world)");
+            return;
+        }
+        int centers = 0, gyms = 0, marts = 0;
+        java.util.Map<String, Integer> gymTypes = new TreeMap<>();
+        for (int cx = -PLAN_RADIUS; cx <= PLAN_RADIUS; cx++)
+            for (int cz = -PLAN_RADIUS; cz <= PLAN_RADIUS; cz++) {
+                PlatLot lot = lotAt(plan, cx, cz);
+                if (lot instanceof me.daddychurchill.CityWorld.Plats.Urban.PokecenterLot)
+                    centers++;
+                else if (lot instanceof me.daddychurchill.CityWorld.Plats.Urban.GymLot gym) {
+                    gyms++;
+                    gymTypes.merge(gym.getType().name(), 1, Integer::sum);
+                } else if (lot != null && lot.getShopType() != null
+                        && lot.getShopType().trade() == me.daddychurchill.CityWorld.api.ShopTrade.POKEMART)
+                    marts++;
+            }
+        boolean available = me.daddychurchill.CityWorld.Plats.Urban.PokecenterLot.available();
+        if (cobblemon != available)
+            fail("the healing-machine pool resolves " + available + " but Cobblemon loaded is " + cobblemon);
+        if (cobblemon && (centers == 0 || gyms == 0 || marts == 0))
+            fail("Cobblemon is installed but the plan has " + centers + " Pokémon Centers, " + gyms + " gyms, " + marts
+                    + " Poké Marts");
+        if (!cobblemon && (centers + gyms + marts) > 0)
+            fail("Cobblemon is not installed but the plan has " + centers + " Pokémon Centers, " + gyms + " gyms, "
+                    + marts + " Poké Marts");
+        report.put("cobblemon.lots", centers + " Pokémon Centers, " + gyms + " gyms " + gymTypes + ", " + marts
+                + " Poké Marts in " + (2 * PLAN_RADIUS + 1) + "^2 chunks" + (cobblemon ? "" : " (Cobblemon not installed)"));
     }
 
     private void checkStructures(MinecraftServer server) {

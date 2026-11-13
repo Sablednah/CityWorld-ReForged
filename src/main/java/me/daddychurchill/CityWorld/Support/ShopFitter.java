@@ -200,6 +200,8 @@ public final class ShopFitter {
             case WEAPONSMITH -> Material.GRINDSTONE;
             case COBBLER -> Material.CAULDRON;
             case DRAPER -> Material.LOOM;
+            // the PC is two high through its furniture layout; the plain setBlock routes it to setFurniture
+            case POKEMART -> MaterialTags.resolve(MaterialTags.FITTINGS_PC).stream().findFirst().orElse(null);
         };
     }
 
@@ -217,6 +219,7 @@ public final class ShopFitter {
             case DRAPER -> Material.PURPLE_CARPET;
             case BOOKSHOP -> Material.BLUE_CARPET;
             case NEWSAGENT -> Material.WHITE_CARPET;
+            case POKEMART -> Material.RED_CARPET;
         };
     }
 }
