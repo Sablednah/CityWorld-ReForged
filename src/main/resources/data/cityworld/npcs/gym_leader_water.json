@@ -21,54 +21,54 @@
     "type": "pool",
     "minPokemon": 3,
     "maxPokemon": 5,
-    "isStatic": true,
+    "isStatic": false,
     "pool": [
       {
         "pokemon": "staryu",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "psyduck",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "poliwag",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "seel",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "horsea",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "krabby",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "squirtle",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       },
       {
         "pokemon": "wooper",
         "weight": 10,
-        "npcLevels": "18-30",
+        "npcLevels": "1-100",
         "selectableTimes": 1
       }
     ]

@@ -195,6 +195,7 @@ public class CityWorldSettings {
      *  building chunk — nothing unless {@code #cityworld:fittings/healing_machine} resolves (Plats/Urban/PokecenterLot). */
     public double oddsOfPokecenter = CityWorldSettingsData.Shops.POKECENTER_ODDS;
     public double oddsOfGym = Odds.oddsUnlikely;
+    public int gymLeaderLevel = CityWorldSettingsData.Shops.GYM_LEADER_LEVEL;
 
     /**
      * The subway: a station lot in every urban platmap and twin-track tunnels to the first station each
@@ -584,7 +585,8 @@ public class CityWorldSettings {
         CityWorldSettingsData.Overgrowth og2 = new CityWorldSettingsData.Overgrowth(v, og.intensity(), v);
         CityWorldSettingsData.Shops sh = new CityWorldSettingsData.Shops(v, v, d.shops().oddsOfAtmInCivic(),
                 d.shops().oddsOfAtmInShops(), d.shops().oddsOfAtmInMalls(), d.shops().bankPlazaRadius(),
-                d.shops().oddsOfPokecenter(), d.shops().oddsOfGym());
+                d.shops().oddsOfPokecenter(), d.shops().oddsOfGym(),
+                d.shops().gymLeaderLevel());
         CityWorldSettingsData.Subways sw = new CityWorldSettingsData.Subways(v, v);
         return new CityWorldSettingsData(f, t2, d.spawns(), d.treasures(), d.world(), d.radius(), d.naming(),
                 d.mobs(), og2, sh, d.decay(), d.caves(), sw, d.structures(), d.cities(), d.roads());
@@ -646,6 +648,7 @@ public class CityWorldSettings {
         bankPlazaRadius = data.shops().bankPlazaRadius();
         oddsOfPokecenter = data.shops().oddsOfPokecenter();
         oddsOfGym = data.shops().oddsOfGym();
+        gymLeaderLevel = data.shops().gymLeaderLevel();
         includeSubways = data.subways().enabled();
         spawnersInSubways = data.subways().spawners();
         driveOnLeft = data.roads().driveOnLeft();
@@ -804,7 +807,7 @@ public class CityWorldSettings {
         CityWorldSettingsData.Overgrowth overgrowth = new CityWorldSettingsData.Overgrowth(
                 includeOvergrowth, overgrowthIntensity, capVines);
         CityWorldSettingsData.Shops shops = new CityWorldSettingsData.Shops(includeShops, includeMalls, oddsOfAtmInCivic,
-                oddsOfAtmInShops, oddsOfAtmInMalls, bankPlazaRadius, oddsOfPokecenter, oddsOfGym);
+                oddsOfAtmInShops, oddsOfAtmInMalls, bankPlazaRadius, oddsOfPokecenter, oddsOfGym, gymLeaderLevel);
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);

@@ -30,7 +30,8 @@ import net.minecraft.resources.ResourceLocation;
  * <p>The leader is a Cobblemon NPC ({@code cobblemon:npc}) of the class CityWorld ships under
  * {@code data/cityworld/npcs/gym_leader_<type>.json} — a typed party, names, the challenge dialogue
  * {@code cityworld:gym_leader} — written into the chunk the way the {@code cityworld:spawn} registry writes its
- * entities; a Cobblemon without NPCs (1.5.x) gets a villager referee instead. Containers roll
+ * entities, at {@code shops.gymLeaderLevel} (the party is formed from the class's pool at challenge time, at that
+ * level: Cobblemon's static parties are only built on its own spawn path, so ours is {@code isStatic: false}); a Cobblemon without NPCs (1.5.x) gets a villager referee instead. Containers roll
  * {@code cityworld:chests/gym} (+ {@code _extra}).
  */
 public class GymLot extends IsolatedLot {
@@ -202,7 +203,10 @@ public class GymLot extends IsolatedLot {
         int x = f.x(7, 3), z = f.z(7, 3);
         if (BuiltInRegistries.ENTITY_TYPE.containsKey(NPC)) {
             try {
-                var data = Spawns.parseCompound("{NPCClass:\"cityworld:gym_leader_" + type.id() + "\"}");
+                // Level: the NPC's own level, which its party is formed at when challenged (a party pool entry's
+                // npcLevels is a filter on it; an unset level loads as 1 and would empty the pool)
+                var data = Spawns.parseCompound("{NPCClass:\"cityworld:gym_leader_" + type.id() + "\",Level:"
+                        + generator.getSettings().gymLeaderLevel + "}");
                 if (Spawns.placeEntity(chunk, NPC.toString(), data, x, y, z, f.yaw(BlockFace.SOUTH), true))
                     return;
             } catch (Exception e) {
