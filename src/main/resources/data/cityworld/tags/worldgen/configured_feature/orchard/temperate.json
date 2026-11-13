@@ -15,6 +15,7 @@
     { "id": "pamhc2trees:pecan", "required": false },
     { "id": "pamhc2trees:persimmon", "required": false },
     { "id": "pamhc2trees:maple", "required": false },
-    { "id": "pamhc2trees:gooseberry", "required": false }
-  ]
+    { "id": "pamhc2trees:gooseberry", "required": false },
+    { "id": "cobblemon:apricorn_trees", "required": false }
+]
 }

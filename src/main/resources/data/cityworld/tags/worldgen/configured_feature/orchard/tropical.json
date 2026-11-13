@@ -24,6 +24,8 @@
     { "id": "pamhc2trees:candlenut", "required": false },
     { "id": "pamhc2trees:lime", "required": false },
     { "id": "pamhc2trees:lemon", "required": false },
-    { "id": "pamhc2trees:orange", "required": false }
-  ]
+    { "id": "pamhc2trees:orange", "required": false },
+    { "id": "cobblemon:green_apricorn_tree", "required": false },
+    { "id": "cobblemon:pink_apricorn_tree", "required": false }
+]
 }

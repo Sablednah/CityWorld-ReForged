@@ -1,6 +1,12 @@
 {
   "replace": false,
   "values": {
+    "cobblemon:ruins/deserted_gimmi_tower": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "clearance": 3, "beard": true } },
+    "cobblemon:ruins/frozen_gimmi_tower": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "clearance": 3, "beard": true } },
+    "cobblemon:ruins/lush_gimmi_tower": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "clearance": 3, "beard": true } },
+    "cobblemon:ruins/rooted_gimmi_tower": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "clearance": 3, "beard": true } },
+    "cobblemon:ruins/sunscorched_gimmi_tower": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "clearance": 3, "beard": true } },
+    "cobblemon:ruins/temperate_gimmi_tower": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cobblemon" }], "value": { "clearance": 3, "beard": true } },
     "cataclysm:cursed_pyramid": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cataclysm" }], "value": { "clearance": 7,  "beard": true } },
     "cataclysm:frosted_prison": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cataclysm" }], "value": { "clearance": 8,  "beard": true } },
     "cataclysm:soul_black_smith": { "neoforge:conditions": [{ "type": "neoforge:mod_loaded", "modid": "cataclysm" }], "value": { "beard": true } },
