@@ -3,12 +3,16 @@
 
     python3 scripts/gen_cobblemon_loot.py          # in the checkout whose tables to write
 
-Every item is Cobblemon's, so each table is conditioned on the mod (a top-level `neoforge:conditions` mod_loaded —
-`forge:conditions` on 1.20.1): without Cobblemon the file is skipped at load and nothing references it, since the lots
-that roll these are only planned while Cobblemon's blocks are present. Dialects as scripts/gen_shop_loot.py:
+Every item is Cobblemon's, so each table is conditioned on the mod (a top-level `neoforge:conditions` mod_loaded):
+without Cobblemon the file is skipped at load and nothing references it, since the lots that roll these are only
+planned while Cobblemon's blocks are present. Dialects as scripts/gen_shop_loot.py:
     1.21.1, 1.21.11, 26.1, 26.2   "type": "item", "functions": [set_count], hook id under "value"
-    1.20.1                        the same, in loot_tables/, hook id under "name"
     26.3                          typed everything: "minecraft:item", typed rolls, "modifier" for set_count
+    1.20.1                        in loot_tables/, hook id under "name" — and VANILLA stock only: Forge 1.20.1 has no
+                                  condition hook on loot tables (ForgeHooks.loadLootTable takes the JSON as it is),
+                                  so an unknown `cobblemon:` item fails the whole table's parse without the mod
+                                  (self-test 2026-11-13: "Expected name to be an item, was unknown string"). A pack
+                                  adds Cobblemon's items there through the `_extra` hooks.
 Re-run it in each checkout after a change (26.3 and 1.20.1 differ).
 """
 import json
@@ -33,6 +37,17 @@ TABLES = {
                       ("paralyze_heal", 4, 1, 2), ("awakening", 3, 1, 2), ("burn_heal", 3, 1, 2), ("ice_heal", 3, 1, 2),
                       ("full_heal", 2, 1, 1), ("ether", 3, 1, 1), ("max_ether", 1, 1, 1), ("exp_candy_xs", 4, 1, 3),
                       ("rare_candy", 1, 1, 1), ("minecraft:emerald", 4, 1, 2)],
+}
+
+
+# 1.20.1: what stands in for the Cobblemon stock (see the module doc)
+VANILLA_TABLES = {
+    "pokecenter": [("minecraft:bread", 6, 1, 3), ("minecraft:cake", 1, 1, 1), ("minecraft:golden_apple", 2, 1, 1),
+                   ("minecraft:honey_bottle", 4, 1, 2), ("minecraft:paper", 3, 1, 4), ("minecraft:red_bed", 1, 1, 1)],
+    "gym": [("minecraft:emerald", 5, 1, 3), ("minecraft:gold_ingot", 3, 1, 2), ("minecraft:name_tag", 1, 1, 1),
+            ("minecraft:experience_bottle", 4, 2, 5), ("minecraft:golden_apple", 1, 1, 1)],
+    "shop_pokemart": [("minecraft:emerald", 4, 1, 2), ("minecraft:paper", 4, 1, 4), ("minecraft:honey_bottle", 4, 1, 2),
+                      ("minecraft:bread", 3, 1, 3), ("minecraft:glass_bottle", 3, 1, 3)],
 }
 
 
@@ -61,15 +76,16 @@ def table(name, stock, kind):
     entries.append({"type": "minecraft:loot_table", "name" if kind == "1.20.1" else "value":
                     "cityworld:chests/%s_extra" % name, "weight": 15})
     rolls = {"type": "minecraft:uniform", "min": 2, "max": 5} if typed else {"min": 2, "max": 5}
-    conditions = "forge:conditions" if kind == "1.20.1" else "neoforge:conditions"
-    return {conditions: [{"type": conditions.split(":")[0] + ":mod_loaded", "modid": "cobblemon"}],
-            "type": "minecraft:chest", "pools": [{"rolls": rolls, "entries": entries}]}
+    body = {"type": "minecraft:chest", "pools": [{"rolls": rolls, "entries": entries}]}
+    if kind == "1.20.1":  # vanilla stock, no condition (Forge 1.20.1 would not read one)
+        return body
+    return {"neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "cobblemon"}], **body}
 
 
 def main():
     kind = dialect()
     out = os.path.join(DATA, "loot_tables" if kind == "1.20.1" else "loot_table", "chests")
-    for name, stock in sorted(TABLES.items()):
+    for name, stock in sorted((VANILLA_TABLES if kind == "1.20.1" else TABLES).items()):
         for file, body in ((name, table(name, stock, kind)), (name + "_extra", {"type": "minecraft:chest", "pools": []})):
             with open(os.path.join(out, file + ".json"), "w", encoding="utf-8") as fh:
                 json.dump(body, fh, indent=2)
