@@ -13,7 +13,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 40,
+      "weight": 333,
       "condition": {
         "markers": [
           "cityworld:district/industrial"
@@ -27,7 +27,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 40,
+      "weight": 333,
       "condition": {
         "markers": [
           "cityworld:district/industrial"
@@ -41,7 +41,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 35,
+      "weight": 292,
       "condition": {
         "markers": [
           "cityworld:district/industrial"
@@ -55,7 +55,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 40,
+      "weight": 333,
       "condition": {
         "markers": [
           "cityworld:district/industrial"
@@ -69,7 +69,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 25,
+      "weight": 208,
       "condition": {
         "markers": [
           "cityworld:district/industrial"
@@ -83,7 +83,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "15-40",
-      "weight": 20,
+      "weight": 117,
       "condition": {
         "markers": [
           "cityworld:district/industrial"
@@ -97,7 +97,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "15-40",
-      "weight": 12,
+      "weight": 70,
       "condition": {
         "markers": [
           "cityworld:district/industrial"
@@ -111,7 +111,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "15-40",
-      "weight": 10,
+      "weight": 58,
       "condition": {
         "markers": [
           "cityworld:district/industrial"
@@ -125,7 +125,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "15-40",
-      "weight": 10,
+      "weight": 58,
       "condition": {
         "markers": [
           "cityworld:district/industrial"
@@ -139,7 +139,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "15-40",
-      "weight": 8,
+      "weight": 47,
       "condition": {
         "markers": [
           "cityworld:district/industrial"
@@ -153,7 +153,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "rare",
       "level": "25-45",
-      "weight": 10.0,
+      "weight": 150,
       "condition": {
         "markers": [
           "cityworld:district/industrial"
@@ -167,7 +167,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 40,
+      "weight": 231,
       "condition": {
         "markers": [
           "cityworld:district/park"
@@ -182,7 +182,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 40,
+      "weight": 231,
       "condition": {
         "markers": [
           "cityworld:district/park"
@@ -197,7 +197,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 35,
+      "weight": 202,
       "condition": {
         "markers": [
           "cityworld:district/park"
@@ -212,7 +212,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 30,
+      "weight": 173,
       "condition": {
         "markers": [
           "cityworld:district/park"
@@ -227,7 +227,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 30,
+      "weight": 173,
       "condition": {
         "markers": [
           "cityworld:district/park"
@@ -242,7 +242,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 25,
+      "weight": 144,
       "condition": {
         "markers": [
           "cityworld:district/park"
@@ -257,7 +257,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 20,
+      "weight": 115,
       "condition": {
         "markers": [
           "cityworld:district/park"
@@ -272,7 +272,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 40,
+      "weight": 231,
       "condition": {
         "markers": [
           "cityworld:district/park"
@@ -287,7 +287,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "10-35",
-      "weight": 15,
+      "weight": 105,
       "condition": {
         "markers": [
           "cityworld:district/park"
@@ -302,7 +302,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "10-35",
-      "weight": 15,
+      "weight": 105,
       "condition": {
         "markers": [
           "cityworld:district/park"
@@ -317,7 +317,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "10-35",
-      "weight": 12,
+      "weight": 84,
       "condition": {
         "markers": [
           "cityworld:district/park"
@@ -332,7 +332,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "10-35",
-      "weight": 8,
+      "weight": 56,
       "condition": {
         "markers": [
           "cityworld:district/park"
@@ -347,7 +347,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "12-35",
-      "weight": 15,
+      "weight": 95,
       "condition": {
         "markers": [
           "cityworld:district/municipal"
@@ -361,7 +361,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "12-35",
-      "weight": 20,
+      "weight": 127,
       "condition": {
         "markers": [
           "cityworld:district/municipal"
@@ -375,7 +375,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "12-35",
-      "weight": 12,
+      "weight": 76,
       "condition": {
         "markers": [
           "cityworld:district/municipal"
@@ -389,7 +389,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "12-35",
-      "weight": 8,
+      "weight": 51,
       "condition": {
         "markers": [
           "cityworld:district/municipal"
@@ -403,7 +403,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "rare",
       "level": "30-50",
-      "weight": 6.0,
+      "weight": 150,
       "condition": {
         "markers": [
           "cityworld:district/municipal"
@@ -417,7 +417,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 40,
+      "weight": 300,
       "condition": {
         "markers": [
           "cityworld:district/neighborhood"
@@ -431,7 +431,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 35,
+      "weight": 262,
       "condition": {
         "markers": [
           "cityworld:district/neighborhood"
@@ -445,7 +445,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 30,
+      "weight": 225,
       "condition": {
         "markers": [
           "cityworld:district/neighborhood"
@@ -459,7 +459,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 40,
+      "weight": 300,
       "condition": {
         "markers": [
           "cityworld:district/neighborhood"
@@ -473,7 +473,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 30,
+      "weight": 225,
       "condition": {
         "markers": [
           "cityworld:district/neighborhood"
@@ -487,7 +487,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 25,
+      "weight": 188,
       "condition": {
         "markers": [
           "cityworld:district/neighborhood"
@@ -501,7 +501,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "10-35",
-      "weight": 15,
+      "weight": 114,
       "condition": {
         "markers": [
           "cityworld:district/neighborhood"
@@ -515,7 +515,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "10-35",
-      "weight": 15,
+      "weight": 114,
       "condition": {
         "markers": [
           "cityworld:district/neighborhood"
@@ -529,7 +529,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "10-35",
-      "weight": 12,
+      "weight": 91,
       "condition": {
         "markers": [
           "cityworld:district/neighborhood"
@@ -543,7 +543,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "10-35",
-      "weight": 4,
+      "weight": 30,
       "condition": {
         "markers": [
           "cityworld:district/neighborhood"
@@ -557,7 +557,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "rare",
       "level": "10-30",
-      "weight": 8.0,
+      "weight": 150,
       "condition": {
         "markers": [
           "cityworld:district/neighborhood"
@@ -571,7 +571,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 40,
+      "weight": 857,
       "condition": {
         "markers": [
           "cityworld:district/highrise"
@@ -586,7 +586,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 30,
+      "weight": 643,
       "condition": {
         "markers": [
           "cityworld:district/highrise"
@@ -601,7 +601,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "10-35",
-      "weight": 15.0,
+      "weight": 210,
       "condition": {
         "markers": [
           "cityworld:district/highrise"
@@ -616,7 +616,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "10-35",
-      "weight": 10.0,
+      "weight": 140,
       "condition": {
         "markers": [
           "cityworld:district/highrise"
@@ -631,7 +631,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 50,
+      "weight": 417,
       "condition": {
         "markers": [
           "cityworld:sewer"
@@ -645,7 +645,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 50,
+      "weight": 417,
       "condition": {
         "markers": [
           "cityworld:sewer"
@@ -659,7 +659,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 50,
+      "weight": 417,
       "condition": {
         "markers": [
           "cityworld:sewer"
@@ -673,7 +673,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 30,
+      "weight": 250,
       "condition": {
         "markers": [
           "cityworld:sewer"
@@ -687,7 +687,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "15-40",
-      "weight": 20,
+      "weight": 156,
       "condition": {
         "markers": [
           "cityworld:sewer"
@@ -701,7 +701,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "15-40",
-      "weight": 15,
+      "weight": 117,
       "condition": {
         "markers": [
           "cityworld:sewer"
@@ -715,7 +715,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "15-40",
-      "weight": 10,
+      "weight": 78,
       "condition": {
         "markers": [
           "cityworld:sewer"
@@ -729,7 +729,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "rare",
       "level": "30-50",
-      "weight": 10.0,
+      "weight": 150,
       "condition": {
         "markers": [
           "cityworld:sewer"
@@ -743,7 +743,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 50,
+      "weight": 500,
       "condition": {
         "markers": [
           "cityworld:subway"
@@ -757,7 +757,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 40,
+      "weight": 400,
       "condition": {
         "markers": [
           "cityworld:subway"
@@ -771,7 +771,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 30,
+      "weight": 300,
       "condition": {
         "markers": [
           "cityworld:subway"
@@ -785,7 +785,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 30,
+      "weight": 300,
       "condition": {
         "markers": [
           "cityworld:subway"
@@ -799,7 +799,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "15-40",
-      "weight": 15.0,
+      "weight": 350,
       "condition": {
         "markers": [
           "cityworld:subway"
@@ -813,7 +813,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 50,
+      "weight": 714,
       "condition": {
         "markers": [
           "cityworld:lot/vault"
@@ -828,7 +828,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 30,
+      "weight": 429,
       "condition": {
         "markers": [
           "cityworld:lot/vault"
@@ -843,7 +843,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 25,
+      "weight": 357,
       "condition": {
         "markers": [
           "cityworld:lot/vault"
@@ -858,7 +858,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "20-45",
-      "weight": 20,
+      "weight": 135,
       "condition": {
         "markers": [
           "cityworld:lot/vault"
@@ -873,7 +873,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "20-45",
-      "weight": 20,
+      "weight": 135,
       "condition": {
         "markers": [
           "cityworld:lot/vault"
@@ -888,7 +888,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "20-45",
-      "weight": 12,
+      "weight": 81,
       "condition": {
         "markers": [
           "cityworld:lot/vault"
@@ -903,7 +903,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "rare",
       "level": "35-55",
-      "weight": 6,
+      "weight": 90,
       "condition": {
         "markers": [
           "cityworld:lot/vault"
@@ -918,7 +918,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "rare",
       "level": "35-55",
-      "weight": 4,
+      "weight": 60,
       "condition": {
         "markers": [
           "cityworld:lot/vault"
@@ -933,7 +933,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 35,
+      "weight": 583,
       "condition": {
         "markers": [
           "cityworld:farm"
@@ -948,7 +948,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 35,
+      "weight": 583,
       "condition": {
         "markers": [
           "cityworld:farm"
@@ -963,7 +963,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "common",
       "level": "5-30",
-      "weight": 20,
+      "weight": 333,
       "condition": {
         "markers": [
           "cityworld:farm"
@@ -978,7 +978,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "15-35",
-      "weight": 12,
+      "weight": 175,
       "condition": {
         "markers": [
           "cityworld:farm"
@@ -993,7 +993,7 @@
       "spawnablePositionType": "grounded",
       "bucket": "uncommon",
       "level": "15-35",
-      "weight": 12,
+      "weight": 175,
       "condition": {
         "markers": [
           "cityworld:farm"
