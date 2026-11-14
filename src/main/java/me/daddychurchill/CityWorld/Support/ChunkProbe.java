@@ -1131,6 +1131,15 @@ public final class ChunkProbe {
         var getProbabilities = selectorIface.getMethod("getProbabilities", spawnerIface, String.class, java.util.List.class);
         StringBuilder out = new StringBuilder();
         out.append("positions ").append(((java.util.List<?>) positions).size());
+        // the markers CobblemonBridge put on those positions, tallied — the thing a district entry matches against
+        java.util.Map<String, Integer> markers = new java.util.TreeMap<>();
+        for (Object position : (java.util.List<?>) positions) {
+            @SuppressWarnings("unchecked")
+            java.util.Set<String> set = (java.util.Set<String>) position.getClass().getMethod("getMarkers").invoke(position);
+            for (String marker : set)
+                markers.merge(marker, 1, Integer::sum);
+        }
+        out.append(" markers ").append(markers);
         for (String bucket : new String[] { "common", "uncommon", "rare", "ultra-rare" }) {
             @SuppressWarnings("unchecked")
             java.util.Map<Object, Float> probabilities = (java.util.Map<Object, Float>) getProbabilities.invoke(selector, spawner, bucket, positions);
@@ -1145,7 +1154,7 @@ public final class ChunkProbe {
             out.append('\n').append(bucket).append(": ");
             if (sorted.isEmpty())
                 out.append("(nothing can spawn here)");
-            for (int i = 0; i < Math.min(14, sorted.size()); i++)
+            for (int i = 0; i < Math.min(24, sorted.size()); i++)
                 out.append(i > 0 ? ", " : "").append(sorted.get(i).getKey()).append(' ')
                         .append(String.format("%.1f%%", sorted.get(i).getValue()));
         }
