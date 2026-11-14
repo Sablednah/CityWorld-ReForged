@@ -1033,8 +1033,7 @@ public final class ChunkProbe {
                 { "park", "ParkLot", "top", "8" }, { "industrial", "ctx:IndustrialContext", "top", "8" },
                 { "municipal", "ctx:MunicipalContext", "top", "8" }, { "highrise roof", "ctx:HighriseContext", "top", "8" },
                 { "neighborhood", "ctx:NeighborhoodContext", "top", "8" }, { "farm", "ctx:FarmContext", "top", "8" },
-                { "subway station", "SubwayStationLot", "-10", "14" }, { "vault", "VaultLot", "-20", "24" },
-                { "wild (control)", "ctx:NatureContext", "top", "8" } };
+                { "subway station", "SubwayStationLot", "-10", "14" }, { "wild (control)", "ctx:NatureContext", "top", "8" } };
         for (String[] zone : zones) {
             int[] at = findLot(level, zone[1]);
             if (at == null) {
@@ -1042,15 +1041,19 @@ public final class ChunkProbe {
                 continue;
             }
             int cx = at[0], cz = at[1];
+            int top = -1;
             for (int dx = -1; dx <= 1; dx++)
                 for (int dz = -1; dz <= 1; dz++) {
                     int sx = cx + dx, sz = cz + dz;
-                    server.submit(() -> level.getChunk(sx, sz, ChunkStatus.FULL, true)).join();
+                    // the heightmap is read on the server thread from the chunk itself: off it, the level answered the
+                    // world floor for every chunk but spawn's
+                    int h = server.submit(() -> level.getChunk(sx, sz, ChunkStatus.FULL, true)
+                            .getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, 8, 8)).join();
+                    if (dx == 0 && dz == 0)
+                        top = h;
                 }
             int x = cx * 16 + 8, z = cz * 16 + 8;
-            int y = zone[2].equals("top")
-                    ? level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, x, z) + 1
-                    : street + Integer.parseInt(zone[2]);
+            int y = zone[2].equals("top") ? top + 1 : street + Integer.parseInt(zone[2]);
             int vr = Integer.parseInt(zone[3]);
             var lot = context.getPlatMap(cx, cz).getLot(Math.floorMod(cx, PlatMap.Width), Math.floorMod(cz, PlatMap.Width));
             String where = String.format("%s @ %d,%d,%d lot=%s ctx=%s", zone[0], x, y, z,
