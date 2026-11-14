@@ -18,15 +18,17 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   page shows the result as the set's default tick. Self-test `placedSets`.
 - **Cobblemon: Pokémon Centers, gyms and Poké Marts in the city.** With Cobblemon installed (1.21.1 and newer), a
   one-chunk Pokémon Center stands on the streets of the lowrise, midrise and highrise districts
-  (`shops.oddsOfPokecenter`, 1 in 21 road-fronting building chunks): white walls, a red band, a Poké Ball on the roof,
+  (`shops.oddsOfPokecenter`, 1 in 55 road-fronting building chunks — one building, never flooded into its neighbours): white walls, a red band, a Poké Ball on the roof,
   the healing machine behind the reception counter with a `cobblemon:nurse`, a bank of PCs, seating, beds upstairs, a
   pasture out the back, chests on `cityworld:chests/pokecenter`. Municipal districts get **gyms**
-  (`shops.oddsOfGym`, 1 in 8): a two-storey hall typed by position — fire, water, grass, electric, rock, ice, psychic,
+  (`shops.oddsOfGym`, 1 in 21): a two-storey hall typed by position — fire, water, grass, electric, rock, ice, psychic,
   fighting — the arena in the type's concrete with its gem block at the heart, bleachers, two prize chests
   (`cityworld:chests/gym`) and a **gym leader** waiting behind the arena: a Cobblemon NPC of class
   `cityworld:gym_leader_<type>` with a typed party of three to five at `shops.gymLeaderLevel` (25), who challenges you through the
   dialogue `cityworld:gym_leader` (both are data under `data/cityworld/npcs/` and `dialogues/`, yours to override).
-  Street shops deal a new trade, the **Poké Mart** (a PC on the counter, stock on `cityworld:chests/shop_pokemart`).
+  Street shops deal a new trade, the **Poké Mart** (a PC on the counter, stock on `cityworld:chests/shop_pokemart`),
+  and the mall draws a Poké Mart unit among its shops (`cityworld:chests/mall_pokemart`). The gym leader wears
+  Cobblemon's trainer model.
   All three are planned only while `#cityworld:fittings/healing_machine` has a block in it (Cobblemon's; pools
   `fittings/{healing_machine,pc,pasture}`), so a world without Cobblemon never rolls for them and plans as before.
   `/cityfind pokecenter`, `/cityfind gym`, `/cityfind shop:pokemart`; both buildings are announced landmarks.

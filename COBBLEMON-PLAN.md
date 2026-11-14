@@ -258,10 +258,10 @@ pool files are deleted on that branch (1.5.2 would ignore the unknown `markers` 
   challenge time at the NPC's own level, which is `Level` in its NBT (0/absent loads as 1), set from the new
   `shops.gymLeaderLevel` (25); a pool entry's `npcLevels` is a FILTER on that level, so ours is `1-100`) and `data/cityworld/dialogues/gym_leader.json`
   (modelled on Cobblemon's `npc-example`: greet, Challenge → `q.npc.start_battle(q.player, 'single')`, Not today).
-- Planning: `UrbanContext.getBuilding` (lowrise/midrise/highrise) rolls `shops.oddsOfPokecenter` (default 1/21, a
+- Planning: `UrbanContext.getBuilding` (lowrise/midrise/highrise) rolls `shops.oddsOfPokecenter` (default 1/55 — the new Customize rung "Scarce"; it was 1/21 and the district flood copied a Center into its neighbours, fourteen in a row on the owner's first look, so `PlatLot.floodsNeighbours()` is false for a Center and a gym; a
   Customize rung) only when `isModernStyle && platmap.frontsRoad && PokecenterLot.available()` — available = the
   healing-machine pool resolves — so a world without Cobblemon takes no draw and plans byte-for-byte as before;
-  `MunicipalContext.getBuilding` the same for `GymLot` at `shops.oddsOfGym` (1/8). Settings `Shops` is 7 fields
+  `MunicipalContext.getBuilding` the same for `GymLot` at `shops.oddsOfGym` (1/21, was 1/8). Settings `Shops` is 7 fields
   (8 on 1.20.1 with `bankPlazaRadius`), DEFAULT = field defaults (`checkSettingsDefaults`), Customize pickers
   "Pokémon Centers"/"Pokémon gyms", export included.
 - `ShopTrade.POKEMART("Poké Mart", minecraft:cleric, cobblemon:pc)`: the constructor now parses a namespaced id;

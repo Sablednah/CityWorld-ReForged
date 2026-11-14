@@ -28,7 +28,7 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 - Owner at bedtime: *"do as much cobble mon support as you can overnight"*. Built: `worldgen/CobblemonBridge` (markers +
   civilisation through Cobblemon's `SpawningInfluenceDetector`, two spawn pools in `data/cityworld/spawn_pool_world/`,
   NOT on 1.20.1 — Cobblemon 1.5.2 has no markers), `Plats/Urban/PokecenterLot` (lowrise/midrise/highrise, road-fronting,
-  `shops.oddsOfPokecenter` 1/21), `Plats/Urban/GymLot` (municipal, `shops.oddsOfGym` 1/8, typed by position, a
+  `shops.oddsOfPokecenter` 1/55), `Plats/Urban/GymLot` (municipal, `shops.oddsOfGym` 1/21, typed by position, a
   `cobblemon:npc` leader of class `cityworld:gym_leader_<type>` at `shops.gymLeaderLevel` 25 — `isStatic: false`, the
   party forms at challenge time; a static one loaded from NBT never battles), `ShopTrade.POKEMART` (dealt only while
   its mod is loaded), pools `fittings/{healing_machine,pc,pasture}` — **the switch: all three are planned only while
