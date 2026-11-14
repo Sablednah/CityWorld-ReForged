@@ -1080,6 +1080,10 @@ public class FarmLot extends ConnectedLot {
 			return false;
 		var pick = trees.get().get(chunkOdds.getRandomInt(trees.get().size()));
 		var worldGenerator = level.getLevel().getChunkSource().getGenerator();
+		// Cobblemon's apricorn tree will not place in a generating chunk outside its own biome tags, and rolls
+		// its config chance even inside them: CityWorld draws that one itself (Support/ApricornTree)
+		net.minecraft.world.level.block.state.BlockState apricorn = me.daddychurchill.CityWorld.Support.ApricornTree
+				.fruitFor(pick, chunkOdds);
 		int planted = 0;
 		for (int x : new int[] { 2, 7, 12 })
 			for (int z : new int[] { 2, 7, 12 }) {
@@ -1088,8 +1092,11 @@ public class FarmLot extends ConnectedLot {
 				net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(
 						me.daddychurchill.CityWorld.Support.AbstractBlocks.getBlockX(chunk.sectionX, x), croplevel,
 						me.daddychurchill.CityWorld.Support.AbstractBlocks.getBlockZ(chunk.sectionZ, z));
-				if (pick.value().place(level, worldGenerator,
-						net.minecraft.util.RandomSource.create(chunkOdds.getRandomLong()), pos))
+				boolean grew = apricorn != null ? me.daddychurchill.CityWorld.Support.ApricornTree.plant(chunk, chunkOdds, x,
+						croplevel, z, apricorn)
+						: pick.value().place(level, worldGenerator,
+								net.minecraft.util.RandomSource.create(chunkOdds.getRandomLong()), pos);
+				if (grew)
 					planted++;
 				else if (planted == 0)
 					return false;

@@ -1236,7 +1236,7 @@ public final class CityWorldSelfTest {
                                         me.daddychurchill.CityWorld.Plats.Rural.FarmLot.CropType.OAK_TREE))
                     orchardChunks.add(new int[] { cx, cz });
         Map<String, Integer> logs = new TreeMap<>();
-        int withCherry = 0;
+        int withCherry = 0, apricorns = 0;
         for (int[] coord : orchardChunks) {
             final int cx = coord[0], cz = coord[1];
             LevelChunk chunk = server.submit(() -> level.getChunk(cx, cz)).join();
@@ -1245,9 +1245,11 @@ public final class CityWorldSelfTest {
                 for (int z = 0; z < 16; z++)
                     for (int y = context.streetLevel; y <= context.streetLevel + 14; y++) {
                         BlockState state = chunk.getBlockState(new BlockPos(cx * 16 + x, y, cz * 16 + z));
+                        String id = String.valueOf(BuiltInRegistries.BLOCK.getKey(state.getBlock()));
+                        if (id.startsWith("cobblemon:") && id.endsWith("_apricorn"))
+                            apricorns++;
                         if (!state.is(net.minecraft.tags.BlockTags.LOGS))
                             continue;
-                        String id = String.valueOf(BuiltInRegistries.BLOCK.getKey(state.getBlock()));
                         logs.merge(id, 1, Integer::sum);
                         if (id.equals("minecraft:cherry_log"))
                             cherry = true;
@@ -1269,6 +1271,14 @@ public final class CityWorldSelfTest {
         report.put("orchard.temperateLots", Integer.toString(orchardChunks.size()));
         report.put("orchard.lotsWithCherry", Integer.toString(withCherry));
         report.put("orchard.logs", logs.toString());
+        // Cobblemon's apricorn tree feature never places in a generating chunk outside its biome tags, so CityWorld
+        // draws it (Support/ApricornTree): with Cobblemon here and an apricorn in the temperate pool, the orchards
+        // must hold some fruit
+        report.put("orchard.apricorns", Integer.toString(apricorns));
+        boolean apricornPooled = report.getOrDefault("orchard.pool.temperate", "").contains("cobblemon:");
+        if (apricornPooled && orchardChunks.size() >= 6 && apricorns == 0 && !logs.containsKey("cobblemon:apricorn_log"))
+            fail("the temperate orchard pool holds a Cobblemon apricorn tree, " + orchardChunks.size()
+                    + " temperate orchards generated and none grew one");
         if (cherryShipped && orchardChunks.size() >= 6 && withCherry == 0)
             fail("the temperate orchard pool holds minecraft:cherry, " + orchardChunks.size()
                     + " temperate orchards generated and none grew a cherry -- the fruit-orchard placement "
