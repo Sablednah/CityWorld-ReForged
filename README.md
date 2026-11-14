@@ -20,7 +20,7 @@ mines, sewers, farms and wild nature**, all seed-deterministic.
 | **Licence** | GPL-3.0-only |
 | **Status** | ✅ Playable — full cities generate, inhabited and furnished, across 13 world styles |
 
-Jars are named for the Minecraft version they target — `cityworld-7.0.0+mc26.2.jar` — and a given
+Jars are named for the Minecraft version they target — `cityworld-7.1.0+mc26.2.jar` — and a given
 seed generates the same city on every supported version.
 
 Drop the jar in your `mods/` folder and pick **CityWorld** as the world type (or one of its styles),
@@ -149,6 +149,9 @@ generated city, more ground than all of Greater London and two and a half New Yo
 - **Cities in a vanilla world** — pick *Land — Vanilla, cities apart* and the terrain is vanilla's with a CityWorld
   city every so often, joined (7.0) by highways that climb in half-block steps, tunnel through ridges and bridge
   rivers.
+- **Cobblemon** (7.1, 1.21.1+) — Pokémon Centers on the streets, typed gyms with a leader to battle, Poké Marts;
+  the city tells Cobblemon's spawner where it is, so urban species walk the streets and each district has its own;
+  villages and Cobblemon's structures in the wild, apricorn trees in the orchards.
 - **Subway** (MODERN/APOCALYPSE) — a station in every urban district and twin-track tunnels between
   stations near and far, on two levels with interchanges and powered track; a minecart runs the network.
 - **Shopping malls** (MODERN/APOCALYPSE) — rare, sprawling, at the edge of town: an atrium in wings,

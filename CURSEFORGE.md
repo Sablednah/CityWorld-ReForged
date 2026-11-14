@@ -15,6 +15,17 @@ generated city, more ground than all of Greater London and two and a half New Yo
 
 ![The highrise core at golden hour](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/cityworld-highrise-district-in-golden-hour.jpg)
 
+**New in 7.1.0: Cobblemon.** With Cobblemon installed (1.21.1 and newer) the city grows **Pokémon Centers** on its
+streets — a nurse and the healing machine at the counter, a bank of PCs, beds upstairs, a pasture out the back —
+**gyms** in the municipal districts, typed fire to psychic with a **gym leader** waiting behind the arena to
+battle, and **Poké Marts** among the street shops and in the mall. The city tells Cobblemon's spawner where it is:
+Meowth, Growlithe and Trubbish on the streets, Grimer and Koffing round the factories, Rattata and Zubat in the
+sewers and subway, Chansey by the hospitals, Mareep and Wooloo on the farms, Pidove and Spearow on the highrise
+roofs (and a city street no longer reads to Cobblemon as a jungle temple). Villages and Cobblemon's own structures
+come to the wild between the cities, apricorn trees grow in the orchards and its berries in the fields. Every piece
+of it is data a pack can change: the NPC classes, the dialogue, the spawn pools, the loot. Without Cobblemon,
+nothing changes.
+
 **New in 7.0.0: deep oceans, highways, car parks and real cars.** A world-changing drop, so a major version.
 **Deep oceans** now and then run off CityWorld's own land: a shelf down into a wide, thirty-block-deep sea with
 vanilla's ocean biomes and everything that lives in them, monuments, ruins, shipwrecks, buried treasure and the sea
@@ -365,6 +376,7 @@ with none installed nothing changes.
 | Mod | What CityWorld does with it |
 |---|---|
 | **JourneyMap** | Draws the city plan over unexplored ground, names streets, places and landmarks. |
+| **Cobblemon** (1.21.1+) | Pokémon Centers, typed gyms with leaders to battle, Poké Marts; its spawner told where the city is (urban species on the streets, district species by district); villages and its structures in the wild; apricorn trees and berries on the farms. |
 | **Macaw's Furniture**, **MrCrayfish's Refurbished Furniture**, **Fantasy's Furniture** (all sets, Decorations) | Furnishes every interior with their pieces. |
 | **Macaw's Doors, Windows, Fences and Walls, Roofs, Stairs, Trapdoors, Lights** (and the BoP add-on) | Builds the city's doors, windows, roofs, fences, stairs and lighting from them. |
 | **Macaw's Roads and Streets, Paths and Pavings, Bridges** | Street and highway surfaces, markings and road signs; park and farm paths; rope bridges in the wild and between ruined towers. |
