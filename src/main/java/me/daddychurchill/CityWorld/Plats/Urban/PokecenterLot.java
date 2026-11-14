@@ -235,13 +235,15 @@ public class PokecenterLot extends IsolatedLot {
                 LootProvider.LootLocation.POKECENTER);
         ladder(chunk, f, street, fh);
 
-        // upstairs: beds for trainers (heads to the wall: setBed's SOUTH puts the head at the anchor and the foot a
-        // cell on), two more PCs, a window seat
+        // upstairs: beds for trainers, heads to the walls (v 1 and 14) — both cells named through the frame, since
+        // the anchor form of setBed lays toward +x/+z in WORLD terms (in the wall on two of the four facings, owner's
+        // 2026-11-14 shots), two more PCs, a window seat
         int uy = street + fh + 1;
-        chunk.setBed(f.x(3, 2), uy, f.z(3, 2), BEDS[0], f.face(BlockFace.SOUTH));
-        chunk.setBed(f.x(5, 2), uy, f.z(5, 2), BEDS[1], f.face(BlockFace.SOUTH));
-        chunk.setBed(f.x(3, 11), uy, f.z(3, 11), BEDS[2], f.face(BlockFace.NORTH));
-        chunk.setBed(f.x(5, 11), uy, f.z(5, 11), BEDS[3], f.face(BlockFace.NORTH));
+        for (int i = 0; i < 2; i++) {
+            int u = 3 + 2 * i;
+            chunk.setBed(f.x(u, 2), uy, f.z(u, 2), f.x(u, 3), f.z(u, 3), BEDS[i]);
+            chunk.setBed(f.x(u, 13), uy, f.z(u, 13), f.x(u, 12), f.z(u, 12), BEDS[2 + i]);
+        }
         if (pc != null)
             for (int v = 7; v <= 8; v++)
                 chunk.setFurniture(f.x(13, v), uy, f.z(13, v), pc, FurnitureTags.facingFor(pc, f.face(BlockFace.WEST)));

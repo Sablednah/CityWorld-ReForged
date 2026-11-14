@@ -794,6 +794,21 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		setActualBlock(x, y, z, with(state, BlockStateProperties.BED_PART, part));
 	}
 
+	/**
+	 * A bed by its two cells: the head at {@code (headX, headZ)}, the foot at {@code (footX, footZ)} — adjacent.
+	 * {@link #setBed(int, int, int, Material, BlockFace)} always lays the bed from its anchor toward +x or +z, which
+	 * a lot drawn in a turned frame cannot know (the Pokémon Center's beds stood in the wall on one facing and two
+	 * cells off it on another, 2026-11-14); naming both cells through the frame makes the frame the only geometry.
+	 */
+	public final void setBed(int headX, int y, int headZ, int footX, int footZ, Material material) {
+		BlockFace facing = BlockFace.NORTH;
+		for (BlockFace f : new BlockFace[] { BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST })
+			if (footX + f.getModX() == headX && footZ + f.getModZ() == headZ)
+				facing = f;
+		setBedBlock(footX, y, footZ, material, facing, BedPart.FOOT);
+		setBedBlock(headX, y, headZ, material, facing, BedPart.HEAD);
+	}
+
 	public final void setBed(int x, int y, int z, Material material, BlockFace facing) {
 		switch (facing) {
 		default:
