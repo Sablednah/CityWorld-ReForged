@@ -9,10 +9,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
-import net.minecraft.world.level.levelgen.feature.configurations.BlockStateConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.SimpleRandomFeatureConfiguration;
-import net.minecraft.world.level.levelgen.placement.PlacedFeature;
+import net.minecraft.world.level.levelgen.feature.Feature;
 
 /**
  * Cobblemon's apricorn tree, drawn by CityWorld. Its own feature ({@code cobblemon:apricorn_tree}) refuses to place
@@ -32,28 +29,46 @@ public final class ApricornTree {
 
 	private static final BlockFace[] SIDES = { BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST };
 
-	private static boolean isApricornFeature(Holder<ConfiguredFeature<?, ?>> feature) {
-		return feature.value().feature().getClass().getName().endsWith("ApricornTreeFeature")
-				&& feature.value().config() instanceof BlockStateConfiguration;
+	/**
+	 * 26.3: a configured feature IS the {@code Feature} record, and a selector lists its members through
+	 * {@code getSubFeatures()}. No Cobblemon exists for this line yet; the apricorn's state is read from whatever
+	 * {@code state} accessor or field its tree feature carries, so a future build needs no change here.
+	 */
+	private static BlockState stateOf(Feature feature) {
+		if (!feature.getClass().getName().endsWith("ApricornTreeFeature"))
+			return null;
+		for (String name : new String[] { "state", "getState" })
+			try {
+				Object o = feature.getClass().getMethod(name).invoke(feature);
+				if (o instanceof BlockState b)
+					return b;
+			} catch (ReflectiveOperationException | RuntimeException ignored) {
+			}
+		try {
+			Object o = feature.getClass().getField("state").get(feature);
+			if (o instanceof BlockState b)
+				return b;
+		} catch (ReflectiveOperationException | RuntimeException ignored) {
+		}
+		return null;
 	}
 
 	/**
-	 * The apricorn (fruit block state) a pooled configured feature would grow, or {@code null} when the feature is
-	 * not Cobblemon's apricorn tree: the tree feature itself, or a {@code simple_random_selector} of them
-	 * ({@code cobblemon:apricorn_trees}), in which case one of its members is drawn with {@code odds}.
+	 * The apricorn (fruit block state) a pooled feature would grow, or {@code null} when the feature is not
+	 * Cobblemon's apricorn tree: the tree feature itself, or a selector of them ({@code cobblemon:apricorn_trees}),
+	 * in which case one of its members is drawn with {@code odds}.
 	 */
-	public static BlockState fruitFor(Holder<ConfiguredFeature<?, ?>> pick, Odds odds) {
-		if (isApricornFeature(pick))
-			return ((BlockStateConfiguration) pick.value().config()).state;
-		if (pick.value().config() instanceof SimpleRandomFeatureConfiguration selector) {
-			List<BlockState> fruits = new ArrayList<>();
-			for (Holder<PlacedFeature> placed : selector.features)
-				if (isApricornFeature(placed.value().feature()))
-					fruits.add(((BlockStateConfiguration) placed.value().feature().value().config()).state);
-			if (!fruits.isEmpty())
-				return fruits.get(odds.getRandomInt(fruits.size()));
-		}
-		return null;
+	public static BlockState fruitFor(Holder<Feature> pick, Odds odds) {
+		BlockState own = stateOf(pick.value());
+		if (own != null)
+			return own;
+		List<BlockState> fruits = new ArrayList<>();
+		pick.value().getSubFeatures().forEach(h -> {
+			BlockState s = stateOf(h.value());
+			if (s != null)
+				fruits.add(s);
+		});
+		return fruits.isEmpty() ? null : fruits.get(odds.getRandomInt(fruits.size()));
 	}
 
 	/** The apricorn log and leaves, when Cobblemon is here. */
