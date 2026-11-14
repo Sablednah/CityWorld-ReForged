@@ -317,3 +317,54 @@ identical everywhere; MODERN and APOCALYPSE identical on the five lines WITHOUT 
 lots take no draw without the mod; 1.21.1 alone differs (`2df593e7` APOCALYPSE), because Cobblemon is installed there
 and 190 Centers / 157 gyms / 133 Marts are in its plan. Deployed to the owner's `1.21.1` instance
 `DEPLOYED-8725c2cb` (`cityworld-7.0.0+mc1.21.1.jar` rebuilt from that head). Nothing pushed, no release.
+
+## 9. The owner's first look (2026-11-13 evening → 14 overnight) — what it changed
+
+The owner walked a 1.21.1 world with the overnight build and sent screenshots; each line below is one of their
+calls and what was done. All on master and the five lines (picks listed in CLAUDE.md's resume bullet).
+
+- **`/checkspawns` read "cityworld-…" names in the commons.** Herd entries name themselves by raw id unless they carry
+  a `displayName` lang key; `gen_cobblemon_city_spawns.py` gives every herd copy `cobblemon.species.<leader>.name`.
+- **"Poke center door is blocked by the red."** The sidewalk stands a block above the street, so the awning at
+  `dy + 2` was at head height in the doorway: awning `dy + 3`, sign `dy + 2`, both lots.
+- **"The PCs are backwards", "same with pasture block".** Cobblemon's PC, pasture and healing machine take
+  `facing = blockPlaceContext.horizontalDirection` — the PLACER'S look, so their front is opposite `facing`. The
+  furniture data map now carries `facingOffset: 180` for all three (`cobblemon:healing_machine` gained an entry) and
+  the lot passes every piece through `FurnitureTags.facingFor`. **Read a mod block's `getStateForPlacement` before
+  choosing a facing for it** — same lesson as Macaw's rope pieces.
+- **"Beds would be better rotated 180."** Heads to the wall: `setBed`'s SOUTH puts the head at the anchor cell.
+- **"Healing machine as part of the counter, the middle block."** It is the counter's middle block at (7,4) now.
+- **"Not seeing a nurse."** `spawnWorker` rolls `spawnBeings` (2/3). A Center without its nurse is wrong, so
+  `SpawnProvider.spawnKeyWorker` spawns whenever beings are on at all (never rolled) and the nurse uses it.
+- **"Pokegym doors are mirrored."** `SupportBlocks.setDoubleDoor` hinged leaf one LEFT and leaf two RIGHT for every
+  facing. Vanilla reads the hinge from the door's own facing (the state's, the opposite of ours): the leaf on the
+  state facing's counter-clockwise side is LEFT. The first leaf (west or north) is that side only for a state facing
+  north or east, so pairs facing the other two ways had their hinges in the middle. The hospital's pair faces south
+  (unchanged); the Center's and gym's pairs turn with the road and were wrong for half the frames.
+- **"Is this lil' dino guy always the gym leader?"** An NPC class with no `resourceIdentifier` renders Cobblemon's
+  `cobblemon:dummy` (the green blob). All eight classes now name `cobblemon:standard`, the trainer model
+  (`assets/cobblemon/bedrock/npcs/variations/standard/`: one texture; the player-skin variations need a skin the
+  class cannot carry). Variation is a resource pack's: a variation file keyed on aspects. One trainer look for now.
+- **"Poké Centers might be a little too frequent", "14 centers next to each other".** Two causes. (1) The district
+  flood fill copied the lot into its neighbours like any office (`fillOutBuilding` → `newLike`): a Center is one
+  building of one chunk, so `PlatLot.floodsNeighbours()` (new, default true) is false for `PokecenterLot` and
+  `GymLot` and the flood stops at them. (2) The odds were per road-fronting chunk at 1/21: now 1/55 (a new picker
+  rung, "Scarce", because the default must be a rung) and gyms 1/21 (was 1/8); `Shops.GYM_ODDS` names it, DEFAULT
+  record and field defaults both changed (`checkSettingsDefaults`).
+- **"Can we add a mart to the mall as well?"** `Mall.Kind.POKEMART` (red fascia, white floor, "Poké Mart"/"Trainer
+  Supplies"… names), drawn from `Mall.shopKinds()` = the fixed list plus the Mart only while
+  `#cityworld:fittings/pc` resolves — a world without Cobblemon draws from the same list as before; fittings: white
+  shelving with lanterns, a PC island on a red mat (`Mall::pokeDesk`, the PC two high through its furniture layout), a
+  lectern till; loot `chests/mall_pokemart` (+ `_extra`) from `gen_cobblemon_loot.py` (vanilla stand-ins on 1.20.1).
+  The street Mart the owner found was in a store's stairwell chunk ("wasn't best"): the trade is dealt by position
+  over every chunk of a store building; not changed.
+- **"Rooftop birds and other oddities to confirm" — the owner asked for a headless check instead of walking.**
+  `-Dcityworld.probe=survey:cobblemon` runs Cobblemon's own `/checkspawns` path (zone generate → resolve → selector
+  probabilities, by reflection on a `FixedAreaSpawner` the size of a player's zone, on the server thread) at a chunk
+  of each kind of place — street, sewer, park, industrial, municipal, highrise roof, neighbourhood, farm, subway
+  station, wild land as the control — and prints each bucket's species and percentages. `find:ctx:<Context>` is new in
+  `findLot`. Two traps it paid for: the heightmap must be read on the server thread from the chunk (off it the level
+  answered the world floor), and Cobblemon's zone generator reads chunks with `getChunk(…, FULL, load = false)` while
+  the probe's own load is let go after one tick, so every zone but spawn's read 0 positions until the nine chunks
+  round each zone were held with FORCED tickets. No vault zone: vaults are Apocalypse-only and the search for one on
+  a Modern seed planned 1,681 platmaps. Results: see the gates paragraph below.

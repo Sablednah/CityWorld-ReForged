@@ -24,6 +24,21 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-14 overnight): the owner's first Cobblemon look, every call answered — `COBBLEMON-PLAN.md` §9.**
+- Their walk on 1.21.1 (2026-11-13 evening) and the fixes, all on master + five lines: herd names in `/checkspawns`,
+  awning off the doorway, Cobblemon's PC/pasture/healing machine turned to the room (`facingOffset: 180` — their
+  `facing` is the PLACER'S look; read a mod block's `getStateForPlacement`), healing machine = the counter's middle
+  block, beds head-to-wall, the nurse always (`spawnKeyWorker`), **double doors hinged on the outside for every
+  facing** (`setDoubleDoor`: the leaf on the state facing's counter-clockwise side is LEFT — east/south-facing pairs
+  were mirrored since 6.x; hospital unaffected), gym leaders in Cobblemon's trainer model (`resourceIdentifier:
+  cobblemon:standard`; no identifier = the green dummy), **Centers/gyms never flood** (`PlatLot.floodsNeighbours()`
+  false; fourteen in a row) and rarer: Centers 1/55 (new picker rung "Scarce"), gyms 1/21; **a Poké Mart unit in the
+  mall** (`Mall.Kind.POKEMART`, `shopKinds()` adds it only while `fittings/pc` resolves, `chests/mall_pokemart`).
+  **`-Dcityworld.probe=survey:cobblemon`** = Cobblemon's `/checkspawns` headless at a chunk of every zone (street,
+  sewer, park, each district, subway, wild control), on FORCED tickets (its zone generator never loads a chunk).
+  Measured: sewer Rattata/Zubat/Grimer/Gastly, suburbs Meowth/Purrloin/Skitty/Growlithe — gates below pending.
+  Owner at bedtime: "work on the list overnight". Nothing pushed; 7.1.0 unreleased.
+
 **▶ Resume here (2026-11-13 overnight): Cobblemon Stage 1 + Stage 2 BUILT on all six lines, unreleased — `COBBLEMON-PLAN.md` §8.**
 - Owner at bedtime: *"do as much cobble mon support as you can overnight"*. Built: `worldgen/CobblemonBridge` (markers +
   civilisation through Cobblemon's `SpawningInfluenceDetector`, two spawn pools in `data/cityworld/spawn_pool_world/`,
