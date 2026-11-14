@@ -133,6 +133,8 @@ public abstract class UrbanContext extends CivilizedContext {
 
 	private boolean fillOutBuilding(CityWorldGenerator generator, PlatMap platmap, Odds odds, double theOdds,
 			PlatLot source, int x, int z) {
+		if (!source.floodsNeighbours())
+			return false;
 		if (odds.playOdds(oddsOfFloodFill) && platmap.inBounds(x, z) && platmap.isEmptyLot(x, z)) {
 			// ⚠ The flood STOPS where the lot cannot be placed. It used to ignore the result and recurse
 			// anyway, and a refused lot stays empty -- so every monotone path through a refused region
