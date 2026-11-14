@@ -37,6 +37,14 @@ public abstract class PlatLot {
 
 	public LotStyle style;
 	public boolean trulyIsolated;
+
+	/**
+	 * Whether a district's flood fill may copy this lot into its neighbours to make a bigger building. A Pokémon Center
+	 * or gym is one building of one chunk: fourteen in a row were a flood of copies (owner, 2026-11-13).
+	 */
+	public boolean floodsNeighbours() {
+		return true;
+	}
 	protected final boolean inACity;
 
 	/** Whether a vanilla or modded structure is planned here, so this chunk was deliberately left as

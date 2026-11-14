@@ -882,6 +882,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
      */
     private enum Chance {
         NEVER("Never", 0.0),
+        SCARCE("Scarce", 1.0 / 55.0), // Pokémon Centers' default: about one a district
         VERY_RARE("Very rare", 1.0 / 21.0),
         // CityWorld's "very unlikely" — the default for finds in drawers (oddsOfFinds), which must be a rung or
         // the picker would round it to Rare and save that (the picker writes its rung back)
