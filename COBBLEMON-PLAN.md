@@ -390,3 +390,19 @@ calls and what was done. All on master and the five lines (picks listed in CLAUD
   that save undid the fresh `rm -rf run/world`; `selftest-one.sh` now waits for the killed server to be gone
   (`f9401812`). Deployed to the owner's `1.21.1` instance `DEPLOYED-92b8fa7b`. Nothing pushed; 7.1.0 unreleased.
   Not done: gym-leader variation (a resource pack's variation file); the street Mart on a stairwell chunk.
+- **The owner's second look (2026-11-14 afternoon).** Nurses, PCs, pastures, trainer-model leaders: right. Two calls.
+  (1) *Beds*: one pair in the wall, the other two cells off it — `setBed(x, y, z, material, facing)` lays the bed
+  from its anchor toward +x/+z in WORLD terms, which a lot drawn in a turned frame cannot know; new
+  `setBed(headX, y, headZ, footX, footZ, material)` names both cells through the frame (head at v 2 and 13, the
+  walls at 1 and 14). (2) *"Do Cobblemon's apricorn trees grow in the orchards?"* — the pools list them
+  (`#cityworld:orchard/*`: `cobblemon:apricorn_trees` temperate, two colours each for cold/dry/tropical), but
+  Cobblemon's `ApricornTreeFeature.place` returns false while the chunk is generating unless the biome is in
+  `has_feature/apricorns_{sparse,normal,dense}`, and then rolls `baseApricornTreeGenerationChance` 0.1 — so a
+  pooled apricorn orchard's first tree failed and the lot fell back to the classic oak orchard: **0 apricorn logs
+  in 8 temperate orchards** (1.21.1 self-test `orchard.logs`), the whole 48-region self-test world holding 26
+  apricorns in two wild trees. `Support/ApricornTree` is a transcription of the feature (five-log trunk, the
+  collar, the ring two out with the fruit on it, topper, tufts, ≤ 8 apricorns, leaf distances computed);
+  `FarmLot.plantFruitOrchard` uses it when the pick (or a member of a selector pick) is that feature. 26.2's
+  selector config is `CompositeFeatureConfiguration`; 26.3's configured feature is the `Feature` record with
+  `getSubFeatures()` (no Cobblemon there yet; the state is read reflectively). Self-test `orchard.apricorns` +
+  a gate (pool offers an apricorn, six orchards, none grew).

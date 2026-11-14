@@ -30,7 +30,11 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   and the mall draws a Poké Mart unit among its shops (`cityworld:chests/mall_pokemart`). The gym leader wears
   Cobblemon's trainer model. CityWorld's district spawns are weighted to be about four in ten of a district's spawns,
   and Cobblemon's temple and stronghold reads (it finds them in cobblestone, sandstone and stone bricks — a city's
-  walls) weigh nothing on a city's surface.
+  walls) weigh nothing on a city's surface. Farm orchards really grow apricorn trees now: Cobblemon's tree feature
+  refuses a chunk that is still generating unless the biome is in its own apricorn tags, and rolls its config
+  chance even there, so the pooled apricorn orchards had been falling back to oak; CityWorld draws the tree itself
+  (trunk, crown and up to eight apricorns, as the mod does). The Center's beds stand head to the wall on every
+  facing.
   All three are planned only while `#cityworld:fittings/healing_machine` has a block in it (Cobblemon's; pools
   `fittings/{healing_machine,pc,pasture}`), so a world without Cobblemon never rolls for them and plans as before.
   `/cityfind pokecenter`, `/cityfind gym`, `/cityfind shop:pokemart`; both buildings are announced landmarks.
