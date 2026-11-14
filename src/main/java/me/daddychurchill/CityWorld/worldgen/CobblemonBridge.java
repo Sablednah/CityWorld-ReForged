@@ -58,6 +58,10 @@ public final class CobblemonBridge {
     private static final String POSITION = PKG + "position.SpawnablePosition";
     private static final String CACHE = POSITION + "$StructureChunkCache";
 
+    /** The nearby-block conditions by which Cobblemon reads a structure from blocks alone (its presets jungle_pyramid, desert_pyramid, stronghold). */
+    static final Set<String> STRUCTURE_READS = Set.of("#cobblemon:jungle_pyramid_blocks", "#cobblemon:desert_pyramid_blocks",
+            "minecraft:cracked_stone_bricks", "minecraft:mossy_stone_bricks");
+
     /** The structure tag Cobblemon's village-dwelling spawn entries require. */
     public static final TagKey<Structure> CIVILIZATION = TagKey.create(Registries.STRUCTURE,
             ResourceLocation.fromNamespaceAndPath(MOD_ID, "spawns/is_civilization"));
@@ -188,6 +192,15 @@ public final class CobblemonBridge {
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (method.getName().equals("affectWeight") && args != null && args.length == 3) {
+                try {
+                    if (readsAStructureFromCityBlocks(args[0], args[1]))
+                        return 0F;
+                } catch (Throwable t) {
+                    CityWorldMod.LOGGER.debug("CityWorld: Cobblemon weight not read", t);
+                }
+                return args[2];
+            }
             if (method.getName().equals("affectSpawnablePosition") && args != null && args.length == 1) {
                 try {
                     mark(args[0]);
@@ -197,6 +210,47 @@ public final class CobblemonBridge {
                 return null;
             }
             return objectMethod(proxy, method, args, "CityWorld spawning influence");
+        }
+
+        /**
+         * Cobblemon reads three structures from blocks alone — a jungle pyramid from cobblestone near
+         * {@code #cobblemon:jungle_pyramid_blocks}, a desert pyramid from sandstone near {@code #cobblemon:desert_pyramid_blocks},
+         * a stronghold from stone bricks near cracked or mossy ones — and a city's walls and pavements satisfy all three, so
+         * Hawlucha, Sigilyph, Meditite and Bronzor made 37% of a street's commons (measured 2026-11-14, {@code survey:cobblemon}).
+         * On a city's surface ({@code cityworld:city}) such an entry weighs nothing; underground (the sewers, the vault) it is
+         * left alone — a ruin read is right there. Entries that also require the real structure never fire in a city anyway.
+         */
+        private boolean readsAStructureFromCityBlocks(Object detail, Object position) throws Throwable {
+            @SuppressWarnings("unchecked")
+            Set<String> markers = (Set<String>) positions.markers().invoke(position);
+            if (!markers.contains("cityworld:city"))
+                return false;
+            List<?> conditions = (List<?>) detail.getClass().getMethod("getConditions").invoke(detail);
+            for (Object condition : conditions) {
+                Method nearby;
+                try {
+                    nearby = condition.getClass().getMethod("getNeededNearbyBlocks");
+                } catch (NoSuchMethodException e) {
+                    continue;
+                }
+                List<?> needed = (List<?>) nearby.invoke(condition);
+                if (needed == null)
+                    continue;
+                for (Object need : needed) {
+                    String id = null;
+                    try {
+                        id = "#" + ((TagKey<?>) need.getClass().getMethod("getTag").invoke(need)).location();
+                    } catch (NoSuchMethodException e) {
+                        try {
+                            id = need.getClass().getMethod("getIdentifier").invoke(need).toString();
+                        } catch (NoSuchMethodException ignored) {
+                        }
+                    }
+                    if (id != null && STRUCTURE_READS.contains(id))
+                        return true;
+                }
+            }
+            return false;
         }
 
         private void mark(Object position) throws Throwable {
