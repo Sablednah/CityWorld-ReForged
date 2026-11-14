@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write the Cobblemon buildings' loot tables: chests/pokecenter, chests/gym and chests/shop_pokemart (+ _extra hooks).
+"""Write the Cobblemon buildings' loot tables: chests/pokecenter, chests/gym, chests/shop_pokemart and chests/mall_pokemart (+ _extra hooks).
 
     python3 scripts/gen_cobblemon_loot.py          # in the checkout whose tables to write
 
@@ -32,6 +32,9 @@ TABLES = {
     "gym": [("rare_candy", 4, 1, 2), ("exp_candy_xs", 6, 2, 5), ("ultra_ball", 3, 1, 2), ("great_ball", 5, 1, 3),
             ("hyper_potion", 4, 1, 2), ("max_revive", 2, 1, 1), ("full_heal", 3, 1, 2), ("max_ether", 2, 1, 1),
             ("minecraft:emerald", 5, 1, 3), ("minecraft:gold_ingot", 3, 1, 2), ("minecraft:name_tag", 1, 1, 1)],
+    "mall_pokemart": [("poke_ball", 12, 3, 8), ("great_ball", 6, 1, 4), ("ultra_ball", 3, 1, 2), ("potion", 10, 2, 4),
+                      ("super_potion", 5, 1, 2), ("revive", 3, 1, 1), ("antidote", 3, 1, 2), ("paralyze_heal", 3, 1, 2),
+                      ("exp_candy_xs", 4, 1, 3), ("rare_candy", 1, 1, 1)],
     "shop_pokemart": [("poke_ball", 12, 2, 6), ("great_ball", 6, 1, 3), ("ultra_ball", 2, 1, 1), ("potion", 10, 1, 3),
                       ("super_potion", 6, 1, 2), ("hyper_potion", 2, 1, 1), ("revive", 4, 1, 1), ("antidote", 4, 1, 2),
                       ("paralyze_heal", 4, 1, 2), ("awakening", 3, 1, 2), ("burn_heal", 3, 1, 2), ("ice_heal", 3, 1, 2),
@@ -46,6 +49,8 @@ VANILLA_TABLES = {
                    ("minecraft:honey_bottle", 4, 1, 2), ("minecraft:paper", 3, 1, 4), ("minecraft:red_bed", 1, 1, 1)],
     "gym": [("minecraft:emerald", 5, 1, 3), ("minecraft:gold_ingot", 3, 1, 2), ("minecraft:name_tag", 1, 1, 1),
             ("minecraft:experience_bottle", 4, 2, 5), ("minecraft:golden_apple", 1, 1, 1)],
+    "mall_pokemart": [("minecraft:emerald", 5, 1, 3), ("minecraft:paper", 4, 1, 4), ("minecraft:honey_bottle", 4, 1, 2),
+                      ("minecraft:glass_bottle", 3, 1, 3), ("minecraft:lead", 2, 1, 1), ("minecraft:name_tag", 1, 1, 1)],
     "shop_pokemart": [("minecraft:emerald", 4, 1, 2), ("minecraft:paper", 4, 1, 4), ("minecraft:honey_bottle", 4, 1, 2),
                       ("minecraft:bread", 3, 1, 3), ("minecraft:glass_bottle", 3, 1, 3)],
 }
