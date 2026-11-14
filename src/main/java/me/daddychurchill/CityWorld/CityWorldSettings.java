@@ -194,7 +194,7 @@ public class CityWorldSettings {
     /** Cobblemon: a Pokémon Center per road-fronting building chunk (lowrise/midrise/highrise), a gym per municipal
      *  building chunk — nothing unless {@code #cityworld:fittings/healing_machine} resolves (Plats/Urban/PokecenterLot). */
     public double oddsOfPokecenter = CityWorldSettingsData.Shops.POKECENTER_ODDS;
-    public double oddsOfGym = Odds.oddsUnlikely;
+    public double oddsOfGym = CityWorldSettingsData.Shops.GYM_ODDS;
     public int gymLeaderLevel = CityWorldSettingsData.Shops.GYM_LEADER_LEVEL;
 
     /**

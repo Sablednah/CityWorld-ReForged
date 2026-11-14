@@ -58,6 +58,11 @@ public class PokecenterLot extends IsolatedLot {
     }
 
     @Override
+    public boolean floodsNeighbours() {
+        return false; // one building, one chunk
+    }
+
+    @Override
     public LootProvider.LootLocation defaultLoot() {
         return LootProvider.LootLocation.POKECENTER;
     }

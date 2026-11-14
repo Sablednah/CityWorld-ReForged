@@ -655,11 +655,17 @@ public record CityWorldSettingsData(
         /** The level a gym leader's party is formed at (their NPC's own level; the party rolls at challenge time). */
         public static final int GYM_LEADER_LEVEL = 25;
 
-        /** A Pokémon Center's odds per road-fronting building chunk of a lowrise/midrise/highrise district: a rung of the Customize picker. */
-        public static final double POKECENTER_ODDS = 1.0 / 21.0;
+        /**
+         * A Pokémon Center's odds per road-fronting building chunk of a lowrise/midrise/highrise district, and a gym's per
+         * building chunk of a municipal district: rungs of the Customize picker. A Center or gym never floods into its
+         * neighbours like an office does, so these are per building. 1/21 and 1/8 with the flood gave the owner fourteen
+         * Centers in a row (2026-11-13).
+         */
+        public static final double POKECENTER_ODDS = 1.0 / 55.0;
+        public static final double GYM_ODDS = 1.0 / 21.0;
 
         public static final Shops DEFAULT = new Shops(false, true, Odds.oddsSomewhatLikely, Odds.oddsUnlikely,
-                Odds.oddsSomewhatUnlikely, 2, POKECENTER_ODDS, Odds.oddsUnlikely, GYM_LEADER_LEVEL);
+                Odds.oddsSomewhatUnlikely, 2, POKECENTER_ODDS, GYM_ODDS, GYM_LEADER_LEVEL);
 
         public static final Codec<Shops> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("enabled", false).forGetter(Shops::enabled),
@@ -678,7 +684,7 @@ public record CityWorldSettingsData(
                 // Cobblemon (Plats/Urban/PokecenterLot, GymLot): only planned while #cityworld:fittings/healing_machine
                 // resolves, so these roll nothing without the mod
                 Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfPokecenter", POKECENTER_ODDS).forGetter(Shops::oddsOfPokecenter),
-                Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfGym", Odds.oddsUnlikely).forGetter(Shops::oddsOfGym),
+                Codec.doubleRange(0.0, 1.0).optionalFieldOf("oddsOfGym", GYM_ODDS).forGetter(Shops::oddsOfGym),
                 Codec.intRange(1, 100).optionalFieldOf("gymLeaderLevel", GYM_LEADER_LEVEL).forGetter(Shops::gymLeaderLevel)
         ).apply(i, Shops::new));
     }

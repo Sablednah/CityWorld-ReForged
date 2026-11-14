@@ -578,8 +578,14 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		boolean alongX = facing == BlockFace.NORTH || facing == BlockFace.SOUTH;
 		int x2 = alongX ? x + 1 : x;
 		int z2 = alongX ? z : z + 1;
-		setDoor(x, y, z, material, facing, false);
-		setDoor(x2, y, z2, material, facing, true);
+		// vanilla's hinge side is read from the door's own facing (the state's, which setDoor makes the opposite of
+		// ours): the leaf on that facing's counter-clockwise side hinges LEFT, the other RIGHT. The first leaf here is
+		// the west or north one, which is the counter-clockwise side only for a state facing north or east — for the
+		// other two the pair came out hinged in the middle, its leaves mirrored (the owner's gym, 2026-11-13).
+		BlockFace state = fixFacing(facing).getOppositeFace();
+		boolean firstLeft = state == BlockFace.NORTH || state == BlockFace.EAST;
+		setDoor(x, y, z, material, facing, !firstLeft);
+		setDoor(x2, y, z2, material, facing, firstLeft);
 	}
 
 	public void setFenceDoor(int x, int y1, int y2, int z, Material material, BlockFace facing) {
