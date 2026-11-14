@@ -24,6 +24,17 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-14 evening): v7.1.0 is RELEASED — Cobblemon.**
+- Owner: "all good - tested and working now - cut a release". Tag `v7.1.0` at the master bump `02d4b366` (docs
+  `ca5f882c` before it; branch bumps b7a1d113/6780705a/3b2c2248/215c300d/cb0a58e0), GitHub release with six
+  jars (`--latest`), CurseForge 9617454–9617464 (run 43633691634; 1.20.1 = Forge/Java 17, the rest NeoForge),
+  fleet `DEPLOYED-v7.1.0` on 12 (ZARP opts out), wiki pushed (+119 lines: Cobblemon palettes/examples/loot/settings),
+  WEBSITE.md handover note. Gates: six self-tests PASS + `--compare` five-way on the pre-bump heads, CI 43632152743
+  green on the bump heads (+ "Same seed, same city"), scan 0/0/0 on all six after the positive read 2/2, 1.20.1
+  SRG 55. **The owner pastes `CURSEFORGE.md`** (7.1.0 headline + the Cobblemon Works-with row). Next: nothing
+  queued — the owner's playtest is the queue; gym-leader variation (resource pack) and the street Mart on a
+  stairwell chunk are the known leftovers.
+
 **▶ Resume here (2026-11-14 overnight): the owner's first Cobblemon look, every call answered — `COBBLEMON-PLAN.md` §9.**
 - Their walk on 1.21.1 (2026-11-13 evening) and the fixes, all on master + five lines: herd names in `/checkspawns`,
   awning off the doorway, Cobblemon's PC/pasture/healing machine turned to the room (`facingOffset: 180` — their
