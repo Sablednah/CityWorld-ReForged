@@ -170,7 +170,7 @@
       "weight": 231,
       "condition": {
         "markers": [
-          "cityworld:district/park"
+          "cityworld:lot/park"
         ],
         "minSkyLight": 8
       }
@@ -185,7 +185,7 @@
       "weight": 231,
       "condition": {
         "markers": [
-          "cityworld:district/park"
+          "cityworld:lot/park"
         ],
         "minSkyLight": 8
       }
@@ -200,7 +200,7 @@
       "weight": 202,
       "condition": {
         "markers": [
-          "cityworld:district/park"
+          "cityworld:lot/park"
         ],
         "minSkyLight": 8
       }
@@ -215,7 +215,7 @@
       "weight": 173,
       "condition": {
         "markers": [
-          "cityworld:district/park"
+          "cityworld:lot/park"
         ],
         "minSkyLight": 8
       }
@@ -230,7 +230,7 @@
       "weight": 173,
       "condition": {
         "markers": [
-          "cityworld:district/park"
+          "cityworld:lot/park"
         ],
         "minSkyLight": 8
       }
@@ -245,7 +245,7 @@
       "weight": 144,
       "condition": {
         "markers": [
-          "cityworld:district/park"
+          "cityworld:lot/park"
         ],
         "minSkyLight": 8
       }
@@ -260,7 +260,7 @@
       "weight": 115,
       "condition": {
         "markers": [
-          "cityworld:district/park"
+          "cityworld:lot/park"
         ],
         "minSkyLight": 8
       }
@@ -275,7 +275,7 @@
       "weight": 231,
       "condition": {
         "markers": [
-          "cityworld:district/park"
+          "cityworld:lot/park"
         ],
         "minSkyLight": 8
       }
@@ -290,7 +290,7 @@
       "weight": 105,
       "condition": {
         "markers": [
-          "cityworld:district/park"
+          "cityworld:lot/park"
         ],
         "minSkyLight": 8
       }
@@ -305,7 +305,7 @@
       "weight": 105,
       "condition": {
         "markers": [
-          "cityworld:district/park"
+          "cityworld:lot/park"
         ],
         "minSkyLight": 8
       }
@@ -320,7 +320,7 @@
       "weight": 84,
       "condition": {
         "markers": [
-          "cityworld:district/park"
+          "cityworld:lot/park"
         ],
         "minSkyLight": 8
       }
@@ -335,7 +335,7 @@
       "weight": 56,
       "condition": {
         "markers": [
-          "cityworld:district/park"
+          "cityworld:lot/park"
         ],
         "minSkyLight": 8
       }
