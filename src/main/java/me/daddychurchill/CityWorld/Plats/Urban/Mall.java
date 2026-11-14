@@ -6,6 +6,7 @@ import java.util.List;
 import me.daddychurchill.CityWorld.CityWorldGenerator;
 import me.daddychurchill.CityWorld.Plats.PlatLot;
 import me.daddychurchill.CityWorld.Support.FurnitureTags;
+import me.daddychurchill.CityWorld.Support.MaterialTags;
 import me.daddychurchill.CityWorld.Support.Odds;
 import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.Support.RealBlocks;
@@ -87,6 +88,9 @@ public final class Mall {
                 new String[] { "Canvas", "Easel", "Palette", "Brush", "Colour", "Sketch" }),
         DEPARTMENT("department", Material.BLACK_CONCRETE, Material.POLISHED_DIORITE, new String[] { "& Co.", "Department Store", "Emporium", "Stores", "Brothers" },
                 new String[] { "Grand", "Royal", "Metro", "Central", "Park", "Empire" }),
+        // Cobblemon's Poké Mart: in the draw only while the mod supplies #cityworld:fittings/pc (see shopKinds)
+        POKEMART("pokemart", Material.RED_CONCRETE, Material.WHITE_CONCRETE, new String[] { "Poké Mart", "Poké Shop", "Trainer Supplies", "Poké Balls", "Trainer Gear" },
+                new String[] { "Poké", "Trainer's", "Champion", "Gym", "Wild", "Master" }),
         KIOSK("food", Material.RED_CONCRETE, Material.SMOOTH_STONE, new String[] { "Pretzels", "Hot Dogs", "Smoothies", "Doughnuts", "Popcorn", "Ice Cream", "Noodles", "Crepes" },
                 new String[] { "Twisty", "Top", "Tasty", "Happy", "Quick", "Street" });
 
@@ -155,6 +159,16 @@ public final class Mall {
     private static final Kind[] SHOP_KINDS = { Kind.MUSIC, Kind.FLORIST, Kind.FASHION, Kind.FASHION, Kind.HARDWARE,
             Kind.GROCER, Kind.BAKERY, Kind.CAFE, Kind.CAFE, Kind.BOOKS, Kind.TOYS, Kind.PETS, Kind.JEWELLER,
             Kind.ELECTRONICS, Kind.SPORTS, Kind.PHARMACY, Kind.FURNITURE, Kind.GIFTS, Kind.ART };
+    private static final Kind[] SHOP_KINDS_WITH_POKEMART = java.util.stream.Stream
+            .concat(java.util.Arrays.stream(SHOP_KINDS), java.util.stream.Stream.of(Kind.POKEMART)).toArray(Kind[]::new);
+
+    /**
+     * The kinds a unit is drawn from: the fixed list, plus a Poké Mart while Cobblemon supplies the PC the Mart is
+     * fitted with (the owner's ask, 2026-11-14). Without the mod the list — and so every draw — is what it was.
+     */
+    static Kind[] shopKinds() {
+        return MaterialTags.resolve(MaterialTags.FITTINGS_PC).isEmpty() ? SHOP_KINDS : SHOP_KINDS_WITH_POKEMART;
+    }
 
     private static final String[] SURNAMES = { "Harper", "Walker", "Bennett", "Carter", "Hughes", "Fletcher", "Mason",
             "Turner", "Price", "Reed", "Ellis", "Brooks", "Hayes", "Morgan", "Porter", "Sutton", "Wells", "Lloyd",
@@ -732,12 +746,13 @@ public final class Mall {
         /** Cut {@code [a0, a1]} into shop units separated by one-block walls. */
         private void partition(int floor, int side, int a0, int a1, Odds odds) {
             int[] widths = { 5, 7, 7, 9, 11, 15 };
+            Kind[] kinds = shopKinds();
             int pos = a0;
             while (pos <= a1) {
                 int w = widths[odds.getRandomInt(widths.length)];
                 if (a1 - (pos + w - 1) < 6)
                     w = a1 - pos + 1;
-                Kind kind = SHOP_KINDS[odds.getRandomInt(SHOP_KINDS.length)];
+                Kind kind = kinds[odds.getRandomInt(kinds.length)];
                 units.add(new Unit(floor, side, pos, pos + w - 1, kind, shopName(kind, odds), odds.getRandomLong()));
                 pos += w + 1;
             }
@@ -1594,6 +1609,8 @@ public final class Mall {
                 new Material[] { Material.ORANGE_GLAZED_TERRACOTTA, Material.MAGENTA_GLAZED_TERRACOTTA,
                         Material.LIGHT_BLUE_GLAZED_TERRACOTTA, Material.YELLOW_GLAZED_TERRACOTTA },
                 Material.WHITE_CONCRETE, Material.LOOM, null);
+        case POKEMART -> new Fittings(new Material[] { Material.WHITE_CONCRETE, Material.BARREL }, new Material[] { Material.LANTERN },
+                Material.WHITE_CONCRETE, null, Material.WHITE_CONCRETE, Material.LECTERN, Mall::pokeDesk);
         case DEPARTMENT, KIOSK -> new Fittings(new Material[] { Material.WHITE_WOOL, Material.BOOKSHELF, Material.BARREL }, null,
                 Material.POLISHED_DIORITE, new Material[] { Material.WHITE_CARPET, Material.LANTERN, Material.REDSTONE_LAMP, PEARL_LIGHT },
                 Material.SMOOTH_QUARTZ, Material.LECTERN, null);
@@ -1641,6 +1658,14 @@ public final class Mall {
     }
 
     /** Furniture: a showroom set from the furniture pools, vanilla beds and stairs where there are none. */
+    /** A Poké Mart's island: a PC from #cityworld:fittings/pc (two high through its furniture layout) on a red mat. */
+    private static void pokeDesk(Wing m, Wing.Canvas k, int a, int c, int stand, Odds odds) {
+        java.util.List<Material> pcs = MaterialTags.resolve(MaterialTags.FITTINGS_PC);
+        Material pc = pcs.isEmpty() ? null : pcs.get(odds.getRandomInt(pcs.size()));
+        k.furniture(a, c, stand, pc, Material.RED_CONCRETE, m.plusC());
+        k.set(a + 1, c, stand, Material.RED_CARPET);
+    }
+
     private static void showroom(Wing m, Wing.Canvas k, int a, int c, int stand, Odds odds) {
         switch (odds.getRandomInt(3)) {
         case 0 -> {
