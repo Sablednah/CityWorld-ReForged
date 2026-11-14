@@ -727,8 +727,14 @@ Cobblemon's **urban** entries copied onto the `cityworld:city` marker (Meowth, G
 Cobblemon's own weights and levels; generated from Cobblemon's data by `scripts/gen_cobblemon_city_spawns.py`), so a
 street spawns what a village street would; `cityworld_districts.json` is CityWorld's own: Grimer and Koffing in the
 industrial districts, Chansey and Audino round the hospitals, Zubat and Rattata in the sewers and subways, Gastly
-and Rotom in the vault, Mareep and Wooloo on the farms, Pidove and Murkrow on the highrise roofs. A pack adds its own
-the same way — any `spawn_pool_world` file in any namespace — with a `markers` list in the entry's condition:
+and Rotom in the vault, Mareep and Wooloo on the farms, Pidove and Spearow on the highrise roofs (Murkrow and Noibat
+at night). **Weights:** the city pool's commons total about 2,100 across 92 entries, so a district's own entries are
+weighted to total about 1,500 in the common bucket, 350 uncommon and 150 rare — roughly four in ten of what spawns in a
+district is that district's own (measured with `-Dcityworld.probe=survey:cobblemon`, Cobblemon's `/checkspawns` run
+headless at a chunk of each zone). An entry of weight 30 on its own would be one in seventy. One thing CityWorld takes
+away: Cobblemon reads a jungle pyramid, a desert pyramid and a stronghold from blocks alone (cobblestone, sandstone,
+stone bricks near their tags), and a city's walls satisfy all three, so on a city's surface those entries (Hawlucha,
+Sigilyph, Meditite, Bronzor…) weigh nothing; underground they are left alone. A pack adds its own the same way — any `spawn_pool_world` file in any namespace — with a `markers` list in the entry's condition:
 
 ```json
 { "enabled": true, "neededInstalledMods": ["cobblemon"],

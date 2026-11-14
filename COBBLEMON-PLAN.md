@@ -367,4 +367,13 @@ calls and what was done. All on master and the five lines (picks listed in CLAUD
   answered the world floor), and Cobblemon's zone generator reads chunks with `getChunk(…, FULL, load = false)` while
   the probe's own load is let go after one tick, so every zone but spawn's read 0 positions until the nine chunks
   round each zone were held with FORCED tickets. No vault zone: vaults are Apocalypse-only and the search for one on
-  a Modern seed planned 1,681 platmaps. Results: see the gates paragraph below.
+  a Modern seed planned 1,681 platmaps.
+- **What the survey found (2026-11-14, seed 8675309, 1.21.1).** Markers right everywhere (`cityworld:district/highrise`
+  on all 143 roof positions, `sewer` under the road, `subway` at the station, `wild` on nature). But a district's
+  own entries were invisible: the city pool's commons total 2,120 across 92 entries, so Spearow at weight 30 was one
+  in seventy on a roof (`spearow-herd-1` 2.1%, Pidove 1.4%). The districts pool is rescaled so each district's own
+  entries total 1,500 common / 350 uncommon / 150 rare (≈ four in ten). And the street's commons were 37% Hawlucha,
+  Sigilyph, Meditite and Bronzor: Cobblemon's `jungle_pyramid`, `desert_pyramid` and `stronghold` presets read a
+  structure from blocks alone (cobblestone/sandstone/stone bricks near their tags), which a city satisfies.
+  `CobblemonBridge.Influence` now answers `affectWeight` 0 for such an entry on a `cityworld:city` position
+  (`STRUCTURE_READS`); underground reads (a sewer as a ruin) are left alone.

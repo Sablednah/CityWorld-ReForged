@@ -28,7 +28,9 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   dialogue `cityworld:gym_leader` (both are data under `data/cityworld/npcs/` and `dialogues/`, yours to override).
   Street shops deal a new trade, the **Poké Mart** (a PC on the counter, stock on `cityworld:chests/shop_pokemart`),
   and the mall draws a Poké Mart unit among its shops (`cityworld:chests/mall_pokemart`). The gym leader wears
-  Cobblemon's trainer model.
+  Cobblemon's trainer model. CityWorld's district spawns are weighted to be about four in ten of a district's spawns,
+  and Cobblemon's temple and stronghold reads (it finds them in cobblestone, sandstone and stone bricks — a city's
+  walls) weigh nothing on a city's surface.
   All three are planned only while `#cityworld:fittings/healing_machine` has a block in it (Cobblemon's; pools
   `fittings/{healing_machine,pc,pasture}`), so a world without Cobblemon never rolls for them and plans as before.
   `/cityfind pokecenter`, `/cityfind gym`, `/cityfind shop:pokemart`; both buildings are announced landmarks.
