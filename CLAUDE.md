@@ -43,8 +43,15 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   (`STRUCTURE_READS`); park entries key on `cityworld:lot/park`. Six self-tests PASS on final heads (1.21.1
   `92b8fa7b`, 26.1 `53123d0b`, 26.2 `92e0d9be`, 26.3 `d41d510d`, 1.20.1 `9ddef785`); `selftest-one.sh` now waits
   for the killed server to exit (its shutdown save undid the next run's fresh world). Deployed to the owner's
-  `1.21.1` instance `DEPLOYED-92b8fa7b`. Nothing pushed; 7.1.0 unreleased. Next: the owner's look (roof birds,
-  streets, a park), then 7.1.0.
+  `1.21.1` instance `DEPLOYED-92b8fa7b`. **Then the owner's second look (afternoon):** nurses/PCs/pastures/leaders
+  right; Center beds now laid by head+foot cell through the frame (`setBed(headX,y,headZ,footX,footZ,m)` — the
+  anchor form lays toward +x/+z in WORLD terms); **apricorn orchards were 0** because Cobblemon's
+  `ApricornTreeFeature` refuses a generating chunk outside its `has_feature/apricorns_*` biome tags and rolls 0.1
+  inside them → `Support/ApricornTree` draws it (0 → 205 logs / 204 apricorns in 8 orchards; self-test
+  `orchard.apricorns` + gate; 26.2 `CompositeFeatureConfiguration`, 26.3 `Feature` record + `getSubFeatures()`).
+  Six PASS on final heads (1.21.1 `0aad3c24`, 26.1 `32ac4a34`, 26.2 `c31eb473`, 26.3 `cee565a4`, 1.20.1
+  `75f18f42`), compare five-way, deployed `DEPLOYED-0aad3c24`. Nothing pushed; 7.1.0 unreleased. Next: the owner's
+  look (beds, an orchard, roof birds, a park), then 7.1.0.
 
 **▶ Resume here (2026-11-13 overnight): Cobblemon Stage 1 + Stage 2 BUILT on all six lines, unreleased — `COBBLEMON-PLAN.md` §8.**
 - Owner at bedtime: *"do as much cobble mon support as you can overnight"*. Built: `worldgen/CobblemonBridge` (markers +

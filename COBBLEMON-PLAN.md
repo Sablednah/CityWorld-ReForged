@@ -405,4 +405,8 @@ calls and what was done. All on master and the five lines (picks listed in CLAUD
   `FarmLot.plantFruitOrchard` uses it when the pick (or a member of a selector pick) is that feature. 26.2's
   selector config is `CompositeFeatureConfiguration`; 26.3's configured feature is the `Feature` record with
   `getSubFeatures()` (no Cobblemon there yet; the state is read reflectively). Self-test `orchard.apricorns` +
-  a gate (pool offers an apricorn, six orchards, none grew).
+  a gate (pool offers an apricorn, six orchards, none grew). **Measured** in the same eight temperate orchards:
+  0 → 205 apricorn logs and 204 apricorns (cherry 144 either way). Gates: six self-tests PASS on the final heads
+  (1.21.1 `0aad3c24`, 26.1 `32ac4a34`, 26.2 `c31eb473`, 26.3 `cee565a4`, 1.20.1 `75f18f42`, master `b7416bd5`),
+  `--compare` five-way agreement (MODERN `c4b95b7c`, APOCALYPSE `fd6df8c0`; 1.21.1 differs with Cobblemon in its
+  mods), deployed to the owner's `1.21.1` instance `DEPLOYED-0aad3c24`. Nothing pushed.
