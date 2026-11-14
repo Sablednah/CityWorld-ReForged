@@ -36,8 +36,15 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   mall** (`Mall.Kind.POKEMART`, `shopKinds()` adds it only while `fittings/pc` resolves, `chests/mall_pokemart`).
   **`-Dcityworld.probe=survey:cobblemon`** = Cobblemon's `/checkspawns` headless at a chunk of every zone (street,
   sewer, park, each district, subway, wild control), on FORCED tickets (its zone generator never loads a chunk).
-  Measured: sewer Rattata/Zubat/Grimer/Gastly, suburbs Meowth/Purrloin/Skitty/Growlithe — gates below pending.
-  Owner at bedtime: "work on the list overnight". Nothing pushed; 7.1.0 unreleased.
+  Measured, then fixed: a district's own entries were drowned by the city pool (Spearow at weight 30 = one in
+  seventy on a roof) → `cityworld_districts.json` rescaled to 1500/350/150 per bucket (roof now Pidove 19.9% +
+  Spearow 14.9%); Cobblemon's block-read temples/stronghold (cobblestone, sandstone, stone bricks = a city's walls)
+  made 37% of a street's commons → `CobblemonBridge` answers `affectWeight` 0 for them on `cityworld:city`
+  (`STRUCTURE_READS`); park entries key on `cityworld:lot/park`. Six self-tests PASS on final heads (1.21.1
+  `92b8fa7b`, 26.1 `53123d0b`, 26.2 `92e0d9be`, 26.3 `d41d510d`, 1.20.1 `9ddef785`); `selftest-one.sh` now waits
+  for the killed server to exit (its shutdown save undid the next run's fresh world). Deployed to the owner's
+  `1.21.1` instance `DEPLOYED-92b8fa7b`. Nothing pushed; 7.1.0 unreleased. Next: the owner's look (roof birds,
+  streets, a park), then 7.1.0.
 
 **▶ Resume here (2026-11-13 overnight): Cobblemon Stage 1 + Stage 2 BUILT on all six lines, unreleased — `COBBLEMON-PLAN.md` §8.**
 - Owner at bedtime: *"do as much cobble mon support as you can overnight"*. Built: `worldgen/CobblemonBridge` (markers +

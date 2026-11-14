@@ -381,4 +381,12 @@ calls and what was done. All on master and the five lines (picks listed in CLAUD
   19.5% / Wooloo 19.5% / Ducklett 11.2%; subway Magnemite/Zubat/Voltorb/Rattata; neighbourhood Purrloin/Pidove/
   Lillipup/Skitty/Fidough/Yungoos ≈ 72%; street: Hawlucha/Sigilyph/Meditite/Bronzor gone. The park zone (a ParkLot in
   a LOWRISE district) showed none of ours: the park entries keyed on `cityworld:district/park`, which only a park
-  district carries — they key on `cityworld:lot/park` now.
+  district carries — they key on `cityworld:lot/park` now. Re-measured: park Caterpie 6.8% / Weedle 6.8% /
+  Bellsprout 5.6% / Pidgey 5.2% / Oddish 5.1% / Budew 3.9%, Butterfree and Beedrill in its uncommons.
+- **Gates (2026-11-14 overnight).** Six self-tests PASS on the final heads (1.21.1 `92b8fa7b` — `cobblemon.lots = 45
+  Pokémon Centers, 36 gyms, 136 Poké Marts in 301² chunks`, down from 190/157 before the flood stop and the odds cut;
+  26.1 `53123d0b`, 26.2 `92e0d9be`, 26.3 `d41d510d`, 1.20.1 `9ddef785`, master). 26.1 and 26.3 each first failed with
+  "Failed to load datapacks" — a run started while the previous run's server was still saving on the way out, and
+  that save undid the fresh `rm -rf run/world`; `selftest-one.sh` now waits for the killed server to be gone
+  (`f9401812`). Deployed to the owner's `1.21.1` instance `DEPLOYED-92b8fa7b`. Nothing pushed; 7.1.0 unreleased.
+  Not done: gym-leader variation (a resource pack's variation file); the street Mart on a stairwell chunk.
