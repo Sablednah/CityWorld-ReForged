@@ -1053,6 +1053,18 @@ public final class ChunkProbe {
                     if (dx == 0 && dz == 0)
                         top = h;
                 }
+            // Cobblemon's zone generator reads each chunk with getChunk(…, FULL, load=false), and the load above holds a
+            // chunk for ONE tick: by the next tick a far chunk's holder is gone and every column is skipped (0 positions
+            // everywhere but spawn's held chunks). A FORCED ticket keeps the nine chunks full and lit for the read.
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dz = -1; dz <= 1; dz++) {
+                    int sx = cx + dx, sz = cz + dz;
+                    server.submit(() -> level.setChunkForced(sx, sz, true)).join();
+                }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ignored) {
+            }
             int x = cx * 16 + 8, z = cz * 16 + 8;
             int y = zone[2].equals("top") ? top + 1 : street + Integer.parseInt(zone[2]);
             int vr = Integer.parseInt(zone[3]);
@@ -1073,6 +1085,11 @@ public final class ChunkProbe {
             } catch (Exception e) {
                 CityWorldMod.LOGGER.warn("PROBE cobblemon {}: FAILED {}", where, e.toString(), e);
             }
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dz = -1; dz <= 1; dz++) {
+                    int sx = cx + dx, sz = cz + dz;
+                    server.submit(() -> level.setChunkForced(sx, sz, false)).join();
+                }
         }
         CityWorldMod.LOGGER.warn("PROBE complete — the server is still running; stop it yourself.");
     }
