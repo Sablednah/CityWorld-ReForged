@@ -120,7 +120,7 @@ hook. The vault's mess-hall store is the Modern `food` table in every world: the
 | `food` (+ `modern/`, `apocalypse/`) | Kitchenettes, and the vault's food barrels | yes (shared) |
 | `shop` | A shop's stock when the shop has no trade of its own | yes |
 | `shop_apothecary` · `shop_armourer` · `shop_bookshop` · `shop_builders_merchant` · `shop_butcher` · `shop_cartographer` · `shop_cobbler` · `shop_draper` · `shop_fishmonger` · `shop_fletcher` · `shop_greengrocer` · `shop_newsagent` · `shop_toolsmith` · `shop_weaponsmith` | Street shops, by trade: their counters, shelves and storerooms | yes |
-| `mall_art` · `mall_bakery` · `mall_books` · `mall_cafe` · `mall_department` · `mall_electronics` · `mall_fashion` · `mall_florist` · `mall_food` · `mall_furniture` · `mall_gifts` · `mall_grocer` · `mall_hardware` · `mall_jeweller` · `mall_music` · `mall_pets` · `mall_pharmacy` · `mall_sports` · `mall_toys` | Shopping-mall stores, by kind | yes |
+| `mall_art` · `mall_bakery` · `mall_books` · `mall_cafe` · `mall_department` · `mall_electronics` · `mall_fashion` · `mall_florist` · `mall_food` · `mall_furniture` · `mall_gifts` · `mall_grocer` · `mall_hardware` · `mall_jeweller` · `mall_music` · `mall_pets` · `mall_pharmacy` · `mall_sports` · `mall_toys` · `mall_pokemart` (*with Cobblemon*: a Poké Mart unit, drawn only while the mod supplies `#cityworld:fittings/pc`) | Shopping-mall stores, by kind | yes |
 | `hospital` | The hospital campus: medicine and supplies | yes |
 | `warehouse` | Industrial buildings and warehouses, and the yards of storage lots | yes |
 | `storage_shed` | The lock-up units on storage lots | yes |
