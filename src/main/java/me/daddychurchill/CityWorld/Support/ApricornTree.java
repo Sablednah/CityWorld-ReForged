@@ -11,7 +11,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.BlockStateConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.SimpleRandomFeatureConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.CompositeFeatureConfiguration;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 /**
@@ -45,9 +45,9 @@ public final class ApricornTree {
 	public static BlockState fruitFor(Holder<ConfiguredFeature<?, ?>> pick, Odds odds) {
 		if (isApricornFeature(pick))
 			return ((BlockStateConfiguration) pick.value().config()).state;
-		if (pick.value().config() instanceof SimpleRandomFeatureConfiguration selector) {
+		if (pick.value().config() instanceof CompositeFeatureConfiguration selector) {
 			List<BlockState> fruits = new ArrayList<>();
-			for (Holder<PlacedFeature> placed : selector.features)
+			for (Holder<PlacedFeature> placed : selector.features())
 				if (isApricornFeature(placed.value().feature()))
 					fruits.add(((BlockStateConfiguration) placed.value().feature().value().config()).state);
 			if (!fruits.isEmpty())
