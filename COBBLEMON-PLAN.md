@@ -376,4 +376,9 @@ calls and what was done. All on master and the five lines (picks listed in CLAUD
   Sigilyph, Meditite and Bronzor: Cobblemon's `jungle_pyramid`, `desert_pyramid` and `stronghold` presets read a
   structure from blocks alone (cobblestone/sandstone/stone bricks near their tags), which a city satisfies.
   `CobblemonBridge.Influence` now answers `affectWeight` 0 for such an entry on a `cityworld:city` position
-  (`STRUCTURE_READS`); underground reads (a sewer as a ruin) are left alone.
+  (`STRUCTURE_READS`); underground reads (a sewer as a ruin) are left alone. **Re-measured:** highrise roof Pidove
+  19.9% + Spearow 14.9% of commons; industrial Trubbish/Koffing/Grimer/Magnemite/Voltorb the top five; farm Mareep
+  19.5% / Wooloo 19.5% / Ducklett 11.2%; subway Magnemite/Zubat/Voltorb/Rattata; neighbourhood Purrloin/Pidove/
+  Lillipup/Skitty/Fidough/Yungoos ≈ 72%; street: Hawlucha/Sigilyph/Meditite/Bronzor gone. The park zone (a ParkLot in
+  a LOWRISE district) showed none of ours: the park entries keyed on `cityworld:district/park`, which only a park
+  district carries — they key on `cityworld:lot/park` now.
