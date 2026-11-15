@@ -11,7 +11,7 @@ the train waits a bit then heads to the next stop. I edited some of the corners 
 
 | Mod | Lines it ships for | What it does | What CityWorld does for it |
 |---|---|---|---|
-| **Slash Rails** (`slashrails`) | 1.20.1 Forge, 1.21.1, 1.21.11, 26.1.2, 26.2, 26.3 | A *Track Smoother* item a player uses on a rail: it walks the flat run (≤ 512 rails, stops at slopes) and renders/drives the cart along a smooth curve through a staircase of short rails. A single 90° corner "can only be rounded a little". A rail is *tight* when a colliding block sits within ±1 of it at rail height or +1. Nothing is automatic. | **Bends are curves now** (§1): every subway bend is a staircase arc on both tracks through a round-walled tunnel, clear at cart height around every rail. The player still smooths it; there is nothing to call. |
+| **Slash Rails** (`slashrails`) | 1.20.1 Forge, 1.21.1, 1.21.11, 26.1.2, 26.2, 26.3 | A *Track Smoother* item a player uses on a rail: it walks the flat run (≤ 512 rails, stops at slopes) and renders/drives the cart along a smooth curve through a staircase of short rails. A single 90° corner "can only be rounded a little". A rail is *tight* when a colliding block sits within ±1 of it at rail height or +1. Nothing is automatic. | **Bends are curves now** (§1): every subway bend is a staircase arc on both tracks through a round-walled tunnel, clear at cart height around every rail, and each is smoothed through the mod's own `RunService.smooth` the first time it generates (`subways.smoothBends`) — unless Choo Choo is installed too (§6). |
 | **Improvement Minecarts** (`improvement_minecarts`) | mod jar + datapack, 1.21–26.2 | Manages carts of `#improvement_minecarts:carts` on vanilla rails (`#rails`: rail, powered, detector, activator). A **station** is a rail over a lapis block (`#station_block`; emerald/amethyst are the config's alternatives): a train stops there, dwells (`#dwell` 200 ticks), then leaves. A **gold block** is a terminus: wait, reverse, depart. A redstone lamp under a rail is a signal. A sign directly beside the station rail is announced from its first line. | **Each platform track gets its stop** when the mod is there (as a mod or as a datapack): lapis under a vanilla rail mid-platform, gold near the buffers of a dead-end station, and a wall sign on the pillar between the tracks whose first line is the station's name (the road it stands on). Setting `subways.stops`. |
 | **Railcraft Reborn** (`railcraft`) | 1.20.1, 1.21.1, 1.21.10, 26.1.2 | Its own track family, each a `BaseRailBlock` with its own shape property: `reinforced_track`, `reinforced_booster_track` (its own `powered`), `abandoned_track` (`grass`), `reinforced_buffer_stop_track` (`reversed`), `reinforced_delayed_locking_track` (holds a cart a while; a block entity). Steam/electric locomotives need fuel or power. | **Track pools** (§2): the subway lays its plain, powered, ruined, buffer-stop and platform-stop rails from five `#cityworld:fittings/rail*` tags, which ship Railcraft's five as optional entries. Locomotives: not parked (they need fuel, a boiler, or an electric line to do anything). |
 | **Choo Choo** (`choochoo`) | 1.20.1 Forge, 1.21.1 (NeoForge 21.1.256+), 1.21.8, 1.21.11 (21.11.45+), 26.1.2 | Locomotives and carriages as entities (`choochoo:locomotive`, `passenger_cart`, `single_cart`, `flatbed_cart`, `storage_cart`) coupled with a `coupling_chain`; couplings live in level saved data (`CouplingData`, keyed by entity ids). No blocks. | **Parked trains** (§3): a locomotive and carriages standing at a platform of some stations (`subways.oddsOfTrain` 1/2, `subways.trainCarriages` 2), from entity tags `#cityworld:subway/locomotive` and `#cityworld:subway/carriage`, coupled once they are in the world. |
@@ -31,6 +31,22 @@ Measured (1.21.11, seed 8675309, bend at chunk −11,−5, 126 bends in 60 chunk
 through the bend, "Smoothed 160 rails" and "Smoothed 192 rails", none tight; the old corner reads the same counts
 but each turn is the one corner rail. Self-test `subway.bend`: every rail in a plain bend leads at both ends to a
 rail or out of the chunk, with no colliding block above it (fails on a broken or roofed curve; a ruin reports only).
+
+**Smoothed for the player (2026-11-15, owner: "default on when slash rails is installed").** `Support/RailSmoothing`:
+the chunk-load event for a chunk just generated (`isNewChunk`, never one read from disk) queues the middle rail of each
+of a plain bend's two curves; a second later, once the chunk is in the world, it calls Slash Rails'
+`RunService.smooth(ServerLevel, BlockPos)` by reflection — the method the Track Smoother calls, unchanged in name and
+signature through all three releases (v0.1.0 2026-09-19, v0.2.0, v0.3.0 2026-10-05; the file's four commits never
+touched it). The mod walks the run itself and stops at unloaded chunks and at rails of other runs, so each bend is its
+own run of a few hundred rails at most, well under the 512 cap (and the cap truncates, it does not fail). Runs live in
+the mod's saved data (`slashrails_runs`), so this happens once per bend. Setting `subways.smoothBends` (default true).
+The mod refuses a run that is too short ("Too few connected rails to smooth"), which a bend generated before the
+track either side of it always is, so a chunk's generation also re-queues its four loaded neighbours' bends that are
+not yet in a run. Measured (1.21.11, 30-chunk probe): every bend queued was smoothed, 50–288 rails a run, none too
+short. Self-test `subway.bend.smoothed`: every rail of the checked bend is in one of the mod's runs (read from
+`SmoothRunRegistry` by reflection) when Slash Rails is loaded; the check holds the bend and its four neighbours on
+forced tickets first (a chunk read with no ticket had unloaded before the queue ran, and every try read "not
+loaded").
 
 ## 2. Track pools (Railcraft)
 
@@ -95,5 +111,30 @@ datapack-parse gate, so the jar stays out of `mc1.21.1/run/mods` for a self-test
   Choo re-ends the consist); which way it drives is the player's starter button. Not seen in a client.
 - **Create / MTR** — not looked at.
 - **An interchange station's dead end** (seen once, 1.21.1 station −27,−15): one track's buffer stop and its stop sign
-  were missing — something drawn after the hall (the stairs between levels, most likely) took those cells. The stop
-  block itself was there, so the mod still stops a train. Not chased.
+  were missing. That station is in a lush cave region, and the cell under its parked locomotive read clay: CityWorld's
+  own `LushCaves` pass took the hall's air above its rails for a cave and laid moss/clay over 35% of such floors.
+  Fixed (§6); the missing pieces were most likely the same pass.
+
+## 6. All four together (2026-11-15, owner: "someone's gonna install all 4 and go 'why's it not working'")
+
+Each pair, read from the jars and then ridden on 1.21.1 (NeoForge 21.1.266, all four mods, seed 8675309, the bend at
+chunk −11,−5, 8 blocks of straight before it; probe `rideBend`, a scratchpad debug listener):
+
+| Pair | Finding | What CityWorld does |
+|---|---|---|
+| Slash Rails + Railcraft | Railcraft's track is `BaseRailBlock`; the mod smooths it like vanilla's (160/192 rails). | nothing needed |
+| Slash Rails + Improvement Minecarts | A fuelled furnace cart rides a smoothed bend and out at speed. | nothing needed |
+| Slash Rails + Choo Choo | Slash Rails' `CartTickMixin` wraps `AbstractMinecart.tick`'s `moveAlongTrack` and, on a smoothed run, moves the cart itself without calling it (`CurveRide.stepOnRail`, no check of the cart's type). Choo Choo's `LocomotiveEntity` overrides `moveAlongTrack`: its traction. **A running locomotive (coupled to a carriage, engine RUNNING) stood still for 60 s on a smoothed run; unsmoothed, with Slash Rails installed and without, it pulled away and round the bend.** Unpowered Choo Choo carriages with a rider ride a smoothed bend fine. | `RailSmoothing.heldBack()`: no auto-smoothing while `choochoo` is loaded (logged once). Not ours to fix; worth a report to Slash Rails. |
+| Improvement Minecarts + Railcraft | Every predicate and function keys on `#improvement_minecarts:rails` (vanilla's four), so on Railcraft track its speed control, signals and cart chaining do not run; its stops still worked because CityWorld lays a vanilla rail over the lapis. | `data/improvement_minecarts/tags/block/rails.json` adds CityWorld's five rail pools (optional entries): the tag reads true on Railcraft track, and the furnace cart then ran 37 blocks in four seconds where it ran 20. |
+| Improvement Minecarts + Choo Choo | Its `#carts` tag is vanilla's seven minecart types: it neither manages nor stops a Choo Choo train. | documented only (Choo Choo trains are driven) |
+| Railcraft + Choo Choo | Choo Choo's vehicles extend vanilla `Minecart`; a running train drove on Railcraft's track, boosters included. | nothing needed |
+
+**Starting a Choo Choo locomotive with no player:** open the firebox hatch (`engine.toggleServiceHatch`), `addCoal`
+while `canAddCoal`, `ignite` (FIRE_LIT), close the hatch (that calls `startFromLiveFire`: STARTING, then RUNNING
+after about three seconds). It drives toward its `ForwardX/ForwardZ`. An empty minecart dies by friction within a
+second or two (0.96 a tick unridden, vanilla's), so a pushed empty cart says nothing about a bend; give it a rider.
+
+**Found on the way: `LushCaves` carpeted the subway.** It decorated any air cell above a solid block below the street
+(`isFloor`), so in a lush region it laid moss and clay over the rails (and hung vines in the halls); the WATCH at
+−420,41,−234 read rail → moss_block from `LushCaves.decorateFloor`. It now decorates only floors and ceilings of rock or
+soil (`#base_stone_overworld`, `#dirt`, gravel, clay); the cell reads booster track again.

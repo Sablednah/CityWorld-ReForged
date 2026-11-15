@@ -10,8 +10,11 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 ### Added
 
 - **Train mods in the subway** (GitHub issue #7). Every subway bend is now a **curve** of short rails through a
-  rounded tunnel, not one corner rail, so **Slash Rails**' Track Smoother rounds it into a smooth turn (it reports the
-  whole run, none of it tight). With **Improvement Minecarts** (mod or datapack) each platform track gets its **stop**:
+  rounded tunnel, not one corner rail, and with **Slash Rails** installed each bend is smoothed for you the first time
+  it generates, exactly as its Track Smoother would (`subways.smoothBends`, **Smooth bends** in Customize; not while
+  Choo Choo is installed, whose locomotives cannot drive on smoothed track). With **Improvement Minecarts** (mod or
+  datapack) each platform track gets its **stop**, and it manages carts on whichever track the subway is laid in
+  (CityWorld adds its rail pools to that mod's `rails` tag):
   lapis under the rail mid-platform, gold at the end of a line, and a sign with the station's name for the mod to
   announce (`subways.stops`, **Train stops** in Customize). **Railcraft Reborn**'s track is laid where it is installed:
   reinforced track, booster track on the powered lengths, abandoned track in a ruin, buffer stops at dead ends and a
@@ -19,7 +22,14 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   some stations, a locomotive and its carriages coupled and facing out (`subways.oddsOfTrain` 1/2,
   `subways.trainCarriages` 2, **Parked trains** in Customize; entity tags `#cityworld:subway/locomotive` and
   `subway/carriage`). Without these mods a world draws exactly what it did, bends aside. Self-test `subway.bend`.
-  TRAINS-PLAN.md has the survey and the measurements.
+  TRAINS-PLAN.md has the survey and the measurements, including all four mods at once.
+
+### Fixed
+
+- **Lush caves no longer carpet the subway.** In a lush cave region the cave pass laid moss and clay over the
+  subway's rails (and could do the same to any man-made floor below the street: tunnels, vaults, mines) and hung
+  vines from their ceilings, because it took any air above a solid block for a cave. It now decorates only rock and
+  soil. A train parked in such a station stood on clay and could not move.
 
 ## 7.1.0 — 2026-11-14
 

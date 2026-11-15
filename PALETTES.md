@@ -773,8 +773,15 @@ the mod announces as a train pulls in.
 tag names a type, a station rolls `subways.oddsOfTrain` for a locomotive standing on one of its tracks, facing out,
 with up to `subways.trainCarriages` carriages behind it; with Choo Choo they are coupled into one train the first
 time they load. Any entity type can go in these tags (a pack could park plain minecarts), but only Choo Choo's are
-coupled. Every subway bend is also a curve of short rails (not one corner rail), which Slash Rails' Track Smoother
-rounds into a smooth turn.
+coupled. Every subway bend is also a curve of short rails (not one corner rail), and with Slash Rails installed each
+bend is smoothed the first time it generates, as its Track Smoother would (`subways.smoothBends`) — **except when
+Choo Choo is installed too**: Slash Rails drives every cart on smoothed track itself, and a Choo Choo locomotive does
+not move there, so the bends are left as staircases, which every cart and train rides.
+
+**All four together.** CityWorld adds its five rail pools to Improvement Minecarts' own `improvement_minecarts:rails`
+tag, so that mod manages carts on whatever track the subway is laid in (Railcraft's, or a pack's), not only on
+vanilla rail. Improvement Minecarts manages vanilla minecarts only: its stops do not hold a Choo Choo train, which its
+driver stops.
 
 ## Data maps: swapping blocks, unlit lights, biome ground
 
