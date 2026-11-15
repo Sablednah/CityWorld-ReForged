@@ -82,14 +82,26 @@ public final class LushCaves {
     }
 
     private static boolean isFloor(RealBlocks real, int x, int y, int z) {
-        return !real.isEmpty(x, y - 1, z) && !real.isWater(x, y - 1, z);
+        return !real.isEmpty(x, y - 1, z) && !real.isWater(x, y - 1, z) && natural(real, x, y - 1, z);
+    }
+
+    /**
+     * Rock or soil, the stuff a cave is cut from. Air above a solid block is not enough: a subway hall, a tunnel,
+     * a vault or a mine is air above a floor too, and this pass laid moss and clay over the subway's rails (and
+     * hung vines from its ceilings) wherever a line ran through a lush patch.
+     */
+    private static boolean natural(RealBlocks real, int x, int y, int z) {
+        net.minecraft.world.level.block.state.BlockState state = real.getActualBlock(x, y, z).getBlockData();
+        return state.is(net.minecraft.tags.BlockTags.BASE_STONE_OVERWORLD) || state.is(net.minecraft.tags.BlockTags.DIRT)
+                || state.is(net.minecraft.world.level.block.Blocks.GRAVEL) || state.is(net.minecraft.world.level.block.Blocks.CLAY);
     }
 
     private static boolean isCeiling(RealBlocks real, int x, int y, int z) {
         // require a broad, thick backing so we're decorating real ceiling, not a small floating remnant the
         // cave-carving noise leaves behind (a single detached lump reads as a moss block hanging in mid-air
         // once coloured — two-thick alone wasn't enough, it just needed to be a *wide* lump too)
-        if (real.isEmpty(x, y + 1, z) || real.isWater(x, y + 1, z) || real.isEmpty(x, y + 2, z))
+        if (real.isEmpty(x, y + 1, z) || real.isWater(x, y + 1, z) || real.isEmpty(x, y + 2, z)
+                || !natural(real, x, y + 1, z))
             return false;
         int solidSides = 0;
         if (!real.isEmpty(x + 1, y + 1, z))
