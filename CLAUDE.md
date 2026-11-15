@@ -40,7 +40,17 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   26.1 `4eb898de`, 26.2 `4c3a0760`, 26.3 `eab666fc`, 1.20.1 `182b9bae`), `--compare` five-way agrees (MODERN
   `c4b95b7c`, APOCALYPSE `fd6df8c0`; 1.21.1 differs by its Cobblemon, as at 7.1.0); Improvement Minecarts' 1.21.1 jar
   fails the parse gate on its own `iron_chain` predicate, so it stays out of `mc1.21.1/run/mods` for a self-test.
-  Deployed to the owner's `1.21.1` instance `DEPLOYED-8409c56f` (scan 0/0/0). Nothing pushed. Next: the owner's look
+  Deployed to the owner's `1.21.1` instance `DEPLOYED-8409c56f` (scan 0/0/0).
+- **Then (same day): bends smoothed for the player, and all four mods checked together** (`TRAINS-PLAN.md` §1, §6).
+  `Support/RailSmoothing` calls Slash Rails' `RunService.smooth` by reflection on each new bend chunk (+ its loaded
+  neighbours' unsmoothed bends; `subways.smoothBends` true) — **but not while Choo Choo is loaded**: on a smoothed run
+  Slash Rails moves every cart itself, and a RUNNING Choo Choo locomotive stood still there (it drives the same bend
+  unsmoothed, with Slash Rails installed or not; probe `rideBend` in the scratchpad `trains/TrainProbe-1.21.1.java`).
+  CityWorld's five rail pools are added to `#improvement_minecarts:rails` (IM saw only vanilla's four). `LushCaves`
+  laid moss/clay over subway rails in lush regions (any air over solid): rock/soil only now. Master `57062bd8`
+  `1c5b0670` + docs; picked to the five lines (26.x `ChunkPos.x()`, 1.20.1 Forge `ChunkEvent`/`ModList`,
+  `tags/blocks/`). Six self-tests PASS (`subway.bend.smoothed` 32/32 on 1.21.11, 1.21.1, 26.1 with Slash Rails in
+  `run/mods`), `--compare` five-way agrees. Deployed `DEPLOYED-4abed721`. Nothing pushed. Next: the owner's look
   (with the four mods in that instance), then 7.2.0.
 
 **▶ Resume here (2026-11-14 evening): v7.1.0 is RELEASED — Cobblemon.**
