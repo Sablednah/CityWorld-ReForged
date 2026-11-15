@@ -225,6 +225,10 @@ public class CityWorldSettings {
     public int carParkMinLevels = 2, carParkMaxLevels = 4;
     public double oddsOfWildBridge = Odds.oddsLikely;
     public boolean spawnersInSubways = true;
+    /** Train mods at the stations (subways.stops/oddsOfTrain/trainCarriages; see Support/Railway). */
+    public boolean subwayStops = true;
+    public double oddsOfParkedTrain = CityWorldSettingsData.Subways.TRAIN_ODDS;
+    public int trainCarriages = CityWorldSettingsData.Subways.TRAIN_CARRIAGES;
 
     /** Who turns up, and how often. {@code SpawnProvider} branches on all of these. */
     public double spawnBeings = Odds.oddsLikely;
@@ -648,6 +652,9 @@ public class CityWorldSettings {
         gymLeaderLevel = data.shops().gymLeaderLevel();
         includeSubways = data.subways().enabled();
         spawnersInSubways = data.subways().spawners();
+        subwayStops = data.subways().stops();
+        oddsOfParkedTrain = data.subways().oddsOfTrain();
+        trainCarriages = data.subways().trainCarriages();
         driveOnLeft = data.roads().driveOnLeft();
         speedLimitUrban = data.roads().speedLimitUrban();
         speedLimitRural = data.roads().speedLimitRural();
@@ -807,7 +814,8 @@ public class CityWorldSettings {
                 oddsOfAtmInShops, oddsOfAtmInMalls, oddsOfPokecenter, oddsOfGym, gymLeaderLevel);
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
-        CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways);
+        CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways,
+                subwayStops, oddsOfParkedTrain, trainCarriages);
         CityWorldSettingsData.Roads roads = new CityWorldSettingsData.Roads(driveOnLeft, speedLimitUrban, speedLimitRural,
                 oddsOfSpeedRepeat, includeSkybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, includeWildBridges,
                 wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion,

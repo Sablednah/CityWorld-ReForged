@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "railcraft:abandoned_track",
+      "required": false
+    }
+  ]
+}
