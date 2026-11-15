@@ -38,7 +38,10 @@ rail or out of the chunk, with no colliding block above it (fails on a broken or
 ruin, then `fittings/rail`, else vanilla rail; `booster()` = `fittings/rail_booster`, else powered rail (always over
 its redstone block); `bufferStop()` = `fittings/rail_buffer_stop` at a dead end in place of the iron block, turned by
 `reversed` (Railcraft's model: unreversed north-south has its bumper north, east-west east); `platformStop()` =
-`fittings/rail_stop` at each track's stop cell when Improvement Minecarts is not marking stops. Shapes go through the
+`fittings/rail_stop` at each track's stop cell when Improvement Minecarts is not marking stops. Measured on
+1.21.1 with Railcraft 1.2.17: reinforced track throughout, booster track over every redstone block, the delayed
+locking track at along 8 (along 3 at a terminus), the buffer stop at a west dead end `reversed=true` (bumper to the
+wall); Slash Rails smooths Railcraft's track through a bend the same as vanilla's (160/192 rails). Shapes go through the
 block's own shape property (`SupportBlocks.withRailShape`: `BaseRailBlock.getShapeProperty()`), and `powered` by name
 when the block declares its own.
 
@@ -56,6 +59,11 @@ minute, looks both vehicles up by id and, when both are in the world, calls Choo
 their two nearest ends (by `CoupledMinecart.anchor`) with a coupling chain stack, then drops the tag. All by
 reflection: nothing loads without the mod. Measured (1.21.11 + Choo Choo on NeoForge 21.11.48 by
 `ORG_GRADLE_PROJECT_neo_version`): three stations with trains, each a component of 3 after coupling, tags gone.
+On 1.21.1 (NeoForge 21.1.266, with Railcraft and Improvement Minecarts too) a north-south train would not couple
+("3.0 apart": its nearest ends were its centres) until each carriage was given Choo Choo's `PassengerNose` yaw
+(degrees of `atan2(z, x)`, 0 = +x; the default 0 lies east-west whatever the track) — and with a nose but no
+`TwoSeatVersion: 1` Choo Choo takes the carriage for an old one-seat save and swaps it for its `single_cart`. Both
+are now written; every train in that run coupled as passenger carts.
 
 **Traps this cost:** a vehicle that has just joined is not found by id (`ServerLevel.getEntity`) until its chunk is
 in the world proper, so `server.execute` from the join event found nothing every time; and **a dedicated server
@@ -71,6 +79,11 @@ along 8 (beside the middle pillar), a terminus (one end closed) at 13 or 3 besid
 (1.21.11 + the mod jar): lapis at 8,6 and 8,9 with signs "Main Street" etc. on the pillar; a fuelled furnace cart set
 rolling at the platform's end stopped on the lapis, stood ten seconds (the 200-tick dwell), and left at speed.
 
+**Improvement Minecarts on 1.21.1:** its 1.21–1.21.4 jar logs two function parse errors there (`minecraft:iron_chain`,
+an item 1.21.1 does not have, in its cart-chaining functions); stations, dwell and announcements are separate
+functions. Its own matter, not CityWorld's — but its predicate `holding_iron_chain` fails the self-test's
+datapack-parse gate, so the jar stays out of `mc1.21.1/run/mods` for a self-test (the probes ran with it).
+
 ## 5. Not done, and why
 
 - **Railcraft locomotives** — they do nothing without fuel and water (steam) or an electrified line; a parked one
@@ -81,3 +94,6 @@ rolling at the platform's end stopped on the lapis, stood ten seconds (the 200-t
 - **Choo Choo heading after coupling** — the locomotive's front anchor reads toward its carriages once coupled (Choo
   Choo re-ends the consist); which way it drives is the player's starter button. Not seen in a client.
 - **Create / MTR** — not looked at.
+- **An interchange station's dead end** (seen once, 1.21.1 station −27,−15): one track's buffer stop and its stop sign
+  were missing — something drawn after the hall (the stairs between levels, most likely) took those cells. The stop
+  block itself was there, so the mod still stops a train. Not chased.

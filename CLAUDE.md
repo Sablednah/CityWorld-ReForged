@@ -24,6 +24,20 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-15): issue #7 train mods BUILT on all six lines, unreleased — `TRAINS-PLAN.md`.**
+- Owner: *"see what we can add support in for"* (Slash Rails, Improvement Minecarts, Railcraft Reborn, Choo Choo).
+  Built: subway bends are staircase arcs in a rounded tunnel (Slash Rails smooths 160/192 rails, none tight; self-test
+  `subway.bend`, proved failing with one rail removed per curve); track from `#cityworld:fittings/rail*` (Railcraft's
+  five, optional; `Support/Railway`); Improvement Minecarts stops (lapis/gold + station-name sign, `subways.stops`,
+  mod id or its `tick` function); Choo Choo parked trains (`subways.oddsOfTrain` 0.5, `trainCarriages` 2, entity tags
+  `#cityworld:subway/locomotive|carriage`, coupled by `Support/TrainCouplings`; a carriage needs `PassengerNose` +
+  `TwoSeatVersion` NBT). **A headless dedicated server with nobody on stops ticking after 60 s
+  (`pause-when-empty-seconds`, 1.21.2+): master's `run/server.properties` now says -1.** Choo Choo needs NeoForge
+  21.1.256+/21.11.45+ (`ORG_GRADLE_PROJECT_neo_version` for a probe; out of `run/mods` for a self-test). Master
+  `8838d255` `0f000d7f` `44562d82` + docs; picked to all five lines (drift: `ResourceLocation`, `ITEM.get`,
+  26.x `entityTags()`, 1.20.1 Forge events + `tags/blocks/`, `tags/entity_types/`). Reply draft for the issue in the
+  session scratchpad `trains/issue7-reply.md`. Nothing pushed. Next: the owner's look, then 7.2.0.
+
 **▶ Resume here (2026-11-14 evening): v7.1.0 is RELEASED — Cobblemon.**
 - Owner: "all good - tested and working now - cut a release". Tag `v7.1.0` at the master bump `02d4b366` (docs
   `ca5f882c` before it; branch bumps b7a1d113/6780705a/3b2c2248/215c300d/cb0a58e0), GitHub release with six
