@@ -17,6 +17,7 @@ import me.daddychurchill.CityWorld.Support.PlatMap;
 import me.daddychurchill.CityWorld.worldgen.CityWorldBiomes;
 import me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -3496,7 +3497,7 @@ public final class CityWorldSelfTest {
         int[] firstRamp = null;
         int[] firstCross = null;
         List<String> mismatchSamples = new ArrayList<>();
-        int[] firstStation = null, firstStraight = null;
+        int[] firstStation = null, firstStraight = null, firstBend = null;
         for (int cx = -radius; cx <= radius; cx++)
             for (int cz = -radius; cz <= radius; cz++) {
                 var piece = me.daddychurchill.CityWorld.Support.Subway.at(plan, cx, cz);
@@ -3530,6 +3531,10 @@ public final class CityWorldSelfTest {
                     }
                     if (firstStraight == null && piece.ewMask() == 12 && !piece.ewPlatform() && piece.nsMask() == 0)
                         firstStraight = new int[] { cx, cz };
+                    int em = piece.ewMask();
+                    if (firstBend == null && piece.ramp() == null && piece.nsMask() == 0 && !piece.ewPlatform()
+                            && Integer.bitCount(em) == 2 && em != 3 && em != 12)
+                        firstBend = new int[] { cx, cz, em };
                 }
                 // every open side must be answered by the chunk it faces, on the same level (or by a ramp,
                 // which joins the levels; level 2 is the ramp's own sides, answered by anything)
@@ -3613,6 +3618,67 @@ public final class CityWorldSelfTest {
                         + " rails (a straight wants 32" + (plan.isApocalypseStyle() ? ", less a ruin's gaps" : "") + ")");
         } else if (stations > 1)
             report.put("subway.tunnel.chunk", "no plain east-west straight found");
+        if (firstBend != null)
+            checkSubwayBend(server, level, firstBend, ewRail, plan.isApocalypseStyle());
+        else
+            report.put("subway.bend", "no plain east-west bend found");
+    }
+
+    /**
+     * A bend's two tracks are curves of many short rails (so a rail-smoothing mod such as Slash Rails can round
+     * them): every rail must lead, at both its ends, to another rail or out of the chunk, and stand in a tunnel
+     * clear at cart height. The old bend was one corner rail per track, and a curve that breaks anywhere strands a
+     * cart, which no block count would see.
+     */
+    private void checkSubwayBend(MinecraftServer server, ServerLevel level, int[] bend, int railY, boolean ruin) {
+        int cx = bend[0], cz = bend[1];
+        LevelChunk chunk = server.submit(() -> level.getChunk(cx, cz)).join();
+        int rails = 0, broken = 0, blocked = 0;
+        List<String> samples = new ArrayList<>();
+        for (int x = 0; x < 16; x++)
+            for (int z = 0; z < 16; z++) {
+                BlockPos at = new BlockPos(cx * 16 + x, railY, cz * 16 + z);
+                BlockState state = chunk.getBlockState(at);
+                if (!(state.getBlock() instanceof net.minecraft.world.level.block.BaseRailBlock rail))
+                    continue;
+                rails++;
+                var shape = state.getValue(rail.getShapeProperty());
+                if (!chunk.getBlockState(at.above()).getCollisionShape(level, at.above()).isEmpty()) {
+                    blocked++;
+                    if (samples.size() < 4)
+                        samples.add("blocked " + x + "," + z);
+                }
+                for (Direction d : railEnds(shape)) {
+                    int nx = x + d.getStepX(), nz = z + d.getStepZ();
+                    if (nx < 0 || nx > 15 || nz < 0 || nz > 15)
+                        continue; // leaves through a side
+                    if (!chunk.getBlockState(at.relative(d)).is(net.minecraft.tags.BlockTags.RAILS)) {
+                        broken++;
+                        if (samples.size() < 4)
+                            samples.add(shape + " at " + x + "," + z + " ends " + d);
+                    }
+                }
+            }
+        report.put("subway.bend", cx + "," + cz + " mask " + bend[2] + ": " + rails + " rails, " + broken
+                + " broken ends, " + blocked + " blocked" + (samples.isEmpty() ? "" : " " + samples));
+        if (ruin)
+            return; // a ruin's track has gaps by design
+        if (rails < 20)
+            fail("subway bend at " + cx + "," + cz + " has " + rails + " rails (want two curves of many)");
+        if (broken > 0 || blocked > 0)
+            fail("subway bend at " + cx + "," + cz + ": " + broken + " rail ends lead nowhere, " + blocked
+                    + " rails have no headroom " + samples);
+    }
+
+    private static Direction[] railEnds(net.minecraft.world.level.block.state.properties.RailShape shape) {
+        return switch (shape) {
+            case NORTH_SOUTH, ASCENDING_NORTH, ASCENDING_SOUTH -> new Direction[] { Direction.NORTH, Direction.SOUTH };
+            case EAST_WEST, ASCENDING_EAST, ASCENDING_WEST -> new Direction[] { Direction.EAST, Direction.WEST };
+            case NORTH_EAST -> new Direction[] { Direction.NORTH, Direction.EAST };
+            case NORTH_WEST -> new Direction[] { Direction.NORTH, Direction.WEST };
+            case SOUTH_EAST -> new Direction[] { Direction.SOUTH, Direction.EAST };
+            case SOUTH_WEST -> new Direction[] { Direction.SOUTH, Direction.WEST };
+        };
     }
 
     /**

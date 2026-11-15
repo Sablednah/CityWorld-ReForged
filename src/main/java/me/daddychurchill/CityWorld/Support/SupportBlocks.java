@@ -140,6 +140,17 @@ public abstract class SupportBlocks extends AbstractBlocks {
 		setActualBlock(x, y, z, state);
 	}
 
+	/** Set a boolean property by name on the block already there (a mod's own property, e.g. Railcraft's
+	 *  {@code reversed}); nothing when the block has none of that name. */
+	public final void setBlockProperty(int x, int y, int z, String name, boolean value) {
+		BlockState state = getActualBlock(x, y, z).getBlockData();
+		for (Property<?> p : state.getProperties())
+			if (p instanceof net.minecraft.world.level.block.state.properties.BooleanProperty b && b.getName().equals(name)) {
+				setActualBlock(x, y, z, state.setValue(b, value));
+				return;
+			}
+	}
+
 	@Override
 	public final void setBlock(int x, int y, int z, Material material) {
 		// declared furniture takes the furniture path here too (the hospital's desk toppers came
@@ -459,7 +470,13 @@ public abstract class SupportBlocks extends AbstractBlocks {
 
 	public final void setBlock(int x, int y, int z, Material material, RailShape shape, boolean powered) {
 		BlockState state = withRailShape(stateOf(material), shape);
-		setActualBlock(x, y, z, with(state, BlockStateProperties.POWERED, powered));
+		if (state.hasProperty(BlockStateProperties.POWERED))
+			state = state.setValue(BlockStateProperties.POWERED, powered);
+		else // a modded track may declare a "powered" of its own (Railcraft's booster track)
+			for (Property<?> p : state.getProperties())
+				if (p instanceof net.minecraft.world.level.block.state.properties.BooleanProperty b && b.getName().equals("powered"))
+					state = state.setValue(b, powered);
+		setActualBlock(x, y, z, state);
 	}
 
 	@Override
@@ -1228,6 +1245,11 @@ public abstract class SupportBlocks extends AbstractBlocks {
 	 * asked of a rail that cannot bend (as Bukkit's own setter would have refused it).
 	 */
 	private static BlockState withRailShape(BlockState state, RailShape shape) {
+		// a modded track (Railcraft's) names its own shape property: ask the rail which it is
+		if (state.getBlock() instanceof net.minecraft.world.level.block.BaseRailBlock rail) {
+			Property<RailShape> p = rail.getShapeProperty();
+			return state.hasProperty(p) && p.getPossibleValues().contains(shape) ? state.setValue(p, shape) : state;
+		}
 		if (state.hasProperty(BlockStateProperties.RAIL_SHAPE))
 			return state.setValue(BlockStateProperties.RAIL_SHAPE, shape);
 		if (state.hasProperty(BlockStateProperties.RAIL_SHAPE_STRAIGHT)
