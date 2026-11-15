@@ -120,6 +120,12 @@ public class SubwayStationLot extends BuildingLot {
         generator.spawnProvider.spawnBeing(generator, chunk, chunkOdds, 7, stand, 7);
     }
 
+    /** The station's name (the road it stands beside), for the platforms' signs. */
+    public String stationName(CityWorldGenerator generator) {
+        PlatMap platmap = generator.getPlatMap(chunkX, chunkZ);
+        return stationName(generator, platmap, chunkX - platmap.originX, chunkZ - platmap.originZ);
+    }
+
     /** The name of the road this station stands beside, or "Subway" in a world without street names. */
     private String stationName(CityWorldGenerator generator, PlatMap platmap, int platX, int platZ) {
         if (generator.getSettings().includeNamedRoads)

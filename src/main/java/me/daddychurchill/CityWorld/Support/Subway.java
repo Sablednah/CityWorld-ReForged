@@ -511,9 +511,10 @@ public final class Subway {
         int lineColour = Math.floorMod(chunk.sectionX / PlatMap.Width * 31 + chunk.sectionZ / PlatMap.Width * 17, LINE_COLOURS.length);
         Material stripe = lot instanceof SubwayStationLot s ? s.lineColour() : LINE_COLOURS[lineColour];
         if (piece.station()) {
-            hall(generator, chunk, odds, ewFloor(generator), true, piece.ewMask(), piece.ewWide(), stripe, ruined);
+            String name = lot instanceof SubwayStationLot s ? s.stationName(generator) : "Subway";
+            hall(generator, chunk, odds, ewFloor(generator), true, piece.ewMask(), piece.ewWide(), stripe, ruined, name);
             if (piece.nsMask() != 0)
-                hall(generator, chunk, odds, nsFloor(generator), false, piece.nsMask(), piece.nsWide(), stripe, ruined);
+                hall(generator, chunk, odds, nsFloor(generator), false, piece.nsMask(), piece.nsWide(), stripe, ruined, name);
             return;
         }
         if (piece.ramp() != null)
@@ -556,7 +557,8 @@ public final class Subway {
      * lights sit in the crown every four blocks (dark, some of them, in a ruin).
      */
     static void tunnel(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int floorY, int mask, boolean ruined) {
-        boolean[][][] inside = profile(mask);
+        boolean bend = isBend(mask);
+        boolean[][][] inside = bend ? bendProfile(mask) : profile(mask);
         int ceilY = floorY + HEIGHT + 1;
         for (int dy = 0; dy <= HEIGHT + 1; dy++) {
             boolean[][] at = dy == 0 ? inside[1] : dy == HEIGHT + 1 ? inside[HEIGHT] : inside[dy];
@@ -572,10 +574,19 @@ public final class Subway {
                         chunk.setBlock(x, y, z, SHELL);
                 }
         }
-        // lights in the crown, dark in a ruin
+        // lights in the crown, dark in a ruin (round a bend, three along the crown's arc)
+        int[][] lamps = bend ? bendLamps(mask) : null;
         for (int i = 2; i < 16; i += 4) {
-            int x = mask == (N | S) ? 7 + (i / 4 & 1) : i;
-            int z = mask == (N | S) ? i : 7 + (i / 4 & 1);
+            int x, z;
+            if (bend) {
+                if (i / 4 >= lamps.length)
+                    break;
+                x = lamps[i / 4][0];
+                z = lamps[i / 4][1];
+            } else {
+                x = mask == (N | S) ? 7 + (i / 4 & 1) : i;
+                z = mask == (N | S) ? i : 7 + (i / 4 & 1);
+            }
             if (inside[HEIGHT][x][z])
                 chunk.setBlock(x, ceilY, z, ruined && Math.floorMod(chunk.sectionX * 7 + chunk.sectionZ * 13 + i, 5) < 3
                         ? DEAD_LIGHT : LIGHT);
@@ -665,7 +676,7 @@ public final class Subway {
                 rampRail(chunk, odds, r, topFloor, x, cz, RailShape.EAST_WEST, ruined);
             for (int z = b == S ? 15 : 0; z != cz; z += b == S ? -1 : 1)
                 rampRail(chunk, odds, r, topFloor, cx, z, RailShape.NORTH_SOUTH, ruined);
-            chunk.setBlock(cx, topFloor - r.drop(cx, cz) + 1, cz, Material.RAIL, corner, false);
+            chunk.setBlock(cx, topFloor - r.drop(cx, cz) + 1, cz, Railway.track(ruined), corner, false);
         }
     }
 
@@ -675,7 +686,7 @@ public final class Subway {
         int i = fromEdge(r.in(), x, z), j = fromEdge(r.out(), x, z);
         RailShape shape = i >= 1 && i <= r.rIn() ? ascending(r.in())
                 : i >= 5 && j >= 1 && j <= r.rOut() ? ascending(opposite(r.out())) : null;
-        rail(chunk, odds, x, topFloor - r.drop(x, z), z, shape == null ? flat : shape, shape != null && !ruined, ruined);
+        rail(chunk, odds, x, topFloor - r.drop(x, z), z, shape == null ? flat : shape, shape != null && !ruined, ruined, ruined);
     }
 
     private static RailShape ascending(int side) {
@@ -728,41 +739,165 @@ public final class Subway {
      * ruin has plain rails with gaps.
      */
     static void rails(RealBlocks chunk, Odds odds, int floorY, int mask, boolean ruined) {
+        rails(chunk, odds, floorY, mask, ruined, ruined);
+    }
+
+    /** As above; {@code worn}: a ruin's track ({@link Railway#track}), whether or not this piece has gaps. */
+    static void rails(RealBlocks chunk, Odds odds, int floorY, int mask, boolean ruined, boolean worn) {
         int railY = floorY + 1;
         if (mask == (W | E) || mask == (N | S)) {
             boolean ew = mask == (W | E);
             for (int line : new int[] { 6, 9 })
                 for (int i = 0; i < 16; i++)
                     rail(chunk, odds, ew ? i : line, floorY, ew ? line : i, ew ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH,
-                            !ruined && i % 8 == 4, ruined);
+                            !ruined && i % 8 == 4, ruined, worn);
             return;
         }
-        int a = mask & (W | E), b = mask & (N | S);
-        if (a == 0 || b == 0)
+        if (!isBend(mask))
             return; // a dead end has no track to lay
-        int zFar = b == S ? 6 : 9, zNear = 15 - zFar;
-        int xFar = a == W ? 9 : 6, xNear = 15 - xFar;
-        RailShape corner = a == W ? (b == S ? RailShape.SOUTH_WEST : RailShape.NORTH_WEST)
-                : (b == S ? RailShape.SOUTH_EAST : RailShape.NORTH_EAST);
-        for (int[] t : new int[][] { { xFar, zFar }, { xNear, zNear } }) {
-            int cx = t[0], cz = t[1];
-            for (int x = a == W ? 0 : 15; x != cx; x += a == W ? 1 : -1)
-                rail(chunk, odds, x, floorY, cz, RailShape.EAST_WEST, false, ruined);
-            for (int z = b == S ? 15 : 0; z != cz; z += b == S ? -1 : 1)
-                rail(chunk, odds, cx, floorY, z, RailShape.NORTH_SOUTH, false, ruined);
-            chunk.setBlock(cx, railY, cz, Material.RAIL, corner, false);
+        // a bend: each track a quarter circle laid as a staircase (see arc)
+        for (int line : new int[] { 6, 9 })
+            for (int[] c : arc(mask, line))
+                rail(chunk, odds, c[0], floorY, c[1], RailShape.values()[c[2]], false, ruined, worn);
+    }
+
+    /** Exactly one east-west side and one north-south side open: a bend. */
+    static boolean isBend(int mask) {
+        return Integer.bitCount(mask) == 2 && (mask & (W | E)) != 0 && (mask & (N | S)) != 0;
+    }
+
+    /*
+     * Bends (issue #7, 2026-11-14). A bend used to run each track straight to a single corner rail: a hard
+     * 90-degree turn, which a cart snaps through and SlashRails (which turns a rail staircase into a real
+     * curve) can only round a little. Now each track is a quarter circle about the chunk corner between the
+     * two open sides, laid as a staircase of rails, and the tunnel follows it as an arched annulus. Worked in a
+     * canonical frame (open west and south, the corner at the south-west edge point (0, 16)) and mirrored.
+     * The radii are where the straights' tracks already run: the track at z 6 on the west edge is 9.5 from
+     * the corner and comes out at x 9 on the south edge, the one at z 9 is 6.5 out and comes out at x 6, so
+     * the two never cross and meet the straights either side unchanged.
+     */
+
+    /**
+     * One track round a bend, in order from the east-west side to the north-south side: {@code {x, z,
+     * shape ordinal}} per rail. {@code line} is where it crosses the east-west edge in the canonical frame (6
+     * the outer track, 9 the inner). Each step goes to whichever of the two forward cells keeps closer to the
+     * circle, so the rails make a staircase every cell of which connects to the next: what vanilla carts
+     * already ride, and what SlashRails smooths into one curve.
+     */
+    static java.util.List<int[]> arc(int mask, int line) {
+        double r = 15.5 - line;
+        int endX = 15 - line;
+        java.util.List<int[]> cells = new java.util.ArrayList<>();
+        int x = 0, z = line;
+        cells.add(new int[] { x, z });
+        while (x != endX || z != 15) {
+            if (x == endX)
+                z++;
+            else if (z == 15)
+                x++;
+            else if (Math.abs(Math.hypot(x + 1.5, 15.5 - z) - r) <= Math.abs(Math.hypot(x + 0.5, 14.5 - z) - r))
+                x++;
+            else
+                z++;
+            cells.add(new int[] { x, z });
         }
+        boolean flipX = (mask & E) != 0, flipZ = (mask & N) != 0;
+        java.util.List<int[]> out = new java.util.ArrayList<>(cells.size());
+        for (int i = 0; i < cells.size(); i++) {
+            int[] c = cells.get(i);
+            int from = i == 0 ? W : cells.get(i - 1)[0] < c[0] ? W : N; // where the track comes in
+            int to = i == cells.size() - 1 ? S : cells.get(i + 1)[0] > c[0] ? E : S; // where it goes on
+            if (flipX) {
+                from = mirrorX(from);
+                to = mirrorX(to);
+            }
+            if (flipZ) {
+                from = mirrorZ(from);
+                to = mirrorZ(to);
+            }
+            out.add(new int[] { flipX ? 15 - c[0] : c[0], flipZ ? 15 - c[1] : c[1], shapeOf(from | to).ordinal() });
+        }
+        return out;
+    }
+
+    private static int mirrorX(int side) {
+        return side == W ? E : side == E ? W : side;
+    }
+
+    private static int mirrorZ(int side) {
+        return side == N ? S : side == S ? N : side;
+    }
+
+    /** The flat rail joining two sides. */
+    static RailShape shapeOf(int sides) {
+        return switch (sides) {
+        case W | E -> RailShape.EAST_WEST;
+        case N | S -> RailShape.NORTH_SOUTH;
+        case S | E -> RailShape.SOUTH_EAST;
+        case S | W -> RailShape.SOUTH_WEST;
+        case N | W -> RailShape.NORTH_WEST;
+        default -> RailShape.NORTH_EAST;
+        };
+    }
+
+    /**
+     * A bend's interior at each height: the straights' arched profile swept round the corner (an annulus
+     * whose radii at each height are the straight's across-extent there, so both edges match the straights
+     * cell for cell), widened at cart height to clear every cell beside a rail. SlashRails only lets a cart
+     * leave the vanilla line where nothing solid stands next to the track at rail or cart height, so a
+     * curve with tile beside it would stay a staircase.
+     */
+    static boolean[][][] bendProfile(int mask) {
+        boolean[][][] canon = new boolean[HEIGHT + 2][16][16];
+        java.util.List<int[]> rails = new java.util.ArrayList<>(arc(W | S, 6));
+        rails.addAll(arc(W | S, 9));
+        for (int dy = 1; dy <= HEIGHT; dy++) {
+            int l = lo(dy);
+            double rIn = l + 0.2, rOut = 15.8 - l;
+            for (int x = 0; x < 16; x++)
+                for (int z = 0; z < 16; z++) {
+                    double d = Math.hypot(x + 0.5, 15.5 - z);
+                    canon[dy][x][z] = d >= rIn && d <= rOut;
+                }
+            if (dy <= 3)
+                for (int[] c : rails)
+                    for (int dx = -1; dx <= 1; dx++)
+                        for (int dz = -1; dz <= 1; dz++) {
+                            int nx = c[0] + dx, nz = c[1] + dz;
+                            if (nx >= 0 && nx < 16 && nz >= 0 && nz < 16)
+                                canon[dy][nx][nz] = true;
+                        }
+        }
+        boolean flipX = (mask & E) != 0, flipZ = (mask & N) != 0;
+        boolean[][][] inside = new boolean[HEIGHT + 2][16][16];
+        for (int dy = 0; dy < HEIGHT + 2; dy++)
+            for (int x = 0; x < 16; x++)
+                for (int z = 0; z < 16; z++)
+                    inside[dy][flipX ? 15 - x : x][flipZ ? 15 - z : z] = canon[dy][x][z];
+        return inside;
+    }
+
+    /** Three crown cells round a bend, on the arc of the crown's middle (eight from the corner). */
+    static int[][] bendLamps(int mask) {
+        boolean flipX = (mask & E) != 0, flipZ = (mask & N) != 0;
+        int[][] out = new int[3][];
+        double[] angles = { Math.toRadians(20), Math.toRadians(45), Math.toRadians(70) };
+        for (int i = 0; i < 3; i++) {
+            int x = (int) Math.floor(8 * Math.sin(angles[i])), z = (int) Math.floor(16 - 8 * Math.cos(angles[i]));
+            out[i] = new int[] { flipX ? 15 - x : x, flipZ ? 15 - z : z };
+        }
+        return out;
     }
 
     private static void rail(RealBlocks chunk, Odds odds, int x, int floorY, int z, RailShape shape, boolean powered,
-            boolean ruined) {
+            boolean ruined, boolean worn) {
         if (ruined && odds.playOdds(0.12))
             return; // a missing length of track
         if (powered) {
             chunk.setBlock(x, floorY, z, Material.REDSTONE_BLOCK);
-            chunk.setBlock(x, floorY + 1, z, Material.POWERED_RAIL, shape, true);
+            chunk.setBlock(x, floorY + 1, z, Railway.booster(), shape, true);
         } else
-            chunk.setBlock(x, floorY + 1, z, Material.RAIL, shape, false);
+            chunk.setBlock(x, floorY + 1, z, Railway.track(worn), shape, false);
     }
 
     /** The ruin: puddles in the bed, rubble, and a sewer-bag spawner in a niche cut into one wall. */
@@ -803,6 +938,12 @@ public final class Subway {
      */
     static void hall(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int floorY, boolean alongX, int mask,
             int wide, Material stripe, boolean ruined) {
+        hall(generator, chunk, odds, floorY, alongX, mask, wide, stripe, ruined, null);
+    }
+
+    /** As above; {@code stationName} is set for a station's own hall (its stops and its parked train), null beside one. */
+    static void hall(CityWorldGenerator generator, RealBlocks chunk, Odds odds, int floorY, boolean alongX, int mask,
+            int wide, Material stripe, boolean ruined, String stationName) {
         int ceilY = floorY + HEIGHT + 1;
         int negSide = alongX ? W : N, posSide = alongX ? E : S;
         // the box: floor, ceiling, and the two long walls
@@ -847,16 +988,22 @@ public final class Subway {
             for (int across : new int[] { 1, 14 })
                 chunk.setBlock(alongX ? along : across, floorY + 2, alongX ? across : along, Material.SMOOTH_STONE_SLAB);
         rods(chunk, floorY + 5, alongX, 1, 14);
-        rails(chunk, odds, floorY, negSide | posSide, ruined && odds.playOdds(0.5));
+        rails(chunk, odds, floorY, negSide | posSide, ruined && odds.playOdds(0.5), ruined);
+        Material buffer = Railway.bufferStop();
         for (int end = 0; end < 2; end++) { // no line that way: the track stops short at a pair of buffers
             if ((mask & (end == 0 ? negSide : posSide)) != 0)
                 continue;
             for (int line : new int[] { 6, 9 }) {
                 int wall = end == 0 ? 0 : 15, stop = end == 0 ? 1 : 14;
                 chunk.setBlock(alongX ? wall : line, floorY + 1, alongX ? line : wall, HALL_WALL); // the rail took the wall cell
-                chunk.setBlock(alongX ? stop : line, floorY + 1, alongX ? line : stop, Material.IRON_BLOCK);
+                if (buffer == null)
+                    chunk.setBlock(alongX ? stop : line, floorY + 1, alongX ? line : stop, Material.IRON_BLOCK);
+                else
+                    bufferStop(chunk, buffer, alongX ? stop : line, floorY + 1, alongX ? line : stop, alongX, end == 1);
             }
         }
+        if (stationName != null)
+            stops(generator, chunk, floorY, alongX, mask, negSide, posSide, stationName);
         // lost property: the odd chest at a platform's end
         if (odds.playOdds(Odds.oddsSomewhatLikely)) {
             int along = odds.flipCoin() ? 1 : 14, across = odds.flipCoin() ? 1 : 14;
@@ -870,6 +1017,63 @@ public final class Subway {
                 if (chunk.isEmpty(x, floorY + 2, z) && !chunk.isEmpty(x, floorY + 1, z))
                     chunk.setBlock(x, floorY + 2, z, odds.flipCoin() ? Material.MOSS_CARPET : Material.COBWEB);
             }
+        }
+        // a train waiting at the platform: rolled last, and only while a mod supplies one, so a world
+        // without one draws exactly what it drew before
+        if (stationName != null && (mask & (negSide | posSide)) != 0 && Railway.anyTrain()
+                && odds.playOdds(generator.getSettings().oddsOfParkedTrain)) {
+            boolean towardPos = (mask & posSide) != 0; // face an open end, out of the station
+            int line = odds.flipCoin() ? 6 : 9;
+            int head = towardPos ? 12 : 3, step = towardPos ? 1 : -1;
+            int room = towardPos ? head - 1 : 14 - head; // track behind the locomotive, inside this hall
+            int x = chunk.getBlockX(alongX ? head : line), z = chunk.getBlockZ(alongX ? line : head);
+            Railway.parkTrain(chunk.getWorld(), x, floorY + 1, z, alongX ? step : 0, alongX ? 0 : step,
+                    generator.getSettings().trainCarriages, room, odds);
+        }
+    }
+
+    /** A buffer-stop track (Railcraft's) at a dead end: its bumper on the wall side ({@code atPos}: the far end). */
+    private static void bufferStop(RealBlocks chunk, Material buffer, int x, int y, int z, boolean alongX, boolean atPos) {
+        chunk.setBlock(x, y, z, buffer, alongX ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH, false);
+        // Railcraft's model: north-south unreversed has its bumper to the north, east-west unreversed to the east
+        boolean reversed = alongX ? !atPos : atPos;
+        chunk.setBlockProperty(x, y, z, "reversed", reversed);
+    }
+
+    /**
+     * Each platform track's stop, for the train mods that stop at one. A through hall stops mid-platform; a
+     * hall with one end closed is a terminus and stops near the buffers (a train waits there, then reverses
+     * out). Improvement Minecarts (when installed): a lapis block under that rail (gold at a terminus), the
+     * rail itself vanilla (the mod only follows vanilla rails), and a sign beside it between the tracks, on
+     * the pillar, whose first line is the station's name: the mod announces it as the train pulls in.
+     * Otherwise Railcraft's delayed locking track, if supplied, holds a cart there a while.
+     */
+    private static void stops(CityWorldGenerator generator, RealBlocks chunk, int floorY, boolean alongX, int mask,
+            int negSide, int posSide, String stationName) {
+        boolean negOpen = (mask & negSide) != 0, posOpen = (mask & posSide) != 0;
+        if (!negOpen && !posOpen)
+            return; // no line calls here
+        boolean terminus = negOpen != posOpen;
+        // beside a pillar (along 2, 7, 12), so the sign has a wall: mid-platform, or the end by the buffers
+        int along = !terminus ? 8 : negOpen ? 13 : 3;
+        int pillar = !terminus ? 7 : negOpen ? 12 : 2;
+        boolean im = Railway.marksStops(generator);
+        Material hold = im ? null : Railway.platformStop();
+        if (!im && hold == null)
+            return;
+        for (int line : new int[] { 6, 9 }) {
+            int x = alongX ? along : line, z = alongX ? line : along;
+            RailShape shape = alongX ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
+            if (im) {
+                chunk.setBlock(x, floorY, z, terminus ? Railway.TERMINUS_BLOCK : Railway.STOP_BLOCK);
+                chunk.setBlock(x, floorY + 1, z, Material.RAIL, shape, false);
+                int gap = line == 6 ? 7 : 8; // between the tracks, beside this one
+                int sx = alongX ? along : gap, sz = alongX ? gap : along;
+                BlockFace away = alongX ? (along > pillar ? BlockFace.EAST : BlockFace.WEST)
+                        : (along > pillar ? BlockFace.SOUTH : BlockFace.NORTH);
+                chunk.setWallSign(sx, floorY + 1, sz, away, stationName, terminus ? "terminus" : "", "", "");
+            } else
+                chunk.setBlock(x, floorY + 1, z, hold, shape, false);
         }
     }
 
