@@ -302,15 +302,30 @@ public record CityWorldSettingsData(
     /**
      * The subway: a station under every urban district, joined by twin-track tunnels to the first
      * station each way along its row and column, up to six districts off (see {@code Support/Subway}). Its own group because {@code Features} is at the codec's
-     * sixteen-field cap. {@code spawners} puts the sewer mob bag's spawners in the tunnels.
+     * sixteen-field cap. {@code spawners} puts the sewer mob bag's spawners in the tunnels. {@code stops} marks
+     * each platform's stop for Improvement Minecarts when it is installed; {@code oddsOfTrain} and
+     * {@code trainCarriages} park a train mod's train at a station ({@code Support/Railway}).
      */
-    public record Subways(boolean enabled, boolean spawners) {
+    public record Subways(boolean enabled, boolean spawners, boolean stops, double oddsOfTrain, int trainCarriages) {
 
-        public static final Subways DEFAULT = new Subways(true, true);
+        /** A station's odds of a parked train on one platform (only while a train mod supplies a locomotive). */
+        public static final double TRAIN_ODDS = 0.5;
+        /** Carriages behind a parked locomotive, at most (fewer where the platform is short). */
+        public static final int TRAIN_CARRIAGES = 2;
+
+        public static final Subways DEFAULT = new Subways(true, true, true, TRAIN_ODDS, TRAIN_CARRIAGES);
+
+        public Subways(boolean enabled, boolean spawners) {
+            this(enabled, spawners, true, TRAIN_ODDS, TRAIN_CARRIAGES);
+        }
 
         public static final Codec<Subways> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("enabled", true).forGetter(Subways::enabled),
-                Codec.BOOL.optionalFieldOf("spawners", true).forGetter(Subways::spawners)
+                Codec.BOOL.optionalFieldOf("spawners", true).forGetter(Subways::spawners),
+                // train mods (issue #7, Support/Railway): Improvement Minecarts' stops; parked trains
+                Codec.BOOL.optionalFieldOf("stops", true).forGetter(Subways::stops),
+                Codec.doubleRange(0, 1).optionalFieldOf("oddsOfTrain", TRAIN_ODDS).forGetter(Subways::oddsOfTrain),
+                Codec.intRange(0, 8).optionalFieldOf("trainCarriages", TRAIN_CARRIAGES).forGetter(Subways::trainCarriages)
         ).apply(i, Subways::new));
     }
 

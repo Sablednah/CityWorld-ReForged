@@ -72,6 +72,19 @@ public final class CityWorldServerEvents {
     }
 
     /** A player's map-plan choices last for their session only (their map mod sends them again on joining). */
+    /** A parked train's carriages couple once loaded (Support/TrainCouplings). */
+    @SubscribeEvent
+    public static void onEntityJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
+        if (!event.getLevel().isClientSide())
+            me.daddychurchill.CityWorld.Support.TrainCouplings.joined(event.getEntity());
+    }
+
+    @SubscribeEvent
+    public static void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
+        if (event.phase == net.minecraftforge.event.TickEvent.Phase.END)
+            me.daddychurchill.CityWorld.Support.TrainCouplings.tick(event.getServer());
+    }
+
     @SubscribeEvent
     public static void onLoggedOut(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
         MapMarkers.forgetCityPlan(event.getEntity().getUUID());
@@ -81,6 +94,7 @@ public final class CityWorldServerEvents {
     @SubscribeEvent
     public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event) {
         MapMarkers.forgetCityPlan(null);
+        me.daddychurchill.CityWorld.Support.TrainCouplings.clear();
     }
 
     @SubscribeEvent
