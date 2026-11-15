@@ -36,7 +36,12 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   21.1.256+/21.11.45+ (`ORG_GRADLE_PROJECT_neo_version` for a probe; out of `run/mods` for a self-test). Master
   `8838d255` `0f000d7f` `44562d82` + docs; picked to all five lines (drift: `ResourceLocation`, `ITEM.get`,
   26.x `entityTags()`, 1.20.1 Forge events + `tags/blocks/`, `tags/entity_types/`). Reply draft for the issue in the
-  session scratchpad `trains/issue7-reply.md`. Nothing pushed. Next: the owner's look, then 7.2.0.
+  session scratchpad `trains/issue7-reply.md`. Gates: six self-tests PASS on the final heads (1.21.1 `8409c56f`,
+  26.1 `4eb898de`, 26.2 `4c3a0760`, 26.3 `eab666fc`, 1.20.1 `182b9bae`), `--compare` five-way agrees (MODERN
+  `c4b95b7c`, APOCALYPSE `fd6df8c0`; 1.21.1 differs by its Cobblemon, as at 7.1.0); Improvement Minecarts' 1.21.1 jar
+  fails the parse gate on its own `iron_chain` predicate, so it stays out of `mc1.21.1/run/mods` for a self-test.
+  Deployed to the owner's `1.21.1` instance `DEPLOYED-8409c56f` (scan 0/0/0). Nothing pushed. Next: the owner's look
+  (with the four mods in that instance), then 7.2.0.
 
 **▶ Resume here (2026-11-14 evening): v7.1.0 is RELEASED — Cobblemon.**
 - Owner: "all good - tested and working now - cut a release". Tag `v7.1.0` at the master bump `02d4b366` (docs
