@@ -230,6 +230,8 @@ public class CityWorldSettings {
     public boolean subwayStops = true;
     public double oddsOfParkedTrain = CityWorldSettingsData.Subways.TRAIN_ODDS;
     public int trainCarriages = CityWorldSettingsData.Subways.TRAIN_CARRIAGES;
+    /** With Slash Rails: each subway bend smoothed when it first loads (subways.smoothBends; Support/RailSmoothing). */
+    public boolean smoothBends = true;
 
     /** Who turns up, and how often. {@code SpawnProvider} branches on all of these. */
     public double spawnBeings = Odds.oddsLikely;
@@ -658,6 +660,7 @@ public class CityWorldSettings {
         subwayStops = data.subways().stops();
         oddsOfParkedTrain = data.subways().oddsOfTrain();
         trainCarriages = data.subways().trainCarriages();
+        smoothBends = data.subways().smoothBends();
         driveOnLeft = data.roads().driveOnLeft();
         speedLimitUrban = data.roads().speedLimitUrban();
         speedLimitRural = data.roads().speedLimitRural();
@@ -818,7 +821,7 @@ public class CityWorldSettings {
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways,
-                subwayStops, oddsOfParkedTrain, trainCarriages);
+                subwayStops, oddsOfParkedTrain, trainCarriages, smoothBends);
         CityWorldSettingsData.Roads roads = new CityWorldSettingsData.Roads(driveOnLeft, speedLimitUrban, speedLimitRural,
                 oddsOfSpeedRepeat, includeSkybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, includeWildBridges,
                 wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion,
