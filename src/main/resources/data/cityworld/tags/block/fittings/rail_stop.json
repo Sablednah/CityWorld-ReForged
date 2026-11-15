@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "railcraft:reinforced_delayed_locking_track",
+      "required": false
+    }
+  ]
+}

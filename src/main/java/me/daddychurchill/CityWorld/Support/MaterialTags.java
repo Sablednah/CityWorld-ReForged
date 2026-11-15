@@ -166,6 +166,13 @@ public final class MaterialTags {
     /** A rope bridge across a ravine in the wild (Macaw's rope bridges, one per wood). */
     public static final TagKey<Block> FITTINGS_ROPE_BRIDGE = key("cityworld:fittings/rope_bridge");
     public static final TagKey<Block> FITTINGS_ATM = key("cityworld:fittings/atm");
+    /** Subway track (Support/Railway): plain, powered, a ruin's, a dead end's buffer stop, a platform's stop.
+     *  Railcraft Reborn supplies each; without it the subway lays vanilla rails, powered rails and iron buffers. */
+    public static final TagKey<Block> FITTINGS_RAIL = key("cityworld:fittings/rail");
+    public static final TagKey<Block> FITTINGS_RAIL_BOOSTER = key("cityworld:fittings/rail_booster");
+    public static final TagKey<Block> FITTINGS_RAIL_RUINED = key("cityworld:fittings/rail_ruined");
+    public static final TagKey<Block> FITTINGS_RAIL_BUFFER_STOP = key("cityworld:fittings/rail_buffer_stop");
+    public static final TagKey<Block> FITTINGS_RAIL_STOP = key("cityworld:fittings/rail_stop");
     /** A Pokémon Center's healing machine ({@code cobblemon:healing_machine}); while empty no Center is planned. */
     public static final TagKey<Block> FITTINGS_HEALING_MACHINE = key("cityworld:fittings/healing_machine");
     /** A Pokémon storage PC ({@code cobblemon:pc}, two high through its furniture layout): Centers, the Poké Mart counter. */
