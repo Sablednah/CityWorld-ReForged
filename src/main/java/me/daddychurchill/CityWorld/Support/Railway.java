@@ -176,9 +176,12 @@ public final class Railway {
             rotation.add(FloatTag.valueOf(0f));
             tag.put("Rotation", rotation);
             tag.putIntArray("UUID", UUIDUtil.uuidToIntArray(id));
-            // Choo Choo's locomotive keeps its heading as a vector of its own
+            // Choo Choo keeps headings of its own: the locomotive's as a vector, a carriage's as its "nose" yaw
+            // (degrees of atan2(z, x): 0 is +x). A carriage left at its default nose lies east-west whatever its
+            // track, so on a north-south line its ends stood beside its neighbours' and it never coupled.
             tag.putDouble("ForwardX", dx);
             tag.putDouble("ForwardZ", dz);
+            tag.putFloat("PassengerNose", (float) Math.toDegrees(Math.atan2(dz, dx)));
             if (ahead != null) {
                 ListTag tags = new ListTag();
                 tags.add(StringTag.valueOf(COUPLE_TAG + ahead));
