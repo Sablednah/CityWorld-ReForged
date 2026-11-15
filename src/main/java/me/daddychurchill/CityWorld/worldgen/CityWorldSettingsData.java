@@ -306,17 +306,18 @@ public record CityWorldSettingsData(
      * each platform's stop for Improvement Minecarts when it is installed; {@code oddsOfTrain} and
      * {@code trainCarriages} park a train mod's train at a station ({@code Support/Railway}).
      */
-    public record Subways(boolean enabled, boolean spawners, boolean stops, double oddsOfTrain, int trainCarriages) {
+    public record Subways(boolean enabled, boolean spawners, boolean stops, double oddsOfTrain, int trainCarriages,
+            boolean smoothBends) {
 
         /** A station's odds of a parked train on one platform (only while a train mod supplies a locomotive). */
         public static final double TRAIN_ODDS = 0.5;
         /** Carriages behind a parked locomotive, at most (fewer where the platform is short). */
         public static final int TRAIN_CARRIAGES = 2;
 
-        public static final Subways DEFAULT = new Subways(true, true, true, TRAIN_ODDS, TRAIN_CARRIAGES);
+        public static final Subways DEFAULT = new Subways(true, true, true, TRAIN_ODDS, TRAIN_CARRIAGES, true);
 
         public Subways(boolean enabled, boolean spawners) {
-            this(enabled, spawners, true, TRAIN_ODDS, TRAIN_CARRIAGES);
+            this(enabled, spawners, true, TRAIN_ODDS, TRAIN_CARRIAGES, true);
         }
 
         public static final Codec<Subways> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -325,7 +326,9 @@ public record CityWorldSettingsData(
                 // train mods (issue #7, Support/Railway): Improvement Minecarts' stops; parked trains
                 Codec.BOOL.optionalFieldOf("stops", true).forGetter(Subways::stops),
                 Codec.doubleRange(0, 1).optionalFieldOf("oddsOfTrain", TRAIN_ODDS).forGetter(Subways::oddsOfTrain),
-                Codec.intRange(0, 8).optionalFieldOf("trainCarriages", TRAIN_CARRIAGES).forGetter(Subways::trainCarriages)
+                Codec.intRange(0, 8).optionalFieldOf("trainCarriages", TRAIN_CARRIAGES).forGetter(Subways::trainCarriages),
+                // Slash Rails: each bend smoothed the first time it loads (Support/RailSmoothing)
+                Codec.BOOL.optionalFieldOf("smoothBends", true).forGetter(Subways::smoothBends)
         ).apply(i, Subways::new));
     }
 
