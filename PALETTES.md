@@ -747,6 +747,35 @@ To take CityWorld's entries away, override the file with an empty `spawns` list.
 1.20.1 (1.5.x) has neither markers nor the influence API, so this section does not apply there and the two pool
 files are not in that jar.
 
+### Train mods: the subway's track, stops and parked trains (from 7.2)
+
+The subway lays its track from five block tags, one block per tag per world (the first by id), each shipping only
+optional entries, so without a train mod it lays vanilla rail as it always did:
+
+| Tag | Used for | Ships as |
+|---|---|---|
+| `cityworld:fittings/rail` | plain track in the tunnels and halls | **empty** — Railcraft Reborn's `reinforced_track` (optional); vanilla rail otherwise |
+| `cityworld:fittings/rail_booster` | the powered lengths (every eighth rail, over a redstone block) | **empty** — Railcraft's `reinforced_booster_track`; vanilla powered rail otherwise |
+| `cityworld:fittings/rail_ruined` | a ruined (Apocalypse) subway's track, before `fittings/rail` | **empty** — Railcraft's `abandoned_track` |
+| `cityworld:fittings/rail_buffer_stop` | the end of a dead-end platform track, in place of the iron block | **empty** — Railcraft's `reinforced_buffer_stop_track`, turned to face the wall |
+| `cityworld:fittings/rail_stop` | each platform track's stop, where a train waits (not drawn while Improvement Minecarts marks stops) | **empty** — Railcraft's `reinforced_delayed_locking_track` |
+
+A block in these pools should be a rail (`BaseRailBlock`): its shape is set through its own shape property, and a
+`powered` property by name if it declares its own.
+
+**Stops.** With Improvement Minecarts installed (as a mod, or as its datapack) and `subways.stops` on, each platform
+track of a station gets a lapis block under a vanilla rail mid-platform (a gold block near the buffers when the
+station is the end of its line), and a sign on the pillar beside it whose first line is the station's name, which
+the mod announces as a train pulls in.
+
+**Parked trains** come from two **entity type** tags, `data/cityworld/tags/entity_type/subway/locomotive.json` and
+`subway/carriage.json`, which ship Choo Choo's `locomotive` and `passenger_cart` (optional). While the locomotive
+tag names a type, a station rolls `subways.oddsOfTrain` for a locomotive standing on one of its tracks, facing out,
+with up to `subways.trainCarriages` carriages behind it; with Choo Choo they are coupled into one train the first
+time they load. Any entity type can go in these tags (a pack could park plain minecarts), but only Choo Choo's are
+coupled. Every subway bend is also a curve of short rails (not one corner rail), which Slash Rails' Track Smoother
+rounds into a smooth turn.
+
 ## Data maps: swapping blocks, unlit lights, biome ground
 
 Tags say *which* blocks belong to a pool. **Data maps** attach a value to a block or biome instead. Three
@@ -943,11 +972,17 @@ merges with CityWorld's on NeoForge and **replaces** it on 1.20.1):
 | `palette/<part>`, `palette/<style>/<part>` | one part of a building or street (28 parts), optionally for one style | [Per-part palettes](#per-part-palettes-from-614) |
 | `furniture/<role>` | what furnishes a room by role: `chair`, `table`, `sofa`, `desk`, `counter`, `cabinet`, `drawer`, `wardrobe`, `sink`, `bath`, `toilet`, `bookshelf`, `lamp`, `floor_lamp`, `bed`, `shelf`, `crate`, and the kitchen and office appliances `stove`, `fridge`, `freezer`, `microwave`, `toaster`, `cutting_board`, `bin`, `computer`, `tv`, `workbench`, `ceiling_fan` | [Furniture](#furniture) |
 | `decor/*` | tabletop, floor and wall scatter (`surface`, `floor`, `wall`, `desk`, `rug`, `feast`, `stove_top`, `hanging_light`) and the APOCALYPSE-only `grim_floor`, `grim_surface`, `grim_wall` | [Decoration](#furniture) |
-| `fittings/*` | doors (`door`, `interior_door`, `store_door`, `industrial_door`, `garage_door`), `trapdoor`, `window`, `roof`, `stairs`, `railing`, fences (`fence`, `farm_fence`, `gate`, `site_fence`, `site_wire`), `shop_sign`, `atm`, `healing_machine`, `pc`, `pasture` (Cobblemon) and `atm_base` (the block an ATM stands on), and the road kit `road`, `path`, `track`, `skybridge`, `rope_bridge` | [Fittings](#fittings) |
+| `fittings/*` | doors (`door`, `interior_door`, `store_door`, `industrial_door`, `garage_door`), `trapdoor`, `window`, `roof`, `stairs`, `railing`, fences (`fence`, `farm_fence`, `gate`, `site_fence`, `site_wire`), `shop_sign`, `atm`, `healing_machine`, `pc`, `pasture` (Cobblemon) and `atm_base` (the block an ATM stands on), and the road kit `road`, `path`, `track`, `skybridge`, `rope_bridge`, and the subway's track `rail`, `rail_booster`, `rail_ruined`, `rail_buffer_stop`, `rail_stop` (Railcraft) | [Fittings](#fittings) |
 | `light/*` | `street_lamp`, `garden`, `tiki` | [Fittings](#fittings) |
 | `farm/*` | `crops`, `flowers`, `tall_flowers`, `soil`, `paddy`, `produce`, `compost`, `bales` | [Farms](#farms) |
 | `loot/never` | containers that are machines, not storage: they are never given loot (a furnace-like mod block that would otherwise be filled) | [Loot Tables](Loot-Tables) |
 | `loot/food` | containers that hold one thing being prepared (a cutting board, a skillet): they get a single food item from `#cityworld:kitchen/food` instead of the lot's loot | [Loot Tables](Loot-Tables) |
+
+**Entity type tags** — `data/cityworld/tags/entity_type/<family>/<name>.json` (`tags/entity_types/` on 1.20.1):
+
+| Tag | What it feeds | Documented |
+|---|---|---|
+| `subway/locomotive`, `subway/carriage` | the trains parked at subway platforms (Choo Choo's) | [Train mods](#train-mods-the-subways-track-stops-and-parked-trains-from-72) |
 
 **Item tags** — `data/cityworld/tags/item/<family>/<name>.json`:
 

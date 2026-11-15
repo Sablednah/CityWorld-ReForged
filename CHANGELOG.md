@@ -5,6 +5,22 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 7.2.0 (unreleased)
+
+### Added
+
+- **Train mods in the subway** (GitHub issue #7). Every subway bend is now a **curve** of short rails through a
+  rounded tunnel, not one corner rail, so **Slash Rails**' Track Smoother rounds it into a smooth turn (it reports the
+  whole run, none of it tight). With **Improvement Minecarts** (mod or datapack) each platform track gets its **stop**:
+  lapis under the rail mid-platform, gold at the end of a line, and a sign with the station's name for the mod to
+  announce (`subways.stops`, **Train stops** in Customize). **Railcraft Reborn**'s track is laid where it is installed:
+  reinforced track, booster track on the powered lengths, abandoned track in a ruin, buffer stops at dead ends and a
+  delayed locking track at each stop (five new pools, `#cityworld:fittings/rail*`). **Choo Choo**'s trains stand at
+  some stations, a locomotive and its carriages coupled and facing out (`subways.oddsOfTrain` 1/2,
+  `subways.trainCarriages` 2, **Parked trains** in Customize; entity tags `#cityworld:subway/locomotive` and
+  `subway/carriage`). Without these mods a world draws exactly what it did, bends aside. Self-test `subway.bend`.
+  TRAINS-PLAN.md has the survey and the measurements.
+
 ## 7.1.0 — 2026-11-14
 
 ### Added

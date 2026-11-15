@@ -435,6 +435,9 @@ lists. Cities keep clear of whatever is placed.
 |---|---|---|
 | `enabled` | `true` | A station in every urban district — a ticket hall beside a road, switchback stairs down to twin-track platforms 24 blocks under the street — and tunnels to the first station along its row or column up to six districts away, so lines cross the countryside between city clusters. East-west lines run on the upper level, north-south lines eight blocks lower, so lines never junction; a station on both is an interchange with stairs between its halls, and one with a single line each way joins them in a sloped loop instead of two dead ends. Lit, ringed in brick, powered rails so a cart runs the line. Stations announce as the landmark kind `subway` (off by default). |
 | `spawners` | `true` | In a ruined (APOCALYPSE) world, sewer-mob spawners in niches in the tunnel walls. |
+| `stops` | `true` | **Train stops** in Customize. With Improvement Minecarts installed (mod or datapack), each platform track gets a stop: a lapis block under the rail mid-platform (gold at the end of a line, where a train reverses) and a sign with the station's name beside it, which the mod announces. Without the mod nothing is drawn. |
+| `oddsOfTrain` | `0.5` (1 in 2) | **Parked trains** in Customize. With a train mod that supplies one (Choo Choo; the entity tag `#cityworld:subway/locomotive`), the chance a station has a train standing at one platform, coupled and facing out. Without one, nothing is rolled. |
+| `trainCarriages` | `2` | How many carriages a parked train has behind its locomotive (0 to 8; fewer when the platform runs out). |
 
 ### `roads` — road signs, bridges and parked vehicles (Macaw's Roads and Streets, Macaw's Bridges, Immersive Vehicles; nothing without them)
 
