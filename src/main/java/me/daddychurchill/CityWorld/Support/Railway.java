@@ -182,6 +182,8 @@ public final class Railway {
             tag.putDouble("ForwardX", dx);
             tag.putDouble("ForwardZ", dz);
             tag.putFloat("PassengerNose", (float) Math.toDegrees(Math.atan2(dz, dx)));
+            tag.putInt("TwoSeatVersion", 1); // with a nose and no version, Choo Choo takes it for an old one-seat save
+                                             // and swaps the carriage for its single cart
             if (ahead != null) {
                 ListTag tags = new ListTag();
                 tags.add(StringTag.valueOf(COUPLE_TAG + ahead));
