@@ -3668,6 +3668,79 @@ public final class CityWorldSelfTest {
         if (broken > 0 || blocked > 0)
             fail("subway bend at " + cx + "," + cz + ": " + broken + " rail ends lead nowhere, " + blocked
                     + " rails have no headroom " + samples);
+        checkBendSmoothed(server, level, chunk, cx, cz, railY);
+    }
+
+    /**
+     * With Slash Rails installed, the bend's rails must belong to one of its smoothed runs (Support/RailSmoothing asks
+     * the mod when a bend chunk is first generated). Read from the mod's own registry, by reflection.
+     */
+    private void checkBendSmoothed(MinecraftServer server, ServerLevel level, LevelChunk chunk, int cx, int cz, int railY) {
+        if (!me.daddychurchill.CityWorld.Support.RailSmoothing.available()) {
+            report.put("subway.bend.smoothed", "no Slash Rails");
+            return;
+        }
+        if (me.daddychurchill.CityWorld.Support.RailSmoothing.heldBack()) {
+            report.put("subway.bend.smoothed", "not smoothed: Choo Choo installed");
+            return;
+        }
+        // the track either side of the bend, as a player walking the line brings it in (a bend smoothed alone is a run
+        // too short for the mod, and is tried again as each neighbour arrives); then, since this server may have
+        // stopped ticking (nobody on it), what is queued is smoothed here
+        // held by forced tickets, as a player holds them (a chunk read with no ticket is gone again before the
+        // smoothing runs, and the mod smooths only loaded track)
+        int[][] around = { { 0, 0 }, { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
+        server.submit(() -> {
+            for (int[] d : around)
+                level.getChunkSource().updateChunkForced(new net.minecraft.world.level.ChunkPos(cx + d[0], cz + d[1]), true);
+        }).join();
+        try {
+            for (int i = 0; i < 300; i++) {
+                boolean all = server.submit(() -> {
+                    for (int[] d : around)
+                        if (level.getChunkSource().getChunkNow(cx + d[0], cz + d[1]) == null)
+                            return false;
+                    return true;
+                }).join();
+                if (all)
+                    break;
+                Thread.sleep(100);
+            }
+            server.submit(() -> me.daddychurchill.CityWorld.Support.RailSmoothing.drainNow(server)).join();
+            readSmoothed(level, chunk, cx, cz, railY);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            server.submit(() -> {
+                for (int[] d : around)
+                    level.getChunkSource().updateChunkForced(new net.minecraft.world.level.ChunkPos(cx + d[0], cz + d[1]), false);
+            }).join();
+        }
+    }
+
+    private void readSmoothed(ServerLevel level, LevelChunk chunk, int cx, int cz, int railY) {
+        int rails = 0, smoothed = 0;
+        try {
+            Class<?> reg = Class.forName("com.slashrails.run.SmoothRunRegistry");
+            Object registry = reg.getMethod("get", ServerLevel.class).invoke(null, level);
+            var contains = reg.getMethod("contains", BlockPos.class);
+            for (int x = 0; x < 16; x++)
+                for (int z = 0; z < 16; z++) {
+                    BlockPos at = new BlockPos(cx * 16 + x, railY, cz * 16 + z);
+                    if (!(chunk.getBlockState(at).getBlock() instanceof net.minecraft.world.level.block.BaseRailBlock))
+                        continue;
+                    rails++;
+                    if ((Boolean) contains.invoke(registry, at))
+                        smoothed++;
+                }
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            fail("subway bend smoothing: could not read Slash Rails' runs: " + e);
+            return;
+        }
+        report.put("subway.bend.smoothed", smoothed + " of " + rails + " rails in smoothed runs");
+        if (smoothed < rails)
+            fail("subway bend at " + cx + "," + cz + ": " + (rails - smoothed) + " of " + rails
+                    + " rails not smoothed with Slash Rails installed");
     }
 
     private static Direction[] railEnds(net.minecraft.world.level.block.state.properties.RailShape shape) {
