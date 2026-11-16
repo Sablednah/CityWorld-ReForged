@@ -60,6 +60,15 @@ iconBlur=false
 # no-op — measured 2026-09-16: 6 rose quartz blocks across a 13x13-chunk sweep either way, identical to
 # stock BoP, because BoP's pack loaded last. (The override aims BoP's placement at the ruined Nether's
 # cave band; BoP tunes it for vanilla's 128-block Nether and ours is ~3x taller. See PORTING.md.)
+# Railcraft Reborn: CityWorld ships particle-only overrides of its six track corner models (see
+# assets/railcraft/models/block/), which only take effect when CityWorld's resources load after Railcraft's.
+[[dependencies.${mod_id}]]
+    modId="railcraft"
+    type="optional"
+    versionRange="[0,)"
+    ordering="AFTER"
+    side="BOTH"
+
 [[dependencies.${mod_id}]]
     modId="biomesoplenty"
     type="optional"
