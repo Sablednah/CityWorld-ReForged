@@ -38,6 +38,11 @@ public final class CityWorldRegistries {
     public static final DeferredRegister<MapCodec<? extends BiomeSource>> BIOME_SOURCES =
             DeferredRegister.create(Registries.BIOME_SOURCE, CityWorldMod.MODID);
 
+    /** {@code cityworld:linked_table}: a loot modifier that rolls another table, its own modifiers and all
+     *  ({@link me.daddychurchill.CityWorld.Support.LinkedTableLoot}); nothing uses it until a datapack does. */
+    public static final DeferredRegister<MapCodec<? extends net.neoforged.neoforge.common.loot.IGlobalLootModifier>> LOOT_MODIFIERS =
+            DeferredRegister.create(net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.GLOBAL_LOOT_MODIFIER_SERIALIZERS, CityWorldMod.MODID);
+
     /** Root key of the per-world settings datapack registry. */
     public static final ResourceKey<Registry<CityWorldSettingsData>> WORLD_SETTINGS =
             ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath(CityWorldMod.MODID, "world_settings"));
@@ -53,12 +58,14 @@ public final class CityWorldRegistries {
         BIOME_SOURCES.register("nether", () -> CityWorldNetherBiomeSource.CODEC); // ruined-city Nether — climate × #nether_pool
         BIOME_SOURCES.register("vanilla", () -> CityWorldVanillaBiomeSource.CODEC); // a vanilla-terrain world — another source, asked with the real climate
         BIOME_SOURCES.register("end", () -> CityWorldEndBiomeSource.CODEC); // the End — vanilla's biomes (+ TerraBlender's) on vanilla's islands
+        LOOT_MODIFIERS.register("linked_table", () -> me.daddychurchill.CityWorld.Support.LinkedTableLoot.CODEC);
     }
 
     /** Wire the deferred registers and datapack-registry listener onto the mod event bus. */
     public static void register(IEventBus modEventBus) {
         CHUNK_GENERATORS.register(modEventBus);
         BIOME_SOURCES.register(modEventBus);
+        LOOT_MODIFIERS.register(modEventBus);
         modEventBus.addListener(CityWorldRegistries::onNewDataPackRegistry);
     }
 
