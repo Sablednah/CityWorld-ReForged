@@ -1,6 +1,5 @@
 {
   "parent": "minecraft:block/rail_curved",
-  "render_type": "minecraft:cutout",
   "textures": {
     "particle": "railcraft:block/abandoned_track_0",
     "rail": "railcraft:block/abandoned_track_corner"
