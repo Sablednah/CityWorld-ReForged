@@ -24,6 +24,28 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-16 overnight): an ELECTRIC subway with Railcraft Reborn, built on all six lines — `TRAINS-PLAN.md` §7.**
+- Owner at bedtime: *"have a try at the electric line over night - answer your queries with tests - and then build the
+  best result. If theres a way to recharge we can built into the station somehow"*. Built: with
+  `#cityworld:fittings/rail_electric` filled (Railcraft's `electric_track`) and `subways.electric` on (default), a line
+  that is not a ruin is all electric track (pools `rail_electric`, `_booster`, `_buffer_stop`, `_stop`; pickers never
+  fall back to plain rail, which would split the grid), two `fittings/rail_battery` (nickel-zinc) at each hall's
+  middle-pillar feet, one against each track (BESIDE a rail connects, UNDER one does not), fed by `Support/Substations`
+  at `subways.stationCharge` 20/tick (1.21.1 `IEnergyStorage`; 1.21.11/26.x `Capabilities.Energy` + `Transaction`;
+  1.20.1 Railcraft's `Charge` API by reflection), and parked `#cityworld:subway/electric_locomotive` with a MINECART
+  yaw (`atan2(dz,dx)`; a mob yaw stood it across the track). Every question answered by probe on 1.21.1 (§7 table):
+  lazy network registration needs nothing at worldgen, a 226-node grid per station, a started loco runs at 6 b/s and
+  rides a smoothed bend, no shock, survives a restart; the locking track does not hold a running loco. **Probe trap:
+  an empty level stops ticking entities 300 ticks after emptying — `level.resetEmptyTime()` in every probe wait.**
+  Master `695a2f25` `cf1d2079` + docs; picked to the five lines (26.x `ChunkPos.x()`/`pack()`, 1.20.1 Forge events +
+  `tags/blocks/`, `tags/entity_types/`). Railcraft exists for 1.20.1/1.21.1/26.1 only; it is now in `mc26.1/run/mods`
+  (26.1's self-test `subway.electric` reads track live), and 26.x test beds' `run/server.properties` now say
+  `pause-when-empty-seconds=-1`. Self-tests PASS: 1.21.1 `587e86f6`, 26.1 `69f343cb`, 26.2 `13451f4e`, 26.3
+  `c5f6f3f9`, master `cf1d2079`, 1.20.1 `1261b318`; `--compare` five-way agrees (MODERN `c4b95b7c`, APOCALYPSE
+  `fd6df8c0`, 26.1 with Railcraft included: the electric line changes no plan; 1.21.1 differs by its Cobblemon). Deployed to the owner's `1.21.1` instance `DEPLOYED-587e86f6` (that instance has
+  Slash Rails but not Railcraft: add `railcraft-reborn-1.21.1-1.2.17.jar` to see the line). Issue reply draft updated
+  (scratchpad `trains/issue7-reply.md`). Nothing pushed. Next: the owner's look, then 7.2.0.
+
 **▶ Resume here (2026-11-15): issue #7 train mods BUILT on all six lines, unreleased — `TRAINS-PLAN.md`.**
 - Owner: *"see what we can add support in for"* (Slash Rails, Improvement Minecarts, Railcraft Reborn, Choo Choo).
   Built: subway bends are staircase arcs in a rounded tunnel (Slash Rails smooths 160/192 rails, none tight; self-test
