@@ -149,7 +149,7 @@ generated city, more ground than all of Greater London and two and a half New Yo
 - **Cities in a vanilla world** — pick *Land — Vanilla, cities apart* and the terrain is vanilla's with a CityWorld
   city every so often, joined (7.0) by highways that climb in half-block steps, tunnel through ridges and bridge
   rivers.
-- **Cobblemon** (7.1, 1.21.1+) — Pokémon Centers on the streets, typed gyms with a leader to battle, Poké Marts;
+- **Cobblemon** (7.1; 1.21.1, and 1.20.1 in part: villagers for the nurse and gym leader, no district spawns) — Pokémon Centers on the streets, typed gyms with a leader to battle, Poké Marts;
   the city tells Cobblemon's spawner where it is, so urban species walk the streets and each district has its own;
   villages and Cobblemon's structures in the wild, apricorn trees in the orchards.
 - **Subway** (MODERN/APOCALYPSE) — a station in every urban district and twin-track tunnels between

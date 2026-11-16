@@ -70,7 +70,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   `data/cityworld/data_maps/worldgen/structure_set/placed_sets.json` places a structure set under a
   `neoforge:conditions` guard (`allow`, `wild`), which a `#cityworld:allowed` tag entry cannot carry. The Structures
   page shows the result as the set's default tick. Self-test `placedSets`.
-- **Cobblemon: Pokémon Centers, gyms and Poké Marts in the city.** With Cobblemon installed (1.21.1 and newer), a
+- **Cobblemon: Pokémon Centers, gyms and Poké Marts in the city.** With Cobblemon installed (all of this on 1.21.1; on 1.20.1 the Centers, gyms and Poké Marts, with a villager
+  standing in for the nurse and the gym leader and no district spawns; Cobblemon has a release for 1.21.1 and 1.20.1 only), a
   one-chunk Pokémon Center stands on the streets of the lowrise, midrise and highrise districts
   (`shops.oddsOfPokecenter`, 1 in 55 road-fronting building chunks — one building, never flooded into its neighbours): white walls, a red band, a Poké Ball on the roof,
   the healing machine behind the reception counter with a `cobblemon:nurse`, a bank of PCs, seating, beds upstairs, a
@@ -91,7 +92,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   facing.
   All three are planned only while `#cityworld:fittings/healing_machine` has a block in it (Cobblemon's; pools
   `fittings/{healing_machine,pc,pasture}`), so a world without Cobblemon never rolls for them and plans as before.
-  `/cityfind pokecenter`, `/cityfind gym`, `/cityfind shop:pokemart`; both buildings are announced landmarks.
+  `/cityfind lot pokecenter` and `/cityfind lot gym` find them (a bare `/cityfind <name>` searches schematic
+  buildings only); the Urban Compass also finds a Poké Mart (`shop:pokemart`). Both buildings are announced landmarks.
 - **Cobblemon: the city tells Cobblemon's spawner where it is.** Through Cobblemon's spawning-influence API, every
   spawn position on CityWorld land carries **markers** (`cityworld:city`, `cityworld:street`, `cityworld:farm`,
   `cityworld:wild`, `cityworld:underground`, `cityworld:sewer`, `cityworld:subway`, `cityworld:district/<family>`,

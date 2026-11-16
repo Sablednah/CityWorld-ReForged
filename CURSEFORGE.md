@@ -15,7 +15,8 @@ generated city, more ground than all of Greater London and two and a half New Yo
 
 ![The highrise core at golden hour](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/cityworld-highrise-district-in-golden-hour.jpg)
 
-**New in 7.1.0: Cobblemon.** With Cobblemon installed (1.21.1 and newer) the city grows **Pokémon Centers** on its
+**New in 7.1.0: Cobblemon.** With Cobblemon installed (fully on 1.21.1; on 1.20.1 the buildings, with villagers for the nurse and gym
+leader; Cobblemon has a release for 1.21.1 and 1.20.1 only) the city grows **Pokémon Centers** on its
 streets — a nurse and the healing machine at the counter, a bank of PCs, beds upstairs, a pasture out the back —
 **gyms** in the municipal districts, typed fire to psychic with a **gym leader** waiting behind the arena to
 battle, and **Poké Marts** among the street shops and in the mall. The city tells Cobblemon's spawner where it is:
@@ -376,7 +377,7 @@ with none installed nothing changes.
 | Mod | What CityWorld does with it |
 |---|---|
 | **JourneyMap** | Draws the city plan over unexplored ground, names streets, places and landmarks. |
-| **Cobblemon** (1.21.1+) | Pokémon Centers, typed gyms with leaders to battle, Poké Marts; its spawner told where the city is (urban species on the streets, district species by district); villages and its structures in the wild; apricorn trees and berries on the farms. |
+| **Cobblemon** (1.21.1; 1.20.1 in part) | Pokémon Centers, typed gyms with leaders to battle, Poké Marts; its spawner told where the city is (urban species on the streets, district species by district); villages and its structures in the wild; apricorn trees and berries on the farms. |
 | **Macaw's Furniture**, **MrCrayfish's Refurbished Furniture**, **Fantasy's Furniture** (all sets, Decorations) | Furnishes every interior with their pieces. |
 | **Macaw's Doors, Windows, Fences and Walls, Roofs, Stairs, Trapdoors, Lights** (and the BoP add-on) | Builds the city's doors, windows, roofs, fences, stairs and lighting from them. |
 | **Macaw's Roads and Streets, Paths and Pavings, Bridges** | Street and highway surfaces, markings and road signs; park and farm paths; rope bridges in the wild and between ruined towers. |
