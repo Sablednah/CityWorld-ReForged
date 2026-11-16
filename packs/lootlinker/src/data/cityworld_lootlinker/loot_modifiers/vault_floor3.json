@@ -1,0 +1,14 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/vault_floor3",
+    "cityworld:chests/vault_ammo_floor3",
+    "cityworld:chests/vault_armoury_floor3",
+    "cityworld:chests/vault_office_floor3",
+    "cityworld:chests/vault_quarters_floor3"
+  ],
+  "table": "minecraft:chests/ancient_city",
+  "chance": 0.5,
+  "max_stacks": 3
+}

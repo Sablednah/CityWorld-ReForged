@@ -1,0 +1,14 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/vault_floor1",
+    "cityworld:chests/vault_ammo_floor1",
+    "cityworld:chests/vault_armoury_floor1",
+    "cityworld:chests/vault_office_floor1",
+    "cityworld:chests/vault_quarters_floor1"
+  ],
+  "table": "minecraft:chests/abandoned_mineshaft",
+  "chance": 0.4,
+  "max_stacks": 2
+}

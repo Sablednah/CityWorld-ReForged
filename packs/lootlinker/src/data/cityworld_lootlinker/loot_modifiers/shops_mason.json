@@ -1,0 +1,10 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/shop_builders_merchant"
+  ],
+  "table": "minecraft:chests/village/village_mason",
+  "chance": 0.5,
+  "max_stacks": 2
+}

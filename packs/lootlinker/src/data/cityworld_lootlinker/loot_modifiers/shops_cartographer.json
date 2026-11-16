@@ -1,0 +1,13 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/mall_books",
+    "cityworld:chests/shop_bookshop",
+    "cityworld:chests/shop_cartographer",
+    "cityworld:chests/shop_newsagent"
+  ],
+  "table": "minecraft:chests/village/village_cartographer",
+  "chance": 0.5,
+  "max_stacks": 2
+}

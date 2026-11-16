@@ -1,0 +1,10 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/sewer"
+  ],
+  "table": "minecraft:chests/simple_dungeon",
+  "chance": 0.3,
+  "max_stacks": 2
+}

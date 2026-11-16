@@ -1,0 +1,14 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/vault_armoury",
+    "cityworld:chests/vault_armoury_floor1",
+    "cityworld:chests/vault_armoury_floor2",
+    "cityworld:chests/vault_armoury_floor3",
+    "cityworld:chests/bunker"
+  ],
+  "table": "minecraft:chests/pillager_outpost",
+  "chance": 0.35,
+  "max_stacks": 2
+}

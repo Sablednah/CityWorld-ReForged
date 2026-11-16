@@ -1,0 +1,11 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/mall_fashion",
+    "cityworld:chests/shop_draper"
+  ],
+  "table": "minecraft:chests/village/village_shepherd",
+  "chance": 0.5,
+  "max_stacks": 2
+}

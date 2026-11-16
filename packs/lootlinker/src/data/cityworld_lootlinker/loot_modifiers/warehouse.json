@@ -1,0 +1,10 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/warehouse"
+  ],
+  "table": "minecraft:chests/shipwreck_supply",
+  "chance": 0.4,
+  "max_stacks": 3
+}

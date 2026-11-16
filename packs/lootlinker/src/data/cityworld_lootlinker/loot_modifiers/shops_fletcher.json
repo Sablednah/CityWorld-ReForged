@@ -1,0 +1,11 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/mall_sports",
+    "cityworld:chests/shop_fletcher"
+  ],
+  "table": "minecraft:chests/village/village_fletcher",
+  "chance": 0.5,
+  "max_stacks": 2
+}

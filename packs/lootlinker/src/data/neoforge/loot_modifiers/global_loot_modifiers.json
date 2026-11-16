@@ -1,0 +1,35 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:never"
+    }
+  ],
+  "replace": false,
+  "entries": [
+    "cityworld_lootlinker:vault_entry",
+    "cityworld_lootlinker:vault_floor1",
+    "cityworld_lootlinker:vault_floor2",
+    "cityworld_lootlinker:vault_floor3",
+    "cityworld_lootlinker:armoury_outpost",
+    "cityworld_lootlinker:armoury_weaponsmith",
+    "cityworld_lootlinker:armoury_armorer",
+    "cityworld_lootlinker:mine",
+    "cityworld_lootlinker:sewer_dungeon",
+    "cityworld_lootlinker:sewer_ruin",
+    "cityworld_lootlinker:warehouse",
+    "cityworld_lootlinker:homes_plains",
+    "cityworld_lootlinker:homes_taiga",
+    "cityworld_lootlinker:shops_armorer",
+    "cityworld_lootlinker:shops_butcher",
+    "cityworld_lootlinker:shops_cartographer",
+    "cityworld_lootlinker:shops_fisher",
+    "cityworld_lootlinker:shops_fletcher",
+    "cityworld_lootlinker:shops_mason",
+    "cityworld_lootlinker:shops_plains_house",
+    "cityworld_lootlinker:shops_shepherd",
+    "cityworld_lootlinker:shops_tannery",
+    "cityworld_lootlinker:shops_temple",
+    "cityworld_lootlinker:shops_toolsmith",
+    "cityworld_lootlinker:shops_weaponsmith"
+  ]
+}

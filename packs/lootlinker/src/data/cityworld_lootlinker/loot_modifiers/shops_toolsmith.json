@@ -1,0 +1,11 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/mall_hardware",
+    "cityworld:chests/shop_toolsmith"
+  ],
+  "table": "minecraft:chests/village/village_toolsmith",
+  "chance": 0.5,
+  "max_stacks": 2
+}

@@ -1,0 +1,10 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/shop_butcher"
+  ],
+  "table": "minecraft:chests/village/village_butcher",
+  "chance": 0.5,
+  "max_stacks": 2
+}

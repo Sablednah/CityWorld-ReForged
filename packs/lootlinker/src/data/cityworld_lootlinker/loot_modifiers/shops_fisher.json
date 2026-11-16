@@ -1,0 +1,10 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/shop_fishmonger"
+  ],
+  "table": "minecraft:chests/village/village_fisher",
+  "chance": 0.5,
+  "max_stacks": 2
+}

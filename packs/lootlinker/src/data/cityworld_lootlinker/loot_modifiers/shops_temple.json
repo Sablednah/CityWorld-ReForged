@@ -1,0 +1,11 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/mall_pharmacy",
+    "cityworld:chests/shop_apothecary"
+  ],
+  "table": "minecraft:chests/village/village_temple",
+  "chance": 0.5,
+  "max_stacks": 2
+}

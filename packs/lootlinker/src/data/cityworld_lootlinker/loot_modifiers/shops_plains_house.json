@@ -1,0 +1,12 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/mall_bakery",
+    "cityworld:chests/mall_grocer",
+    "cityworld:chests/shop_greengrocer"
+  ],
+  "table": "minecraft:chests/village/village_plains_house",
+  "chance": 0.5,
+  "max_stacks": 2
+}

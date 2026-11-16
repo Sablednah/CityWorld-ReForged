@@ -1,0 +1,10 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/mine"
+  ],
+  "table": "minecraft:chests/abandoned_mineshaft",
+  "chance": 0.4,
+  "max_stacks": 3
+}

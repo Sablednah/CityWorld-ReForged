@@ -1,0 +1,14 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/vault_floor2",
+    "cityworld:chests/vault_ammo_floor2",
+    "cityworld:chests/vault_armoury_floor2",
+    "cityworld:chests/vault_office_floor2",
+    "cityworld:chests/vault_quarters_floor2"
+  ],
+  "table": "minecraft:chests/stronghold_corridor",
+  "chance": 0.45,
+  "max_stacks": 3
+}

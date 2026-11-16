@@ -1,0 +1,10 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/sewer"
+  ],
+  "table": "minecraft:chests/underwater_ruin_small",
+  "chance": 0.25,
+  "max_stacks": 2
+}

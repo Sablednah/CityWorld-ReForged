@@ -1,0 +1,13 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/vault_ammo",
+    "cityworld:chests/vault_armoury",
+    "cityworld:chests/vault_office",
+    "cityworld:chests/vault_quarters"
+  ],
+  "table": "minecraft:chests/simple_dungeon",
+  "chance": 0.35,
+  "max_stacks": 2
+}

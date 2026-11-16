@@ -1,0 +1,24 @@
+# CityWorld: LootLinker, a data-only add-on (no code). MinecraftForge 1.20.1 reads this file.
+modLoader="lowcodefml"
+loaderVersion="[1,)"
+license="GPL-3.0-only"
+issueTrackerURL="https://github.com/Sablednah/CityWorld-ReForged/issues"
+
+[[mods]]
+modId="cityworld_lootlinker"
+version="1.0.0"
+displayName="CityWorld: LootLinker"
+authors="Sablednah"
+description='''
+A datapack for CityWorld: vanilla's chest loot, and every mod's additions to it, mixed into the city's containers.
+The vault gets dungeon, mineshaft, stronghold and ancient-city loot as it deepens; armouries and bunkers an outpost's
+and a smith's; mines, sewers and warehouses their vanilla cousins; each shop its village trade; homes, rarely, a
+village house's. Needs CityWorld 7.2.0 or later.
+'''
+
+[[dependencies.cityworld_lootlinker]]
+    modId="cityworld"
+    mandatory=true
+    versionRange="[7.2,)"
+    ordering="AFTER"
+    side="BOTH"

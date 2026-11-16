@@ -1,0 +1,24 @@
+{
+  "type": "cityworld:linked_table",
+  "conditions": [],
+  "targets": [
+    "cityworld:chests/building",
+    "cityworld:chests/nightstand",
+    "cityworld:chests/food",
+    "cityworld:chests/modern/building",
+    "cityworld:chests/modern/building_find",
+    "cityworld:chests/modern/nightstand",
+    "cityworld:chests/modern/nightstand_find",
+    "cityworld:chests/modern/food",
+    "cityworld:chests/modern/food_find",
+    "cityworld:chests/apocalypse/building",
+    "cityworld:chests/apocalypse/building_find",
+    "cityworld:chests/apocalypse/nightstand",
+    "cityworld:chests/apocalypse/nightstand_find",
+    "cityworld:chests/apocalypse/food",
+    "cityworld:chests/apocalypse/food_find"
+  ],
+  "table": "minecraft:chests/village/village_taiga_house",
+  "chance": 0.04,
+  "max_stacks": 1
+}
