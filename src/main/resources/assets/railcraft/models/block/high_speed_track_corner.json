@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/rail_curved",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "railcraft:block/high_speed_track",
+    "rail": "railcraft:block/high_speed_track_corner"
+  }
+}
