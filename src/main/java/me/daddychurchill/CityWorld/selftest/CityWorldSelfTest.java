@@ -3784,19 +3784,30 @@ public final class CityWorldSelfTest {
                     if (took <= 0 || after <= before)
                         return "FAIL the battery at " + b.toShortString() + " took no charge: " + out;
                 }
-                try {
-                    Class<?> charge = Class.forName("mods.railcraft.api.charge.Charge");
-                    Object network = charge.getMethod("network", ServerLevel.class).invoke(charge.getField("distribution").get(null), level);
-                    Object access = network.getClass().getMethod("access", BlockPos.class).invoke(network, rail);
-                    boolean live = (Boolean) access.getClass().getMethod("hasCapacity", int.class).invoke(access, 1000);
-                    out.append("track live ").append(live);
-                    if (!live)
-                        return "FAIL the track beside the batteries has no charge: " + out;
-                } catch (ReflectiveOperationException | RuntimeException e) {
-                    return "FAIL could not read Railcraft's charge network: " + e;
-                }
                 return out.toString();
             }).join();
+            // the track's network counts a battery's charge as available from its next tick on, so ask again for up to
+            // two seconds (the run's server.properties must not pause an empty server: pause-when-empty-seconds -1)
+            if (!result.startsWith("FAIL")) {
+                BlockPos rail = new BlockPos(cx * 16 + 7, railY, cz * 16 + 6);
+                String live = "?";
+                for (int i = 0; i < 40 && !live.equals("true"); i++) {
+                    Thread.sleep(50);
+                    live = server.submit(() -> {
+                        try {
+                            Class<?> charge = Class.forName("mods.railcraft.api.charge.Charge");
+                            Object network = charge.getMethod("network", ServerLevel.class).invoke(charge.getField("distribution").get(null), level);
+                            Object access = network.getClass().getMethod("access", BlockPos.class).invoke(network, rail);
+                            return "" + access.getClass().getMethod("hasCapacity", int.class).invoke(access, 1);
+                        } catch (ReflectiveOperationException | RuntimeException e) {
+                            return "unreadable: " + e;
+                        }
+                    }).join();
+                }
+                result += "track live " + live;
+                if (!live.equals("true"))
+                    result = "FAIL the track beside the batteries has no charge: " + result;
+            }
             report.put("subway.electric", cx + "," + cz + " " + result);
             if (result.startsWith("FAIL"))
                 fail("subway electric station at " + cx + "," + cz + ": " + result.substring(5));
