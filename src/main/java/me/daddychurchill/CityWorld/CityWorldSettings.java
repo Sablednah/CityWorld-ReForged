@@ -231,6 +231,9 @@ public class CityWorldSettings {
     public int trainCarriages = CityWorldSettingsData.Subways.TRAIN_CARRIAGES;
     /** With Slash Rails: each subway bend smoothed when it first loads (subways.smoothBends; Support/RailSmoothing). */
     public boolean smoothBends = true;
+    /** With Railcraft: non-ruined lines electric, a battery per station hall charged from the city (Support/Substations). */
+    public boolean electricSubways = true;
+    public int stationCharge = CityWorldSettingsData.Subways.STATION_CHARGE;
 
     /** Who turns up, and how often. {@code SpawnProvider} branches on all of these. */
     public double spawnBeings = Odds.oddsLikely;
@@ -658,6 +661,8 @@ public class CityWorldSettings {
         oddsOfParkedTrain = data.subways().oddsOfTrain();
         trainCarriages = data.subways().trainCarriages();
         smoothBends = data.subways().smoothBends();
+        electricSubways = data.subways().electric();
+        stationCharge = data.subways().stationCharge();
         driveOnLeft = data.roads().driveOnLeft();
         speedLimitUrban = data.roads().speedLimitUrban();
         speedLimitRural = data.roads().speedLimitRural();
@@ -818,7 +823,7 @@ public class CityWorldSettings {
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways,
-                subwayStops, oddsOfParkedTrain, trainCarriages, smoothBends);
+                subwayStops, oddsOfParkedTrain, trainCarriages, smoothBends, electricSubways, stationCharge);
         CityWorldSettingsData.Roads roads = new CityWorldSettingsData.Roads(driveOnLeft, speedLimitUrban, speedLimitRural,
                 oddsOfSpeedRepeat, includeSkybridges, oddsOfSkybridge, skybridgeMinFloors, oddsOfStreetRope, includeWildBridges,
                 wildBridgeDepth, wildBridgeSpan, oddsOfWildBridge, wildBridgeRegion,

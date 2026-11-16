@@ -5,6 +5,10 @@
     { "id": "#cityworld:fittings/rail_booster", "required": false },
     { "id": "#cityworld:fittings/rail_ruined", "required": false },
     { "id": "#cityworld:fittings/rail_buffer_stop", "required": false },
-    { "id": "#cityworld:fittings/rail_stop", "required": false }
+    { "id": "#cityworld:fittings/rail_stop", "required": false },
+    { "id": "#cityworld:fittings/rail_electric", "required": false },
+    { "id": "#cityworld:fittings/rail_electric_booster", "required": false },
+    { "id": "#cityworld:fittings/rail_electric_buffer_stop", "required": false },
+    { "id": "#cityworld:fittings/rail_electric_stop", "required": false }
   ]
 }

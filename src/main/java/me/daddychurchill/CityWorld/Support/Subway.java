@@ -504,6 +504,11 @@ public final class Subway {
      * (the station lot calls it itself, first, since its stairs cut through what this draws).
      */
     public static void generate(CityWorldGenerator generator, PlatLot lot, RealBlocks chunk, Odds odds) {
+        // an electric line (Railcraft) lays every piece from the electric pools: see Railway
+        Railway.electrified(Railway.electricLine(generator), () -> draw(generator, lot, chunk, odds));
+    }
+
+    private static void draw(CityWorldGenerator generator, PlatLot lot, RealBlocks chunk, Odds odds) {
         Piece piece = at(generator, chunk.sectionX, chunk.sectionZ);
         if (!piece.any())
             return;
@@ -978,6 +983,10 @@ public final class Subway {
         for (int along = 2; along < 16; along += 5)
             for (int across = 7; across <= 8; across++)
                 chunk.setBlocks(alongX ? along : across, floorY + 1, ceilY, alongX ? across : along, RING);
+        Material battery = stationName != null ? Railway.battery() : null;
+        if (battery != null) // the substation: a battery at the foot of the middle pillars, one against each track
+            for (int across = 7; across <= 8; across++)
+                chunk.setBlock(alongX ? 7 : across, floorY + 1, alongX ? across : 7, battery);
         for (int along = 1; along < 16; along += 4)
             for (int across : new int[] { 3, 7, 12 }) {
                 boolean dead = ruined && Math.floorMod(chunk.sectionX * 7 + chunk.sectionZ * 13 + along * 3 + across, 5) < 2;
@@ -1066,7 +1075,7 @@ public final class Subway {
             RailShape shape = alongX ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
             if (im) {
                 chunk.setBlock(x, floorY, z, terminus ? Railway.TERMINUS_BLOCK : Railway.STOP_BLOCK);
-                chunk.setBlock(x, floorY + 1, z, Material.RAIL, shape, false);
+                chunk.setBlock(x, floorY + 1, z, Railway.stopRail(), shape, false);
                 int gap = line == 6 ? 7 : 8; // between the tracks, beside this one
                 int sx = alongX ? along : gap, sz = alongX ? gap : along;
                 BlockFace away = alongX ? (along > pillar ? BlockFace.EAST : BlockFace.WEST)
