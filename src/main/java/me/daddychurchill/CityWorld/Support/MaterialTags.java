@@ -173,6 +173,12 @@ public final class MaterialTags {
     public static final TagKey<Block> FITTINGS_RAIL_RUINED = key("cityworld:fittings/rail_ruined");
     public static final TagKey<Block> FITTINGS_RAIL_BUFFER_STOP = key("cityworld:fittings/rail_buffer_stop");
     public static final TagKey<Block> FITTINGS_RAIL_STOP = key("cityworld:fittings/rail_stop");
+    // the electric line (Railcraft Reborn's electric track, and the battery each station keeps charged)
+    public static final TagKey<Block> FITTINGS_RAIL_ELECTRIC = key("cityworld:fittings/rail_electric");
+    public static final TagKey<Block> FITTINGS_RAIL_ELECTRIC_BOOSTER = key("cityworld:fittings/rail_electric_booster");
+    public static final TagKey<Block> FITTINGS_RAIL_ELECTRIC_BUFFER_STOP = key("cityworld:fittings/rail_electric_buffer_stop");
+    public static final TagKey<Block> FITTINGS_RAIL_ELECTRIC_STOP = key("cityworld:fittings/rail_electric_stop");
+    public static final TagKey<Block> FITTINGS_RAIL_BATTERY = key("cityworld:fittings/rail_battery");
     /** A Pokémon Center's healing machine ({@code cobblemon:healing_machine}); while empty no Center is planned. */
     public static final TagKey<Block> FITTINGS_HEALING_MACHINE = key("cityworld:fittings/healing_machine");
     /** A Pokémon storage PC ({@code cobblemon:pc}, two high through its furniture layout): Centers, the Poké Mart counter. */
