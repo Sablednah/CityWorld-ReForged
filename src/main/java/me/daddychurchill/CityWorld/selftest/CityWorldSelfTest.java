@@ -228,6 +228,7 @@ public final class CityWorldSelfTest {
             checkFitOuts(server);
             checkFindables(server);
             checkVaultLootTiers(server);
+            checkLinkedLoot(server);
             checkStyleLootTables(server);
             checkReservedSite(server); // last: it changes the plan (far from everything else checked)
             checkDirectLoad(server); // truly last: if it finds a deadlock the server thread never answers again
@@ -3153,6 +3154,77 @@ public final class CityWorldSelfTest {
      * Every table a vault container can name exists, on every level a vault can have: a level-7 footlocker once named
      * vault_quarters_floor7, past the deepest table shipped, and stayed empty.
      */
+    /** cityworld:linked_table rolls the linked table as itself, so a mod's loot modifiers on it run: with Farmer's
+     *  Delight (1.21.1's run/mods) its own simple-dungeon additions arrive through the link, and never through
+     *  NeoForge's add_table (a raw roll, the reason the link exists). LOOT.md "Linking vanilla loot". */
+    private void checkLinkedLoot(net.minecraft.server.MinecraftServer server) {
+        var key = net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE,
+                net.minecraft.resources.Identifier.parse("minecraft:chests/simple_dungeon"));
+        String result = server.submit(() -> {
+            ServerLevel level = server.overworld();
+            var params = new net.minecraft.world.level.storage.loot.LootParams.Builder(level)
+                    .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN,
+                            new net.minecraft.world.phys.Vec3(0.5, 64, 0.5))
+                    .create(net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.CHEST);
+            java.util.Optional<net.minecraft.core.Holder<net.minecraft.world.level.storage.loot.predicates.LootItemCondition>> none = java.util.Optional.empty();
+            var linked = new me.daddychurchill.CityWorld.Support.LinkedTableLoot(none, net.neoforged.neoforge.common.loot.IGlobalLootModifier.DEFAULT_PRIORITY, List.of(), key, 1f, 64);
+            var raw = new net.neoforged.neoforge.common.loot.AddTableLootModifier(none, net.neoforged.neoforge.common.loot.IGlobalLootModifier.DEFAULT_PRIORITY, key);
+            int linkedStacks = 0, linkedMod = 0, rawStacks = 0, rawMod = 0;
+            for (int k = 0; k < 300; k++) {
+                var context = new net.minecraft.world.level.storage.loot.LootContext.Builder(params)
+                        .withOptionalRandomSeed(k + 1).create(java.util.Optional.empty());
+                for (var stack : linked.apply(new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(), context)) {
+                    linkedStacks++;
+                    if (!net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace().equals("minecraft"))
+                        linkedMod++;
+                }
+                for (var stack : raw.apply(new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(), context)) {
+                    rawStacks++;
+                    if (!net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace().equals("minecraft"))
+                        rawMod++;
+                }
+            }
+            return linkedStacks + " stacks (" + linkedMod + " a mod's) linked, " + rawStacks + " (" + rawMod + ") raw, in 300 rolls";
+        }).join();
+        report.put("loot.linked", result);
+        String[] n = result.replaceAll("[^0-9 ]", " ").trim().split(" +");
+        int linkedStacks = Integer.parseInt(n[0]), linkedMod = Integer.parseInt(n[1]), rawMod = Integer.parseInt(n[3]);
+        if (linkedStacks == 0)
+            fail("linked loot: the linked table gave nothing: " + result);
+        if (net.neoforged.fml.ModList.get().isLoaded("farmersdelight") && (linkedMod == 0 || rawMod != 0))
+            fail("linked loot: Farmer's Delight's additions should come through the link and not the raw roll: " + result);
+        // the LootLinker add-on (packs/lootlinker), when it is in run/mods: its links are read on this loader and
+        // fire on CityWorld's own tables — items a raw roll of the table never gives arrive in a full one
+        if (net.neoforged.fml.ModList.get().isLoaded("cityworld_lootlinker")) {
+            String linker = server.submit(() -> {
+                ServerLevel level = server.overworld();
+                var params = new net.minecraft.world.level.storage.loot.LootParams.Builder(level)
+                        .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN,
+                                new net.minecraft.world.phys.Vec3(0.5, 64, 0.5))
+                        .create(net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.CHEST);
+                StringBuilder out = new StringBuilder();
+                for (String id : List.of("cityworld:chests/mine", "cityworld:chests/vault_floor3", "cityworld:chests/shop_butcher")) {
+                    var table = server.reloadableRegistries().getLootTable(net.minecraft.resources.ResourceKey.create(
+                            net.minecraft.core.registries.Registries.LOOT_TABLE, net.minecraft.resources.Identifier.parse(id)));
+                    java.util.Set<net.minecraft.world.item.Item> own = new java.util.HashSet<>();
+                    for (int k = 0; k < 300; k++)
+                        table.getRandomItemsRaw(new net.minecraft.world.level.storage.loot.LootContext.Builder(params)
+                                .withOptionalRandomSeed(k + 1).create(java.util.Optional.empty()), st -> own.add(st.getItem()));
+                    int linked = 0;
+                    for (int k = 0; k < 300; k++)
+                        for (var stack : table.getRandomItems(params, 100000L + k))
+                            if (!own.contains(stack.getItem()))
+                                linked++;
+                    out.append(id.substring(id.indexOf('/') + 1)).append(' ').append(linked).append("; ");
+                }
+                return out.toString();
+            }).join();
+            report.put("loot.lootlinker", linker);
+            if (linker.matches(".*\\b0;.*"))
+                fail("LootLinker: a linked table added nothing a raw roll lacks: " + linker);
+        }
+    }
+
     private void checkVaultLootTiers(net.minecraft.server.MinecraftServer server) {
         List<String> missing = new ArrayList<>();
         for (var loc : me.daddychurchill.CityWorld.Plugins.LootProvider.LootLocation.values()) {
