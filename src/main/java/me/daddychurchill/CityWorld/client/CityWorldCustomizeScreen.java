@@ -80,9 +80,10 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private boolean includeCaves, includeLavaFields, includeSeas, includeMountains, includeOres, includeBones,
             includeFires, includeAbovegroundFluids, includeUndergroundFluids, includeWorkingLights,
             includeDecayedRoads, includeDecayedBuildings, includeDecayedNature, includeOvergrowth, capVines,
-            includeShops, windingCaves, largeCaverns, includeSubways, spawnersInSubways, includeMalls, subwayStops, smoothBends;
+            includeShops, windingCaves, largeCaverns, includeSubways, spawnersInSubways, includeMalls, subwayStops, smoothBends, electricSubways;
     private Chance oddsOfTrain; // a train mod's parked trains at the stations (Support/Railway)
     private int trainCarriages; // carried through untouched (no picker yet)
+    private int stationCharge; // carried through untouched (no picker yet)
     private double oddsOfPristineBuilding, overgrowthIntensity; // carried through untouched (no picker yet)
     // decay group — carried through untouched (the world style sets these; datapack tunes them, no picker yet)
     private double buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad;
@@ -216,6 +217,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         oddsOfTrain = Chance.nearest(data.subways().oddsOfTrain());
         trainCarriages = data.subways().trainCarriages();
         smoothBends = data.subways().smoothBends();
+        electricSubways = data.subways().electric();
+        stationCharge = data.subways().stationCharge();
         this.roads = data.roads();
         CityWorldSettingsData.Decay dk = data.decay();
         buildingDecayIntensity = dk.buildingIntensity();
@@ -493,6 +496,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 "With a train mod (Choo Choo): a station's odds of a train waiting at a platform"));
         pair(row, tip(onOff("Smooth bends", smoothBends, v -> smoothBends = v),
                 "With Slash Rails: every subway bend is smoothed the first time it loads, as its Track Smoother would"));
+        pair(row, tip(onOff("Electric line", electricSubways, v -> electricSubways = v),
+                "With Railcraft Reborn: the subway laid in electric track, and a battery in each station charged from the city"));
         // road furniture and bridges (Macaw's): nothing is drawn without the mods, so the toggles cost nothing then
         pair(row, onOff("Skybridges", roads.skybridges(), v -> roads = roads.withSkybridges(v)));
         pair(row, onOff("Wild rope bridges", roads.wildBridges(), v -> roads = roads.withWildBridges(v)));
@@ -678,7 +683,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         CityWorldSettingsData.Decay decay = new CityWorldSettingsData.Decay(
                 buildingDecayIntensity, roadDecayIntensity, oddsOfDecayFire, oddsOfPristineRoad);
         CityWorldSettingsData.Subways subways = new CityWorldSettingsData.Subways(includeSubways, spawnersInSubways,
-                subwayStops, oddsOfTrain.value, trainCarriages, smoothBends);
+                subwayStops, oddsOfTrain.value, trainCarriages, smoothBends, electricSubways, stationCharge);
         CityWorldSettingsData data = new CityWorldSettingsData(
                 features, terrain, spawns, treasures, world, radius, naming, mobs, overgrowth, shops, decay,
                 caves, subways, structures, cities, roads);

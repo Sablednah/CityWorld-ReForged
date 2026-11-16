@@ -84,15 +84,26 @@ public final class CityWorldServerEvents {
         if (event.phase == net.minecraftforge.event.TickEvent.Phase.END) {
             me.daddychurchill.CityWorld.Support.TrainCouplings.tick(event.getServer());
             me.daddychurchill.CityWorld.Support.RailSmoothing.tick(event.getServer());
+            me.daddychurchill.CityWorld.Support.Substations.tick(event.getServer());
         }
     }
 
-    /** A chunk just generated (never one read from disk): its subway bends are smoothed (Support/RailSmoothing). */
+    /** A chunk just generated (never one read from disk): its subway bends are smoothed (Support/RailSmoothing).
+     *  Any chunk: a station's batteries are fed while it is loaded (Support/Substations). */
     @SubscribeEvent
     public static void onChunkLoad(net.minecraftforge.event.level.ChunkEvent.Load event) {
-        if (event.isNewChunk() && event.getLevel() instanceof net.minecraft.server.level.ServerLevel level)
+        if (!(event.getLevel() instanceof net.minecraft.server.level.ServerLevel level))
+            return;
+        if (event.isNewChunk())
             me.daddychurchill.CityWorld.Support.RailSmoothing.generated(level, event.getChunk().getPos().x,
                     event.getChunk().getPos().z);
+        me.daddychurchill.CityWorld.Support.Substations.loaded(level, event.getChunk());
+    }
+
+    @SubscribeEvent
+    public static void onChunkUnload(net.minecraftforge.event.level.ChunkEvent.Unload event) {
+        if (event.getLevel() instanceof net.minecraft.server.level.ServerLevel level)
+            me.daddychurchill.CityWorld.Support.Substations.unloaded(level, event.getChunk());
     }
 
     @SubscribeEvent
@@ -106,6 +117,7 @@ public final class CityWorldServerEvents {
         MapMarkers.forgetCityPlan(null);
         me.daddychurchill.CityWorld.Support.TrainCouplings.clear();
         me.daddychurchill.CityWorld.Support.RailSmoothing.clear();
+        me.daddychurchill.CityWorld.Support.Substations.clear();
     }
 
     @SubscribeEvent

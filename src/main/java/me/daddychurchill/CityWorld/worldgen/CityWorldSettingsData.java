@@ -307,17 +307,21 @@ public record CityWorldSettingsData(
      * {@code trainCarriages} park a train mod's train at a station ({@code Support/Railway}).
      */
     public record Subways(boolean enabled, boolean spawners, boolean stops, double oddsOfTrain, int trainCarriages,
-            boolean smoothBends) {
+            boolean smoothBends, boolean electric, int stationCharge) {
 
         /** A station's odds of a parked train on one platform (only while a train mod supplies a locomotive). */
         public static final double TRAIN_ODDS = 0.5;
         /** Carriages behind a parked locomotive, at most (fewer where the platform is short). */
         public static final int TRAIN_CARRIAGES = 2;
 
-        public static final Subways DEFAULT = new Subways(true, true, true, TRAIN_ODDS, TRAIN_CARRIAGES, true);
+        /** Charge a station's battery takes from the city each tick, while its chunk is loaded (Support/Substations). */
+        public static final int STATION_CHARGE = 20;
+
+        public static final Subways DEFAULT = new Subways(true, true, true, TRAIN_ODDS, TRAIN_CARRIAGES, true, true,
+                STATION_CHARGE);
 
         public Subways(boolean enabled, boolean spawners) {
-            this(enabled, spawners, true, TRAIN_ODDS, TRAIN_CARRIAGES, true);
+            this(enabled, spawners, true, TRAIN_ODDS, TRAIN_CARRIAGES, true, true, STATION_CHARGE);
         }
 
         public static final Codec<Subways> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -328,7 +332,10 @@ public record CityWorldSettingsData(
                 Codec.doubleRange(0, 1).optionalFieldOf("oddsOfTrain", TRAIN_ODDS).forGetter(Subways::oddsOfTrain),
                 Codec.intRange(0, 8).optionalFieldOf("trainCarriages", TRAIN_CARRIAGES).forGetter(Subways::trainCarriages),
                 // Slash Rails: each bend smoothed the first time it loads (Support/RailSmoothing)
-                Codec.BOOL.optionalFieldOf("smoothBends", true).forGetter(Subways::smoothBends)
+                Codec.BOOL.optionalFieldOf("smoothBends", true).forGetter(Subways::smoothBends),
+                // Railcraft Reborn: an electric line, a battery in each station charged from the city
+                Codec.BOOL.optionalFieldOf("electric", true).forGetter(Subways::electric),
+                Codec.intRange(0, 100000).optionalFieldOf("stationCharge", STATION_CHARGE).forGetter(Subways::stationCharge)
         ).apply(i, Subways::new));
     }
 

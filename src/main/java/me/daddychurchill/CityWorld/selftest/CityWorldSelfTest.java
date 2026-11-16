@@ -3624,6 +3624,7 @@ public final class CityWorldSelfTest {
                         + " stair blocks (two switchbacks of three four-step pairs want 48)");
             if (counts.getOrDefault("lights", 0) == 0)
                 fail("subway station at " + c[0] + "," + c[1] + " is unlit");
+            checkElectricStation(server, level, plan, c[0], c[1], ewRail);
         }
         if (firstStraight != null) {
             int[] c = firstStraight;
@@ -3758,6 +3759,64 @@ public final class CityWorldSelfTest {
         if (smoothed < rails)
             fail("subway bend at " + cx + "," + cz + ": " + (rails - smoothed) + " of " + rails
                     + " rails not smoothed with Slash Rails installed");
+    }
+
+    /**
+     * With Railcraft Reborn (an electric line): the station hall's track is electric, a battery stands at the foot of
+     * the middle pillars against each track, the city's supply finds and charges it (Support/Substations), and the
+     * track beside it then has charge on its network — read from Railcraft's own charge API, by reflection. The
+     * battery is fed here directly, since this server may not be ticking.
+     */
+    private void checkElectricStation(MinecraftServer server, ServerLevel level, CityWorldGenerator plan, int cx, int cz,
+            int railY) {
+        if (!me.daddychurchill.CityWorld.Support.Railway.electricLine(plan)) {
+            report.put("subway.electric", plan.isApocalypseStyle() ? "a ruin: not electric" : "no electric track (no Railcraft)");
+            return;
+        }
+        var pos = new net.minecraft.world.level.ChunkPos(cx, cz);
+        server.submit(() -> level.getChunkSource().updateChunkForced(pos, true)).join();
+        try {
+            for (int i = 0; i < 300 && server.submit(() -> level.getChunkSource().getChunkNow(cx, cz) == null).join(); i++)
+                Thread.sleep(100);
+            String result = server.submit(() -> {
+                BlockPos rail = new BlockPos(cx * 16 + 7, railY, cz * 16 + 6);
+                BlockPos[] batteries = { rail.south(), rail.south(2) };
+                if (!level.getBlockState(rail).is(me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_RAIL_ELECTRIC))
+                    return "FAIL the hall's track at " + rail.toShortString() + " is " + level.getBlockState(rail);
+                StringBuilder out = new StringBuilder();
+                for (BlockPos b : batteries) {
+                    if (!level.getBlockState(b).is(me.daddychurchill.CityWorld.Support.MaterialTags.FITTINGS_RAIL_BATTERY))
+                        return "FAIL no battery at " + b.toShortString() + ": " + level.getBlockState(b);
+                    if (!me.daddychurchill.CityWorld.Support.Substations.known(level).contains(b))
+                        return "FAIL the battery at " + b.toShortString() + " is not known to the supply";
+                    int before = me.daddychurchill.CityWorld.Support.Substations.stored(level, b);
+                    int took = me.daddychurchill.CityWorld.Support.Substations.feed(level, b, 4000);
+                    int after = me.daddychurchill.CityWorld.Support.Substations.stored(level, b);
+                    out.append(b.toShortString()).append(" ").append(before).append("+").append(took).append("=").append(after).append("; ");
+                    if (took <= 0 || after <= before)
+                        return "FAIL the battery at " + b.toShortString() + " took no charge: " + out;
+                }
+                try {
+                    Class<?> charge = Class.forName("mods.railcraft.api.charge.Charge");
+                    Object network = charge.getMethod("network", ServerLevel.class).invoke(charge.getField("distribution").get(null), level);
+                    Object access = network.getClass().getMethod("access", BlockPos.class).invoke(network, rail);
+                    boolean live = (Boolean) access.getClass().getMethod("hasCapacity", int.class).invoke(access, 1000);
+                    out.append("track live ").append(live);
+                    if (!live)
+                        return "FAIL the track beside the batteries has no charge: " + out;
+                } catch (ReflectiveOperationException | RuntimeException e) {
+                    return "FAIL could not read Railcraft's charge network: " + e;
+                }
+                return out.toString();
+            }).join();
+            report.put("subway.electric", cx + "," + cz + " " + result);
+            if (result.startsWith("FAIL"))
+                fail("subway electric station at " + cx + "," + cz + ": " + result.substring(5));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            server.submit(() -> level.getChunkSource().updateChunkForced(pos, false)).join();
+        }
     }
 
     private static Direction[] railEnds(net.minecraft.world.level.block.state.properties.RailShape shape) {
