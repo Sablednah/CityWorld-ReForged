@@ -1028,7 +1028,9 @@ merges with CityWorld's on NeoForge and **replaces** it on 1.20.1):
 | `structure_set/wilderness_only` | sets kept out of the city's platmaps | [Biome Mods](Biome-Mods#keep-a-mods-structures-out-of-the-city-set-by-set) |
 
 **Loot tables** — `data/cityworld/loot_table/chests/<name>.json`: every table and its `_extra` hook are listed on
-[Loot Tables](Loot-Tables); a schematic's own table is `chests/schematic/<name>`.
+[Loot Tables](Loot-Tables); a schematic's own table is `chests/schematic/<name>`. The loot modifier
+`cityworld:linked_table` (7.2.0) rolls another table, mod additions and all, into any of them: [Loot
+Tables](Loot-Tables#vanilla-loot-and-loot-mods-lootlinker).
 
 **Schematics** are files, not data: `config/cityworld/schematics/<Family>/` with a `.yml` sidecar — [Custom
 Schematics](Custom-Schematics). Worked examples of all of the above, start to finish: [Examples](Examples).

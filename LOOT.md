@@ -9,7 +9,8 @@ what they hold, and lists every table.
 > their own tables, so those additions never show up there. To get a mod's items into CityWorld's chests, add them
 > to CityWorld's tables with one of the methods below. Vanilla structures that generate in a CityWorld world
 > (strongholds, trial chambers, ancient cities, and any you turn back on) keep vanilla's tables, so loot mods do
-> reach those.
+> reach those. **The LootLinker add-on** (CityWorld 7.2.0+) links vanilla's tables into the city's, mod additions
+> and all: see [Vanilla loot and loot mods](#vanilla-loot-and-loot-mods-lootlinker).
 
 > **On the "junk".** The everyday tables are deliberately ordinary. Most places in a city are homes, offices and
 > shops, and a drawer in an office holds paper, candles, a clock or some bread. Since 6.10.0, Modern and
@@ -80,6 +81,33 @@ quest item to one kind of chest without touching anyone else's.
 
 If you use a loot mod that has a config list of tables to modify, add the `cityworld:chests/...` ids from the
 list below to it.
+
+### Vanilla loot and loot mods: LootLinker
+
+A loot mod usually adds its items to vanilla's tables with a **loot modifier**, and a modifier runs only when a table
+is rolled as itself: a `minecraft:loot_table` entry in a CityWorld table (or NeoForge's `neoforge:add_table`) rolls
+the vanilla table *raw*, so it brings vanilla's items and none of the mods'. CityWorld 7.2.0 adds a loot modifier of
+its own, `cityworld:linked_table`, that rolls a table as itself into a CityWorld container's loot:
+
+```json
+{ "type": "cityworld:linked_table", "conditions": [],
+  "targets": [ "cityworld:chests/mine" ],
+  "table": "minecraft:chests/abandoned_mineshaft",
+  "chance": 0.4,
+  "max_stacks": 3 }
+```
+
+`targets` are the CityWorld tables it adds to (the list below), `table` the one it rolls, `chance` how often
+(default 1), `max_stacks` how many of its stacks are kept at most, picked at random (default 2: a drawer is small).
+Put the file in `data/<your pack>/loot_modifiers/` and list it in `data/neoforge/loot_modifiers/global_loot_modifiers.json`
+(1.21.x) or `data/forge/loot_modifiers/global_loot_modifiers.json` (1.20.1); 26.x loads every file in the folder
+without a list. `targets` keeps one file valid on every version (the table-id condition is named differently on each).
+
+**LootLinker** is a ready-made set of these, a data-only jar on its own GitHub release: the vault gets simple
+dungeon, mineshaft, stronghold and ancient-city loot as it deepens; armouries and bunkers a pillager outpost's,
+weaponsmith's and armourer's; mines a mineshaft's; sewers a dungeon's and an underwater ruin's; warehouses a
+shipwreck's supplies; each shop and mall store with a village trade that trade's village chest; and homes, at 6% and
+4%, a plains or taiga house's. Its README has the chances; every link is one file you can change.
 
 ### Turning loot off
 

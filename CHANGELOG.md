@@ -33,8 +33,26 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   unpowered. Five new pools (`#cityworld:fittings/rail_electric`, `rail_electric_booster`,
   `rail_electric_buffer_stop`, `rail_electric_stop`, `rail_battery`) and an entity tag
   (`#cityworld:subway/electric_locomotive`). Self-test `subway.electric`.
+- **`cityworld:linked_table`, a loot modifier that brings vanilla's loot (and every mod's additions to it) into
+  CityWorld's containers.** It rolls another loot table into a CityWorld container's loot, *as itself*, so the loot
+  modifiers mods use to add their items to vanilla's tables run on it. A `minecraft:loot_table` entry or NeoForge's
+  `neoforge:add_table` roll the other table raw and never see those additions (and every loot mod in the owner's
+  instances adds by loot modifier). Nothing uses it until a datapack does: the **LootLinker** add-on
+  (`packs/lootlinker/`, its own release) is a set of these: the vault gets dungeon, mineshaft, stronghold and
+  ancient-city loot as it deepens, armouries and bunkers an outpost's and a smith's, mines, sewers and warehouses
+  their vanilla cousins, each shop its village trade, homes rarely a village house's. Self-test `loot.linked` (with
+  Farmer's Delight: its dungeon additions come through the link, never through `add_table`) and `loot.lootlinker`.
+  LOOT.md "Vanilla loot and loot mods: LootLinker".
 
 ### Fixed
+
+- **Mines no longer cut through the subway.** A mine level's stairs up to the next level were drawn even when the
+  subway had taken that level's place, and they cleared a trench across the subway's floor and rails (the owner's
+  world: oak stairs at both ends of a one-block cut through both tracks). Stairs now go only to a level that was dug.
+- **Railcraft's track looks right on bends smoothed by Slash Rails.** Slash Rails draws a smoothed modded rail with
+  the rail's particle texture, which for Railcraft's corner pieces is the curved texture, so the curve was drawn in
+  twisted bits. CityWorld now ships Railcraft's six corner models with only their particle texture set to the
+  straight one (nothing else changes, and nothing at all without Slash Rails).
 
 - **Lush caves no longer carpet the subway.** In a lush cave region the cave pass laid moss and clay over the
   subway's rails (and could do the same to any man-made floor below the street: tunnels, vaults, mines) and hung
