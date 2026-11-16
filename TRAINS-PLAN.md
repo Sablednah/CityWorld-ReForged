@@ -102,8 +102,8 @@ datapack-parse gate, so the jar stays out of `mc1.21.1/run/mods` for a self-test
 
 ## 5. Not done, and why
 
-- **Railcraft locomotives** — they do nothing without fuel and water (steam) or an electrified line; a parked one
-  would be scenery that looks broken. Its carts could go in `#cityworld:subway/carriage` by a pack.
+- **Railcraft steam locomotives** — they do nothing without fuel and water; a parked one would be scenery that looks
+  broken. The **electric** one is done (§7): the line is electrified and the city charges it.
 - **"The metro should always run"** (the issue's Improvement Minecarts wish) — a running train is a live cart that
   must exist at generation time and keep a loaded chunk; CityWorld places worlds, it does not run them. A pack can put
   a furnace cart at each terminus by the spawn datapack.
@@ -138,3 +138,47 @@ second or two (0.96 a tick unridden, vanilla's), so a pushed empty cart says not
 (`isFloor`), so in a lush region it laid moss and clay over the rails (and hung vines in the halls); the WATCH at
 −420,41,−234 read rail → moss_block from `LushCaves.decorateFloor`. It now decorates only floors and ceilings of rock or
 soil (`#base_stone_overworld`, `#dirt`, gravel, clay); the cell reads booster track again.
+
+## 7. The electric line (2026-11-16, owner: "have a try at the electric line over night - answer your queries with tests - and then build the best result. If theres a way to recharge we can built into the station somehow")
+
+Read from Railcraft Reborn 1.21.1-1.2.17 with `javap`, then measured on 1.21.1 (seed 8675309, Railcraft + Slash Rails in
+`run/mods`; probe listener `scratchpad trains/TrainProbe-1.21.1-electric.java`, never committed).
+
+**Built.** With `#cityworld:fittings/rail_electric` naming a block (Railcraft's `electric_track`) and `subways.electric`
+on (default), a line that is not a ruin is drawn inside `Railway.electrified(...)`, and every track picker answers from
+the electric pools: `rail_electric`, `rail_electric_booster`, `rail_electric_buffer_stop`, `rail_electric_stop`. A piece
+the electric pools lack is plain electric track (a stop: none), never a plain rail, which would split the network
+(1.20.1's Railcraft has no electric locking track). Improvement Minecarts' stop rail is the line's own electric track
+over the lapis (its rails tag carries the four electric pools). Each station's own hall has two `fittings/rail_battery`
+(Railcraft's `nickel_zinc_battery`, rechargeable, 150,000) at the foot of its middle pillars (along 7, across 7 and 8,
+rail height), one against each track. `Support/Substations` reads the three pillar columns of every loaded chunk of an
+electric world for batteries (no planning), keeps them per level while loaded, and every 20 ticks gives each
+`subways.stationCharge` × 20 (default 20 a tick) through the block energy capability: `IEnergyStorage` on 1.21.1,
+`Capabilities.Energy` + a transaction on 1.21.11 and 26.x, Railcraft's own `Charge.network(level).access(pos).storage()`
+by reflection on 1.20.1 Forge (no block capability there). A parked train on an electric line may be an
+`#cityworld:subway/electric_locomotive` (Railcraft's `electric_locomotive`, alone; with Choo Choo's locomotive in its pool
+too, a coin per station). Self-test `subway.electric` (track, batteries, the supply knows and feeds them, the track then
+has charge on its network).
+
+**The questions, and what answered them:**
+
+| Question | Answer (measured unless it says "read") |
+|---|---|
+| Do blocks placed at generation join the network? | Yes, with nothing extra. `ChargeNetworkImpl.access(pos)` registers an unknown node from its block state and `addNode` floods through every loaded connected neighbour (read), so the first capability call on a battery, or the first time a locomotive draws, builds the whole line. Generated station: one grid of 226 nodes (both tracks, both batteries, the tunnels either side), capacity 300,000. |
+| How does a battery connect? | Beside a rail at rail height: yes (it joined the track's grid). Under a rail: no (a one-node grid of its own). Hence the pillar feet. Each battery touches its track and the other battery, so both tracks are one grid. |
+| Does the city's recharge work? | Yes. `receiveEnergy` / `insert` puts charge in (50,000 accepted at once); fed at 20 a tick, each battery rose 11,392 → 15,177 in 200 ticks. Any FE generator a player connects charges them as well (Railcraft's batteries are the standard capability). |
+| Does an electric locomotive run on it? | Yes: started (SHUTDOWN → RUNNING) it filled its own 5,000 from the grid, ran at 0.30 a tick (6 blocks a second) through the station and down the tunnel, and drew about 80 per 8 ticks after. It rode a **smoothed** bend (Slash Rails) and out the other side, so no hold-back as for Choo Choo. Parked ones (6 of 8 stations at `oddsOfTrain` 1/2) started and drove 35–36 blocks in 6 s out of the station's open end, on boosters or not. |
+| Does the third rail shock? | No. The track's `entityInside` → `CollisionHandler.ELECTRIC` → `Charge.Access.zap(entity, TRACK, 2)` needs 2,000 *available* charge in a tick and a killable entity (living, attackable, not riding a minecart; read). Measured: a pig and a zombie held on charged rail for 60 s, and `entityInside` called directly on a pig, a zombie and a villager with the grid part-charged (39k) and full (300k): no damage, though all three test killable. No setting needed. |
+| Can one be parked from NBT? | Yes, and it saves mode SHUTDOWN. **Its heading is a minecart's yaw**: traction is `(cos yaw, 0, sin yaw)` × horsepower (read), so 0 is east, 90 south. Saved with a mob's yaw (what Choo Choo's parking writes) it stood across its track: yaw 90 on an east-west line, and 0/180 on a north-south one, never moved (yaw −90 on east-west snaps to 0 and runs east, which hid it at first). `parkTrain` writes `atan2(dz, dx)` for an electric locomotive. |
+| Does it survive a restart? | Yes. The batteries' charge is in Railcraft's saved data (`ChargeSavedData`); the supply found all six batteries again on load, the 226-node grid rebuilt on first use, and a fresh locomotive with an empty store filled to 5,000 from it and ran 24 blocks. |
+
+**Not done.** Railcraft's delayed locking track does not hold a running locomotive (measured: it ran straight
+through the station's), so an electric train does not stop at stations by itself; Improvement Minecarts manages
+vanilla minecarts only. A timetable would be redstone (Railcraft's locomotive/throttle tracks), which is the player's.
+1.20.1 is unmeasured: Railcraft 1.20.1's mixins are SRG-named and do not load in the named dev runtime; its charge API is
+the same calls (read from 1.20.1-1.1.11).
+
+**A probe trap, paid for twice:** a level with no players stops ticking entities 300 ticks after it empties (1.21.1;
+1.21.2+ adds `pause-when-empty-seconds` on top). A wait in a headless probe must call `level.resetEmptyTime()` or every
+locomotive "does not move" — that, not their NBT or the boosters, was why the first parked locomotives stood still.
+

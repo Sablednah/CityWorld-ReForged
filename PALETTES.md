@@ -759,9 +759,25 @@ optional entries, so without a train mod it lays vanilla rail as it always did:
 | `cityworld:fittings/rail_ruined` | a ruined (Apocalypse) subway's track, before `fittings/rail` | **empty** — Railcraft's `abandoned_track` |
 | `cityworld:fittings/rail_buffer_stop` | the end of a dead-end platform track, in place of the iron block | **empty** — Railcraft's `reinforced_buffer_stop_track`, turned to face the wall |
 | `cityworld:fittings/rail_stop` | each platform track's stop, where a train waits (not drawn while Improvement Minecarts marks stops) | **empty** — Railcraft's `reinforced_delayed_locking_track` |
+| `cityworld:fittings/rail_electric` | an electric line's track (`subways.electric`; a line is electric only while this pool names a block) | **empty** — Railcraft's `electric_track` |
+| `cityworld:fittings/rail_electric_booster` | an electric line's powered lengths (plain electric track where the pool is empty) | **empty** — Railcraft's `electric_booster_track` |
+| `cityworld:fittings/rail_electric_buffer_stop` | an electric line's buffer stops (the plain buffer stop where the pool is empty) | **empty** — Railcraft's `electric_buffer_stop_track` |
+| `cityworld:fittings/rail_electric_stop` | an electric line's platform stops (no stop where the pool is empty: 1.20.1's Railcraft has none) | **empty** — Railcraft's `electric_delayed_locking_track` |
+| `cityworld:fittings/rail_battery` | the two batteries at the foot of each station hall's middle pillars on an electric line, which the city keeps charged (`subways.stationCharge`) | **empty** — Railcraft's `nickel_zinc_battery` |
 
 A block in these pools should be a rail (`BaseRailBlock`): its shape is set through its own shape property, and a
-`powered` property by name if it declares its own.
+`powered` property by name if it declares its own (the battery pool aside).
+
+**The electric line.** With Railcraft Reborn installed (`rail_electric` names a block) and `subways.electric` on, a
+line that is not a ruin is laid in nothing but the electric pools, because one plain rail splits Railcraft's charge
+network and leaves everything past it dead. Each station hall gets two batteries from `rail_battery` at the foot of
+its middle pillars, at rail height, each against one track (a battery under a rail does not connect: measured), so the
+batteries, both tracks and the tunnels to the next stations are one network. While a station is loaded the city tops
+its batteries up by `subways.stationCharge` a tick through the standard energy capability (on 1.20.1, Railcraft's own
+charge API), so any battery block a pack puts in the pool is fed the same way. A station may have an electric
+locomotive from the entity tag `subway/electric_locomotive` waiting, shut down, facing out (Railcraft's
+`electric_locomotive`). Railcraft's electric track did not shock a mob standing in it in testing, full batteries or
+not.
 
 **Stops.** With Improvement Minecarts installed (as a mod, or as its datapack) and `subways.stops` on, each platform
 track of a station gets a lapis block under a vanilla rail mid-platform (a gold block near the buffers when the
@@ -778,7 +794,7 @@ bend is smoothed the first time it generates, as its Track Smoother would (`subw
 Choo Choo is installed too**: Slash Rails drives every cart on smoothed track itself, and a Choo Choo locomotive does
 not move there, so the bends are left as staircases, which every cart and train rides.
 
-**All four together.** CityWorld adds its five rail pools to Improvement Minecarts' own `improvement_minecarts:rails`
+**All four together.** CityWorld adds its rail pools (the electric four too) to Improvement Minecarts' own `improvement_minecarts:rails`
 tag, so that mod manages carts on whatever track the subway is laid in (Railcraft's, or a pack's), not only on
 vanilla rail. Improvement Minecarts manages vanilla minecarts only: its stops do not hold a Choo Choo train, which its
 driver stops.
@@ -979,7 +995,7 @@ merges with CityWorld's on NeoForge and **replaces** it on 1.20.1):
 | `palette/<part>`, `palette/<style>/<part>` | one part of a building or street (28 parts), optionally for one style | [Per-part palettes](#per-part-palettes-from-614) |
 | `furniture/<role>` | what furnishes a room by role: `chair`, `table`, `sofa`, `desk`, `counter`, `cabinet`, `drawer`, `wardrobe`, `sink`, `bath`, `toilet`, `bookshelf`, `lamp`, `floor_lamp`, `bed`, `shelf`, `crate`, and the kitchen and office appliances `stove`, `fridge`, `freezer`, `microwave`, `toaster`, `cutting_board`, `bin`, `computer`, `tv`, `workbench`, `ceiling_fan` | [Furniture](#furniture) |
 | `decor/*` | tabletop, floor and wall scatter (`surface`, `floor`, `wall`, `desk`, `rug`, `feast`, `stove_top`, `hanging_light`) and the APOCALYPSE-only `grim_floor`, `grim_surface`, `grim_wall` | [Decoration](#furniture) |
-| `fittings/*` | doors (`door`, `interior_door`, `store_door`, `industrial_door`, `garage_door`), `trapdoor`, `window`, `roof`, `stairs`, `railing`, fences (`fence`, `farm_fence`, `gate`, `site_fence`, `site_wire`), `shop_sign`, `atm`, `healing_machine`, `pc`, `pasture` (Cobblemon) and `atm_base` (the block an ATM stands on), and the road kit `road`, `path`, `track`, `skybridge`, `rope_bridge`, and the subway's track `rail`, `rail_booster`, `rail_ruined`, `rail_buffer_stop`, `rail_stop` (Railcraft) | [Fittings](#fittings) |
+| `fittings/*` | doors (`door`, `interior_door`, `store_door`, `industrial_door`, `garage_door`), `trapdoor`, `window`, `roof`, `stairs`, `railing`, fences (`fence`, `farm_fence`, `gate`, `site_fence`, `site_wire`), `shop_sign`, `atm`, `healing_machine`, `pc`, `pasture` (Cobblemon) and `atm_base` (the block an ATM stands on), and the road kit `road`, `path`, `track`, `skybridge`, `rope_bridge`, and the subway's track `rail`, `rail_booster`, `rail_ruined`, `rail_buffer_stop`, `rail_stop`, the electric line's `rail_electric`, `rail_electric_booster`, `rail_electric_buffer_stop`, `rail_electric_stop` and its `rail_battery` (Railcraft) | [Fittings](#fittings) |
 | `light/*` | `street_lamp`, `garden`, `tiki` | [Fittings](#fittings) |
 | `farm/*` | `crops`, `flowers`, `tall_flowers`, `soil`, `paddy`, `produce`, `compost`, `bales` | [Farms](#farms) |
 | `loot/never` | containers that are machines, not storage: they are never given loot (a furnace-like mod block that would otherwise be filled) | [Loot Tables](Loot-Tables) |
@@ -989,7 +1005,7 @@ merges with CityWorld's on NeoForge and **replaces** it on 1.20.1):
 
 | Tag | What it feeds | Documented |
 |---|---|---|
-| `subway/locomotive`, `subway/carriage` | the trains parked at subway platforms (Choo Choo's) | [Train mods](#train-mods-the-subways-track-stops-and-parked-trains-from-72) |
+| `subway/locomotive`, `subway/carriage`, `subway/electric_locomotive` | the trains parked at subway platforms (Choo Choo's; Railcraft's electric locomotive on an electric line) | [Train mods](#train-mods-the-subways-track-stops-and-parked-trains-from-72) |
 
 **Item tags** — `data/cityworld/tags/item/<family>/<name>.json`:
 

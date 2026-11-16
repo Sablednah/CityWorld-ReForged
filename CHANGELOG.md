@@ -23,6 +23,16 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   `subways.trainCarriages` 2, **Parked trains** in Customize; entity tags `#cityworld:subway/locomotive` and
   `subway/carriage`). Without these mods a world draws exactly what it did, bends aside. Self-test `subway.bend`.
   TRAINS-PLAN.md has the survey and the measurements, including all four mods at once.
+- **An electric subway with Railcraft Reborn.** Where Railcraft is installed, a line that is not a ruin is laid all
+  in its **electric track**, and each station hall has two **batteries** at the foot of its middle pillars, one
+  against each track. The batteries, both tracks and the tunnels to the next stations form one charge network, and
+  **the city keeps it charged**: while a station is loaded its batteries are topped up (`subways.stationCharge`, 20 a
+  tick each; a running electric locomotive draws about 10). Some stations have an **electric locomotive** waiting,
+  shut down and facing out; open it and set it running (under `subways.oddsOfTrain`; with Choo Choo as well, a coin
+  picks which kind). On by default (`subways.electric`, **Electric line** in Customize); Apocalypse ruins stay
+  unpowered. Five new pools (`#cityworld:fittings/rail_electric`, `rail_electric_booster`,
+  `rail_electric_buffer_stop`, `rail_electric_stop`, `rail_battery`) and an entity tag
+  (`#cityworld:subway/electric_locomotive`). Self-test `subway.electric`.
 
 ### Fixed
 
