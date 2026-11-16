@@ -737,8 +737,9 @@ public abstract class PlatLot {
 		int y1 = y + 6;
 		boolean stairsFound = false;
 
-		// going down?
-		if (isShaftableLevel(generator, y - 16)) {
+		// going down? (only to a level that exists: one the subway's band blocked was never cut, and the stairs
+		// would climb out of this one's floor into nothing)
+		if (isShaftableLevel(generator, y - 16) && !me.daddychurchill.CityWorld.Support.Subway.blocksMines(generator, this, y - 16)) {
 			if (generator.shapeProvider.isHorizontalNSShaft(chunk.sectionX, y, chunk.sectionZ)
 					&& generator.shapeProvider.isHorizontalNSShaft(chunk.sectionX, y - 16, chunk.sectionZ)) {
 
@@ -772,8 +773,10 @@ public abstract class PlatLot {
 		// reset the stairs flag
 		stairsFound = false;
 
-		// going up?
-		if (isShaftableLevel(generator, y + 32)) {
+		// going up? Into the level above, so only when the subway has not blocked that level: these stairs climb
+		// nine blocks and clear four above each step, and through a subway they cut its floor and rails (the
+		// owner's world, 2026-11-16: level 16's stairs opened a trench across the tunnel at y 31-33)
+		if (isShaftableLevel(generator, y + 32) && !me.daddychurchill.CityWorld.Support.Subway.blocksMines(generator, this, y + 16)) {
 			if (generator.shapeProvider.isHorizontalNSShaft(chunk.sectionX, y, chunk.sectionZ)
 					&& generator.shapeProvider.isHorizontalNSShaft(chunk.sectionX, y + 16, chunk.sectionZ)) {
 
