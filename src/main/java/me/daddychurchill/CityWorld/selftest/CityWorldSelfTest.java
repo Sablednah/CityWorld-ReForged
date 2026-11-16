@@ -3185,26 +3185,36 @@ public final class CityWorldSelfTest {
             var linked = new me.daddychurchill.CityWorld.Support.LinkedTableLoot(none, List.of(), key, 1f, 64);
             var dungeon = server.getLootData().getLootTable(key); // 1.20.1 Forge has no add_table: a raw roll is the same thing
             int linkedStacks = 0, linkedMod = 0, rawStacks = 0, rawMod = 0;
+            java.util.Map<String, Integer> linkedBy = new java.util.TreeMap<>(), rawBy = new java.util.TreeMap<>();
             for (int k = 0; k < 300; k++) {
                 var context = new net.minecraft.world.level.storage.loot.LootContext.Builder(params)
                         .withOptionalRandomSeed(k + 1).create(null);
                 for (var stack : linked.apply(new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(), context)) {
                     linkedStacks++;
-                    if (!net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace().equals("minecraft"))
+                    String ns = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace();
+                    if (!ns.equals("minecraft"))
+                        linkedBy.merge(ns, 1, Integer::sum);
+                    if (ns.equals("farmersdelight"))
                         linkedMod++;
                 }
                 var rawLoot = new it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.world.item.ItemStack>();
                 dungeon.getRandomItemsRaw(context, rawLoot::add);
                 for (var stack : rawLoot) {
                     rawStacks++;
-                    if (!net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace().equals("minecraft"))
+                    String ns = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace();
+                    if (!ns.equals("minecraft"))
+                        rawBy.merge(ns, 1, Integer::sum);
+                    if (ns.equals("farmersdelight"))
                         rawMod++;
                 }
             }
-            return linkedStacks + " stacks (" + linkedMod + " a mod's) linked, " + rawStacks + " (" + rawMod + ") raw, in 300 rolls";
+            // the counts in brackets are Farmer's Delight's (a loot modifier); the maps every mod's. A mod that edits
+            // vanilla's table itself (not by modifier) shows on both sides
+            return linkedStacks + " stacks (" + linkedMod + " Farmer's Delight) linked, " + rawStacks + " (" + rawMod
+                    + ") raw, in 300 rolls; mods linked " + linkedBy + " raw " + rawBy;
         }).join();
         report.put("loot.linked", result);
-        String[] n = result.replaceAll("[^0-9 ]", " ").trim().split(" +");
+        String[] n = result.substring(0, result.indexOf(';')).replaceAll("[^0-9 ]", " ").trim().split(" +");
         int linkedStacks = Integer.parseInt(n[0]), linkedMod = Integer.parseInt(n[1]), rawMod = Integer.parseInt(n[3]);
         if (linkedStacks == 0)
             fail("linked loot: the linked table gave nothing: " + result);
