@@ -37,6 +37,12 @@ import me.daddychurchill.CityWorld.worldgen.ShiftedRegion;
  * <li><b>Stops.</b> Improvement Minecarts stops a train over a lapis block under a rail (a gold block: a terminus,
  *     where it waits, reverses and leaves) and announces the first line of a sign beside that rail. With the mod
  *     installed, as a mod or as a datapack, each platform track gets its stop and a sign with the station's name.</li>
+ * <li><b>The electric line.</b> With {@code #cityworld:fittings/rail_electric} filled (Railcraft Reborn's electric
+ *     track) and {@code subways.electric} on, a line that is not a ruin is laid all in electric track
+ *     ({@code rail_electric}, {@code rail_electric_booster}, {@code rail_electric_buffer_stop},
+ *     {@code rail_electric_stop}), and each station hall has a {@code fittings/rail_battery} at the foot of its middle
+ *     pillars, one against each track, which the city keeps charged ({@link Substations}). A station may have an
+ *     electric locomotive ({@code #cityworld:subway/electric_locomotive}) waiting, shut down, for a player to start.</li>
  * <li><b>Parked trains.</b> {@code #cityworld:subway/locomotive} and {@code #cityworld:subway/carriage} (entity type
  *     tags): a locomotive and carriages behind it, stood on one platform track of a station. Choo Choo supplies
  *     both, and its trains are coupled once they are loaded ({@link TrainCouplings}).</li>
@@ -49,6 +55,7 @@ public final class Railway {
 
     public static final TagKey<net.minecraft.world.entity.EntityType<?>> LOCOMOTIVE = entityTag("cityworld:subway/locomotive");
     public static final TagKey<net.minecraft.world.entity.EntityType<?>> CARRIAGE = entityTag("cityworld:subway/carriage");
+    public static final TagKey<net.minecraft.world.entity.EntityType<?>> ELECTRIC_LOCOMOTIVE = entityTag("cityworld:subway/electric_locomotive");
 
     private static TagKey<net.minecraft.world.entity.EntityType<?>> entityTag(String id) {
         return TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse(id));
@@ -61,8 +68,53 @@ public final class Railway {
         return pool.isEmpty() ? null : pool.get(0);
     }
 
-    /** Plain track: the pool's, else vanilla rail. A ruin takes its own pool first. */
+    // ---- the electric line ---------------------------------------------------------------------------
+
+    private static final ThreadLocal<Boolean> ELECTRIC = ThreadLocal.withInitial(() -> false);
+
+    /** Whether this world's subway is electric where it is not a ruin: the setting, and a track to lay. */
+    public static boolean electricLine(CityWorldGenerator generator) {
+        return generator.getSettings().electricSubways && !generator.isApocalypseStyle()
+                && first(MaterialTags.FITTINGS_RAIL_ELECTRIC) != null;
+    }
+
+    /** Runs {@code draw} with every track picker below answering from the electric pools. */
+    public static void electrified(boolean electric, Runnable draw) {
+        if (!electric) {
+            draw.run();
+            return;
+        }
+        boolean was = ELECTRIC.get();
+        ELECTRIC.set(true);
+        try {
+            draw.run();
+        } finally {
+            ELECTRIC.set(was);
+        }
+    }
+
+    /** Whether the drawing in hand is an electric line's ({@link #electrified}). */
+    public static boolean electric() {
+        return ELECTRIC.get();
+    }
+
+    /** A station's battery, or null: none in the pool, or this is not an electric line. */
+    public static Material battery() {
+        return electric() ? first(MaterialTags.FITTINGS_RAIL_BATTERY) : null;
+    }
+
+    // An electric line lays nothing but electric track along its length: one plain rail splits the charge network
+    // there, and everything past it is dead (1.20.1's Railcraft has no electric locking track, for one). A piece the
+    // electric pools lack is plain electric track, or for a stop no stop at all; only a buffer stop, at the end of
+    // the line, may fall back to the plain one.
+
+    /** Plain track: the pool's, else vanilla rail. A ruin takes its own pool first, an electric line its own. */
     public static Material track(boolean ruined) {
+        if (!ruined && electric()) {
+            Material e = first(MaterialTags.FITTINGS_RAIL_ELECTRIC);
+            if (e != null)
+                return e;
+        }
         Material m = ruined ? first(MaterialTags.FITTINGS_RAIL_RUINED) : null;
         if (m == null)
             m = first(MaterialTags.FITTINGS_RAIL);
@@ -71,18 +123,23 @@ public final class Railway {
 
     /** A powered length: the pool's, else vanilla powered rail. Laid over a redstone block either way. */
     public static Material booster() {
+        if (electric()) {
+            Material e = first(MaterialTags.FITTINGS_RAIL_ELECTRIC_BOOSTER);
+            return e != null ? e : track(false);
+        }
         Material m = first(MaterialTags.FITTINGS_RAIL_BOOSTER);
         return m == null ? Material.POWERED_RAIL : m;
     }
 
     /** The end of a dead-end platform track, or null: the vanilla end is an iron block across the rail. */
     public static Material bufferStop() {
-        return first(MaterialTags.FITTINGS_RAIL_BUFFER_STOP);
+        Material e = electric() ? first(MaterialTags.FITTINGS_RAIL_ELECTRIC_BUFFER_STOP) : null;
+        return e != null ? e : first(MaterialTags.FITTINGS_RAIL_BUFFER_STOP);
     }
 
     /** The length of platform track a train waits on, or null (Railcraft's delayed locking track). */
     public static Material platformStop() {
-        return first(MaterialTags.FITTINGS_RAIL_STOP);
+        return first(electric() ? MaterialTags.FITTINGS_RAIL_ELECTRIC_STOP : MaterialTags.FITTINGS_RAIL_STOP);
     }
 
     // ---- Improvement Minecarts -------------------------------------------------------------------
@@ -90,6 +147,11 @@ public final class Railway {
     /** The block under a platform's stop rail (Improvement Minecarts' default station block), and a terminus's. */
     public static final Material STOP_BLOCK = Material.LAPIS_BLOCK;
     public static final Material TERMINUS_BLOCK = Material.GOLD_BLOCK;
+
+    /** The rail over a stop block: vanilla's, or an electric line's own track (in the mod's rails tag, see above). */
+    public static Material stopRail() {
+        return electric() ? track(false) : Material.RAIL;
+    }
 
     private static final java.util.Map<MinecraftServer, Boolean> STOPS =
             java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
@@ -126,9 +188,14 @@ public final class Railway {
         return out;
     }
 
-    /** Whether there is a train to park: a locomotive at least. */
+    /** Whether there is a train to park: a locomotive at least (an electric one, on an electric line). */
     public static boolean anyTrain() {
-        return !types(LOCOMOTIVE).isEmpty();
+        return !types(LOCOMOTIVE).isEmpty() || electricTrain();
+    }
+
+    /** Whether an electric locomotive could be parked here: on an electric line, with one in the pool. */
+    public static boolean electricTrain() {
+        return electric() && !types(ELECTRIC_LOCOMOTIVE).isEmpty();
     }
 
     /** The scoreboard tag a parked vehicle carries naming the vehicle it couples to, ahead of it in the train. */
@@ -147,13 +214,23 @@ public final class Railway {
     public static boolean parkTrain(LevelAccessor level, int x, int railY, int z, int dx, int dz, int carriages,
             int room, Odds odds) {
         List<net.minecraft.world.entity.EntityType<?>> locos = types(LOCOMOTIVE), cars = types(CARRIAGE);
+        // an electric line parks an electric locomotive, alone (it couples nothing of Choo Choo's); with both kinds
+        // in the pools a coin picks, so a world with only one kind takes no new draw
+        boolean electricLoco = electricTrain() && (locos.isEmpty() || odds.flipCoin());
+        if (electricLoco) {
+            locos = types(ELECTRIC_LOCOMOTIVE);
+            cars = List.of();
+        }
         if (locos.isEmpty())
             return false;
         var access = level.getChunk(x >> 4, z >> 4);
         if (!(access instanceof ProtoChunk chunk) || access instanceof net.minecraft.world.level.chunk.ImposterProtoChunk)
             return false;
         double y = railY + 0.0625 + ShiftedRegion.shiftOf(level);
-        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)); // vanilla: 0 south, 90 west
+        // a Railcraft locomotive pushes along (cos yaw, sin yaw), a minecart's own yaw (0 east, 90 south): one saved
+        // with a mob's yaw stood across its track and never moved (measured); Choo Choo heads by ForwardX/Z below
+        float yaw = electricLoco ? (float) Math.toDegrees(Math.atan2(dz, dx))
+                : (float) Math.toDegrees(Math.atan2(-dx, dz)); // vanilla: 0 south, 90 west
         UUID ahead = null;
         int n = cars.isEmpty() ? 0 : Math.min(carriages, (int) Math.floor(room / SPACING));
         for (int i = 0; i <= n; i++) {

@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "railcraft:nickel_zinc_battery",
+      "required": false
+    }
+  ]
+}
