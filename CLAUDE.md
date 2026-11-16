@@ -24,6 +24,34 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-16 evening): the owner's train look, and LootLinker — built on all six lines, unreleased.**
+- Owner's screenshots: (1) **mine stairs cut the subway**: a level's "going up" stairs climbed into the level the subway
+  had blocked (`Subway.blocksMines`) and cleared a trench through its floor and rails; now both stair directions ask
+  `blocksMines` of the level they reach (`PlatLot.generateVerticalMineLevel`; reproduced and fixed by probe on the
+  owner's seed -8089239306972652689, chunk 3,-1, x 54). (2) **Railcraft bends drawn in twisted bits under Slash
+  Rails**: Slash Rails meshes a non-vanilla rail with its model's PARTICLE sprite, and Railcraft's corner models
+  (parent `rail_curved`) take `#rail` = the curved texture. CityWorld ships the six corner models with only
+  `"particle"` set to the straight texture (26.x copies without `render_type`, like Railcraft's own), plus a
+  `railcraft` optional `ordering="AFTER"` dependency (Forge: `mandatory=false`). Not verifiable headless — the owner's
+  look. Upstream bug is Slash Rails'.
+- **`cityworld:linked_table`** (`Support/LinkedTableLoot`): rolls a table AS ITSELF into a CityWorld container (a
+  nested `loot_table` entry and `neoforge:add_table` roll RAW: loot mods add by modifier, every one in the owner's
+  instances). Fields `targets` (CityWorld's own list, so one JSON reads on every loader: the table-id condition and
+  26.3's condition key differ), `table`, `chance`, `max_stacks`. Per-line API: 1.21.1 `getParam`/`net.minecraft.Util`;
+  26.1/26.2 `(conditions, priority)`; 26.3 `Optional<Holder<condition>>, priority` + `getOptional`; 1.20.1 Forge
+  `Codec`, `ResourceLocation` table, `getResolver().getLootTable`. Loaders: 1.20.1/1.21.x read a list file, **26.x
+  loads every file in `loot_modifiers/`** — the add-on's two list files carry `neoforge:conditions [neoforge:never]`.
+- **LootLinker add-on** `packs/lootlinker/` (`gen.py` writes the 25 links, `build.sh`, data-only `lowcodefml` jar, one
+  for every line, requires CityWorld `[7.2,)`; test beds use `scratchpad/lootlinker-test/…-test71.jar` with `[7.1,)`
+  until the bump). Its own GitHub release, never CurseForge (memory `cityworld-addon-jars-not-on-cf.md`). Self-tests
+  `loot.linked` (1.21.1: Farmer's Delight 662 + Railcraft 148 linked, 0 raw; Cobblemon edits the table itself, so shows
+  both sides) and `loot.lootlinker` (links fire on mine/vault_floor3/shop_butcher on all six lines).
+- Website session's two doc reports fixed (`b8469e91`): `/cityfind lot pokecenter|gym`; Cobblemon full on 1.21.1,
+  partial on 1.20.1. Six self-tests PASS on final heads (master `b8469e91`, 1.21.1 `2e498cc4`, 26.1 `fe443a1d`, 26.2
+  `ee40a531`, 26.3 `bef4d275`, 1.20.1 `592dae9d`), `--compare` five-way agrees (1.21.1 by Cobblemon). Owner's 1.21.1
+  instance `DEPLOYED-2e498cc4` + Improvement Minecarts + the LootLinker test jar. Nothing pushed. Next: the owner's
+  look (bends with Slash Rails + Railcraft, a mine near the subway, a few chests), then 7.2.0 (+ LootLinker release).
+
 **▶ Resume here (2026-11-16 overnight): an ELECTRIC subway with Railcraft Reborn, built on all six lines — `TRAINS-PLAN.md` §7.**
 - Owner at bedtime: *"have a try at the electric line over night - answer your queries with tests - and then build the
   best result. If theres a way to recharge we can built into the station somehow"*. Built: with
