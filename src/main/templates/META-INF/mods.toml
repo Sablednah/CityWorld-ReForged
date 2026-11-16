@@ -69,7 +69,7 @@ iconBlur=false
 # assets/railcraft/models/block/), which only take effect when CityWorld's resources load after Railcraft's.
 [[dependencies.${mod_id}]]
     modId="railcraft"
-    type="optional"
+    mandatory=false
     versionRange="[0,)"
     ordering="AFTER"
     side="BOTH"
