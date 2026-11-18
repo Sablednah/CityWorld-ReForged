@@ -78,15 +78,15 @@ public final class CityWorldServerEvents {
         me.daddychurchill.CityWorld.Support.Substations.tick(event.getServer());
     }
 
-    /** A chunk just generated (never one read from disk): its subway bends are smoothed (Support/RailSmoothing).
+    /** A chunk come in at full: its subway bends, and its neighbours', are smoothed (Support/RailSmoothing).
      *  Any chunk: a station's batteries are fed while it is loaded (Support/Substations). */
     @SubscribeEvent
     public static void onChunkLoad(net.neoforged.neoforge.event.level.ChunkEvent.Load event) {
         if (!(event.getLevel() instanceof net.minecraft.server.level.ServerLevel level))
             return;
-        if (event.isNewChunk())
-            me.daddychurchill.CityWorld.Support.RailSmoothing.generated(level, event.getChunk().getPos().x(),
-                    event.getChunk().getPos().z());
+        if (event.getChunk() instanceof net.minecraft.world.level.chunk.LevelChunk)
+            me.daddychurchill.CityWorld.Support.RailSmoothing.loaded(level, event.getChunk().getPos().x(),
+                    event.getChunk().getPos().z(), event.isNewChunk());
         me.daddychurchill.CityWorld.Support.Substations.loaded(level, event.getChunk());
     }
 
