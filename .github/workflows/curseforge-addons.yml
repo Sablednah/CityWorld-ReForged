@@ -1,0 +1,108 @@
+name: Publish add-on to CurseForge
+
+# An add-on's GitHub release (tag neutral-palette-1.0.0, lootlinker-1.0.0, all-vanilla-structures-1.0.0) publishes its
+# jar to that add-on's OWN CurseForge project. CityWorld's releases (v*) go through curseforge.yml to CityWorld's
+# project, and neither workflow ever touches the other's tags: an add-on on CityWorld's project would be served as
+# the latest CityWorld.
+#
+# The projects (ids are public, so they live here rather than in repository variables):
+#   neutral-palette-*         -> 1814778  CityWorld: Neutral Palette
+#   lootlinker-*              -> 1814804  CityWorld: LootLinker
+#   all-vanilla-structures-*  -> 1814818  CityWorld: All Vanilla Structures
+# A new add-on: add its prefix to the case below, with its project id and display name.
+#
+# Uses the same CURSEFORGE_TOKEN secret as curseforge.yml.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Add-on release tag to upload (e.g. lootlinker-1.0.0)
+        required: true
+      release_type:
+        description: CurseForge release type
+        required: false
+        default: release
+        type: choice
+        options: [release, beta, alpha]
+      changelog:
+        description: Changelog text (empty = the GitHub release's notes)
+        required: false
+        type: string
+      debug:
+        description: Print the upload metadata (contains no credentials)
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    if: >-
+      startsWith(github.event.release.tag_name || inputs.tag, 'neutral-palette-') ||
+      startsWith(github.event.release.tag_name || inputs.tag, 'lootlinker-') ||
+      startsWith(github.event.release.tag_name || inputs.tag, 'all-vanilla-structures-')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the CurseForge token is configured
+        id: guard
+        env:
+          TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "CURSEFORGE_TOKEN secret not set — skipping."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.guard.outputs.configured == 'true'
+
+      - name: Which add-on
+        if: steps.guard.outputs.configured == 'true'
+        id: addon
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          case "$TAG" in
+            neutral-palette-*)        id=1814778; name="CityWorld: Neutral Palette";        version="${TAG#neutral-palette-}" ;;
+            lootlinker-*)             id=1814804; name="CityWorld: LootLinker";             version="${TAG#lootlinker-}" ;;
+            all-vanilla-structures-*) id=1814818; name="CityWorld: All Vanilla Structures"; version="${TAG#all-vanilla-structures-}" ;;
+            *) echo "::error::No CurseForge project for tag $TAG"; exit 1 ;;
+          esac
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+          echo "display=$name $version" >> "$GITHUB_OUTPUT"
+          echo "$TAG -> project $id as \"$name $version\""
+
+      - name: Download the release jar and changelog
+        if: steps.guard.outputs.configured == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          CHANGELOG: ${{ inputs.changelog }}
+        run: |
+          mkdir -p dist
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.jar' --dir dist
+          if [ -n "$CHANGELOG" ]; then
+            printf '%s\n' "$CHANGELOG" > dist/changelog.md
+          else
+            gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body --jq '.body' > dist/changelog.md
+          fi
+          ls -la dist
+          n=$(ls dist/*.jar | wc -l)
+          [ "$n" -eq 1 ] || { echo "::error::An add-on release should carry exactly one jar, found $n"; exit 1; }
+
+      - name: Upload
+        if: steps.guard.outputs.configured == 'true'
+        env:
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          RELEASE_TYPE: ${{ inputs.release_type || 'release' }}
+          CURSEFORGE_DEBUG: ${{ inputs.debug && '1' || '' }}
+        run: |
+          bash scripts/curseforge-upload-addon.sh dist/*.jar "${{ steps.addon.outputs.id }}" \
+            "${{ steps.addon.outputs.display }}" dist/changelog.md "$RELEASE_TYPE"
