@@ -3732,6 +3732,30 @@ public final class CityWorldSelfTest {
      */
     private void checkSubwayBend(MinecraftServer server, ServerLevel level, int[] bend, int railY, boolean ruin) {
         int cx = bend[0], cz = bend[1];
+        // smoothing must never load a chunk: the mod's clearance check reads one block round every rail, and a run
+        // that stops at the edge of what is loaded read into the next chunk, which the server thread then loaded
+        // (in a new world, generated) on the spot: ten-second pauses (the owner's 1.21.1 world, 2026-11-17). So any
+        // chunk that comes in at full while the smoothing is on the stack is one it waited for (the forced tickets'
+        // own loads come through the chunk map's queue, never from inside it). Watched from before the bend chunk is
+        // made: the tick smooths a new bend a second after it arrives. Proved on the old smoothing.
+        java.util.concurrent.atomic.AtomicInteger stray = new java.util.concurrent.atomic.AtomicInteger();
+        java.util.concurrent.atomic.AtomicBoolean watching = new java.util.concurrent.atomic.AtomicBoolean(true);
+        java.util.function.Consumer<net.minecraftforge.event.level.ChunkEvent.Load> watch = e -> {
+            if (watching.get() && e.getLevel() == level && e.getChunk() instanceof LevelChunk
+                    && StackWalker.getInstance().walk(f -> f.anyMatch(x -> x.getClassName().endsWith(".RailSmoothing"))))
+                stray.incrementAndGet();
+        };
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(watch);
+        try {
+            checkSubwayBend(server, level, cx, cz, bend[2], railY, ruin, stray);
+        } finally {
+            watching.set(false);
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.unregister(watch);
+        }
+    }
+
+    private void checkSubwayBend(MinecraftServer server, ServerLevel level, int cx, int cz, int mask, int railY,
+            boolean ruin, java.util.concurrent.atomic.AtomicInteger stray) {
         LevelChunk chunk = server.submit(() -> level.getChunk(cx, cz)).join();
         int rails = 0, broken = 0, blocked = 0;
         List<String> samples = new ArrayList<>();
@@ -3759,7 +3783,7 @@ public final class CityWorldSelfTest {
                     }
                 }
             }
-        report.put("subway.bend", cx + "," + cz + " mask " + bend[2] + ": " + rails + " rails, " + broken
+        report.put("subway.bend", cx + "," + cz + " mask " + mask + ": " + rails + " rails, " + broken
                 + " broken ends, " + blocked + " blocked" + (samples.isEmpty() ? "" : " " + samples));
         if (ruin)
             return; // a ruin's track has gaps by design
@@ -3768,14 +3792,15 @@ public final class CityWorldSelfTest {
         if (broken > 0 || blocked > 0)
             fail("subway bend at " + cx + "," + cz + ": " + broken + " rail ends lead nowhere, " + blocked
                     + " rails have no headroom " + samples);
-        checkBendSmoothed(server, level, chunk, cx, cz, railY);
+        checkBendSmoothed(server, level, chunk, cx, cz, railY, stray);
     }
 
     /**
      * With Slash Rails installed, the bend's rails must belong to one of its smoothed runs (Support/RailSmoothing asks
      * the mod when a bend chunk is first generated). Read from the mod's own registry, by reflection.
      */
-    private void checkBendSmoothed(MinecraftServer server, ServerLevel level, LevelChunk chunk, int cx, int cz, int railY) {
+    private void checkBendSmoothed(MinecraftServer server, ServerLevel level, LevelChunk chunk, int cx, int cz, int railY,
+            java.util.concurrent.atomic.AtomicInteger stray) {
         if (!me.daddychurchill.CityWorld.Support.RailSmoothing.available()) {
             report.put("subway.bend.smoothed", "no Slash Rails");
             return;
@@ -3806,7 +3831,11 @@ public final class CityWorldSelfTest {
                     break;
                 Thread.sleep(100);
             }
+            Thread.sleep(2000); // the tick's own smoothing (due a second after a chunk arrives)
             server.submit(() -> me.daddychurchill.CityWorld.Support.RailSmoothing.drainNow(server)).join();
+            report.put("subway.bend.loads", stray.get() + " chunk(s) loaded from inside the smoothing");
+            if (stray.get() > 0)
+                fail("subway bend smoothing loaded " + stray.get() + " chunk(s) on the server thread (it may read only loaded ones)");
             readSmoothed(level, chunk, cx, cz, railY);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
