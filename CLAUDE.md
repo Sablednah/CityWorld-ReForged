@@ -24,6 +24,21 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-18 overnight): the exploring pauses were the bend smoothing — fixed on all six lines, unreleased.**
+- Owner: "taking awhile to load chunks ... a good 10-15 second pause". Forty jstacks of the running game put the server
+  thread in `Level.getChunk` under Slash Rails' `Clearance.compute` under `RailSmoothing.drain`: `RunService.smooth`'s
+  clearance reads one block round every rail, a run stopped at the loaded edge ends on a chunk edge, so it read (and
+  the server generated) the next chunk, whose own bends did the same — 48 chunks for one bend. `RailSmoothing.smooth`
+  now takes the mod's steps (`RunDetector.detect` with a stop predicate "surroundings not loaded or in another run",
+  `Clearance`, `SmoothRunRegistry.add`, `curve`, `Platform.sendRuns`); a bend waits for its four neighbours, is queued
+  again on ANY full chunk load (disk too) of itself or a neighbour, retries a minute. Self-test `subway.bend.loads`
+  (a `ChunkEvent.Load` with `RailSmoothing` on the stack; a before/after set read 0 on the old code — proved at 48)
+  and a 3-minute wait for the five chunks (1.21.1 with Cobblemon took ~4). Master `c9aab3b5` `b1d3c6f5` + docs; six
+  PASS on final heads (1.21.1 `79ee2bf2`), compare five-way. Owner's 1.21.1 `DEPLOYED-79ee2bf2`. Also: owner
+  confirmed the Railcraft corners ("flowed perfectly") and LootLinker (Railcraft steel sword from a vault office roll);
+  "Network Protocol Error" clicking a loco = spectator mode, Railcraft's bug. Nothing pushed. Next: the owner's look
+  (explore new ground over the subway: no pauses), then 7.2.0 + LootLinker release.
+
 **▶ Resume here (2026-11-16 evening): the owner's train look, and LootLinker — built on all six lines, unreleased.**
 - Owner's screenshots: (1) **mine stairs cut the subway**: a level's "going up" stairs climbed into the level the subway
   had blocked (`Subway.blocksMines`) and cleared a trench through its floor and rails; now both stair directions ask
