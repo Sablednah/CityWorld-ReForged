@@ -46,6 +46,11 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 
 ### Fixed
 
+- **No more pauses of ten seconds or so while exploring with Slash Rails installed.** CityWorld smooths each new subway
+  bend with Slash Rails, which checks the blocks around every rail of the run. A run that stopped at the edge of the
+  loaded world read one block into the next chunk, so the game loaded it on the spot (in a new world it generated
+  it), and that chunk's own bends did the same to the next: one bend pulled 48 chunks through the server thread.
+  Bends are now smoothed only as far as the loaded world reaches, and wait until their own neighbours are in.
 - **Mines no longer cut through the subway.** A mine level's stairs up to the next level were drawn even when the
   subway had taken that level's place, and they cleared a trench across the subway's floor and rails (the owner's
   world: oak stairs at both ends of a one-block cut through both tracks). Stairs now go only to a level that was dug.

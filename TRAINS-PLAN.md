@@ -182,3 +182,25 @@ the same calls (read from 1.20.1-1.1.11).
 1.21.2+ adds `pause-when-empty-seconds` on top). A wait in a headless probe must call `level.resetEmptyTime()` or every
 locomotive "does not move" — that, not their NBT or the boosters, was why the first parked locomotives stood still.
 
+## 8. The owner's look (2026-11-16/17)
+
+- **Railcraft bends under Slash Rails** were drawn in twisted bits: Slash Rails meshes a non-vanilla smoothed rail with
+  the model's PARTICLE sprite, and Railcraft's corner models take theirs from the curved texture. CityWorld ships the
+  six corner models with the straight texture as particle (`assets/railcraft/models/block/*_track_corner.json`,
+  `ordering="AFTER"` on railcraft). Owner: "curves a plenty ... a double turn right then left ... flowed perfectly".
+- **Mine stairs cut the subway** (a trench through floor and rails): the "going up" stairs now ask `Subway.blocksMines`
+  of the level they reach.
+- **10-15 s pauses exploring** (thread dumps of the owner's game: the server thread in `Level.getChunk` under
+  `Clearance.compute` under `RailSmoothing.drain`). `RunService.smooth` runs the mod's clearance check, which reads one
+  block round every rail; a run stopped at the loaded edge ends on a chunk edge, so it read into an unloaded chunk and
+  the server loaded (generated) it, and that chunk's `generated()` queued its bends, which loaded the next: 48 chunks
+  for one bend (self-test `subway.bend.loads`, a `ChunkEvent.Load` listener counting full chunks that arrive with
+  `RailSmoothing` on the stack — a before/after set of loaded chunks read 0 on the old code, because the tick had
+  already smoothed and the temporary tickets had dropped the chunks). `RailSmoothing.smooth` now takes the mod's steps
+  itself (`RunDetector.detect` with a stop predicate "surroundings not all loaded" or "in another run", `Clearance`,
+  `SmoothRunRegistry.add`, `curve`, `Platform.sendRuns` to clients with the mod); a bend waits for its four neighbours.
+  Missing any part (another Slash Rails), nothing is smoothed — never the plain `smooth`. Slash Rails 0.3.0 has the
+  same signatures on 1.21.1 and 26.1 (checked by `javap`).
+- **Network Protocol Error clicking a locomotive** was spectator mode: vanilla's spectator path opens an entity's menu
+  with no extra data, and Railcraft's locomotive menu reads its buffer (NPE in `RailcraftMenuTypes.entityMenu`).
+  Railcraft's bug; in survival/creative it opens normally.
