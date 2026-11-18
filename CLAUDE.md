@@ -24,6 +24,16 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-18): v7.2.0 is RELEASED — trains in the subway, and LootLinker.**
+- Owner: "curve lockups not happening now - so lets get this out the door". Tag `v7.2.0` at the master bump `db5cd135`
+  (docs `93f6a607` before it; branch bumps 5d3a7e39/3395f5cf/f19ffd34/fa5efb05/b4fabf71), GitHub release with six jars
+  (`--latest`), CurseForge 9683262–9683267 (run 44312027856; 1.20.1 = Forge), fleet `DEPLOYED-v7.2.0` on 11 (ZARP opts
+  out), wiki pushed (+100 lines). **LootLinker 1.0.0** is its own release `lootlinker-1.0.0` (jar requires `[7.2,)`;
+  never on CurseForge), v7.2.0 set back to latest after it. Gates: six PASS + `--compare` five-way on the final heads,
+  CI 44308432624 green on the bump heads, scan 0/0/0 after the synthetic positive read 2/1, 1.20.1 SRG 402. **The owner
+  pastes `CURSEFORGE.md`** (7.2.0 headline, the LootLinker add-on section, four Works-with rows) and replies to the
+  loot commenter with the LootLinker link. Next: nothing queued.
+
 **▶ Resume here (2026-11-18 overnight): the exploring pauses were the bend smoothing — fixed on all six lines, unreleased.**
 - Owner: "taking awhile to load chunks ... a good 10-15 second pause". Forty jstacks of the running game put the server
   thread in `Level.getChunk` under Slash Rails' `Clearance.compute` under `RailSmoothing.drain`: `RunService.smooth`'s
