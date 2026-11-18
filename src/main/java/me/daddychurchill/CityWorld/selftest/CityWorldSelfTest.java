@@ -3820,16 +3820,21 @@ public final class CityWorldSelfTest {
                 level.getChunkSource().updateChunkForced(new net.minecraft.world.level.ChunkPos(cx + d[0], cz + d[1]), true);
         }).join();
         try {
-            for (int i = 0; i < 300; i++) {
-                boolean all = server.submit(() -> {
+            // up to three minutes: a slow line (1.21.1 with Cobblemon) took longer than 30 s for these five
+            boolean in = false;
+            for (int i = 0; i < 1800 && !in; i++) {
+                in = server.submit(() -> {
                     for (int[] d : around)
                         if (level.getChunkSource().getChunkNow(cx + d[0], cz + d[1]) == null)
                             return false;
                     return true;
                 }).join();
-                if (all)
-                    break;
-                Thread.sleep(100);
+                if (!in)
+                    Thread.sleep(100);
+            }
+            if (!in) {
+                fail("subway bend at " + cx + "," + cz + ": its four neighbours never loaded (3 min), smoothing not checked");
+                return;
             }
             Thread.sleep(2000); // the tick's own smoothing (due a second after a chunk arrives)
             server.submit(() -> me.daddychurchill.CityWorld.Support.RailSmoothing.drainNow(server)).join();

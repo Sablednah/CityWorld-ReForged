@@ -20,8 +20,8 @@ import me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator;
 /**
  * Smooths the subway's bends with Slash Rails, as a player with its Track Smoother would (GitHub issue #7; see
  * TRAINS-PLAN.md). Slash Rails only rounds a run when a player asks it to, and keeps the runs it has rounded in the
- * world's saved data, so this asks once per bend: when a bend chunk first comes into the world (a chunk just
- * generated, never one loaded from disk) its two tracks are queued, and a second later, once the chunk is in the world
+ * world's saved data, so this asks until a bend is smoothed: when a bend chunk or one beside it comes in at full, the
+ * bend's two tracks are queued unless the mod already has them, and a second later, once the chunks are in the world
  * proper, each is smoothed the way the mod's own {@code RunService.smooth(ServerLevel, BlockPos)} does it — by
  * reflection, so nothing here loads without the mod, and a mod that renames its parts is simply not called.
  *
@@ -117,19 +117,21 @@ public final class RailSmoothing {
     }
 
     /**
-     * From the chunk-load event, for a chunk just generated: queue its own bends, and the bends of its four
-     * neighbours that are in the world but not yet smoothed. The mod smooths only what is loaded, and turns down a
+     * From the chunk-load event, for a chunk that has come in at full: queue its own bends (if it was read from disk,
+     * only those not smoothed yet), and the bends of its four neighbours that are in the world but not yet smoothed.
+     * A bend waits for its four neighbours (see the class comment), so a neighbour read back from disk is a chance
+     * as good as a new one. The mod smooths only what is loaded, and turns down a
      * run that is too short ("Too few connected rails"), so a bend generated before the track either side of it was
      * smoothed by nothing until the chunk beside it arrives; that arrival is its second chance.
      */
-    public static void generated(ServerLevel level, int chunkX, int chunkZ) {
+    public static void loaded(ServerLevel level, int chunkX, int chunkZ, boolean isNew) {
         if (!(level.getChunkSource().getGenerator() instanceof CityWorldChunkGenerator g))
             return;
         CityWorldGenerator plan = g.getContext(level);
         if (plan == null || !plan.getSettings().smoothBends || !Subway.planned(plan) || !available() || heldBack())
             return;
         int due = level.getServer().getTickCount() + 20;
-        queueChunk(level, plan, chunkX, chunkZ, due, false);
+        queueChunk(level, plan, chunkX, chunkZ, due, !isNew);
         queueChunk(level, plan, chunkX + 1, chunkZ, due, true);
         queueChunk(level, plan, chunkX - 1, chunkZ, due, true);
         queueChunk(level, plan, chunkX, chunkZ + 1, due, true);
@@ -139,7 +141,7 @@ public final class RailSmoothing {
     private static void queueChunk(ServerLevel level, CityWorldGenerator plan, int chunkX, int chunkZ, int due,
             boolean neighbour) {
         if (neighbour && !level.hasChunk(chunkX, chunkZ))
-            return; // it will queue itself when it generates
+            return; // it will queue itself when it comes in
         Subway.Piece piece = Subway.at(plan, chunkX, chunkZ);
         if (!piece.any() || piece.station() || piece.ramp() != null)
             return;
@@ -157,7 +159,7 @@ public final class RailSmoothing {
             BlockPos rail = new BlockPos(chunkX * 16 + mid[0], railY, chunkZ * 16 + mid[1]);
             if (unlessSmoothed && smoothed(level, rail))
                 continue;
-            PENDING.add(new Pending(level, rail, due, 10));
+            PENDING.add(new Pending(level, rail, due, 30));
         }
     }
 
@@ -209,7 +211,7 @@ public final class RailSmoothing {
                 continue;
             if (!aroundLoaded(p.level(), p.rail().getX() >> 4, p.rail().getZ() >> 4)) {
                 if (p.tries() > 0)
-                    PENDING.add(new Pending(p.level(), p.rail(), now + 20, p.tries() - 1));
+                    PENDING.add(new Pending(p.level(), p.rail(), now + 40, p.tries() - 1)); // about a minute in all
                 continue;
             }
             BlockPos rail = findRail(p.level(), p.rail());
