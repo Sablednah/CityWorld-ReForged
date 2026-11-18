@@ -15,6 +15,14 @@ generated city, more ground than all of Greater London and two and a half New Yo
 
 ![The highrise core at golden hour](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/cityworld-highrise-district-in-golden-hour.jpg)
 
+**New in 7.2.0: trains in the subway, and vanilla's loot in the city.** Every subway bend is now a real **curve**
+of rails through a rounded tunnel, and with **Slash Rails** each one is smoothed as you explore, so carts sweep round
+instead of jolting. **Railcraft Reborn** lays its own track in the tunnels, and makes the line **electric**: electric
+track all the way, batteries in every station that the city keeps charged, and now and then an **electric
+locomotive** waiting at the platform for you to start. **Choo Choo**'s trains stand coupled at some stations, and
+**Improvement Minecarts** gets a stop at every platform with the station's name on it. And the new **LootLinker**
+add-on (below) brings vanilla's chest loot, and everything your loot mods add to it, into the city's chests.
+
 **New in 7.1.0: Cobblemon.** With Cobblemon installed (fully on 1.21.1; on 1.20.1 the buildings, with villagers for the nurse and gym
 leader; Cobblemon has a release for 1.21.1 and 1.20.1 only) the city grows **Pokémon Centers** on its
 streets — a nurse and the healing machine at the counter, a bank of PCs, beds upstairs, a pasture out the back —
@@ -300,6 +308,17 @@ becomes clear. It works on every world style, Apocalypse included. Drop it in `m
 The **[All Vanilla Structures](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/all-vanilla-structures-1.0.0)**
 sample datapack switches every vanilla structure on, for servers.
 
+### Vanilla's loot, and your loot mods', in the city: the LootLinker add-on
+
+CityWorld's chests use their own loot tables, so the items loot mods add to vanilla's chests (dungeons, mineshafts,
+village houses) never reached a city. The **CityWorld: LootLinker** add-on jar links them in: the vault gets dungeon,
+mineshaft, stronghold and ancient-city loot as it gets deeper, armouries and bunkers a pillager outpost's and a
+smith's, mines a mineshaft's, sewers a dungeon's and a sunken ruin's, warehouses a shipwreck's, each shop its village
+trade's chest, and now and then a home a village house's. Your loot mods' additions come with them: Railcraft's tools
+in the mine chests, Farmer's Delight's food in the vault. Drop it in `mods` beside CityWorld (7.2.0 or later); one jar
+works on every Minecraft version. Every link is a small JSON file a pack can change or remove.
+**→ [Download from GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/lootlinker-1.0.0)**
+
 ### And your biome mod's biomes
 
 Install **Biomes O' Plenty** — or anything else built on **TerraBlender** (Oh The Biomes We've Gone, Nyctophobia,
@@ -391,6 +410,10 @@ with none installed nothing changes.
 | **Modernlife** (1.20.1) | ATMs in city halls, shops and malls, and a paved square at spawn for its bank. |
 | **L_Ender's Cataclysm**, **Battle Towers**, **Dungeon Crawl** | Their structures are placed, the city keeps clear, and the ground is shaped to fit them; their sea structures in the deep oceans. |
 | **C2ME** | Faster generation; the End works with it. |
+| **Slash Rails** | Subway bends smoothed as they generate, so carts sweep round the curves (not while Choo Choo is installed: its locomotives cannot drive on smoothed track). |
+| **Railcraft Reborn** (1.20.1, 1.21.1, 26.1) | Its track in the tunnels, and an electric line: electric track, station batteries the city keeps charged, electric locomotives at the platforms. |
+| **Choo Choo** | Its trains parked at some stations, locomotive and carriages coupled. |
+| **Improvement Minecarts** | A stop at every platform, lapis and gold under the rail and the station's name on a sign; it manages carts on Railcraft's track too. |
 
 **Made to work together:**
 

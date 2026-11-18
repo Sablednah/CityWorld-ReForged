@@ -154,6 +154,10 @@ generated city, more ground than all of Greater London and two and a half New Yo
   villages and Cobblemon's structures in the wild, apricorn trees in the orchards.
 - **Subway** (MODERN/APOCALYPSE) — a station in every urban district and twin-track tunnels between
   stations near and far, on two levels with interchanges and powered track; a minecart runs the network.
+  Bends are real curves (7.2), smoothed with Slash Rails; Railcraft Reborn makes it an electric line with charged
+  station batteries and locomotives, Choo Choo parks trains, Improvement Minecarts gets its stops.
+- **LootLinker** (7.2, add-on, [download](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/lootlinker-1.0.0)) — vanilla's chest loot, and every loot mod's additions to it,
+  in the city's chests.
 - **Shopping malls** (MODERN/APOCALYPSE) — rare, sprawling, at the edge of town: an atrium in wings,
   escalators and lifts, dozens of named shops each with its own loot table, car parks out to the road.
 - **Inhabitants** — villagers (named, employed at their shop's trade), vanilla's herds in the wild by biome,

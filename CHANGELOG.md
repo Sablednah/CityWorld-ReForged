@@ -5,7 +5,7 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
-## 7.2.0 (unreleased)
+## 7.2.0 — 2026-11-18
 
 ### Added
 
@@ -42,7 +42,8 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   ancient-city loot as it deepens, armouries and bunkers an outpost's and a smith's, mines, sewers and warehouses
   their vanilla cousins, each shop its village trade, homes rarely a village house's. Self-test `loot.linked` (with
   Farmer's Delight: its dungeon additions come through the link, never through `add_table`) and `loot.lootlinker`.
-  LOOT.md "Vanilla loot and loot mods: LootLinker".
+  LOOT.md "Vanilla loot and loot mods: LootLinker". **LootLinker 1.0.0** is out beside this release, one jar for
+  every Minecraft version: [download from GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/lootlinker-1.0.0).
 
 ### Fixed
 
