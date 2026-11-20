@@ -24,6 +24,20 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-20): the add-ons are on CurseForge, and releases announce themselves.**
+- The three add-ons have their OWN CurseForge projects (approved 2026-11-20): Neutral Palette 1814778
+  `cityworld-neutral-palette`, LootLinker 1814804 `cityworld-lootlinker`, All Vanilla Structures 1814818
+  `cityworld-all-vanilla-structures` (Mods, not Data Packs). `.github/workflows/curseforge-addons.yml` +
+  `scripts/curseforge-upload-addon.sh` upload an add-on tag's ONE jar there (all six MC versions, Forge + NeoForge,
+  CityWorld required); never to CityWorld's project. Descriptions to paste: `packs/<addon>/CURSEFORGE.md`. The
+  `lowcodefml` warning stays (1.21.1's FML 4 requires `modLoader`). Docs link CurseForge first.
+- **Release announcer**: https://github.com/Sablednah/release-announcer (`../Release-Announcer`, its own README/SETUP):
+  polls all 20 of the owner's mods every 30 min and posts new releases to Bluesky, Mastodon, Tumblr, Facebook,
+  Instagram, Threads (no X: it charges), plus a "Ko-fi: …" paste issue. LIVE; 7.2.0 was the first post. A release
+  note `<!-- announce: skip -->` keeps one quiet. Memory `release-announcer.md` has the Meta token traps.
+- `CURSEFORGE.md` gained "Three ways in" (`/cityworld`, world type, `level-type` on a server) and lost the 7.0.0
+  headline (folded into the body). **The owner pastes it** into the CurseForge page. Next: nothing queued.
+
 **▶ Resume here (2026-11-18): v7.2.0 is RELEASED — trains in the subway, and LootLinker.**
 - Owner: "curve lockups not happening now - so lets get this out the door". Tag `v7.2.0` at the master bump `db5cd135`
   (docs `93f6a607` before it; branch bumps 5d3a7e39/3395f5cf/f19ffd34/fa5efb05/b4fabf71), GitHub release with six jars
