@@ -15,6 +15,21 @@ generated city, more ground than all of Greater London and two and a half New Yo
 
 ![The highrise core at golden hour](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/cityworld-highrise-district-in-golden-hour.jpg)
 
+## Three ways in
+
+**1. In the world you already have: `/cityworld`.** It takes you to a CityWorld city at the same X/Z, a dimension of
+its own that is there whatever generates your main world, and `/cityworld leave` brings you back. It needs operator,
+or the `cityworld.teleport` permission, so a server can hand it out.
+
+**2. A new world.** On the create-world screen's **World** tab, set **World Type** to **CityWorld** (the Modern
+city) or any of the other twelve styles below. **Customize** sets the rest: CityWorld's own land or vanilla's with
+cities apart, the Nether and End, which structures generate, and every setting on its pages.
+
+**3. A server.** Set the world type in `server.properties` before the world is first created:
+`level-type=cityworld\:city` for Modern, or `cityworld\:apocalypse`, `cityworld\:classic` and so on for the other
+styles. Its settings come from a datapack; shape a world in single player with Customize, and `/cityexport` writes it
+out for the server.
+
 **New in 7.2.0: trains in the subway, and vanilla's loot in the city.** Every subway bend is now a real **curve**
 of rails through a rounded tunnel, and with **Slash Rails** each one is smoothed as you explore, so carts sweep round
 instead of jolting. **Railcraft Reborn** lays its own track in the tunnels, and makes the line **electric**: electric
@@ -34,21 +49,6 @@ roofs (and a city street no longer reads to Cobblemon as a jungle temple). Villa
 come to the wild between the cities, apricorn trees grow in the orchards and its berries in the fields. Every piece
 of it is data a pack can change: the NPC classes, the dialogue, the spawn pools, the loot. Without Cobblemon,
 nothing changes.
-
-**New in 7.0.0: deep oceans, highways, car parks and real cars.** A world-changing drop, so a major version.
-**Deep oceans** now and then run off CityWorld's own land: a shelf down into a wide, thirty-block-deep sea with
-vanilla's ocean biomes and everything that lives in them, monuments, ruins, shipwrecks, buried treasure and the sea
-structures of mods (Cataclysm's Sunken City, Alex's Caves' abyssal chasm on 1.20.1), with oil rigs far out and a lava
-sea in the ruined Nether twin. **Highways** join the cities of a vanilla world: each city's street runs on out of
-town, climbing in half-block steps a car can drive, winding round hills, cut through ridges in lit tunnels and over
-rivers on bridges, signed MOTORWAY, TUNNEL and STEEP with Macaw's Roads. **Car parks** stand among the buildings:
-surface lots and multi-storey decks with ramps, pillars, parapets and lit roofs, open to the road. **Real cars**: with
-**Immersive Vehicles** or **Ultimate Car Mod**, drivable vehicles wait in the car parks and at the kerbs, fuelled,
-and the gas stations get working pumps; **Macaw's Roads and Streets works well with Ultimate Car Mod** (its asphalt
-takes the roads, Macaw's picture signs stand where Macaw's has one, and both mods' cars share the kerbs). Road signs
-go on IV's poles, every town and district has a name, and a datapack can put anything in the city by lot, district or
-place (`cityworld:spawn`). Older worlds keep the land they always had: oceans and highways only come to a world
-made with 7.0.
 
 ![A mall and its car park, lit for the night](https://raw.githubusercontent.com/Sablednah/CityWorld-ReForged/master/screengrabs/cityworld-shopping-mall-and-car-park-by-night.jpg)
 
@@ -72,15 +72,17 @@ Pick **CityWorld** as your world type and you land in a living city:
 - **Districts** — municipal civic centres with monuments in their squares, museums with fossil skeletons and
   exhibits, industrial factories and warehouses (with bunkers underneath, batteries of **silos** and the odd
   **gasometer**), farms with animals and crops, parks with gazebos, ponds, benches, **zoos and glass biodomes**,
-  and now **car parks**, surface and multi-storey.
+  and **car parks**: surface lots and multi-storey decks with ramps, pillars and lit roofs, open to the road.
 - **A subway** — a station in every district, stairs down to the platforms, and twin-track tunnels
   between stations near and far, on two levels with interchanges; a minecart runs the line.
 - **Shopping malls** — rare, sprawling, at the edge of town: an atrium with balconies, escalators and
   lifts, dozens of named shops with their own goods and loot, and car parks out to the road.
 - **Rivers, seas and oceans** — rivers rise in the hills and run to the sea over waterfalls, with hidden finds
   behind them; the waterside follows the district (quays, slips, harbours, beaches, lighthouses, rustic jetties)
-  and roads bridge the water; and now and then the land runs down a shelf into a **deep ocean** with vanilla's
-  ocean biomes, monuments, ruins, shipwrecks and buried treasure, and oil rigs far out.
+  and roads bridge the water; and now and then the land runs down a shelf into a thirty-block-deep **ocean** with
+  vanilla's ocean biomes and everything that lives in them, monuments, ruins, shipwrecks, buried treasure, the sea
+  structures of mods (Cataclysm's Sunken City, Alex's Caves' abyssal chasm on 1.20.1), and oil rigs far out. (Deep
+  oceans, like the highways below, come to worlds made with 7.0 or later; older worlds keep the land they had.)
 - **Underground** — mine networks with copper-age fittings, ore veins that get richer with depth,
   cave-spider nests, hanging lanterns, and vertical lift shafts; wet sewers; bunkers and basements with
   loot and mob spawners; and rare **large caverns**.
@@ -241,7 +243,7 @@ Mod authors: adding your own furniture takes two data files in your jar — see 
 
 ## World styles
 
-Thirteen selectable styles, each its own world type (`cityworld:<style>`) or a click away on the
+Thirteen selectable styles, each its own world type (`cityworld:<style>`; Modern is `cityworld:city`) or a click away on the
 **Customize** screen:
 
 | Style | What it is |
