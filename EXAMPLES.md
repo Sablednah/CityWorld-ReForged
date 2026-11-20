@@ -69,7 +69,7 @@ Keep everything else and drop one block, without `"replace": true`:
 is not there is ignored. The same works on any CityWorld tag: a furniture role, a fittings pool, a biome pool.
 
 To stop CityWorld using a **vanilla block entirely** (no iron blocks anywhere), swap it instead — example 3; the
-[Neutral Palette](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/neutral-palette-1.0.0) add-on is a
+[Neutral Palette](https://www.curseforge.com/minecraft/mc-mods/cityworld-neutral-palette) add-on is a
 complete pack of exactly that.
 
 ## 3. Replace a block everywhere — or make a mix of it

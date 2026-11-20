@@ -43,7 +43,7 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   their vanilla cousins, each shop its village trade, homes rarely a village house's. Self-test `loot.linked` (with
   Farmer's Delight: its dungeon additions come through the link, never through `add_table`) and `loot.lootlinker`.
   LOOT.md "Vanilla loot and loot mods: LootLinker". **LootLinker 1.0.0** is out beside this release, one jar for
-  every Minecraft version: [download from GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/lootlinker-1.0.0).
+  every Minecraft version: [get it on CurseForge](https://www.curseforge.com/minecraft/mc-mods/cityworld-lootlinker).
 
 ### Fixed
 

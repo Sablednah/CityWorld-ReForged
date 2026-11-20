@@ -814,7 +814,7 @@ are for packs; the furniture one is described under [Furniture](#furniture).
 `data/cityworld/data_maps/block/substitute.json` (the same path on every version) swaps one block for
 another **everywhere CityWorld places it** — its generated buildings, roads and decoration, and its
 schematics. CityWorld ships it empty; the
-[Neutral Palette](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/neutral-palette-1.0.0)
+[Neutral Palette](https://www.curseforge.com/minecraft/mc-mods/cityworld-neutral-palette)
 add-on is a complete example.
 
 ```json

@@ -103,12 +103,12 @@ Put the file in `data/<your pack>/loot_modifiers/` and list it in `data/neoforge
 (1.21.x) or `data/forge/loot_modifiers/global_loot_modifiers.json` (1.20.1); 26.x loads every file in the folder
 without a list. `targets` keeps one file valid on every version (the table-id condition is named differently on each).
 
-**LootLinker** is a ready-made set of these, a data-only jar on its own GitHub release: the vault gets simple
+**LootLinker** is a ready-made set of these, a data-only add-on jar: the vault gets simple
 dungeon, mineshaft, stronghold and ancient-city loot as it deepens; armouries and bunkers a pillager outpost's,
 weaponsmith's and armourer's; mines a mineshaft's; sewers a dungeon's and an underwater ruin's; warehouses a
 shipwreck's supplies; each shop and mall store with a village trade that trade's village chest; and homes, at 6% and
 4%, a plains or taiga house's. Its README has the chances; every link is one file you can change.
-[Download LootLinker 1.0.0](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/lootlinker-1.0.0).
+[Get LootLinker on CurseForge](https://www.curseforge.com/minecraft/mc-mods/cityworld-lootlinker).
 
 ### Turning loot off
 

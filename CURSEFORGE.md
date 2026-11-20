@@ -304,8 +304,8 @@ builds with natural woods, stones, deepslate and terracotta only. No iron, gold,
 or copper blocks in buildings; coloured wool becomes planks, concrete becomes terracotta, stained glass
 becomes clear. It works on every world style, Apocalypse included. Drop it in `mods` beside CityWorld
 (5.19.0 or later). It is a plain datapack inside, so a pack author can change any swap.
-**→ [Download from GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/neutral-palette-1.0.0)**
-The **[All Vanilla Structures](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/all-vanilla-structures-1.0.0)**
+**→ [Get it on CurseForge](https://www.curseforge.com/minecraft/mc-mods/cityworld-neutral-palette)** · [or from GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/neutral-palette-1.0.0)
+The **[All Vanilla Structures](https://www.curseforge.com/minecraft/mc-mods/cityworld-all-vanilla-structures)**
 sample datapack switches every vanilla structure on, for servers.
 
 ### Vanilla's loot, and your loot mods', in the city: the LootLinker add-on
@@ -317,7 +317,7 @@ smith's, mines a mineshaft's, sewers a dungeon's and a sunken ruin's, warehouses
 trade's chest, and now and then a home a village house's. Your loot mods' additions come with them: Railcraft's tools
 in the mine chests, Farmer's Delight's food in the vault. Drop it in `mods` beside CityWorld (7.2.0 or later); one jar
 works on every Minecraft version. Every link is a small JSON file a pack can change or remove.
-**→ [Download from GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/lootlinker-1.0.0)**
+**→ [Get it on CurseForge](https://www.curseforge.com/minecraft/mc-mods/cityworld-lootlinker)** · [or from GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/lootlinker-1.0.0)
 
 ### And your biome mod's biomes
 

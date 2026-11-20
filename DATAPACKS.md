@@ -49,7 +49,7 @@ A datapack belongs to **one world**, not to the game.
 | **Single player, new world** | On **Create New World**, open the **More** tab → **Data Packs** → drag your folder or zip into the window, and move it to the *Selected* side. It is in place before the first chunk is made — the best way. |
 | **Single player, existing world** | `.minecraft/saves/<world name>/datapacks/` (in the CurseForge app: right-click the instance → *Open Folder* → `saves`). Then quit to the title screen and reopen the world. |
 | **A server** | `world/datapacks/` — the folder named by `level-name` in `server.properties`, next to `level.dat`. Then restart the server. |
-| **Every new world, automatically** | A global-datapack mod such as **OpenLoader** (`config/openloader/data/`), or package the pack as a mod jar the way the [Neutral Palette](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/neutral-palette-1.0.0) add-on does. |
+| **Every new world, automatically** | A global-datapack mod such as **OpenLoader** (`config/openloader/data/`), or package the pack as a mod jar the way the [Neutral Palette](https://www.curseforge.com/minecraft/mc-mods/cityworld-neutral-palette) add-on does. |
 
 **Check it loaded:** run `/datapack list`. Your pack should be listed as enabled (shown as
 `[file/my-city-pack]`). If it isn't there, Minecraft hasn't read it, and nothing in it will do anything.
@@ -188,7 +188,7 @@ folder names letter by letter against this page.
 
 ## Easiest of all: copy a pack that works
 
-The [Neutral Palette](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/neutral-palette-1.0.0)
+The [Neutral Palette](https://www.curseforge.com/minecraft/mc-mods/cityworld-neutral-palette)
 add-on is a complete, working CityWorld pack: palette tags for both 1.20.1 and 1.21+, a substitute map, and
 a `pack.mcmeta` that loads everywhere. It is a `.jar`, but a jar is a zip — rename it to `.zip`, open it,
 copy its `data/` folder and `pack.mcmeta` into a folder of your own, and change the contents.
