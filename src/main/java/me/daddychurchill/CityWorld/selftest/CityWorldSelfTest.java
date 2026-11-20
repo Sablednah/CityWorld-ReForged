@@ -175,6 +175,59 @@ public final class CityWorldSelfTest {
     private final List<String> failures = new ArrayList<>();
     private final Map<String, String> report = new TreeMap<>();
 
+    /** Zombies CityWorld finalised while generating, and spawns finalised as a JOCKEY inside one of those. */
+    private final java.util.concurrent.atomic.AtomicInteger zombiesFinalised = new java.util.concurrent.atomic.AtomicInteger(),
+            worldgenJockeys = new java.util.concurrent.atomic.AtomicInteger();
+
+    /**
+     * Watches every finalised spawn from the first chunk on (the spawn area included): a JOCKEY one from inside
+     * CityWorld's own spawning is a second spawn event a mod cannot tell from a live one, and SporeWithin hung the
+     * server on it (issue #8). See {@code SpawnProvider.noJockey}.
+     */
+    @SubscribeEvent
+    public void onFinalizeSpawn(net.neoforged.neoforge.event.entity.living.FinalizeSpawnEvent event) {
+        if (!StackWalker.getInstance().walk(f -> f.anyMatch(x -> x.getClassName().endsWith(".SpawnProvider"))))
+            return;
+        if (event.getSpawnType() == net.minecraft.world.entity.MobSpawnType.JOCKEY)
+            worldgenJockeys.incrementAndGet();
+        else if (event.getEntity() instanceof net.minecraft.world.entity.monster.Zombie)
+            zombiesFinalised.incrementAndGet();
+    }
+
+    /**
+     * The world itself finalises too few zombies to show a one-in-four-hundred roll (one in a whole run), so the
+     * check also puts {@link #JOCKEY_TRIES} zombie villagers through CityWorld's own finalise, on the live level at
+     * chunk 0,0 (any chicken a jockey roll adds there is discarded). Proved on the old finalise (no group data):
+     * 5 jockeys in 4000 on 1.21.11.
+     */
+    private static final int JOCKEY_TRIES = 4000;
+
+    private void checkWorldgenJockeys(MinecraftServer server) {
+        int inWorld = worldgenJockeys.get(), zombies = zombiesFinalised.get();
+        server.submit(() -> {
+            ServerLevel level = server.overworld();
+            level.getChunk(0, 0);
+            BlockPos at = new BlockPos(8, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, 8, 8), 8);
+            for (int i = 0; i < JOCKEY_TRIES; i++) {
+                var zombie = net.minecraft.world.entity.EntityType.ZOMBIE_VILLAGER.create(level);
+                if (zombie == null)
+                    continue;
+                zombie.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.0F, 0.0F);
+                me.daddychurchill.CityWorld.Plugins.SpawnProvider.finalizeGenerated(zombie, level,
+                        net.minecraft.world.entity.MobSpawnType.STRUCTURE);
+            }
+            level.getEntitiesOfClass(net.minecraft.world.entity.animal.Chicken.class,
+                    new net.minecraft.world.phys.AABB(at).inflate(16)).forEach(net.minecraft.world.entity.Entity::discard);
+        }).join();
+        int tried = worldgenJockeys.get() - inWorld;
+        report.put("spawn.jockeys", inWorld + " jockey spawn(s) inside " + zombies + " zombie(s) CityWorld finalised"
+                + " while generating; " + tried + " in " + JOCKEY_TRIES + " finalised by the check");
+        CityWorldMod.LOGGER.info("SELFTEST: spawn.jockeys {}", report.get("spawn.jockeys"));
+        if (worldgenJockeys.get() > 0)
+            fail(worldgenJockeys.get() + " jockey spawn(s) finalised from inside CityWorld's worldgen spawning"
+                    + " (a second FinalizeSpawnEvent a mod cannot tell from a live spawn: issue #8)");
+    }
+
     @SubscribeEvent
     public void onStarted(ServerStartedEvent event) {
         if (!enabled())
@@ -231,6 +284,7 @@ public final class CityWorldSelfTest {
             checkLinkedLoot(server);
             checkStyleLootTables(server);
             checkReservedSite(server); // last: it changes the plan (far from everything else checked)
+            checkWorldgenJockeys(server);
             checkDirectLoad(server); // truly last: if it finds a deadlock the server thread never answers again
         } catch (Throwable t) {
             fail("harness threw: " + t);
