@@ -10,6 +10,8 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.level.LevelAccessor;
@@ -470,6 +472,27 @@ public class SpawnProvider extends Provider {
         }
     }
 
+    /**
+     * The group data a zombie (any kind: villager, husk, drowned, piglin) is finalised with here: the baby roll
+     * vanilla makes itself, but never a chicken jockey. With no group data, {@code Zombie.finalizeSpawn} makes a
+     * baby one time in twenty and then, one baby in twenty, builds a chicken and finalises it as
+     * {@code JOCKEY} — a second {@code FinalizeSpawnEvent} from inside ours. A mod that skips worldgen spawns
+     * by their reason ({@code STRUCTURE}, {@code CHUNK_GENERATION}) cannot tell that one came from a generating
+     * chunk, and SporeWithin then read the height of the REAL level from the worldgen worker:
+     * {@code Level.getChunk} joins the server thread, which was waiting for this chunk, and the server hung
+     * (issue #8, under Chunky). Vanilla turns jockeys off the same way for its strider's rider.
+     */
+    private static SpawnGroupData noJockey(Mob mob, ServerLevelAccessor server) {
+        return mob instanceof Zombie ? new Zombie.ZombieGroupData(Zombie.getSpawnAsBabyOdds(server.getRandom()), false)
+                : null;
+    }
+
+    /** Finalises a mob CityWorld places while generating: through the loader's event, never a jockey's parent. */
+    public static void finalizeGenerated(Mob mob, ServerLevelAccessor server, MobSpawnType reason) {
+        ForgeEventFactory.onFinalizeSpawn(mob, server, server.getCurrentDifficultyAt(mob.blockPosition()), reason,
+                noJockey(mob, server), null);
+    }
+
     /** The three-step vanilla worldgen spawn — see this class's notes. */
     private void placeEntity(CityWorldGenerator generator, Odds odds, Location at, EntityType entity,
             ResourceLocation workerProfession, ZooSpawn zoo) {
@@ -497,8 +520,7 @@ public class SpawnProvider extends Provider {
         // A cancelled spawn needs no handling on our side — Forge marks the mob and
         // WorldGenRegion.addFreshEntity drops it.
         if (being instanceof Mob mob && (zoo == null || zoo.finalizeSpawn()))
-            ForgeEventFactory.onFinalizeSpawn(mob, server, server.getCurrentDifficultyAt(mob.blockPosition()),
-                    reason, null, null);
+            finalizeGenerated(mob, server, reason);
         // a zoo's young, after the spawn setup (which may roll its own baby); and a zoo animal stays put
         if (zoo != null) {
             if (being instanceof net.minecraft.world.entity.AgeableMob young && zoo.babyChance() > 0
