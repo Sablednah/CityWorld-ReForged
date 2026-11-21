@@ -24,7 +24,15 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-11-21): issue #8 (SporeWithin hang) FIXED on all six lines, unreleased.**
+**▶ Resume here (2026-11-21): v7.2.1 is RELEASED — issue #8 (SporeWithin hang) fixed.**
+- Tag `v7.2.1` at the master bump `f5bcbccc` (docs `9e86f54b` before it; branch bumps 364af169/bd00c25c/e490752b/
+  a877c3b1/5c63f710), GitHub release with six jars (`--latest`), CurseForge 9732192–9732199 (run 44905318041; 1.20.1 =
+  Forge), fleet `DEPLOYED-v7.2.1` on 11 (ZARP opts out), wiki unchanged (nothing to publish). Gates: six PASS + compare
+  five-way on the fix heads, CI 44903438979 green on the bump heads, scan 0/0/0 after the synthetic positive read 2/1,
+  1.20.1 SRG 49 in SpawnProvider. The owner posts the issue reply (copied to Downloads `cityworld-issue8-reply.md`).
+  Next: nothing queued.
+
+**▶ (2026-11-21, before the release): issue #8 (SporeWithin hang) FIXED on all six lines.**
 - A worldgen baby zombie's `finalizeSpawn` (no group data) can build a chicken and finalise it as `JOCKEY`: a nested
   FinalizeSpawnEvent that SporeWithin (filters STRUCTURE/CHUNK_GENERATION/SPAWNER, not JOCKEY) answered with
   `mob.level().getHeight` from the worker → `Level.getChunk` joined the server thread waiting on that chunk (Chunky).
@@ -32,8 +40,8 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   villagers through it (old code 5/4000, fixed 0 on all six; 1.21.1 run with Spore + SporeWithin 1.3.0 loaded). Master
   `7139248b`, 1.21.1 `8c9eb28f`, 26.1 `b8bb9640`, 26.2 `09a70c85`, 26.3 `2de69d93`, 1.20.1 `0e94d3fc` (26.2+ need
   `EntityTypes.*`). Six PASS (26.1's first run hit the 60 s watchdog in subway planning beside another self-test; alone
-  it passed); compare: five agree, 1.21.1 by Cobblemon. CHANGELOG "Unreleased". Issue reply draft in the session
-  scratchpad `issue8/reply.md`. Nothing pushed. Next: the owner posts the reply, then a release on their word.
+  it passed); compare: five agree, 1.21.1 by Cobblemon. CHANGELOG 7.2.1. Issue reply draft in the session
+  scratchpad `issue8/reply.md`.
 
 **▶ Resume here (2026-11-20): the add-ons are on CurseForge, and releases announce themselves.**
 - The three add-ons have their OWN CurseForge projects (approved 2026-11-20): Neutral Palette 1814778
