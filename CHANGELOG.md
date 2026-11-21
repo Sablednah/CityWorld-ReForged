@@ -5,6 +5,18 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## Unreleased
+
+### Fixed
+
+- **A server could hang generating chunks with SporeWithin installed** (GitHub issue #8, 1.21.1 under Chunky). A
+  baby zombie CityWorld placed while generating could roll vanilla's chicken jockey, and vanilla finalises that
+  chicken as a `JOCKEY` spawn: a second spawn event from inside CityWorld's, which a mod cannot tell from a live one.
+  SporeWithin skips world-generation spawns by their reason but not that one, read the live level from the
+  generation thread and waited forever for the chunk being generated. Zombies CityWorld places now never make a
+  jockey (vanilla's own switch, the one it uses for a strider's rider); they still roll to be babies. Self-test
+  `spawn.jockeys` (the old code made 5 jockeys in 4000 zombie villagers; now 0).
+
 ## 7.2.0 — 2026-11-18
 
 ### Added
