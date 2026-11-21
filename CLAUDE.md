@@ -29,7 +29,7 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   a877c3b1/5c63f710), GitHub release with six jars (`--latest`), CurseForge 9732192–9732199 (run 44905318041; 1.20.1 =
   Forge), fleet `DEPLOYED-v7.2.1` on 11 (ZARP opts out), wiki unchanged (nothing to publish). Gates: six PASS + compare
   five-way on the fix heads, CI 44903438979 green on the bump heads, scan 0/0/0 after the synthetic positive read 2/1,
-  1.20.1 SRG 49 in SpawnProvider. The owner posts the issue reply (copied to Downloads `cityworld-issue8-reply.md`).
+  1.20.1 SRG 49 in SpawnProvider. The owner posted the issue #8 reply (2026-11-21).
   Next: nothing queued.
 
 **▶ (2026-11-21, before the release): issue #8 (SporeWithin hang) FIXED on all six lines.**
