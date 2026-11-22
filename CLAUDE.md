@@ -31,8 +31,8 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   five-way on the fix heads, CI 44903438979 green on the bump heads, scan 0/0/0 after the synthetic positive read 2/1,
   1.20.1 SRG 49 in SpawnProvider. The owner posted the issue #8 reply (2026-11-21).
   SporeWithin has no issue tracker: a private message to its author (the bug, why `hasChunkAt` misses it, ocean ruins
-  hit it in vanilla, fix `if (!(event.getLevel() instanceof ServerLevel)) return;`) was handed to the owner to send
-  (2026-11-22). Next: nothing queued.
+  hit it in vanilla, fix `if (!(event.getLevel() instanceof ServerLevel)) return;`) was sent by the owner
+  (2026-11-22); the author thanked them and released SporeWithin with the fix. Next: nothing queued.
 
 **▶ (2026-11-21, before the release): issue #8 (SporeWithin hang) FIXED on all six lines.**
 - A worldgen baby zombie's `finalizeSpawn` (no group data) can build a chicken and finalise it as `JOCKEY`: a nested
