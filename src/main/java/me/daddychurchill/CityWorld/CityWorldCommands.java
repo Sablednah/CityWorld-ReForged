@@ -1010,6 +1010,9 @@ public final class CityWorldCommands {
             name = "cityworld-settings";
         me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData data =
                 cityGenerator.getContext(level).getSettings().toData();
+        // what this world does about structures, said outright: left unset it would follow the age of whichever
+        // world the pack is read by next
+        data = data.withStructures(data.structures().resolved(cityGenerator.wideStructures()));
         java.nio.file.Path root = net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get()
                 .resolve(CityWorldMod.MODID).resolve("exports").resolve(name);
         // the entry this world reads (or, for Customize's inline settings, the one its style's preset reads):
