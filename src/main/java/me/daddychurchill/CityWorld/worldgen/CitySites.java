@@ -469,6 +469,65 @@ public final class CitySites {
                 && edgeDistance(site, x + 15, z + 15) <= 0;
     }
 
+    private final ConcurrentHashMap<Long, Boolean> spillable = new ConcurrentHashMap<>();
+
+    /**
+     * The city whose ground may be carried on under this chunk, which lies outside its disc — for a lot that may
+     * stand beyond the city (a mall and its car park, which are planned as one block and were cut off at the edge:
+     * owner, 2026-11-23). As far out as the ring can still ease the ground back to vanilla's: the taper a rise
+     * needs ({@link #SLOPE}) must fit between the chunk's furthest corner and the ring's end, so flat land takes
+     * a mall {@code TAPER_MAX - TAPER_MIN} blocks out, a 24-block rise 60, a 48-block one none. Never a river
+     * chunk, nor one whose middle is under water. Null for a city chunk (it needs no leave) and for anything
+     * else. The planner asks this of a mall's footprint and the chunk generator of what the plan put there, so
+     * the two cannot disagree.
+     */
+    public Site spillSite(int chunkX, int chunkZ) {
+        Site site = influencing(chunkX, chunkZ);
+        if (site == null || isCityChunk(chunkX, chunkZ))
+            return null;
+        long key = ((long) chunkX << 32) ^ (chunkZ & 0xffffffffL);
+        Boolean known = spillable.get(key);
+        if (known == null) {
+            int x = chunkX * 16, z = chunkZ * 16;
+            double out = Math.max(edgeDistance(site, x + 8, z + 8), Math.max(
+                    Math.max(edgeDistance(site, x, z), edgeDistance(site, x + 15, z)),
+                    Math.max(edgeDistance(site, x, z + 15), edgeDistance(site, x + 15, z + 15))));
+            boolean can = out <= TAPER_MAX - TAPER_MIN && !isRiverChunk(chunkX, chunkZ);
+            if (can) {
+                int top = heights.top(x + 8, z + 8);
+                can = top >= seaLevel - 1
+                        && out <= TAPER_MAX - Math.max(TAPER_MIN, Math.abs(top - site.level()) * SLOPE);
+            }
+            known = can;
+            spillable.put(key, known);
+        }
+        return known ? site : null;
+    }
+
+    /**
+     * As {@link #groundAt}, for a column {@code distance} blocks from ground carried on past the edge
+     * ({@link #spillSite}): the city's level beside it, eased back to vanilla's height over the same taper — and
+     * always vanilla's by the ring's end, past which no chunk is shaped at all.
+     */
+    public int groundBeside(Site site, double distance, int blockX, int blockZ, int top) {
+        double d = distance - APRON;
+        if (d <= 0)
+            return site.level();
+        int rise = top - site.level();
+        if (rise == 0)
+            return top;
+        double taper = Math.max(TAPER_MIN, Math.min(TAPER_MAX, Math.abs(rise) * SLOPE));
+        double room = APRON + TAPER_MAX - edgeDistance(site, blockX, blockZ);
+        double t = Math.max(d / taper, 1.0 - room / TAPER_MIN);
+        if (t >= 1.0)
+            return top;
+        double eased = t * t * (3.0 - 2.0 * t);
+        return site.level() + (int) Math.round(rise * eased);
+    }
+
+    /** How far from a column ground carried on past the edge can still change it. */
+    public static final int SPILL_REACH = APRON + TAPER_MAX;
+
     /**
      * The y the ground's top block is brought to at a column whose vanilla top block is {@code top}: the city's
      * level across the disc and its apron, vanilla's own height past the taper, and an eased blend between.
