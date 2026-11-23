@@ -1360,12 +1360,30 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         return citySites;
     }
 
-    /** Whether the plan puts something built on this chunk. Asks for a plan only inside a city's patch. */
+    /**
+     * Whether the plan puts something built on this chunk. Asks for a plan only inside a city's patch — and just
+     * past its edge where a mall may stand ({@link #isSpillLot}).
+     */
     private boolean isBuiltLot(CityWorldGenerator context, int chunkX, int chunkZ) {
         if (!citySites.isCityChunk(chunkX, chunkZ))
-            return false;
+            return isSpillLot(context, chunkX, chunkZ);
         me.daddychurchill.CityWorld.Plats.PlatLot lot = context.getPlatMap(chunkX, chunkZ).getMapLot(chunkX, chunkZ);
         return lot != null && lot.style != me.daddychurchill.CityWorld.Plats.PlatLot.LotStyle.NATURE;
+    }
+
+    /**
+     * Whether this chunk, outside its city's disc, holds a lot that is built all the same: a mall or its car park
+     * reaching past the edge ({@code PlatLot.buildsBeyondCity}), on ground the city may carry on under
+     * ({@link CitySites#spillSite}). The city's ground is levelled under it and eased around it
+     * ({@link #shapeCityGround}), and every stage that asks {@link #isBuiltLot} treats it as the city. The mall's
+     * own cheap test comes first, so the ring of a city with no mall near is never planned for this.
+     */
+    private boolean isSpillLot(CityWorldGenerator context, int chunkX, int chunkZ) {
+        if (!me.daddychurchill.CityWorld.Plats.Urban.Mall.couldStandNear(context, chunkX, chunkZ)
+                || citySites.spillSite(chunkX, chunkZ) == null)
+            return false;
+        me.daddychurchill.CityWorld.Plats.PlatLot lot = context.getPlatMap(chunkX, chunkZ).getMapLot(chunkX, chunkZ);
+        return lot != null && lot.buildsBeyondCity();
     }
 
     /**
@@ -1386,7 +1404,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
     private void shapeCityGround(CityWorldGenerator context, ChunkAccess chunk, CitySites.Site site) {
         ChunkPos pos = chunk.getPos();
         int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ(), chunkX = minX >> 4, chunkZ = minZ >> 4;
-        boolean cityChunk = citySites.isCityChunk(chunkX, chunkZ);
+        // a mall past the edge stands on the city's ground too (never a river chunk: spillSite refuses those)
+        boolean cityChunk = citySites.isCityChunk(chunkX, chunkZ) || isSpillLot(context, chunkX, chunkZ);
         boolean riverChunk = citySites.isRiverChunk(chunkX, chunkZ);
         // The river is vanilla's, in the city and out of it (owner, 2026-10-04: "a complete navigable river flows
         // through — and rivers have banks — and in some places are swapped out with docks and moorings"). Nothing
@@ -1458,10 +1477,35 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         riverSamples++;
                     }
                 }
+            // ...and eased to a mall that stands past the edge as it is to the disc: the chunks of one near enough
+            // to change this one's ground
+            int spillReach = (CitySites.SPILL_REACH + 15) >> 4, spills = 0;
+            int[] spillX = null, spillZ = null;
+            for (int dx = -spillReach; dx <= spillReach; dx++)
+                for (int dz = -spillReach; dz <= spillReach; dz++)
+                    if ((dx != 0 || dz != 0) && isSpillLot(context, chunkX + dx, chunkZ + dz)) {
+                        if (spillX == null) {
+                            spillX = new int[(2 * spillReach + 1) * (2 * spillReach + 1)];
+                            spillZ = new int[spillX.length];
+                        }
+                        spillX[spills] = (chunkX + dx) << 4;
+                        spillZ[spills++] = (chunkZ + dz) << 4;
+                    }
             for (int x = 0; x < 16; x++)
                 for (int z = 0; z < 16; z++) {
                     int top = tops[x << 4 | z];
                     int target = citySites.groundAt(site, minX + x, minZ + z, top);
+                    if (spills > 0) {
+                        double nearest = Double.MAX_VALUE;
+                        for (int i = 0; i < spills; i++) {
+                            int gapX = Math.max(0, Math.max(spillX[i] - (minX + x), minX + x - (spillX[i] + 15)));
+                            int gapZ = Math.max(0, Math.max(spillZ[i] - (minZ + z), minZ + z - (spillZ[i] + 15)));
+                            nearest = Math.min(nearest, Math.sqrt((double) gapX * gapX + (double) gapZ * gapZ));
+                        }
+                        int beside = citySites.groundBeside(site, nearest, minX + x, minZ + z, top);
+                        if (Math.abs(beside - site.level()) < Math.abs(target - site.level()))
+                            target = beside; // whichever of the two holds the ground nearer the city's level
+                    }
                     if (riverSamples > 0) {
                         long nearest = Long.MAX_VALUE;
                         for (int i = 0; i < riverSamples; i++) {

@@ -30,6 +30,11 @@ public class MallLot extends IsolatedLot {
     }
 
     @Override
+    public boolean buildsBeyondCity() {
+        return true;
+    }
+
+    @Override
     public PlatLot newLike(PlatMap platmap, int chunkX, int chunkZ) {
         return new MallLot(platmap, chunkX, chunkZ, mall, false);
     }

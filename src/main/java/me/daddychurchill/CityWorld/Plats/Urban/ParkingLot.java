@@ -31,6 +31,11 @@ public class ParkingLot extends IsolatedLot {
     }
 
     @Override
+    public boolean buildsBeyondCity() {
+        return true;
+    }
+
+    @Override
     public PlatLot newLike(PlatMap platmap, int chunkX, int chunkZ) {
         return new ParkingLot(platmap, chunkX, chunkZ, mall);
     }

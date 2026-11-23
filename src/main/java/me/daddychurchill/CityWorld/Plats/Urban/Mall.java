@@ -292,7 +292,39 @@ public final class Mall {
 
     /** Whether this platmap is its region's nominee. */
     static boolean nominated(CityWorldGenerator generator, PlatMap platmap) {
-        int px = Math.floorDiv(platmap.originX, PlatMap.Width), pz = Math.floorDiv(platmap.originZ, PlatMap.Width);
+        return nominated(generator, platmap.originX, platmap.originZ);
+    }
+
+    /**
+     * Whether the platmap holding this chunk could hold a mall at all: the style and settings allow one and it is
+     * its region's nominee. Cheap, and asks for no plan — the chunk generator's test before it reads one for a
+     * chunk past a vanilla-land city's edge.
+     */
+    public static boolean couldStandNear(CityWorldGenerator generator, int chunkX, int chunkZ) {
+        return generator.isModernStyle() && generator.getSettings().includeBuildings && generator.getSettings().includeMalls
+                && nominated(generator, Math.floorDiv(chunkX, PlatMap.Width) * PlatMap.Width,
+                        Math.floorDiv(chunkZ, PlatMap.Width) * PlatMap.Width);
+    }
+
+    /**
+     * Whether a mall or its car park may take this chunk as far as the city's ground goes. Anywhere on CityWorld's
+     * own land; in a vanilla-land city, a chunk of its disc, or one just past the edge that the city's ground can
+     * be carried on under ({@code CitySites.spillSite}) and no highway crosses. Past that the land is vanilla's and
+     * nothing is built: the planner reads every chunk out there as one above the street, which passes for
+     * levellable, and a mall planned across the edge was drawn only as far as it (owner, 2026-11-23).
+     */
+    private static boolean onCityGround(CityWorldGenerator generator, int chunkX, int chunkZ) {
+        var sites = generator.citySites;
+        if (sites == null || sites.isCityChunk(chunkX, chunkZ))
+            return true;
+        if (sites.spillSite(chunkX, chunkZ) == null)
+            return false;
+        var highways = generator.highways;
+        return highways == null || !highways.crosses(chunkX * 16, chunkZ * 16, chunkX * 16 + 15, chunkZ * 16 + 15, 2);
+    }
+
+    private static boolean nominated(CityWorldGenerator generator, int originX, int originZ) {
+        int px = Math.floorDiv(originX, PlatMap.Width), pz = Math.floorDiv(originZ, PlatMap.Width);
         int rx = Math.floorDiv(px, REGION), rz = Math.floorDiv(pz, REGION);
         Odds odds = generator.shapeProvider.getMacroOddsGeneratorAt(rx * REGION * PlatMap.Width + 3, rz * REGION * PlatMap.Width + 7);
         return Math.floorMod(px, REGION) == odds.getRandomInt(REGION) && Math.floorMod(pz, REGION) == odds.getRandomInt(REGION);
@@ -478,7 +510,8 @@ public final class Mall {
                 for (int z = 0; z < PlatMap.Width; z++)
                     if (!foot[x][z] && !park[x][z] && (touches(foot, x, z) || touches(park, x, z)) && platmap.isNaturalLot(x, z)
                             && platmap.isLevellableLots(x, z, 1, 1, MAX_RISE)
-                            && !generator.isStructureReserved(platmap.originX + x, platmap.originZ + z))
+                            && !generator.isStructureReserved(platmap.originX + x, platmap.originZ + z)
+                            && onCityGround(generator, platmap.originX + x, platmap.originZ + z))
                         next[x][z] = true;
             for (int x = 0; x < PlatMap.Width; x++)
                 for (int z = 0; z < PlatMap.Width; z++)
@@ -534,6 +567,8 @@ public final class Mall {
                 // never across a river (CityWorld's own): the chunk refuses the mall's lot, stays wild, and a quay
                 // was planned into the middle of the mall (owner, 2026-10-07: "it totally wrecked a mall")
                 if (generator.shapeProvider.refusesLotAt(platmap.originX + x, platmap.originZ + z))
+                    return false;
+                if (!onCityGround(generator, platmap.originX + x, platmap.originZ + z))
                     return false;
             }
         return count == n; // no two wings overlap
