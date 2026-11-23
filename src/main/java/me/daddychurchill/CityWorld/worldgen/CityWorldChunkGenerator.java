@@ -445,6 +445,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     {
                         final CityWorldGenerator bound = local;
                         local.buildingBiomes = (cx, cz) -> buildingBiome(bound, cx, cz);
+                        local.vanillaLand = vanillaTerrain();
                     }
                     // The End plans against vanilla's islands, so its planner needs vanilla's noise before the
                     // first platmap is asked for — and the biome source reads the same field for its biomes.
@@ -772,6 +773,15 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      * the biome's ground like a city cut), or a bridge with railings and pillars over water and deep drops.
      */
     private void drawHighways(CityWorldGenerator context, ChunkAccess chunk) {
+        drawHighways(context, chunk, false);
+    }
+
+    /**
+     * @param again drawn a second time, after the carvers: for a terrain mod that puts its own ground back at the end
+     *              of that stage (see {@link #applyCarvers}). The surface pass is over by then, so the columns cut
+     *              or banked are not handed to it again.
+     */
+    private void drawHighways(CityWorldGenerator context, ChunkAccess chunk, boolean again) {
         ChunkPos pos = chunk.getPos();
         int minX = pos.getMinBlockX(), minZ = pos.getMinBlockZ();
         int half = highways.halfWidth();
@@ -871,6 +881,18 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                 double e = d - (deckEdge + 1);
                 int cutTo = deck + (int) Math.ceil(e);
                 int bankTo = deck - (int) Math.ceil(e);
+                // The second drawing: the terrain mod has refilled its lakes and rivers to the level of the ground it
+                // remembers, which a cut has since lowered — a road in a trench of standing water (the owner's Earth:
+                // a highway out of a valley city, under twenty blocks of it). The cut is drained down its slopes, and
+                // its outermost row holds back what water lies beyond it.
+                if (again) {
+                    boolean rim = d > half + Highways.SIDE - 0.5;
+                    for (int y = sky; y > Math.max(cutTo, top); y--) {
+                        var fluid = chunk.getFluidState(cursor.set(bx, y, bz));
+                        if (!fluid.isEmpty())
+                            chunk.setBlockState(cursor, rim && fluid.isSource() ? stone : air);
+                    }
+                }
                 if (top > cutTo) {
                     for (int y = sky; y > cutTo; y--)
                         chunk.setBlockState(cursor.set(bx, y, bz), air);
@@ -885,7 +907,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     cut.set(x << 4 | z);
                 }
             }
-        if (cut != null) {
+        if (cut != null && !again) {
             java.util.BitSet bits = cut;
             cutColumns.merge(ChunkPos.pack(minX >> 4, minZ >> 4), bits, (old, add) -> {
                 java.util.BitSet both = (java.util.BitSet) old.clone();
@@ -1166,7 +1188,14 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         var links = highways.linksTouching(x0 - reach, z0 - reach, x0 + 47 + reach, z0 + 47 + reach);
         if (links.isEmpty())
             return;
-        boolean slabbed = highwaySlab(highwayPavement(context)) != null;
+        BlockState pavement = highwayPavement(context);
+        BlockState pavementSlab = highwaySlab(pavement);
+        boolean slabbed = pavementSlab != null;
+        BlockState lines = me.daddychurchill.CityWorld.Support.Palettes.pickWorld(context,
+                me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_LINES,
+                context.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(1, Material.QUARTZ_BLOCK)).getBlockState();
+        BlockState edge = net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState();
+        BlockState rail = net.minecraft.world.level.block.Blocks.STONE_BRICK_WALL.defaultBlockState();
         me.daddychurchill.CityWorld.Support.RoadKit kit = me.daddychurchill.CityWorld.Support.RoadKit.forWorld(context); // its signs stay
         BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
         BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
@@ -1189,6 +1218,14 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                         var kind = near.kind();
                         if (d <= deckEdge + 1) {
                             boolean kerb = d > deckEdge;
+                            // a feature that cut the deck itself — a lava or water lake dug into the road's edge, its
+                            // stone rim where the kerb was (and the diorite an ore blob then made of that) — is
+                            // undone: the deck is laid again
+                            BlockState on = level.getBlockState(cursor.set(bx, deck, bz));
+                            if (kind != Highways.Kind.TUNNEL && (on.isAir() || !on.getFluidState().isEmpty()
+                                    || on.is(net.minecraft.tags.BlockTags.BASE_STONE_OVERWORLD)))
+                                drawDeck(level.getChunk(chunkX, chunkZ), cursor, bx, bz, deck, step, d, deckEdge, near.along(),
+                                        pavement, pavementSlab, lines, edge, kind == Highways.Kind.BRIDGE, rail);
                             int from = deck + 1 + (step ? 1 : 0) + (kerb && kind == Highways.Kind.BRIDGE ? 1 : 0);
                             int to = deck + (kerb ? 4 : 5);
                             for (int y = from; y <= to; y++) {
@@ -1203,6 +1240,9 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                                     if (treePart(level.getBlockState(cursor.set(bx, y, bz))))
                                         level.setBlock(cursor, air, 2);
                         } else if (kind != Highways.Kind.BRIDGE) {
+                            // lava level with the deck, right beside it (a lava lake against the kerb): stone
+                            if (level.getFluidState(cursor.set(bx, deck, bz)).is(net.minecraft.tags.FluidTags.LAVA))
+                                level.setBlock(cursor, stone, 2);
                             for (int y = deck + 1; y <= deck + Highways.SIDE + 2; y++) {
                                 var fluid = level.getFluidState(cursor.set(bx, y, bz));
                                 if (!fluid.isEmpty())
