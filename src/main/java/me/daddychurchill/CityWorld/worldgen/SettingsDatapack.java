@@ -240,7 +240,10 @@ public final class SettingsDatapack {
         JsonObject structures = new JsonObject();
         structures.add("allow", arr(st.allow()));
         structures.add("deny", arr(st.deny()));
-        structures.addProperty("wildernessOnly", st.wildernessOnly());
+        // unset means "as the world was made" (on from 7.3, CityWorldChunkGenerator.wideStructures): written only
+        // when the settings say
+        st.wildernessOnly().ifPresent(v -> structures.addProperty("wildernessOnly", v));
+        st.placeAll().ifPresent(v -> structures.addProperty("placeAll", v));
         root.add("structures", structures);
 
         CityWorldSettingsData.Cities c = d.cities();
