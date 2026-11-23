@@ -4,8 +4,6 @@
     "minecraft:desert",
     "#c:is_desert",
     "#forge:is_desert",
-    "#c:is_sandy",
-    "#forge:is_sandy",
     "desert",
     "dune",
     "oasis",

@@ -146,9 +146,10 @@ Words are what make one theme reach biome mods nobody listed: `desert` and `dune
 A word matches anywhere in the name, so prefer a pattern for a short one (`*:ice_*` rather than `ice`, which is
 also in `rice_paddy`).
 
-**When two themes name the same biome**, the closest naming wins: its exact id, then a tag, then a word or
-pattern. Between two equally close, the higher `"priority"` (a number in the theme file, default 0), then the
-first file by id. So a broad word in one theme never takes a biome another theme lists by id.
+**When two themes name the same biome**, a theme that lists its **exact id** has it. Otherwise (tags, words and
+patterns count the same) the theme with the higher `"priority"` — a number in the theme file, default 0 — then the
+first file by id. So a broad word never takes a biome another theme lists by id, and of two broad themes the
+priority says which is the more particular (`frozen` over `mountain` for an icy peak).
 
 Other fields: `"theme": "desert"` gives the theme's name when the file is called something else — which is how a
 second pack **adds biomes to a theme it does not own**, without replacing that theme's file:

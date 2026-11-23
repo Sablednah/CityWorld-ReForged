@@ -16,13 +16,23 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   a biome's edge is never half of each), and streets do not change. On vanilla land a city takes the biome at its
   centre, as a village does. CityWorld ships no themes, so nothing changes without a pack. The biome list takes
   exact ids, biome tags, plain words (`desert` is every biome of any mod with that in its name), patterns and
-  `!` exclusions; when two themes name a biome the closest naming wins, then `priority`. F3 shows the theme of
+  `!` exclusions; when two themes name a biome its exact id wins, then the theme's `priority`. F3 shows the theme of
   the chunk you stand in, and `-Dcityworld.diagnostics=true` logs the theme of every installed biome.
 - **The Biome Palettes add-on** (`packs/biome-palettes`, its own jar): ten themes — desert, badlands, savanna,
   tropical, swamp, boreal, frozen, coastal, mountain, blossom — for vanilla's biomes and those of biome mods
   (Biomes O' Plenty, Terralith, Regions Unexplored, Dreamwoods and others, by word and tag).
 - **Schematics for a biome.** `Biome:` in a schematic's `.yml` limits it to the biomes named, in the same words
   as a theme (`Biome: desert, badlands`); without the line it appears everywhere, as before.
+
+### Fixed
+
+- **Terrarium Expanded on vanilla land: a spawn on land, and a world that starts** (GitHub issue #9; 1.21.1 and
+  1.21.11, with `world.packPreset: "terrarium_expanded:earth"`). Terrarium moves the spawn to block 0, 0 in a world
+  type it does not know as its own, which on its Earth is open sea; CityWorld now puts it at the point Terrarium's
+  preset names, from the world's creation and after each of Terrarium's moves. Creating the world no longer searches
+  that sea for a spawn (eight minutes of map downloads on a first start, measured; three seconds now on 1.21.11).
+  When finding the cities for highways takes over half a minute, the log says so once and names the settings that
+  shorten it. The Biome Mods page has the measurements.
 
 ## 7.2.1 — 2026-11-21
 

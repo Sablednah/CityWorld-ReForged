@@ -7,8 +7,8 @@
     "#minecraft:is_badlands",
     "badlands",
     "mesa",
-    "canyon",
     "outback",
-    "painted"
+    "painted",
+    "terralith:bryce_canyon"
   ]
 }

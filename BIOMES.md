@@ -121,6 +121,46 @@ land offers its foreign biomes.
 `world.useModdedBiomes: false` — CityWorld's own palette only, on its own land. On vanilla land the biome mod owns the
 map; remove the mod or its datapack instead.
 
+## Terrain mods (vanilla land only)
+
+A mod or datapack that reshapes the overworld — its noise, its density functions, its world preset — changes
+**vanilla land**, where CityWorld builds its cities on vanilla's terrain. It cannot change CityWorld's own land,
+which is not made from vanilla's noise at all. Measured on 1.21.1 with vanilla land on
+(`"cities": { "vanillaTerrain": true }`):
+
+| Mod | Result |
+|---|---|
+| Continents | Works. Oceans went from 30% to 65% of a 16,000-block survey, and cities stand on the continents. |
+| Lithosphere (with Lithostitched) | Loads and generates without errors. Not walked in game. |
+| Biolith | Works: its biome placements apply. A biome id it cannot find stops the world from loading, so check the spelling (`minecraft:stony_shore`, not `stony_shores`). |
+| Natural Temperature | Works: its latitude bands are there. |
+| All of those with TerraBlender, Biomes O' Plenty, Featurify and Noisium | Works together. |
+| Terrarium Expanded | Works once its preset is named: see below. |
+| Abyssia | Loads, but its deep sea needs its own world type and does not appear in a CityWorld world. A Default world with Abyssia still has the CityWorld dimension (`/cityworld`). |
+
+### Terrarium Expanded: cities on its Earth
+
+Terrarium Expanded (1.21.1 and 1.21.11) keeps its Earth in a world preset of its own, so name it and turn vanilla
+land on, in the world settings:
+
+```json
+"world": { "packPreset": "terrarium_expanded:earth" },
+"cities": { "vanillaTerrain": true }
+```
+
+- **Spawn** (from 7.3). Terrarium moves the spawn on every start, and in a world type it does not recognise as its
+  own it moves it to block 0, 0, which on its Earth is open sea. CityWorld puts it at the point Terrarium's own
+  preset names instead (East Africa by default).
+- **The first minutes are slow, once.** Terrarium fetches its map from the internet as terrain is first read, and
+  CityWorld reads terrain a long way out to decide where cities stand and which of them a highway joins. Measured
+  for the first chunks at spawn on a fresh install: about six and a half minutes and 430 MB of map at the default
+  settings; about three and a half minutes and 170 MB with `"cities": { "highways": { "reach": 1 } }` (a highway
+  joins next-door cities only, which on an Earth this full of cities loses little); about half a minute once the
+  map is stored. New ground far from any you have visited fetches again, less each time. Before 7.3 the world's
+  creation itself took eight to nine minutes, searching the sea at 0, 0 for somewhere to spawn.
+- **Leave Terrarium's `io.shared_tile_threads` at its default.** Raised to 32, its map server dropped connections
+  and the same start did not finish in fifteen minutes.
+
 ## Checking it worked
 
 - `/locate biome <id>` from spawn. A biome that cannot be found within a few thousand blocks is not in the world's

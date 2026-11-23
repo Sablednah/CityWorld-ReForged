@@ -17,13 +17,12 @@ DATA = os.path.join(HERE, 'src', 'data')
 NS = 'cityworld_biome_palettes'
 
 # Biome lists: 'ns:id' exact, '#tag', a word (any biome whose name contains it), a pattern with *, '!' to exclude.
-# A biome two themes name goes to the closest naming (id, tag, word), then the higher priority.
+# A biome two themes name goes to the one that lists its exact id, else to the higher priority.
 THEMES = {
     'frozen': {
         'priority': 40,
         'biomes': ['minecraft:snowy_plains', 'minecraft:ice_spikes', 'minecraft:frozen_river',
                    'minecraft:frozen_ocean', 'minecraft:deep_frozen_ocean', 'minecraft:snowy_beach',
-                   '#c:is_icy', '#forge:is_icy',
                    'tundra', 'glacial', 'glacier', 'arctic', 'frozen', 'icy', '*:ice_*', '*:*_ice', '*:*_ice_*',
                    'cold_desert', 'wintry_lowlands', 'white_shore'],
         'wall': ['spruce_planks', 'calcite', 'white_concrete', 'polished_diorite', 'light_gray_concrete',
@@ -49,7 +48,7 @@ THEMES = {
     'badlands': {
         'priority': 30,
         'biomes': ['minecraft:badlands', 'minecraft:eroded_badlands', 'minecraft:wooded_badlands',
-                   '#minecraft:is_badlands', 'badlands', 'mesa', 'canyon', 'outback', 'painted'],
+                   '#minecraft:is_badlands', 'badlands', 'mesa', 'outback', 'painted', 'terralith:bryce_canyon'],
         'wall': ['red_sandstone', 'smooth_red_sandstone', 'cut_red_sandstone', 'terracotta', 'orange_terracotta',
                  'red_terracotta', 'brown_terracotta', 'yellow_terracotta', 'light_gray_terracotta',
                  'white_terracotta'],
@@ -86,7 +85,7 @@ THEMES = {
     },
     'desert': {
         'priority': 15,
-        'biomes': ['minecraft:desert', '#c:is_desert', '#forge:is_desert', '#c:is_sandy', '#forge:is_sandy',
+        'biomes': ['minecraft:desert', '#c:is_desert', '#forge:is_desert',
                    'desert', 'dune', 'oasis', 'arid', 'dryland', 'wasteland', 'ancient_sands', 'sandstone',
                    'mirage', '!cold_desert'],
         'wall': ['sandstone', 'smooth_sandstone', 'cut_sandstone', 'terracotta', 'white_terracotta',
@@ -180,14 +179,14 @@ def write(path, obj):
 
 
 def rank(term, bid):
-    """The game's BiomeMatch, less tags: 3 exact id, 1 word or pattern, 0 no."""
+    """The game's BiomeMatch, less tags: 2 exact id, 1 word or pattern, 0 no."""
     if term.startswith('#'):
         return 0
     if '*' in term:
         glob = term if ':' in term else '*:' + term
         return 1 if re.fullmatch('.*'.join(re.escape(p) for p in glob.split('*')), bid) else 0
     if ':' in term:
-        return 3 if term == bid else 0
+        return 2 if term == bid else 0
     return 1 if term in bid.split(':', 1)[1] else 0
 
 

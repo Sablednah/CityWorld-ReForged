@@ -7,8 +7,6 @@
     "minecraft:frozen_ocean",
     "minecraft:deep_frozen_ocean",
     "minecraft:snowy_beach",
-    "#c:is_icy",
-    "#forge:is_icy",
     "tundra",
     "glacial",
     "glacier",
