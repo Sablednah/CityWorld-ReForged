@@ -72,8 +72,13 @@ public final class SettingsExample {
             if (in == null)
                 return CityWorldSettingsData.DEFAULT;
             var json = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-            return CityWorldSettingsData.CODEC.parse(JsonOps.INSTANCE, json).result()
+            CityWorldSettingsData data = CityWorldSettingsData.CODEC.parse(JsonOps.INSTANCE, json).result()
                     .orElse(CityWorldSettingsData.DEFAULT);
+            // the two structure answers a new Modern or Apocalypse world gives, written out so the example shows
+            // the keys; "default" serves styles that differ (CityWorldSettingsData.Structures.wideStyle): unset
+            if (!entry.equals(SettingsDatapack.DEFAULT_ENTRY))
+                data = data.withStructures(data.structures().resolved(true));
+            return data;
         } catch (IOException | RuntimeException e) {
             CityWorldMod.LOGGER.warn("CityWorld: could not read the shipped settings entry {}", entry, e);
             return CityWorldSettingsData.DEFAULT;

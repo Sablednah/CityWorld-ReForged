@@ -606,9 +606,11 @@ public record CityWorldSettingsData(
     }
 
     /**
-     * Which vanilla and mod structures this world places, as two lists of structure-set ids laid over the tag
-     * {@code #cityworld:allowed}: {@code allow} adds sets the tag does not hold ({@code "minecraft:villages"}),
-     * {@code deny} removes sets it does. Both empty (the default) is the tag exactly.
+     * Which vanilla and mod structures this world places, as two lists of structure-set ids laid over a base:
+     * {@code allow} adds sets the base does not hold, {@code deny} removes sets it does. Both empty (the default)
+     * is the base exactly. The base is the tag {@code #cityworld:allowed} — or, with {@code placeAll} (the default
+     * for a world made with 7.3 or later in a {@link #wideStyle}), every installed set but those in
+     * {@code #cityworld:off_by_default} (mineshafts).
      *
      * <p>Two lists over the tag, not a full copy of it, so a world keeps following the tag for everything it
      * never touched: a mod installed later whose sets CityWorld ships as allowed still appears. This is what the
@@ -616,17 +618,60 @@ public record CityWorldSettingsData(
      * names no installed structure set is ignored (the mod is not installed), and allowing a set does not make it
      * appear where none of its biomes exist: vanilla drops those itself.
      */
-    public record Structures(java.util.List<String> allow, java.util.List<String> deny, boolean wildernessOnly) {
+    public record Structures(java.util.List<String> allow, java.util.List<String> deny,
+            java.util.Optional<Boolean> wildernessOnly, java.util.Optional<Boolean> placeAll) {
 
-        public static final Structures DEFAULT = new Structures(java.util.List.of(), java.util.List.of(), false);
+        public static final Structures DEFAULT = new Structures(java.util.List.of(), java.util.List.of(),
+                java.util.Optional.empty(), java.util.Optional.empty());
 
         public static final Codec<Structures> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.listOf().optionalFieldOf("allow", java.util.List.of()).forGetter(Structures::allow),
                 Codec.STRING.listOf().optionalFieldOf("deny", java.util.List.of()).forGetter(Structures::deny),
                 // every placed set keeps to the wild: never started where the city would build (a set-by-set
                 // version is the tag #cityworld:wilderness_only); see CityWorldChunkGenerator.createStructures
-                Codec.BOOL.optionalFieldOf("wildernessOnly", false).forGetter(Structures::wildernessOnly)
+                Codec.BOOL.optionalFieldOf("wildernessOnly").forGetter(Structures::wildernessOnly),
+                // every installed set is placed but those in #cityworld:off_by_default, where false keeps to
+                // #cityworld:allowed; see CityWorldChunkGenerator.onlyAllowed
+                Codec.BOOL.optionalFieldOf("placeAll").forGetter(Structures::placeAll)
         ).apply(i, Structures::new));
+
+        /**
+         * Whether a world of this style, made now, takes 7.3's structure defaults when its settings do not say: every
+         * installed set placed (mineshafts apart) and all of them kept to the wild. The styles that build an
+         * ordinary city on ordinary ground; the ones that ARE a terrain (floating, flooded, dunes, astral, maze,
+         * nature, metro) keep the tag and the city, as before.
+         */
+        public static boolean wideStyle(me.daddychurchill.CityWorld.CityWorldGenerator.WorldStyle style) {
+            return switch (style) {
+                case MODERN, APOCALYPSE, CLASSIC, DESTROYED, SPARSE -> true;
+                default -> false;
+            };
+        }
+
+        /**
+         * Whether every placed set keeps to the wild. Neither {@code true} nor {@code false} in the settings means
+         * "as this world was made": {@code fresh} for a world stamped with 7.3 or later in a {@link #wideStyle},
+         * so a world made before it — which reads the same settings entry from the jar — keeps its structures
+         * where its half-built platmaps already plan around them.
+         */
+        public boolean wildOnly(boolean fresh) {
+            return wildernessOnly.orElse(fresh);
+        }
+
+        /** Whether every installed set is placed unless turned off; see {@link #wildOnly} for {@code fresh}. */
+        public boolean placesAll(boolean fresh) {
+            return placeAll.orElse(fresh);
+        }
+
+        /** Both answers written out, as a world that is ({@code fresh}) or is not one of 7.3's would resolve them. */
+        public Structures resolved(boolean fresh) {
+            return new Structures(allow, deny, java.util.Optional.of(wildOnly(fresh)),
+                    java.util.Optional.of(placesAll(fresh)));
+        }
+
+        public Structures withWildernessOnly(boolean v) {
+            return new Structures(allow, deny, java.util.Optional.of(v), placeAll);
+        }
 
         /**
          * The choice that gives exactly these sets, given which the tag holds. A set this install does not have
@@ -650,7 +695,7 @@ public record CityWorldSettingsData(
             });
             java.util.Collections.sort(allowed);
             java.util.Collections.sort(denied);
-            return new Structures(java.util.List.copyOf(allowed), java.util.List.copyOf(denied), wildernessOnly);
+            return new Structures(java.util.List.copyOf(allowed), java.util.List.copyOf(denied), wildernessOnly, placeAll);
         }
 
         /** Whether a set is placed: {@code inTag} is the tag's answer, which these lists overrule. */
@@ -666,7 +711,7 @@ public record CityWorldSettingsData(
             for (String id : ids)
                 if (!more.contains(id))
                     more.add(id);
-            return new Structures(java.util.List.copyOf(more), deny, wildernessOnly);
+            return new Structures(java.util.List.copyOf(more), deny, wildernessOnly, placeAll);
         }
     }
 
