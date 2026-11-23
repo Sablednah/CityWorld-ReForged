@@ -421,7 +421,18 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                         + "own streets, winding round the hills, cut through them, bridged over rivers and tunnelled "
                         + "under the ridges.")));
         addRow(highwaysButton, reach);
-        cityDials.addAll(List.of(spacing, size, vary, rise, highwaysButton, reach));
+        // cities.maxWater: how much of a city's disc may be sea, which the city then fills in (a player with a
+        // terrain pack, and the owner's west-coast city on Terrarium's Earth: "a bite of ocean into flat ground")
+        int sea = (int) Math.round(cities.maxWater() * 100);
+        CycleButton<Integer> coast = cycle("Sea under a city", withValue(SEA_CHOICES, sea), sea,
+                v -> Component.literal(v == 0 ? "none" : "up to " + v + "%"),
+                v -> cities = cities.withMaxWater(v / 100.0));
+        coast.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                "Vanilla land only: how much of a city's ground may be sea. A city fills that part in to its "
+                        + "own level, so a coastal city takes a bite out of the ocean; \"none\" keeps cities off "
+                        + "the water (an inlet narrower than the points it is judged by can still be filled).")));
+        addRow(coast, null);
+        cityDials.addAll(List.of(spacing, size, vary, rise, highwaysButton, reach, coast));
         for (AbstractWidget dial : cityDials)
             dial.active = cities.vanillaTerrain();
 
@@ -838,6 +849,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
 
     private static final Integer[] SPACING_CHOICES = { 1024, 1536, 2048, 3072, 4096, 6144, 8192 };
     private static final Integer[] REACH_CHOICES = { 1, 2, 3, 4, 5, 6 };
+    /** Share of a city's disc that may be sea, in hundredths; the default (35) is one of them. */
+    private static final Integer[] SEA_CHOICES = { 0, 5, 10, 20, 35, 50 };
     private static final Integer[] DISTRICT_CHOICES = { 1, 2, 3, 4, 5, 6 };
     private static final Integer[] VARIANCE_CHOICES = { 0, 1, 2 };
     private static final Integer[] RISE_CHOICES = { 0, 16, 24, 32, 40, 56, 72, 96 };

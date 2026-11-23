@@ -522,6 +522,11 @@ public record CityWorldSettingsData(
             return new Cities(vanillaTerrain, spacing, districts, districtsVariance, v, maxWater, minNear, rivers, oceans, highways);
         }
 
+        public Cities withMaxWater(double v) {
+            return new Cities(vanillaTerrain, spacing, districts, districtsVariance, levelRange,
+                    Math.max(0.0, Math.min(1.0, v)), minNear, rivers, oceans, highways);
+        }
+
         public Cities withHighways(Highways v) {
             return new Cities(vanillaTerrain, spacing, districts, districtsVariance, levelRange, maxWater, minNear, rivers, oceans, v);
         }
