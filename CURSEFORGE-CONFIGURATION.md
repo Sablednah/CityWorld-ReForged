@@ -170,13 +170,21 @@ too, or every chunk is still in range of a city:
 
 **Villages — and any other vanilla structure:**
 
-CityWorld builds its own cities, so it places only the vanilla and mod structures that are switched on.
+**From 7.3, a new world has them already.** A world made with 7.3 or later in the Modern, Apocalypse, Classic,
+Destroyed or Sparse style places every structure set the install has, vanilla's and mods', except mineshafts
+(CityWorld digs its own mines, and vanilla's cut through sewers, subways and basements), and keeps all of them to
+the wild: villages, mansions, temples and a mod's dungeons stand in the land between cities, and no structure
+leaves a gap in a city. Worlds made before 7.3 are not changed, and the other styles (the ones that are a terrain
+of their own: Floating, Flooded, the dunes, Astral, Maze, Nature, Metro) keep the short list below. Either can be
+turned on or off per world: see [`structures`](#structures--which-vanilla-and-mod-structures-this-world-places).
+
+Otherwise CityWorld builds its own cities and places only the vanilla and mod structures that are switched on.
 
 **The easy way (5.17.0+): the Structures page.** On the create-world screen pick a CityWorld world type,
 press **Customize**, then **Vanilla & mod structures**. Every structure set the install has is listed,
-grouped by mod, with an on/off each — the ones CityWorld places by default start on. Switch on
-**Villages** and create the world. Hover a button to see the structures in the set and which realm they
-belong to.
+grouped by mod, with an on/off each — the ones this world will place by default start on. Switch
+**Villages** on or off and create the world. Hover a button to see the structures in the set and which realm
+they belong to. **Structures: only in the wild**, the row under it, lets them into the cities again when off.
 
 **For a server or a pack (5.17.0+): the `structures` settings group** — two lists in the world settings
 (see [`structures`](#structures--which-vanilla-and-mod-structures-this-world-places) below):
@@ -330,7 +338,8 @@ Two things here are **datapack tags, not settings**, because they are lists of i
 
 | Tag | What it decides |
 |---|---|
-| `#cityworld:allowed` (structure sets) | Which vanilla and mod structures generate. Ships as strongholds, trial chambers, ancient cities, Nether fortresses and bastions, and End cities, plus optional entries for Cataclysm, Dungeon Crawl, Battle Towers and Alex's Caves (used only when those mods are installed). Add another mod's structure set here and it will generate; **an absent or empty tag means none**, so a stripped datapack falls back to CityWorld-only worldgen rather than letting villages loose. A set that should generate only when another mod is installed goes in the `cityworld:placed_sets` data map instead (see `structures` below): CityWorld ships vanilla's villages there for Cobblemon. |
+| `#cityworld:off_by_default` (structure sets) | From 7.3: the sets a new world leaves out although it places every other one (see `structures.placeAll`). Ships as vanilla's mineshafts. Add a set to keep it out of new worlds until someone ticks it; `"replace": true` with an empty list lets mineshafts back in. A set in `#cityworld:allowed` is placed whatever this tag says. |
+| `#cityworld:allowed` (structure sets) | Which vanilla and mod structures generate **in a world made before 7.3, and in the styles that are a terrain of their own** (a new Modern, Apocalypse, Classic, Destroyed or Sparse world places every set: `structures.placeAll`). Ships as strongholds, trial chambers, ancient cities, Nether fortresses and bastions, and End cities, plus optional entries for Cataclysm, Dungeon Crawl, Battle Towers and Alex's Caves (used only when those mods are installed). Add another mod's structure set here and it will generate; **an absent or empty tag means none**, so a stripped datapack falls back to CityWorld-only worldgen rather than letting villages loose. A set that should generate only when another mod is installed goes in the `cityworld:placed_sets` data map instead (see `structures` below): CityWorld ships vanilla's villages there for Cobblemon. |
 | `#cityworld:cave_pool` (biomes) | Which cave biomes the underground draws from. Ships as deep dark, lush, dripstone, and sulfur caves (Minecraft 26.2+, marked optional so it is simply absent on older versions), plus optional Biomes O' Plenty and Alex's Caves cave biomes. Add a modded cave biome here and it will appear. |
 
 > **Adding another mod's structures — and telling whether it worked.**
@@ -407,15 +416,26 @@ Cave biomes bring their own mobs. The deep dark carries none at all, plus warden
 
 ### `structures` — which vanilla and mod structures this world places
 
-Two lists of structure-**set** ids laid over the tag `#cityworld:allowed` (CityWorld's defaults: strongholds,
-trial chambers, ancient cities, the Nether's fortresses and bastions, end cities, and several mods' sets). This is
-what the Structures page of the Customize screen writes.
+Two lists of structure-**set** ids laid over a base, and two switches. The base is every installed set except
+those in `#cityworld:off_by_default` (mineshafts) when `placeAll` is on, and the tag `#cityworld:allowed` when it
+is off (strongholds, trial chambers, ancient cities, the Nether's fortresses and bastions, end cities, and several
+mods' sets). This is what the Structures page of the Customize screen writes.
 
 | Setting | Default | What it does |
 |---|---|---|
 | `allow` | `[]` | Structure sets to place as well: `["minecraft:villages", "minecraft:woodland_mansions"]`. |
 | `deny` | `[]` | Structure sets to stop placing: `["minecraft:trial_chambers"]`. |
-| `wildernessOnly` | `false` | Keep every placed set to the wild: a structure never starts in a platmap the city plans to build (a district of any kind, farms and outland included) — so a pond or ruin structure cannot cut a city in two. Strongholds are never affected: the eyes of ender point at their ring whether or not one stands. Set by set instead, a datapack tags `#cityworld:wilderness_only` (structure sets; Arboria's lakes ship in it). |
+| `placeAll` | by the world's age* | Place every installed structure set, vanilla's and mods', except those in `#cityworld:off_by_default` (mineshafts). `false` places only the sets in `#cityworld:allowed`. `allow` and `deny` are laid over whichever it is. Always on in a vanilla-land world, mineshafts included: its wild is a normal world. |
+| `wildernessOnly` | by the world's age* | Keep every placed set to the wild: a structure never starts in a platmap the city plans to build (a district of any kind, farms and outland included) — so a pond or ruin structure cannot cut a city in two. Strongholds are never affected: the eyes of ender point at their ring whether or not one stands. Set by set instead, a datapack tags `#cityworld:wilderness_only` (structure sets; Arboria's lakes ship in it). |
+
+\* **Left out of the settings, both follow the world's age**: on for a world made with 7.3 or later in the
+Modern, Apocalypse, Classic, Destroyed or Sparse style, off for an older world and for the other styles. An older
+world reads the same settings entry from the jar and has cities already planned around its structures, so it is
+left as it was made; write `true` or `false` and that is obeyed in any world. A world's age is the `"made_with"`
+number in its generator, which the world presets and Customize write (`73` from 7.3; `7` for 7.0 to 7.2). **A pack
+that ships its own world preset or dimension file** carries the number it was written with: change it to `73` to
+give new worlds these defaults, or leave it and set the two switches outright. `/cityexport` writes both answers as
+the world it is run in resolves them.
 
 Ids are sets (`data/<namespace>/worldgen/structure_set/`), not single structures. An id whose mod is not installed
 is ignored.
@@ -526,7 +546,7 @@ lowrise districts (the mall keeps its own whatever these say).
 | `clearance` | `5` | How high a bridge deck stands above the sea when it crosses water. `1`–`32`. |
 | `tunnel` | `12` | How far the ground must stand above the road for a tunnel; less is a cut with sloped sides. `8`–`128`. |
 | `speedLimit` | `70` | The limit signed where a city's street becomes the highway (with a road mod's signs: Macaw's Roads), beside the town's board. `10`–`120`, in tens. |
-| `reach` | `3` | How many cells (each `spacing` blocks) a highway may run past empty ones to the next city. A city takes the next cell's city when there is one, otherwise the nearest that way up to this many cells off whose straight line passes no other city. `1` joins next-door cities only. `1`–`6`. |
+| `reach` | `3` | How many cells (each `spacing` blocks) a highway may run past empty ones to the next city. A city takes the next cell's city when there is one, otherwise the nearest that way up to this many cells off whose straight line passes no other city. `1` joins next-door cities only. `1`–`6`. **Highway reach** in Customize (from 7.3), beside Highways; picking Terrarium Expanded's Earth as the terrain sets it to 1. |
 | `surface` | `minecraft:cobbled_deepslate` | The deck's block where no road mod gives the street one: a block that has a slab, so the half-block climbs match it (`minecraft:polished_deepslate`, `minecraft:smooth_stone`, `minecraft:deepslate_tiles` all do). The city's street keeps its own surface, so the deck changes where the highway begins. With Macaw's Roads the deck is its asphalt whatever this says; a pack's `street/surface` palette also wins. A name that is not a block falls back to the street's surface. |
 
 `oceans` is a group of its own:
@@ -596,7 +616,7 @@ treasure chests underground). What any container holds, and how a modpack adds i
 | `climateWarmth` | `0.25` | Leans the temperature field warm. `0.0` is the raw field; higher values shift the average up without narrowing the range (0 stays 0, 1 stays 1), so you keep frozen peaks and deserts but see more warm ground between them. The default lifts the mean by about 14%, which is there because worlds read persistently cold. |
 | `useModdedBiomes` | `true` | Let installed biome mods (Biomes O' Plenty and anything else built on **TerraBlender**) contribute biomes to the world. On by default, because installing a biome mod is itself the request — set it `false` to keep CityWorld's own biome selection. Does nothing at all if you have no such mod. Oceans, shores and peaks always stay CityWorld's, since those follow the terrain exactly. |
 | `moddedBiomeShare` | `0.35` | How much contested ground a biome mod may own outright. A modded biome is normally picked only where it beats every vanilla biome in the climate lookup, and many mod biomes overlap CityWorld's climate on every axis yet never quite win — measured with Biomes O' Plenty, 25 of them. On this share of the map the lookup runs with vanilla's biomes removed, so those compete only with each other. The share is regional, not scattered, so a mod gets areas you can walk across. `0.0` means "only where they outright win"; `1.0` hands every contested column to the mod. Needs `useModdedBiomes`. |
-| `packPreset` | `"minecraft:normal"` | The world preset CityWorld reads the pack's overworld from. **Vanilla land** (`cities.vanillaTerrain`) takes its terrain noise and biome source from it; **CityWorld's land** offers the foreign biomes it declares through `moddedBiomeShare`, exactly as TerraBlender's. Datapack biome mods — Terralith, Dreamwoods' Grand Terrain — rewrite `minecraft:normal` and write their biomes inline in it, nowhere else, so with this they just work; a pack that gives vanilla another preset names it here. Blank reads no preset (vanilla's registry entries, as before 6.11). |
+| `packPreset` | `"minecraft:normal"` | The world preset CityWorld reads the pack's overworld from. **Vanilla land** (`cities.vanillaTerrain`) takes its terrain noise and biome source from it; **CityWorld's land** offers the foreign biomes it declares through `moddedBiomeShare`, exactly as TerraBlender's. Datapack biome mods — Terralith, Dreamwoods' Grand Terrain — rewrite `minecraft:normal` and write their biomes inline in it, nowhere else, so with this they just work; a pack that gives vanilla another preset names it here. Blank reads no preset (vanilla's registry entries, as before 6.11). **Terrain from** in Customize (from 7.3), under Land: it lists every installed world type with ordinary terrain (Default, Amplified, Large Biomes, a mod's own), and picking one that cannot feed CityWorld's own land switches Land to vanilla. |
 | `moddedBiomeGrain` | `64` | The cell, in blocks, a mod's biome is decided for: the climate is read at the cell's centre (nudged by a low-frequency warp, so edges are not a grid) and the answer stands for the whole cell. Per column, a mod biome's narrow climate box wins for a few blocks at its edges — haunted forests a few blocks across, inside the city. `1` is every column for itself (the pre-6.11 look); larger values make bigger patches. |
 | `biomeScale` | `1.5` | How large biome regions are, as a multiplier — it divides the frequency of the temperature, humidity, erosion and weirdness fields together, and widens the continentalness smoothing to match. `1.0` is the older, tighter default; `3.0` gives continent-sized regions. Scaling all the axes together changes how *big* regions are rather than which biome you get. |
 

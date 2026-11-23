@@ -24,8 +24,34 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
 - **Schematics for a biome.** `Biome:` in a schematic's `.yml` limits it to the biomes named, in the same words
   as a theme (`Biome: desert, badlands`); without the line it appears everywhere, as before.
 
+- **Customize: "Terrain from".** A row under Land lists every installed world type with ordinary terrain
+  (Default, Amplified, Large Biomes, and a mod's own such as Terrarium Expanded's Earth) and sets
+  `world.packPreset` to the one picked; a world type that cannot feed CityWorld's own land switches Land to
+  "Vanilla, cities apart". No settings file is needed to put cities on a terrain mod's world any more.
+- **Customize: "Highway reach"** beside Highways (`cities.highways.reach`, 1 to 6 cells). Picking Terrarium's
+  Earth sets it to 1.
+
+### Changed
+
+- **New worlds place every structure, in the wild.** A world made with 7.3 or later in the Modern, Apocalypse,
+  Classic, Destroyed or Sparse style now places every installed structure set, vanilla's and mods', except
+  mineshafts, and keeps them all to the wild: villages, mansions and temples between the cities, and no structure
+  leaving a gap in a city. Both are settings (`structures.placeAll`, `structures.wildernessOnly`; the Structures
+  page and "Structures: only in the wild" in Customize), and the sets left out are a tag
+  (`#cityworld:off_by_default`). **Existing worlds are not changed**: a world keeps the behaviour it was made
+  with (the world presets and Customize now stamp a new world `"made_with": 73`), because its cities are already
+  planned around its structures. The styles that are a terrain of their own keep the short list in
+  `#cityworld:allowed`. A pack that ships its own world preset keeps the stamp it was written with: see
+  `structures` on the settings page. Strongholds are never moved.
+- `/cityexport` writes `structures.wildernessOnly` and `structures.placeAll` as the world resolves them.
+
 ### Fixed
 
+- **Vanilla land: a mall is no longer cut off at the city's edge.** A mall is planned as one block, and one that
+  reached past the edge of a city on vanilla land was built only as far as it: half a building, open to the
+  weather. A mall and its car park may now stand past the edge, the city's ground carried on under them and
+  eased back into the land around, as far as that land lets it (about six chunks on flat ground, less on a slope,
+  never over water or a river); a mall that cannot fit that way is not planned there at all.
 - **Terrarium Expanded on vanilla land: a spawn on land, and a world that starts** (GitHub issue #9; 1.21.1 and
   1.21.11, with `world.packPreset: "terrarium_expanded:earth"`). Terrarium moves the spawn to block 0, 0 in a world
   type it does not know as its own, which on its Earth is open sea; CityWorld now puts it at the point Terrarium's

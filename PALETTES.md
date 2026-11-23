@@ -1097,6 +1097,7 @@ merges with CityWorld's on NeoForge and **replaces** it on 1.20.1):
 | `configured_feature/nether_trees` | the trees the ruined Nether's cover grows | — |
 | `structure/carve_cavern` | structures given a cavern of their own in CityWorld's terrain (bastion remnants) | — |
 | `structure_set/allowed` | which vanilla and mod structure sets generate | [Configuring CityWorld](Configuring-CityWorld#structures--which-vanilla-and-mod-structures-this-world-places) |
+| `structure_set/off_by_default` | sets a world made with 7.3+ leaves out while it places every other (mineshafts) | [Configuring CityWorld](Configuring-CityWorld) (`structures`) |
 | `structure_set/wilderness_only` | sets kept out of the city's platmaps | [Biome Mods](Biome-Mods#keep-a-mods-structures-out-of-the-city-set-by-set) |
 
 **Loot tables** — `data/cityworld/loot_table/chests/<name>.json`: every table and its `_extra` hook are listed on

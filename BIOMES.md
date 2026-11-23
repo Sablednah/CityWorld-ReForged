@@ -55,8 +55,9 @@ in its data, or `lithostitched` in its dependencies.
   surface-rule injectors). They do nothing on CityWorld's land, which has its own terrain; on vanilla land they
   usually work because CityWorld builds a real vanilla generator there.
 - **Structures a biome mod places in its biomes.** They are placed by vanilla's structure system and reserved for
-  by CityWorld, but a pond or ruin structure landing in a city still cuts it in two unless it is kept to the wild —
-  see "Structures only in the wild".
+  by CityWorld. From 7.3 a new world keeps every structure to the wild, so none lands in a city; in an older world
+  a pond or ruin structure landing in a city still cuts it in two unless it is kept to the wild — see "Keep a
+  mod's structures out of the city".
 
 ## The settings that steer it
 
@@ -69,7 +70,8 @@ All in the `world` group unless noted ([full reference](Configuring-CityWorld#fu
 | `moddedBiomeGrain` | `64` | The cell, in blocks, a mod's biome is decided for. Bigger = larger, bolder patches; `1` = the old per-column look (slivers). |
 | `packPreset` | `"minecraft:normal"` | The world preset CityWorld reads the pack's overworld from. Vanilla land takes its terrain and biomes from it; CityWorld's land offers its foreign biomes. Name another preset if your pack's is not `minecraft:normal`; blank reads none. |
 | `cities.vanillaTerrain` | `false` | Vanilla land. |
-| `structures.wildernessOnly` | `false` | Keep every placed structure set out of the built platmaps (`structures` group). |
+| `structures.wildernessOnly` | on in a world made with 7.3+, off in an older one | Keep every placed structure set out of the built platmaps (`structures` group). |
+| `structures.placeAll` | the same | Place every installed structure set but mineshafts, a biome mod's included, instead of only the sets in `#cityworld:allowed`. |
 
 ## Datapack recipes
 
@@ -84,8 +86,9 @@ A datapack goes in the world's `datapacks/` folder (or a mod's `data/`). Paths b
 ```
 
 A set listed here never starts in a platmap the city plans to build, in either land. Arboria's five lake sets ship in
-this tag already. (`structures.wildernessOnly: true` does it for every set at once; strongholds are never touched,
-because the eyes of ender point at their ring whether or not one stands.)
+this tag already. (`structures.wildernessOnly: true` does it for every set at once, and is the default for a world
+made with 7.3 or later; strongholds are never touched, because the eyes of ender point at their ring whether or not
+one stands.)
 
 ### Force a biome CityWorld's climate never picks
 
@@ -140,8 +143,13 @@ which is not made from vanilla's noise at all. Measured on 1.21.1 with vanilla l
 
 ### Terrarium Expanded: cities on its Earth
 
-Terrarium Expanded (1.21.1 and 1.21.11) keeps its Earth in a world preset of its own, so name it and turn vanilla
-land on, in the world settings:
+Terrarium Expanded (1.21.1 and 1.21.11) keeps its Earth in a world preset of its own. From 7.3, pick it when you
+create the world: CityWorld world type, **Customize**, and under **Land** set **Terrain from** to Terrarium's
+Earth. That switches Land to "Vanilla, cities apart" and sets **Highway reach** to "next city only" for you (see
+the timings below). **Terrain from** lists every installed world type with ordinary terrain, so the same row picks
+Amplified, Large Biomes or another mod's world.
+
+On a server, or in a pack, the same thing in the world settings:
 
 ```json
 "world": { "packPreset": "terrarium_expanded:earth" },

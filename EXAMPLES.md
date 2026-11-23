@@ -370,7 +370,9 @@ fields are under [Zoos](Building-Palettes#zoos). **Check:** `/cityfind lot zoo t
 ```
 
 The Structures page of Customize does the same by clicking. CityWorld reserves the structure's real footprint and
-shapes the ground to meet it.
+shapes the ground to meet it. (A world made with 7.3 or later in a city-on-ordinary-ground style places every
+installed set but mineshafts without this file, all kept to the wild; the tag still decides for older worlds and
+the other styles, and a set it holds is placed in any world.)
 
 **Keep a set out of the city, in the wild only:** `data/cityworld/tags/worldgen/structure_set/wilderness_only.json`
 

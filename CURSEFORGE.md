@@ -308,7 +308,9 @@ becomes clear. It works on every world style, Apocalypse included. Drop it in `m
 (5.19.0 or later). It is a plain datapack inside, so a pack author can change any swap.
 **→ [Get it on CurseForge](https://www.curseforge.com/minecraft/mc-mods/cityworld-neutral-palette)** · [or from GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/neutral-palette-1.0.0)
 The **[All Vanilla Structures](https://www.curseforge.com/minecraft/mc-mods/cityworld-all-vanilla-structures)**
-sample datapack switches every vanilla structure on, for servers.
+sample datapack switches every vanilla structure on, for servers. (From 7.3 a new world places them all without
+it, mineshafts apart; the add-on still does it for older worlds, for the styles that are a terrain of their own,
+and for mineshafts.)
 
 ### Vanilla's loot, and your loot mods', in the city: the LootLinker add-on
 
