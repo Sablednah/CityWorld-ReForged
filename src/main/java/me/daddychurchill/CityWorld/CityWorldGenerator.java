@@ -163,6 +163,9 @@ public class CityWorldGenerator {
      */
     public volatile me.daddychurchill.CityWorld.worldgen.Highways highways;
 
+    /** Whether this is vanilla land (cities in a vanilla world): set by the chunk generator with the binding below. */
+    public volatile boolean vanillaLand;
+
     /**
      * The biome a building at a chunk stands in, bound by the chunk generator (null until then, and in a realm
      * that has none to give): what palette themes and a schematic's {@code Biome:} line go by.
