@@ -65,6 +65,14 @@ public final class Clipboard {
     public final String title;
 
     /**
+     * {@code Biome:} in the {@code .yml} (7.3) — the biomes this build belongs to, as a {@code BiomeMatch} list:
+     * exact ids, {@code #tags}, or words ({@code "Biome: desert, badlands"} is every biome of any mod with either
+     * in its name). A build with one appears only where its site's centre stands in one of them; without, anywhere,
+     * as always.
+     */
+    public final me.daddychurchill.CityWorld.worldgen.BiomeMatch biomes;
+
+    /**
      * {@code Ocean: true} in the {@code .yml} — an offshore build (rig, ship, lighthouse) that sits
      * <em>on</em> deep open water at the surface, on its own legs/hull, with no foundation: it places
      * only in genuinely deep water and the mod does nothing to the terrain, just drops the build in.
@@ -115,6 +123,7 @@ public final class Clipboard {
         this.flipableX = meta.flipableX;
         this.flipableZ = meta.flipableZ;
         this.oddsOfAppearance = meta.oddsOfAppearance;
+        this.biomes = meta.biomes;
         this.decayable = meta.decayable;
         this.pristineChance = meta.pristineChance;
         this.broadcastLocation = meta.broadcastLocation;
@@ -423,12 +432,23 @@ public final class Clipboard {
         return rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90;
     }
 
+    /** For the self-test: the {@code Biome:} limit a sidecar of this text gives its build. */
+    public static me.daddychurchill.CityWorld.worldgen.BiomeMatch biomesOfSidecar(String yml) {
+        try {
+            return Meta.parse(new java.io.ByteArrayInputStream(yml.getBytes(StandardCharsets.UTF_8))).biomes;
+        } catch (IOException e) {
+            return me.daddychurchill.CityWorld.worldgen.BiomeMatch.ANY;
+        }
+    }
+
     /** Parsed {@code .schematic.yml}; simple {@code key: value} lines, no YAML library needed. */
     private static final class Meta {
         int groundLevelY = 0;
         boolean flipableX = false;
         boolean flipableZ = false;
         double oddsOfAppearance = 0.1;
+        me.daddychurchill.CityWorld.worldgen.BiomeMatch biomes = me.daddychurchill.CityWorld.worldgen.BiomeMatch.ANY;
+        String biomeText = "";
         boolean decayable = true;
         double pristineChance = -1.0; // < 0 = use the world's oddsOfPristineBuilding
         boolean broadcastLocation = false;
@@ -491,6 +511,12 @@ public final class Clipboard {
                             case "KeepAir" -> m.keepAir = Boolean.parseBoolean(val);
                             case "Anchor" -> m.anchor = Boolean.parseBoolean(val);
                             case "Loot" -> m.loot = val;
+                            case "Biome", "Biomes" -> {
+                                // the raw value: a tag starts with '#', which cleanValue would cut as a comment
+                                // (a comment here is a '#' standing alone or followed by a space); lines add up
+                                m.biomeText += " " + line.substring(c + 1).split("\\s#(\\s|$)", 2)[0];
+                                m.biomes = me.daddychurchill.CityWorld.worldgen.BiomeMatch.parse(m.biomeText);
+                            }
                             case "Driveway", "Driveways" -> m.addDriveways(val);
                             default -> { /* ignore unknown keys */ }
                         }
