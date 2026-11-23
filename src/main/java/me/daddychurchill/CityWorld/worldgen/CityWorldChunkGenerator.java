@@ -646,6 +646,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
     // --- a vanilla world with cities in it ("terrain": "vanilla") ---------------------------------------
 
+    /** On vanilla land, the biome source of the world preset the land follows ({@code world.packPreset}); else null. */
+    public BiomeSource vanillaLandSource() {
+        return vanillaTerrain() ? vanillaOverworld().getBiomeSource() : null;
+    }
+
     /** Vanilla's overworld generator for this world, built once; see {@link #vanillaEnd()} for the pattern. */
     private net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator vanillaOverworld() {
         var local = vanillaOverworld;
