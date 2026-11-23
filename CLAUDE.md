@@ -44,8 +44,8 @@ Terrarium Expanded spawn — BUILT on all six lines for 7.3.0, unreleased, nothi
 - **Add-on `packs/biome-palettes`** (`cityworld_biome_palettes`, needs `[7.3,)`; `./build.sh --test` makes a
   `-test72` jar that loads beside 7.2.x): ten themes from `gen.py`'s tables; `gen.py --check <harvest.json>`
   simulates assignments (harvest = `{namespace: {biome: …}}` from mod jars). **No base stones in a palette** (stone,
-  andesite, diorite, tuff, deepslate: vanilla's ore pass replaces them). **It needs its own CurseForge project
-  before release** (the owner creates it; then its id goes in `curseforge-addons.yml`/`curseforge-upload-addon.sh`).
+  andesite, diorite, tuff, deepslate: vanilla's ore pass replaces them). Its own CurseForge project is **1826195** (owner made it
+  2026-11-23, signed the themes off in game); tag `biome-palettes-<version>` uploads there (`curseforge-addons.yml`).
 - **Measured:** desert district 35/37 buildings themed (sandstone family dominant); vanilla-land desert city 39/39
   and boreal 46/46; a `Biome: desert, badlands` schematic placed 12 times, all in `minecraft:desert`, a tag-limited
   one 22 times in its two biomes, the control 52; with Biomes O' Plenty + Terralith + Regions Unexplored +

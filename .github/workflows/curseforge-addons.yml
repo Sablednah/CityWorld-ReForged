@@ -1,6 +1,7 @@
 name: Publish add-on to CurseForge
 
-# An add-on's GitHub release (tag neutral-palette-1.0.0, lootlinker-1.0.0, all-vanilla-structures-1.0.0) publishes its
+# An add-on's GitHub release (tag neutral-palette-1.0.0, lootlinker-1.0.0, all-vanilla-structures-1.0.0,
+# biome-palettes-1.0.0) publishes its
 # jar to that add-on's OWN CurseForge project. CityWorld's releases (v*) go through curseforge.yml to CityWorld's
 # project, and neither workflow ever touches the other's tags: an add-on on CityWorld's project would be served as
 # the latest CityWorld.
@@ -9,6 +10,7 @@ name: Publish add-on to CurseForge
 #   neutral-palette-*         -> 1814778  CityWorld: Neutral Palette
 #   lootlinker-*              -> 1814804  CityWorld: LootLinker
 #   all-vanilla-structures-*  -> 1814818  CityWorld: All Vanilla Structures
+#   biome-palettes-*          -> 1826195  CityWorld: Biome Palettes
 # A new add-on: add its prefix to the case below, with its project id and display name.
 #
 # Uses the same CURSEFORGE_TOKEN secret as curseforge.yml.
@@ -45,7 +47,8 @@ jobs:
     if: >-
       startsWith(github.event.release.tag_name || inputs.tag, 'neutral-palette-') ||
       startsWith(github.event.release.tag_name || inputs.tag, 'lootlinker-') ||
-      startsWith(github.event.release.tag_name || inputs.tag, 'all-vanilla-structures-')
+      startsWith(github.event.release.tag_name || inputs.tag, 'all-vanilla-structures-') ||
+      startsWith(github.event.release.tag_name || inputs.tag, 'biome-palettes-')
     runs-on: ubuntu-latest
     steps:
       - name: Check the CurseForge token is configured
@@ -73,6 +76,7 @@ jobs:
             neutral-palette-*)        id=1814778; name="CityWorld: Neutral Palette";        version="${TAG#neutral-palette-}" ;;
             lootlinker-*)             id=1814804; name="CityWorld: LootLinker";             version="${TAG#lootlinker-}" ;;
             all-vanilla-structures-*) id=1814818; name="CityWorld: All Vanilla Structures"; version="${TAG#all-vanilla-structures-}" ;;
+            biome-palettes-*)         id=1826195; name="CityWorld: Biome Palettes";         version="${TAG#biome-palettes-}" ;;
             *) echo "::error::No CurseForge project for tag $TAG"; exit 1 ;;
           esac
           echo "id=$id" >> "$GITHUB_OUTPUT"

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Upload one CityWorld add-on jar (Neutral Palette, LootLinker, All Vanilla Structures) to ITS OWN CurseForge project.
+# Upload one CityWorld add-on jar (Neutral Palette, LootLinker, All Vanilla Structures, Biome Palettes) to ITS OWN
+# CurseForge project.
 #
 #   CURSEFORGE_TOKEN=xxx ./scripts/curseforge-upload-addon.sh <jar> <project-id> <display-name> <changelog-file> [release-type]
 #
