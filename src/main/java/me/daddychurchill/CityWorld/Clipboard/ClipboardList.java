@@ -77,7 +77,8 @@ public final class ClipboardList implements Iterable<Clipboard> {
 	/** The first single-chunk clip whose appearance odds come up, or {@code null} — for spot fills. */
 	public Clipboard getSingleLot(CityWorldGenerator generator, PlatMap platmap, Odds odds, int placeX, int placeZ) {
 		for (Clipboard clip : list) {
-			if (clip.chunkX == 1 && clip.chunkZ == 1 && odds.playOdds(clip.oddsOfAppearance))
+			if (clip.chunkX == 1 && clip.chunkZ == 1 && platmap.footprintInBiome(generator, clip, placeX, placeZ, 1, 1)
+					&& odds.playOdds(clip.oddsOfAppearance))
 				return clip;
 		}
 		return null;

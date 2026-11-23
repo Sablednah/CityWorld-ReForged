@@ -80,9 +80,9 @@ public class RoadLot extends ConnectedLot {
 
 		// a pack's street palettes override these: one pick for the whole world, so every road matches
 		// (Support/Palettes)
-		pavementMat = me.daddychurchill.CityWorld.Support.Palettes.pick(platmap.generator, me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_SURFACE, 0, 0,
+		pavementMat = me.daddychurchill.CityWorld.Support.Palettes.pickWorld(platmap.generator, me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_SURFACE,
 				platmap.generator.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(0, Material.WHITE_TERRACOTTA));
-		linesMat = me.daddychurchill.CityWorld.Support.Palettes.pick(platmap.generator, me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_LINES, 0, 0,
+		linesMat = me.daddychurchill.CityWorld.Support.Palettes.pickWorld(platmap.generator, me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_LINES,
 				platmap.generator.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(1, Material.QUARTZ_BLOCK));
 		// paved sidewalk is 2, read in PlatLot
 		dirtroadMat = platmap.generator.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(3,

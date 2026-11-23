@@ -163,6 +163,45 @@ public class CityWorldGenerator {
      */
     public volatile me.daddychurchill.CityWorld.worldgen.Highways highways;
 
+    /**
+     * The biome a building at a chunk stands in, bound by the chunk generator (null until then, and in a realm
+     * that has none to give): what palette themes and a schematic's {@code Biome:} line go by.
+     */
+    public volatile java.util.function.BiFunction<Integer, Integer, net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome>> buildingBiomes;
+
+    private final java.util.concurrent.ConcurrentHashMap<Long, java.util.Optional<net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome>>> buildingBiomeMemo = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * The biome a building at this chunk stands in, or {@code null}. On CityWorld's land it is the chunk's own
+     * biome at its natural ground; on vanilla land the biome at the centre of the chunk's city, so one city is one
+     * thing. Memoised; a pure function of the seed and the position, so the planner may ask before any chunk exists.
+     */
+    public net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> buildingBiomeAt(int chunkX, int chunkZ) {
+        var probe = buildingBiomes;
+        if (probe == null)
+            return null;
+        long key = ((long) chunkX << 32) ^ (chunkZ & 0xFFFFFFFFL);
+        var known = buildingBiomeMemo.get(key);
+        if (known == null) {
+            // computed outside the map (the lookup reads terrain; never under a bin lock)
+            known = java.util.Optional.ofNullable(probe.apply(chunkX, chunkZ));
+            if (buildingBiomeMemo.size() > 8192)
+                buildingBiomeMemo.clear();
+            buildingBiomeMemo.put(key, known);
+        }
+        return known.orElse(null);
+    }
+
+    /**
+     * The palette theme a building at this chunk takes from its biome ({@code worldgen/BiomeThemes}), or
+     * {@code null}. With no theme installed nothing is looked up.
+     */
+    public String paletteThemeAt(int chunkX, int chunkZ) {
+        if (!me.daddychurchill.CityWorld.worldgen.BiomeThemes.any())
+            return null;
+        return me.daddychurchill.CityWorld.worldgen.BiomeThemes.themeFor(buildingBiomeAt(chunkX, chunkZ));
+    }
+
     /** The sides a highway leaves this street chunk from ({@code Highways.EXIT_*} bits); 0 without highways. */
     public int highwayExitsAt(int chunkX, int chunkZ) {
         me.daddychurchill.CityWorld.worldgen.Highways local = highways;
