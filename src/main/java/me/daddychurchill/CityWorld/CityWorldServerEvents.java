@@ -128,6 +128,9 @@ public final class CityWorldServerEvents {
         me.daddychurchill.CityWorld.worldgen.CobblemonBridge.install();
     }
 
+    // Terrarium Expanded (worldgen/TerrariumBridge) does not exist for 1.20.1: its spawn handlers are on the 1.21
+    // lines only.
+
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         if (!MapMarkers.hasListeners())

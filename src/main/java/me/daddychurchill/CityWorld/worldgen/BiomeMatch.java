@@ -29,8 +29,10 @@ import net.minecraft.world.level.biome.Biome;
  */
 public final class BiomeMatch {
 
-    /** How closely a biome was named: the exact id beats a tag, a tag beats a word or a pattern. */
-    public static final int NONE = 0, WORD = 1, TAG = 2, EXACT = 3;
+    /** How a biome was named: by its exact id, or loosely (a tag, a word or a pattern); an exact id counts for more. */
+    public static final int NONE = 0, NAMED = 1, EXACT = 2;
+
+    private static final int WORD = 3, TAG = 4; // kinds of term, never answered
 
     /** No limit: every biome, and no biome at all. */
     public static final BiomeMatch ANY = new BiomeMatch(List.of(), List.of());
@@ -42,11 +44,11 @@ public final class BiomeMatch {
                 case EXACT:
                     return id.equals(text) ? EXACT : NONE;
                 case TAG:
-                    return tag != null && biome.is(tag) ? TAG : NONE;
+                    return tag != null && biome.is(tag) ? NAMED : NONE;
                 default:
                     if (pattern != null)
-                        return pattern.matcher(id).matches() ? WORD : NONE;
-                    return id.substring(id.indexOf(':') + 1).contains(text) ? WORD : NONE;
+                        return pattern.matcher(id).matches() ? NAMED : NONE;
+                    return id.substring(id.indexOf(':') + 1).contains(text) ? NAMED : NONE;
             }
         }
     }
@@ -101,8 +103,8 @@ public final class BiomeMatch {
     }
 
     /**
-     * How closely {@code biome} is named — {@link #EXACT}, {@link #TAG}, {@link #WORD} — or {@link #NONE}: not
-     * named, taken out by a {@code !} term, or unknown (null, or a biome with no id).
+     * How {@code biome} is named — {@link #EXACT} or {@link #NAMED} — or {@link #NONE}: not named, taken out by a
+     * {@code !} term, or unknown (null, or a biome with no id).
      */
     public int rank(@Nullable Holder<Biome> biome) {
         if (biome == null || isAny())
@@ -114,7 +116,7 @@ public final class BiomeMatch {
             if (term.rank(id, biome) != NONE)
                 return NONE;
         if (include.isEmpty())
-            return WORD;
+            return NAMED;
         int best = NONE;
         for (Term term : include)
             best = Math.max(best, term.rank(id, biome));
