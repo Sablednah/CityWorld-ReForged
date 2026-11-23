@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:stripped_jungle_wood",
+    "minecraft:mossy_stone_bricks",
+    "minecraft:stripped_bamboo_block"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:spruce_planks",
+    "minecraft:calcite",
+    "minecraft:white_concrete",
+    "minecraft:polished_diorite",
+    "minecraft:light_gray_concrete",
+    "minecraft:white_terracotta",
+    "minecraft:light_blue_terracotta",
+    "minecraft:stone_bricks",
+    "minecraft:packed_ice"
+  ]
+}

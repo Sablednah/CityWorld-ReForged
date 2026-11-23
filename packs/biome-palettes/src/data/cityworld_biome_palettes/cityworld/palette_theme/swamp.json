@@ -1,0 +1,26 @@
+{
+  "priority": 25,
+  "biomes": [
+    "minecraft:swamp",
+    "minecraft:mangrove_swamp",
+    "#c:is_swamp",
+    "#forge:is_swamp",
+    "swamp",
+    "bayou",
+    "marsh",
+    "wetland",
+    "mangrove",
+    "morass",
+    "mire",
+    "muskeg",
+    "moor",
+    "floodplain",
+    "*:delta",
+    "*:*_delta",
+    "*:bog",
+    "*:*_bog",
+    "*:fen",
+    "*:*_fen",
+    "haunted_lakes"
+  ]
+}

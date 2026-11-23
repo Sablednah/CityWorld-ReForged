@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:mossy_stone_bricks",
+    "minecraft:stone_bricks",
+    "minecraft:jungle_planks",
+    "minecraft:bamboo_planks",
+    "minecraft:mossy_cobblestone",
+    "minecraft:mud_bricks",
+    "minecraft:white_terracotta"
+  ]
+}

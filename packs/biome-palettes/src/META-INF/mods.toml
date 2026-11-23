@@ -1,0 +1,23 @@
+# CityWorld: Biome Palettes, a data-only add-on (no code). MinecraftForge 1.20.1 reads this file.
+modLoader="lowcodefml"
+loaderVersion="[1,)"
+license="GPL-3.0-only"
+issueTrackerURL="https://github.com/Sablednah/CityWorld-ReForged/issues"
+
+[[mods]]
+modId="cityworld_biome_palettes"
+version="1.0.0"
+displayName="CityWorld: Biome Palettes"
+authors="Sablednah"
+description='''
+A datapack for CityWorld: cities built to suit the biome they stand in.
+Sandstone in the desert, red sandstone and terracotta in the badlands, spruce and stone in the taiga, and seven more.
+Covers vanilla's biomes and those of biome mods, by name and by tag. Needs CityWorld 7.3.0 or later.
+'''
+
+[[dependencies.cityworld_biome_palettes]]
+modId="cityworld"
+mandatory=true
+versionRange="[7.3,)"
+ordering="AFTER"
+side="BOTH"

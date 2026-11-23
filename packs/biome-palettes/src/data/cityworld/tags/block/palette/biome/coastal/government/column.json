@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:stripped_birch_wood",
+    "minecraft:cut_sandstone",
+    "minecraft:prismarine_bricks"
+  ]
+}

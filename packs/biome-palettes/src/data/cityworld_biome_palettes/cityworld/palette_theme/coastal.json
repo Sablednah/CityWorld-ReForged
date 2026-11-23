@@ -1,0 +1,18 @@
+{
+  "priority": 10,
+  "biomes": [
+    "minecraft:beach",
+    "minecraft:stony_shore",
+    "#minecraft:is_beach",
+    "#minecraft:is_ocean",
+    "beach",
+    "shore",
+    "coast",
+    "ocean",
+    "cove",
+    "reef",
+    "lagoon",
+    "isles",
+    "island"
+  ]
+}

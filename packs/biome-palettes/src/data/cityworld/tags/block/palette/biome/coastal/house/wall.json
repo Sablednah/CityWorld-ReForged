@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:white_terracotta",
+    "minecraft:smooth_sandstone",
+    "minecraft:birch_planks",
+    "minecraft:white_concrete",
+    "minecraft:light_blue_terracotta",
+    "minecraft:cyan_terracotta",
+    "minecraft:prismarine_bricks",
+    "minecraft:bricks"
+  ]
+}

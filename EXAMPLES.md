@@ -454,7 +454,40 @@ The facing rule, multi-block layouts (sofas, double beds) and the vocabulary rou
 under [Furniture](Building-Palettes#furniture). **Check:** the log's furniture pool counts at startup, then any
 dining room.
 
-## 13. Vehicles, sign packs, biomes
+## 13. A different city in each biome
+
+A **biome theme** gives the buildings in some biomes their own per-part palettes (example 4). Two files make one:
+the theme, naming its biomes, and a palette under the theme's name. A swamp town of mangrove and mud brick:
+
+`data/mypack/cityworld/palette_theme/swamp.json`
+
+```json
+{
+  "biomes": ["minecraft:swamp", "minecraft:mangrove_swamp", "#c:is_swamp", "swamp", "bayou", "marsh"]
+}
+```
+
+`data/cityworld/tags/block/palette/biome/swamp/building/wall.json`
+
+```json
+{ "values": ["minecraft:mangrove_planks", "minecraft:mud_bricks", "minecraft:mossy_stone_bricks"] }
+```
+
+A biome list takes full ids, `#` biome tags, plain **words** (any biome of any mod with the word in its name, so
+`bayou` reaches a biome mod's bayous) and `!` to leave some out. The parts a theme does not fill keep the style's
+palette or CityWorld's own. One building is always one theme, and streets do not change. The whole of it, and what
+happens when two themes want the same biome: [Palettes by biome](Building-Palettes#palettes-by-biome-from-73).
+The Biome Palettes add-on is ten ready-made themes to copy from.
+
+**A building for one biome.** A [schematic of your own](#5-add-a-building-of-your-own) takes the same list in its
+`.yml`, and then appears only there:
+
+```yaml
+# adobe_house.nbt.yml
+Biome: desert, badlands
+```
+
+## 14. Vehicles, sign packs, biomes
 
 Pointers, because each has its own worked example:
 

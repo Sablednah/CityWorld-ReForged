@@ -5,6 +5,25 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 7.3.0 (unreleased)
+
+### Added
+
+- **Palettes by biome** (GitHub issue #9). A datapack can now give the buildings in some biomes their own look: a
+  theme file in the new registry `cityworld/palette_theme` names the biomes, and per-part palettes under
+  `#cityworld:palette/biome/<theme>/<part>` say what a building there is made of. A building reads its biome
+  theme's palette first, then the style's, then the general one. One building is always one theme (a building on
+  a biome's edge is never half of each), and streets do not change. On vanilla land a city takes the biome at its
+  centre, as a village does. CityWorld ships no themes, so nothing changes without a pack. The biome list takes
+  exact ids, biome tags, plain words (`desert` is every biome of any mod with that in its name), patterns and
+  `!` exclusions; when two themes name a biome the closest naming wins, then `priority`. F3 shows the theme of
+  the chunk you stand in, and `-Dcityworld.diagnostics=true` logs the theme of every installed biome.
+- **The Biome Palettes add-on** (`packs/biome-palettes`, its own jar): ten themes — desert, badlands, savanna,
+  tropical, swamp, boreal, frozen, coastal, mountain, blossom — for vanilla's biomes and those of biome mods
+  (Biomes O' Plenty, Terralith, Regions Unexplored, Dreamwoods and others, by word and tag).
+- **Schematics for a biome.** `Biome:` in a schematic's `.yml` limits it to the biomes named, in the same words
+  as a theme (`Biome: desert, badlands`); without the line it appears everywhere, as before.
+
 ## 7.2.1 — 2026-11-21
 
 ### Fixed

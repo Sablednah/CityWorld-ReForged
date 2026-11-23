@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:stone_bricks",
+    "minecraft:polished_andesite",
+    "minecraft:cobblestone",
+    "minecraft:spruce_planks",
+    "minecraft:deepslate_bricks",
+    "minecraft:bricks",
+    "minecraft:polished_deepslate"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "priority": 15,
+  "biomes": [
+    "minecraft:taiga",
+    "minecraft:snowy_taiga",
+    "minecraft:old_growth_pine_taiga",
+    "minecraft:old_growth_spruce_taiga",
+    "minecraft:grove",
+    "#minecraft:is_taiga",
+    "taiga",
+    "boreal",
+    "spruce",
+    "*:pine_*",
+    "*:*_pine_*",
+    "*:*_pine",
+    "pinelands",
+    "conifer",
+    "redwood",
+    "larch",
+    "hemlock",
+    "siberian",
+    "shield",
+    "snowy",
+    "wintry",
+    "yosemite",
+    "yellowstone",
+    "*:fir_*",
+    "*:*_fir_*"
+  ]
+}

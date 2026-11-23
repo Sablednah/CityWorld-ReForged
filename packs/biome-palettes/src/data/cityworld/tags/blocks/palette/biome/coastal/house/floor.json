@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:birch_planks",
+    "minecraft:oak_planks",
+    "minecraft:smooth_sandstone"
+  ]
+}

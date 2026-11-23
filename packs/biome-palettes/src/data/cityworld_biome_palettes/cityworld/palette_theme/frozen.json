@@ -1,0 +1,25 @@
+{
+  "priority": 40,
+  "biomes": [
+    "minecraft:snowy_plains",
+    "minecraft:ice_spikes",
+    "minecraft:frozen_river",
+    "minecraft:frozen_ocean",
+    "minecraft:deep_frozen_ocean",
+    "minecraft:snowy_beach",
+    "#c:is_icy",
+    "#forge:is_icy",
+    "tundra",
+    "glacial",
+    "glacier",
+    "arctic",
+    "frozen",
+    "icy",
+    "*:ice_*",
+    "*:*_ice",
+    "*:*_ice_*",
+    "cold_desert",
+    "wintry_lowlands",
+    "white_shore"
+  ]
+}

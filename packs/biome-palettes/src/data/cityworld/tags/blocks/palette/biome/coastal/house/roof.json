@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:birch_planks",
+    "minecraft:prismarine_bricks",
+    "minecraft:dark_prismarine",
+    "minecraft:cyan_terracotta",
+    "minecraft:oak_planks"
+  ]
+}

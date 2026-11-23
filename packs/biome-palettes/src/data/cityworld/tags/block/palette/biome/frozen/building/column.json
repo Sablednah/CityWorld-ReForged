@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:stripped_spruce_wood",
+    "minecraft:polished_diorite",
+    "minecraft:packed_ice"
+  ]
+}

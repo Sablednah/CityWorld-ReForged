@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:spruce_planks",
+    "minecraft:calcite",
+    "minecraft:light_blue_terracotta",
+    "minecraft:deepslate_tiles"
+  ]
+}

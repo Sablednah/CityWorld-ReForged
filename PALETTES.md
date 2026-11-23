@@ -110,6 +110,75 @@ another in a part, add a weighted [substitute](#block-substitutes) on top.
 **Not covered yet:** malls, hospitals, the subway, the vault, bunkers, mines and the smaller industrial lots
 (warehouses, silos, gasometers) keep their own fixed looks. Block substitutes reach all of those.
 
+### Palettes by biome (from 7.3)
+
+A per-part palette can also belong to a **biome theme**, so a city in the desert is built of sandstone and one in
+the taiga of spruce and stone. Two things make a theme:
+
+1. **A theme file** that names the biomes it covers, in the registry `cityworld/palette_theme`:
+   `data/<namespace>/cityworld/palette_theme/<theme>.json`. The file's name is the theme's name.
+2. **Per-part palettes under that name**: `cityworld:palette/biome/<theme>/<part>`, the same 28 parts as above
+   (`palette/biome/desert/building/wall`, `palette/biome/desert/house/roof`…).
+
+`data/mypack/cityworld/palette_theme/desert.json`
+```json
+{
+  "biomes": ["minecraft:desert", "#c:is_desert", "desert", "dune", "!cold_desert"]
+}
+```
+
+`data/cityworld/tags/block/palette/biome/desert/building/wall.json`
+```json
+{ "values": ["minecraft:sandstone", "minecraft:cut_sandstone", "minecraft:smooth_sandstone"] }
+```
+
+**The biome list** takes four kinds of entry, mixed freely:
+
+| Entry | Covers |
+|---|---|
+| `minecraft:desert` | that biome |
+| `#c:is_desert` | every biome in that biome tag |
+| `desert` | a **word**: every biome, from any mod, with it in its name (`minecraft:desert`, `biomesoplenty:lush_desert`, `terralith:desert_canyon`) |
+| `terralith:*`, `*:snowy_*` | a pattern over the whole id; `*` stands for anything |
+| `!cold_desert` | **not** these (any of the forms above after the `!`), whatever else names them |
+
+Words are what make one theme reach biome mods nobody listed: `desert` and `dune` cover most deserts there are.
+A word matches anywhere in the name, so prefer a pattern for a short one (`*:ice_*` rather than `ice`, which is
+also in `rice_paddy`).
+
+**When two themes name the same biome**, the closest naming wins: its exact id, then a tag, then a word or
+pattern. Between two equally close, the higher `"priority"` (a number in the theme file, default 0), then the
+first file by id. So a broad word in one theme never takes a biome another theme lists by id.
+
+Other fields: `"theme": "desert"` gives the theme's name when the file is called something else — which is how a
+second pack **adds biomes to a theme it does not own**, without replacing that theme's file:
+
+`data/otherpack/cityworld/palette_theme/my_extra_deserts.json`
+```json
+{ "theme": "desert", "biomes": ["mymod:scorched_flats"] }
+```
+
+**How a building reads it.** A part is looked up in this order, and the first palette that has any block in it is
+used: the building's biome theme (`palette/biome/<theme>/<part>`), then the style's (`palette/<style>/<part>`),
+then the general one (`palette/<part>`), then CityWorld's own choice. A theme may fill only some parts; the rest
+fall through. **One building, one theme:** the theme is that of the chunk the building was begun in, and all its
+chunks follow it, so a building on a biome's edge is never half of each. Streets do not change with the biome
+(they are one pick for the whole world).
+
+**Which biome.** On CityWorld's own land, the biome under the building. On **vanilla land**, the biome at the
+centre of the building's city, as a vanilla village takes its type from the biome at its centre: one city, one
+look. The ruined Nether twin follows the overworld it copies; the End has no themes.
+
+CityWorld ships **no themes**: without a pack nothing here is read and no building changes. The
+[Biome Palettes add-on](https://github.com/Sablednah/CityWorld-ReForged/tree/master/packs/biome-palettes) is ten
+of them (desert, badlands, savanna, tropical, swamp, boreal, frozen, coastal, mountain, blossom) covering
+vanilla's biomes and those of the biome mods by word and tag; it is also the example to copy. To see which
+theme every installed biome gets, start the game with `-Dcityworld.diagnostics=true` and read the
+`CityWorld palette themes:` lines in the log. In game, F3 shows the theme of the chunk you stand in.
+
+A [schematic](Custom-Schematics) can be limited to biomes in the same words: `Biome: desert, badlands` in its
+`.yml`.
+
 ### Biome pools
 
 These biome tags decide which biomes CityWorld places by a route other than its own climate lookup. They
@@ -972,6 +1041,7 @@ the folders are `tags/blocks/`, `tags/items/` and `loot_tables/` (see the
 | `cityworld/vehicle` | a parked vehicle (Immersive Vehicles or Ultimate Car Mod) | [Parked vehicles](#parked-vehicles-immersive-vehicles), [Ultimate Car Mod](#ultimate-car-mod-from-70) |
 | `cityworld/pole_signs` | a road-sign pack on Immersive Vehicles' poles | [Road signs](#road-signs-on-immersive-vehicles-poles-from-70) |
 | `cityworld/spawn` | anything placed by lot, district, place, style or schematic | [Spawns](#putting-anything-in-the-city-spawns-from-70) |
+| `cityworld/palette_theme` | a biome theme: the biomes whose buildings read `palette/biome/<theme>/<part>` | [Palettes by biome](#palettes-by-biome-from-73) |
 | `spawn_pool_world/<name>.json` (Cobblemon's registry, any namespace) | Pokémon spawns keyed on CityWorld's `markers` (`cityworld:city`, `cityworld:sewer`, `cityworld:district/<family>`…) | [Cobblemon](#cobblemon-what-the-city-tells-its-spawner-from-71) |
 | `cityworld/npcs/gym_leader_<type>.json`, `cityworld/dialogues/gym_leader.json` (Cobblemon's registries) | the eight gym leaders' NPC classes and their challenge dialogue; override to change names, parties or words | [Cobblemon](#cobblemon-what-the-city-tells-its-spawner-from-71) |
 
@@ -993,6 +1063,7 @@ merges with CityWorld's on NeoForge and **replaces** it on 1.20.1):
 |---|---|---|
 | `build/*` | the building palettes by kind of block (`planks`, `wool`, `concrete`, `modern_stones`…) | [The palettes](#the-palettes) |
 | `palette/<part>`, `palette/<style>/<part>` | one part of a building or street (28 parts), optionally for one style | [Per-part palettes](#per-part-palettes-from-614) |
+| `palette/biome/<theme>/<part>` | the same parts for buildings in one biome theme (read first) | [Palettes by biome](#palettes-by-biome-from-73) |
 | `furniture/<role>` | what furnishes a room by role: `chair`, `table`, `sofa`, `desk`, `counter`, `cabinet`, `drawer`, `wardrobe`, `sink`, `bath`, `toilet`, `bookshelf`, `lamp`, `floor_lamp`, `bed`, `shelf`, `crate`, and the kitchen and office appliances `stove`, `fridge`, `freezer`, `microwave`, `toaster`, `cutting_board`, `bin`, `computer`, `tv`, `workbench`, `ceiling_fan` | [Furniture](#furniture) |
 | `decor/*` | tabletop, floor and wall scatter (`surface`, `floor`, `wall`, `desk`, `rug`, `feast`, `stove_top`, `hanging_light`) and the APOCALYPSE-only `grim_floor`, `grim_surface`, `grim_wall` | [Decoration](#furniture) |
 | `fittings/*` | doors (`door`, `interior_door`, `store_door`, `industrial_door`, `garage_door`), `trapdoor`, `window`, `roof`, `stairs`, `railing`, fences (`fence`, `farm_fence`, `gate`, `site_fence`, `site_wire`), `shop_sign`, `atm`, `healing_machine`, `pc`, `pasture` (Cobblemon) and `atm_base` (the block an ATM stands on), and the road kit `road`, `path`, `track`, `skybridge`, `rope_bridge`, and the subway's track `rail`, `rail_booster`, `rail_ruined`, `rail_buffer_stop`, `rail_stop`, the electric line's `rail_electric`, `rail_electric_booster`, `rail_electric_buffer_stop`, `rail_electric_stop` and its `rail_battery` (Railcraft) | [Fittings](#fittings) |

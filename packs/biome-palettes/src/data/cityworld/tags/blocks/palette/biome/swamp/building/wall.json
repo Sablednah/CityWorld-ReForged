@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:mangrove_planks",
+    "minecraft:dark_oak_planks",
+    "minecraft:mud_bricks",
+    "minecraft:mossy_cobblestone",
+    "minecraft:mossy_stone_bricks",
+    "minecraft:oak_planks",
+    "minecraft:packed_mud"
+  ]
+}

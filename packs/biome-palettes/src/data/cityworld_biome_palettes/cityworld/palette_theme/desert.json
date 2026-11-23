@@ -1,0 +1,20 @@
+{
+  "priority": 15,
+  "biomes": [
+    "minecraft:desert",
+    "#c:is_desert",
+    "#forge:is_desert",
+    "#c:is_sandy",
+    "#forge:is_sandy",
+    "desert",
+    "dune",
+    "oasis",
+    "arid",
+    "dryland",
+    "wasteland",
+    "ancient_sands",
+    "sandstone",
+    "mirage",
+    "!cold_desert"
+  ]
+}

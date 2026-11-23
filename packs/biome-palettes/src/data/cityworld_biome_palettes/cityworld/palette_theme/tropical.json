@@ -1,0 +1,15 @@
+{
+  "priority": 20,
+  "biomes": [
+    "minecraft:jungle",
+    "minecraft:sparse_jungle",
+    "minecraft:bamboo_jungle",
+    "#minecraft:is_jungle",
+    "jungle",
+    "rainforest",
+    "tropic",
+    "bamboo",
+    "cloud_forest",
+    "!temperate"
+  ]
+}

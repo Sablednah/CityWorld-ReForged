@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:polished_deepslate",
+    "minecraft:stripped_spruce_wood",
+    "minecraft:polished_andesite",
+    "minecraft:chiseled_stone_bricks"
+  ]
+}

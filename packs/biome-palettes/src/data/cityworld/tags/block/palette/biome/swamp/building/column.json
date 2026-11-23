@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:stripped_mangrove_wood",
+    "minecraft:stripped_dark_oak_wood",
+    "minecraft:mud_bricks"
+  ]
+}

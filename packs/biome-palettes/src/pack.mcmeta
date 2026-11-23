@@ -1,0 +1,12 @@
+{
+  "pack": {
+    "description": "CityWorld: Biome Palettes - cities built to suit their biome",
+    "pack_format": 15,
+    "supported_formats": [
+      15,
+      999
+    ],
+    "min_format": 15,
+    "max_format": 999
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "priority": 5,
+  "biomes": [
+    "minecraft:jagged_peaks",
+    "minecraft:frozen_peaks",
+    "minecraft:stony_peaks",
+    "minecraft:snowy_slopes",
+    "minecraft:windswept_hills",
+    "minecraft:windswept_gravelly_hills",
+    "minecraft:windswept_forest",
+    "#minecraft:is_mountain",
+    "mountain",
+    "peaks",
+    "cliffs",
+    "highland",
+    "alpine",
+    "crag",
+    "stony",
+    "windswept",
+    "slopes",
+    "spires",
+    "volcan",
+    "caldera",
+    "basalt",
+    "heights"
+  ]
+}

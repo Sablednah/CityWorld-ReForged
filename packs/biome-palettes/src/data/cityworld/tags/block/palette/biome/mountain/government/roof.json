@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:deepslate_tiles",
+    "minecraft:spruce_planks",
+    "minecraft:cobbled_deepslate",
+    "minecraft:stone_bricks"
+  ]
+}

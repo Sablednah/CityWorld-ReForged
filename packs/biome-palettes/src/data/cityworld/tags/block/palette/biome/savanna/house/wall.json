@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:acacia_planks",
+    "minecraft:orange_terracotta",
+    "minecraft:terracotta",
+    "minecraft:yellow_terracotta",
+    "minecraft:mud_bricks",
+    "minecraft:packed_mud",
+    "minecraft:smooth_sandstone"
+  ]
+}

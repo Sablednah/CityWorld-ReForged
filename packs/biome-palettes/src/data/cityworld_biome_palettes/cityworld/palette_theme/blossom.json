@@ -1,0 +1,13 @@
+{
+  "priority": 35,
+  "biomes": [
+    "minecraft:cherry_grove",
+    "cherry",
+    "sakura",
+    "blossom",
+    "blooming",
+    "wisteria",
+    "jacaranda",
+    "magnolia"
+  ]
+}

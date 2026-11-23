@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:cherry_planks",
+    "minecraft:white_terracotta",
+    "minecraft:pink_terracotta",
+    "minecraft:calcite",
+    "minecraft:birch_planks",
+    "minecraft:white_concrete",
+    "minecraft:stripped_cherry_wood"
+  ]
+}

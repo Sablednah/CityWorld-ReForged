@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:mangrove_planks",
+    "minecraft:dark_oak_planks",
+    "minecraft:mud_bricks"
+  ]
+}
