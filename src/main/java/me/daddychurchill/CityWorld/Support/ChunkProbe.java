@@ -205,6 +205,32 @@ public final class ChunkProbe {
             return null;
         var context = cw.getContext(level);
         int width = PlatMap.Width;
+        if (lotClass.startsWith("theme:")) {
+            // find:theme:desert — the nearest platmap with 30+ (-Dcityworld.probe.min) building lots standing in that
+            // palette theme; answers its centre chunk
+            String theme = lotClass.substring(6);
+            for (int ring = 0; ring <= 40; ring++)
+                for (int px = -ring; px <= ring; px++)
+                    for (int pz = -ring; pz <= ring; pz++) {
+                        if (Math.max(Math.abs(px), Math.abs(pz)) != ring)
+                            continue;
+                        PlatMap platmap = context.getPlatMap(px * width, pz * width);
+                        int themed = 0, buildings = 0;
+                        for (int x = 0; x < width; x++)
+                            for (int z = 0; z < width; z++)
+                                if (platmap.getLot(x, z) instanceof me.daddychurchill.CityWorld.Plats.BuildingLot) {
+                                    buildings++;
+                                    if (theme.equals(context.paletteThemeAt(platmap.originX + x, platmap.originZ + z)))
+                                        themed++;
+                                }
+                        if (themed >= Integer.getInteger("cityworld.probe.min", 30)) {
+                            CityWorldMod.LOGGER.warn("PROBE: theme {} — platmap at chunk {}, {} ({}) has {} building lots, {} in the theme",
+                                    theme, platmap.originX, platmap.originZ, platmap.context.getClass().getSimpleName(), buildings, themed);
+                            return new int[] { platmap.originX + width / 2, platmap.originZ + width / 2 };
+                        }
+                    }
+            return null;
+        }
         for (int ring = 0; ring <= 20; ring++)
             for (int px = -ring; px <= ring; px++)
                 for (int pz = -ring; pz <= ring; pz++) {
@@ -1534,6 +1560,7 @@ public final class ChunkProbe {
                 var ctx = g.getContext(level);
                 java.util.TreeMap<String, Integer> chunksByClip = new java.util.TreeMap<>(), platmapsByContext = new java.util.TreeMap<>();
                 java.util.Map<String, Integer> footprint = new java.util.HashMap<>();
+                java.util.TreeMap<String, java.util.TreeMap<String, Integer>> biomesByLimited = new java.util.TreeMap<>();
                 for (int px = -r; px < r; px++)
                     for (int pz = -r; pz < r; pz++) {
                         var map = ctx.getPlatMap(px * 10, pz * 10);
@@ -1547,12 +1574,21 @@ public final class ChunkProbe {
                                     String key = map.context.getClass().getSimpleName() + " " + clip.name;
                                     chunksByClip.merge(key, 1, Integer::sum);
                                     footprint.put(key, clip.chunkX * clip.chunkZ);
+                                    if (!clip.biomes.isAny()) { // a Biome: line: which biomes did its chunks land in?
+                                        var biome = ctx.buildingBiomeAt(map.originX + dx, map.originZ + dz);
+                                        String id = biome == null ? "(none)"
+                                                : biome.unwrapKey().map(k -> k.identifier().toString()).orElse("(none)");
+                                        biomesByLimited.computeIfAbsent(key + " [Biome: " + clip.biomes + "]",
+                                                k -> new java.util.TreeMap<>()).merge(id, 1, Integer::sum);
+                                    }
                                 }
                     }
                 CityWorldMod.LOGGER.warn("SURVEY schematics over {}x{} platmaps — platmaps by context: {}", 2 * r, 2 * r, platmapsByContext);
                 for (var e : chunksByClip.entrySet())
                     CityWorldMod.LOGGER.warn("SURVEY schematics: {} = {} placed ({} chunks of {} each)", e.getKey(),
                             e.getValue() / footprint.get(e.getKey()), e.getValue(), footprint.get(e.getKey()));
+                for (var e : biomesByLimited.entrySet())
+                    CityWorldMod.LOGGER.warn("SURVEY schematics: {} chunks by biome {}", e.getKey(), e.getValue());
                 return;
             }
             if (spec.startsWith("find:biome:")) {

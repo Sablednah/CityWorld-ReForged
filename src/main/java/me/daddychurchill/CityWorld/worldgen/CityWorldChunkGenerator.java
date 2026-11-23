@@ -441,6 +441,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     // so hand it over the moment it exists — this is the earliest point it can be had.
                     if (this.biomeSource instanceof CityWorldBiomes cityBiomes)
                         cityBiomes.bindContext(local);
+                    // palettes by biome and a schematic's Biome: line: the biome a chunk's building stands in
+                    {
+                        final CityWorldGenerator bound = local;
+                        local.buildingBiomes = (cx, cz) -> buildingBiome(bound, cx, cz);
+                    }
                     // The End plans against vanilla's islands, so its planner needs vanilla's noise before the
                     // first platmap is asked for — and the biome source reads the same field for its biomes.
                     if (isEnd()) {
@@ -602,6 +607,43 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         return CompletableFuture.completedFuture(chunk);
     }
 
+    /**
+     * The biome a building at a chunk stands in ({@code CityWorldGenerator.buildingBiomeAt}). On CityWorld's land
+     * the chunk's own biome at its natural ground; on vanilla land the biome at the centre of the chunk's city (as
+     * a vanilla village takes its type from the biome at its centre), and outside every city the biome over the
+     * chunk itself. A twin answers for the dimension it copies. Null where there is none to give (the End, a
+     * Nether of its own).
+     */
+    /** 26.3: the vanilla overworld's uncached climate sampler ({@link #vanillaOverworld()} builds it). */
+    private volatile net.minecraft.world.level.biome.Climate.Sampler vanillaOverworldClimate;
+
+    private Holder<Biome> buildingBiome(CityWorldGenerator context, int chunkX, int chunkZ) {
+        try {
+            if (vanillaTerrain()) {
+                CitySites sites = citySites;
+                CitySites.Site site = sites == null ? null : sites.influencing(chunkX, chunkZ);
+                // no city here: the sky over the chunk, where only surface biomes answer
+                int x = site == null ? chunkX * 16 + 8 : site.centreX();
+                int y = site == null ? context.height - 1 : site.level() + 1;
+                int z = site == null ? chunkZ * 16 + 8 : site.centreZ();
+                // 26.3: a biome source answers through a resolver made from a climate sampler
+                var land = vanillaOverworld().getBiomeSource();
+                var climate = vanillaOverworldClimate;
+                return climate == null ? null : land.createResolver(climate).getNoiseBiome(x >> 2, y >> 2, z >> 2);
+            }
+            if (this.biomeSource instanceof CityWorldBiomes classifier) {
+                int y = context.shapeProvider.getCachedYs(context, chunkX, chunkZ).getBlockY(8, 8) + 1;
+                return CityWorldBiomeLookup.biomeAt(classifier, net.minecraft.core.QuartPos.fromBlock(chunkX * 16 + 8),
+                        net.minecraft.core.QuartPos.fromBlock(y), net.minecraft.core.QuartPos.fromBlock(chunkZ * 16 + 8));
+            }
+            CityWorldChunkGenerator source = twinSource(false);
+            CityWorldGenerator theirs = source == null ? null : source.context;
+            return theirs == null ? null : theirs.buildingBiomeAt(chunkX, chunkZ);
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
     // --- a vanilla world with cities in it ("terrain": "vanilla") ---------------------------------------
 
     /** Vanilla's overworld generator for this world, built once; see {@link #vanillaEnd()} for the pattern. */
@@ -637,6 +679,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     // is shared by every worker (the biome handover, the river test), so it is built without caches
                     net.minecraft.world.level.biome.Climate.Sampler shared = random.createClimateSampler(
                             net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().build());
+                    this.vanillaOverworldClimate = shared;
                     // The preset wraps vanilla's biome source in ours, because the sampler a non-noise generator is
                     // handed is a dummy that answers zero everywhere; the wrapper asks with this world's real one.
                     // The first presets wrapped vanilla's source in cityworld:vanilla; a world made from Customize
@@ -728,8 +771,8 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         if (links.isEmpty())
             return;
         BlockState pavement = highwayPavement(context);
-        BlockState lines = me.daddychurchill.CityWorld.Support.Palettes.pick(context,
-                me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_LINES, 0, 0,
+        BlockState lines = me.daddychurchill.CityWorld.Support.Palettes.pickWorld(context,
+                me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_LINES,
                 context.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(1, Material.QUARTZ_BLOCK)).getBlockState();
         BlockState pavementSlab = highwaySlab(pavement);
         BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
@@ -1090,7 +1133,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         if (kit != null)
             return kit.surface.getBlockState();
         if (palette)
-            return me.daddychurchill.CityWorld.Support.Palettes.pick(context, streetPool, 0, 0,
+            return me.daddychurchill.CityWorld.Support.Palettes.pickWorld(context, streetPool,
                     me.daddychurchill.CityWorld.Plats.RoadLot.cityPavement(context)).getBlockState();
         var id = net.minecraft.resources.Identifier.tryParse(citiesConfig().highways().surface());
         var own = id == null ? java.util.Optional.<net.minecraft.world.level.block.Block>empty()
