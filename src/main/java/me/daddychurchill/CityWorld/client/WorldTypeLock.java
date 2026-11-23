@@ -51,11 +51,36 @@ public final class WorldTypeLock {
     private static final Component LOCKED = Component.translatable("cityworld.lock.world_type");
 
     public static void register() {
+        NeoForge.EVENT_BUS.addListener(WorldTypeLock::onRestamp);
         if (CityWorldPackConfig.lockedWorldPreset().isEmpty() && CityWorldPackConfig.lockedRuinedNether().isEmpty()
                 && CityWorldPackConfig.lockedCityWorldEnd().isEmpty())
             return;
         NeoForge.EVENT_BUS.addListener(WorldTypeLock::onInit);
         NeoForge.EVENT_BUS.addListener(WorldTypeLock::onRender);
+    }
+
+    /**
+     * "Re-Create" copies the old world's dimensions into the create-world screen, generator stamp and all, so the
+     * new world came out stamped as the old one was made and took none of what a new world gets since (7.0's deep
+     * oceans and highways, 7.3's structure defaults) unless Customize was opened and closed on the way. A world
+     * made from this screen is a new world: its CityWorld overworld is stamped as one. Only where the screen holds
+     * copied dimensions (no world preset selected) — a world type picked from the list carries the stamp its
+     * preset file gives it, which is a pack's to choose. Nothing to do with the locks; it shares their hook.
+     */
+    private static void onRestamp(ScreenEvent.Init.Post event) {
+        if (!(event.getScreen() instanceof CreateWorldScreen screen))
+            return;
+        WorldCreationUiState state = screen.getUiState();
+        if (state.getWorldType().preset() != null)
+            return;
+        if (state.getSettings().selectedDimensions().overworld()
+                instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw
+                && cw.madeWith() < me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator.MADE_WITH) {
+            CityWorldMod.LOGGER.info("CityWorld: a world re-created from one stamped made_with {} is a new world: "
+                    + "stamped {}", cw.madeWith(), me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator.MADE_WITH);
+            state.updateDimensions((registries, dimensions) ->
+                    dimensions.replaceOverworldGenerator(registries, cw.restamped()));
+        }
     }
 
     private static void onInit(ScreenEvent.Init.Post event) {

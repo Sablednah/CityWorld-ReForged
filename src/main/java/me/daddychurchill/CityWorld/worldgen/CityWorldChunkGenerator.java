@@ -205,6 +205,15 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         return source != null ? source.madeWith() : madeWith.orElse(0);
     }
 
+    /**
+     * This generator stamped as made now: for the create-world screen, when its dimensions were copied from an
+     * older world ("Re-Create"). The copy carries that world's stamp, and the world about to be made is a new one.
+     */
+    public CityWorldChunkGenerator restamped() {
+        return new CityWorldChunkGenerator(this.biomeSource, decayed, style, settings, twinOf, environment, terrain,
+                Optional.of(MADE_WITH));
+    }
+
     /** Whether this world was made with 7.0 or later, so may have deep oceans and highways. */
     public boolean oceansStamped() {
         return madeWith() >= MADE_WITH_OCEANS;
