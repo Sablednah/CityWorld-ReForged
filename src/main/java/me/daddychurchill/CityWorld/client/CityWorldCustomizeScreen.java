@@ -111,7 +111,23 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private double climateWarmth;
     private double biomeScale;
     private double moddedBiomeShare;
-    private final String packPreset; // a pack's knob, not a player's: carried through unchanged
+    private String packPreset; // the world preset the land follows: the "Terrain from" row, or a pack's own
+
+    /**
+     * A world preset the land can follow ({@code world.packPreset}): one with a noise overworld. {@code feedsCityLand}
+     * is whether CityWorld's own land can take biomes from it (a multi-noise biome source); one that cannot only
+     * means something on vanilla land. {@code earth} is Terrarium Expanded's.
+     */
+    public record Terrain(String id, Component name, boolean feedsCityLand, boolean earth) {
+    }
+
+    private List<Terrain> terrains = List.of();
+
+    /** The world presets the "Terrain from" row offers (read from the game by {@code CityWorldClient}). */
+    public CityWorldCustomizeScreen withTerrains(List<Terrain> terrains) {
+        this.terrains = terrains;
+        return this;
+    }
     private final int moddedBiomeGrain; // likewise
 
     /** Cities in a vanilla world and their spacing, size and level range (settings "cities"). */
@@ -278,13 +294,14 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
         this.list.addHeader(Component.literal("Land"));
         // The four dials below only mean something on vanilla land; greyed out on CityWorld's own.
         List<AbstractWidget> cityDials = new ArrayList<>();
+        Consumer<Boolean> setLand = v -> {
+            cities = cities.withVanillaTerrain(v);
+            for (AbstractWidget dial : cityDials)
+                dial.active = v;
+            applyLand();
+        };
         CycleButton<Boolean> land = cycle("Land", new Boolean[] { false, true }, cities.vanillaTerrain(),
-                v -> Component.literal(v ? "Vanilla, cities apart" : "CityWorld"), v -> {
-                    cities = cities.withVanillaTerrain(v);
-                    for (AbstractWidget dial : cityDials)
-                        dial.active = v;
-                    applyLand();
-                });
+                v -> Component.literal(v ? "Vanilla, cities apart" : "CityWorld"), setLand);
         land.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
                 "Vanilla, cities apart: a normal vanilla world — its terrain, caves, villages and animals — with a "
                         + "city every so often, like a village, each on its own level. CityWorld: CityWorld's own "
@@ -303,6 +320,42 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                 "Vanilla land only: one city at most per this many blocks each way. Fewer where the sea or the "
                         + "mountains refuse a site.")));
         addRow(land, spacing);
+        // The terrain a world follows: any installed world preset with a noise overworld — vanilla's own, Amplified,
+        // Large Biomes, a terrain mod's (Terrarium Expanded's Earth). The setting was a pack's alone until 7.3, and a
+        // player had to write a file to reach it.
+        CycleButton<Integer> reach = cycle("Highway reach", withValue(REACH_CHOICES, cities.highways().reach()),
+                cities.highways().reach(), v -> Component.literal(v == 1 ? "next city only" : "up to " + v + " cells"),
+                v -> cities = cities.withHighways(cities.highways().withReach(v)));
+        reach.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                "Vanilla land only: how many city spacings a highway may run past empty ground to the next city. A "
+                        + "lower reach reads less of the land when a place is first visited, which matters on terrain "
+                        + "that loads its map from the internet (Terrarium Expanded).")));
+        List<Terrain> choices = new ArrayList<>(terrains);
+        if (choices.stream().noneMatch(t -> t.id().equals(packPreset)))
+            choices.add(0, new Terrain(packPreset, Component.literal(packPreset.isBlank() ? "None" : packPreset), true, false));
+        if (choices.size() > 1) {
+            Terrain current = choices.stream().filter(t -> t.id().equals(packPreset)).findFirst().orElse(choices.get(0));
+            CycleButton<Terrain> terrain = cycle("Terrain from", choices.toArray(new Terrain[0]), current, Terrain::name, v -> {
+                packPreset = v.id();
+                // a preset CityWorld's own land cannot take biomes from only means something on vanilla land
+                if (!v.feedsCityLand() && !cities.vanillaTerrain()) {
+                    land.setValue(true);
+                    setLand.accept(true);
+                }
+                // Terrarium's Earth fetches its map as the land is read: next-door highways only, unless chosen
+                int usual = CityWorldSettingsData.Highways.DEFAULT.reach();
+                if (v.earth() && cities.highways().reach() == usual) {
+                    cities = cities.withHighways(cities.highways().withReach(1));
+                    reach.setValue(1);
+                }
+            });
+            terrain.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                    "The world type whose terrain and biomes the land follows. On vanilla land the terrain is this "
+                            + "one's, with CityWorld's cities on it; on CityWorld's own land its biomes are offered in "
+                            + "the wild. A terrain mod's world type appears here when the mod is installed. Choosing "
+                            + "one that only works on vanilla land switches Land to it.")));
+            addRow(terrain, null);
+        }
         CycleButton<Integer> size = cycle("City size", withValue(DISTRICT_CHOICES, cities.districts()), cities.districts(),
                 this::citySizeLabel, v -> {
                     cities = cities.withDistricts(v);
@@ -362,8 +415,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                         + "empty ones), leaving along the city's "
                         + "own streets, winding round the hills, cut through them, bridged over rivers and tunnelled "
                         + "under the ridges.")));
-        addRow(highwaysButton, null);
-        cityDials.addAll(List.of(spacing, size, vary, rise, highwaysButton));
+        addRow(highwaysButton, reach);
+        cityDials.addAll(List.of(spacing, size, vary, rise, highwaysButton, reach));
         for (AbstractWidget dial : cityDials)
             dial.active = cities.vanillaTerrain();
 
@@ -554,7 +607,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
      */
     private Screen fromPreset(Result preset) {
         return new CityWorldCustomizeScreen(this.lastScreen, styleLocked ? style : preset.style(), preset.settings(),
-                preset.ruinedNether(), preset.cityWorldEnd(), this.styleLocked, this.structureEntries, this.styleBases, this.onDone);
+                preset.ruinedNether(), preset.cityWorldEnd(), this.styleLocked, this.structureEntries, this.styleBases, this.onDone)
+                .withTerrains(this.terrains);
     }
 
     private Result buildResult() {
@@ -631,7 +685,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                     defaults.subways(), structures, cities, roads);
         }
         // 26.2 moved screen switching from Minecraft onto its Gui (Minecraft.setScreen is gone).
-        this.minecraft.gui.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.ruinedNether, this.cityWorldEnd, this.styleLocked, this.structureEntries, this.styleBases, this.onDone));
+        this.minecraft.gui.setScreen(new CityWorldCustomizeScreen(this.lastScreen, newStyle, carried, this.ruinedNether, this.cityWorldEnd, this.styleLocked, this.structureEntries, this.styleBases, this.onDone)
+                .withTerrains(this.terrains));
     }
 
     /**
@@ -640,7 +695,8 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
      */
     private Screen reopened(CityWorldSettingsData.Structures chosen) {
         return new CityWorldCustomizeScreen(this.lastScreen, style, buildResult().settings().withStructures(chosen),
-                this.ruinedNether, this.cityWorldEnd, this.styleLocked, this.structureEntries, this.styleBases, this.onDone);
+                this.ruinedNether, this.cityWorldEnd, this.styleLocked, this.structureEntries, this.styleBases, this.onDone)
+                .withTerrains(this.terrains);
     }
 
     // ---- widget helpers ----------------------------------------------------------------------
@@ -684,6 +740,7 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
     private static final Integer[] GYM_LEVEL_CHOICES = { 10, 15, 20, 25, 30, 40, 50, 60, 80, 100 };
 
     private static final Integer[] SPACING_CHOICES = { 1024, 1536, 2048, 3072, 4096, 6144, 8192 };
+    private static final Integer[] REACH_CHOICES = { 1, 2, 3, 4, 5, 6 };
     private static final Integer[] DISTRICT_CHOICES = { 1, 2, 3, 4, 5, 6 };
     private static final Integer[] VARIANCE_CHOICES = { 0, 1, 2 };
     private static final Integer[] RISE_CHOICES = { 0, 16, 24, 32, 40, 56, 72, 96 };

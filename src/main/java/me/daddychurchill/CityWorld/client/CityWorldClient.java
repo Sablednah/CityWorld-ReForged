@@ -86,7 +86,7 @@ public final class CityWorldClient {
                 false,
                 me.daddychurchill.CityWorld.worldgen.StructureChoices.list(context.worldgenLoadContext()),
                 styleBases(context),
-                result -> parent.getUiState().updateDimensions(configurator(result))));
+                result -> parent.getUiState().updateDimensions(configurator(result))).withTerrains(terrains(context)));
         // A modpack lock onto another CityWorld preset (apocalypse, say) still gets a Customize button — only
         // cityworld:city has one otherwise — but with the style picker held on the preset's own style, so
         // "settings open, type locked" cannot be undone from inside the editor.
@@ -102,7 +102,7 @@ public final class CityWorldClient {
                         true,
                         me.daddychurchill.CityWorld.worldgen.StructureChoices.list(context.worldgenLoadContext()),
                         styleBases(context),
-                        result -> parent.getUiState().updateDimensions(configurator(result)))));
+                        result -> parent.getUiState().updateDimensions(configurator(result))).withTerrains(terrains(context))));
     }
 
     /** Reads the style off whatever generator is currently selected, so the picker opens on it. */
@@ -131,6 +131,46 @@ public final class CityWorldClient {
             CityWorldMod.LOGGER.warn("CityWorld: could not read the world presets for Customize: {}", e.toString());
         }
         return bases;
+    }
+
+    /**
+     * The world presets the land can follow, for Customize's "Terrain from" row: every installed one with a noise
+     * overworld (vanilla's Default, Amplified and Large Biomes, a terrain mod's), vanilla's first. Named as the
+     * world-type button names them. Single Biome is left out: it needs a biome picked for it.
+     */
+    private static java.util.List<CityWorldCustomizeScreen.Terrain> terrains(WorldCreationContext context) {
+        java.util.List<CityWorldCustomizeScreen.Terrain> found = new java.util.ArrayList<>();
+        try {
+            context.worldgenLoadContext().lookupOrThrow(Registries.WORLD_PRESET).listElements()
+                    .sorted(java.util.Comparator.comparing(preset -> preset.key().identifier().toString()))
+                    .forEach(preset -> {
+                        var id = preset.key().identifier();
+                        if (id.getPath().startsWith("single_biome"))
+                            return;
+                        try {
+                            var stem = preset.value().createWorldDimensions().dimensions()
+                                    .get(net.minecraft.world.level.dimension.LevelStem.OVERWORLD);
+                            if (stem == null || !(stem
+                                    .generator() instanceof net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator noise))
+                                return;
+                            var source = noise.getBiomeSource();
+                            String key = id.toLanguageKey("generator");
+                            net.minecraft.network.chat.Component name = net.minecraft.locale.Language.getInstance().has(key)
+                                    ? net.minecraft.network.chat.Component.translatable(key)
+                                    : net.minecraft.network.chat.Component.literal(id.toString());
+                            found.add(new CityWorldCustomizeScreen.Terrain(id.toString(), name,
+                                    source instanceof net.minecraft.world.level.biome.MultiNoiseBiomeSource,
+                                    me.daddychurchill.CityWorld.worldgen.TerrariumBridge.isEarth(source)));
+                        } catch (RuntimeException e) {
+                            CityWorldMod.LOGGER.warn("CityWorld: could not read world preset {} for Customize: {}", id, e.toString());
+                        }
+                    });
+        } catch (RuntimeException e) {
+            CityWorldMod.LOGGER.warn("CityWorld: could not list the world presets for Customize: {}", e.toString());
+        }
+        // vanilla's own first
+        found.sort(java.util.Comparator.comparing(t -> !t.id().equals("minecraft:normal")));
+        return found;
     }
 
     /** Reads the settings off the selected generator so the screen opens on the current values. */
