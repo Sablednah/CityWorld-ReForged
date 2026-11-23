@@ -238,6 +238,7 @@ public final class Highways {
      * the line check). So no cell is judged one at a time on the thread that first wanted a road while the rest wait.
      */
     private void prejudge(int cx0, int cz0, int cx1, int cz1) {
+        long began = System.nanoTime();
         sites.judgeAll(cx0, cz0, cx1, cz1);
         List<int[]> cones = new ArrayList<>();
         for (int cx = cx0; cx <= cx1; cx++)
@@ -246,7 +247,19 @@ public final class Highways {
                     cones.add(new int[] { cx - reach - 1, cz - reach - 1, cx + reach + 1, cz + reach + 1 });
         if (!cones.isEmpty())
             sites.judgeAll(cones);
+        // A terrain source that is slow to answer (one that fetches its map, as Terrarium Expanded does the first
+        // time) makes this the long wait of a world's first start: say so once, and what shortens it.
+        long seconds = (System.nanoTime() - began) / 1_000_000_000L;
+        if (seconds >= SLOW_PREJUDGE_SECONDS && SLOW_LOGGED.compareAndSet(false, true))
+            me.daddychurchill.CityWorld.CityWorldMod.LOGGER.info(
+                    "CityWorld: finding the cities that highways run between took {} s ({}). This world's terrain is slow "
+                            + "to read; if it loads its map from the internet it is quicker once that is stored. A lower "
+                            + "cities.highways.reach (1), or cities.highways.enabled false, reads far less of it.",
+                    seconds, sites.costs());
     }
+
+    private static final long SLOW_PREJUDGE_SECONDS = 30;
+    private static final java.util.concurrent.atomic.AtomicBoolean SLOW_LOGGED = new java.util.concurrent.atomic.AtomicBoolean();
 
     /** The cities a city's highways run to, out of its cell and into it. */
     private List<CitySites.Site> linkedTo(int cx, int cz) {

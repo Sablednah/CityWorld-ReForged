@@ -1114,8 +1114,8 @@ public final class CityWorldSelfTest {
         record Case(String list, net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> biome, int rank) {
         }
         final int none = me.daddychurchill.CityWorld.worldgen.BiomeMatch.NONE,
-                word = me.daddychurchill.CityWorld.worldgen.BiomeMatch.WORD,
-                tag = me.daddychurchill.CityWorld.worldgen.BiomeMatch.TAG,
+                word = me.daddychurchill.CityWorld.worldgen.BiomeMatch.NAMED,
+                tag = me.daddychurchill.CityWorld.worldgen.BiomeMatch.NAMED,
                 exact = me.daddychurchill.CityWorld.worldgen.BiomeMatch.EXACT;
         int checked = 0;
         for (Case c : List.of(new Case("desert", desert, word), new Case("DESERT", desert, word),
@@ -1151,8 +1151,11 @@ public final class CityWorldSelfTest {
 
         if (me.daddychurchill.CityWorld.worldgen.BiomeThemes.any())
             fail("palette themes are installed: CityWorld must ship none (a test pack in the run folder?)");
+        // "frozen" names snowy taiga by id and wins it from "boreal"'s tag; taiga itself is named by "boreal"'s tag
+        // and by "conifer"'s word alike, and goes to the first of the two
         Runnable restore = me.daddychurchill.CityWorld.worldgen.BiomeThemes.bindForTest(java.util.Map.of(
-                "boreal", "#minecraft:is_taiga", "frozen", "minecraft:snowy_taiga", "sandy", "desert"));
+                "boreal", "#minecraft:is_taiga", "frozen", "minecraft:snowy_taiga", "sandy", "desert", "conifer",
+                "taiga"));
         try {
             record Want(net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> biome, String theme) {
             }
