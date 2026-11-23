@@ -156,8 +156,10 @@ land on, in the world settings:
   for the first chunks at spawn on a fresh install: about six and a half minutes and 430 MB of map at the default
   settings; about three and a half minutes and 170 MB with `"cities": { "highways": { "reach": 1 } }` (a highway
   joins next-door cities only, which on an Earth this full of cities loses little); about half a minute once the
-  map is stored. New ground far from any you have visited fetches again, less each time. Before 7.3 the world's
-  creation itself took eight to nine minutes, searching the sea at 0, 0 for somewhere to spawn.
+  map is stored. New ground far from any you have visited fetches again, less each time. On 1.21.1, where the game
+  prepares the spawn area as the world starts, that wait is the start itself: under two minutes with `reach` 1.
+  Before 7.3 a world's creation took eight to nine minutes on either version, searching the sea at 0, 0 for
+  somewhere to spawn.
 - **Leave Terrarium's `io.shared_tile_threads` at its default.** Raised to 32, its map server dropped connections
   and the same start did not finish in fifteen minutes.
 
