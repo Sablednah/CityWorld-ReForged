@@ -51,6 +51,9 @@ Terrarium Expanded spawn — BUILT on all six lines for 7.3.0, unreleased, nothi
   one 22 times in its two biomes, the control 52; with Biomes O' Plenty + Terralith + Regions Unexplored +
   Dreamwoods + Nyctophobia together on 1.21.1, 233 of 356 biomes take a theme and every difference from the
   word-only simulation is a mod's own tag being right; add-on loads on Forge 1.20.1 (`tags/blocks/`) and 26.2 (BoP).
+  **Not seen built:** badlands, coastal and blossom — no platmap within 6,400 blocks of seed 8675309 has six
+  buildings in any of them on CityWorld land (cities sit in the lowland band), nor a badlands city on vanilla land;
+  their 56 block ids all exist on every line (checked against each version's block loot tables).
 - **Terrarium Expanded** (1.21.1 + 1.21.11 only; `world.packPreset "terrarium_expanded:earth"` + vanilla land):
   it forces the spawn on EVERY start, to block 0,0 for a generator it does not know (open sea).
   `worldgen/TerrariumBridge` (reflection) + `CityWorldServerEvents.onCreateSpawn`/`onServerStartedSpawn` (LOWEST)
