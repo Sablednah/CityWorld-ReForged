@@ -254,6 +254,7 @@ public final class CityWorldSelfTest {
             checkBundledSchematics();
             checkWeightedSubstitutes();
             checkPalettesShipEmpty();
+            checkBiomeThemes(server);
             checkOceans(server);
             checkHighways();
             checkCityFitAndReach();
@@ -1092,6 +1093,105 @@ public final class CityWorldSelfTest {
             fail("highways: no link crossed the river between the cells — the check proves nothing about bridges");
         report.put("highways.check", links.size() + " links; " + crossedRidge + " through the ridge (" + tunnelled
                 + " tunnel samples), " + crossedRiver + " over the river (" + bridged + " bridge samples)");
+    }
+
+    /**
+     * Palettes by biome and a schematic's {@code Biome:} line (7.3): the biome list reads ids, tags, words and
+     * exclusions as documented; the closest naming wins a biome two themes claim; CityWorld ships no theme and no
+     * limited schematic; and the planner's building biome answers for the live overworld, the same twice.
+     */
+    private void checkBiomeThemes(MinecraftServer server) {
+        var match = me.daddychurchill.CityWorld.worldgen.BiomeMatch.class;
+        var biomes = server.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.BIOME);
+        net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> desert = biomes
+                .getOrThrow(net.minecraft.world.level.biome.Biomes.DESERT);
+        net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> taiga = biomes
+                .getOrThrow(net.minecraft.world.level.biome.Biomes.TAIGA);
+        net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> snowyTaiga = biomes
+                .getOrThrow(net.minecraft.world.level.biome.Biomes.SNOWY_TAIGA);
+        net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> plains = biomes
+                .getOrThrow(net.minecraft.world.level.biome.Biomes.PLAINS);
+        record Case(String list, net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> biome, int rank) {
+        }
+        final int none = me.daddychurchill.CityWorld.worldgen.BiomeMatch.NONE,
+                word = me.daddychurchill.CityWorld.worldgen.BiomeMatch.WORD,
+                tag = me.daddychurchill.CityWorld.worldgen.BiomeMatch.TAG,
+                exact = me.daddychurchill.CityWorld.worldgen.BiomeMatch.EXACT;
+        int checked = 0;
+        for (Case c : List.of(new Case("desert", desert, word), new Case("DESERT", desert, word),
+                new Case("minecraft:desert", desert, exact), new Case("desert", plains, none),
+                new Case("#minecraft:is_taiga", snowyTaiga, tag), new Case("#minecraft:is_taiga", desert, none),
+                new Case("taiga", snowyTaiga, word), new Case("taiga, !snowy", snowyTaiga, none),
+                new Case("taiga, !snowy", taiga, word), new Case("*:snowy_*", snowyTaiga, word),
+                new Case("minecraft:*", plains, word), new Case("other:*", plains, none),
+                new Case("!desert", plains, word), new Case("!desert", desert, none),
+                new Case("[desert, \"minecraft:plains\"]", plains, exact), new Case("desert", null, none))) {
+            int got = me.daddychurchill.CityWorld.worldgen.BiomeMatch.parse(c.list()).rank(c.biome());
+            if (got != c.rank())
+                fail("biome list '" + c.list() + "' ranks "
+                        + (c.biome() == null ? "no biome" : c.biome().unwrapKey().orElseThrow().identifier()) + " "
+                        + got + ", expected " + c.rank());
+            checked++;
+        }
+        if (!me.daddychurchill.CityWorld.worldgen.BiomeMatch.ANY.matches(null)
+                || !me.daddychurchill.CityWorld.worldgen.BiomeMatch.parse("  ").isAny())
+            fail("an empty biome list must be no limit");
+
+        // a schematic's sidecar: a tag is not a comment, a comment is, and lines add up
+        var side = me.daddychurchill.CityWorld.Clipboard.Clipboard
+                .biomesOfSidecar("Title: x\nBiome: #minecraft:is_taiga, desert # the cold ones\nBiomes: !snowy\n");
+        if (!side.matches(taiga) || !side.matches(desert) || side.matches(snowyTaiga) || side.matches(plains))
+            fail("a sidecar's Biome: lines read as '" + side + "'");
+        if (!me.daddychurchill.CityWorld.Clipboard.Clipboard.biomesOfSidecar("Title: x\n").isAny())
+            fail("a sidecar with no Biome: line limits its build");
+        for (var family : me.daddychurchill.CityWorld.Clipboard.PasteProvider.SchematicFamily.values())
+            for (var clip : me.daddychurchill.CityWorld.Clipboard.SchematicLibrary.family(family))
+                if (!clip.biomes.isAny())
+                    fail("schematic " + clip.name + " is limited to biomes (" + clip.biomes + "): nothing CityWorld ships may be");
+
+        if (me.daddychurchill.CityWorld.worldgen.BiomeThemes.any())
+            fail("palette themes are installed: CityWorld must ship none (a test pack in the run folder?)");
+        Runnable restore = me.daddychurchill.CityWorld.worldgen.BiomeThemes.bindForTest(java.util.Map.of(
+                "boreal", "#minecraft:is_taiga", "frozen", "minecraft:snowy_taiga", "sandy", "desert"));
+        try {
+            record Want(net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> biome, String theme) {
+            }
+            for (Want w : List.of(new Want(snowyTaiga, "frozen"), new Want(taiga, "boreal"), new Want(desert, "sandy"),
+                    new Want(plains, null))) {
+                String got = me.daddychurchill.CityWorld.worldgen.BiomeThemes.themeFor(w.biome());
+                if (!java.util.Objects.equals(got, w.theme()))
+                    fail("palette theme of " + w.biome().unwrapKey().orElseThrow().identifier() + " is " + got
+                            + ", expected " + w.theme());
+                checked++;
+            }
+
+            // the live overworld: the planner's biome for a building, and the theme a filled palette is read by
+            var gen = server.overworld().getChunkSource().getGenerator();
+            if (gen instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw) {
+                CityWorldGenerator context = cw.getContext(server.overworld());
+                int known = 0, themed = 0;
+                java.util.Set<String> seen = new java.util.TreeSet<>();
+                for (int cx = -40; cx <= 40; cx += 4)
+                    for (int cz = -40; cz <= 40; cz += 4) {
+                        var first = context.buildingBiomeAt(cx, cz);
+                        if (first == null)
+                            continue;
+                        known++;
+                        seen.add(first.unwrapKey().map(k -> k.identifier().getPath()).orElse("?"));
+                        if (first != context.buildingBiomeAt(cx, cz))
+                            fail("the building biome at chunk " + cx + "," + cz + " changed between two asks");
+                        if (context.paletteThemeAt(cx, cz) != null)
+                            themed++;
+                    }
+                if (known == 0)
+                    fail("the planner has no building biome anywhere in the overworld");
+                report.put("biomeThemes.overworld", known + " of 441 chunks have a building biome (" + seen.size()
+                        + " biomes), " + themed + " in a test theme");
+            }
+        } finally {
+            restore.run();
+        }
+        report.put("biomeThemes.checked", Integer.toString(checked));
     }
 
     private void checkPalettesShipEmpty() {

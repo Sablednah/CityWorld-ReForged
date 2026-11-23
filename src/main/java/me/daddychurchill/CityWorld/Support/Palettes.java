@@ -12,8 +12,9 @@ import me.daddychurchill.CityWorld.compat.Material;
  * cityworld generates per part of the structure"), and the seam the owner's later city styles are meant to be built
  * from: a style is mostly a set of these.
  *
- * <p>A part reads {@code #cityworld:palette/<style>/<part>} first (e.g. {@code palette/apocalypse/building/wall}),
- * then {@code #cityworld:palette/<part>}. <b>Every one ships empty</b>, and an empty part changes nothing: the call
+ * <p>A part reads {@code #cityworld:palette/biome/<theme>/<part>} first, when a pack gives the building's biome a
+ * theme (7.3, {@code worldgen/BiomeThemes}), then {@code #cityworld:palette/<style>/<part>} (e.g.
+ * {@code palette/apocalypse/building/wall}), then {@code #cityworld:palette/<part>}. <b>Every one ships empty</b>, and an empty part changes nothing: the call
  * site keeps the block it already picked, with the rolls it always made. A filled part replaces that block with one
  * from the tag, picked on dice of its own, seeded from the world seed, the part and the position it is given — so a
  * pack never shifts any other choice in the building, and the same seed builds the same city.
@@ -76,10 +77,37 @@ public final class Palettes {
      * and {@code (x, z)}. Lots pass their chunk; a pick that is one per world passes {@code (0, 0)}.
      */
     public static Material pick(CityWorldGenerator generator, Part part, int x, int z, Material current) {
-        List<Material> pool = poolFor(generator, part);
+        List<Material> pool = poolFor(generator, part, x, z);
         if (pool.isEmpty())
             return current;
         Odds odds = new Odds(seed(generator.getWorldSeed(), part, x, z));
+        return pool.get(odds.getRandomInt(pool.size()));
+    }
+
+    /**
+     * The palette for {@code part} at a chunk: its biome theme's ({@code #cityworld:palette/biome/<theme>/<part>},
+     * the theme from {@code worldgen/BiomeThemes}; 7.3), else the style's, else the general one, else empty.
+     */
+    public static List<Material> poolFor(CityWorldGenerator generator, Part part, int x, int z) {
+        String theme = generator.paletteThemeAt(x, z);
+        if (theme != null) {
+            List<Material> themed = MaterialTags
+                    .resolve(MaterialTags.key("cityworld:palette/biome/" + theme + "/" + part.path));
+            if (!themed.isEmpty())
+                return themed;
+        }
+        return poolFor(generator, part);
+    }
+
+    /**
+     * A pick that is one per world (the street's surface, lines and sidewalk): no place, so no biome theme. Seeded
+     * as {@code pick(.., 0, 0, ..)} always was, so a pack's world keeps the street it had.
+     */
+    public static Material pickWorld(CityWorldGenerator generator, Part part, Material current) {
+        List<Material> pool = poolFor(generator, part);
+        if (pool.isEmpty())
+            return current;
+        Odds odds = new Odds(seed(generator.getWorldSeed(), part, 0, 0));
         return pool.get(odds.getRandomInt(pool.size()));
     }
 
