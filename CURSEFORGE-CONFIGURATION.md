@@ -525,7 +525,7 @@ lowrise districts (the mall keeps its own whatever these say).
 | `districts` | `3` | How many districts across a vanilla-world city is. `1`–`8`. In a world made with 7.0 or later a size too big for the spacing is built as the biggest that fits (Customize's **City size** shows "(N fit)" in gold); before 7.0 that city was not built at all. |
 | `districtsVariance` | `1` | How much each city's size varies from `districts`, plus or minus. `0`–`3`. |
 | `levelRange` | `40` | How far above CityWorld's street level (y 64) a vanilla-world city may stand, to sit on the land around it. `0`–`120`. |
-| `maxWater` | `0.35` | The share of a candidate site that may be under the sea. Datapack only. |
+| `maxWater` | `0.35` | The share of a candidate site that may be under the sea. A city fills that part in to its own level, so a coastal city takes a bite out of the ocean; `0` keeps cities off the water (the site is judged on a grid of points, so an inlet narrower than the grid can still be filled). **Sea under a city** in Customize (from 7.3.1). |
 | `minNear` | `0.75` | The share of a candidate site that must already lie within sixteen blocks of the city's level. Datapack only. |
 | `rivers` | `false`* | Rivers on CityWorld's own land: springs in the hills, waterfalls, rivers widening to the sea, bridges where roads cross, and the waterside by district (quays, slips, harbours, beaches, lighthouses). *On in the world presets; off in a world saved before rivers existed, so an old world never grows a river that stops at the chunks it already has. |
 | `highways` | see below | Roads between the cities of a vanilla world (7.0). **Highways** in Customize. |

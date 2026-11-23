@@ -5,6 +5,14 @@ All notable changes to the modern port of CityWorld — NeoForge, and MinecraftF
 Settings and terrain changes only affect **newly generated chunks** — existing chunks never
 regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixes.
 
+## 7.3.1 (unreleased)
+
+### Added
+
+- **Customize: "Sea under a city"** (vanilla land; `cities.maxWater`, which was datapack-only). A city may stand
+  on a site with some sea under it and fills that part in, so a coastal city takes a bite out of the ocean; the
+  dial sets how much, from none to half its ground (default 35%).
+
 ## 7.3.0 (2026-11-23)
 
 ### Added
