@@ -177,19 +177,29 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     private final Optional<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> twinOf;
 
-    /** The CityWorld major version a world made now is stamped with ({@link #madeWith}). */
-    public static final int MADE_WITH = 7;
+    /**
+     * The stamp a world made now carries ({@link #madeWith}): 73, for 7.3. The first stamp was a bare 7 (7.0 to
+     * 7.2); from 7.3 it is major x 10 + minor, so every later one sorts after it.
+     */
+    public static final int MADE_WITH = 73;
+
+    /** The first stamp with deep oceans and highways (7.0). */
+    public static final int MADE_WITH_OCEANS = 7;
+
+    /** The first stamp with every structure set placed, and all of them kept to the wild (7.3). */
+    public static final int MADE_WITH_WIDE_STRUCTURES = 73;
 
     /**
-     * The world's stamp: the CityWorld major version it was created with (the world presets and the Customize screen
+     * The world's stamp: the CityWorld version it was created with (the world presets and the Customize screen
      * write {@link #MADE_WITH}). Saved with the generator in the world, so a world made before 7.0 has none — and a
-     * feature that would change the land under it (7.0's deep oceans and highways) stays off there, although the world
-     * re-reads its settings entry from the jar on every load: new chunks would otherwise meet an ocean or a road that
-     * stops dead at the edge of the ones already made. A twin follows the dimension it copies.
+     * feature that would change the land under it (7.0's deep oceans and highways, 7.3's structure defaults) stays
+     * off there, although the world re-reads its settings entry from the jar on every load: new chunks would
+     * otherwise meet an ocean or a road that stops dead at the edge of the ones already made, or a platmap planned
+     * around a structure in its made half and over it in the rest. A twin follows the dimension it copies.
      */
     private final Optional<Integer> madeWith;
 
-    /** The CityWorld major version this world was made with (its own stamp, or its twin source's); 0 before 7.0. */
+    /** The stamp this world was made with (its own, or its twin source's); 0 before 7.0. */
     public int madeWith() {
         CityWorldChunkGenerator source = twinSource(false);
         return source != null ? source.madeWith() : madeWith.orElse(0);
@@ -197,7 +207,19 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
 
     /** Whether this world was made with 7.0 or later, so may have deep oceans and highways. */
     public boolean oceansStamped() {
-        return madeWith() >= 7;
+        return madeWith() >= MADE_WITH_OCEANS;
+    }
+
+    /**
+     * Whether this world takes 7.3's structure defaults where its settings do not say: made with 7.3 or later, in
+     * a style that builds an ordinary city on ordinary ground ({@link CityWorldSettingsData.Structures#wideStyle}).
+     * A twin answers for the dimension it copies.
+     */
+    public boolean wideStructures() {
+        CityWorldChunkGenerator source = twinSource(false);
+        if (source != null)
+            return source.wideStructures();
+        return madeWith() >= MADE_WITH_WIDE_STRUCTURES && CityWorldSettingsData.Structures.wideStyle(resolvedStyle());
     }
 
     /** The settings with the 7.0 oceans stamp folded in: no stamp, no oceans, whatever the settings say. */
@@ -210,7 +232,7 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             if (UNSTAMPED_SAID.compareAndSet(false, true))
                 me.daddychurchill.CityWorld.CityWorldMod.LOGGER.info("CityWorld: this world's generator has no "
                         + "\"made_with\": {} — a world made before 7.0 (or from a world preset that lacks it), so it gets no "
-                        + "deep oceans or highways", MADE_WITH);
+                        + "deep oceans or highways", MADE_WITH_OCEANS);
             return data.withCities(c.withOceans(c.oceans().withEnabled(false)));
         }
         return data;
@@ -3102,9 +3124,15 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             climate.offerPreset(PresetBiomes.points(
                     net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(),
                     resolvedSettings().world().packPreset()));
+        // A world made with 7.3 or later places every installed set but #cityworld:off_by_default's, and keeps them
+        // all to the wild (below), where its settings do not say otherwise; an older one keeps to #cityworld:allowed.
+        boolean fresh = wideStructures();
+        StructureBase base = vanillaTerrain() ? StructureBase.EVERY
+                : choice.placesAll(fresh) ? StructureBase.WIDE : StructureBase.TAG;
+        boolean wildOnly = choice.wildOnly(fresh);
         ChunkGeneratorStructureState state = ChunkGeneratorStructureState.createForNormal(
                 vanillaNow ? vanillaOverworldRandom : randomState, seed, this.biomeSource,
-                onlyAllowed(lookup, choice, vanillaTerrain()));
+                onlyAllowed(lookup, choice, base));
         // which of the placed sets keep to the wild (see createStructures): all of them, or the tag's
         {
             HolderSet<StructureSet> tagged = lookup.get(WILDERNESS_ONLY_STRUCTURE_SETS)
@@ -3114,19 +3142,20 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
             for (Holder<StructureSet> set : state.possibleStructureSets())
                 // never a concentric-ring set (strongholds): vanilla's /locate and the eyes of ender answer from the
                 // ring layout whether or not the start exists, so removing one would send a player to nothing
-                if ((choice.wildernessOnly() || tagged.contains(set)
+                if ((wildOnly || tagged.contains(set)
                         || me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.wildByData(set)) && !(set.value().placement()
                         instanceof net.minecraft.world.level.levelgen.structure.placement.ConcentricRingsStructurePlacement)) {
                     set.unwrapKey().ifPresent(keys::add);
                     for (StructureSet.StructureSelectionEntry e : set.value().structures())
                         kept.add(e.structure().value());
                 }
-            wildernessOnlyAll = choice.wildernessOnly();
+            wildernessOnlyAll = wildOnly;
             wildernessOnlySets = java.util.Set.copyOf(keys);
             wildernessOnlyStructures = java.util.Set.copyOf(kept);
             if (!kept.isEmpty())
                 me.daddychurchill.CityWorld.CityWorldMod.LOGGER.info("CityWorld: {} structure set(s) keep to the wild{}",
-                        keys.size(), choice.wildernessOnly() ? " (structures.wildernessOnly)"
+                        keys.size(), wildOnly ? choice.wildernessOnly().isPresent() ? " (structures.wildernessOnly)"
+                                : " (every set: a world made with 7.3 or later)"
                                 : " (#cityworld:wilderness_only, cityworld:placed_sets)");
             // what the data map decided, once per world: a server log should say where villages came from
             java.util.List<String> byData = new java.util.ArrayList<>();
@@ -3193,7 +3222,36 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
      */
     public static HolderLookup<StructureSet> onlyAllowed(HolderLookup<StructureSet> all,
             CityWorldSettingsData.Structures choice) {
-        return onlyAllowed(all, choice, false);
+        return onlyAllowed(all, choice, StructureBase.TAG);
+    }
+
+    /**
+     * What a world places before its own allow and deny lists: {@link #TAG} only the sets in
+     * {@code #cityworld:allowed} (every world made before 7.3, and the styles that are a terrain); {@link #WIDE}
+     * every installed set but those in {@code #cityworld:off_by_default} (mineshafts: CityWorld digs its own mines,
+     * and vanilla's cut through sewers, subways and basements) that {@code #cityworld:allowed} does not hold; {@link #EVERY} every set (a vanilla-terrain world).
+     */
+    public enum StructureBase {
+        TAG, WIDE, EVERY
+    }
+
+    /** The structure sets a {@link StructureBase#WIDE} world leaves out until its settings allow them. */
+    public static final TagKey<StructureSet> OFF_BY_DEFAULT_STRUCTURE_SETS = TagKey.create(Registries.STRUCTURE_SET,
+            Identifier.fromNamespaceAndPath("cityworld", "off_by_default"));
+
+    /**
+     * Whether {@code base} holds this set, the {@code cityworld:placed_sets} data map having the last word
+     * ({@code CityWorldDataMaps.placedByData}).
+     */
+    public static boolean inBase(HolderLookup<StructureSet> all, Holder<StructureSet> set, StructureBase base) {
+        boolean in = switch (base) {
+            case EVERY -> true;
+            // a set a pack tags as allowed is placed although it is off by default: the pack said so
+            case WIDE -> !all.get(OFF_BY_DEFAULT_STRUCTURE_SETS).map(off -> off.contains(set)).orElse(false)
+                    || all.get(ALLOWED_STRUCTURE_SETS).map(tag -> tag.contains(set)).orElse(false);
+            case TAG -> all.get(ALLOWED_STRUCTURE_SETS).map(tag -> tag.contains(set)).orElse(false);
+        };
+        return me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps.placedByData(set, in);
     }
 
     /** The structure sets a world with deep oceans adds: the ones vanilla puts in and beside its oceans. */
@@ -3219,18 +3277,15 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
         };
     }
 
-    /** @param everything every set counts as tagged (a vanilla-terrain world), so only the deny list takes any away */
+    /** @param base what counts as placed before the world's own lists, see {@link StructureBase} */
     public static HolderLookup<StructureSet> onlyAllowed(HolderLookup<StructureSet> all,
-            CityWorldSettingsData.Structures choice, boolean everything) {
-        HolderSet<StructureSet> tagged = all.get(ALLOWED_STRUCTURE_SETS)
-                .<HolderSet<StructureSet>>map(named -> named)
-                .orElseGet(HolderSet::direct); // absent tag -> empty -> no vanilla structures
-        // The world's own allow/deny lists (settings "structures") overrule the tag, set by set.
-        // The cityworld:placed_sets data map adds to the tag (or takes from it) under a condition — villages
+            CityWorldSettingsData.Structures choice, StructureBase base) {
+        // The world's own allow/deny lists (settings "structures") overrule the base, set by set. An absent tag is
+        // an empty one: no vanilla structures under TAG, nothing left out under WIDE.
+        // The cityworld:placed_sets data map adds to the base (or takes from it) under a condition — villages
         // when Cobblemon is installed (CityWorldDataMaps.PlacedSet); the world's own lists still win.
         java.util.function.Predicate<Holder.Reference<StructureSet>> allowed = set -> choice
-                .allows(set.key().identifier().toString(), me.daddychurchill.CityWorld.worldgen.CityWorldDataMaps
-                        .placedByData(set, everything || tagged.contains(set)));
+                .allows(set.key().identifier().toString(), inBase(all, set, base));
         return new HolderLookup<>() {
             @Override
             public Stream<Holder.Reference<StructureSet>> listElements() {

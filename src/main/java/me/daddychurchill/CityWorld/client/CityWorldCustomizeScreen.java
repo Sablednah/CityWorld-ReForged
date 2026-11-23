@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import me.daddychurchill.CityWorld.CityWorldGenerator.WorldStyle;
 import me.daddychurchill.CityWorld.CityWorldSettings.SubSurfaceStyle;
 import me.daddychurchill.CityWorld.Plugins.TreeProvider.TreeStyle;
+import me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator;
 import me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData;
 
 import net.minecraft.client.Minecraft;
@@ -460,8 +461,10 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
                             + "CityWorld keeps its cities clear of them.")));
             addRow(pick, null);
             // every placed set kept to the wild: a pond structure cut a city in two (a player, 2026-10-29)
-            addRow(onOff("Structures: only in the wild", structures.wildernessOnly(), v -> structures = new CityWorldSettingsData.Structures(
-                    structures.allow(), structures.deny(), v)), null);
+            // (on for a world made now in a style on ordinary ground: shown as the generator will resolve it)
+            addRow(onOff("Structures: only in the wild",
+                    structures.wildOnly(CityWorldSettingsData.Structures.wideStyle(style)),
+                    v -> structures = structures.withWildernessOnly(v)), null);
         }
 
         this.list.addHeader(Component.literal("Features"));
@@ -746,21 +749,23 @@ public class CityWorldCustomizeScreen extends OptionsSubScreen {
 
     /** The choices, with the world's own value among them — a picker that lacks the value rewrites it on save. */
     /**
-     * The structure sets with their defaults as this world will see them: deep oceans add vanilla's ocean structures
-     * (CityWorldChunkGenerator.OCEAN_STRUCTURE_SETS) to what the tag allows, so the page shows them on, and switching
-     * one off there writes a deny, which wins. Oceans need CityWorld's own land in a style on the plain terrain.
+     * The structure sets with their defaults as this world will see them. The base first: every set on vanilla
+     * land; every set but mineshafts for a world made now in a style on ordinary ground, unless its settings say
+     * {@code placeAll} false; the tag otherwise. Then deep oceans add vanilla's ocean structures
+     * (CityWorldChunkGenerator.OCEAN_STRUCTURE_SETS), so the page shows them on, and switching one off there writes
+     * a deny, which wins. Oceans need CityWorld's own land in a style on the plain terrain.
      */
     private List<me.daddychurchill.CityWorld.worldgen.StructureChoices.Entry> structureEntriesNow() {
+        var base = cities.vanillaTerrain() ? CityWorldChunkGenerator.StructureBase.EVERY
+                : structures.placesAll(CityWorldSettingsData.Structures.wideStyle(style))
+                        ? CityWorldChunkGenerator.StructureBase.WIDE : CityWorldChunkGenerator.StructureBase.TAG;
         boolean oceans = cities.oceans().enabled() && !cities.vanillaTerrain() && switch (style) {
             case MODERN, APOCALYPSE, CLASSIC, SPARSE -> true;
             default -> false;
         };
-        if (!oceans)
-            return structureEntries;
         var ids = me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator.OCEAN_STRUCTURE_SETS;
-        return structureEntries.stream().map(e -> e.byDefault() || !ids.contains(e.id()) ? e
-                : new me.daddychurchill.CityWorld.worldgen.StructureChoices.Entry(e.id(), e.group(), e.label(), true,
-                        e.structures(), e.realms())).toList();
+        return structureEntries.stream().map(e -> e.as(base))
+                .map(e -> oceans && ids.contains(e.id()) ? e.withDefault(true) : e).toList();
     }
 
     /** Ocean share steps, as the mask threshold in hundredths: higher is rarer. The default (50) is one of them. */
