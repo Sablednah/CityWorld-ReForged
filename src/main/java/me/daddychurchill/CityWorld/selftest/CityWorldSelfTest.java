@@ -268,6 +268,7 @@ public final class CityWorldSelfTest {
             checkBiomeDepth(server);
             checkStructures(server);
             checkStructureChoices(server);
+            checkStructureDefaults(server);
             checkPlacedSets(server);
             checkCobblemonSpawns(server);
             checkCobblemonLots(server);
@@ -714,7 +715,8 @@ public final class CityWorldSelfTest {
                                 "minecraft:lush_caves", 64, 7, -40, 10))),
                 new me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Subways(false, false),
                 new me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Structures(
-                        List.of("minecraft:villages"), List.of("minecraft:mineshafts"), true),
+                        List.of("minecraft:villages"), List.of("minecraft:mineshafts"), java.util.Optional.of(true),
+                        java.util.Optional.of(false)),
                 new me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Cities(true, 4096, 4, 2, 30, 0.2, 0.5, true),
                 base.roads().withDriveOnLeft(true).withSkybridges(true)));
         int checked = 0;
@@ -2145,11 +2147,22 @@ public final class CityWorldSelfTest {
                 for (int cz = -r; cz <= r; cz++) {
                     if (Math.max(Math.abs(cx), Math.abs(cz)) != r)
                         continue;
+                    // a set kept to the wild (every set, in a world made with 7.3 or later) has no start in a
+                    // chunk the city plans: such a candidate holds nothing to compare, and the cap below would be
+                    // spent on the city round spawn
                     boolean candidate = false;
+                    Boolean wild = null;
                     for (Holder<StructureSet> set : state.possibleStructureSets())
                         if (!(set.value().placement() instanceof ConcentricRingsStructurePlacement)
-                                && !oceanSet(set) && set.value().placement().isStructureChunk(state, cx, cz))
+                                && !oceanSet(set) && set.value().placement().isStructureChunk(state, cx, cz)) {
+                            if (cw.keepsOutOfCities(set)) {
+                                if (wild == null)
+                                    wild = cw.isWildernessAt(level, cx, cz);
+                                if (!wild)
+                                    continue;
+                            }
                             candidate = true;
+                        }
                     if (!candidate)
                         continue;
                     if (++examined > STRUCTURE_SCAN_CANDIDATES * 3)
@@ -2251,6 +2264,109 @@ public final class CityWorldSelfTest {
             fail("strongholds switched off by the structure choice were still in the structure state");
         if (!placed.contains("minecraft:ancient_cities"))
             fail("a set the choice left alone (ancient cities) dropped out of the structure state: " + placed);
+    }
+
+    /**
+     * 7.3's structure defaults: a world made now in a style on ordinary ground (the self-test's, from the City
+     * preset) places every installed set but {@code #cityworld:off_by_default}'s and keeps them all to the wild,
+     * with nothing in its settings saying so; a world stamped before 7.3 reads the same settings and keeps to
+     * {@code #cityworld:allowed} with structures in the city; and a settings entry that says either way is obeyed
+     * whatever the world's age.
+     */
+    private void checkStructureDefaults(MinecraftServer server) {
+        ServerLevel level = server.overworld();
+        if (!(level.getChunkSource().getGenerator()
+                instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw))
+            return;
+        var unset = me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Structures.DEFAULT;
+        var codec = me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Structures.CODEC;
+        if (!unset.wildOnly(true) || unset.wildOnly(false) || !unset.placesAll(true)
+                || unset.placesAll(false))
+            fail("unset structure settings should follow the world's age, both ways");
+        var said = codec.parse(com.mojang.serialization.JsonOps.INSTANCE, com.google.gson.JsonParser.parseString(
+                "{\"wildernessOnly\": false, \"placeAll\": false}")).result().orElse(null);
+        if (said == null || said.wildOnly(true) || said.placesAll(true))
+            fail("structure settings that say false were not obeyed in a new world: " + said);
+        var resolved = unset.resolved(true);
+        var back = codec.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, resolved).result()
+                .flatMap(j -> codec.parse(com.mojang.serialization.JsonOps.INSTANCE, j).result()).orElse(null);
+        if (!resolved.equals(back) || !codec.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, unset)
+                .result().map(j -> j.getAsJsonObject().size() == 0).orElse(false))
+            fail("structure settings: a resolved choice should survive its codec and an unset one write nothing");
+        for (var style : CityWorldGenerator.WorldStyle.values()) {
+            boolean wide = me.daddychurchill.CityWorld.worldgen.CityWorldSettingsData.Structures.wideStyle(style);
+            boolean want = switch (style) {
+                case MODERN, APOCALYPSE, CLASSIC, DESTROYED, SPARSE -> true;
+                default -> false;
+            };
+            if (wide != want)
+                fail("style " + style + " takes 7.3's structure defaults: " + wide + ", expected " + want);
+        }
+
+        var old = new me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator(cw.getBiomeSource(),
+                java.util.Optional.empty(), java.util.Optional.of("modern"), java.util.Optional.empty(),
+                java.util.Optional.empty(), java.util.Optional.empty(), java.util.Optional.empty(),
+                java.util.Optional.of(me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator.MADE_WITH_OCEANS));
+        var floating = new me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator(cw.getBiomeSource(),
+                java.util.Optional.empty(), java.util.Optional.of("floating"), java.util.Optional.empty(),
+                java.util.Optional.empty(), java.util.Optional.empty(), java.util.Optional.empty(),
+                java.util.Optional.of(me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator.MADE_WITH));
+        if (old.wideStructures())
+            fail("a world stamped made_with 7 (7.0 to 7.2) takes 7.3's structure defaults");
+        if (floating.wideStructures())
+            fail("a Floating world takes 7.3's structure defaults");
+        if (!cw.wideStructures()) {
+            fail("the self-test world, made from the city preset, does not take 7.3's structure defaults (stamp "
+                    + cw.madeWith() + ")");
+            return;
+        }
+
+        var sets = server.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE_SET);
+        java.util.Set<String> placed = new java.util.TreeSet<>();
+        int kept = 0, rings = 0;
+        for (Holder<StructureSet> set : level.getChunkSource().getGeneratorState().possibleStructureSets()) {
+            set.unwrapKey().ifPresent(k -> placed.add(k.location().toString()));
+            if (set.value().placement()
+                    instanceof net.minecraft.world.level.levelgen.structure.placement.ConcentricRingsStructurePlacement)
+                rings++;
+            else if (cw.keepsOutOfCities(set))
+                kept++;
+        }
+        report.put("structures.defaults", placed.size() + " sets placed, " + kept + " kept to the wild, " + rings
+                + " ring set(s) left alone");
+        for (String id : List.of("minecraft:villages", "minecraft:strongholds", "minecraft:ancient_cities",
+                "minecraft:woodland_mansions", "minecraft:ruined_portals"))
+            if (!placed.contains(id))
+                fail("a new world should place " + id + " by default: " + placed);
+        // (a dev pack in run/mods that tags mineshafts as allowed overrules the off-by-default tag, by design)
+        boolean mineshaftsTagged = sets.get(me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator
+                .ALLOWED_STRUCTURE_SETS).map(tag -> tag.stream().anyMatch(h -> h.unwrapKey()
+                        .map(k -> k.location().toString().equals("minecraft:mineshafts")).orElse(false))).orElse(false);
+        if (placed.contains("minecraft:mineshafts") != mineshaftsTagged)
+            fail("a new world should leave mineshafts out (#cityworld:off_by_default) unless #cityworld:allowed "
+                    + "holds them (" + mineshaftsTagged + "): " + placed);
+        if (kept + rings != placed.size())
+            fail("a new world should keep every placed set to the wild but the ring sets: " + kept + " + " + rings
+                    + " of " + placed.size());
+        // the three bases, set by set, as the Structures page lists them
+        var entries = me.daddychurchill.CityWorld.worldgen.StructureChoices.list(server.registryAccess());
+        for (var entry : entries) {
+            if (entry.id().equals("minecraft:mineshafts") && (entry.wide() != mineshaftsTagged || !entry.every()))
+                fail("mineshafts should be off under 7.3's defaults and on in a vanilla-terrain world: " + entry);
+            if (entry.id().equals("minecraft:villages") && !entry.wide())
+                fail("villages should be on under 7.3's defaults: " + entry);
+            if (entry.as(me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator.StructureBase.WIDE)
+                    .byDefault() != entry.wide())
+                fail("a Structures page entry did not take the base it was asked for: " + entry);
+        }
+        var tagOnly = me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator.onlyAllowed(sets, unset);
+        var wideView = me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator.onlyAllowed(sets, unset,
+                me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator.StructureBase.WIDE);
+        long tagCount = tagOnly.listElements().count(), wideCount = wideView.listElements().count();
+        report.put("structures.bases", tagCount + " by the tag, " + wideCount + " by 7.3's defaults, of "
+                + sets.listElements().count());
+        if (wideCount <= tagCount)
+            fail("7.3's defaults should place more sets than #cityworld:allowed: " + wideCount + " vs " + tagCount);
     }
 
     /**
@@ -2543,6 +2659,11 @@ public final class CityWorldSelfTest {
                     String biome = biomeName(source, QuartPos.fromBlock(cx * 16 + 8),
                             QuartPos.fromBlock(ANCIENT_CITY_START_Y), QuartPos.fromBlock(cz * 16 + 8), sampler);
                     if (!"deep_dark".equals(biome))
+                        continue;
+                    // kept to the wild (a world made with 7.3 or later): one under a city was never started
+                    if (level.getChunkSource().getGenerator()
+                            instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw
+                            && cw.keepsOutOfCities(ancientCities) && !cw.isWildernessAt(level, cx, cz))
                         continue;
                     if (++generated > ANCIENT_CITY_SAMPLES)
                         break outer;

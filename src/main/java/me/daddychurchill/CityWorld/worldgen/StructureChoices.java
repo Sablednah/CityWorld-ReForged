@@ -9,7 +9,6 @@ import java.util.Set;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.level.biome.Biome;
@@ -37,13 +36,30 @@ public final class StructureChoices {
      * @param group      the mod (or datapack namespace) it comes from, for the page's headings
      * @param label      the set's name, readable
      * @param byDefault  whether {@code #cityworld:allowed} holds it, or the {@code cityworld:placed_sets} data map
-     *                   allows it (villages with Cobblemon installed) — the box starts ticked
+     *                   allows it (villages with Cobblemon installed) — the box starts ticked. The Customize screen
+     *                   swaps in {@code wide} or {@code every} for the world being made ({@link #as})
+     * @param wide       the same under 7.3's defaults: every set but {@code #cityworld:off_by_default}'s
+     * @param every      the same in a vanilla-terrain world: every set the data map does not turn off
      * @param structures the structures in the set
      * @param realms     where its biomes are, by vanilla's {@code is_overworld}/{@code is_nether}/{@code is_end}
      *                   tags; empty when its structures name no biome in any of them
      */
-    public record Entry(String id, String group, String label, boolean byDefault, List<String> structures,
-            List<String> realms) {
+    public record Entry(String id, String group, String label, boolean byDefault, boolean wide, boolean every,
+            List<String> structures, List<String> realms) {
+
+        /** This entry with {@code byDefault} as a world on this base sees it. */
+        public Entry as(CityWorldChunkGenerator.StructureBase base) {
+            boolean on = switch (base) {
+                case TAG -> byDefault;
+                case WIDE -> wide;
+                case EVERY -> every;
+            };
+            return withDefault(on);
+        }
+
+        public Entry withDefault(boolean on) {
+            return on == byDefault ? this : new Entry(id, group, label, on, wide, every, structures, realms);
+        }
     }
 
     /** Every structure set in these registries, vanilla's first, then by mod and name. */
@@ -51,8 +67,6 @@ public final class StructureChoices {
         HolderLookup<StructureSet> sets = registries.lookup(Registries.STRUCTURE_SET).orElse(null);
         if (sets == null)
             return List.of();
-        HolderSet<StructureSet> tagged = sets.get(CityWorldChunkGenerator.ALLOWED_STRUCTURE_SETS)
-                .<HolderSet<StructureSet>>map(named -> named).orElseGet(HolderSet::direct);
         List<Entry> entries = new ArrayList<>();
         sets.listElements().forEach(set -> {
             var id = set.key().location();
@@ -74,8 +88,10 @@ public final class StructureChoices {
             if (end)
                 realms.add("End");
             entries.add(new Entry(id.toString(), group(id.getNamespace()), nice(id.getPath()),
-                    CityWorldDataMaps.placedByData(set, tagged.contains(set)), List.copyOf(structures),
-                    List.copyOf(realms)));
+                    CityWorldChunkGenerator.inBase(sets, set, CityWorldChunkGenerator.StructureBase.TAG),
+                    CityWorldChunkGenerator.inBase(sets, set, CityWorldChunkGenerator.StructureBase.WIDE),
+                    CityWorldChunkGenerator.inBase(sets, set, CityWorldChunkGenerator.StructureBase.EVERY),
+                    List.copyOf(structures), List.copyOf(realms)));
         });
         entries.sort(Comparator.comparing((Entry e) -> !e.id().startsWith("minecraft:"))
                 .thenComparing(Entry::group, String.CASE_INSENSITIVE_ORDER)
