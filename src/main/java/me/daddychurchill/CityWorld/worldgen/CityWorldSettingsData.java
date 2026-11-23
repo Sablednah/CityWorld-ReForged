@@ -578,6 +578,10 @@ public record CityWorldSettingsData(
         public Highways withEnabled(boolean v) {
             return new Highways(v, width, grade, fillMax, clearance, tunnel, speedLimit, reach, surface);
         }
+
+        public Highways withReach(int v) {
+            return new Highways(enabled, width, grade, fillMax, clearance, tunnel, speedLimit, Math.max(1, Math.min(6, v)), surface);
+        }
     }
 
     public record Oceans(boolean enabled, int size, double rarity, int depth, double shelf, double rigs) {
