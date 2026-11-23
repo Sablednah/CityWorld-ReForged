@@ -80,8 +80,9 @@ Terrarium Expanded spawn — BUILT on all six lines for 7.3.0, unreleased, nothi
   How it was found: log the cell after each stage (fill, surface, carvers) — the slab was there after surface and
   gone after carvers; `javap -p -c` on the mod's mixin named the two post-processors. **Highway writes bypass
   `-Dcityworld.watch`.** Not done: bridges over Terrarium's inland water (needs its water levels at plan time);
-  the one-block step where a city street meets the highway (his 2597,-2634) was not regenerated. Owner: "all
-  great" after re-testing; Biome Palettes signed off in game.
+  Owner re-tested every spot in a new seed-1234 world: "all great", and the one-block
+  step where a city street met the highway (2597,-2634) is "now a slab". Biome Palettes signed off in game. Gates on
+  these heads: six self-tests PASS, `--compare` five-way agrees.
 - Commits: master `d4c06713` `d0667f48` `482ee6b9` `382ae23d` `094255a8`; 1.21.1 `0f5f634d` `1bf1a1df`; 26.1
   `e14e9e4d` `6ede218d`; 26.2 `9ce97260` `fdacd735`; 26.3 `dc69efd3` `6e84ae29`; 1.20.1 `6535bf7f` `14b41fbb`
   (ported by patch, not cherry-pick: master's self-test held its checkout). Gates so far: six self-tests PASS on
