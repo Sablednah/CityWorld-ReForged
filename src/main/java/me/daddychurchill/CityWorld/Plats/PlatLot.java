@@ -39,6 +39,16 @@ public abstract class PlatLot {
 	public boolean trulyIsolated;
 
 	/**
+	 * Whether this lot is still built where its chunk lies outside a vanilla-land city's disc: a mall and its car
+	 * park are one block, planned whole, and were cut off where the city's ground ended. The chunk generator
+	 * carries the city's ground on under such a lot, as far as {@code CitySites.spillSite} allows; whoever plans
+	 * one asks that first.
+	 */
+	public boolean buildsBeyondCity() {
+		return false;
+	}
+
+	/**
 	 * Whether a district's flood fill may copy this lot into its neighbours to make a bigger building. A Pokémon Center
 	 * or gym is one building of one chunk: fourteen in a row were a flood of copies (owner, 2026-11-13).
 	 */
