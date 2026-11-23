@@ -118,6 +118,60 @@ public final class CityWorldServerEvents {
         me.daddychurchill.CityWorld.worldgen.CobblemonBridge.install();
     }
 
+    /**
+     * A new world on Terrarium Expanded's Earth under vanilla land: spawn at its preset's point from the start, so
+     * the area prepared first is where players arrive (vanilla's own search starts at block 0, 0, which is open sea
+     * there, and finds nothing).
+     */
+    @SubscribeEvent
+    public static void onCreateSpawn(net.neoforged.neoforge.event.level.LevelEvent.CreateSpawnPosition event) {
+        try {
+            if (!(event.getLevel() instanceof net.minecraft.server.level.ServerLevel level)
+                    || level.dimension() != net.minecraft.world.level.Level.OVERWORLD || !(level.getChunkSource()
+                            .getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw))
+                return;
+            net.minecraft.core.BlockPos earth = me.daddychurchill.CityWorld.worldgen.TerrariumBridge
+                    .spawnOf(cw.vanillaLandSource());
+            if (earth == null)
+                return;
+            event.getSettings().setSpawn(
+                    net.minecraft.world.level.storage.LevelData.RespawnData.of(level.dimension(), earth, 0.0F, 0.0F));
+            event.setCanceled(true);
+            CityWorldMod.LOGGER.info("CityWorld: a new world on Terrarium Expanded's Earth spawns at its own point, {} {} {}",
+                    earth.getX(), earth.getY(), earth.getZ());
+        } catch (RuntimeException e) {
+            CityWorldMod.LOGGER.warn("CityWorld: could not choose the spawn for Terrarium Expanded: {}", e.toString());
+        }
+    }
+
+    /**
+     * Terrarium Expanded's Earth under vanilla land: put the spawn where its own preset would (TerrariumBridge).
+     * After Terrarium's own listeners, which move it to block 0, 0 on every start of a world they do not know;
+     * only from there, so a spawn someone has set since is left alone.
+     */
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOWEST)
+    public static void onServerStartedSpawn(ServerStartedEvent event) {
+        try {
+            net.minecraft.server.level.ServerLevel level = event.getServer().overworld();
+            if (level == null || !(level.getChunkSource()
+                    .getGenerator() instanceof me.daddychurchill.CityWorld.worldgen.CityWorldChunkGenerator cw))
+                return;
+            net.minecraft.core.BlockPos earth = me.daddychurchill.CityWorld.worldgen.TerrariumBridge
+                    .spawnOf(cw.vanillaLandSource());
+            if (earth == null)
+                return;
+            var now = level.getRespawnData();
+            if (now.pos().getX() != 0 || now.pos().getZ() != 0)
+                return;
+            level.setRespawnData(net.minecraft.world.level.storage.LevelData.RespawnData.of(now.dimension(), earth,
+                    now.yaw(), now.pitch()));
+            CityWorldMod.LOGGER.info("CityWorld: spawn moved to Terrarium Expanded's own point, {} {} {} (it was at 0, 0)",
+                    earth.getX(), earth.getY(), earth.getZ());
+        } catch (RuntimeException e) {
+            CityWorldMod.LOGGER.warn("CityWorld: could not place the spawn for Terrarium Expanded: {}", e.toString());
+        }
+    }
+
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         if (!MapMarkers.hasListeners())
