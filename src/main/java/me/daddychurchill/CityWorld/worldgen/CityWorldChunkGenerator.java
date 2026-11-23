@@ -666,7 +666,11 @@ public class CityWorldChunkGenerator extends ChunkGenerator {
                     // and the biome source the pack put there (PresetBiomes has the why). Blank keeps the registry
                     // entries, as every vanilla-land world before 6.11.
                     BiomeSource packSource = null;
-                    String presetId = resolvedSettings().world().packPreset();
+                    // through the twin, as vanillaTerrain() is: a twin of a Customize-made vanilla-land overworld
+                    // (the /cityworld dimension) otherwise took vanilla land from the overworld's settings and
+                    // the preset from its own entry, and stood on vanilla's terrain beside a pack's
+                    CityWorldChunkGenerator presetTwin = twinSource(false);
+                    String presetId = (presetTwin != null ? presetTwin : this).resolvedSettings().world().packPreset();
                     var packOverworld = PresetBiomes.overworldOf(registries, presetId);
                     if (packOverworld.isPresent()) {
                         settings = packOverworld.get().generatorSettings();
