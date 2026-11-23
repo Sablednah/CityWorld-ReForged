@@ -24,7 +24,23 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
-**▶ Resume here (2026-11-23 overnight): palettes by biome, the Biome Palettes add-on, schematics by biome and the
+**▶ Resume here (2026-11-23 evening): v7.3.0 is RELEASED — palettes by biome, every structure in the wild.**
+- Owner: "all ok and ready to release once tests are done". Tag `v7.3.0` at the master bump `f48dfdae` (docs before
+  it; branch bumps 50cea528/962de44a/fad6f635/e9b2770b/92b10a70), GitHub release with six jars (`--latest`),
+  CurseForge 9779661–9779675 (run 45259481123; 1.20.1 = Forge), fleet `DEPLOYED-v7.3.0` on 11 (ZARP opts out), wiki
+  pushed (+201 lines), WEBSITE.md handover. **Biome Palettes 1.0.0** = tag `biome-palettes-1.0.0` (same commit),
+  CurseForge project 1826195 file 9779743 (run 45259696509), v7.3.0 set back to latest; the four instances that had
+  the `-test72` jar now hold the real one. Gates: six self-tests PASS + `--compare` five-way on the pre-bump heads
+  (the client-only re-create commit `e33dddfc` came after them: compiled on every line, in CI on the bump heads),
+  CI 45255013570 green (+ "Same seed, same city"), scan 0/0/0 after a fresh synthetic positive (2/1), 1.20.1 SRG 788.
+  **The owner pastes `CURSEFORGE.md`** (7.3.0 headline, the Biome Palettes section, the Terrarium Works-with row)
+  and `packs/biome-palettes/CURSEFORGE.md` into the add-on's page, and posts the issue #9 follow-up (draft in the
+  spike worktree's `spike-notes/replies/issue9-followup.md`). Docs link the add-on as
+  `curseforge.com/projects/1826195` (its slug was not known). Not seen in a client by this session: the re-create
+  restamp (`WorldTypeLock.onRestamp`). Owner declined a spawn fix for a non-Earth world with Terrarium installed
+  ("if someone's installed terrarium AND city world they likely want them together"). Next: nothing queued.
+
+**▶ (2026-11-23 overnight, before the release): palettes by biome, the Biome Palettes add-on, schematics by biome and the
 Terrarium Expanded spawn — BUILT on all six lines for 7.3.0, unreleased, nothing pushed.**
 - From GitHub issues #9/#10 (owner posted both replies 2026-11-22; **Abyssia #10 is on hold**, its deep sea needs
   its own generator class). Owner's asks: biome palettes as a separate mod, one palette per building, every modded
