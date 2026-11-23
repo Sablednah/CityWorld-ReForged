@@ -33,6 +33,21 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   that sea for a spawn (eight minutes of map downloads on a first start, measured; three seconds now on 1.21.11).
   When finding the cities for highways takes over half a minute, the log says so once and names the settings that
   shorten it. The Biome Mods page has the measurements.
+- **Terrarium Expanded: highways are no longer wrecked.** Terrarium puts its Earth back after the caves are carved,
+  clearing whatever stands above its ground and refilling its lakes and rivers. Highways lost their half-step
+  slabs (a pitted road), their bridges over the sea, and stood under water wherever a cut had lowered the ground;
+  chunks at a city's edge could stand full of water on a hillside. The road is now drawn again after that stage
+  and its cut drained, and a city's patch is left uncarved there. A road through a lake or river is a dry cut
+  with a stone wall holding the water back, not yet a bridge.
+- **Vanilla land: a roundabout on the street a highway leaves by keeps its centre.** The street was paved straight
+  through it, leaving the ring round a plain crossroads (since 7.0).
+- **Vanilla land: a lava or water lake no longer cuts a highway.** Vanilla's lake could dig into the road's edge
+  after the road was drawn; the deck is laid again, and lava level with it beside the road becomes stone.
+- **Vanilla land: parks, farms and street trees follow the real biome.** They took their climate from CityWorld's
+  own climate map, which vanilla land does not follow: a park could lie under snow in a jungle. On vanilla land
+  they now go by the biome their city stands in.
+- **Vanilla land: the `/cityworld` dimension follows the same world preset as the overworld.** In a world made
+  with Customize on a pack's preset it stood on vanilla's terrain instead.
 
 ## 7.2.1 — 2026-11-21
 

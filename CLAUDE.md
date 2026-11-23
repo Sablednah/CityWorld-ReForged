@@ -64,6 +64,24 @@ Terrarium Expanded spawn — BUILT on all six lines for 7.3.0, unreleased, nothi
   30 s+. **Terrarium's `io.shared_tile_threads=32` made its tile server drop connections: do not recommend it, and
   do not run cold starts in a loop against it.** 1.20.1 has the bridge class but not the handlers (no Terrarium
   there, and it already has an `onCreateSpawn`).
+- **The owner's first Earth (2026-11-23 afternoon), every report reproduced on the dev server with his seed 1234
+  and his tile cache (copy `Instances/<x>/cache/terrarium_expanded` into `run/cache/`: no downloads), then
+  regenerated fixed** — commit `24c0c168` (+ picks). **Terrarium ends `applyCarvers` with
+  `EarthTerrainEnvelopePostProcessor.enforceChunk` + `InlandWaterChunkPostProcessor.fillChunk`**: blocks above its
+  ground cleared, water refilled to the level of the ground it remembers. So (1) highways, drawn at fill, lost
+  slabs/bridges and flooded → `drawHighways(.., again=true)` after vanilla's carvers when
+  `TerrariumBridge.isEarth`, draining the cut (outermost row: sources → stone); (2) city-patch chunks the city had
+  lowered filled with water → on the Earth `applyCarvers` returns for any chunk `citySites.influencing` a city.
+  General vanilla-land fixes found the same afternoon: `sweepHighways` relays a deck a lake feature cut (air,
+  fluid or base stone at deck y) and turns lava at deck level beside it to stone; `PlatMap.populateRoads` no
+  longer paves a ROUNDABOUT centre with the highway's exit street (7.0 bug); `ClimateZone.at` uses the real
+  biome on vanilla land (`generator.vanillaLand`, `Biome.getBaseTemperature` + `getModifiedClimateSettings()
+  .downfall()`): a park lay under snow in a jungle; `world.packPreset` is read through the twin (`4e69155b`).
+  How it was found: log the cell after each stage (fill, surface, carvers) — the slab was there after surface and
+  gone after carvers; `javap -p -c` on the mod's mixin named the two post-processors. **Highway writes bypass
+  `-Dcityworld.watch`.** Not done: bridges over Terrarium's inland water (needs its water levels at plan time);
+  the one-block step where a city street meets the highway (his 2597,-2634) was not regenerated. Owner: "all
+  great" after re-testing; Biome Palettes signed off in game.
 - Commits: master `d4c06713` `d0667f48` `482ee6b9` `382ae23d` `094255a8`; 1.21.1 `0f5f634d` `1bf1a1df`; 26.1
   `e14e9e4d` `6ede218d`; 26.2 `9ce97260` `fdacd735`; 26.3 `dc69efd3` `6e84ae29`; 1.20.1 `6535bf7f` `14b41fbb`
   (ported by patch, not cherry-pick: master's self-test held its checkout). Gates so far: six self-tests PASS on

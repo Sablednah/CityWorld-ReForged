@@ -160,6 +160,10 @@ land on, in the world settings:
   prepares the spawn area as the world starts, that wait is the start itself: under two minutes with `reach` 1.
   Before 7.3 a world's creation took eight to nine minutes on either version, searching the sea at 0, 0 for
   somewhere to spawn.
+- **Roads** (from 7.3). Terrarium puts its own ground and water back late in generation; CityWorld draws its
+  highways again after that, so they keep their surface and their bridges over the sea. A highway through one of
+  Terrarium's lakes or rivers is a dry cut with a low stone wall holding the water back, not a bridge. Chunks
+  inside a city's patch get no vanilla caves on the Earth.
 - **Leave Terrarium's `io.shared_tile_threads` at its default.** Raised to 32, its map server dropped connections
   and the same start did not finish in fifteen minutes.
 
