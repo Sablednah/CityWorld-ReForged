@@ -24,6 +24,56 @@ verified API notes, and what to do next. Start at its "Resume here" section.
 
 ## ▶ Where this is, and what's next (2026-10-15)
 
+**▶ Resume here (2026-11-23 overnight): palettes by biome, the Biome Palettes add-on, schematics by biome and the
+Terrarium Expanded spawn — BUILT on all six lines for 7.3.0, unreleased, nothing pushed.**
+- From GitHub issues #9/#10 (owner posted both replies 2026-11-22; **Abyssia #10 is on hold**, its deep sea needs
+  its own generator class). Owner's asks: biome palettes as a separate mod, one palette per building, every modded
+  biome covered, and a schematic sidecar `Biome:` with part-matching.
+- **`worldgen/BiomeMatch`**: ONE biome list for themes and for a schematic's `Biome:` line — exact id, `#tag`, a
+  word (any mod's biome with it in its name), a `*` pattern, `!` to exclude. **`worldgen/BiomeThemes`**: registry
+  `cityworld:palette_theme` (`{ "biomes": [...], "priority": 0, "theme": "..." }`), bound at level load; a biome
+  goes to the theme that lists its exact id, else the higher priority, else the first file id (a tag is NOT above a
+  word: with five biome mods loaded the mods' tags stole biomes). A building reads
+  `#cityworld:palette/biome/<theme>/<part>` before the style's and the general palette; the street's picks went to
+  `Palettes.pickWorld` (one per world, unthemed). `CityWorldGenerator.buildingBiomeAt`: CityWorld land = the
+  chunk's biome at natural ground; vanilla land = the biome at the city's centre; a twin asks its source (26.3:
+  `createResolver(vanillaOverworldClimate)`). `PlatMap.footprintInBiome` gates a limited clip, which is placed by
+  scan. Ships EMPTY (self-test `checkBiomeThemes` fails with a theme installed: keep the add-on out of `run/mods`
+  for a self-test). F3 shows `palette theme`; `-Dcityworld.diagnostics=true` logs every biome's theme; probes
+  `find:theme:<name>` (`-Dcityworld.probe.min`) and `survey:schematics` (biomes of limited clips).
+- **Add-on `packs/biome-palettes`** (`cityworld_biome_palettes`, needs `[7.3,)`; `./build.sh --test` makes a
+  `-test72` jar that loads beside 7.2.x): ten themes from `gen.py`'s tables; `gen.py --check <harvest.json>`
+  simulates assignments (harvest = `{namespace: {biome: …}}` from mod jars). **No base stones in a palette** (stone,
+  andesite, diorite, tuff, deepslate: vanilla's ore pass replaces them). **It needs its own CurseForge project
+  before release** (the owner creates it; then its id goes in `curseforge-addons.yml`/`curseforge-upload-addon.sh`).
+- **Measured:** desert district 35/37 buildings themed (sandstone family dominant); vanilla-land desert city 39/39
+  and boreal 46/46; a `Biome: desert, badlands` schematic placed 12 times, all in `minecraft:desert`, a tag-limited
+  one 22 times in its two biomes, the control 52; with Biomes O' Plenty + Terralith + Regions Unexplored +
+  Dreamwoods + Nyctophobia together on 1.21.1, 233 of 356 biomes take a theme and every difference from the
+  word-only simulation is a mod's own tag being right; add-on loads on Forge 1.20.1 (`tags/blocks/`) and 26.2 (BoP).
+- **Terrarium Expanded** (1.21.1 + 1.21.11 only; `world.packPreset "terrarium_expanded:earth"` + vanilla land):
+  it forces the spawn on EVERY start, to block 0,0 for a generator it does not know (open sea).
+  `worldgen/TerrariumBridge` (reflection) + `CityWorldServerEvents.onCreateSpawn`/`onServerStartedSpawn` (LOWEST)
+  put it at the preset's own point (6034, 63, -81). The 8-minute first start was vanilla's spawn search generating
+  ocean chunks at 0,0, each asking the highway planner for ~250 city cells (2048 blocks each) of remote tiles:
+  1.21.11 now starts in 3 s and pays at the first chunks (6.5 min / 430 MB cold at `highways.reach` 3; 3.5 min /
+  170 MB at reach 1; 36 s warm); 1.21.1 (spawn chunks) starts in 114 s at reach 1. `Highways.prejudge` logs once at
+  30 s+. **Terrarium's `io.shared_tile_threads=32` made its tile server drop connections: do not recommend it, and
+  do not run cold starts in a loop against it.** 1.20.1 has the bridge class but not the handlers (no Terrarium
+  there, and it already has an `onCreateSpawn`).
+- Commits: master `d4c06713` `d0667f48` `482ee6b9` `382ae23d` `094255a8`; 1.21.1 `0f5f634d` `1bf1a1df`; 26.1
+  `e14e9e4d` `6ede218d`; 26.2 `9ce97260` `fdacd735`; 26.3 `dc69efd3` `6e84ae29`; 1.20.1 `6535bf7f` `14b41fbb`
+  (ported by patch, not cherry-pick: master's self-test held its checkout). Gates so far: six self-tests PASS on
+  those heads, `--compare` five-way agrees (MODERN `c4b95b7c`, APOCALYPSE `fd6df8c0`; 1.21.1 by its Cobblemon),
+  master jar scan 0/0/0. Docs: PALETTES "Palettes by biome" + reference rows, EXAMPLES 13, SCHEMATICS `Biome`,
+  BIOMES "Terrain mods (vanilla land only)", CHANGELOG 7.3.0 (unreleased); `gen-wiki.sh` dry run clean (+149).
+- Deployed for the owner's look: `1.21.1` `DEPLOYED-1bf1a1df`, `CityWork-ReForged` `DEPLOYED-094255a8`,
+  `BoP+Cityworld` `DEPLOYED-fdacd735`, `1.20.1  Forge` `DEPLOYED-14b41fbb`, each with
+  `cityworld-biome-palettes-1.0.0-test72.jar` (remove it when the real 1.0.0 goes in). A follow-up draft for issue
+  #9 is in the spike worktree's `spike-notes/replies/issue9-followup.md` (that worktree,
+  `../CityWorld-ReForged-worktrees/spike-biome-palettes`, is otherwise superseded and can go). Next: the owner's
+  look, then 7.3.0 + the add-on's release (its CurseForge project first).
+
 **▶ Resume here (2026-11-21): v7.2.1 is RELEASED — issue #8 (SporeWithin hang) fixed.**
 - Tag `v7.2.1` at the master bump `f5bcbccc` (docs `9e86f54b` before it; branch bumps 364af169/bd00c25c/e490752b/
   a877c3b1/5c63f710), GitHub release with six jars (`--latest`), CurseForge 9732192–9732199 (run 44905318041; 1.20.1 =
