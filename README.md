@@ -156,6 +156,13 @@ generated city, more ground than all of Greater London and two and a half New Yo
   stations near and far, on two levels with interchanges and powered track; a minecart runs the network.
   Bends are real curves (7.2), smoothed with Slash Rails; Railcraft Reborn makes it an electric line with charged
   station batteries and locomotives, Choo Choo parks trains, Improvement Minecarts gets its stops.
+- **Palettes by biome** (7.3) — a datapack theme gives the buildings in a biome their own materials, and a
+  schematic's `Biome:` line keeps it to the biomes it suits. The **Biome Palettes** add-on
+  ([download](https://www.curseforge.com/projects/1826195)) is ten ready themes: sandstone desert cities, spruce
+  taiga towns, mud-brick savanna.
+- **Every structure, in the wild** (7.3) — a new world places every vanilla and mod structure set but mineshafts,
+  all between the cities; Customize's **Terrain from** builds cities on Amplified, Large Biomes or a terrain mod's
+  world (Terrarium Expanded's Earth).
 - **LootLinker** (7.2, add-on, [download](https://www.curseforge.com/minecraft/mc-mods/cityworld-lootlinker)) — vanilla's chest loot, and every loot mod's additions to it,
   in the city's chests.
 - **Shopping malls** (MODERN/APOCALYPSE) — rare, sprawling, at the edge of town: an atrium in wings,

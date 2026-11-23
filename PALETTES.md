@@ -171,7 +171,7 @@ centre of the building's city, as a vanilla village takes its type from the biom
 look. The ruined Nether twin follows the overworld it copies; the End has no themes.
 
 CityWorld ships **no themes**: without a pack nothing here is read and no building changes. The
-[Biome Palettes add-on](https://github.com/Sablednah/CityWorld-ReForged/tree/master/packs/biome-palettes) is ten
+[Biome Palettes add-on](https://www.curseforge.com/projects/1826195) is ten
 of them (desert, badlands, savanna, tropical, swamp, boreal, frozen, coastal, mountain, blossom) covering
 vanilla's biomes and those of the biome mods by word and tag; it is also the example to copy. To see which
 theme every installed biome gets, start the game with `-Dcityworld.diagnostics=true` and read the

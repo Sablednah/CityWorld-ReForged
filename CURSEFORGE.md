@@ -30,6 +30,15 @@ cities apart, the Nether and End, which structures generate, and every setting o
 styles. Its settings come from a datapack; shape a world in single player with Customize, and `/cityexport` writes it
 out for the server.
 
+**New in 7.3.0: cities that match their biome, and every structure in the wild.** A datapack can now give the
+buildings in a biome their own look, and the new **Biome Palettes** add-on (below) does it for you: a desert city in
+sandstone, a taiga town in spruce and stone, mud brick in the savanna, your biome mod's biomes included. A custom
+schematic can be kept to the biomes it suits with one line. **A new world places every vanilla and mod structure
+except mineshafts, all in the land between the cities** — villages, mansions, temples, a mod's dungeons — so none of
+them leaves a gap in a city (existing worlds are not changed, and both are switches in Customize). And Customize has
+a **Terrain from** list: pick Amplified, Large Biomes or a terrain mod's world, such as **Terrarium Expanded**'s
+real Earth, and build cities on it without writing a settings file.
+
 **New in 7.2.0: trains in the subway, and vanilla's loot in the city.** Every subway bend is now a real **curve**
 of rails through a rounded tunnel, and with **Slash Rails** each one is smoothed as you explore, so carts sweep round
 instead of jolting. **Railcraft Reborn** lays its own track in the tunnels, and makes the line **electric**: electric
@@ -93,10 +102,10 @@ Pick **CityWorld** as your world type and you land in a living city:
   26.2 and later — each decorated the way vanilla decorates it. Warm mountains carry savanna, forest and jungle up
   to stony peaks, the way vanilla lays them out, so there is no snow over the jungle.
 - **Vanilla structures where they belong** — **strongholds** (so eyes of ender work and the End is
-  reachable), **trial chambers**, and **ancient cities** in the deep dark. Villages and mineshafts are
-  off by default — CityWorld builds its own — but the **Structures** page of the Customize screen
-  switches on any structure the install has, vanilla's or a mod's (a datapack tag or the world settings
-  do the same for servers). Whatever is switched on, the city plans round its real footprint and the ground is
+  reachable), **trial chambers**, **ancient cities** in the deep dark, and from 7.3, in a new world, every
+  other structure the install has, vanilla's or a mod's, in the wild between the cities: villages, mansions,
+  temples, outposts. Mineshafts are off by default — CityWorld digs its own mines — and the **Structures** page of
+  the Customize screen switches any set on or off (a datapack tag or the world settings do the same for servers). Whatever is switched on, the city plans round its real footprint and the ground is
   shaped to meet it.
 - **Inhabitants** — named villagers employed at their shop's actual trade, vanilla's herds in the wild by biome
   (and in the cities, if you let them), fish in the sea, hostiles lurking in mines, sewers and the dark.
@@ -312,6 +321,17 @@ sample datapack switches every vanilla structure on, for servers. (From 7.3 a ne
 it, mineshafts apart; the add-on still does it for older worlds, for the styles that are a terrain of their own,
 and for mineshafts.)
 
+### Cities that match their biome: the Biome Palettes add-on
+
+Out of the box a city is built from the same materials wherever it stands. The **CityWorld: Biome Palettes** add-on
+jar gives the buildings ten looks by biome: desert (sandstone), badlands (terracotta and red sandstone), savanna
+(mud brick and acacia), tropical (jungle wood, bamboo and moss), swamp (mangrove and mud), boreal (spruce and
+stone), frozen (spruce, calcite and packed ice), coastal, mountain and blossom. It covers vanilla's biomes and
+those of biome mods (Biomes O' Plenty, Terralith, Regions Unexplored, Dreamwoods and others). One building is
+always one look, and streets stay as they are. Drop it in `mods` beside CityWorld (7.3.0 or later); one jar works on
+every Minecraft version, and every palette is a tag a pack can change.
+**→ [Get it on CurseForge](https://www.curseforge.com/projects/1826195)** · [or from GitHub](https://github.com/Sablednah/CityWorld-ReForged/releases/tag/biome-palettes-1.0.0)
+
 ### Vanilla's loot, and your loot mods', in the city: the LootLinker add-on
 
 CityWorld's chests use their own loot tables, so the items loot mods add to vanilla's chests (dungeons, mineshafts,
@@ -334,8 +354,8 @@ beaches, volcanic plains, salt wastes — get their real blocks rather than a gr
 Datapack biome mods that rewrite the vanilla world preset — **Terralith**, **Dreamwoods** with Grand Terrain — reach
 CityWorld's land the same way and give vanilla land their terrain too (`world.packPreset`). **Regions Unexplored**
 and the other Lithostitched mods reach vanilla land. Mod biomes arrive in proper patches (`world.moddedBiomeGrain`),
-and a mod's structures can be kept to the wild: "Structures: only in the wild" in Customize, or a datapack's
-`#cityworld:wilderness_only` tag, set by set.
+and a mod's structures keep to the wild, so a pond or ruin never cuts a city in two: on in a new world from 7.3
+("Structures: only in the wild" in Customize), or set by set with a datapack's `#cityworld:wilderness_only` tag.
 
 On by default, because installing a biome mod is itself the request. `world.moddedBiomeShare` sets how
 much ground a mod may own, `world.useModdedBiomes` turns it off entirely, and both cost nothing when
@@ -408,6 +428,7 @@ with none installed nothing changes.
 | **Ultimate Car Mod** | Its asphalt roads and text signs, its cars parked in the city, its gas stations with free bio diesel, canola on the farms, its fluids in the industrial tanks. Pairs well with Macaw's Roads and Streets. |
 | **Biomes O' Plenty** / **TerraBlender** | Its biomes generate in the overworld, the ruined Nether and the End, with their own ground blocks. |
 | **Terralith**, **Dreamwoods**, **Regions Unexplored** and other datapack / Lithostitched biome mods | Their biomes and terrain reach CityWorld's land and vanilla land. |
+| **Terrarium Expanded** (1.21.1, 1.21.11) | Cities and highways on its real Earth: pick it as **Terrain from** in Customize. |
 | **Alex's Caves** (1.20.1) | Five of its cave biomes join the underground, in its own rock, with its cave structures; the abyssal chasm opens under the deep oceans. |
 | **Pam's HarvestCraft 2** (Crops, Trees) | Its crops grow in the fields and its fruit trees in the orchards, by climate. |
 | **Farmer's Delight** (1.20.1, 1.21.1) | Kitchens built from its cabinets, stove, pots and cutting boards; feasts on dining tables; rice paddies; rich soil, compost, crates and bales on the farms; canvas shop signs. |
@@ -428,8 +449,8 @@ with none installed nothing changes.
 | **Forgified Fabric API** + a mod adding End biomes | The End no longer freezes. |
 | **CityWorld Urban Compass** | The companion mod: points at any district, place, shop or building. |
 
-**Works by design, not tested one by one:** any mod's **structures** can be switched on from the Structures
-page; any **TerraBlender** biome mod's biomes join the world; and any mod that tags its blocks, crops and
+**Works by design, not tested one by one:** any mod's **structures** are placed in a new world's wild land (the
+Structures page switches each set); any **TerraBlender** biome mod's biomes join the world; and any mod that tags its blocks, crops and
 flowers the standard way has them built with and planted. If something you use misbehaves in a CityWorld
 world, say so in the comments.
 
