@@ -30,6 +30,8 @@ cities apart, the Nether and End, which structures generate, and every setting o
 styles. Its settings come from a datapack; shape a world in single player with Customize, and `/cityexport` writes it
 out for the server.
 
+## Latest Changes and New Features
+
 **New in 7.3.0: cities that match their biome, and every structure in the wild.** A datapack can now give the
 buildings in a biome their own look, and the new **Biome Palettes** add-on (below) does it for you: a desert city in
 sandstone, a taiga town in spruce and stone, mud brick in the savanna, your biome mod's biomes included. A custom
