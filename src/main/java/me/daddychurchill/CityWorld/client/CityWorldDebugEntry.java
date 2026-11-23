@@ -75,6 +75,14 @@ public class CityWorldDebugEntry {
                     displayer.accept("[CityWorld] shop " + info.shop().describe());
                 if (info.schematicName() != null)
                     displayer.accept("[CityWorld] schematic " + info.schematicName());
+                // the biome theme a building here takes its palettes from (a pack's; none ships). Asked once per
+                // chunk, and only of a chunk already planned, so nothing is planned on the render thread.
+                if (chunkKey != themeKey) {
+                    themeKey = chunkKey;
+                    lastTheme = context.paletteThemeAt(pos.getX() >> 4, pos.getZ() >> 4);
+                }
+                if (lastTheme != null)
+                    displayer.accept("[CityWorld] palette theme " + lastTheme);
             }
             // Two lines, not one: the single combined line ran past the width of the F3 overlay.
             displayer.accept(String.format("[CityWorld] street %d  sea %d  maxFloors %d",
@@ -100,6 +108,8 @@ public class CityWorldDebugEntry {
     // the F3 readout is drawn every frame: remember the last chunk's answer, and which chunk is being warmed
     private long lastChunkKey = Long.MIN_VALUE, warmingKey = Long.MIN_VALUE;
     private LotInfo lastInfo;
+    private long themeKey = Long.MIN_VALUE;
+    private String lastTheme;
 
     private static String buildStamp() {
         String stamp = me.daddychurchill.CityWorld.BuildInfo.describe();

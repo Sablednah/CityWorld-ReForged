@@ -85,5 +85,7 @@ public final class CityWorldRegistries {
         event.dataPackRegistry(Spawns.SPAWNS, Spawns.Spawn.CODEC);
         // road signs on Immersive Vehicles' poles, one file per sign pack (PoleSigns)
         event.dataPackRegistry(PoleSigns.POLE_SIGNS, PoleSigns.SignSet.CODEC);
+        // palettes by biome: one file per theme, naming its biomes (BiomeThemes)
+        event.dataPackRegistry(BiomeThemes.THEMES, BiomeThemes.Theme.CODEC);
     }
 }
