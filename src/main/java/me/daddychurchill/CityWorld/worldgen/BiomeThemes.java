@@ -33,9 +33,9 @@ import net.minecraft.world.level.biome.Biome;
  *
  * {@code biomes} is a {@link BiomeMatch} list (exact ids, {@code #tags}, words, {@code !} to take one back out).
  * The theme's name is the file's own, or {@code "theme"} when given — so a second pack can add biomes to a theme
- * it does not own from a file of another name. A biome two themes name goes to the one that names it most closely
- * (id, then tag, then word), then the higher {@code priority}, then the first by file id. CityWorld ships none: with
- * no theme installed nothing here is asked and no building changes.
+ * it does not own from a file of another name. A biome two themes name goes to the one that names it by its exact
+ * id; failing that to the higher {@code priority}, then the first by file id. CityWorld ships none: with no theme
+ * installed nothing here is asked and no building changes.
  */
 public final class BiomeThemes {
 
@@ -130,7 +130,7 @@ public final class BiomeThemes {
         if (known == null) {
             String best = null;
             int bestRank = BiomeMatch.NONE;
-            for (Bound b : local) { // highest priority first: a later theme must name the biome more closely to win
+            for (Bound b : local) { // highest priority first: a later theme wins only by naming the biome's exact id
                 int rank = b.match().rank(biome);
                 if (rank > bestRank) {
                     bestRank = rank;
