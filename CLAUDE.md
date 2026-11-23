@@ -40,6 +40,15 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   restamp (`WorldTypeLock.onRestamp`). Owner declined a spawn fix for a non-Earth world with Terrarium installed
   ("if someone's installed terrarium AND city world they likely want them together"). Next: nothing queued.
 
+**▶ After 7.3.0 (2026-11-23 late), unreleased, local only:** Customize **"Sea under a city"** (`cities.maxWater`,
+  was datapack-only; choices 0/5/10/20/35/50%) — master `81fc367d`, picked to all five lines (compiled, no
+  self-test run: client screen + one `with` method), `CityWork-ReForged` `DEPLOYED-81fc367d` for the owner's look.
+  From a deleted comment on issue #9 (Lithosphere: "oceans turned into plains") and the owner's west-coast city on
+  Terrarium: a vanilla-land city fills in up to `maxWater` (35%) of sea under its disc. Lithosphere 1.9 read from
+  its jar (data only: replaces `minecraft:overworld` noise settings, 576-tall world, no preset of its own) but
+  NOT run: the auto-mode classifier refused the dev-server run with the downloaded jar in `run/mods`. CHANGELOG has
+  "7.3.1 (unreleased)". Next: the owner's look, then 7.3.1 on his word.
+
 **▶ (2026-11-23 overnight, before the release): palettes by biome, the Biome Palettes add-on, schematics by biome and the
 Terrarium Expanded spawn — BUILT on all six lines for 7.3.0, unreleased, nothing pushed.**
 - From GitHub issues #9/#10 (owner posted both replies 2026-11-22; **Abyssia #10 is on hold**, its deep sea needs
