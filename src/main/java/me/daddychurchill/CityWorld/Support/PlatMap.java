@@ -749,7 +749,8 @@ public class PlatMap {
 				for (int px = 0; px <= PlatMap.Width - chunksX; px++)
 					for (int pz = 0; pz <= PlatMap.Width - chunksZ; pz++) {
 						if (!isNaturalLots(px, pz, chunksX, chunksZ)
-								|| !footprintBuildable(generator, px, pz, chunksX, chunksZ))
+								|| !footprintBuildable(generator, px, pz, chunksX, chunksZ)
+								|| !footprintInBiome(generator, clip, px, pz, chunksX, chunksZ))
 							continue;
 						boolean faces = false;
 						for (int[] c : cells) {
@@ -772,6 +773,17 @@ public class PlatMap {
 		placeSpecificClip(generator, odds, clip, (Integer) pick[0], (Integer) pick[1],
 				(net.minecraft.world.level.block.Rotation) pick[2], (net.minecraft.world.level.block.Mirror) pick[3]);
 		return true;
+	}
+
+	/**
+	 * Whether a build may stand here by its .yml's {@code Biome:} line: the biome at the centre chunk of its
+	 * footprint is one it names. A build with no such line fits anywhere, and nothing is looked up for it.
+	 */
+	public boolean footprintInBiome(CityWorldGenerator generator, Clipboard clip, int px, int pz, int chunksX,
+			int chunksZ) {
+		if (clip.biomes.isAny())
+			return true;
+		return clip.biomes.matches(generator.buildingBiomeAt(originX + px + chunksX / 2, originZ + pz + chunksZ / 2));
 	}
 
 	/**
@@ -808,7 +820,8 @@ public class PlatMap {
 			for (int px = 0; px <= PlatMap.Width - chunksX; px++)
 				for (int pz = 0; pz <= PlatMap.Width - chunksZ; pz++)
 					if (footprintDeepWater(generator, px, pz, chunksX, chunksZ)
-							&& isNaturalLots(px, pz, chunksX, chunksZ))
+							&& isNaturalLots(px, pz, chunksX, chunksZ)
+							&& footprintInBiome(generator, clip, px, pz, chunksX, chunksZ))
 						valid.add(new int[] { px, pz });
 			if (valid.isEmpty())
 				return false;
@@ -821,12 +834,15 @@ public class PlatMap {
 		// large contiguous flat-buildable run; the cheap random search almost never lands one — the
 		// cathedral placed 0 times in a 12800-block sweep. Scan every position and pick among the fits so
 		// it can appear wherever the rare open, flat spot exists. Small builds keep the cheap random dart.
-		if (chunksX * chunksZ >= 12) {
+		// A build limited to some biomes (its .yml's Biome:) is scanned for too: where the platmap straddles a biome
+		// edge, random darts would mostly land on the wrong side.
+		if (chunksX * chunksZ >= 12 || !clip.biomes.isAny()) {
 			java.util.List<int[]> valid = new java.util.ArrayList<>();
 			for (int px = 0; px <= PlatMap.Width - chunksX; px++)
 				for (int pz = 0; pz <= PlatMap.Width - chunksZ; pz++)
 					if (isNaturalLots(px, pz, chunksX, chunksZ)
-							&& footprintBuildable(generator, px, pz, chunksX, chunksZ))
+							&& footprintBuildable(generator, px, pz, chunksX, chunksZ)
+							&& footprintInBiome(generator, clip, px, pz, chunksX, chunksZ))
 						valid.add(new int[] { px, pz });
 			// A very large civic build (a 9×5 cathedral) never finds a clear run: the road grid crosses
 			// any span that wide, so an empty-only search comes up empty on every platmap. As a last
@@ -835,7 +851,8 @@ public class PlatMap {
 				for (int px = 0; px <= PlatMap.Width - chunksX; px++)
 					for (int pz = 0; pz <= PlatMap.Width - chunksZ; pz++)
 						if (isClaimableLots(px, pz, chunksX, chunksZ)
-								&& footprintBuildable(generator, px, pz, chunksX, chunksZ))
+								&& footprintBuildable(generator, px, pz, chunksX, chunksZ)
+								&& footprintInBiome(generator, clip, px, pz, chunksX, chunksZ))
 							valid.add(new int[] { px, pz });
 			if (valid.isEmpty())
 				return false;

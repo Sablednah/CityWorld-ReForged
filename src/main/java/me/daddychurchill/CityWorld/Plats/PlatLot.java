@@ -66,8 +66,8 @@ public abstract class PlatLot {
 
 		// pavement is 0, read in RoadLot
 		// lines is 1, read in RoadLot
-		pavementSidewalk = me.daddychurchill.CityWorld.Support.Palettes.pick(platmap.generator,
-				me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_SIDEWALK, 0, 0,
+		pavementSidewalk = me.daddychurchill.CityWorld.Support.Palettes.pickWorld(platmap.generator,
+				me.daddychurchill.CityWorld.Support.Palettes.Part.STREET_SIDEWALK,
 				platmap.generator.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(2, Material.STONE_SLAB));
 		// dirt is 3, read in RoadLot
 		dirtroadSidewalk = platmap.generator.materialProvider.itemsMaterialListFor_Roads.getNthMaterial(4,
