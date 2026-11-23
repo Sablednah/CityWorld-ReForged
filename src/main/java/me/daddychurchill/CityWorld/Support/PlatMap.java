@@ -484,7 +484,10 @@ public class PlatMap {
 		if (highways != null)
 			for (int x = 0; x < Width; x++)
 				for (int z = 0; z < Width; z++)
-					if (highways.exitRoadAt(originX + x, originZ + z))
+					// not a roundabout's centre: its ring is the street already, and paving the centre left the ring
+					// round a plain crossroads (the owner's Earth, 2026-11-23: five in a row along one exit street)
+					if (highways.exitRoadAt(originX + x, originZ + z)
+							&& !(platLots[x][z] != null && platLots[x][z].style == LotStyle.ROUNDABOUT))
 						paveLot(x, z, false);
 	}
 
