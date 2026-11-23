@@ -44,6 +44,9 @@ regenerate, so a fresh world (or unexplored land) is needed to see worldgen fixe
   `#cityworld:allowed`. A pack that ships its own world preset keeps the stamp it was written with: see
   `structures` on the settings page. Strongholds are never moved.
 - `/cityexport` writes `structures.wildernessOnly` and `structures.placeAll` as the world resolves them.
+- **A re-created world is a new world.** "Re-Create" copies the old world's generator, stamp included, so the copy
+  came out as old as the original: no deep oceans or highways from a world made before 7.0, none of 7.3's
+  structure defaults from one made before 7.3. The create-world screen now stamps it as made today.
 
 ### Fixed
 

@@ -83,6 +83,29 @@ Terrarium Expanded spawn — BUILT on all six lines for 7.3.0, unreleased, nothi
   Owner re-tested every spot in a new seed-1234 world: "all great", and the one-block
   step where a city street met the highway (2597,-2634) is "now a slab". Biome Palettes signed off in game. Gates on
   these heads: six self-tests PASS, `--compare` five-way agrees.
+- **Evening, same day (2026-11-23), three more for 7.3, on all six lines:**
+  (1) **Customize "Terrain from"** (`7b74e3c5` + `44300b69`): a row under Land lists every world preset whose
+  overworld is a `NoiseBasedChunkGenerator` (`CityWorldClient.terrains`, names through `Language.has`: `I18n.exists`
+  is gone on 26.2+) and sets `world.packPreset`; one that is not multi-noise switches Land to vanilla; Terrarium's
+  Earth sets the new **Highway reach** dial to 1. The owner used it (his `te_apoc` preset).
+  (2) **7.3's structure defaults** (`c2e70848`; owner: wild-only "stops the gappy ness", and "structures all to
+  default on except mineshafts"): `structures.wildernessOnly` and the new `structures.placeAll` are
+  `Optional<Boolean>`, unset = by the world's age: on when `CityWorldChunkGenerator.wideStructures()` — stamp
+  `made_with` >= **73** (`MADE_WITH` is now 73 = 7.3; 7 still gates oceans/highways) AND
+  `Structures.wideStyle` (MODERN, APOCALYPSE, CLASSIC, DESTROYED, SPARSE: the styles that are a terrain keep the
+  tag, unmeasured there). Old worlds re-read the same settings entry, so the default could not simply flip: their
+  half-built platmaps plan around structures. `StructureBase` TAG / WIDE (all but `#cityworld:off_by_default` =
+  mineshafts, unless `#cityworld:allowed` holds the set) / EVERY (vanilla land); `StructureChoices.Entry.as(base)`
+  feeds the Structures page; `/cityexport` and the settings example write both resolved. Self-test
+  `checkStructureDefaults`; **`checkForecast` and the ancient-city check now look only where a kept-out set may
+  start** (the city round spawn has none: the first run failed "no structure start to compare"). Plan hashes did
+  not move. A pack with its own world preset keeps its old stamp (ZARP: tell its session before it restamps).
+  (3) **A mall past the city's edge on vanilla land** (`69fb6b80`; his seed 1234, chunk -58,57): outside the disc
+  `findPerciseY` answers street+1, which passes `isLevellableLots`, so a mall was planned across the edge and
+  built only inside it. `CitySites.spillSite` (as far as the ring can ease the rise back: 104 blocks on flat
+  land; no river, no water), `Mall.onCityGround` in `fits` and the car parks, `PlatLot.buildsBeyondCity`,
+  `isBuiltLot` -> `isSpillLot`, `shapeCityGround` levels under it and eases around it (`groundBeside`). A first
+  cut at a fixed 64 blocks refused that mall outright: measure the refusal reasons before choosing a limit.
 - Commits: master `d4c06713` `d0667f48` `482ee6b9` `382ae23d` `094255a8`; 1.21.1 `0f5f634d` `1bf1a1df`; 26.1
   `e14e9e4d` `6ede218d`; 26.2 `9ce97260` `fdacd735`; 26.3 `dc69efd3` `6e84ae29`; 1.20.1 `6535bf7f` `14b41fbb`
   (ported by patch, not cherry-pick: master's self-test held its checkout). Gates so far: six self-tests PASS on
