@@ -155,7 +155,7 @@ public final class CityWorldClient {
                                 return;
                             var source = noise.getBiomeSource();
                             String key = id.toLanguageKey("generator");
-                            net.minecraft.network.chat.Component name = net.minecraft.client.resources.language.I18n.exists(key)
+                            net.minecraft.network.chat.Component name = net.minecraft.locale.Language.getInstance().has(key)
                                     ? net.minecraft.network.chat.Component.translatable(key)
                                     : net.minecraft.network.chat.Component.literal(id.toString());
                             found.add(new CityWorldCustomizeScreen.Terrain(id.toString(), name,
