@@ -40,14 +40,38 @@ verified API notes, and what to do next. Start at its "Resume here" section.
   restamp (`WorldTypeLock.onRestamp`). Owner declined a spawn fix for a non-Earth world with Terrarium installed
   ("if someone's installed terrarium AND city world they likely want them together"). Next: nothing queued.
 
-**▶ After 7.3.0 (2026-11-23 late), unreleased, local only:** Customize **"Sea under a city"** (`cities.maxWater`,
-  was datapack-only; choices 0/5/10/20/35/50%) — master `81fc367d`, picked to all five lines (compiled, no
-  self-test run: client screen + one `with` method), `CityWork-ReForged` `DEPLOYED-81fc367d` for the owner's look.
-  From a deleted comment on issue #9 (Lithosphere: "oceans turned into plains") and the owner's west-coast city on
-  Terrarium: a vanilla-land city fills in up to `maxWater` (35%) of sea under its disc. Lithosphere 1.9 read from
-  its jar (data only: replaces `minecraft:overworld` noise settings, 576-tall world, no preset of its own) but
-  NOT run: the auto-mode classifier refused the dev-server run with the downloaded jar in `run/mods`. CHANGELOG has
-  "7.3.1 (unreleased)". Next: the owner's look, then 7.3.1 on his word.
+**▶ Resume here (2026-11-24): v7.3.1 is RELEASED, and the cyberpunk mod has begun.**
+- **7.3.1** = Customize "Sea under a city" (`cities.maxWater`; from a deleted issue #9 comment about Lithosphere and
+  the owner's Terrarium west coast: a vanilla-land city fills in up to 35% sea under its disc). Tag `v7.3.1` at the
+  master bump `182e9841` (branch bumps 39776c5d/96353dc1/5d3a9140/d7267484/a35a5142), CurseForge 9787797–9787802
+  (run 45356860260), fleet `DEPLOYED-v7.3.1` on 10 (ZARP opts out; **`CityWork-ReForged` was held back with a
+  temporary `.sablecraft-no-deploy` and carries the hooks build `DEPLOYED-hooks74-<sha>` + the cyberpunk mod**),
+  wiki pushed. Gates: six PASS + compare five-way, CI 45352953331, scan 0 after the positive, SRG 917.
+  **`mc26.1/run/server.properties` had `max-tick-time=60000` (the other five beds say -1): its self-test died on the
+  watchdog under load inside `checkForecast`'s wild-chunk generation; set to -1.** The PC suspended overnight
+  (23:55–06:45): background self-tests simply resumed.
+- **The cyberpunk mod** (owner's next project; memory `cityworld-cyberpunk-mod-notes.md` has his whole brief):
+  repo `../CityWorld-Cyberpunk` (LOCAL ONLY, no remote; working title/id `cityworld_cyberpunk`, NeoForge 1.21.11
+  first), `PLAN.md` = brief, who-owns-what, hook list, obstacle log, decisions for the owner; `docs/research/` =
+  the research report (107 sources) and notes; `scripts/gen_blocks.py` (23 placeholder blocks + textures + Java
+  registry from one table), `scripts/gen_data.py` (palettes by district, spawn files, settings, world preset).
+  **His rule: the mod's blocks are its own flash, but everything about how they are used and how the city is
+  shaped goes through PUBLIC CityWorld hooks; whatever is missing is added to CityWorld for every modder. Keep the
+  obstacle log (PLAN.md section 8).** The research workspace (`research_notes/`, `reports/`) is excluded from git.
+- **Branch `hooks-7.4`** (worktree `../CityWorld-ReForged-worktrees/hooks-7.4`, local, 1.21.11 only so far, for
+  7.4): `world.look` (a world's look by name: `palette/look/<look>/<part>`, and spawn files list it under
+  `styles`), palettes by district (`palette/district/<d>/<part>`, `palette/look/<look>/district/<d>/<part>`; the
+  lot passes `Palettes.districtOf(platmap)` — never ask the generator from inside a pick, it would plan the
+  platmap being planned), `cities.districtMix` (`ShapeProvider.remix`, own dice), spawn `at` kinds `facade[:a-b]`,
+  `alley`, `sidewalk`, `roof` (`Spawns.placedSpots`; a block with a horizontal facing turns away from its wall).
+  Self-tests `checkPalettesShipEmpty` (districts/look), `checkDistrictMix` written, NOT yet run; not ported.
+  Measured with the mod (seed 8675309): mod blocks in buildings; farm 94 -> 0 and outland 45 -> 0 of 576 platmaps
+  with every un-named district unchanged; facade/alley/sidewalk/roof spawns land.
+  `-Dcityworld.probe=survey:schematics:12` prints districts per settings entry.
+- Next: the owner's first look at the world type in a client (nothing of the mod has been seen in game by this
+  session), then PLAN.md's hook list (trim palette part, schematics from a mod jar, condition by district,
+  furniture by look/district, shop kinds as data, spans between lots), and his new ideas (holographic blocks,
+  player statues from skins).
 
 **▶ (2026-11-23 overnight, before the release): palettes by biome, the Biome Palettes add-on, schematics by biome and the
 Terrarium Expanded spawn — BUILT on all six lines for 7.3.0, unreleased, nothing pushed.**
